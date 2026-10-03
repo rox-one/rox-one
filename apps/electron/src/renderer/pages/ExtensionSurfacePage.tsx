@@ -42,6 +42,7 @@ export default function ExtensionSurfacePage({
   const [instanceId, setInstanceId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [removed, setRemoved] = useState(false)
+  const [surfaceAttempt, setSurfaceAttempt] = useState(0)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
   const { activeWorkspaceId, isFocusedPanel } = useAppShellContext()
   const isFocused = isFocusedPanel ?? (panelId === undefined || focusedPanelId === panelId)
@@ -102,19 +103,19 @@ export default function ExtensionSurfacePage({
         }
       })
     }
-  }, [durableKey, surfaceUrl, extensionId, viewId, activeWorkspaceId])
+  }, [durableKey, surfaceUrl, extensionId, viewId, activeWorkspaceId, surfaceAttempt])
 
   useEffect(() => {
     if (!instanceId) return
+    let active = true
     const offRemoved = window.electronAPI.extensionSurface.onRemoved((removedId) => {
-      if (removedId === instanceId) setRemoved(true)
-    })
-    const offStateChanged = window.electronAPI.extensionSurface.onStateChanged((state) => {
-      if (state.instanceId === instanceId) setRemoved(false)
+      // Removal is terminal for this owner. A queued state broadcast must not
+      // revive a closed native view; Retry acquires a fresh instance instead.
+      if (active && removedId === instanceId) setRemoved(true)
     })
     return () => {
+      active = false
       offRemoved()
-      offStateChanged()
     }
   }, [instanceId])
 
@@ -126,20 +127,26 @@ export default function ExtensionSurfacePage({
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
+      <div className="flex flex-col gap-3 items-center justify-center h-full w-full bg-background text-muted-foreground" data-testid="extension-surface-unavailable" role="status">
         <p className="text-sm">
           {t('extensions.surface.error')}
         </p>
+        <button type="button" className="rounded-md border border-border px-3 py-1 text-sm" onClick={() => setSurfaceAttempt(attempt => attempt + 1)}>
+          {t('common.retry')}
+        </button>
       </div>
     )
   }
 
   if (removed) {
     return (
-      <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
+      <div className="flex flex-col gap-3 items-center justify-center h-full w-full bg-background text-muted-foreground" data-testid="extension-surface-removed" role="status">
         <p className="text-sm">
           {t('extensions.surface.removed')}
         </p>
+        <button type="button" className="rounded-md border border-border px-3 py-1 text-sm" onClick={() => setSurfaceAttempt(attempt => attempt + 1)}>
+          {t('common.retry')}
+        </button>
       </div>
     )
   }

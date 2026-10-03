@@ -3720,6 +3720,8 @@
   "notes.palette.session": "Sitzungen",
   "notes.palette.task": "Aufgaben",
   "notes.palette.title": "Erwähnungen und Befehle",
+  "notes.route.notFound": "Diese Notiz ist nicht mehr verfügbar",
+  "notes.route.unavailable": "Diese Notiz konnte nicht geöffnet werden",
   "notes.save.autosaveHint": "Notizen werden beim Tippen gespeichert",
   "notes.save.autosaving": "Autospeichern",
   "notes.save.failed": "Speichern fehlgeschlagen",

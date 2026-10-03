@@ -36,7 +36,10 @@ describe('ship-rox-chrome-leftover-post-960', () => {
   })
 
   it('does not reopen inspector strip host from #958/#959', () => {
-    expect(host).toContain('(chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />')
+    // The retained wrapper preserves drafts when hidden and applies the same
+    // visibility flags plus suppression; InspectorHost owns the restore strip.
+    expect(host).toContain('<RetainedSurface visible={!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed)}>')
+    expect(host).toMatch(/<RetainedSurface[^>]*>\s*<InspectorHost \/>\s*<\/RetainedSurface>/)
     const start = inspector.indexOf('if (chromeCollapsed)')
     const collapsedReturn = inspector.indexOf('return (', start)
     const expandedReturn = inspector.indexOf('return (', collapsedReturn + 1)

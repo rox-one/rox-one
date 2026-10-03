@@ -3720,6 +3720,8 @@
   "notes.palette.session": "Sessions",
   "notes.palette.task": "Tasks",
   "notes.palette.title": "Mentions and commands",
+  "notes.route.notFound": "This note is no longer available",
+  "notes.route.unavailable": "This note could not be opened",
   "notes.save.autosaveHint": "Notes autosave as you type",
   "notes.save.autosaving": "Autosaving",
   "notes.save.failed": "Save failed",

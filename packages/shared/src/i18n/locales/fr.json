@@ -3720,6 +3720,8 @@
   "notes.palette.session": "Sessions",
   "notes.palette.task": "Tâches",
   "notes.palette.title": "Mentions et commandes",
+  "notes.route.notFound": "Cette note n’est plus disponible",
+  "notes.route.unavailable": "Impossible d’ouvrir cette note",
   "notes.save.autosaveHint": "Les notes s’enregistrent pendant la saisie",
   "notes.save.autosaving": "Enregistrement auto",
   "notes.save.failed": "Échec de l’enregistrement",

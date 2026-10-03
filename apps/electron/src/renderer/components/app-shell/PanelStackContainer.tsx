@@ -27,7 +27,7 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { motion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
-import { parseRouteToNavigationState } from '../../../shared/route-parser'
+import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
 import { PanelSlot } from './PanelSlot'
 import { PanelResizeSash } from './PanelResizeSash'
@@ -84,7 +84,7 @@ export function PanelStackContainer({
   // Compact mode: drill-in is "detail focused", not just "session selected".
   // For sessions: a session is selected. For settings: Overview and every
   // subpage are detail surfaces so compact shows Overview on bare settings.
-  const focusedNavState = focusedRoute ? parseRouteToNavigationState(focusedRoute) : null
+  const focusedNavState = focusedRoute ? parseRouteToNavigationStateOrUnavailable(focusedRoute) : null
   const isDetailFocused = isDetailNavState(focusedNavState)
   const hasSelectedContent = isCompact && isDetailFocused
 

@@ -502,7 +502,7 @@ export default function KnowledgeSurfacePage({
 
   if (!knowledgeEnabled) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-background px-6 text-center text-muted-foreground">
+      <div data-testid="knowledge-entity-unavailable" data-knowledge-id={id} role="status" className="flex h-full w-full flex-col items-center justify-center gap-2 bg-background px-6 text-center text-muted-foreground">
         <p className="text-sm font-medium">{t('knowledge.featureDisabled.title')}</p>
         <p className="text-sm">{t('knowledge.featureDisabled.body')}</p>
         <p className="text-xs">{t('knowledge.featureDisabled.envHint')}</p>

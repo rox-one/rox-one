@@ -5,6 +5,7 @@
  * an item into a personal task or a reply DRAFT (a pre-filled, unsent chat).
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ExtraScreenItemUnavailable } from '../ExtraScreenItemUnavailable'
 import { useTranslation } from 'react-i18next'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
@@ -281,6 +282,8 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
           />
         ) : selectedItem ? (
           <ItemDetail key={selectedItem.id} item={selectedItem} language={language} onDismiss={() => dismiss(selectedItem.id)} />
+        ) : itemId ? (
+          <ExtraScreenItemUnavailable screen="radar" itemId={itemId} />
         ) : (
           <EmptyState title={t('extraScreens.radar.pickTitle')} body={t('extraScreens.radar.pickBody')} />
         )}

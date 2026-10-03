@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next'
 import { useSetAtom } from 'jotai'
 import { cn } from '@/lib/utils'
 import { X, ChevronLeft } from 'lucide-react'
-import { parseRouteToNavigationState } from '../../../shared/route-parser'
+import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { closePanelAtom, focusedPanelIdAtom, type PanelStackEntry } from '@/atoms/panel-stack'
 import { useAppShellContext, AppShellProvider } from '@/context/AppShellContext'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
@@ -56,7 +56,7 @@ export function PanelSlot({
   const closePanel = useSetAtom(closePanelAtom)
   const setFocusedPanel = useSetAtom(focusedPanelIdAtom)
   const parentContext = useAppShellContext()
-  const navState = parseRouteToNavigationState(entry.route)
+  const navState = parseRouteToNavigationStateOrUnavailable(entry.route)
 
   const handleClose = useCallback(() => {
     closePanel(entry.id)

@@ -5,6 +5,7 @@
  * workspace memory lessons (rejected options become MUST NOT rules).
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ExtraScreenItemUnavailable } from '../ExtraScreenItemUnavailable'
 import { useTranslation } from 'react-i18next'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
@@ -254,6 +255,8 @@ export default function DecisionsPage({ itemId }: { itemId: string | null }) {
               select(null)
             }}
           />
+        ) : itemId ? (
+          <ExtraScreenItemUnavailable screen="decisions" itemId={itemId} />
         ) : data.decisions.length === 0 && data.candidates.length === 0 ? (
           <EmptyState
             title={t('extraScreens.decisions.emptyTitle')}
