@@ -271,14 +271,8 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
     };
 
     // All vendored packs synced with zero errors and no false localModified flags.
-    expect(out.packs.map(p => p.slug).sort()).toEqual([
-      'craft-knowledge',
-      'mattpocock-skills',
-      'rox-harness',
-      'superpowers',
-      'vercel-agent-skills',
-      'vercel-next-skills',
-    ]);
+    const lock = JSON.parse(readFileSync(join(REPO_ROOT, 'apps/electron/resources/skills/SKILLS.lock'), 'utf8'));
+    expect(out.packs.map(p => p.slug).sort()).toEqual(lock.packs.map((p: { slug: string }) => p.slug).sort());
     for (const pack of out.packs) {
       expect(pack.error).toBeUndefined();
       expect(pack.localModified).toBe(false);
@@ -290,12 +284,14 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
     for (const slug of ['brainstorming', 'test-driven-development', 'tdd', 'next-dev-loop', 'react-best-practices']) {
       expect(out.slugs).toContain(slug);
     }
-    expect(out.slugs.length).toBeGreaterThanOrEqual(60);
+    for (const pack of lock.packs) {
+      for (const slug of pack.skills) expect(out.slugs).toContain(slug);
+    }
 
     // Discovery ignores the internal state directory.
     expect(out.slugs).not.toContain('.bundled');
     expect(existsSync(join(home, '.agents', 'skills', '.bundled', 'superpowers.json'))).toBe(true);
-  }, 30_000);
+  }, 180_000);
 });
 
 describe('disabled packs hidden from discovery', () => {

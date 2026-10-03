@@ -40,6 +40,7 @@ import {
   readdirSync,
   readFileSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from 'fs';
 import { createHash } from 'crypto';
@@ -186,6 +187,32 @@ function readSkillsLock(bundleRoot: string): Map<string, SkillsLockPack> {
   return map;
 }
 
+/**
+ * A disposable OMP profile needs the shipped skills immediately, independently
+ * of global installation or edited copies. Link read-only bundle directories
+ * rather than copying every script/data file for every process restart.
+ * OMP's other discovery tiers retain the user's authored skills and overrides.
+ */
+export function linkBundledSkillsForOmp(options: EnsureBundledSkillsOptions & { targetRoot: string }): string[] {
+  const bundleRoot = options.bundleRoot ?? getBundledAssetsDir('skills');
+  if (!bundleRoot || !existsSync(bundleRoot)) return [];
+  const disabled = new Set(options.disabled ?? loadStoredConfig()?.bundledSkills?.disabled ?? []);
+  const lock = readSkillsLock(bundleRoot);
+  mkdirSync(options.targetRoot, { recursive: true });
+  const linked: string[] = [];
+  for (const pack of [...lock.keys()].sort()) {
+    if (disabled.has(pack)) continue;
+    const packDir = join(bundleRoot, pack);
+    for (const skill of listPackSkillDirs(packDir)) {
+      const target = join(options.targetRoot, skill);
+      if (existsSync(target)) throw new Error(`Bundled OMP skill collision: ${skill}`);
+      symlinkSync(join(packDir, skill), target, process.platform === 'win32' ? 'junction' : 'dir');
+      linked.push(skill);
+    }
+  }
+  return linked;
+}
+
 function readPackState(targetRoot: string, packSlug: string): BundledPackState | null {
   const path = join(targetRoot, STATE_DIR_NAME, `${packSlug}.json`);
   if (!existsSync(path)) return null;
@@ -287,7 +314,7 @@ export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): Ensur
         if (!state) continue;
         for (const key of Object.keys(state.files)) {
           const slash = key.indexOf('/');
-          if (slash > 0) ownerOf.set(key.slice(0, slash), state.pack);
+          if (slash > 0) ownerOf.set(key.slice(0, slash), state.pack === 'craft-knowledge' ? 'rox-knowledge' : state.pack);
         }
       }
     }
@@ -427,7 +454,7 @@ function syncPack(
         rmSync(join(stagedDir, rel), { force: true });
       }
 
-      const backupDir = join(targetRoot, `.craft-bak-${skill}-${process.pid}`);
+      const backupDir = join(targetRoot, `.rox-bak-${skill}-${process.pid}`);
       if (hadTarget) {
         renameSync(targetDir, backupDir);
       }
