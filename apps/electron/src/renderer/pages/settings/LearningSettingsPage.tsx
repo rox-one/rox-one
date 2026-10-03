@@ -44,8 +44,8 @@ export default function LearningSettingsPage() {
             <p className="mt-2 text-xs">{t('productTour.acknowledged')}: {acknowledged}/{tour.steps.length} · {t('productTour.verified')}: {verified}/{tour.steps.length}</p>
             {reason && <p className="mt-2 text-xs text-muted-foreground">{t('productTour.prerequisites')}: {t(`productTour.reasons.${reason}`)}</p>}
             <div className="mt-3 flex gap-2">
-              <Button type="button" data-testid={`learning-start-${tour.id}`} disabled={!learning?.enabled} onClick={() => { scrollContainer.current?.scrollTo({ top: 0 }); void learning?.start(tour.id, progress ? 'resume' : 'new') }}>{t(progress ? 'productTour.controls.resume' : 'productTour.controls.start')}</Button>
-              {progress && <Button type="button" variant="outline" disabled={!learning?.enabled} onClick={() => { scrollContainer.current?.scrollTo({ top: 0 }); void learning?.start(tour.id, 'replay') }}>{t('productTour.controls.replay')}</Button>}
+              <Button type="button" data-testid={`learning-start-${tour.id}`} disabled={!learning?.enabled || !learning.ready} onClick={() => { scrollContainer.current?.scrollTo({ top: 0 }); void learning?.start(tour.id, progress ? 'resume' : 'new') }}>{t(progress ? 'productTour.controls.resume' : 'productTour.controls.start')}</Button>
+              {progress && <Button type="button" variant="outline" disabled={!learning?.enabled || !learning.ready} onClick={() => { scrollContainer.current?.scrollTo({ top: 0 }); void learning?.start(tour.id, 'replay') }}>{t('productTour.controls.replay')}</Button>}
             </div>
           </article>
         })}

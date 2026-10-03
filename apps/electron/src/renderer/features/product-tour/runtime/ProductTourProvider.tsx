@@ -81,7 +81,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const panelRoute = useAtomValue(focusedPanelRouteAtom)
   const modal = useModalRegistry()
   const layers = useDismissibleLayerRegistry()
-  const [enabled, updateEnabled] = useState(() => storage.get(storage.KEYS.featureProductTourV1, false))
+  const [enabled, updateEnabled] = useState(() => storage.get(storage.KEYS.featureProductTourV1, false) === true)
   const [state, updateState] = useState<RuntimeState>(initialRuntimeState)
   const stateRef = useRef(state)
   const context = { workspaceId: workspaceId ?? '', panelId, ...navigationEntity(nav.navigationState) }
