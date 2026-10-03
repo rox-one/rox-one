@@ -18,7 +18,7 @@ function show(state: RuntimeState) {
   return transition(state, { type: 'TARGET_READY', runToken: attempt.binding.runToken, stepId: attempt.stepId }).state
 }
 const ack = (state: RuntimeState, at = 120) => transition(state, { type: 'ACK', runToken: state.attempt!.binding.runToken, stepId: state.attempt!.stepId, at }).state
-const insertion: TourSignal = { name: 'dictation.inserted', binding, eventToken: 'inserted-once', operationToken: 'native-dictation', operationStartedAt: 105, at: 110, level: 'observed', origin: 'native-event' }
+const insertion = { name: 'dictation.inserted', binding, eventToken: 'inserted-once', operationToken: 'native-dictation', operationStartedAt: 105, at: 110, level: 'observed', origin: 'native-event' } satisfies TourSignal
 
 test('production voice policies retain one insertion during native handoff, then require start and visible review acknowledgements', () => {
   let state = show(start(voice))

@@ -79,10 +79,28 @@ function Providers({ kind }: { kind: 'voice' | 'source' }) {
     register: target => { targets.set(target.id, target); return () => { if (targets.get(target.id) === target) targets.delete(target.id) } },
     setCapability: () => () => {},
   }), [])
-  // EditPopover remains closed. These real contexts supply only the read-only
-  // data its normal hooks require; no session or authorization action is called.
-  const shell = { workspaces: [{ id: binding.workspaceId, name: 'Fixture workspace', rootPath: '/fixture-workspace' }], activeWorkspaceId: binding.workspaceId, activeWorkspaceSlug: 'fixture', llmConnections: [], pendingPermissions: new Map(), pendingCredentials: new Map(), sessionOptions: new Map() } as AppShellContextType
-  const navigation = { navigate: () => {}, isReady: true, navigationState: { navigator: 'sources' as const, filter: { kind: 'all' as const } }, navigationRevision: 1, canGoBack: false, canGoForward: false, goBack: () => {}, goForward: () => {}, updateRightSidebar: () => {}, toggleRightSidebar: () => {}, navigateToSource: () => {}, navigateToSession: () => {} }
+  // The closed EditPopover reads this real context. Fail if an unexpected shell
+  // action is called rather than silently simulating a session mutation.
+  const unexpectedShellAction = (): never => { throw new Error('Unexpected shell action in the native continuity fixture') }
+  const shell: AppShellContextType = {
+    workspaces: [{ id: binding.workspaceId, name: 'Fixture workspace', slug: 'fixture', rootPath: '/fixture-workspace', createdAt: 0 }],
+    activeWorkspaceId: binding.workspaceId, activeWorkspaceSlug: 'fixture', llmConnections: [],
+    pendingPermissions: new Map(), pendingCredentials: new Map(), sessionOptions: new Map(),
+    refreshLlmConnections: unexpectedShellAction, getDraft: unexpectedShellAction,
+    getDraftAttachmentRefs: unexpectedShellAction, hydrateDraftAttachments: unexpectedShellAction,
+    onCreateSession: unexpectedShellAction, onSendMessage: unexpectedShellAction,
+    onRenameSession: unexpectedShellAction, onFlagSession: unexpectedShellAction,
+    onUnflagSession: unexpectedShellAction, onArchiveSession: unexpectedShellAction,
+    onUnarchiveSession: unexpectedShellAction, onMarkSessionRead: unexpectedShellAction,
+    onMarkSessionUnread: unexpectedShellAction, onSetActiveViewingSession: unexpectedShellAction,
+    onSessionStatusChange: unexpectedShellAction, onDeleteSession: unexpectedShellAction,
+    onOpenFile: unexpectedShellAction, onOpenUrl: unexpectedShellAction,
+    onSelectWorkspace: unexpectedShellAction, onOpenSettings: unexpectedShellAction,
+    onOpenKeyboardShortcuts: unexpectedShellAction, onOpenStoredUserPreferences: unexpectedShellAction,
+    onReset: unexpectedShellAction, onSessionOptionsChange: unexpectedShellAction,
+    onInputChange: unexpectedShellAction, onAttachmentsChange: unexpectedShellAction,
+  }
+  const navigation = { navigate: () => {}, isReady: true, navigationState: { navigator: 'sources' as const, details: kind === 'source' ? { type: 'source' as const, sourceSlug: source.config.slug } : null }, navigationRevision: 1, canGoBack: false, canGoForward: false, goBack: () => {}, goForward: () => {}, updateRightSidebar: () => {}, toggleRightSidebar: () => {}, navigateToSource: () => {}, navigateToSession: () => {} }
   return <AppShellProvider value={shell}><NavigationContext.Provider value={navigation}><EscapeInterruptProvider><PlatformProvider><TooltipProvider><ModalProvider><DismissibleLayerProvider><TourRuntimeContext.Provider value={port}><TourPanelScope {...binding}><Harness kind={kind} /></TourPanelScope></TourRuntimeContext.Provider></DismissibleLayerProvider></ModalProvider></TooltipProvider></PlatformProvider></EscapeInterruptProvider></NavigationContext.Provider></AppShellProvider>
 }
 await i18n.use(initReactI18next).init({ lng: 'en', fallbackLng: 'en', resources: { en: { translation: en } }, keySeparator: false, interpolation: { escapeValue: false } })
