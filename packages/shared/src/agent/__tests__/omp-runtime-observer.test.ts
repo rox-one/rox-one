@@ -537,11 +537,6 @@ describe('OMP typed native runtime bridge', () => {
       eventQueue: { enqueue: (event: AgentEvent) => void };
     };
     const events: AgentEvent[] = [];
-    // The optional legacy port cannot carry the production managed environment.
-    // This fixture exercises that supported port explicitly; the previous case
-    // retains the actual managed-context local execution and stdout/stderr proof.
-    const currentContext = internals.getSessionToolContext.bind(agent);
-    internals.getSessionToolContext = () => ({ ...currentContext(), getHostBashEnv: undefined });
     let actualSidecarCalls = 0;
     setHostBashPort(async () => { actualSidecarCalls++; throw new Error('fixture sidecar unavailable'); });
     internals._isProcessing = true;
