@@ -1,9 +1,116 @@
 import { describe, expect, it } from 'bun:test';
-import { attachCredentialRef } from './attach-credential-ref.ts';
+import { attachCredentialRef, type AttachCredentialRefInput } from './attach-credential-ref.ts';
 import { CredentialRefRegistry, isCredentialRefId } from './credential-types.ts';
 import type { ServiceConnection } from './types.ts';
 
+function withPrototypeProperty(field: string, descriptor: PropertyDescriptor, run: () => void): void {
+  const original = Object.getOwnPropertyDescriptor(Object.prototype, field);
+  Object.defineProperty(Object.prototype, field, descriptor);
+  try {
+    run();
+  } finally {
+    if (original) Object.defineProperty(Object.prototype, field, original);
+    else Reflect.deleteProperty(Object.prototype, field);
+  }
+}
+
+function captureError(run: () => unknown): unknown {
+  try {
+    run();
+    return undefined;
+  } catch (error) {
+    return error;
+  }
+}
+
 describe('attachCredentialRef', () => {
+  const connection: ServiceConnection = { id: 'svc-github', workspaceId: 'ws', provider: 'github', status: 'connected' };
+  const input: AttachCredentialRefInput = { kind: 'bearer_token', providerId: 'local', locator: { type: 'local', key: 'github/default' }, now: 1 };
+
+  for (const field of ['kind', 'providerId', 'locator'] as const) {
+    for (const propertyKind of ['data', 'getter', 'throwing getter'] as const) {
+      it(`rejects an inherited input ${field} ${propertyKind} before registration`, () => {
+        const registry = new CredentialRefRegistry();
+        const incomplete = { ...input } as Partial<AttachCredentialRefInput>;
+        delete incomplete[field];
+        let reads = 0;
+        let error: unknown;
+        const descriptor: PropertyDescriptor = propertyKind === 'data'
+          ? { configurable: true, enumerable: true, value: input[field] }
+          : { configurable: true, enumerable: true, get: () => { reads += 1; if (propertyKind === 'throwing getter') throw new Error('inherited getter executed'); return input[field]; } };
+        withPrototypeProperty(field, descriptor, () => {
+          error = captureError(() => attachCredentialRef(connection, registry, incomplete as AttachCredentialRefInput));
+        });
+        expect(reads).toBe(0);
+        expect(error).toBeInstanceOf(Error);
+        expect(registry.list()).toEqual([]);
+        expect(connection).toEqual({ id: 'svc-github', workspaceId: 'ws', provider: 'github', status: 'connected' });
+        expect(incomplete).not.toHaveProperty(field);
+      });
+    }
+  }
+
+  for (const target of ['connection', 'input', 'locator'] as const) {
+    for (const propertyKind of ['data', 'getter'] as const) {
+      it(`rejects ${target} accessors despite inherited descriptor value ${propertyKind} before mutation`, () => {
+        const registry = new CredentialRefRegistry();
+        const suppliedConnection = { ...connection };
+        const suppliedInput = { ...input, locator: { ...input.locator } };
+        const value = target === 'connection' ? suppliedConnection : target === 'input' ? suppliedInput : suppliedInput.locator;
+        const field = target === 'connection' ? 'status' : target === 'input' ? 'locator' : 'key';
+        const result = target === 'connection' ? 'connected' : target === 'input' ? input.locator : 'github/default';
+        let fieldReads = 0;
+        let descriptorReads = 0;
+        let error: unknown;
+        Object.defineProperty(value, field, { enumerable: true, get: () => { fieldReads += 1; return result; } });
+        const descriptor: PropertyDescriptor = propertyKind === 'data'
+          ? { configurable: true, enumerable: true, value: result }
+          : { configurable: true, enumerable: true, get: () => { descriptorReads += 1; return result; } };
+        withPrototypeProperty('value', descriptor, () => {
+          error = captureError(() => attachCredentialRef(suppliedConnection, registry, suppliedInput));
+        });
+        expect(fieldReads).toBe(0);
+        expect(descriptorReads).toBe(0);
+        expect(error).toBeInstanceOf(Error);
+        expect(registry.list()).toEqual([]);
+      });
+    }
+  }
+
+  it('ignores inherited optional now without executing its getter', () => {
+    const registry = new CredentialRefRegistry();
+    const supplied: AttachCredentialRefInput = { kind: input.kind, providerId: input.providerId, locator: input.locator };
+    let reads = 0;
+    let error: unknown;
+    let attached: ServiceConnection | undefined;
+    const before = Date.now();
+    withPrototypeProperty('now', { configurable: true, enumerable: true, get: () => { reads += 1; return 1; } }, () => {
+      error = captureError(() => { attached = attachCredentialRef(connection, registry, supplied); });
+    });
+    expect(error).toBeUndefined();
+    expect(reads).toBe(0);
+    expect(registry.list()[0]?.createdAt).toBeGreaterThanOrEqual(before);
+    expect(attached?.credentialRef).toBe(registry.list()[0]?.id);
+    expect(supplied).not.toHaveProperty('now');
+  });
+
+  it('preserves frozen own connection, input and locator data under prototype pollution', () => {
+    const registry = new CredentialRefRegistry();
+    const suppliedConnection = Object.freeze({ ...connection, accountLabel: 'GitHub', readOnly: true });
+    const suppliedInput = Object.freeze({ ...input, locator: Object.freeze({ ...input.locator }) });
+    let reads = 0;
+    let error: unknown;
+    let attached: ServiceConnection | undefined;
+    withPrototypeProperty('locator', { configurable: true, enumerable: true, get: () => { reads += 1; throw new Error('inherited getter executed'); } }, () => {
+      error = captureError(() => { attached = attachCredentialRef(suppliedConnection, registry, suppliedInput); });
+    });
+    expect(error).toBeUndefined();
+    expect(reads).toBe(0);
+    expect(attached).toEqual({ id: 'svc-github', workspaceId: 'ws', provider: 'github', status: 'connected', accountLabel: 'GitHub', readOnly: true, credentialRef: registry.list()[0]?.id });
+    expect(suppliedConnection).toEqual({ id: 'svc-github', workspaceId: 'ws', provider: 'github', status: 'connected', accountLabel: 'GitHub', readOnly: true });
+    expect(suppliedInput).toEqual(input);
+  });
+
   it('writes a cred uuid and does not accept a raw value', () => {
     const registry = new CredentialRefRegistry();
     const connection: ServiceConnection = {
