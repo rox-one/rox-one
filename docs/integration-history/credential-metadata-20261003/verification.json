@@ -2,11 +2,11 @@
   "source_pr": "https://github.com/rox-one/rox-one/pull/1424",
   "source_head": "f2c6e1e44a07cb950fc55bf7c34e3e41f59a560b",
   "integrated_source": "944ed1cb0",
-  "integrated_main": "ae19683e69f079893cd09065487cfa7653d01154",
+  "integrated_main": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
   "scope": "Source attachment repair and distinct current inherited/frozen/persistence controls, original head retained as Git ancestor; append-only docs conflict resolution",
   "local_checks": {
-    "full_core": "1093 pass,0fail,5142assertions",
-    "core_strict_types": "exit0,zero diagnostics",
+    "full_core": "1098 pass,0 fail,5221 assertions on reconciled main credential sources",
+    "core_strict_types": "exit0,zero diagnostics on reconciled sources",
     "exact_old_attachment_negative": "new inherited metadata controls fail; candidate restored before delivery"
   },
   "hosted_ubuntu": {
@@ -15,17 +15,21 @@
     "actual_checkout": "924f3f9 Merge f2c6e1e44a07cb950fc55bf7c34e3e41f59a560b into2b18a2562d773c3d6e5103b2e020243d8e3a2d75",
     "full_core": "1093pass0fail",
     "validate_alias": "success",
-    "source_qualification": "all4changed runtime/test/workflow blobs byteidentical sourcef2 and integrated944; hosted result is source qualification, not a fictional later commit run"
+    "source_qualification": "Hosted proof covers original sourcef2 attachment repair; final combined locator/attachment tests additionally execute locally. No fictional final hosted run."
   },
   "sha256": {
     "packages/core/src/platform/identity/attach-credential-ref.ts": "6e9e6afc965c932bc8870743289bab082bc6b37f5db8da43675c89683d58cfbf",
     "packages/core/src/platform/identity/attach-credential-ref.test.ts": "a033430777cd1ec4aeab743bb1b5ff2b67a9cc18e31a08dc09cb386c36f1570d",
-    "packages/core/src/platform/identity/credential-types.test.ts": "46ffff4d47fb044621b296ea1e86fa8805659b3526e804a3cca797b84eca7a7a",
+    "packages/core/src/platform/identity/credential-types.test.ts": "b7663ed91a3b55951231a888c56aed0239dfe28379666af36cb1af450fb95098",
     ".github/workflows/ci.yml": "10f05429e3760f6fd78df1a5296a6e41dd80678f21f94015defb9269fce5f0e9"
   },
   "limits": [
     "Hosted macOS queued and Vercel deployment blocked externally",
     "No installed-provider or fullrelease acceptance claim"
   ],
-  "original_branches_preserved": true
+  "original_branches_preserved": true,
+  "source_delivery": {
+    "external_pr1424": "merged b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
+    "own_pr1438": "verification receipt only after source delivery; no remaining runtime difference from observed main"
+  }
 }
