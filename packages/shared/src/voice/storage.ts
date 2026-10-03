@@ -101,11 +101,14 @@ export function normalizeVoicePrefs(raw: unknown, now: number = Date.now()): Voi
     cloudEnhancementConsent: obj.cloudEnhancementConsent === true,
     webEnrichmentConsent: obj.webEnrichmentConsent === true,
     privacyMigrationPending,
+    trailingSpace: version === VOICE_PREFS_VERSION && obj.trailingSpace === true,
+    delivery: version === VOICE_PREFS_VERSION && obj.delivery === 'clipboard' ? 'clipboard' : 'draft',
     autoSubmit: false,
     enhancementMode: asEnhancement(obj.enhancementMode),
     enhancementModules: Array.isArray(obj.enhancementModules)
       ? obj.enhancementModules.filter((item): item is string => typeof item === 'string')
       : [],
+    pttModifier: version === VOICE_PREFS_VERSION && (obj.pttModifier === 'ControlRight' || obj.pttModifier === 'none') ? obj.pttModifier : 'AltRight',
     hotkeyMode: asHotkeyMode(obj.hotkeyMode),
     toggleAccelerator: typeof obj.toggleAccelerator === 'string' ? obj.toggleAccelerator : base.toggleAccelerator,
     cancelAccelerator: typeof obj.cancelAccelerator === 'string' ? obj.cancelAccelerator : base.cancelAccelerator,

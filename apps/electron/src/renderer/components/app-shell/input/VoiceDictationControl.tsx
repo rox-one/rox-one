@@ -120,8 +120,12 @@ export function VoiceDictationControl({
       const text = result.text.trim()
       if (text) {
         const latest = latestInputRef.current
-        if (latest.onInputChange) {
-          latest.onInputChange(latest.inputValue ? `${latest.inputValue} ${text}` : text)
+        const deliveredText = prefs?.trailingSpace ? `${text} ` : text
+        if (prefs?.delivery === 'clipboard') {
+          await window.electronAPI.copyVoiceText({ text: deliveredText })
+          if (captureId !== captureIdRef.current) return
+        } else if (latest.onInputChange) {
+          latest.onInputChange(latest.inputValue ? `${latest.inputValue} ${deliveredText}` : deliveredText)
           tourSignals.emit(dictationObservation, 'dictation.inserted', 'observed', 'native-event')
         }
       }
@@ -136,7 +140,7 @@ export function VoiceDictationControl({
         setTranscribing(false)
       }
     }
-  }, [prefs?.sttEngine, stopTracks, t, tourSignals])
+  }, [prefs?.sttEngine, prefs?.delivery, prefs?.trailingSpace, stopTracks, t, tourSignals])
 
   const cancelRecording = useCallback(() => {
     dictationObservationRef.current = null

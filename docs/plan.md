@@ -726,6 +726,26 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 
 Evidence and delivery receipt: `docs/credential-locator-own-data-validation.md`. .codegraph is absent in the frozen repository; targeted symbol/caller inspection supplies the bounded source map. Native work and Vercel account deployment status remain outside this locator correction.
 
+## Credential metadata own-data repair and integration — 2026-10-03
+
+The user authorized full source repair, GitHub writes and merge into `main`. The original checkout and its unrelated CSS edits are preserved. One lead owns the isolated `fix/credential-metadata-own-data-20261003` source branch; an independent reviewer owns separate evidence artifacts. Initial integration base: `829e2cbd840e2980b421038457866d0efd0893f2`.
+
+The integration at `b1526a85f6db5a6cdf668438e484f62ce15e6f29` preserves PR #1407's locator implementation and inherited-field tests, adds only distinct locator controls, and retains main's MCP onboarding step. A prior macOS full-CI attempt hit 17 subprocess timeouts; the unchanged 109-test config gate subsequently passed with the original deadlines. Preserve both receipts and verify the complete integrated candidate on Linux and hosted runners.
+
+| Task | Owner | Dependencies | Verification / delivery |
+| --- | --- | --- | --- |
+| LOC-STATE | Lead | none | Exact fresh main, clean isolated checkout, live PR and publishing policy readback |
+| LOC-FIX | Lead | LOC-STATE | Own-data snapshots in registry/attachment; regressions for all locator variants, accessors, frozen controls and persisted state |
+| LOC-REVIEW | Independent reviewer | LOC-STATE, LOC-FIX | Source hashes, adversarial holdout, negative controls and actionable compatibility findings |
+| LOC-VERIFY | Lead | LOC-FIX | Pinned Linux Bun 1.3.14 full core, core TypeScript, unchanged CI alias and separate MCP onboarding script; preserve any initial failures and exact logs |
+| LOC-CI | Lead | LOC-FIX | Full core suite, unchanged CI alias and main's separate MCP onboarding step on hosted Ubuntu 24.04 and macOS 15; existing permissions/install/deadlines/assertions retained |
+| LOC-DELIVER | Lead | LOC-REVIEW, LOC-VERIFY, LOC-CI | Commit/push scoped files, publish a current PR, resolve actionable feedback, merge main, read back delivered source and save revision-bound report |
+
+The earlier local-only candidate and its results remain historical evidence. They do not replace complete verification of this new base or the delivered revision. Integration receipts, commands, exits, source/artifact hashes, actual hosted run URLs and final main identity are saved outside the checkout; no publication or acceptance is inferred from a task launch. This slice does not change broader native/provider/platform acceptance.
+
+
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
+
 ## Credential locator repair plan — 2026-10-03
 
 | Task | Owner | Depends on | Owned files | Verification |
@@ -766,6 +786,16 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 - Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.
 
 
+### Voice archive recovery ownership and verification (2026-10-03)
+
+- Owner: recent-features worker. Dependencies: current actor-scoped voice HistoryIndex, native authority and request fences, registered RPC/channel-map and actual Settings/composer lifecycle. Lead owns ordered merge; original source branches remain intact.
+- Recover current UI search/detail/revisions/edit/select/delete/export/play plus explicit draft/clipboard completion. Add scoped handlers where current ports are absent; retain expected-selected CAS, foreign-record ownership, bounded text, path-free bounded audio frames, final integrity verification and local-only managed-owner clipboard writes. No legacy global capture, fake receipt/provider or default cloud consent is restored.
+- Verify actual authenticated WS actor/read-only/stale/oversize/symlink/persistence/restart controls; actual local-only clipboard RPC remote/forged/dead/moved-owner rejection; complete audio-byte/frame replacement/digest/dispose controls; actual Chromium current UI search/edit/select/stale/copy/export/play/delete/out-of-order/unmount/web denial and composer delivery. Run relevant shared/server/Electron types, protocol catalog/routing and all locale parity; qualify renderer/main/preload builds on the delivered source.
+- Native OS microphone/provider/installed clipboard acceptance and the full Voice/Meeting program remain separate from synthetic bounded integration evidence.
+
+Current foreground PTT also restores the explicit Right Control and disabled presets alongside the default Right Alt/Option. Stored current-schema preferences are normalized and consumed by the same managed foreground key owner; left/wrong modifiers remain untouched, repeat is paired once, changed held modifiers cancel once, and the existing key-up completion contract survives mode changes. These controls do not claim OS-wide modifier capture.
+
+An explicit current-schema trailing-space preference applies to draft and clipboard completion, while the missing/legacy preference preserves current no-trailing-space behavior. Real Chromium completion controls verify both targets.
 ## Validated personal task import recovery — 2026-10-03
 
 1. Historical worker maps Golden's consumed import guard to actual current TasksPage onImport and cache tryFromJson consumers. Root owns other Golden UI; this recovery changes core validation and tests only.
@@ -780,6 +810,14 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
 4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
 
+Review qualification: each audio frame binds the opened leaf to captured BigInt dev/ino identities for every ancestor before any read and rechecks them after the frame; canonical path equality alone is insufficient. A deterministic real-directory replacement fixture returns a foreign frame on the earlier helper and rejects before any foreign descriptor read after the repair. All19 newly added labels have authored translations in all12 locales. Native WS fixture initialization is sequenced through authenticated read readiness; 500ms transport and 20s test deadlines, concurrent capture and all privacy assertions remain intact.
+
+## Golden narrow Notes tools and sash — 2026-10-03
+
+1. Historical integration recovers only the consumed width lease, responsive rail and focus helpers; current NativeNotesPage remains the sole data/editor owner. Depend on existing Dialog and localized Contents/Comments labels, current EntityViewTabs and primary-sidebar vault portal.
+2. Wire sheets for hidden Contents/Comments, using current auto-hide computation rather than source360px all-rail policy. Scope-close to workspace/document/view; keep existing editor mounted and native authority unchanged.
+3. Recover Notes sash keyboard/leased pointer callbacks with current width bounds, foreign-pointer isolation and Escape/blur/cancel/unmount cleanup.
+4. Run actual component/NativeNotesPage callback, observer, hidden/inert/visibility/focus and pointer cancellation tests; substitute original page/sash as before-source negative controls then restore exact candidate. Run relevant existing Notes document/view/comment controls and Electron types, reconcile latestmain, push/attach separate PR. Final Chromium qualification:38 tests/251 assertions pass across6 files, including6 production-component DOM cases, hidden/inert/scope close, focus return, document-draft retention, pointer cancellation and IME/current normalized bounds. Fixture controls the document owner; complete NativeNotesPage/backend and installed native acceptance remain independently gated. Original failure evidence is retained: corrected fixture inert property and allowed bounded browser teardown, without relaxing production guards. Actual Inspector/RightSession narrow sheets are a separate pending recovery.
 
 ## Golden service navigation and guidance recovery — 2026-10-03
 
@@ -787,3 +825,5 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 2. Recover the source's workspace-scoped dismissal key/helper; compose it into today's flat SidebarChrome/PromoSlot using the existing all-locale `common.dismiss` key. Fence focus by captured workspace and connected/visible profile owner. Keep reminders independent.
 3. Execute actual component callbacks with real panel atoms and controlled local storage: mounted-route/draft preservation, preferred match, missing-service fallback, explicit subroutes, compact mode, durable workspace isolation and stale-callback focus. Verify current DOM keyboard/disclosure, panel lanes, promo policy and Electron types. Run before-source negative controls, restore exact files, reconcile live main without replacing later docs, publish a separate PR and retain all source branches.
 4. Acceptance is bounded source and renderer integration; do not claim installed native UI, old sidebar layout recovery, full Golden source-family completion or production acceptance.
+
+Voice archive follow-up: open the leaf with NOFOLLOW/NONBLOCK before validating its regular-file size and current path identity, then verify all ancestor identities before any read and after the frame. This removes reliance on a pre-open leaf path stat while retaining bounded/no-read failure controls.

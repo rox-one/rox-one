@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
 import { matchesNoteReceipt, notesReadCapability } from '@/features/product-tour/adapters/knowledge'
+import { NotesRailTools, NotesResponsiveRail, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
 import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
@@ -394,14 +395,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [railLayout, setRailLayout] = useNotesRailLayout()
   // Width of the document row (СОДЕРЖАНИЕ | note | КОММЕНТАРИИ) so the side
   // rails can yield before the note column gets unreadably narrow.
-  const [docRowEl, setDocRowEl] = React.useState<HTMLDivElement | null>(null)
-  const [docRowWidth, setDocRowWidth] = React.useState(0)
-  React.useEffect(() => {
-    if (!docRowEl || typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(([entry]) => setDocRowWidth(entry?.contentRect.width ?? 0))
-    observer.observe(docRowEl)
-    return () => observer.disconnect()
-  }, [docRowEl])
+  const [setDocRowEl, docRowWidth] = useNotesPanelWidth<HTMLDivElement>()
+  const [railSheet, setRailSheet] = React.useState<'toc' | 'comments' | null>(null)
   const [foldedHeadingIds, setFoldedHeadingIds] = React.useState<string[]>([])
   const [commandQuery, setCommandQuery] = React.useState<string | null>(null)
   const [commandIndex, setCommandIndex] = React.useState(0)
@@ -582,6 +577,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     noteViewCapabilities,
     'standard',
   )
+  React.useEffect(() => { setRailSheet(null) }, [activeWorkspaceId, activeNote?.id, noteView])
   const noteMindMapGraph = React.useMemo((): MindMapGraph | null => {
     if (!activeNote) return null
     if (noteView !== 'map' || !visibleBlockTree) return null
@@ -2320,12 +2316,15 @@ h1,h2,h3{margin-top:1.5em}
         </Dialog>
 
         {activeNote ? (
+          <div className="flex min-w-0 items-center">
           <EntityViewTabs
             value={noteView}
             onChange={setNoteView}
             capabilities={noteViewCapabilities}
             className="min-w-0 flex-wrap"
           />
+          {noteView === 'standard' ? <NotesRailTools tocShown={tocShown} commentsShown={commentsShown} sheet={railSheet} onOpen={setRailSheet} onCollapse={(rail) => setRailLayout({ [`${rail}Collapsed`]: true })} /> : null}
+          </div>
         ) : null}
 
         <div className="relative flex-1 min-h-0">
@@ -2440,7 +2439,7 @@ h1,h2,h3{margin-top:1.5em}
             </div></div>
           ) : (
             <div ref={setDocRowEl} className="flex h-full min-h-0">
-            {tocShown ? (
+            <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={tocShown} open={railSheet === 'toc'} title={t('notes.toc.title')} onClose={() => setRailSheet(null)}>
             <NotesToc
               markdown={content}
               width={railLayout.toc}
@@ -2467,14 +2466,15 @@ h1,h2,h3{margin-top:1.5em}
                 heading?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }}
             />
-            ) : null}
-            <NotesRailSash
+            </NotesResponsiveRail>
+            {tocShown ? <NotesRailSash
               width={railLayout.toc}
               onWidth={(toc) => setRailLayout({ toc })}
               collapsed={railLayout.tocCollapsed}
               onToggle={() => setRailLayout({ tocCollapsed: !railLayout.tocCollapsed })}
               label={t('notes.layout.resizeToc')}
-            />
+              maximumWidth={Math.max(140, docRowWidth - NOTE_COLUMN_MIN - (commentsShown ? railLayout.comments : 0))}
+            /> : null}
             <div
               ref={noteEditorTarget}
               className="notes-editor relative h-full min-w-0 flex-1 overflow-y-auto px-10 pb-16 pt-8"
@@ -2677,15 +2677,16 @@ h1,h2,h3{margin-top:1.5em}
                 />
               ) : null}
             </div>
-            <NotesRailSash
+            {commentsShown ? <NotesRailSash
               width={railLayout.comments}
               invert
               onWidth={(comments) => setRailLayout({ comments })}
               collapsed={railLayout.commentsCollapsed}
               onToggle={() => setRailLayout({ commentsCollapsed: !railLayout.commentsCollapsed })}
               label={t('notes.layout.resizeComments')}
-            />
-            {activeNote && commentsShown ? (
+              maximumWidth={Math.max(140, docRowWidth - NOTE_COLUMN_MIN - (tocShown ? railLayout.toc : 0))}
+            /> : null}
+            {activeNote ? <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={commentsShown} open={railSheet === 'comments'} title={t('notes.comments.title')} onClose={() => setRailSheet(null)}>
               <NotesComments
                 noteId={activeNote.id}
                 draftQuote={commentDraftQuote}
@@ -2710,7 +2711,7 @@ h1,h2,h3{margin-top:1.5em}
                   setDirty(true)
                 }}
               />
-            ) : null}
+            </NotesResponsiveRail> : null}
             </div>
           )}
         </div>
