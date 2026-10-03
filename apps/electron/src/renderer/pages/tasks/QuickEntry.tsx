@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { PremiumMenuSelect } from '@rox/ui'
 import { parseTaskEntry, type ParsedTaskEntry, type TaskArea, type TaskProject } from '@rox/core/tasks/personal'
 import { Overlay } from './parts'
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 
 export interface QuickEntryResult {
   parsed: ParsedTaskEntry
@@ -41,6 +42,7 @@ export function QuickEntry({
   initialText?: string
 }) {
   const { t, i18n } = useTranslation()
+  const tourTarget = useTourTarget('tasks.quick-entry')
   const [text, setText] = React.useState(initialText)
   const [notes, setNotes] = React.useState('')
   const [projectId, setProjectId] = React.useState(initialProjectId ?? '')
@@ -85,6 +87,8 @@ export function QuickEntry({
   return (
     <Overlay onClose={onClose} label={t('tasks.quickEntry.title')} testId="tasks-quick-entry">
       <form
+        ref={tourTarget}
+        data-tour="tasks.quick-entry"
         className="flex flex-col gap-1 px-4 pb-3 pt-4"
         onSubmit={(event) => {
           event.preventDefault()

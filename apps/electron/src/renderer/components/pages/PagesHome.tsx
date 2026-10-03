@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
 import { PanelsTopLeft, Plus, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAtom, useAtomValue } from 'jotai'
@@ -27,6 +28,10 @@ export function PagesHome() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const pages = useAtomValue(pagesAtom)
+  const knowledgeSignals = useKnowledgeSignals({ workspaceId: activeWorkspaceId ?? undefined })
+  const pagesAvailable = typeof window.electronAPI.getPages === 'function' && typeof window.electronAPI.createPageLease === 'function'
+  React.useEffect(() => knowledgeSignals.capability('pages.available', pagesAvailable ? { state: 'ready' } : { state: 'unavailable', reason: 'api-unavailable' }), [knowledgeSignals, pagesAvailable])
+  React.useEffect(() => knowledgeSignals.capability('pages.entity-present', { state: 'pending', reason: 'missing-entity' }), [knowledgeSignals])
   const projects = useAtomValue(projectsAtom)
   const [projectFilter, setProjectFilter] = useAtom(pagesProjectFilterAtom)
   const [pendingDelete, setPendingDelete] = React.useState<LoadedPage | null>(null)

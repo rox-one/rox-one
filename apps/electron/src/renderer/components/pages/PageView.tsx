@@ -1,4 +1,7 @@
 import * as React from 'react'
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
+import { pageLeaseMatches } from '@/features/product-tour/adapters/knowledge'
 import { AlertTriangle, ArrowLeft, Check, FolderKanban, FolderOpen, Globe2, KeyRound, MoreHorizontal, Pencil, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAtomValue } from 'jotai'
@@ -58,6 +61,11 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const pages = useAtomValue(pagesAtom)
+  const knowledgeSignals = useKnowledgeSignals({ workspaceId: activeWorkspaceId ?? undefined, entityId: pageSlug })
+  const pageHostTarget = useTourTarget('pages.host', { workspaceId: activeWorkspaceId ?? undefined, entityId: pageSlug })
+  const pageFreshnessTarget = useTourTarget('pages.freshness', { workspaceId: activeWorkspaceId ?? undefined, entityId: pageSlug })
+  const pagesAvailable = typeof window.electronAPI.createPageLease === 'function' && typeof window.electronAPI.getPageData === 'function'
+  React.useEffect(() => knowledgeSignals.capability('pages.available', pagesAvailable ? { state: 'ready' } : { state: 'unavailable', reason: 'api-unavailable' }), [knowledgeSignals, pagesAvailable])
 
   // Prefer the live atom copy; fall back to a direct fetch for deep links
   // that land before the initial pages load.
@@ -79,6 +87,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
   React.useEffect(() => {
     if (pageFromAtom || !activeWorkspaceId) return
     let stale = false
+    if (typeof window.electronAPI.getPage !== 'function') { setFallback({ workspaceId: activeWorkspaceId, slug: pageSlug, list: pages, page: null }); return }
     window.electronAPI
       .getPage(activeWorkspaceId, pageSlug)
       .then(loaded => { if (!stale) setFallback({ workspaceId: activeWorkspaceId, slug: pageSlug, list: pages, page: loaded }) })
@@ -107,6 +116,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
         .catch(error => console.warn('[PageView] Render lease release failed:', error))
     }
 
+    if (!pagesAvailable) { setLeaseError(t('common.unavailable')); return }
     window.electronAPI
       .createPageLease(activeWorkspaceId, pageSlug)
       .then(result => {
@@ -125,7 +135,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
       stale = true
       if (heldLeaseId) releaseLease(heldLeaseId)
     }
-  }, [activeWorkspaceId, pageSlug, contentDigest, hasContent, pageLoaded, leaseRetry])
+  }, [activeWorkspaceId, pageSlug, contentDigest, hasContent, pageLoaded, leaseRetry, pagesAvailable, t])
 
   const currentLease = leaseState?.workspaceId === activeWorkspaceId
     && leaseState?.lease.pageSlug === pageSlug && leaseState?.lease.contentDigest === contentDigest
@@ -142,16 +152,24 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
 
   React.useEffect(() => {
     setSnapshotState(null)
-    if (!activeWorkspaceId || !pageLoaded) return
+    if (!activeWorkspaceId || !pageLoaded || !pagesAvailable) return
     let stale = false
     window.electronAPI
       .getPageData(activeWorkspaceId, pageSlug)
       .then(data => { if (!stale) setSnapshotState({ key: snapshotKey, data }) })
       .catch(() => { if (!stale) setSnapshotState({ key: snapshotKey, data: null }) })
     return () => { stale = true }
-  }, [activeWorkspaceId, pageSlug, pageLoaded, snapshotKey])
+  }, [activeWorkspaceId, pageSlug, pageLoaded, snapshotKey, pagesAvailable])
 
   const snapshotReady = snapshotState?.key === snapshotKey
+  const [renderedLeaseId, setRenderedLeaseId] = React.useState<string | null>(null)
+  React.useEffect(() => knowledgeSignals.capability('pages.entity-present', pageLoaded ? { state: 'ready' } : { state: 'pending', reason: 'missing-entity' }), [knowledgeSignals, pageLoaded])
+  React.useEffect(() => {
+    if (!activeWorkspaceId || !currentLease || !contentDigest || !snapshotReady || renderedLeaseId !== currentLease.lease.leaseId
+      || !pageLeaseMatches(currentLease.lease, pageSlug, contentDigest)) return
+    // Current-state policy observes the trusted mounted host. No iframe document is inspected.
+    knowledgeSignals.publish(knowledgeSignals.capture(), { kind: 'page-host-rendered', workspaceId: activeWorkspaceId, pageSlug, contentDigest, lease: currentLease.lease })
+  }, [knowledgeSignals, currentLease, contentDigest, snapshotReady, renderedLeaseId, activeWorkspaceId, pageSlug])
 
   // ------------------------------------------------------------------
   // Actions
@@ -296,7 +314,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
           </span>
         )}
         <PageKindBadge kind={config.kind} />
-        <PageFreshness config={config} className="hidden @[28rem]/panel:inline-flex" />
+        <span ref={pageFreshnessTarget} className="hidden @[28rem]/panel:inline-flex"><PageFreshness config={config} /></span>
         <div className="ml-auto flex items-center gap-1">
           {(sharingEnabled || config.share) && (
             <button
@@ -446,7 +464,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
             <LoadingIndicator label={t('common.loading')} />
           </div>
         ) : (
-          <div className="h-full w-full overflow-hidden rounded-lg border border-border/60 shadow-minimal">
+          <div ref={pageHostTarget} className="h-full w-full overflow-hidden rounded-lg border border-border/60 shadow-minimal">
             <PageFrame
               key={currentLease.lease.leaseId}
               workspaceId={activeWorkspaceId}
@@ -454,6 +472,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
               lease={currentLease.lease}
               content={currentLease.content}
               snapshot={snapshotState?.data ?? null}
+              onHostLoad={() => setRenderedLeaseId(currentLease.lease.leaseId)}
             />
           </div>
         )}
