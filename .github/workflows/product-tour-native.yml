@@ -1,0 +1,133 @@
+name: product-tour-native
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/product-tour-native.yml'
+      - 'apps/electron/src/renderer/**'
+      - 'packages/ui/src/**'
+      - 'apps/electron/src/main/**'
+      - 'apps/electron/src/preload/**'
+      - 'apps/electron/vite.config.ts'
+      - 'scripts/electron-build-*.ts'
+      - 'scripts/product-tour/**'
+      - 'tests/e2e/product-tour/**'
+      - 'package.json'
+      - 'apps/electron/package.json'
+      - 'bun.lock'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/product-tour-native.yml'
+      - 'apps/electron/src/renderer/**'
+      - 'packages/ui/src/**'
+      - 'apps/electron/src/main/**'
+      - 'apps/electron/src/preload/**'
+      - 'apps/electron/vite.config.ts'
+      - 'scripts/electron-build-*.ts'
+      - 'scripts/product-tour/**'
+      - 'tests/e2e/product-tour/**'
+      - 'package.json'
+      - 'apps/electron/package.json'
+      - 'bun.lock'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: product-tour-native-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-and-domain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: '1.3.14'
+      - name: Install exact lockfile
+        run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Chromium and browser runtime dependencies
+        run: bunx playwright install --with-deps chromium
+      - name: Bind every browser harness to installed Chromium
+        run: |
+          bun -e '
+            import { chromium } from "@playwright/test";
+            import { appendFileSync, existsSync } from "node:fs";
+            const browserPath = chromium.executablePath();
+            if (!existsSync(browserPath)) throw new Error("Installed Chromium executable missing");
+            const environmentFile = process.env.GITHUB_ENV;
+            if (!environmentFile) throw new Error("GitHub environment file missing");
+            appendFileSync(environmentFile, ["CHROMIUM_EXECUTABLE", "LEARNING_CHROMIUM_PATH", "ROX_BROWSER_PATH"].map(name => `${name}=${browserPath}`).join("\n") + "\n");
+          '
+      - name: Verify product-tour policies, native domain adapters and browser harnesses
+        run: bun run test:product-tour
+      - name: Exercise production App, scoped targets and isolated native stores
+        run: bun run test:product-tour:e2e
+      - name: Upload browser and domain evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-tour-browser-and-domain-${{ github.sha }}
+          path: |
+            test-results/product-tour/application.json
+            test-results/product-tour/application/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+
+  fresh-native-smoke:
+    name: fresh-native-smoke (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: '1.3.14'
+      - name: Record candidate and installed runtimes
+        run: |
+          git rev-parse HEAD
+          bun --version
+          node --version
+      - name: Install exact lockfile and real Electron executable
+        run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build the real desktop main, preload, renderer and resources
+        run: bun run electron:build
+      - name: Exercise fresh native setup and absence of automatic tour
+        # This launches dist/main.cjs with an isolated profile, not a browser fixture.
+        # The runner leaves full NATIVE-01/02/03 acceptance NOT_RUN in its report.
+        run: bun scripts/product-tour/run-native.ts
+      - name: Upload native smoke evidence and unresolved platform gates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-tour-native-${{ matrix.os }}-${{ github.sha }}
+          path: |
+            test-results/product-tour/native-readiness.json
+            test-results/product-tour/native.json
+            test-results/product-tour/native/
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,44 @@
+{
+  "owned_fixture": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-ui1448-owned-pg-8gtfrz3s",
+  "postgres_version": "17.11",
+  "protected_descriptor_mode": "0600",
+  "results": [
+    {
+      "path": "tests/macro-integration/wp-01.test.ts",
+      "exit": 0,
+      "counts": {
+        "pass": 14,
+        "fail": 0
+      },
+      "log": "/tmp/rox-branch-integration-20261003/ui1448-owned-pg-wp-01.test.ts.log"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-http.test.ts",
+      "exit": 0,
+      "counts": {
+        "pass": 9,
+        "fail": 0
+      },
+      "log": "/tmp/rox-branch-integration-20261003/ui1448-owned-pg-wp-01-http.test.ts.log"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-native-routing.test.ts",
+      "exit": 0,
+      "counts": {
+        "pass": 11,
+        "fail": 0
+      },
+      "log": "/tmp/rox-branch-integration-20261003/ui1448-owned-pg-wp-01-native-routing.test.ts.log"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-transport.test.ts",
+      "exit": 0,
+      "counts": {
+        "pass": 7,
+        "fail": 0
+      },
+      "log": "/tmp/rox-branch-integration-20261003/ui1448-owned-pg-wp-01-transport.test.ts.log"
+    }
+  ],
+  "production_state_touched": false
+}

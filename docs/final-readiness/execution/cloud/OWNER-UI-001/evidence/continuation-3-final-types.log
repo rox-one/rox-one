@@ -1,0 +1,9 @@
+$ tsc --noEmit
+src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-kQwahD/rox-readiness-ui-001.entry.tsx(3,39): error TS2307: Cannot find module 'rox-ui001-bindings' or its corresponding type declarations.
+src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-kQwahD/rox-readiness-ui-001.entry.tsx(5,77): error TS7031: Binding element 'directory' implicitly has an 'any' type.
+src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-kQwahD/rox-readiness-ui-001.entry.tsx(5,87): error TS7031: Binding element 'override' implicitly has an 'any' type.
+src/shared/__tests__/rox-readiness-ui-001.routes.test.ts(42,36): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(expected: "sessions" | "tasks" | "notes" | "knowledge" | "settings" | "sources" | "skills" | "memory" | "automations" | "projects" | "pages" | "feed" | "meetings" | "diff" | "search" | ... 8 more ... | "connections"): void', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"sessions" | "tasks" | "notes" | "knowledge" | "settings" | "sources" | "skills" | "memory" | "automations" | "projects" | "pages" | "feed" | "meetings" | "diff" | "search" | "browser" | ... 7 more ... | "connections"'.
+  Overload 2 of 2, '(expected: "sessions" | "tasks" | "notes" | "knowledge" | "settings" | "sources" | "skills" | "memory" | "automations" | "projects" | "pages" | "feed" | "meetings" | "diff" | "search" | ... 8 more ... | "connections"): void', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"sessions" | "tasks" | "notes" | "knowledge" | "settings" | "sources" | "skills" | "memory" | "automations" | "projects" | "pages" | "feed" | "meetings" | "diff" | "search" | "browser" | ... 7 more ... | "connections"'.

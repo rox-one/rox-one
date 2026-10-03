@@ -1,0 +1,1174 @@
+{
+  "capabilityCatalog.all": {
+    "ru": "Все",
+    "en": "All"
+  },
+  "capabilityCatalog.allCategories": {
+    "ru": "Все категории",
+    "en": "All categories"
+  },
+  "capabilityCatalog.allIntegrations": {
+    "ru": "Все интеграции",
+    "en": "All integrations"
+  },
+  "capabilityCatalog.allScopes": {
+    "ru": "Все области",
+    "en": "All scopes"
+  },
+  "capabilityCatalog.allTypes": {
+    "ru": "Все типы",
+    "en": "All types"
+  },
+  "capabilityCatalog.authFailed": {
+    "ru": "Не удалось подтвердить авторизацию.",
+    "en": "Could not confirm authentication."
+  },
+  "capabilityCatalog.categories.analytics": {
+    "ru": "Аналитика",
+    "en": "Analytics"
+  },
+  "capabilityCatalog.categories.code": {
+    "ru": "Код и сборки",
+    "en": "Code and builds"
+  },
+  "capabilityCatalog.categories.communication": {
+    "ru": "Коммуникации",
+    "en": "Communication"
+  },
+  "capabilityCatalog.categories.design": {
+    "ru": "Дизайн",
+    "en": "Design"
+  },
+  "capabilityCatalog.categories.feedback": {
+    "ru": "Обратная связь клиентов",
+    "en": "Customer feedback"
+  },
+  "capabilityCatalog.categories.knowledge": {
+    "ru": "Документы и знания",
+    "en": "Docs and knowledge"
+  },
+  "capabilityCatalog.categories.local": {
+    "ru": "Локальные файлы и инструменты",
+    "en": "Local files and tools"
+  },
+  "capabilityCatalog.categories.models": {
+    "ru": "Модели",
+    "en": "Models"
+  },
+  "capabilityCatalog.categories.monitoring": {
+    "ru": "Мониторинг",
+    "en": "Monitoring"
+  },
+  "capabilityCatalog.categories.other": {
+    "ru": "Другое",
+    "en": "Other"
+  },
+  "capabilityCatalog.categories.planning": {
+    "ru": "Задачи и планирование",
+    "en": "Issues and planning"
+  },
+  "capabilityCatalog.category": {
+    "ru": "Категории",
+    "en": "Categories"
+  },
+  "capabilityCatalog.columns.author": {
+    "ru": "Автор",
+    "en": "Author"
+  },
+  "capabilityCatalog.columns.category": {
+    "ru": "Категория",
+    "en": "Category"
+  },
+  "capabilityCatalog.columns.description": {
+    "ru": "Что делает",
+    "en": "Description"
+  },
+  "capabilityCatalog.columns.name": {
+    "ru": "Навык",
+    "en": "Skill"
+  },
+  "capabilityCatalog.columns.updated": {
+    "ru": "Обновлён",
+    "en": "Updated"
+  },
+  "capabilityCatalog.columns.usage": {
+    "ru": "Попадания в промпт",
+    "en": "Prompt mentions"
+  },
+  "capabilityCatalog.configure": {
+    "ru": "Настроить",
+    "en": "Configure"
+  },
+  "capabilityCatalog.connect": {
+    "ru": "Подключить",
+    "en": "Connect"
+  },
+  "capabilityCatalog.credentialsAndPolicies": {
+    "ru": "Учётные данные и политики",
+    "en": "Credentials and policies"
+  },
+  "capabilityCatalog.dependencies": {
+    "ru": "Необходимые источники",
+    "en": "Required sources"
+  },
+  "capabilityCatalog.details": {
+    "ru": "Сведения и настройки",
+    "en": "Details and settings"
+  },
+  "capabilityCatalog.disable": {
+    "ru": "Выключить",
+    "en": "Disable"
+  },
+  "capabilityCatalog.disablePack": {
+    "ru": "Выключить набор {{name}}",
+    "en": "Disable {{name}} pack"
+  },
+  "capabilityCatalog.enable": {
+    "ru": "Включить",
+    "en": "Enable"
+  },
+  "capabilityCatalog.enablePack": {
+    "ru": "Включить набор {{name}}",
+    "en": "Enable {{name}} pack"
+  },
+  "capabilityCatalog.individualSkills": {
+    "ru": "Отдельные навыки",
+    "en": "Individual skills"
+  },
+  "capabilityCatalog.integrationsDescription": {
+    "ru": "Источники, их назначения и подтверждённое состояние подключения.",
+    "en": "Sources, their purpose and confirmed connection state."
+  },
+  "capabilityCatalog.integrationsTitle": {
+    "ru": "Интеграции",
+    "en": "Integrations"
+  },
+  "capabilityCatalog.loadFailed": {
+    "ru": "Не удалось загрузить каталог.",
+    "en": "Could not load the catalog."
+  },
+  "capabilityCatalog.modelLoadFailed": {
+    "ru": "Не удалось прочитать модельные подключения.",
+    "en": "Could not read model connections."
+  },
+  "capabilityCatalog.noAuth": {
+    "ru": "не требуется",
+    "en": "not required"
+  },
+  "capabilityCatalog.noResults": {
+    "ru": "Нет подходящих ресурсов.",
+    "en": "No matching resources."
+  },
+  "capabilityCatalog.open": {
+    "ru": "Открыть",
+    "en": "Open"
+  },
+  "capabilityCatalog.packDisabled": {
+    "ru": "Выключен",
+    "en": "Disabled"
+  },
+  "capabilityCatalog.packEnabled": {
+    "ru": "Включён",
+    "en": "Enabled"
+  },
+  "capabilityCatalog.packInstalled": {
+    "ru": "Установлено {{installed}} из {{count}}",
+    "en": "Installed {{installed}} of {{count}}"
+  },
+  "capabilityCatalog.packLoadFailed": {
+    "ru": "Не удалось прочитать наборы навыков.",
+    "en": "Could not read skill packs."
+  },
+  "capabilityCatalog.packPartial": {
+    "ru": "Набор включён частично. Проверь недостающие навыки.",
+    "en": "Pack enabled partially. Check the missing skills."
+  },
+  "capabilityCatalog.packUpdateFailed": {
+    "ru": "Не удалось подтвердить изменение набора.",
+    "en": "Could not confirm the pack change."
+  },
+  "capabilityCatalog.permissionRequirement": {
+    "ru": "Авторизация: {{auth}}. Доступ в сессии настраивается отдельно.",
+    "en": "Authentication: {{auth}}. Session access is configured separately."
+  },
+  "capabilityCatalog.promptHitsHint": {
+    "ru": "Число запусков, где навык был указан в промпте. Это не число успешных выполнений.",
+    "en": "Spawns with this skill in the prompt, not successful executions."
+  },
+  "capabilityCatalog.promptHits_few": {
+    "ru": "{{count}} попадания",
+    "en": "{{count}} mentions"
+  },
+  "capabilityCatalog.promptHits_many": {
+    "ru": "{{count}} попаданий",
+    "en": "{{count}} mentions"
+  },
+  "capabilityCatalog.promptHits_one": {
+    "ru": "{{count}} попадание",
+    "en": "{{count}} mention"
+  },
+  "capabilityCatalog.promptHits_other": {
+    "ru": "{{count}} попаданий",
+    "en": "{{count}} mentions"
+  },
+  "capabilityCatalog.readbackFailed": {
+    "ru": "Повторное чтение не подтвердило сохранение.",
+    "en": "Readback did not confirm the saved change."
+  },
+  "capabilityCatalog.reconnect": {
+    "ru": "Переподключить",
+    "en": "Reconnect"
+  },
+  "capabilityCatalog.resourceAction": {
+    "ru": "{{action}}: {{name}}",
+    "en": "{{action}}: {{name}}"
+  },
+  "capabilityCatalog.scope": {
+    "ru": "Область действия",
+    "en": "Scope"
+  },
+  "capabilityCatalog.scopes.global": {
+    "ru": "Глобально",
+    "en": "Global"
+  },
+  "capabilityCatalog.scopes.omp": {
+    "ru": "OMP",
+    "en": "OMP"
+  },
+  "capabilityCatalog.scopes.project": {
+    "ru": "Проект",
+    "en": "Project"
+  },
+  "capabilityCatalog.scopes.session": {
+    "ru": "Сессия",
+    "en": "Session"
+  },
+  "capabilityCatalog.scopes.workspace": {
+    "ru": "Рабочее пространство",
+    "en": "Workspace"
+  },
+  "capabilityCatalog.searchIntegrations": {
+    "ru": "Поиск интеграций",
+    "en": "Search integrations"
+  },
+  "capabilityCatalog.searchSkills": {
+    "ru": "Поиск навыков",
+    "en": "Search skills"
+  },
+  "capabilityCatalog.selectResource": {
+    "ru": "Выбрать {{name}}",
+    "en": "Select {{name}}"
+  },
+  "capabilityCatalog.showDetails": {
+    "ru": "Показать сведения о {{name}}",
+    "en": "Show details for {{name}}"
+  },
+  "capabilityCatalog.skillsDescription": {
+    "ru": "Наборы инструкций и навыки из текущего рабочего пространства.",
+    "en": "Instruction packs and skills in the current workspace."
+  },
+  "capabilityCatalog.skillsTitle": {
+    "ru": "Навыки",
+    "en": "Skills"
+  },
+  "capabilityCatalog.status.authenticated": {
+    "ru": "Учётные данные проверены",
+    "en": "Credentials verified"
+  },
+  "capabilityCatalog.status.available": {
+    "ru": "Доступен",
+    "en": "Available"
+  },
+  "capabilityCatalog.status.connected": {
+    "ru": "Подключено",
+    "en": "Connected"
+  },
+  "capabilityCatalog.status.failed": {
+    "ru": "Проверка подключения не пройдена",
+    "en": "Connection check failed"
+  },
+  "capabilityCatalog.status.local_disabled": {
+    "ru": "Выключено",
+    "en": "Disabled"
+  },
+  "capabilityCatalog.status.needs_auth": {
+    "ru": "Требуется авторизация",
+    "en": "Authentication required"
+  },
+  "capabilityCatalog.status.shadowed": {
+    "ru": "Перекрыт навыком ROX",
+    "en": "Shadowed by a ROX skill"
+  },
+  "capabilityCatalog.status.untested": {
+    "ru": "Подключение не проверено",
+    "en": "Connection not tested"
+  },
+  "capabilityCatalog.technicalType": {
+    "ru": "Тип подключения",
+    "en": "Connection type"
+  },
+  "capabilityCatalog.types.api": {
+    "ru": "API",
+    "en": "API"
+  },
+  "capabilityCatalog.types.local": {
+    "ru": "Локальный",
+    "en": "Local"
+  },
+  "capabilityCatalog.types.mcp": {
+    "ru": "MCP",
+    "en": "MCP"
+  },
+  "capabilityCatalog.types.model": {
+    "ru": "Модельное подключение",
+    "en": "Model connection"
+  },
+  "capabilityCatalog.types.skill": {
+    "ru": "Навык",
+    "en": "Skill"
+  },
+  "capabilityCatalog.usedInRun": {
+    "ru": "Использован в выбранном запуске",
+    "en": "Used in the selected run"
+  },
+  "runtimeMap.acceptance.failed": {
+    "en": "Check failed",
+    "ru": "Проверка не пройдена"
+  },
+  "runtimeMap.acceptance.passed": {
+    "en": "Check passed",
+    "ru": "Проверка пройдена"
+  },
+  "runtimeMap.acceptance.running": {
+    "en": "Checking",
+    "ru": "Проверка выполняется"
+  },
+  "runtimeMap.acceptance.unknown": {
+    "en": "No check result",
+    "ru": "Результат проверки неизвестен"
+  },
+  "runtimeMap.agent": {
+    "en": "Agent",
+    "ru": "Агент"
+  },
+  "runtimeMap.allowedTools": {
+    "en": "Allowed tools",
+    "ru": "Разрешённые инструменты"
+  },
+  "runtimeMap.arguments": {
+    "en": "Arguments",
+    "ru": "Аргументы"
+  },
+  "runtimeMap.artifactKind": {
+    "en": "Artifact type",
+    "ru": "Тип материала"
+  },
+  "runtimeMap.assignment": {
+    "en": "Assigned task",
+    "ru": "Назначенная задача"
+  },
+  "runtimeMap.attempt": {
+    "en": "Attempt",
+    "ru": "Попытка"
+  },
+  "runtimeMap.blockKind": {
+    "en": "Context type",
+    "ru": "Тип контекста"
+  },
+  "runtimeMap.childAgent": {
+    "en": "Child agent",
+    "ru": "Подагент"
+  },
+  "runtimeMap.chooseRun": {
+    "en": "Choose run",
+    "ru": "Выбрать запуск"
+  },
+  "runtimeMap.close": {
+    "en": "Close map",
+    "ru": "Закрыть карту"
+  },
+  "runtimeMap.closeInspector": {
+    "en": "Close details",
+    "ru": "Закрыть подробности"
+  },
+  "runtimeMap.command": {
+    "en": "Command",
+    "ru": "Команда"
+  },
+  "runtimeMap.compactCaption": {
+    "en": "Event order · pauses compressed, not seconds",
+    "ru": "Порядок событий · паузы сжаты, это не секунды"
+  },
+  "runtimeMap.compactTimeline": {
+    "en": "Compact timeline",
+    "ru": "Компактная шкала"
+  },
+  "runtimeMap.confirmedModel": {
+    "en": "Confirmed model / route",
+    "ru": "Подтверждённая модель / маршрут"
+  },
+  "runtimeMap.connectionError": {
+    "en": "Event delivery interrupted. Shown events are preserved.",
+    "ru": "Поступление событий прервано. Полученные события сохранены."
+  },
+  "runtimeMap.content": {
+    "en": "Content",
+    "ru": "Содержимое"
+  },
+  "runtimeMap.contentInInspector": {
+    "en": "Open the card to see details",
+    "ru": "Открой карточку, чтобы увидеть подробности"
+  },
+  "runtimeMap.contentTokens": {
+    "en": "Content size; separate from billed provider usage",
+    "ru": "Размер содержимого; отдельно от расхода токенов провайдера"
+  },
+  "runtimeMap.contextFill": {
+    "en": "Context occupancy",
+    "ru": "Заполнение контекста"
+  },
+  "runtimeMap.contextVersion": {
+    "en": "Context v{{version}} · {{count}} blocks",
+    "ru": "Контекст v{{version}} · блоков: {{count}}"
+  },
+  "runtimeMap.contextWindow": {
+    "en": "Model context window",
+    "ru": "Контекстное окно модели"
+  },
+  "runtimeMap.copy": {
+    "en": "Copy shown content",
+    "ru": "Копировать показанный текст"
+  },
+  "runtimeMap.copyEventLink": {
+    "en": "Copy event link",
+    "ru": "Копировать ссылку на событие"
+  },
+  "runtimeMap.cost": {
+    "en": "Cost",
+    "ru": "Стоимость"
+  },
+  "runtimeMap.coverage.complete": {
+    "en": "Recorded",
+    "ru": "Записано"
+  },
+  "runtimeMap.coverage.partial": {
+    "en": "Partial trace",
+    "ru": "Неполная трасса"
+  },
+  "runtimeMap.coverage.unavailable": {
+    "en": "No trace data",
+    "ru": "Нет данных трассы"
+  },
+  "runtimeMap.coveragePartial": {
+    "en": "Some execution data was not recorded. Missing context, timing and reasoning remain unknown.",
+    "ru": "Часть данных выполнения не записана. Отсутствующие контекст, время и рассуждения остаются неизвестными."
+  },
+  "runtimeMap.criteria": {
+    "en": "Acceptance criteria",
+    "ru": "Критерии приёмки"
+  },
+  "runtimeMap.dependencies": {
+    "en": "Dependencies",
+    "ru": "Зависимости"
+  },
+  "runtimeMap.description": {
+    "en": "Description",
+    "ru": "Описание"
+  },
+  "runtimeMap.duration": {
+    "en": "Duration",
+    "ru": "Длительность"
+  },
+  "runtimeMap.effectivePrompt": {
+    "en": "Prompt delivered to executor",
+    "ru": "Запрос, переданный исполнителю"
+  },
+  "runtimeMap.emptyDescription": {
+    "en": "The map shows real recorded events when a request runs. Opening it does not start work.",
+    "ru": "Карта покажет реальные записанные события при выполнении запроса. Открытие карты не запускает работу."
+  },
+  "runtimeMap.emptyTitle": {
+    "en": "Execution appears here",
+    "ru": "Здесь появится выполнение"
+  },
+  "runtimeMap.error": {
+    "en": "Error",
+    "ru": "Ошибка"
+  },
+  "runtimeMap.eventAria": {
+    "en": "{{type}} event, sequence {{sequence}}",
+    "ru": "Событие {{type}}, номер {{sequence}}"
+  },
+  "runtimeMap.eventCount_few": {
+    "en": "{{count}} cards",
+    "ru": "{{count}} карточки"
+  },
+  "runtimeMap.eventCount_many": {
+    "en": "{{count}} cards",
+    "ru": "{{count}} карточек"
+  },
+  "runtimeMap.eventCount_one": {
+    "en": "{{count}} card",
+    "ru": "{{count}} карточка"
+  },
+  "runtimeMap.eventCount_other": {
+    "en": "{{count}} cards",
+    "ru": "{{count}} карточки"
+  },
+  "runtimeMap.eventType": {
+    "en": "Event type",
+    "ru": "Тип события"
+  },
+  "runtimeMap.evidence": {
+    "en": "Evidence",
+    "ru": "Подтверждения"
+  },
+  "runtimeMap.exitCode": {
+    "en": "Exit code",
+    "ru": "Код завершения"
+  },
+  "runtimeMap.expand": {
+    "en": "Expand workspace",
+    "ru": "Развернуть рабочую область"
+  },
+  "runtimeMap.expectedResult": {
+    "en": "Expected result",
+    "ru": "Ожидаемый результат"
+  },
+  "runtimeMap.export": {
+    "en": "Export safe event metadata",
+    "ru": "Экспортировать безопасные метаданные событий"
+  },
+  "runtimeMap.filter": {
+    "en": "Filter events",
+    "ru": "Фильтр событий"
+  },
+  "runtimeMap.filterKind.acceptance": {
+    "en": "Checks",
+    "ru": "Проверки"
+  },
+  "runtimeMap.filterKind.agent": {
+    "en": "Agents",
+    "ru": "Агенты"
+  },
+  "runtimeMap.filterKind.all": {
+    "en": "All events",
+    "ru": "Все события"
+  },
+  "runtimeMap.filterKind.errors": {
+    "en": "Errors",
+    "ru": "Ошибки"
+  },
+  "runtimeMap.filterKind.memory": {
+    "en": "Memory",
+    "ru": "Память"
+  },
+  "runtimeMap.filterKind.plan": {
+    "en": "Plans",
+    "ru": "Планы"
+  },
+  "runtimeMap.filterKind.result": {
+    "en": "Results",
+    "ru": "Результаты"
+  },
+  "runtimeMap.filterKind.skill": {
+    "en": "Skills",
+    "ru": "Навыки"
+  },
+  "runtimeMap.filterKind.terminal": {
+    "en": "Terminal",
+    "ru": "Терминал"
+  },
+  "runtimeMap.filterKind.tool": {
+    "en": "Tools",
+    "ru": "Инструменты"
+  },
+  "runtimeMap.filterKind.waiting": {
+    "en": "Waiting",
+    "ru": "Ожидание"
+  },
+  "runtimeMap.fit": {
+    "en": "Fit visible events",
+    "ru": "Показать видимые события целиком"
+  },
+  "runtimeMap.follow": {
+    "en": "Follow current execution",
+    "ru": "К текущему выполнению"
+  },
+  "runtimeMap.gap": {
+    "en": "Missing events {{from}}–{{to}}",
+    "ru": "Пропущены события {{from}}–{{to}}"
+  },
+  "runtimeMap.hash": {
+    "en": "Content hash",
+    "ru": "Хеш содержимого"
+  },
+  "runtimeMap.included": {
+    "en": "Included in request",
+    "ru": "Включено в запрос"
+  },
+  "runtimeMap.inertTerminal": {
+    "en": "Read-only command log. Viewing or copying never executes it.",
+    "ru": "Журнал команд только для чтения. Просмотр и копирование не выполняют команду."
+  },
+  "runtimeMap.inputTokens": {
+    "en": "Input tokens for this call",
+    "ru": "Входные токены этого вызова"
+  },
+  "runtimeMap.inspector": {
+    "en": "Event details",
+    "ru": "Подробности события"
+  },
+  "runtimeMap.invalidResponse": {
+    "en": "Invalid execution history response",
+    "ru": "Получены некорректные данные выполнения"
+  },
+  "runtimeMap.kind.acceptance": {
+    "en": "Acceptance check",
+    "ru": "Проверка приёмки"
+  },
+  "runtimeMap.kind.agent": {
+    "en": "Agent",
+    "ru": "Агент"
+  },
+  "runtimeMap.kind.approval": {
+    "en": "Permission",
+    "ru": "Разрешение"
+  },
+  "runtimeMap.kind.artifact": {
+    "en": "Artifact",
+    "ru": "Материал"
+  },
+  "runtimeMap.kind.attempt": {
+    "en": "Attempt",
+    "ru": "Попытка"
+  },
+  "runtimeMap.kind.context": {
+    "en": "Request context",
+    "ru": "Контекст запроса"
+  },
+  "runtimeMap.kind.decision": {
+    "en": "Recorded decision",
+    "ru": "Записанное решение"
+  },
+  "runtimeMap.kind.memory": {
+    "en": "Memory",
+    "ru": "Память"
+  },
+  "runtimeMap.kind.model": {
+    "en": "Model",
+    "ru": "Модель"
+  },
+  "runtimeMap.kind.operation": {
+    "en": "Queued operation",
+    "ru": "Операция в очереди"
+  },
+  "runtimeMap.kind.plan": {
+    "en": "Plan",
+    "ru": "План"
+  },
+  "runtimeMap.kind.reasoning": {
+    "en": "Provided reasoning",
+    "ru": "Предоставленные рассуждения"
+  },
+  "runtimeMap.kind.result": {
+    "en": "Result",
+    "ru": "Результат"
+  },
+  "runtimeMap.kind.run": {
+    "en": "Request",
+    "ru": "Запрос"
+  },
+  "runtimeMap.kind.skill": {
+    "en": "Skill",
+    "ru": "Навык"
+  },
+  "runtimeMap.kind.task": {
+    "en": "Task",
+    "ru": "Задача"
+  },
+  "runtimeMap.kind.terminal": {
+    "en": "Terminal",
+    "ru": "Терминал"
+  },
+  "runtimeMap.kind.tool": {
+    "en": "Tool",
+    "ru": "Инструмент"
+  },
+  "runtimeMap.kind.trace": {
+    "en": "Trace coverage",
+    "ru": "Полнота трассы"
+  },
+  "runtimeMap.kind.usage": {
+    "en": "Provider usage",
+    "ru": "Расход провайдера"
+  },
+  "runtimeMap.latestWindow": {
+    "en": "Latest {{count}} cards",
+    "ru": "Последние карточки: {{count}}"
+  },
+  "runtimeMap.launch.channel": {
+    "en": "Channel request",
+    "ru": "Запрос из канала"
+  },
+  "runtimeMap.launch.delegated": {
+    "en": "Delegated request",
+    "ru": "Делегированный запрос"
+  },
+  "runtimeMap.launch.manual": {
+    "en": "Manual request",
+    "ru": "Ручной запрос"
+  },
+  "runtimeMap.launch.scheduled": {
+    "en": "Scheduled request",
+    "ru": "Запрос по расписанию"
+  },
+  "runtimeMap.launch.unknown": {
+    "en": "Launch source not recorded",
+    "ru": "Источник запуска не записан"
+  },
+  "runtimeMap.launchSource": {
+    "en": "Launch source",
+    "ru": "Источник запуска"
+  },
+  "runtimeMap.lifecycle": {
+    "en": "Retained lifecycle phases · {{count}}",
+    "ru": "Этапы в карточке · {{count}}"
+  },
+  "runtimeMap.live": {
+    "en": "Live",
+    "ru": "Сейчас"
+  },
+  "runtimeMap.loadContent": {
+    "en": "Load recorded content",
+    "ru": "Загрузить записанное содержимое"
+  },
+  "runtimeMap.loadFailed": {
+    "en": "Could not load execution history",
+    "ru": "Не удалось загрузить историю выполнения"
+  },
+  "runtimeMap.loadNext": {
+    "en": "Load next page",
+    "ru": "Загрузить следующую часть"
+  },
+  "runtimeMap.loading": {
+    "en": "Loading recorded execution…",
+    "ru": "Загружаю записанное выполнение…"
+  },
+  "runtimeMap.location": {
+    "en": "Saved location",
+    "ru": "Место сохранения"
+  },
+  "runtimeMap.mainAgent": {
+    "en": "Main agent",
+    "ru": "Основной агент"
+  },
+  "runtimeMap.memoryState.committed": {
+    "en": "Memory write confirmed",
+    "ru": "Запись в память подтверждена"
+  },
+  "runtimeMap.memoryState.included": {
+    "en": "Included in the model request",
+    "ru": "Передано в запрос модели"
+  },
+  "runtimeMap.memoryState.proposed": {
+    "en": "Proposed for memory; not yet saved",
+    "ru": "Предложено для памяти; ещё не сохранено"
+  },
+  "runtimeMap.memoryState.retrieved": {
+    "en": "Found by memory retrieval",
+    "ru": "Найдено поиском памяти"
+  },
+  "runtimeMap.mode.context": {
+    "en": "Context",
+    "ru": "Контекст"
+  },
+  "runtimeMap.mode.editor": {
+    "en": "Workflow editor",
+    "ru": "Редактор процесса"
+  },
+  "runtimeMap.mode.execution": {
+    "en": "Execution",
+    "ru": "Выполнение"
+  },
+  "runtimeMap.mode.list": {
+    "en": "Event list",
+    "ru": "Список событий"
+  },
+  "runtimeMap.modelContent": {
+    "en": "Content actually delivered to model",
+    "ru": "Содержимое, фактически переданное модели"
+  },
+  "runtimeMap.narrow": {
+    "en": "Both panels remain open. Scroll sideways or expand the workspace.",
+    "ru": "Обе панели открыты. Прокрути по горизонтали или расширь рабочую область."
+  },
+  "runtimeMap.nextEvent": {
+    "en": "Next recorded event",
+    "ru": "Следующее записанное событие"
+  },
+  "runtimeMap.nextWindow": {
+    "en": "Next events",
+    "ru": "Следующие события"
+  },
+  "runtimeMap.noEvidence": {
+    "en": "No evidence recorded",
+    "ru": "Подтверждения не записаны"
+  },
+  "runtimeMap.noMatches": {
+    "en": "No matching events",
+    "ru": "Подходящих событий нет"
+  },
+  "runtimeMap.noRuns": {
+    "en": "No recorded runs",
+    "ru": "Записанных запусков нет"
+  },
+  "runtimeMap.notIncluded": {
+    "en": "Not included",
+    "ru": "Не включено"
+  },
+  "runtimeMap.notRecorded": {
+    "en": "Not provided or not recorded",
+    "ru": "Не предоставлено или не записано"
+  },
+  "runtimeMap.openCapability": {
+    "en": "Open capability",
+    "ru": "Открыть возможность"
+  },
+  "runtimeMap.originalPrompt": {
+    "en": "Original user prompt",
+    "ru": "Исходный запрос пользователя"
+  },
+  "runtimeMap.outputTokens": {
+    "en": "Output tokens",
+    "ru": "Выходные токены"
+  },
+  "runtimeMap.parentAgent": {
+    "en": "Parent agent",
+    "ru": "Родительский агент"
+  },
+  "runtimeMap.parentMissing": {
+    "en": "Parent assignment was not recorded",
+    "ru": "Назначение родителя не записано"
+  },
+  "runtimeMap.payloadError": {
+    "en": "Content cannot be read. It may have been deleted or access is restricted.",
+    "ru": "Содержимое недоступно. Оно могло быть удалено или доступ ограничен."
+  },
+  "runtimeMap.payloadUnavailable": {
+    "en": "Recorded content is unavailable on this client",
+    "ru": "Записанное содержимое недоступно в этом клиенте"
+  },
+  "runtimeMap.permissionDenied": {
+    "en": "Permission denied",
+    "ru": "В разрешении отказано"
+  },
+  "runtimeMap.permissionGranted": {
+    "en": "Permission granted",
+    "ru": "Разрешение предоставлено"
+  },
+  "runtimeMap.permissions": {
+    "en": "Permission mode",
+    "ru": "Режим разрешений"
+  },
+  "runtimeMap.planVersion": {
+    "en": "Plan v{{version}} · {{count}} tasks",
+    "ru": "План v{{version}} · задач: {{count}}"
+  },
+  "runtimeMap.previousEvent": {
+    "en": "Previous recorded event",
+    "ru": "Предыдущее записанное событие"
+  },
+  "runtimeMap.previousWindow": {
+    "en": "Previous events",
+    "ru": "Предыдущие события"
+  },
+  "runtimeMap.provenance.explicit": {
+    "en": "Explicit explanation from the agent",
+    "ru": "Явное объяснение агента"
+  },
+  "runtimeMap.provenance.provider": {
+    "en": "Text provided by the runtime / provider",
+    "ru": "Текст, предоставленный исполнителем / провайдером"
+  },
+  "runtimeMap.provenance.summary": {
+    "en": "Reasoning summary",
+    "ru": "Краткая сводка рассуждений"
+  },
+  "runtimeMap.redacted": {
+    "en": "Content hidden by access / redaction policy",
+    "ru": "Содержимое скрыто правилами доступа и удаления секретов"
+  },
+  "runtimeMap.reduction": {
+    "en": "Context reduction",
+    "ru": "Сокращение контекста"
+  },
+  "runtimeMap.reductionKind.none": {
+    "en": "Not reduced",
+    "ru": "Без сокращения"
+  },
+  "runtimeMap.reductionKind.summarized": {
+    "en": "Summarized",
+    "ru": "Заменено сводкой"
+  },
+  "runtimeMap.reductionKind.truncated": {
+    "en": "Truncated",
+    "ru": "Обрезано"
+  },
+  "runtimeMap.reductionKind.unknown": {
+    "en": "Reduction not recorded",
+    "ru": "Сокращение не записано"
+  },
+  "runtimeMap.renderError": {
+    "en": "The map could not be displayed. The chat continues to work.",
+    "ru": "Карту не удалось отобразить. Чат продолжает работать."
+  },
+  "runtimeMap.replay": {
+    "en": "Read-only history cursor",
+    "ru": "Курсор просмотра истории"
+  },
+  "runtimeMap.replayPosition": {
+    "en": "Recorded event {{sequence}}",
+    "ru": "Записанное событие {{sequence}}"
+  },
+  "runtimeMap.requestedModel": {
+    "en": "Requested model / route",
+    "ru": "Выбранная модель / маршрут"
+  },
+  "runtimeMap.resize": {
+    "en": "Resize chat and runtime map",
+    "ru": "Изменить ширину чата и карты"
+  },
+  "runtimeMap.retry": {
+    "en": "Retry",
+    "ru": "Повторить"
+  },
+  "runtimeMap.returnedResult": {
+    "en": "Returned result",
+    "ru": "Возвращённый результат"
+  },
+  "runtimeMap.roxSystemInstructions": {
+    "en": "System instructions supplied by ROX. Hidden provider instructions are not available.",
+    "ru": "Системные инструкции, переданные ROX. Скрытые инструкции провайдера недоступны."
+  },
+  "runtimeMap.schedule": {
+    "en": "Schedule",
+    "ru": "Расписание"
+  },
+  "runtimeMap.search": {
+    "en": "Search events",
+    "ru": "Поиск событий"
+  },
+  "runtimeMap.sequence": {
+    "en": "Collector sequence",
+    "ru": "Порядок в журнале"
+  },
+  "runtimeMap.shell": {
+    "en": "Shell",
+    "ru": "Оболочка"
+  },
+  "runtimeMap.showInChat": {
+    "en": "Show in chat",
+    "ru": "Показать в чате"
+  },
+  "runtimeMap.showMore": {
+    "en": "Show full recorded text",
+    "ru": "Показать полный записанный текст"
+  },
+  "runtimeMap.showOnMap": {
+    "ru": "Показать на карте",
+    "en": "Show on map"
+  },
+  "runtimeMap.skill.applied": {
+    "en": "Application explicitly recorded",
+    "ru": "Применение явно записано"
+  },
+  "runtimeMap.skill.loaded": {
+    "en": "Instructions loaded into context",
+    "ru": "Инструкции загружены в контекст"
+  },
+  "runtimeMap.skill.selected": {
+    "en": "Selected; not yet loaded",
+    "ru": "Выбран; ещё не загружен"
+  },
+  "runtimeMap.skillInstructions": {
+    "en": "Skill instructions",
+    "ru": "Инструкции навыка"
+  },
+  "runtimeMap.source": {
+    "en": "Source",
+    "ru": "Источник"
+  },
+  "runtimeMap.state": {
+    "en": "State",
+    "ru": "Состояние"
+  },
+  "runtimeMap.status.blocked": {
+    "en": "Blocked",
+    "ru": "Заблокировано"
+  },
+  "runtimeMap.status.cancelled": {
+    "en": "Cancelled",
+    "ru": "Отменено"
+  },
+  "runtimeMap.status.failed": {
+    "en": "Failed",
+    "ru": "Ошибка"
+  },
+  "runtimeMap.status.interrupted": {
+    "en": "Interrupted",
+    "ru": "Прервано"
+  },
+  "runtimeMap.status.queued": {
+    "en": "Queued",
+    "ru": "В очереди"
+  },
+  "runtimeMap.status.running": {
+    "en": "Running",
+    "ru": "Выполняется"
+  },
+  "runtimeMap.status.succeeded": {
+    "en": "Completed",
+    "ru": "Завершено"
+  },
+  "runtimeMap.status.waiting-approval": {
+    "en": "Waiting for approval",
+    "ru": "Ждёт разрешения"
+  },
+  "runtimeMap.timeCaption": {
+    "en": "Elapsed time · same clock domain; concurrent spans stack",
+    "ru": "Прошедшее время · единые часы; параллельные операции друг под другом"
+  },
+  "runtimeMap.timeline": {
+    "en": "Timeline mode",
+    "ru": "Режим шкалы времени"
+  },
+  "runtimeMap.title": {
+    "en": "Runtime map",
+    "ru": "Карта выполнения"
+  },
+  "runtimeMap.tokens": {
+    "en": "{{value}} tokens",
+    "ru": "{{value}} токенов"
+  },
+  "runtimeMap.toolName": {
+    "en": "Tool name",
+    "ru": "Имя инструмента"
+  },
+  "runtimeMap.toolResult": {
+    "en": "Result returned by tool",
+    "ru": "Результат, возвращённый инструментом"
+  },
+  "runtimeMap.trigger": {
+    "en": "Trigger",
+    "ru": "Триггер"
+  },
+  "runtimeMap.trueTimeline": {
+    "en": "Elapsed time",
+    "ru": "Прошедшее время"
+  },
+  "runtimeMap.truncated": {
+    "en": "Content was truncated at capture time",
+    "ru": "Содержимое сокращено при записи"
+  },
+  "runtimeMap.unknown": {
+    "en": "No data",
+    "ru": "Нет данных"
+  },
+  "runtimeMap.usageProvider": {
+    "en": "Provider-reported usage. Content size and current context occupancy are separate measurements.",
+    "ru": "Расход, сообщённый провайдером. Размер содержимого и заполнение текущего контекста измеряются отдельно."
+  },
+  "runtimeMap.usageScope": {
+    "en": "Accounting scope",
+    "ru": "Область учёта"
+  },
+  "runtimeMap.version": {
+    "en": "Version",
+    "ru": "Версия"
+  },
+  "runtimeMap.view": {
+    "en": "Runtime map view",
+    "ru": "Представление карты выполнения"
+  },
+  "runtimeMap.viewerLimit": {
+    "en": "Viewer limit reached: 256 KiB. The recorded source remains unchanged.",
+    "ru": "Достигнут лимит просмотра: 256 КиБ. Записанный источник сохранён полностью."
+  },
+  "runtimeMap.window": {
+    "en": "Page {{page}} of {{count}}",
+    "ru": "Часть {{page}} из {{count}}"
+  },
+  "runtimeMap.workerKind": {
+    "en": "Executor type",
+    "ru": "Тип исполнителя"
+  },
+  "runtimeMap.workingDirectory": {
+    "en": "Working directory",
+    "ru": "Рабочая директория"
+  },
+  "starterPrompts.dependencies": {
+    "ru": "Необходимые возможности",
+    "en": "Required capabilities"
+  },
+  "starterPrompts.dismiss": {
+    "ru": "Скрыть рекомендации",
+    "en": "Dismiss suggestions"
+  },
+  "starterPrompts.plan": {
+    "ru": "Разложить задачу на шаги",
+    "en": "Break a task into steps"
+  },
+  "starterPrompts.planPrompt": {
+    "ru": "Помоги разложить задачу на шаги: цель, зависимости, исполнители и критерии готовности.",
+    "en": "Help break a task into steps: goal, dependencies, owners and acceptance criteria."
+  },
+  "starterPrompts.process": {
+    "ru": "Превратить повторяющуюся задачу в процесс",
+    "en": "Turn a recurring task into a process"
+  },
+  "starterPrompts.processPrompt": {
+    "ru": "Помоги превратить повторяющуюся задачу в процесс с понятными входами, шагами, проверками и результатом.",
+    "en": "Help turn a recurring task into a process with clear inputs, steps, checks and results."
+  },
+  "starterPrompts.review": {
+    "ru": "Проверить изменения в проекте",
+    "en": "Review project changes"
+  },
+  "starterPrompts.reviewPrompt": {
+    "ru": "Проверь последние изменения в проекте через {{name}}. Найди существенные ошибки и предложи порядок исправлений.",
+    "en": "Review recent project changes using {{name}}. Identify material issues and suggest the order of fixes."
+  },
+  "starterPrompts.skillPrompt": {
+    "ru": "Помоги решить задачу с помощью навыка «{{name}}». Сначала уточни цель и ожидаемый результат.",
+    "en": "Help me solve a task using {{name}}. First clarify the goal and expected outcome."
+  },
+  "starterPrompts.structure": {
+    "ru": "Структурировать мои материалы",
+    "en": "Structure my materials"
+  },
+  "starterPrompts.structurePrompt": {
+    "ru": "Помоги структурировать материалы, которые я добавлю: выдели темы, связи и открытые вопросы.",
+    "en": "Help structure the materials I will add: identify topics, connections and open questions."
+  },
+  "starterPrompts.suggestions": {
+    "ru": "Рекомендации для начала",
+    "en": "Starter suggestions"
+  },
+  "starterPrompts.summarize": {
+    "ru": "Собрать сводку последних материалов",
+    "en": "Summarize recent materials"
+  },
+  "starterPrompts.summaryPrompt": {
+    "ru": "Собери сводку последних материалов из {{name}}, со ссылками на источники и краткими выводами.",
+    "en": "Summarize recent materials from {{name}}, with source links and concise conclusions."
+  },
+  "starterPrompts.useSkill": {
+    "ru": "Применить навык «{{name}}»",
+    "en": "Use {{name}}"
+  },
+  "starterPrompts.welcome": {
+    "ru": "Что сделаем сегодня?",
+    "en": "What shall we do today?"
+  }
+}

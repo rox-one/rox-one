@@ -7,7 +7,7 @@
  */
 
 import { homedir } from 'os';
-import { resolve, join, normalize, isAbsolute } from 'path';
+import { resolve, join, normalize, isAbsolute, relative } from 'path';
 import { existsSync } from 'fs';
 import { resolveConfigDir } from "../config/paths.ts"
 
@@ -53,25 +53,25 @@ export function expandVars(input: string, extraVars?: PathVars): string {
   // Handle ~ alone
   if (result === '~') return home;
 
-  // Handle ~/ prefix
-  if (result.startsWith('~/')) {
-    result = join(home, result.slice(2));
+  // Accept both portable separators, including legacy Windows ~\ paths.
+  if (/^~[/\\]/.test(result)) {
+    result = join(home, normalizePath(result.slice(2)));
   }
 
   // Handle ${HOME} and $HOME variables
-  result = result.replace(/\$\{HOME\}/g, home);
-  result = result.replace(/\$HOME(?=\/|$)/g, home);
+  result = result.replace(/\$\{HOME\}/g, () => home);
+  result = result.replace(/\$HOME(?=[/\\]|$)/g, () => home);
 
   // Handle ${CRAFT_CONFIG_DIR} — centralized config directory
-  result = result.replace(/\$\{CRAFT_CONFIG_DIR\}/g, resolveConfigDir());
+  result = result.replace(/\$\{CRAFT_CONFIG_DIR\}/g, () => resolveConfigDir());
 
   // Handle caller-provided extra variables
   if (extraVars) {
     for (const [key, value] of Object.entries(extraVars)) {
       if (!value) continue;
       const safeKey = escapeRegExp(key);
-      result = result.replace(new RegExp(`\\$\\{${safeKey}\\}`, 'g'), value);
-      result = result.replace(new RegExp(`\\$${safeKey}(?=/|$)`, 'g'), value);
+      result = result.replace(new RegExp(`\\$\\{${safeKey}\\}`, 'g'), () => value);
+      result = result.replace(new RegExp(`\\$${safeKey}(?=[/\\\\]|$)`, 'g'), () => value);
     }
   }
 
@@ -165,7 +165,8 @@ export function resolveStdioConfig(
 
 /**
  * Convert absolute path to portable form.
- * If path is within home directory, converts to ~ prefix.
+ * If path is within home directory, converts to ~ prefix with forward slashes.
+ * Already-portable home paths stay portable on repeated calls.
  *
  * @param absolutePath - Absolute path to convert
  * @returns Portable path (with ~ prefix if in home) or original if outside home
@@ -178,24 +179,23 @@ export function resolveStdioConfig(
 export function toPortablePath(absolutePath: string): string {
   if (!absolutePath) return absolutePath;
 
-  const home = homedir();
-  const normalized = normalize(absolutePath);
+  // Serialization can call this more than once (queue -> JSONL header).
+  // Never feed portable paths to native normalize(), which produces ~\ on Windows.
+  if (absolutePath === '~' || /^~[/\\]/.test(absolutePath)) {
+    return normalizePath(absolutePath);
+  }
 
-  // Exact match with home directory
-  if (normalized === home) {
+  const normalized = normalize(absolutePath);
+  if (!isAbsolute(normalized)) return normalized;
+  const homeRelative = relative(homedir(), normalized);
+
+  // Native relative() handles trailing separators and Windows home-path casing.
+  if (homeRelative === '') {
     return '~';
   }
 
-  // Path within home directory (handle both Unix and Windows separators)
-  const homePrefix = home + '/';
-  const homePrefixWin = home + '\\';
-
-  if (normalized.startsWith(homePrefix)) {
-    return '~/' + normalized.slice(homePrefix.length);
-  }
-
-  if (normalized.startsWith(homePrefixWin)) {
-    return '~/' + normalized.slice(homePrefixWin.length);
+  if (!isAbsolute(homeRelative) && homeRelative !== '..' && !/^\.\.[/\\]/.test(homeRelative)) {
+    return '~/' + normalizePath(homeRelative);
   }
 
   // Path is outside home directory, keep as absolute
@@ -210,7 +210,7 @@ export function hasPathVariables(path: string): boolean {
   return (
     path.startsWith('~') ||
     path.includes('${HOME}') ||
-    path.includes('$HOME/')
+    /\$HOME(?=[/\\]|$)/.test(path)
   );
 }
 
@@ -261,7 +261,8 @@ export function normalizePathForComparison(path: string): string {
 export function pathStartsWith(filePath: string, dirPath: string): boolean {
   const normalizedFile = normalizePathForComparison(filePath);
   const normalizedDir = normalizePathForComparison(dirPath);
-  return normalizedFile.startsWith(normalizedDir + '/') || normalizedFile === normalizedDir;
+  const prefix = normalizedDir.endsWith('/') ? normalizedDir : normalizedDir + '/';
+  return normalizedFile.startsWith(prefix) || normalizedFile === normalizedDir;
 }
 
 /**
@@ -275,8 +276,10 @@ export function pathStartsWith(filePath: string, dirPath: string): boolean {
 export function stripPathPrefix(filePath: string, prefix: string): string {
   const normalizedFile = normalizePathForComparison(filePath);
   const normalizedPrefix = normalizePathForComparison(prefix);
-  if (normalizedFile.startsWith(normalizedPrefix + '/')) {
-    return normalizedFile.slice(normalizedPrefix.length + 1);
+  const directoryPrefix = normalizedPrefix.endsWith('/') ? normalizedPrefix : normalizedPrefix + '/';
+  if (normalizedFile.startsWith(directoryPrefix)) {
+    // Comparison folds case on Windows; the returned path must preserve it.
+    return normalizePath(resolve(filePath)).slice(directoryPrefix.length);
   }
   return filePath;
 }

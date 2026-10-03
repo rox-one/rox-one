@@ -1,5 +1,5 @@
 import type { Meeting } from '@rox/core/meetings'
-import type { MeetingGrant } from '@rox/shared/meeting-agents'
+import type { MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import { i18nKeyForCaptureError } from './capture-rpc'
 import type { MeetingListItem } from './start-rpc'
 import { rowFromMeeting } from './start-rpc'

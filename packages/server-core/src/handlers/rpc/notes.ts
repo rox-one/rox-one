@@ -1,4 +1,4 @@
-import { open, realpath, mkdir, readdir, readFile, rename, rm, stat, unlink, writeFile } from 'fs/promises'
+import { open, realpath, lstat, mkdir, readdir, readFile, rename, rm, stat, unlink, writeFile } from 'fs/promises'
 import { existsSync, constants } from 'fs'
 import { createHash } from 'node:crypto'
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path'
@@ -111,6 +111,7 @@ type ClientNotesWatchState = {
   debounceTimer: ReturnType<typeof setTimeout> | null
   lastExternalChangeAt: number | null
   pendingFilenames: Array<string | Buffer | null>
+  detachAuthority?: () => void
 }
 
 const clientNotesWatches = new Map<string, ClientNotesWatchState>()
@@ -128,6 +129,7 @@ export function cleanupNotesWatchForClient(clientId: string): void {
     state.debounceTimer = null
   }
   state.watcher.close()
+  state.detachAuthority?.()
   clientNotesWatches.delete(clientId)
 }
 
@@ -1200,6 +1202,19 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   const changed = (payload: NoteChangedPayload, target: { to: 'workspace'; workspaceId: string } | { to: 'client'; clientId: string } = { to: 'workspace', workspaceId: payload.workspaceId }) => {
     pushTyped(server, RPC_CHANNELS.notes.CHANGED, target, payload)
   }
+  const watchedClients = new Set<string>()
+  const watchRequests = new Map<string, number>()
+  let watchesDisposed = false
+  server.onClientDisconnect?.(clientId => {
+    watchRequests.delete(clientId)
+    if (watchedClients.delete(clientId)) cleanupNotesWatchForClient(clientId)
+  })
+  server.onShutdown?.(() => {
+    watchesDisposed = true
+    for (const clientId of watchedClients) cleanupNotesWatchForClient(clientId)
+    watchedClients.clear()
+    watchRequests.clear()
+  })
 
   const nativeContent = registerContentHandlers(server, {
     nativeJournal: {
@@ -1614,7 +1629,109 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   server.handle(RPC_CHANNELS.notes.WATCH, async (ctx, workspaceId: string) => {
     const clientId = ctx.clientId
+    const request = (watchRequests.get(clientId) ?? 0) + 1
+    watchRequests.set(clientId, request)
     cleanupNotesWatchForClient(clientId)
+    watchedClients.delete(clientId)
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, 'read')
+      const authority = deps.nativeData!.authority
+      const subscribeFence = authority.permissionFence(context.principal, workspaceId, 'subscribe')
+      if (!subscribeFence || !authority.authorize(context.principal, workspaceId, 'subscribe')) {
+        throw new CodedError('FORBIDDEN', 'Native Notes subscription denied')
+      }
+      const workspaceRoot = dirname(context.notesRoot)
+      let sourceIdentity: { dev: number; ino: number } | undefined
+      const assertCurrent = async () => {
+        assertNativeNotesFences(deps, context)
+        if (watchesDisposed || watchRequests.get(clientId) !== request ||
+            !server.isRequestContextCurrent?.(ctx, 'subscribe') ||
+            authority.permissionFence(context.principal, workspaceId, 'subscribe') !== subscribeFence ||
+            !authority.authorize(context.principal, workspaceId, 'subscribe')) {
+          throw new CodedError('AUTH_FAILED', 'Native Notes subscription changed')
+        }
+        const workspace = authority.resolveWorkspace(workspaceId)
+        if (!workspace || workspace.nativeRoot !== workspaceRoot ||
+            await realpath(workspaceRoot) !== workspaceRoot) {
+          throw new CodedError('DOCUMENT_AUTHORITY_CHANGED', 'Native Notes source binding changed')
+        }
+        const source = await lstat(context.notesRoot).catch(error => {
+          if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null
+          throw error
+        })
+        if ((!source && sourceIdentity) || (source && (!source.isDirectory() || source.isSymbolicLink() ||
+            await realpath(context.notesRoot) !== context.notesRoot ||
+            (sourceIdentity && (source.dev !== sourceIdentity.dev || source.ino !== sourceIdentity.ino))))) {
+          throw new CodedError('DOCUMENT_AUTHORITY_CHANGED', 'Native Notes source directory changed')
+        }
+        // An empty registered workspace has no Notes source yet. Reading or
+        // subscribing must not create it. Latch the first canonical directory
+        // only after an authorized writer has created it.
+        if (source && !sourceIdentity) sourceIdentity = { dev: source.dev, ino: source.ino }
+        assertNativeNotesFences(deps, context)
+        if (watchesDisposed || watchRequests.get(clientId) !== request ||
+            !server.isRequestContextCurrent?.(ctx, 'subscribe') ||
+            authority.permissionFence(context.principal, workspaceId, 'subscribe') !== subscribeFence) {
+          throw new CodedError('AUTH_FAILED', 'Native Notes subscription changed')
+        }
+      }
+      // Observe the existing registered parent so the first authorized note
+      // creation is visible, without writing under a read/subscribe grant.
+      await assertCurrent()
+      const { watch } = await import('fs')
+      await assertCurrent()
+      const state: ClientNotesWatchState = {
+        watcher: null as unknown as import('fs').FSWatcher,
+        workspaceId, debounceTimer: null, lastExternalChangeAt: null, pendingFilenames: [],
+      }
+      state.watcher = watch(workspaceRoot, { recursive: true }, (_eventType, filename) => {
+        let noteFilename: string | null = null
+        if (filename) {
+          const relativeFilename = toSlashPath(filename.toString())
+          if (relativeFilename !== NOTES_DIR && !relativeFilename.startsWith(`${NOTES_DIR}/`)) return
+          noteFilename = relativeFilename === NOTES_DIR ? null : relativeFilename.slice(NOTES_DIR.length + 1)
+          if (noteFilename && !noteIdFromWatchFilename(noteFilename)) return
+        }
+        state.pendingFilenames.push(noteFilename)
+        if (state.debounceTimer) clearTimeout(state.debounceTimer)
+        state.debounceTimer = setTimeout(() => {
+          state.debounceTimer = null
+          const burst = state.pendingFilenames.splice(0)
+          void (async () => {
+            await assertCurrent()
+            if (clientNotesWatches.get(clientId) !== state) return
+            const noteIds = [...new Set(burst.flatMap(name => {
+              const noteId = noteIdFromWatchFilename(name)
+              return noteId ? [noteId] : []
+            }))]
+            state.lastExternalChangeAt = Date.now()
+            changed({ workspaceId, reason: 'external', noteId: noteIds.length === 1 ? noteIds[0] : undefined },
+              { to: 'client', clientId })
+          })().catch(() => {
+            if (clientNotesWatches.get(clientId) === state) {
+              cleanupNotesWatchForClient(clientId)
+              watchedClients.delete(clientId)
+            }
+          })
+        }, VAULT_WATCH_DEBOUNCE_MS)
+      })
+      state.detachAuthority = authority.onInvalidation(event => {
+        if (event.subject === context.principal.subject && clientNotesWatches.get(clientId) === state) {
+          cleanupNotesWatchForClient(clientId)
+          watchedClients.delete(clientId)
+        }
+      })
+      clientNotesWatches.set(clientId, state)
+      watchedClients.add(clientId)
+      try { await assertCurrent() } catch (error) {
+        if (clientNotesWatches.get(clientId) === state) {
+          cleanupNotesWatchForClient(clientId)
+          watchedClients.delete(clientId)
+        }
+        throw error
+      }
+      return
+    }
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureNotesDirs(notesRoot)
 
@@ -1656,12 +1773,16 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       })
 
       clientNotesWatches.set(clientId, state)
+      watchedClients.add(clientId)
     } catch (error) {
       throw new Error(`Failed to watch notes: ${error instanceof Error ? error.message : String(error)}`)
     }
-  })
+  }, { nativeAction: 'subscribe' })
 
   server.handle(RPC_CHANNELS.notes.UNWATCH, async (ctx) => {
+    if (ctx.principal) nativeNotesContext(deps, ctx, ctx.workspaceId ?? '', 'read')
+    watchRequests.set(ctx.clientId, (watchRequests.get(ctx.clientId) ?? 0) + 1)
     cleanupNotesWatchForClient(ctx.clientId)
-  })
+    watchedClients.delete(ctx.clientId)
+  }, { nativeAction: 'read' })
 }

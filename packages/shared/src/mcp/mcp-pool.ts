@@ -13,7 +13,7 @@
  * - Runtime source switching without session restart
  */
 
-import { CraftMcpClient, type McpClientConfig, type PoolCallToolOptions, type PoolClient } from './client.ts';
+import { CraftMcpClient, DEFAULT_CONNECTION_TIMEOUT_MS, formatMcpUrlForLog, type McpClientConfig, type McpConnectOptions, type PoolCallToolOptions, type PoolClient } from './client.ts';
 import { ApiSourcePoolClient } from './api-source-pool-client.ts';
 import type { SdkMcpServerConfig } from '../agent/backend/types.ts';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
@@ -223,11 +223,12 @@ export class McpClientPool {
    * Register a client: connect, cache tools, build proxy mappings.
    * Shared logic for both remote MCP and in-process API sources.
    */
-  protected async registerClient(slug: string, client: PoolClient, canRegister: () => boolean = () => true): Promise<void> {
+  protected async registerClient(slug: string, client: PoolClient, canRegister: () => boolean = () => true, options?: McpConnectOptions): Promise<void> {
     // listTools() triggers connect() internally for both CraftMcpClient and ApiSourcePoolClient
     let tools: Tool[];
     try {
-      tools = await client.listTools();
+      tools = await client.listTools(options);
+      if (client.isConnected?.() === false) throw new Error(`MCP source "${slug}" closed during tool discovery`);
       if (!canRegister()) throw new Error(`MCP connection cancelled for source "${slug}"`);
     } catch (error) {
       await client.close().catch(() => {});
@@ -304,14 +305,63 @@ export class McpClientPool {
       for (let attempt = 0; attempt < 2; attempt++) {
         if (pending.cancelled) throw new Error(`MCP connection cancelled for source "${slug}"`);
         pending.client = this.createClient(clientConfig);
+        const deadline = Date.now() + DEFAULT_CONNECTION_TIMEOUT_MS;
+        const remaining = (): number => {
+          if (pending.cancelled) throw new Error(`MCP connection cancelled for source "${slug}"`);
+          const milliseconds = deadline - Date.now();
+          if (milliseconds <= 0) throw new Error(`MCP connection timed out after ${DEFAULT_CONNECTION_TIMEOUT_MS} ms`);
+          return milliseconds;
+        };
+        let selectedConfig = clientConfig;
+        let primaryError: unknown;
+        let registrationStarted = false;
+        let currentClientClosed = false;
         try {
-          await this.registerClient(slug, pending.client, () => !pending.cancelled);
+          // Negotiate explicitly before discovery. Only an initialize rejection
+          // can select legacy SSE; an initialized HTTP server never changes its
+          // transport because a later health/discovery/tool request failed.
+          if (clientConfig.transport === 'http' && pending.client.connect) {
+            try {
+              await pending.client.connect({ timeoutMs: remaining() });
+            } catch (error) {
+              await pending.client.close().catch(() => {});
+              currentClientClosed = true;
+              if (pending.cancelled) throw new Error(`MCP connection cancelled for source "${slug}"`);
+              if (!(error instanceof StreamableHTTPError)
+                || ![400, 404, 405].includes(error.code ?? 0)) throw error;
+              primaryError = error;
+              this.debug(`HTTP ${error.code} from ${formatMcpUrlForLog(clientConfig.url)}; trying legacy SSE for ${slug}`);
+              remaining();
+              selectedConfig = { ...clientConfig, transport: 'sse' };
+              pending.client = this.createClient(selectedConfig);
+              currentClientClosed = false;
+              await pending.client.connect?.({ timeoutMs: remaining() });
+            }
+          }
+          const discoveryOptions = { timeoutMs: remaining() };
+          registrationStarted = true;
+          await this.registerClient(slug, pending.client, () => !pending.cancelled, discoveryOptions);
           if (pending.cancelled) throw new Error(`MCP connection cancelled for source "${slug}"`);
           this.activeConfigs.set(slug, connectionConfig);
           return;
         } catch (error) {
-          if (pending.cancelled || attempt === 1 || !isConnectionFailure(error)) throw error;
-          this.debug(`Retrying connection to MCP source ${slug}`);
+          if (!registrationStarted && !currentClientClosed) await pending.client.close().catch(() => {});
+          if (!pending.cancelled && attempt === 0 && isConnectionFailure(error)) {
+            this.debug(`Retrying connection to MCP source ${slug}`);
+            continue;
+          }
+          if (pending.cancelled) throw new Error(`MCP connection cancelled for source "${slug}"`);
+          const context = this.connectionErrorContext(slug, selectedConfig, error);
+          // Both client errors have already passed their configured credential
+          // scrubber. Retain both safe contexts without a raw SDK cause object.
+          const message = primaryError
+            ? `${this.connectionErrorContext(slug, clientConfig, primaryError)}; legacy SSE fallback failed: ${context}`
+            : context;
+          // Retain the public HTTP status for callers that inspect the typed
+          // error, while avoiding a raw SDK cause containing private headers.
+          throw error instanceof StreamableHTTPError
+            ? new StreamableHTTPError(error.code, message)
+            : new Error(message);
         }
       }
     }).finally(() => {
@@ -319,6 +369,12 @@ export class McpClientPool {
     });
     this.connecting.set(slug, pending);
     return pending.promise;
+  }
+
+  private connectionErrorContext(slug: string, config: McpClientConfig, error: unknown): string {
+    const endpoint = config.transport === 'stdio' ? config.command : formatMcpUrlForLog(config.url);
+    const status = error instanceof StreamableHTTPError && error.code !== undefined ? `, HTTP ${error.code}` : '';
+    return `MCP source ${slug} (${config.transport}: ${endpoint}${status}) failed: ${error instanceof Error ? error.message : String(error)}`;
   }
 
   /**

@@ -969,7 +969,7 @@ final class ToolState {
       GEN_ACCESSORS_REV: 'syntax-test-v5',
     };
     const run = spawnSync('swift', [
-      'run', '--package-path', packageDir, 'gen-accessors',
+      'run', '--package-path', packageDir, '--jobs', '2', 'gen-accessors',
       '--input', inputDir, '--output', outputDir,
     ], { encoding: 'utf8', env, timeout: 180_000 });
     if (run.status !== 0) throw new Error(`SwiftSyntax generator failed:\n${run.stderr}`);
@@ -1037,7 +1037,7 @@ final class DuplicateState {
 }
 `);
     const invalid = spawnSync('swift', [
-      'run', '--package-path', packageDir, 'gen-accessors',
+      'run', '--package-path', packageDir, '--jobs', '2', 'gen-accessors',
       '--input', invalidInput, '--output', invalidOutput,
     ], { encoding: 'utf8', env, timeout: 180_000 });
     expect(invalid.status).toBe(4);

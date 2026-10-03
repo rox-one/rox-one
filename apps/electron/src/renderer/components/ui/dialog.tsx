@@ -4,11 +4,13 @@ import { XIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
+import { useTourNativeLayer } from '@/features/product-tour/runtime/native-layer'
 
 function Dialog({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+  const state = useTourNativeLayer(props, true)
+  return <DialogPrimitive.Root data-slot="dialog" {...props} {...state} />
 }
 
 function DialogTrigger({

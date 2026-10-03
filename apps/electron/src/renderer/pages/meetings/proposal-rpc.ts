@@ -1,6 +1,6 @@
 import type { MeetingProposal, OperationResultV2 } from '@rox/core/meetings'
 import { isUiVerified } from '@rox/core/meetings'
-import type { MeetingGrant } from '@rox/shared/meeting-agents'
+import type { MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import { routes, type Route } from '../../../shared/routes'
 
 export type NativeProposalType = 'create_task' | 'create_note'

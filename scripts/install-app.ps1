@@ -1,18 +1,99 @@
-# Craft Agents Windows Installer
+# Rox Windows Installer
 # Usage: irm https://thecraftagents.com/install-app.ps1 | iex
+param(
+    [ValidateSet('auto', 'bundled', 'system')][string]$DependencyMode,
+    [switch]$InstallLinuxSupport,
+    [switch]$InstallGitBash
+)
 
 & {
 $ErrorActionPreference = "Stop"
 
 $VERSIONS_URL = "https://thecraftagents.com/electron"
 $DOWNLOAD_DIR = "$env:TEMP\craft-agent-install"
-$APP_NAME = "Craft Agents"
+$APP_NAME = "Rox"
 
 # Colors for output
 function Write-Info { Write-Host "> $args" -ForegroundColor Blue }
 function Write-Success { Write-Host "> $args" -ForegroundColor Green }
 function Write-Warn { Write-Host "! $args" -ForegroundColor Yellow }
 function Write-Err { Write-Host "x $args" -ForegroundColor Red; exit 1 }
+
+function Get-RoxCommandLauncher {
+    # Only fixed launcher text goes through cmd.exe. Registry paths remain data
+    # inside the PowerShell helper and are never interpolated into a shell line.
+    return '@echo off' + "`r`n" + 'setlocal DisableDelayedExpansion' + "`r`n" + '@"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "%~dp0rox-launch.ps1" %*' + "`r`n"
+}
+
+function Get-RoxLauncherScript {
+    # Self-contained for irm | iex distribution. Fixed ASCII source; paths are
+    # read as Unicode registry values at invocation, including after upgrades.
+    return @'
+$ErrorActionPreference = 'Stop'
+
+function Read-RoxInstallLocation {
+    param([string]$Hive, [string]$View, [string]$Key)
+    $base = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::$Hive, [Microsoft.Win32.RegistryView]::$View)
+    try {
+        $entry = $base.OpenSubKey($Key, $false)
+        if (-not $entry) { return $null }
+        try { return $entry.GetValue('InstallLocation', $null) } finally { $entry.Dispose() }
+    } finally { $base.Dispose() }
+}
+
+function Resolve-RoxInstalledExecutable {
+    param([scriptblock]$ReadRegistry = ${function:Read-RoxInstallLocation})
+    # UUIDv5(com.lukilabs.craft-agent, electron-builder NS UUID), same key as NSIS.
+    $guid = '61dc82ee-e3b9-557b-98c4-20b9178a0f78'
+    $keys = @("Software\$guid", "Software\Microsoft\Windows\CurrentVersion\Uninstall\$guid")
+    foreach ($hive in @('CurrentUser', 'LocalMachine')) {
+        foreach ($view in @('Registry64', 'Registry32')) {
+            foreach ($key in $keys) {
+                $location = & $ReadRegistry $hive $view $key
+                if (-not ($location -is [string]) -or [string]::IsNullOrWhiteSpace($location)) { continue }
+                # Do not consume UninstallString/DisplayIcon command lines. Only
+                # an absolute InstallLocation directory plus the known exe name.
+                if (-not [IO.Path]::IsPathRooted($location) -or $location -match '["\x00]' -or
+                    $location -notmatch '^(?:[a-zA-Z]:[\\/]|\\\\[^\\]+\\[^\\]+)') { continue }
+                try {
+                    $exe = [IO.Path]::GetFullPath((Join-Path $location 'Rox.exe'))
+                    if (Test-Path -LiteralPath $exe -PathType Leaf) { return $exe }
+                } catch { # Ignore invalid/stale registration, not a shell command.
+                }
+            }
+        }
+    }
+    throw 'Registered Rox.exe was not found. Reinstall Rox or repair its NSIS InstallLocation registration.'
+}
+
+function ConvertTo-RoxWindowsArgument {
+    param([AllowEmptyString()][string]$Argument)
+    if ($Argument.Contains([string][char]0)) { throw 'NUL is not allowed in a process argument' }
+    # Windows CRT argv quoting: double backslashes before quotes and before
+    # the closing quote. No cmd.exe, Invoke-Expression, or PowerShell evaluation.
+    $escaped = [regex]::Replace($Argument, '(\\*)"', '${1}${1}\"')
+    $escaped = [regex]::Replace($escaped, '(\\+)$', '${1}${1}')
+    return '"' + $escaped + '"'
+}
+
+function Invoke-RoxRegisteredApp {
+    param([string]$Executable, [string[]]$Arguments)
+    $start = New-Object Diagnostics.ProcessStartInfo
+    $start.FileName = $Executable
+    $start.UseShellExecute = $false
+    $start.Arguments = ($Arguments | ForEach-Object { ConvertTo-RoxWindowsArgument $_ }) -join ' '
+    $process = New-Object Diagnostics.Process
+    $process.StartInfo = $start
+    try { if (-not $process.Start()) { throw 'Rox process did not start' } }
+    finally { $process.Dispose() }
+}
+
+if ($MyInvocation.InvocationName -ne '.') {
+    try { Invoke-RoxRegisteredApp -Executable (Resolve-RoxInstalledExecutable) -Arguments $args }
+    catch { Write-Error $_ -ErrorAction Continue; exit 1 }
+}
+'@
+}
 
 # Check for Windows
 if ($env:OS -ne "Windows_NT") {
@@ -21,6 +102,7 @@ if ($env:OS -ne "Windows_NT") {
 
 # Detect architecture
 $arch = if ([Environment]::Is64BitOperatingSystem) { "x64" } else { "x86" }
+if ($arch -ne 'x64') { Write-Err 'Rox supports 64-bit Windows only.' }
 $platform = "win32-$arch"
 
 Write-Host ""
@@ -64,29 +146,22 @@ Write-Info "Latest version: $version"
 #       arch: x64
 function Get-YamlEntryForArch {
     param([string]$yaml, [string]$targetArch)
-    $lines = $yaml -split "`n"
-    $currentUrl = $null
-    $currentSha512 = $null
-    $currentSize = $null
-
-    foreach ($line in $lines) {
-        if ($line -match '^\s*-\s*url:\s*(.+)') {
-            $currentUrl = $Matches[1].Trim()
-            $currentSha512 = $null
-            $currentSize = $null
+    # electron-builder does not normally emit an `arch` property. Accept the
+    # artifact's architecture suffix as well, without matching another arch.
+    $blocks = [regex]::Matches($yaml, '(?ms)^\s*-\s*url:\s*([^\r\n]+)\r?\n(.*?)(?=^\s*-\s*url:|^\S|\z)')
+    foreach ($block in $blocks) {
+        $url = $block.Groups[1].Value.Trim().Trim('"', "'")
+        $body = $block.Groups[2].Value
+        $matchesArch = $url -match ('-' + [regex]::Escape($targetArch) + '\.exe$')
+        if ($body -match '(?m)^\s*arch:\s*([^\r\n]+)') {
+            $matchesArch = $Matches[1].Trim().Trim('"', "'") -eq $targetArch
         }
-        if ($line -match '^\s*sha512:\s*(.+)') {
-            $currentSha512 = $Matches[1].Trim()
-        }
-        if ($line -match '^\s*size:\s*(\d+)') {
-            $currentSize = [long]$Matches[1]
-        }
-        if ($line -match '^\s*arch:\s*(.+)') {
-            $entryArch = $Matches[1].Trim()
-            if ($entryArch -eq $targetArch -and $currentSha512 -and $currentUrl) {
-                return @{ url = $currentUrl; sha512 = $currentSha512; size = $currentSize }
-            }
-        }
+        if (-not $matchesArch -or $url -notmatch '^[A-Za-z0-9._-]+\.exe$') { continue }
+        if ($body -notmatch '(?m)^\s*sha512:\s*([^\r\n]+)') { continue }
+        $sha512 = $Matches[1].Trim().Trim('"', "'")
+        $size = 0L
+        if ($body -match '(?m)^\s*size:\s*(\d+)') { $size = [long]$Matches[1] }
+        return @{ url = $url; sha512 = $sha512; size = $size }
     }
     return $null
 }
@@ -108,7 +183,7 @@ if (-not $checksum -or $checksum.Length -lt 80) {
 
 # Use default filename if not found
 if (-not $filename) {
-    $filename = "Craft-Agents-$arch.exe"
+    $filename = "Rox-$arch.exe"
 }
 
 $installerUrl = "$VERSIONS_URL/latest/$filename"
@@ -192,9 +267,9 @@ if ($actualHash -ne $checksum) {
 Write-Success "Checksum verified!"
 
 # Close the app if it's running
-$process = Get-Process -Name "Craft Agents" -ErrorAction SilentlyContinue
+$process = Get-Process -Name $APP_NAME -ErrorAction SilentlyContinue
 if ($process) {
-    Write-Info "Closing Craft Agents..."
+    Write-Info "Closing Rox..."
     $process | Stop-Process -Force
     Start-Sleep -Seconds 2
 }
@@ -203,7 +278,15 @@ if ($process) {
 Write-Info "Running installer (follow the installer prompts)..."
 
 try {
-    $installerProcess = Start-Process -FilePath $installerPath -PassThru
+    $installerArgs = @()
+    if ($DependencyMode) { $installerArgs += "/DEPENDENCIES=$DependencyMode" }
+    if ($InstallLinuxSupport) { $installerArgs += '/WSL' }
+    if ($InstallGitBash) { $installerArgs += '/GITBASH' }
+    if ($installerArgs.Count) {
+        $installerProcess = Start-Process -FilePath $installerPath -ArgumentList $installerArgs -PassThru
+    } else {
+        $installerProcess = Start-Process -FilePath $installerPath -PassThru
+    }
     $spinner = @('|', '/', '-', '\')
     $i = 0
 
@@ -215,7 +298,9 @@ try {
 
     Write-Host -NoNewline "`r                      `r"
 
-    if ($installerProcess.ExitCode -ne 0) {
+    if ($installerProcess.ExitCode -eq 3010) {
+        Write-Warn 'WSL needs a restart. Restart later, then resume resources\windows-bootstrap\bootstrap.ps1 -InstallLinuxSupport.'
+    } elseif ($installerProcess.ExitCode -ne 0) {
         Write-Err "Installation failed with exit code: $($installerProcess.ExitCode)"
     }
 } catch {
@@ -229,20 +314,21 @@ Remove-Item -Path $installerPath -Force -ErrorAction SilentlyContinue
 # Add command line shortcut
 Write-Info "Adding 'craft-agents' command to PATH..."
 
-$binDir = "$env:LOCALAPPDATA\Craft Agents\bin"
+$binDir = "$env:LOCALAPPDATA\Rox\bin"
 $cmdFile = "$binDir\craft-agents.cmd"
-$exePath = "$env:LOCALAPPDATA\Programs\Craft Agents\Craft Agents.exe"
 
 # Create bin directory
 New-Item -ItemType Directory -Force -Path $binDir | Out-Null
 
-# Create batch file launcher
-$cmdContent = "@echo off`r`nstart `"`" `"$exePath`" %*"
+# Write a fixed ASCII wrapper and a UTF-8 PowerShell helper. Neither embeds a
+# profile/install path; each invocation resolves the latest NSIS registration.
+$cmdContent = Get-RoxCommandLauncher
 Set-Content -Path $cmdFile -Value $cmdContent -Encoding ASCII
+Set-Content -LiteralPath (Join-Path $binDir 'rox-launch.ps1') -Value (Get-RoxLauncherScript) -Encoding UTF8
 
 # Add to user PATH if not already there
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($userPath -notlike "*$binDir*") {
+if (($userPath -split ';' | ForEach-Object { $_.Trim().TrimEnd('\') }) -notcontains $binDir.TrimEnd('\')) {
     $newPath = "$userPath;$binDir"
     [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
     Write-Success "Added to PATH (restart terminal to use 'craft-agents' command)"
@@ -255,7 +341,7 @@ Write-Host "--------------------------------------------------------------------
 Write-Host ""
 Write-Success "Installation complete!"
 Write-Host ""
-Write-Host "  Craft Agents has been installed."
+Write-Host "  Rox has been installed."
 Write-Host ""
 Write-Host "  Launch from:"
 Write-Host "    - Start Menu or desktop shortcut"

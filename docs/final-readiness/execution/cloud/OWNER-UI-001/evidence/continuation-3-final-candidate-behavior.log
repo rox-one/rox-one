@@ -1,0 +1,26 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts:
+156 |       if (request.url==='/fixture.js') { response.writeHead(200, {'content-type':'text/javascript'}); response.end(javascript); }
+157 |       else { response.writeHead(200, {'content-type':'text/html'}); response.end('<!doctype html><div id="root"></div><script src="/fixture.js"></script>'); }
+158 |     })
+159 |     await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve))
+160 |     base = 'http://127.0.0.1:'+ (server.address() as any).port
+161 |     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE, channel: process.env.ROX_UI001_CHROMIUM_EXECUTABLE ? undefined : process.env.ROX_UI001_BROWSER_CHANNEL ?? 'chrome', headless:true })
+                                   ^
+error: launch: Executable doesn't exist at /Users/t/Library/Caches/ms-playwright/chromium-1148/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+╔═════════════════════════════════════════════════════════════════════════╗
+║ Looks like Playwright Test or Playwright was just installed or updated. ║
+║ Please run the following command to download new browsers:              ║
+║                                                                         ║
+║     npx playwright install                                              ║
+║                                                                         ║
+║ <3 Playwright Team                                                      ║
+╚═════════════════════════════════════════════════════════════════════════╝
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts:161:30
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/native:7:39)
+(fail) UI-001 real Chromium component and persistence fixtures > (unnamed) [2866.46ms]
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [7.69s]

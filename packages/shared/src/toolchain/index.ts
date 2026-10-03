@@ -7,6 +7,9 @@ export * from './types';
 export { currentPlatform, toolchainPaths, loadManifest, TOOLCHAIN_MANIFEST } from './manifest';
 export type { ManifestToolData } from './manifest-data';
 export { createResolver } from './resolver';
+export { pathEnvKey, prependPath } from './exec';
+export { readWindowsBootstrap, setWindowsBootstrapRuntime, getWindowsBootstrapRuntime } from './windows-bootstrap';
+export type { WindowsBootstrapRuntime, WindowsDependencyMode } from './windows-bootstrap';
 export type { ResolverOptions } from './resolver';
 export { OPENCLAW_CAPABILITIES, probeOpenClawCapabilities } from './openclaw';
 export type {

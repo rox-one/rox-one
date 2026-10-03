@@ -1,6 +1,15 @@
 import * as React from "react"
+import { useAtom } from "jotai"
+import { suggestionHistoryAtom } from "@/atoms/header-status"
+import { rememberSuggestion } from "@/lib/contextual-suggestions"
+import { appendStarterPrompt, canShowStarterPrompts, selectStarterPrompts, starterHistoryId, type StarterPrompt } from "@/lib/starter-prompts"
+import { EmptyChatWelcome } from "@/components/chat/EmptyChatWelcome"
+import { StarterPromptList } from "@/components/chat/StarterPromptList"
 import { followChatOutput } from "./chat-scroll"
 import { useChatOutputFollow } from "./useChatOutputFollow"
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { resolvePublishedToolSource } from '@/features/product-tour/adapters/connections'
+import { beginChatUserTurn, beginChatPermissionResponse, cancelChatUserTurn, deriveExecutionCapabilities, observeChatSessionReopened } from '@/features/product-tour/adapters/chat'
 import { createMessageTts } from '@/lib/message-tts'
 import { useAuthenticatedReactionActor } from '@/hooks/useMessageReactionActor'
 import { messageActionId } from '@/lib/message-action-id'
@@ -597,19 +606,59 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
+  const runtimePanelId = (appShellContext as typeof appShellContext & { panelId?: string })?.panelId
 
   const handleOpenWorkflow = useCallback(() => {
     if (!session?.id) return
     window.dispatchEvent(new CustomEvent('craft:session-view', {
-      detail: { sessionId: session.id, view: 'map' },
+      detail: { sessionId: session.id, view: 'map', mode: 'editor', panelId: runtimePanelId },
     }))
-  }, [session?.id])
+  }, [session?.id, runtimePanelId])
+
+  const runtimeMapSessionRef = React.useRef(session)
+  runtimeMapSessionRef.current = session
+  const handleShowRuntimeMap = useCallback((messageId: string) => {
+    const current = runtimeMapSessionRef.current
+    if (!current || current.id !== session?.id) return
+    window.dispatchEvent(new CustomEvent('craft:runtime-map-focus', {
+      detail: { sessionId: current.id, messageId: messageActionId(current.messages, messageId), panelId: runtimePanelId },
+    }))
+  }, [session?.id, runtimePanelId])
+
+  const [starterHistory, setStarterHistory] = useAtom(suggestionHistoryAtom)
+  const emptyWelcome = Boolean(session && session.messages.length === 0 && !compactMode && !messagesLoading && !messagesLoadError && !session.isProcessing)
+  const starterOptions = {
+    session,
+    skills: skills ?? EMPTY_SKILLS,
+    sources: sources ?? [],
+    active: isFocusedPanel && !compactMode && !disabled && !connectionUnavailable && !messagesLoading && !messagesLoadError && Boolean(onInputChange),
+    hasPendingRequest: Boolean(pendingPermission || pendingCredential),
+    history: starterHistory,
+    now: Date.now(),
+  }
+  const starterPrompts = selectStarterPrompts(starterOptions)
+  const prepareStarterPrompt = (prompt: StarterPrompt) => {
+    // Recheck the live dependency state before preparing a draft. This path
+    // never calls handleSubmit, onSendMessage, an auth flow, or a provider.
+    if (!session || !canShowStarterPrompts(starterOptions) || !starterPrompts.some(item => item.id === prompt.id)) return
+    let text = t(prompt.promptKey, prompt.values)
+    if (prompt.skill && !(inputValue ?? '').includes(`[skill:${prompt.skill.slug}]`)) text = `[skill:${prompt.skill.slug}] ${text}`
+    onInputChange?.(appendStarterPrompt(inputValue ?? '', text))
+    const dependencies = prompt.dependencies.filter(ref => ref.kind === 'source').map(ref => ref.id)
+    if (dependencies.length) onSourcesChange?.([...new Set([...(session.enabledSourceSlugs ?? []), ...dependencies])])
+    setStarterHistory(history => rememberSuggestion(history, starterHistoryId(session, prompt.id), Date.now()))
+    textareaRef?.current?.focus()
+  }
+  const dismissStarterPrompts = () => {
+    if (!session) return
+    setStarterHistory(history => starterPrompts.reduce((current, prompt) => rememberSuggestion(current, starterHistoryId(session, prompt.id), Date.now()), history))
+  }
 
   useContextualSuggestions({
     session,
     skills: skills ?? EMPTY_SKILLS,
     draft: inputValue ?? '',
-    active: isFocusedPanel,
+    active: isFocusedPanel && !emptyWelcome,
     hasPendingRequest: Boolean(pendingPermission || pendingCredential),
     onDraftChange: (draft) => {
       onInputChange?.(draft)
@@ -1120,10 +1169,20 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Diff viewer settings - loaded from user preferences on mount, persisted on change
   // These settings are stored in ~/.craft-agent/preferences.json (not localStorage)
   const [diffViewerSettings, setDiffViewerSettings] = useState<Partial<DiffViewerSettings>>({})
+  const preferencesScope = React.useMemo(() => ({}), [workspaceId, session?.id, appShellContext.runtimeSummary])
+  const preferencesScopeRef = React.useRef<object | undefined>(preferencesScope)
+  preferencesScopeRef.current = preferencesScope
+  const preferencesRevisionRef = React.useRef(0)
 
   // Load diff viewer settings from preferences on mount
   useEffect(() => {
-    window.electronAPI.readPreferences().then(({ content }) => {
+    const scope = preferencesScope
+    preferencesScopeRef.current = scope
+    const revision = ++preferencesRevisionRef.current
+    let current = true
+    setDiffViewerSettings({})
+    void window.electronAPI.readPreferences().then(({ content }) => {
+      if (!current || preferencesScopeRef.current !== scope || preferencesRevisionRef.current !== revision) return
       try {
         const prefs = JSON.parse(content)
         if (prefs.diffViewer) {
@@ -1132,25 +1191,30 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       } catch {
         // Ignore parse errors, use defaults
       }
-    })
-  }, [])
+    }).catch(() => { /* Host preferences may be unavailable to a scoped native caller. */ })
+    return () => { current = false; if (preferencesScopeRef.current === scope) preferencesScopeRef.current = undefined }
+  }, [preferencesScope])
 
   // Persist diff viewer settings to preferences when changed
   const handleDiffViewerSettingsChange = useCallback((settings: DiffViewerSettings) => {
     setDiffViewerSettings(settings)
-    // Read current preferences, merge in new settings, write back
-    window.electronAPI.readPreferences().then(({ content }) => {
+    const scope = preferencesScope
+    const revision = ++preferencesRevisionRef.current
+    // Read current preferences, merge in new settings, write back while this view remains current.
+    void window.electronAPI.readPreferences().then(async ({ content }) => {
+      if (preferencesScopeRef.current !== scope || preferencesRevisionRef.current !== revision) return
+      let prefs: Record<string, unknown>
       try {
-        const prefs = JSON.parse(content)
-        prefs.diffViewer = settings
-        prefs.updatedAt = Date.now()
-        window.electronAPI.writePreferences(JSON.stringify(prefs, null, 2))
+        const parsed = JSON.parse(content)
+        prefs = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
       } catch {
-        // If preferences malformed, create fresh with just diffViewer
-        window.electronAPI.writePreferences(JSON.stringify({ diffViewer: settings, updatedAt: Date.now() }, null, 2))
+        prefs = {}
       }
-    })
-  }, [])
+      prefs.diffViewer = settings
+      prefs.updatedAt = Date.now()
+      if (preferencesScopeRef.current === scope && preferencesRevisionRef.current === revision) await window.electronAPI.writePreferences(JSON.stringify(prefs, null, 2))
+    }).catch(() => { /* Preserve this view's setting when host persistence is unavailable. */ })
+  }, [preferencesScope])
 
   // Close overlay handler
   const handleCloseOverlay = useCallback(() => {
@@ -1388,6 +1452,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Backend handles interruption and queueing if currently processing
   const handleSubmit = (message: string, attachments?: FileAttachment[], skillSlugs?: string[]) => {
     const scrollOwner = captureScrollOwner()
+    if (session) beginChatUserTurn(tourSignals.capture(), session)
     const hasBaseMessage = message.trim().length > 0
     const followUpSection = formatFollowUpSection(pendingFollowUpAnnotations, {
       includeTopSeparator: hasBaseMessage,
@@ -1590,6 +1655,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // silent=true when redirecting (sending new message), silent=false when user clicks Stop button
   const handleStop = (silent = false) => {
     if (!session?.isProcessing) return
+    cancelChatUserTurn(session.id)
 
     // Explicit Stop (not a redirect/new-message send): put the in-flight prompt
     // back in the input so the user can tweak and resend. Append to any draft.
@@ -1621,6 +1687,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Handle structured input responses (permissions and credentials)
   const handleStructuredResponse = (response: StructuredResponse) => {
     if ((response.type === 'permission' || response.type === 'admin_approval') && pendingPermission && onRespondToPermission) {
+      beginChatPermissionResponse(tourSignals.capture(), pendingPermission.sessionId, pendingPermission.requestId)
       if (response.type === 'permission') {
         const permResponse = response as PermissionResponse
         onRespondToPermission(
@@ -1673,6 +1740,31 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     }
     return undefined
   }, [pendingPermission, pendingCredential])
+
+  const tourSignals = useTourSignals({ sessionId: session?.id, workspaceId: session?.workspaceId })
+  const tourVariant = compactMode ? 'compact' : 'regular'
+  const entryTarget = useTourTarget('session.entry', { sessionId: session?.id, variant: tourVariant })
+  const executionTarget = useTourTarget('session.execution', { sessionId: session?.id, variant: tourVariant })
+  const finalTarget = useTourTarget('session.final-result', { sessionId: session?.id, variant: tourVariant })
+  const toolResultTarget = useTourTarget('session.tool-result', { sessionId: session?.id, variant: tourVariant })
+  const tourFinalMessageId = useMemo(() => {
+    if (!session) return undefined
+    const userIndex = session.messages.findLastIndex(message => message.role === 'user' && !message.isPending && !message.isQueued && !message.hidden)
+    if (userIndex < 0) return undefined
+    return session.messages.slice(userIndex + 1).findLast(message => message.role === 'assistant' && !message.isIntermediate && !message.isPending && !message.isStreaming && !message.isError && !message.hidden && !message.parentToolUseId && message.content.trim())?.id
+  }, [session?.messages])
+  useEffect(() => {
+    const cleanups = Object.entries(deriveExecutionCapabilities(session, !!pendingPermission)).map(([id, capability]) => tourSignals.capability(id as 'sessions.available' | 'permissions.pending', capability!))
+    if (session && !messagesLoading && !messagesLoadError) {
+      const captured = tourSignals.capture()
+      tourSignals.emit(captured, 'session.ready', 'observed', 'ui-observation', `ready:${captured?.operationToken}`)
+      if (session.isProcessing || tourFinalMessageId) tourSignals.emit(captured, 'execution.state-visible', 'observed', 'ui-observation', `execution:${captured?.operationToken}`)
+      for (const evidence of observeChatSessionReopened(session)) {
+        tourSignals.emit({ binding: evidence.binding, operationToken: evidence.operationToken!, at: evidence.operationStartedAt! }, evidence.name, evidence.level, evidence.origin, evidence.eventToken)
+      }
+    }
+    return () => { cleanups.forEach(cleanup => cleanup()) }
+  }, [tourSignals, session?.id, session?.isProcessing, pendingPermission, messagesLoading, messagesLoadError, tourFinalMessageId])
 
   // Memoize turn grouping - avoids O(n) iteration on every render/keystroke
   const allTurns = React.useMemo(() => {
@@ -1853,7 +1945,7 @@ const handleFollowUpChipClick = useCallback((item: {
     <div ref={zoneRef} className="flex h-full flex-col min-w-0" data-focus-zone="chat">
       {session ? (
         <>
-        <div className="flex flex-1 flex-col min-h-0 min-w-0 relative">
+        <div ref={entryTarget} className="flex flex-1 flex-col min-h-0 min-w-0 relative">
           {session.branchFromSessionId ? (
             <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 text-xs text-muted-foreground">
               <span>
@@ -1871,7 +1963,8 @@ const handleFollowUpChipClick = useCallback((item: {
           {/* Content layer */}
           <div className="flex flex-1 flex-col min-h-0 min-w-0 relative z-10">
           {/* === MESSAGES AREA: Scrollable list of message bubbles === */}
-          <div className="relative flex-1 min-h-0">
+          <div ref={executionTarget} className="relative flex-1 min-h-0">
+            {emptyWelcome && !pendingPermission && !pendingCredential && <EmptyChatWelcome />}
             {/* Mask wrapper - fades content at top and bottom over transparent/image backgrounds */}
             <div
               className="h-full"
@@ -2015,6 +2108,7 @@ const handleFollowUpChipClick = useCallback((item: {
                             onPickSideThread={handlePickSideThread}
                             onListen={(text) => { void handleListen(text, turn.message.id) }}
                             isListening={listeningTurnId === turn.message.id}
+                            onShowRuntimeMap={handleShowRuntimeMap}
                             onBranch={session?.supportsBranching && !turn.message.isPending && !turn.message.isQueued ? handleMessageBranch : undefined}
                           />
                         </div>
@@ -2084,10 +2178,12 @@ const handleFollowUpChipClick = useCallback((item: {
 
                     // Assistant turns - render with TurnCard (buffered streaming)
                     const assistantUiKey = getAssistantTurnUiKey(turn, index)
+                    const isNativeFinal = !!turn.response?.messageId && turn.response.messageId === tourFinalMessageId
+                    const hasNativeSourceResult = isLatestAssistantTurn && turn.activities.some(activity => activity.type === 'tool' && activity.status === 'completed' && !activity.error && !!activity.toolName && !!resolvePublishedToolSource(activity.toolName, session.enabledSourceSlugs ?? []))
                     return (
                       <div
                         key={turnKey}
-                        ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
+                        ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey); if (isNativeFinal) finalTarget(el); if (hasNativeSourceResult) toolResultTarget(el) }}
                         className={cn(
                           "pt-2",
                           "rounded-lg transition-all duration-200",
@@ -2125,6 +2221,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         onQuote={handleQuoteMessage}
                         onLearnFromMessage={handleLearnFromMessage}
                         onPickSideThread={handlePickSideThread}
+                        onShowRuntimeMap={handleShowRuntimeMap}
                         onBranch={session?.supportsBranching ? handleMessageBranch : undefined}
                         onAddAnnotation={persistAnnotation}
                         onRemoveAnnotation={removeAnnotation}
@@ -2273,6 +2370,14 @@ const handleFollowUpChipClick = useCallback((item: {
             </div>
           </div>
 
+          {/* Recommendations stay directly above the existing lower composer. */}
+          <StarterPromptList
+            prompts={starterPrompts}
+            sources={sources ?? []}
+            workspaceId={session.workspaceId}
+            onSelect={prepareStarterPrompt}
+            onDismiss={dismissStarterPrompts}
+          />
           {/* === INPUT CONTAINER: FreeForm or Structured Input === */}
           <ChatInputZone
             compactMode={compactMode}
@@ -2525,6 +2630,7 @@ interface MessageBubbleProps {
   onListen?: (text: string) => void
   isListening?: boolean
   onBranch?: (messageId: string) => void
+  onShowRuntimeMap?: (messageId: string) => void
 }
 
 /**
@@ -2552,7 +2658,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
         <div className="text-xs text-destructive/50 mb-0.5 font-semibold">
           {message.errorTitle || t('common.error')}
         </div>
-        <p className="text-sm text-destructive">{message.content}</p>
+        <p className="text-sm text-destructive">{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</p>
 
         {/* Action buttons */}
         {actions && actions.length > 0 && (
@@ -2620,6 +2726,7 @@ function MessageBubble({
   onListen,
   isListening,
   onBranch,
+  onShowRuntimeMap,
 }: MessageBubbleProps) {
   const { t } = useTranslation()
   const messageContent = useMemo(() => linkifyNoteReferences(message.content), [message.content])
@@ -2647,6 +2754,7 @@ function MessageBubble({
         onListen={onListen}
         isListening={isListening}
         onBranch={onBranch}
+        onShowRuntimeMap={onShowRuntimeMap}
       />
     )
   }
@@ -2725,7 +2833,7 @@ function MessageBubble({
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
           <Spinner className="text-[10px]" />
         </div>
-        <span>{message.content}</span>
+        <span>{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</span>
       </div>
     )
   }
@@ -2760,7 +2868,7 @@ function MessageBubble({
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
           <Icon className="w-3 h-3" />
         </div>
-        <span>{message.content}</span>
+        <span>{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</span>
       </div>
     )
   }
@@ -2773,7 +2881,7 @@ function MessageBubble({
           <div className="text-xs text-info/50 mb-0.5 font-semibold">
             Warning
           </div>
-          <p className="text-sm text-info">{message.content}</p>
+          <p className="text-sm text-info">{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</p>
         </div>
       </div>
     )
@@ -2806,6 +2914,7 @@ const MemoizedMessageBubble = React.memo(MessageBubble, (prev, next) => {
     prev.onListen === next.onListen &&
     prev.isListening === next.isListening &&
     prev.onBranch === next.onBranch &&
+    prev.onShowRuntimeMap === next.onShowRuntimeMap &&
     prev.onQuote === next.onQuote &&
     prev.onLearnFromMessage === next.onLearnFromMessage &&
     prev.onPickSideThread === next.onPickSideThread

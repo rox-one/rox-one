@@ -1,0 +1,148 @@
+name: UI-001 Recovery
+
+on:
+  pull_request:
+    paths:
+      - 'apps/electron/src/renderer/**'
+      - 'apps/electron/src/shared/**'
+      - 'docs/final-readiness/execution/cloud/OWNER-UI-001/**'
+      - '.github/workflows/ui-001-recovery.yml'
+      - 'bun.lock'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/electron/src/renderer/**'
+      - 'apps/electron/src/shared/**'
+      - 'docs/final-readiness/execution/cloud/OWNER-UI-001/**'
+      - '.github/workflows/ui-001-recovery.yml'
+      - 'bun.lock'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-001-recovery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  component-recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: '1.3.14'
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+      - name: Install pinned dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Record the tested merge revision and source hashes
+        run: |
+          python3 - <<'PY'
+          import pathlib, subprocess, hashlib, json
+          owner = pathlib.Path('docs/final-readiness/execution/cloud/OWNER-UI-001')
+          manifest = json.loads((owner / 'source-manifest-v3.json').read_text())
+          hashes = {path: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+                    for path in manifest['sourceSha256']}
+          receipt = {'testedRevision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+                     'bun': subprocess.check_output(['bun', '--version'], text=True).strip(),
+                     'node': subprocess.check_output(['node', '--version'], text=True).strip(),
+                     'actualSourceSha256': hashes,
+                     'matchesCommittedCandidate': hashes == manifest['sourceSha256']}
+          destination = owner / 'verification/browser/ui001-ci-source.json'
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          destination.write_text(json.dumps(receipt, indent=2) + '\n')
+          print(json.dumps(receipt, indent=2))
+          assert receipt['matchesCommittedCandidate'], 'Tested sources differ from the committed candidate manifest'
+          PY
+      - name: Shell, parser, persistence and navigation regression
+        env:
+          # Browser fixtures run below in separate Bun processes. Do not let a
+          # preinstalled runner browser activate them inside the unit process.
+          CHROMIUM_EXECUTABLE: ${{ runner.temp }}/ui001-separate-browser-phase
+        run: >-
+          bun test --timeout 30000
+          ./apps/electron/src/renderer/components/app-shell/__tests__
+          ./apps/electron/src/shared/__tests__
+          ./apps/electron/src/renderer/contexts/__tests__
+          ./apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts
+          ./apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts
+          ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts
+          ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts
+      - name: Project validation and types
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: bun run validate:ci
+      - name: MCP provisioning and onboarding protocol fixtures
+        run: bun run test:mcp-onboarding
+      - name: Build the renderer
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: bun run electron:build:renderer
+      - name: Install isolated Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Mounted NavigationProvider and browser history
+        run: bun docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts
+      - name: Mounted owner, readiness and deferred action recovery
+        env:
+          ROX_UI001_BROWSER_TEST: '1'
+        run: |
+          export ROX_UI001_CHROMIUM_EXECUTABLE="$(bun -e 'import {chromium} from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
+          bun test --timeout 60000 apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts
+      - name: Resource, editor and cross-window persistence recovery
+        run: bun docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts
+      - name: Skill editor save, deletion and catalog ownership
+        run: |
+          node apps/electron/src/renderer/pages/__tests__/skill-info-owner.fixture.mjs "$RUNNER_TEMP/rox-ui001-skill-bundle.js"
+          export ROX_SKILL_INFO_BROWSER_TEST=1
+          export ROX_SKILL_INFO_FIXTURE_BUNDLE="$RUNNER_TEMP/rox-ui001-skill-bundle.js"
+          export ROX_UI001_CHROMIUM_EXECUTABLE="$(bun -e 'import {chromium} from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
+          node --test --test-reporter=tap apps/electron/src/renderer/pages/__tests__/skill-info-owner.browser.node.ts
+      - name: Retry, lazy loading and resize callbacks
+        env:
+          ROX_UI001_BROWSER_TEST: '1'
+          ROX_UI001_BROWSER_CHANNEL: chromium
+        run: bun test --timeout 60000 apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts
+      - name: Native surface renderer ownership and suppression
+        run: bun test --timeout 60000 apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts
+      - name: Other shell browser fixtures in separate processes
+        run: |
+          export CHROMIUM_EXECUTABLE="$(bun -e 'import {chromium} from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
+          for test_path in \
+            apps/electron/src/renderer/components/app-shell/__tests__/panel-workspace.browser.test.ts \
+            apps/electron/src/renderer/components/app-shell/__tests__/device-status-chip.browser.test.ts \
+            apps/electron/src/renderer/components/app-shell/__tests__/quest-progress-card.browser.test.ts \
+            apps/electron/src/renderer/components/app-shell/__tests__/message-actions.browser.test.ts \
+            apps/electron/src/renderer/components/app-shell/__tests__/voice-dictation.browser.test.ts
+          do
+            bun test --timeout 60000 "$test_path"
+          done
+      - name: Confirm the tested source hashes stayed unchanged
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import pathlib, hashlib, json
+          owner = pathlib.Path('docs/final-readiness/execution/cloud/OWNER-UI-001')
+          destination = owner / 'verification/browser/ui001-ci-source.json'
+          receipt = json.loads(destination.read_text())
+          receipt['sourceAfterSha256'] = {path: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+                                         for path in receipt['actualSourceSha256']}
+          receipt['sourcesStable'] = receipt['sourceAfterSha256'] == receipt['actualSourceSha256']
+          destination.write_text(json.dumps(receipt, indent=2) + '\n')
+          assert receipt['sourcesStable'] and receipt['matchesCommittedCandidate']
+          PY
+      - name: Preserve component fixture evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ui-001-component-evidence-${{ github.sha }}
+          path: docs/final-readiness/execution/cloud/OWNER-UI-001/verification/browser
+          if-no-files-found: ignore
+
+# These jobs prove renderer and IPC-boundary fixture behavior. Installed
+# Windows 10/11, native macOS compositor and actual hosted service acceptance
+# remain separately required by the unchanged UI-001 task contract.

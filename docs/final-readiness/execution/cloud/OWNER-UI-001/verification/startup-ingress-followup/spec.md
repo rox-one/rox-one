@@ -1,0 +1,3 @@
+Before WindowManager exists, an accepted second-instance protocol URL must be retained in the same single pending slot used by macOS open-url. The latest received URL replaces the earlier one. Once startup creates windows, the existing replay dispatches the exact retained URL with the existing module sink/client resolver and clears the slot only after success. A ready second instance and a non-protocol launch retain their existing dispatch/focus behavior. Both rox and craftagents aliases must work.
+
+This repair is source/callback verified. Original Requirements/DoD/Test method stay unchanged; installed Windows OS dispatch and the full platform matrix remain unaccepted. Native8e evidence cannot be promoted to the newer integrated source.

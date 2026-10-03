@@ -17,6 +17,10 @@ const callback = (name: string) => {
   if (!declaration?.initializer) throw new Error('Actual callback missing: ' + name)
   return `const ${name} = ${declaration.initializer.getText(ast)};`
 }
+const availability = ts.transpileModule(callback('readUnavailable') + callback('assetsUnavailable')
+  + '\nreturn { readUnavailable, assetsUnavailable };', { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText
+const readAvailability = (activeWorkspaceId: string, notesReadError: unknown, assetsReadError: unknown) =>
+  new Function('activeWorkspaceId', 'notesReadError', 'assetsReadError', availability)(activeWorkspaceId, notesReadError, assetsReadError)
 const lease = page.body.statements.find(node => ts.isExpressionStatement(node) && ts.isCallExpression(node.expression)
   && ts.isPropertyAccessExpression(node.expression.expression) && node.expression.expression.name.text === 'useLayoutEffect')
 if (!lease) throw new Error('Actual committed Notes lease missing')
@@ -29,7 +33,8 @@ const pending = <T>() => {
   return { promise, resolve, reject }
 }
 function fixture() {
-  const refs = { notesListRequestRef: { current: 0 }, assetsRequestRef: { current: 0 }, readWorkspaceGenerationRef: { current: 0 },
+  const refs = { notesListRequestRef: { current: 0 }, assetsRequestRef: { current: 0 },
+    readWorkspaceGenerationRef: { current: 0 },
     readWorkspaceRef: { current: undefined as string | undefined }, readsMountedRef: { current: false } }
   const events: Array<[string, unknown]> = []
   let commit!: () => () => void
@@ -69,6 +74,41 @@ describe('actual NotesPage read callbacks and committed workspace lease', () => 
     const dispose = view.commit(); await view.refreshNotes(); await view.refreshAssets()
     expect(f.events).toEqual([['notesError', { workspaceId: 'a', code: 'AUTH_FAILED' }], ['assetsError', { workspaceId: 'a', code: 'AUTH_FAILED' }]])
     dispose()
+  })
+  test('optional asset refusal preserves canonical text Notes, and asset retry clears only its own error', async () => {
+    const f = fixture(), error = { code: 'AUTH_FAILED', message: 'Optional asset access unavailable' }
+    const notes = [{ id: 'canonical-readable-note' }]
+    let available = false
+    const view = f.render('a', { listNotes: async () => notes,
+      listNoteAssets: async () => { if (!available) throw error; return [{ relativePath: 'authorized-asset.png' }] } })
+    const dispose = view.commit()
+    await view.refreshNotes(); await view.refreshAssets()
+    const assetError = { workspaceId: 'a', code: 'AUTH_FAILED' }
+    expect(f.events).toEqual([['notesError', null], ['notes', notes], ['order', ['canonical-readable-note']], ['assetsError', assetError]])
+    expect(readAvailability('a', null, assetError)).toEqual({ readUnavailable: null, assetsUnavailable: assetError })
+    available = true; await view.refreshAssets()
+    expect(f.events.slice(4)).toEqual([['assetsError', null], ['assets', [{ relativePath: 'authorized-asset.png' }]]])
+    expect(readAvailability('a', null, null)).toEqual({ readUnavailable: null, assetsUnavailable: null })
+    dispose()
+  })
+  test('core Notes denial still closes the document surface; a foreign assets error cannot affect the current workspace', () => {
+    const notesError = { workspaceId: 'a', code: 'AUTH_FAILED' }, assetsError = { workspaceId: 'b', code: 'AUTH_FAILED' }
+    expect(readAvailability('a', notesError, assetsError)).toEqual({ readUnavailable: notesError, assetsUnavailable: null })
+    expect(readAvailability('a', null, assetsError)).toEqual({ readUnavailable: null, assetsUnavailable: null })
+  })
+  test('refused optional assets stop actual upload/paste/rename/delete/cleanup handlers before any host probe or mutation', async () => {
+    const actions = ['importFiles', 'handleImportAsset', 'openAssetRenameDialog', 'handleRenameAsset', 'handleDeleteAsset', 'handleCleanUnusedAssets']
+    const code = ts.transpileModule(actions.map(callback).join('\n') + `\nreturn { ${actions.join(', ')} };`,
+      { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText
+    let probes = 0
+    const bindings = { React: { useCallback: (fn: unknown) => fn }, activeWorkspaceId: 'a', activeNote: { id: 'canonical-readable-note' },
+      assetsUnavailable: { workspaceId: 'a', code: 'AUTH_FAILED' }, refreshAssets() { probes++ }, t() { probes++ },
+      assetRenameTarget: { relativePath: 'a.png' }, assetRenameName: 'b.png', orphanAssets: [{ relativePath: 'a.png' }],
+      setAssetRenameTarget() { probes++ }, setAssetRenameName() { probes++ }, setAssetBusy() { probes++ },
+      window: { electronAPI: new Proxy({}, { get() { probes++; throw new Error('Host/file capability must not be probed') } }) } }
+    const functions = new Function(...Object.keys(bindings), code)(...Object.values(bindings)) as Record<string, (input?: unknown) => unknown>
+    for (const name of actions) await functions[name]!({ relativePath: 'a.png' })
+    expect(probes).toBe(0)
   })
   test('A → B → A without another list call cannot revive the old A success or denial', async () => {
     for (const method of ['refreshNotes', 'refreshAssets'] as const) for (const rejected of [false, true]) {

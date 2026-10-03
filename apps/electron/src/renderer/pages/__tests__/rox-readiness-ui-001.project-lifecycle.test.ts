@@ -33,7 +33,7 @@ function fixture(api: Record<string, unknown>, workspaceId: string | null = 'wor
   const refs = { projectRequestRef: { current: 0 }, projectMountedRef: { current: true } }
   let mount!: () => () => void
   const bindings = {
-    ...refs, workspaceId, projectSlug: 'project', project: loadedProject,
+    ...refs, projectReadsMountedRef: refs.projectMountedRef, projectReadRevisionRef: refs.projectRequestRef, workspaceId, projectSlug: 'project', project: loadedProject,
     useCallback: (fn: unknown) => fn, useEffect: (fn: () => () => void) => { mount = fn },
     t: (key: string) => key, soupProjectListResult: () => ({ result: {} }), soupProjectReadResult: () => ({ result: {} }),
     soupProjectActResult: () => ({}), isClaimableLive: () => claimable,
@@ -107,7 +107,7 @@ describe('UI-001 actual project read and delete ownership', () => {
     const failed = fixture({ getProject: async () => { throw new Error('denied') } })
     await failed.loadProject()
     expect(failed.events).toContainEqual(['Project', null])
-    expect(failed.events).toContainEqual(['Error', 'denied'])
+    expect(failed.events).toContainEqual(['Error', 'common.unavailable'])
     expect(failed.events.at(-1)).toEqual(['Loading', false])
     for (const f of [fixture({}, null), fixture({}, 'workspace', false)]) {
       await f.loadProject()

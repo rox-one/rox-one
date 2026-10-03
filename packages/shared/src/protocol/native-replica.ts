@@ -53,6 +53,8 @@ export interface NativeReplicaCreatePlan {
 
 export interface NativeReplicaEnqueueCreateIpcInput extends NativeReplicaSessionIpcInput {
   plan: NativeReplicaCreatePlan
+  /** Opaque retry token, never the canonical operation ID assigned by main. */
+  callerAttemptId?: string
 }
 
 /** A mutation to persist in the device-bound encrypted queue before an RPC attempt. */

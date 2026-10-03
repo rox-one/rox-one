@@ -39,14 +39,15 @@ describe('panel inset alignment', () => {
     expect(collapsed).toContain('rox-shell-divider-l')
     expect(collapsed).toContain('data-inspector="collapsed"')
 
-    const desktop = stack.slice(stack.indexOf('DESKTOP BRANCH'))
-    expect(desktop).toContain('paddingTop: PANEL_STACK_TOP_INSET')
+    const desktop = stack
+    expect(desktop).toContain('paddingTop: isCompact ? undefined : PANEL_STACK_TOP_INSET')
     expect(desktop).toMatch(/paddingBottom:\s*PANEL_STACK_(TOP|BOTTOM)_INSET/)
     expect(desktop).not.toContain('marginBottom: -PANEL_STACK_BOTTOM_INSET')
     expect(desktop).not.toContain('marginBottom: -PANEL_STACK_TOP_INSET')
 
     expect(host).toContain('<BottomTerminalDock />')
-    expect(host).toContain('(chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />')
+    expect(host).toContain('<RetainedSurface visible={!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed)}>')
+    expect(host).toContain('<InspectorHost />')
     expect(host.indexOf('<BottomTerminalDock />')).toBeLessThan(host.indexOf('<InspectorHost />'))
   })
 })

@@ -3,6 +3,7 @@
  * the user, running now, stuck, cloud runs, automations, and authoritative
  * workspace budget status, with stop / pause controls.
  */
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { parseAutomationsConfig } from '@/components/automations/types'
@@ -90,6 +91,10 @@ function useCenterAutomations(workspaceId: string | null): { automations: Center
 export default function AgentCenterPage(_props: { itemId: string | null }) {
   const { t, i18n } = useTranslation()
   const language: 'ru' | 'en' = i18n.language.startsWith('ru') ? 'ru' : 'en'
+  const summaryTarget = useTourTarget('agents.summary')
+  const budgetTarget = useTourTarget('agents.budget')
+  const tourSignals = useTourSignals()
+  useEffect(() => tourSignals.capability('agent-center.available', { state: 'ready' }), [tourSignals])
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id ?? null
   const { pendingPermissions, pendingCredentials } = useAppShellContext()
@@ -227,7 +232,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
         />
         <div className="max-w-[1100px] px-4 pb-6">
           {error && <div className="pb-2 text-destructive">{error}</div>}
-          <div className="grid grid-cols-4 gap-2">
+          <div ref={summaryTarget} className="grid grid-cols-4 gap-2">
             <Stat label={t('extraScreens.agents.running')} value={String(center.running.length + center.cloudActive.length)} />
             <Stat label={t('extraScreens.agents.waiting')} value={String(center.waiting.length)} tone={center.waiting.length ? 'warn' : undefined} />
             <Stat label={t('extraScreens.agents.stuck')} value={String(center.stuck.length)} tone={center.stuck.length ? 'err' : undefined} />
@@ -239,7 +244,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
             />
           </div>
 
-          <Card accent={!!center.budget?.exhausted}>
+          <div ref={budgetTarget}><Card accent={!!center.budget?.exhausted}>
             <div className="flex flex-wrap items-center gap-2">
               <CardTitle>{t('extraScreens.agents.budgetTitle')}</CardTitle>
               <span className="flex-1" />
@@ -267,7 +272,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
                 {t('extraScreens.agents.budgetRemaining')}: {center.budget.remainingUsd == null ? '—' : formatUsd(center.budget.remainingUsd)} · {t('extraScreens.agents.budgetReserved')}: {formatUsd(center.budget.reservedUsd)}
               </div>
             )}
-          </Card>
+          </Card></div>
 
           {nothingActive && (
             <div className="mt-4 rounded-[8px] bg-foreground/[0.03] px-4 py-3 text-muted-foreground" role="status">{t('extraScreens.agents.allQuiet')}</div>

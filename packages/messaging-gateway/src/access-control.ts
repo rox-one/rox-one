@@ -80,7 +80,7 @@ export function evaluatePreBindingAccess(
 export interface BindingAccessInput {
   msg: IncomingMessage
   workspaceConfig: MessagingConfig
-  binding: { config: BindingConfig }
+  binding: { config: BindingConfig; nativeOwner?: { issuer: string; subject: string } }
 }
 
 /**
@@ -96,18 +96,23 @@ export function evaluateBindingAccess(input: BindingAccessInput): AccessDecision
   const { msg, workspaceConfig, binding } = input
   if (msg.senderIsBot) return { kind: 'reject', reason: 'bot-sender' }
 
+  // Platform disabling also applies to bindings created before the change.
+  if (readPlatformAccessMode(workspaceConfig, msg.platform) === 'disabled') {
+    return { kind: 'reject', reason: 'disabled' }
+  }
+
   const mode = normalizeMessagingAccessMode(binding.config.accessMode)
   if (mode === 'disabled') return { kind: 'reject', reason: 'disabled' }
   if (mode === 'public-inbox') return { kind: 'public-inbox' }
 
   const allowlisted = binding.config.allowedSenderIds.includes(msg.senderId)
   const owners = readPlatformOwners(workspaceConfig, msg.platform)
-  if (allowlisted || owners.some((o) => o.userId === msg.senderId)) {
+  if (allowlisted || !binding.nativeOwner && owners.some((o) => o.userId === msg.senderId)) {
     return { kind: 'route' }
   }
   return {
     kind: 'reject',
-    reason: binding.config.allowedSenderIds.length > 0 ? 'not-allowlisted' : 'not-owner',
+    reason: binding.nativeOwner ? 'not-on-binding-allowlist' : binding.config.allowedSenderIds.length > 0 ? 'not-allowlisted' : 'not-owner',
   }
 }
 

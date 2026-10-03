@@ -1,0 +1,27 @@
+{
+  "label": "continuation-3-chrome-browser",
+  "command": [
+    "env",
+    "ROX_UI001_BROWSER_TEST=1",
+    "ROX_UI001_CHROMIUM_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+    "CHROMIUM_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "test",
+    "--timeout",
+    "30000",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts"
+  ],
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+  "startedAt": "2026-10-03T13:28:28.751617+00:00",
+  "finishedAt": "2026-10-03T13:33:01.114244+00:00",
+  "exitCode": 1,
+  "sourceSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+    "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+  },
+  "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-chrome-browser.log",
+  "logSha256": "9920e03b2d4994818ec8a7fa9afe9a40273c40693d632e504b551baed208b3b7"
+}

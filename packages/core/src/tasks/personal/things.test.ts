@@ -56,6 +56,21 @@ describe('quick entry (RU/EN natural language)', () => {
     expect(parseDateExpression('2026-12-01', now)).toBe(new Date(2026, 11, 1).getTime())
     expect(parseDateExpression('1 января', now)).toBe(new Date(2027, 0, 1).getTime())
   })
+
+  it('refuses impossible ISO calendar dates instead of silently changing the requested day', () => {
+    for (const input of ['2026-02-31', '2026-13-01', '2026-02-00', '2026-04-31', '2026-02-29']) {
+      expect(parseDateExpression(input, now)).toBeNull()
+    }
+  })
+
+  it('retains the exact valid local day including leap days', () => {
+    for (const [input, year, month, date] of [['2028-02-29', 2028, 1, 29], ['2026-12-31', 2026, 11, 31]] as const) {
+      const at = parseDateExpression(input, now)
+      expect(at).toBe(new Date(year, month, date).getTime())
+      expect(new Date(at!).getHours()).toBe(0)
+      expect(new Date(at!).getDate()).toBe(date)
+    }
+  })
 })
 
 describe('repeat rules', () => {
