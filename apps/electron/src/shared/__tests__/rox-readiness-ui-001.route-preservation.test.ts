@@ -13,11 +13,11 @@ const unavailableRoutes = [
   'skills/skill', 'projects/project', 'pages/page', 'browser/instance',
   'allSessions/session', 'allSessions/wrong/id', 'state/todo/session',
   'label/work/session/a/extra', 'board/session/a/extra', 'table/extra',
-  'notes/note/a/extra', 'knowledge/document/a/extra', 'cloud-run/a/extra',
-  'terminal/a/extra', 'extension/plugin/view/extra', 'diff/a/extra',
+
+
   'tasks/task/a/extra', 'meetings/meeting/a/extra', 'inbox/item/a/extra',
   'feed/item/a/extra', 'radar/item/a/extra', 'home/extra', 'connections/extra',
-  'sources//source/a', '/allSessions', 'allSessions/',
+
   'notes/note/%E0%A4%A', 'label/%', 'terminal/%GG', 'radar/item/%E0%A4%A',
   'search?q=%E0%A4%A', 'sources/source/a?stray=%',
   'action/new-session', 'action/delete-session/selected', 'action/unknown',
@@ -117,6 +117,25 @@ describe('UI-001 raw view route preservation', () => {
       expect(parser.buildRouteFromNavigationState(state)).toBe(root)
     })
   }
+
+  it('retains legacy separator aliases and complete nested IDs without silently selecting their prefix', () => {
+    for (const [route, expected] of [
+      ['sources//source/a', { navigator: 'sources', details: { type: 'source', sourceSlug: 'a' } }],
+      ['/allSessions', { navigator: 'sessions', filter: { kind: 'allSessions' } }],
+      ['allSessions/', { navigator: 'sessions', filter: { kind: 'allSessions' } }],
+      ['notes/note/a/extra', { navigator: 'notes', details: { type: 'note', noteId: 'a/extra' } }],
+      ['knowledge/document/a/extra', { navigator: 'knowledge', details: { type: 'knowledge', kind: 'document', id: 'a/extra' } }],
+      ['cloud-run/a/extra', { navigator: 'cloud-run', details: { type: 'cloud-run', runId: 'a/extra' } }],
+      ['terminal/a/extra', { navigator: 'terminal', details: { type: 'terminal', id: 'a/extra' } }],
+      ['extension/plugin/view/extra', { navigator: 'extension', details: { type: 'extension', extensionId: 'plugin', viewId: 'view/extra' } }],
+      ['diff/a/extra', { navigator: 'diff', details: { type: 'diff', proposalId: 'a/extra' } }],
+    ] as const) {
+      const state = resolve(route)
+      expect(state).toMatchObject(expected)
+      expect(resolve(parser.buildRouteFromNavigationState(state))).toEqual(state)
+      expect(parser.resolveViewRoute(route)).toEqual(state)
+    }
+  })
 
   it('retains the public null contract for unsupported and action routes', () => {
     expect(parser.parseRouteToNavigationState('not-a-route')).toBeNull()

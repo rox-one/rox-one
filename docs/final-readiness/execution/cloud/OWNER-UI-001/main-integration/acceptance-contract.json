@@ -1,0 +1,16 @@
+[
+  {
+    "id": "UI-001.1",
+    "Requirements": "Preserve workspace and entity selection through direct links, restart, browser history and missing/deleted entities. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+    "DoD": "Every link resolves to its own surface or a specific missing/unavailable state; no unrelated chat fallback.",
+    "Full functional verification": "Open direct links for session, source, skill, project, note, page, knowledge, extension, terminal, cloud-run and all extra screens; remove each entity while selected.",
+    "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+  },
+  {
+    "id": "UI-001.2",
+    "Requirements": "Verify all shell variants, native overlays and modal focus at supported DPI/zoom; persist only valid layout sizes. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+    "DoD": "Content remains usable without clipped actions, native view overlap or inaccessible resize handles.",
+    "Full functional verification": "Resize panels while opening dialogs, browser and extension hosts; repeat Windows 100/150/200% scaling and macOS Retina plus browser zoom.",
+    "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+  }
+]

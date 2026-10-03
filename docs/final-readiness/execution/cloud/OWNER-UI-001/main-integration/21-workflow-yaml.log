@@ -1,0 +1,6 @@
+1 | import {createRequire} from 'node:module'; const require=createRequire(require.resolve('eslint/package.json')); const yaml=require('js-yaml'); const {readFileSync}=require('node:fs'); const workflow=yaml.load(readFileSync('.github/workflows/ui-route-recovery.yml','utf8')); if(workflow.jobs['route-fixtures'].strategy.matrix.os.length!==2)throw new Error('missing OS matrix'); console.log('UI route workflow YAML valid');
+                                                                           ^
+ReferenceError: Cannot access 'require' before initialization.
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/[eval]:1:72
+
+Bun v1.3.14 (macOS arm64)

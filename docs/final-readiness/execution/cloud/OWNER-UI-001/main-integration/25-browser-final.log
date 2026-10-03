@@ -1,0 +1,26 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+(pass) UI-001 actual navigation in Chromium > unknown single link survives reload and never selects its nested session [5654.59ms]
+(pass) UI-001 actual navigation in Chromium > malformed encoding and legacy lossy degradation retain their own unavailable surface [5991.11ms]
+(pass) UI-001 actual navigation in Chromium > multi-panel restore retains valid sibling, unavailable focus and proportions across reload [4244.65ms]
+(pass) UI-001 actual navigation in Chromium > actual navigate and deep-link callbacks preserve unavailable route and browser back/forward [6026.67ms]
+(pass) UI-001 actual navigation in Chromium > stored action address cannot execute, while explicit action callback still runs once [3578.30ms]
+(pass) UI-001 actual navigation in Chromium > pending search replay retains query and new-panel options [2631.20ms]
+(pass) UI-001 actual navigation in Chromium > latest pending unknown address wins without selecting a previous valid session [2271.24ms]
+(pass) UI-001 actual navigation in Chromium > workspace restoration and history keep each workspace address [4943.72ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts:
+(pass) UI-001 real Chromium component and persistence fixtures > selected source deletion and recreation preserve workspace and entity address [3745.93ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retry recovers an unavailable selected source through the actual click handler [5550.91ms]
+(pass) UI-001 real Chromium component and persistence fixtures > late resource load cannot replace a new missing address [3089.82ms]
+(pass) UI-001 real Chromium component and persistence fixtures > cloud run switch clears previous content while the new callback is pending [2999.61ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retries rejected lazy imports and keeps the selected route [3378.27ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retries rendering failure and a new route clears a previous error [3019.74ms]
+(pass) UI-001 real Chromium component and persistence fixtures > workspace switch cancels a real pending resize timer before it can persist old geometry [2846.21ms]
+(pass) UI-001 real Chromium component and persistence fixtures > actual localStorage persists valid sizes across reload and other windows [6742.20ms]
+
+ 16 pass
+ 0 fail
+ 138 expect() calls
+Ran 16 tests across 2 files. [93.85s]

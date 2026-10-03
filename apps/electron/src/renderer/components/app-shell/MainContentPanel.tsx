@@ -761,6 +761,7 @@ export function MainContentPanel({
         role="status"
         className="flex items-center justify-center h-full text-muted-foreground"
         data-testid="route-unavailable"
+        data-route={navState.navigator === 'unavailable' ? navState.route : undefined}
       >
         {/* Unknown/stale deep links must not masquerade as an unrelated chat route. */}
         <p className="text-sm">{t('common.unavailable')}</p>

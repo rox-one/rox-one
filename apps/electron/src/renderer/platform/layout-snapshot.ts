@@ -177,7 +177,7 @@ export function surfaceTabFromRoute(route: string): SurfaceTabLike | null {
 function decodeLayoutPanelEntries(panelsParam: string): Array<{ route: string; proportion: number }> {
   const entries = decodePanelEntries(panelsParam)
 
-  const hasProportions = entries.some(e => e.proportion > 0)
+  const hasProportions = entries.every(e => e.proportion > 0)
   if (!hasProportions) {
     const equal = 1 / entries.length
     entries.forEach(e => { e.proportion = equal })
@@ -207,7 +207,8 @@ export function snapshotFromUrlSearch(
   let rawEntries: Array<{ route: string; proportion: number }> = []
   if (panelsParam) {
     rawEntries = decodeLayoutPanelEntries(panelsParam)
-  } else {
+  }
+  if (rawEntries.length === 0) {
     const route = params.get('route')
     if (route) rawEntries = [{ route, proportion: 1 }]
   }
