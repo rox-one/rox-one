@@ -187,7 +187,8 @@ describe('kinds: git-npm (gbrain)', () => {
       gitNpmInstallImpl: async (ctx) => {
         installs.push(`${ctx.entry.name}@${ctx.entry.version}`);
         // реальный defaultGitNpmInstall кладёт дерево в versionDir (BUN_INSTALL) — эмулируем факт.
-        fs.mkdirSync(ctx.versionDir, { recursive: true });
+        fs.mkdirSync(path.join(ctx.versionDir, 'bin'), { recursive: true });
+        fs.writeFileSync(path.join(ctx.versionDir, 'bin', process.platform === 'win32' ? 'gbrain.exe' : 'gbrain'), 'fixture', { mode: 0o755 });
       },
     });
 
@@ -212,7 +213,8 @@ describe('kinds: git-npm (gbrain)', () => {
       pathEnv: stubBunPathEnv(),
       gitNpmInstallImpl: async (ctx) => {
         installs++;
-        fs.mkdirSync(ctx.versionDir, { recursive: true });
+        fs.mkdirSync(path.join(ctx.versionDir, 'bin'), { recursive: true });
+        fs.writeFileSync(path.join(ctx.versionDir, 'bin', process.platform === 'win32' ? 'gbrain.exe' : 'gbrain'), 'fixture', { mode: 0o755 });
       },
     });
     const st = await manager.update('gbrain');

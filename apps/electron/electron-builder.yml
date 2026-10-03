@@ -12,7 +12,8 @@ protocols:
 electronVersion: "39.2.7"
 
 # Hook to compile macOS 26+ Liquid Glass icon after packaging
-afterPack: scripts/afterPack.cjs
+afterPack: build/afterPack.cjs
+beforePack: build/beforePack.cjs
 
 directories:
   output: release
@@ -91,7 +92,7 @@ publish:
 asar: false
 
 # OEM pin metadata + G2 record. Kernel binary is staged into resources/oem-kernel
-# (gitignored except .gitkeep); filter allows an empty staging dir.
+# (gitignored except keepers); Windows production beforePack rejects empty/README-only staging.
 extraResources:
   - from: resources/oem-kernel-pin.json
     to: oem-kernel-pin.json
@@ -197,13 +198,24 @@ win:
     - target: nsis
       arch:
         - x64
-  # Use predictable naming: Craft-Agents-x64.exe
+  # Use predictable naming: Rox-x64.exe
   artifactName: "Rox-${arch}.${ext}"
   # Bun and uv stay outside regular files to avoid collector EBUSY locking.
   # Do not add a negative-only files matcher: it implicitly includes **/*.
   # See: https://github.com/electron-userland/electron-builder/issues/8250
   # Copy executables as extraResources; source/destination remain unchanged.
   extraResources:
+    # Offline, checksum-pinned native dependencies and the installer/bootstrap entrypoint.
+    - from: build/windows-dependencies
+      to: windows-dependencies
+      filter:
+        - "manifest.json"
+        - "*.zip"
+        - "*.exe"
+    - from: build/windows
+      to: windows-bootstrap
+      filter:
+        - "*.ps1"
     - from: node_modules/@anthropic-ai/claude-agent-sdk
       to: app/node_modules/@anthropic-ai/claude-agent-sdk
     - from: node_modules/@anthropic-ai/claude-agent-sdk-binary
@@ -216,6 +228,13 @@ win:
       to: vendor/bun/bun.exe
     - from: resources/bin/win32-x64
       to: app/resources/bin/win32-x64
+    # WorkGraph's JavaScript facade and Windows NAPI addon must stay real files.
+    - from: ../../node_modules/@tursodatabase/database
+      to: app/node_modules/@tursodatabase/database
+    - from: ../../node_modules/@tursodatabase/database-common
+      to: app/node_modules/@tursodatabase/database-common
+    - from: ../../node_modules/@tursodatabase/database-win32-x64-msvc
+      to: app/node_modules/@tursodatabase/database-win32-x64-msvc
     # WhatsApp worker subprocess (self-contained; Baileys bundled in).
     - from: ../../packages/messaging-whatsapp-worker/dist/worker.cjs
       to: messaging-whatsapp-worker/worker.cjs
@@ -233,7 +252,13 @@ win:
 nsis:
   # Preserve the existing installation identity when adopting the ROX appId.
   guid: 61dc82ee-e3b9-557b-98c4-20b9178a0f78
-  oneClick: true
+  oneClick: false
+  include: build/windows/installer.nsh
+  allowElevation: false
+  runAfterFinish: false
+  installerLanguages:
+    - ru_RU
+    - en_US
   # Per-user install to %LOCALAPPDATA%\Programs\ (not Program Files).
   # Bun subprocess cannot read/write files in Program Files due to Windows permissions.
   perMachine: false
