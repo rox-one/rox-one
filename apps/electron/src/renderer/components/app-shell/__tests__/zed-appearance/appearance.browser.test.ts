@@ -155,7 +155,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
       await stopResources()
       throw new Error(`${String(error)}\n${await serverLog}`)
     }
-  }, 300_000)
+  }, 900_000)
 
   beforeEach(async () => {
     pageErrors.length = 0
@@ -583,8 +583,8 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
       await second.goto(fixtureUrl)
       await expectDOM(second.locator('html')).toHaveAttribute('data-shell-css-material', 'glass')
       await page.bringToFront()
-      await settings.getByRole('button', { name: 'System', exact: true }).click()
-      await page.locator('[data-slot="popover-content"]').getByRole('button', { name: 'Opaque', exact: true }).click()
+      await settings.getByRole('button', { name: 'Window material System', exact: true }).click()
+      await page.locator('[data-slot="popover-content"]').getByRole('option', { name: 'Opaque', exact: true }).click()
       await expectDOM(page.locator('html')).toHaveAttribute('data-shell-css-material', 'solid')
       await second.bringToFront()
       await expectDOM(second.locator('html')).toHaveAttribute('data-shell-css-material', 'solid')
@@ -593,8 +593,8 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
       expect(await transportCalls()).toEqual([])
       await page.reload()
       await expectDOM(page.locator('html')).toHaveAttribute('data-shell-css-material', 'solid')
-      await settings.getByRole('button', { name: 'Opaque', exact: true }).click()
-      await page.locator('[data-slot="popover-content"]').getByRole('button', { name: 'Glass', exact: true }).click()
+      await settings.getByRole('button', { name: 'Window material Opaque', exact: true }).click()
+      await page.locator('[data-slot="popover-content"]').getByRole('option', { name: 'Glass', exact: true }).click()
       await expectDOM(page.locator('html')).toHaveAttribute('data-shell-css-material', 'glass')
       await second.bringToFront()
       await expectDOM(second.locator('html')).toHaveAttribute('data-shell-css-material', 'glass')

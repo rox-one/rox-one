@@ -1,6 +1,6 @@
 /* =============================================================================
    TITLEBAR MODE PILL — one centered segmented control for every screen mode.
-   A soft glass track holds colored mode icons and a raised active segment.
+   Flat mode tabs share the titlebar material, with one active segment.
    The active segment slides between items without moving their labels.
    High contrast keeps solid fills and removes decorative depth.
    ============================================================================= */
@@ -14,16 +14,9 @@
   height: 30px;
   padding: 2px;
   border: 0;
-  border-radius: var(--radius-control);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
-    inset 0 0 0 1px color-mix(in oklch, var(--foreground) 6%, transparent),
-    0 2px 8px color-mix(in srgb, black 8%, transparent);
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklch, var(--foreground) 4%, transparent),
-    color-mix(in oklch, var(--foreground) 7%, transparent)
-  );
+  border-radius: var(--rox-radius-panel);
+  box-shadow: none;
+  background: transparent;
   font-family: var(--font-sans);
   font-size: var(--chrome-font-size, 12px);
   letter-spacing: var(--chrome-tracking, normal);
@@ -143,9 +136,7 @@ html.dark .rox-mode-pill-item[data-mode="inbox"] { --mode-color: oklch(0.76 0.13
   height: 26px;
   border-radius: var(--radius-control);
   background: var(--element-selected, color-mix(in oklch, var(--accent) 20%, transparent));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 22%, transparent),
-    0 1px 3px color-mix(in srgb, black 9%, transparent);
+  box-shadow: none;
   opacity: 0;
   pointer-events: none;
 }
@@ -193,7 +184,7 @@ html.dark .rox-mode-pill-item[data-mode="inbox"] { --mode-color: oklch(0.76 0.13
 }
 
 html[data-contrast="high"] .rox-mode-pill {
-  background: color-mix(in oklch, var(--foreground) 11%, transparent);
+  background: transparent;
   box-shadow: none;
 }
 

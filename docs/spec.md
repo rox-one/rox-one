@@ -816,3 +816,6 @@ Recover geometry0/4/6, chrome-only material, opaque reading surfaces and three l
 ### Golden per-task form draft recovery — 2026-10-04
 
 Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
+
+
+Zed source addendum frozen at7379efcda6f5806b66672e236a1cc61bdffb4e00 includes compact fixed-content Home widgets, a flat mode switch and inspector tint matching the side panel. Adapt Home grid sizing while preserving current per-widget appearance and saved S/M/L layout ownership. Source release29e86 and installed/native reports remain historical.

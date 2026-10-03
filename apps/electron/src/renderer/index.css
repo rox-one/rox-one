@@ -981,6 +981,7 @@ html {
   --shell-glass-topbar: rgb(from var(--surface-titlebar, var(--surface-elevated)) r g b / 1);
   --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);
   --shell-glass-strip: rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1);
+  --shell-glass-inspector: rgb(from var(--surface-rail) r g b / 1);
   --shell-window-radius: 0px;
 }
 
@@ -997,6 +998,9 @@ html :is(.chrome-rail, .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pa
 }
 html[data-shell-style="zen"]:not([data-scenic]) { --shell-content: var(--canvas); }
 html .chrome-strip { background: var(--shell-glass-strip); }
+/* Inspector is a side panel. A toolbar tint across its entire height turns
+   it into an unintended raised surface beside the work area. */
+html [data-inspector-panel] { --shell-glass-surface: var(--shell-glass-inspector); }
 
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   html[data-shell-runtime="web"]:not([data-shell-css-material="solid"]),
@@ -1004,6 +1008,7 @@ html .chrome-strip { background: var(--shell-glass-strip); }
     --shell-glass-topbar: color-mix(in srgb, rgb(from var(--surface-titlebar, var(--surface-elevated)) r g b / 1) 84%, transparent);
     --shell-glass-rail: color-mix(in srgb, rgb(from var(--surface-rail) r g b / 1) 82%, transparent);
     --shell-glass-strip: color-mix(in srgb, rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) 88%, transparent);
+    --shell-glass-inspector: color-mix(in srgb, rgb(from var(--surface-rail) r g b / 1) 88%, transparent);
   }
   html[data-shell-runtime="web"]:not([data-shell-css-material="solid"]) :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]),
   html[data-shell-runtime="electron"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
@@ -1022,6 +1027,7 @@ html[data-contrast="high"] {
   --shell-glass-topbar: rgb(from var(--surface-titlebar, var(--surface-elevated)) r g b / 1) !important;
   --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1) !important;
   --shell-glass-strip: rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) !important;
+  --shell-glass-inspector: rgb(from var(--surface-rail) r g b / 1) !important;
 }
 html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
   backdrop-filter: none !important;
@@ -1033,6 +1039,7 @@ html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [dat
     --shell-glass-topbar: rgb(from var(--surface-titlebar, var(--surface-elevated)) r g b / 1) !important;
     --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1) !important;
     --shell-glass-strip: rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) !important;
+    --shell-glass-inspector: rgb(from var(--surface-rail) r g b / 1) !important;
   }
   html[data-shell-runtime] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
     backdrop-filter: none !important;
@@ -1044,6 +1051,7 @@ html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [dat
     --shell-glass-topbar: Canvas !important;
     --shell-glass-rail: Canvas !important;
     --shell-glass-strip: Canvas !important;
+    --shell-glass-inspector: Canvas !important;
   }
   html[data-shell-runtime] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
     background: Canvas;
@@ -1312,6 +1320,7 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
     --shell-glass-topbar: var(--surface-titlebar-opaque) !important;
     --shell-glass-rail: var(--navigator-opaque) !important;
     --shell-glass-strip: var(--surface-toolbar-opaque) !important;
+    --shell-glass-inspector: var(--navigator-opaque) !important;
     background: var(--canvas-opaque);
   }
   html[data-shell-runtime] :is(body, #root, [data-shell-role="content"]) {
