@@ -51,7 +51,7 @@ export function useTourSignals(overrides: Partial<TourScope> = {}) {
   }, [inherited, overrides.workspaceId, overrides.panelId, overrides.sessionId, overrides.entityId])
   return useMemo(() => ({
     capture: (): TourObservation | null => runtime?.enabled && scope ? runtime.capture(scope) : null,
-    emit: (observation: TourObservation | null, name: SignalName, level: TourSignal['level'], origin: TourSignal['origin'], eventToken = crypto.randomUUID()) => {
+    emit: (observation: TourObservation | null, name: SignalName, level: TourSignal['level'], origin: TourSignal['origin'], eventToken: string = crypto.randomUUID()) => {
       if (!observation || !runtime?.enabled || (level === 'verified' && origin === 'ui-observation')) return
       runtime.emit({ name, binding: observation.binding, operationToken: observation.operationToken, operationStartedAt: observation.at, eventToken, at: Date.now(), level, origin } as TourSignal)
     },
