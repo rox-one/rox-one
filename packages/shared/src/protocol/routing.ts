@@ -476,6 +476,11 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
 // ---------------------------------------------------------------------------
 
 export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
+  RPC_CHANNELS.workspaceWork.READ,
+  RPC_CHANNELS.workspaceWork.WRITE,
+  RPC_CHANNELS.workspaceWork.DELETE,
+  RPC_CHANNELS.workspaceWork.SNAPSHOT_PROFILE,
+  RPC_CHANNELS.workspaceWork.CHANGED,
   // voice — private actor state and client-supplied audio; OS playback stays on the client
   RPC_CHANNELS.voice.GET,
   RPC_CHANNELS.voice.SAVE,

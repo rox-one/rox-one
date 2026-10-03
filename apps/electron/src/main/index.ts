@@ -542,7 +542,7 @@ app.whenReady().then(async () => {
       showVoiceOverlay()
     })
     registerMeetingCaptureIpc()
-    registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
+    const localMeetings = registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
       getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
       getWorkspaceGenerationForWindow: (id) => windowManager?.getWorkspaceGenerationForWindow(id) ?? null,
     })
@@ -925,6 +925,13 @@ app.whenReady().then(async () => {
             browserPaneManager: browserPaneManager ?? undefined,
             oauthFlowStore: ofs,
             messagingRegistry: messagingHandle.registry,
+            workspaceWorkReferences: {
+              exists: (workspaceId, _root, link) => {
+                if (link.kind !== 'meeting') return false
+                const meeting = localMeetings.read(link.id)
+                return meeting?.workspaceId === workspaceId && (!link.anchor || meeting.actions.some(action => action.id === link.anchor))
+              },
+            },
             ...(!isHeadless ? { browserCredentials } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
             nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },

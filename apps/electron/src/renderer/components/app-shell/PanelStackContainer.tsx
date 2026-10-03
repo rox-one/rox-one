@@ -22,36 +22,21 @@
  * feel rather than a CSS reflow.
  */
 
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { motion } from 'motion/react'
 import { cn } from '@/lib/utils'
-import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
+import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
+import { visibleWorkspacePanels } from './auxiliary-layout'
 import { parseRouteToNavigationState } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
 import { PanelSlot } from './PanelSlot'
-import { PanelResizeSash } from './PanelResizeSash'
-import { CompactPanelTransition } from './CompactPanelTransition'
-import {
-  PANEL_GAP,
-  PANEL_EDGE_INSET,
-  PANEL_STACK_VERTICAL_OVERFLOW,
-  PANEL_STACK_TOP_INSET,
-  PANEL_STACK_BOTTOM_INSET,
-} from './panel-constants'
-
 const SPATIAL_DIRECTION_BY_KEY: Record<string, PanelSpatialDirection> = {
   ArrowLeft: 'left',
   ArrowRight: 'right',
   ArrowUp: 'up',
   ArrowDown: 'down',
 }
-
-/** Spring transition matching AppShell's sidebar/navigator animation */
-const PANEL_SPRING = { type: 'spring' as const, stiffness: 600, damping: 49 }
-
-/** Visual breathing room between the fixed compact TopBar and the first panel. */
-const COMPACT_PANEL_TOP_GAP = 4
 
 interface PanelStackContainerProps {
   sidebarSlot: React.ReactNode
@@ -71,13 +56,24 @@ export function PanelStackContainer({
   navigatorSlot,
   navigatorWidth,
   isSidebarAndNavigatorHidden,
-  isRightSidebarVisible,
   isCompact = false,
-  isResizing,
 }: PanelStackContainerProps) {
   const panelStack = useAtomValue(panelStackAtom)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
   const focusedRoute = useAtomValue(focusedPanelRouteAtom)
+  const primaryId = useAtomValue(primaryPanelIdAtom)
+  const lastTool = useAtomValue(lastAuxiliaryToolAtom)
+  const { t } = useTranslation()
+  const layoutRef = useRef<HTMLDivElement | null>(null)
+  const [availableWidth, setAvailableWidth] = useState(0)
+  useEffect(() => {
+    const element = layoutRef.current
+    if (!element) return
+    const observer = new ResizeObserver(() => setAvailableWidth(element.clientWidth))
+    observer.observe(element)
+    setAvailableWidth(element.clientWidth)
+    return () => observer.disconnect()
+  }, [])
 
   const contentPanels = panelStack
 
@@ -88,13 +84,13 @@ export function PanelStackContainer({
   const isDetailFocused = isDetailNavState(focusedNavState)
   const hasSelectedContent = isCompact && isDetailFocused
 
-  const visiblePanels = isCompact
-    ? contentPanels.filter(e => e.id === focusedPanelId).slice(0, 1)
-    : contentPanels
-
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const prevCountRef = useRef(contentPanels.length)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
   const setFocusedPanel = useSetAtom(focusedPanelIdAtom)
+  const hasTools = contentPanels.some(entry => entry.tool)
+  const visibleIds = new Set(isCompact
+    ? contentPanels.filter(entry => entry.id === focusedPanelId).map(entry => entry.id)
+    : visibleWorkspacePanels(contentPanels, Math.max(0, availableWidth - (isSidebarAndNavigatorHidden ? 0 : sidebarWidth + navigatorWidth)), focusedPanelId, lastTool, primaryId))
+
 
   const focusPanelInDirection = useCallback((direction: PanelSpatialDirection): boolean => {
     const container = scrollRef.current
@@ -161,183 +157,30 @@ export function PanelStackContainer({
     return () => cancelAnimationFrame(frame)
   }, [focusedPanelId, panelStack])
 
-  const hasSidebar = sidebarWidth > 0
-  // Desktop: navigator is shown when AppShell asks for it. Compact: navigator
-  // is always mounted (transform-hidden when detail-focused) so the slide can
-  // animate both slots in lockstep.
-  const hasNavigator = isCompact ? navigatorWidth > 0 : navigatorWidth > 0
-  const isMultiPanel = visiblePanels.length > 1
-  const isLeftEdge = !hasSidebar && !hasNavigator
-
-  // Auto-scroll to newly pushed content panel (desktop multi-panel only).
-  // Compact mode is single-panel so there's nothing to scroll into view.
-  useEffect(() => {
-    if (contentPanels.length > prevCountRef.current && scrollRef.current && !isCompact) {
-      requestAnimationFrame(() => {
-        scrollRef.current?.scrollTo({
-          left: scrollRef.current.scrollWidth,
-          behavior: 'smooth',
-        })
-      })
-    }
-    prevCountRef.current = contentPanels.length
-  }, [contentPanels.length, isCompact])
-
-  const transition = (isResizing || isCompact) ? { duration: 0 } : PANEL_SPRING
-
-  // === COMPACT BRANCH ===
-  // Single-panel layout with iOS-style slide between navigator and detail.
-  // Both stay in the DOM; CompactPanelTransition transforms whichever should be
-  // off-screen. Sidebar is hidden by AppShell in compact mode (sidebarWidth = 0).
-  if (isCompact) {
-    const focusedEntry = visiblePanels[0]
-    return (
-      <div
-        ref={scrollRef}
-        onKeyDown={handleSpatialPanelKeyDown}
-        data-mobile-menu-root="true"
-        data-shell-density="compact"
-        className="flex-1 min-w-0 relative panel-scroll @container/shell"
-        style={{
-          paddingBlock: PANEL_STACK_VERTICAL_OVERFLOW,
-          marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
-          paddingBottom: PANEL_STACK_BOTTOM_INSET,
-          '--compact-panel-stack-top': `${PANEL_STACK_VERTICAL_OVERFLOW + COMPACT_PANEL_TOP_GAP}px`,
-        } as React.CSSProperties}
-      >
-        {/* Navigator slot — full width, slides left to -30% when detail focused. */}
-        {hasNavigator && (
-          <CompactPanelTransition role="navigator" isDetailActive={hasSelectedContent}>
-            <div
-              data-panel-role="navigator"
-              className={cn(
-                'h-full w-full overflow-hidden relative',
-                // One-surface shell: flush pane, no rounded outlined box.
-                'rox-shell-pane',
-              )}
-            >
-              {navigatorSlot}
-            </div>
-          </CompactPanelTransition>
-        )}
-
-        {/* Content slot — full width, slides in from the right when detail focused. */}
-        {focusedEntry && (
-          <CompactPanelTransition role="detail" isDetailActive={hasSelectedContent}>
-            <div className="h-full w-full flex">
-              <PanelSlot
-                key={focusedEntry.id}
-                entry={focusedEntry}
-                isOnly={true}
-                isFocusedPanel={true}
-                isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden}
-                isAtLeftEdge={isLeftEdge}
-                isAtRightEdge={!isRightSidebarVisible}
-                proportion={focusedEntry.proportion}
-                isCompact={true}
-              />
-            </div>
-          </CompactPanelTransition>
-        )}
+  // Tool switching changes visibility, never mounting/ownership of the main object.
+  return <div ref={element => { layoutRef.current = element; scrollRef.current = element }} onKeyDown={handleSpatialPanelKeyDown} className="flex min-w-0 flex-1 flex-col" data-workspace-tool-layout>
+      <div hidden={!hasTools} role="tablist" aria-label={t('navigation.openPanels')} className={cn("shrink-0 gap-1 overflow-x-auto border-b border-foreground/5 px-2 py-1", hasTools ? "flex" : "hidden")}>
+        {contentPanels.map(entry => <button key={entry.id} type="button" role="tab"
+          aria-selected={entry.id === focusedPanelId} onClick={() => setFocusedPanel(entry.id)}
+          className={`whitespace-nowrap rounded px-3 py-1 text-xs ${entry.id === focusedPanelId ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}>
+          {entry.tool ? t(`navigation.tools.${entry.tool}`) : t('navigation.mainSurface')}
+        </button>)}
       </div>
-    )
-  }
-
-  // === DESKTOP BRANCH ===
-  // Same flex-row layout as before; behavior is unchanged.
-  return (
-    <div
-      ref={scrollRef}
-      onKeyDown={handleSpatialPanelKeyDown}
-      data-mobile-menu-root="true"
-      data-shell-density={isCompact ? 'compact' : 'regular'}
-      className="flex-1 min-w-0 flex relative z-panel panel-scroll @container/shell"
-      style={{
-        overflowX: 'auto',
-        overflowY: 'hidden',
-        paddingBlock: PANEL_STACK_VERTICAL_OVERFLOW,
-        paddingTop: PANEL_STACK_TOP_INSET,
-        marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
-        paddingBottom: PANEL_STACK_BOTTOM_INSET,
-        paddingRight: PANEL_EDGE_INSET,
-        marginRight: -PANEL_EDGE_INSET,
-      }}
-    >
-      <motion.div
-        className="flex h-full"
-        initial={false}
-        animate={{ paddingLeft: PANEL_EDGE_INSET }}
-        transition={transition}
-        style={{ gap: PANEL_GAP, flexGrow: 1, minWidth: 0 }}
-      >
-        {/* === SIDEBAR SLOT === */}
-        <motion.div
-          data-panel-role="sidebar"
-          initial={false}
-          animate={{
-            width: hasSidebar ? sidebarWidth : 0,
-            marginRight: hasSidebar ? 0 : -PANEL_GAP,
-            opacity: hasSidebar ? 1 : 0,
-          }}
-          transition={transition}
-          className={cn(
-            'h-full relative shrink-0 overflow-hidden',
-            // One-surface shell: flush pane + a single hairline divider.
-            'rox-shell-pane',
-            hasSidebar && 'rox-shell-divider-r',
-          )}
-        >
-          <div className="h-full" style={{ width: sidebarWidth }}>
-            {sidebarSlot}
-          </div>
-        </motion.div>
-
-        {/* === NAVIGATOR SLOT === */}
-        <motion.div
-          data-panel-role="navigator"
-          initial={false}
-          animate={{
-            width: hasNavigator ? navigatorWidth : 0,
-            marginRight: hasNavigator ? 0 : -PANEL_GAP,
-            opacity: hasNavigator ? 1 : 0,
-          }}
-          transition={transition}
-          className={cn(
-            'h-full overflow-hidden relative shrink-0 z-[2]',
-            'rox-shell-pane',
-            hasNavigator && 'rox-shell-divider-r',
-          )}
-        >
-          <div className="h-full" style={{ width: navigatorWidth }}>
-            {navigatorSlot}
-          </div>
-        </motion.div>
-
-        {/* === CONTENT PANELS WITH SASHES === */}
-        {visiblePanels.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center" />
-        ) : (
-          visiblePanels.map((entry, index) => (
-            <PanelSlot
-              key={entry.id}
-              entry={entry}
-              isOnly={visiblePanels.length === 1}
-              isFocusedPanel={isMultiPanel ? entry.id === focusedPanelId : true}
-              isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden}
-              isAtLeftEdge={index === 0 && isLeftEdge}
-              isAtRightEdge={index === visiblePanels.length - 1 && !isRightSidebarVisible}
-              proportion={entry.proportion}
-              isCompact={false}
-              sash={index > 0 ? (
-                <PanelResizeSash
-                  leftIndex={index - 1}
-                  rightIndex={index}
-                />
-              ) : undefined}
-            />
-          ))
-        )}
-      </motion.div>
+      <div className="flex min-h-0 min-w-0 flex-1">
+        {!isCompact && !isSidebarAndNavigatorHidden && <>
+          <div className="h-full shrink-0 overflow-hidden border-r border-foreground/5" style={{ width: sidebarWidth }}>{sidebarSlot}</div>
+          {navigatorSlot && <div className="h-full shrink-0 overflow-hidden border-r border-foreground/5" style={{ width: navigatorWidth }}>{navigatorSlot}</div>}
+        </>}
+        {isCompact && !hasTools && navigatorSlot && <div hidden={hasSelectedContent} className={cn("h-full min-w-0 flex-1", hasSelectedContent && "hidden")}>{navigatorSlot}</div>}
+        <div className={cn("min-w-0 flex-1", isCompact && !hasTools && navigatorSlot && !hasSelectedContent ? "hidden" : "flex")}>
+          {contentPanels.map(entry => <div key={entry.id} hidden={!visibleIds.has(entry.id)}
+            className={cn('h-full min-w-0', visibleIds.has(entry.id) ? 'flex' : 'hidden')}
+            style={{ flex: entry.tool && visibleIds.size > 1 ? '0 0 360px' : '1 1 0' }}>
+            <PanelSlot entry={entry} isOnly={true} isFocusedPanel={entry.id === focusedPanelId}
+              isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden} isAtLeftEdge={!entry.tool}
+              isAtRightEdge={true} proportion={entry.proportion} isCompact={isCompact} />
+          </div>)}
+        </div>
+      </div>
     </div>
-  )
 }

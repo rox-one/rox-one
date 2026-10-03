@@ -36,7 +36,7 @@ export const SESSION_PERSISTENT_FIELDS = [
   // Read tracking
   'lastReadMessageId', 'hasUnread',
   // Config
-  'enabledSourceSlugs', 'permissionMode', 'previousPermissionMode', 'memoryMode', 'workingDirectory',
+  'enabledSourceSlugs', 'agentProfileSnapshot', 'permissionMode', 'previousPermissionMode', 'memoryMode', 'workingDirectory',
   // Model/Connection
   'model', 'llmConnection', 'connectionLocked', 'thinkingLevel',
   // Sharing
@@ -116,6 +116,7 @@ export type { StoredMessage } from '@rox/core/types';
  * Session configuration (persisted metadata)
  */
 export interface SessionConfig {
+  agentProfileSnapshot?: import('../workspace-work/types.ts').AgentProfileSnapshot;
   id: string;
   /** SDK session ID (captured after first message) */
   sdkSessionId?: string;
@@ -227,7 +228,7 @@ export interface SessionConfig {
   /** Whether the transferred-session summary has already been injected. */
   transferredSessionSummaryApplied?: boolean;
   /** Metadata for sessions created by automations */
-  triggeredBy?: { automationName?: string; event?: string; timestamp?: number };
+  triggeredBy?: { automationName?: string; event?: string; timestamp?: number; context?: import('../automations/types.ts').AutomationContextReference };
   /** Workspace-scoped project id this session belongs to (undefined = unbound). */
   projectId?: string;
   /** Parent session id — conversation lineage only (ADR-0001). Do not add further user-task fields to Session. */
@@ -267,6 +268,7 @@ export interface StoredSession extends SessionConfig {
  * This enables fast session listing without parsing message content.
  */
 export interface SessionHeader {
+  agentProfileSnapshot?: import('../workspace-work/types.ts').AgentProfileSnapshot;
   id: string;
   /** SDK session ID (captured after first message) */
   sdkSessionId?: string;
@@ -347,7 +349,7 @@ export interface SessionHeader {
   /** Whether the transferred-session summary has already been injected. */
   transferredSessionSummaryApplied?: boolean;
   /** Metadata for sessions created by automations */
-  triggeredBy?: { automationName?: string; event?: string; timestamp?: number };
+  triggeredBy?: { automationName?: string; event?: string; timestamp?: number; context?: import('../automations/types.ts').AutomationContextReference };
   /** Workspace-scoped project id this session belongs to (undefined = unbound). */
   projectId?: string;
   /** Parent session id — conversation lineage only (ADR-0001). Do not add further user-task fields to Session. */
@@ -393,6 +395,7 @@ export interface SessionHeader {
  * Session metadata (lightweight, for lists)
  */
 export interface SessionMetadata {
+  agentProfileSnapshot?: import('../workspace-work/types.ts').AgentProfileSnapshot;
   id: string;
   workspaceRootPath: string;
   name?: string;

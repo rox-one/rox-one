@@ -1,11 +1,14 @@
 import * as React from 'react'
 import { PanelsTopLeft, Plus, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtom, useAtomValue, useStore } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
+import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
+import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
+import { pagesContextFilter, pagesCreationProject, pagesFilterContextKeyAtom, pagesProjectContext } from '@/lib/pages-project-context'
 import { pagesAtom, pagesProjectFilterAtom, PAGES_UNASSIGNED_PROJECT } from '@/atoms/pages'
 import { projectsAtom } from '@/atoms/projects'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
@@ -23,32 +26,34 @@ import type { LoadedPage } from '@rox/shared/pages/types'
  * and the New Page action; tiles open the embedded page render.
  */
 export function PagesHome() {
-  const { activeWorkspaceId } = useAppShellContext()
+  const { activeWorkspaceId, onCreateSession, onInputChange, panelId } = useAppShellContext()
+  const store = useStore()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const pages = useAtomValue(pagesAtom)
   const projects = useAtomValue(projectsAtom)
   const [projectFilter, setProjectFilter] = useAtom(pagesProjectFilterAtom)
+  const [workspaceProjects, setWorkspaceProjects] = useAtom(workspaceProjectContextsAtom)
+  const [syncedContextKey, setSyncedContextKey] = useAtom(pagesFilterContextKeyAtom)
+  const selectedProjectId = activeWorkspaceId ? workspaceProjects[activeWorkspaceId] ?? null : null
   const [pendingDelete, setPendingDelete] = React.useState<LoadedPage | null>(null)
 
-  // Keep the (module-global) filter scoped to the current workspace + live
-  // projects: clear on workspace switch, prune ids whose project no longer
-  // exists. The Unassigned sentinel always survives pruning.
-  const prevWorkspaceRef = React.useRef(activeWorkspaceId)
+  // External workspace/project choices update this library without navigating
+  // an open page. Keep advanced multi/unassigned filters when echoing our own change.
+  const projectContextKey = JSON.stringify([activeWorkspaceId, selectedProjectId])
   React.useEffect(() => {
-    if (prevWorkspaceRef.current !== activeWorkspaceId) {
-      prevWorkspaceRef.current = activeWorkspaceId
-      setProjectFilter(prev => (prev.length ? [] : prev))
-      return
-    }
-    setProjectFilter(prev => {
-      if (prev.length === 0) return prev
-      const live = prev.filter(
-        id => id === PAGES_UNASSIGNED_PROJECT || projects.some(p => p.config.id === id),
-      )
-      return live.length === prev.length ? prev : live
-    })
-  }, [activeWorkspaceId, projects, setProjectFilter])
+    if (syncedContextKey === projectContextKey) return
+    setSyncedContextKey(projectContextKey)
+    setProjectFilter(pagesContextFilter(selectedProjectId))
+  }, [projectContextKey, selectedProjectId, syncedContextKey, setSyncedContextKey, setProjectFilter])
+
+  const changeProjectFilter = React.useCallback((ids: string[]) => {
+    setProjectFilter(ids)
+    if (!activeWorkspaceId) return
+    const projectId = pagesProjectContext(ids, PAGES_UNASSIGNED_PROJECT)
+    setSyncedContextKey(JSON.stringify([activeWorkspaceId, projectId]))
+    setWorkspaceProjects(current => ({ ...current, [activeWorkspaceId]: projectId }))
+  }, [activeWorkspaceId, setProjectFilter, setSyncedContextKey, setWorkspaceProjects])
 
   const projectOptions = React.useMemo<ProjectFilterOption[]>(
     () => projects.map(p => ({ id: p.config.id, name: p.config.name, color: p.config.color })),
@@ -85,7 +90,11 @@ export function PagesHome() {
   // visible under an active filter — mirrors the board's create behavior.
   const handleCreatePage = React.useCallback(async () => {
     if (!activeWorkspaceId) return
-    const boundProjectId = projectFilter.find(id => id !== PAGES_UNASSIGNED_PROJECT)
+    const boundProjectId = pagesCreationProject(projectFilter, projects.map(project => project.config.id))
+    if (projectFilter.some(id => id !== PAGES_UNASSIGNED_PROJECT) && !boundProjectId) {
+      toast.error(t('navigation.notes.scopeCreateUnavailable'))
+      return
+    }
     try {
       const created = await window.electronAPI.createPage(activeWorkspaceId, {
         name: t('pages.newPage'),
@@ -98,11 +107,27 @@ export function PagesHome() {
         description: err instanceof Error ? err.message : String(err),
       })
     }
-  }, [activeWorkspaceId, projectFilter, t, navigate])
+  }, [activeWorkspaceId, projectFilter, projects, t, navigate])
 
-  const handleAskAgent = React.useCallback(() => {
-    navigate(routes.action.newSession({ input: t('pages.askAgentPrompt') }))
-  }, [navigate, t])
+  const [askingAgent, setAskingAgent] = React.useState(false)
+  const handleAskAgent = React.useCallback(async () => {
+    if (!activeWorkspaceId || askingAgent) return
+    const projectId = pagesCreationProject(projectFilter, projects.map(project => project.config.id)) ?? selectedProjectId ?? undefined
+    if (projectId && !projects.some(project => project.config.id === projectId)) {
+      toast.error(t('navigation.notes.scopeCreateUnavailable'))
+      return
+    }
+    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId, tool: 'agent', originPanelId: panelId })
+    if (!intent) return
+    setAskingAgent(true)
+    try {
+      const created = await onCreateSession(activeWorkspaceId, { projectId })
+      onInputChange(created.id, t('pages.askAgentPrompt'))
+      openWorkspaceTool(store, intent, routes.view.allSessions(created.id))
+    } catch (error) {
+      toast.error(t('common.error'), { description: error instanceof Error ? error.message : String(error) })
+    } finally { setAskingAgent(false) }
+  }, [activeWorkspaceId, askingAgent, projectFilter, projects, selectedProjectId, store, panelId, onCreateSession, onInputChange, t])
 
   const handleConfirmDelete = React.useCallback(async () => {
     if (!activeWorkspaceId || !pendingDelete) return
@@ -135,7 +160,7 @@ export function PagesHome() {
             <ProjectMultiSelectFilter
               projects={projectOptions}
               value={projectFilter}
-              onChange={setProjectFilter}
+              onChange={changeProjectFilter}
               unassignedId={PAGES_UNASSIGNED_PROJECT}
             />
           )}
@@ -158,7 +183,8 @@ export function PagesHome() {
             description={t('pages.emptyDescription')}
           >
             <button
-              onClick={handleAskAgent}
+              onClick={() => { void handleAskAgent() }}
+              disabled={askingAgent}
               className="inline-flex h-7 items-center gap-1.5 rounded-[8px] bg-foreground/[0.02] px-3 text-xs font-medium shadow-minimal transition-colors hover:bg-foreground/[0.05]"
             >
               <Sparkles className="h-3.5 w-3.5" /> {t('pages.askAgent')}

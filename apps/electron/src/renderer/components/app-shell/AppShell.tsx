@@ -2,7 +2,7 @@ import * as React from "react"
 import { useTranslation, Trans } from "react-i18next"
 import { isInternalAgentSession } from "@rox/shared/sessions/internal-prompts"
 import { useRef, useState, useEffect, useCallback, useMemo } from "react"
-import { useAtomValue, useStore } from "jotai"
+import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai"
 import { motion, AnimatePresence } from "motion/react"
 import {
   Archive,
@@ -36,6 +36,9 @@ import {
 // SessionStatusIcons no longer used - icons come from dynamic sessionStatuses
 import { SourceAvatar } from "@/components/ui/source-avatar"
 import { TopBar } from "./TopBar"
+import { SurfaceNavigationRail, type PrimarySurfaceId } from './SurfaceNavigationRail'
+import { openAuxiliaryPanelAtom, closePanelAtom, primaryPanelRouteAtom, type AuxiliaryTool } from '@/atoms/panel-stack'
+import { workspaceProjectContextsAtom, activeWorkspaceContextAtom } from '@/atoms/workspace-context'
 import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { McpIcon } from "../icons/McpIcon"
 import { cn } from "@/lib/utils"
@@ -75,8 +78,6 @@ import type { ChatDisplayHandle } from "./ChatDisplay"
 import { LeftSidebar, type LinkItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
-import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
-import { visibleExtraScreens } from "@/pages/extra-screens/registry"
 import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
 import { SidebarChrome } from "./SidebarChrome"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
@@ -115,7 +116,6 @@ import { useAction, useActionLabel } from "@/actions"
 import { useFocusZone } from "@/hooks/keyboard"
 import { useFocusContext } from "@/context/FocusContext"
 import { getSessionTitle } from "@/utils/session"
-import { useSetAtom } from "jotai"
 import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSource, LoadedSkill, PermissionMode, SourceFilter, AutomationFilter } from "../../../shared/types"
 import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/atoms/sessions"
 import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
@@ -320,14 +320,13 @@ function AppShellContent({
   const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 0) + PANEL_EDGE_INSET + 4
   // WorkspaceSurfaceHost suppresses its ActivityRail while AppShell owns primary navigation.
   // Keep its geometric offset at zero regardless of experimental chrome flags.
-  const unifiedRailOffset = 0 // AppShell owns the single primary sidebar.
+  const unifiedRailOffset = 56 // Permanent surface and tool rail.
   // Preserve the saved expanded-label preference across every route. The compact
   // icon rail remains available when labels are collapsed; focus mode hides both.
   const isSidebarVisible = storedSidebarVisible
   const isSidebarCollapsed = !isSidebarVisible
   const isPrimarySidebarRendered = true
   const [shellSidebarSlot, setShellSidebarSlot] = useState<HTMLElement | null>(null)
-  const extraScreens = visibleExtraScreens(useAtomValue(enabledExtraScreenIdsAtom))
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
     return loadShellLayout(null).sidebarWidth
   })
@@ -521,6 +520,22 @@ function AppShellContent({
   // UNIFIED NAVIGATION STATE - single source of truth from NavigationContext
   // Derived from focused panel's route — all panels are peers
   const navState = useNavigationState()
+  const [projectContexts, setProjectContexts] = useAtom(workspaceProjectContextsAtom)
+  const selectedProjectId = activeWorkspaceId ? projectContexts[activeWorkspaceId] ?? null : null
+  const liveWorkspace = useRef(activeWorkspaceId)
+  liveWorkspace.current = activeWorkspaceId
+  const surfaceRoutes = {
+    inbox: routes.view.inbox(), feed: routes.view.feed(), plan: routes.view.meetings(),
+    projects: routes.view.projects(), pages: routes.view.pages(), dialogues: routes.view.allSessions(),
+    agents: routes.view.screen('agents'),
+  }
+  const selectedSurface: PrimarySurfaceId = navState.navigator === 'inbox' ? 'inbox'
+    : navState.navigator === 'feed' ? 'feed' : navState.navigator === 'meetings' ? 'plan'
+    : navState.navigator === 'projects' ? 'projects'
+    : navState.navigator === 'pages' || navState.navigator === 'notes' ? 'pages'
+    : navState.navigator === 'screen' && navState.screen === 'agents' ? 'agents'
+    : navState.navigator === 'screen' && ['dossier', 'decisions'].includes(navState.screen) ? 'plan' : 'dialogues'
+  const [openingAgent, setOpeningAgent] = useState(false)
   const contextualSidebarKey = navState.navigator === 'screen' ? `screen:${navState.screen}` : navState.navigator
   const [applicationSectionsOpenFor, setApplicationSectionsOpenFor] = useState<string | null>(null)
   const hasContextualSidebar = isInboxNavigation(navState) || isFeedNavigation(navState) || isNotesNavigation(navState)
@@ -533,6 +548,31 @@ function AppShellContent({
   }, [contextualSidebarKey])
 
   const store = useStore()
+  useEffect(() => { store.set(activeWorkspaceContextAtom, activeWorkspaceId) }, [store, activeWorkspaceId])
+  const toggleTool = async (tool: AuxiliaryTool) => {
+    const existing = store.get(panelStackAtom).find(entry => entry.tool === tool)
+    if (existing) { store.set(closePanelAtom, existing.id); return }
+    if (!activeWorkspaceId) return
+    const context = { workspaceId: activeWorkspaceId, projectId: selectedProjectId ?? undefined,
+      route: (store.get(primaryPanelRouteAtom) ?? routes.view.inbox()) as import('../../../shared/routes').ViewRoute }
+    let route: import('../../../shared/routes').ViewRoute = tool === 'tasks' ? routes.view.tasks() : tool === 'memory' ? routes.view.memory() : routes.view.automations()
+    if (tool === 'agent') {
+      if (openingAgent) return
+      setOpeningAgent(true)
+      try {
+        const sessions = Array.from(store.get(sessionMetaMapAtom).values())
+          .filter(meta => meta.workspaceId === activeWorkspaceId && (meta.projectId ?? null) === selectedProjectId && !meta.isArchived && !isInternalAgentSession(meta))
+          .sort((a, b) => (b.lastMessageAt ?? b.createdAt ?? 0) - (a.lastMessageAt ?? a.createdAt ?? 0))
+        const previous = sessions[0]
+        const created = previous ?? await contextValue.onCreateSession(activeWorkspaceId, { projectId: selectedProjectId ?? undefined })
+        if (liveWorkspace.current !== context.workspaceId || store.get(primaryPanelRouteAtom) !== context.route
+          || (store.get(workspaceProjectContextsAtom)[context.workspaceId] ?? null) !== (context.projectId ?? null)) return
+        route = routes.view.allSessions(created.id)
+      } catch (error) { toast.error(error instanceof Error ? error.message : t('common.error')); return }
+      finally { setOpeningAgent(false) }
+    }
+    store.set(openAuxiliaryPanelAtom, { tool, route: route as import('../../../shared/routes').ViewRoute, context })
+  }
   const panelStack = useAtomValue(panelStackAtom)
   const panelCount = useAtomValue(panelCountAtom)
   const focusedSessionId = useAtomValue(focusedSessionIdAtom)
@@ -648,6 +688,12 @@ function AppShellContent({
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const setCollectionFilterKey = useSetAtom(collectionFilterKeyAtom)
+  useEffect(() => {
+    if (!isSessionsNavigation(navState)) return
+    const current = store.get(collectionFiltersAtom)
+    const projectId = selectedProjectId ? [selectedProjectId] : undefined
+    if (JSON.stringify(current.projectId) !== JSON.stringify(projectId)) setCollectionFilters({ ...current, projectId })
+  }, [selectedProjectId, sessionFilterKey, store, setCollectionFilters])
   const prevKeyRef = React.useRef(sessionFilterKey ?? 'allSessions')
   const skipRailChipClearRef = React.useRef(false)
 
@@ -2686,27 +2732,20 @@ function AppShellContent({
       onClick: () => handleSettingsClick(),
     },
   ]
-  const experimentalLinks: SidebarLinkItem[] = extraScreens.map(screen => ({
-    id: `nav:screen:${screen.id}`,
-    title: t(screen.labelKey), icon: screen.icon,
-    variant: navState.navigator === 'screen' && navState.screen === screen.id ? 'default' : 'ghost',
-    onClick: () => navigate(routes.view.screen(screen.id)),
-    iconColor: screen.id === 'radar' ? '#38bdf8' : screen.id === 'focus' ? '#34d399' : '#c084fc',
-  }))
-
   const globalSidebarNavigation = (
     <>
       <LeftSidebar
         isCollapsed={isSidebarCollapsed}
         onExpand={handleExpandNavigation}
-        links={sidebarLinks}
+        links={sidebarLinks.filter(link => {
+          if (isSessionsNavigation(navState)) return ['nav:allSessions', 'nav:labels', 'nav:sources', 'nav:skills'].includes(link.id)
+          if (isPagesNavigation(navState) || isNotesNavigation(navState)) return ['nav:pages', 'nav:notes'].includes(link.id)
+          if (isProjectsNavigation(navState)) return link.id === 'nav:projects'
+          if (isSourcesNavigation(navState)) return link.id === 'nav:sources'
+          if (isSkillsNavigation(navState)) return link.id === 'nav:skills'
+          return false
+        })}
       />
-      {experimentalLinks.length > 0 && (
-        <section className="mx-1 mt-5 rounded-xl bg-foreground/[0.025] py-2" aria-label={t('sidebar.experimentalFeatures')}>
-          {!isSidebarCollapsed && <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/40">{t('sidebar.experimentalFeatures')}</div>}
-          <LeftSidebar isCollapsed={isSidebarCollapsed} onExpand={handleExpandNavigation} links={experimentalLinks} />
-        </section>
-      )}
     </>
   )
   return (
@@ -2742,13 +2781,14 @@ function AppShellContent({
           isCompactChatMode={isAutoCompact && isSessionsNavigation(navState) && !!navState.details}
           isCompactSettingsMode={isWebUI && isAutoCompact && isSettingsNavigation(navState)}
           isCompact={isAutoCompact}
-          showWorkspaceSelector={showTopBarWorkspaceSelector || (isAutoCompact && !isWebUI)}
+          showWorkspaceSelector={true}
+          surfaceNavigationActive={true}
           leftInset={topBarLeftInset}
         />
 
         {isWebUI && <WebBrowserPanel open={webBrowserOpen} onClose={() => setWebBrowserOpen(false)} />}
 
-      {isAutoCompact && !isSidebarAndNavigatorHidden && (
+      {false && isAutoCompact && !isSidebarAndNavigatorHidden && (
         <div data-compact-profile className="chrome-rail fixed bottom-1 left-1 z-panel flex h-11 items-center gap-1 rounded-xl px-1" data-shell-role="chrome">
           <ProfileStrip data={profileStripWithSpend} compact onClick={() => handleSettingsClick('account')} className="w-10 p-0.5" />
           <button type="button" onClick={() => handleSettingsClick()} aria-label={t('sidebar.settings')} title={t('sidebar.settings')} className="grid size-9 place-items-center rounded-lg text-foreground/60 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
@@ -2771,6 +2811,13 @@ function AppShellContent({
         }}
       >
         {/* AppShell owns primary navigation; the host keeps optional workspace chrome. */}
+        <SurfaceNavigationRail className="w-14 shrink-0 border-r border-foreground/5" compact={isAutoCompact}
+          selectedSurface={isSettingsNavigation(navState) ? null : selectedSurface}
+          selectedTools={panelStack.flatMap(entry => entry.tool ? [entry.tool] : [])}
+          onSelectSurface={surface => { navigate(surfaceRoutes[surface], { primary: true }) }}
+          onToggleTool={tool => { void toggleTool(tool) }}
+          settingsSelected={isSettingsNavigation(navState)}
+          onSettings={() => navigate(routes.view.settings(), { primary: true })} />
         <WorkspaceSurfaceHost operatorCapability={workbenchOperatorCapability} ownsPrimaryNavigation>
           <PanelStackContainer
           sidebarSlot={
@@ -2782,6 +2829,14 @@ function AppShellContent({
               data-focus-zone="sidebar"
               tabIndex={sidebarFocused ? 0 : -1}
               onKeyDown={handleSidebarTreeKeyDown}
+              onPointerDownCapture={() => {
+                const main = store.get(panelStackAtom).find(panel => !panel.tool)
+                if (main) store.set(focusedPanelIdAtom, main.id)
+              }}
+              onFocusCapture={() => {
+                const main = store.get(panelStackAtom).find(panel => !panel.tool)
+                if (main) store.set(focusedPanelIdAtom, main.id)
+              }}
             >
             <div className="flex h-full flex-col select-none">
               {/* Sidebar Top Section */}
@@ -2789,23 +2844,23 @@ function AppShellContent({
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
                 {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
                 <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
+                {activeWorkspaceId && !isSidebarCollapsed && (
+                  <div className="px-3 py-2 border-b border-foreground/5">
+                    <label className="block text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
+                    <select id="workspace-project-context" value={selectedProjectId ?? ''}
+                      className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+                      onChange={event => setProjectContexts(previous => ({ ...previous, [activeWorkspaceId]: event.target.value || null }))}>
+                      <option value="">{t('navigation.allProjects')}</option>
+                      {projects.map(project => <option key={project.config.id} value={project.config.id}>{project.config.name}</option>)}
+                    </select>
+                  </div>
+                )}
                 <div ref={setShellSidebarSlot} hidden={isSidebarCollapsed} data-primary-sidebar-context className="mb-2 border-b border-foreground/5 empty:hidden">
                   {isSettingsNavigation(navState) && !isAutoCompact && (
                     <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />
                   )}
                 </div>
-                {hasContextualSidebar && !isSidebarCollapsed ? (
-                  <details className="group/application-sections mx-1 mt-2 rounded-xl bg-foreground/[0.025]" data-application-sections
-                    open={applicationSectionsOpenFor === contextualSidebarKey}
-                    onToggle={event => setApplicationSectionsOpenFor(event.currentTarget.open ? contextualSidebarKey : null)}>
-                    <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-2.5 text-[11px] font-semibold text-foreground/50 outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-                      <Layers className="size-3.5 text-accent" aria-hidden />
-                      <span className="min-w-0 flex-1 truncate">{t('sidebar.applicationSections')}</span>
-                      <ChevronRight className="size-3.5 transition-transform group-open/application-sections:rotate-90 motion-reduce:transition-none" aria-hidden />
-                    </summary>
-                    {globalSidebarNavigation}
-                  </details>
-                ) : globalSidebarNavigation}
+                {globalSidebarNavigation}
                 </div>
                 <div className="shrink-0">
                   <SidebarChrome
@@ -2815,7 +2870,7 @@ function AppShellContent({
                     onPromoCta={handleMemoryClick}
                     collapsed={isSidebarCollapsed}
                     onToggleSidebar={handleToggleSidebar}
-                    onOpenSettings={() => handleSettingsClick()}
+
                   />
                 </div>
               </div>

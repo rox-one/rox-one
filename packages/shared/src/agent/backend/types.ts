@@ -168,6 +168,9 @@ export interface BackendHostRuntimeContext {
  * Provider-specific runtime details are resolved by backend drivers internally.
  */
 export interface CoreBackendConfig {
+  /** Frozen server-owned profile; legacy unbound sessions omit this capability ceiling. */
+  agentProfileSnapshot?: import('../../workspace-work/types.ts').AgentProfileSnapshot;
+  allowedSkillSlugs?: readonly string[];
   /** Workspace configuration */
   workspace: Workspace;
 

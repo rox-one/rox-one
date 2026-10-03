@@ -155,7 +155,7 @@ export function AutomationsListPanel({
     }
     // Enabled first, then by name — stable, so rows don't jump after each run.
     for (const g of AUTOMATION_GROUPS) {
-      byGroup[g].sort((a, b) => Number(b.enabled) - Number(a.enabled) || a.name.localeCompare(b.name, locale))
+      byGroup[g].sort((a, b) => Number(b.enabled && !b.contextPause) - Number(a.enabled && !a.contextPause) || a.name.localeCompare(b.name, locale))
     }
     return byGroup
   }, [automations, query, onlyGroup, t, locale])
@@ -269,7 +269,7 @@ export function AutomationsListPanel({
             AUTOMATION_GROUPS.map((group) => {
               const items = groups[group]
               if (items.length === 0) return null
-              const enabledCount = items.filter((a) => a.enabled).length
+              const enabledCount = items.filter((a) => a.enabled && !a.contextPause).length
               return (
                 <section key={group} aria-label={t(GROUP_TITLE_KEYS[group])} data-group={group}>
                   <div className="rox-autom-group-title">
@@ -288,7 +288,7 @@ export function AutomationsListPanel({
                         tabIndex={0}
                         aria-selected={selected}
                         data-automation-id={automation.id}
-                        className={cn('rox-autom-row automation-item', !automation.enabled && 'is-off', inMulti && 'is-multi')}
+                        className={cn('rox-autom-row automation-item', (!automation.enabled || automation.contextPause) && 'is-off', inMulti && 'is-multi')}
                         onMouseDown={(e) => handleRowMouseDown(e, automation.id)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
@@ -299,6 +299,9 @@ export function AutomationsListPanel({
                       >
                         <div className="rox-autom-row-main">
                           <span className="rox-autom-row-name">{automation.name}</span>
+                          {automation.contextPause && <span role="status" className="truncate text-[11px] text-amber-600" title={t(automation.contextPause.reason === 'target-deleted' ? 'automations.context.pausedDeleted' : 'automations.context.pausedOutOfScope')}>
+                            {t(automation.contextPause.reason === 'target-deleted' ? 'automations.context.pausedDeleted' : 'automations.context.pausedOutOfScope')}
+                          </span>}
                           <span className="rox-autom-row-sub">{describeTrigger(automation, t, locale)}</span>
                         </div>
                         <LastRunMeta automation={automation} />

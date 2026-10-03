@@ -61,6 +61,8 @@ export interface AccountMenuProps {
    * compact false → DropdownMenu (desktop topbar).
    */
   compact?: boolean
+  /** Custom logo trigger; creation, reconnection and identity authority stay in this menu. */
+  trigger?: React.ReactElement
   workspaces: Workspace[]
   activeWorkspaceId: string | null
   onSelectWorkspace: (workspaceId: string, openInNewWindow?: boolean) => void | Promise<void>
@@ -90,6 +92,7 @@ const drawerRowClass =
 
 export function AccountMenu({
   compact = false,
+  trigger,
   workspaces,
   activeWorkspaceId,
   onSelectWorkspace,
@@ -394,7 +397,7 @@ export function AccountMenu({
         {creationScreen}
 
         <Drawer nested open={open} onOpenChange={handleOpenChange}>
-          <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
+          <DrawerTrigger asChild>{trigger ?? triggerButton}</DrawerTrigger>
 
           <DrawerContent className="max-h-[85vh]">
             <DrawerHeader>
@@ -572,7 +575,7 @@ export function AccountMenu({
       {creationScreen}
 
       <DropdownMenu open={open} onOpenChange={handleOpenChange}>
-        <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>{trigger ?? triggerButton}</DropdownMenuTrigger>
 
         <StyledDropdownMenuContent align="start" sideOffset={6} minWidth="min-w-72">
           {sectionLabel(t('accountMenu.section.profile'))}

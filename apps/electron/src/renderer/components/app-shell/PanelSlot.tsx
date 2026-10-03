@@ -15,15 +15,20 @@
 
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSetAtom } from 'jotai'
+import { useSetAtom, useAtomValue } from 'jotai'
 import { cn } from '@/lib/utils'
 import { X, ChevronLeft } from 'lucide-react'
 import { parseRouteToNavigationState } from '../../../shared/route-parser'
-import { closePanelAtom, focusedPanelIdAtom, type PanelStackEntry } from '@/atoms/panel-stack'
+import { closePanelAtom, focusedPanelIdAtom, primaryPanelIdAtom, type PanelStackEntry } from '@/atoms/panel-stack'
 import { useAppShellContext, AppShellProvider } from '@/context/AppShellContext'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
 import { MainContentPanel } from './MainContentPanel'
 import { PANEL_MIN_WIDTH } from './panel-constants'
+import { NavigationContext } from '@/contexts/NavigationContext'
+import { useContext } from 'react'
+import { ShellSidebarContext } from './ShellSidebarPortal'
+import { AuxiliaryToolPanel } from './AuxiliaryToolPanel'
+import { WorkspaceToolContext } from '@/atoms/workspace-context'
 
 interface PanelSlotProps {
   entry: PanelStackEntry
@@ -56,6 +61,9 @@ export function PanelSlot({
   const closePanel = useSetAtom(closePanelAtom)
   const setFocusedPanel = useSetAtom(focusedPanelIdAtom)
   const parentContext = useAppShellContext()
+  const navigation = useContext(NavigationContext)
+  const sidebarTarget = useContext(ShellSidebarContext)
+  const primaryId = useAtomValue(primaryPanelIdAtom)
   const navState = parseRouteToNavigationState(entry.route)
 
   const handleClose = useCallback(() => {
@@ -93,7 +101,9 @@ export function PanelSlot({
     rightSidebarButton: closeButton,
     leadingAction: backButton,
     isFocusedPanel,
-  }), [parentContext, closeButton, backButton, isFocusedPanel])
+    panelId: entry.id,
+  }), [parentContext, closeButton, backButton, isFocusedPanel, entry.id])
+  const panelNavigation = navigation && navState ? { ...navigation, navigationState: navState } : navigation
 
   const handlePointerDown = useCallback(() => {
     if (!isFocusedPanel) {
@@ -113,6 +123,7 @@ export function PanelSlot({
         data-panel-id={entry.id}
         data-shell-role="content"
         data-compact={isCompact || undefined}
+        data-auxiliary-tool={entry.tool}
         tabIndex={-1}
         className={cn(
           'h-full overflow-hidden relative @container/panel',
@@ -136,17 +147,23 @@ export function PanelSlot({
           ),
           ...(isOnly
             ? { flexGrow: 1, minWidth: 0 }
-            : { flexGrow: proportion, flexShrink: 1, flexBasis: 0, minWidth: PANEL_MIN_WIDTH }
+            : { flexGrow: entry.tool ? 0 : proportion, flexShrink: entry.tool ? 0 : 1,
+                flexBasis: entry.tool ? 360 : 0, minWidth: entry.tool ? 300 : PANEL_MIN_WIDTH }
           ),
         }}
       >
         <div className="h-full flex flex-col">
           <AppShellProvider value={contextOverride}>
-            <MainContentPanel
-              navStateOverride={navState}
-              isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden}
-              panelId={entry.id}
-            />
+            <NavigationContext.Provider value={panelNavigation}>
+              <ShellSidebarContext.Provider value={entry.tool || (primaryId && primaryId !== entry.id) ? null : sidebarTarget}>
+                <WorkspaceToolContext.Provider value={entry.toolContext ?? null}>
+                {entry.tool ? <AuxiliaryToolPanel entry={entry} onClose={handleClose} /> : (
+                  <MainContentPanel navStateOverride={navState}
+                    isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden} panelId={entry.id} />
+                )}
+                </WorkspaceToolContext.Provider>
+              </ShellSidebarContext.Provider>
+            </NavigationContext.Provider>
           </AppShellProvider>
         </div>
       </div>

@@ -148,6 +148,7 @@
     "./workflows": "./src/workflows/index.ts",
     "./workspace/open-in-editor": "./src/workspace/open-in-editor.ts",
     "./workspaces": "./src/workspaces/index.ts",
+    "./workspace-work": "./src/workspace-work/index.ts",
     "./environment": "./src/environment/index.ts",
     "./voice": "./src/voice/index.ts",
     "./meeting-agents": "./src/meeting-agents/index.ts",

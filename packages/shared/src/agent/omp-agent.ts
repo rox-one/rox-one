@@ -391,8 +391,8 @@ export class OmpAgent extends BaseAgent {
           mimeType: a.mimeType,
           sizeBytes: a.sizeBytes,
         })),
-        memoryPath: getProjectMemoryPath(root, slug),
-        memoryContent: loadProjectMemory(root, slug) ?? undefined,
+        memoryPath: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : getProjectMemoryPath(root, slug),
+        memoryContent: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : loadProjectMemory(root, slug) ?? undefined,
         roadmapContent: loadProjectRoadmapPromptText(root, slug),
       };
     } catch (error) {
@@ -412,7 +412,7 @@ export class OmpAgent extends BaseAgent {
     const projectContext = this.resolveProjectContext();
     return composeOmpAppendSystemPrompt({
       workingDirectory: this.resolvedCwd(),
-      preferences: formatPreferencesForPrompt(),
+      preferences: this.config.agentProfileSnapshot ? '' : formatPreferencesForPrompt(),
       projectContextBlock: projectContext ? formatProjectContextForPrompt(projectContext) : null,
       memoryBlocks: this.config.memoryBlocks,
     });
@@ -707,6 +707,9 @@ export class OmpAgent extends BaseAgent {
     // --approval-mode yolo: craft permission mode 'allow-all' → full yolo
     //   (OMP's strongest auto mode: zero approval prompts, incl. destructive).
     const args = ['--mode', 'rpc', '--allow-home'];
+    // Profile sessions activate only the captured skill list via BaseAgent's validated mentions.
+    // Disable the native runtime's independent discovery so it cannot expand that list.
+    if (this.config.allowedSkillSlugs !== undefined) args.push('--no-skills');
     const craftSessionId = this.config.session?.id || this._sessionId || '';
     const ompSessionDir = craftSessionId ? this.getOmpSessionDir(craftSessionId) : null;
     if (ompSessionDir) {

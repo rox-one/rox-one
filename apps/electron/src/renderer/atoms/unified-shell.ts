@@ -273,7 +273,7 @@ export const activityRailNarrowOverrideAtom = atom<boolean>(false)
 /** Inspector panel visibility (the 48px section rail itself always renders). */
 export const inspectorVisibleAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.inspectorVisible),
-  true,
+  false,
   undefined,
   { getOnInit: true },
 )

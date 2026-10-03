@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, rmSync } from 'fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { SessionManager } from './SessionManager.ts'
@@ -67,5 +67,22 @@ describe('executePromptAutomation waitForCompletion', () => {
         prompt: 'do something',
       }),
     ).rejects.toThrow('send failed')
+  })
+
+  it('binds a resolved project reference and refuses a foreign or unavailable target before creating a session', async () => {
+    mkdirSync(join(tmpRoot, 'projects', 'project'), { recursive: true })
+    writeFileSync(join(tmpRoot, 'projects', 'project', 'config.json'), JSON.stringify({ id: 'project_id', slug: 'project', name: 'Project', createdAt: Date.now(), updatedAt: Date.now() }))
+    let created = 0
+    let boundProject: string | undefined
+    ;(sm as unknown as { createSession: unknown }).createSession = async (_workspaceId: string, options: { projectId?: string }) => {
+      created++; boundProject = options.projectId; return { id: 'test-sess' }
+    }
+    ;(sm as unknown as { sendMessage: unknown }).sendMessage = async () => {}
+    await sm.executePromptAutomation({ workspaceId: 'ws_test', workspaceRootPath: tmpRoot, prompt: 'Review project', automationContext: { workspaceId: 'ws_test', projectId: 'project_id' } })
+    expect(boundProject).toBe('project_id')
+    expect(created).toBe(1)
+    await expect(sm.executePromptAutomation({ workspaceId: 'ws_test', workspaceRootPath: tmpRoot, prompt: 'Wrong context', automationContext: { workspaceId: 'foreign', projectId: 'project_id' } })).rejects.toThrow('outside its workspace/project')
+    await expect(sm.executePromptAutomation({ workspaceId: 'ws_test', workspaceRootPath: tmpRoot, prompt: 'Unsupported source', automationContext: { workspaceId: 'ws_test', object: { kind: 'mail', id: 'unknown' } } })).rejects.toThrow('unavailable')
+    expect(created).toBe(1)
   })
 })

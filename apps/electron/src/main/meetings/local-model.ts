@@ -6,6 +6,7 @@ import {
   MEETINGS_LOCAL_SCHEMA,
   type LocalMeeting,
   type LocalMeetingAction,
+  type LocalMeetingTaskRef,
   type LocalMeetingDocument,
   type LocalMeetingExtraction,
   type LocalMeetingExtractedDecision,
@@ -98,6 +99,18 @@ export function normalizeTranscript(raw: unknown): LocalTranscript | null {
   }
 }
 
+export function normalizeMeetingTaskRef(value: unknown): LocalMeetingTaskRef | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const ref = value as Record<string, unknown>
+  const validId = (id: unknown): id is string => typeof id === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(id)
+  if (!validId(ref.id)) return undefined
+  if (ref.scope === 'personal' && Object.keys(ref).every(key => key === 'scope' || key === 'id')) return { scope: 'personal', id: ref.id }
+  if (ref.scope === 'workspace' && validId(ref.workspaceId) && Object.keys(ref).every(key => ['scope', 'id', 'workspaceId'].includes(key))) {
+    return { scope: 'workspace', workspaceId: ref.workspaceId, id: ref.id }
+  }
+  return undefined
+}
+
 function normActions(v: unknown): LocalMeetingAction[] {
   if (!Array.isArray(v)) return []
   return v.flatMap((a, i): LocalMeetingAction[] => {
@@ -111,6 +124,7 @@ function normActions(v: unknown): LocalMeetingAction[] {
       text,
       done: o.done === true,
       taskId: str(o.taskId) || undefined,
+      taskRef: normalizeMeetingTaskRef(o.taskRef),
       generated: o.generated === true || undefined,
       sourceSegmentIds,
       sourceTranscriptRevision: num(o.sourceTranscriptRevision),

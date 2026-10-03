@@ -1,12 +1,16 @@
 import { createHash } from 'node:crypto'
 import { readFile } from 'fs/promises'
+import { readFileSync } from 'fs'
 import { join } from 'path'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import { appendAutomationHistoryEntry } from '@rox/shared/automations/history-store'
 import { awardXpSafe } from '@rox/shared/gamification'
 import { AUTOMATION_HISTORY_MAX_RUNS_PER_MATCHER } from '@rox/shared/automations/constants'
-import { atomicWriteFileSync } from '@rox/shared/utils/files'
+import { writeContextualAutomationsConfig } from '@rox/shared/automations/context-storage'
+import { automationContextFailure, relinkAutomationContext, sameAutomationContext } from '@rox/shared/automations/context'
+import type { AutomationContextReference, AutomationMatcher } from '@rox/shared/automations/types'
+import { resolveWorkspaceAutomationContext } from '../../automations/context-resolver'
 import {
   buildAutomationGraphSave,
   getAutomationGraphProjection,
@@ -15,7 +19,7 @@ import {
 import { resolveAutomationsConfigPath, generateShortId } from '@rox/shared/automations/resolve-config-path'
 import { ensureDefaultAutomations } from '@rox/shared/automations/default-seeds'
 import { validateAutomationsConfig } from '@rox/shared/automations/validation'
-import { pushTyped, type RpcServer } from '@rox/server-core/transport'
+import { pushTyped, type RpcServer, type RequestContext, type HandlerFn } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { isClaimableLive, rpcAutomationsActResult, rpcAutomationsListResult, rpcAutomationsReadResult } from '@rox/core/rox2'
 
@@ -67,7 +71,7 @@ function redactWebhookGraphCredentials<T>(projection: T): T {
   }
   return result as T
 }
-async function withAutomationMatcher<T = void>(workspaceId: string, eventName: string, matcherIndex: number, mutate: (matchers: Record<string, unknown>[], index: number, config: AutomationsConfigJson, genId: () => string) => T): Promise<T> {
+async function withAutomationMatcher<T = void>(workspaceId: string, eventName: string, matcherIndex: number, mutate: (matchers: Record<string, unknown>[], index: number, config: AutomationsConfigJson, genId: () => string) => T, explicitRelink = false): Promise<T> {
   const workspace = getWorkspaceByNameOrId(workspaceId)
   if (!workspace) throw new Error('Workspace not found')
 
@@ -83,6 +87,7 @@ async function withAutomationMatcher<T = void>(workspaceId: string, eventName: s
       throw new Error(`Invalid automation reference: ${eventName}[${matcherIndex}]`)
     }
 
+    const changedId = matchers[matcherIndex]?.id
     const result = mutate(matchers, matcherIndex, config, generateShortId)
 
     // Backfill missing IDs on all matchers before writing
@@ -93,7 +98,9 @@ async function withAutomationMatcher<T = void>(workspaceId: string, eventName: s
       }
     }
 
-    atomicWriteFileSync(configPath, JSON.stringify(config, null, 2) + '\n')
+    writeContextualAutomationsConfig(configPath, config, workspace.id,
+      reference => resolveWorkspaceAutomationContext(workspace.rootPath, workspace.id, reference),
+      explicitRelink && typeof changedId === 'string' ? [changedId] : [])
     return result
   })
 }
@@ -102,7 +109,7 @@ async function withAutomationMatcher<T = void>(workspaceId: string, eventName: s
  *  on the matcher (graph metadata, attributeAllowList, …) is preserved. */
 const EDITABLE_MATCHER_KEYS = [
   'name', 'matcher', 'cron', 'timezone', 'permissionMode', 'labels',
-  'enabled', 'conditions', 'telegramTopic', 'actions',
+  'enabled', 'conditions', 'telegramTopic', 'actions', 'context',
 ] as const
 
 const KNOWN_EVENTS = new Set<string>([
@@ -201,6 +208,24 @@ export const HANDLED_CHANNELS = [
 
 export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps): void {
   const log = deps.platform.logger
+  const assertCurrent = (context: RequestContext, action: 'write' | 'delete' = 'write') => {
+    if (server.isRequestContextCurrent && !server.isRequestContextCurrent(context, action)) {
+      throw new Error('Automation request is no longer authorized')
+    }
+  }
+  const reads = new Set<string>([RPC_CHANNELS.automations.GET, RPC_CHANNELS.automations.GET_GRAPH,
+    RPC_CHANNELS.automations.GET_HISTORY, RPC_CHANNELS.automations.GET_LAST_EXECUTED])
+  const handle = (channel: string, handler: HandlerFn) => {
+    const nativeAction = reads.has(channel) ? 'read' : channel === RPC_CHANNELS.automations.DELETE ? 'delete' : 'write'
+    server.handle(channel, (context: RequestContext, ...args: unknown[]) => {
+      const requested = typeof args[0] === 'string' ? args[0]
+        : args[0] && typeof args[0] === 'object' ? (args[0] as { workspaceId?: unknown }).workspaceId : undefined
+      if (typeof requested !== 'string' || !requested) throw new Error('Automation workspace is required')
+      const bound = context.workspaceId ?? (context.webContentsId != null ? deps.windowManager?.getWorkspaceForWindow(context.webContentsId) : undefined)
+      if ((bound && bound !== requested) || (context.principal && !bound)) throw new Error('Workspace access denied')
+      return handler(context, ...args)
+    }, { access: 'nativeOrLocalElectron', nativeAction })
+  }
   // Mutations push CHANGED directly so every window refreshes immediately,
   // independent of the (debounced) config file watcher.
   const notifyChanged = (workspaceId: string) => {
@@ -210,7 +235,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
   }
 
   // Get automations config for a workspace (read-only, resolves path server-side)
-  server.handle(RPC_CHANNELS.automations.GET, async (_ctx, workspaceId: string) => {
+  handle(RPC_CHANNELS.automations.GET, async (_ctx, workspaceId: string) => {
     const listed = rpcAutomationsListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return null
     log.info(`AUTOMATIONS_GET: Loading automations for workspace: ${workspaceId}`)
@@ -223,7 +248,9 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
       return await withConfigMutex(workspace.rootPath, async () => {
         // Existing seed lifecycle stays serialized with graph saves. The graph
         // projection itself never calls this writer.
-        ensureDefaultAutomations(workspace.rootPath)
+        if (!server.isRequestContextCurrent || server.isRequestContextCurrent(_ctx, 'write')) {
+          ensureDefaultAutomations(workspace.rootPath)
+        }
         const configPath = resolveAutomationsConfigPath(workspace.rootPath)
         log.info(`AUTOMATIONS_GET: Reading config from: ${configPath}`)
         const content = await readFile(configPath, 'utf-8')
@@ -244,7 +271,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
   // Keep graph authoring read-only until its explicit save action. In
   // particular, do not call ensureDefaultAutomations here: an absent document
   // projects a default graph without creating a config file.
-  server.handle(RPC_CHANNELS.automations.GET_GRAPH, async (_ctx, workspaceId: string) => {
+  handle(RPC_CHANNELS.automations.GET_GRAPH, async (_ctx, workspaceId: string) => {
     const listed = rpcAutomationsListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) throw new Error('automations graph list is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -266,7 +293,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
   // Compile graph metadata into canonical matchers/actions, then atomically
   // replace automations.json while holding the same mutex as legacy mutations.
-  server.handle(RPC_CHANNELS.automations.SAVE_GRAPH, async (_ctx, rawPayload: unknown) => {
+  handle(RPC_CHANNELS.automations.SAVE_GRAPH, async (_ctx, rawPayload: unknown) => {
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: 'graph' })
     if (!isClaimableLive(act)) throw new Error('automations graph write is not live')
     const payload = parseSaveAutomationGraphPayload(rawPayload)
@@ -289,20 +316,36 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
       }
 
       const saved = buildAutomationGraphSave(currentConfig, payload)
+      assertCurrent(_ctx)
       const validation = validateAutomationsConfig(saved.config)
       if (!validation.valid) throw new Error(`Compiled automation configuration is invalid: ${validation.errors.join('; ')}`)
-      atomicWriteFileSync(configPath, JSON.stringify(saved.config, null, 2) + '\n')
+      const priorById = new Map(Object.values((currentConfig as { automations?: Record<string, AutomationMatcher[]> }).automations ?? {}).flat().map(matcher => [matcher.id, matcher]))
+      const relinked: string[] = []
+      for (const matchers of Object.values(saved.config.automations ?? {})) {
+        for (let index = 0; index < (matchers?.length ?? 0); index++) {
+          const matcher = matchers![index]!
+          if (!sameAutomationContext(priorById.get(matcher.id)?.context, matcher.context)) {
+            matchers![index] = relinkAutomationContext(matcher, matcher.context, workspace.id,
+              matcher.context ? resolveWorkspaceAutomationContext(workspace.rootPath, workspace.id, matcher.context) : undefined)
+            if (matcher.id) relinked.push(matcher.id)
+          }
+        }
+      }
+      writeContextualAutomationsConfig(configPath, saved.config, workspace.id,
+        reference => resolveWorkspaceAutomationContext(workspace.rootPath, workspace.id, reference), relinked)
+      const persistedConfig = JSON.parse(readFileSync(configPath, 'utf8'))
+      const projection = getAutomationGraphProjection(persistedConfig)
       pushTyped(
         server,
         RPC_CHANNELS.automations.CHANGED,
         { to: 'workspace', workspaceId: payload.workspaceId },
         payload.workspaceId,
       )
-      return saved
+      return { ...saved, config: persistedConfig, graph: projection.graph, revision: projection.revision }
     })
   })
 
-  server.handle(RPC_CHANNELS.automations.TEST, async (_ctx, payload: import('@rox/shared/protocol').TestAutomationPayload) => {
+  handle(RPC_CHANNELS.automations.TEST, async (_ctx, payload: import('@rox/shared/protocol').TestAutomationPayload) => {
     const workspace = getWorkspaceByNameOrId(payload.workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
@@ -311,9 +354,19 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     const { executeWebhookRequest, createWebhookHistoryEntry, createPromptHistoryEntry } = await import('@rox/shared/automations/webhook-utils')
 
     let actionsToTest = payload.actions
+    let automationContext: AutomationContextReference | undefined
     if (payload.automationId) {
       const saved = await readConfigOrEmpty(resolveAutomationsConfigPath(workspace.rootPath))
       const matcher = Object.values(saved.automations ?? {}).flat().find((candidate) => candidate.id === payload.automationId)
+      if (!matcher) throw new Error('Automation not found')
+      if (matcher.contextPause) throw new Error('Automation target needs an explicit relink')
+      automationContext = matcher.context as AutomationContextReference | undefined
+      if (automationContext) {
+        const resolved = resolveWorkspaceAutomationContext(workspace.rootPath, workspace.id, automationContext)
+        if (resolved.status !== 'available' || automationContextFailure(automationContext, workspace.id, resolved)) {
+          throw new Error('Automation target is unavailable or outside its workspace/project')
+        }
+      }
       const savedActions = Array.isArray(matcher?.actions) ? matcher.actions : []
       actionsToTest = payload.actions.map((action, index) => {
         const requested = action as typeof action & { authConfigured?: boolean; authType?: string }
@@ -326,6 +379,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     }
 
     for (const action of actionsToTest) {
+      assertCurrent(_ctx)
       const start = Date.now()
 
       if (action.type === 'webhook') {
@@ -366,6 +420,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
         // Timeout is clamped below the 30s RPC timeout so a slow script fails
         // the test visibly instead of tripping the transport (see #943).
         const { executeScriptAction, createScriptHistoryEntry, buildScriptEnv } = await import('@rox/shared/automations')
+        assertCurrent(_ctx)
         const env = buildScriptEnv(
           'SchedulerTick',
           { workspaceId: payload.workspaceId, timestamp: Date.now() },
@@ -412,6 +467,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
         const { sessionId } = await deps.sessionManager.executePromptAutomation({
           workspaceId: payload.workspaceId,
           workspaceRootPath: workspace.rootPath,
+          automationContext,
           prompt: action.prompt,
           labels: payload.labels,
           permissionMode: payload.permissionMode,
@@ -470,10 +526,11 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
   })
 
   // Automation enabled state management (toggle enabled/disabled in automations.json)
-  server.handle(RPC_CHANNELS.automations.SET_ENABLED, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, enabled: boolean) => {
+  handle(RPC_CHANNELS.automations.SET_ENABLED, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, enabled: boolean) => {
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: eventName })
     if (!isClaimableLive(act)) return
     await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx) => {
+      assertCurrent(_ctx)
       if (enabled) {
         delete matchers[idx].enabled
       } else {
@@ -486,11 +543,12 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
   // Duplicate an automation matcher. `copyName` is the clone's name already
   // localized by the client (e.g. «Имя (копия)»); without it the legacy
   // English " Copy" suffix is used.
-  server.handle(RPC_CHANNELS.automations.DUPLICATE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, copyName?: unknown) => {
+  handle(RPC_CHANNELS.automations.DUPLICATE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, copyName?: unknown) => {
     const localizedName = typeof copyName === 'string' ? copyName.trim().slice(0, 200) : ''
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: eventName })
     if (!isClaimableLive(act)) return
     const id = await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx, _config, genId) => {
+      assertCurrent(_ctx)
       const clone = JSON.parse(JSON.stringify(matchers[idx]))
       clone.id = genId()
       clone.name = localizedName || (clone.name ? `${clone.name} Copy` : 'Untitled Copy')
@@ -503,19 +561,27 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
   // Replace one matcher's editable fields (id and unknown keys preserved).
   // Changing the event moves the matcher to the end of that event's list.
-  server.handle(RPC_CHANNELS.automations.UPDATE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, rawPayload: unknown) => {
+  handle(RPC_CHANNELS.automations.UPDATE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, rawPayload: unknown) => {
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: eventName })
     if (!isClaimableLive(act)) throw new Error('automations update is not live')
     const payload = parseEditPayload(rawPayload)
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error('Workspace not found')
     const result = await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx, config, genId) => {
+      assertCurrent(_ctx)
       const current = matchers[idx]!
       if (payload.expectedRevision !== undefined && createHash('sha256').update(JSON.stringify(current)).digest('hex') !== payload.expectedRevision) {
         throw new Error('Automation changed since it was loaded; reload before saving')
       }
-      const next = applyMatcherEdit(current, payload.matcher, payload.event)
+      let next = applyMatcherEdit(current, payload.matcher, payload.event)
       applyWebhookCredentialEdit(current, next, payload.matcher.webhookAuthMode)
       if (!next.id) next.id = genId()
       assertValidMatcher(payload.event, next)
+      if ('context' in payload.matcher) {
+        const context = next.context as AutomationContextReference | undefined
+        next = relinkAutomationContext(next as unknown as AutomationMatcher, context, workspace.id,
+          context ? resolveWorkspaceAutomationContext(workspace.rootPath, workspace.id, context) : undefined) as unknown as Record<string, unknown>
+      }
       if (payload.event === eventName) {
         matchers[idx] = next
         return { id: next.id as string, event: eventName, matcherIndex: idx }
@@ -526,13 +592,13 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
       const target = (eventMap[payload.event] ??= [])
       target.push(next)
       return { id: next.id as string, event: payload.event, matcherIndex: target.length - 1 }
-    })
+    }, 'context' in payload.matcher)
     notifyChanged(workspaceId)
     return result
   })
 
   // Append a new matcher (creates automations.json if missing, without seeding).
-  server.handle(RPC_CHANNELS.automations.CREATE, async (_ctx, workspaceId: string, rawPayload: unknown) => {
+  handle(RPC_CHANNELS.automations.CREATE, async (_ctx, workspaceId: string, rawPayload: unknown) => {
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: 'create' })
     if (!isClaimableLive(act)) throw new Error('automations create is not live')
     const payload = parseEditPayload(rawPayload)
@@ -541,12 +607,18 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     const result = await withConfigMutex(workspace.rootPath, async () => {
       const configPath = resolveAutomationsConfigPath(workspace.rootPath)
       const config = await readConfigOrEmpty(configPath)
+      assertCurrent(_ctx)
       const next = applyMatcherEdit({ id: generateShortId() }, payload.matcher, payload.event)
       assertValidMatcher(payload.event, next)
+      if (next.context) {
+        relinkAutomationContext(next as unknown as AutomationMatcher, next.context as AutomationContextReference, workspace.id,
+          resolveWorkspaceAutomationContext(workspace.rootPath, workspace.id, next.context as AutomationContextReference))
+      }
       const eventMap = (config.automations ??= {})
       const target = (eventMap[payload.event] ??= [])
       target.push(next)
-      atomicWriteFileSync(configPath, JSON.stringify(config, null, 2) + '\n')
+      writeContextualAutomationsConfig(configPath, config, workspace.id,
+        reference => resolveWorkspaceAutomationContext(workspace.rootPath, workspace.id, reference))
       return { id: next.id as string, event: payload.event, matcherIndex: target.length - 1 }
     })
     notifyChanged(workspaceId)
@@ -554,7 +626,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
   })
 
   // Delete an automation matcher
-  server.handle(RPC_CHANNELS.automations.DELETE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number) => {
+  handle(RPC_CHANNELS.automations.DELETE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number) => {
     const act = rpcAutomationsActResult({
       source: 'native',
       action: 'destroy',
@@ -563,6 +635,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     })
     if (!isClaimableLive(act)) return
     await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx, config) => {
+      assertCurrent(_ctx, 'delete')
       matchers.splice(idx, 1)
       if (matchers.length === 0) {
         const eventMap = config.automations
@@ -573,7 +646,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
   })
 
   // Read execution history for a specific automation
-  server.handle(RPC_CHANNELS.automations.GET_HISTORY, async (_ctx, workspaceId: string, automationId: string, limit = AUTOMATION_HISTORY_MAX_RUNS_PER_MATCHER) => {
+  handle(RPC_CHANNELS.automations.GET_HISTORY, async (_ctx, workspaceId: string, automationId: string, limit = AUTOMATION_HISTORY_MAX_RUNS_PER_MATCHER) => {
     const read = rpcAutomationsReadResult({ source: 'native', nativeId: automationId })
     if (!isClaimableLive(read.result)) return []
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -596,7 +669,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
   })
 
   // Replay webhook actions for a specific automation matcher
-  server.handle(RPC_CHANNELS.automations.REPLAY, async (_ctx, workspaceId: string, automationId: string, eventName: string) => {
+  handle(RPC_CHANNELS.automations.REPLAY, async (_ctx, workspaceId: string, automationId: string, eventName: string) => {
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: automationId })
     if (!isClaimableLive(act)) throw new Error('automations replay is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -610,6 +683,14 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     const matchers = config.automations?.[eventName] ?? []
     const matcher = matchers.find(m => m.id === automationId)
     if (!matcher) throw new Error('Automation not found')
+    const linked = matcher as AutomationMatcher
+    if (linked.contextPause) throw new Error('Automation target needs an explicit relink')
+    if (linked.context) {
+      const resolved = resolveWorkspaceAutomationContext(workspace.rootPath, workspace.id, linked.context)
+      if (resolved.status !== 'available' || automationContextFailure(linked.context, workspace.id, resolved)) {
+        throw new Error('Automation target is unavailable or outside its workspace/project')
+      }
+    }
 
     const webhookActions = (matcher.actions ?? []).filter(a => a.type === 'webhook')
     if (webhookActions.length === 0) {
@@ -620,6 +701,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     }
 
     const { executeWebhookRequest, createWebhookHistoryEntry } = await import('@rox/shared/automations/webhook-utils')
+    assertCurrent(_ctx)
     const results = await Promise.all(
       webhookActions.map(a => executeWebhookRequest(a as unknown as import('@rox/shared/automations').WebhookAction))
     )
@@ -650,7 +732,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
   // Return last execution timestamp for all automations
   // `detailed` adds the last run's ok flag: { [id]: { ts, ok } } instead of { [id]: ts }.
-  server.handle(RPC_CHANNELS.automations.GET_LAST_EXECUTED, async (_ctx, workspaceId: string, detailed?: boolean) => {
+  handle(RPC_CHANNELS.automations.GET_LAST_EXECUTED, async (_ctx, workspaceId: string, detailed?: boolean) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 

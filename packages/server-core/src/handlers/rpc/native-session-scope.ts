@@ -54,7 +54,7 @@ const sessionFields = ['id', 'workspaceId', 'workspaceName', 'name', 'preview', 
   'lastReadMessageId', 'hasUnread', 'enabledSourceSlugs', 'model', 'llmConnection', 'thinkingLevel',
   'lastMessageRole', 'lastFinalMessageId', 'createdAt', 'messageCount', 'tokenUsage', 'hidden',
   'isArchived', 'archivedAt', 'supportsBranching', 'branchFromMessageId', 'branchFromSessionId',
-  'projectId', 'parentSessionId', 'kanbanColumn', 'rank', 'priority', 'dueDate'] as const
+  'projectId', 'parentSessionId', 'agentProfileSnapshot', 'kanbanColumn', 'rank', 'priority', 'dueDate'] as const
 
 export function nativeSession(session: Session): Session {
   const projected = Object.fromEntries(sessionFields.map(key => [key, session[key]])) as unknown as Session

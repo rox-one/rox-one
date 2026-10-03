@@ -167,6 +167,7 @@ export interface AppShellContextType {
 
   /** Whether this panel is the focused panel (for multi-panel visual differentiation) */
   isFocusedPanel?: boolean
+  panelId?: string
 
   /** Whether the shell is currently in compact/narrow mode */
   isCompactMode?: boolean

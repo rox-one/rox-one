@@ -17,6 +17,11 @@ function listener(channel: string) {
 }
 
 export const CHANNEL_MAP = {
+  workspaceWorkRead: invoke(RPC_CHANNELS.workspaceWork.READ),
+  workspaceWorkWrite: invoke(RPC_CHANNELS.workspaceWork.WRITE),
+  workspaceWorkDelete: invoke(RPC_CHANNELS.workspaceWork.DELETE),
+  workspaceWorkSnapshotProfile: invoke(RPC_CHANNELS.workspaceWork.SNAPSHOT_PROFILE),
+  onWorkspaceWorkChanged: listener(RPC_CHANNELS.workspaceWork.CHANGED),
   // Cloud Runs (PRD docs/cloud-runs-prd.md, phase G3)
   getCloudRunsConfig: invoke(RPC_CHANNELS.cloudRuns.GET_CONFIG),
   setCloudRunsConfig: invoke(RPC_CHANNELS.cloudRuns.SET_CONFIG),

@@ -16,6 +16,7 @@ import { TEAM_FLAG, dispatchTeam, readTeamState, teamActionContext, useTeamFlag,
 import { useTeamRoster } from '@/components/team/use-team-roster'
 import { useTranslation } from 'react-i18next'
 import { navigate, routes } from '@/lib/navigate'
+import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
 import { useInboxItems } from '@/hooks/useInboxItems'
 import {
   Badge,
@@ -71,6 +72,7 @@ const KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory
 
 export default function InboxPage({ selectedId }: { selectedId?: string | null }) {
   const { t, i18n } = useTranslation()
+  const canHandleKeyboard = usePanelKeyboardGuard()
   const teamInboxEnabled = useTeamFlag(TEAM_FLAG.mentions)
   const teamState = useTeamState()
   const teamRoster = useTeamRoster()
@@ -89,7 +91,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   useEffect(() => { const context = contextRef.current; return () => { if (contextRef.current === context) contextRef.current = { workspaceId } } }, [workspaceId])
   const [preferences, setPreferences] = useAtom(inboxPreferencesAtom)
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<InboxPageFilter>('all')
+  const [filter, setFilter] = useState<InboxPageFilter>('decisions')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
   const [bulkAction, setBulkAction] = useState<'read' | 'archive' | null>(null)
   const [bulkFailures, setBulkFailures] = useState<Record<string, string>>({})
@@ -347,9 +349,14 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     }
   })
 
-  const onListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openSession)
+  const handleListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openSession)
+  const onListKeys: typeof handleListKeys = event => {
+    if (event.defaultPrevented || event.nativeEvent.isComposing || !canHandleKeyboard(event.target)) return
+    handleListKeys(event)
+  }
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing || !canHandleKeyboard(event.target)) return
       const target = event.target as HTMLElement | null
       if (target?.closest('input, textarea, [contenteditable="true"]')) return
       if (target?.closest('[data-inbox-sidebar]')) return
@@ -399,7 +406,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
           checked={selectedIds.has(item.id)}
           onClick={(event) => event.stopPropagation()}
           onChange={(event) => toggleSelected(item.id, event.currentTarget.checked)}
-          className="relative mt-1 h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-sm before:transition-transform checked:before:translate-x-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          className="relative mt-1 h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-xs before:transition-transform checked:before:translate-x-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
         />
         <InboxKindIcon kind={item.kind} />
         <span className="min-w-0 flex-1">
@@ -461,7 +468,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
             role="switch"
             checked={preferences.unreadOnly}
             onChange={(event) => setPreferences((p) => ({ ...p, unreadOnly: event.currentTarget.checked }))}
-            className="relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-sm before:transition-transform checked:before:translate-x-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            className="relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-xs before:transition-transform checked:before:translate-x-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
           />
           {t('inbox.unreadOnly', { defaultValue: 'Unread only' })}
         </label>
@@ -482,7 +489,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
               return next
             })
           }}
-          className="relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-sm before:transition-transform checked:before:translate-x-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          className="relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-xs before:transition-transform checked:before:translate-x-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
         />
         <span>{t('inbox.selectedCount', { count: selectedVisibleIds.length, defaultValue: `${selectedVisibleIds.length} selected` })}</span>
         <Button variant="ghost" disabled={bulkBusy || selectedIds.size === 0} onClick={() => setSelectedIds(new Set())}>{t('inbox.clearSelection', { defaultValue: 'Clear selection' })}</Button>

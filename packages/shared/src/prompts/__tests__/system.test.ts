@@ -296,6 +296,13 @@ describe('formatProjectContextForPrompt', () => {
     expect(occurrences(block, '</project_context>')).toBe(1)
     expect(occurrences(block, '</project_assets>')).toBe(1)
   })
+  it('omits project memory path and write guidance when captured capabilities disable memory', () => {
+    const block = formatProjectContextForPrompt(baseCtx({ memoryPath: undefined, memoryContent: undefined }))
+    expect(block).not.toContain('<project_memory_path>')
+    expect(block).not.toContain('<project_memory>')
+    expect(block).not.toContain('record it in MEMORY.md')
+    expect(block).toContain('<project_assets_path>')
+  })
 })
 
 describe('findAllProjectContextFiles monorepo glob', () => {

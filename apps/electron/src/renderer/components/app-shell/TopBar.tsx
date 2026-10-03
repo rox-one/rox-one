@@ -59,6 +59,7 @@ import { WORKBENCH_FLAG } from "@rox/core/platform"
 
 const RIGHT_SLOT_FULL_BADGES_THRESHOLD = 420
 const RIGHT_SLOT_TWO_BADGES_THRESHOLD = 300
+const bundledRoxLogo = new URL('../../assets/rox-logo.svg', import.meta.url).href
 
 interface TopBarProps {
   workspaces: Workspace[]
@@ -94,6 +95,8 @@ interface TopBarProps {
   isCompact?: boolean
   /** When false, workspace selection is rendered elsewhere (for example, the left icon rail). */
   showWorkspaceSelector?: boolean
+  /** The left surface rail replaces the title-bar mode picker. */
+  surfaceNavigationActive?: boolean
   /** Left offset for a full-height rail rendered outside the top bar. */
   leftInset?: number
 }
@@ -127,9 +130,35 @@ export function TopBar({
   isCompactSettingsMode,
   isCompact,
   showWorkspaceSelector = true,
+  surfaceNavigationActive = false,
   leftInset = 0,
 }: TopBarProps) {
   const { t } = useTranslation()
+  const workspaceName = workspaces.find(workspace => workspace.id === activeWorkspaceId)?.name ?? t('navigation.workspace')
+  const logoWorkspaceMenu = (
+    <AccountMenu
+      compact={!!isCompact}
+      workspaces={workspaces}
+      activeWorkspaceId={activeWorkspaceId}
+      onSelectWorkspace={onSelectWorkspace}
+      onWorkspaceCreated={onWorkspaceCreated}
+      onWorkspaceRemoved={onWorkspaceRemoved}
+      workspaceUnreadMap={workspaceUnreadMap}
+      trigger={
+        <button
+          type="button"
+          data-workspace-logo-menu
+          aria-label={t('navigation.workspaceMenu', { workspace: workspaceName })}
+          title={t('navigation.workspaceMenu', { workspace: workspaceName })}
+          className="titlebar-no-drag flex h-8 min-w-0 shrink-0 items-center gap-1.5 rounded-lg px-1.5 font-sans text-[13px] text-foreground/80 outline-none transition-colors motion-reduce:transition-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-foreground/[0.06]"
+        >
+          <img src={bundledRoxLogo} alt="" aria-hidden className="size-6 shrink-0 object-contain" />
+          {!isCompact && <span className="max-w-40 truncate">{workspaceName}</span>}
+          <Icons.ChevronDown className="size-3 shrink-0 opacity-60" aria-hidden />
+        </button>
+      }
+    />
+  )
   const [maxVisibleBrowserBadges, setMaxVisibleBrowserBadges] = useState(3)
   const rightSlotRef = useRef<HTMLDivElement | null>(null)
   const [inspectorVisible, setInspectorVisible] = useAtom(inspectorVisibleAtom)
@@ -153,7 +182,7 @@ export function TopBar({
   })
 
   // Primary application surfaces remain available independently of experimental Workbench chrome.
-  const showModePill = !isCompact
+  const showModePill = !isCompact && !surfaceNavigationActive
   const topbarRef = useRef<HTMLDivElement | null>(null)
   const leftFixedRef = useRef<HTMLDivElement | null>(null)
   const [modePillMetrics, setModePillMetrics] = useState<ModeBarMetrics | null>(null)
@@ -303,8 +332,9 @@ export function TopBar({
           so the workspace pill doesn't run flush against the viewport edge. */}
       {isCompact && (isCompactChatMode || isCompactSettingsMode) ? (
         <div className="pointer-events-auto flex min-w-0 flex-1 items-center px-3">
+          {surfaceNavigationActive && logoWorkspaceMenu}
           {compactHeaderRenderer?.()}
-          <CompactWorkspaceMenu onOpenBrowser={onAddBrowserPanel} />
+          <CompactWorkspaceMenu onOpenBrowser={onAddBrowserPanel} showServices={!surfaceNavigationActive} />
         </div>
       ) : (
       <div
@@ -317,6 +347,7 @@ export function TopBar({
         }}
       >
         <div className="flex items-center gap-0.5">
+        {surfaceNavigationActive && logoWorkspaceMenu}
         {!isCompact && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -328,7 +359,7 @@ export function TopBar({
         </Tooltip>
         )}
 
-        <AppMenu
+        {!surfaceNavigationActive && <AppMenu
           onNewChat={onNewChat}
           onNewWindow={onNewWindow}
           onOpenSettings={onOpenSettings}
@@ -336,9 +367,9 @@ export function TopBar({
           onOpenStoredUserPreferences={onOpenStoredUserPreferences}
           onToggleSidebar={onToggleSidebar}
           onToggleFocusMode={onToggleFocusMode}
-        />
+        />}
         {isCompact && (
-          <CompactWorkspaceMenu onOpenBrowser={onAddBrowserPanel} />
+          <CompactWorkspaceMenu onOpenBrowser={onAddBrowserPanel} showServices={!surfaceNavigationActive} />
         )}
         </div>
 
@@ -349,9 +380,9 @@ export function TopBar({
             actually fit on phone-width viewports. */}
         <div ref={leftFixedRef} className={cn(
           "ml-1 flex min-w-0 items-center gap-1",
-          isCompact
+          isCompact && !surfaceNavigationActive
             ? "w-[clamp(108px,32vw,180px)] shrink-0"
-            : showWorkspaceSelector ? "w-[clamp(220px,42vw,640px)]" : "shrink-0",
+            : showWorkspaceSelector && !surfaceNavigationActive ? "w-[clamp(220px,42vw,640px)]" : "shrink-0",
         )}>
           {!isCompact && (
             <>
@@ -375,7 +406,7 @@ export function TopBar({
             </>
           )}
 
-          {showWorkspaceSelector && (
+          {showWorkspaceSelector && !surfaceNavigationActive && (
             <div className="min-w-0 flex-1">
               <AccountMenu
                 compact={!!isCompact}
@@ -432,7 +463,7 @@ export function TopBar({
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("entityView.map")}</TooltipContent>
         </Tooltip>
-        <Tooltip>
+        {!surfaceNavigationActive && <Tooltip>
           <TooltipTrigger asChild>
             <TopBarButton
               onClick={onAddSessionPanel}
@@ -443,7 +474,7 @@ export function TopBar({
             </TopBarButton>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("session.newSessionInPanel")}</TooltipContent>
-        </Tooltip>
+        </Tooltip>}
         <Tooltip>
           <TooltipTrigger asChild>
             <TopBarButton

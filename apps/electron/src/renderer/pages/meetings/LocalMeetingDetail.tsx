@@ -12,7 +12,12 @@ import { cn } from '@/lib/utils'
 import { Badge, Button, EmptyState, SectionLabel, Tabs, type Tone } from '@/components/mode-screen/ModeScreen'
 import { extractionBusy, startMeetingExtraction } from '@/lib/meetings/auto-extraction'
 import { newLocalId, subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
-import { createPersonalTask } from '@/lib/extra-screens/personal-task-bridge'
+import { createPersonalTaskConfirmed } from '@/lib/extra-screens/personal-task-bridge'
+import { PersonalTaskCreationError } from '@/lib/personal-tasks-sync'
+import { createMeetingWorkspaceTask, linkMeetingTaskAfterCommit, MeetingTaskBacklinkError } from '@/lib/meetings/meeting-task-bridge'
+import { workspaceProjectOptions, workspaceWorkFailure, type WorkspaceProjectOption, type WorkspaceWorkErrorCode } from '@/lib/workspace-work-client'
+import type { PersonalTask } from '@rox/core/tasks/personal'
+import type { WorkspaceWorkSnapshot } from '@rox/shared/workspace-work'
 import {
   DECISIONS_NS,
   loadDecisions,
@@ -32,7 +37,7 @@ import {
 } from '@/lib/meetings/recorder'
 import { formatRecClock } from '@/components/meetings/MeetingRecordingIndicator'
 import { MEETING_SOURCE_SEEK_SESSION_KEY } from '../../../shared/meetings-local'
-import type { LocalAsrEngine, LocalMeeting, LocalMeetingAction, LocalTranscript, LocalTranscriptSegmentPatch } from '../../../shared/meetings-local'
+import type { LocalAsrEngine, LocalMeeting, LocalMeetingAction, LocalMeetingTaskRef, LocalTranscript, LocalTranscriptSegmentPatch } from '../../../shared/meetings-local'
 import {
   activeSegmentIndex,
   filterSegments,
@@ -88,6 +93,8 @@ export function LocalMeetingDetail(props: {
   const rec = useRecorder()
   const currentMeetingId = useRef(m.id)
   currentMeetingId.current = m.id
+  const currentWorkspaceId = useRef(workspaceId)
+  currentWorkspaceId.current = workspaceId
   const locale = i18n.resolvedLanguage || i18n.language
   const language: 'ru' | 'en' = locale.startsWith('ru') ? 'ru' : 'en'
   const recordingThis = rec.meetingId === m.id && rec.status !== 'idle'
@@ -826,7 +833,65 @@ export function LocalMeetingDetail(props: {
   // Actions
   const [actionDraft, setActionDraft] = useState('')
   const [actionEdit, setActionEdit] = useState<{ id: string; text: string } | null>(null)
-  const saveAction = async (actionId: string, patch?: Partial<Pick<LocalMeetingAction, 'text' | 'done' | 'taskId'>>, remove = false, create = false) => {
+  const [taskChoice, setTaskChoice] = useState<{ actionId: string; scope: 'personal' | 'workspace'; assigneeId: string; projectId: string; pending: boolean; error?: WorkspaceWorkErrorCode | 'backlink'; knownRef?: LocalMeetingTaskRef } | null>(null)
+  const [taskCatalog, setTaskCatalog] = useState<{ workspaceId: string; snapshot: WorkspaceWorkSnapshot; projects: WorkspaceProjectOption[] } | null>(null)
+  const [taskCatalogError, setTaskCatalogError] = useState<WorkspaceWorkErrorCode | null>(null)
+  const personalAttempts = useRef(new Map<string, PersonalTask>())
+  const savedTaskRefs = useRef(new Map<string, LocalMeetingTaskRef>())
+  const taskAttemptKey = (actionId: string) => JSON.stringify([workspaceId, m.id, actionId])
+  useEffect(() => {
+    setTaskCatalog(null); setTaskCatalogError(null)
+    if (!workspaceId || taskChoice?.scope !== 'workspace') return
+    let active = true
+    void Promise.all([window.electronAPI.workspaceWorkRead(workspaceId), window.electronAPI.getProjects(workspaceId)])
+      .then(([snapshot, projects]) => {
+        if (!active) return
+        if (snapshot.workspaceId !== workspaceId) throw new Error('Workspace response scope mismatch')
+        setTaskCatalog({ workspaceId, snapshot, projects: workspaceProjectOptions(projects, workspaceId) })
+      }).catch(error => { if (active) setTaskCatalogError(workspaceWorkFailure(error).code) })
+    return () => { active = false }
+  }, [workspaceId, taskChoice?.scope, taskChoice?.actionId])
+  const confirmActionTask = async () => {
+    const choice = taskChoice
+    const action = m.actions.find(item => item.id === choice?.actionId)
+    if (!choice || !action || !api || choice.pending) return
+    const meetingId = m.id
+    const key = taskAttemptKey(action.id)
+    setTaskChoice({ ...choice, pending: true, error: undefined })
+    try {
+      const updated = await linkMeetingTaskAfterCommit(api, meetingId, action.id, async () => {
+        const knownRef = choice.knownRef ?? savedTaskRefs.current.get(key)
+        if (choice.scope === 'workspace') {
+          if (!workspaceId || m.workspaceId !== workspaceId) throw new Error('Meeting workspace scope mismatch')
+          if (!taskCatalog || taskCatalog.workspaceId !== workspaceId) throw new Error('Workspace task catalog unavailable')
+          if (choice.projectId && !taskCatalog.projects.some(project => project.id === choice.projectId)) throw new Error('Selected project unavailable')
+          const task = await createMeetingWorkspaceTask(window.electronAPI, { workspaceId, meetingId, actionId: action.id,
+            title: action.text, description: t('meetings.local.taskNotes', { title: m.title }),
+            assigneeId: choice.assigneeId || null, projectId: choice.projectId || null,
+          }, knownRef?.scope === 'workspace' ? knownRef.id : undefined)
+          const ref: LocalMeetingTaskRef = { scope: 'workspace', workspaceId: task.workspaceId, id: task.id }
+          savedTaskRefs.current.set(key, ref)
+          return ref
+        }
+        if (knownRef?.scope === 'personal') return knownRef
+        const task = await createPersonalTaskConfirmed({ title: action.text, notes: t('meetings.local.taskNotes', { title: m.title }),
+          source: { kind: 'meeting', id: meetingId, label: m.title } }, personalAttempts.current.get(key))
+        personalAttempts.current.set(key, task)
+        const ref: LocalMeetingTaskRef = { scope: 'personal', id: task.id }
+        savedTaskRefs.current.set(key, ref)
+        return ref
+      })
+      if (currentMeetingId.current === meetingId && currentWorkspaceId.current === workspaceId) { onChanged(updated); setTaskChoice(null) }
+      personalAttempts.current.delete(key); savedTaskRefs.current.delete(key)
+    } catch (error) {
+      if (error instanceof PersonalTaskCreationError) personalAttempts.current.set(key, error.task)
+      if (error instanceof MeetingTaskBacklinkError) savedTaskRefs.current.set(key, error.taskRef)
+      if (currentMeetingId.current === meetingId && currentWorkspaceId.current === workspaceId) setTaskChoice({ ...choice, pending: false,
+        error: error instanceof MeetingTaskBacklinkError ? 'backlink' : workspaceWorkFailure(error).code,
+        knownRef: savedTaskRefs.current.get(key) })
+    }
+  }
+  const saveAction = async (actionId: string, patch?: Partial<Pick<LocalMeetingAction, 'text' | 'done' | 'taskId' | 'taskRef'>>, remove = false, create = false) => {
     if (!api) return
     const meetingId = m.id
     const result = await api.saveAction(meetingId, { actionId, patch, remove, create }).catch(() => null)
@@ -834,7 +899,7 @@ export function LocalMeetingDetail(props: {
     if (result?.ok) onChanged(result.value)
     else onBanner(result?.code ?? 'unavailable')
   }
-  useEffect(() => { setActionEdit(null); setDecisionEdit(null); setActionDraft(''); setDecisionDraft(''); setDecisionWhy('') }, [m.id])
+  useEffect(() => { setActionEdit(null); setDecisionEdit(null); setActionDraft(''); setDecisionDraft(''); setDecisionWhy(''); setTaskChoice(null) }, [m.id, workspaceId])
   const actionsTab = (
     <div className="flex flex-col gap-1">
       {m.actions.length === 0 ? <EmptyState title={t('meetings.local.actionsEmptyTitle')} body={t('meetings.local.actionsEmptyBody')} /> : null}
@@ -853,15 +918,36 @@ export function LocalMeetingDetail(props: {
             </div>
             {a.sourceTranscriptRevision === transcript?.revision ? renderSourceLinks(a.sourceSegmentIds) : null}
             {actionEdit?.id !== a.id ? <Button variant="ghost" aria-label={t('meetings.local.editAction')} onClick={() => setActionEdit({ id: a.id, text: a.text })}><Pencil className="size-3.5" aria-hidden /></Button> : null}
-            {a.taskId ? (
-              <Button variant="ghost" onClick={() => navigate(routes.view.tasks(a.taskId))}>{t('meetings.local.openTask')}</Button>
+            {a.taskRef || a.taskId ? (
+              <Button variant="ghost" onClick={() => navigate(routes.view.tasks(a.taskRef?.id ?? a.taskId))}>{t('meetings.local.openTask')}</Button>
             ) : (
-              <Button data-testid="meeting-action-to-task" onClick={() => {
-                const task = createPersonalTask({ title: a.text, notes: t('meetings.local.taskNotes', { title: m.title }) })
-                void saveAction(a.id, { taskId: task.id })
+              <Button data-testid="meeting-action-to-task" disabled={taskChoice?.pending} onClick={() => {
+                const knownRef = savedTaskRefs.current.get(taskAttemptKey(a.id))
+                setTaskChoice({ actionId: a.id, scope: knownRef?.scope ?? 'personal', assigneeId: '', projectId: '', pending: false, knownRef })
               }}>{t('meetings.local.toTask')}</Button>
             )}
             <Button variant="ghost" aria-label={t('meetings.local.remove')} className="opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => void saveAction(a.id, undefined, true)}>×</Button>
+            {taskChoice?.actionId === a.id && <form className="basis-full space-y-2 rounded-[6px] border border-border/60 p-3" data-testid="meeting-task-choice" onSubmit={event => { event.preventDefault(); void confirmActionTask() }}>
+              <p className="text-[12px] text-text-muted">{t('navigation.meetingTask.hint')}</p>
+              <label className="flex flex-col gap-1 text-[12px]">{t('navigation.meetingTask.scope')}<select className={input} value={taskChoice.scope} disabled={taskChoice.pending || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, scope: event.target.value as 'personal' | 'workspace', error: undefined })}>
+                <option value="personal">{t('navigation.taskScopes.personal')}</option><option value="workspace" disabled={!workspaceId || m.workspaceId !== workspaceId}>{t('navigation.taskScopes.workspace')}</option>
+              </select></label>
+              {taskChoice.scope === 'workspace' && <>
+                {!taskCatalog && !taskCatalogError && <p role="status" className="text-[12px]">{t('navigation.work.loading')}</p>}
+                {taskCatalogError && <p role="alert" className="text-[12px] text-destructive">{t(`navigation.work.errors.${taskCatalogError}`)}</p>}
+                {taskCatalog && !taskCatalog.snapshot.access.canWrite && <p role="status" className="text-[12px]">{t('navigation.work.readOnly')}</p>}
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex flex-col gap-1 text-[12px]">{t('navigation.work.tasks.assignee')}<select className={input} value={taskChoice.assigneeId} disabled={taskChoice.pending || !taskCatalog || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, assigneeId: event.target.value, error: undefined })}>
+                    <option value="">{t('navigation.work.tasks.unassigned')}</option>{taskCatalog?.snapshot.members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
+                  </select></label>
+                  <label className="flex flex-col gap-1 text-[12px]">{t('navigation.work.tasks.project')}<select className={input} value={taskChoice.projectId} disabled={taskChoice.pending || !taskCatalog || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, projectId: event.target.value, error: undefined })}>
+                    <option value="">{t('navigation.work.tasks.noProject')}</option>{taskCatalog?.projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
+                  </select></label>
+                </div>
+              </>}
+              {taskChoice.error && <p role="alert" className="text-[12px] text-destructive">{t(taskChoice.error === 'backlink' ? 'navigation.meetingTask.backlinkFailed' : `navigation.work.errors.${taskChoice.error}`)}</p>}
+              <div className="flex gap-2"><Button type="submit" disabled={taskChoice.pending || taskChoice.scope === 'workspace' && (!taskCatalog || !taskCatalog.snapshot.access.canWrite && !taskChoice.knownRef)}>{t(taskChoice.knownRef ? 'common.retry' : 'navigation.meetingTask.confirm')}</Button><Button variant="ghost" disabled={taskChoice.pending} onClick={() => setTaskChoice(null)}>{t('common.cancel')}</Button></div>
+            </form>}
           </li>
         ))}
       </ul>

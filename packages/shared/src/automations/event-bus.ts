@@ -28,6 +28,8 @@ export interface BaseEventPayload {
   workspaceId: string;
   timestamp: number;
   labels?: string[];
+  projectId?: string;
+  objectReference?: { kind: import('./types.ts').AutomationObjectKind; id: string };
 }
 
 /** Label events payload */

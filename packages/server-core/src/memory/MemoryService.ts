@@ -398,7 +398,7 @@ export class MemoryService {
    * (EPISODIC_PROMPT_BUDGET_MS) and fail-soft so a cold model download or any
    * episodic error only means the tail is omitted — never a broken prompt.
    */
-  async buildMemoryBlocks(opts?: { query?: string }): Promise<MemoryPromptBlocks | undefined> {
+  async buildMemoryBlocks(opts?: { query?: string; workspaceOnly?: boolean }): Promise<MemoryPromptBlocks | undefined> {
     if (!this.config.enabled) return undefined
     const globalStore = this.deps.lessonStoreFactory?.('global') ?? this.defaultLessonStore('global')
     const workspaceStore = this.deps.lessonStoreFactory?.('workspace') ?? this.defaultLessonStore('workspace')
@@ -413,6 +413,10 @@ export class MemoryService {
         workspaceLessons = ranked.workspaceLessons
         memory = ranked.memory
       }
+    }
+    if (opts?.workspaceOnly) {
+      globalLessons = []
+      memory = { ...memory, preferences: '' }
     }
     const lessons = [...globalLessons, ...workspaceLessons]
     // Usage accounting (spec F1/F4): the lessons just assembled into the prompt
@@ -596,6 +600,7 @@ export class MemoryService {
   }
 
   private async runDistill(job: DistillJob): Promise<void> {
+    if (this.stopped || !this.config.enabled || this.skipsWrites(job.sessionId)) return
     let result: DistillResult | null = null
     try {
       const messages = (this.deps.readMessages ?? ((id) => readSessionMessages(getSessionFilePath(this.deps.workspaceRoot, id))))(
@@ -628,6 +633,9 @@ export class MemoryService {
       this.logger.warn(`MemoryService: runDistill failed for ${job.sessionId}`, err)
       return
     }
+    // A queued job or an awaited provider result must not outlive a change to
+    // the session's memory mode or the service's write permission.
+    if (this.stopped || !this.config.enabled || this.skipsWrites(job.sessionId)) return
     this.applyResult(job, result)
   }
 

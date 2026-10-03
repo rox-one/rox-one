@@ -15,7 +15,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAtomValue } from 'jotai'
+import { useAtomValue, useStore } from 'jotai'
 import {
   FEED_TABS,
   type FeedAnnotationPatch,
@@ -39,6 +39,9 @@ import {
   Star,
 } from 'lucide-react'
 import { navigate, routes } from '@/lib/navigate'
+import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
+import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
+import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
 import { cn } from '@/lib/utils'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
@@ -151,7 +154,9 @@ const INPUT = 'h-7 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px] outline-n
 
 export default function FeedPage({ selectedId }: { selectedId?: string | null }) {
   const { t, i18n } = useTranslation()
+  const canHandleKeyboard = usePanelKeyboardGuard()
   const shell = useOptionalAppShellContext()
+  const store = useStore()
   const workspaceId = shell?.activeWorkspaceId ?? null
   const api = typeof window !== 'undefined' ? window.electronAPI : undefined
 
@@ -367,11 +372,19 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     return item.title || (item.kind === 'session' ? t('feed.untitledSession') : item.url ?? '')
   }
 
+  const openAutomation = (automationId: string) => {
+    if (!workspaceId) return
+    const rule = automations.automations.find(item => item.id === automationId)
+    const projectId = rule?.context?.projectId ?? store.get(workspaceProjectContextsAtom)[workspaceId] ?? undefined
+    const intent = captureWorkspaceToolOpen(store, { workspaceId, projectId, tool: 'automations', originPanelId: shell?.panelId })
+    if (intent) openWorkspaceTool(store, intent, routes.view.automations({ automationId }))
+  }
+
   const openItem = (item: FeedViewItem) => {
     if (item.ref?.type === 'session' || (item.kind !== 'automation-run' && item.sessionId)) {
       navigate(routes.view.allSessions(item.sessionId ?? item.ref!.id))
     } else if (item.ref?.type === 'automation') {
-      navigate(routes.view.automations({ automationId: item.ref.id }))
+      openAutomation(item.ref.id)
     } else if (item.url) {
       void api?.openUrl?.(item.url)
     }
@@ -398,7 +411,11 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     setSent({ itemId: item.id, kind: 'note', id: created.id })
   })
 
-  const onListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openItem)
+  const handleListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openItem)
+  const onListKeys: typeof handleListKeys = event => {
+    if (event.defaultPrevented || event.nativeEvent.isComposing || !canHandleKeyboard(event.target)) return
+    handleListKeys(event)
+  }
 
   // ── navigator ────────────────────────────────────────────────────────────
   const xConnected = data.x.state === 'connected'
@@ -750,7 +767,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
             </Button>
           ) : null}
           {selected.sessionId ? <Button onClick={() => navigate(routes.view.allSessions(selected.sessionId!))}>{t('feed.openSession')}</Button> : null}
-          <Button variant="ghost" onClick={() => navigate(routes.view.automations({ automationId: selected.automationId! }))}>{t('feed.openAutomation')}</Button>
+          <Button variant="ghost" onClick={() => openAutomation(selected.automationId!)}>{t('feed.openAutomation')}</Button>
         </div>
       ) : null}
       {selSource ? (
@@ -769,6 +786,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing || !canHandleKeyboard(event.target)) return
       const target = event.target as HTMLElement | null
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
       if (event.metaKey || event.ctrlKey || event.altKey) return

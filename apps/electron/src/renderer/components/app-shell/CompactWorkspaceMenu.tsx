@@ -23,7 +23,7 @@ import {
 } from './compact-workspace-navigation'
 
 /** Always available in compact chrome, including a chat's custom header. */
-export function CompactWorkspaceMenu({ onOpenBrowser }: { onOpenBrowser: () => void }) {
+export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { onOpenBrowser: () => void; showServices?: boolean }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const navigation = useNavigationState()
@@ -63,7 +63,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser }: { onOpenBrowser: () => v
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <TopBarButton
-          aria-label={`${t('rail.title')} · ${t('surfaceTabs.panel')}`}
+          aria-label={showServices ? `${t('rail.title')} · ${t('surfaceTabs.panel')}` : t('navigation.openPanels')}
           data-compact-workspace-menu="true"
           className="h-9 w-9 shrink-0 focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
         >
@@ -105,7 +105,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser }: { onOpenBrowser: () => v
             <StyledDropdownMenuSeparator />
           </>
         )}
-        <div role="group" aria-label={t('rail.title')}>
+        {showServices && <div role="group" aria-label={t('rail.title')}>
           <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground" aria-hidden>
             {t('rail.title')}
           </div>
@@ -126,7 +126,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser }: { onOpenBrowser: () => v
               </StyledDropdownMenuItem>
             )
           })}
-        </div>
+        </div>}
       </StyledDropdownMenuContent>
     </DropdownMenu>
   )

@@ -22,6 +22,8 @@ export type { Route }
 export const NAVIGATE_EVENT = 'rox-navigate'
 
 export interface NavigateOptions {
+  /** Explicit surface controls keep navigation out of auxiliary tools. */
+  primary?: boolean
   /** Open the target in a new panel instead of navigating the current one */
   newPanel?: boolean
   /**
@@ -33,6 +35,21 @@ export interface NavigateOptions {
   targetLaneId?: 'main'
   /** Skip auto-selecting first item when navigating to a list view (used when closing panels) */
   skipAutoSelect?: boolean
+}
+
+/** Keep every navigation option intact between surface controls and the router. */
+export function subscribeNavigateEvents(
+  handler: (route: Route, options?: NavigateOptions) => unknown,
+  target: EventTarget = window,
+): () => void {
+  const listener = (event: Event) => {
+    const detail = (event as CustomEvent<{ route: Route } & NavigateOptions>).detail
+    if (!detail?.route) return
+    const { route, ...options } = detail
+    void handler(route, options)
+  }
+  target.addEventListener(NAVIGATE_EVENT, listener)
+  return () => target.removeEventListener(NAVIGATE_EVENT, listener)
 }
 
 /**

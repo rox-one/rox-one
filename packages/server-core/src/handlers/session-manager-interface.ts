@@ -58,7 +58,7 @@ export interface ISessionManager {
   createSession(
     workspaceId: string,
     options?: CreateSessionOptions,
-    internal?: { emitCreatedEvent?: boolean },
+    internal?: { emitCreatedEvent?: boolean; agentProfileSnapshot?: import('@rox/shared/workspace-work').AgentProfileSnapshot | null },
   ): Promise<Session>
   /** Resolved working directory of a live session (Tasks Conductor uses it so children inherit
    *  the orchestrator's cwd). */
@@ -240,6 +240,7 @@ export interface ISessionManager {
     workspaceId: string,
     bundle: SessionBundle,
     mode: DispatchMode,
+    internal?: { defaultAgentProfileSnapshot?: import('@rox/shared/workspace-work').AgentProfileSnapshot | null },
   ): Promise<{ sessionId: string; warnings?: string[] }>
 
   /**
@@ -351,6 +352,7 @@ export interface ISessionManager {
  * overrides) can be added without churn at every call site.
  */
 export interface ExecutePromptAutomationInput {
+  automationContext?: import('@rox/shared/automations/types').AutomationContextReference
   workspaceId: string
   workspaceRootPath: string
   prompt: string

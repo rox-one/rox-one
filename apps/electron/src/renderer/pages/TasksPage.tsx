@@ -57,12 +57,12 @@ import {
   subscribePersonalTasks,
 } from '@/lib/personal-tasks'
 import { navigate, routes } from '@/lib/navigate'
+import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
 import { cn } from '@/lib/utils'
 import {
   Badge,
   Button,
   EmptyState,
-  ListHeader,
   ModeScreenLayout,
   type Tone,
 } from '@/components/mode-screen/ModeScreen'
@@ -143,6 +143,7 @@ export interface TasksPageProps {
 
 export default function TasksPage(props: TasksPageProps = {}) {
   const { t, i18n } = useTranslation()
+  const canHandleKeyboard = usePanelKeyboardGuard()
   const workspace = useActiveWorkspace()
   const shell = useOptionalAppShellContext()
   const { projects } = useProjects(workspace?.id)
@@ -579,14 +580,10 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [mutate])
 
   // ── Keyboard ────────────────────────────────────────────────────────────
-  const pageVisible = () => Boolean(rootRef.current && rootRef.current.isConnected && rootRef.current.offsetParent !== null)
-  const pageFocused = () => {
-    const active = document.activeElement
-    return pageVisible() && (!active || active === document.body || Boolean(rootRef.current?.contains(active)))
-  }
+  const pageFocused = () => canHandleKeyboard(document.activeElement)
   const inField = () => Boolean((document.activeElement as HTMLElement | null)?.closest('input, textarea, [contenteditable="true"]'))
   // ⌘N on Задачи = Quick Entry (a new chat elsewhere); ⌘K / ⌘T apply to the selected task.
-  useAction('app.newChat', () => setQuickEntry({ initial: '' }), { enabled: () => pageVisible(), priority: 10 })
+  useAction('app.newChat', () => setQuickEntry({ initial: '' }), { enabled: () => pageFocused(), priority: 10 })
   useAction('app.omnibox', () => { if (selected) setMoveFor(selected.id) }, { enabled: () => Boolean(selected) && pageFocused() && !inField(), priority: 10 }, [selected])
   useAction('app.newChatInPanel', () => { if (selected) applyWhen(selected.id, { kind: 'today' }) }, { enabled: () => Boolean(selected) && pageFocused() && !inField(), priority: 10 }, [selected])
 
@@ -604,6 +601,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }
 
   const onKeyDown = (event: React.KeyboardEvent) => {
+    if (event.defaultPrevented || event.nativeEvent.isComposing || !canHandleKeyboard(event.target)) return
     if (quickEntry || moveFor || confirm) return
     const target = event.target as HTMLElement
     // Portalled navigation still bubbles through this page's React tree.
@@ -1080,9 +1078,39 @@ export default function TasksPage(props: TasksPageProps = {}) {
     />
   ) : listTitle
 
+  const magicPlusControl = (
+    view.kind !== 'agents' && view.kind !== 'tag' && !(view.kind === 'list' && (view.id === 'logbook' || view.id === 'trash')) ? (
+      <button
+          type="button"
+          draggable
+          onDragStart={(event) => { event.dataTransfer.setData(DRAG_PLUS, '1'); event.dataTransfer.effectAllowed = 'copy' }}
+          onClick={() => {
+            const section = sections.find((s) => s.context) ?? sections[0]
+            if (section) { setInline({ sectionKey: section.key, afterId: selected && section.tasks.some((x) => x.id === selected.id) ? selected.id : section.tasks[section.tasks.length - 1]?.id, context: section.context }); setInlineText('') }
+            else setQuickEntry({ initial: '' })
+          }}
+          title={t('tasks.magicPlusHint')}
+          aria-label={t('tasks.magicPlus')}
+          data-testid="tasks-magic-plus"
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-[6px] bg-accent text-[20px] leading-none text-accent-foreground outline-none transition-colors hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          +
+        </button>
+    ) : null
+  )
+
   const list = (
     <div className="relative flex h-full min-h-0 flex-col">
-      <ListHeader title={titleNode} subtitle={t('tasks.status.open', { count: view.kind === 'agents' ? agentList.length : visible.filter(isOpenTask).length })} actions={headerControls} />
+      <header className="shrink-0 px-3 pt-2" data-testid="tasks-list-header">
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold">{titleNode}</h2>
+          {magicPlusControl}
+        </div>
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-1">
+          <span className="min-w-0 text-[12px] text-text-muted">{t('tasks.status.open', { count: view.kind === 'agents' ? agentList.length : visible.filter(isOpenTask).length })}</span>
+          <div className="flex min-w-0 flex-wrap items-center gap-1">{headerControls}</div>
+        </div>
+      </header>
       {projectToolbar}
       {view.kind === 'project' && currentProject ? (
         <textarea
@@ -1147,7 +1175,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         aria-label={typeof listTitle === 'string' ? listTitle : undefined}
         tabIndex={0}
         data-testid="tasks-list"
-        className="relative min-h-0 flex-1 overflow-y-auto pb-16 outline-none"
+        className="relative min-h-0 flex-1 overflow-y-auto pb-3 outline-none"
       >
         {view.kind === 'agents' ? (
           agentList.length === 0 ? (
@@ -1167,24 +1195,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           <EmptyState title={searching ? t('tasks.search.none') : t(emptyKey)} />
         ) : sections.map(renderSection)}
       </div>
-      {view.kind !== 'agents' && view.kind !== 'tag' && !(view.kind === 'list' && (view.id === 'logbook' || view.id === 'trash')) ? (
-        <button
-          type="button"
-          draggable
-          onDragStart={(event) => { event.dataTransfer.setData(DRAG_PLUS, '1'); event.dataTransfer.effectAllowed = 'copy' }}
-          onClick={() => {
-            const section = sections.find((s) => s.context) ?? sections[0]
-            if (section) { setInline({ sectionKey: section.key, afterId: selected && section.tasks.some((x) => x.id === selected.id) ? selected.id : section.tasks[section.tasks.length - 1]?.id, context: section.context }); setInlineText('') }
-            else setQuickEntry({ initial: '' })
-          }}
-          title={t('tasks.magicPlusHint')}
-          aria-label={t('tasks.magicPlus')}
-          data-testid="tasks-magic-plus"
-          className="absolute bottom-4 right-4 flex size-9 items-center justify-center rounded-full bg-accent text-[20px] leading-none text-accent-foreground shadow-middle transition-transform hover:scale-105 active:scale-95"
-        >
-          +
-        </button>
-      ) : null}
+
     </div>
   )
 
@@ -1301,31 +1312,32 @@ export default function TasksPage(props: TasksPageProps = {}) {
       ) : null}
       <ModeScreenLayout
         testId="tasks-page"
+        detailKey={selected?.id}
         navigator={navigator}
         list={list}
         detail={detail}
         status={(
-          <>
-            <span className="truncate">{t('tasks.status.summary', { today: todayCount, agents: agentLinked })}</span>
-            <span>·</span>
-            <span data-testid="tasks-sync-state" className="truncate">{t(`tasks.status.sync.${sync}`)}</span>
-            <span className="flex-1" />
-            <button type="button" className="hover:text-foreground" onClick={onExport}>{t('tasks.export')}</button>
-            <label className="cursor-pointer hover:text-foreground">
-              {t('tasks.import')}
-              <input
-                type="file"
-                accept="application/json"
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.target.files?.[0]
-                  if (file) void onImport(file)
-                  event.target.value = ''
-                }}
-              />
-            </label>
+          <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="min-w-0 flex-[1_1_160px] break-words">{t('tasks.status.summary', { today: todayCount, agents: agentLinked })}</span>
+            <span data-testid="tasks-sync-state" className="min-w-0 break-words">{t(`tasks.status.sync.${sync}`)}</span>
+            <div className="ml-auto flex shrink-0 items-center gap-2">
+              <button type="button" className="hover:text-foreground" onClick={onExport}>{t('tasks.export')}</button>
+              <label className="cursor-pointer hover:text-foreground">
+                {t('tasks.import')}
+                <input
+                  type="file"
+                  accept="application/json"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    if (file) void onImport(file)
+                    event.target.value = ''
+                  }}
+                />
+              </label>
+            </div>
             <span className="hidden xl:inline">· {t('tasks.status.hint')}</span>
-          </>
+          </div>
         )}
       />
       {quickEntry ? (
