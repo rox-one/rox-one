@@ -1,5 +1,5 @@
 {
-  "source_branch": "codex/rox-canonical-remaining-p0-20261003",
+  "source_branch": "fix/windows-runtime-mcp-bootstrap-20261003",
   "source_pr": 1436,
   "source_sha": "384843bfc4cf7d4a1f34c902a66a9a3198043c9f",
   "base": "c9f149554f22b89cb3db1b65a3b9cb6b882f8dbb",
@@ -26,7 +26,11 @@
       "fail": 0,
       "scope": "exact current AppShell callbacks mounted in real React/Jotai; controlled preferences RPC contract and browser reload; native disk independently checked"
     },
-    "final_browser": "pending after fresh-main reconciliation",
+    "final_browser": {
+      "pass": 5,
+      "fail": 0,
+      "scope": "exact current AppShell workspace/grouping consumers mounted in real React/Jotai, controlled preferences RPC contract; current native filesystem cases separately33/0"
+    },
     "electron_types": "pending"
   },
   "limits": [

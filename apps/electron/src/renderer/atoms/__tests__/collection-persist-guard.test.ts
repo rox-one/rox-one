@@ -145,7 +145,7 @@ describe('current collection load/edit lifetime', () => {
       f.store.set(windowWorkspaceIdAtom, 'b'); await f.store.set(load as any, 'b')
       f.store.set(windowWorkspaceIdAtom, 'a'); await f.store.set(load as any, 'a')
       held.resolve(stale); await first
-      expect(f.store.get(live as any)).toEqual(latest)
+      expect(kind === 'filters' ? f.store.get(collectionFiltersMapAtom) : f.store.get(collectionDisplayAtom)).toEqual(latest)
     })
 
     it(`${kind} a later durable edit survives a held initial snapshot`, async () => {
@@ -170,7 +170,7 @@ describe('current collection load/edit lifetime', () => {
       const pending = f.store.set((kind === 'filters' ? loadCollectionFiltersAtom : loadCollectionDisplayAtom) as any, 'a')
       f.store.set((kind === 'filters' ? replaceCollectionFiltersMapAtom : replaceCollectionDisplayAtom) as any, latest)
       held.resolve(kind === 'filters' ? {} : DEFAULT_COLLECTION_DISPLAY); await pending
-      expect(f.store.get((kind === 'filters' ? collectionFiltersMapAtom : collectionDisplayAtom) as any)).toEqual(latest)
+      expect(kind === 'filters' ? f.store.get(collectionFiltersMapAtom) : f.store.get(collectionDisplayAtom)).toEqual(latest)
     })
   }
 })
