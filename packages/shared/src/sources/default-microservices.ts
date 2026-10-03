@@ -113,7 +113,8 @@ export function resolveNativeFolderSourcePaths(
   env: NodeJS.ProcessEnv = process.env,
 ): { applications: string; telegram: string } {
   if (platform === 'win32') {
-    const appData = env.APPDATA && win32.isAbsolute(env.APPDATA) ? env.APPDATA : win32.join(homeDir, 'AppData', 'Roaming');
+    const appData = env.APPDATA && win32.isAbsolute(env.APPDATA) && win32.parse(env.APPDATA).root.length > 1
+      ? env.APPDATA : win32.join(homeDir, 'AppData', 'Roaming');
     return {
       applications: win32.join(appData, 'Microsoft', 'Windows', 'Start Menu', 'Programs'),
       telegram: win32.join(appData, 'Telegram Desktop'),

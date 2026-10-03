@@ -14,6 +14,7 @@ describe('native folder source platform mapping', () => {
       applications: 'D:\\Profile\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs', telegram: 'D:\\Profile\\Roaming\\Telegram Desktop',
     });
     expect(resolveNativeFolderSourcePaths('win32', 'C:\\Users\\owner', { APPDATA: 'relative' }).telegram).toBe(win32.join('C:\\Users\\owner', 'AppData', 'Roaming', 'Telegram Desktop'));
+    expect(resolveNativeFolderSourcePaths('win32', 'C:\\Users\\owner', { APPDATA: '\\root-relative' }).telegram).toBe(win32.join('C:\\Users\\owner', 'AppData', 'Roaming', 'Telegram Desktop'));
     expect(resolveNativeFolderSourcePaths('darwin', '/Users/owner', {})).toEqual({ applications: '/Users/owner/Applications', telegram: '/Users/owner/Library/Application Support/Telegram' });
     expect(resolveNativeFolderSourcePaths('linux', '/home/owner', { XDG_DATA_HOME: '/data/owner' })).toEqual({ applications: '/data/owner/applications', telegram: '/data/owner/TelegramDesktop' });
     expect(resolveNativeFolderSourcePaths('linux', '/home/owner', { XDG_DATA_HOME: 'relative' }).telegram).toBe(posix.join('/home/owner', '.local', 'share', 'TelegramDesktop'));

@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { getLocalSourceFolderState, isSourceUsable, loadSourceConfig } from '../storage.ts';
 import { SourceManager } from '../../agent/core/source-manager.ts';
+import { BaseAgent } from '../../agent/base-agent.ts';
 import { SourceCredentialManager } from '../credential-manager.ts';
 import { BUILTIN_MCP_CATALOG } from '../builtin-mcp.ts';
 import { SourceServerBuilder } from '../server-builder.ts';
@@ -95,6 +96,24 @@ describe('local folder source actual storage and agent consumer', () => {
     const manager = new SourceManager();
     manager.setAllSources([managed]); manager.updateActiveState([], [], ['firecrawl-mcp']);
     expect(manager.formatSourceState()).toContain('awaiting setup or a supported local runtime');
+  });
+
+  test('actual BaseAgent source sync retains selected local folders after empty live MCP discovery', async () => {
+    const manager = new SourceManager(); manager.setAllSources([source()]);
+    // Execute the actual public sync/refresh methods with controlled fields;
+    // avoid constructor-owned runtime stores/provider setup for this boundary.
+    const agent = Object.create(BaseAgent.prototype) as BaseAgent;
+    Object.defineProperty(agent, 'sourceManager', { value: manager });
+    Object.defineProperty(agent, 'config', { value: { mcpPool: {
+      sync: async () => [], getConnectedSlugs: () => [], getTools: () => [],
+    } } });
+    await agent.setSourceServers({}, {}, ['folder']);
+    expect(agent.getActiveSourceSlugs()).toEqual(['folder']);
+    expect(manager.isSourceActive('folder')).toBe(true);
+    expect(manager.formatSourceState()).toContain('folder (local files)');
+    await agent.setSourceServers({}, {}, []);
+    expect(agent.getActiveSourceSlugs()).toEqual([]);
+    expect(manager.isSourceActive('folder')).toBe(false);
   });
 
   test('ordinary local/no-auth sources skip vault but managed stdio still resolves its current credential identity', async () => {
