@@ -95,6 +95,13 @@ jobs:
           bun test --timeout 60000 apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts
       - name: Resource, editor and cross-window persistence recovery
         run: bun docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts
+      - name: Skill editor save, deletion and catalog ownership
+        run: |
+          node apps/electron/src/renderer/pages/__tests__/skill-info-owner.fixture.mjs "$RUNNER_TEMP/rox-ui001-skill-bundle.js"
+          export ROX_SKILL_INFO_BROWSER_TEST=1
+          export ROX_SKILL_INFO_FIXTURE_BUNDLE="$RUNNER_TEMP/rox-ui001-skill-bundle.js"
+          export ROX_UI001_CHROMIUM_EXECUTABLE="$(bun -e 'import {chromium} from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
+          node --test --test-reporter=tap apps/electron/src/renderer/pages/__tests__/skill-info-owner.browser.node.ts
       - name: Retry, lazy loading and resize callbacks
         env:
           ROX_UI001_BROWSER_TEST: '1'

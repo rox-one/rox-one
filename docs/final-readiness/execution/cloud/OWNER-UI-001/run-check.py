@@ -17,7 +17,7 @@ integration_base=subprocess.check_output(["git","rev-parse","origin/main"],cwd=r
 with log.open("w") as out: result=subprocess.run(command,cwd=root,stdout=out,stderr=subprocess.STDOUT)
 after={p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in paths}
 receipt={"label":label,"command":command,"cwd":str(root),"inputHead":head,"integrationBase":integration_base,"startedAt":started,"finishedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),"exitCode":result.returncode,"sourceSha256":source,"sourceAfterSha256":after,"sourcesStable":source==after,"log":str(log.relative_to(root)),"logSha256":hashlib.sha256(log.read_bytes()).hexdigest()}
-receipt['testEnvironment']={key:os.environ[key] for key in ['ROX_UI001_BROWSER_EXECUTABLE','ROX_UI001_CHROMIUM_EXECUTABLE','ROX_UI001_BROWSER_TEST','ROX_UI001_BROWSER_CHANNEL','CHROMIUM_EXECUTABLE','NODE_OPTIONS','PLAYWRIGHT_BROWSERS_PATH'] if key in os.environ}
+receipt['testEnvironment']={key:os.environ[key] for key in ['ROX_UI001_BROWSER_EXECUTABLE','ROX_UI001_CHROMIUM_EXECUTABLE','ROX_UI001_BROWSER_TEST','ROX_UI001_BROWSER_CHANNEL','ROX_SKILL_INFO_BROWSER_TEST','ROX_SKILL_INFO_FIXTURE_BUNDLE','CHROMIUM_EXECUTABLE','NODE_OPTIONS','PLAYWRIGHT_BROWSERS_PATH'] if key in os.environ}
 (owner/"evidence"/(label+".json")).write_text(json.dumps(receipt,indent=2)+"\n")
 print(json.dumps({"label":label,"exitCode":result.returncode,"tail":log.read_text(errors="replace")[-6000:]}))
 sys.exit(result.returncode)
