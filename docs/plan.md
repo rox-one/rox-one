@@ -918,3 +918,11 @@ Owner: recent_features; dependency: current native Voice capture and Product Lea
 ## Portable resources follow-up (2026-10-03)
 
 Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.
+
+
+### Recover native overlay recording custody (2026-10-03)
+
+- Owner: recent_features; integrate source A7 `eeddeb5bd0af59b93fd121c10b8a7a52956ff0b7` in a separate `codex/` branch after merged Product Learning. Preserve all original branches.
+- Carry recording ID only for authenticated overlay stop/cancel, validate command/ID and managed native client, retain current private child sender/phase/owner checks.
+- Bind queued START/permission commands to the current native recording and capture generation; clear on completion/cancel/failure; cancellation wins. Preserve current learning observation and native consent/PTT paths.
+- Verify actual two-composer/browser owner pipeline with before/after negative proof, delayed START and grant, idle/foreign/retired packets, current 25 dictation regressions, native command/owner and authority/protocol suites, full Electron types and main/preload bundles. Retain failure history; controlled browser/native ports do not establish OS microphone or clipboard acceptance. Parent owns remote merge; delivery receipt remains separate from implementation.
