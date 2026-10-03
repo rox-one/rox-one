@@ -8,8 +8,8 @@ permissions:
   contents: read
 jobs:
   validate:
-    # Standard hosted macOS runners support this public repository without runner registration.
-    runs-on: macos-15
+    # Verification-only branch: execute unchanged gates on a native Linux runner.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
