@@ -378,3 +378,8 @@ This bounded addition inspects legacy `.rox-docs/commits` without running legacy
 The module is deliberately unwired. Recovery clearance is not native ownership, an adoption permission, a trusted receipt, or a complete atomic migration guard. Canonical activation requires serial integration of the authenticated NativeJournal pipeline, private receipt custody, stable operation replay, and an explicitly authorized disposition for existing legacy files. The full compound package acceptance criteria remain unchanged.
 
 Acceptance: real filesystem fixtures preserve inspected bytes and directory entries; prepared and partially applied records fail closed; replacements at the open seam cannot contribute unrelated historical metadata; completed history never authorizes native activation.
+
+
+## PR1315 portable runtime historical source and evidence
+
+The [original spec.md](integration-history/pr1315/spec.md) and its September task/evidence snapshots are retained under integration-history/pr1315. Their older source and bounded execution claims do not replace current native authority, request fences or later September evidence. Portable recovery deltas are reconciled against the current implementation.

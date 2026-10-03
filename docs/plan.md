@@ -499,3 +499,8 @@ Owner: compound integration reviewer; lead retains integration and publication. 
 4. Existing compound integrator separately decides recovery disposition and serial canonical pipeline integration. The inventory stays unwired until an actual preparation path and its authority prerequisites are reviewed.
 
 Verification covers unchanged real fixture bytes, interrupted WAL refusal, unreadable/malformed/symlink state, and deterministic file/parent replacement races. It does not claim complete migration, native UI acceptance, adoption of existing files, or closure of the full compound program.
+
+
+## PR1315 portable runtime historical source and evidence
+
+The [original plan.md](integration-history/pr1315/plan.md) and its September task/evidence snapshots are retained under integration-history/pr1315. Their older source and bounded execution claims do not replace current native authority, request fences or later September evidence. Portable recovery deltas are reconciled against the current implementation.

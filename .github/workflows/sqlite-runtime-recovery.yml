@@ -20,7 +20,7 @@ on:
       - 'apps/electron/src/main/native-replica.ts'
       - 'apps/electron/src/main/__tests__/native-notes-runtime.test.ts'
   push:
-    branches: [fix/september-sqlite-runtime-20260930, cloud/all-surfaces-20260930]
+    branches: [fix/september-sqlite-runtime-20260930, cloud/all-surfaces-20260930, fix/cloud-sqlite-runtime-20260930]
   workflow_dispatch:
 
 permissions:
