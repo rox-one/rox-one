@@ -646,6 +646,16 @@ Owner: historical integration; parent retains merge. Dependency: existing useWor
 3. Execute delivered component/hook with actual atoms: initial list, state update, interaction, removal/reconciliation, disabled transfer, unmount and late-event/list controls. Run existing browser/chrome checks and renderer validation.
 4. Publish a separate PR with exact source/head and bounded evidence; original branches remain untouched.
 
+## Bounded historical recovery: Meeting profiles, slash and followup planning (2026-10-03)
+
+Owner: historical integration; parent merges. Dependency: current packaged roles/recipes, safe analysis session port, local Meeting store, NativeAuthority read fences and canonical MeetingJournal. Preserve concurrent voice/PTT producer/consumer work, native Notes authority and current glass/navigation.
+
+1. Map richer historical recipe/followup intent to actual routed consumers; reject synthetic receipts, writable-file grants and invented host principal.
+2. Bind profile/slash to current durable claim/attach/finish analysis and persist profile through existing local store; retain CAS, no-source-tool sessions, source-revision result validation and manual-edit supersession.
+3. Publish context-bound read-only plan RPC with canonical revision and policy projection; refuse unsafe/background execution, independent scheduling writes and corrupt-tail repair.
+4. Verify actual safe analysis callback, store restart, real authenticated WebSocket planning, foreign/missing/forged/revoked identities, asynchronous revocation, unknown/unpermitted slash and no journal/outbox/schedule mutation. Check routing, all locale catalogs, changed package/renderer types and relevant builds. Reconcile current built-in MCP provisioning and prove real SessionManager empty per-session source selection survives nonempty workspace defaults and persisted headers.
+5. Deliver separate PR with exact source/head and explicitly bounded receipts. The missing real authenticated backend/scheduler delegation ports remain named acceptance limits.
+
 ## Voice command transport recovery — 2026-10-03
 
 Owner: recent feature worker; main integration owner: branch audit lead. Dependencies: current HOTKEY wire channel, native window/client binding and composer consent/permission/generation guards at main 3d04470f9be127945dd15c582775ed1e0401ed50.
@@ -684,3 +694,10 @@ The latest user authorization explicitly permits source repair, GitHub writes an
 2. Recover commit defaults, preserving direct injected importer overrides. Add internal low-level runner ports used only by tests and host composition. Keep candidate previews free of helper password/process execution, except explicit metadata/public-identity list operations.
 3. Test all five positive selected paths, output masking/copy/reference behavior, unknown candidate refusal before secret access, helper failure without Connection/copy, and explicit override precedence. Prove negative controls by restoring exact pre-change adapter blobs, then restore candidate before final checks.
 4. Run existing importer/runner/workgraph/handler controls and consumed server-core/Electron types. Publish a separate codex PR and exact remote-head/proof receipt; lead merges after qualification. No actual host credential reads or external sends are part of verification.
+
+### Calendar synchronization ownership recovery (2026-10-03)
+
+- Owner: recent-features integration worker; dependency: current canonical CalendarStore and adapters.
+- Recover the absent per-account request fence from source `1dd90c5031087855e72cd3ecfce7dd057a2a6208`, preserving current conflict/identity and provider-readiness behavior.
+- Verification: deterministic deferred adapters reproduce stale event/cursor overwrite, stale conflict/delete replacement and newer-failure/older-success races before the fix; after the fix verify all three and independent-account/revocation controls, plus the complete calendar suite and core types.
+- Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.
