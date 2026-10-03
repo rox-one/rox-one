@@ -412,3 +412,12 @@ The [original spec](integration-history/pr1321/spec.md) remains preserved. Curre
 ## Parallel release integration — 2026-10-03
 
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [spec](integration-history/remote-main-3dd1f98b7/spec.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
+
+
+## Recovered Compound native license evidence — 2026-10-03
+
+Branch audit against main `76228cc33e44518e5fab5e59f5c754f4051d1e8c` found the unmerged native slice in `feat/rox-compound-workspace-20260930` commit `d141e962185fd808f177a2d01760b211f47f0832`. The canonical WP48 backend was already present; the Settings consumer, strict native evidence schemas and typed license audit operation in the existing encrypted Project intent slot were absent. This recovery retains those additions and their original source-bound proofs without replacing newer main contracts.
+
+Acceptance for this integration is the existing canonical authority and credential storage, strict workspace/window scope, one discriminated pending intent, explicit retry/cancel, receipt and independent event replay plus live readback before intent deletion, uncertainty after a lost response, rejection of unknown formats and preservation of the Project intent path. Private evidence retracts when authority or workspace changes. All user-facing labels retain locale parity. No installed identity, license, authorization or release configuration is changed by integration.
+
+Original proof artifacts and the Compound handoff remain historical evidence tied to their recorded September revisions. They do not establish current native pixels, legal approval, complete WP48 acceptance or full program DoD. Current verification is recorded in [the recovery receipt](integration-history/compound-d141e962/recovery-verification.json); delivery is tracked separately; actual native Settings product acceptance remains a separate gate.

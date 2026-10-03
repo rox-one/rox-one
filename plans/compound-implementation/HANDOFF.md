@@ -1,3 +1,5 @@
+> Historical source checkpoint recorded on 2026-09-30 and recovered on 2026-10-03 from `d141e962185fd808f177a2d01760b211f47f0832`. Worker/process, checkout and branch states below describe that recorded run; they are not current execution authority. Follow current `docs/spec.md` and `docs/plan.md` for integration and execution.
+
 # Compound implementation handoff — 2026-09-30
 
 ## Scope and current ownership
