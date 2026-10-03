@@ -127,3 +127,18 @@ test('capture identifiers are matched literally rather than as regular expressio
   expect(anchoredOn('tool capture root abcXYZ', 'abc.*')).toBe(false);
   expect(anchoredOn('tool capture root normal-id', 'normal-id')).toBe(true);
 });
+
+for (const copy of ['', 'gstack']) {
+  test(`loopback IPC state cannot inject URL authority (${copy || 'flat'})`, async () => {
+    const { isDaemonState, isLoopbackPort } = await import(join(resources, copy, 'browse/src/loopback-auth.ts'));
+    for (const port of ['1@evil.test', '80/path', '80', -1, 0, 65536, 1.5, NaN]) {
+      expect(isLoopbackPort(port)).toBe(false);
+      expect(isDaemonState({ port, token: 'private', pid: 123 })).toBe(false);
+    }
+    expect(isDaemonState({ port: 1234, token: 'private', pid: 123 })).toBe(true);
+    expect(isDaemonState({ port: 1234, token: 'bad\r\nheader', pid: 123 })).toBe(false);
+    const { resolveBrowseAuth } = await import(join(resources, copy, 'browse/src/browse-client.ts'));
+    expect(() => resolveBrowseAuth({ port: '80@evil.test' as unknown as number, token: 'private' })).toThrow();
+    expect(resolveBrowseAuth({ port: 1234, token: 'private' }).port).toBe(1234);
+  });
+}

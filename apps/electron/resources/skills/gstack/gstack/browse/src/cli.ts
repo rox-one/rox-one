@@ -1,3 +1,4 @@
+import { isDaemonState, isLoopbackPort } from './loopback-auth';
 /**
  * gstack CLI — thin wrapper that talks to the persistent server
  *
@@ -141,7 +142,8 @@ interface ServerState {
 function readState(): ServerState | null {
   try {
     const data = fs.readFileSync(config.stateFile, 'utf-8');
-    return JSON.parse(data);
+    const state = JSON.parse(data);
+    return isDaemonState(state) ? state : null;
   } catch {
     return null;
   }
@@ -154,6 +156,7 @@ function readState(): ServerState | null {
  * Used in all polling loops instead of isProcessAlive() (which is slow on Windows).
  */
 export async function isServerHealthy(port: number, timeoutMs = 2000): Promise<boolean> {
+  if (!isLoopbackPort(port)) return false;
   try {
     const resp = await fetch(`http://127.0.0.1:${port}/health`, {
       signal: AbortSignal.timeout(timeoutMs),
@@ -920,6 +923,7 @@ export function extractTabId(args: string[]): { tabId: number | undefined; args:
 
 // ─── Command Dispatch ──────────────────────────────────────────
 export async function sendCommand(state: ServerState, command: string, args: string[], retries = 0): Promise<void> {
+  if (!isDaemonState(state)) throw new Error("Invalid daemon state; refusing non-loopback authority");
   // Precedence: CLI --tab-id flag > BROWSE_TAB env var.
   // make-pdf always passes --tab-id; human users typically rely on BROWSE_TAB
   // or the active tab.

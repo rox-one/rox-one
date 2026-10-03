@@ -1,3 +1,7 @@
+/** ROX: configuration values must not change the literal loopback URL host. */
+export function isLoopbackPort(port: unknown): port is number {
+  return typeof port === 'number' && Number.isInteger(port) && port >= 1 && port <= 65535;
+}
 /**
  * browse-client — canonical SDK that browser-skill scripts import to drive the
  * gstack daemon over loopback HTTP.
@@ -63,6 +67,8 @@ function parseIntegerEnvValue(value: string | undefined): number | undefined {
 
 /** Resolve the daemon port + token. Throws a clear error if neither path works. */
 export function resolveBrowseAuth(opts: BrowseClientOptions = {}): ResolvedAuth {
+  if (opts.port !== undefined && !isLoopbackPort(opts.port)) throw new Error('Invalid loopback port');
+  if (opts.token !== undefined && (typeof opts.token !== 'string' || !opts.token || /[\r\n\u0000]/.test(opts.token))) throw new Error('Invalid bearer token');
   if (opts.port !== undefined && opts.token !== undefined) {
     return { port: opts.port, token: opts.token, source: 'env' };
   }
@@ -72,7 +78,7 @@ export function resolveBrowseAuth(opts: BrowseClientOptions = {}): ResolvedAuth 
   const envToken = process.env.GSTACK_SKILL_TOKEN;
   if (envPort && envToken) {
     const port = opts.port ?? parseIntegerEnvValue(envPort);
-    if (port !== undefined) {
+    if (isLoopbackPort(port)) {
       return { port, token: opts.token ?? envToken, source: 'env' };
     }
   }
@@ -82,7 +88,7 @@ export function resolveBrowseAuth(opts: BrowseClientOptions = {}): ResolvedAuth 
   if (stateFile && fs.existsSync(stateFile)) {
     try {
       const data = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
-      if (typeof data.port === 'number' && typeof data.token === 'string') {
+      if (isLoopbackPort(data.port) && typeof data.token === 'string' && data.token.length > 0 && !/[\r\n\u0000]/.test(data.token)) {
         return {
           port: opts.port ?? data.port,
           token: opts.token ?? data.token,
