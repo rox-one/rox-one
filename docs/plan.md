@@ -643,3 +643,16 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 2. Wire Notes folding preferences and replace placeholder slash insertions with real nodes. Supply legacy parser/serializer adapters required by the current default engine; preserve existing column aliases and literal code fences.
 3. Verify actual installed legacy parser/ProseMirror/serializer parse-edit-export-reopen, official-engine roundtrips, fold state normalization, malformed markers, bounded resizing, read-only refusal and locale parity; run consumed Electron types and renderer build.
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
+
+
+## Credential locator repair plan — 2026-10-03
+
+| Task | Owner | Depends on | Owned files | Verification |
+|---|---|---|---|---|
+| LOC-01: Audit current main and merged PR lineage | Lead + independent scouts | none | task-owned evidence | exact remote SHA; validate current source rather than stale PR body |
+| LOC-02: Add inherited-property regression matrix | locator_audit worker | LOC-01 | credential-types.test.ts | red run on original validator, restoration of polluted prototype before assertions |
+| LOC-03: Capture only own descriptor values | Lead | LOC-02 red proof | credential-types.ts | green focused test, every required field rejects inherited substitution |
+| LOC-04: Validate current integration and built runtime | Lead + independent reviewer | LOC-03 | isolated Linux dependencies/artifacts; task-owned logs | full core/types, validate:ci, WebUI types, three builds and built lifecycle |
+| LOC-05: Publish, review and merge main | Lead | LOC-04 | scoped PR and verification receipt | exact pushed HEAD, check readback, merge SHA and main ancestry; retain unrelated work |
+
+The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
