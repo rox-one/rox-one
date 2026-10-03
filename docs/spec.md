@@ -866,3 +866,9 @@ Owner recent_features; dependency: externally merged selected-detail1467 at89cb2
 ## Opaque route identity follow-up — 2026-10-04
 
 Owner root; depends on external1412/f058 runtime route recovery. Normalize published empty namespace aliases without folding repeated/trailing separators inside opaque Knowledge/run/terminal/diff/extension IDs. Keep the existing Notes filesystem alias, decode percent escapes once, preserve full panel query transport and view-only action denial. Current navigation/account/native authority stays intact; this is a focused identity repair to the newly merged shared boundary.
+
+### Управление runtime и изоляция тестов — 2026-10-04
+
+Владелец recent_features; источник поздних дополнений #1448 закреплён на e572bbdf0b6952b3a0274f1312f347157aee52d1. Физическая Windows-копия current признаётся готовой только вместе с проверенным каталогом той же версии, завершением установки, исходным commit, lock и разрешённым launcher. Остальные способы установки, managed18.4.12, SSO и native policy сохраняют текущих владельцев.
+
+Запускатель исполняет каждый тестовый файл в отдельном процессе и приватном HOME, сохраняет manifest/hash, журналы и дальнейшее покрытие после отказа. Независимый дедлайн ограничивает зависший процесс и его потомков; общий вывод ограничен 64MiB. Исходники до16MiB и журналы читаются через проверенный дескриптор с привязкой к canonical-предкам. Подмена предка и oversized source запрещены до чтения; переименование того же листового inode допускает исходный snapshot, который повторно проверяется перед исполнением. Квалификация ограничена изменёнными controls и всеми15 существующими toolchain-файлами; полный repository/native Windows release этим не принят.
