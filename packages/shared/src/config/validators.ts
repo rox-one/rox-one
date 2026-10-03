@@ -22,6 +22,7 @@ import { isValidProviderAuthCombination } from './llm-connections.ts';
 import { SUPPORTED_LANGUAGE_CODES } from '../i18n/languages.ts';
 import type { LanguageCode } from '../i18n/languages.ts';
 import { SecretRefEntrySchema } from '../secrets/types.ts';
+import { TERMINAL_ANSI_COLOR_NAMES } from './theme.ts';
 
 // ============================================================
 // Config Directory
@@ -1604,46 +1605,52 @@ export function isValidPermissionsFile(filePath: string): boolean {
 
 const CSSColorSchema = z.string().min(1);
 
-const ThemeDarkOverrideSchema = z.object({
+const ThemeColorShape = {
   background: CSSColorSchema.optional(),
   foreground: CSSColorSchema.optional(),
   accent: CSSColorSchema.optional(),
+  accentText: CSSColorSchema.optional(),
   info: CSSColorSchema.optional(),
   success: CSSColorSchema.optional(),
   destructive: CSSColorSchema.optional(),
+  textSecondary: CSSColorSchema.optional(),
+  textMuted: CSSColorSchema.optional(),
+  textDisabled: CSSColorSchema.optional(),
+  focus: CSSColorSchema.optional(),
+  borderSubtle: CSSColorSchema.optional(),
+  borderStrong: CSSColorSchema.optional(),
+  borderFocused: CSSColorSchema.optional(),
+  elementHover: CSSColorSchema.optional(),
+  elementSelected: CSSColorSchema.optional(),
   paper: CSSColorSchema.optional(),
   navigator: CSSColorSchema.optional(),
   input: CSSColorSchema.optional(),
   popover: CSSColorSchema.optional(),
   popoverSolid: CSSColorSchema.optional(),
+  titlebar: CSSColorSchema.optional(),
+  toolbar: CSSColorSchema.optional(),
+  tabBar: CSSColorSchema.optional(),
+  tabActive: CSSColorSchema.optional(),
+  tabInactive: CSSColorSchema.optional(),
   terminalBackground: CSSColorSchema.optional(),
   terminalForeground: CSSColorSchema.optional(),
+  terminalBrightForeground: CSSColorSchema.optional(),
+  terminalDimForeground: CSSColorSchema.optional(),
   terminalCursor: CSSColorSchema.optional(),
   terminalSelection: CSSColorSchema.optional(),
-}).strict();
+  terminalAnsi: z.object(Object.fromEntries(
+    TERMINAL_ANSI_COLOR_NAMES.map(name => [name, CSSColorSchema.optional()]),
+  )).strict().optional(),
+};
+
+const ThemeDarkOverrideSchema = z.object(ThemeColorShape).strict();
 
 /**
  * Zod schema for app-level theme override files (~/.craft-agent/theme.json).
  * Allows partial overrides but rejects unknown keys.
  */
 export const ThemeOverrideSchema = z.object({
-  // Semantic colors
-  background: CSSColorSchema.optional(),
-  foreground: CSSColorSchema.optional(),
-  accent: CSSColorSchema.optional(),
-  info: CSSColorSchema.optional(),
-  success: CSSColorSchema.optional(),
-  destructive: CSSColorSchema.optional(),
-  // Surface colors
-  paper: CSSColorSchema.optional(),
-  navigator: CSSColorSchema.optional(),
-  input: CSSColorSchema.optional(),
-  popover: CSSColorSchema.optional(),
-  popoverSolid: CSSColorSchema.optional(),
-  terminalBackground: CSSColorSchema.optional(),
-  terminalForeground: CSSColorSchema.optional(),
-  terminalCursor: CSSColorSchema.optional(),
-  terminalSelection: CSSColorSchema.optional(),
+  ...ThemeColorShape,
   // Scenic mode
   mode: z.enum(['solid', 'scenic', 'blurred']).optional(),
   backgroundImage: z.string().optional(),
@@ -1673,23 +1680,7 @@ export const PresetThemeSchema = z.object({
   license: z.string().optional(),
   source: z.string().optional(),
   supportedModes: z.array(z.enum(['light', 'dark'])).optional(),
-  // Semantic colors
-  background: CSSColorSchema.optional(),
-  foreground: CSSColorSchema.optional(),
-  accent: CSSColorSchema.optional(),
-  info: CSSColorSchema.optional(),
-  success: CSSColorSchema.optional(),
-  destructive: CSSColorSchema.optional(),
-  // Surface colors
-  paper: CSSColorSchema.optional(),
-  navigator: CSSColorSchema.optional(),
-  input: CSSColorSchema.optional(),
-  popover: CSSColorSchema.optional(),
-  popoverSolid: CSSColorSchema.optional(),
-  terminalBackground: CSSColorSchema.optional(),
-  terminalForeground: CSSColorSchema.optional(),
-  terminalCursor: CSSColorSchema.optional(),
-  terminalSelection: CSSColorSchema.optional(),
+  ...ThemeColorShape,
   // Scenic mode
   mode: z.enum(['solid', 'scenic', 'blurred']).optional(),
   backgroundImage: z.string().optional(),

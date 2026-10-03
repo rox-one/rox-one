@@ -74,7 +74,7 @@ export function ProjectAuthorityConnectionPanel() {
     } catch { if (generation.current === current) setError({ code: 'PROVIDER_UNAVAILABLE', status: 503 }) }
     finally { if (generation.current === current) { setPassword(''); setBusy(false) } }
   }
-  return <section className="mb-6 rounded-xl border border-foreground/10 p-4 text-foreground"
+  return <section className="mb-6 rounded-[var(--radius-card)] border border-foreground/10 p-4 text-foreground"
     data-testid="project-authority-connection" data-authority-state={state}>
     <h2 className="text-sm font-semibold">{t('projectAuthority.heading')}</h2>
     <p className="mt-1 text-xs text-muted-foreground">{t('projectAuthority.description')}</p>

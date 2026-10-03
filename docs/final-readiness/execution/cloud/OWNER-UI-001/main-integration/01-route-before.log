@@ -1,0 +1,14 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+SyntaxError: Export named 'resolveViewRoute' not found in module '/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/route-parser.ts'.
+-------------------------------
+
+
+ 0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [1.67s]

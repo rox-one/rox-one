@@ -164,7 +164,7 @@ function StatusBadge({ tone, children }: { tone: 'muted' | 'warn' | 'error' | 'o
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 h-5 px-2 text-[11px] font-medium rounded-[4px]',
+        'inline-flex items-center gap-1 h-5 px-2 text-[11px] font-medium rounded-[var(--radius-control)]',
         tone === 'muted' && 'bg-background shadow-minimal text-foreground/60',
         tone === 'ok' && 'bg-background shadow-minimal text-foreground/60',
         tone === 'warn' && 'bg-amber-500/10 text-amber-600 dark:text-amber-400',

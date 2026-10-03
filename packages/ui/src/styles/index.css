@@ -52,6 +52,15 @@
   --surface-input: var(--input-surface);
   --surface-popover: var(--popover-solid);
 
+  /* Resolver overrides these with solid RGB. They also provide a safe first
+     frame when a browser cannot normalize source alpha via relative colors. */
+  --canvas-opaque: #fafafa;
+  --paper-opaque: #fafafa;
+  --navigator-opaque: #fafafa;
+  --input-surface-opaque: #fafafa;
+  --surface-titlebar-opaque: #fafafa;
+  --surface-toolbar-opaque: #fafafa;
+
   /* Borders, text, focus, and status */
   /* No-lines chrome: separation comes from surface tone. Dividers/edges are
      near-invisible (6-7% foreground); --border-strong is only for scrollbar
@@ -131,17 +140,20 @@
 
   /* Layout scale */
   --font-size-base: 15px;
-  /* Radius scale — px, not rem (root is 15px, rem gave 3.75/7.5/11.25px).
-     xs 4: badges, chips, checkboxes · sm/md 6: controls, rows, menu items ·
-     lg 8: cards, grouped sections · xl 10: popovers, menus · 2xl 12: dialogs,
-     composer. Nested surfaces use outer = inner + padding. */
-  --radius: 4px;
+  /* Geometry is independent of palettes: joined workbench panes, compact
+     controls/cards/composer, and detached overlays. Native window corners
+     remain owned by the OS. */
+  --radius-control: 4px;
+  --radius-card: 4px;
+  --radius-composer: 4px;
+  --radius-overlay: 6px;
+  --radius: var(--radius-control);
   --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 10px;
-  --radius-2xl: 12px;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: var(--radius-control);
+  --radius-2xl: var(--radius-control);
   --spacing: 0.25rem;
   --tracking-normal: 0em;
 
@@ -165,14 +177,14 @@
   --ink: oklch(0.22 0.014 255);
   --graphite: oklch(0.46 0.012 255);
   --rox-mint: oklch(0.72 0.08 165);
-  --rox-radius-sm: 6px;
-  --rox-radius-md: 8px;
+  --rox-radius-sm: var(--radius-card);
+  --rox-radius-md: var(--radius-card);
   /* Shell panels (sidebar, navigator, content, inspector, rails). */
-  --rox-radius-panel: 10px;
+  --rox-radius-panel: 0px;
   --rox-gutter: 8px;
   /* Panels sit on a same-colour canvas: keep a half-strength hairline for the
      edge plus a soft lift, instead of the full-strength inset ring. */
-  --rox-elev-panel: var(--shadow-soft);
+  --rox-elev-panel: none;
   /* One-surface shell: panes sit flush on one background and are separated
      by a single low-alpha hairline instead of rounded outlined boxes. */
   --rox-shell-divider: color-mix(in oklch, var(--foreground) 6%, transparent);
@@ -201,6 +213,12 @@
 ============================================================================= */
 
 .dark {
+  --canvas-opaque: #0c0c0d;
+  --paper-opaque: #0c0c0d;
+  --navigator-opaque: #0c0c0d;
+  --input-surface-opaque: #0c0c0d;
+  --surface-titlebar-opaque: #0c0c0d;
+  --surface-toolbar-opaque: #0c0c0d;
   --background: oklch(0.17 0.012 255);
   --foreground: oklch(0.92 0.012 255);
   --foreground-rgb: 211, 218, 229;
@@ -340,7 +358,7 @@ html[data-contrast="high"] {
   --chrome-glass-blur: 0px;
   --chrome-glass-border: color-mix(in oklch, var(--foreground) 10%, transparent);
   /* Raised surfaces: tone + soft lift only, no 1px ring. */
-  --rox-elev-panel: var(--shadow-soft);
+  --rox-elev-panel: none;
   --rox-shell-divider: color-mix(in oklch, var(--foreground) 10%, transparent);
   --shadow-minimal: inset 0 0 0 1px var(--border-subtle);
 }
@@ -544,17 +562,11 @@ html[data-contrast="high"] :focus-visible {
     background: var(--surface-elevated);
   }
 
-  /* Shell pane: flat borderless rounded box (radius token), no shadow. Panes
-     are separated by PANEL_GAP, so pane-side hairlines are dropped. */
+  /* Joined workbench panels: no floating outline or layout gutter. */
   .rox-shell-pane {
     background: var(--background);
     border-radius: var(--rox-radius-panel);
     box-shadow: none;
-  }
-  .rox-shell-pane.rox-shell-divider-r,
-  .rox-shell-pane.rox-shell-divider-l {
-    border-left: 0;
-    border-right: 0;
   }
   /* High contrast: a 1px inner ring keeps pane edges legible without
      changing layout (box-shadow, not border). */
@@ -613,7 +625,7 @@ html[data-contrast="high"] :focus-visible {
   .popover-styled {
     background: var(--surface-popover);
     color: var(--text-primary);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-overlay);
     border: none;
     box-shadow: var(--shadow-minimal);
   }
@@ -731,7 +743,7 @@ html[data-contrast="high"] :focus-visible {
   max-width: 18rem;
   padding: 8px 10px;
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-overlay);
   background: var(--surface-popover);
   box-shadow: var(--shadow-minimal);
   color: var(--text-primary);
@@ -754,8 +766,8 @@ html[data-shell-style="zen"] {
   --shell-backdrop-tint: color-mix(in oklch, var(--foreground) 6%, transparent);
   --shell-border: color-mix(in oklch, var(--foreground) 6%, transparent);
   --shell-content: oklch(0.985 0.004 255);
-  --shell-hover: color-mix(in oklch, var(--foreground) 7%, transparent);
-  --shell-selected: color-mix(in oklch, var(--accent) 18%, transparent);
+  --shell-hover: var(--element-hover, color-mix(in oklch, var(--foreground) 7%, transparent));
+  --shell-selected: var(--element-selected, color-mix(in oklch, var(--accent) 18%, transparent));
   --shell-focus: var(--focus);
   --shell-sash: color-mix(in oklch, var(--foreground) 8%, transparent);
   --shell-motion-fast: 120ms;
@@ -765,8 +777,8 @@ html[data-shell-style="zen"] {
 html[data-shell-style="zen"].dark {
   --shell-backdrop-tint: color-mix(in oklch, var(--foreground) 8%, transparent);
   --shell-content: oklch(0.17 0.012 255);
-  --shell-hover: color-mix(in oklch, var(--foreground) 10%, transparent);
-  --shell-selected: color-mix(in oklch, var(--accent) 22%, transparent);
+  --shell-hover: var(--element-hover, color-mix(in oklch, var(--foreground) 10%, transparent));
+  --shell-selected: var(--element-selected, color-mix(in oklch, var(--accent) 22%, transparent));
   --shell-sash: color-mix(in oklch, var(--foreground) 10%, transparent);
 }
 
@@ -785,8 +797,8 @@ html[data-shell-style="zen"][data-contrast="high"] {
 }
 
 html[data-shell-style="zen"] [data-shell-role="chrome"] {
-  background: var(--shell-backdrop-tint);
-  border-color: var(--shell-border);
+  background: var(--shell-glass-surface, var(--shell-glass-strip, var(--shell-backdrop-tint)));
+  border-color: var(--border-subtle);
 }
 
 html[data-shell-style="zen"] [data-shell-role="content"] {
@@ -804,4 +816,3 @@ html[data-shell-style="zen"] [data-shell-role="content"] :focus-visible {
 html[data-shell-style="zen"] [data-shell-role="sash"] {
   background: var(--shell-sash);
 }
-

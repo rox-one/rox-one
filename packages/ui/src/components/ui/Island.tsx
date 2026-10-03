@@ -67,7 +67,7 @@ export interface IslandProps {
   activeViewId: string
   children: React.ReactNode
   className?: string
-  radius?: number
+  radius?: number | string
   transitionConfig?: IslandTransitionConfig
   onActiveViewSizeChange?: (size: IslandActiveViewSize) => void
   /** Controls shell presence animation. Defaults to true for backward compatibility. */
@@ -272,7 +272,7 @@ export function Island({
   activeViewId,
   children,
   className,
-  radius = 12,
+  radius = 'var(--radius-overlay)',
   transitionConfig,
   onActiveViewSizeChange,
   isVisible = true,

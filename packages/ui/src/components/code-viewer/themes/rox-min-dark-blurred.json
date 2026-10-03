@@ -1,0 +1,207 @@
+{
+  "name": "rox-min-dark-blurred",
+  "displayName": "Min Dark (Blurred)",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#1A1A1A",
+    "editor.foreground": "#bbbbbb",
+    "editor.selectionBackground": "#2A2A2A"
+  },
+  "settings": [
+    {
+      "scope": [
+        "entity.other.attribute-name"
+      ],
+      "settings": {
+        "foreground": "#b392f1"
+      },
+      "name": "Zed capture: attribute"
+    },
+    {
+      "scope": [
+        "constant.language.boolean"
+      ],
+      "settings": {
+        "foreground": "#79b8ff"
+      },
+      "name": "Zed capture: boolean"
+    },
+    {
+      "scope": [
+        "comment"
+      ],
+      "settings": {
+        "foreground": "#888888"
+      },
+      "name": "Zed capture: comment"
+    },
+    {
+      "scope": [
+        "comment.block.documentation",
+        "comment.line.documentation"
+      ],
+      "settings": {
+        "foreground": "#888888"
+      },
+      "name": "Zed capture: comment.doc"
+    },
+    {
+      "scope": [
+        "constant"
+      ],
+      "settings": {
+        "foreground": "#79b8ff"
+      },
+      "name": "Zed capture: constant"
+    },
+    {
+      "scope": [
+        "entity.name.type.enum"
+      ],
+      "settings": {
+        "foreground": "#b392f1"
+      },
+      "name": "Zed capture: enum"
+    },
+    {
+      "scope": [
+        "entity.name.function",
+        "support.function"
+      ],
+      "settings": {
+        "foreground": "#b392f1"
+      },
+      "name": "Zed capture: function"
+    },
+    {
+      "scope": [
+        "keyword",
+        "storage.type",
+        "storage.modifier"
+      ],
+      "settings": {
+        "foreground": "#fa7584"
+      },
+      "name": "Zed capture: keyword"
+    },
+    {
+      "scope": [
+        "constant.numeric"
+      ],
+      "settings": {
+        "foreground": "#f8f8f8"
+      },
+      "name": "Zed capture: number"
+    },
+    {
+      "scope": [
+        "keyword.operator"
+      ],
+      "settings": {
+        "foreground": "#fa7584"
+      },
+      "name": "Zed capture: operator"
+    },
+    {
+      "scope": [
+        "variable.other.property",
+        "support.variable.property",
+        "meta.object-literal.key"
+      ],
+      "settings": {
+        "foreground": "#bbbbbb"
+      },
+      "name": "Zed capture: property"
+    },
+    {
+      "scope": [
+        "punctuation"
+      ],
+      "settings": {
+        "foreground": "#d1d1d1"
+      },
+      "name": "Zed capture: punctuation"
+    },
+    {
+      "scope": [
+        "string"
+      ],
+      "settings": {
+        "foreground": "#ffab70"
+      },
+      "name": "Zed capture: string"
+    },
+    {
+      "scope": [
+        "constant.character.escape"
+      ],
+      "settings": {
+        "foreground": "#fa7584",
+        "fontStyle": ""
+      },
+      "name": "Zed capture: string.escape"
+    },
+    {
+      "scope": [
+        "entity.name.tag"
+      ],
+      "settings": {
+        "foreground": "#ffab70",
+        "fontStyle": ""
+      },
+      "name": "Zed capture: tag"
+    },
+    {
+      "scope": [
+        "markup.raw"
+      ],
+      "settings": {
+        "foreground": "#e394dc",
+        "fontStyle": ""
+      },
+      "name": "Zed capture: text.literal"
+    },
+    {
+      "scope": [
+        "entity.name.type",
+        "support.type",
+        "support.class"
+      ],
+      "settings": {
+        "foreground": "#79b8ff",
+        "fontStyle": ""
+      },
+      "name": "Zed capture: type"
+    },
+    {
+      "scope": [
+        "support.type.builtin"
+      ],
+      "settings": {
+        "foreground": "#79b8ff",
+        "fontStyle": ""
+      },
+      "name": "Zed capture: type.builtin"
+    },
+    {
+      "scope": [
+        "variable"
+      ],
+      "settings": {
+        "foreground": "#bbbbbb",
+        "fontStyle": ""
+      },
+      "name": "Zed capture: variable"
+    },
+    {
+      "scope": [
+        "variable.language"
+      ],
+      "settings": {
+        "foreground": "#79b8ff",
+        "fontStyle": ""
+      },
+      "name": "Zed capture: variable.special"
+    }
+  ]
+}

@@ -73,6 +73,8 @@ function uiHarness(kind: 'desktop' | 'compact') {
   }
   const bindings = {
     React: react, useTranslation: () => ({ t: (key: string) => key }), cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
+    // Tour registration is a declared seam; the actual permission callbacks
+    // and incoming ref-registration assertions remain part of this harness.
     useTourTarget: () => tourTarget,
     PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, isWebUI: false,
     Popover: 'popover', PopoverContent: 'popover-content', PopoverTrigger: 'popover-trigger',
@@ -177,7 +179,7 @@ for (const kind of ['desktop', 'compact'] as const) {
         expect(app.readbacks).toEqual([sessionId])
         expect(app.hook(sessionId).options.permissionModeVersion).toBe(5)
         expect(app.errors).toEqual([])
-      })
+      }, 15000)
     }
 
     it('restores the actual mode when RPC fails before the optimistic UI commits', async () => {

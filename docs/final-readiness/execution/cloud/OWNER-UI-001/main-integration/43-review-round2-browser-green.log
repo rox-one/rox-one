@@ -1,0 +1,36 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+(pass) UI-001 actual navigation in Chromium > unknown single link survives reload and never selects its nested session [1822.87ms]
+(pass) UI-001 actual navigation in Chromium > malformed encoding and legacy lossy degradation retain their own unavailable surface [3445.06ms]
+(pass) UI-001 actual navigation in Chromium > multi-panel restore retains valid sibling, unavailable focus and proportions across reload [1282.95ms]
+(pass) UI-001 actual navigation in Chromium > actual navigate and deep-link callbacks preserve unavailable route and browser back/forward [958.69ms]
+(pass) UI-001 actual navigation in Chromium > stored action address cannot execute, while explicit action callback still runs once [1206.64ms]
+223 |     for (const invalidId of ['missing', 's2']) {
+224 |       await page.evaluate(id => (window as any).ui001.navigate(`allSessions/session/${id}?keep=1`, { skipAutoSelect: true }), invalidId)
+225 |       await page.waitForFunction(() => !(window as any).ui001.snapshot().state.details)
+226 |       const state = await snapshot()
+227 |       expect(state.session).toBeNull()
+228 |       expect(new URLSearchParams(state.search).get('route')).toBe('allSessions')
+                                                                   ^
+error: expect(received).toBe(expected)
+
+Expected: "allSessions"
+Received: "allSessions?keep=1"
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:228:62)
+(fail) UI-001 actual navigation in Chromium > explicit navigation preserves spelling only after session workspace validation [893.69ms]
+(pass) UI-001 actual navigation in Chromium > pending search replay retains query and new-panel options [875.21ms]
+(pass) UI-001 actual navigation in Chromium > latest pending unknown address wins without selecting a previous valid session [1054.93ms]
+(pass) UI-001 actual navigation in Chromium > additional query parameters survive list auto-selection, navigation, history and reload [2359.55ms]
+(pass) UI-001 actual navigation in Chromium > literal commas, percent encoding and unknown addresses retain separate panels after reload [1331.59ms]
+(pass) UI-001 actual navigation in Chromium > compact menu labels unavailable panels consistently and Sessions opens its own service [1019.78ms]
+(pass) UI-001 actual navigation in Chromium > workspace restoration and history keep each workspace address [1310.61ms]
+killed 2 dangling processes
+(fail) UI-001 actual navigation in Chromium > (unnamed) [15002.44ms]
+  ^ a beforeEach/afterEach hook timed out for this test.
+
+ 11 pass
+ 2 fail
+ 174 expect() calls
+Ran 13 tests across 1 file. [37.83s]

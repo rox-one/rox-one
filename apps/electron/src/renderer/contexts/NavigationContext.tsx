@@ -57,7 +57,7 @@ import {
 import { routes, type Route, type ViewRoute } from '../../shared/routes'
 import { parsePermissionMode } from '@rox/shared/agent/mode-types'
 import { NAVIGATE_EVENT, type NavigateOptions } from '../lib/navigate'
-import { preserveRouteQuery, normalizePanelRouteForReconcile } from './navigation-reconcile'
+import { normalizePanelRouteForReconcile, preserveRouteQuery } from './navigation-reconcile'
 import { encodePanelEntries, decodePanelEntries } from '@/lib/panel-url'
 import { buildSemanticHistoryKey, canRunInitialRestore } from './navigation-history'
 import * as storage from '@/lib/local-storage'
@@ -546,11 +546,10 @@ export function NavigationProvider({
    */
   const reconcileFromUrlParams = useCallback(
     (params: URLSearchParams) => {
-      const initialRoute = params.get('route')
+      const initialRoute = params.get('route') || (params.has('panels') ? routes.view.allSessions() : null)
       const sidebarParam = params.get('sidebar') || undefined
       const panelsParam = params.get('panels')
       const focusedIndexParam = params.get('fi')
-      if (initialRoute) requestRuntimeSelection(initialRoute)
 
       // Restore right sidebar
       if (sidebarParam) {
@@ -566,8 +565,9 @@ export function NavigationProvider({
       let entries: { route: ViewRoute; proportion: number }[] = []
       let focusedIndex = 0
 
-      if (panelsParam) {
-        entries = decodePanelEntries(panelsParam).map(({ route, proportion }) => ({
+      const parsedPanels = panelsParam ? decodePanelEntries(panelsParam) : []
+      if (parsedPanels.length > 0) {
+        entries = parsedPanels.map(({ route, proportion }) => ({
           route: normalizePanelRouteForReconcile(route as ViewRoute, state => resolveAutoSelectionRef.current(state)),
           proportion,
         }))
@@ -591,10 +591,10 @@ export function NavigationProvider({
         entries = [{ route, proportion: 1 }]
       }
 
-      if (entries.length === 0 && (initialRoute || panelsParam)) {
-        entries = [{ route: normalizePanelRouteForReconcile((initialRoute || panelsParam!) as ViewRoute, (state) => resolveAutoSelectionRef.current(state)), proportion: 1 }]
-      }
       if (entries.length > 0) {
+        // Restore read-only map references for every actual panel, including
+        // unfocused panels and layouts published without a separate ?route=.
+        for (const entry of entries) requestRuntimeSelection(entry.route)
         store.set(reconcilePanelStackAtom, { entries, focusedIndex })
       }
     },
@@ -1074,12 +1074,15 @@ export function NavigationProvider({
       if (newNavState) {
         // Resolve auto-selection (pure — no side effects)
         const resolvedState = resolveAutoSelection(newNavState, options)
-        const finalRoute = preserveRouteQuery(route, buildRouteFromNavigationState(resolvedState))
+        const finalRoute = (resolvedState === newNavState && 'details' in resolvedState && resolvedState.details)
+          ? route as ViewRoute
+          : preserveRouteQuery(route, buildRouteFromNavigationState(resolvedState))
 
         // Persist last selected session for auto-select on next visit
         if (isSessionsNavigation(resolvedState) && resolvedState.details && workspaceId) {
           const meta = store.get(sessionMetaMapAtom).get(resolvedState.details.sessionId)
-          if (meta && (meta.workspaceId === workspaceId || meta.workspaceId === remoteWorkspaceId)) {
+          // Remote metadata must not overwrite this local workspace selection.
+          if (meta?.workspaceId === workspaceId) {
             storage.set(storage.KEYS.lastSelectedSessionId, resolvedState.details.sessionId, workspaceId)
           }
         }
@@ -1271,7 +1274,7 @@ export function NavigationProvider({
     lastSemanticHistoryKeyRef.current = getSemanticHistoryKey()
 
     // If nothing was in the URL, navigate to default
-    if (!params.get('route') && !params.get('panels') && (!requested || requested === workspaceSlug)) {
+    if (!params.get('route') && !params.has('panels') && (!requested || requested === workspaceSlug)) {
       navigate(routes.view.allSessions())
     }
 
@@ -1453,7 +1456,7 @@ export function NavigationProvider({
 
     const resolved = resolveAutoSelection(currentState)
     if (isSessionsNavigation(resolved) && resolved.details) {
-      void navigate(preserveRouteQuery(currentRoute, buildRouteFromNavigationState(resolved)))
+      void navigate(preserveRouteQuery(currentRoute!, buildRouteFromNavigationState(resolved)))
     }
   }, [
     isReady,

@@ -69,6 +69,15 @@ describe('parseDeepLink view routes', () => {
     expect(target?.windowMode).toBe('focused')
   })
 
+  it('forwards view queries while retaining separate window and sidebar controls', () => {
+    const target = parseDeepLink('rox://search?q=two%20words&mode=future&window=focused&sidebar=history')
+    expect(target?.view).toBe('search?q=two%20words&mode=future')
+    expect(target?.windowMode).toBe('focused')
+    expect(target?.rightSidebar).toBe('history')
+    expect(parseDeepLink('rox://workspace/ws1/tasks?view=calendar&view=other&window=full')?.view)
+      .toBe('tasks?view=calendar&view=other')
+  })
+
   it('still rejects unknown hosts and passes auth callbacks through', () => {
     expect(parseDeepLink('rox://definitely-not-a-route')).toBeNull()
     expect(parseDeepLink('rox://auth-callback?code=1')).toBeNull()

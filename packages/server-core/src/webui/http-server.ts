@@ -392,10 +392,11 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
       if (!configSession) {
         return Response.json({ error: 'Unauthorized' }, { status: 401 })
       }
-      const { getActiveWorkspace } = await import('@rox/shared/config/storage')
-      const active = getActiveWorkspace()
+      const { readWebDefaultWorkspace } = await import('./theme-storage')
+      const active = readWebDefaultWorkspace()
       return Response.json({
         defaultWorkspaceId: active?.id ?? null,
+        workspace: active ? { id: active.id, name: active.name } : null,
       })
     }
 

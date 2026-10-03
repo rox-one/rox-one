@@ -115,7 +115,7 @@ import { WindowManager } from './window-manager'
 import { readBoundWindowWorkspace } from './bootstrap-window-workspace'
 import { stopAllExtensionHosts } from './extension-host-manager'
 import { loadWindowState, saveWindowState } from './window-state'
-import { getWorkspaces, getWorkspaceByNameOrId, loadStoredConfig, addWorkspace, saveConfig, CONFIG_DIR } from '@rox/shared/config'
+import { getWorkspaces, getWorkspaceByNameOrId, loadStoredConfig, addWorkspace, saveConfig, getConfigPath, createInitialStoredConfig, CONFIG_DIR } from '@rox/shared/config'
 import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
 import { resolveWorkspaceMachineName } from '@rox/shared/os/user-display-name'
 import { ensureDemoPage } from '@rox/shared/pages'
@@ -378,7 +378,8 @@ async function createInitialWindows(): Promise<void> {
   if (workspaces.length === 0) {
     // Ensure config file exists (addWorkspace requires it)
     if (!loadStoredConfig()) {
-      saveConfig({ workspaces: [], activeWorkspaceId: null, activeSessionId: null })
+      if (existsSync(getConfigPath())) throw new Error('Unable to load existing global config')
+      saveConfig(createInitialStoredConfig())
     }
     const defaultPath = join(getDefaultWorkspacesDir(), 'my-workspace')
     const workspaceName = resolveWorkspaceMachineName()

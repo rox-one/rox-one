@@ -96,6 +96,35 @@ describe('web adapter notification stubs', () => {
   })
 })
 
+describe('web adapter acknowledged workspace metadata', () => {
+  it('does not project the requested workspace before the server acknowledges it', async () => {
+    const { api, client } = createWebApi({
+      serverUrl: 'ws://127.0.0.1:1', workspaceId: 'requested-workspace', workspaceName: 'Appearance acceptance',
+    })
+    CLIENTS.push(client)
+
+    expect(await api.getWorkspaces()).toEqual([])
+    expect(await api.getWindowWorkspace()).toBeNull()
+    expect(client.getConnectionState().status).toBe('idle')
+  })
+
+  it('projects only the acknowledged workspace without host paths or authority metadata', async () => {
+    const { api, client } = createWebApi({
+      serverUrl: 'ws://127.0.0.1:1', workspaceId: 'requested-workspace', workspaceName: 'Appearance acceptance',
+    })
+    CLIENTS.push(client)
+    // Isolate the adapter projection; real handshake and scope rejection are
+    // exercised by the WS appearance RPC integration tests.
+    client.getAcknowledgedWorkspaceId = () => 'acknowledged-workspace'
+
+    expect(await api.getWorkspaces()).toEqual([{
+      id: 'acknowledged-workspace', name: 'Appearance acceptance', slug: 'acknowledged-workspace', rootPath: '', createdAt: 0,
+    }])
+    expect(await api.getWindowWorkspace()).toBe('acknowledged-workspace')
+    expect(client.getConnectionState().status).toBe('idle')
+  })
+})
+
 describe('web UI PWA manifest', () => {
   it('is reachable without a session cookie, or is not requested', async () => {
     const html = readFileSync(INDEX_HTML, 'utf8')

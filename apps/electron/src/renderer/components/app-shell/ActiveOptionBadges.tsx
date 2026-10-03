@@ -389,7 +389,7 @@ function LabelBadge({
 /**
  * Renders the current workflow state as a badge in the dynamic stacking container.
  * Click opens a SessionStatusMenu popover for changing the state.
- * Styled consistently with label badges (h-[30px], rounded-[8px], color-mix tinting).
+ * Styled consistently with label badges (h-[30px], rounded-[var(--radius-card)], color-mix tinting).
  */
 function StateBadge({
   state,
@@ -647,7 +647,7 @@ function PermissionModeDropdown({ permissionMode, onPermissionModeChange, sessio
           type="button"
           data-tutorial="permission-mode-dropdown"
           className={cn(
-            "h-[30px] pl-2.5 pr-2 text-xs font-medium rounded-[8px] flex items-center gap-1.5 shadow-tinted outline-none select-none",
+            "h-[30px] pl-2.5 pr-2 text-xs font-medium rounded-[var(--radius-control)] flex items-center gap-1.5 shadow-tinted outline-none select-none",
             currentStyle.className
           )}
           style={{ '--shadow-color': currentStyle.shadowVar } as React.CSSProperties}
@@ -658,7 +658,7 @@ function PermissionModeDropdown({ permissionMode, onPermissionModeChange, sessio
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0 rounded-[8px] bg-background text-foreground shadow-modal-small"
+        className="w-auto p-0 rounded-[var(--radius-overlay)] bg-background text-foreground shadow-modal-small"
         side="top"
         align="start"
         sideOffset={4}

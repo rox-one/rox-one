@@ -1,0 +1,20 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+231 |         url.searchParams.set('route', 'tasks?view=calendar')
+232 |         url.searchParams.set('panels', panels)
+233 |         history.pushState(null, '', url)
+234 |         window.dispatchEvent(new PopStateEvent('popstate'))
+235 |       }, panels)
+236 |       await page.waitForFunction(() => (window as any).ui001.snapshot().state.navigator === 'tasks', undefined, { timeout: 5000 })
+                       ^
+TimeoutError: forFunction: Timeout 5000ms exceeded.
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:236:18
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > empty or invalid panel list "[" restores the focused address during history and reload [5939.86ms]
+
+ 0 pass
+ 19 filtered out
+ 1 fail
+ 6 expect() calls
+Ran 1 test across 1 file. [7.50s]

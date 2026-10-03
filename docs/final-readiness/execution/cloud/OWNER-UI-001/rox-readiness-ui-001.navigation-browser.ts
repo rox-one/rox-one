@@ -141,6 +141,7 @@ try {
     await page.goto(`${origin}?ws=workspace-a&route=allSessions/session/missing`)
     await selected('sessions', 'missing')
     await page.locator('[data-testid="route-session-missing"]').waitFor()
+    assert.equal(new URL(page.url()).searchParams.get('route'), 'allSessions/session/' + (await state()).details.sessionId)
     assert.equal(await page.locator('[data-testid="route-session-missing"]').getAttribute('data-route-entity'), 'missing')
     assert.equal(new URL(page.url()).searchParams.get('ws'), 'workspace-a')
     assert.equal(new URL(page.url()).searchParams.get('route'), 'allSessions/session/missing')

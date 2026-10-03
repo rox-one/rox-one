@@ -15,7 +15,7 @@ let server: Server, browser: Browser, context: BrowserContext, page: Page, base:
 function productionFunctions(): string {
   const source = readFileSync(process.env.ROX_UI001_MAIN_SOURCE ?? join(import.meta.dir, '../MainContentPanel.tsx'), 'utf8')
   const file = ts.createSourceFile('MainContentPanel.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  const names = new Set(['UnavailableAutomationTour', 'useSelectedResourceAvailability', 'MainContentPanel'])
+  const names = new Set(['useSelectedResourceAvailability', 'UnavailableAutomationTour', 'MainContentPanel'])
   return file.statements.filter((node) => (ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node)) ? names.has(node.name?.text ?? '') : ts.isVariableStatement(node) && node.declarationList.declarations.some(decl => names.has(decl.name.getText(file))))
     .map((node) => node.getText(file).replace(/^export /, '')).join('\n')
 }
@@ -43,6 +43,8 @@ async function fixtureBundle() {
     import { useCallback, useEffect, useMemo, useState } from 'react';
     import { createRoot } from 'react-dom/client';
     import { flushSync } from 'react-dom';
+    import { TourPanelScope, useTourSignals } from './apps/electron/src/renderer/features/product-tour/runtime/hooks';
+    import { navigationEntity } from './apps/electron/src/renderer/features/product-tour/runtime/routes';
     import { usePanelResize } from './apps/electron/src/renderer/hooks/usePanelResize';
     import * as storage from './apps/electron/src/renderer/lib/local-storage';
     import { loadShellLayout, commitShellLayout } from './apps/electron/src/renderer/lib/shell-layout-preferences';
@@ -52,8 +54,6 @@ async function fixtureBundle() {
     import { runtimeTraceScopeKey, runtimeTraceSessionAtomFamily } from './apps/electron/src/renderer/atoms/runtime-trace';
     import { loadRuntimeTrace } from './apps/electron/src/renderer/event-processor/runtime-trace-ingress';
     import { runtimeCatalogCapabilities, runtimeCatalogScope } from './apps/electron/src/renderer/lib/runtime-catalog-capabilities';
-    import { TourPanelScope, useTourSignals } from './apps/electron/src/renderer/features/product-tour/runtime/hooks';
-    import { navigationEntity } from './apps/electron/src/renderer/features/product-tour/runtime/routes';
     import * as guards from './apps/electron/src/shared/types';
     import { parseRouteToNavigationStateOrUnavailable as parseRouteToNavigationState, buildRouteFromNavigationState } from './apps/electron/src/shared/route-parser';
     import { inspectorPanelWidthAtom, bottomDockHeightAtom, bottomTerminalOpenAtom } from './apps/electron/src/renderer/atoms/unified-shell';

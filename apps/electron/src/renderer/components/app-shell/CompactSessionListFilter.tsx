@@ -179,7 +179,7 @@ export function CompactSessionListFilter({
           icon={<ListFilter className="h-4 w-4" />}
           aria-label={t('sidebar.filterChats')}
           className={cn(
-            'rounded-[8px]',
+            'rounded-[var(--radius-card)]',
             hasUserFilter && 'bg-accent/5 text-accent shadow-tinted',
           )}
           style={
@@ -208,7 +208,7 @@ export function CompactSessionListFilter({
         </DrawerHeader>
 
         <div className="px-4 pb-2">
-          <label className="bg-foreground/5 rounded-[8px] px-3 h-10 flex items-center gap-2">
+          <label className="bg-foreground/5 rounded-[var(--radius-control)] px-3 h-10 flex items-center gap-2">
             <Search className="h-4 w-4 text-muted-foreground shrink-0" />
             <input
               type="text"
@@ -307,7 +307,7 @@ export function CompactSessionListFilter({
                 <button
                   type="button"
                   onClick={onOpenSearch}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-[10px] hover:bg-foreground/5 active:bg-foreground/10 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-[var(--radius-control)] hover:bg-foreground/5 active:bg-foreground/10 transition-colors text-left"
                 >
                   <Search className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span className="text-sm font-medium">{t('sidebar.search')}</span>
@@ -382,7 +382,7 @@ function FilterRow({
       role="button"
       onClick={pinned ? undefined : onTap}
       className={cn(
-        'flex items-center gap-3 px-3 py-2.5 rounded-[10px] transition-colors',
+        'flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-control)] transition-colors',
         pinned ? 'opacity-60' : 'cursor-pointer hover:bg-foreground/5 active:bg-foreground/10',
       )}
     >
@@ -398,7 +398,7 @@ function FilterRow({
             onModeTap?.()
           }}
           className={cn(
-            'shrink-0 h-7 px-2.5 rounded-[6px] text-xs font-medium flex items-center gap-1 shadow-tinted',
+            'shrink-0 h-7 px-2.5 rounded-[var(--radius-control)] text-xs font-medium flex items-center gap-1 shadow-tinted',
             mode === 'include'
               ? 'bg-background text-foreground'
               : 'bg-destructive/10 text-destructive',
@@ -464,7 +464,7 @@ function PinnedSummary({
 
 function PinnedChip({ icon, label }: { icon: React.ReactNode; label: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-[6px] bg-foreground/5 text-xs text-foreground/70">
+    <span className="inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-[var(--radius-control)] bg-foreground/5 text-xs text-foreground/70">
       <span className="shrink-0 inline-flex items-center justify-center">{icon}</span>
       <span className="truncate">{label}</span>
       <Check className="h-3 w-3 shrink-0 text-muted-foreground" />
