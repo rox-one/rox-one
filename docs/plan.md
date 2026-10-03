@@ -911,6 +911,12 @@ The native-domain producer preserves main 4fec686d ownership: actor/workspace-sc
 
 Owner: root branch integration. Dependency: route recovery #1446, current Windows bootstrap #1443 and fixture repair #1445. Adapt the remaining #1417 skill catalog/draft behavior and history switch failure signal onto current owner/revision guards; preserve newer main. Verify actual mounted callbacks and real native inputs with controlled backends, restore old source in isolated fixture bundles as negative controls, then run Electron types and renderer build. Browser fixtures compile with Node before launch. The Skill lane uses Node's test runner because the Bun host repeatedly stalled while closing Chromium; all behavior assertions and failure history are retained. Commit and merge a separate PR while retaining both source and integration branches.
 
+### Golden Tasks recovery verification — 2026-10-03
+
+Owner: recent_features; integration/remote merge owner: root. Dependencies: current native PersonalTaskPersistStore, personalTasks RPC CAS and caller-scope lifetime, current Tasks import validation and shell sidebar ownership. Implement a confirmed merge-import seam in the existing shared renderer store; connect the actual file callback and an opt-in responsive layout in the current Tasks consumer. Verify real native disk restart, denied/forged/partial ACK/readback, mid-await edits and actor/workspace ABA; exercise actual TasksPage DOM with compiled production stylesheet for pending file reads, persistence refusal, focus return, outside focus, narrow navigation and resize. Retain failures and exact source fingerprints; reconcile fresh main and current Product Learning producers before final delivery. Original source branches are preserved.
+
+
+
 ## Infrastructure recovery graph — 2026-10-03
 
 1. Scout owns exact1448 installer/manager, RPC transport/types plus current Workspace License guard, serial runner/package test entry, and the reproduced extension-worker custom output-path repair. Depend on merged1443 Windows bootstrap and1450 MCP privacy; preserve all current namespaces, pins and native authority. Lead owns1448 navigation/resources/native executable harness and original branch disposition.
@@ -925,6 +931,8 @@ Owner: recent_features; dependency: current native Voice capture and Product Lea
 
 Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.
 
+
+- Tasks import follow-up ownership review: register the background operation before opening transport; import invalidates background epochs, drains already dispatched same-owner work, then reads current canonical storage. Cover a held earlier refresh and held earlier write ACK with real native persistence (baseline8pass/2fail; recovered10pass/0fail). Refresh/sync cannot publish or issue a later call across that import lifetime.
 
 ### Recover native overlay recording custody (2026-10-03)
 
