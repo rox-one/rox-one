@@ -3,13 +3,13 @@
  *
  * Ships pinned snapshots of curated open skill packs under
  * `apps/electron/resources/skills/<pack-slug>/` (see SKILLS.lock there for
- * origin/commit pins) and syncs them into the global skills tier
- * `~/.agents/skills/` on app startup, so agents know them out of the box.
+ * origin/commit pins) and syncs them into the application-owned skills tier
+ * `<config>/skills/` on app startup, with optional links in `~/.agents/skills/`.
  *
  * Layout: skills discovery (storage.ts loadSkillsFromDir) is FLAT — a skill is
  * `<skills-root>/<skill-slug>/SKILL.md` with no recursion. Therefore each pack
- * installs its skills as top-level directories of `~/.agents/skills/`, and a
- * per-pack state file under `~/.agents/skills/.bundled/<pack-slug>.json`
+ * installs its skills as top-level directories of `<config>/skills/`, and a
+ * per-pack state file under `<config>/skills/.bundled/<pack-slug>.json`
  * (dot-prefixed, ignored by discovery) records the sha256 of every file we
  * wrote ("last known bundle version").
  *
@@ -19,7 +19,7 @@
  * - target hash != state hash             → user-modified → keep, flag localModified
  * - file removed from newer bundle        → delete only if target still matches state
  * - target unknown to state               → overwrite only if identical to bundle
- * - skill dir owned by another pack       → conflict: whole skill skipped
+ * - same name from another pack or user   → stable qualified name; both survive
  *
  * Atomicity: for every changed skill dir we stage the merged result under a
  * dot-prefixed tmp dir and swap via rename (existing dir moved to a dot-prefixed
@@ -39,17 +39,22 @@ import {
   rmSync,
   readdirSync,
   readFileSync,
+  readlinkSync,
+  lstatSync,
   statSync,
   symlinkSync,
   writeFileSync,
 } from 'fs';
 import { createHash } from 'crypto';
 import { dirname, join, relative } from 'path';
-import { GLOBAL_AGENT_SKILLS_DIR } from './storage.ts';
+import { APP_MANAGED_SKILLS_DIR, GLOBAL_AGENT_SKILLS_DIR } from './storage.ts';
 import { getBundledAssetsDir } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
 import { safeJsonParse } from '../utils/files.ts';
 import { loadStoredConfig } from '../config/storage.ts';
+import { chooseManagedSkillName, isSafeSkillName, isSkillLinkTo, linkManagedSkill, pathEntryExists, unlinkManagedSkill } from './managed.ts';
+import { invalidateSkillsCache } from './storage.ts';
+import { invalidateOmpSkillsCache } from './omp-discovery.ts';
 
 // ============================================================
 // Types
@@ -80,6 +85,8 @@ interface BundledPackState {
   syncedAt: string;
   /** `<skill-slug>/<relative-path>` → sha256 of file content as shipped by the bundle. */
   files: Record<string, string>;
+  /** Original bundle directory → installed directory. Retained across upgrades. */
+  aliases?: Record<string, string>;
 }
 
 export interface BundledSkillPackStatus {
@@ -96,7 +103,7 @@ export interface BundledSkillPackStatus {
   skills: string[];
   /** Skill slugs present on disk after the sync. */
   installed: string[];
-  /** Skill slugs skipped because their target dir belongs to another pack. */
+  /** Legacy status field; duplicate names receive aliases rather than being skipped. */
   conflicts: string[];
   /** Set when this pack failed to sync (status information only — not fatal). */
   error?: string;
@@ -105,8 +112,10 @@ export interface BundledSkillPackStatus {
 export interface EnsureBundledSkillsOptions {
   /** Bundle root (default: getBundledAssetsDir('skills')). */
   bundleRoot?: string;
-  /** Install target (default: GLOBAL_AGENT_SKILLS_DIR — `~/.agents/skills`). */
+  /** Install target (default: APP_MANAGED_SKILLS_DIR — `<config>/skills`). */
   targetRoot?: string;
+  /** Optional external agent links. Explicit targets default to no links; null disables links. */
+  linksRoot?: string | null;
   /** Disabled pack slugs (default: config `bundledSkills.disabled`). */
   disabled?: string[];
 }
@@ -133,29 +142,24 @@ export function resetBundledSkillsInitialized(): void {
 // ============================================================
 
 function sha256OfFile(path: string): string {
-  return createHash('sha256').update(readFileSync(path)).digest('hex');
+  return createHash('sha256').update(lstatSync(path).isSymbolicLink() ? `symlink:${readlinkSync(path)}` : readFileSync(path)).digest('hex');
 }
 
 /** Recursively list files of `dir` as relative paths. Dot entries are internal state, never content. */
-function listFilesRecursive(dir: string): string[] {
+function listFilesRecursive(dir: string, rejectLinks = false): string[] {
   const out: string[] = [];
-  const walk = (current: string): void => {
+  const walk = (current: string, depth: number): void => {
+    if (depth > 32) throw new Error('Skill tree exceeds maximum depth');
     for (const entry of readdirSync(current, { withFileTypes: true })) {
-      if (entry.name.startsWith('.')) continue;
+      if (out.length >= 10_000) throw new Error('Skill tree exceeds maximum file count');
       const full = join(current, entry.name);
-      let isDir = entry.isDirectory();
-      if (!isDir && entry.isSymbolicLink()) {
-        try {
-          isDir = statSync(full).isDirectory();
-        } catch {
-          continue; // dangling symlink — skip
-        }
-      }
-      if (isDir) walk(full);
+      if (entry.isSymbolicLink() && rejectLinks) throw new Error('Bundled skill contains a symbolic link');
+      // User links count as local content without following targets or recursive cycles.
+      if (entry.isDirectory()) walk(full, depth + 1);
       else out.push(relative(dir, full));
     }
   };
-  walk(dir);
+  walk(dir, 0);
   return out;
 }
 
@@ -163,7 +167,7 @@ function listFilesRecursive(dir: string): string[] {
 function listPackSkillDirs(packDir: string): string[] {
   const skills: string[] = [];
   for (const entry of readdirSync(packDir, { withFileTypes: true })) {
-    if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+    if (!entry.isDirectory() || !isSafeSkillName(entry.name)) continue;
     if (existsSync(join(packDir, entry.name, 'SKILL.md'))) {
       skills.push(entry.name);
     }
@@ -234,6 +238,7 @@ export function linkBundledSkillsForOmp(options: EnsureBundledSkillsOptions & { 
 }
 
 function readPackState(targetRoot: string, packSlug: string): BundledPackState | null {
+  if (!isSafeSkillName(packSlug)) return null;
   const path = join(targetRoot, STATE_DIR_NAME, `${packSlug}.json`);
   if (!existsSync(path)) return null;
   try {
@@ -242,6 +247,7 @@ function readPackState(targetRoot: string, packSlug: string): BundledPackState |
     if (!parsed || parsed.pack !== packSlug || typeof parsed.files !== 'object' || parsed.files === null) {
       return null;
     }
+    if (Object.keys(parsed.files).some(key => !isSafeSkillName(key.split('/')[0]!) || key.split('/').some(part => part === '..') || key.includes('\\'))) return null;
     return parsed;
   } catch {
     return null; // corrupt state → unknown ownership → conservative sync
@@ -262,12 +268,13 @@ function writePackState(targetRoot: string, state: BundledPackState): void {
  * Works for both the bundle pack dir and the skills target root (missing skill
  * dirs contribute nothing, which naturally models first-install and removals).
  */
-function buildManifest(rootDir: string, skillSlugs: string[]): Map<string, { abs: string; sha: string }> {
+function buildManifest(rootDir: string, skillSlugs: string[], rejectLinks = false): Map<string, { abs: string; sha: string }> {
   const manifest = new Map<string, { abs: string; sha: string }>();
   for (const skill of skillSlugs) {
     const skillDir = join(rootDir, skill);
     if (!existsSync(skillDir)) continue; // disk variant: skill absent → empty manifest
-    for (const rel of listFilesRecursive(skillDir)) {
+    if (lstatSync(skillDir).isSymbolicLink()) continue;
+    for (const rel of listFilesRecursive(skillDir, rejectLinks)) {
       const abs = join(skillDir, rel);
       manifest.set(`${skill}/${rel}`, { abs, sha: sha256OfFile(abs) });
     }
@@ -280,7 +287,7 @@ function buildManifest(rootDir: string, skillSlugs: string[]): Map<string, { abs
 // ============================================================
 
 /**
- * Sync all bundled skill packs into the global skills tier. Called once at app
+ * Sync all bundled skill packs into the application skills tier. Called once at app
  * startup from Electron main (next to initializeDocs). Never throws.
  */
 export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): EnsureBundledSkillsResult {
@@ -288,12 +295,13 @@ export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): Ensur
   // explicit option injection (tests, tools) always runs.
   if (!options) {
     if (bundledSkillsInitialized) {
-      return { packs: [], bundleRoot: null, targetRoot: GLOBAL_AGENT_SKILLS_DIR };
+      return { packs: [], bundleRoot: null, targetRoot: APP_MANAGED_SKILLS_DIR };
     }
     bundledSkillsInitialized = true;
   }
 
-  const targetRoot = options?.targetRoot ?? GLOBAL_AGENT_SKILLS_DIR;
+  const targetRoot = options?.targetRoot ?? APP_MANAGED_SKILLS_DIR;
+  const linksRoot = options?.linksRoot === undefined ? (options?.targetRoot ? null : GLOBAL_AGENT_SKILLS_DIR) : options.linksRoot;
   const result: EnsureBundledSkillsResult = { packs: [], bundleRoot: null, targetRoot };
 
   try {
@@ -315,7 +323,7 @@ export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): Ensur
     const disabledSet = disabledPackSet(disabled);
     const lock = readSkillsLock(bundleRoot);
     const packSlugs = readdirSync(bundleRoot, { withFileTypes: true })
-      .filter(e => e.isDirectory() && !e.name.startsWith('.'))
+      .filter(e => e.isDirectory() && isSafeSkillName(e.name))
       .map(e => e.name)
       .sort();
 
@@ -354,21 +362,35 @@ export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): Ensur
       result.packs.push(status);
 
       if (status.disabled) {
+        if (linksRoot) {
+          for (const key of Object.keys(readPackState(targetRoot, slug)?.files ?? {})) {
+            unlinkManagedSkill(join(targetRoot, key.split('/')[0]!), linksRoot);
+          }
+        }
         debug(`[bundled-skills] Pack "${slug}" disabled via config — skipped`);
         continue;
       }
 
       try {
-        const bundleManifest = syncPack(bundleRoot, targetRoot, slug, status, ownerOf);
+        const previousFiles = readPackState(targetRoot, slug)?.files ?? {};
+        const aliases: Record<string, string> = {};
+        const bundleManifest = syncPack(bundleRoot, targetRoot, slug, status, ownerOf, aliases, linksRoot);
         writePackState(targetRoot, {
           version: 1,
           pack: slug,
           commit: status.commit,
           syncedAt: new Date().toISOString(),
           files: Object.fromEntries([...bundleManifest].map(([key, { sha }]) => [key, sha])),
+          aliases,
         });
-        for (const skill of status.skills) {
-          if (!status.conflicts.includes(skill)) ownerOf.set(skill, slug);
+        for (const skill of status.installed) ownerOf.set(skill, slug);
+        if (linksRoot) {
+          for (const oldSkill of new Set(Object.keys(previousFiles).map(key => key.split('/')[0]!))) {
+            if (!status.installed.includes(oldSkill)) unlinkManagedSkill(join(targetRoot, oldSkill), linksRoot);
+          }
+          for (const skill of status.installed) {
+            linkManagedSkill(join(targetRoot, skill), linksRoot, skill);
+          }
         }
         debug(`[bundled-skills] Synced pack "${slug}": ${status.installed.length} skills${status.localModified ? ' (local modifications preserved)' : ''}`);
       } catch (error) {
@@ -381,6 +403,8 @@ export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): Ensur
     debug('[bundled-skills] ensureBundledSkills failed:', error instanceof Error ? error.message : error);
   }
 
+  invalidateSkillsCache();
+  invalidateOmpSkillsCache();
   return result;
 }
 
@@ -395,12 +419,37 @@ function syncPack(
   slug: string,
   status: BundledSkillPackStatus,
   ownerOf: ReadonlyMap<string, string>,
+  aliasesOut: Record<string, string>,
+  linksRoot: string | null,
 ): Map<string, { abs: string; sha: string }> {
   const packDir = join(bundleRoot, slug);
-  const skills = listPackSkillDirs(packDir);
+  const originals = listPackSkillDirs(packDir);
+  const previousState = readPackState(targetRoot, slug);
+  const reserved = new Set<string>();
+  const aliases = new Map(originals.map((skill) => {
+    const legacyAlias = ownerOf.get(`${slug}--${skill}`) === slug ? `${slug}--${skill}` : ownerOf.get(skill) === slug ? skill : undefined;
+    const previous = previousState?.aliases?.[skill] ?? legacyAlias;
+    const installed = chooseManagedSkillName(slug, skill, (candidate) => {
+      if (reserved.has(candidate)) return false;
+      const target = join(targetRoot, candidate);
+      if (ownerOf.has(candidate) && ownerOf.get(candidate) !== slug) return false;
+      if (pathEntryExists(target) && (ownerOf.get(candidate) !== slug || lstatSync(target).isSymbolicLink())) return false;
+      // An established application identity stays stable if a user later adds a global skill.
+      // Discovery gives that application skill an explicit alias without rewriting local edits.
+      const link = linksRoot ? join(linksRoot, candidate) : null;
+      return previous === candidate || !link || !pathEntryExists(link) || isSkillLinkTo(link, target);
+    }, previous);
+    reserved.add(installed);
+    aliasesOut[skill] = installed;
+    return [skill, installed] as const;
+  }));
+  const skills = [...aliases.values()];
   status.skills = skills;
-  const bundleManifest = buildManifest(packDir, skills);
-  const stateFiles = readPackState(targetRoot, slug)?.files ?? {};
+  const bundleManifest = new Map([...buildManifest(packDir, originals, true)].map(([key, value]) => {
+    const slash = key.indexOf('/');
+    return [`${aliases.get(key.slice(0, slash))}${key.slice(slash)}`, value] as const;
+  }));
+  const stateFiles = previousState?.files ?? {};
 
   const tmpRoot = join(targetRoot, `.bundled-tmp-${slug}-${process.pid}`);
   rmSync(tmpRoot, { recursive: true, force: true });
@@ -408,14 +457,6 @@ function syncPack(
 
   try {
     for (const skill of skills) {
-      // Foreign ownership: another pack previously installed this skill dir.
-      const owner = ownerOf.get(skill);
-      if (owner && owner !== slug) {
-        status.conflicts.push(skill);
-        debug(`[bundled-skills] Skill "${skill}" of pack "${slug}" skipped — owned by pack "${owner}"`);
-        continue;
-      }
-
       const disk = buildManifest(targetRoot, [skill]);
       const writes: { rel: string; from: string }[] = [];
       const deletes: string[] = [];
@@ -517,6 +558,8 @@ function syncPack(
       } else {
         status.installed.push(skill);
         status.localModified = true; // user touched it — keep
+        // Preserve ownership so a later disable/update still recognizes retained user content.
+        for (const key of managedKeys) bundleManifest.set(key, { abs: join(targetRoot, key), sha: stateFiles[key]! });
       }
     }
   } finally {
@@ -533,7 +576,7 @@ function syncPack(
  * on-disk .bundled state + target dirs.
  */
 export function listBundledSkillPacks(options?: EnsureBundledSkillsOptions): BundledSkillPackStatus[] {
-  const targetRoot = options?.targetRoot ?? GLOBAL_AGENT_SKILLS_DIR;
+  const targetRoot = options?.targetRoot ?? APP_MANAGED_SKILLS_DIR;
   const bundleRoot = options?.bundleRoot ?? getBundledAssetsDir('skills');
   if (!bundleRoot || !existsSync(bundleRoot)) return [];
 
@@ -548,15 +591,17 @@ export function listBundledSkillPacks(options?: EnsureBundledSkillsOptions): Bun
   const disabledSet = disabledPackSet(disabled);
   const lock = readSkillsLock(bundleRoot);
   const packSlugs = readdirSync(bundleRoot, { withFileTypes: true })
-    .filter(e => e.isDirectory() && !e.name.startsWith('.'))
+    .filter(e => e.isDirectory() && isSafeSkillName(e.name))
     .map(e => e.name)
     .sort();
 
   return packSlugs.map((slug) => {
     const meta = lock.get(slug);
     const packDir = join(bundleRoot, slug);
-    const skills = listPackSkillDirs(packDir);
     const state = readPackState(targetRoot, slug);
+    const originals = listPackSkillDirs(packDir);
+    const installedAliases = state ? [...new Set(Object.keys(state.files).map((key) => key.split('/')[0]!))] : [];
+    const skills = [...new Set([...originals.map((skill) => state?.aliases?.[skill] ?? (installedAliases.includes(`${slug}--${skill}`) ? `${slug}--${skill}` : skill)), ...installedAliases])];
     const installed: string[] = [];
     let localModified = false;
     for (const skill of skills) {

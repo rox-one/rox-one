@@ -1363,10 +1363,29 @@ html[data-contrast="high"] .rox-rail-row[aria-current="page"] {
   }
 }
 
-/* Главная widgets (platform/home): flat tone steps, never outlines. High
-   contrast gets stronger tones so widgets and hovered rows stay distinct. */
+/* Widget tint controls affect surfaces only; content keeps readable theme
+   colors. A CSS surface (rather than inline background) lets system contrast
+   and transparency preferences take precedence over a custom design. */
+html[data-scenic] {
+  --home-scenic-base: oklch(0.985 0.004 255 / 0.94);
+}
+html.dark[data-scenic] {
+  --home-scenic-base: oklch(0.17 0.012 255 / 0.94);
+}
+:is([data-home-cell], .rox-home-widget, [data-home-design-controls]) {
+  --widget-base: var(--home-scenic-base, var(--background));
+}
 .rox-home-widget {
-  background-color: color-mix(in oklch, var(--foreground) 4%, transparent);
+  --muted-foreground: color-mix(in oklch, var(--foreground) 78%, var(--widget-base));
+  background-color: var(--widget-surface, color-mix(in oklch, var(--foreground) 4%, transparent));
+  box-shadow: var(--widget-border, none);
+}
+html[data-scenic] [data-home-design-controls] {
+  background-color: rgb(from var(--widget-base) r g b / 1);
+  --muted-foreground: color-mix(in oklch, var(--foreground) 78%, var(--widget-base));
+}
+html[data-shell-material="solid"] :is([data-home-cell], .rox-home-widget) {
+  --widget-base: rgb(from var(--home-scenic-base, var(--canvas)) r g b / 1);
 }
 .rox-home-tile {
   background-color: color-mix(in oklch, var(--foreground) 5%, transparent);
@@ -1380,7 +1399,9 @@ html[data-contrast="high"] .rox-rail-row[aria-current="page"] {
   background-color: color-mix(in oklch, var(--foreground) 8%, transparent);
 }
 html[data-contrast="high"] .rox-home-widget {
-  background-color: color-mix(in oklch, var(--foreground) 9%, transparent);
+  background-color: rgb(from var(--home-scenic-base, var(--canvas)) r g b / 1);
+  box-shadow: inset 0 0 0 1px var(--foreground);
+  --muted-foreground: var(--foreground);
 }
 html[data-contrast="high"] .rox-home-tile {
   background-color: color-mix(in oklch, var(--foreground) 12%, transparent);
@@ -1403,6 +1424,32 @@ html[data-contrast="high"] .rox-home-tile.rox-home-tile-added {
 html[data-contrast="high"] .rox-home-toggle[aria-checked="false"] {
   background-color: color-mix(in oklch, var(--foreground) 45%, transparent);
 
+}
+
+@media (prefers-contrast: more) {
+  .rox-home-widget {
+    background-color: rgb(from var(--home-scenic-base, var(--canvas)) r g b / 1);
+    box-shadow: inset 0 0 0 1px var(--foreground);
+    --muted-foreground: var(--foreground);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :is([data-home-cell], .rox-home-widget) {
+    --widget-base: rgb(from var(--home-scenic-base, var(--canvas)) r g b / 1);
+  }
+  .rox-home-widget {
+    backdrop-filter: none;
+  }
+}
+@media (forced-colors: active) {
+  .rox-home-widget {
+    background-color: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+    outline: 1px solid CanvasText;
+    outline-offset: -1px;
+    --muted-foreground: CanvasText;
+  }
 }
 
 .rox-inspector-terminal ::selection {

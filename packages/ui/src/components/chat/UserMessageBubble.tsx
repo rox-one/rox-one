@@ -1,3 +1,4 @@
+import { useMessageReactionActor } from './message-reaction-actor'
 /**
  * UserMessageBubble - Shared user message component
  *
@@ -12,7 +13,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Clock } from 'lucide-react'
+import { Clock, GitBranch, Volume2 } from 'lucide-react'
 import type { AnnotationV1, StoredAttachment, ContentBadge } from '@rox/core'
 import { normalizePath } from '@rox/core/utils'
 import { cn } from '../../lib/utils'
@@ -27,7 +28,6 @@ import {
   createReactionAnnotation,
   DEFAULT_REACTION_EMOJI,
   findOwnReaction,
-  LOCAL_REACTION_ACTOR,
   quoteMessageMarkdown,
 } from './message-reactions'
 
@@ -335,11 +335,14 @@ export interface UserMessageBubbleProps {
   messageId?: string
   sessionId?: string
   annotations?: AnnotationV1[]
-  onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void
-  onRemoveAnnotation?: (messageId: string, annotationId: string) => void
+  onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void | Promise<void>
+  onRemoveAnnotation?: (messageId: string, annotationId: string) => void | Promise<void>
   onQuote?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
   onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
+  onListen?: (text: string) => void
+  isListening?: boolean
+  onBranch?: (messageId: string) => void
 }
 
 /** Minimum visible duration of the "Queued" chip. Both backends ack
@@ -365,30 +368,35 @@ export function UserMessageBubble({
   onQuote,
   onLearnFromMessage,
   onPickSideThread,
+  onListen,
+  isListening = false,
+  onBranch,
 }: UserMessageBubbleProps) {
   const { t } = useTranslation()
+  const reactionActor = useMessageReactionActor()
   const hasAttachments = attachments && attachments.length > 0
   const reactionCounts = useMemo(
-    () => aggregateReactions(annotations, LOCAL_REACTION_ACTOR.id),
-    [annotations],
+    () => aggregateReactions(annotations, reactionActor?.id),
+    [annotations, reactionActor],
   )
 
-  const handleToggleEmoji = (emoji: string) => {
-    if (!messageId || !onAddAnnotation) return
-    const existing = findOwnReaction(annotations, emoji, LOCAL_REACTION_ACTOR.id)
-    if (existing && onRemoveAnnotation) {
-      onRemoveAnnotation(messageId, existing.id)
-      return
+  const pendingReactions = useRef(new Set<string>())
+  const handleToggleEmoji = async (emoji: string) => {
+    if (!reactionActor || !messageId || !onAddAnnotation || pendingReactions.current.has(emoji)) return
+    pendingReactions.current.add(emoji)
+    try {
+      const existing = findOwnReaction(annotations, emoji, reactionActor.id)
+      if (existing && onRemoveAnnotation) {
+        await onRemoveAnnotation(messageId, existing.id)
+      } else {
+        await onAddAnnotation(messageId, createReactionAnnotation({ messageId, sessionId: sessionId ?? '', emoji, actor: reactionActor }))
+      }
+    } catch {
+      // The persistence handler reports the failure; do not leak a rejected
+      // promise from a React click event or claim a saved reaction.
+    } finally {
+      pendingReactions.current.delete(emoji)
     }
-    onAddAnnotation(
-      messageId,
-      createReactionAnnotation({
-        messageId,
-        sessionId: sessionId ?? '',
-        emoji,
-        actor: LOCAL_REACTION_ACTOR,
-      }),
-    )
   }
 
   // Show the queued chip while `isQueued` is true AND for at least
@@ -566,12 +574,17 @@ export function UserMessageBubble({
       <div className="flex items-center justify-end">
         <MessageHoverDock
           reactionCounts={reactionCounts}
+          reactionsDisabled={!reactionActor || !messageId || !onAddAnnotation}
           onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
           onToggleEmoji={handleToggleEmoji}
           onCopy={() => navigator.clipboard.writeText(displayContent)}
           onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(displayContent)) : undefined}
           onLearn={onLearnFromMessage ? () => onLearnFromMessage(displayContent) : undefined}
           onPickSideThread={onPickSideThread && messageId ? (action) => onPickSideThread(action, displayContent, messageId) : undefined}
+          extraActions={[
+            ...(onListen ? [{ id: 'listen', label: t(isListening ? 'chat.listenStop' : 'chat.listen'), icon: <Volume2 />, onSelect: () => onListen(displayContent) }] : []),
+            ...(onBranch && messageId ? [{ id: 'branch', label: t('chat.branchFromThisMessage'), icon: <GitBranch />, onSelect: () => onBranch(messageId) }] : []),
+          ]}
         />
       </div>
     </div>

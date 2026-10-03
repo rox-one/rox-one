@@ -7,6 +7,8 @@ import {
   type LocalMeeting,
   type LocalMeetingAction,
   type LocalMeetingDocument,
+  type LocalMeetingExtraction,
+  type LocalMeetingExtractedDecision,
   type LocalMeetingPatch,
   type LocalMeetingQuestion,
   type LocalTranscript,
@@ -44,6 +46,8 @@ function normalizeTranscriptProvenance(v: unknown): LocalTranscriptProvenance | 
     sourceHash: str(o.sourceHash) || undefined,
     engine: str(o.engine) || undefined,
     model: str(o.model) || undefined,
+    modelRevision: str(o.modelRevision) || undefined,
+    diarizationModel: str(o.diarizationModel) || undefined,
     generatedAt: num(o.generatedAt),
   }
 }
@@ -111,7 +115,29 @@ function normActions(v: unknown): LocalMeetingAction[] {
       sourceSegmentIds,
       sourceTranscriptRevision: num(o.sourceTranscriptRevision),
       createdAt: num(o.createdAt) ?? 0,
+      editedAt: num(o.editedAt),
     }]
+  })
+}
+
+function normExtraction(v: unknown): LocalMeetingExtraction | undefined {
+  if (!v || typeof v !== 'object') return undefined
+  const o = v as Record<string, unknown>
+  const status = o.status
+  if (!str(o.id) || !str(o.workspaceId) || !['starting', 'running', 'done', 'failed', 'superseded'].includes(String(status))) return undefined
+  return { id: str(o.id), workspaceId: str(o.workspaceId), transcriptRevision: num(o.transcriptRevision) ?? 0,
+    editRevision: num(o.editRevision) ?? 0, automatic: o.automatic === true, status: status as LocalMeetingExtraction['status'],
+    startedAt: num(o.startedAt) ?? 0, finishedAt: num(o.finishedAt), sessionId: str(o.sessionId) || undefined, errorCode: str(o.errorCode) || undefined }
+}
+
+function normExtractedDecisions(v: unknown): LocalMeetingExtractedDecision[] {
+  if (!Array.isArray(v)) return []
+  return v.flatMap((item): LocalMeetingExtractedDecision[] => {
+    if (!item || typeof item !== 'object') return []
+    const o = item as Record<string, unknown>
+    if (!str(o.id) || !str(o.title).trim()) return []
+    return [{ id: str(o.id), title: str(o.title), why: str(o.why), who: Array.isArray(o.who) ? o.who.filter((x): x is string => typeof x === 'string') : [],
+      sourceSegmentIds: Array.isArray(o.sourceSegmentIds) ? o.sourceSegmentIds.filter((x): x is string => typeof x === 'string') : [], sourceTranscriptRevision: num(o.sourceTranscriptRevision) ?? 0, sourceStartMs: num(o.sourceStartMs) }]
   })
 }
 
@@ -200,7 +226,14 @@ export function normalizeMeeting(raw: unknown, id: string): LocalMeeting | null 
           updatedAt: num(s.updatedAt) ?? 0,
         }
       : null,
-    summaryRun: run && str(run.sessionId) ? { sessionId: str(run.sessionId), startedAt: num(run.startedAt) ?? 0, transcriptRevision: num(run.transcriptRevision) } : undefined,
+    summaryRun: run && str(run.sessionId) ? { sessionId: str(run.sessionId), startedAt: num(run.startedAt) ?? 0, transcriptRevision: num(run.transcriptRevision), automatic: run.automatic === true } : undefined,
+    summaryAutoRevision: num(o.summaryAutoRevision),
+    extraction: normExtraction(o.extraction) ?? (run && str(run.sessionId) && str(o.workspaceId) ? {
+      id: `legacy-${str(run.sessionId)}`, workspaceId: str(o.workspaceId), transcriptRevision: num(run.transcriptRevision) ?? num(t.revision) ?? 0,
+      editRevision: num(o.analysisEditRevision) ?? 0, automatic: run.automatic === true, status: 'running', sessionId: str(run.sessionId), startedAt: num(run.startedAt) ?? 0,
+    } : undefined),
+    analysisEditRevision: num(o.analysisEditRevision) ?? 0,
+    extractedDecisions: normExtractedDecisions(o.extractedDecisions),
     actions: normActions(o.actions),
     documents: normDocuments(o.documents),
     updatedAt: num(o.updatedAt) ?? createdAt,
@@ -256,6 +289,14 @@ export function applyPatch(meeting: LocalMeeting, patch: LocalMeetingPatch, now:
   }
   if ('summaryRun' in patch) {
     next.summaryRun = patch.summaryRun && typeof patch.summaryRun.sessionId === 'string' ? patch.summaryRun : undefined
+  }
+  if (typeof patch.summaryAutoRevision === 'number' && Number.isSafeInteger(patch.summaryAutoRevision) && patch.summaryAutoRevision >= 0) next.summaryAutoRevision = patch.summaryAutoRevision
+  if ('summary' in patch || Array.isArray(patch.actions)) {
+    next.analysisEditRevision = (meeting.analysisEditRevision ?? 0) + 1
+    if (meeting.extraction?.status === 'starting' || meeting.extraction?.status === 'running') {
+      next.extraction = { ...meeting.extraction, status: 'superseded', finishedAt: now, errorCode: 'manual-edit' }
+      next.summaryRun = undefined
+    }
   }
   return next
 }
@@ -357,7 +398,7 @@ export function transcriptMarkdown(meeting: Pick<LocalMeeting, 'title' | 'starte
   ]
   for (const seg of transcript.segments) {
     const speaker = seg.speakerId?.trim()
-    lines.push(`[${formatClock(seg.startMs)}] ${speaker ? `${speaker}: ` : ''}${seg.text}`)
+    lines.push(`[${formatClock(seg.startMs)}] ${speaker ? `${speaker}: ` : ''}${seg.text}`, '')
   }
   return `${lines.join('\n')}\n`
 }

@@ -1630,6 +1630,8 @@ export interface ElectronAPI {
     currentThreshold: number
     recentEvents?: Array<{ type: XpEventType; xp: number; at: number }>
     quests: QuestRecord[]
+    questRecords?: QuestRecord[]
+    weeklyXp?: { current: number; previous: number }
     ratings: SessionRating[]
     analyticsConsent: boolean
   }>
@@ -1671,6 +1673,8 @@ export interface ElectronAPI {
     currentThreshold?: number
     recentEvents?: Array<{ type: XpEventType; xp: number; at: number }>
     quests?: QuestRecord[]
+    questRecords?: QuestRecord[]
+    weeklyXp?: { current: number; previous: number }
     ratings?: SessionRating[]
     analyticsConsent?: boolean
   }) => void): () => void
@@ -1721,7 +1725,7 @@ export interface ElectronAPI {
   onVoiceChanged(callback: (prefs: VoicePrefs) => void): () => void
   bootstrapVoice(): Promise<{ installationId: string; expiresAt: number; scopes: string[] }>
   getVoiceCapabilities(): Promise<{ displayName: string; languageCount: number; show74Badge: boolean; modelId: string }>
-  startVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob>
+  startVoiceCapture(payload?: { mimeType?: string }): Promise<import('@rox/shared/voice').VoiceJob>
   stopVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob>
   cancelVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob | null>
   grantVoicePermission(): Promise<import('@rox/shared/voice').VoiceJob>

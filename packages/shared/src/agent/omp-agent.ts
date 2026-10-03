@@ -110,6 +110,7 @@ import { saveBinaryResponse } from '../utils/binary-detection.ts';
 import { isRoxPublicModelId, ROX_PUBLIC_MODEL_IDS, type OmpModelCandidate } from '../config/rox-public-models.ts';
 import { ompStateHasModel, resolveVerifiedOmpModelTarget } from './omp-model-selection.ts';
 import { OmpRpcLineGuard, OmpRpcTransport, supportsOmpRpcV2 } from './omp-rpc-transport.ts';
+import type { OmpBranchEntry } from './omp-user-branch.ts';
 import { resolveConfigDir } from "../config/paths.ts"
 
 // ============================================================
@@ -252,12 +253,7 @@ function isOmpModelNotFoundError(error: unknown): boolean {
  * `id` is a short 8-hex entry id; `parentId` chains entries. Verified in
  * docs/omp-rpc-notes.md §Branching.
  */
-interface OmpTranscriptEntry {
-  type?: string;
-  id?: string;
-  parentId?: string | null;
-  message?: { role?: string };
-}
+type OmpTranscriptEntry = OmpBranchEntry;
 
 interface OmpUsage {  input?: number;
   output?: number;

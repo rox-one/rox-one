@@ -16,6 +16,8 @@ export interface VoiceJob {
   capture: CaptureState
   job: JobState
   error?: string
+  /** STOP returns its actual ASR result; clients must not transcribe the audio again. */
+  transcript?: import('./adapters/audio-result.ts').NormalizedTranscript
 }
 
 export function createVoiceJob(recordingId: string, jobId: string): VoiceJob {

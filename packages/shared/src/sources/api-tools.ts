@@ -265,6 +265,7 @@ export async function executeApiRequest(
   const fetchOptions: RequestInit = {
     method,
     headers,
+    ...(config.rejectRedirects ? { redirect: 'error' as const } : {}),
     ...(signals.length > 0 ? { signal: signals.length === 1 ? signals[0] : AbortSignal.any(signals) } : {}),
   };
 
