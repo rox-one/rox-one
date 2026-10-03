@@ -4,7 +4,7 @@ import { errorResponse, successResponse } from '../response.ts';
 import type { ToolResult } from '../types.ts';
 import { createSanitizedEnv } from '../runtime/sandbox-env.ts';
 import { resolveHostBashCwd } from '../runtime/host-bash-cwd.ts';
-import { getHostBashPort, type HostBashExecResult } from '../runtime/host-bash-port.ts';
+import { getHostBashPort, type HostBashExecResult, type HostBashObserver } from '../runtime/host-bash-port.ts';
 import {
   isHostBashSandboxEnabled,
   planHostBashSandbox,
@@ -70,6 +70,7 @@ export async function runHostBash(req: {
   cwd: string;
   workspaceRoot?: string;
   timeoutMs?: number;
+  observer?: HostBashObserver;
 }): Promise<ToolResult> {
   const command = typeof req.command === 'string' ? req.command.trim() : '';
   if (!command) {
@@ -86,18 +87,25 @@ export async function runHostBash(req: {
     HOST_BASH_MAX_TIMEOUT_MS,
   );
 
+  const notify = (observation: Omit<Parameters<HostBashObserver>[0], 'command' | 'cwd' | 'occurredAt' | 'monotonicMs'>): void => {
+    try { req.observer?.({ command, cwd, occurredAt: Date.now(), monotonicMs: performance.now(), ...observation }); } catch { /* Observability never changes process execution or fallback. */ }
+  };
+
   const sandboxEnabled = isHostBashSandboxEnabled();
   const port = getHostBashPort();
   if (port && !sandboxEnabled) {
     try {
+      notify({ phase: 'started', execution: 'sidecar' });
       const remote = await port({
         command,
         cwd,
         timeoutMs,
         workspaceRoot: req.workspaceRoot,
       });
+      notify({ phase: 'completed', execution: 'sidecar', result: remote });
       return formatHostBashResult(remote);
-    } catch {
+    } catch (error) {
+      notify({ phase: 'failed', execution: 'sidecar', error: error instanceof Error ? error.message : String(error) });
       // Sidecar down or invoke failed — local spawn stays the primary path.
     }
   }
@@ -116,13 +124,16 @@ export async function runHostBash(req: {
   const spawnArgs = sandbox?.args ?? shellArgs;
   const memoryCap = HOST_BASH_MAX_OUTPUT_CHARS * 2;
 
-  const startedAt = Date.now();
+  const startedAt = performance.now();
+  notify({ phase: 'started', execution: 'local', shell: shell.command });
   try {
     const result = await new Promise<{
       stdout: string;
       stderr: string;
       code: number | null;
       timedOut: boolean;
+      stdoutTruncated: boolean;
+      stderrTruncated: boolean;
     }>((resolvePromise, reject) => {
       const child = spawn(spawnCommand, spawnArgs, {
         cwd,
@@ -134,6 +145,8 @@ export async function runHostBash(req: {
       let stdout = '';
       let stderr = '';
       let timedOut = false;
+      let stdoutTruncated = false;
+      let stderrTruncated = false;
       const pid = child.pid;
 
       const killTimer = setTimeout(() => {
@@ -142,15 +155,23 @@ export async function runHostBash(req: {
       }, timeoutMs);
 
       child.stdout.on('data', (chunk: Buffer) => {
-        if (stdout.length < memoryCap) stdout += chunk.toString();
+        const received = chunk.toString();
+        const retained = received.slice(0, Math.max(0, memoryCap - stdout.length));
+        if (retained.length < received.length) stdoutTruncated = true;
+        stdout += retained;
+        if (retained) notify({ phase: 'output', execution: 'local', shell: shell.command, stdout: retained });
       });
       child.stderr.on('data', (chunk: Buffer) => {
-        if (stderr.length < memoryCap) stderr += chunk.toString();
+        const received = chunk.toString();
+        const retained = received.slice(0, Math.max(0, memoryCap - stderr.length));
+        if (retained.length < received.length) stderrTruncated = true;
+        stderr += retained;
+        if (retained) notify({ phase: 'output', execution: 'local', shell: shell.command, stderr: retained });
       });
 
       child.on('close', (code) => {
         clearTimeout(killTimer);
-        resolvePromise({ stdout, stderr, code, timedOut });
+        resolvePromise({ stdout, stderr, code, timedOut, stdoutTruncated, stderrTruncated });
       });
       child.on('error', (err) => {
         clearTimeout(killTimer);
@@ -158,20 +179,22 @@ export async function runHostBash(req: {
       });
     });
 
-    const durationMs = Date.now() - startedAt;
-    return formatHostBashResult(
-      {
-        stdout: result.stdout,
-        stderr: result.stderr,
-        exitCode: result.code,
-        timedOut: result.timedOut,
-        durationMs,
-        cwd,
-      },
-      sandbox ?? undefined,
-    );
+    const durationMs = Math.max(0, Math.round(performance.now() - startedAt));
+    const structured: HostBashExecResult = {
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.code,
+      timedOut: result.timedOut,
+      durationMs,
+      cwd,
+      stdoutTruncated: result.stdoutTruncated,
+      stderrTruncated: result.stderrTruncated,
+    };
+    notify({ phase: 'completed', execution: 'local', shell: shell.command, result: structured });
+    return formatHostBashResult(structured, sandbox ?? undefined);
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
+    notify({ phase: 'failed', execution: 'local', shell: shell.command, error: msg });
     return errorResponse(`Error running host-tool bash: ${msg}`);
   }
 }
@@ -186,6 +209,7 @@ export async function handleHostBash(
     cwd,
     workspaceRoot: ctx.workspacePath,
     timeoutMs: args.timeoutMs,
+    observer: ctx.hostBashObserver,
   });
 }
 

@@ -5,3 +5,5 @@ export * from './events'
 export * from './routing'
 export * from './native-channels'
 export * from './native-replica'
+
+export * from './runtime-trace'

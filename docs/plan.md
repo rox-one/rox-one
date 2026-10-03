@@ -952,6 +952,13 @@ Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_sco
 ## Workspace shortcut popover integration —2026-10-03
 Owner root. Depends on existing rail-links/Popover/Select and current product-tour hooks. Import1447 selectively, repair viewport constraints, qualify nine actual DOM cases and old25px negative, run full Electron types; commit proof and merge a separate PR preserving source branch. Completed local checks in docs/integration-history/workspace-link-popover-20261003.
 
+## Passive Runtime Map integration graph — 2026-10-03
+
+1. Owner historical_sweep audits all 127 exact PR #1444 source paths, retains current native/account/Product Learning authorities and recovers passive producers, canonical ingress, scoped reader and actual retained ChatPage consumers. Root reviews and merges a separate PR; original branches remain intact.
+2. Reproduce source getter/prototype disclosure and delayed child misbinding, repair own-descriptor projection and actual dispatch custody, preserve invalid-before-blob-write and native observer quota controls. Retain source and intermediate failure history.
+3. Exercise current privacy/authority/producer/failure controls, hardcoded IPC inventories, all 12 actual locale catalogues, real Chromium runtime UI/performance and retained App/Notes flows, and the actual pinned OMP SDK using a network-free controlled model. Distinguish hook-port race proof from normal native SDK execution and installed/native acceptance.
+4. Preserve append-only shared documentation when reconciling current main, publish/attach the exact qualified PR and record remote head. Receipts name disjoint later merges and the precise revision of each gate instead of claiming full release acceptance.
+
 ## Local source recovery integration graph (2026-10-03)
 
 1. Scout recovers storage/local-state + actual SourceManager/BaseAgent consumers, source credential admission and public MCP builder semantics; preserve current builtin catalog, managed stdio account secrets, live MCP definitions and explicit source ownership. Adapt exact old Windows default migration through bounded same-descriptor file admission, not the original path-check/path-write race.
