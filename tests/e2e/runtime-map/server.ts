@@ -7,6 +7,7 @@ import { createRuntimeTraceFixture } from '../../../packages/core/src/runtime-tr
 import { known, type RuntimeAgentObservation, type RuntimeEvent, type RuntimePayloadQuery, type RuntimeTraceQuery, type RuntimeEventsQuery } from '../../../packages/core/src/runtime-trace/types'
 import { RuntimeTraceService, type RuntimeTraceRun } from '../../../packages/server-core/src/sessions/runtime-trace/service'
 import { createCatalogFixture } from './catalog-store'
+import { contextFixtureAgentIds, createContextFixtureSnapshot } from '../../fixtures/runtime-map/context'
 
 if (process.env.ROX_RUNTIME_MAP_E2E !== '1' || process.env.NODE_ENV === 'production') throw new Error('Isolated runtime-map test server requires explicit test opt-in')
 const directory = await mkdtemp(join(tmpdir(), 'rox-runtime-map-e2e-'))
@@ -67,6 +68,28 @@ const server = Bun.serve({ hostname: '127.0.0.1', port: 4177, idleTimeout: 0, as
       if (!run) return json({ error: 'No active test run' }, 409)
       await service.record(run, 'approval.requested', { id: 'test-approval', kind: 'permission', description: 'Тестовый запрос разрешения; карта его не подтверждает' }, { messageId: 'fixture-approval' })
       return json({ requested: true })
+    }
+    if (path === '/context-fixture' && request.method === 'POST') {
+      if (!run) return json({ error: 'No active test run' }, 409)
+      const rootSnapshot = createContextFixtureSnapshot('root')
+      const childSnapshot = createContextFixtureSnapshot('child')
+      await service.capture('fixture-session', rootSnapshot)
+      const observation = (sourceSeq: number, agentId: string, kind: RuntimeAgentObservation['kind'], payload: unknown): RuntimeAgentObservation => ({
+        sourceId: 'explicit-context-fixture', sourceSeq, sourceEventId: `context-fixture:${sourceSeq}`,
+        agentId, parentAgentId: 'root', occurredAt: known(Date.now(), 'explicit-context-fixture'), origin: 'observed',
+        kind, payload,
+      } as RuntimeAgentObservation)
+      await service.observe('fixture-session', observation(1, contextFixtureAgentIds.child, 'agent.assigned', { assignment: {
+        agentId: contextFixtureAgentIds.child, parentAgentId: 'root', name: 'Child context fixture', nativeKind: 'restricted',
+        task: childSnapshot.originalPrompt, prompt: childSnapshot.effectivePrompt, model: childSnapshot.model,
+        contextSnapshotId: childSnapshot.id, tools: ['read'], permissionMode: 'read-only',
+      } }))
+      await service.observe('fixture-session', observation(2, contextFixtureAgentIds.child, 'context.captured', { snapshot: childSnapshot }))
+      await service.observe('fixture-session', observation(3, contextFixtureAgentIds.missing, 'agent.assigned', { assignment: {
+        agentId: contextFixtureAgentIds.missing, parentAgentId: 'root', name: 'Child without snapshot', nativeKind: 'task',
+        task: { text: 'Context snapshot was not emitted.' }, prompt: { text: 'Explicit assignment without snapshot.' },
+      } }))
+      return json({ rootSnapshotId: rootSnapshot.id, childSnapshotId: childSnapshot.id, agents: contextFixtureAgentIds })
     }
     if (path === '/large' && request.method === 'POST') {
       if (!run) return json({ error: 'No active test run' }, 409)

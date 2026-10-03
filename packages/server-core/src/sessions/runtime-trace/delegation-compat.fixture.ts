@@ -3,11 +3,12 @@ import { readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { RuntimeTraceService, type RuntimeTraceSession } from './service'
 import { createSession, loadSession, saveSession, getSessionPath, getSessionFilePath } from '@rox/shared/sessions'
-import type { StoredSession } from '@rox/shared/sessions'
+import type { StoredMessage, StoredSession } from '@rox/shared/sessions'
 import type { RuntimeEvent } from '@rox/core/runtime-trace'
 
 const workspace = process.env.ROX_CONFIG_DIR!
 const usage = { inputTokens: 0, outputTokens: 0, totalTokens: 0, contextTokens: 0, costUsd: 0 }
+const storedMessage = (id: string, type: StoredMessage['type'], content: string, timestamp: number): StoredMessage => ({ id, type, content, timestamp })
 const sessions = new Map<string, RuntimeTraceSession>()
 const emitted: RuntimeEvent[] = []
 const trace = new RuntimeTraceService(id => sessions.get(id), event => emitted.push(event))
@@ -16,7 +17,7 @@ const register = (session: { id: string; parentSessionId?: string }) => sessions
 if (process.argv[2] === 'legacy') {
   const session = await createSession(workspace, { name: 'Existing pre-trace session', model: 'rox/r1-max' })
   register(session)
-  const stored: StoredSession = { ...session, messages: [{ id: 'old-user', role: 'user', content: 'Existing request', timestamp: 10 }, { id: 'old-answer', role: 'assistant', content: 'Existing answer', timestamp: 20 }], tokenUsage: usage }
+  const stored: StoredSession = { ...session, messages: [storedMessage('old-user', 'user', 'Existing request', 10), storedMessage('old-answer', 'assistant', 'Existing answer', 20)], tokenUsage: usage }
   await saveSession(stored)
   const path = getSessionFilePath(workspace, session.id)
   const original = await readFile(path, 'utf8')
@@ -38,16 +39,16 @@ if (process.argv[2] === 'legacy') {
   const { createFakeOmp, makeOmpConfig, useFakeOmpEnv } = await import('@rox/shared/agent/__tests__/omp-fake-cli')
   const parent = await createSession(workspace, { name: 'Parent', permissionMode: 'allow-all', model: 'rox/r1-max' })
   register(parent)
-  await saveSession({ ...parent, messages: [{ id: 'parent-request', role: 'user', content: 'Request', timestamp: 1 }], tokenUsage: usage })
+  await saveSession({ ...parent, messages: [storedMessage('parent-request', 'user', 'Request', 1)], tokenUsage: usage })
   const root = await trace.begin(parent.id, 'Request', { messageId: 'parent-request' })
-  const manager = Object.create(SessionManager.prototype) as SessionManager
+  const manager = Object.create(SessionManager.prototype) as InstanceType<typeof SessionManager>
   const jobs: Promise<void>[] = []
   Object.assign(manager, { runtimeTrace: trace,
     createSession: async (_workspaceId: string, options: Parameters<typeof createSession>[1]) => { const child = await createSession(workspace, options); register(child); return { ...child, workspaceId: 'ws-test' } },
-    sendMessage: (id: string, prompt: string) => { const job = (async () => { const child = loadSession(workspace, id)!; await saveSession({ ...child, messages: [{ id: 'child-request', role: 'user', content: prompt, timestamp: 2 }], tokenUsage: usage }); await trace.begin(id, prompt, { messageId: 'child-request' }); await trace.publishMessage(id, 'child-answer', 'Isolated child executor response'); await trace.finish(id, 'complete') })(); jobs.push(job); return job },
+    sendMessage: (id: string, prompt: string) => { const job = (async () => { const child = loadSession(workspace, id)!; await saveSession({ ...child, messages: [storedMessage('child-request', 'user', prompt, 2)], tokenUsage: usage }); await trace.begin(id, prompt, { messageId: 'child-request' }); await trace.publishMessage(id, 'child-answer', 'Isolated child executor response'); await trace.finish(id, 'complete') })(); jobs.push(job); return job },
   })
   const managed = { ...parent, workspace: { id: 'ws-test', name: 'Fixture', rootPath: workspace }, enabledSourceSlugs: [], permissionMode: 'allow-all' }
-  const handler = (manager as unknown as { createSpawnSessionHandler(managed: unknown): NonNullable<OmpAgent['onSpawnSession']> }).createSpawnSessionHandler(managed)
+  const handler = (manager as unknown as { createSpawnSessionHandler(managed: unknown): NonNullable<InstanceType<typeof OmpAgent>['onSpawnSession']> }).createSpawnSessionHandler(managed)
   const fake = createFakeOmp('host-tool-spawn')
   const restore = useFakeOmpEnv(fake)
   const agent = new OmpAgent(makeOmpConfig(fake))

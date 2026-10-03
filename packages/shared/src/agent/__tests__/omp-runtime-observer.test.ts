@@ -24,7 +24,7 @@ describe('OMP native runtime observation transport', () => {
     const previousEnv = { path: process.env.ROX_RUNTIME_OBSERVATION_PATH, control: process.env.ROX_RUNTIME_CONTROL_PATH, key: process.env.ROX_API_KEY };
     const events: OmpRuntimeObservation[] = [];
     const errors: Error[] = [];
-    const observer = new OmpRuntimeObserver(join(root, 'observer'), event => events.push(event), error => errors.push(error));
+    const observer = new OmpRuntimeObserver(join(root, 'observer'), event => { if (event.agent.id === 'ActualNativeId') events.push(event); }, error => errors.push(error));
     try {
       Object.assign(process.env, observer.env, { ROX_API_KEY: 'SECRET_FIXTURE_API_KEY' });
       observer.beginRun('current-turn');
@@ -36,9 +36,19 @@ describe('OMP native runtime observation transport', () => {
       const ctx = { agent: { kind: 'sub' as const, id: 'ActualNativeId', name: 'scout SECRET_FIXTURE_API_KEY', depth: 2, parentId: 'ActualParentId' },
         sessionManager: { getSessionId: () => 'actual-native-session' }, cwd: '/fixture/SECRET_FIXTURE_API_KEY', model: { provider: 'fixture', id: 'worker', contextWindow: 200000 },
         getContextUsage: () => ({ tokens: 123, contextWindow: 200000, percent: 0.0615 }) };
+      const parentHooks = new Map<string, Function>();
+      factory({ on: (hook: string, handler: Function) => parentHooks.set(hook, handler), getActiveTools: () => tools,
+        getAllTools: () => tools.map(name => ({ name })), getThinkingLevel: () => 'high' });
+      const parent = { ...ctx, agent: { kind: 'main', id: 'ActualParentId', name: 'parent', depth: 0 } };
+      parentHooks.get('before_agent_start')!({ prompt: 'parent', systemPrompt: [] }, parent);
+      parentHooks.get('before_subagent_spawn')!({ invocationKind: 'task', spawnKey: 'actual-parent-call:0' }, parent);
       const prompt = { prompt: 'Assignment with SECRET_FIXTURE_API_KEY', systemPrompt: ['Keep restrictions'], images: [{ type: 'image', mimeType: 'image/png', data: 'pixels' }] };
+      let accessorReads = 0;
+      const args = Object.assign(JSON.parse('{"__proto__":{"marker":"fixture"}}'), { path: '/fixture/a', Authorization: 'Bearer private' });
+      Object.defineProperty(args, 'password', { enumerable: true, get: () => { accessorReads++; throw new Error('Private getter must not execute'); } });
+      Object.defineProperty(args, 'publicGetter', { enumerable: true, get: () => { accessorReads++; return 'uncaptured'; } });
       expect(handlers.get('before_agent_start')!(prompt, ctx)).toBeUndefined();
-      expect(handlers.get('tool_execution_start')!({ toolCallId: 'real-call', toolName: 'read', args: { path: '/fixture/a', Authorization: 'Bearer private', password: 'dont-store' } }, ctx)).toBeUndefined();
+      expect(handlers.get('tool_execution_start')!({ toolCallId: 'real-call', toolName: 'read', args }, ctx)).toBeUndefined();
       const privateText = 'password="unregistered quoted value" password=\'unregistered single value\'\nCookie: session=unregistered-cookie; private-attr=value';
       const privateJSON = JSON.stringify({ password: 'unregistered JSON value', env: { CUSTOM: 'unregistered ENV value' }, inputTokens: 99 });
       handlers.get('tool_execution_end')!({ toolCallId: 'real-call', toolName: 'read', result: { content: [{ type: 'text', text: privateText }, { type: 'text', text: privateJSON }] }, isError: false }, ctx);
@@ -49,7 +59,10 @@ describe('OMP native runtime observation transport', () => {
       expect(events[0]!.sourceSeq).toBe(1);
       expect(events[2]!.sourceSeq).toBe(3);
       expect(events[0]!.payload.prompt).toBe('Assignment with [REDACTED]');
-      expect(events[1]!.payload.args).toEqual({ path: '/fixture/a', Authorization: '[REDACTED]', password: '[REDACTED]' });
+      expect(accessorReads).toBe(0);
+      expect(events[1]!.payload.args).toEqual({ ['__proto__']: { marker: 'fixture' }, path: '/fixture/a', Authorization: '[REDACTED]', password: '[REDACTED]', publicGetter: '[Accessor omitted]' });
+      expect(Object.hasOwn(events[1]!.payload.args as object, '__proto__')).toBe(true);
+      expect((events[1]!.payload.args as Record<string, unknown>).marker).toBeUndefined();
       expect(prompt.prompt).toBe('Assignment with SECRET_FIXTURE_API_KEY');
       expect(ctx.agent.name).toBe('scout SECRET_FIXTURE_API_KEY');
       expect(tools).toEqual(['read', 'yield']);
@@ -139,6 +152,58 @@ describe('OMP native runtime observation transport', () => {
       observer.drain();
       expect(events.at(-1)?.runId).toBe('originating-run');
       expect(events.at(-1)?.payload.toolDefinitions).toEqual([{ name: 'read' }]);
+    } finally {
+      observer.dispose();
+      if (previous.path === undefined) delete process.env.ROX_RUNTIME_OBSERVATION_PATH; else process.env.ROX_RUNTIME_OBSERVATION_PATH = previous.path;
+      if (previous.control === undefined) delete process.env.ROX_RUNTIME_CONTROL_PATH; else process.env.ROX_RUNTIME_CONTROL_PATH = previous.control;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('binds generated child ids to a unique actual-parent reservation and refuses ambiguous cross-turn starts', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'rox-observation-'));
+    const previous = { path: process.env.ROX_RUNTIME_OBSERVATION_PATH, control: process.env.ROX_RUNTIME_CONTROL_PATH };
+    const events: OmpRuntimeObservation[] = [];
+    const observer = new OmpRuntimeObserver(join(root, 'observer'), event => events.push(event), () => {});
+    try {
+      Object.assign(process.env, observer.env);
+      observer.beginRun('originating-run');
+      const factory = (await import(observer.extensionPath)).default;
+      const parentHooks = new Map<string, Function>();
+      const childHooks = new Map<string, Function>();
+      const api = (hooks: Map<string, Function>) => ({ on: (name: string, handler: Function) => hooks.set(name, handler),
+        getActiveTools: () => ['read'], getAllTools: () => [{ name: 'read' }, { name: 'hidden-tool' }], getThinkingLevel: () => 'high' });
+      factory(api(parentHooks)); factory(api(childHooks));
+      const parent = { agent: { kind: 'main', id: 'Main', name: 'main', depth: 0 }, sessionManager: { getSessionId: () => 'parent-session' }, cwd: '/fixture', getContextUsage: () => undefined };
+      const child = { ...parent, agent: { kind: 'sub', id: 'GeneratedNativeChild', name: 'child', depth: 1, parentId: 'Main' } };
+      parentHooks.get('before_agent_start')!({ prompt: 'parent', systemPrompt: [] }, parent);
+      parentHooks.get('before_subagent_spawn')!({ invocationKind: 'task', spawnKey: 'parent-call-A:0' }, parent);
+      observer.beginRun('next-user-run');
+      childHooks.get('before_agent_start')!({ prompt: 'delayed actual child', systemPrompt: [] }, child);
+      observer.drain();
+      expect(events.at(-1)?.runId).toBe('originating-run');
+      expect(events.at(-1)?.payload.toolDefinitions).toEqual([{ name: 'read' }]);
+      parentHooks.get('before_agent_start')!({ prompt: 'next parent', systemPrompt: [] }, parent);
+      parentHooks.get('before_subagent_spawn')!({ invocationKind: 'task', spawnKey: 'parent-call-B:0' }, parent);
+      const beforeAmbiguous = events.length;
+      observer.drain();
+      const afterParent = events.length;
+      const previousStderr = process.stderr.write;
+      const diagnostics: string[] = [];
+      process.stderr.write = ((value: string) => { diagnostics.push(value); return true; }) as typeof process.stderr.write;
+      try {
+        childHooks.get('before_agent_start')!({ prompt: 'ambiguous child', systemPrompt: [] }, { ...child, agent: { ...child.agent, id: 'UnboundNewId' } });
+        childHooks.get('tool_execution_start')!({ toolCallId: 'unbound', toolName: 'read', args: {} }, child);
+      } finally { process.stderr.write = previousStderr; }
+      observer.drain();
+      expect(events.length).toBe(afterParent);
+      expect(afterParent).toBeGreaterThan(beforeAmbiguous);
+      expect(diagnostics.join('')).toContain('cannot bind native child');
+      // Actual task-result identity closes A, leaving only B's dispatch.
+      parentHooks.get('tool_execution_end')!({ toolCallId: 'parent-call-A', toolName: 'task', result: { details: { results: [{ index: 0, id: 'GeneratedNativeChild' }] } } }, parent);
+      childHooks.get('before_agent_start')!({ prompt: 'new child B', systemPrompt: [] }, { ...child, agent: { ...child.agent, id: 'NewNativeChildB' } });
+      observer.drain();
+      expect(events.at(-1)?.runId).toBe('next-user-run');
     } finally {
       observer.dispose();
       if (previous.path === undefined) delete process.env.ROX_RUNTIME_OBSERVATION_PATH; else process.env.ROX_RUNTIME_OBSERVATION_PATH = previous.path;

@@ -427,6 +427,50 @@
     "en": "Context occupancy",
     "ru": "Заполнение контекста"
   },
+  "runtimeMap.contextGroup.agent": {
+    "en": "Agent context",
+    "ru": "Контекст агента"
+  },
+  "runtimeMap.contextGroup.caption": {
+    "en": "Recorded configuration · rows open their source event",
+    "ru": "Фактическая конфигурация · строки открывают исходное событие"
+  },
+  "runtimeMap.contextGroup.channel": {
+    "en": "Channel",
+    "ru": "Канал"
+  },
+  "runtimeMap.contextGroup.instructions": {
+    "en": "Instructions",
+    "ru": "Инструкции"
+  },
+  "runtimeMap.contextGroup.more": {
+    "en": "Show {{count}} more",
+    "ru": "Ещё {{count}}"
+  },
+  "runtimeMap.contextGroup.observedUse": {
+    "en": "Invocation recorded",
+    "ru": "Вызов зарегистрирован"
+  },
+  "runtimeMap.contextGroup.rowCount": {
+    "en": "Recorded rows: {{count}}",
+    "ru": "Зарегистрированные строки: {{count}}"
+  },
+  "runtimeMap.contextGroup.snapshotMissing": {
+    "en": "This agent's context snapshot was not recorded",
+    "ru": "Снимок контекста этого агента не записан"
+  },
+  "runtimeMap.contextGroup.subAgents": {
+    "en": "Sub-agents",
+    "ru": "Дочерние агенты"
+  },
+  "runtimeMap.contextGroup.toolSchema": {
+    "en": "Tool schema supplied in context",
+    "ru": "Схема инструмента передана в контексте"
+  },
+  "runtimeMap.contextGroup.trigger": {
+    "en": "Trigger",
+    "ru": "Триггер"
+  },
   "runtimeMap.contextVersion": {
     "en": "Context v{{version}} · {{count}} blocks",
     "ru": "Контекст v{{version}} · блоков: {{count}}"

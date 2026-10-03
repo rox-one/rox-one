@@ -30,7 +30,7 @@ export function RuntimeToolbar(props: RuntimeToolbarProps) {
     </div>
     {props.mode !== 'editor' && <div className="runtime-toolbar-controls">
       <label className="runtime-search"><Search size={13} /><input type="search" placeholder={t('runtimeMap.search')} aria-label={t('runtimeMap.search')} value={props.query} onChange={event => props.onQueryChange(event.target.value)} /></label>
-      <select aria-label={t('runtimeMap.filter')} value={props.filter} onChange={event => props.onFilterChange(event.target.value)}>{filters.map(filter => <option key={filter} value={filter}>{t(`runtimeMap.filterKind.${filter}`)}</option>)}</select>
+      {props.mode !== 'context' && <select aria-label={t('runtimeMap.filter')} value={props.filter} onChange={event => props.onFilterChange(event.target.value)}>{filters.map(filter => <option key={filter} value={filter}>{t(`runtimeMap.filterKind.${filter}`)}</option>)}</select>}
       <button type="button" className="runtime-icon-button" title={t('runtimeMap.fit')} aria-label={t('runtimeMap.fit')} onClick={props.onFit}><Maximize2 size={14} /></button>
       <button type="button" className="runtime-follow-button" data-active={props.following} title={t('runtimeMap.follow')} aria-label={t('runtimeMap.follow')} onClick={props.onFollow}><Crosshair size={14} />{props.pending ? <span>{props.pending}</span> : null}</button>
       <button type="button" className="runtime-icon-button" title={t('runtimeMap.export')} aria-label={t('runtimeMap.export')} onClick={props.onExport}><Download size={14} /></button>

@@ -35,6 +35,7 @@ export function RuntimeInspector({ node, readPayload, onClose, onOpenMessage, on
       {(() => {
         switch (event.kind) {
           case 'context.captured': case 'context.changed': return <ContextDetails snapshot={event.payload.snapshot} scope={scope} readPayload={readPayload} onOpenCapability={onOpenCapability} />
+          case 'context.compacted': return event.payload.snapshot ? <ContextDetails snapshot={event.payload.snapshot} scope={scope} readPayload={readPayload} onOpenCapability={onOpenCapability} /> : viewer(t('runtimeMap.kind.context'), event.payload.summary)
           case 'tool.started': case 'tool.output': case 'tool.completed': {
             const payload: RuntimeToolPayload = node.tool ?? node.events.reduce<RuntimeToolPayload>((current, item) => item.kind === 'tool.started' || item.kind === 'tool.output' || item.kind === 'tool.completed' ? { ...current, ...item.payload } : current, { name: event.payload.name })
             return <><dl className="runtime-properties"><Property label={t('runtimeMap.toolName')} value={payload.name} />{payload.error && <Property label={t('runtimeMap.error')} value={payload.error} />}</dl><CapabilityButton capability={payload.capability} onOpen={onOpenCapability} />{viewer(t('runtimeMap.arguments'), payload.input)}{viewer(t('runtimeMap.toolResult'), payload.result || node.content)}{viewer(t('runtimeMap.modelContent'), payload.modelContent)}</>

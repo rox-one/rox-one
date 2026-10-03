@@ -19,18 +19,18 @@ const run = await trace.begin(session.id, 'Isolated cancellation fixture')
 let aborted = false
 try {
   for await (const event of agent.chat('Isolated cancellation fixture')) {
-    await trace.agentEvent(session.id, event as never, { structuredHostTerminals: true })
+    await trace.agentEvent(session.id, event as never, { structuredHostTerminals: true, originRun: run })
     if (scenario === 'model' && !aborted && event.type === 'runtime_observation' && event.observation.kind === 'terminal.output') {
       aborted = true
       await agent.abort('isolated cancellation fixture')
     }
   }
-  await trace.finish(session.id, scenario === 'model' ? 'interrupted' : 'complete')
+  await trace.finish(session.id, scenario === 'model' ? 'interrupted' : 'complete', run)
   fake.setScenario('healthy')
   await agent.reconnect()
   const successor = await trace.begin(session.id, 'Successor fixture')
-  for await (const event of agent.chat('Successor fixture')) await trace.agentEvent(session.id, event as never)
-  await trace.finish(session.id, 'complete')
+  for await (const event of agent.chat('Successor fixture')) await trace.agentEvent(session.id, event as never, { originRun: successor })
+  await trace.finish(session.id, 'complete', successor)
   // The real local process continues after transport cancellation. Wait for its independent
   // completion marker, then prove its late stdout/result was not delivered to the old/new turn.
   const deadline = Date.now() + 3000

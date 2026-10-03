@@ -1,0 +1,130 @@
+{
+  "classification": "renderer-e2e / independent offline; not installed-app or live-provider",
+  "testedProductionRoot": "d6200d023",
+  "fitCorrection": "4652eb451",
+  "isolatedMeasuredHead": "4b52308f67b34a2acf53197e2c793daf70ad098b",
+  "hardware": {
+    "gitHead": "4b52308f67b34a2acf53197e2c793daf70ad098b",
+    "node": "v24.19.0",
+    "platform": "linux",
+    "release": "6.18.44",
+    "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCpuCount": 9,
+    "totalMemoryBytes": 10451464192,
+    "cgroupCpuMax": "800000 100000",
+    "cgroupMemoryMax": "8589934592",
+    "loadBeforePan": [
+      1.2,
+      0.86,
+      0.76
+    ],
+    "loadAfterPan": [
+      1.27,
+      0.88,
+      0.77
+    ]
+  },
+  "commands": [
+    {
+      "command": "ROX_RUNTIME_REUSE_BUILD=1 ROX_TEST_BUN=<pinned-bun> node node_modules/@playwright/test/cli.js test --config tests/e2e/runtime-map/playwright.config.ts",
+      "exitCode": 1,
+      "result": "17 pass / 2 fail; explicit previous successful bundle cache verified after spec-only Node24 locale correction",
+      "report": "browser-final-integrated-results.json",
+      "log": "browser-final-integrated.log"
+    },
+    {
+      "command": "ROX_TEST_BUN=<pinned-bun> node node_modules/@playwright/test/cli.js test --config tests/e2e/runtime-map/playwright.config.ts catalog.spec.ts performance.spec.ts --grep \"intersected category|10000-event\"",
+      "exitCode": 0,
+      "result": "2 pass; displayed canonical ID query correction and public bounds Fit correction",
+      "report": "browser-final-remediation-results.json",
+      "log": "browser-final-remediation.log"
+    },
+    {
+      "command": "bun test <exact scoped files in independent-unit-latest.log>",
+      "exitCode": 0,
+      "result": "91 pass / 3 skip / 0 fail /349 assertions",
+      "log": "independent-unit-latest.log"
+    },
+    {
+      "command": "bun test packages/messaging-gateway/src/__tests__/router.test.ts packages/server-core/src/sessions/execute-prompt-automation-test-mode.test.ts",
+      "exitCode": 0,
+      "result": "16 pass /0 fail /51 assertions",
+      "log": "launch-authority-unit.log"
+    },
+    {
+      "command": "bun test tests/e2e/runtime-map/catalog-store.test.ts tests/e2e/runtime-map/journal-harness.test.ts",
+      "exitCode": 0,
+      "result": "3 pass /0 fail /33 assertions",
+      "log": "catalog-journal-unit.log"
+    }
+  ],
+  "media": [
+    "ROX-live-map-dark.png",
+    "ROX-live-map-light.png",
+    "ROX-live-map-stream.webm",
+    "ROX-welcome-light.png",
+    "historical-event-cold-snapshot.png",
+    "integrations-dark-1280.png",
+    "integrations-dark-1440.png",
+    "integrations-dark-1920.png",
+    "integrations-light-1280.png",
+    "integrations-light-1440.png",
+    "integrations-light-1920.png",
+    "retained-workflow-editor.png",
+    "skills-dark-1280.png",
+    "skills-dark-1440.png",
+    "skills-dark-1920.png",
+    "skills-keyboard-multiselect.png",
+    "skills-light-1280.png",
+    "skills-light-1440.png",
+    "skills-light-1920.png",
+    "skills-pack-readback.png",
+    "sources-existing-multiselect-dark.png",
+    "welcome-dark-1920-reduced-motion.png"
+  ],
+  "limits": [
+    "No macOS/Windows installed-app smoke",
+    "No paid/live-provider calls or third-party account authorization",
+    "Local OMP AF_UNIX blocked EPERM; actual hosted native SDK run37147330512 passed with explicit fixture provider",
+    "Authorized reference ZIP recovered by coordinator; Canvas comparison and genuine200% browser test pending",
+    "Later upstream main Navigation and catalog contrast changes require scoped final coordinator smoke"
+  ],
+  "reviewedOwnerEvidence": [
+    {
+      "path": "backend-storage-and-cancellation.md",
+      "class": "actual local executor / production dispatcher / canonical storage with explicit fake CLI",
+      "receipts": [
+        {
+          "tests": 63,
+          "assertions": 277,
+          "exitCode": 0
+        },
+        {
+          "tests": 27,
+          "assertions": 143,
+          "exitCode": 0
+        }
+      ],
+      "reviewedBy": "W8; execution by backend owner/coordinator"
+    },
+    {
+      "path": "native-loop-hosted-37147330512.json",
+      "review": "native-loop-w8-review.json",
+      "class": "actual pinned native SDK fixture provider on hosted Ubuntu",
+      "workflowRun": 37147330512,
+      "nativeLoopExitCode": 0,
+      "boundaryTests": 72,
+      "boundaryAssertions": 352
+    },
+    {
+      "path": "artifact-readback.md / artifact-readback.json",
+      "class": "actual production TaskRunner/filesystem/collector/projector integration, injected deterministic session execution",
+      "testCommit": "9e4606665",
+      "receiptCommit": "6bb767909",
+      "tests": 22,
+      "assertions": 115,
+      "exitCode": 0,
+      "reviewedBy": "W8 read actual test and receipt; execution by projection owner"
+    }
+  ]
+}

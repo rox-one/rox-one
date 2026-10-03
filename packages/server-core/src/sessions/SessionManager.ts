@@ -1,6 +1,6 @@
 import type { EventSink, RpcServer } from '@rox/server-core/transport'
 import { annotationPayloadRejection } from './annotation-payload'
-import { RuntimeTraceService } from './runtime-trace/service'
+import { RuntimeTraceService, type RuntimeTraceRun } from './runtime-trace/service'
 import { known, unknown, type RuntimeContextBlock, type RuntimeTraceQuery, type RuntimeEventsQuery, type RuntimePayloadQuery, type RuntimeLaunch } from '@rox/core/runtime-trace'
 import { CLIENT_BROWSER_INVOKE } from '@rox/server-core/transport'
 import type { ISessionManager, IBrowserPaneManager, ExecutePromptAutomationInput } from '@rox/server-core/handlers'
@@ -7232,10 +7232,14 @@ export class SessionManager implements ISessionManager {
       managed.rateLimitFailoverInProgress = false
     }
 
+    // Bind passive evidence to this iterator, even after a successor prompt starts.
+    // A failed begin stays null and cannot inherit another turn's active trace.
+    let runtimeOrigin: RuntimeTraceRun | null = null
     await this.captureRuntime(async () => {
       const run = await this.runtimeTrace.begin(sessionId, userMessage.content, { messageId: userMessage.id,
         retry: !!(isAuthRetry || isFailoverRetry),
         launch: rpcContext?.runtimeLaunch ?? managed.runtimeLaunchByMessageId?.get(userMessage.id) ?? (managed.triggeredBy ? { kind: 'unknown', triggerId: managed.triggeredBy.event } : undefined) })
+      runtimeOrigin = run
       managed.runtimeLaunchByMessageId?.delete(userMessage.id)
       for (const slug of options?.skillSlugs ?? []) {
         const skill = loadSkillBySlug(managed.workspace.rootPath, slug, managed.workingDirectory)
@@ -7442,7 +7446,7 @@ export class SessionManager implements ISessionManager {
           })
           this.persistSession(managed)
           this.sendEvent({ type: 'error', sessionId, error: errorMessage }, managed.workspace.id)
-          await this.onProcessingStopped(sessionId, 'error')
+          await this.onProcessingStopped(sessionId, 'error', runtimeOrigin)
           return
         }
         const runId = randomUUID()
@@ -7457,7 +7461,7 @@ export class SessionManager implements ISessionManager {
           })
           this.persistSession(managed)
           this.sendEvent({ type: 'error', sessionId, error: errorMessage }, managed.workspace.id)
-          await this.onProcessingStopped(sessionId, 'error')
+          await this.onProcessingStopped(sessionId, 'error', runtimeOrigin)
           return
         }
         managed.budgetRunId = runId
@@ -7467,7 +7471,7 @@ export class SessionManager implements ISessionManager {
 
 
       await this.captureRuntime(async () => {
-        const run = this.runtimeTrace.getActive(sessionId)
+        const run = runtimeOrigin
         if (!run) return
         const originalPrompt = await this.runtimeTrace.content(run, userMessage.content)
         const effectivePrompt = await this.runtimeTrace.content(run, effectiveMessage)
@@ -7481,7 +7485,7 @@ export class SessionManager implements ISessionManager {
           originalPrompt, effectivePrompt, model: { requested: managed.model, confirmed: unknown('not-emitted'), contextWindow: unknown('not-emitted') },
           permissionMode: managed.permissionMode, workingDirectory: managed.workingDirectory,
           inputTokens: unknown('not-emitted'), blocks,
-          coverage: { state: 'partial', source: 'runtime', missing: ['native-final-prompt', 'provider-request-context', 'provider-model-readback'] } }, userMessage.id)
+          coverage: { state: 'partial', source: 'runtime', missing: ['native-final-prompt', 'provider-request-context', 'provider-model-readback'] } }, userMessage.id, runtimeOrigin)
       })
 
       sendSpan.mark('chat.starting')
@@ -7501,7 +7505,7 @@ export class SessionManager implements ISessionManager {
         }
 
         // Process the event first
-        await this.processEvent(managed, event)
+        await this.processEvent(managed, event, runtimeOrigin)
 
         // Fallback: Capture SDK session ID if the onSdkSessionIdUpdate callback didn't fire.
         // Primary capture happens in getOrCreateAgent() via onSdkSessionIdUpdate callback,
@@ -7597,7 +7601,7 @@ export class SessionManager implements ISessionManager {
 
           sendSpan.mark('chat.complete')
           sendSpan.end()
-          this.onProcessingStopped(sessionId, 'complete')
+          this.onProcessingStopped(sessionId, 'complete', runtimeOrigin)
           return  // Exit function, skip finally block (onProcessingStopped handles cleanup)
         }
 
@@ -7614,7 +7618,7 @@ export class SessionManager implements ISessionManager {
         sendSpan.end()
       } else if (managed.stopRequested) {
         sessionLog.info('Chat loop completed after stop request - events drained successfully')
-        this.onProcessingStopped(sessionId, 'interrupted')
+        this.onProcessingStopped(sessionId, 'interrupted', runtimeOrigin)
       } else {
         sessionLog.info('Chat loop exited unexpectedly')
       }
@@ -7639,7 +7643,7 @@ export class SessionManager implements ISessionManager {
         // by setting isProcessing = false directly. All other abort reasons route
         // through onProcessingStopped for queue draining.
         if (reason === AbortReason.UserStop || reason === AbortReason.Redirect || reason === undefined) {
-          this.onProcessingStopped(sessionId, 'interrupted')
+          this.onProcessingStopped(sessionId, 'interrupted', runtimeOrigin)
         }
       } else {
         sessionLog.error('Error in chat:', error)
@@ -7658,7 +7662,7 @@ export class SessionManager implements ISessionManager {
           error: error instanceof Error ? error.message : 'Unknown error'
         }, managed.workspace.id)
         // Handle error via centralized handler
-        this.onProcessingStopped(sessionId, 'error')
+        this.onProcessingStopped(sessionId, 'error', runtimeOrigin)
       }
     } finally {
       // Only handle cleanup for unexpected exits (loop break without complete event)
@@ -7668,7 +7672,7 @@ export class SessionManager implements ISessionManager {
         sessionLog.info('Finally block cleanup - unexpected exit')
         sendSpan.mark('chat.unexpected_exit')
         sendSpan.end()
-        this.onProcessingStopped(sessionId, 'interrupted')
+        this.onProcessingStopped(sessionId, 'interrupted', runtimeOrigin)
       }
     }
   }
@@ -8054,12 +8058,13 @@ export class SessionManager implements ISessionManager {
    */
   private async onProcessingStopped(
     sessionId: string,
-    reason: 'complete' | 'interrupted' | 'error' | 'timeout'
+    reason: 'complete' | 'interrupted' | 'error' | 'timeout',
+    originRun?: RuntimeTraceRun | null,
   ): Promise<void> {
     const managed = this.sessions.get(sessionId)
     if (!managed) return
 
-    await this.captureRuntime(() => this.runtimeTrace.finish(sessionId, reason))
+    await this.captureRuntime(() => this.runtimeTrace.finish(sessionId, reason, originRun))
     sessionLog.info(`Processing stopped for session ${sessionId}: ${reason}`)
     if (managed.budgetRunId) {
       // Missing final usage is not a zero-cost success: retain the reservation
@@ -9416,13 +9421,13 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  private async processEvent(managed: ManagedSession, event: AgentEvent): Promise<void> {
+  private async processEvent(managed: ManagedSession, event: AgentEvent, originRun?: RuntimeTraceRun | null): Promise<void> {
     const sessionId = managed.id
     const workspaceId = managed.workspace.id
 
     // This manager creates OMP backends via createOmpSessionBackendFromResolvedContext.
     // Root host Bash publishes actual executor observations after authorization; a tool request alone does not start a shell.
-    await this.captureRuntime(() => this.runtimeTrace.agentEvent(sessionId, event as unknown as { type: string; [key: string]: unknown }, { structuredHostTerminals: true }))
+    await this.captureRuntime(() => this.runtimeTrace.agentEvent(sessionId, event as unknown as { type: string; [key: string]: unknown }, { structuredHostTerminals: true, originRun }))
 
     switch (event.type) {
       case 'runtime_observation':
@@ -9465,7 +9470,7 @@ export class SessionManager implements ISessionManager {
           parentToolUseId: event.parentToolUseId,
         }
         managed.messages.push(assistantMessage)
-        await this.captureRuntime(() => this.runtimeTrace.publishMessage(sessionId, assistantMessage.id, event.text, event.turnId, !!event.isIntermediate))
+        await this.captureRuntime(() => this.runtimeTrace.publishMessage(sessionId, assistantMessage.id, event.text, event.turnId, !!event.isIntermediate, originRun))
         managed.streamingText = ''
         managed.streamingTurnId = undefined
 

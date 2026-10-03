@@ -12,6 +12,33 @@ async function openCatalog(page: Page, mode: 'skills' | 'integrations', options:
   await expect(page.getByRole('alert')).toHaveCount(0)
   await expect(page.locator('html')).toHaveClass(new RegExp(`(?:^|\\s)${options.theme ?? 'light'}(?:\\s|$)`))
 }
+/** Check actual browser-resolved colors, including modern oklch theme mixes. */
+async function expectReadableMetadata(page: Page, mode: 'skills' | 'integrations') {
+  const samples = await page.evaluate(mode => {
+    const catalog = document.querySelector(`[data-testid="${mode}-catalog"]`)!
+    const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1
+    const context = canvas.getContext('2d', { willReadFrequently: true })!
+    const rgba = (color: string) => {
+      context.clearRect(0, 0, 1, 1); context.fillStyle = color; context.fillRect(0, 0, 1, 1)
+      return [...context.getImageData(0, 0, 1, 1).data]
+    }
+    const background = rgba(getComputedStyle(document.documentElement).getPropertyValue('--background').trim())
+    const luminance = (color: number[]) => color.slice(0, 3).map(value => {
+      const channel = value / 255
+      return channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4
+    }).reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index]!, 0)
+    const backdrop = luminance(background)
+    return [...catalog.querySelectorAll('p.text-muted-foreground, td.text-muted-foreground, button.text-muted-foreground')].map(element => {
+      const foreground = rgba(getComputedStyle(element).color)
+      const alpha = foreground[3]! / 255
+      const composite = foreground.slice(0, 3).map((value, index) => value * alpha + background[index]! * (1 - alpha))
+      const text = luminance(composite)
+      return { text: element.textContent?.trim().slice(0, 80), ratio: (Math.max(text, backdrop) + .05) / (Math.min(text, backdrop) + .05) }
+    })
+  }, mode)
+  expect(samples.length).toBeGreaterThan(0)
+  for (const sample of samples) expect(sample.ratio, `${mode}: ${sample.text}`).toBeGreaterThanOrEqual(4.5)
+}
 test.beforeEach(async ({ request }) => {
   expect((await request.post(`${server}/reset`, { data: {} })).ok()).toBe(true)
   expect((await request.post(`${server}/catalog/reset`, { data: {} })).ok()).toBe(true)
@@ -37,6 +64,7 @@ for (const theme of ['light', 'dark'] as const) {
         await expect(row.getByRole('cell').nth(5)).toHaveText('—')
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+      await expectReadableMetadata(page, 'skills')
       await page.getByTestId('catalog-main-content').screenshot({ path: info.outputPath(`skills-${theme}-${width}.png`) })
       await openCatalog(page, 'integrations', { theme })
       await expect(page.getByTestId('catalog-integration-card')).toHaveCount(5)
@@ -51,6 +79,7 @@ for (const theme of ['light', 'dark'] as const) {
         const bounds = card.getBoundingClientRect()
         return bounds.x >= 0 && bounds.right <= window.innerWidth && card.scrollWidth <= card.clientWidth
       }))).toBe(true)
+      await expectReadableMetadata(page, 'integrations')
       await page.getByTestId('catalog-main-content').screenshot({ path: info.outputPath(`integrations-${theme}-${width}.png`) })
       const stats = await (await request.get(`${server}/stats`)).json()
       expect(stats.providerRequests).toBe(0)
@@ -111,7 +140,9 @@ test('integrations: intersected category/type/search filters preserve unknown pr
   await expect(type).toHaveValue('api')
   await expect(page.getByTestId('catalog-integration-card')).toHaveCount(1)
   const search = page.getByRole('searchbox', { name: copy('capabilityCatalog.searchIntegrations') })
-  await search.focus(); await search.pressSequentially('custom-warehouse')
+  // Search the visible, canonical capability ID. The saved provider ID is not
+  // displayed/indexed when the source has its own purpose description.
+  await search.focus(); await search.pressSequentially('custom-source')
   await expect(page.locator('[data-source-id="custom-source"]')).toBeVisible()
   await page.locator('[data-source-id="custom-source"]').getByRole('button', { name: copy('capabilityCatalog.details'), exact: true }).press('Enter')
   await expect(page.getByTestId('catalog-navigation-route')).toHaveText(routes.view.sources({ sourceSlug: 'custom-source' }))

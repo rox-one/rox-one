@@ -46,3 +46,11 @@ The observer tests exercise the actual prepared extension factory and bridge off
 Journal content and resident journal caches have explicit bounds; compact late-event identity mappings are intentionally retained. This review does not claim a global finite bound on all retained server history or every identity mapping.
 
 The production-file inspection above is limited to the stated commit. This evidence document introduces no product changes.
+
+## Later read-only follow-up
+
+After the concurrent main merge, Navigation/App inspection at `67d2b1478` confirmed that runtime deep links retain read-only session/run/event selection through URL reconciliation and focused-route recovery; queries remain in the workspace-scoped atom and the existing unavailable-session/RPC scope gates. App still has one captured authority/workspace-guarded session-event subscription. Cancellation observation explicitly reports `unconfirmed-host-process-termination`; a transport abort neither fabricates physical terminal exit nor permits late invocation output to resurrect the run.
+
+The previously unavailable local native child-loop check was subsequently established by the hosted SDK 18.4.12 fixture run `37147330512`. Independent light inspection verified the downloaded ZIP SHA-256 `2649e70a4df74df735ce1b7967d466e33a7c92c492397f15285c0cd67abf99d2` and its raw JSON SHA-256 `2932b42f41036a66181adb38dbcb6e5e81a3f67ac605e82ff366de7a05556a2b`. The receipt contains 121 actual hooks, 63 typed observations and 10 fixture-provider requests, with zero network or paid-provider attempts. Native task worker `AnnoyedBlackbird` spawned `AnnoyedBlackbird.SportingWren`; both had actual task identities and completed successfully. The grandchild and eval agent used the distinct `fixture/restricted` model and only `read`/`yield`. Actual parent task span IDs were retained. Eval has no upstream parent tool-call ID, so its missing parent span remains honest. This establishes the native fixture boundary; installed-app and remote-provider claims remain outside this review.
+
+R19's actual production TaskRunner output-file readback and restored answer/artifact/evidence graph are recorded separately in [artifact-readback.md](artifact-readback.md).

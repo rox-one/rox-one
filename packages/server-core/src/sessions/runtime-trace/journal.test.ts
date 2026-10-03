@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { RuntimeTraceJournal, MAX_RUNTIME_CONTENT_BYTES } from './journal'
 import { sanitizeRuntimeTrace } from './privacy'
-import { clearRegisteredSecretValues, registerSecretValues } from '@rox/shared/secrets/redact'
+import { clearRegisteredSecretValues, registerSecretValues } from '@rox/shared/secrets'
 
 const roots: string[] = []
 async function directory() { const root = await mkdtemp(join(tmpdir(), 'rox-trace-test-')); roots.push(root); return root }

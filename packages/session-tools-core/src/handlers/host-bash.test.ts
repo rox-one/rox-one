@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { SessionToolContext } from '../context.ts';
@@ -90,11 +90,11 @@ describe('host-tool bash', () => {
     const command = "printf 'actual-out'; printf 'actual-err' >&2; exit 7";
     const result = await handleHostBash(ctx({ hostBashObserver: observation => observations.push(observation) }), { command });
     expect(result.isError).toBe(true);
-    expect(observations[0]).toMatchObject({ phase: 'started', execution: 'local', command, cwd: workspaceDir });
+    expect(observations[0]).toMatchObject({ phase: 'started', execution: 'local', command, cwd: realpathSync(workspaceDir) });
     expect(observations.filter(observation => observation.phase === 'output').map(observation => observation.stdout ?? '').join('')).toBe('actual-out');
     expect(observations.filter(observation => observation.phase === 'output').map(observation => observation.stderr ?? '').join('')).toBe('actual-err');
     const completed = observations.at(-1)!;
-    expect(completed).toMatchObject({ phase: 'completed', execution: 'local', result: { stdout: 'actual-out', stderr: 'actual-err', exitCode: 7, timedOut: false, cwd: workspaceDir } });
+    expect(completed).toMatchObject({ phase: 'completed', execution: 'local', result: { stdout: 'actual-out', stderr: 'actual-err', exitCode: 7, timedOut: false, cwd: realpathSync(workspaceDir) } });
     expect(completed.monotonicMs).toBeGreaterThanOrEqual(observations[0]!.monotonicMs);
     expect(completed.result!.durationMs).toBeGreaterThanOrEqual(0);
   });

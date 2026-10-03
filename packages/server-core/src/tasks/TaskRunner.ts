@@ -464,7 +464,7 @@ class ActiveRun {
       st.state = 'done';
       this.inFlight = Math.max(0, this.inFlight - 1);
       writeNodeOutput(this.deps.workspaceRoot, this.slug, this.runId, nodeId, output);
-      this.log({ kind: 'node-finished', nodeId, sessionId: evt.sessionId, state: 'done' });
+      this.log({ kind: 'node-finished', nodeId, sessionId: evt.sessionId, state: 'done' }, evt.finalMessageId);
       void this.deps.host.setSessionStatus(evt.sessionId, DONE_STATUS);
       void this.deps.host.setKanbanColumn(evt.sessionId, 'done');
       this.scheduleReady();
@@ -609,7 +609,7 @@ class ActiveRun {
       this.verdictOff?.();
       this.verdictOff = undefined;
       const text = evt.finalText ?? this.deps.host.getSessionFinalText(orchestrator) ?? '';
-      this.handleVerdict(text);
+      this.handleVerdict(text, evt.finalMessageId);
     });
   }
 
@@ -631,11 +631,11 @@ class ActiveRun {
    *   unparsed  → re-ask for a well-formed verdict (bounded; not a repair); exhausted → failed.
    *   FAIL      → repair the frontier if budget remains, else failed (iterations/token budget breach).
    */
-  private handleVerdict(text: string): void {
+  private handleVerdict(text: string, messageId?: string): void {
     if (this.runStatus !== 'verifying') return; // stopped/finalized while awaiting the verdict
     writeNodeOutput(this.deps.workspaceRoot, this.slug, this.runId, '__verdict__', { text });
     const verdict = parseVerdict(text);
-    this.log({ kind: 'verdict', result: verdict.result, reason: verdict.reason, nodes: verdict.nodes });
+    this.log({ kind: 'verdict', result: verdict.result, reason: verdict.reason, nodes: verdict.nodes }, messageId);
 
     if (verdict.result === 'pass') {
       this.unparsedReAsks = 0;
@@ -767,13 +767,21 @@ class ActiveRun {
     return this.runStatus === 'completed' || this.runStatus === 'failed' || this.runStatus === 'stopped';
   }
 
-  private log(entry: RunLogEntryInput): void {
+  private log(entry: RunLogEntryInput, messageId?: string): void {
     const t = this.deps.now ? this.deps.now() : new Date().toISOString();
     const durable = { ...entry, t } as RunLogEntry;
     appendRunLog(this.deps.workspaceRoot, this.slug, this.runId, durable);
+    const outputNodeId = durable.kind === 'node-finished' && durable.state === 'done' ? durable.nodeId : durable.kind === 'verdict' ? '__verdict__' : undefined;
+    let output: NodeOutput | undefined;
+    try {
+      // Capture this version immediately after the authority's write, before a repair may replace it.
+      const stored = outputNodeId ? readNodeOutput(this.deps.workspaceRoot, this.slug, this.runId, outputNodeId) : null;
+      if (stored && typeof stored.text === 'string') output = stored;
+    } catch { /* A passive readback failure never changes the task authority. */ }
+    const outputRef = output ? `tasks/${this.slug}/runs/${this.runId}/nodes/${outputNodeId}.json` : undefined;
     // Consume the canonical verdict/state only after the authority stored it. Observer failures never change the task.
     this.observationQueue = this.observationQueue.then(async () => {
-      try { await this.deps.host.observeTaskRun?.({ spec: this.spec, slug: this.slug, taskRunId: this.runId, orchestratorSessionId: this.opts.orchestratorSessionId, entry: durable }); } catch { /* Passive observation. */ }
+      try { await this.deps.host.observeTaskRun?.({ spec: this.spec, slug: this.slug, taskRunId: this.runId, orchestratorSessionId: this.opts.orchestratorSessionId, entry: durable, output, outputRef, messageId }); } catch { /* Passive observation. */ }
     });
   }
 }

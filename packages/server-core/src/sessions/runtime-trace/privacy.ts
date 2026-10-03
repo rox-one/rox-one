@@ -1,4 +1,4 @@
-import { redactRegisteredSecrets } from '@rox/shared/secrets/redact'
+import { redactRegisteredSecrets } from '@rox/shared/secrets'
 
 const PRIVATE_FIELD = /^(?:authorization|proxy-authorization|cookie|set-cookie|x-api-key|api[_-]?key|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|client[_-]?secret|password|credential|credentials|env|environment|envOverrides|thumbnailBase64|base64|dataUrl)$/i
 const MAX_DEPTH = 12
@@ -37,11 +37,23 @@ export function sanitizeRuntimeTrace(value: unknown): unknown {
     if (ancestors.has(node)) return '[Circular]'
     ancestors.add(node)
     try {
-      if (Array.isArray(node)) return node.slice(0, MAX_ENTRIES).map(item => walk(item, depth + 1))
-      const output: Record<string, unknown> = {}
-      for (const [key, entry] of Object.entries(node)) {
+      if (Array.isArray(node)) {
+        const output: unknown[] = []
+        for (let index = 0; index < Math.min(node.length, MAX_ENTRIES); index++) {
+          if (--remaining < 0) { output.push('[Trace size limit]'); break }
+          const descriptor = Object.getOwnPropertyDescriptor(node, String(index))
+          output.push(descriptor && 'value' in descriptor ? walk(descriptor.value, depth + 1) : '[Accessor or hole omitted]')
+        }
+        return output
+      }
+      const output: Record<string, unknown> = Object.create(null)
+      for (const key of Object.keys(node)) {
         if (--remaining < 0) { output.traceTruncated = true; break }
-        output[key] = PRIVATE_FIELD.test(key) ? '[REDACTED]' : walk(entry, depth + 1)
+        const descriptor = Object.getOwnPropertyDescriptor(node, key)
+        // Projection never executes accessors, including a private getter before masking it.
+        if (PRIVATE_FIELD.test(key)) output[key] = '[REDACTED]'
+        else if (descriptor && 'value' in descriptor) output[key] = walk(descriptor.value, depth + 1)
+        else output[key] = '[Accessor omitted]'
       }
       return output
     } finally { ancestors.delete(node) }

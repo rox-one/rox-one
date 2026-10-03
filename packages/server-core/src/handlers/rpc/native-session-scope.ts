@@ -1,4 +1,4 @@
-import type { RuntimeEvent, RuntimeContent } from '@rox/core/runtime-trace'
+import type { RuntimeEvent, RuntimeContent, RuntimeRunSummary } from '@rox/core/runtime-trace'
 import type { AnnotationV1, Message } from '@rox/core/types'
 import { CodedError, RPC_CHANNELS, type Session, type SessionEvent } from '@rox/shared/protocol'
 import type { LoadedSource } from '@rox/shared/sources'
@@ -88,6 +88,19 @@ export function nativeSources(sources: readonly LoadedSource[]): LoadedSource[] 
 }
 
 /** Preserve event identities/cursors while retaining the native boundary's host-data restriction. */
+function isOriginalRootUserRequest(event: RuntimeEvent): boolean {
+  return event.kind === 'run.accepted' && event.payload.launch.kind === 'manual'
+    && !event.payload.launch.triggerId?.startsWith('task:') && !!event.messageId
+    && !event.parentAgentId && event.runId === event.rootRunId
+}
+
+/** Header excerpts cannot prove their own provenance; use only the permitted observed request. */
+export function nativeRuntimeTraceRunSummary(run: RuntimeRunSummary, events: readonly RuntimeEvent[]): RuntimeRunSummary {
+  const request = events.find(event => event.rootRunId === run.rootRunId && isOriginalRootUserRequest(event))
+  return { rootRunId: run.rootRunId, sessionId: run.sessionId, agentId: run.agentId, status: run.status,
+    startedAt: run.startedAt, prompt: request?.kind === 'run.accepted' ? request.payload.prompt.text?.slice(0, 4096) ?? '' : '', coverage: run.coverage }
+}
+
 export function nativeRuntimeTraceEvent(event: RuntimeEvent): RuntimeEvent {
   const redacted = (): RuntimeContent => ({ availability: 'redacted', tokens: { state: 'unknown', reason: 'redacted' } })
   const copy = structuredClone(event)
@@ -95,8 +108,7 @@ export function nativeRuntimeTraceEvent(event: RuntimeEvent): RuntimeEvent {
   const payload = copy.payload
   switch (copy.kind) {
     case 'run.accepted':
-      // A delegated prompt is host-delivered assignment data, not the original user input.
-      if (copy.parentAgentId || copy.runId !== copy.rootRunId) copy.payload.prompt = redacted()
+      if (!isOriginalRootUserRequest(copy)) copy.payload.prompt = redacted()
       break
     case 'context.captured': case 'context.changed': {
       copy.payload.snapshot.originalPrompt = redacted()
@@ -117,10 +129,13 @@ export function nativeRuntimeTraceEvent(event: RuntimeEvent): RuntimeEvent {
     case 'skill.selected': case 'skill.loaded': case 'skill.applied': copy.payload.content = redacted(); break
     case 'memory.retrieved': case 'memory.included': case 'memory.proposed': case 'memory.committed': copy.payload.content = redacted(); break
     case 'plan.published': case 'plan.revised':
-      copy.payload.plan.content = redacted(); copy.payload.plan.tasks = copy.payload.plan.tasks.map(task => ({ ...task, description: redacted() })); break
-    case 'task.state-changed': copy.payload.task.description = redacted(); break
-    case 'acceptance.started': case 'acceptance.completed': copy.payload.acceptance.evidence = [redacted()]; break
-    case 'artifact.created': copy.payload.artifact.uri = undefined; copy.payload.artifact.content = redacted(); break
+      copy.payload.plan.title = undefined; copy.payload.plan.content = redacted(); copy.payload.plan.tasks = copy.payload.plan.tasks.map(task => ({ ...task, title: '[REDACTED]', criteria: [], description: redacted() })); break
+    case 'task.state-changed': copy.payload.task.title = '[REDACTED]'; copy.payload.task.criteria = []; copy.payload.task.description = redacted(); break
+    case 'acceptance.started': case 'acceptance.completed': copy.payload.acceptance.criterion = '[REDACTED]'; copy.payload.acceptance.evidence = [redacted()]; break
+    case 'artifact.created': copy.payload.artifact.label = '[REDACTED]'; copy.payload.artifact.uri = undefined; copy.payload.artifact.content = redacted(); break
+    case 'result.published':
+      if (!copy.messageId || copy.parentAgentId || copy.runId !== copy.rootRunId) copy.payload.content = redacted()
+      break
     case 'context.compacted': copy.payload.snapshot = undefined; copy.payload.summary = redacted(); break
     case 'approval.requested': copy.payload.description = '[REDACTED]'; break
     case 'attempt.started': case 'attempt.completed': copy.payload.description = undefined; break

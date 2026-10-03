@@ -5,6 +5,7 @@
  * Every fetch is forbidden; this does not prove remote/installed-app acceptance.
  */
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { homedir, tmpdir } from 'node:os';
 import { OMP_WORKER_POLICY_SOURCE } from '../../packages/shared/src/agent/omp-worker-policy.ts';
@@ -36,6 +37,24 @@ async function main(): Promise<void> {
   let auth: any;
   const requests: Array<{ kind: string; tools: string[]; reasoning: unknown; messages: unknown }> = [];
   const providerRequests: Array<{ model: { id: string; provider: string; contextWindow: number }; tools: string[] }> = [];
+  const providerContexts: Array<{
+    call: number; model: { id: string; provider: string }; tools: string[];
+    boundary: 'native fixture provider Context';
+    context: { sha256: string; byteLength: number };
+    systemPrompt: { sha256: string; byteLength: number; parts: number };
+    messages: { sha256: string; byteLength: number; count: number };
+    toolSchemas: { sha256: string; byteLength: number; count: number };
+    userTextParts: Array<{ sha256: string; byteLength: number; containsOriginalRootPrompt: boolean }>;
+  }> = [];
+  const contextComparisons: Array<{
+    agentId: string; snapshotId: string; providerCall: number; effectivePromptSha256: string;
+    effectivePromptByteLength: number; systemPromptSha256: string; systemPromptByteLength: number;
+    actualProviderContextSha256: string; actualProviderContextByteLength: number;
+    matchedFields: ['effectivePrompt:user-text-part', 'systemPrompt:ordered-parts'];
+    matchesEffectivePromptPart: true; matchesSystemPromptParts: true;
+    originalRootPromptDistinct?: true; originalRootPromptIncluded?: true;
+  }> = [];
+  const fingerprint = (value: string) => ({ sha256: createHash('sha256').update(value).digest('hex'), byteLength: Buffer.byteLength(value) });
   let taskResult: unknown;
   let evalResult: unknown;
   try {
@@ -102,6 +121,22 @@ async function main(): Promise<void> {
     registry.registerProvider('fixture', { api: 'mock', baseUrl: 'mock://', apiKey: 'fixture-only',
       streamSimple: (model: any, context: any, options: unknown) => {
         providerRequests.push({ model: { id: model.id, provider: model.provider, contextWindow: model.contextWindow }, tools: context.tools?.map((tool: any) => tool.name) ?? [] });
+        // This is the actual custom provider entry point after the native
+        // convert/normalize/provider transforms. It is not an HTTP wire payload.
+        // Persist hashes/lengths only; never duplicate private context content.
+        const userTextParts: string[] = context.messages.filter((message: any) => message.role === 'user').flatMap((message: any) =>
+          typeof message.content === 'string' ? [message.content] : Array.isArray(message.content)
+            ? message.content.flatMap((part: any) => part.type === 'text' && typeof part.text === 'string' ? [part.text] : []) : []);
+        if (providerContexts.length >= 32 || userTextParts.length > 128 || (context.systemPrompt?.length ?? 0) > 128) throw new Error('Native fixture provider Context evidence exceeded bounds');
+        providerContexts.push({
+          call: providerRequests.length, model: { id: model.id, provider: model.provider },
+          tools: context.tools?.map((tool: any) => tool.name) ?? [], boundary: 'native fixture provider Context',
+          context: fingerprint(JSON.stringify(context)),
+          systemPrompt: { ...fingerprint(JSON.stringify(context.systemPrompt ?? [])), parts: context.systemPrompt?.length ?? 0 },
+          messages: { ...fingerprint(JSON.stringify(context.messages)), count: context.messages.length },
+          toolSchemas: { ...fingerprint(JSON.stringify(context.tools ?? [])), count: context.tools?.length ?? 0 },
+          userTextParts: userTextParts.map(part => ({ ...fingerprint(part), containsOriginalRootPrompt: part.includes('NATIVE_PARENT_TASK') })),
+        });
         const mock = mocks.get(model.id);
         if (!mock) throw new Error('Unexpected native fixture model route');
         return mock.stream(model, context, options);
@@ -164,6 +199,36 @@ async function main(): Promise<void> {
     }
     if (!providerRequests.some(request => request.model.id === 'restricted' && request.model.contextWindow === 32768 && JSON.stringify(request.tools) === JSON.stringify(['read', 'yield']))) throw new Error('Actual restricted model did not receive the restricted native provider request');
     if (!providerRequests.some(request => request.model.id === 'worker' && request.model.contextWindow === 200000 && request.tools.includes('task'))) throw new Error('Actual parent/worker model route was not used');
+    for (const agentId of ['root', childAssignment.agentId, grandchildAssignment.agentId, evalAssignment.agentId]) {
+      // The native context hook includes keyword transformations applied after
+      // before_agent_start. Compare that delivered effective prompt, not the
+      // earlier preparation snapshot, to the actual provider request.
+      const captured = observations.find(event => event.kind === 'context.changed' && event.agentId === agentId);
+      if (captured?.kind !== 'context.changed' || captured.payload.snapshot.effectivePrompt.text === undefined) throw new Error('Native fixture Context comparison snapshot missing');
+      const snapshot = captured.payload.snapshot;
+      const effectivePrompt = fingerprint(snapshot.effectivePrompt.text!);
+      const systemParts = snapshot.blocks.filter(block => block.kind === 'system').map(block => block.content.text);
+      if (systemParts.some(part => part === undefined)) throw new Error('Native fixture system parts unavailable for comparison');
+      const systemPrompt = fingerprint(JSON.stringify(systemParts));
+      const confirmedModel = snapshot.model.confirmed.state === 'known' ? snapshot.model.confirmed.value : undefined;
+      const actual = providerContexts.find(call => `${call.model.provider}/${call.model.id}` === confirmedModel
+        && call.systemPrompt.sha256 === systemPrompt.sha256
+        && call.userTextParts.some(part => part.sha256 === effectivePrompt.sha256 && part.byteLength === effectivePrompt.byteLength));
+      if (!actual) throw new Error('Native effective prompt/system snapshot did not match actual fixture provider Context');
+      const comparison: typeof contextComparisons[number] = { agentId, snapshotId: snapshot.id, providerCall: actual.call,
+        effectivePromptSha256: effectivePrompt.sha256, effectivePromptByteLength: effectivePrompt.byteLength,
+        systemPromptSha256: systemPrompt.sha256, systemPromptByteLength: systemPrompt.byteLength,
+        actualProviderContextSha256: actual.context.sha256, actualProviderContextByteLength: actual.context.byteLength,
+        matchedFields: ['effectivePrompt:user-text-part', 'systemPrompt:ordered-parts'],
+        matchesEffectivePromptPart: true, matchesSystemPromptParts: true };
+      if (agentId === 'root') {
+        if (snapshot.originalPrompt.text !== 'NATIVE_PARENT_TASK' || fingerprint(snapshot.originalPrompt.text).sha256 === effectivePrompt.sha256
+          || !actual.userTextParts.some(part => part.sha256 === effectivePrompt.sha256 && part.containsOriginalRootPrompt)) throw new Error('Original root prompt was not preserved distinctly inside actual provider Context');
+        comparison.originalRootPromptDistinct = true;
+        comparison.originalRootPromptIncluded = true;
+      }
+      contextComparisons.push(comparison);
+    }
     if (observations.some(event => event.agentId === 'root' && ['tool.started', 'tool.completed', 'reasoning.output', 'usage.reported'].includes(event.kind))) throw new Error('Native root duplicated parent RPC events');
     if (transportErrors.length || networkAttempts) throw new Error('Observation transport/network error');
     writeWorkerEvidence(outputPath, {
@@ -172,7 +237,9 @@ async function main(): Promise<void> {
       requests: requests.map(({ kind, tools, reasoning }) => ({ kind, tools, reasoning })),
       rawHooks: raw.map(event => ({ hook: event.hook, agent: event.agent, nativeSessionId: event.nativeSessionId, sourceSeq: event.sourceSeq,
         dispatch: ['before_subagent_spawn', 'subagent_identity'].includes(event.hook) ? event.payload : undefined })),
-      observations, taskResult, evalResult, providerRequests,
+      observations, taskResult, evalResult, providerRequests, providerContexts, contextComparisons,
+      contextComparisonBoundary: { available: 'Actual native fixture provider Context after native transforms',
+        unavailable: ['HTTP serialized request payload', 'exact provider tokenization'] },
     });
     console.log(JSON.stringify({ assertionsPassed: true, networkAttempts, requests: requests.map(({ kind, tools }) => ({ kind, tools })), observations: observations.length }));
   } catch (error) {
@@ -180,7 +247,9 @@ async function main(): Promise<void> {
       assertionsPassed: false, ompVersion: '18.4.12', networkAttempts, paidProviderRequests: 0,
       error: error instanceof Error ? error.message : String(error),
       requests: requests.map(({ kind, tools, reasoning }) => ({ kind, tools, reasoning })),
-      observations, taskResult, evalResult, providerRequests, transportErrors,
+      observations, taskResult, evalResult, providerRequests, providerContexts, contextComparisons, transportErrors,
+      contextComparisonBoundary: { available: 'Actual native fixture provider Context after native transforms',
+        unavailable: ['HTTP serialized request payload', 'exact provider tokenization'] },
       rawHooks: raw.map(event => ({ hook: event.hook, agent: event.agent, nativeSessionId: event.nativeSessionId, sourceSeq: event.sourceSeq,
         dispatch: ['before_subagent_spawn', 'subagent_identity'].includes(event.hook) ? event.payload : undefined })),
       boundary: 'An unsuccessful native task loop is not acceptance evidence. Native file locks and integrity checks remain enabled.',

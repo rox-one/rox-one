@@ -43,6 +43,16 @@ let emitterCount = 0;
 // Native SDK rebinds the same prepared factory into descendants. The genuine
 // spawn reservation binds delayed starts to their dispatching user turn.
 const assignedRuns = new Map();
+const parentReservations = new Map();
+let reservationQuotaExceeded = false;
+const identityKey = (id, parentId) => JSON.stringify([parentId, id]);
+const rememberIdentity = (id, reservation) => {
+  const key = identityKey(id, reservation.parentId);
+  if (assignedRuns.size >= 256 && !assignedRuns.has(key)) { reservationQuotaExceeded = true; return; }
+  const previous = assignedRuns.get(key);
+  // A reused actor receipt across turns cannot identify a delayed start safely.
+  assignedRuns.set(key, assignedRuns.has(key) && (!previous || previous.runId !== reservation.runId) ? undefined : reservation);
+};
 const sensitive = /^(?:authorization|proxy.?authorization|cookie|set.?cookie|password|passwd|secret|client.?secret|api.?key|access.?token|refresh.?token|id.?token|private.?key|credentials?|env|environment|envOverrides|base64|thumbnailBase64|dataUrl)$/i;
 const knownSecrets = Object.entries(process.env).filter(([key, value]) => /(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i.test(key) && value && value.length >= 8).map(([, value]) => value);
 function sanitized(value, state, depth = 0, key = '') {
@@ -71,16 +81,24 @@ function sanitized(value, state, depth = 0, key = '') {
   if (depth > 12) { state.truncated = true; return '[DEPTH TRUNCATED]'; }
   if (Array.isArray(value)) {
     if (value.length > 200) state.truncated = true;
-    return value.slice(0, 200).map(item => sanitized(item, state, depth + 1));
+    const result = [];
+    for (let index = 0; index < Math.min(value.length, 200); index++) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+      result.push(descriptor && 'value' in descriptor ? sanitized(descriptor.value, state, depth + 1) : '[Accessor or hole omitted]');
+    }
+    return result;
   }
   if (typeof value === 'object') {
-    const result = {};
+    const result = Object.create(null);
     let count = 0;
-    for (const [name, item] of Object.entries(value)) {
+    for (const name of Object.keys(value)) {
       if (++count > 200) { state.truncated = true; break; }
+      const descriptor = Object.getOwnPropertyDescriptor(value, name);
+      if (sensitive.test(name)) { result[name] = '[REDACTED]'; continue; }
+      if (!descriptor || !('value' in descriptor)) { result[name] = '[Accessor omitted]'; continue; }
       // Images/blob bytes are not duplicated into the observation journal.
-      if ((name === 'data' && value.type === 'image') || name === 'apiKey') { result[name] = '[REDACTED]'; continue; }
-      result[name] = sanitized(item, state, depth + 1, name);
+      if ((name === 'data' && Object.getOwnPropertyDescriptor(value, 'type')?.value === 'image') || name === 'apiKey') { result[name] = '[REDACTED]'; continue; }
+      result[name] = sanitized(descriptor.value, state, depth + 1, name);
     }
     return result;
   }
@@ -126,7 +144,16 @@ export default function roxRuntimeObserver(pi) {
     try { control = JSON.parse(readFileSync(controlPath, 'utf8')); }
     catch { process.stderr.write('ROX_RUNTIME_OBSERVER_ERROR cannot read observation control\n'); return; }
     if (typeof control.runId !== 'string' || !control.runId) return;
-    runId = ctx.agent.kind === 'sub' ? assignedRuns.get(ctx.agent.id + ':' + ctx.agent.parentId) ?? assignedRuns.get(ctx.agent.id) ?? control.runId : control.runId;
+    if (ctx.agent.kind === 'sub') {
+      const key = identityKey(ctx.agent.id, ctx.agent.parentId);
+      const direct = assignedRuns.get(key);
+      const reservations = parentReservations.get(ctx.agent.parentId);
+      const candidates = new Set(reservations ? [...reservations.values()].map(value => value.runId) : []);
+      const ambiguousIdentity = assignedRuns.has(key) && !direct;
+      runId = !reservationQuotaExceeded && !ambiguousIdentity && direct && direct.parentId === ctx.agent.parentId
+        ? direct.runId : !reservationQuotaExceeded && !ambiguousIdentity && candidates.size === 1 ? [...candidates][0] : undefined;
+      if (!runId) { process.stderr.write('ROX_RUNTIME_OBSERVER_ERROR cannot bind native child to originating run\n'); return; }
+    } else runId = control.runId;
     const activeTools = pi.getActiveTools();
     write('before_agent_start', { prompt: event.prompt, systemPrompt: event.systemPrompt,
       images: event.images?.map(image => ({ type: image.type, mimeType: image.mimeType })),
@@ -137,11 +164,15 @@ export default function roxRuntimeObserver(pi) {
   pi.on('before_provider_request', (event, ctx) => write('before_provider_request', { providerPayload: event.payload }, ctx));
   pi.on('before_subagent_spawn', (event, ctx) => {
     if (runId && typeof event.spawnKey === 'string') {
-      if (assignedRuns.size >= 256 && !assignedRuns.has(event.spawnKey)) assignedRuns.delete(assignedRuns.keys().next().value);
-      assignedRuns.set(event.spawnKey, runId);
-      assignedRuns.set(event.spawnKey + ':' + ctx.agent.id, runId);
+      const reservation = { runId, parentId: ctx.agent.id, ctx, invocationKind: event.invocationKind };
+      rememberIdentity(event.spawnKey, reservation);
+      if (!reservationQuotaExceeded) {
+        let reservations = parentReservations.get(ctx.agent.id);
+        if (!reservations) { reservations = new Map(); parentReservations.set(ctx.agent.id, reservations); }
+        reservations.set(event.spawnKey, reservation);
+      }
       if (spawnReservations.size >= 256 && !spawnReservations.has(event.spawnKey)) spawnReservations.delete(spawnReservations.keys().next().value);
-      spawnReservations.set(event.spawnKey, { runId, ctx, invocationKind: event.invocationKind });
+      spawnReservations.set(event.spawnKey, reservation);
     }
     write('before_subagent_spawn', event, ctx);
   });
@@ -160,12 +191,29 @@ export default function roxRuntimeObserver(pi) {
     const reservation = reserved ?? taskInvocations.get(payload.parentToolCallId);
     if (!reservation) return;
     if (reserved) spawnReservations.delete(key);
-    if (assignedRuns.size >= 256 && !assignedRuns.has(payload.id)) assignedRuns.delete(assignedRuns.keys().next().value);
-    assignedRuns.set(payload.id, reservation.runId);
-    assignedRuns.set(payload.id + ':' + reservation.ctx.agent.id, reservation.runId);
+    rememberIdentity(payload.id, reservation);
     write('subagent_identity', { id: payload.id, invocationKind: reservation.invocationKind,
       spawnKey: reserved ? key : undefined, parentToolCallId: payload.parentToolCallId, index: payload.index }, reservation.ctx, reservation.runId);
   });
+  const releaseReservations = (event, ctx) => {
+    const reservations = parentReservations.get(ctx.agent.id);
+    const own = (value, key) => value && typeof value === 'object' ? Object.getOwnPropertyDescriptor(value, key)?.value : undefined;
+    const callId = own(event, 'toolCallId');
+    if (!reservations || own(event, 'toolName') !== 'task' || typeof callId !== 'string') return;
+    const results = own(own(own(event, 'result'), 'details'), 'results');
+    // Actual structured task-result ids close dispatch reservations, retaining
+    // exact receipts for a worker whose first hook arrives after its dispatch.
+    if (Array.isArray(results)) for (let index = 0; index < Math.min(results.length, 200); index++) {
+      const result = own(results, String(index));
+      const id = own(result, 'id');
+      const childIndex = own(result, 'index');
+      if (typeof id !== 'string' || !Number.isSafeInteger(childIndex)) continue;
+      const reservation = reservations.get(callId + ':' + childIndex);
+      if (reservation) rememberIdentity(id, reservation);
+    }
+    for (const key of reservations.keys()) if (key.startsWith(callId + ':')) reservations.delete(key);
+    if (!reservations.size) parentReservations.delete(ctx.agent.id);
+  };
   for (const hook of ['agent_start', 'agent_end', 'turn_start', 'turn_end', 'tool_call',
     'tool_execution_start', 'tool_execution_update', 'tool_execution_end',
     'auto_compaction_start', 'auto_compaction_end', 'auto_retry_start', 'auto_retry_end',
@@ -174,8 +222,9 @@ export default function roxRuntimeObserver(pi) {
     pi.on(hook, (event, ctx) => {
       if (hook === 'tool_execution_start' && event.toolName === 'task' && typeof event.toolCallId === 'string') {
         if (taskInvocations.size >= 128 && !taskInvocations.has(event.toolCallId)) taskInvocations.delete(taskInvocations.keys().next().value);
-        taskInvocations.set(event.toolCallId, { runId, ctx, invocationKind: 'task' });
+        taskInvocations.set(event.toolCallId, { runId, parentId: ctx.agent.id, ctx, invocationKind: 'task' });
       }
+      if (hook === 'tool_execution_end') releaseReservations(event, ctx);
       write(hook, event, ctx);
       if (hook === 'tool_execution_end') taskInvocations.delete(event.toolCallId);
     });

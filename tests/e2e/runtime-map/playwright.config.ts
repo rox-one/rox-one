@@ -13,7 +13,8 @@ export default defineConfig({
   outputDir: resolve(repoRoot, 'docs/evidence/runtime-map/browser-artifacts', evidenceRun),
   reporter: [['list'], ['json', { outputFile: resolve(repoRoot, 'docs/evidence/runtime-map/browser-results.json') }]],
   use: { baseURL: 'http://127.0.0.1:4176', viewport: { width: 1440, height: 900 },
-    headless: true, actionTimeout: 10_000, video: 'on', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
+    headless: true, actionTimeout: 10_000, video: 'on', trace: 'retain-on-failure', screenshot: 'only-on-failure',
+    launchOptions: { executablePath: process.env.ROX_TEST_CHROMIUM ?? process.env.CHROMIUM_EXECUTABLE } },
   webServer: [
     { command: `${quote(bun)} run tests/e2e/runtime-map/server.ts`, cwd: repoRoot, url: 'http://127.0.0.1:4177/health', timeout: 30_000,
       env: { ROX_RUNTIME_MAP_E2E: '1' }, reuseExistingServer: false },
