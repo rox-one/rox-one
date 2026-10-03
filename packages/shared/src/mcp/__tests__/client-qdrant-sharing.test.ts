@@ -37,10 +37,11 @@ if (lock) {
 log({ event: 'spawn', pid: process.pid });
 const respond = (request, result) => process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, result }) + '\\n');
 const input = readline.createInterface({ input: process.stdin });
+let lists = 0;
 input.on('line', async line => {
   const request = JSON.parse(line);
-  if (!('id' in request)) return;
   log({ event: request.method, pid: process.pid });
+  if (!('id' in request)) return;
   if (request.method === 'initialize') {
     if (process.env.MCP_TEST_FAIL_INITIALIZE) {
       process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, error: {code: -32603, message:'fixture initialize failed'} }) + '\\n');
@@ -50,8 +51,13 @@ input.on('line', async line => {
     while (gate && !fs.existsSync(gate)) await new Promise(resolve => setTimeout(resolve, 5));
     respond(request, { protocolVersion: request.params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name: 'qdrant-fixture', version: '1.0.0' } });
   } else if (request.method === 'tools/list') {
+    const gate = process.env.MCP_TEST_LIST_GATE;
+    lists++;
+    while (lists > 1 && gate && !fs.existsSync(gate)) await new Promise(resolve => setTimeout(resolve, 5));
     respond(request, { tools: [{name:'echo', inputSchema:{type:'object', properties:{text:{type:'string'}}}}] });
   } else if (request.method === 'tools/call') {
+    const gate = process.env.MCP_TEST_CALL_GATE;
+    while (request.params.arguments.text === 'blocked' && gate && !fs.existsSync(gate)) await new Promise(resolve => setTimeout(resolve, 5));
     respond(request, { content: [{ type:'text', text: request.params.arguments.text ?? 'echo' }] });
   }
 });
@@ -261,6 +267,77 @@ describe('managed embedded Qdrant client leases', () => {
     writeFileSync(gate, 'ready');
     await secondConnect;
     expect(session.isConnected()).toBe(true);
+    expect(events(settings).filter(event => event.event === 'spawn')).toHaveLength(1);
+  });
+
+  test('closing one lease cancels its tools/list wait without cancelling another lease', async () => {
+    const gate = join(root, `list-gate-${++sequence}`);
+    const settings = config({MCP_TEST_LIST_GATE:gate});
+    const first = client(settings);
+    const second = client(settings);
+    await Promise.all([first.connect(), second.connect()]);
+    const firstList = first.listTools().catch(error => error);
+    const secondList = second.listTools();
+    try {
+      await waitFor(() => events(settings).filter(event => event.event === 'tools/list').length === 2);
+      await first.close();
+      const cancelled = await Promise.race([firstList, new Promise(resolve => setTimeout(() => resolve('still waiting'), 100))]);
+      expect(cancelled).toBeInstanceOf(Error);
+      expect((cancelled as Error).message).toContain('closed');
+      expect(second.isConnected()).toBe(true);
+    } finally {
+      writeFileSync(gate, 'ready');
+      await firstList;
+      expect((await secondList).map(tool => tool.name)).toEqual(['echo']);
+    }
+    expect(events(settings).filter(event => event.event === 'spawn')).toHaveLength(1);
+  });
+
+  test('closing one lease cancels its tool request while another lease keeps using the process', async () => {
+    const gate = join(root, `call-gate-${++sequence}`);
+    const settings = config({MCP_TEST_CALL_GATE:gate});
+    const first = client(settings);
+    const second = client(settings);
+    await Promise.all([first.connect(), second.connect()]);
+    const request = first.callTool('echo', {text:'blocked'}, {signal:new AbortController().signal}).catch(error => error);
+    try {
+      await waitFor(() => events(settings).some(event => event.event === 'tools/call'));
+      await first.close();
+      const cancelled = await Promise.race([request, new Promise(resolve => setTimeout(() => resolve('still waiting'), 100))]);
+      expect(cancelled).toBeInstanceOf(Error);
+      await waitFor(() => events(settings).some(event => event.event === 'notifications/cancelled'));
+      expect(await second.callTool('echo', {text:'still running'})).toMatchObject({content:[{text:'still running'}]});
+      expect(events(settings).filter(event => event.event === 'exit')).toHaveLength(0);
+    } finally {
+      writeFileSync(gate, 'ready');
+      await request;
+    }
+  });
+
+  test('caller cancellation settles a tool call during initialize without cancelling another lease', async () => {
+    const gate = join(root, `call-initialize-gate-${++sequence}`);
+    const settings = config({MCP_TEST_INITIALIZE_GATE:gate});
+    const first = client(settings);
+    const second = client(settings);
+    const controller = new AbortController();
+    const reason = new Error('User cancelled the tool call');
+    const request = first.callTool('echo', {text:'cancelled'}, {signal:controller.signal}).catch(error => error);
+    const secondConnect = second.connect();
+    try {
+      await waitFor(() => events(settings).some(event => event.event === 'initialize'));
+      controller.abort(reason);
+      const cancelled = await Promise.race([request, new Promise(resolve => setTimeout(() => resolve('still waiting'), 100))]);
+      expect(cancelled).toBe(reason);
+      expect(events(settings).filter(event => event.event === 'tools/call')).toHaveLength(0);
+    } finally {
+      writeFileSync(gate, 'ready');
+      await request;
+      await secondConnect;
+      await first.connect();
+    }
+    expect(first.isConnected()).toBe(true);
+    expect(second.isConnected()).toBe(true);
+    expect(await first.callTool('echo', {text:'new request'})).toMatchObject({content:[{text:'new request'}]});
     expect(events(settings).filter(event => event.event === 'spawn')).toHaveLength(1);
   });
 
