@@ -4,11 +4,10 @@ import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const executablePath = process.env.CHROMIUM_EXECUTABLE ?? '/usr/bin/chromium'
-const browserTest = existsSync(executablePath) ? test : test.skip
 let browser: Browser | undefined
 let server: ReturnType<typeof Bun.serve> | undefined
 beforeAll(async () => {
-  if (!existsSync(executablePath)) return
+  if (!existsSync(executablePath)) throw new Error(`Reader DOM verification requires Chromium at ${executablePath}; set CHROMIUM_EXECUTABLE to an installed browser executable.`)
   const bundle = await Bun.build({ entrypoints: [fileURLToPath(new URL('./reader-harness.fixture.tsx', import.meta.url))], target: 'browser', define: { 'process.env.NODE_ENV': '"production"' } })
   if (!bundle.success) throw new Error(bundle.logs.map(String).join('\n'))
   const script = await bundle.outputs[0]!.text()
@@ -17,7 +16,7 @@ beforeAll(async () => {
 }, 30_000)
 afterAll(async () => { await browser?.close(); server?.stop(true) })
 
-browserTest('native reader hook observes a real rendered selection and source gallery never subscribes on tour start', async () => {
+test('native reader hook observes a real rendered selection and source gallery never subscribes on tour start', async () => {
   const page = await browser!.newPage()
   await page.goto(server!.url.toString())
   await page.getByTestId('choose').waitFor()
