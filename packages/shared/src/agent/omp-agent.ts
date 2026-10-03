@@ -946,6 +946,9 @@ export class OmpAgent extends BaseAgent {
         await this.sendCommand('negotiate_protocol', { protocolVersion: 2 });
       } catch (error) {
         this.killSubprocessSync();
+        if (this.abortReason !== undefined || error instanceof OmpStartupAbortedError) {
+          throw new OmpStartupAbortedError('OMP startup interrupted during RPC negotiation');
+        }
         throw new OmpStartupError({ code: 'OMP_PROTOCOL_ERROR',
           message: `OMP protocol v2 negotiation failed: ${error instanceof Error ? error.message : error}`,
           cause: error instanceof Error ? error : undefined });

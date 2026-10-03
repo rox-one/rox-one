@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-03",
+  "package": "@oh-my-pi/pi-coding-agent",
+  "previous_toolchain_version": "17.2.10",
+  "version": "18.4.12",
+  "registry_tag": "latest",
+  "tarball_sha256": "91fca5e305d9b97dbd27d1b682741cbbcf50dda2b8c2976a0436f2ba84650bf9",
+  "tarball_size": 13382972,
+  "profiles": [
+    "~/.rox"
+  ],
+  "command": "~/.local/bin/rox",
+  "version_output": "rox/18.4.12",
+  "auth_configuration": "Existing ~/.omp retained",
+  "rpc_probe": {
+    "version": "rox/18.4.12",
+    "ready": {
+      "protocolVersion": 1,
+      "supportedProtocolVersions": [
+        1,
+        2
+      ],
+      "maxFrameBytes": 1048576,
+      "maxReassembledFrameBytes": 67108864
+    },
+    "negotiated_protocol": 2,
+    "state_received": true,
+    "model_count": 758,
+    "set_model": {
+      "provider": "rox",
+      "modelId": "gemini-3.6-flash-high"
+    },
+    "host_tools": {
+      "toolNames": [
+        "rox_upgrade_smoke"
+      ]
+    },
+    "extension_ui_responses": 1,
+    "chunk_frames": 8,
+    "ok": true
+  },
+  "validation": {
+    "focused_runtime_tests": {
+      "passed": 89,
+      "failed": 0
+    },
+    "additional_omp_tests": {
+      "passed": 37,
+      "failed": 1,
+      "failure": "existing SIGTERM-immune child timeout/retry test; reproduced against HEAD baseline"
+    },
+    "shared_typecheck": {
+      "errors": 17,
+      "errors_in_changed_runtime_files": 0,
+      "same_errors_as_initial_check": true
+    },
+    "electron_main_build": "passed"
+  },
+  "app_relaunch": {
+    "profile": "~/.rox",
+    "main_rebuilt": true
+  },
+  "native_ui_readback": "Rox window observed before switching to persistent profile; final UI inspection blocked by Sky Computer Use native pipe startup failed.",
+  "paid_model_prompt_sent": false,
+  "rollback_backup": "~/.rox/backups/runtime-20261003/omp-17.2.10",
+  "temporary_profile_note": "The temporary test profile was removed after the upgrade probe. Rox was relaunched with its persistent ~/.rox profile.",
+  "app_boot_readback": "Main log confirms ~/.rox saved workspace restored, window created and did-finish-load, toolchain ensureAll scheduled."
+}

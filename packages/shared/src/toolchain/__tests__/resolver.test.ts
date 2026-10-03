@@ -46,6 +46,16 @@ const FAKE_MANIFEST: ToolEntry[] = [
 ];
 
 describe('resolver', () => {
+  it('resolves both Rox CLI and the omp compatibility name from the managed toolchain', async () => {
+    const paths = toolchainPaths(path.join(tmpDir, 'cfg-rox'));
+    const name = process.platform === 'win32' ? 'rox.cmd' : 'rox';
+    const launcher = path.join(paths.toolchainDir, 'omp', 'current', 'bin', name);
+    putExecutable(launcher);
+    const resolver = createResolver(paths, { pathEnv: '' });
+    expect(await resolver.findExecutable('rox')).toBe(launcher);
+    expect(await resolver.findExecutable('omp')).toBe(launcher);
+  });
+
   it('toolchain имеет приоритет над PATH', async () => {
     const paths = toolchainPaths(path.join(tmpDir, 'cfg1'));
     const tcBin = path.join(paths.toolchainDir, 'jq', 'current', 'bin', binName('jq'));

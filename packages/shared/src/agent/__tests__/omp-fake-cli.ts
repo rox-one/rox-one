@@ -233,7 +233,7 @@ function rpcLoop() {
         if (scenario.startsWith('transport-') && !['transport-v1', 'transport-bad-ack', 'transport-large-command'].includes(scenario)) {
           respond({ models: [...availableModels, ...Array.from({ length: 858 }, (_, i) =>
             ({ provider: 'fixture', id: 'catalog-' + i, name: 'x'.repeat(1700) }))] });
-        } else respond(availableModels);
+        } else respond(readScenario() === 'large-catalog' ? availableModels.map(m => m.id === 'kimi-k2' ? {...m, name:'Model'.repeat(250000)} : m) : availableModels);
         break;
       case 'set_model': {
         const target = availableModels.find(m => m.provider === msg.provider && m.id === msg.modelId);

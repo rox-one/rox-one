@@ -10,6 +10,25 @@ import type { ToolName } from '../types';
 const HEX_64 = /^[0-9a-f]{64}$/;
 
 describe('manifest validation', () => {
+  it('Rox CLI uses an exact upstream version with an integrity-locked dependency graph', () => {
+    const omp = MANIFEST_DATA.omp!;
+    expect(omp.displayName).toBe('Rox CLI');
+    const lock = JSON.parse(getNpmLock('omp', omp.version)!);
+    expect(lock.packages[''].version).toBe(omp.version);
+    expect(lock.packages[''].name).toBe('@oh-my-pi/pi-coding-agent');
+    for (const [packagePath, record] of Object.entries(lock.packages)) {
+      if (!packagePath) continue;
+      const pkg = record as { resolved: string; integrity: string };
+      expect(pkg.resolved).toStartWith('https://registry.npmjs.org/');
+      expect(pkg.integrity).toStartWith('sha512-');
+    }
+    for (const [platform, artifact] of Object.entries(omp.artifacts)) {
+      expect(artifact!.url).toEndWith(`pi-coding-agent-${omp.version}.tgz`);
+      expect(artifact!.binPaths).toEqual(platform === 'win32-x64'
+        ? ['bin/rox.cmd', 'bin/omp.cmd'] : ['bin/rox', 'bin/omp']);
+    }
+  });
+
   it('каждый артефакт имеет непустые url/sha256/size/binPaths', () => {
     expect(TOOLCHAIN_MANIFEST.length).toBeGreaterThan(0);
     for (const entry of TOOLCHAIN_MANIFEST) {

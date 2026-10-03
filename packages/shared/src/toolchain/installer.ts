@@ -139,16 +139,31 @@ async function isNativeBinary(file: string): Promise<boolean> {
  * bun → bun из PATH.
  * Нативная цель bin (postinstall opencode-ai) — лончер exec'ает её напрямую.
  */
-async function generateNpmWrappers(toolDir: string): Promise<string[]> {
+export async function generateNpmWrappers(toolDir: string): Promise<string[]> {
   const pkgFile = path.join(toolDir, 'package', 'package.json');
   let pkgBin: Record<string, string> | undefined;
+  let isRoxCli = false;
   try {
     const pkg = JSON.parse(await fs.promises.readFile(pkgFile, 'utf8'));
     pkgBin = typeof pkg.bin === 'string' ? { [pkg.name ?? 'bin']: pkg.bin } : pkg.bin;
+    isRoxCli = pkg.name === '@oh-my-pi/pi-coding-agent';
   } catch {
     return [];
   }
   if (!pkgBin || typeof pkgBin !== 'object') return [];
+  // OMP_APP_NAME controls usage attribution, while CLI help/version still use
+  // upstream's hardcoded name. Brand only those human-readable commands: RPC
+  // frames, model output, config paths and the upstream package stay intact.
+  if (isRoxCli && pkgBin.omp) {
+    await fs.promises.writeFile(path.join(toolDir, 'package', 'rox-cli-branding.js'),
+      'const args = process.argv.slice(2);\n' +
+      'if (args.some(arg => ["--help", "-h", "--version", "-v"].includes(arg))) {\n' +
+      '  const write = process.stdout.write.bind(process.stdout);\n' +
+      '  process.stdout.write = (chunk, ...rest) => write(\n' +
+      '    typeof chunk === "string" ? chunk.replace(/(?<![.\\w/\\-])omp(?=[\\s/])/g, "rox") : chunk, ...rest);\n' +
+      '}\n');
+    pkgBin = { ...pkgBin, rox: pkgBin.omp };
+  }
 
   const binDir = path.join(toolDir, 'bin');
   await fs.promises.mkdir(binDir, { recursive: true });
@@ -183,6 +198,7 @@ async function generateNpmWrappers(toolDir: string): Promise<string[]> {
     // unix wrapper: ../package/<rel> относительно bin/
     const sh =
       '#!/bin/sh\n' +
+      (isRoxCli ? 'export OMP_APP_NAME="rox"\n' : '') +
       'DIR="$(cd "$(dirname "$0")" && pwd)"\n' +
       'if [ -n "$CRAFT_BUN_PATH" ] && [ -x "$CRAFT_BUN_PATH" ]; then\n' +
       '  BUN="$CRAFT_BUN_PATH"\n' +
@@ -193,17 +209,18 @@ async function generateNpmWrappers(toolDir: string): Promise<string[]> {
       '  done\n' +
       '  [ -z "$BUN" ] && BUN="bun"\n' +
       'fi\n' +
-      `exec "$BUN" "$DIR/../package/${rel}" "$@"\n`;
+      `exec "$BUN" ${isRoxCli ? '--preload "$DIR/../package/rox-cli-branding.js" ' : ''}"$DIR/../package/${rel}" "$@"\n`;
     await fs.promises.writeFile(path.join(binDir, name), sh, { mode: 0o755 });
     created.push(path.join('bin', name));
     // windows wrapper
     const cmd =
       '@echo off\r\n' +
       'setlocal\r\n' +
+      (isRoxCli ? 'set "OMP_APP_NAME=rox"\r\n' : '') +
       'set "BUN=%CRAFT_BUN_PATH%"\r\n' +
       'if "%BUN%"=="" if exist "%~dp0..\\..\\..\\bun\\current\\bun-windows-x64\\bun.exe" set "BUN=%~dp0..\\..\\..\\bun\\current\\bun-windows-x64\\bun.exe"\r\n' +
       'if "%BUN%"=="" set "BUN=bun"\r\n' +
-      `"%BUN%" "%~dp0..\\package\\${rel.replace(/\//g, '\\')}" %*\r\n`;
+      `"%BUN%" ${isRoxCli ? '--preload "%~dp0..\\package\\rox-cli-branding.js" ' : ''}"%~dp0..\\package\\${rel.replace(/\//g, '\\')}" %*\r\n`;
     await fs.promises.writeFile(path.join(binDir, `${name}.cmd`), cmd);
     created.push(path.join('bin', `${name}.cmd`));
   }

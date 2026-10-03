@@ -108,46 +108,46 @@ function localNativeBin(): ToolArtifact {
 }
 
 export const MANIFEST_DATA: Partial<Record<ToolName, ManifestToolData>> = {
-  // omp 17.2.10 — npm tarball @oh-my-pi/pi-coding-agent (платформонезависимый JS).
+  // Rox CLI 18.4.12 — npm tarball @oh-my-pi/pi-coding-agent (платформонезависимый JS).
   // sha256 скачанного tarball; npm integrity (sha512) сверен.
-  // binPaths — именованные лончеры, которые installer генерирует из package.json "bin" (bin/omp + bin/omp.cmd).
+  // installer генерирует Rox CLI лончеры и совместимые omp/omp.cmd алиасы.
   omp: {
-    version: '17.2.10',
+    version: '18.4.12',
     kind: 'npm',
     tier: 'core',
-    displayName: 'omp (Oh My Pi)',
+    displayName: 'Rox CLI',
     critical: true,
     // npm-тарболл + bun-рантайм wrapper + npm ci --locked deps (pi-natives) —
     // bun и node обязаны стоять первыми волнами.
     dependsOn: ['bun', 'node'],
     artifacts: {
       'darwin-arm64': {
-        url: 'https://registry.npmjs.org/@oh-my-pi/pi-coding-agent/-/pi-coding-agent-17.2.10.tgz',
-        sha256: 'e2789960126f237842ec735af6f39a89ea4c2b1792bddc8bb78e9d148477aa85',
-        size: 10202985,
+        url: 'https://registry.npmjs.org/@oh-my-pi/pi-coding-agent/-/pi-coding-agent-18.4.12.tgz',
+        sha256: '91fca5e305d9b97dbd27d1b682741cbbcf50dda2b8c2976a0436f2ba84650bf9',
+        size: 13382972,
         archive: 'tar.gz',
-        binPaths: ['bin/omp'],
+        binPaths: ['bin/rox', 'bin/omp'],
       },
       'darwin-x64': {
-        url: 'https://registry.npmjs.org/@oh-my-pi/pi-coding-agent/-/pi-coding-agent-17.2.10.tgz',
-        sha256: 'e2789960126f237842ec735af6f39a89ea4c2b1792bddc8bb78e9d148477aa85',
-        size: 10202985,
+        url: 'https://registry.npmjs.org/@oh-my-pi/pi-coding-agent/-/pi-coding-agent-18.4.12.tgz',
+        sha256: '91fca5e305d9b97dbd27d1b682741cbbcf50dda2b8c2976a0436f2ba84650bf9',
+        size: 13382972,
         archive: 'tar.gz',
-        binPaths: ['bin/omp'],
+        binPaths: ['bin/rox', 'bin/omp'],
       },
       'linux-x64': {
-        url: 'https://registry.npmjs.org/@oh-my-pi/pi-coding-agent/-/pi-coding-agent-17.2.10.tgz',
-        sha256: 'e2789960126f237842ec735af6f39a89ea4c2b1792bddc8bb78e9d148477aa85',
-        size: 10202985,
+        url: 'https://registry.npmjs.org/@oh-my-pi/pi-coding-agent/-/pi-coding-agent-18.4.12.tgz',
+        sha256: '91fca5e305d9b97dbd27d1b682741cbbcf50dda2b8c2976a0436f2ba84650bf9',
+        size: 13382972,
         archive: 'tar.gz',
-        binPaths: ['bin/omp'],
+        binPaths: ['bin/rox', 'bin/omp'],
       },
       'win32-x64': {
-        url: 'https://registry.npmjs.org/@oh-my-pi/pi-coding-agent/-/pi-coding-agent-17.2.10.tgz',
-        sha256: 'e2789960126f237842ec735af6f39a89ea4c2b1792bddc8bb78e9d148477aa85',
-        size: 10202985,
+        url: 'https://registry.npmjs.org/@oh-my-pi/pi-coding-agent/-/pi-coding-agent-18.4.12.tgz',
+        sha256: '91fca5e305d9b97dbd27d1b682741cbbcf50dda2b8c2976a0436f2ba84650bf9',
+        size: 13382972,
         archive: 'tar.gz',
-        binPaths: ['bin/omp.cmd'],
+        binPaths: ['bin/rox.cmd', 'bin/omp.cmd'],
       },
     },
   },
