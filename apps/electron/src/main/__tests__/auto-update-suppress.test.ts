@@ -96,3 +96,18 @@ describe('compareSemver', () => {
     expect(compareSemver('v0.12.1', '0.12.0')).toBe(1)
   })
 })
+
+it('uses SemVer prerelease precedence and ignores build metadata', () => {
+  expect(compareSemver('0.11.8-beta.1', '0.11.8')).toBe(-1)
+  expect(compareSemver('0.11.8', '0.11.8-beta.1')).toBe(1)
+  expect(compareSemver('0.11.8-beta.9', '0.11.8-beta.10')).toBe(-1)
+  expect(compareSemver('0.11.8-alpha', '0.11.8-beta')).toBe(-1)
+  expect(compareSemver('0.11.8+build.1', '0.11.8+build.2')).toBe(0)
+  expect(shouldAcceptReadyUpdate({ localVersion: '0.11.8-beta.1', feedVersion: '0.11.8' })).toBe(true)
+  expect(shouldAcceptReadyUpdate({ localVersion: '0.11.8', feedVersion: '0.11.8-beta.1' })).toBe(false)
+  for (const feedVersion of ['invalid', '0.11.8-beta.01', '0.011.8']) {
+    expect(shouldAcceptReadyUpdate({ localVersion: '0.11.7', feedVersion })).toBe(false)
+  }
+  expect(shouldAcceptReadyUpdate({ localVersion: 'invalid', feedVersion: '0.11.8' })).toBe(false)
+  expect(shouldAcceptReadyUpdate({ localVersion: '0.11.7', feedVersion: '0.11.8', cachedVersion: 'invalid' })).toBe(false)
+})

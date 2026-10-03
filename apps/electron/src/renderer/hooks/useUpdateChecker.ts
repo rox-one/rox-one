@@ -33,6 +33,7 @@ interface UseUpdateCheckerResult {
 
 // Toast ID for update notification (allows dismiss/update)
 const UPDATE_TOAST_ID = 'update-available'
+const MANUAL_UPDATE_TOAST_ID = 'manual-update-check'
 
 export function useUpdateChecker(): UseUpdateCheckerResult {
   const { t } = useTranslation()
@@ -63,6 +64,35 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
     })
   }, [t])
 
+  // A native menu check broadcasts the same metadata as Settings Check Now.
+  // Notify once per result so broadcast + RPC return do not duplicate it.
+  const shownManualNoticeRef = useRef<{ notice: string; at: number } | null>(null)
+  const showManualUpdateToast = useCallback((info: UpdateInfo) => {
+    if (info.updateMode !== 'manual') return
+    const notice = info.error ? `error:${info.error}`
+      : info.available && info.releaseUrl ? info.releaseUrl : `current:${info.currentVersion}`
+    const previous = shownManualNoticeRef.current
+    if (previous?.notice === notice && Date.now() - previous.at < 1000) return
+    shownManualNoticeRef.current = { notice, at: Date.now() }
+    if (info.error) {
+      toast.error(t('toast.failedToCheckUpdates'), { id: MANUAL_UPDATE_TOAST_ID, description: info.error })
+      return
+    }
+    if (!info.available) {
+      toast.success(t('toast.upToDate'), {
+        id: MANUAL_UPDATE_TOAST_ID, description: t('toast.versionIsLatest', { version: info.currentVersion }), duration: 3000,
+      })
+      return
+    }
+    if (!info.releaseUrl) return
+    toast.info(t('settings.about.manualUpdateAvailable', { defaultValue: 'A new ROX release is available', version: info.latestVersion }), {
+      id: MANUAL_UPDATE_TOAST_ID,
+      description: t('settings.about.manualUpdateDescription', { defaultValue: 'This build requires manual installation. Automatic installation is disabled.' }),
+      action: { label: t('settings.about.openRelease', { defaultValue: 'Open release downloads' }),
+        onClick: () => { void window.electronAPI.openUrl(info.releaseUrl!) } },
+    })
+  }, [t])
+
   // Install the update
   const installUpdate = useCallback(async () => {
     try {
@@ -84,6 +114,10 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
   // Load initial state and check if update ready
   useEffect(() => {
     const checkAndNotify = async (info: UpdateInfo) => {
+      if (info.updateMode === 'manual') {
+        showManualUpdateToast(info)
+        return
+      }
       if (!info.available || !info.latestVersion) return
       if (info.downloadState !== 'ready') return
 
@@ -118,22 +152,21 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
       cleanupAvailable()
       cleanupProgress()
     }
-  }, [showUpdateToast, installUpdate])
+  }, [showUpdateToast, showManualUpdateToast, installUpdate])
 
   // Check for updates manually
   const checkForUpdates = useCallback(async () => {
     try {
+      shownManualNoticeRef.current = null // Explicit user checks may notify again.
       const info = await window.electronAPI.checkForUpdates()
       setUpdateInfo(info)
 
+      if (info.updateMode === 'manual') {
+        showManualUpdateToast(info)
+        return
+      }
       if (info.error) throw new Error(info.error)
-      if (info.updateMode === 'manual' && info.available && info.releaseUrl) {
-        toast.info(t('settings.about.manualUpdateAvailable', { defaultValue: 'A new ROX release is available', version: info.latestVersion }), {
-          description: t('settings.about.manualUpdateDescription', { defaultValue: 'This build requires manual installation. Automatic installation is disabled.' }),
-          action: { label: t('settings.about.openRelease', { defaultValue: 'Open release downloads' }),
-            onClick: () => { void window.electronAPI.openUrl(info.releaseUrl!) } },
-        })
-      } else if (!info.available) {
+      if (!info.available) {
         toast.success(t('toast.upToDate'), {
           description: t('toast.versionIsLatest', { version: info.currentVersion }),
           duration: 3000,
@@ -149,7 +182,7 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
         description: error instanceof Error ? error.message : t('toast.unknownError'),
       })
     }
-  }, [showUpdateToast, installUpdate, t])
+  }, [showUpdateToast, showManualUpdateToast, installUpdate, t])
 
   return {
     updateInfo,

@@ -1,5 +1,5 @@
 import type { UpdateInfo } from '@rox/shared/protocol'
-import { compareSemver } from './auto-update-policy'
+import { compareSemver, isValidUpdateVersion } from './auto-update-policy'
 
 export type ReleaseMetadataFetcher = (url: string, options?: RequestInit) => Promise<Response>
 
@@ -22,13 +22,14 @@ export async function checkPublishedManualUpdate(
     tag_name: string; published_at: string; assets: Array<{ name: string }>
   } => {
     if (!release || typeof release !== 'object' || release.draft === true) return false
-    if (typeof release.tag_name !== 'string' || !/^v?\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(release.tag_name)) return false
+    if (typeof release.tag_name !== 'string' || !/^v?\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(release.tag_name) || !isValidUpdateVersion(release.tag_name)) return false
     if (typeof release.published_at !== 'string' || !Number.isFinite(Date.parse(release.published_at))) return false
     const version = release.tag_name.replace(/^v/, '')
     return Array.isArray(release.assets) && release.assets.some((asset: unknown) =>
       !!asset && typeof asset === 'object' && 'name' in asset &&
       ['Rox-arm64.zip', 'Rox-arm64.dmg', `Rox-${version}-arm64.zip`, `Rox-${version}-arm64.dmg`].includes(String(asset.name)))
-  }).sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at))
+  }).sort((a, b) => compareSemver(b.tag_name, a.tag_name)
+    || Date.parse(b.published_at) - Date.parse(a.published_at))
   const release = candidates[0]
   if (!release) throw new Error('No published macOS ARM64 ROX release is available')
   const latestVersion = release.tag_name.replace(/^v/, '')
