@@ -1638,6 +1638,7 @@
   "errors.omp.authRequired.title": "Rox-Authentifizierung erforderlich",
   "errors.omp.noModels.message": "Die Rox-Laufzeitumgebung hat keine Modellanbieter. Vor dem ersten Turn sind ein Rox-API-Schlüssel (ROX_API_KEY) oder eine lokale models.yml erforderlich.",
   "errors.omp.noModels.title": "Rox hat keine Modelle konfiguriert",
+  "errors.omp.runtimeUnavailable.message": "Die Bun-Laufzeit unter „{{path}}“ kann nicht gestartet werden. Setzen Sie CRAFT_BUN_PATH auf eine native Bun-Datei oder installieren Sie die verwaltete Bun-Laufzeit und versuchen Sie es erneut.",
   "errors.pleaseReload": "Bitte lade die Seite neu. Der Fehler wurde gemeldet.",
   "errors.retryLoadingSessions": "Sitzungen erneut laden",
   "errors.sessionNotFound": "Sitzung nicht gefunden",

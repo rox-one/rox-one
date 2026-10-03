@@ -46,7 +46,7 @@ import { spawn, execFile, type ChildProcess } from 'node:child_process';
 import type { LoadAllSkillsOptions } from '../skills/storage.ts';
 import { createInterface, type Interface as ReadlineInterface } from 'node:readline';
 import { homedir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve, isAbsolute, delimiter } from 'node:path';
 import { mkdirSync, readFileSync, readdirSync, copyFileSync, cpSync, existsSync } from 'node:fs';
 import { getSessionPath } from '../sessions/storage.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
@@ -62,6 +62,8 @@ import type { FileAttachment } from '../utils/files.ts';
 import { getProxyEnvVars } from '../config/proxy-env.ts';
 import { getToolchain, resolveOmpExecutableOrExplain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
 import { prepareOmpNativePolicy } from './omp-native-policy.ts';
+import { whichTool } from '../toolchain/exec.ts';
+import { setupI18n } from '../i18n/index.ts';
 
 import { AbortReason } from './backend/types.ts';
 import type {
@@ -86,6 +88,7 @@ import {
   isOmpStartupError,
   ompStartupErrorToAgentError,
   OmpStartupError,
+  scrubOmpStderr,
 } from './errors.ts';
 
 // Host-tool bridge: same defs/executor semantics as PiAgent (register_tools +
@@ -294,7 +297,8 @@ interface PendingPermission {
 // ============================================================
 
 export class OmpAgent extends BaseAgent {
-  private async prepareNativeInvocation(bin: string, env: NodeJS.ProcessEnv): Promise<{bin:string; prefix:string[]; dispose:()=>void}> {
+  private async prepareNativeInvocation(bin: string, env: NodeJS.ProcessEnv, cwd = this.resolvedCwd()): Promise<{bin:string; prefix:string[]; dispose:()=>void; runtime?:true}> {
+    bin = resolve(cwd, bin);
     const packageDir = join(dirname(bin), '..', 'package');
     if (!existsSync(join(packageDir, 'src/session/agent-session.ts'))) {
       // Protocol fixtures intentionally have no native package. Production cannot
@@ -302,10 +306,27 @@ export class OmpAgent extends BaseAgent {
       if (process.env.NODE_ENV === 'test') return { bin, prefix: [], dispose: () => {} };
       throw new Error('ROX mandatory native modes require the managed pinned OMP package; select the managed runtime instead of this external executable');
     }
-    const bun = env.CRAFT_BUN_PATH || await getToolchain().resolver.findExecutable('bun');
-    if (!bun) throw new Error('Bun runtime is unavailable for mandatory OMP policy');
+    let bun = env.CRAFT_BUN_PATH?.trim() || await getToolchain().resolver.findExecutable('bun');
+    if (!bun) throw this.nativeRuntimeError('bun');
+    if (!isAbsolute(bun) && /[\\/]/.test(bun)) bun = resolve(cwd, bun);
+    else if (!isAbsolute(bun)) {
+      const pathKey = Object.keys(env).sort().find(key => key.toUpperCase() === 'PATH');
+      const path = (pathKey ? env[pathKey] ?? '' : '').split(delimiter).filter(Boolean)
+        .map(dir => resolve(cwd, dir.replace(/^"(.*)"$/, '$1'))).join(delimiter);
+      bun = await whichTool(bun, path) ?? bun;
+    }
+    if (/\.(cmd|bat)$/i.test(bun)) throw this.nativeRuntimeError(bun);
     const overlay = prepareOmpNativePolicy(packageDir, join(resolveConfigDir(), 'runtime', 'omp-native'));
-    return { bin: bun, prefix: [overlay.entry], dispose: overlay.dispose };
+    return { bin: bun, prefix: [overlay.entry], dispose: overlay.dispose, runtime: true };
+  }
+
+  private nativeRuntimeError(bin: string, cause?: Error): OmpStartupError {
+    const detail = cause ? scrubOmpStderr(cause.message) : '';
+    return new OmpStartupError({ code: 'OMP_NOT_CONFIGURED',
+      message: setupI18n().t('errors.omp.runtimeUnavailable.message', { path: scrubOmpStderr(bin) })
+        + (detail ? `\n${(cause as NodeJS.ErrnoException).code === 'ENOENT' && !/\bENOENT\b/.test(detail) ? 'ENOENT: ' : ''}${detail}` : ''),
+      cause,
+    });
   }
   /** RX-TSK-0402 Phase 1 (G4): OMP sessions resolve mentions across the
    * merged craft+OMP registry; craft wins on slug conflicts. */
@@ -344,6 +365,8 @@ export class OmpAgent extends BaseAgent {
   /** Monotonic spawn counter — stale exit/close events from a previous child
    *  must never settle a newer child's startup handshake. */
   private startupGeneration = 0;
+  private launchGeneration = 0;
+  private destroyed = false;
 
   /** Permission policy captured at spawn — respawn required to change. */
   private autoApproveAtSpawn = false;
@@ -483,6 +506,10 @@ export class OmpAgent extends BaseAgent {
     return wd;
   }
 
+  private assertLaunchCurrent(generation: number): void {
+    if (this.destroyed || generation !== this.launchGeneration) throw new OmpStartupAbortedError();
+  }
+
   private async ensureSubprocess(): Promise<void> {
     if (this.spawnPromise) {
       // A spawn is already in flight (concurrent chat during startup) — share
@@ -495,10 +522,15 @@ export class OmpAgent extends BaseAgent {
       // known-dead promise.
       await this.subprocessReady;
     } else {
-      this.spawnPromise = this.spawnSubprocess().finally(() => {
-        this.spawnPromise = null;
+      const generation = this.startupGeneration + 1;
+      const pending = this.spawnSubprocess().catch(error => {
+        if (generation === this.startupGeneration) this.settleReady(error);
+        throw error;
+      }).finally(() => {
+        if (this.spawnPromise === pending) this.spawnPromise = null;
       });
-      await this.spawnPromise;
+      this.spawnPromise = pending;
+      await pending;
     }
     // Branch fork: after spawn, attach to the parent OMP transcript and cut
     // it at the persisted anchor. Runs exactly once per agent instance.
@@ -672,12 +704,31 @@ export class OmpAgent extends BaseAgent {
   }
 
   private async spawnSubprocess(): Promise<void> {
+    const launchGeneration = this.launchGeneration;
+    this.assertLaunchCurrent(launchGeneration);
+    const generation = ++this.startupGeneration;
+    const assertAttempt = () => {
+      this.assertLaunchCurrent(launchGeneration);
+      if (generation !== this.startupGeneration) throw new OmpStartupAbortedError();
+    };
+    // Own startup before resolving anything: there may be no child to kill yet.
+    const readyPromise = new Promise<void>((resolve, reject) => {
+      this.subprocessReadyResolve = resolve;
+      this.subprocessReadyReject = reject;
+    });
+    this.subprocessReady = readyPromise;
+    this.startupInFlight = true;
+    this.readyAccepted = false;
+    this.recentStderr = '';
+    readyPromise.catch(() => {});
     // OMP_CLI_PATH env → toolchain/PATH lookup → friendly error while the
     // toolchain is still installing → last-resort 'omp' (ENOENT path preserved).
     let bin: string;
     try {
       bin = await resolveOmpExecutableOrExplain();
+      assertAttempt();
     } catch (error) {
+      assertAttempt();
       throw new OmpStartupError({
         code: 'OMP_NOT_CONFIGURED',
         message: error instanceof Error ? error.message : String(error),
@@ -727,20 +778,6 @@ export class OmpAgent extends BaseAgent {
 
     this.debug(`Spawning OMP subprocess: ${bin} ${args.join(' ')} (cwd=${cwd})`);
 
-    const readyPromise = new Promise<void>((resolve, reject) => {
-      this.subprocessReadyResolve = resolve;
-      this.subprocessReadyReject = reject;
-    });
-    this.subprocessReady = readyPromise;
-    this.startupInFlight = true;
-    this.readyAccepted = false;
-    this.recentStderr = '';
-    this.startupGeneration += 1;
-    // Startup failure reaches the ensureSubprocess() awaiter via rejection;
-    // attach a no-op handler so a rejection surfacing before that await never
-    // trips unhandledRejection.
-    readyPromise.catch(() => {});
-
     let storedOmpKey: string | null = null;
     const connectionSlug = this.config.connectionSlug || ROX_DEFAULT_CONNECTION_SLUG;
     try {
@@ -748,6 +785,7 @@ export class OmpAgent extends BaseAgent {
     } catch {
       storedOmpKey = null;
     }
+    assertAttempt();
     const usesPublicRoxCatalog = isRoxPublicModelId(this._model ?? '');
     if (!usesPublicRoxCatalog) {
       ensureOmpRoxFirstRun({
@@ -770,6 +808,7 @@ export class OmpAgent extends BaseAgent {
       ...credentialEnv,
       ...(this.config.envOverrides ?? {}),
     });
+    assertAttempt();
     // Public Rox routes have their own canonical catalog. User/named OMP
     // profiles remain untouched, and inherited env overrides cannot redirect
     // this child to a different profile or provider.
@@ -783,18 +822,24 @@ export class OmpAgent extends BaseAgent {
     });
     if (runtimeConfig) Object.assign(env, runtimeConfig.env);
     let nativeInvocation: Awaited<ReturnType<OmpAgent['prepareNativeInvocation']>>;
-    try { nativeInvocation = await this.prepareNativeInvocation(bin, env); }
+    try { nativeInvocation = await this.prepareNativeInvocation(bin, env, cwd); }
     catch (error) {
       try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
+      assertAttempt();
       throw error;
     }
     env.OMP_APP_NAME = 'rox';
     let child: ChildProcess;
     try {
-      child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
+      assertAttempt();
+      child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     } catch (error) {
       try { runtimeConfig?.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
       try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
+      assertAttempt();
+      if (nativeInvocation.runtime && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw this.nativeRuntimeError(nativeInvocation.bin, error as Error);
+      }
       throw error;
     }
     // Capture this attempt's disposer: a predecessor closing after respawn
@@ -873,9 +918,9 @@ export class OmpAgent extends BaseAgent {
         // Spawn-time failure — typed and actionable (ENOENT = binary missing).
         const errno = (error as NodeJS.ErrnoException).code;
         this.settleReady(errno === 'ENOENT'
-          ? new OmpStartupError({
+          ? nativeInvocation.runtime ? this.nativeRuntimeError(nativeInvocation.bin, error) : new OmpStartupError({
               code: 'OMP_NOT_CONFIGURED',
-              message: `OMP executable not found at "${bin}".`,
+              message: `OMP executable not found at "${nativeInvocation.bin}".`,
               hint: 'Install the omp CLI, wait for the toolchain download to finish, or set OMP_CLI_PATH to a valid omp binary.',
               stderr: this.recentStderr.trim(),
               cause: error,
@@ -1014,6 +1059,7 @@ export class OmpAgent extends BaseAgent {
    * Graceful shutdown: close stdin → SIGTERM → SIGKILL fallback.
    */
   private async killSubprocessGracefully(timeoutMs = 2_000): Promise<void> {
+    this.launchGeneration += 1;
     const child = this.subprocess;
     // Settle any pending startup wait — a killed subprocess never completes
     // the ready handshake. No-op once the handshake has settled.
@@ -1065,6 +1111,7 @@ export class OmpAgent extends BaseAgent {
   }
 
   private killSubprocessSync(): void {
+    this.launchGeneration += 1;
     const child = this.subprocess;
     // Unblock any startup waiter — a killed subprocess never completes the
     // ready handshake. No-op once the handshake has settled.
@@ -1985,6 +2032,7 @@ export class OmpAgent extends BaseAgent {
     attachments?: FileAttachment[],
     _options?: ChatOptions,
   ): AsyncGenerator<AgentEvent> {
+    const launchGeneration = this.launchGeneration;
     // Permission changes retire the child asynchronously. Wait before claiming
     // this turn so its predecessor's intentional exit cannot fail the new turn
     // or leave ensureSubprocess using a child whose stdin is already closed.
@@ -2027,7 +2075,9 @@ export class OmpAgent extends BaseAgent {
     });
 
     try {
+      this.assertLaunchCurrent(launchGeneration);
       await this.ensureSubprocess();
+      this.assertLaunchCurrent(launchGeneration);
 
       await this.sendCommand('set_thinking_level', { level: 'max' });
       // Refresh source state on every turn, just as Claude/Pi do. The static
@@ -2081,6 +2131,7 @@ export class OmpAgent extends BaseAgent {
   }
 
   async abort(reason?: string): Promise<void> {
+    this.launchGeneration += 1;
     this.debug(`abort(${reason ?? 'no reason'})`);
     this.emitAutomationEvent('Stop', { hook_event_name: 'Stop' });
 
@@ -2110,6 +2161,7 @@ export class OmpAgent extends BaseAgent {
   }
 
   forceAbort(reason: AbortReason): void {
+    this.launchGeneration += 1;
     this.debug(`forceAbort(${reason})`);
     this.emitAutomationEvent('Stop', { hook_event_name: 'Stop' });
 
@@ -2120,6 +2172,9 @@ export class OmpAgent extends BaseAgent {
       this.respondExtensionUi(pending.uiRequestId, false, false);
     }
     this.pendingPermissions.clear();
+
+    const child = this.subprocess;
+    if (this.startupInFlight) this.killSubprocessSync();
 
     // For PlanSubmitted and AuthRequest, just interrupt the turn
     if (reason === AbortReason.PlanSubmitted || reason === AbortReason.AuthRequest) {
@@ -2135,7 +2190,6 @@ export class OmpAgent extends BaseAgent {
     }
     this.eventQueue.complete();
 
-    const child = this.subprocess;
     if (child) {
       child.kill('SIGTERM');
       setTimeout(() => {
@@ -2275,13 +2329,17 @@ export class OmpAgent extends BaseAgent {
   // ============================================================
 
   private async runOneShot(prompt: string, model?: string): Promise<string> {
+    const launchGeneration = this.launchGeneration;
+    this.assertLaunchCurrent(launchGeneration);
     this.debug(`runOneShot: resolving bin (prompt ${prompt.length} chars)`);
     const bin = await resolveOmpExecutableOrExplain();
+    this.assertLaunchCurrent(launchGeneration);
     this.debug(`runOneShot: bin=${bin}`);
     const cwd = this.resolvedCwd();
     const connectionSlug = this.config.connectionSlug || ROX_DEFAULT_CONNECTION_SLUG;
     let storedApiKey: string | null = null;
     try { storedApiKey = await getCredentialManager().getLlmApiKey(connectionSlug); } catch {}
+    this.assertLaunchCurrent(launchGeneration);
     const invocationModel = model || (isRoxPublicModelId(this._model ?? '') ? this._model : undefined);
     const publicRoxCatalog = isRoxPublicModelId(invocationModel ?? '');
     if (!publicRoxCatalog) ensureOmpRoxFirstRun({ homeDir: homedir(), env: process.env, storedApiKey });
@@ -2293,6 +2351,7 @@ export class OmpAgent extends BaseAgent {
       ...credentialEnv,
       ...(this.config.envOverrides ?? {}),
     });
+    this.assertLaunchCurrent(launchGeneration);
 
     const runtimeConfig = prepareOmpRoxRuntimeConfig({
       runtimeRoot: join(resolveConfigDir(), 'runtime', 'omp'),
@@ -2314,20 +2373,25 @@ export class OmpAgent extends BaseAgent {
     const effectivePrompt = withOmpRequiredModes(prompt);
     const args = ['--no-session', '--thinking', 'max', ...(invocationModel ? ['--model', invocationModel] : []), '-p', effectivePrompt];
     let nativeInvocation: Awaited<ReturnType<OmpAgent['prepareNativeInvocation']>>;
-    try { nativeInvocation = await this.prepareNativeInvocation(bin, env); }
+    try { nativeInvocation = await this.prepareNativeInvocation(bin, env, cwd); }
     catch (error) {
       try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
+      this.assertLaunchCurrent(launchGeneration);
       throw error;
     }
     env.OMP_APP_NAME = 'rox';
     this.debug('runOneShot: spawning -p child');
     return new Promise<string>((resolve, reject) => {
       let child: ChildProcess;
-      try { child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env }); }
+      try {
+        this.assertLaunchCurrent(launchGeneration);
+        child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, shell: false, windowsHide: true });
+      }
       catch (error) {
         try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
         try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
-        reject(error); return;
+        reject(nativeInvocation.runtime && (error as NodeJS.ErrnoException).code === 'ENOENT'
+          ? this.nativeRuntimeError(nativeInvocation.bin, error as Error) : error); return;
       }
       child.once('close', () => {
         try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
@@ -2344,7 +2408,8 @@ export class OmpAgent extends BaseAgent {
       child.stderr?.on('data', (d: Buffer) => { stderr += d.toString() });
       child.on('error', (err) => {
         clearTimeout(timer);
-        reject(new Error(`omp -p failed: ${err.message}`));
+        reject(nativeInvocation.runtime && (err as NodeJS.ErrnoException).code === 'ENOENT'
+          ? this.nativeRuntimeError(nativeInvocation.bin, err) : new Error(`omp -p failed: ${err.message}`));
       });
       child.on('close', (code) => {
         clearTimeout(timer);
@@ -2431,6 +2496,7 @@ export class OmpAgent extends BaseAgent {
   }
 
   destroy(): void {
+    this.destroyed = true;
     this.stopConfigWatcher();
 
     this.failPendingRequests(new Error('OmpAgent destroyed'));

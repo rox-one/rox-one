@@ -1638,6 +1638,7 @@
   "errors.omp.authRequired.title": "Rox authentication required",
   "errors.omp.noModels.message": "The Rox runtime has no model providers. A Rox API key (ROX_API_KEY) or a local models.yml is required before the first turn.",
   "errors.omp.noModels.title": "Rox has no models configured",
+  "errors.omp.runtimeUnavailable.message": "Cannot start the Bun runtime at \"{{path}}\". Set CRAFT_BUN_PATH to a native Bun executable or install the managed Bun runtime, then retry.",
   "errors.pleaseReload": "Please reload the page. The error has been reported.",
   "errors.retryLoadingSessions": "Retry loading sessions",
   "errors.sessionNotFound": "Session not found",
