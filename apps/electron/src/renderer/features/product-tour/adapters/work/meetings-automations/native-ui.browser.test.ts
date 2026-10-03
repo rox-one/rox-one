@@ -38,10 +38,10 @@ async function bundle() {
     import {TourRuntimeContext,TourPanelScope} from './apps/electron/src/renderer/features/product-tour/runtime/hooks';
     const emptyMeeting={schema:1,id:'meeting-a',title:'Native fixture meeting',workspaceId:'ws-a',createdAt:1,updatedAt:10,durationMs:0,status:'ready',source:'none',participants:[],notes:'',audio:null,transcript:{status:'none',progress:0},summary:null,actions:[],documents:[]};
     const automation={id:'automation-a',event:'SchedulerTick',matcherIndex:0,name:'Native automation',summary:'',enabled:false,cron:'0 9 * * *',timezone:'Europe/Moscow',permissionMode:'safe',actions:[{type:'prompt',prompt:'Native stored prompt'}],revision:'native-revision'};
-    const f=window.fixture={workspaceId:'ws-a',panelId:'panel-a',surface:'meetings',selectedId:null,enabled:true,runToken:null,meeting:emptyMeeting,mutations:[],events:[],accepted:[],capabilities:{},targets:{},delayTranscript:false};
+    const f=window.fixture={workspaceId:'ws-a',panelId:'panel-a',surface:'meetings',selectedId:null,enabled:true,runToken:null,meeting:emptyMeeting,mutations:[],events:[],accepted:[],capabilities:{},targets:{},delayTranscript:false,delayCatalog:false,catalogRequests:[]};
     let deferredTranscript;
     const api={
-      list:async()=>[f.meeting],engine:async()=>({ready:false,missing:[],engine:null,binary:null,model:null,modelPath:null,ffmpeg:null}),onChanged:()=>()=>{},
+      list:workspaceId=>f.delayCatalog?new Promise(resolve=>f.catalogRequests.push({workspaceId,resolve,result:[{...f.meeting,workspaceId}]})):Promise.resolve([f.meeting]),engine:async()=>({ready:false,missing:[],engine:null,binary:null,model:null,modelPath:null,ffmpeg:null}),onChanged:()=>()=>{},
       readAudio:async()=>null,readTranscript:()=>f.delayTranscript?new Promise(resolve=>{deferredTranscript=resolve}):Promise.resolve(null),
       update:async()=>{f.mutations.push('meeting-update');return f.meeting},create:async()=>{f.mutations.push('meeting-create');return f.meeting},
       importAudio:async()=>{f.mutations.push('import');return null},micAccess:async()=>{f.mutations.push('mic');return 'denied'},recStart:async()=>{f.mutations.push('recStart');return {ok:false,code:'denied'}}
@@ -54,11 +54,12 @@ async function bundle() {
       register(target){f.targets[target.id]=target;return()=>{if(f.targets[target.id]?.registrationToken===target.registrationToken)delete f.targets[target.id]}},
       setCapability(scope,id,value){const record={scope,value};f.capabilities[id]=record;return()=>{if(f.capabilities[id]===record)delete f.capabilities[id]}}};
     const root=createRoot(document.getElementById('root'));
-    f.render=()=>flushSync(()=>root.render(<React.StrictMode><TourRuntimeContext.Provider value={f.enabled?runtime:null}><TourPanelScope workspaceId={f.workspaceId} panelId={f.panelId} entityId={f.selectedId??undefined}>{f.surface==='meetings'?<MeetingsPage key={f.workspaceId} workspaceId={f.workspaceId} selectedId={f.selectedId}/>:<AutomationEditor automation={automation} workspaceId={f.workspaceId}/>}</TourPanelScope></TourRuntimeContext.Provider></React.StrictMode>));
+    f.render=()=>flushSync(()=>root.render(<React.StrictMode><TourRuntimeContext.Provider value={f.enabled?runtime:null}><TourPanelScope workspaceId={f.workspaceId} panelId={f.panelId} entityId={f.selectedId??undefined}>{f.surface==='meetings'?<MeetingsPage workspaceId={f.workspaceId} selectedId={f.selectedId}/>:<AutomationEditor automation={automation} workspaceId={f.workspaceId}/>}</TourPanelScope></TourRuntimeContext.Provider></React.StrictMode>));
     f.select=id=>{f.selectedId=id??null;f.render()};
     f.start=token=>{f.runToken=token??'run-a';f.render()};
     f.previewProfile=()=>buildSummaryPrompt({title:f.meeting.title,participants:[],segments:[],language:'en',recipeId:'client',slash:'/client'});
     f.finishTranscript=()=>deferredTranscript?.({engine:'fixture',model:'fixture',language:'en',createdAt:10,elapsedMs:1,revision:1,segments:[{id:'segment-a',startMs:0,endMs:1000,text:'Private fixture transcript'}]});
+    f.finishCatalog=workspaceId=>{const index=f.catalogRequests.findIndex(request=>request.workspaceId===workspaceId); if(index<0)throw new Error('missing fixture catalog request'); const [request]=f.catalogRequests.splice(index,1);request.resolve(request.result)};
     f.mount=(surface,mode)=>{f.surface=surface;f.selectedId=surface==='automation'?'automation-a':mode==='empty'?null:'meeting-a';
       f.meeting=mode==='summary'?{...emptyMeeting,summary:{text:'Private native summary',generated:false,updatedAt:10}}:mode==='transcript'?{...emptyMeeting,audio:{file:'fixture.webm',mimeType:'audio/webm',bytes:100},transcript:{status:'done',progress:1,segments:1,revision:1,finishedAt:10}}:emptyMeeting;
       f.delayTranscript=mode==='transcript';f.render()};
@@ -169,6 +170,35 @@ describe('A11 rendered native surfaces', () => {
     expect(state.events).toEqual([])
     expect(state.accepted).toEqual([])
     expect(state.targets['meetings.artifacts'].context.panelId).toBe('foreign-panel')
+    await page.close()
+  })
+
+  it('T-MEETINGS-LIST/RESULT: A → B → A cannot publish a stale catalog or artifact capability', async () => {
+    const page = await fixture('meetings', 'summary')
+    await page.evaluate(() => {
+      const f = (window as any).fixture
+      f.start(); f.delayCatalog = true; f.workspaceId = 'ws-b'; f.render()
+    })
+    expect((await inspect(page)).capabilities['meetings.available'].value).toEqual({ state: 'pending', reason: 'installing' })
+    expect((await inspect(page)).targets['meetings.artifacts']).toBeUndefined()
+    await page.evaluate(() => { const f = (window as any).fixture; f.workspaceId = 'ws-a'; f.render() })
+    await page.evaluate(async () => {
+      ;(window as any).fixture.finishCatalog('ws-b')
+      await new Promise(requestAnimationFrame)
+      await new Promise(requestAnimationFrame)
+    })
+    const stale = await inspect(page)
+    expect(stale.capabilities['meetings.available'].scope.workspaceId).toBe('ws-a')
+    expect(stale.capabilities['meetings.available'].value).toEqual({ state: 'pending', reason: 'installing' })
+    expect(stale.targets['meetings.artifacts']).toBeUndefined()
+    expect(await page.getByTestId('meeting-detail').count()).toBe(0)
+    await page.evaluate(() => (window as any).fixture.finishCatalog('ws-a'))
+    await page.waitForFunction(() => (window as any).fixture.capabilities['meetings.available']?.value.state === 'ready')
+    const current = await inspect(page)
+    expect(current.targets['meetings.artifacts'].context.workspaceId).toBe('ws-a')
+    expect(current.capabilities['meeting.artifact-present'].value).toEqual({ state: 'ready' })
+    expect(current.events).toEqual([])
+    expect(current.mutations).toEqual([])
     await page.close()
   })
 
