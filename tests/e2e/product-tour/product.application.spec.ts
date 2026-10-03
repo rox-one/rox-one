@@ -99,3 +99,22 @@ test('T-LEARNING-LIBRARY/T-LEARNING-CONTROLS: production learning controls start
   expect(calls.some(call => ['sendMessage', 'respondToPermission', 'performOAuth', 'runAutomation', 'toggleAutomation'].includes(call.method))).toBe(false)
   await attachEvidence(page, info)
 })
+
+test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creation and save only after ordinary user actions', async ({ page }, info) => {
+  await openApp(page, 'settings/learning', true)
+  await expect(page.getByTestId('learning-settings')).toBeVisible()
+  await page.getByTestId('learning-start-OBT-17').click()
+  const popup = page.locator('[data-product-tour-popover]')
+  await expect(popup).toHaveAttribute('data-product-tour-step', 'notes.create')
+  await page.getByRole('button', { name: 'New note', exact: true }).first().click()
+  const dialog = page.getByRole('dialog').filter({ has: page.getByRole('textbox') })
+  await dialog.getByRole('textbox').fill(`Guided canonical note ${Date.now()}`)
+  await dialog.getByRole('textbox').press('Enter')
+  await expect(dialog).toHaveCount(0)
+  await expect(popup).toHaveAttribute('data-product-tour-step', 'notes.save')
+  const content = 'User-written guided note canonical acceptance 72194.'
+  await page.locator('[contenteditable="true"]').first().fill(content)
+  await expect.poll(async () => (await evidence(page)).nativeFiles.some((file: { actualContent: string; content: string }) => file.actualContent.includes(content) && file.actualContent === file.content)).toBe(true)
+  await expect(popup).toHaveCount(0)
+  await attachEvidence(page, info)
+})
