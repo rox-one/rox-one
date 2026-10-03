@@ -557,7 +557,7 @@ Dependencies: current server entry point and helper build commands at main
 3. Exercise authenticated RPC ping, graceful stop, restart, token permissions and
    token rotation, plus failed install/entropy negative controls — complete.
 4. Deliver a separate PR preserving the original branch; main integration remains
-  owned by the lead. Hosted Cursor provisioning remains unverified.
+   owned by the lead. Hosted Cursor provisioning remains unverified.
 
 ## Selective editor block recovery — 2026-10-03
 

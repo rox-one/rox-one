@@ -102,6 +102,12 @@ describe('recovered presentation blocks in the actual legacy Markdown libraries'
     expect(dispatched).toBe(false)
     expect(library.serialize(doc)).toContain('[!details]- Title')
   })
+  test('styled marker-like quotes remain ordinary quotes without losing marks', () => {
+    const library = fixture(true, [RoxBlockCallout, PortableCalloutBlockquote])
+    const doc = library.parse('> **[!details]- Title**\n>\n> Body')
+    expect(collectRoxBlockTargets(doc)).toHaveLength(0)
+    expect(library.parse(library.serialize(doc)).toJSON()).toEqual(doc.toJSON())
+  })
 })
 Object.assign(prototype, {
   matches(this: Element, selector: string) { return is(this, selector, selectorOptions) },

@@ -177,6 +177,9 @@ export function collectRoxBlockTargets(doc: ProseMirrorNode): RoxBlockTarget[] {
     const markerText = lineBreak === -1 ? paragraphText : paragraphText.slice(0, lineBreak)
     const marker = parseRoxBlockMarker(markerText)
     if (!marker) return
+    let plain = true
+    markerNode.forEach((child, offset) => { if (offset < markerText.length && (!child.isText || child.marks.length > 0)) plain = false })
+    if (!plain) return
 
     const markerFrom = quoteFrom + 1
     const markerTo = markerFrom + markerNode.nodeSize
@@ -226,6 +229,7 @@ export const PortableCalloutBlockquote = Blockquote.extend({
       serialize(state: any, node: ProseMirrorNode) {
         const first = node.firstChild
         const marker = first?.type.name === 'paragraph' && first.content.size === first.textContent.length
+          && Array.from(first.content.content).every(child => child.isText && child.marks.length === 0)
           ? parseRoxBlockMarker(first.textContent) : null
         state.wrapBlock('> ', null, node, () => {
           if (!marker || !first) { state.renderContent(node); return }

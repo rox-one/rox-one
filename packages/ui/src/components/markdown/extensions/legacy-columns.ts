@@ -14,7 +14,7 @@ export function installLegacyColumns(markdown: any): void {
       const value = line(closing)
       const code = /^(`{3,}|~{3,})/.exec(value)?.[1]
       if (fence) {
-        if (code?.[0] === fence[0] && code.length >= fence.length && new RegExp(`^${fence[0]}+\\s*$`).test(value)) fence = undefined
+        if (code && code[0] === fence[0] && code.length >= fence.length && new RegExp(`^${fence[0]}+\\s*$`).test(value)) fence = undefined
         continue
       }
       if (code) { fence = code; continue }
