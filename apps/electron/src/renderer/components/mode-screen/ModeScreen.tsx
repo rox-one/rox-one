@@ -33,7 +33,9 @@ export function ModeScreenLayout({
         <ShellSidebarPortal className="w-[220px] shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3">
           {navigator}
         </ShellSidebarPortal>
-        {wideList ? (
+        {detail == null ? (
+          <section className="flex min-w-0 flex-1 flex-col bg-foreground/[0.025]">{list}</section>
+        ) : wideList ? (
           <>
             <section className="flex min-w-[280px] flex-1 flex-col bg-foreground/[0.025]">{list}</section>
             <section className="flex w-[320px] shrink-0 flex-col overflow-y-auto bg-background">{detail}</section>

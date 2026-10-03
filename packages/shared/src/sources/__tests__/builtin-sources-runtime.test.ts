@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { ensureBuiltinSources } from '../builtin-sources.ts'
-import { loadWorkspaceSources } from '../storage.ts'
+import { loadWorkspaceSources, loadSource, markSourceAuthenticated, saveSourceConfig } from '../storage.ts'
 import { SourceCredentialManager } from '../credential-manager.ts'
 import { SourceServerBuilder } from '../server-builder.ts'
 import { ApiSourcePoolClient } from '../../mcp/api-source-pool-client.ts'
@@ -33,7 +33,7 @@ describe('default provider tools through the runtime MCP proxy', () => {
   it('publishes all four tools for an existing unauthenticated workspace and resolves keys only on the backend', async () => {
     ensureBuiltinSources(dir)
     const sources = loadWorkspaceSources(dir)
-    expect(sources.every((source) => source.config.isAuthenticated === false)).toBe(true)
+    for (const source of sources) expect(source.config).toMatchObject({ isAuthenticated: false })
     process.env.EXA_API_KEY = 'fixture-exa'
     process.env.FIRECRAWL_API_KEY = 'fixture-firecrawl'
     process.env.BRAVE_API_KEY = 'fixture-brave'
@@ -82,5 +82,19 @@ describe('default provider tools through the runtime MCP proxy', () => {
     expect(await manager.getApiCredential(source)).toBe('fixture-user-owned')
     value = ''
     expect(await manager.getApiCredential(source)).toBe('fixture-shared')
+  })
+
+  it('retains a real user credential across rename and shared credential withdrawal', async () => {
+    process.env.EXA_API_KEY = 'fixture-shared'
+    ensureBuiltinSources(dir)
+    const userCredential = { value: 'fixture-user-owned' }
+    vaultSpy = spyOn(credentialsModule, 'getCredentialManager').mockReturnValue({ get: async () => userCredential } as unknown as ReturnType<typeof credentialsModule.getCredentialManager>)
+    markSourceAuthenticated(dir, 'exa')
+    saveSourceConfig(dir, { ...loadSource(dir, 'exa')!.config, name: 'My research account' })
+    delete process.env.EXA_API_KEY
+    const source = loadSource(dir, 'exa')!
+    expect(source.config).toMatchObject({ name: 'My research account', isAuthenticated: true, connectionStatus: 'connected' })
+    expect(await new SourceCredentialManager().getApiCredential(source)).toBe('fixture-user-owned')
+    expect(userCredential).toEqual({ value: 'fixture-user-owned' })
   })
 })

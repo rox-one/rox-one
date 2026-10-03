@@ -17,6 +17,7 @@ import {
   type PersonalTaskBundle,
   type PersonalTaskCacheLoad,
   type PersonalTask,
+  type PersonalTaskKv,
 } from '@rox/core/tasks/personal'
 import type { PersonalTaskConflict } from '@rox/core/tasks/personal'
 import {
@@ -50,14 +51,120 @@ let hydrating: Promise<void> | null = null
 let unsubscribeServer: (() => void) | null = null
 let retryTimer: number | null = null
 let syncConflicts: PersonalTaskConflict[] = []
+export interface PersonalTaskCallerScope {
+  authority: 'native' | 'local'
+  userId: string
+  issuer?: string
+  workspaceId: string | null
+}
+let callerScope: PersonalTaskCallerScope | null = null
+let scopeGeneration = 0
+let offIdentity: (() => void) | null = null
+let identityGeneration = 0
+let snapshotGeneration = 0
 
-function kv(): Storage {
-  return localStorage
+/** Invalidate before any actor/workspace transition; late replies never publish into a successor scope. */
+export function setPersonalTaskScope(scope: PersonalTaskCallerScope | null): void {
+  const normalized = scope && scope.userId && (scope.authority === 'local' || scope.issuer && scope.workspaceId) ? { ...scope } : null
+  if (normalized && JSON.stringify(callerScope) === JSON.stringify(normalized)) return
+  callerScope = normalized
+  ++scopeGeneration
+  unsubscribeServer?.(); unsubscribeServer = null
+  if (retryTimer !== null) clearTimeout(retryTimer)
+  retryTimer = null
+  currentBundle = synced = null
+  revisions = {}
+  loadStatus = 'empty'
+  syncState = normalized ? 'local' : 'syncing'
+  hydrating = null
+  syncConflicts = []
+  emit()
+  if (normalized) void hydratePersonalTasks()
+}
+
+/** A rejected switch/logout must rebind from fresh authority, never from its former cached identity. */
+export async function runPersonalTaskScopeTransition<T>(
+  operation: () => Promise<T>,
+  isCurrent: () => boolean,
+  committedScope: { authority: 'native' | 'local' | null; workspaceId: string | null } | null = callerScope,
+): Promise<T> {
+  const expected = committedScope ? { authority: committedScope.authority, workspaceId: committedScope.workspaceId } : null
+  setPersonalTaskScope(null)
+  const generation = scopeGeneration
+  const current = () => generation === scopeGeneration && isCurrent()
+  try {
+    const result = await operation()
+    if (!current()) throw new Error('Personal task transition changed')
+    return result
+  }
+  catch (error) {
+    if (current()) {
+      try {
+        const candidate = window.electronAPI
+        const identity = await candidate.getOrgIdentity()
+        if (!current()) throw new Error('Personal task transition changed')
+        const workspaceId = await candidate.getWindowWorkspace()
+        if (!current()) throw new Error('Personal task transition changed')
+        const confirmedIdentity = await candidate.getOrgIdentity()
+        if (!current() || identity.authority !== confirmedIdentity.authority || identity.userId !== confirmedIdentity.userId
+          || identity.issuer !== confirmedIdentity.issuer) throw new Error('Personal task identity changed')
+        const confirmedWorkspace = await candidate.getWindowWorkspace()
+        if (!current() || confirmedWorkspace !== workspaceId || !expected
+          || confirmedIdentity.authority !== expected.authority || confirmedWorkspace !== expected.workspaceId) throw new Error('Personal task workspace changed')
+        setPersonalTaskScope({ ...confirmedIdentity, workspaceId: confirmedWorkspace })
+      } catch { /* Failed fresh authority stays unavailable; no stale profile is restored. */ }
+    }
+    throw error
+  }
+}
+
+function cacheKey(key: string): string {
+  if (!callerScope) throw new Error('Personal task caller unavailable')
+  return callerScope.authority === 'local' ? key : `${key}.native.${encodeURIComponent(JSON.stringify([callerScope.issuer, callerScope.userId, callerScope.workspaceId]))}`
+}
+
+function watchIdentity(): void {
+  if (offIdentity || typeof window === 'undefined') return
+  const candidate = window.electronAPI
+  if (typeof candidate?.onIdentityChanged !== 'function' || typeof candidate.getOrgIdentity !== 'function') return
+  offIdentity = candidate.onIdentityChanged(() => {
+    const request = ++identityGeneration
+    setPersonalTaskScope(null)
+    const generation = scopeGeneration
+    void (async () => {
+      const identity = await candidate.getOrgIdentity()
+      const workspaceId = await candidate.getWindowWorkspace()
+      if (request !== identityGeneration || generation !== scopeGeneration) return
+      setPersonalTaskScope({ ...identity, workspaceId })
+    })().catch(() => {})
+  })
+}
+
+function kv(): PersonalTaskKv {
+  const generation = scopeGeneration
+  return {
+    getItem: key => generation === scopeGeneration && callerScope ? localStorage.getItem(cacheKey(key)) : null,
+    setItem: (key, value) => { if (generation === scopeGeneration && callerScope) localStorage.setItem(cacheKey(key), value) },
+  }
 }
 
 function api(): (PersonalTasksApi & { onPersonalTasksChanged?: (cb: () => void) => () => void }) | null {
   const candidate = typeof window !== 'undefined' ? (window as unknown as { electronAPI?: unknown }).electronAPI : undefined
   return isPersonalTasksApi(candidate) ? (candidate as PersonalTasksApi & { onPersonalTasksChanged?: (cb: () => void) => () => void }) : null
+}
+
+/** Fence before each transport call, including PUT→DELETE sequences, so a successor workspace is never mutated. */
+function scopedApi(remote: PersonalTasksApi, generation: number): PersonalTasksApi {
+  const invoke = <T>(operation: () => Promise<T>): Promise<T> => {
+    if (!callerScope || generation !== scopeGeneration) return Promise.reject(new Error('Personal task caller changed'))
+    return operation()
+  }
+  return {
+    personalTasksList: () => invoke(() => remote.personalTasksList()),
+    personalTasksPut: (writes, meta) => invoke(() => remote.personalTasksPut(writes, meta)),
+    personalTasksDelete: deletes => invoke(() => remote.personalTasksDelete(deletes)),
+    personalTasksMigrate: input => invoke(() => remote.personalTasksMigrate(input)),
+  }
 }
 
 function emit(): void {
@@ -101,6 +208,8 @@ export function resolvePersonalTaskConflict(id: string, choice: 'local' | 'serve
 }
 
 export function loadPersonalTaskStore(): PersonalTaskStore {
+  watchIdentity()
+  if (!callerScope) return new PersonalTaskStore()
   if (currentBundle) return new PersonalTaskStore(currentBundle)
   const loaded = loadPersonalTaskCache(kv())
   loadStatus = loaded.status
@@ -109,6 +218,7 @@ export function loadPersonalTaskStore(): PersonalTaskStore {
 }
 
 export function persistPersonalTaskStore(store: PersonalTaskStore): void {
+  if (!callerScope) return
   currentBundle = store.snapshot()
   persistPersonalTaskCache(kv(), store, loadStatus)
   const remote = api()
@@ -117,12 +227,14 @@ export function persistPersonalTaskStore(store: PersonalTaskStore): void {
 }
 
 async function syncBundle(remote: PersonalTasksApi, next: PersonalTaskBundle): Promise<void> {
+  const generation = scopeGeneration
   const base = synced
   if (!base) return
   const diff = diffPersonalTaskBundles(base, next)
   if (isEmptyDiff(diff)) return
   syncState = 'syncing'
-  const result = await pushPersonalTaskDiff(remote, diff, revisions)
+  const result = await pushPersonalTaskDiff(scopedApi(remote, generation), diff, { ...revisions })
+  if (generation !== scopeGeneration) return
   syncConflicts = result.conflicts
   const acceptedIds = new Set(result.accepted.map(({ task }) => task.id))
   for (const accepted of result.accepted) revisions[accepted.task.id] = accepted.revision
@@ -144,10 +256,12 @@ async function syncBundle(remote: PersonalTasksApi, next: PersonalTaskBundle): P
   if (result.ok) {
     try {
       const snapshot = await remote.personalTasksList()
+      if (generation !== scopeGeneration) return
       synced = bundleFromSnapshot(snapshot)
       revisions = snapshot.revisions
       syncState = 'synced'
     } catch {
+      if (generation !== scopeGeneration) return
       syncState = 'error'
     }
   } else {
@@ -155,6 +269,7 @@ async function syncBundle(remote: PersonalTasksApi, next: PersonalTaskBundle): P
     if (result.conflicts.length === 0 && result.rejected.length === 0) {
       if (retryTimer !== null) clearTimeout(retryTimer)
       retryTimer = window.setTimeout(() => {
+        if (generation !== scopeGeneration) return
         retryTimer = null
         void syncBundle(remote, loadPersonalTaskStore().snapshot())
       }, 5000)
@@ -165,11 +280,13 @@ async function syncBundle(remote: PersonalTasksApi, next: PersonalTaskBundle): P
 
 /** Home quick-add commits to the existing cache only after native ACK. */
 export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<void> {
+  const generation = scopeGeneration
   const remote = api()
-  if (!remote) throw new PersonalTaskCreationError(task, new Error('Native personal task storage unavailable'))
+  if (!remote || !callerScope) throw new PersonalTaskCreationError(task, new Error('Native personal task storage unavailable'))
   syncState = 'syncing'
   try {
     const accepted = await putPersonalTaskConfirmed(remote, task)
+    if (generation !== scopeGeneration) throw new PersonalTaskCreationError(task, new Error('Personal task caller changed'))
     // A server push or another screen may have updated the shared store while
     // this write was in flight. Acknowledge only this ID and preserve other edits.
     const latest = loadPersonalTaskStore().snapshot()
@@ -184,6 +301,7 @@ export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<
       : synced && isEmptyDiff(diffPersonalTaskBundles(synced, next)) ? 'synced' : 'syncing'
     emit()
   } catch (cause) {
+    if (generation !== scopeGeneration) throw cause instanceof PersonalTaskCreationError ? cause : new PersonalTaskCreationError(task, cause)
     syncState = 'error'
     emit()
     throw cause instanceof PersonalTaskCreationError ? cause : new PersonalTaskCreationError(task, cause)
@@ -191,7 +309,10 @@ export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<
 }
 
 async function refreshFromServer(remote: PersonalTasksApi): Promise<void> {
+  const generation = scopeGeneration
+  const request = ++snapshotGeneration
   const snapshot = await remote.personalTasksList()
+  if (generation !== scopeGeneration || request !== snapshotGeneration) return
   const remoteBundle = bundleFromSnapshot(snapshot)
   const local = currentBundle ?? loadPersonalTaskStore().snapshot()
   const pending = synced ? diffPersonalTaskBundles(synced, local) : null
@@ -215,32 +336,50 @@ async function refreshFromServer(remote: PersonalTasksApi): Promise<void> {
  * then keeps the in-memory store in sync with personalTasks:changed pushes.
  */
 export function hydratePersonalTasks(): Promise<void> {
+  watchIdentity()
   if (hydrating) return hydrating
   const remote = api()
-  if (!remote) return Promise.resolve()
+  if (!remote || !callerScope) return Promise.resolve()
+  const generation = scopeGeneration
+  const authority = callerScope.authority
   syncState = 'syncing'
   hydrating = (async () => {
     try {
       const cached = loadPersonalTaskStore().snapshot()
-      const result = await hydratePersonalTasksFrom(remote, kv())
+      // Native scopes never migrate a desktop-global blob, and read-only native callers can hydrate without a write grant.
+      const result = authority === 'native'
+        ? await remote.personalTasksList().then(snapshot => ({ bundle: bundleFromSnapshot(snapshot), revisions: snapshot.revisions, cacheStatus: 'ok' as const }))
+        : await hydratePersonalTasksFrom(scopedApi(remote, generation), kv())
+      if (generation !== scopeGeneration) return
       if (result.cacheStatus === 'quarantine') loadStatus = 'quarantine'
       synced = result.bundle
-      const pending = diffPersonalTaskBundles(synced, cached)
+      let next = cached
+      if (authority === 'native') {
+        // A saved cache is a display hint, not authority to delete server tasks or resurrect old ones.
+        // Preserve only edits made explicitly during this hydration, rebased on the fresh canonical snapshot.
+        const edited = diffPersonalTaskBundles(cached, currentBundle ?? cached)
+        const changedIds = new Set(edited.put.map(task => task.id))
+        next = { ...synced, tasks: [...synced.tasks.filter(task => !changedIds.has(task.id) && !edited.remove.includes(task.id)), ...edited.put], ...(edited.meta ?? {}) }
+      }
+      const pending = diffPersonalTaskBundles(synced, next)
       revisions = result.revisions
       if (!isEmptyDiff(pending)) {
-        currentBundle = cached
-        persistPersonalTaskCache(kv(), new PersonalTaskStore(cached), loadStatus)
+        currentBundle = next
+        persistPersonalTaskCache(kv(), new PersonalTaskStore(next), loadStatus)
         syncState = 'error'
-        void syncBundle(remote, cached)
+        void syncBundle(remote, next)
       } else {
         currentBundle = synced
         persistPersonalTaskCache(kv(), new PersonalTaskStore(synced), loadStatus)
         syncState = 'synced'
       }
       if (!unsubscribeServer && typeof remote.onPersonalTasksChanged === 'function') {
-        unsubscribeServer = remote.onPersonalTasksChanged(() => { void refreshFromServer(remote).catch(() => {}) })
+        unsubscribeServer = remote.onPersonalTasksChanged(() => {
+          if (generation === scopeGeneration) void refreshFromServer(remote).catch(() => {})
+        })
       }
     } catch {
+      if (generation !== scopeGeneration) return
       // Server unavailable: keep working from the localStorage cache; retry on next mount.
       syncState = 'error'
       hydrating = null
@@ -252,7 +391,10 @@ export function hydratePersonalTasks(): Promise<void> {
 
 export function subscribePersonalTasks(onChange: () => void): () => void {
   const onStorage = (event: StorageEvent) => {
-    if (event.key === PERSONAL_TASKS_STORAGE_KEY || event.key === PERSONAL_TASKS_QUARANTINE_KEY) onChange()
+    if (callerScope && (event.key === cacheKey(PERSONAL_TASKS_STORAGE_KEY) || event.key === cacheKey(PERSONAL_TASKS_QUARANTINE_KEY))) {
+      currentBundle = null
+      onChange()
+    }
   }
   window.addEventListener(PERSONAL_TASKS_CHANGED_EVENT, onChange)
   window.addEventListener('storage', onStorage)

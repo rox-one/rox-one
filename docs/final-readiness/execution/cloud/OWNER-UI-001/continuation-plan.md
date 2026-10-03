@@ -8,3 +8,5 @@
 6. Root creates/attaches a focused PR, obtains actual hosted check results, merges the verified head into main and reads back merged SHA/parents/source. Preserve all prior failures and exact external acceptance prerequisites.
 
 Dependencies: source repairs and runner/platform preparation are independent. Final verification follows all source changes and any upstream merge. Git delivery follows successful relevant gates and source review. FullDoD remains false until every original platform acceptance is observed.
+
+Final merge ownership: source_review owns managed installer/manager and the declared installer fixtures; regression_scout owns locale merge, atomic test-file/error-log IO and complete Git inventory; platform_scout owns only merged browser/lifecycle/thin-binding fixtures and actual mounted driver evidence; root owns RPC wire-key correction, integration, qualified build/CI, native CUA, GitHub delivery and result readback. Each product writer freezes before final integration.

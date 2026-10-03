@@ -220,11 +220,8 @@ export function SessionTableHost() {
       .then(({ content }) => {
         if (!cancelled) setCollapsed(parseCollapsedGroups(content))
       })
-      .catch((error) => {
-        console.error('[SessionTable] Failed to load collapsed groups:', error)
-        if (!cancelled) {
-          toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
-        }
+      .catch(() => {
+        // Optional preferences may be unavailable; retain the current table grouping.
       })
     return () => { cancelled = true }
   }, [t])

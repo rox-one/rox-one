@@ -87,20 +87,25 @@ export function useWorkingDirectoryState(
   const [filter, setFilter] = React.useState('')
 
   React.useEffect(() => {
+    let current = true
     setRecentDirs(getRecentWorkingDirs(workspaceId))
-    window.electronAPI?.getHomeDir?.().then((dir: string) => {
-      if (dir) setHomeDir(dir)
-    })
+    setHomeDir('')
+    void window.electronAPI?.getHomeDir?.().then((dir: string) => {
+      if (current && dir) setHomeDir(dir)
+    }).catch(() => { /* Host paths are optional for scoped native sessions. */ })
+    return () => { current = false }
   }, [workspaceId])
 
   React.useEffect(() => {
+    let current = true
     if (workingDirectory) {
-      window.electronAPI?.getGitBranch?.(workingDirectory).then((branch: string | null) => {
-        setGitBranch(branch)
-      })
+      void window.electronAPI?.getGitBranch?.(workingDirectory).then((branch: string | null) => {
+        if (current) setGitBranch(branch)
+      }).catch(() => { if (current) setGitBranch(null) })
     } else {
       setGitBranch(null)
     }
+    return () => { current = false }
   }, [workingDirectory])
 
   React.useEffect(() => {

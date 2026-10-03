@@ -8,7 +8,7 @@
  */
 import { createHash } from 'node:crypto'
 import { accessSync, constants, existsSync, readFileSync, statSync } from 'node:fs'
-import { lstat, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, mkdtemp, open, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import ts from 'typescript'
@@ -216,6 +216,45 @@ async function gitTestInventory(root: string): Promise<string[] | null> {
   return [...new Set(output.split('\0').filter(Boolean))]
 }
 
+/** Check and use the same inode, even if its pathname changes during IO. */
+async function openRegularFile(path: string, flags: number, mode?: number) {
+  // Node does not expose these flags on Windows. Its fallback validates the
+  // directory entry against the already opened handle before reading/writing.
+  const noFollow = process.platform === 'win32' ? 0 : constants.O_NOFOLLOW ?? 0
+  const nonBlock = process.platform === 'win32' ? 0 : constants.O_NONBLOCK ?? 0
+  let file: Awaited<ReturnType<typeof open>>
+  try { file = await open(path, flags | noFollow | nonBlock, mode) }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ELOOP') return null; throw error }
+  let accepted = false
+  try {
+    const entry = noFollow ? undefined : await lstat(path)
+    const inode = await file.stat()
+    if (!inode.isFile() || (entry && !entry.isFile())) return null
+    if (entry && (entry.dev !== inode.dev || entry.ino !== inode.ino)) throw new Error('File identity changed while opening: ' + path)
+    accepted = true
+    return file
+  } finally { if (!accepted) await file.close() }
+}
+
+async function readRegularFile(path: string) {
+  const file = await openRegularFile(path, constants.O_RDONLY)
+  if (!file) return null
+  try { return await file.readFile() } finally { await file.close() }
+}
+
+async function appendExecutionError(path: string, message: string) {
+  let file
+  try { file = await openRegularFile(path, constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | constants.O_EXCL, 0o600) }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+    // Open an existing inode without O_CREAT: a substituted dangling symlink
+    // cannot create a file outside the execution directory on Windows.
+    file = await openRegularFile(path, constants.O_WRONLY | constants.O_APPEND)
+  }
+  if (!file) throw new Error('Execution log is not a regular file')
+  try { await file.writeFile(message) } finally { await file.close() }
+}
+
 /** Match Bun's filename forms; retain the existing explicit *.isolated.ts stage. */
 export async function discoverSuites(inputRoot: string): Promise<SuiteManifest> {
   const root = resolve(inputRoot)
@@ -233,9 +272,13 @@ export async function discoverSuites(inputRoot: string): Promise<SuiteManifest> 
     if (!STANDARD_TEST.test(name) && !ISOLATED_TEST.test(name)) return
     // Do not follow symlinks into dependency checkouts or external profiles.
     // An enumerated source disappearing is an error, not reduced coverage.
-    if (!(await lstat(path)).isFile()) return
-    if (hidden && !ISOLATED_TEST.test(name)) { manifest.discovery.hiddenStandardFiles += 1; return }
-    const content = await readFile(path)
+    const file = await openRegularFile(path, constants.O_RDONLY)
+    if (!file) return
+    let content: Buffer
+    try {
+      if (hidden && !ISOLATED_TEST.test(name)) { manifest.discovery.hiddenStandardFiles += 1; return }
+      content = await file.readFile()
+    } finally { await file.close() }
     const dependencies = imports(content.toString('utf8'))
     const runner: TestRunner = dependencies.has('bun:test') ? 'bun'
       : dependencies.has('@playwright/test') ? 'playwright'
@@ -350,7 +393,9 @@ export async function runSuites(options: {
     const result: SuiteResult = { path: suite.path, runner: suite.runner, status: 'blocked', exitCode: null, command: [], configRoot, log, logSha256: '', durationMs: 0, testCounts: null }
     const started = performance.now()
     try {
-      if (hash(await readFile(join(root, suite.path))) !== suite.sha256) throw new Error('Test source changed since discovery; regenerate the manifest')
+      const source = await readRegularFile(join(root, suite.path))
+      if (!source) throw new Error('Test source is not a regular file; regenerate the manifest')
+      if (hash(source) !== suite.sha256) throw new Error('Test source changed since discovery; regenerate the manifest')
       if (suite.prerequisiteError) throw new Error(suite.prerequisiteError)
       result.command = commandFor(root, suite, directory, bunTimeoutMs, environment)
       const childEnv: NodeJS.ProcessEnv = { ...environment, ROX_CONFIG_DIR: configRoot, CRAFT_CONFIG_DIR: configRoot }
@@ -368,10 +413,11 @@ export async function runSuites(options: {
       }
     } catch (error) {
       result.error = error instanceof Error ? error.message : String(error)
-      await writeFile(log, `${result.error}\n`, { flag: existsSync(log) ? 'a' : 'wx' })
+      await appendExecutionError(log, `${result.error}\n`)
     }
     result.durationMs = Math.round(performance.now() - started)
-    const content = await readFile(log)
+    const content = await readRegularFile(log)
+    if (!content) throw new Error('Execution log is not a regular file')
     result.logSha256 = hash(content)
     result.testCounts = suite.runner === 'bun' ? bunCounts(content.toString('utf8')) : null
     report.results.push(result)

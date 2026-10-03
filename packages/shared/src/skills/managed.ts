@@ -13,7 +13,10 @@ export function pathEntryExists(path: string): boolean {
 
 export function isSkillLinkTo(link: string, target: string): boolean {
   try {
-    return lstatSync(link).isSymbolicLink() && resolve(link, '..', readlinkSync(link)) === resolve(target);
+    if (!lstatSync(link).isSymbolicLink()) return false;
+    const linkedTarget = readlinkSync(link);
+    const normalizedTarget = process.platform === 'win32' && linkedTarget.startsWith('\\\\?\\') ? linkedTarget.slice(4) : linkedTarget;
+    return resolve(link, '..', normalizedTarget) === resolve(target);
   } catch { return false; }
 }
 

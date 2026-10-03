@@ -303,6 +303,7 @@ export class SkillPendingQueue {
         content,
         source: {
           ts: meta.source?.ts ?? ts,
+          ...(meta.source?.owner ? { owner: meta.source.owner } : {}),
           ...(meta.source?.sessionId ? { sessionId: meta.source.sessionId } : {}),
           ...(meta.source?.toolCallStats ? { toolCallStats: meta.source.toolCallStats } : {}),
         },

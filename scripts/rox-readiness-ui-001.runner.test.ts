@@ -1,4 +1,7 @@
-import { afterEach, describe, expect, test } from 'bun:test'
+import { afterEach, describe, expect, spyOn, test } from 'bun:test'
+import { createHash } from 'node:crypto'
+import * as nativeFs from 'node:fs'
+import * as nativeFsPromises from 'node:fs/promises'
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -25,6 +28,81 @@ async function runner() {
 }
 
 describe('UI-001 repository test runner', () => {
+  test('discovery reads the checked inode when its pathname is replaced before reading', async () => {
+    const root = fixture(), api = await runner()
+    const source = "import {test} from 'bun:test'; test('original inode',()=>{});"
+    const replacement = "import {test} from '@playwright/test'; test('replacement pathname',()=>{});"
+    file(root, 'a.test.ts', source)
+    const path = join(root, 'a.test.ts')
+    let swapped = false
+    const swap = () => {
+      if (swapped) return
+      swapped = true
+      nativeFs.renameSync(path, join(root, 'original-inode'))
+      writeFileSync(path, replacement)
+    }
+    const actualLstat = nativeFsPromises.lstat, actualOpen = nativeFsPromises.open
+    const checkedPath = spyOn(nativeFsPromises, 'lstat').mockImplementation((async (pathToCheck: nativeFs.PathLike) => {
+      const result = await actualLstat(pathToCheck)
+      if (String(pathToCheck) === path) swap()
+      return result
+    }) as typeof nativeFsPromises.lstat)
+    const checkedHandle = spyOn(nativeFsPromises, 'open').mockImplementation(async (...args: Parameters<typeof actualOpen>) => {
+      const handle = await actualOpen(...args)
+      if (String(args[0]) === path) {
+        const actualStat = handle.stat.bind(handle)
+        handle.stat = (async () => { const result = await actualStat(); swap(); return result }) as typeof handle.stat
+      }
+      return handle
+    })
+    try {
+      const manifest = await api.discoverSuites(root)
+      expect(swapped).toBe(true)
+      expect(readFileSync(path, 'utf8')).toBe(replacement)
+      expect(manifest.suites).toMatchObject([{ path: 'a.test.ts', runner: 'bun', sha256: createHash('sha256').update(source).digest('hex') }])
+    } finally { checkedPath.mockRestore(); checkedHandle.mockRestore() }
+  }, 20_000)
+
+  test('failure logger keeps its checked inode and refuses a replacement symlink as execution evidence', async () => {
+    const root = fixture(), api = await runner()
+    file(root, 'embedded/package.json', '{"name":"embedded"}')
+    file(root, 'embedded/vitest.config.ts', 'export default {test:{}}')
+    file(root, 'embedded/src/required.test.ts', "import {test} from 'vitest'; test('required',()=>{});")
+    file(root, 'embedded/node_modules/vitest/vitest.mjs', '')
+    const protectedTarget = join(root, 'protected-target'), archivedLog = join(root, 'checked-log-inode')
+    writeFileSync(protectedTarget, 'protected-original\n')
+    const manifest = await api.discoverSuites(root)
+    let swapped = false
+    const swap = (path: string) => {
+      if (swapped) return
+      swapped = true
+      nativeFs.renameSync(path, archivedLog)
+      nativeFs.symlinkSync(protectedTarget, path)
+    }
+    const actualExists = nativeFs.existsSync, actualOpen = nativeFsPromises.open
+    const checkedPath = spyOn(nativeFs, 'existsSync').mockImplementation(path => {
+      const result = actualExists(path)
+      if (result && String(path).endsWith('output.log')) swap(String(path))
+      return result
+    })
+    const checkedHandle = spyOn(nativeFsPromises, 'open').mockImplementation(async (...args: Parameters<typeof actualOpen>) => {
+      const handle = await actualOpen(...args)
+      if (String(args[0]).endsWith('output.log') && typeof args[1] === 'number' && (args[1] & nativeFs.constants.O_APPEND)) {
+        const actualStat = handle.stat.bind(handle)
+        handle.stat = (async () => { const result = await actualStat(); swap(String(args[0])); return result }) as typeof handle.stat
+      }
+      return handle
+    })
+    try {
+      const outcome = await api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence') })
+        .then(report => ({ report }), error => ({ error }))
+      expect(swapped).toBe(true)
+      expect(readFileSync(protectedTarget, 'utf8')).toBe('protected-original\n')
+      expect(readFileSync(archivedLog, 'utf8')).toContain('without execution output')
+      expect(outcome).toMatchObject({ error: expect.objectContaining({ message: 'Execution log is not a regular file' }) })
+    } finally { checkedPath.mockRestore(); checkedHandle.mockRestore() }
+  }, 20_000)
+
   test('actual fast-exit Git, Node and Bun commands retain stdout, stderr and real failure codes', async () => {
     const root = fixture(), api = await runner()
     const git = await api.captureTestCommand(['git', '--version'], { cwd: root })

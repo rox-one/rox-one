@@ -187,7 +187,7 @@ describe('kinds: git-npm (gbrain)', () => {
     const commit = '15b9863d13635d173562a54f55a1d388bfcf546b';
     fs.writeFileSync(path.join(source, '.git', 'HEAD'), `${commit}\n`);
     fs.writeFileSync(path.join(source, 'bun.lock'), 'fixture frozen upstream lock\n');
-    fs.writeFileSync(path.join(ctx.versionDir, 'bin', 'gbrain'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    fs.writeFileSync(path.join(ctx.versionDir, 'bin', process.platform === 'win32' ? 'gbrain.exe' : 'gbrain'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
     fs.writeFileSync(path.join(ctx.versionDir, '.craft-toolchain-install-complete'), JSON.stringify({
       format: 'git-npm-local-source-v1', repo: 'garrytan/gbrain', commit,
     }));

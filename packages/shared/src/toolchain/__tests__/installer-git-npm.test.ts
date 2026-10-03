@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'bun:test';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { installGitNpmPinned } from '../installer';
 
 function makePaths(name: string) {
@@ -34,6 +34,29 @@ function collectRunCmd(impl: (args: string[], options: { cwd?: string }) => Prom
 }
 
 describe('installGitNpmPinned', () => {
+  it('uses managed git and exposes managed git/bun to checkout and install subprocesses', async () => {
+    const { base, workDir, versionDir } = makePaths('managed-git');
+    const git = join(base, 'managed git', 'git.exe');
+    const bun = join(base, 'managed bun', 'bun.exe');
+    const calls: { args: string[]; env?: NodeJS.ProcessEnv }[] = [];
+    try {
+      await installGitNpmPinned({ bun, git, versionDir, repo: REPO, commit: COMMIT, workDir,
+        runCmd: async (args, opts) => {
+          calls.push({ args, env: opts?.env });
+          if (args.includes('checkout')) {
+            writeDetachedHead(opts!.cwd!, COMMIT);
+            writeFileSync(join(opts!.cwd!, 'bun.lock'), 'fake');
+          }
+        },
+      });
+      expect(calls.slice(0, 4).every((call) => call.args[0] === git)).toBe(true);
+      for (const call of calls) {
+        const pathKey = Object.keys(call.env!).find((key) => key.toUpperCase() === 'PATH')!;
+        expect(call.env![pathKey]).toContain(dirname(git));
+        expect(call.env![pathKey]).toContain(dirname(bun));
+      }
+    } finally { rmSync(base, { recursive: true, force: true }); }
+  });
   it('has upstream bun.lock → installs transitives via --frozen-lockfile, then global from checkout', async () => {
     const { base, workDir, versionDir } = makePaths('lock');
     const { calls, fn } = collectRunCmd(async (args, options) => {

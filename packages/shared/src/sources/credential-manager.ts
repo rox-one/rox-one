@@ -389,6 +389,7 @@ export class SourceCredentialManager {
       const config = loadSourceConfig(source.workspaceRootPath, source.config.slug);
       if (config) {
         config.isAuthenticated = false;
+        delete config.builtinCredentialProjection;
         config.connectionStatus = 'needs_auth';
         config.connectionError = errorMessage;
         saveSourceConfig(source.workspaceRootPath, config);

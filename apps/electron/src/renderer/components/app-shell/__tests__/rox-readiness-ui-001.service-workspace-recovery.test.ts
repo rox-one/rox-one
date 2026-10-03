@@ -13,7 +13,7 @@ import {
   buildRouteFromNavigationState, buildRightSidebarParam,
 } from '../../../../shared/route-parser'
 import { isSessionsNavigation, DEFAULT_NAVIGATION_STATE } from '../../../../shared/types'
-import { normalizePanelRouteForReconcile } from '../../../contexts/navigation-reconcile'
+import { preserveRouteQuery, normalizePanelRouteForReconcile } from '../../../contexts/navigation-reconcile'
 
 import { decodePanelEntries, encodePanelEntries } from '../../../lib/panel-url'
 
@@ -51,7 +51,7 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   if (multiple) { params.set('panels', 'home:0.5,notes/note/retained:0.5'); params.set('fi', '0') }
   reconcile(params)
   const navigate = productionClosure(navURL, 'navigate', {
-    parseRoute, resolveRouteNavigationState, parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState, buildRouteFromNavigationState, isSessionsNavigation, navigationOwnerRef: { current: { active: true, revision: 0 } },
+    parseRoute, resolveRouteNavigationState, parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState, buildRouteFromNavigationState, preserveRouteQuery, isSessionsNavigation, navigationOwnerRef: { current: { active: true, revision: 0 } },
     store, updateFocusedPanelRouteAtom, sessionMetaMapAtom: {}, workspaceId: 'a', remoteWorkspaceId: null,
     workspaceSlug: 'a', requestedWorkspaceSlugRef, setRequestedWorkspaceSlug: (value: string) => { requestedWorkspaceSlug = value },
     isReady: true, isSessionsReady: true, initialRouteRestoredRef: { current: true }, isPopstateSwitchRef: { current: false },

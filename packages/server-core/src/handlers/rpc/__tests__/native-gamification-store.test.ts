@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from 'bun:test'
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { createHash } from 'node:crypto'
+import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { NativeGamificationStore } from '../native-gamification'
 import { awardNativeXpAndBroadcast } from '../gamification'
 import type { NativePrincipal } from '../../../authority/native-authority'
@@ -40,6 +42,19 @@ describe('transactional native XP receipts', () => {
     writeFileSync(join(foreign, 'database'), '')
     symlinkSync(join(foreign, 'database'), join(dir, 'native-gamification/progress.sqlite'))
     expect(() => new NativeGamificationStore(dir)).toThrow('custody file')
+  })
+  it('rejects damaged stored achievements without resetting earned XP or crashing profile rendering', () => {
+    const dir = directory(), store = open(dir)
+    store.award(alice, 'session_completed', 'committed-session')
+    const db = new DatabaseSync(join(dir, 'native-gamification/progress.sqlite'))
+    try {
+      const actor = createHash('sha256').update(JSON.stringify(['native-xp-v1', alice.issuer, alice.subject])).digest('hex')
+      const damaged = { ...store.read(alice), quests: {} }
+      db.prepare('UPDATE progress SET state_json=? WHERE actor_hash=?').run(JSON.stringify(damaged), actor)
+      expect(() => store.read(alice)).toThrow('Native XP state is invalid')
+      const raw = db.prepare('SELECT state_json FROM progress WHERE actor_hash=?').get(actor)
+      expect(JSON.parse(String(raw?.state_json)).xp).toBe(25)
+    } finally { db.close() }
   })
   it('fails closed when authorizer returns false or the original current context guard is absent/stale', () => {
     const ctx: RequestContext = { principal: alice, workspaceId: 'own', clientId: 'minted-client', webContentsId: null }

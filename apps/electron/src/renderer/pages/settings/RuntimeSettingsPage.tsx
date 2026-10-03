@@ -345,7 +345,7 @@ function ToolRow({ tool, isUpdating, onUpdate }: ToolRowProps) {
 export default function RuntimeSettingsPage() {
   const { t } = useTranslation()
   const { available, isLoading, tools, updateTool, updating } = useToolchainStatus()
-  const { activeWorkspaceId, llmConnections, refreshLlmConnections } = useAppShellContext()
+  const { activeWorkspaceId, llmConnections, runtimeSummary, refreshLlmConnections } = useAppShellContext()
   const activeSessionId = useAtomValue(activeSessionIdAtom)
   const [disabledTools, setDisabledTools] = useState<ToolchainToolName[]>([])
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>(DEFAULT_THINKING_LEVEL)
@@ -368,7 +368,7 @@ export default function RuntimeSettingsPage() {
       llmConnections.map((c) => ({
         value: c.slug,
         label: c.name,
-        description: [c.providerType, c.defaultModel].filter(Boolean).join(' · '),
+        description: [c.providerType === 'omp' ? ROX_VISIBLE_TERMS.product : c.providerType, c.defaultModel].filter(Boolean).join(' · '),
       })),
     [llmConnections],
   )
@@ -592,7 +592,23 @@ export default function RuntimeSettingsPage() {
               title={t('settings.runtime.llmConnections')}
               description={t('settings.runtime.llmConnectionsDesc')}
             >
-              {llmConnections.length === 0 ? (
+              {runtimeSummary ? (
+                <SettingsCard>
+                  <div className="px-4 py-3.5 space-y-1" data-runtime-configuration="native">
+                    <div className="text-sm font-medium">{runtimeSummary.providerType === 'omp' ? ROX_VISIBLE_TERMS.product : runtimeSummary.providerType}</div>
+                    <div className="text-xs text-muted-foreground">
+                      <span className="text-foreground/70">{t('settings.runtime.llmProvider')}: </span>
+                      <span className="font-mono">{runtimeSummary.providerType === 'omp' ? ROX_VISIBLE_TERMS.product : runtimeSummary.providerType}</span>
+                    </div>
+                    {runtimeSummary.defaultModel && (
+                      <div className="text-xs text-muted-foreground">
+                        <span className="text-foreground/70">{t('settings.runtime.llmModel')}: </span>
+                        <span className="font-mono">{runtimeSummary.defaultModel}</span>
+                      </div>
+                    )}
+                  </div>
+                </SettingsCard>
+              ) : llmConnections.length === 0 ? (
                 <SettingsCard>
                   <div className="px-4 py-6 text-center space-y-3">
                     <p className="text-sm text-muted-foreground">{t('settings.runtime.llmEmpty')}</p>

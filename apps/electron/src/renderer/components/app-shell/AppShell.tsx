@@ -331,11 +331,11 @@ function AppShellContent({
   const [shellSidebarSlot, setShellSidebarSlot] = useState<HTMLElement | null>(null)
   const extraScreens = visibleExtraScreens(useAtomValue(enabledExtraScreenIdsAtom))
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
-    return loadShellLayout(null).sidebarWidth
+    return loadShellLayout(activeWorkspaceId).sidebarWidth
   })
   // Session list width in pixels (min 240, max 480)
   const [storedSessionListWidth, setSessionListWidth] = React.useState(() => {
-    return loadShellLayout(null).navigatorWidth
+    return loadShellLayout(activeWorkspaceId).navigatorWidth
   })
 
   // Hides both sidebar and navigator (CMD+. toggle)
@@ -586,7 +586,7 @@ function AppShellContent({
   // without this the navigator column stayed mounted and empty beside them.
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
   const hideModuleMiddleNav =
-    isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -899,7 +899,7 @@ function AppShellContent({
   // Track which expandable sidebar items are collapsed
   // Labels are collapsed by default; user preference is persisted once toggled
   const [collapsedItems, setCollapsedItems] = React.useState<Set<string>>(() => {
-    const saved = loadShellLayout(null).collapsedSectionIds
+    const saved = loadShellLayout(activeWorkspaceId).collapsedSectionIds
     if (saved.length > 0) return new Set(saved)
     return new Set(['nav:labels'])
   })
@@ -1035,7 +1035,7 @@ function AppShellContent({
 
     setWorkspaceUiStateId(activeWorkspaceId)
     previousWorkspaceRef.current = activeWorkspaceId
-  }, [activeWorkspaceId])
+  }, [activeWorkspaceId, sidebarResize.handleKeyCancel, navigatorResize.handleKeyCancel])
 
   // A live update is newer than the initial snapshot; obsolete loads must not
   // resurrect deleted entities or cross a workspace boundary.

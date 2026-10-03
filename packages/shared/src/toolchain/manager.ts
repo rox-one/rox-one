@@ -10,12 +10,13 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { downloadArtifact, HttpError, NetworkError, ShaMismatchError } from './downloader';
-import { runCommand } from './exec';
+import { executableCandidates, runCommand } from './exec';
 import { getGitLock } from './git-locks';
 import { getPipRequirements } from './pip-locks';
 import { cleanupOldVersions, flipCurrent, installGitNpmPinned, installTool } from './installer';
 import { currentPlatform, TOOLCHAIN_MANIFEST } from './manifest';
 import { createResolver } from './resolver';
+import { bootstrapToolName, getWindowsBootstrapRuntime, type WindowsBootstrapRuntime } from './windows-bootstrap';
 import { StatusEmitter } from './status';
 import type {
   ToolArtifact,
@@ -57,6 +58,7 @@ export interface ManagerOptions {
   /** Сколько загрузок/установок одновременно. */
   concurrency?: number;
   pathEnv?: string;
+  windowsBootstrap?: WindowsBootstrapRuntime | null;
   /**
    * Инструменты tier default-on, которые ensureAll пропускает
    * (config `toolchain.disabled`; связывание storage → manager — в toolchain-runtime.ts).
@@ -85,6 +87,8 @@ export interface ManagerOptions {
    * Default writes requirements + invokes toolchain uv against --target py_packages.
    */
   pipInstallImpl?: (ctx: PipInstallContext) => Promise<void>;
+  /** DI for managed Python installation; production uses the Node-safe runner. */
+  pythonRunCmd?: typeof runCommand;
 }
 
 export interface GitNpmInstallContext {
@@ -94,6 +98,8 @@ export interface GitNpmInstallContext {
   versionDir: string;
   /** toolchain-первый bun executable. */
   bun: string;
+  /** Managed/system git resolved before the checkout (never bare PATH-only git). */
+  git?: string;
 }
 
 export interface BrewInstallContext {
@@ -198,6 +204,7 @@ async function defaultGitNpmInstall(ctx: GitNpmInstallContext): Promise<void> {
   const workDir = await fs.promises.mkdtemp(path.join(tmpdir(), 'craft-gitnpm-'));
   await installGitNpmPinned({
     bun: ctx.bun,
+    git: ctx.git,
     versionDir: ctx.versionDir,
     repo: lock.repo,
     commit: lock.commit,
@@ -227,7 +234,19 @@ export function createManager(
   const platform = opts.platform ?? currentPlatform();
   const concurrency = opts.concurrency ?? 2;
   const emitter = new StatusEmitter();
-  const resolver = createResolver(paths, { manifest, pathEnv: opts.pathEnv });
+  const bootstrap = () => platform === 'win32-x64'
+    ? (opts.windowsBootstrap === undefined ? getWindowsBootstrapRuntime() : opts.windowsBootstrap) : null;
+  const resolverPlatform: NodeJS.Platform = platform.startsWith('win32-') ? 'win32' : platform.startsWith('linux-') ? 'linux' : 'darwin';
+  const resolver = createResolver(paths, { manifest, platform: resolverPlatform, pathEnv: opts.pathEnv, windowsBootstrap: opts.windowsBootstrap });
+
+  async function nativeStatus(entry: ToolEntry): Promise<ToolStatus | null> {
+    const native = bootstrap();
+    if (!native || !bootstrapToolName(entry.name)) return null;
+    const executable = await resolver.findExecutable(entry.name);
+    // Availability only: installer-owned files never become managed state.json.
+    return { name: entry.name, phase: executable ? 'ready' : 'missing', tier: entry.tier,
+      ...(executable ? { installedVersion: executable.startsWith(paths.toolchainDir + path.sep) ? entry.version : `installer-${native.mode}` } : {}) };
+  }
 
   // default-on инструменты из этого списка ensureAll пропускает (opt-in никогда не ставит).
   let disabledTools = new Set<ToolName>(opts.disabledTools ?? []);
@@ -252,6 +271,38 @@ export function createManager(
     if (tier === 'opt-in') return false;
     if (tier === 'default-on' && disabledTools.has(entry.name)) return false;
     return true;
+  }
+
+  /** A version directory alone does not prove a runnable installation. */
+  function hasInstalledFiles(entry: ToolEntry, artifact: ToolArtifact | undefined, installedPath: string): boolean {
+    if (!fs.existsSync(installedPath)) return false;
+    const currentDir = path.join(paths.toolchainDir, entry.name, 'current');
+    if (!fs.existsSync(currentDir)) return false;
+    const win = platform === 'win32-x64';
+    const filePresent = (binRel: string, executable = false): boolean => {
+      try {
+        for (const dir of [installedPath, currentDir]) {
+          const file = path.join(dir, binRel);
+          if (!fs.statSync(file).isFile()) return false;
+          if (executable && !win) fs.accessSync(file, fs.constants.X_OK);
+        }
+        return true;
+      } catch { return false; }
+    };
+    if (entry.kind === 'pip') {
+      try {
+        if (![installedPath, currentDir].every((dir) => fs.statSync(path.join(dir, 'py_packages')).isDirectory())) return false;
+      } catch { return false; }
+      // Library-only pip entries intentionally do not expose a console launcher.
+      if (!entry.pipModule) return true;
+    }
+    if (entry.kind === 'git-npm' || (entry.kind === 'pip' && entry.pipModule)) {
+      const names = executableCandidates(entry.systemBinary ?? entry.name, win)
+        .filter((name) => !win || /\.(exe|com|cmd|bat)$/i.test(name));
+      return names.some((name) => filePresent(path.join('bin', name), true));
+    }
+    const binPaths = artifact?.binPaths ?? [];
+    return binPaths.length > 0 && binPaths.every((binRel) => filePresent(binRel));
   }
 
   // Очередь активного ensureAll (для ensureIdle в тестах / перед выходом)
@@ -296,7 +347,12 @@ export function createManager(
     // stable link .pyinstall (binPaths манифеста относительны current).
     const toolRoot = path.join(paths.toolchainDir, 'python');
     const versionDir = path.join(toolRoot, entry.version);
-    await runCommand([uv, 'python', 'install', entry.version, '--install-dir', versionDir]);
+    // Keep the installation private: uv otherwise publishes user-wide Python
+    // launchers and registers it in the Windows registry even with --install-dir.
+    await (opts.pythonRunCmd ?? runCommand)([
+      uv, 'python', 'install', entry.version, '--install-dir', versionDir,
+      '--no-bin', '--no-registry', '--no-config', '--cache-dir', path.join(paths.downloadsDir, 'uv-cache'),
+    ]);
 
     // Находим cpython-директорию (ручное имя содержит patch-версию/платформу,
     // в манифест его не зашить) и ссылаемся на неё стабильным .pyinstall.
@@ -306,7 +362,8 @@ export function createManager(
     const link = path.join(versionDir, '.pyinstall');
     await fs.promises.rm(link, { force: true, recursive: true });
     // win32: без явного типа symlink каталога падает (EPERM/EINVAL) — 'junction'.
-    await fs.promises.symlink(cpython, link, process.platform === 'win32' ? 'junction' : undefined);
+    const win = process.platform === 'win32';
+    await fs.promises.symlink(win ? path.join(versionDir, cpython) : cpython, link, win ? 'junction' : undefined);
     await flipCurrent(toolRoot, entry.version, versionDir);
     await cleanupOldVersions(toolRoot, entry.version);
     return { installedPath: versionDir };
@@ -337,11 +394,17 @@ export function createManager(
         const toolRoot = path.join(paths.toolchainDir, entry.name);
         const versionDir = path.join(toolRoot, entry.version);
         await fs.promises.rm(versionDir, { recursive: true, force: true });
-        await (opts.gitNpmInstallImpl ?? defaultGitNpmInstall)({ entry, paths, versionDir, bun });
-        if (!(await hasUsableInstall(entry, versionDir, entry.version))) {
+        const git = await resolver.findExecutable('git');
+        if (!git && !opts.gitNpmInstallImpl) throw new Error('git not found: git-npm tools require git (dependsOn git)');
+        await (opts.gitNpmInstallImpl ?? defaultGitNpmInstall)({ entry, paths, versionDir, bun, git: git ?? undefined });
+        // Validate the completed version before its current selector is flipped.
+        if (!(await hasUsableInstall(entry, versionDir, entry.version, false))) {
           throw new Error(`git-npm installation is incomplete: ${entry.name}@${entry.version}`);
         }
         await flipCurrent(toolRoot, entry.version, versionDir);
+        if (!hasInstalledFiles(entry, artifact, versionDir)) {
+          throw new Error(`git-npm install did not produce a usable launcher for ${entry.name}`);
+        }
         await cleanupOldVersions(toolRoot, entry.version);
         const result = { installedPath: versionDir, installedVersion: entry.version };
         await persistTool(entry.name, result);
@@ -435,43 +498,68 @@ export function createManager(
   }
 
   /** A ready git-npm version must retain its verified source and a usable managed launcher. */
-  async function hasUsableInstall(entry: ToolEntry, installedPath: string, installedVersion: string): Promise<boolean> {
+  async function hasUsableInstall(entry: ToolEntry, installedPath: string, installedVersion: string, requireCurrent = true): Promise<boolean> {
     if (!fs.existsSync(installedPath)) return false;
     if (entry.kind !== 'git-npm') return true;
     const lock = getGitLock(entry.name, installedVersion);
     if (!lock || path.resolve(installedPath) !== path.resolve(paths.toolchainDir, entry.name, installedVersion)) return false;
-    const sourceDir = path.join(installedPath, 'source');
     const isWithin = (root: string, file: string): boolean => {
       const relative = path.relative(root, file);
       return !!relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
     };
     try {
-      const [root, versionRoot, sourceRoot, markerRaw, head] = await Promise.all([
+      const [root, versionRoot] = await Promise.all([
         fs.promises.realpath(paths.toolchainDir),
         fs.promises.realpath(installedPath),
-        fs.promises.realpath(sourceDir),
-        fs.promises.readFile(path.join(installedPath, TOOLCHAIN_INSTALL_COMPLETE_MARKER), 'utf8'),
-        fs.promises.readFile(path.join(sourceDir, '.git', 'HEAD'), 'utf8'),
       ]);
-      if (!isWithin(root, versionRoot) || !isWithin(versionRoot, sourceRoot)) return false;
-      const marker = JSON.parse(markerRaw);
-      if (marker?.format !== 'git-npm-local-source-v1' || marker.repo !== lock.repo || marker.commit !== lock.commit) return false;
-      if (head.trim() !== lock.commit) return false;
-      const frozenLock = ['bun.lock', 'bun.lockb'].find((name) => fs.existsSync(path.join(sourceDir, name)));
-      if (!frozenLock || !(await fs.promises.stat(path.join(sourceDir, frozenLock))).isFile()) return false;
-      const binary = entry.systemBinary ?? entry.name;
-      const names = process.platform === 'win32' ? [`${binary}.exe`, `${binary}.cmd`, binary] : [binary];
-      for (const name of names) {
-        try {
-          const launcher = path.join(installedPath, 'bin', name);
-          const realLauncher = await fs.promises.realpath(launcher);
-          if (!isWithin(versionRoot, realLauncher) || !(await fs.promises.stat(realLauncher)).isFile()) continue;
-          await fs.promises.access(launcher, process.platform === 'win32' ? fs.constants.F_OK : fs.constants.X_OK);
-          return true;
-        } catch {
-          // Try the other platform launcher names; a dangling link is missing.
+      if (!isWithin(root, versionRoot)) return false;
+      const layouts = [{ directory: installedPath, realRoot: versionRoot, allowVersionLinks: false }];
+      if (requireCurrent) {
+        const currentDir = path.join(paths.toolchainDir, entry.name, 'current');
+        const [currentRoot, currentStat] = await Promise.all([
+          fs.promises.realpath(currentDir), fs.promises.lstat(currentDir),
+        ]);
+        if (currentRoot !== versionRoot) {
+          // A link/junction must select this exact installed version. Windows
+          // may instead publish a physical copy when junctions are unavailable.
+          if (platform !== 'win32-x64' || currentStat.isSymbolicLink() || !isWithin(root, currentRoot)) return false;
+          layouts.push({ directory: currentDir, realRoot: currentRoot, allowVersionLinks: true });
         }
       }
+      const win = platform === 'win32-x64';
+      const names = executableCandidates(entry.systemBinary ?? entry.name, win).filter((name) => !win || /\.(exe|com|cmd|bat)$/i.test(name));
+      for (const layout of layouts) {
+        const sourceDir = path.join(layout.directory, 'source');
+        const [sourceRoot, markerRaw, head] = await Promise.all([
+          fs.promises.realpath(sourceDir),
+          fs.promises.readFile(path.join(layout.directory, TOOLCHAIN_INSTALL_COMPLETE_MARKER), 'utf8'),
+          fs.promises.readFile(path.join(sourceDir, '.git', 'HEAD'), 'utf8'),
+        ]);
+        if (!isWithin(layout.realRoot, sourceRoot)) return false;
+        const marker = JSON.parse(markerRaw);
+        if (marker?.format !== 'git-npm-local-source-v1' || marker.repo !== lock.repo || marker.commit !== lock.commit) return false;
+        if (head.trim() !== lock.commit) return false;
+        const frozenLock = ['bun.lock', 'bun.lockb'].find((name) => fs.existsSync(path.join(sourceDir, name)));
+        if (!frozenLock || !(await fs.promises.stat(path.join(sourceDir, frozenLock))).isFile()) return false;
+        let usableLauncher = false;
+        for (const name of names) {
+          try {
+            const launcher = path.join(layout.directory, 'bin', name);
+            const realLauncher = await fs.promises.realpath(launcher);
+            // fs.cp's Windows fallback preserves links into the same verified
+            // version. Links to another version or an external tree are denied.
+            if ((!isWithin(layout.realRoot, realLauncher) && !(layout.allowVersionLinks && isWithin(versionRoot, realLauncher))) ||
+              !(await fs.promises.stat(realLauncher)).isFile()) continue;
+            await fs.promises.access(launcher, win ? fs.constants.F_OK : fs.constants.X_OK);
+            usableLauncher = true;
+            break;
+          } catch {
+            // Try the other platform launcher names; a dangling link is missing.
+          }
+        }
+        if (!usableLauncher) return false;
+      }
+      return true;
     } catch {
       // Legacy, interrupted and malformed layouts are repaired by the normal installer.
     }
@@ -485,7 +573,8 @@ export function createManager(
     if (!installed || !installed.installedVersion) return { entry, artifact, reason: 'missing' };
     if (installed.installedVersion !== entry.version) return { entry, artifact, reason: 'outdated' };
     // версия совпала, но директория могли подтереть — проверяем факт
-    if (!(await hasUsableInstall(entry, installed.installedPath, installed.installedVersion))) return { entry, artifact, reason: 'missing' };
+    if (!hasInstalledFiles(entry, artifact, installed.installedPath) ||
+      !(await hasUsableInstall(entry, installed.installedPath, installed.installedVersion))) return { entry, artifact, reason: 'missing' };
     return null;
   }
 
@@ -496,6 +585,8 @@ export function createManager(
     for (const entry of manifest) {
       // Инструмента нет на этой платформе (матрица) → в статусе не показываем.
       if (entry.platforms && !entry.platforms.includes(platform)) continue;
+      const native = await nativeStatus(entry);
+      if (native) { statuses.push(native); continue; }
       const kind = entry.kind ?? 'binary';
       const artifact = entry.artifacts[platform];
       const installed = state.tools[entry.name];
@@ -550,7 +641,10 @@ export function createManager(
         continue;
       }
 
-      if (installed?.installedVersion && await hasUsableInstall(entry, installed.installedPath, installed.installedVersion)) {
+      if (installed?.installedVersion && (installed.installedVersion === entry.version
+        ? hasInstalledFiles(entry, artifact, installed.installedPath)
+        : fs.existsSync(installed.installedPath)) &&
+        await hasUsableInstall(entry, installed.installedPath, installed.installedVersion)) {
         statuses.push(
           installed.installedVersion === entry.version
             ? {
@@ -584,6 +678,7 @@ export function createManager(
     const plan: WorkItem[] = [];
     for (const entry of manifest) {
       if (entry.platforms && !entry.platforms.includes(platform)) continue;
+      if (bootstrap() && bootstrapToolName(entry.name)) continue;
       // tier-фильтр: core всегда; default-on если не disabled; opt-in — только update(name).
       if (!includeInEnsureAll(entry)) continue;
       // brew/detect/pip kinds не имеют toolchain-установки в ensureAll
@@ -605,8 +700,16 @@ export function createManager(
         try {
           const st = await readStateFile(paths.stateFile);
           for (const [n, meta] of Object.entries(st.tools)) {
-            if (meta?.installedVersion && fs.existsSync(meta.installedPath)) {
+            const entry = manifest.find((entry) => entry.name === n);
+            if (entry && meta?.installedVersion && hasInstalledFiles(entry, entry.artifacts[platform], meta.installedPath) &&
+              await hasUsableInstall(entry, meta.installedPath, meta.installedVersion)) {
               installedNames.add(n as ToolName);
+            }
+          }
+          // Installer-owned Node/Git satisfy dependencies without fake managed state.
+          if (bootstrap()) {
+            for (const entry of manifest) {
+              if (bootstrapToolName(entry.name) && await resolver.findExecutable(entry.name)) installedNames.add(entry.name);
             }
           }
         } catch {
@@ -628,7 +731,8 @@ export function createManager(
             const st = await readStateFile(paths.stateFile);
             for (const w of batch) {
               const meta = st.tools[w.entry.name];
-              if (meta?.installedVersion && meta.installedPath && fs.existsSync(meta.installedPath)) {
+              if (meta?.installedVersion && meta.installedPath && hasInstalledFiles(w.entry, w.artifact, meta.installedPath) &&
+                await hasUsableInstall(w.entry, meta.installedPath, meta.installedVersion)) {
                 installedNames.add(w.entry.name);
               }
             }
@@ -792,6 +896,9 @@ export function createManager(
       }
 
       await flipCurrent(toolRoot, entry.version, versionDir);
+      if (!hasInstalledFiles(entry, undefined, versionDir)) {
+        throw new Error(`pip install did not produce usable files for ${entry.name}`);
+      }
       await cleanupOldVersions(toolRoot, entry.version);
 
       const result = { installedPath: versionDir, installedVersion: entry.version };
@@ -804,6 +911,11 @@ export function createManager(
   }
 
   async function update(name: ToolName): Promise<ToolStatus> {
+    const nativeEntry = manifest.find((entry) => entry.name === name);
+    if (nativeEntry) {
+      const native = await nativeStatus(nativeEntry);
+      if (native) return setStatus(native);
+    }
     const entry = manifest.find((e) => e.name === name);
     if (!entry) throw new Error(`unknown tool: ${name}`);
     const kind = entry.kind ?? 'binary';
@@ -821,6 +933,24 @@ export function createManager(
       const status = { name, phase: 'missing' as const };
       setStatus(status);
       return status;
+    }
+    // OpenClaw intentionally requires its own exact managed Node. Native
+    // prerequisite reuse must not weaken that launcher contract or strand a
+    // first-time explicit OpenClaw install. This is not an ensureAll duplicate.
+    if (name === 'openclaw' && bootstrap()) {
+      const node = manifest.find((tool) => tool.name === 'node');
+      const nodeArtifact = node?.artifacts[platform];
+      if (!node || !nodeArtifact) return setStatus({ name, phase: 'error', error: 'OPENCLAW_INSTALL_FAILED' });
+      const nodeVersionDir = path.join(paths.toolchainDir, 'node', node.version);
+      const nodeMarker = path.join(paths.toolchainDir, 'node', 'current', TOOLCHAIN_INSTALL_COMPLETE_MARKER);
+      const ready = async () => hasInstalledFiles(node, nodeArtifact, nodeVersionDir) &&
+        await fs.promises.readFile(nodeMarker, 'utf8').catch(() => '') === `node@${node.version}\n`;
+      if (!await ready()) {
+        await installSerialized({ entry: node, artifact: nodeArtifact, reason: 'missing' });
+      }
+      if (!await ready()) {
+        return setStatus({ name, phase: 'error', error: 'OPENCLAW_INSTALL_FAILED' });
+      }
     }
     // форс: игнорируем текущее состояние (через общий per-tool mutex)
     await installSerialized({ entry, artifact, reason: 'outdated' });
