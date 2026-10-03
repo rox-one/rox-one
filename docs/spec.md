@@ -1,3 +1,7 @@
+# Golden Gate meeting request ownership recovery (2026-10-03)
+
+Recover the proven missing request-ownership semantics in the current routed local MeetingsPage: committed workspace generations, latest per-meeting reads, coalesced writes, no stale navigation/errors, and preservation of text edited during submission. Catalogue snapshots retain newer pushed changes. Notes already owns equivalent read/save generations; no unused Notes helper is imported. Source PR584 and adapted-export hashes are in docs/golden-meeting-request-source.json. Microphone/provider/native authorization acceptance remains outside this bounded UI callback proof.
+
 ## Golden Gate device diagnostics recovery — 2026-10-03
 
 Owner: integration worker in isolated `codex/recover-golden-diagnostics-20261003`. Recover the genuinely absent native diagnostics slice from preserved branch `codex/golden-gate-workspace`, exact revision `5def9ffd36dc160fdc7c908784e0ef97ba6a732e` (closed unmerged PR #584). Source file hashes and the 90 recovered locale keys are recorded in `docs/golden-diagnostics-source.json`.
@@ -535,6 +539,11 @@ Credential locators must contain their discriminator and every required value as
 
 Acceptance: negative data/getter cases for every locator variant and required field, zero getter invocations, unchanged state after rejection, existing valid/frozen positives, complete core suite and TypeScript, unchanged comprehensive CI command, and actual built-server HTTP/WebSocket authentication, shutdown and persistence/restart checks. Bind results to the delivered revision; Linux reproduction and hosted macOS checks are separate evidence.
 
+## Recovered connection audit action projection — 2026-10-03
+
+Owner: branch integration lead. Source: checkpoint/session-audit-20260821-craft-agents @86154e8c812746261282bb4c517b16ad7becc0ec; dependency: delivered Connections producer PR1414 and current canonical WorkGraph SQLite. Recover the missing additive schema3 action column and creation audit projection. V1/V2 migration SQL/checksums must remain identical; migration3 SQL matches the source. Older ledger rows remain immutable and expose event type as the fallback action. Only metadata action labels cross transport; never restore payload content.
+
+Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/installation, schema3 restart, current actions plus creation event, foreign workspace exclusion and update/delete trigger refusal. The negative control runs the actual new test against unchanged main. Existing kernel/connection/revalidation and consumed server types must pass. Deliver independently and retain the source branch. This supplies audit metadata for the separately recovered Connections UI; no native/provider acceptance is claimed.
 
 ### Calendar synchronization ownership recovery (2026-10-03)
 
