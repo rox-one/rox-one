@@ -50,6 +50,7 @@ import { MEETINGS_LOCAL_IPC, type MeetingsLocalApi } from '../shared/meetings-lo
 import { MAIL_IPC, type MailLocalApi } from '../shared/mail-local'
 import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
 import { createOpenClawHostControlBridge } from './openclaw-host-control'
+import { createDeviceDiagnosticsBridge } from './device-diagnostics'
 
 // ---------------------------------------------------------------------------
 // Client interface — common surface for both RoutedClient and WsRpcClient
@@ -719,6 +720,12 @@ client.onConnectionStateChanged((state) => {
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)
+// Host diagnostics always describe this device, including for remote workspaces.
+if (process.isMainFrame) {
+  contextBridge.exposeInMainWorld('deviceDiagnostics', createDeviceDiagnosticsBridge(
+    (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+  ))
+}
 if (openClawHostControl) {
   contextBridge.exposeInMainWorld('openClawHostControl', openClawHostControl)
 }

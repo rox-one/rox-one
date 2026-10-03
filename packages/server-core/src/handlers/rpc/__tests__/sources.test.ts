@@ -184,6 +184,10 @@ describe('sources:get — local default source seeding', () => {
       'applications',
       'telegram-support',
       'craft-agents-docs',
+      'exa',
+      'firecrawl',
+      'brave',
+      'e2b',
       'deepwiki',
       'context7',
       'firecrawl-mcp',
@@ -196,8 +200,9 @@ describe('sources:get — local default source seeding', () => {
       'mem0',
       ...(process.platform === 'win32' ? ['everything-mcp', 'windows-commander', 'windows-mcp'] : []),
     ])
-    expect(loadSourceConfig(rootPath, 'exa')?.enabled).toBe(false)
-    expect(loadSourceConfig(rootPath, 'firecrawl')?.enabled).toBe(false)
+    for (const slug of ['exa', 'firecrawl', 'brave', 'e2b']) {
+      expect(loadSourceConfig(rootPath, slug)).toMatchObject({ enabled: true, type: 'api' })
+    }
 
     const notesConfigPath = join(rootPath, 'sources', 'notes', 'config.json')
     const before = readFileSync(notesConfigPath, 'utf-8')

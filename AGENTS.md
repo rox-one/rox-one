@@ -3,7 +3,7 @@
 Этот файл читают кодовые агенты, работающие в этом репозитории (форк `craft-ai-agents/craft-agents-oss`), и привязан к нашей runtime-интеграции с OMP.
 
 ## Стек и воркфлоу
-- Менеджер: **Bun** (`bun install`, isolated linker).
+- Менеджер: **Bun** (`bun install`, hoisted linker из `bunfig.toml`).
 - Тесты: `bun test <path>`; typecheck: `bun run tsc --noEmit` внутри пакета.
 - i18n: ВСЕ user-facing строки — через `t()` из react-i18next; переводы в `packages/shared/src/i18n/locales/*.json` (10 локалей: de, en, es, fr, hu, ja, pl, ru, zh-Hans, zh-Hant; ru — дефолт UI-язык, `fallbackLng: ['ru','en']`). Новый ключ → все 10 файлов, ключи ASCII-сортировкой; паритет проверяется `bun test packages/shared/src/i18n`.
 - Русские плюральные ключи: `_one/_few/_many`; `_other` добавляем по польской конвенции.

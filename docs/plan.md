@@ -1,3 +1,10 @@
+## Golden Gate device diagnostics recovery plan — 2026-10-03
+
+1. Historical scout identified exact source revision and runtime files absent from main; integration worker audited the diagnostic dependency closure and recorded source hashes.
+2. Recover the 13 source modules/tests, localized keys and minimal TopBar/main/preload wiring, preserving current shell behavior.
+3. Cover arbitrary command/path/sender denial, native cancellation/replacement, bounded/redacted logs including links/FIFOs, browser closed cost and open/tab/close behavior.
+4. Run targeted tests, complete package types and WebUI/Electron main/preload/renderer builds; publish a separate PR after main/release reconciliation. Lead owns independent review and serial main merge; all original branches remain.
+5. Recover remaining panel/native/request/task clusters in coherent subsequent slices with actual callers and behavior evidence.
 
 Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
 ## Session UX branch integration plan — 2026-10-03
@@ -637,11 +644,24 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 3. Verify actual installed legacy parser/ProseMirror/serializer parse-edit-export-reopen, official-engine roundtrips, fold state normalization, malformed markers, bounded resizing, read-only refusal and locale parity; run consumed Electron types and renderer build.
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
 
-## Credential locator own-data repair — 2026-10-03
 
-Implementation unit U1. Owner: core repair lead; independent review owner: locator reviewer. Dependency: the existing `CredentialRefRegistry` boundary and its ten locator variants. Use an isolated branch from current `main`; preserve unrelated work and the frozen lockfile.
+## Credential locator repair plan — 2026-10-03
 
-1. Replace property reads from the original locator with a null-prototype snapshot of validated own enumerable data descriptors. Require an own descriptor `value`; preserve readonly/frozen values and existing field normalization.
-2. Add required-field inherited data/getter cases across every variant, accessor descriptor inheritance controls, rejected persistent writes, malformed reload cases and frozen positive controls. Restore prototype mutations and temporary data in `finally` blocks.
-3. Independently review the exact candidate and run Bun 1.3.14 focused/full core tests, core TypeScript and unchanged `validate:ci`. Retain the earlier red runs and negative controls as revision-bound history; capture new failures and diagnostics without weakening assertions or timeouts.
-4. Publish the reviewed commit in a dedicated PR, resolve actionable feedback and required checks, merge into `main`, then read back and validate the merged revision. Record the PR, source hashes, commands, exits, skips and cleanup receipt in the delivery report.
+| Task | Owner | Depends on | Owned files | Verification |
+|---|---|---|---|---|
+| LOC-01: Audit current main and merged PR lineage | Lead + independent scouts | none | task-owned evidence | exact remote SHA; validate current source rather than stale PR body |
+| LOC-02: Add inherited-property regression matrix | locator_audit worker | LOC-01 | credential-types.test.ts | red run on original validator, restoration of polluted prototype before assertions |
+| LOC-03: Capture only own descriptor values | Lead | LOC-02 red proof | credential-types.ts | green focused test, every required field rejects inherited substitution |
+| LOC-04: Validate current integration and built runtime | Lead + independent reviewer | LOC-03 | isolated Linux dependencies/artifacts; task-owned logs | full core/types, validate:ci, WebUI types, three builds and built lifecycle |
+| LOC-05: Publish, review and merge main | Lead | LOC-04 | scoped PR and verification receipt | exact pushed HEAD, check readback, merge SHA and main ancestry; retain unrelated work |
+
+The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
+
+## Credential locator persistence regression delivery — 2026-10-03
+
+Implementation unit U1. Owner: core repair lead; independent review owner: locator reviewer. Dependencies: PR #1407's own-data validator and existing ten-variant regression matrix, current main workflow and the registry persistence contract.
+
+1. Preserve current main's validator and tests; reconcile the parallel repair without duplicate test matrices. Add frozen positives under prototype pollution, inherited descriptor getter controls and rejected-write/reload coverage for reference and version state.
+2. Review the exact integrated commit independently. Run pinned frozen Linux focused/full core tests, core TypeScript, unchanged `validate:ci` and the workflow's MCP onboarding tests. Capture commands, exits, diagnostics, skips and exact source hashes; retain earlier failed controls as history.
+3. Publish the verified integration in PR #1413, resolve actionable feedback and merge into `main` under the user's explicit source/GitHub authorization. Read back the pushed and merged SHAs and verify actual merged-source behavior.
+4. Remove only task-owned test resources, retain evidence and report revision-bound results. Preserve unrelated work, credentials, lockfile and repository policy; deployment and broad feature acceptance remain separate.
