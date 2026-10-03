@@ -1,4 +1,4 @@
-import type { RuntimeAgentObservation, RuntimeEvent, RuntimeObservation, RuntimeTraceSnapshot, RuntimeEventsPage, RuntimePayloadPage, TraceCoverage } from './types'
+import type { RuntimeAgentObservation, RuntimeEvent, RuntimeObservation, RuntimeTraceSnapshot, RuntimeEventsPage, RuntimePayloadPage, RuntimeLaunch, TraceCoverage } from './types'
 
 type Check = (value: unknown) => boolean
 const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -33,7 +33,9 @@ const tool = shape({ name: id }, { input: content, result: content, modelContent
 const terminal = shape({ command: string }, { shell: string, cwd: string, stdout: content, stderr: content, exitCode: measurement(number), durationMs: numericMeasurement, timedOut: boolean, error: string, execution: oneOf('local', 'sidecar'), status })
 const usage = shape({ providerCallId: id, scope: oneOf('self', 'aggregate'), source: id, inputTokens: numericMeasurement, outputTokens: numericMeasurement, final: boolean }, { cacheReadTokens: numericMeasurement, cacheWriteTokens: numericMeasurement, cost: numericMeasurement, currency: string })
 const artifact = shape({ id, label: string }, { kind: string, uri: string, content, evidenceEventIds: array(id) })
-const launch = shape({ kind: oneOf('manual', 'scheduled', 'channel', 'delegated', 'unknown') }, { scheduleId: id, triggerId: id, occurrenceId: id, channel: capability })
+const launch = shape({ kind: oneOf('manual', 'scheduled', 'channel', 'delegated', 'unknown') }, { scheduleId: id, triggerId: id, occurrenceId: id, timezone: id, scheduledAt: numericMeasurement, dispatchedAt: numericMeasurement, channel: capability })
+/** Declarative telemetry only: validating it never authorizes execution. */
+export const isRuntimeLaunch = (value: unknown): value is RuntimeLaunch => launch(value)
 const payloads: Record<string, Check> = {
   'run.accepted': shape({ prompt: content, launch }),
   'run.started': shape({ status }), 'run.completed': shape({ status }, { reason: string }),

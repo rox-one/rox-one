@@ -1723,6 +1723,7 @@
   "errors.omp.authRequired.title": "Rox 인증이 필요합니다",
   "errors.omp.noModels.message": "Rox 런타임에 모델 제공자가 없습니다. 첫 턴 전에 Rox API 키(ROX_API_KEY) 또는 로컬 models.yml이 필요합니다.",
   "errors.omp.noModels.title": "Rox에 구성된 모델이 없습니다",
+  "errors.omp.runtimeUnavailable.message": "«{{path}}»의 Bun 런타임을 시작할 수 없습니다. CRAFT_BUN_PATH에 네이티브 Bun 실행 파일을 지정하거나 관리되는 Bun 런타임을 설치한 후 다시 시도하세요.",
   "errors.pleaseReload": "페이지를 새로고침하세요. 오류가 보고되었습니다.",
   "errors.retryLoadingSessions": "세션 불러오기 재시도",
   "errors.sessionNotFound": "세션을 찾을 수 없습니다",
