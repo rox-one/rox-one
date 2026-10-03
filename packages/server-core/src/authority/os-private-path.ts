@@ -91,11 +91,18 @@ try {
 }
 `
 
-function windowsPrivatePaths(paths: readonly PrivatePath[], operation: WindowsOperation): void {
+export function resolveWindowsSystemRoot(): string {
   // Resolve the kernel's SystemRoot, outside user/session DOS-device mappings.
   // An environment override must never select the security-verifier executable.
-  const systemRoot = realpathSync(String.raw`\\?\GLOBALROOT\SystemRoot`)
+  // The ordinary Node-compatible resolver walks namespace ancestors, which
+  // are not filesystem directories. Use the OS full-path handle operation.
+  const systemRoot = realpathSync.native(String.raw`\\?\GLOBALROOT\SystemRoot`)
   if (!win32.isAbsolute(systemRoot)) throw new Error('Windows OS ownership verification is unavailable')
+  return systemRoot
+}
+
+function windowsPrivatePaths(paths: readonly PrivatePath[], operation: WindowsOperation): void {
+  const systemRoot = resolveWindowsSystemRoot()
   const executable = win32.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
   const result = spawnSync(executable, ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(windowsPrivatePathsScript, 'utf16le').toString('base64')], {
     input: Buffer.from(JSON.stringify({ paths, operation }), 'utf8').toString('base64'),

@@ -1,11 +1,11 @@
 import { expect, test } from 'bun:test'
 import { spawnSync } from 'node:child_process'
-import { chmodSync, linkSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
+import { chmodSync, linkSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, win32 } from 'node:path'
 import { NativeAuthority } from '../native-authority.ts'
 import { runLocalMaintenanceCommand } from '../local-maintenance.ts'
-import { privateFileIdentity, requireOsOwner, requireOsPrivatePaths, secureOsPrivatePaths, validateWindowsPrivatePaths, VerifiedPrivateFileGuard } from '../os-private-path.ts'
+import { privateFileIdentity, requireOsOwner, requireOsPrivatePaths, resolveWindowsSystemRoot, secureOsPrivatePaths, validateWindowsPrivatePaths, VerifiedPrivateFileGuard } from '../os-private-path.ts'
 
 const currentSid = 'S-1-5-21-111-222-333-1001'
 const foreignSid = 'S-1-5-21-111-222-333-1002'
@@ -19,7 +19,7 @@ function descriptor() {
 }
 
 function broadenWindowsAcl(path: string): void {
-  const systemRoot = realpathSync(String.raw`\\?\GLOBALROOT\SystemRoot`)
+  const systemRoot = resolveWindowsSystemRoot()
   const executable = win32.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
   const script = `
 $ErrorActionPreference = 'Stop'
@@ -119,6 +119,28 @@ test('actual POSIX file custody restores private mode for the same inode on ever
     }
   } finally { rmSync(root, { recursive: true, force: true }) }
 }, 20_000)
+
+test('Windows native full-path resolver avoids walking the kernel namespace ancestors', () => {
+  // This fresh-child boundary test is not actual Windows OS evidence. The
+  // original filesystem/authority cases still execute the real OS APIs in CI.
+  const script = `
+import { mock } from 'bun:test';
+import * as filesystem from 'node:fs';
+let seen;
+const walker = () => { throw new Error('ENOENT: lstat kernel namespace ancestor'); };
+walker.native = path => { seen = path; return 'C:\\\\Windows'; };
+mock.module('node:fs', () => ({ ...filesystem, realpathSync: walker }));
+process.env.SystemRoot = 'C:\\\\untrusted';
+const { resolveWindowsSystemRoot } = await import(${JSON.stringify(new URL('../os-private-path.ts', import.meta.url).href)});
+const systemRoot = resolveWindowsSystemRoot();
+console.log(JSON.stringify({ systemRoot, seen }));
+`
+  const result = spawnSync(process.execPath, ['--eval', script], { encoding: 'utf8', timeout: 5_000, maxBuffer: 64 * 1024 })
+  if (result.error || result.status !== 0) throw new Error(`Native full-path boundary failed: ${result.error ?? result.stderr}`)
+  const proof = JSON.parse(result.stdout.trim())
+  expect(proof.systemRoot).toBe('C:\\Windows')
+  expect(proof.seen).toBe(String.raw`\\?\GLOBALROOT\SystemRoot`)
+})
 
 test('actual OS branch secures a new authority and its sidecars before a durable reopen', () => {
   const root = mkdtempSync(join(tmpdir(), 'authority-os-private-'))
