@@ -2,25 +2,36 @@ import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import ts from 'typescript'
+import { createStore } from 'jotai'
+import { sessionMetaMapAtom } from '../../atoms/sessions'
+import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey, runtimeTraceSessionAtomFamily } from '../../atoms/runtime-trace'
+import { parseRuntimeMapViewRequest } from '../../../shared/runtime-map-link'
 import { parseRoute, resolveRouteNavigationState, buildRouteFromNavigationState } from '../../../shared/route-parser'
 import { isSessionsNavigation } from '../../../shared/types'
 import { preserveRouteQuery } from '../navigation-reconcile'
 
 const source = readFileSync(join(import.meta.dir, '../NavigationContext.tsx'), 'utf8')
 const ast = ts.createSourceFile('NavigationContext.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const matches: ts.VariableDeclaration[] = []
-function visit(node: ts.Node) {
-  if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === 'navigate') matches.push(node)
-  ts.forEachChild(node, visit)
+function actualCallback(name: string, bindings: Record<string, unknown>): Function {
+  const matches: ts.VariableDeclaration[] = []
+  function visit(node: ts.Node) {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === name) matches.push(node)
+    ts.forEachChild(node, visit)
+  }
+  visit(ast)
+  const initializer = matches[0]?.initializer
+  if (matches.length !== 1 || !initializer || !ts.isCallExpression(initializer) || !initializer.arguments[0]) throw new Error(`Actual ${name} callback missing/ambiguous`)
+  const executable = ts.transpileModule('return (' + initializer.arguments[0].getText(ast) + ');', {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
+  }).outputText
+  return new Function(...Object.keys(bindings), executable)(...Object.values(bindings))
 }
-visit(ast)
-if (matches.length !== 1 || !matches[0]?.initializer || !ts.isCallExpression(matches[0].initializer)) throw new Error('Actual navigate callback missing/ambiguous')
-const callback = matches[0].initializer.arguments[0]!
-const executable = ts.transpileModule('return (' + callback.getText(ast) + ');', {
-  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
-}).outputText
 
 function fixture(overrides: { ready?: boolean; restored?: boolean; pendingUrl?: string | null } = {}) {
+  const runtimeStore = createStore()
+  const requestRuntimeSelection = actualCallback('requestRuntimeSelection', {
+    store: runtimeStore, workspaceId: 'workspace-a', parseRuntimeMapViewRequest, runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey,
+  })
   const refs = {
     navigationOwnerRef: { current: { active: true, revision: 0 } },
     isPopstateSwitchRef: { current: false }, suppressPushRef: { current: true },
@@ -33,22 +44,32 @@ function fixture(overrides: { ready?: boolean; restored?: boolean; pendingUrl?: 
   const writes: Array<{ route: string; suppressed: boolean; kind: string }> = []
   const observe = (kind: string, route: string) => writes.push({ kind, route, suppressed: refs.suppressPushRef.current })
   const bindings = {
-    ...refs, isReady: overrides.ready ?? true, isSessionsReady: overrides.ready ?? true,
+    ...refs, requestRuntimeSelection, isReady: overrides.ready ?? true, isSessionsReady: overrides.ready ?? true,
     workspaceId: 'workspace-a', workspaceSlug: 'workspace-a', parseRoute, resolveRouteNavigationState, buildRouteFromNavigationState,
     setRequestedWorkspaceSlug: () => {},
     isSessionsNavigation, preserveRouteQuery, resolveAutoSelection: (state: unknown) => state,
     handleActionNavigation: async (parsed: { name: string }) => { observe('action', parsed.name) },
     pushPanel: (entry: { route: string }) => observe('panel', entry.route),
     setNavigationRevision: () => {}, updateFocusedPanelRouteAtom: Symbol('opaque atom'),
-    store: { set: (_atom: unknown, route: string) => observe('route', route) },
+    store: { get: runtimeStore.get, set: (_atom: unknown, route: string) => observe('route', route) }, sessionMetaMapAtom,
     storage: { KEYS: { lastSelectedSessionId: 'selected' }, set: () => {} },
   }
-  const navigate = new Function(...Object.keys(bindings), executable)(...Object.values(bindings)) as
+  const navigate = actualCallback('navigate', bindings) as
     (route: string, options?: { newPanel?: boolean }) => Promise<void>
-  return { refs, writes, navigate }
+  return { refs, writes, navigate, runtimeStore }
 }
 
 describe('accepted navigation claims actual history before writes', () => {
+  test('a runtime map route selects real scoped intent without rewriting recorded execution', async () => {
+    const f = fixture(), scope = runtimeTraceScopeKey({ workspaceId: 'workspace-a', sessionId: 'retained' })
+    const projection = f.runtimeStore.get(runtimeTraceSessionAtomFamily(scope))
+    const route = 'allSessions/session/retained?runtimeRun=run-a&runtimeEvent=event-a'
+    await f.navigate(route)
+    expect(f.runtimeStore.get(runtimeMapOpenRequestAtomFamily(scope))).toEqual({ rootRunId: 'run-a', eventId: 'event-a', requestId: 1 })
+    expect(f.runtimeStore.get(runtimeTraceSessionAtomFamily(scope))).toBe(projection)
+    expect(f.runtimeStore.get(runtimeMapOpenRequestAtomFamily(runtimeTraceScopeKey({ workspaceId: 'workspace-b', sessionId: 'retained' })))).toBeUndefined()
+    expect(f.writes).toEqual([{ kind: 'route', route, suppressed: false }])
+  })
   for (const kind of ['route', 'panel', 'action'] as const) test(`${kind} claims restoration history before its collaborator runs`, async () => {
     const f = fixture()
     await f.navigate(kind === 'action' ? 'action/new-session' : 'sources/source/two', kind === 'panel' ? { newPanel: true } : undefined)
