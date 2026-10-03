@@ -1,0 +1,7 @@
+import {describe,expect,it} from 'bun:test'
+import {sanitizeConnectionInspect,isStaleInspectSummary} from '../connections-list'
+const valid={connectionId:'c1',credentialRefId:'cred_1',health:'healthy',expiry:'—',provenance:'import',fingerprint:'digest',kind:'api_key',versionId:'v1'}
+describe('metadata-only inspect projection',()=>{
+ it('accepts exact readonly metadata and identifies revoked/expired records',()=>{expect(sanitizeConnectionInspect(Object.freeze({...valid}))).toEqual(valid);expect(isStaleInspectSummary(valid)).toBe(false);expect(isStaleInspectSummary({...valid,health:'revoked'})).toBe(true);expect(isStaleInspectSummary({...valid,expiry:'2001-01-01T00:00:00.000Z'},Date.UTC(2026,9,3))).toBe(true)})
+ it('rejects secret/unknown fields, inherited required values and getters without invoking them',()=>{let invoked=0;for(const key of Object.keys(valid)){const missing={...valid} as any;delete missing[key];Object.setPrototypeOf(missing,{[key]:(valid as any)[key]});expect(()=>sanitizeConnectionInspect(missing)).toThrow();const accessor={...valid};Object.defineProperty(accessor,key,{enumerable:true,get(){invoked++;return (valid as any)[key]}});expect(()=>sanitizeConnectionInspect(accessor)).toThrow()}expect(invoked).toBe(0);expect(()=>sanitizeConnectionInspect({...valid,accessToken:'PRIVATE'})).toThrow();expect(()=>sanitizeConnectionInspect({...valid,extra:'PRIVATE'})).toThrow();expect(()=>sanitizeConnectionInspect({...valid,[Symbol('extra')]:'PRIVATE'})).toThrow()})
+})
