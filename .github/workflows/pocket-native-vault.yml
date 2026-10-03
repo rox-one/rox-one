@@ -1,5 +1,13 @@
 name: Pocket Native Vault Proof
 on:
+  push:
+    branches: ['codex/pocket-id-sso']
+    paths:
+      - '.github/workflows/pocket-native-vault.yml'
+      - 'apps/electron/src/main/pocket-account-store.ts'
+      - 'apps/electron/src/main/__tests__/pocket-account-store*'
+      - 'scripts/probes/pocket-vault-*'
+      - 'scripts/probes/run-pocket-vault-native.ts'
   workflow_dispatch:
 permissions:
   contents: read
