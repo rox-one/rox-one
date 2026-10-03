@@ -4,10 +4,8 @@ on:
   pull_request:
     paths:
       - '.github/workflows/product-tour-native.yml'
-      - 'apps/electron/src/renderer/features/product-tour/**'
-      - 'apps/electron/src/renderer/App.tsx'
-      - 'apps/electron/src/renderer/components/app-shell/**'
-      - 'apps/electron/src/renderer/pages/settings/LearningSettingsPage.tsx'
+      - 'apps/electron/src/renderer/**'
+      - 'packages/ui/src/**'
       - 'apps/electron/src/main/**'
       - 'apps/electron/src/preload/**'
       - 'apps/electron/vite.config.ts'
@@ -21,10 +19,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/product-tour-native.yml'
-      - 'apps/electron/src/renderer/features/product-tour/**'
-      - 'apps/electron/src/renderer/App.tsx'
-      - 'apps/electron/src/renderer/components/app-shell/**'
-      - 'apps/electron/src/renderer/pages/settings/LearningSettingsPage.tsx'
+      - 'apps/electron/src/renderer/**'
+      - 'packages/ui/src/**'
       - 'apps/electron/src/main/**'
       - 'apps/electron/src/preload/**'
       - 'apps/electron/vite.config.ts'
