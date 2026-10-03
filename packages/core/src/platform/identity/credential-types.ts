@@ -234,16 +234,18 @@ function validateLocator(locator: ProviderLocator): ProviderLocator {
     throw new Error('Invalid credential metadata: locator');
   }
 
-  // Keep locator metadata inert: inspect descriptors before type/values.
+  // Snapshot only own data values. Missing fields must not fall through to
+  // Object.prototype, and normalization must not invoke ordinary get traps.
   // Readonly/frozen data properties remain valid metadata.
+  const record: Record<string, unknown> = Object.create(null);
   for (const key of Reflect.ownKeys(locator)) {
     const descriptor = Object.getOwnPropertyDescriptor(locator, key);
-    if (typeof key !== 'string' || !descriptor?.enumerable || !('value' in descriptor)) {
+    if (typeof key !== 'string' || !descriptor?.enumerable || !Object.hasOwn(descriptor, 'value')) {
       throw new Error('Invalid credential metadata: locator');
     }
+    record[key] = descriptor.value;
   }
 
-  const record = locator as unknown as Record<string, unknown>;
   switch (record.type) {
     case 'local':
       assertExactKeys(record, new Set(['type', 'key']), 'Invalid credential locator field');
