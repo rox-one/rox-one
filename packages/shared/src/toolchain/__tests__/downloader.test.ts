@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { createHash } from 'node:crypto';
 
 import {
   downloadArtifact,
@@ -12,7 +13,9 @@ import {
 
 const FIXTURES = path.join(import.meta.dir, 'fixtures');
 const RAW_FIXTURE = path.join(FIXTURES, 'demo-raw.bin');
-const RAW_SHA256 = '8d9e1cca2886be54ebfcb25cb0c4c8a35f7d692e1017ea16dd34a6fe0a75bb58';
+// Git may check out this text fixture with CRLF on Windows. Hash the fixture
+// bytes being served; the tampering test independently replaces those bytes.
+const RAW_SHA256 = createHash('sha256').update(fs.readFileSync(RAW_FIXTURE)).digest('hex');
 
 let tmpDir: string;
 let server: Bun.Server<undefined>;

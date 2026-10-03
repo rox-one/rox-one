@@ -9,7 +9,9 @@ import { join } from "path";
 import { ELECTRON_MAIN_CJS_FLAGS } from "./electron-main-cjs";
 
 const ROOT_DIR = join(import.meta.dir, "..");
-const DIST_DIR = join(ROOT_DIR, "apps/electron/dist");
+const outIndex = process.argv.indexOf('--outdir');
+if (outIndex >= 0 && !process.argv[outIndex + 1]) throw new Error('--outdir requires a path');
+const DIST_DIR = outIndex >= 0 ? process.argv[outIndex + 1]! : join(ROOT_DIR, "apps/electron/dist");
 const OUTPUT_FILE = join(DIST_DIR, "main.cjs");
 const INTERCEPTOR_SOURCE = join(ROOT_DIR, "packages/shared/src/unified-network-interceptor.ts");
 const INTERCEPTOR_OUTPUT = join(DIST_DIR, "interceptor.cjs");
@@ -70,8 +72,8 @@ function getBuildDefines(): string[] {
   ];
 
   return definedVars.map((varName) => {
-    const value = process.env[varName] || "";
-    return `--define:process.env.${varName}="${value}"`;
+    const value = process.argv.includes('--no-env') ? '' : process.env[varName] || "";
+    return `--define:process.env.${varName}=${JSON.stringify(value)}`;
   });
 }
 
@@ -351,7 +353,8 @@ async function buildExtensionHostWorker(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  loadEnvFile();
+  if (!process.argv.includes('--no-env')) loadEnvFile();
+  if (process.env.ROX_WINDOWS_DEV_WITHOUT_OEM === '1') process.env.CRAFT_DEV_RUNTIME = '1';
 
   // Ensure dist directory exists
   if (!existsSync(DIST_DIR)) {
@@ -362,19 +365,21 @@ async function main(): Promise<void> {
   verifySessionToolsCore();
 
   // Build Pi agent server (subprocess for Pi SDK sessions)
-  await buildPiAgentServer();
+  if (!process.argv.includes('--main-only')) {
+    await buildPiAgentServer();
 
-  // Build unified network interceptor (CJS bundle for Node.js --require)
-  await buildInterceptor();
+    // Build unified network interceptor (CJS bundle for Node.js --require)
+    await buildInterceptor();
 
-  // Build WhatsApp worker (Baileys subprocess — optional package)
-  await buildWhatsAppWorker();
+    // Build WhatsApp worker (Baileys subprocess — optional package)
+    await buildWhatsAppWorker();
 
-  // Build Discord worker (discord.js subprocess — optional package)
-  await buildDiscordWorker();
+    // Build Discord worker (discord.js subprocess — optional package)
+    await buildDiscordWorker();
 
-  // Build Extension Host craft-sandbox worker (utilityProcess entry)
-  await buildExtensionHostWorker();
+    // Build Extension Host craft-sandbox worker (utilityProcess entry)
+    await buildExtensionHostWorker();
+  }
 
   const buildDefines = getBuildDefines();
 
@@ -387,7 +392,7 @@ async function main(): Promise<void> {
       "--bundle",
       "--platform=node",
       "--format=cjs",
-      "--outfile=apps/electron/dist/main.cjs",
+      `--outfile=${OUTPUT_FILE}`,
       ...ELECTRON_MAIN_CJS_FLAGS,
       "--external:electron",
       // Claude Agent SDK is pure ESM (sdk.mjs) and calls `createRequire(import.meta.url)`

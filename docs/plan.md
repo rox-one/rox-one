@@ -1,6 +1,14 @@
+## Windows dependency/bootstrap selective recovery plan — 2026-10-03
+
+1. Freeze source1436, enumerate137 actual diff paths and CodeQL annotations; compare current OMP/native/MCP consumers before selecting dependencies. Preserve all original branches and dirty user checkout.
+2. Recover coherent dependency/bootstrap/packaging/toolchain slice; adapt only current Electron startup and config. Preserve current upgrade identity/CJS flags/pinned OMP/native policy and current shell consumers. Remaining MCP/local-source/host Bash/perf scopes remain owned follow-ups.
+3. Fix receipt descriptor/size/replacement race with actual adversarial filesystem checks; qualify explicit modes, real private/system exclusions, companion removal, re-probes, damaged generated launcher repair/rollback, pinned payload corruption and production OEM refusal. Run inherited relevant tests/types/current builds, retaining source mismatch history and native Windows skips.
+4. Reconcile latest main, freeze revision/proof hashes, commit/push a separate attached PR. Root reviews/merges. Actual installed Windows execution, NSIS provisioning and OEM release payload remain external platform/release gates, distinct from bounded source acceptance.
+
 ## Inspector resize recovery task graph — 2026-10-03
 
 Owner: branch audit lead; depends on merged Golden Gate controller/native/panels and Connections consumers. Source audit → adapt sash into current InspectorHost with transient preview/current bounds → exercise actual host pointer/keyboard/cancel/unmount/reload and old-consumer negative → package type/build/locale gates → separate reviewed PR, exact merge/readback. Shared files: currentInspectorHost and12locale keys only; original source branches remain intact. No old layout widths or section ownership are restored.
+
 ## Golden Gate chat output recovery plan — 2026-10-03
 
 1. Freeze source helper/current auto-scroll sites and coordinate ChatDisplay regions with Product Learning worker. pr_scout owns output scroll only; root owns merge and Inspector/credential integration.
@@ -877,3 +885,8 @@ Verification uses actual component callbacks with controlled native ports, real 
 Owner: historical integration; foundation: PR1434 contracts/core/persistence/analytics. Source finala6 `35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5` includes the substantive A1/A2/A3/A8/A9 learning system patches; separately retain a7 isolated browser-test fix, a10 required real-browser reader checks and baseline1933748 native workflow. Recover runtime, catalogue, domain adapters, measured target registry/geometry/spotlight, explicit Settings enable/replay/reset and current App/session/modal bridges. The feature remains disabled by default. Preserve current panel/workspace/session binding, canonical native domain authority, real commit/event evidence, capability refusals and twelve locale unions. Merely mounting targets or optimistic callbacks cannot complete a durable/native step. No workflow supplies new grants, credentials or provider authority.
 
 Pure runtime/catalogue/context controls pass163tests/14279assertions; production spotlight registry/geometry/modal/focus/occlusion and observer-cleanup Chromium controls pass7cases. This is a checkpoint, not whole feature acceptance: actual domain target/committed observation producers and current Native Notes bridge custody are separately owned and pending; current full Electron typecheck reports precisely the missing SourceSelector selection prop and personal-task commit observation export. Actual App/chat/input route, native smoke and hosted workflow acceptance remain unaccepted until their current evidence exists. Retain prior failure logs and source acceptance histories explicitly as historical evidence.
+
+
+## Route recovery integration graph —2026-10-03
+
+Integration lead owns current isolatedmain plus source1420 merge, comparative1412/1417 semantic review, meaningful raw-query delta and current route/native resource consumers. Review source → execute canonical entity/source callback adverse controls → real mounted NavigationProvider/history/readiness/ABA Chromium → native query isolated callbacks → type/build/12locale gates → immutable source/qualification receipt → separate PR/merge/readback. Source execution archives remain on preserved original branches. Source1417 distinct SkillInfo watch/draft repair is delivered separately after this source owner is stable. Workers independently own ChatScroll, ProductLearning and Windows runtime.

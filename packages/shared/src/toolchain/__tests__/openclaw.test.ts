@@ -168,9 +168,9 @@ describe('managed OpenClaw toolchain', () => {
       expect(request.executablePath).toBe(managedLauncher().executablePath);
       expect(request.env).toEqual({
         HOME: '/isolated/openclaw-probe-home',
-        XDG_CACHE_HOME: '/isolated/openclaw-probe-home/.cache',
-        XDG_CONFIG_HOME: '/isolated/openclaw-probe-home/.config',
-        XDG_DATA_HOME: '/isolated/openclaw-probe-home/.local/share',
+        XDG_CACHE_HOME: path.join('/isolated/openclaw-probe-home', '.cache'),
+        XDG_CONFIG_HOME: path.join('/isolated/openclaw-probe-home', '.config'),
+        XDG_DATA_HOME: path.join('/isolated/openclaw-probe-home', '.local', 'share'),
         NO_COLOR: '1',
       });
       expect(request.maxOutputBytes).toBe(1024 * 1024);
