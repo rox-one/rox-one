@@ -557,4 +557,13 @@ Dependencies: current server entry point and helper build commands at main
 3. Exercise authenticated RPC ping, graceful stop, restart, token permissions and
    token rotation, plus failed install/entropy negative controls — complete.
 4. Deliver a separate PR preserving the original branch; main integration remains
-   owned by the lead. Hosted Cursor provisioning remains unverified.
+  owned by the lead. Hosted Cursor provisioning remains unverified.
+
+## Selective editor block recovery — 2026-10-03
+
+Owner: recent feature worker; integration owner: branch audit lead. Source dependency: `1f56af31d3658ee9880105361ad5312324f36ab8`; base: live main `2cbc3b594eaeae3606d870d994346d42d085f504`.
+
+1. Recover only ColumnsBlock, DocumentFolding and rox-block-syntax plus focused source tests and styles; retain current editor/shell behavior.
+2. Wire Notes folding preferences and replace placeholder slash insertions with real nodes. Supply legacy parser/serializer adapters required by the current default engine; preserve existing column aliases and literal code fences.
+3. Verify actual installed legacy parser/ProseMirror/serializer parse-edit-export-reopen, official-engine roundtrips, fold state normalization, malformed markers, bounded resizing, read-only refusal and locale parity; run consumed Electron types and renderer build.
+4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.

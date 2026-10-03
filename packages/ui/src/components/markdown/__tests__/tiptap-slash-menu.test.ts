@@ -163,6 +163,6 @@ describe('tiptap slash menu', () => {
     items.find((item) => item.id === 'footnote')?.run(editor)
     expect(calls).toContain('insertContent:"See note.[^1]\\n\\n[^1]: "')
     items.find((item) => item.id === 'columns-2')?.run(editor)
-    expect(calls.some((call) => call.startsWith('insertContent:') && call.includes(':::columns 2'))).toBe(true)
+    expect(calls.some((call) => call.startsWith('insertContentAt:') && call.includes('roxColumns'))).toBe(true)
   })
 })

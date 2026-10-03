@@ -2941,6 +2941,7 @@ h1,h2,h3{margin-top:1.5em}
                 }}
                 onTagClick={(tag) => setSelectedTag(selectedTag === tag ? null : tag)}
                 placeholder={t('notes.editor.placeholder')}
+                foldingStorageKey={`rox:notes:folding:${activeWorkspaceId}:${activeNote.id}`}
                 markdownEngine="legacy"
                 className="notes-editor-prose mx-auto w-full max-w-[70ch] min-h-full"
               />

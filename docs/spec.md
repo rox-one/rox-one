@@ -432,3 +432,9 @@ server to loopback, isolate development context by default, persist each new
 bearer token with mode 0600, and never print its value. Installation or entropy
 failure must stop before subsequent work. Hosted Cursor execution and provider
 credentials require their own verification. See `docs/cursor-cloud-server.md`.
+
+## Selective editor recovery from September source — 2026-10-03
+
+Branch `codex/rox-ui-dev-loop-20260901` at `1f56af31d3658ee9880105361ad5312324f36ab8` contains absent heading/task-list folding, resizable two/three-column document blocks and portable spoiler/details controls. Recover only these editor behaviors onto main `2cbc3b594eaeae3606d870d994346d42d085f504`, with actual Notes/slash-menu consumers. The source's larger UI rewrite and legacy filesystem provider are outside this PR; native authenticated Notes authority and canonical mutation/journal paths remain authoritative.
+
+The default legacy Markdown engine and official engine must preserve content across parse/edit/export/reopen. Recover the source's portable `:::rox-columns`/`:::rox-column` syntax with validated normalized widths, support the previous slash-menu `:::columns 2/3` aliases, and preserve Obsidian `[!spoiler]-`/`[!details]+` markers without escaping away their meaning. Fold preferences are scoped by workspace/document and separate from Markdown. Read-only callout/resize interactions cannot change document content. Preserve newer comments, mixed task-list handling, trailing nodes, controlled echoes and no-save authority flips. Labels exist in all12 current locales. Source tests/builds establish bounded integration; native visual interaction acceptance remains separately verifiable.
