@@ -1,0 +1,120 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/sessions/sendmessage-oauth-refresh.test.ts:
+[session] Cannot send event - no event sink
+[session] [OAuth] Checking if any tokens need refresh
+(pass) sendMessage OAuth refresh ordering (#710) > cold session: tokenRefreshManager runs before getOrCreateAgent [73.81ms]
+[session] Cannot send event - no event sink
+[session] [OAuth] Checking if any tokens need refresh
+[session] [OAuth] Refreshing 1 source(s): failing-mcp
+[session] [OAuth] Some sources failed token refresh: [ "failing-mcp" ]
+(pass) sendMessage OAuth refresh ordering (#710) > failed refresh: source excluded from usable set via in-memory mutation [6.31ms]
+
+packages/server-core/src/sessions/pocket-session-resource-owner.test.ts:
+(pass) actual SessionManager rejects foreign concurrent and title owners, freezes queue and fences restored bindings [7338.25ms]
+
+packages/server-core/src/sessions/pocket-helper-owner.test.ts:
+(pass) actual draft helper selects the RPC caller before backend creation and rejects stale callers before query [27777.98ms]
+
+packages/server-core/src/sessions/improve-draft.test.ts:
+[session] improveDraft failed for session s1: 15 | }
+16 | 
+17 | describe('improveDraft', () => {
+18 |   it('surfaces the real provider error instead of a generic failure', async () => {
+19 |     const manager = harness(async () => {
+20 |       throw new Error('Connection "ROX" is not signed in')
+                     ^
+error: Connection "ROX" is not signed in
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/server-core/src/sessions/improve-draft.test.ts:20:17)
+      at improveDraft (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/server-core/src/sessions/SessionManager.ts:6604:33)
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/server-core/src/sessions/improve-draft.test.ts:22:34)
+
+(pass) improveDraft > surfaces the real provider error instead of a generic failure [6.98ms]
+(pass) improveDraft > passes the draft to the session LLM and strips wrapping quotes [1.93ms]
+[session] improveDraft: Session missing not found
+(pass) improveDraft > rejects an empty draft and an empty model answer [1.03ms]
+(pass) improveDraft > strips code fences [5.35ms]
+
+packages/server-core/src/sessions/midstream-queue.test.ts:
+(pass) mid-stream queue runtime invariants > distinguishes non-interrupting queue mode from a failed steer [19.33ms]
+[session] replay queued {
+  sessionId: "queue-ordering",
+  messageId: "queued-user",
+  queueLengthAfterShift: 0,
+}
+(pass) mid-stream queue runtime invariants > re-stamps replay after the prior final response and emits that timestamp [33.46ms]
+
+packages/server-core/src/sessions/sendmessage-durability.test.ts:
+[session] Cannot send event - no event sink
+(pass) sendMessage durability > user message is on disk before onAck fires (normal branch) [113.55ms]
+[session] mid-stream send {
+  sessionId: "durability-midstream",
+  behavior: "steer",
+  steered: false,
+  queueLengthBefore: 0,
+  backend: "none",
+  connectionSlug: undefined,
+}
+[session] Cannot send event - no event sink
+(pass) sendMessage durability > user message is on disk before onAck fires (mid-stream / queued branch) [18.08ms]
+
+packages/server-core/src/sessions/create-managed-session.test.ts:
+(pass) createManagedSession > normalizes legacy thinkingLevel=think on restore [17.31ms]
+(pass) createManagedSession > drops invalid thinking levels instead of leaking them into runtime state [0.14ms]
+
+packages/server-core/src/sessions/execute-prompt-automation-test-mode.test.ts:
+(pass) executePromptAutomation waitForCompletion > waitForCompletion:false returns as soon as the session is created (does not await the turn) [4.79ms]
+(pass) executePromptAutomation waitForCompletion > default (waitForCompletion unset) awaits sendMessage and propagates its error [0.68ms]
+
+apps/electron/src/main/__tests__/pocket-account-store.test.ts:
+(pass) Pocket OS protected vault > uses injected OS encryption on darwin and restores caller/account scope [38.07ms]
+(pass) Pocket OS protected vault > uses injected OS encryption on win32 and restores caller/account scope [47.17ms]
+(pass) Pocket OS protected vault > fails closed without OS encryption and on unsupported headless Linux [2.20ms]
+(pass) Pocket OS protected vault > rejects a substituted vault directory [8.02ms]
+
+packages/shared/src/auth/__tests__/rox-pocket-client.test.ts:
+(pass) Pocket v2 proof client > uses S256 proof and operation id exclusively in main requests [111.26ms]
+(pass) Pocket v2 proof client > rejects foreign broker redirect and malformed token envelopes [147.32ms]
+(pass) Pocket v2 proof client > cancels a late approval even when HTTP transport ignores its abort [0.54ms]
+(pass) Pocket v2 proof client > rejects foreign-account credential and a redirected inference base [7.68ms]
+(pass) Pocket v2 proof client > projects account snapshot without credential canaries even if the server sends accidental extra fields [0.66ms]
+(pass) Pocket v2 proof client > reuses the same redemption proof after a dropped approved response [2003.77ms]
+
+packages/shared/src/auth/__tests__/rox-account-authority.test.ts:
+(pass) Pocket host account authority > does not share native/local account credentials and never projects tokens/key [2.18ms]
+(pass) Pocket host account authority > keeps zero balance authenticated and ready but rejects paid dispatch [3.17ms]
+(pass) Pocket host account authority > fences old executor and durable session/automation bindings on account switch [1.06ms]
+(pass) Pocket host account authority > restores exact owned resources after restart without ambient fallback [3.06ms]
+(pass) Pocket host account authority > persists refresh operation proof before dispatch, retries same id after dropped response [3.67ms]
+(pass) Pocket host account authority > refreshes expired access and durably clears pending proof before inference without a UI poll [0.52ms]
+(pass) Pocket host account authority > ignores a late bootstrap response after logout and removes persisted secrets [4.87ms]
+(pass) Pocket host account authority > uses sealed prior access proof to revoke a device after an in-flight refresh rotation [153.66ms]
+(pass) Pocket host account authority > fences a running executor when account key generation changes [69.84ms]
+(pass) Pocket host account authority > invalidates the running executor when the active key is revoked [70.40ms]
+(pass) Pocket host account authority > keeps failed device revocation sealed for retry after process restart [50.03ms]
+(pass) Pocket host account authority > revokes via logout-only prior access proof without an expired refresh replay [5.03ms]
+(pass) Pocket host account authority > fences crash-window active records and drains logout on ordinary restart state reads [0.58ms]
+(pass) Pocket host account authority > keeps a pending logout fail-closed across clear failure and broker outage restarts [7.86ms]
+(pass) Pocket host account authority > serializes first session owner claims and preserves caller binding across restart [25.21ms]
+(pass) Pocket host account authority > restores sealed queued-message owners only for their exact execution generation [20.57ms]
+
+packages/shared/src/agent/__tests__/omp-public-runtime.test.ts:
+(pass) actual OmpAgent private public catalog lifecycle > confirms the R1 Max provider/model before executing a new default-model turn [10319.62ms]
+(pass) actual OmpAgent private public catalog lifecycle > uses trusted account key after final environment assembly despite wrong ambient/connection/session keys [3393.40ms]
+(pass) actual OmpAgent private public catalog lifecycle > keeps the successor profile when the predecessor close disposer arrives after actual respawn [3238.81ms]
+(pass) actual OmpAgent private public catalog lifecycle > removes the private profile after an actual pre-ready child failure [1678.28ms]
+(pass) actual OmpAgent private public catalog lifecycle > runs actual mini/title and call_llm children with the account key and aborts old identity after logout [2415.45ms]
+(pass) actual OmpAgent private public catalog lifecycle > never dispatches zero balance or ownerless public executions [1315.91ms]
+(pass) actual OmpAgent private public catalog lifecycle > kills an actual in-flight one-shot at logout and never accepts its delayed result [1497.59ms]
+(pass) actual OmpAgent private public catalog lifecycle > redacts a personal key echoed by an actual child from debug logs and one-shot errors [4136.72ms]
+(pass) actual OmpAgent private public catalog lifecycle > cleans prepared runtime artifacts when logout occurs immediately before dispatch [738.23ms]
+
+packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:
+(pass) actual OmpAgent respawns in both credential/catalog directions and preserves each domain key [7349.85ms]
+(pass) actual in-flight credential-domain switch retires old child and ignores its delayed stream [4619.83ms]
+(pass) credential-domain switch during asynchronous native preparation never spawns its obsolete profile [5194.34ms]
+
+ 54 pass
+ 0 fail
+ 228 expect() calls
+Ran 54 tests across 13 files. [94.48s]

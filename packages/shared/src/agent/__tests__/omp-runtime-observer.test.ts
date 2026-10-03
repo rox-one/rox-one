@@ -372,11 +372,15 @@ describe('OMP typed native runtime bridge', () => {
     const internals = agent as unknown as {
       _isProcessing: boolean; runtimeObservationRunId: string;
       createHostBashObserver: (toolCallId: string, generation: string, active: () => boolean) => (evidence: HostBashObservation) => void;
+      getSessionToolContext: () => SessionToolContext;
       executeHostSessionTool: (name: string, args: Record<string, unknown>, observer?: (evidence: HostBashObservation) => void) => Promise<{ content: string; isError: boolean }>;
       eventQueue: { enqueue: (event: AgentEvent) => void };
     };
     const events: AgentEvent[] = [];
     let actualSidecarCalls = 0;
+    // Main's prepared-environment route deliberately bypasses the env-less
+    // sidecar port. This probe exercises that port's actual fallback branch.
+    internals.getSessionToolContext().getHostBashEnv = undefined;
     setHostBashPort(async () => { actualSidecarCalls++; throw new Error('fixture sidecar unavailable'); });
     internals._isProcessing = true;
     internals.runtimeObservationRunId = 'actual-fallback-run';

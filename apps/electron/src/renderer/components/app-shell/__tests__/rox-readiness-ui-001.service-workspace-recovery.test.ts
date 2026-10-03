@@ -55,6 +55,7 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
     store, updateFocusedPanelRouteAtom, sessionMetaMapAtom: {}, workspaceId: 'a', remoteWorkspaceId: null,
     workspaceSlug: 'a', requestedWorkspaceSlugRef, setRequestedWorkspaceSlug: (value: string) => { requestedWorkspaceSlug = value },
     isReady: true, isSessionsReady: true, initialRouteRestoredRef: { current: true }, isPopstateSwitchRef: { current: false },
+    suppressPushRef: { current: true }, pendingUrlRestoreRef: { current: null },
     preserveRouteQuery, historyReconcileRevisionRef: { current: 0 }, historyMountedRef: { current: true }, finishHistoryReconcile: () => {}, pendingNavigationRef: { current: null }, suppressAutoSelectRef: { current: false }, actionEpochRef: { current: 0 },
     handleActionNavigation: () => { throw new Error('Unexpected action') }, pushPanel: () => { throw new Error('Unexpected panel') },
     resolveAutoSelection: (state: unknown) => state, setNavigationRevision: () => {},

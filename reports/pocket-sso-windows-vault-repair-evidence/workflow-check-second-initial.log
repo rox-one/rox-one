@@ -1,0 +1,7 @@
+{"path":".github/workflows/pocket-native-vault.yml","manualOnly":true,"contents":"read","jobs":["native-vault"]}
+1 | import YAML from "yaml"; import { readFileSync } from "node:fs"; for(const path of [".github/workflows/pocket-native-vault.yml",".github/workflows/desktop-release.yml"]){const v=YAML.parse(readFileSync(path,"utf8")); if(!Object.hasOwn(v.on,"workflow_dispatch") || v.on.push || v.on.pull_request) throw Error("workflow_trigger_contract"); console.log(JSON.stringify({path,manualOnly:true,contents:v.permissions.contents,jobs:Object.keys(v.jobs)}))}
+                                                                                                                                                                                                                                                                                                                  ^
+error: workflow_trigger_contract
+      at /Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/[eval]:1:303
+
+Bun v1.3.14 (macOS arm64)

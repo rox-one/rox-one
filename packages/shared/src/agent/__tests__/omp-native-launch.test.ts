@@ -6,6 +6,8 @@ import { OmpAgent } from '../omp-agent.ts';
 import { AbortReason } from '../backend/types.ts';
 import { withOmpRequiredModes } from '../omp-history.ts';
 import { getCredentialManager } from '../../credentials/manager.ts';
+import { createPocketFixture } from '../../auth/__tests__/pocket-test-fixture.ts';
+import { LOCAL_ROX_CALLER, setRoxAccountAuthority } from '../../auth/rox-account-authority.ts';
 import * as runtime from '../../toolchain-runtime.ts';
 import { LOCALE_REGISTRY, setupI18n } from '../../i18n/index.ts';
 import { chatEvents, makeOmpConfig } from './omp-fake-cli.ts';
@@ -26,10 +28,17 @@ afterEach(async () => {
   fixture = undefined; agent = undefined;
 });
 
-function setup() {
+async function setup() {
   fixture = createNativeLaunchFixture();
   mocks.push(spyOn(getCredentialManager(), 'getLlmApiKey').mockResolvedValue(null));
-  agent = new OmpAgent(makeOmpConfig(fixture.fake, { model: 'rox/standard', envOverrides: {
+  // Main requires a trusted owner for public models; keep this fixture's
+  // native launch probes on the same synthetic public account contract.
+  const pocket = createPocketFixture();
+  await pocket.authority.start(LOCAL_ROX_CALLER);
+  await pocket.authority.state(LOCAL_ROX_CALLER);
+  setRoxAccountAuthority(pocket.authority);
+  const roxExecutionContext = await pocket.authority.capture(LOCAL_ROX_CALLER);
+  agent = new OmpAgent(makeOmpConfig(fixture.fake, { model: 'rox/standard', roxExecutionContext, envOverrides: {
     CRAFT_BUN_PATH: process.execPath, ROX_API_KEY: '', PI_CODING_AGENT_DIR: join(fixture.fake.dir, 'empty-user-profile'), PI_CONFIG_FILES: '',
   } }));
   mkdirSync(dirname(blobFile()), { recursive: true });
@@ -52,7 +61,7 @@ async function waitForCleanup() {
 
 describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cached 18.4.12 source)', () => {
   it('destroy during native preparation must not spawn after teardown and must clean both owners', async () => {
-    const { agent, fake } = setup();
+    const { agent, fake } = await setup();
     let entered!: () => void;
     let release!: () => void;
     const entry = new Promise<void>(resolve => { entered = resolve; });
@@ -78,7 +87,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   for (const boundary of ['executable', 'credentials', 'path-prefix', 'bun-lookup', 'native-prepared'] as const) {
     for (const cancellation of ['destroy', 'abort', 'forceAbort'] as const) {
       it(`${cancellation} during ${boundary} prevents a late native launch and preserves blobs`, async () => {
-        const { agent, fake } = setup();
+        const { agent, fake } = await setup();
         let entered!: () => void;
         let release!: () => void;
         const entry = new Promise<void>(resolve => { entered = resolve; });
@@ -122,7 +131,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   }
 
   it('destroy during one-shot preparation disposes the returned overlay and profile', async () => {
-    const { agent, fake } = setup();
+    const { agent, fake } = await setup();
     let entered!: () => void; let release!: () => void;
     const entry = new Promise<void>(resolve => { entered = resolve; });
     const gate = new Promise<void>(resolve => { release = resolve; });
@@ -140,7 +149,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   });
 
   it('missing Bun names the actual runtime and provides its recovery setting', async () => {
-    const { agent, fake } = setup();
+    const { agent, fake } = await setup();
     const missing = join(fake.dir, 'missing bun.exe');
     (agent as any).config.envOverrides.CRAFT_BUN_PATH = missing;
     const events = await chatEvents(agent, 'missing native fixture runtime', 30_000);
@@ -156,7 +165,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   }, 40_000);
 
   it('workspace-relative package and native runtime paths use child cwd', async () => {
-    const { agent, fake, packageDir } = setup();
+    const { agent, fake, packageDir } = await setup();
     const original = (agent as any).prepareNativeInvocation.bind(agent);
     const relative = './managed runtime with spaces/bin/rox.cmd';
     const bunDir = join(fake.workspaceRoot, 'Bun runtime with spaces');
@@ -175,7 +184,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   });
 
   it('rejects batch Bun and non-managed production packages before launching', async () => {
-    const { agent, fake } = setup();
+    const { agent, fake } = await setup();
     for (const bin of ['invalid.cmd', 'invalid.bat']) {
       await expect((agent as any).prepareNativeInvocation(fake.binPath, { CRAFT_BUN_PATH: bin })).rejects.toThrow('CRAFT_BUN_PATH');
     }
@@ -189,7 +198,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   });
 
   it('preparation rejection settles startup and retry uses a fresh owned invocation', async () => {
-    const { agent } = setup();
+    const { agent } = await setup();
     const original = (agent as any).prepareNativeInvocation.bind(agent);
     const mock = spyOn(agent as any, 'prepareNativeInvocation').mockRejectedValueOnce(new Error('fixture preparation rejected')).mockImplementation(original);
     mocks.push(mock);
@@ -202,7 +211,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   });
 
   it('a real synchronous spawn rejection cleans profile and native overlay', async () => {
-    const { agent, fake } = setup();
+    const { agent, fake } = await setup();
     (agent as any).config.envOverrides.CRAFT_BUN_PATH = process.execPath + '\0';
     const events = await chatEvents(agent, 'invalid native process command', 30_000);
     expect(events.some(event => event.type === 'error')).toBe(true);
@@ -212,7 +221,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   });
 
   it('an actual pre-ready exit cleans both owners and can retry', async () => {
-    const { agent, fake } = setup();
+    const { agent, fake } = await setup();
     fake.setScenario('exit-generic');
     const events = await chatEvents(agent, 'native early exit fixture', 30_000);
     expect(events.some(event => event.type === 'typed_error')).toBe(true);
@@ -224,7 +233,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   });
 
   it('native history/model verification and permission retirement survive the port', async () => {
-    const { agent, fake } = setup();
+    const { agent, fake } = await setup();
     agent.setPermissionMode('allow-all');
     await chatEvents(agent, 'first native turn', 30_000);
     agent.setPermissionMode('safe');
@@ -241,7 +250,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   }, 40_000);
 
   it('one-shot keeps main mandatory model/thinking/directive argv and cleans both owners on exit', async () => {
-    const { agent, fake, observation } = setup();
+    const { agent, fake, observation } = await setup();
     const prompt = 'Русский\n" & | %PATH% !literal! \\';
     expect(await agent.runMiniCompletion(prompt)).toContain('fake-omp answer');
     expect(fake.readArgvLog()[0]).toEqual(['--no-session', '--thinking', 'max', '--model', 'rox/fast', '-p', withOmpRequiredModes(prompt)]);
@@ -252,7 +261,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   });
 
   it('runtime guidance exists in every locale and process-error details are scrubbed', async () => {
-    const { agent } = setup();
+    const { agent } = await setup();
     const i18n = setupI18n(); const previous = i18n.language;
     try {
       for (const [locale, entry] of Object.entries(LOCALE_REGISTRY)) {
@@ -266,7 +275,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
   });
 
   it('main already routes managed .cmd to the verified native overlay with literal Node/Bun argv and NDJSON', async () => {
-    const { agent, fake, packageDir } = setup();
+    const { agent, fake, packageDir } = await setup();
     const invocation = await (agent as any).prepareNativeInvocation(fake.binPath, { CRAFT_BUN_PATH: process.execPath });
     const prompt = 'Русский\n" & | %PATH% !literal! \\';
     try {

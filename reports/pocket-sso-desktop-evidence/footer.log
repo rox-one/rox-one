@@ -1,0 +1,13 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-presentation.test.ts:
+(pass) ProfileStrip presentation > renders a compact identity trigger instead of persistent XP chrome [0.13ms]
+(pass) ProfileStrip presentation > does not present a competing account switcher or secret-bearing actions [0.06ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-account.test.ts:
+(pass) cloud footer cannot inherit local identity or money during logout/outage; XP stays separate [0.19ms]
+
+ 3 pass
+ 0 fail
+ 24 expect() calls
+Ran 3 tests across 2 files. [1.93s]

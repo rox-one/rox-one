@@ -107,6 +107,7 @@ jobs:
             apps/electron/src/main/__tests__/native-notes-runtime.test.ts \
             apps/electron/src/main/__tests__/rox-readiness-ui-001.second-instance-startup.test.ts \
             apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.history-switch-lease.test.ts \
+            apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.immediate-history.test.ts \
             apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts \
             apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts \
             apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts \

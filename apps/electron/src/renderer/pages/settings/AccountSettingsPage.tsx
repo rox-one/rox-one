@@ -1,8 +1,8 @@
 /**
  * AccountSettingsPage — first settings tab: identity, plan, XP, balance.
  *
- * Connections stay on settings/accounts. Balance is local credits or an em dash
- * when gamification.balance is null. Plan is a local label, not billing.
+ * Central identity and money come from the Pocket account snapshot.
+ * Device profile and XP retain their own settings. Plan is a local label.
  */
 
 import * as React from 'react'
@@ -117,6 +117,8 @@ export default function AccountSettingsPage() {
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const connectionState = useTransportConnectionState()
   const taskCount = useWorkspaceTaskCount(workspace?.id)
+  const [cloudAccount, setCloudAccount] = React.useState<import('@rox/shared/auth').RoxAccountSnapshot | null>(null)
+  const [cloudError, setCloudError] = React.useState<string | null>(null)
   const [profile, setProfile] = React.useState<Profile | null>(null)
   const [displayName, setDisplayName] = React.useState('')
   const [email, setEmail] = React.useState('')
@@ -160,6 +162,23 @@ export default function AccountSettingsPage() {
       offXp()
     }
   }, [load, workspace?.id, invalidateProfileRequest])
+
+  React.useEffect(() => {
+    let cancelled = false
+    let reading = false
+    const readCloud = async () => {
+      if (reading) return
+      reading = true
+      try {
+        const cloud = await window.electronAPI.getRoxCloudState()
+        if (!cancelled) { setCloudAccount(cloud.account ?? null); setCloudError(cloud.connectError ?? null) }
+      } catch { if (!cancelled) { setCloudAccount(null); setCloudError('ROX_AUTH_REQUEST_FAILED') } }
+      finally { reading = false }
+    }
+    void readCloud()
+    const timer = setInterval(() => { void readCloud() }, 30_000)
+    return () => { cancelled = true; clearInterval(timer) }
+  }, [])
 
   const persist = async (input: Parameters<typeof window.electronAPI.identityUpdateProfile>[0]) => {
     const generation = ++profileGeneration.current
@@ -280,6 +299,19 @@ export default function AccountSettingsPage() {
             <p className="whitespace-normal break-words text-sm text-muted-foreground">
               {t('settings.account.description')}
             </p>
+        <SettingsSection title={t('settings.account.cloud.title')}>
+          <SettingsCard>
+            <SettingsRow label={cloudAccount?.user.name || cloudAccount?.user.handle || t('profile.defaultName')} description={cloudAccount?.user.email || t('settings.account.cloud.disconnected')}>
+              <Button size="sm" variant="outline" onClick={() => { void window.electronAPI.clearRoxCloud().then(() => window.location.reload()).catch(() => toast.error(t('settings.account.cloud.logoutFailed'))) }}>{t('settings.account.cloud.logout')}</Button>
+            </SettingsRow>
+            <SettingsRow label={t('settings.account.cloud.organization')}><span>{cloudAccount?.organization.name || '—'}</span></SettingsRow>
+            <SettingsRow label={t('settings.account.cloud.handle')}><span>{cloudAccount?.user.handle ? `@${cloudAccount.user.handle}` : '—'}</span></SettingsRow>
+            <SettingsRow label={t('settings.account.cloud.status')}><span>{cloudError ? t('settings.account.cloud.unavailable') : cloudAccount ? t(`onboarding.roxConnect.${cloudAccount.state}`) : t('settings.account.cloud.disconnected')}</span></SettingsRow>
+            <SettingsRow label={t('settings.account.cloud.key')}><span>{cloudAccount?.key?.prefix || '—'}</span></SettingsRow>
+            <SettingsRow label={t('settings.account.cloud.available')}><span>{cloudAccount?.balance.availableRox ?? '—'} ROX</span></SettingsRow>
+            <SettingsRow label={t('settings.account.cloud.held')}><span>{cloudAccount?.balance.heldRox ?? '—'} ROX</span></SettingsRow>
+          </SettingsCard>
+        </SettingsSection>
         <SettingsSection title={t('settings.account.usageSection')}>
           <MiniDashboardCards snapshot={dashboard} className="grid-cols-2 sm:grid-cols-3" />
         </SettingsSection>
@@ -369,8 +401,8 @@ export default function AccountSettingsPage() {
                 />
               </SettingsRow>
             ) : null}
-            <SettingsRow label={t('profile.balanceLabel')} description={t('settings.account.balanceHint')}>
-              <span className="text-sm tabular-nums">{formatBalance(gamification?.balance ?? null, t)}</span>
+            <SettingsRow label={t('profile.balanceLabel')} description={t('settings.account.cloud.title')}>
+              <span className="text-sm tabular-nums">{formatBalance(cloudAccount ? Number(cloudAccount.balance.balanceRox) : null, t)}</span>
             </SettingsRow>
             <SettingsToggle
               label={t('settings.account.analyticsConsent')}

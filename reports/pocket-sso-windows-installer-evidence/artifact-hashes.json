@@ -1,0 +1,8 @@
+{
+  "win32.json": "ee0fac98a4c809d62e9967d5e4d123314b2271b38864d20b6174adf301f409ea",
+  "latest.yml": "134eddee0e76092d339eacaa06671c7f4c9e788a26a76440a3f62e0e48c70456",
+  "manifest-win32-x64.json": "caf56348cdef9ccdd3831e395d473a959e1688d2731f772c4147c00b35627dd5",
+  "artifact-readback.json": "362478dd005643b2b384fd222b91b56b365dbbd28f355688badb99ac6fabcd4b",
+  "local-file-readback.json": "aa385713a4851e6cfb3539576319cd34ec0e59a61337b20e40280d5994ad8b8e",
+  "workflow-readback.json": "b3291f81f9d549732f3a45159eafc637c5d14dd414d7af127fd667bde4b9d754"
+}
