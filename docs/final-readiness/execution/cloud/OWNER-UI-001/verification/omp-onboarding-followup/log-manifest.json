@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "archives": [
+    {
+      "path": "logs/expanded-omp-transport-isolated-red-790216a.log.gz",
+      "originalFilename": "expanded-omp-transport-isolated-red-790216a.log",
+      "originalBytes": 8129,
+      "originalSha256": "f25da34e89c04a0cbe63313417f6c0fdf666a339bc6892efe78de810d2dc3319",
+      "archiveSha256": "cdd3e85e1b85fad38719e300505827c341670d70707c6ec1bb6ffa917f85af96"
+    },
+    {
+      "path": "logs/expanded-omp-transport-isolated-red-exit-790216a.log.gz",
+      "originalFilename": "expanded-omp-transport-isolated-red-exit-790216a.log",
+      "originalBytes": 8121,
+      "originalSha256": "94069fe0bca974c50a3050e9bd0a37df2b9b8a074080342f7e5f06cdab29de33",
+      "archiveSha256": "87ff2b966f939756197e21bcc7bb72264ba3b0a0159d81a49e1bab3509540e11"
+    },
+    {
+      "path": "logs/expanded-omp-transport-isolated-v1-790216a.log.gz",
+      "originalFilename": "expanded-omp-transport-isolated-v1-790216a.log",
+      "originalBytes": 2760,
+      "originalSha256": "ac663430f4c08fee211450f8601f238e464a4c97afbcd1321c2be42a0f45b04a",
+      "archiveSha256": "58246657145208da1e6420140f37f94451cab3a9e84abc40019218aff34a0330"
+    },
+    {
+      "path": "logs/expanded-omp-transport-combined-onboarding-790216a.log.gz",
+      "originalFilename": "expanded-omp-transport-combined-onboarding-790216a.log",
+      "originalBytes": 81024,
+      "originalSha256": "038786864097535b1b0f869fcd0bdbba9164706c0a39be1908ea9b921d03ceeb",
+      "archiveSha256": "84bbb1e38abc67d72be720a1acba2b61c430ac1b3154595af44b3d234bf52ee6"
+    },
+    {
+      "path": "logs/expanded-omp-transport-fail-closed-control-c33f00e.log.gz",
+      "originalFilename": "expanded-omp-transport-fail-closed-control-c33f00e.log",
+      "originalBytes": 194,
+      "originalSha256": "b0102f6bc7e92867ec3b66b950237eb534306736957d82cd919b11de5b7c4b6f",
+      "archiveSha256": "0ad5a8fa869646f7905bca5795e778de77529c50000a3121a1ce51ac7b68244d"
+    },
+    {
+      "path": "logs/expanded-omp-transport-isolated-final-c33f00e.log.gz",
+      "originalFilename": "expanded-omp-transport-isolated-final-c33f00e.log",
+      "originalBytes": 2761,
+      "originalSha256": "a9b685db2beb41669792dfa44b56a59312ce5f6ccf5a4716d1033b551d5e88ba",
+      "archiveSha256": "9ea0ddea0159677d8209c940208fbe02b1ef5a5886656eb51b8c97cd3d4ded7a"
+    },
+    {
+      "path": "logs/expanded-omp-transport-account-runtime-collision-final-c33f00e.log.gz",
+      "originalFilename": "expanded-omp-transport-account-runtime-collision-final-c33f00e.log",
+      "originalBytes": 8249,
+      "originalSha256": "04eb9c0069c4815f025124da16489be98d1e08564e83ccb948ec7c19d2427352",
+      "archiveSha256": "396ec5e7018217b168f19e3ae08de67d9de041a5cd477cb69b689170be10a16d"
+    }
+  ]
+}

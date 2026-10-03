@@ -1,0 +1,41 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+✘ [ERROR] No matching export in "node_modules/pdfjs-dist/build/pdf.worker.min.mjs?url" for import "default"
+
+    packages/ui/src/components/overlay/PDFPreviewOverlay.tsx:23:7:
+      23 │ import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+         ╵        ~~~~~~~~~~~
+
+✘ [ERROR] No matching export in "node_modules/pdfjs-dist/build/pdf.worker.min.mjs?url" for import "default"
+
+    packages/ui/src/components/markdown/MarkdownPdfBlock.tsx:43:7:
+      43 │ import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+         ╵        ~~~~~~~~~~~
+
+1462 |     let { file, line, column } = e.location;
+1463 |     let pluginText = e.pluginName ? `[plugin: ${e.pluginName}] ` : "";
+1464 |     return `
+1465 | ${file}:${line}:${column}: ERROR: ${pluginText}${e.text}`;
+1466 |   }).join("");
+1467 |   let error = new Error(text);
+                         ^
+error: Build failed with 2 errors:
+packages/ui/src/components/markdown/MarkdownPdfBlock.tsx:43:7: ERROR: No matching export in "node_modules/pdfjs-dist/build/pdf.worker.min.mjs?url" for import "default"
+packages/ui/src/components/overlay/PDFPreviewOverlay.tsx:23:7: ERROR: No matching export in "node_modules/pdfjs-dist/build/pdf.worker.min.mjs?url" for import "default"
+      at failureErrorWithLog (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:1467:19)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:926:25)
+      at buildResponseToResult (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:924:7)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:603:9)
+      at handleIncomingPacket (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:658:12)
+      at readFromStdout (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:581:7)
+      at emit (node:events:95:22)
+      at addChunk (internal:streams/readable:264:47)
+      at readableAddChunkPushByteMode (internal:streams/readable:242:18)
+      at handleNumberResult (internal:streams/native-readable:69:18)
+      at <anonymous> (internal:streams/native-readable:43:68)
+(fail) UI-001 actual navigation in Chromium > (unnamed) [6409.44ms]
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [12.06s]

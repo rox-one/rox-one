@@ -1,0 +1,82 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/main/__tests__/deep-link-parse.test.ts:
+(pass) parseDeepLink view routes > accepts rox://home [3.26ms]
+(pass) parseDeepLink view routes > accepts rox://tasks [0.07ms]
+(pass) parseDeepLink view routes > accepts rox://notes [0.17ms]
+(pass) parseDeepLink view routes > accepts rox://meetings [0.02ms]
+(pass) parseDeepLink view routes > accepts rox://knowledge [0.01ms]
+(pass) parseDeepLink view routes > accepts rox://projects
+(pass) parseDeepLink view routes > accepts rox://pages [0.01ms]
+(pass) parseDeepLink view routes > accepts rox://memory
+(pass) parseDeepLink view routes > accepts rox://automations [0.01ms]
+(pass) parseDeepLink view routes > accepts rox://connections
+(pass) parseDeepLink view routes > accepts rox://skills
+(pass) parseDeepLink view routes > accepts rox://sources
+(pass) parseDeepLink view routes > accepts rox://settings
+(pass) parseDeepLink view routes > accepts rox://allSessions [0.01ms]
+(pass) parseDeepLink view routes > accepts rox://flagged
+(pass) parseDeepLink view routes > accepts rox://archived
+(pass) parseDeepLink view routes > accepts rox://board
+(pass) parseDeepLink view routes > accepts rox://table
+(pass) parseDeepLink view routes > accepts rox://heatmap
+(pass) parseDeepLink view routes > keeps nested segments for detail routes [0.07ms]
+(pass) parseDeepLink view routes > accepts every shared compound prefix [0.28ms]
+(pass) parseDeepLink view routes > supports workspace-targeted view routes [0.24ms]
+61 |     expect(target?.windowMode).toBe('focused')
+62 |   })
+63 |
+64 |   it('forwards view queries while retaining separate window and sidebar controls', () => {
+65 |     const target = parseDeepLink('rox://search?q=two%20words&mode=future&window=focused&sidebar=history')
+66 |     expect(target?.view).toBe('search?q=two+words&mode=future')
+                              ^
+error: expect(received).toBe(expected)
+
+Expected: "search?q=two+words&mode=future"
+Received: "search"
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/main/__tests__/deep-link-parse.test.ts:66:26)
+(fail) parseDeepLink view routes > forwards view queries while retaining separate window and sidebar controls [1.87ms]
+(pass) parseDeepLink view routes > still rejects unknown hosts and passes auth callbacks through [0.11ms]
+(pass) parseDeepLink view routes > still parses actions [0.31ms]
+
+apps/electron/src/main/__tests__/deep-link-routing.test.ts:
+29 |     } as unknown as WindowManager
+30 |     const sent: unknown[][] = []
+31 |     const result = await handleDeepLink('rox://search?q=two%20words&mode=future', manager,
+32 |       (_channel, _target, ...args) => { sent.push(args) }, () => 'client-target')
+33 |     expect(result.success).toBe(true)
+34 |     expect(sent).toEqual([[{ view: 'search?q=two+words&mode=future', action: undefined, actionParams: undefined }]])
+                      ^
+error: expect(received).toEqual(expected)
+
+  [
+    [
+      {
+        "action": undefined,
+        "actionParams": undefined,
+-       "view": "search?q=two+words&mode=future",
++       "view": "search",
+      },
+    ],
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/main/__tests__/deep-link-routing.test.ts:34:18)
+(fail) handleDeepLink routing > delivers the native search query and future parameters through the actual navigation sink [1.61ms]
+(pass) handleDeepLink routing > prefers resolved target client over preferred caller client [0.29ms]
+(pass) handleDeepLink routing > uses preferred client only when no resolver is provided [0.30ms]
+(pass) handleDeepLink routing > falls back to workspace routing when resolver exists but target client is unresolved [0.09ms]
+(pass) handleDeepLink routing > routes the Rox deeplink scheme the same as the Craft-era alias [0.08ms]
+(pass) ROX protocol compatibility > parses ROX as primary and keeps existing legacy links readable [0.10ms]
+
+2 tests failed:
+(fail) parseDeepLink view routes > forwards view queries while retaining separate window and sidebar controls [1.87ms]
+(fail) handleDeepLink routing > delivers the native search query and future parameters through the actual navigation sink [1.61ms]
+
+ 29 pass
+ 2 fail
+ 121 expect() calls
+Ran 31 tests across 2 files. [179.00ms]

@@ -1,0 +1,543 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts:
+(pass) ROX UI-001 real Jotai layout storage behavior > inspector: validates direct and functional writes before publishing or persisting [5.38ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > inspector: supports direct and functional RESET and remounts the default [0.52ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > inspector: restores normalized saved values on remount [207.48ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > inspector: tolerates unavailable reads, quota errors and failed reset removal [0.28ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > inspector: reads event snapshots through races, corrupt values and deletion [13.44ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > inspector: filters other keys/storage areas and releases subscriptions [0.29ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > terminal dock: validates direct and functional writes before publishing or persisting [0.25ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > terminal dock: supports direct and functional RESET and remounts the default [0.15ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > terminal dock: restores normalized saved values on remount [24.99ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > terminal dock: tolerates unavailable reads, quota errors and failed reset removal [5.95ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > terminal dock: reads event snapshots through races, corrupt values and deletion [6.39ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > terminal dock: filters other keys/storage areas and releases subscriptions [0.30ms]
+(pass) ROX UI-001 real Jotai layout storage behavior > uses defaults and remains writable when storage access throws or is absent [1.02ms]
+
+apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:
+(pass) ROX UI-001 persisted shell geometry > rounds and bounds preferences within the controls existing supported ranges [0.05ms]
+(pass) ROX UI-001 persisted shell geometry > recovers malformed and non-finite reload values to a usable default [0.06ms]
+
+apps/electron/src/renderer/platform/__tests__/layout-snapshot.test.ts:
+(pass) layout-snapshot: tab ↔ route > maps every SurfaceTab kind to its canonical route and back [0.91ms]
+(pass) layout-snapshot: tab ↔ route > round-trips terminal via URL snapshot [0.21ms]
+(pass) layout-snapshot: tab ↔ route > returns null for non-surface routes and surfaces without a durable ref [0.11ms]
+(pass) layout-snapshot: tab ↔ route > drops degraded surface routes instead of resurrecting bogus tabs [0.02ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > round-trips a single-session layout (no panels param, like syncUrl) [0.09ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > round-trips a mixed 4-surface layout with focus on tab 2 [0.21ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > round-trips a layout covering all 8 surface kinds [0.10ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > preserves non-uniform proportions at transport precision [0.06ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > emits the exact syncUrl format (route always, panels/fi only when multi-panel) [0.04ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > skips non-surface panels and remaps focus to the kept surface tabs [0.03ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > drops malformed surface panels without failing the rest of the stack [0.05ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > reconstructs panel-stack entries for reconcilePanelStackAtom [0.04ms]
+(pass) layout-snapshot: snapshot ↔ open surfaces > round-trips through the OpenSurfaces view with deterministic defaults [0.09ms]
+(pass) layout-snapshot: snapshot ↔ open surfaces > preserves custom ids and proportions when provided [0.07ms]
+(pass) layout-snapshot restore → inspector contribution > restored knowledge tab yields activeSurface knowledge so knowledge.inspector is listed [0.63ms]
+(pass) layout-snapshot restore → inspector contribution > restored session tab does not list knowledge.inspector [0.12ms]
+
+apps/electron/src/renderer/lib/__tests__/native-surface-dom.test.ts:
+(pass) native surfaces follow retained panel visibility > hides for inert, aria-hidden, hidden and CSS-hidden ancestors [3.70ms]
+(pass) native surfaces follow retained panel visibility > hides on document suspension and detached hosts without changing the bounds state [0.05ms]
+(pass) native surfaces follow retained panel visibility > rejects partially clipped and offscreen scroll positions, then restores fresh coordinates [0.14ms]
+(pass) native surfaces follow retained panel visibility > honors horizontal and vertical clipping independently and tolerates subpixel rounding [0.04ms]
+(pass) native surfaces follow retained panel visibility > observes captured scroll and ancestor changes and removes those listeners on cleanup [0.61ms]
+(pass) native surfaces follow retained panel visibility > coalesces invalidations once per frame and never measures hidden or disposed hosts [0.17ms]
+
+apps/electron/src/renderer/lib/__tests__/native-surface-visibility.test.ts:
+(pass) native surface visibility (ZS-07) > requires mounted, focused, valid bounds, and no suppression [0.12ms]
+(pass) native surface visibility (ZS-07) > does not let a stale generation un-hide a suppressed surface [0.16ms]
+(pass) native surface visibility (ZS-07) > keeps overlay suppression after resize lease is released [0.03ms]
+(pass) native surface visibility (ZS-07) > hides a destroyed instance and ignores stale generations [0.03ms]
+
+apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts:
+(pass) shell layout preferences (ZS-06) > clamps sidebar 180–360 and navigator 240–480 [0.09ms]
+(pass) shell layout preferences (ZS-06) > migrates legacy keys without deleting them [0.55ms]
+(pass) shell layout preferences (ZS-06) > commit dual-writes snapshot and legacy keys; preview is not a write [0.96ms]
+(pass) shell layout preferences (ZS-06) > rejects foreign workspace snapshots and extra schema versions [0.41ms]
+(pass) shell layout preferences (ZS-06) > treats a tight-window clamp as derived effective width, not a new preference [0.18ms]
+(pass) shell layout preferences (ZS-06) > keyboard debounce is 250ms and cancel prevents the write [174.91ms]
+(pass) shell layout preferences (ZS-06) > two workspaces keep independent snapshots [1.09ms]
+(pass) side panel defaults (layout v2) > left sidebar and right inspector share one default width [0.38ms]
+(pass) side panel defaults (layout v2) > narrows wider stored widths once, keeps narrower ones, expands the rail [0.15ms]
+(pass) side panel defaults (layout v2) > narrows workspace snapshots so a later commit cannot restore the old width [0.11ms]
+(pass) side panel defaults (layout v2) > leaves narrower user widths and fresh installs untouched [0.04ms]
+
+apps/electron/src/renderer/lib/__tests__/native-surface-owners.test.ts:
+(pass) native surface owner cleanup > hides only the released inspector instance, preserving sibling native panels [39.62ms]
+(pass) native surface owner cleanup > a hidden or released durable owner cannot hide its visible sibling [0.42ms]
+(pass) native surface owner cleanup > transfers to the most recently revealed owner and ignores late released updates [0.12ms]
+(pass) native surface owner cleanup > releases an async attachment that arrives after inspector close without adopting it [0.07ms]
+(pass) native surface owner cleanup > releases each owned attachment once and never enumerates other instances [0.03ms]
+(pass) native surface owner cleanup > serializes a deferred update before the latest final hide [0.13ms]
+(pass) native surface owner cleanup > retries a rejected rect on the next invalidation without polling [0.14ms]
+(pass) native surface owner cleanup > keeps a releasing record until its queued hide settles so a new owner cannot race it [0.10ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/transport-connection-banner.test.ts:
+(pass) shouldShowTransportConnectionBanner > is hidden for null state [0.02ms]
+(pass) shouldShowTransportConnectionBanner > is hidden when mode is local [0.11ms]
+(pass) shouldShowTransportConnectionBanner > is hidden when remote connection is healthy [0.03ms]
+(pass) shouldShowTransportConnectionBanner > is shown when remote connection is reconnecting [0.01ms]
+(pass) shouldShowTransportConnectionBanner > is shown when remote connection failed [0.01ms]
+(pass) getTransportBannerCopy > maps auth failures to token guidance [5.24ms]
+(pass) getTransportBannerCopy > maps reconnecting state to warning with attempt info [0.30ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/background-finished-chip-clarity.test.ts:
+(pass) background finished chip clarity > uses solid fill and hover without backdrop blur [6.09ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts:
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > wires isTerminalNavigation / isCloudRunNavigation to dedicated surface pages [0.08ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > never mute-falls terminal/cloud-run through to session.selectConversation [0.05ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > leaves browser/extension hosts intact [0.30ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > terminal host uses InspectorTerminal or honest empty + dock path [0.09ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > cloud-run host loads run status or honest unavailable + settings path [0.09ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > English and Russian locales keep distinct surface copy [4.58ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > all 12 locales define the wired surface keys [88.14ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/sash-terminal-clearance.test.ts:
+(pass) sash terminal clearance > stops resize sashes from drawing through the top bar gap and bottom terminal [2.07ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/sidebar-disclosure.test.ts:
+(pass) sidebar disclosure helpers (ZS-04) > builds a stable section id from the nav key [0.08ms]
+(pass) sidebar disclosure helpers (ZS-04) > treats expandable items with onClick as navigable parents [0.05ms]
+(pass) sidebar disclosure helpers (ZS-04) > restores focus to the toggle when it is inside the collapsible body [0.08ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/sidebar-dashboard.test.ts:
+(pass) sidebar dashboard source contracts > localizes the scheduled-automation machine warning [1.43ms]
+(pass) sidebar dashboard source contracts > mounts usage cards on the account page, not the sidebar [0.11ms]
+(pass) sidebar dashboard source contracts > keeps TopBar session/browser shortcuts as labeled icon buttons [0.05ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/extension-origin-permissions-presentation.test.ts:
+(pass) extension origin and permissions presentation > shows installed origin next to runtime [0.14ms]
+(pass) extension origin and permissions presentation > chips marketplace permissions beside GitHub origin and highlights high-risk [0.15ms]
+(pass) extension origin and permissions presentation > keeps marketplace kind permissions in a browser-safe helper [4.60ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts:
+(pass) desktop Overview permission selection > clicks safe for new-empty-session, selects it, and reconciles the persisted version [3018.64ms]
+(pass) desktop Overview permission selection > clicks safe for active-chat-session, selects it, and reconciles the persisted version [1247.23ms]
+(pass) desktop Overview permission selection > restores the actual mode when RPC fails before the optimistic UI commits [534.12ms]
+(pass) desktop Overview permission selection > rolls back after a failed command and unavailable readback [252.79ms]
+(pass) desktop Overview permission selection > restores the last actual mode when both rapid clicks fail offline [62.15ms]
+(pass) desktop Overview permission selection > uses the confirmed event as the fallback while a newer click fails [793.00ms]
+(pass) desktop Overview permission selection > ignores failure of an older click and stale versioned mode events [522.46ms]
+(pass) desktop Overview permission selection > keeps a newer selection when an older readback arrives late [456.54ms]
+(pass) desktop Overview permission selection > does not restore host session options after switching to native authority [665.84ms]
+(pass) compact Overview permission selection > clicks safe for new-empty-session, selects it, and reconciles the persisted version [214.95ms]
+(pass) compact Overview permission selection > clicks safe for active-chat-session, selects it, and reconciles the persisted version [246.04ms]
+(pass) compact Overview permission selection > restores the actual mode when RPC fails before the optimistic UI commits [300.86ms]
+(pass) compact Overview permission selection > rolls back after a failed command and unavailable readback [450.32ms]
+(pass) compact Overview permission selection > restores the last actual mode when both rapid clicks fail offline [332.57ms]
+(pass) compact Overview permission selection > uses the confirmed event as the fallback while a newer click fails [234.59ms]
+(pass) compact Overview permission selection > ignores failure of an older click and stale versioned mode events [271.75ms]
+(pass) compact Overview permission selection > keeps a newer selection when an older readback arrives late [465.85ms]
+(pass) compact Overview permission selection > does not restore host session options after switching to native authority [238.32ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+(skip) UI-001 actual navigation in Chromium > (unnamed)
+(skip) UI-001 actual navigation in Chromium > unknown single link survives reload and never selects its nested session
+(skip) UI-001 actual navigation in Chromium > malformed encoding and legacy lossy degradation retain their own unavailable surface
+(skip) UI-001 actual navigation in Chromium > multi-panel restore retains valid sibling, unavailable focus and proportions across reload
+(skip) UI-001 actual navigation in Chromium > actual navigate and deep-link callbacks preserve unavailable route and browser back/forward
+(skip) UI-001 actual navigation in Chromium > stored action address cannot execute, while explicit action callback still runs once
+(skip) UI-001 actual navigation in Chromium > pending search replay retains query and new-panel options
+(skip) UI-001 actual navigation in Chromium > latest pending unknown address wins without selecting a previous valid session
+(skip) UI-001 actual navigation in Chromium > workspace restoration and history keep each workspace address
+(skip) UI-001 actual navigation in Chromium > (unnamed)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts:
+(pass) UI-001 selected resource canonical callbacks > source deletion wins over an older initial load and does not navigate away [316.62ms]
+(pass) UI-001 selected resource canonical callbacks > a malformed source event reports unavailable without throwing [127.72ms]
+(pass) UI-001 selected resource canonical callbacks > source read rejection becomes unavailable and recovers from a real subscription callback [8.10ms]
+(pass) UI-001 selected resource canonical callbacks > unmount suppresses an obsolete source read and missing capability is explicit [13.74ms]
+(pass) UI-001 selected resource canonical callbacks > skill events re-read project/global resolution context and reject an older response [5.82ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/compact-workspace-navigation.test.ts:
+(pass) compact workspace navigation > keeps every registered service reachable without a desktop rail or sidebar [0.53ms]
+(pass) compact workspace navigation > selects any open panel and preserves its identity, route, filter and sizing [0.46ms]
+(pass) compact workspace navigation > reuses an open service before calling its normal opener [0.15ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/edit-file-i18n.test.ts:
+(pass) composer Edit File action is i18n > AppShell secondaryAction uses common.editFile and skips the English label [0.27ms]
+(pass) composer Edit File action is i18n > FreeFormInput secondaryAction uses common.editFile and skips the English label [0.17ms]
+(pass) composer Edit File action is i18n > English locale matches the previous hardcoded label [0.74ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/zen-topbar-safe-area.test.ts:
+(pass) zenTopBarSafeLeftPx (ZS-03) > does not reserve traffic-light space on webui or non-mac [0.08ms]
+(pass) zenTopBarSafeLeftPx (ZS-03) > scales the macOS desktop inset at 100/125/150% zoom [0.03ms]
+(pass) zenTopBarSafeLeftPx (ZS-03) > drops the stoplight inset in fullscreen [0.01ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/home-nav.test.ts:
+(pass) Workbench Home nav and surface > seeds Home as a live Mode Bar destination [0.06ms]
+(pass) Workbench Home nav and surface > hides the navigator column on the home route [0.20ms]
+(pass) Workbench Home nav and surface > renders HomeFrontPage from MainContentPanel on the home navigator [0.02ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/meetings-nav.test.ts:
+(pass) RMA-I012 Meetings nav and surface > registers an enabled meetings destination for the Workbench rail [0.23ms]
+(pass) RMA-I012 Meetings nav and surface > wires Meetings into AppShell and MainContentPanel [25.02ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts:
+(pass) ship-rox-chrome-leftover-post-960 > equalizes compact panel bottom inset without magic ±6 [0.07ms]
+(pass) ship-rox-chrome-leftover-post-960 > makes chat status lane and browser chrome opaque without blur [0.03ms]
+(pass) ship-rox-chrome-leftover-post-960 > aligns FreeFormInput toolbar leftovers to 9px / h-6 [0.84ms]
+(pass) ship-rox-chrome-leftover-post-960 > does not reopen inspector strip host from #958/#959 [0.41ms]
+(pass) ship-rox-chrome-leftover-post-960 > preserves rounded shell gaps without extra terminal dock margins [11.75ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts:
+(pass) Zen Shell native browser wiring (ZS-07) > hides the native view through visibility leases and the existing syncBounds receiver [9.64ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-presentation.test.ts:
+(pass) ProfileStrip presentation > renders a compact identity trigger instead of persistent XP chrome [0.07ms]
+(pass) ProfileStrip presentation > does not present a competing account switcher or secret-bearing actions [0.05ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/workspace-rail.test.ts:
+(pass) shouldShowWorkspaceIconRail > is hidden when the setting is disabled [0.05ms]
+(pass) shouldShowWorkspaceIconRail > is hidden below the compact viewport breakpoint [0.02ms]
+(pass) shouldShowWorkspaceIconRail > is shown at and above the compact viewport breakpoint [0.01ms]
+(pass) getTopBarLeftInset > insets the top bar by the rail width only when the rail is visible [0.02ms]
+(pass) workspace selector rail event > exports the shared event name used by settings and App
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts:
+(skip) UI-001 real Chromium component and persistence fixtures > (unnamed)
+(skip) UI-001 real Chromium component and persistence fixtures > selected source deletion and recreation preserve workspace and entity address
+(skip) UI-001 real Chromium component and persistence fixtures > retry recovers an unavailable selected source through the actual click handler
+(skip) UI-001 real Chromium component and persistence fixtures > late resource load cannot replace a new missing address
+(skip) UI-001 real Chromium component and persistence fixtures > cloud run switch clears previous content while the new callback is pending
+(skip) UI-001 real Chromium component and persistence fixtures > retries rejected lazy imports and keeps the selected route
+(skip) UI-001 real Chromium component and persistence fixtures > retries rendering failure and a new route clears a previous error
+(skip) UI-001 real Chromium component and persistence fixtures > workspace switch cancels a real pending resize timer before it can persist old geometry
+(skip) UI-001 real Chromium component and persistence fixtures > actual localStorage persists valid sizes across reload and other windows
+(skip) UI-001 real Chromium component and persistence fixtures > (unnamed)
+
+apps/electron/src/renderer/components/app-shell/__tests__/session-list-families.test.ts:
+(pass) SessionList family behavior (date mode) > renders a branch directly below its root [0.51ms]
+(pass) SessionList family behavior (date mode) > collapsing a family hides branches but keeps the root [0.08ms]
+(pass) SessionList family behavior (date mode) > expanding restores branch rows [0.04ms]
+(pass) SessionList family behavior (date mode) > family bucket is determined by the latest activity across members [0.08ms]
+(pass) SessionList family behavior (date mode) > a singleton session renders as a plain row (no chevron) [0.05ms]
+(pass) SessionList family behavior (date mode) > legacy branch (no branchFromSessionId) renders as a plain chat [0.07ms]
+(pass) SessionList family behavior (date mode) > Collapse All includes family keys; Expand All clears them [0.14ms]
+(pass) SessionList family behavior (status/unread/project bucketing) > unread mode: whole family lands in the bucket of its latest-activity member [0.03ms]
+(pass) SessionList family behavior (status/unread/project bucketing) > project mode: family bucketed by the project of its latest-activity member [0.03ms]
+(pass) SessionList family behavior (search mode) > non-matching members are absent; matching branch without root has no chevron [0.12ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/notes-canonical-navigation.test.ts:
+(pass) Notes shell navigation > opens the workspace-local Notes surface instead of a knowledge provider [0.10ms]
+(pass) Notes shell navigation > resolves imported chat notes to local Notes, not SiYuan [0.18ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/toolchain-status-banner.test.ts:
+(pass) getToolchainBannerPhase > is hidden without a tool snapshot [0.04ms]
+(pass) getToolchainBannerPhase > is hidden while the manager has not started (missing) [0.04ms]
+(pass) getToolchainBannerPhase > is hidden when the runtime is ready [0.01ms]
+(pass) getToolchainBannerPhase > is hidden when the runtime is usable but outdated
+(pass) getToolchainBannerPhase > is shown while downloading
+(pass) getToolchainBannerPhase > is shown while installing [0.01ms]
+(pass) getToolchainBannerPhase > is shown on error and offline [0.01ms]
+(pass) toolchainBannerPercent > rounds download progress to whole percents [0.04ms]
+(pass) toolchainBannerPercent > clamps into the 0–100 range [0.01ms]
+(pass) toolchainBannerPercent > is indeterminate without byte totals [0.02ms]
+(pass) getToolchainBannerCopy > reports nothing for phases the banner hides [13.50ms]
+(pass) getToolchainBannerCopy > maps downloading to info copy with percent and progress bar [5.26ms]
+(pass) getToolchainBannerCopy > maps downloading without totals to indeterminate copy [0.17ms]
+(pass) getToolchainBannerCopy > maps installing to info copy without a progress bar [9.83ms]
+(pass) getToolchainBannerCopy > maps error to the critical copy with the Toolchain shortcut [0.26ms]
+(pass) getToolchainBannerCopy > maps offline to warning copy with the Toolchain shortcut [0.11ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/invite-bro-chrome.test.ts:
+(pass) Позвать Бро session chrome > adds inviteBro next to publication share in desktop and compact menus [0.06ms]
+(pass) Позвать Бро session chrome > renders presence avatars under session header controls [0.09ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/voice-composer.test.ts:
+(pass) voice composer and listen wiring > exposes dictation in the composer and listen on turns [4.04ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-layout-commit.test.ts:
+(pass) AppShell layout commit boundary (ZS-06) > loads and commits through the shell-layout adapter, not on pointermove [70.98ms]
+(pass) AppShell layout commit boundary (ZS-06) > allows sidebar preferred width up to 360 on the live path [3.42ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/titlebar-mode-pill.test.ts:
+(pass) titlebar mode pill layout > keeps labels when both sides have room [0.12ms]
+(pass) titlebar mode pill layout > collapses to icons when the labelled pill would hit a side group [0.02ms]
+(pass) titlebar mode pill layout > centers on the window, compensating for the left rail inset [0.02ms]
+(pass) titlebar mode pill layout > reserves a gap around the compact pill even when browser tabs exceed their available width [0.09ms]
+(pass) titlebar mode pill source contract > renders every mode in one pill with no overflow menu [0.04ms]
+(pass) titlebar mode pill source contract > is no-drag and keeps high contrast accessible [0.07ms]
+(pass) titlebar mode pill source contract > mounts the pill centered in the titlebar, outside the left group [0.04ms]
+(pass) titlebar mode pill source contract > keeps cost/usage out of the titlebar (balance lives in the profile strip) [0.15ms]
+(pass) titlebar mode pill source contract > uses the plate-free portrait for the titlebar mark [0.02ms]
+(pass) titlebar mode pill source contract > exposes the seven primary surfaces without requiring experimental Workbench chrome [0.03ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/tasks-nav.test.ts:
+(pass) Issue 17 Tasks nav and surface > registers an enabled tasks destination for the Workbench rail [0.07ms]
+(pass) Issue 17 Tasks nav and surface > wires Tasks into AppShell and MainContentPanel [3.66ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/chat-display-branching.test.ts:
+(pass) ChatDisplay branching navigation option > defaults to opening in new panel when options are missing [4.57ms]
+(pass) ChatDisplay branching navigation option > respects explicit newPanel=false [12.43ms]
+(pass) ChatDisplay branching navigation option > respects explicit newPanel=true [0.03ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/accounts-settings-presentation.test.ts:
+(pass) AccountsSettingsPage presentation > does not display raw profile IDs or modes [0.06ms]
+(pass) AccountsSettingsPage presentation > gives the Notes section sole ownership of its cloud connection [0.08ms]
+(pass) AccountsSettingsPage presentation > keeps the credential value hidden while passing it through the existing identity API [0.06ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/memory-proposal-card.test.ts:
+(pass) Issue 13 memory proposal UI wiring > renders compact blue proposal cards in chat and the memory review [7.05ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-splitter.test.ts:
+(pass) Zen Shell splitter wiring (ZS-05) > uses ResizeHandle and pointer capture rather than document mousemove [0.85ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/transfer-targets.test.ts:
+(pass) getTransferTargets > offers every workspace except the active one, local and remote alike [0.12ms]
+(pass) getTransferTargets > includes local workspaces when the active workspace is remote (remote → local send) [0.03ms]
+(pass) getTransferTargets > offers everything when no active workspace is known [0.02ms]
+(pass) hasTransferTargets > is false with a single (active-only) workspace [0.02ms]
+(pass) hasTransferTargets > is true with two local workspaces — no remote required [0.01ms]
+(pass) hasTransferTargets > handles missing workspace lists [0.01ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/module-home-nav.test.ts:
+(pass) module home navigator parity (Memory/Tasks/Meetings/Projects/Pages) > collapses the middle navigator for all five module homes [0.22ms]
+(pass) module home navigator parity (Memory/Tasks/Meetings/Projects/Pages) > hosts PagesHome-pattern surfaces in main content [0.06ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/ChatDisplay.follow-ups.test.ts:
+(pass) formatFollowUpSection — the OSS #580 regression > preserves a >1000-char quote verbatim (no truncation to 280) [0.22ms]
+(pass) formatFollowUpSection — the OSS #580 regression > collapses multiline quotes to a single line (required by round-trip parser) [0.81ms]
+(pass) formatFollowUpSection — the OSS #580 regression > emits the canonical `> [#N] <quote>\n→ <note>` shape for a single follow-up [0.09ms]
+(pass) formatFollowUpSection — the OSS #580 regression > numbers multiple follow-ups sequentially [0.10ms]
+(pass) formatFollowUpSection — the OSS #580 regression > returns an empty string when no follow-ups are pending [0.02ms]
+(pass) formatFollowUpSection — the OSS #580 regression > respects includeTopSeparator=false (used when there is no base message) [0.03ms]
+(pass) formatFollowUpSection — the OSS #580 regression > prepends a `---` separator by default (used under a base message) [0.02ms]
+(pass) normalizeFollowUpsMarkdown — round-trip parser > round-trips a long-quote message unchanged [0.48ms]
+(pass) normalizeFollowUpsMarkdown — round-trip parser > renumbers items when called on a message with wrong indices [0.06ms]
+(pass) normalizeFollowUpsMarkdown — round-trip parser > returns the input unchanged if no follow-up heading is present [0.02ms]
+(pass) truncateForChipTooltip > returns input unchanged when below the cap [0.06ms]
+(pass) truncateForChipTooltip > truncates with ellipsis when over the cap [0.02ms]
+(pass) truncateForChipTooltip > collapses whitespace before measuring length [0.01ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/connections-nav.test.ts:
+(pass) CF-6.2 Connections nav and surface > registers an enabled connections destination for the Workbench rail [0.11ms]
+(pass) CF-6.2 Connections nav and surface > exposes Connections in the single primary sidebar using the canonical route [0.46ms]
+(pass) CF-6.2 Connections nav and surface > renders ConnectionsPage from MainContentPanel on the connections navigator [1.64ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:
+(skip) production native surface renderer ownership > (unnamed)
+(skip) production native surface renderer ownership > hidden/released duplicate hosts cannot hide their visible sibling, while clipping hides the selected host
+(skip) production native surface renderer ownership > retains a typed draft through responsive hiding, restores geometry and suppresses overlays
+(skip) production native surface renderer ownership > releases an inspector attachment arriving after close without hiding a sibling surface
+(skip) production native surface renderer ownership > ignores an obsolete attachment failure after a newer open succeeds
+(skip) production native surface renderer ownership > preserves imported-cookie consent controls and routes explicit opt-in to a private instance
+(skip) production native surface renderer ownership > (unnamed)
+
+apps/electron/src/renderer/components/app-shell/__tests__/projects-home-loaded.test.ts:
+(pass) Projects home loaded DTO boundary > renders the loaded project store without the session-picker projection [245.45ms]
+(pass) Projects home loaded DTO boundary > renders an empty loaded store without inventing a project DTO [83.43ms]
+(pass) Projects home current workspace and explicit source > explicit loaded DTOs take precedence over the isolated atom source [118.79ms]
+(pass) Projects home current workspace and explicit source > an explicit empty result remains empty even when the atom has projects [1.56ms]
+(pass) Projects home current workspace and explicit source > atom fallback rejects another workspace before rendering the list [41.41ms]
+(pass) Projects home current workspace and explicit source > explicit input also rejects previous workspace rows [90.19ms]
+(pass) Projects home current workspace and explicit source > an absent active workspace renders no previously loaded project [1.20ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/account-menu-presentation.test.ts:
+(pass) AccountMenu presentation mode > uses a nested Drawer when compact is true [0.22ms]
+(pass) AccountMenu presentation mode > keeps DropdownMenu on the desktop (!compact) path only [44.99ms]
+(pass) AccountMenu presentation mode > loads Identity Center state via identityGetState and getCredentialHealth [0.31ms]
+(pass) AccountMenu presentation mode > exposes four Identity Center sections on both compact and desktop surfaces [0.38ms]
+(pass) AccountMenu presentation mode > does not present secrets or a second account switcher [0.65ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/quest-progress-card.test.ts:
+(pass) quest progress card > is not mounted on Home (no promo carousel) and never blocks core chrome [3.27ms]
+(pass) quest progress card > rates sessions with 👍/👎 from the session menu, not a composer scale [4.25ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/resize-math.test.ts:
+(pass) solveSplit (ZS-05) > clamps A=500 B=500 min=440 delta=200 to A=560 B=440 [0.20ms]
+(pass) solveSplit (ZS-05) > returns infeasible instead of negative widths when T=800 and both mins are 440 [0.04ms]
+(pass) solveSplit (ZS-05) > rejects non-finite input [0.02ms]
+(pass) solveSplit (ZS-05) > equal split respects mins [0.03ms]
+(pass) resize controller (ZS-05) > coalesces 1000 moves into one preview and zero commits until pointerup [32.65ms]
+(pass) resize controller (ZS-05) > cancel restores the snapshot and ignores a second cleanup [0.25ms]
+(pass) resize controller (ZS-05) > cancels when neighbor ids change [0.16ms]
+(pass) sash geometry (ZS-05) > uses a 12px hit area and 2px line, 24px on coarse pointers [0.02ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/main-content-panel-bulk.test.ts:
+(pass) MainContentPanel sessions bulk UI > does not mount the legacy MultiSelectPanel in the sessions branch [20.60ms]
+(pass) MainContentPanel sessions bulk UI > keeps CollectionBulkBar mounted for sessions list/chat content [0.04ms]
+(pass) MainContentPanel sessions bulk UI > keeps MultiSelectPanel for sources, skills, and automations [0.07ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/sources-list-groups.test.ts:
+(pass) P35-08 sources UI split and notification default > groups microservices vs MCP in the sources list when unfiltered [0.07ms]
+(pass) P35-08 sources UI split and notification default > splits default-source toggles into microservices vs MCP [0.06ms]
+(pass) P35-08 sources UI split and notification default > defaults background-session notifications on [0.07ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-disclosure.test.ts:
+(pass) Zen Shell sidebar disclosure (ZS-04) > extracts a disclosure primitive with aria-expanded/controls [0.04ms]
+(pass) Zen Shell sidebar disclosure (ZS-04) > uses sibling navigation + disclosure for navigable parents [0.05ms]
+(pass) Zen Shell sidebar disclosure (ZS-04) > does not nest a clickable span inside the nav button [0.09ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/session-join-ui.test.ts:
+(pass) Join session dialog behavior > invalidates a delayed join across A → B → A without loading, navigation or a success toast [106.53ms]
+(pass) Join session dialog behavior > keeps the join form while an unrelated publication completes during its pending request [14.58ms]
+(pass) Join session dialog behavior > ignores a delayed join after the host is unmounted [198.31ms]
+(pass) Join session dialog behavior > opens a remote published transcript for viewing without creating an editable session or switching local workspace [15.10ms]
+(pass) Join session dialog behavior > switches workspace and opens actual loaded session after workspace restoration before showing success [9.87ms]
+(pass) Join session dialog behavior > opens a session in the current workspace without switching [12.99ms]
+(pass) Join session dialog behavior > keeps a deleted-target denial visible without loading, navigation or success [8.14ms]
+(pass) Join session dialog behavior > does not report success if the actual session disappears after acceptance [264.74ms]
+(pass) Join session dialog behavior > keeps a failed workspace switch recoverable instead of navigating the old workspace [120.65ms]
+(pass) Join session dialog behavior > rejects inconsistent target workspace data before a switch [166.65ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/zen-topbar.test.ts:
+(pass) Zen Shell top bar (ZS-03) > uses native traffic-light safe area and does not draw HTML stoplights [4.15ms]
+(pass) Zen Shell top bar (ZS-03) > wires shell history to onBack/onForward and AppMenu [0.13ms]
+(pass) Zen Shell top bar (ZS-03) > keeps interactive controls out of the drag region [0.02ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/new-session-filter-inheritance.test.ts:
+(pass) new session filter inheritance > inherits a sole included status, label, or project [0.18ms]
+(pass) new session filter inheritance > does not inherit an excluded status, label, or project [0.03ms]
+(pass) new session filter inheritance > ignores excluded filters when resolving a sole included filter [0.02ms]
+(pass) new session filter inheritance > falls back to defaults when there are no included filters [0.01ms]
+(pass) new session filter inheritance > falls back to defaults when multiple included filters are active [0.02ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/premium-menu-chrome-hygiene.test.ts:
+(pass) Issue 04 chrome hygiene > keeps AppShell on StyledDropdown [35.51ms]
+(pass) Issue 04 chrome hygiene > keeps BrowserTabStrip on StyledDropdown [13.65ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/sidebar-rail-preference.test.ts:
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on sessions [157.09ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on meetings [48.41ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on settings [117.36ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on home [13.57ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on tasks [109.75ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on notes [8.23ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on projects [119.58ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on pages [96.42ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on knowledge [131.37ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on connections [362.02ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on search [107.94ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on screen [80.64ms]
+(pass) actual combined sidebar preference and rail geometry > explicit focus and automatic compact suppression preserve the saved sidebar choice [29.56ms]
+(pass) actual combined sidebar preference and rail geometry > the primary sidebar suppresses duplicate rail geometry for every flag and collapse state [298.28ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/session-row-click.test.ts:
+(pass) sessionRowClickTarget > sends title/row clicks to chat and status clicks to the board card [0.04ms]
+(pass) boardCardRoute > encodes board/session/{id} [0.03ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/main-content-panel-browser-i18n.test.ts:
+(pass) MainContentPanel browser empty state is i18n > uses browser.noInstanceSelected and skips the English defaultValue leftover [0.13ms]
+(pass) MainContentPanel browser empty state is i18n > English locale keeps the previous empty-state copy [37.47ms]
+(pass) MainContentPanel browser empty state is i18n > Russian copy is distinct from English [1.29ms]
+(pass) MainContentPanel browser empty state is i18n > all 12 locales already define the wired browser empty-state key [106.47ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/background-task-chip-state.test.ts:
+(pass) background task chip lifecycle > keeps a recently signaled running task unchanged [0.18ms]
+(pass) background task chip lifecycle > marks a no-signal running task stale without claiming completion [0.05ms]
+(pass) background task chip lifecycle > does not auto-prune stale tasks [0.02ms]
+(pass) background task chip lifecycle > retains and prunes terminal states using their existing linger windows [0.06ms]
+(pass) background task chip lifecycle > restores a stale task to running when progress resumes [0.03ms]
+(pass) background task chip lifecycle > does not resurrect terminal tasks on late progress [0.02ms]
+(pass) background task chip lifecycle > turn teardown converts both running and stale tasks to true orphaned state [0.06ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/sidebar-keyboard.test.ts:
+(pass) single sidebar keyboard navigation > moves from portalled filters to the next visible control and skips folded controls [0.27ms]
+(pass) single sidebar keyboard navigation > leaves Tab to native traversal within the sidebar [0.05ms]
+(pass) single sidebar keyboard navigation > skips inert closing-animation content even while it has layout rectangles [0.04ms]
+(pass) single sidebar keyboard navigation > skips closed native disclosure content even when Chromium keeps nonempty layout rectangles [0.13ms]
+(pass) single sidebar keyboard navigation > reserves unmodified numbered platform shortcuts for surfaces with no duplicate defaults [0.14ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/shell-width-clamp.test.ts:
+(pass) clampShellColumns > keeps restored widths when the center already has its minimum [0.09ms]
+(pass) clampShellColumns > narrows the list first, then the sidebar [0.03ms]
+(pass) clampShellColumns > stops at the column minimums in genuinely narrow windows [0.01ms]
+(pass) clampShellColumns > ignores hidden columns and unmeasured shells [0.02ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late sources responses after workspace/directory change [166.04ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live sources deletion ahead of a pending initial snapshot [224.02ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late skills responses after workspace/directory change [243.85ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live skills deletion ahead of a pending initial snapshot [17.23ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > refreshes project skills in the original directory and discards older event reloads [67.63ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > recovers from request rejection and unmount without installing stale data [94.63ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > restores workspace geometry before an old pending keyboard resize can commit [272.05ms]
+(pass) UI-001 workspace hydration protects persistence > does not save previous workspace expandedFolders into the new workspace [334.22ms]
+(pass) UI-001 workspace hydration protects persistence > does not save previous workspace viewFilters into the new workspace [107.60ms]
+(pass) UI-001 workspace hydration protects persistence > does not save previous workspace collapsedSectionIds into the new workspace [169.07ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/composer-toolbar-type.test.ts:
+(pass) composer toolbar type > uses 9px on context badge and chrome CSS override for toolbar buttons [0.98ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-roles.test.ts:
+(pass) Zen Shell chrome/content roles (ZS-02) > marks top bar and sidebar as chrome and panels as opaque content [0.77ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts:
+(pass) ROX UI-001 route recovery contract > keeps every accepted detail family on its own surface host [0.14ms]
+(pass) ROX UI-001 route recovery contract > renders an explicit unavailable state rather than an unrelated chat fallback [0.03ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/radius-everywhere.test.ts:
+(pass) one-surface shell > rounded panels sit on a 4px gap/inset grid [0.10ms]
+(pass) one-surface shell > renders sidebar and navigator as flush panes with a hairline divider [3.55ms]
+(pass) one-surface shell > content panels are flush, divided only in split view [0.13ms]
+(pass) one-surface shell > activity rail and inspector are flush with dividers, not boxes [0.46ms]
+(pass) one-surface shell > account card is a flat row (no rox-card outline) [0.05ms]
+(pass) one-surface shell > defines divider tokens for standard and high contrast [0.40ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/compact-session-list-filter.test.ts:
+(pass) session list grouping chrome > hides the leftover compact groupingMode cycle (date/status/unread) [0.09ms]
+(pass) session list grouping chrome > leaves CollectionGroupByMenu as the grouping control in collection chrome [0.03ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/topbar-shortcuts.test.ts:
+(pass) TopBar navigation cutover > leaves keyboard shortcut discovery to Settings instead of rendering a duplicate button [0.12ms]
+(pass) TopBar navigation cutover > forwards Settings subpage navigation to the canonical AppMenu route [0.03ms]
+(pass) TopBar navigation cutover > keeps the compact left sidebar control wired to its existing callback [0.04ms]
+(pass) TopBar navigation cutover > exposes bottom-terminal toggle in TopBar whenever the inspector toggle is shown [0.04ms]
+(pass) TopBar navigation cutover > toggles the right inspector and restores fully collapsed chrome [0.14ms]
+(pass) TopBar navigation cutover > exposes a dedicated Map affordance for the focused session [0.18ms]
+(pass) TopBar navigation cutover > does not retain the legacy TopBar What’s New action [0.19ms]
+(pass) TopBar navigation cutover > does not keep update checks on the ProfileStrip [0.02ms]
+(pass) TopBar navigation cutover > uses dedicated session and browser actions instead of a generic plus menu [0.08ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/error-message-actions.test.ts:
+(pass) handleErrorMessageAction > routes retry through the session-scoped focus handler [0.14ms]
+(pass) handleErrorMessageAction > opens the provided URL for open_url actions [0.03ms]
+(pass) handleErrorMessageAction > calls onRetry instead of onRetryFocus when provided [0.03ms]
+(pass) handleErrorMessageAction > runs the settings handler for settings actions [0.02ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/notes-local-entrypoints.test.ts:
+(pass) local Notes entry points > wires the primary shell sidebar and keyboard navigation to Notes [0.21ms]
+(pass) local Notes entry points > uses the canonical local Notes route from both rail entry points [0.03ms]
+(pass) local Notes entry points > loads the local Markdown Notes surface without a knowledge-engine API [0.07ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-accessibility.test.tsx:
+(pass) ProfileStrip preserves its translated accessibility contracts in isolation [1348.93ms]
+
+27 tests skipped:
+(skip) UI-001 actual navigation in Chromium > (unnamed)
+(skip) UI-001 actual navigation in Chromium > unknown single link survives reload and never selects its nested session
+(skip) UI-001 actual navigation in Chromium > malformed encoding and legacy lossy degradation retain their own unavailable surface
+(skip) UI-001 actual navigation in Chromium > multi-panel restore retains valid sibling, unavailable focus and proportions across reload
+(skip) UI-001 actual navigation in Chromium > actual navigate and deep-link callbacks preserve unavailable route and browser back/forward
+(skip) UI-001 actual navigation in Chromium > stored action address cannot execute, while explicit action callback still runs once
+(skip) UI-001 actual navigation in Chromium > pending search replay retains query and new-panel options
+(skip) UI-001 actual navigation in Chromium > latest pending unknown address wins without selecting a previous valid session
+(skip) UI-001 actual navigation in Chromium > workspace restoration and history keep each workspace address
+(skip) UI-001 actual navigation in Chromium > (unnamed)
+(skip) UI-001 real Chromium component and persistence fixtures > (unnamed)
+(skip) UI-001 real Chromium component and persistence fixtures > selected source deletion and recreation preserve workspace and entity address
+(skip) UI-001 real Chromium component and persistence fixtures > retry recovers an unavailable selected source through the actual click handler
+(skip) UI-001 real Chromium component and persistence fixtures > late resource load cannot replace a new missing address
+(skip) UI-001 real Chromium component and persistence fixtures > cloud run switch clears previous content while the new callback is pending
+(skip) UI-001 real Chromium component and persistence fixtures > retries rejected lazy imports and keeps the selected route
+(skip) UI-001 real Chromium component and persistence fixtures > retries rendering failure and a new route clears a previous error
+(skip) UI-001 real Chromium component and persistence fixtures > workspace switch cancels a real pending resize timer before it can persist old geometry
+(skip) UI-001 real Chromium component and persistence fixtures > actual localStorage persists valid sizes across reload and other windows
+(skip) UI-001 real Chromium component and persistence fixtures > (unnamed)
+(skip) production native surface renderer ownership > (unnamed)
+(skip) production native surface renderer ownership > hidden/released duplicate hosts cannot hide their visible sibling, while clipping hides the selected host
+(skip) production native surface renderer ownership > retains a typed draft through responsive hiding, restores geometry and suppresses overlays
+(skip) production native surface renderer ownership > releases an inspector attachment arriving after close without hiding a sibling surface
+(skip) production native surface renderer ownership > ignores an obsolete attachment failure after a newer open succeeds
+(skip) production native surface renderer ownership > preserves imported-cookie consent controls and routes explicit opt-in to a private instance
+(skip) production native surface renderer ownership > (unnamed)
+
+ 338 pass
+ 27 skip
+ 0 fail
+ 1454 expect() calls
+Ran 365 tests across 71 files. [37.00s]

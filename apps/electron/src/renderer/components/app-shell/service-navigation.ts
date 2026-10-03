@@ -10,6 +10,7 @@ export function findServicePanel(
   serviceId: AppNavDestinationId,
 ): PanelStackEntry | undefined {
   const destination = APP_NAV_DESTINATIONS_BY_ID[serviceId]
+  if (!destination) return undefined
   const matches = (panel: PanelStackEntry) => {
     return destination.isActive(parseRouteToNavigationStateOrUnavailable(panel.route))
   }

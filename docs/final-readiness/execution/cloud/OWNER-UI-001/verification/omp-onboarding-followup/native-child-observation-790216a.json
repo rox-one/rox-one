@@ -1,0 +1,28 @@
+{
+  "createdAt": "2026-10-03T22:28:02.682991+00:00",
+  "sourceRevision": "790216a785189279c376f5b144f76dc2da97795b",
+  "observation": {
+    "nativeChildPid": 5280,
+    "parentTestPid": 2646,
+    "batchPid": 324,
+    "commandPrefix": "/Users/t/.local/bin/omp --mode rpc --allow-home --session-dir /var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/omp-fake-hp9N0b/workspace/sessions/session-test/omp",
+    "qualification": "A native CLI was observed as a descendant of the failed test batch after timeout cleanup restored global fake environment. Its startup/provider interaction was not independently traced; do not assert zero provider attempts for this batch."
+  },
+  "cleanup": {
+    "safetyGuardRejectedBeforeSignals": true,
+    "reason": "Own parent no longer matches",
+    "signalsSent": [],
+    "naturallyExitedParentCode": 1,
+    "readbackAbsentPids": [
+      315,
+      324,
+      327,
+      2646,
+      5280
+    ]
+  },
+  "remedy": "Explicit30s test-case runner budget includes setup and disposal, while preserving each8s chat bound; fresh later run required.",
+  "actualNativeOmpLaunched": true,
+  "providerAttempts": "unknown",
+  "observedParentExitCode": 1
+}

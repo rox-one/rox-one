@@ -743,6 +743,10 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
 
 
+## UI-001: внешние ссылки и интеграция в main — 2026-10-03
+
+Владелец: `fix/ui-001-main-integration-20261003-7`. [UI-001 план](final-readiness/execution/cloud/OWNER-UI-001/main-integration/plan.md) сохраняет исходную матрицу UI-001.1/UI-001.2 и явное разрешение пользователя на GitHub/merge. Другие разделы и рабочие копии сохраняются.
+
 # Credential locator boundary validation — 2026-10-03
 
 | Task | Owner | Dependency | Verification |
@@ -1031,3 +1035,15 @@ Owner recent_features; depends on current Tasks1456, strict date1470 and Product
 - [x] Publish separate PR #1483 and attach it; read back the exact head and update the original137 source/caller ledger. Root owns merge.
 
 
+
+
+### Native OMP launch cancellation recovery — 2026-10-04
+
+Owner recent_features; parent owns ordered integration. Retain held-prepare destroy baseline failure, execute all 27 pinned native controls and 317 current account/domain/helper/observer/i18n checks, and qualify full strict Electron types. Preserve all failure history, current SSO/RuntimeMap authority and original branches; reconcile current main without document deletion, publish a separate scoped PR. Installed Windows and full release acceptance stay separate.
+
+## Runtime trace origin recovery — 2026-10-04
+
+1. Historical worker freezes c2e8 source and separates seven collector/core/DTO files from pr_scout's actual producer ownership. Retain current authorization, descriptor privacy and every original branch.
+2. Reproduce origin/privacy/artifact/verdict negatives, including the explicitly pending TaskRunner producer fixture. Restore only the bounded collector layer, then qualify four independent suites (53/0/247), core and server-core Node22 types. Archive source failures and the initial dependent-fixture type diagnostics.
+3. Publish a separate collector PR with qualified hashes and pending producer/UI boundaries. pr_scout preserves current third suppliedExecution argument and spawn authority bind while implementing tagged actual producers in its separate PR. Root owns sequential merge.
+4. Historical worker recovers current renderer context/export/link/retry behavior from the same finite source head; end-to-end producer/UI acceptance needs its own actual consumers and refreshed scoped proof.

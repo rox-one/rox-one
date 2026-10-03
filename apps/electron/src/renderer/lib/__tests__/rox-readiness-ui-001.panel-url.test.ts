@@ -27,10 +27,29 @@ describe('UI-001 panel URL transport', () => {
     ])
   })
 
+  it('keeps bracket-prefixed legacy addresses and their siblings separate from tuple JSON', () => {
+    for (const route of ['[future]', '[[future]]', '["future"]', '[1]', '[["future"]]']) {
+      expect(codec().decodePanelEntries(route)).toEqual([{route,proportion:0}])
+      expect(codec().decodePanelEntries(`${route}:0.6000,tasks:0.4000`)).toEqual([
+        { route, proportion: 0.6 }, { route: 'tasks', proportion: 0.4 },
+      ])
+      expect(codec().decodePanelEntries(`${route},tasks`)).toEqual([
+        { route, proportion: 0 }, { route: 'tasks', proportion: 0 },
+      ])
+    }
+  })
+
   it('retains legacy missing proportion and last-colon parsing behavior', () => {
     expect(codec().decodePanelEntries('home,unknown?retain=a:b:0.7500')).toEqual([
       { route: 'home', proportion: 0 }, { route: 'unknown?retain=a:b', proportion: 0.75 },
     ])
+  })
+
+  it('reads json object URLs and requests equal layout for omitted or unusable weights', () => {
+    expect(codec().decodePanelEntries('json:[{"route":"tasks"},{"route":"notes/note/a,b","proportion":0.4}]')).toEqual([
+      {route:'tasks',proportion:0},{route:'notes/note/a,b',proportion:0.4},
+    ])
+    expect(codec().decodePanelEntries('json:[{"route":" ","proportion":0.4}]')).toEqual([])
   })
 
   it('supports a valid single-entry v2 payload', () => {
@@ -57,4 +76,49 @@ describe('UI-001 panel URL transport', () => {
     expect(new URLSearchParams(search).get('panels')!.startsWith('v2:')).toBe(true)
     expect(snapshotFromUrlSearch(search, 'workspace-a', 123)).toEqual(snapshot)
   })
+  it('reads published tuple URLs and keeps literal commas, colons and existing URI escapes intact', () => {
+    expect(codec().decodePanelEntries('[["notes/note/a,b?keep=x:y",0.6],["future/a%2Fb",0.4]]')).toEqual([
+      { route: 'notes/note/a,b?keep=x:y', proportion: 0.6 }, { route: 'future/a%2Fb', proportion: 0.4 },
+    ])
+  })
+  it('snapshots restore the explicit focused session when panel serialization is empty or damaged', () => {
+    for (const panels of ['[]', '[', 'v2:[]', 'v2:[']) {
+      const search = '?' + new URLSearchParams({ route: 'allSessions/session/requested', panels }).toString()
+      const snapshot = snapshotFromUrlSearch(search, 'workspace-a', 123)
+      expect(snapshot?.tabs.map(entry => entry.tab)).toEqual([{ kind: 'session', sessionId: 'requested' }])
+      expect(snapshot?.focusedIndex).toBe(0)
+    }
+  })
+
+  const sessionRoute = 'allSessions/session/a'
+  const browserRoute = 'browser/instance/b'
+  const mixedWeights = [
+    ['tuple zero', JSON.stringify([[sessionRoute, 0], [browserRoute, 1]])],
+    ['tuple null', JSON.stringify([[sessionRoute, null], [browserRoute, 1]])],
+    ['tuple negative', JSON.stringify([[sessionRoute, -1], [browserRoute, 1]])],
+    ['json missing', 'json:' + JSON.stringify([{ route: sessionRoute }, { route: browserRoute, proportion: 1 }])],
+    ['json zero', 'json:' + JSON.stringify([{ route: sessionRoute, proportion: 0 }, { route: browserRoute, proportion: 1 }])],
+    ['legacy zero', `${sessionRoute}:0,${browserRoute}:1`],
+    ['legacy missing', `${sessionRoute},${browserRoute}:1`],
+  ] as const
+  for (const [name, panels] of mixedWeights) {
+    it(`snapshot repairs ${name} before persistence and retains the usable split after reload`, () => {
+      const search = '?' + new URLSearchParams({ panels, fi: '1' })
+      const snapshot = snapshotFromUrlSearch(search, 'workspace-a', 123)
+      expect(snapshot?.tabs.map(tab => tab.proportion)).toEqual([0.5, 0.5])
+      expect(snapshot?.tabs.map(tab => tab.tab)).toEqual([
+        { kind: 'session', sessionId: 'a' }, { kind: 'browser', tabId: 'b' },
+      ])
+      expect(snapshot?.focusedIndex).toBe(1)
+      expect(snapshot?.workspaceId).toBe('workspace-a')
+      expect(snapshotFromUrlSearch(snapshotToUrlSearch(snapshot!), 'workspace-a', 123)).toEqual(snapshot)
+    })
+  }
+  it('snapshot retains and rescales valid unequal tuple weights', () => {
+    const panels = JSON.stringify([[sessionRoute, 0.2], [browserRoute, 0.6]])
+    const snapshot = snapshotFromUrlSearch('?' + new URLSearchParams({ panels }), 'workspace-a', 123)
+    expect(snapshot?.tabs[0]?.proportion).toBeCloseTo(0.25)
+    expect(snapshot?.tabs[1]?.proportion).toBeCloseTo(0.75)
+  })
+
 })
