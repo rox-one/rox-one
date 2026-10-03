@@ -370,7 +370,7 @@ export default function SecuritySettingsPage() {
               {displayedRuntime?.safeError && (
                 <p role="alert" className="text-sm text-destructive">
                   {displayedRuntime.safeError === 'RUNTIME_MISSING' ? t('security.openclaw.missing') : t('security.error.runtimeUnavailable')}
-                  
+
                 </p>
               )}
               {displayedSnapshot?.safeError && (

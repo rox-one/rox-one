@@ -1101,14 +1101,13 @@ export class WsRpcServer implements RpcServer {
       this.sendResponseError(client.ws, id, channel, 'CHANNEL_NOT_FOUND', `No handler for: ${channel}`)
       return
     }
-    if (!this.canRequest(client, registration)) {
-      this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', 'Workspace permission denied')
-      return
-    }
-
     if ((registration.access === 'authenticatedWorkspace' && !client.workspaceSession)
       || (this.workspaceAuthority && registration.access !== 'authenticatedWorkspace')) {
-      this.sendResponseError(client.ws, id, channel, 'CHANNEL_NOT_FOUND', 'Channel unavailable')
+      this.sendResponseError(client.ws, id, channel, 'CHANNEL_NOT_FOUND', `No handler for: ${channel}`)
+      return
+    }
+    if (!this.canRequest(client, registration)) {
+      this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', this.workspaceAuthority ? 'Request failed' : 'Workspace permission denied')
       return
     }
     if (this.workspaceAuthority && args !== undefined && !Array.isArray(args)) {
@@ -1168,7 +1167,7 @@ export class WsRpcServer implements RpcServer {
         ),
       ])
       if (!this.canReturnResponse(client, registration, ctx, requestFence)) {
-        this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', 'Workspace permission changed')
+        this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', this.workspaceAuthority ? 'Request failed' : 'Workspace permission changed')
         return
       }
       const response: MessageEnvelope = {
@@ -1196,7 +1195,7 @@ export class WsRpcServer implements RpcServer {
       this.safeSend(client.ws, data)
     } catch (err) {
       if (!this.canReturnResponse(client, registration, ctx, requestFence)) {
-        this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', 'Workspace permission changed')
+        this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', this.workspaceAuthority ? 'Request failed' : 'Workspace permission changed')
         return
       }
       const message = err instanceof Error ? err.message : String(err)
