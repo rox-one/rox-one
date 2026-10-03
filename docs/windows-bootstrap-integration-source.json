@@ -2,7 +2,7 @@
   "source_pr": 1436,
   "source_branch": "fix/windows-runtime-mcp-bootstrap-20261003",
   "source_sha": "384843bfc4cf7d4a1f34c902a66a9a3198043c9f",
-  "integration_main": "0db0e61409b83f0421a28d4a83275ed40577d8ee",
+  "integration_main": "3342fad30166bdf005d296e0d5fe24d36d4df5fb",
   "owner": "pr_scout",
   "original_branch_preserved": true,
   "selected_source_paths": [

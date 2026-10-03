@@ -2503,6 +2503,7 @@
   "inspector.info": "Información",
   "inspector.kind.session": "Session",
   "inspector.outline": "Esquema",
+  "inspector.resize": "Cambiar el ancho del inspector",
   "inspector.tab.browser": "Navegador",
   "inspector.tab.context": "Contexto",
   "inspector.tab.files": "Archivos",

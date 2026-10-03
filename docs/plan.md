@@ -5,6 +5,10 @@
 3. Fix receipt descriptor/size/replacement race with actual adversarial filesystem checks; qualify explicit modes, real private/system exclusions, companion removal, re-probes, damaged generated launcher repair/rollback, pinned payload corruption and production OEM refusal. Run inherited relevant tests/types/current builds, retaining source mismatch history and native Windows skips.
 4. Reconcile latest main, freeze revision/proof hashes, commit/push a separate attached PR. Root reviews/merges. Actual installed Windows execution, NSIS provisioning and OEM release payload remain external platform/release gates, distinct from bounded source acceptance.
 
+## Inspector resize recovery task graph — 2026-10-03
+
+Owner: branch audit lead; depends on merged Golden Gate controller/native/panels and Connections consumers. Source audit → adapt sash into current InspectorHost with transient preview/current bounds → exercise actual host pointer/keyboard/cancel/unmount/reload and old-consumer negative → package type/build/locale gates → separate reviewed PR, exact merge/readback. Shared files: currentInspectorHost and12locale keys only; original source branches remain intact. No old layout widths or section ownership are restored.
+
 ## Golden Gate chat output recovery plan — 2026-10-03
 
 1. Freeze source helper/current auto-scroll sites and coordinate ChatDisplay regions with Product Learning worker. pr_scout owns output scroll only; root owns merge and Inspector/credential integration.
