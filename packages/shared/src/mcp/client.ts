@@ -16,6 +16,7 @@ import { isBlockedEnvVar } from '@rox/core/env';
 import { createMcpGuardedFetch, McpRedirectError } from './guarded-fetch.ts';
 import { isSensitiveKeyName, REDACTED_VALUE } from '../utils/redaction.ts';
 import { getToolchain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
+import { pathEnvKey } from '../toolchain/exec.ts';
 
 /**
  * HTTP transport config for remote MCP servers
@@ -169,6 +170,22 @@ export interface PoolClient {
   close(): Promise<void>;
   /** Transport health, when available. Older/in-process clients may omit it. */
   isConnected?(): boolean;
+}
+
+/** Source PATH is authoritative; Windows children receive one unambiguous alias. */
+export function mergeMcpStdioEnvironment(
+  inherited: Record<string, string>,
+  source: Record<string, string> = {},
+  platform: NodeJS.Platform = process.platform,
+): Record<string, string> {
+  const env = { ...inherited, ...source };
+  if (platform === 'win32') {
+    const sourceKey = Object.keys(source).find(key => key.toUpperCase() === 'PATH');
+    const value = sourceKey !== undefined ? source[sourceKey] : inherited[pathEnvKey(inherited, true)];
+    for (const key of Object.keys(env)) if (key.toUpperCase() === 'PATH') delete env[key];
+    if (value !== undefined) env.PATH = value;
+  }
+  return env;
 }
 
 function inheritedEnvironment(): Record<string, string> {
@@ -485,7 +502,7 @@ export class CraftMcpClient {
     this.config = structuredClone(config);
     this.inheritedEnv = inheritedEnvironment();
     this.connection = new McpConnection(config.transport === 'stdio'
-      ? { ...this.config as StdioMcpClientConfig, env: { ...this.inheritedEnv, ...config.env } }
+      ? { ...this.config as StdioMcpClientConfig, env: mergeMcpStdioEnvironment(this.inheritedEnv, config.env) }
       : this.config);
   }
 
@@ -504,11 +521,11 @@ export class CraftMcpClient {
         const inheritedEnv = await withToolchainPathPrefix(this.inheritedEnv);
         let command = config.command;
         // Explicit paths and source-specific PATH values remain user choices.
-        if (/^(?:npx|bun|uvx)$/.test(command) && config.env?.PATH === undefined) {
+        if (/^(?:npx|bun|uvx)$/.test(command) && !Object.keys(config.env ?? {}).some(key => process.platform === 'win32' ? key.toUpperCase() === 'PATH' : key === 'PATH')) {
           command = await getToolchain().resolver.findExecutable(command).catch(() => null) ?? command;
         }
         if (this.controller.signal.aborted) throw new Error('MCP client is closed');
-        const env = { ...inheritedEnv, ...config.env };
+        const env = mergeMcpStdioEnvironment(inheritedEnv, config.env);
         if (isManagedLocalQdrantConfig(config)) {
           // The official server considers even empty remote settings present.
           // An explicit embedded config must omit them, including unrelated

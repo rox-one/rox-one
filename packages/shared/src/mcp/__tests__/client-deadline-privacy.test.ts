@@ -458,6 +458,7 @@ test('real tool failure preserves a usable connection while scrubbing server dia
     await client.connect();
     await server.update({errorMethod:'tools/call',error:'header-secret https://user:pass@host/mcp?token=query-secret'});
     const error = await client.callTool('fixture',{}).catch(error => error);
+    if (!(error instanceof Error)) throw new Error('Expected a sanitized tool error');
     for (const secret of ['header-secret','user:pass','query-secret']) expect(error.message).not.toContain(secret);
     expect(error.cause).toBeUndefined();
     expect(client.isConnected()).toBe(true);
