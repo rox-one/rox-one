@@ -1037,3 +1037,9 @@ Owner recent_features; depends on current Tasks1456, strict date1470 and Product
 3. Publish a separate collector PR with qualified hashes and pending producer/UI boundaries. pr_scout preserves current third suppliedExecution argument and spawn authority bind while implementing tagged actual producers in its separate PR. Root owns sequential merge.
 4. Historical worker recovers current renderer context/export/link/retry behavior from the same finite source head; end-to-end producer/UI acceptance needs its own actual consumers and refreshed scoped proof.
 
+## Runtime actual producer custody recovery — 2026-10-04
+
+- [x] Freeze c2e8 source and current producer caller/blob audit; agree historical collector seven-file dependency and producer fourteen-file partition. Preserve SSO suppliedExecution and spawn authority bind.
+- [x] Reproduce current TaskRunner and native observer negatives in an isolated unchanged baseline; retain fixture/timeout failures separately.
+- [ ] Recover only actual producer origin/output/private projection/native lifecycle intent; qualify current account/native/host process negative controls, native mock-provider loop and package types.
+- [ ] Publish separate qualified PR with exact source and current-main additive docs union; root reviews/merges.

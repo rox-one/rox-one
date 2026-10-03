@@ -43,6 +43,8 @@ export class OmpRuntimeTraceBridge {
   private nativeSequences = new Map<string, number>();
   private agents = new Map<string, NativeAgentState>();
   private spawns = new Map<string, 'task' | 'eval'>();
+  private parentSpans = new Map<string, string>();
+  private nativeIdentities = new Map<string, Map<string, { kind: 'task' | 'eval'; parentSpanId?: string }>>();
   private runId = '';
   private originalPrompt = '';
   private selectedSkills = new Map<string, string>();
@@ -54,6 +56,8 @@ export class OmpRuntimeTraceBridge {
     this.nativeSequences.clear();
     this.agents.clear();
     this.spawns.clear();
+    this.parentSpans.clear();
+    this.nativeIdentities.clear();
     this.selectedSkills = new Map([...skills].map(([slug, path]) => [path, slug]));
   }
 
@@ -69,6 +73,13 @@ export class OmpRuntimeTraceBridge {
     const main = event.agent.kind === 'main';
     const agentId = main ? 'root' : event.agent.id;
     const parentAgentId = event.agent.parentId === 'Main' ? 'root' : event.agent.parentId;
+    // Native buses may mirror a descendant lifecycle to several observers.
+    // Match the actual child registry parent before consuming a bus binding.
+    const identity = parentAgentId && this.nativeIdentities.get(agentId)?.get(parentAgentId);
+    if (identity) {
+      this.spawns.set(agentId, identity.kind);
+      if (identity.parentSpanId) this.parentSpans.set(agentId, identity.parentSpanId);
+    }
     const agentKey = `${event.nativeSessionId}:${event.agent.id}`;
     let state = this.agents.get(agentKey);
     if (!state) {
@@ -81,7 +92,7 @@ export class OmpRuntimeTraceBridge {
       this.sourceSequences.set(sourceId, sourceSeq);
       observations.push({
         sourceEventId: `${event.id}:${kind}:${observations.length}`, sourceId, sourceSeq,
-        agentId, parentAgentId, spanId,
+        agentId, parentAgentId, spanId, parentSpanId: this.parentSpans.get(agentId),
         providerTurnId: `${event.nativeSessionId}:turn:${state!.turn}`,
         occurredAt: known(event.observedAt, 'OMP native extension hook'),
         elapsedMs: event.elapsedMs, clockDomain: `omp-native:${event.sourceId}`, origin: 'observed', kind, payload,
@@ -123,6 +134,17 @@ export class OmpRuntimeTraceBridge {
         reason: `Native emitter omitted source sequences ${previousNativeSeq + 1}–${event.sourceSeq - 1}` } });
     }
     switch (event.hook) {
+      case 'subagent_identity': {
+        const childId = text(event.payload.id);
+        const kind = event.payload.invocationKind;
+        const parentToolCallId = text(event.payload.parentToolCallId);
+        if (childId && (kind === 'task' || kind === 'eval')) {
+          const candidates = this.nativeIdentities.get(childId) ?? new Map();
+          candidates.set(agentId, { kind, parentSpanId: parentToolCallId ? main ? `tool:${parentToolCallId}` : `native:${event.nativeSessionId}:tool:${parentToolCallId}` : undefined });
+          this.nativeIdentities.set(childId, candidates);
+        }
+        break;
+      }
       case 'before_subagent_spawn': {
         const kind = event.payload.invocationKind;
         const spawnKey = text(event.payload.spawnKey);

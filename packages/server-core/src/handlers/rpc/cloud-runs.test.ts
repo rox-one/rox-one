@@ -77,7 +77,7 @@ const sent = [];
 const fakeDeps = {
   sessionManager: {
     getSession: async (sessionId) => ({ id: sessionId, workspaceId: 'ws-test' }),
-    sendMessage: async (sessionId, message) => { sent.push({ sessionId, message }); },
+    sendMessage: async (...args) => { sent.push({ sessionId: args[0], message: args[1], runtimeLaunch: args[8]?.runtimeLaunch }); },
   },
 };
 registerCloudRunsHandlers(fakeServer, fakeDeps);
@@ -247,6 +247,8 @@ describe('cloud-runs rpc handlers (local provider)', () => {
         sent.length = 0;
         await invoke(RPC_CHANNELS.cloudRuns.AGGREGATE, { runId, sessionId });
         if (!sent.some((m) => m.sessionId === sessionId)) throw new Error('AGGREGATE did not send to session: ' + JSON.stringify(sent));
+        const aggregate = sent.find((m) => m.sessionId === sessionId);
+        if (aggregate.runtimeLaunch?.kind !== 'unknown' || aggregate.runtimeLaunch?.triggerId !== 'cloud-run:' + runId) throw new Error('AGGREGATE lost actual host launch provenance: ' + JSON.stringify(aggregate));
 
         // disabled feature is enforced
         const { writeFileSync } = await import('node:fs');

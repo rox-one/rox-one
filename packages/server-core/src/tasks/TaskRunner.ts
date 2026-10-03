@@ -21,6 +21,7 @@
 import type { CreateSessionOptions } from '@rox/shared/protocol';
 import type { SessionCompletionEvent } from '../sessions/SessionManager';
 import type { TaskRuntimeObservation } from '../sessions/runtime-trace/conductor';
+import type { ISessionManager } from '../handlers/session-manager-interface';
 import {
   type TaskSpec,
   type TaskNode,
@@ -51,7 +52,7 @@ export interface ConductorSessionHost {
   /** Creates the child session AND announces it to the renderer (createSession emits
    *  session_created by default), so the subtask appears on the board with its real title. */
   createSession(workspaceId: string, options: CreateSessionOptions): Promise<{ id: string }>;
-  sendMessage(sessionId: string, message: string): Promise<void>;
+  sendMessage(...args: Parameters<ISessionManager['sendMessage']>): Promise<void>;
   setSessionStatus(sessionId: string, status: string): Promise<void>;
   setKanbanColumn(sessionId: string, column: string | null): Promise<void>;
   /** Records the total DAG node count on the orchestrator session for a stable board progress denominator. */
@@ -396,7 +397,8 @@ class ActiveRun {
       if (this.opts.orchestratorSessionId) {
         try { await this.deps.host.assignTaskRuntimeChild?.(this.opts.orchestratorSessionId, child.id, prompt, node, this.runId); } catch { /* A passive observer never changes task dispatch. */ }
       }
-      await this.deps.host.sendMessage(child.id, prompt);
+      await this.deps.host.sendMessage(child.id, prompt, undefined, undefined, undefined, undefined, undefined, undefined,
+        { runtimeLaunch: { kind: 'delegated', triggerId: `task:${this.spec.id}:${this.runId}:node:${node.id}` } });
     } catch (err) {
       this.failNode(node.id, `dispatch failed: ${(err as Error).message}`);
     }
@@ -464,7 +466,7 @@ class ActiveRun {
       st.state = 'done';
       this.inFlight = Math.max(0, this.inFlight - 1);
       writeNodeOutput(this.deps.workspaceRoot, this.slug, this.runId, nodeId, output);
-      this.log({ kind: 'node-finished', nodeId, sessionId: evt.sessionId, state: 'done' });
+      this.log({ kind: 'node-finished', nodeId, sessionId: evt.sessionId, state: 'done' }, evt.finalMessageId);
       void this.deps.host.setSessionStatus(evt.sessionId, DONE_STATUS);
       void this.deps.host.setKanbanColumn(evt.sessionId, 'done');
       this.scheduleReady();
@@ -609,14 +611,15 @@ class ActiveRun {
       this.verdictOff?.();
       this.verdictOff = undefined;
       const text = evt.finalText ?? this.deps.host.getSessionFinalText(orchestrator) ?? '';
-      this.handleVerdict(text);
+      this.handleVerdict(text, evt.finalMessageId);
     });
   }
 
   /** Send to the orchestrator, failing the run (rather than hanging in `verifying`) if the send rejects. */
   private async sendToOrchestrator(orchestrator: string, message: string): Promise<void> {
     try {
-      await this.deps.host.sendMessage(orchestrator, message);
+      await this.deps.host.sendMessage(orchestrator, message, undefined, undefined, undefined, undefined, undefined, undefined,
+        { runtimeLaunch: { kind: 'unknown', triggerId: `task:${this.spec.id}:${this.runId}:verification` } });
     } catch {
       // The verdict will never arrive — detach the listener and settle as failed instead of hanging.
       this.verdictOff?.();
@@ -631,11 +634,11 @@ class ActiveRun {
    *   unparsed  → re-ask for a well-formed verdict (bounded; not a repair); exhausted → failed.
    *   FAIL      → repair the frontier if budget remains, else failed (iterations/token budget breach).
    */
-  private handleVerdict(text: string): void {
+  private handleVerdict(text: string, messageId?: string): void {
     if (this.runStatus !== 'verifying') return; // stopped/finalized while awaiting the verdict
     writeNodeOutput(this.deps.workspaceRoot, this.slug, this.runId, '__verdict__', { text });
     const verdict = parseVerdict(text);
-    this.log({ kind: 'verdict', result: verdict.result, reason: verdict.reason, nodes: verdict.nodes });
+    this.log({ kind: 'verdict', result: verdict.result, reason: verdict.reason, nodes: verdict.nodes }, messageId);
 
     if (verdict.result === 'pass') {
       this.unparsedReAsks = 0;
@@ -767,13 +770,21 @@ class ActiveRun {
     return this.runStatus === 'completed' || this.runStatus === 'failed' || this.runStatus === 'stopped';
   }
 
-  private log(entry: RunLogEntryInput): void {
+  private log(entry: RunLogEntryInput, messageId?: string): void {
     const t = this.deps.now ? this.deps.now() : new Date().toISOString();
     const durable = { ...entry, t } as RunLogEntry;
     appendRunLog(this.deps.workspaceRoot, this.slug, this.runId, durable);
+    const outputNodeId = durable.kind === 'node-finished' && durable.state === 'done' ? durable.nodeId : durable.kind === 'verdict' ? '__verdict__' : undefined;
+    let output: NodeOutput | undefined;
+    try {
+      // Capture this version immediately after the authority's write, before a repair may replace it.
+      const stored = outputNodeId ? readNodeOutput(this.deps.workspaceRoot, this.slug, this.runId, outputNodeId) : null;
+      if (stored && typeof stored.text === 'string') output = stored;
+    } catch { /* A passive readback failure never changes the task authority. */ }
+    const outputRef = output ? `tasks/${this.slug}/runs/${this.runId}/nodes/${outputNodeId}.json` : undefined;
     // Consume the canonical verdict/state only after the authority stored it. Observer failures never change the task.
     this.observationQueue = this.observationQueue.then(async () => {
-      try { await this.deps.host.observeTaskRun?.({ spec: this.spec, slug: this.slug, taskRunId: this.runId, orchestratorSessionId: this.opts.orchestratorSessionId, entry: durable }); } catch { /* Passive observation. */ }
+      try { await this.deps.host.observeTaskRun?.({ spec: this.spec, slug: this.slug, taskRunId: this.runId, orchestratorSessionId: this.opts.orchestratorSessionId, entry: durable, output, outputRef, messageId }); } catch { /* Passive observation. */ }
     });
   }
 }
