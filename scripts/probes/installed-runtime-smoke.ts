@@ -13,6 +13,7 @@ import { parse as parseYaml } from 'yaml';
 import { prepareOmpRoxRuntimeConfig } from '../../packages/shared/src/agent/omp-first-run.ts';
 import { OMP_WORKER_POLICY_SOURCE } from '../../packages/shared/src/agent/omp-worker-policy.ts';
 import { readOmpResumeFile, withOmpRequiredModes, writeOmpIdentity } from '../../packages/shared/src/agent/omp-history.ts';
+import { writeWorkerEvidence } from './omp-worker-loop.ts';
 
 interface Manifest { version: 1; appVersion: string; skillCount: number; workerPolicySha256: string; files: Record<string, string> }
 const sha = (data: string | Buffer) => createHash('sha256').update(data).digest('hex');
@@ -75,7 +76,7 @@ const expected: Manifest = flags.has('--manifest')
   ? JSON.parse(readFileSync(flags.get('--manifest')!, 'utf8'))
   : expectedManifest();
 if (expected.version !== 1 || expected.appVersion !== '0.11.8' || expected.skillCount !== 330) throw new Error('Expected final 0.11.8 / 330-skill manifest');
-if (flags.has('--write-manifest')) writeFileSync(flags.get('--write-manifest')!, JSON.stringify(expected, null, 2) + '\n', { mode: 0o600 });
+if (flags.has('--write-manifest')) writeWorkerEvidence(flags.get('--write-manifest')!, expected);
 const target = resolve(targetArg);
 const layout = [target, join(target, 'Contents', 'Resources'), join(target, 'resources')]
   .map(resources => {
@@ -152,7 +153,7 @@ try {
     compiledWorkerPolicySha256: sha(policy), isolatedHome: true, credentialReads: false,
     crlfTitleHeaderIdentityResume: true, corruptInteriorRejected: true, win32BasenameEscapesRejected: true,
     scope: 'Packaged resource hashes, compiled policy extraction and source-shared profile generation. No Electron execution, native skill discovery, UI, remote provider or Windows filesystem acceptance.', assertionsPassed: true };
-  if (flags.has('--output')) writeFileSync(flags.get('--output')!, JSON.stringify(evidence, null, 2) + '\n', { mode: 0o600 });
+  if (flags.has('--output')) writeWorkerEvidence(flags.get('--output')!, evidence);
   console.log(JSON.stringify(evidence, null, 2));
   profile.dispose();
 } finally { rmSync(isolated, { recursive: true, force: true }); }
