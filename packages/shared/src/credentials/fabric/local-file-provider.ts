@@ -19,6 +19,7 @@ export class LocalFileSecretProvider implements SecretProvider {
     kind: CredentialKind;
     backend: CredentialBackend;
   }>();
+  private readonly mutations = new Map<string, Promise<void>>();
   private readonly byConflict = new Map<string, CredentialRef>();
 
   constructor(
@@ -96,35 +97,87 @@ export class LocalFileSecretProvider implements SecretProvider {
   }
 
   async dropCopy(ref: CredentialRef): Promise<void> {
+    return this.withCredentialMutation(ref.id, () => this.dropCopyNow(ref));
+  }
+
+  private async dropCopyNow(ref: CredentialRef): Promise<void> {
     const copy = this.copies.get(ref.id);
     if (!copy) return;
     await copy.backend.delete(copy.id);
+    if (await copy.backend.get(copy.id)) throw new Error('copy_delete_failed');
     this.copies.delete(ref.id);
   }
 
   async resolveForLease(input: { credentialRef: CredentialRef }): Promise<ProviderMaterialization> {
+    if (this.mutations.has(input.credentialRef.id)) throw new Error('credential_mutation_in_progress');
     const copy = this.copies.get(input.credentialRef.id);
     if (!copy) throw new Error('Provider materialization missing');
     return createProviderMaterialization(input.credentialRef.id, copy.kind, copy.payload);
   }
 
-  async moveCopy(
+  private async withCredentialMutation<T>(refId: string, operation: () => Promise<T>, rejectIfBusy = false): Promise<T> {
+    const previous = this.mutations.get(refId);
+    if (rejectIfBusy && previous) throw new Error('move_in_progress');
+    let finish!: () => void;
+    const current = new Promise<void>(resolve => { finish = resolve; });
+    this.mutations.set(refId, current);
+    try {
+      await previous;
+      return await operation();
+    } finally {
+      if (this.mutations.get(refId) === current) this.mutations.delete(refId);
+      finish();
+    }
+  }
+
+  async moveCopy(ref: CredentialRef, target: CredentialBackend): Promise<{ from: string; to: string }> {
+    return this.withCredentialMutation(ref.id, () => this.moveCopyNow(ref, target), true);
+  }
+
+  private async moveCopyNow(
     ref: CredentialRef,
     target: CredentialBackend,
   ): Promise<{ from: string; to: string }> {
     const copy = this.copies.get(ref.id);
     if (!copy) throw new Error('move_unavailable');
     if (copy.backend.name === target.name) throw new Error('same_backend');
-    await target.set(copy.id, copy.payload);
-    await copy.backend.delete(copy.id);
+    if (!(await target.isAvailable())) throw new Error('backend_unavailable');
+    if (await target.get(copy.id)) throw new Error('target_copy_exists');
+    let sourceDeleted = false;
+    try {
+      await target.set(copy.id, copy.payload);
+      const readback = await target.get(copy.id);
+      if (!readback || credentialPayloadFingerprint(copy.kind, readback)
+        !== credentialPayloadFingerprint(copy.kind, copy.payload)) throw new Error('move_verification_failed');
+      sourceDeleted = await copy.backend.delete(copy.id);
+      if (!sourceDeleted || await copy.backend.get(copy.id)) throw new Error('move_source_delete_failed');
+    } catch {
+      // Restore the source before removing the verified destination if deletion was partial.
+      try {
+        if (sourceDeleted || !(await copy.backend.get(copy.id))) await copy.backend.set(copy.id, copy.payload);
+        const restored = await copy.backend.get(copy.id);
+        if (!restored || credentialPayloadFingerprint(copy.kind, restored)
+          !== credentialPayloadFingerprint(copy.kind, copy.payload)) throw new Error('source_restore_failed');
+        await target.delete(copy.id);
+        if (await target.get(copy.id)) throw new Error('target_cleanup_failed');
+      } catch {
+        throw new Error('move_rollback_failed');
+      }
+      throw new Error('move_failed');
+    }
     this.copies.set(ref.id, { ...copy, backend: target });
     return { from: copy.backend.name, to: target.name };
   }
 
   async revoke(input: { credentialRef: CredentialRef }): Promise<void> {
+    return this.withCredentialMutation(input.credentialRef.id, () => this.revokeNow(input));
+  }
+
+  private async revokeNow(input: { credentialRef: CredentialRef }): Promise<void> {
     const copy = this.copies.get(input.credentialRef.id);
     if (!copy) return;
     await copy.backend.delete(copy.id);
+    if (await copy.backend.get(copy.id)) throw new Error('copy_delete_failed');
     this.copies.delete(input.credentialRef.id);
     if (input.credentialRef.currentVersionId) {
       this.registry.setVersionStatus(input.credentialRef.currentVersionId, 'revoked');

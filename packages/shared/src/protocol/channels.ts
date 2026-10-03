@@ -111,6 +111,13 @@ export const RPC_CHANNELS = {
     UPDATE_REMOTE: 'workspaces:updateRemote',
   },
   workgraph: {
+    LIST_CONNECTION_LEASES: 'workgraph:listConnectionLeases',
+    INSPECT_CONNECTION: 'workgraph:inspectConnection',
+    MOVE_CONNECTION: 'workgraph:moveConnection',
+    START_GITHUB_DEVICE_LOGIN: 'workgraph:startGithubDeviceLogin',
+    POLL_GITHUB_DEVICE_LOGIN: 'workgraph:pollGithubDeviceLogin',
+    CANCEL_GITHUB_DEVICE_LOGIN: 'workgraph:cancelGithubDeviceLogin',
+    RECONNECT_CONNECTION: 'workgraph:reconnectConnection',
     GET_HEALTH: 'workgraph:getHealth',
     GET_VERSION: 'workgraph:getVersion',
     LIST_CONNECTIONS: 'workgraph:listConnections',
@@ -1022,6 +1029,7 @@ export const RPC_CHANNELS = {
     CHANGED: 'marketplace:CHANGED',
   },
   meetings: {
+    PLAN_ACTIONS: 'meetings:planActions',
     LIST: 'meetings:list',
     GET: 'meetings:get',
     SEARCH: 'meetings:search',

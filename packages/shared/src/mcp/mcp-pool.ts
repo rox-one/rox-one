@@ -128,6 +128,26 @@ function needsConnectionRecovery(error: unknown): boolean {
   return isConnectionFailure(error) || (error instanceof StreamableHTTPError && error.code === 404);
 }
 
+/** Cancel one caller's wait without abandoning recovery shared by other calls. */
+function waitForRecovery(work: Promise<void>, signal?: AbortSignal): Promise<void> {
+  if (!signal) return work;
+  return new Promise<void>((resolve, reject) => {
+    const abort = () => {
+      signal.removeEventListener('abort', abort);
+      reject(signal.reason ?? new Error('MCP tool call aborted'));
+    };
+    signal.addEventListener('abort', abort, { once: true });
+    if (signal.aborted) abort();
+    work.then(() => {
+      signal.removeEventListener('abort', abort);
+      resolve();
+    }, error => {
+      signal.removeEventListener('abort', abort);
+      reject(error);
+    });
+  });
+}
+
 interface PendingConnection {
   promise: Promise<void>;
   client?: PoolClient;
@@ -586,16 +606,17 @@ export class McpClientPool {
     }
 
     try {
+      options?.signal?.throwIfAborted();
       // A transport known to be closed has not received this call yet. It is
       // safe to reconnect and execute once on the replacement connection.
       if (!client || client.isConnected?.() === false) {
-        if (options?.signal?.aborted) throw options.signal.reason ?? new Error('MCP tool call aborted');
-        await this.recoverClient(slug, client);
+        await waitForRecovery(this.recoverClient(slug, client), options?.signal);
         client = this.clients.get(slug);
         if (!client || !this.getProxyToolName(slug, originalName)) {
           throw new Error(`MCP tool "${originalName}" is unavailable after reconnecting`);
         }
       }
+      options?.signal?.throwIfAborted();
       const result = await client.callTool(originalName, args, options) as {
         content?: Array<{ type: string; text?: unknown; data?: string; mimeType?: string }>;
         isError?: boolean;
@@ -656,8 +677,10 @@ export class McpClientPool {
       // Restore the connection for subsequent calls without replaying it.
       if (client && this.clients.get(slug) === client && this.activeConfigs.has(slug) &&
           !options?.signal?.aborted && (client.isConnected?.() === false || needsConnectionRecovery(err))) {
-        await this.recoverClient(slug, client).catch(recoveryError => {
-          this.debug(`Failed to recover MCP source ${slug}: ${recoveryError instanceof Error ? recoveryError.message : String(recoveryError)}`);
+        await waitForRecovery(this.recoverClient(slug, client), options?.signal).catch(recoveryError => {
+          if (!options?.signal?.aborted) {
+            this.debug(`Failed to recover MCP source ${slug}: ${recoveryError instanceof Error ? recoveryError.message : String(recoveryError)}`);
+          }
         });
       }
       return {
