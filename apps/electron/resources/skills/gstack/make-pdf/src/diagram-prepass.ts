@@ -631,15 +631,32 @@ export async function inlineLocalImages(html: string, opts: PrepassImageOptions)
     let fd: number | undefined;
     let buf: Buffer;
     try {
+      const named = fs.lstatSync(realFilePath, { bigint: true });
+      const namedParent = fs.realpathSync(path.dirname(filePath));
       fd = fs.openSync(filePath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
-      const stat = fs.fstatSync(fd);
-      if (!stat.isFile()) throw new Error(`image is not a regular file: ${src}`);
-      if (stat.size > MAX_IMAGE_BYTES) throw new Error(`image exceeds size cap: ${src}`);
-      const data = Buffer.alloc(Math.min(stat.size + 1, MAX_IMAGE_BYTES + 1));
+      const opened = fs.fstatSync(fd, { bigint: true });
+      if (fs.realpathSync(path.resolve(opts.inputDir)) + path.sep !== inputRoot ||
+          fs.realpathSync(path.dirname(filePath)) !== namedParent ||
+          fs.realpathSync(filePath) !== realFilePath || opened.dev !== named.dev || opened.ino !== named.ino ||
+          opened.size !== named.size || opened.mtimeNs !== named.mtimeNs || opened.ctimeNs !== named.ctimeNs) {
+        throw new Error(`image changed after confinement: ${src}`);
+      }
+      if (!opened.isFile()) throw new Error(`image is not a regular file: ${src}`);
+      if (opened.size > BigInt(MAX_IMAGE_BYTES)) throw new Error(`image exceeds size cap: ${src}`);
+      const size = Number(opened.size);
+      const data = Buffer.alloc(Math.min(size + 1, MAX_IMAGE_BYTES + 1));
       let count = 0;
       let read = 0;
       while (count < data.length && (read = fs.readSync(fd, data, count, data.length - count, null)) > 0) count += read;
-      if (count > stat.size || count > MAX_IMAGE_BYTES) throw new Error(`image changed or exceeds size cap: ${src}`);
+      const after = fs.fstatSync(fd, { bigint: true });
+      const current = fs.lstatSync(realFilePath, { bigint: true });
+      if (count !== size || count > MAX_IMAGE_BYTES || after.size !== opened.size ||
+          after.mtimeNs !== opened.mtimeNs || after.ctimeNs !== opened.ctimeNs ||
+          current.dev !== opened.dev || current.ino !== opened.ino ||
+          fs.realpathSync(path.resolve(opts.inputDir)) + path.sep !== inputRoot ||
+          fs.realpathSync(path.dirname(filePath)) !== namedParent || fs.realpathSync(filePath) !== realFilePath) {
+        throw new Error(`image changed or exceeds size cap: ${src}`);
+      }
       buf = data.subarray(0, count);
     } catch (error: any) {
       const message = error.message || `image unreadable: ${src}`;

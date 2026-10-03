@@ -833,8 +833,8 @@
       "alerts": [
         789
       ],
-      "change": "Local images read through one nonblocking no-follow descriptor with size-bounded buffer; diagram SVG reconstructed via separate conservative parser allowlist.",
-      "sha256": "b07baddacfe445a25df366315c90389f67a5f90a2f7aab404e5635c94d7a5463"
+      "change": "Local images read through one nonblocking no-follow descriptor with size-bounded buffer; diagram SVG reconstructed via separate conservative parser allowlist.; Bind image confinement to the opened full-width dev/ino identity and stable root/parent/realpath; verify descriptor size/timestamps and current path again after bounded reads. Actual open-time replacement is rejected; ordinary local image embedding remains functional.",
+      "sha256": "80511d07ba2c6d1670870213eebf746825068bb368a4e85b574bd4e66641f1e6"
     },
     {
       "pack": "gstack",
@@ -1066,8 +1066,8 @@
       "alerts": [
         808
       ],
-      "change": "Local images read through one nonblocking no-follow descriptor with size-bounded buffer; diagram SVG reconstructed via separate conservative parser allowlist.",
-      "sha256": "b07baddacfe445a25df366315c90389f67a5f90a2f7aab404e5635c94d7a5463"
+      "change": "Local images read through one nonblocking no-follow descriptor with size-bounded buffer; diagram SVG reconstructed via separate conservative parser allowlist.; Bind image confinement to the opened full-width dev/ino identity and stable root/parent/realpath; verify descriptor size/timestamps and current path again after bounded reads. Actual open-time replacement is rejected; ordinary local image embedding remains functional.",
+      "sha256": "80511d07ba2c6d1670870213eebf746825068bb368a4e85b574bd4e66641f1e6"
     },
     {
       "pack": "gstack",

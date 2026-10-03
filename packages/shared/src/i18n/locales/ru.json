@@ -3928,6 +3928,8 @@
   "onboarding.errors.selectAuthMethod": "Сначала выберите способ входа.",
   "onboarding.errors.validationFailed": "Проверка не удалась",
   "onboarding.errors.workspaceTransitionFailed": "Не удалось открыть рабочее пространство. Повторите попытку.",
+  "onboarding.firstSession.message": "Привет! Я Rox. Давайте начнём с нескольких вопросов, чтобы я мог помогать вам точнее:\n\n1. Как к вам обращаться?\n2. С какой задачей вы хотите разобраться сейчас?\n3. Есть ли предпочтения по стилю ответов или ограничения, которые мне стоит учитывать?\n\nМожно ответить на любой вопрос или сразу прислать задачу.",
+  "onboarding.firstSession.title": "Давайте познакомимся",
   "onboarding.gitBash.alreadyInstalled": "Git уже установлен?",
   "onboarding.gitBash.browse": "Обзор...",
   "onboarding.gitBash.customPath": "Если Git установлен в нестандартном расположении, укажите путь к bash.exe.",

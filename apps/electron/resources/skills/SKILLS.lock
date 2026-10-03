@@ -1942,8 +1942,8 @@
           "alerts": [
             789
           ],
-          "change": "Local images read through one nonblocking no-follow descriptor with size-bounded buffer; diagram SVG reconstructed via separate conservative parser allowlist.",
-          "sha256": "b07baddacfe445a25df366315c90389f67a5f90a2f7aab404e5635c94d7a5463"
+          "change": "Local images read through one nonblocking no-follow descriptor with size-bounded buffer; diagram SVG reconstructed via separate conservative parser allowlist.; Bind image confinement to the opened full-width dev/ino identity and stable root/parent/realpath; verify descriptor size/timestamps and current path again after bounded reads. Actual open-time replacement is rejected; ordinary local image embedding remains functional.",
+          "sha256": "80511d07ba2c6d1670870213eebf746825068bb368a4e85b574bd4e66641f1e6"
         },
         {
           "pack": "gstack",
@@ -2175,8 +2175,8 @@
           "alerts": [
             808
           ],
-          "change": "Local images read through one nonblocking no-follow descriptor with size-bounded buffer; diagram SVG reconstructed via separate conservative parser allowlist.",
-          "sha256": "b07baddacfe445a25df366315c90389f67a5f90a2f7aab404e5635c94d7a5463"
+          "change": "Local images read through one nonblocking no-follow descriptor with size-bounded buffer; diagram SVG reconstructed via separate conservative parser allowlist.; Bind image confinement to the opened full-width dev/ino identity and stable root/parent/realpath; verify descriptor size/timestamps and current path again after bounded reads. Actual open-time replacement is rejected; ordinary local image embedding remains functional.",
+          "sha256": "80511d07ba2c6d1670870213eebf746825068bb368a4e85b574bd4e66641f1e6"
         },
         {
           "pack": "gstack",
@@ -3362,6 +3362,30 @@
         "ralph-loop": "codex-ralph-loop-skill"
       },
       "note": "Genuine upstream plan-act-check loop skill. Frontmatter name normalized to ralph-loop; no Claude stop hooks claimed in OMP."
+    },
+    {
+      "slug": "understand-anything",
+      "origin": "https://github.com/Egonex-AI/Understand-Anything",
+      "commit": "1d7418b8abfa543744ae029e63a482aee03f9022",
+      "license": "MIT",
+      "licenseFile": "LICENSE",
+      "upstream": {
+        "origin": "https://github.com/Egonex-AI/Understand-Anything",
+        "path": "understand-anything-plugin",
+        "commit": "1d7418b8abfa543744ae029e63a482aee03f9022",
+        "note": "Rox discovery entries resolve the original skill/helper paths in understand/plugin. Includes plugin sources, lockfile, grammars and agent prompts; excludes tests, dot metadata and node_modules. Core/dashboard dependency setup remains the upstream first-use preflight."
+      },
+      "skills": [
+        "understand",
+        "understand-chat",
+        "understand-dashboard",
+        "understand-diff",
+        "understand-domain",
+        "understand-explain",
+        "understand-figma",
+        "understand-knowledge",
+        "understand-onboard"
+      ]
     }
   ]
 }

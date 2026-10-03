@@ -3908,6 +3908,8 @@
   "onboarding.errors.selectAuthMethod": "Először válassz hitelesítési módot.",
   "onboarding.errors.validationFailed": "A validáció sikertelen",
   "onboarding.errors.workspaceTransitionFailed": "Nem sikerült megnyitni a munkaterületet. Próbáld újra.",
+  "onboarding.firstSession.message": "Szia! Rox vagyok. Néhány kérdés segít, hogy személyre szabottabban segíthessek:\n\n1. Hogyan szólítsalak?\n2. Mivel szeretnél először foglalkozni?\n3. Van preferenciád a válaszaimmal kapcsolatban, vagy olyan korlát, amit figyelembe kell vennem?\n\nBármelyik kérdésre válaszolhatsz, vagy rögtön kezdhetünk egy feladattal.",
+  "onboarding.firstSession.title": "Ismerkedjünk meg",
   "onboarding.gitBash.alreadyInstalled": "Már telepítve van a Git?",
   "onboarding.gitBash.browse": "Tallózás...",
   "onboarding.gitBash.customPath": "Ha a Git nem szabványos helyre van telepítve, megadhatod a bash.exe elérési útját.",

@@ -3908,6 +3908,8 @@
   "onboarding.errors.selectAuthMethod": "حدّد طريقة المصادقة أولاً.",
   "onboarding.errors.validationFailed": "فشل التحقق",
   "onboarding.errors.workspaceTransitionFailed": "تعذّر فتح مساحة العمل. يُرجى المحاولة مرة أخرى.",
+  "onboarding.firstSession.message": "مرحباً! أنا Rox. ستساعدني بعض الأسئلة على تقديم مساعدة تناسبك:\n\n1. بماذا تود أن أناديك؟\n2. ما المهمة التي تود البدء بها؟\n3. هل لديك تفضيلات لأسلوب إجاباتي أو قيود يجب أن أراعيها؟\n\nيمكنك الإجابة عن أي سؤال أو إرسال مهمة مباشرة.",
+  "onboarding.firstSession.title": "لنتعارف أولاً",
   "onboarding.gitBash.alreadyInstalled": "هل Git مثبت بالفعل؟",
   "onboarding.gitBash.browse": "استعراض...",
   "onboarding.gitBash.customPath": "إذا كان Git مثبتًا في موقع غير قياسي، فيمكنك تحديد مسار bash.exe.",

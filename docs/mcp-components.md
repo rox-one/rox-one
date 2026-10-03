@@ -1,5 +1,8 @@
 # MCP Components — Lifecycle Classification
 
+Default source installation and the first conversation are described in
+[MCP onboarding](builtin-mcp-onboarding.md).
+
 Audit of every MCP-flavored component in the repo: who spawns/loads it, under
 which backend flags, and its resulting lifecycle class. Classes:
 

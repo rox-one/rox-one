@@ -1570,6 +1570,8 @@ export interface ElectronAPI {
     | { status: 'error'; message: string }
   >
   deferSetup(): Promise<{ success: boolean }>
+  /** Create the first local conversation with a persisted assistant greeting, once per installation. */
+  ensureFirstSessionWelcome(workspaceId: string): Promise<Session | null>
   saveOmpCredential(apiKey: string): Promise<{ success: boolean; ready: boolean; code?: string; error?: string }>
 
   // ChatGPT OAuth (for Codex chatgptAuthTokens mode)

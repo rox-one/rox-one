@@ -217,3 +217,28 @@ test('bounded failure range preserves bigint file IDs beyond Number precision', 
     expect(() => readBoundedRangeStable(file, 0, Number.MAX_SAFE_INTEGER + 1, 'Invalid cap')).toThrow();
   } finally { fs.fstatSync = fstat; lstatMock.mockRestore(); fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+for (const copy of ['gstack']) test(`PDF image confinement binds the checked path to the opened file (${copy || 'flat'})`, async () => {
+  const { inlineLocalImages } = await import(path.join(root, 'apps/electron/resources/skills/gstack', copy, 'make-pdf/src/diagram-prepass.ts'));
+  const dir = sandbox(); const image = path.join(dir, 'image.svg');
+  const original = '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>';
+  fs.writeFileSync(image, original);
+  const options = { inputDir: dir, strict: true, allowNetwork: false, contentWidthIn: 6, warn() {}, run: null };
+  const namespace = await import('node:fs');
+  const open = namespace.openSync; const openMock = spyOn(namespace, 'openSync');
+  let replaced = false;
+  try {
+    openMock.mockImplementation(((name: any, flags: any, mode: any) => {
+      if (name === image && !replaced) {
+        replaced = true; fs.renameSync(image, image + '.old'); fs.writeFileSync(image, '<svg>replacement</svg>');
+      }
+      return open(name, flags, mode);
+    }) as typeof fs.openSync);
+    const result = inlineLocalImages('<img src="image.svg">', options);
+    expect(replaced).toBe(true);
+    await expect(result).rejects.toThrow('changed after confinement');
+    openMock.mockRestore();
+    fs.writeFileSync(image, original);
+    expect(await inlineLocalImages('<img src="image.svg">', options)).toContain('data:image/svg+xml;base64,');
+  } finally { openMock.mockRestore(); fs.rmSync(dir, { recursive: true, force: true }); }
+});

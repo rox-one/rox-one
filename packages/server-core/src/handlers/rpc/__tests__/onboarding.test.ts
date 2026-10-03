@@ -7,6 +7,7 @@ let setupDeferred = false
 let setupDeferredReadCount = 0
 const setupDeferredCalls: boolean[] = []
 let oauthPreparationCalls = 0
+const welcomeWorkspaceCalls: string[] = []
 
 mock.module('@rox/shared/auth', () => ({
   fetchRoxBalance: async () => ({ balanceRox: '0' }),
@@ -101,6 +102,12 @@ async function createHarness() {
     },
   } as unknown as RpcServer
   const deps = {
+    sessionManager: {
+      ensureFirstSessionWelcome: async (workspaceId: string) => {
+        welcomeWorkspaceCalls.push(workspaceId)
+        return { id: 'welcome', messages: [{ role: 'assistant', content: 'Hello' }] }
+      },
+    },
     platform: {
       logger: { info() {}, error() {}, warn() {}, debug() {} },
     },
@@ -122,6 +129,7 @@ beforeEach(() => {
   setupDeferredReadCount = 0
   setupDeferredCalls.length = 0
   oauthPreparationCalls = 0
+  welcomeWorkspaceCalls.length = 0
 })
 
 describe('onboarding:getAuthState', () => {
@@ -176,5 +184,22 @@ describe('onboarding:getRoxBalance', () => {
   it('is registered and reports «disconnected» without a Rox cloud session', async () => {
     const { invoke } = await createHarness()
     expect(await invoke(RPC_CHANNELS.onboarding.GET_ROX_BALANCE)).toEqual({ status: 'disconnected' })
+  })
+})
+
+describe('onboarding:ensureFirstSession', () => {
+  it('returns the persisted assistant conversation without starting OAuth or credential setup', async () => {
+    const { invoke } = await createHarness()
+    expect(await invoke(RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION, 'ws')).toEqual({
+      id: 'welcome', messages: [{ role: 'assistant', content: 'Hello' }],
+    })
+    expect(welcomeWorkspaceCalls).toEqual(['ws'])
+    expect(oauthPreparationCalls).toBe(0)
+  })
+
+  it('requires a workspace before creating a greeting', async () => {
+    const { invoke } = await createHarness()
+    await expect(invoke(RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION, '  ')).rejects.toThrow('workspaceId is required')
+    expect(welcomeWorkspaceCalls).toEqual([])
   })
 })

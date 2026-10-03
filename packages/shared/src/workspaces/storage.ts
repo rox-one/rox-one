@@ -23,6 +23,7 @@ import { getDefaultStatusConfig, saveStatusConfig, ensureDefaultIconFiles } from
 import { getDefaultLabelConfig, saveLabelConfig } from '../labels/storage.ts';
 import { ensureDefaultAutomations } from '../automations/default-seeds.ts';
 import { ensureBuiltinSources } from '../sources/builtin-sources.ts';
+import { ensureBuiltinMcpSources, getEnabledBuiltinMcpSourceSlugs } from '../sources/builtin-mcp.ts';
 import {
   collectDefaultEnabledSourceSlugs,
   ensureDefaultMicroserviceSources,
@@ -383,15 +384,17 @@ export function createWorkspaceAtPath(
   const layout = ensureRoxLayout({ workspaceRoot: rootPath });
   const notesPath = config.notesPath ?? join(layout.root, 'notes');
 
-  // Seed credentialed API templates as disabled; they are never workspace defaults.
+  // API templates and default-on MCP servers use the normal source UI and storage.
   ensureBuiltinSources(rootPath);
   // Local microservices (notes, memory, sessions, …) default ON. Existing configs win.
   ensureDefaultMicroserviceSources(rootPath, { roxRoot: layout.root, notesPath });
+  // QMD's first collection can now use the actual local Notes source.
+  ensureBuiltinMcpSources(rootPath);
 
   if (defaults?.enabledSourceSlugs === undefined) {
     config.defaults = {
       ...config.defaults,
-      enabledSourceSlugs: collectDefaultEnabledSourceSlugs(),
+      enabledSourceSlugs: [...collectDefaultEnabledSourceSlugs(), ...getEnabledBuiltinMcpSourceSlugs(rootPath)],
     };
   }
 
