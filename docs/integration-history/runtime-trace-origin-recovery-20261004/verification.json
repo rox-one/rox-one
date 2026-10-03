@@ -1,0 +1,78 @@
+{
+  "owner": "historical_sweep; root reviews and merges; pr_scout owns dependent producer recovery",
+  "source": {
+    "pr": 1444,
+    "head": "c2e8f07b5cb8a1b1659781e1fe4dd4d0f0207727",
+    "base": "bbba69ecb1f59973ff0f0f466054530f1dff947e"
+  },
+  "candidate_base": "0b3d2e584ff7bf5f44eb257d7fa34b0e142bc13f",
+  "qualified_source_sha256": {
+    "packages/core/src/runtime-trace/projector.ts": "37f5659b8466507ba145d020252ee1f40da0447d230177cf71bf8ddefd183c99",
+    "packages/core/src/runtime-trace/types.ts": "2810d149244b3d4bb36c76314db0f74fd458760cb4c21ef2339898156caa0eb6",
+    "packages/core/src/runtime-trace/validation.ts": "3f62002f9357ac515b29adbdc36591351f8ab9cc056294180770dc4bebe6e43d",
+    "packages/shared/src/protocol/dto.ts": "9934209431d50eee915372dab467d76eb80600b2b67dd591f8908ebccb746346",
+    "packages/server-core/src/sessions/runtime-trace/service.ts": "54fc8cde10ee13b4e52c619c36659b9adccdfc9bb47d55038db2463f90deece1",
+    "packages/server-core/src/sessions/runtime-trace/privacy.ts": "c4c87da88e2f69a95d241f243d0e1bb84747dc1a2a439fd406ac19f7c4244aee",
+    "packages/server-core/src/sessions/runtime-trace/conductor.ts": "cb58adde266cbb3b7db81ed920cc25eabad788b6adb21041fb7cf6e03e795b8b"
+  },
+  "checks": {
+    "before_source": {
+      "passed": 36,
+      "failed": 18,
+      "total": 54,
+      "includes_one_dependent_TaskRunner_failure": true
+    },
+    "after_independent_core_and_collector": {
+      "passed": 53,
+      "failed": 0,
+      "assertions": 247,
+      "files": 4
+    },
+    "core_node22_typecheck_exit": 0,
+    "server_core_independent_node22_typecheck_exit": 0,
+    "first_server_type_attempt": "four diagnostics confined to unimplemented dependent TaskRunner fixture; retained; fixture moved outside this PR"
+  },
+  "accepted": [
+    "own-descriptor privacy and serialized secret redaction",
+    "origin-pinned passive event correlation, scoped historic rows and cache eviction",
+    "artifact evidence projection and actual Conductor verification verdict",
+    "passive optional launch/output DTO metadata"
+  ],
+  "pending_dependencies": [
+    "actual SessionManager/gateway/TaskRunner/native producers owned by pr_scout",
+    "renderer RuntimeMap late additions owned by historical_sweep"
+  ],
+  "boundaries": [
+    "No new execution, authorization, principal or credential delegation",
+    "No claim that producer-to-collector end-to-end behavior is accepted before dependent producer recovery",
+    "No installed desktop, live provider, native Windows, deployed or full R01-R30 acceptance"
+  ],
+  "logs": {
+    "runtime-origin-before-source.log": {
+      "sha256": "6ecc9917bc14b170e42f6e2d9dcdbcea96228246d8cb9ef133bb7f34f1b07ebe",
+      "archived_sha256": "09512358fa89f73e52d2043607a30d5f1002c8c52d27fcb5981bfb16251ec55c",
+      "bytes": 42595
+    },
+    "runtime-origin-after-source.log": {
+      "sha256": "ad5bfead719325529da690f7f7f972a1211256f81948fdead8f8c6ae3b385d0d",
+      "archived_sha256": "5ef692b7d7cd1a2b944bbc60b3ec11bad51620e8226207f13d2c8e01406ec1f4",
+      "bytes": 6755
+    },
+    "runtime-origin-core-types.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 0
+    },
+    "runtime-origin-server-types.log": {
+      "sha256": "3aa80c543a6a3c235b8b090c8c5d6461a71e91b559c75c50e837a43aaee8285e",
+      "archived_sha256": "7755af1f78218b971a2abe19b8e5995fffdcb4fe38f859271a39181aab05723b",
+      "bytes": 686
+    },
+    "runtime-origin-server-types-independent.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 0
+    }
+  },
+  "original_branches_preserved": true
+}

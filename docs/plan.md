@@ -1030,4 +1030,10 @@ Owner recent_features; depends on current Tasks1456, strict date1470 and Product
 - [x] Set two launch option lines; qualify actual RPC/helper launch and literal argv/no side effects, adjacent account/native policy/query/lifecycle controls and package types. Record native Windows limits and source-test portability exclusions.
 - [x] Publish separate PR #1483 and attach it; read back the exact head and update the original137 source/caller ledger. Root owns merge.
 
+## Runtime trace origin recovery — 2026-10-04
+
+1. Historical worker freezes c2e8 source and separates seven collector/core/DTO files from pr_scout's actual producer ownership. Retain current authorization, descriptor privacy and every original branch.
+2. Reproduce origin/privacy/artifact/verdict negatives, including the explicitly pending TaskRunner producer fixture. Restore only the bounded collector layer, then qualify four independent suites (53/0/247), core and server-core Node22 types. Archive source failures and the initial dependent-fixture type diagnostics.
+3. Publish a separate collector PR with qualified hashes and pending producer/UI boundaries. pr_scout preserves current third suppliedExecution argument and spawn authority bind while implementing tagged actual producers in its separate PR. Root owns sequential merge.
+4. Historical worker recovers current renderer context/export/link/retry behavior from the same finite source head; end-to-end producer/UI acceptance needs its own actual consumers and refreshed scoped proof.
 

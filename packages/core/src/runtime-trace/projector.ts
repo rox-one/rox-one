@@ -172,9 +172,9 @@ export function buildAgentLanes(state: RuntimeProjection): RuntimeAgentLane[] {
   return result
 }
 export function buildRuntimeGraph(state: RuntimeProjection): RuntimeGraph {
-  const nodes = Object.values(state.nodes).sort((a,b)=>a.seq-b.seq); const edges: RuntimeGraphEdge[] = []; const eventNodes = new Map<string,string>(); const spanNodes = new Map<string,string>(); const assignments = new Map<string,string>(); const agentNodes = new Map<string,string>(); const taskNodes = new Map<string,string>()
-  for (const node of nodes) { if (!agentNodes.has(node.agentId)) agentNodes.set(node.agentId,node.id); for (const event of node.events) eventNodes.set(event.eventId,node.id); if (node.event.kind === 'task.state-changed') taskNodes.set(node.event.payload.task.id,node.id); if (node.spanId) spanNodes.set(node.spanId,node.id); const assignmentEvent = node.events.find(event=>event.kind==='agent.assigned'); if (assignmentEvent?.kind==='agent.assigned') assignments.set(assignmentEvent.payload.assignment.agentId,node.id) }
-  if (nodes.some(node=>node.events.some(event=>event.causationEventId || ('evidenceEventIds' in event.payload && event.payload.evidenceEventIds?.length)))) for (const page of state.eventPages) for (const event of page) { const id = runtimeOperationKey(event); if (state.nodes[id]) eventNodes.set(event.eventId,id) }
+  const nodes = Object.values(state.nodes).sort((a,b)=>a.seq-b.seq); const edges: RuntimeGraphEdge[] = []; const eventNodes = new Map<string,string>(); const spanNodes = new Map<string,string>(); const assignments = new Map<string,string>(); const agentNodes = new Map<string,string>(); const taskNodes = new Map<string,string>(); const artifactNodes = new Map<string,string>()
+  for (const node of nodes) { if (!agentNodes.has(node.agentId)) agentNodes.set(node.agentId,node.id); for (const event of node.events) eventNodes.set(event.eventId,node.id); if (node.event.kind === 'task.state-changed') taskNodes.set(node.event.payload.task.id,node.id); if (node.event.kind === 'artifact.created') artifactNodes.set(node.event.payload.artifact.id,node.id); if (node.spanId) spanNodes.set(node.spanId,node.id); const assignmentEvent = node.events.find(event=>event.kind==='agent.assigned'); if (assignmentEvent?.kind==='agent.assigned') assignments.set(assignmentEvent.payload.assignment.agentId,node.id) }
+  if (nodes.some(node=>node.events.some(event=>event.causationEventId || ('evidenceEventIds' in event.payload && event.payload.evidenceEventIds?.length) || event.kind === 'artifact.created' && event.payload.artifact.evidenceEventIds?.length))) for (const page of state.eventPages) for (const event of page) { const id = runtimeOperationKey(event); if (state.nodes[id]) eventNodes.set(event.eventId,id) }
   const seen = new Set<string>()
   const edge = (source: string | undefined, target: string, kind: RuntimeGraphEdge['kind']) => { if(!source||source===target)return; const id=JSON.stringify([source,target,kind]); if(!seen.has(id)){seen.add(id);edges.push({id,source,target,kind})} }
   for(const node of nodes) { const event=node.event; for(const phase of node.events) { edge(phase.causationEventId ? eventNodes.get(phase.causationEventId) : undefined,node.id,'causal'); edge(phase.parentSpanId ? spanNodes.get(phase.parentSpanId) : undefined,node.id,'span-parent')
@@ -182,6 +182,8 @@ export function buildRuntimeGraph(state: RuntimeProjection): RuntimeGraph {
     }
     if(event.kind==='task.state-changed') { for (const dependency of event.payload.task.dependsOn) edge(taskNodes.get(dependency),node.id,'data-dependency'); if (event.payload.task.parentTaskId) edge(taskNodes.get(event.payload.task.parentTaskId),node.id,'parent-child') }
     if(event.kind==='decision.recorded'||event.kind==='result.published') for(const evidence of event.payload.evidenceEventIds ?? []) edge(eventNodes.get(evidence),node.id,'data-dependency')
+    if(event.kind==='artifact.created') for(const evidence of event.payload.artifact.evidenceEventIds ?? []) edge(eventNodes.get(evidence),node.id,'data-dependency')
+    if(event.kind==='result.published') for(const artifact of event.payload.artifactIds ?? []) edge(artifactNodes.get(artifact),node.id,'data-dependency')
   }
   return {nodes,edges,lanes:buildAgentLanes(state),topologyVersion:state.topologyVersion}
 }
