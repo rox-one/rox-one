@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ListTree, MessageSquare } from 'lucide-react'
+import { ListTree, MessageSquare, PanelRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { canFocusNotesControl, isNotesPanelUnavailable } from './focus-state'
@@ -97,4 +97,12 @@ export function NotesRailTools({ tocShown, commentsShown, sheet, onCollapse, onO
     <button type="button" className="grid size-7 place-items-center rounded-md hover:bg-foreground/[0.08]" aria-label={t('notes.toc.title')} title={t('notes.toc.title')} aria-haspopup={tocShown ? undefined : 'dialog'} aria-expanded={tocShown || sheet === 'toc'} onClick={() => { if (tocShown) onCollapse('toc'); else onOpen('toc') }}><ListTree className="size-3.5" aria-hidden /></button>
     <button type="button" className="grid size-7 place-items-center rounded-md hover:bg-foreground/[0.08]" aria-label={t('notes.comments.title')} title={t('notes.comments.title')} aria-haspopup={commentsShown ? undefined : 'dialog'} aria-expanded={commentsShown || sheet === 'comments'} onClick={() => { if (commentsShown) onCollapse('comments'); else onOpen('comments') }}><MessageSquare className="size-3.5" aria-hidden /></button>
   </div>
+}
+
+
+/** Actual narrow Notes inspector opener; does not mutate the saved collapse preference. */
+export function NotesInspectorToggle({ inline, open, onToggle }: { inline: boolean; open: boolean; onToggle: () => void }) {
+  const { t } = useTranslation()
+  if (inline) return null
+  return <button type="button" className="h-7 w-7 shrink-0 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" aria-label={t('notes.inspector.title')} title={t('notes.inspector.title')} aria-haspopup="dialog" aria-expanded={open} onClick={onToggle}><PanelRight className="h-4 w-4" aria-hidden /></button>
 }
