@@ -69,3 +69,31 @@ describe('onboarding quests', () => {
     expect(consented.analyticsConsent).toBe(true)
   })
 })
+
+describe('quest award replay and persistence', () => {
+  it('never reopens a completed quest or awards completion twice after reload', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rox-quest-replay-'))
+    try {
+      const completed = applyQuestAction('complete', 'first_task', {}, dir)
+      expect(completed.state.xp).toBe(15)
+      applyQuestAction('snooze', 'first_task', {}, dir)
+      applyQuestAction('dismiss', 'first_task', {}, dir)
+      expect(applyQuestAction('complete', 'first_task', {}, dir).state.xp).toBe(15)
+      expect(loadGamificationState(dir).quests.first_task.status).toBe('completed')
+      expect(loadGamificationState(dir).recentEvents).toHaveLength(1)
+    } finally { rmSync(dir, { recursive: true, force: true }) }
+  })
+
+  it('keeps dismiss terminal and snooze hidden until its durable deadline', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rox-quest-status-'))
+    try {
+      const now = Date.now()
+      const snoozed = applyQuestAction('snooze', 'first_note', { now }, dir)
+      expect(visibleQuests(snoozed.state.quests, now).some(quest => quest.id === 'first_note')).toBe(false)
+      expect(visibleQuests(loadGamificationState(dir).quests, now + 72 * 3600000).some(quest => quest.id === 'first_note')).toBe(true)
+      applyQuestAction('dismiss', 'first_link', {}, dir)
+      expect(applyQuestAction('complete', 'first_link', {}, dir).state.xp).toBe(0)
+      expect(loadGamificationState(dir).quests.first_link.status).toBe('dismissed')
+    } finally { rmSync(dir, { recursive: true, force: true }) }
+  })
+})

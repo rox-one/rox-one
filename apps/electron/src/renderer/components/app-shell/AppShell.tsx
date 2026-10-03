@@ -102,6 +102,8 @@ import {
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
+import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
+import { featureWorkbenchBrowserSurfaceV2Atom } from "@/atoms/unified-shell"
 import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
@@ -240,6 +242,7 @@ export function AppShell(props: AppShellProps) {
     <EscapeInterruptProvider>
       {mini ? (
         <AppShellProvider value={props.contextValue}>
+          <WorkspaceBrowserRegistry />
           <MiniSessionSurface />
         </AppShellProvider>
       ) : (
@@ -300,6 +303,7 @@ function AppShellContent({
     return storage.get(storage.KEYS.sidebarVisible, !defaultCollapsed)
   })
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
+  const browserSurfaceEnabled = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
   const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const inspectorSuppressed = useInspectorSuppressed()
   const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
@@ -411,23 +415,28 @@ function AppShellContent({
 
     const applyProfile = async () => {
       try {
-        const [identity, gamification] = await Promise.all([
+        const [identity, gamification] = await Promise.allSettled([
           window.electronAPI.identityGetState(),
           window.electronAPI.getGamificationProfile(),
         ])
         if (cancelled) return
-        setProfileStrip({
-          displayName: identity.profile.displayName || t('profile.defaultName'),
-          avatar: identity.profile.avatar,
-          plan: identity.profile.plan ?? 'standard',
-          level: gamification.level,
-          xp: gamification.xp,
-          progress: gamification.progress,
-          xpIntoLevel: gamification.xpIntoLevel,
-          xpForNext: gamification.xpForNext,
-          nextThreshold: gamification.nextThreshold,
-          balance: gamification.balance,
-        })
+        setProfileStrip((previous) => ({
+          ...previous,
+          ...(identity.status === 'fulfilled' ? {
+            displayName: identity.value.profile.displayName || t('profile.defaultName'),
+            avatar: identity.value.profile.avatar,
+            plan: identity.value.profile.plan ?? 'standard',
+          } : {}),
+          ...(gamification.status === 'fulfilled' ? {
+            level: gamification.value.level,
+            xp: gamification.value.xp,
+            progress: gamification.value.progress,
+            xpIntoLevel: gamification.value.xpIntoLevel,
+            xpForNext: gamification.value.xpForNext,
+            nextThreshold: gamification.value.nextThreshold,
+            balance: gamification.value.balance,
+          } : {}),
+        }))
       } catch (err) {
         console.error('Failed to load profile strip:', err)
       }
@@ -454,7 +463,7 @@ function AppShellContent({
       offXp()
       offIdentity?.()
     }
-  }, [t])
+  }, [t, activeWorkspaceId])
 
 
 
@@ -2702,6 +2711,7 @@ function AppShellContent({
   )
   return (
     <AppShellProvider value={appShellContextValue}>
+      <WorkspaceBrowserRegistry enabled={browserSurfaceEnabled} />
       <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
         {/* === TOP BAR === */}
         <TopBar

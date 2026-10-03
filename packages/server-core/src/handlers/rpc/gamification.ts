@@ -11,6 +11,8 @@ import {
   awardXp,
   getGamificationProgress,
   getLevelProgress,
+  getWeeklyXp,
+  QUEST_IDS,
   isQuestId,
   isXpEventType,
   loadGamificationState,
@@ -29,6 +31,8 @@ import type { RpcServer } from '@rox/server-core/transport'
 import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { resolveConfigDir } from "@rox/shared/config/paths"
+import type { RequestContext } from '../../transport/types'
+import { NativeGamificationStore } from './native-gamification'
 import {
   isClaimableLive,
   rpcGamificationActResult,
@@ -56,6 +60,8 @@ export type GamificationProfileDto = {
   displayNameHint?: string
   recentEvents?: Array<{ type: XpEventType; xp: number; at: number }>
   quests: QuestRecord[]
+  questRecords: QuestRecord[]
+  weeklyXp: { current: number; previous: number }
   ratings: SessionRating[]
   analyticsConsent: boolean
 }
@@ -73,6 +79,8 @@ function toDto(state: GamificationState): GamificationProfileDto {
     currentThreshold: progress.currentThreshold,
     recentEvents: state.recentEvents,
     quests: visibleQuests(state.quests),
+    questRecords: QUEST_IDS.map(id => state.quests[id]),
+    weeklyXp: getWeeklyXp(state),
     ratings: state.ratings,
     analyticsConsent: state.analyticsConsent,
   }
@@ -80,6 +88,31 @@ function toDto(state: GamificationState): GamificationProfileDto {
 
 function broadcast(server: RpcServer, state: GamificationState): void {
   pushTyped(server, RPC_CHANNELS.gamification.CHANGED, { to: 'all' }, toDto(state))
+}
+
+const nativeStores = new WeakMap<RpcServer, NativeGamificationStore>()
+function nativeStoreFor(server: RpcServer): NativeGamificationStore {
+  let store = nativeStores.get(server)
+  if (!store) {
+    store = new NativeGamificationStore(resolveConfigDir())
+    nativeStores.set(server, store)
+    server.onShutdown?.(() => { store?.close(); nativeStores.delete(server) })
+  }
+  return store
+}
+
+/** Best-effort trusted product hook. Never falls back to the host profile. */
+export function awardNativeXpAndBroadcast(
+  server: RpcServer, deps: HandlerDeps, ctx: RequestContext, event: XpEventType, receiptId: string,
+): AwardXpResult | null {
+  try {
+    if (!ctx.principal || !ctx.workspaceId || !deps.nativeData) return null
+    if (!deps.nativeData.authority.authorize(ctx.principal, ctx.workspaceId, 'write')) return null
+    if (server.isRequestContextCurrent?.(ctx, 'write') !== true) return null
+    const result = nativeStoreFor(server).award(ctx.principal, event, receiptId)
+    if (result.awarded) pushTyped(server, RPC_CHANNELS.gamification.CHANGED, { to: 'client', clientId: ctx.clientId }, toDto(result.state))
+    return result
+  } catch { return null }
 }
 
 /** Best-effort award used by product hooks. Never throws. */
@@ -96,19 +129,28 @@ export function awardXpAndBroadcast(
   }
 }
 
-export function registerGamificationHandlers(server: RpcServer, _deps: HandlerDeps): void {
+export function registerGamificationHandlers(server: RpcServer, deps: HandlerDeps): void {
+  const ownStore = (ctx: RequestContext): NativeGamificationStore => {
+    if (!ctx.principal || !ctx.workspaceId || !deps.nativeData) throw new Error('Native XP profile unavailable')
+    // XP and consent are own-profile metadata. A workspace read grant suffices,
+    // as with the caller's display name; canonical workspace data is untouched.
+    if (!deps.nativeData.authority.authorize(ctx.principal, ctx.workspaceId, 'read')) throw new Error('Native XP profile denied')
+    if (server.isRequestContextCurrent?.(ctx, 'read') !== true) throw new Error('Native XP request scope changed')
+    return nativeStoreFor(server)
+  }
   setGamificationAwardListener((result) => {
     broadcast(server, result.state)
   })
 
-  server.handle(RPC_CHANNELS.gamification.GET, async () => {
+  server.handle(RPC_CHANNELS.gamification.GET, async (ctx) => {
     const listed = rpcGamificationListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) throw new Error('gamification profile is not live')
     const read = rpcGamificationReadResult({ source: 'native', nativeId: 'profile' })
     if (!isClaimableLive(read.result)) throw new Error('gamification profile is not live')
+    if (ctx.principal) return toDto(ownStore(ctx).read(ctx.principal))
     const { state } = getGamificationProgress()
     return toDto(state)
-  })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.gamification.AWARD, async (_ctx, event: unknown) => {
     const act = rpcGamificationActResult({ source: 'native', action: 'write', nativeId: 'award' })
@@ -125,9 +167,9 @@ export function registerGamificationHandlers(server: RpcServer, _deps: HandlerDe
       leveledUp: result.leveledUp,
       previousLevel: result.previousLevel,
     }
-  })
+  }, { access: 'localElectron' })
 
-  server.handle(RPC_CHANNELS.gamification.QUEST, async (_ctx, payload: unknown) => {
+  server.handle(RPC_CHANNELS.gamification.QUEST, async (ctx, payload: unknown) => {
     const act = rpcGamificationActResult({ source: 'native', action: 'write', nativeId: 'quest' })
     if (!isClaimableLive(act)) throw new Error('gamification quest is not live')
     if (!payload || typeof payload !== 'object') {
@@ -140,12 +182,14 @@ export function registerGamificationHandlers(server: RpcServer, _deps: HandlerDe
     if (!isQuestId(body.questId)) {
       throw new Error(`Unknown quest: ${String(body.questId)}`)
     }
-    const { state, analytics } = applyQuestAction(body.action, body.questId as QuestId, {
-      cloudFeaturesEnabled: body.cloudFeaturesEnabled !== false,
-    })
-    broadcast(server, state)
+    const options = { cloudFeaturesEnabled: body.cloudFeaturesEnabled !== false }
+    const { state, analytics } = ctx.principal
+      ? ownStore(ctx).quest(ctx.principal, body.action, body.questId, options)
+      : applyQuestAction(body.action, body.questId, options)
+    if (ctx.principal) pushTyped(server, RPC_CHANNELS.gamification.CHANGED, { to: 'client', clientId: ctx.clientId }, toDto(state))
+    else broadcast(server, state)
     return { ...toDto(state), analytics }
-  })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.gamification.RATE, async (_ctx, payload: unknown) => {
     const act = rpcGamificationActResult({ source: 'native', action: 'write', nativeId: 'rate' })
@@ -169,15 +213,17 @@ export function registerGamificationHandlers(server: RpcServer, _deps: HandlerDe
     })
     broadcast(server, state)
     return { ...toDto(state), analytics }
-  })
+  }, { access: 'localElectron' })
 
-  server.handle(RPC_CHANNELS.gamification.SET_CONSENT, async (_ctx, consent: unknown) => {
+  server.handle(RPC_CHANNELS.gamification.SET_CONSENT, async (ctx, consent: unknown) => {
     const act = rpcGamificationActResult({ source: 'native', action: 'write', nativeId: 'consent' })
     if (!isClaimableLive(act)) throw new Error('gamification consent write is not live')
-    const state = setAnalyticsConsent(consent === true)
-    broadcast(server, state)
+    if (typeof consent !== 'boolean') throw new Error('Analytics consent must be boolean')
+    const state = ctx.principal ? ownStore(ctx).consent(ctx.principal, consent) : setAnalyticsConsent(consent)
+    if (ctx.principal) pushTyped(server, RPC_CHANNELS.gamification.CHANGED, { to: 'client', clientId: ctx.clientId }, toDto(state))
+    else broadcast(server, state)
     return toDto(state)
-  })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 }
 
 /** Read-only snapshot for non-RPC callers. */

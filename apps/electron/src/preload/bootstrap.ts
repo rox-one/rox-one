@@ -50,6 +50,7 @@ import { MEETINGS_LOCAL_IPC, type MeetingsLocalApi } from '../shared/meetings-lo
 import { MAIL_IPC, type MailLocalApi } from '../shared/mail-local'
 import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
 import { createOpenClawHostControlBridge } from './openclaw-host-control'
+import { createDeviceDiagnosticsBridge } from './device-diagnostics'
 
 // ---------------------------------------------------------------------------
 // Client interface — common surface for both RoutedClient and WsRpcClient
@@ -643,6 +644,11 @@ client.onConnectionStateChanged((state) => {
     get: (id) => ipcRenderer.invoke(M.GET, id),
     create: (input) => ipcRenderer.invoke(M.CREATE, input),
     update: (id, patch) => ipcRenderer.invoke(M.UPDATE, id, patch),
+    claimExtraction: (id, input) => ipcRenderer.invoke(M.EXTRACTION_CLAIM, id, input),
+    attachExtraction: (id, input) => ipcRenderer.invoke(M.EXTRACTION_ATTACH, id, input),
+    finishExtraction: (id, input) => ipcRenderer.invoke(M.EXTRACTION_FINISH, id, input),
+    failExtraction: (id, input) => ipcRenderer.invoke(M.EXTRACTION_FAIL, id, input),
+    saveAction: (id, input) => ipcRenderer.invoke(M.ACTION_SAVE, id, input),
     trash: (id) => ipcRenderer.invoke(M.TRASH, id),
     recStart: (input) => ipcRenderer.invoke(M.REC_START, input),
     recChunk: (id, chunk) => ipcRenderer.invoke(M.REC_CHUNK, id, chunk),
@@ -714,6 +720,12 @@ client.onConnectionStateChanged((state) => {
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)
+// Host diagnostics always describe this device, including for remote workspaces.
+if (process.isMainFrame) {
+  contextBridge.exposeInMainWorld('deviceDiagnostics', createDeviceDiagnosticsBridge(
+    (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+  ))
+}
 if (openClawHostControl) {
   contextBridge.exposeInMainWorld('openClawHostControl', openClawHostControl)
 }

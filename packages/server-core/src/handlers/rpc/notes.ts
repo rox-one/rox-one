@@ -24,6 +24,7 @@ import { previewPropertyDictionary } from '@rox/core/docs'
 import { parseRox2EntityId } from '@rox/core/rox2'
 import { createDescriptorResolver, FileDescriptorStore, type ContentOwner, type ContentPolicy } from '../../docs/descriptor-resolver.ts'
 import { awardXpSafe } from '@rox/shared/gamification'
+import { awardNativeXpAndBroadcast } from './gamification'
 import {
   contentHash,
   isClaimableLive,
@@ -424,7 +425,7 @@ async function listNotes(notesRoot: string): Promise<NoteSummary[]> {
   return notes
 }
 
-function noteMatchesTarget(note: NoteSummary, target: string): boolean {
+function noteMatchesTarget(note: Pick<NoteSummary, 'id' | 'title'>, target: string): boolean {
   const normalized = stripMdExtension(target.trim()).toLowerCase()
   return normalized === note.id.toLowerCase()
     || normalized === note.title.toLowerCase()
@@ -1160,6 +1161,25 @@ async function moveNoteInFilesystem(notesRoot: string, noteId: string, targetFol
   return readNote(notesRoot, nextId)
 }
 
+/** Read-only Knowledge projection of the same authenticated canonical Notes. */
+export function nativeNotesKnowledgeAccess(deps: HandlerDeps, ctx: RequestContext) {
+  if (!ctx.workspaceId) throw new CodedError('AUTH_FAILED', 'Native Notes workspace is required')
+  const context = nativeNotesContext(deps, ctx, ctx.workspaceId, 'read')
+  return {
+    connectionId: `local-markdown:${context.workspaceId}`,
+    assertRead: () => assertNativeNotesFences(deps, context),
+    async list() {
+      assertNativeNotesFences(deps, context)
+      const entities = await nativeNoteEntities(deps, context)
+      const documents = await Promise.all(entities.flatMap(entity =>
+        entity.files.filter(file => file.path.startsWith(`${NOTES_DIR}/`) && file.path.endsWith('.md'))
+          .map(file => nativeNoteDocument(deps, context, entity, file, entities))))
+      assertNativeNotesFences(deps, context)
+      return documents
+    },
+  }
+}
+
 export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): void {
   const originalServer = server
   server = new Proxy(originalServer, { get(target, property) {
@@ -1253,12 +1273,26 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
       const found = await findNativeNote(deps, context, noteId)
       if (found.entity.files.length !== 1) throw new Error('native Notes save requires one canonical Markdown file')
+      const previous = await nativeNoteDocument(deps, context, found.entity, found.file, found.entities)
       await commitNativeNote(deps, context, found.entity.nativeId, operation, [{
         path: found.file.path,
         content,
       }])
       const updated = await findNativeNote(deps, context, noteId)
       const note = await nativeNoteDocument(deps, context, updated.entity, updated.file, updated.entities)
+      const previousLinks = new Set(previous.links.map(link => stripMdExtension(link.target.trim()).toLowerCase()))
+      for (const link of note.links ?? []) {
+        if (previousLinks.has(stripMdExtension(link.target.trim()).toLowerCase())) continue
+        const targets = updated.entities.filter(entity => entity.nativeId !== updated.entity.nativeId && entity.files.some(file => {
+          if (!file.path.startsWith(`${NOTES_DIR}/`) || !file.path.endsWith('.md')) return false
+          const id = noteIdFromRelativePath(file.path.slice(`${NOTES_DIR}/`.length))
+          const parsed = parseNoteContent(file.content)
+          const title = typeof parsed.properties.title === 'string' ? parsed.properties.title : titleFromId(id)
+          return noteMatchesTarget({ id, title }, link.target)
+        }))
+        // Award only a real unambiguous canonical edge, once for its lifetime.
+        if (targets.length === 1) awardNativeXpAndBroadcast(server, deps, ctx, 'note_linked', JSON.stringify([workspaceId, updated.entity.nativeId, targets[0]!.nativeId]))
+      }
       changed({ workspaceId, reason: 'save', noteId: note.id })
       return note
     }
@@ -1318,6 +1352,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       await commitNativeNote(deps, context, relativeId, metadata, [{ path, content: initialContent }])
       const created = await findNativeNote(deps, context, relativeId)
       const note = await nativeNoteDocument(deps, context, created.entity, created.file, created.entities)
+      awardNativeXpAndBroadcast(server, deps, ctx, 'first_note', JSON.stringify([workspaceId, created.entity.nativeId]))
       changed({ workspaceId, reason: 'create', noteId: note.id })
       return note
     }

@@ -48,4 +48,16 @@ describe('handleMessageAnnotationsUpdated', () => {
     expect((next.state.session.messages[0] as any).annotations).toEqual([])
     expect((next.state.session.messages[1] as any).annotations).toEqual(annotations)
   })
+
+  it('applies a persisted own-message reaction to its still-mounted optimistic bubble', () => {
+    const state = makeState([
+      { id: 'optimistic-own', backendMessageId: 'server-own', role: 'user', content: 'hello', annotations: [] },
+      { id: 'reply', role: 'assistant', content: 'reply', annotations: [] },
+    ])
+    const annotations = [{ id: 'heart', schemaVersion: 1, body: [{ type: 'tag', value: '❤️' }], meta: { kind: 'reaction' } }] as any
+    const next = handleMessageAnnotationsUpdated(state, { type: 'message_annotations_updated', sessionId: 'session-1', messageId: 'server-own', annotations })
+    expect(next.state.session.messages[0]?.annotations).toEqual(annotations)
+    expect(next.state.session.messages[0]?.id).toBe('optimistic-own')
+    expect(next.state.session.messages[1]?.annotations).toEqual([])
+  })
 })

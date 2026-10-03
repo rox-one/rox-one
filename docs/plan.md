@@ -1,3 +1,27 @@
+## Golden Gate device diagnostics recovery plan — 2026-10-03
+
+1. Historical scout identified exact source revision and runtime files absent from main; integration worker audited the diagnostic dependency closure and recorded source hashes.
+2. Recover the 13 source modules/tests, localized keys and minimal TopBar/main/preload wiring, preserving current shell behavior.
+3. Cover arbitrary command/path/sender denial, native cancellation/replacement, bounded/redacted logs including links/FIFOs, browser closed cost and open/tab/close behavior.
+4. Run targeted tests, complete package types and WebUI/Electron main/preload/renderer builds; publish a separate PR after main/release reconciliation. Lead owns independent review and serial main merge; all original branches remain.
+5. Recover remaining panel/native/request/task clusters in coherent subsequent slices with actual callers and behavior evidence.
+
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
+## Session UX branch integration plan — 2026-10-03
+
+1. PR scout owns exhaustive fresh open PR/check/head inventory, retained in `/tmp/rox-branch-integration-20261003/pr-scout.json`; complete.
+2. UI worker reproduces exact #1391 fixture typing and renderer import failures; original logs retained under that task directory; complete.
+3. UI worker applies only runtime-checked fixture narrowing, valid attachment type and direct pure public catalog imports; root separately owns release runtime/security repairs.
+4. UI worker repairs the reproduced credential/ASR check/read races and 22 missing locale keys, covers malicious links/replacements/growth and caller upload/publication refusal, then runs complete package type checks, validate:ci, targeted native behavior tests and browser builds; publishes an isolated candidate commit and reports exact receipt.
+5. Root owns serial release/session reconciliation, security disposition and authorized main integration; no branch deletion. Product/provider/hardware acceptance retains its existing pending state.
+## Golden Gate native surface ownership recovery plan — 2026-10-03
+
+1. Audit actual missing source closure and current callers. Preserve current deliberate SiYuan removal and cookie consent behavior; exclude historical shell replacements.
+2. Restore nine source modules/tests/callers, adapt scoped inspector attachment cleanup and retain inspector state across responsive suppression. Remove the reproduced all-instance hide.
+3. Verify duplicate owners, deferred writes and rejected RPC retry, bounds clipping/visibility, backend extension reference ownership, real production renderer behavior with fixture native responses, and unchanged consent opt-in.
+4. Run complete types, WebUI/Electron renderer bundles and i18n gates; publish a separate verified commit/PR. Lead owns current-main reconciliation, independent review and serial merge; no branch deletion.
+5. Continue remaining source clusters through current callers, retaining explicit superseded decisions rather than reviving disabled product paths.
+
 # September program implementation plan
 
 ## Desktop runtime 0.11.8 delivery — 2026-10-03
@@ -593,6 +617,9 @@ Dependencies: current server entry point and helper build commands at main
    owned by the lead. Hosted Cursor provisioning remains unverified.
 
 
+## Legacy binding replay recovery (2026-10-03)
+
+Binding replay recovery: compare the exact legacy identity alongside the canonical encoded identity; verify raw-key migration followed by repeated imports, and negative controls for wrong kind, unrelated ID and foreign workspace. Run the existing platform-contract tests before separate PR publication.
 The recent worker owns the gstack command redirect prerequisite in an isolated security worktree. Input is the three identical shipped BrowseClient copies at runtime revision `05f1e3741`; dependencies are the existing bearer/port validation and portable provenance catalogs. Verify real HTTP redirects fail before any destination request, direct commands retain authentication, and patch hashes match all parent and portable notices. The lead integrates the committed prerequisite into the runtime PR and retains remote CodeQL closure as a separate pending gate.
 
 
@@ -605,3 +632,25 @@ Restore the seven missing Connections controller operations: lease metadata, ins
 Backend move must verify destination contents before deleting the source, refuse existing destinations and simultaneous moves, revoke outstanding leases before attempting a move, restore the source and clear the destination on recoverable failure, and return a distinct rollback failure when storage recovery cannot be proven. Real credential/backend availability and OAuth sign-in remain environment-dependent; fixture proof does not certify a real provider or native UI.
 
 Acceptance: original source branch retained; current strict types and full CI validation; real temporary SQLite audits and workspace isolation; generated channel/access inventory; deterministic memory-backend write/readback/delete/rollback failures; OAuth pending/approved/cancel race and concurrent-poll controls. Record exact delivered revision and test receipt under `docs/integration-history/connections-86154e8c/`.
+
+## Native Notes Knowledge read projection (2026-10-03)
+
+Owner: historical branch recovery. Add NativeNotesKnowledgeProvider over nativeNotesKnowledgeAccess and explicitly authenticated RPC read handlers; preserve existing SiYuan compatibility reads for legacy contexts. Verify real WebSocket principal authentication, committed note search/read/backlinks, exclusion of loose Markdown files, foreign workspace/global connection rejection, forged/missing principal denial, invalidation of captured readers after revocation, and explicit CAPABILITY_DISABLED for unscoped agent calls. Existing Knowledge RPC/tool runtime tests remain green. Native visual Notes/agent adoption is outside this bounded API proof.
+
+## Bounded historical recovery: browser registry ownership (2026-10-03)
+
+Owner: historical integration; parent retains merge. Dependency: existing useWorkspaceBrowserWindows and the exact browser-surface preference used by TopBar. Owned files: a nonvisual WorkspaceBrowserRegistry, AppShell mounts/imports, hook documentation, and focused tests. Preserve concurrent Golden Gate retained-surface/bounds work and voice/editor providers.
+
+1. Confirm the source lifecycle intent and current hidden-strip producer gap.
+2. Mount a context-bound owner for hidden-strip and mini configurations; retain existing visible-strip subscriptions.
+3. Execute delivered component/hook with actual atoms: initial list, state update, interaction, removal/reconciliation, disabled transfer, unmount and late-event/list controls. Run existing browser/chrome checks and renderer validation.
+4. Publish a separate PR with exact source/head and bounded evidence; original branches remain untouched.
+
+## Selective editor block recovery — 2026-10-03
+
+Owner: recent feature worker; integration owner: branch audit lead. Source dependency: `1f56af31d3658ee9880105361ad5312324f36ab8`; base: live main `3d04470f9be127945dd15c582775ed1e0401ed50`.
+
+1. Recover only ColumnsBlock, DocumentFolding and rox-block-syntax plus focused source tests and styles; retain current editor/shell behavior.
+2. Wire Notes folding preferences and replace placeholder slash insertions with real nodes. Supply legacy parser/serializer adapters required by the current default engine; preserve existing column aliases and literal code fences.
+3. Verify actual installed legacy parser/ProseMirror/serializer parse-edit-export-reopen, official-engine roundtrips, fold state normalization, malformed markers, bounded resizing, read-only refusal and locale parity; run consumed Electron types and renderer build.
+4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.

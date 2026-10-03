@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
   DEFAULT_WAKE_PHRASE,
-  ROCKS_T1_DISPLAY_NAME,
-  ROCKS_T1_MODEL_ID,
+  DEEPGRAM_TRANSCRIPTION_NAME,
+  DEEPGRAM_TRANSCRIPTION_MODEL,
   VoicePrivacyError,
   assertEditableTranscript,
   buildVoiceHealth,
@@ -43,10 +43,10 @@ function cloudAdapter(text = 'hello cloud'): TranscribeAdapter {
 
 
 describe('voice privacy policy', () => {
-  it('defaults new installs to cloud-rox rocks-t1 without auto-submit', () => {
+  it('defaults new installs to cloud-rox Deepgram Nova without auto-submit', () => {
     const prefs = getDefaultVoicePrefs(1)
     expect(prefs.sttEngine).toBe('cloud-rox')
-    expect(prefs.asrModelId).toBe(ROCKS_T1_MODEL_ID)
+    expect(prefs.asrModelId).toBe(DEEPGRAM_TRANSCRIPTION_MODEL)
     expect(prefs.ttsEngine).toBe('system')
     expect(prefs.wakeWordEnabled).toBe(false)
     expect(prefs.alwaysListeningConsent).toBe(false)
@@ -252,7 +252,7 @@ describe('voice privacy policy', () => {
     })
     expect(health.offline).toBe(true)
     expect(health.wakeWordArmed).toBe(false)
-    expect(health.asrBrand).toBe(ROCKS_T1_DISPLAY_NAME)
+    expect(health.asrBrand).toBe(DEEPGRAM_TRANSCRIPTION_NAME)
     const fixtureHealth = buildVoiceHealth(getDefaultVoicePrefs(1), {
       appleSilicon: false,
       offline: true,
@@ -287,7 +287,7 @@ describe('voice privacy policy', () => {
     expect(loadVoicePrefs(dir).selectedInputDeviceId).toBe('mic-1')
     const raw = readFileSync(join(dir, 'voice.json'), 'utf8')
     expect(raw).toContain('"sttEngine": "cloud-rox"')
-    expect(raw).toContain('"asrModelId": "rocks-t1"')
+    expect(raw).toContain('"asrModelId": "nova-3"')
     expect(saved.wakeWordEnabled).toBe(false)
   })
 })
