@@ -917,6 +917,13 @@ Owner: recent_features; integration/remote merge owner: root. Dependencies: curr
 
 
 
+## Infrastructure recovery graph — 2026-10-03
+
+1. Scout owns exact1448 installer/manager, RPC transport/types plus current Workspace License guard, serial runner/package test entry, and the reproduced extension-worker custom output-path repair. Depend on merged1443 Windows bootstrap and1450 MCP privacy; preserve all current namespaces, pins and native authority. Lead owns1448 navigation/resources/native executable harness and original branch disposition.
+2. Run actual pinned Bun local frozen CLI install and launcher replay after temporary/local dependency removal, ancestor manifest/lock isolation, same-version reload repair, malformed/linked/oversized receipt refusal, invalid partial pre-flip admission and current pointer mismatch. Retain current Windows/binary/Python/npm controls.
+3. Exercise actual WebSocket response revoke/expiry/replacement/native generation plus Workspace guard composition, zero serialization on denial. Exercise serial runner child mock/profile isolation, byte-complete output/failed prerequisites/continued failure history and actual repository inventory. Run relevant types, full default/custom main worker build and preload; preserve failed source comparison history.
+4. Freeze source and environment/hash receipt, reconcile freshmain, commit/push separate PR and attach. Parent owns merge. Native Windows/installed Electron/physical capture/provider acceptance is separate; no whole1448 or full branch-audit completion claim.
+
 ### Golden voice append recovery — 2026-10-03
 
 Owner: recent_features; dependency: current native Voice capture and Product Learning consumer. Append the completed transcript to the latest draft without adding a second separator when that draft already ends in whitespace. Preserve the explicit trailing-space delivery preference, current capture identity, consent and single-STOP ownership. Verification uses the actual VoiceDictationControl DOM with deferred STOP and all six space/newline/tab × delivery-preference combinations; existing consent, cancellation, clipboard and stale-attempt controls remain required.

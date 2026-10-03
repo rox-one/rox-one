@@ -742,6 +742,12 @@ Tasks explicitly opts into the shared layout's content-width master/detail excha
 
 
 
+## Persistent git-npm and RPC response admission recovery — 2026-10-03
+
+Owner: PR scout; integration/remote merge: lead. Source PR1448 exact1eb2c8289 supplies substantive git-npm permanent frozen-source isolation, same-version repair, serial test execution, and final shared response admission. Compose onto current managed Git/PATH/Windows receipts and hasInstalledFiles; do not replay old whole manager or navigation. A version is ready only with its contained retained source pin/lock, bounded regular no-follow identity receipt, executable launcher and exact current pointer; validate before flipping current. Frozen local Bun install owns its cwd/manifest/global/bin directories and retains source/dependencies across temporary checkout deletion and reload.
+
+RPC ordinary asynchronous checks are followed by fresh identity admission before serialization. The actual Workspace License read consumer uses final joint session/membership/Resource admission; no later asynchronous transport operation intervenes. Current native grant-generation/caller fences and generic shared-error privacy remain. The repository test entry runs source suites serially in isolated child/profile processes, preserves exact file hashes/runtime/results/failures, refuses missing runners, changed sources and empty green execution. Source native executable harness/resource copying remain independently owned. Custom main --outdir must also place and verify the extension-host worker in the selected output directory.
+
 ### Golden voice append recovery — 2026-10-03
 
 Owner: recent_features; dependency: current native Voice capture and Product Learning consumer. Append the completed transcript to the latest draft without adding a second separator when that draft already ends in whitespace. Preserve the explicit trailing-space delivery preference, current capture identity, consent and single-STOP ownership. Verification uses the actual VoiceDictationControl DOM with deferred STOP and all six space/newline/tab × delivery-preference combinations; existing consent, cancellation, clipboard and stale-attempt controls remain required.
