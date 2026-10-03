@@ -58,6 +58,10 @@ jobs:
           print(json.dumps(receipt, indent=2))
           PY
       - name: Shell, parser, persistence and navigation regression
+        env:
+          # Browser fixtures run below in separate Bun processes. Do not let a
+          # preinstalled runner browser activate them inside the unit process.
+          CHROMIUM_EXECUTABLE: ${{ runner.temp }}/ui001-separate-browser-phase
         run: >-
           bun test --timeout 30000
           apps/electron/src/renderer/components/app-shell/__tests__
@@ -67,6 +71,12 @@ jobs:
           apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts
           apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts
           apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts
+      - name: Project validation and types
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: bun run validate:ci
+      - name: MCP provisioning and onboarding protocol fixtures
+        run: bun run test:mcp-onboarding
       - name: Install isolated Chromium
         run: bunx playwright install --with-deps chromium
       - name: Mounted NavigationProvider and browser history
@@ -80,6 +90,18 @@ jobs:
         run: bun test --timeout 60000 apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts
       - name: Native surface renderer ownership and suppression
         run: bun test --timeout 60000 apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts
+      - name: Other shell browser fixtures in separate processes
+        run: |
+          export CHROMIUM_EXECUTABLE="$(bun -e 'import {chromium} from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
+          for test_path in \
+            apps/electron/src/renderer/components/app-shell/__tests__/panel-workspace.browser.test.ts \
+            apps/electron/src/renderer/components/app-shell/__tests__/device-status-chip.browser.test.ts \
+            apps/electron/src/renderer/components/app-shell/__tests__/quest-progress-card.browser.test.ts \
+            apps/electron/src/renderer/components/app-shell/__tests__/message-actions.browser.test.ts \
+            apps/electron/src/renderer/components/app-shell/__tests__/voice-dictation.browser.test.ts
+          do
+            bun test --timeout 60000 "$test_path"
+          done
       - name: Preserve component fixture evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
