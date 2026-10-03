@@ -1,0 +1,153 @@
+{
+  "owner": "OWNER-UI-001",
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "inputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
+  "originalReportedCommit": "9a8c9c996362f1344d0e92c7f09dca7441ee0809",
+  "originalCommitRetrievable": false,
+  "originalPatchProvenance": {
+    "savedLocalCandidate": "797f184a32fb8d0ee96e9f074b5b6f65b117f0ba",
+    "path": "verification/prior-cloud.diff.gz",
+    "compressedSha256": "5b0b1e39ee7ef41141d57c697bf761a6b7d8e8930f3886949c147098359848dc"
+  },
+  "integrationBaseRevision": "2cbc3b594eaeae3606d870d994346d42d085f504",
+  "productCommit": "cf1f593cabc28b358924e7af2b1bf4d7b2cd6654",
+  "verifiedSourceRevision": "536eaa1483550a2cb2916c7cf090b07fe710ee2c",
+  "runtime": {
+    "client": "Codex desktop local tool execution",
+    "platform": "Darwin",
+    "architecture": "arm64",
+    "codegraph": "absent; recorded before source search",
+    "bun": {
+      "requested": "1.3.14",
+      "observed": "1.3.14",
+      "qualified": true,
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun"
+    },
+    "originalCloudIdentity": "Preserved in verification/prior-result.json; not the current execution environment",
+    "currentModelTaskIdentity": "Not exposed by the available execution tool; not inferred from prompt text"
+  },
+  "ownedChangedPaths": [
+    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts",
+    "apps/electron/src/renderer/atoms/unified-shell.ts",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.effect-harness.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts"
+  ],
+  "existingProductPaths": [
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+    "apps/electron/src/renderer/atoms/unified-shell.ts"
+  ],
+  "implementedClauses": [
+    "Generic unavailable surface uses existing localized copy instead of unrelated chat prompt",
+    "Selected source/skill missing/unavailable/loading states retain workspace/entity address, react to canonical snapshots, and retry through actual callback",
+    "Skill events re-read directory-aware GET catalog rather than treating narrower broadcast payload as authoritative deletion",
+    "Route/workspace/entity identity remounts retained page state; failed render and rejected lazy import are retryable with a new cached attempt",
+    "AppShell cancels obsolete initial loads, rejects older refreshes, and preserves newer live source updates",
+    "Workspace geometry restored and resize cancelled in layout effect before old timers can commit via new-workspace handlers",
+    "Hydration identity guards folder/filter/collapse persistence during workspace switching",
+    "Jotai normalizes before publishing direct/functional writes and RESET; storage read/write/access/quota failures recover; cross-window events use validated event snapshots",
+    "Inspector280..1400 and terminal88..480 preserve existing supported bounds; viewport rendering constraints unchanged"
+  ],
+  "unchangedBehaviorDemonstrated": [
+    "Dedicated route hosts retained; original contract retained verbatim",
+    "Lockfile/root metadata/shared parser/auth/translations unchanged by authored patch",
+    "Existing inspector sizing and dock API preserved including RESET"
+  ],
+  "testCommands": [
+    {
+      "command": "bun install --frozen-lockfile --ignore-scripts",
+      "result": "pass;1817packages;lockfile unchanged",
+      "log": "verification/logs/dependency-install.log.gz"
+    },
+    {
+      "command": "bun test <five isolated UI-001 unit test files>",
+      "result": "32pass0fail220assertions",
+      "log": "verification/logs/focused-final.log.gz"
+    },
+    {
+      "command": "ROX_UI001_BROWSER_TEST=1 bun test apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+      "result": "8pass0fail17assertions; actual isolated Chromium fixture; callbacks/reload/cross-window persistence/resize timer/retry",
+      "log": "verification/logs/browser-final.log.gz"
+    },
+    {
+      "command": "bun test apps/electron/src/renderer/components/app-shell/__tests__ apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+      "result": "267pass10skip1fail; failure independently reproduced unchanged on clean main; opt-in Chromium executed separately",
+      "log": "verification/logs/regression-final.log.gz"
+    },
+    {
+      "command": "cd apps/electron && bun run tsc --noEmit",
+      "result": "pass;exit0;baseline also exit0",
+      "log": "verification/logs/typecheck-final.log.gz"
+    },
+    {
+      "command": "bun run vite build --config apps/electron/vite.config.ts",
+      "result": "pass;exit0;existing warnings retained",
+      "log": "verification/logs/renderer-build-final.log.gz"
+    },
+    {
+      "command": "geometry tests against clean main negative control",
+      "result": "2pass11expectedfail; tests reject unbounded live writes and unsupported storage recovery",
+      "log": "verification/logs/geometry-negative-control.log.gz"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    },
+    {
+      "command": "ROX_UI001_BROWSER_TEST=1 bun test <all six isolated UI-001 test files>",
+      "result": "40pass0fail237assertions on integrated source536eaa1483550a2cb2916c7cf090b07fe710ee2c",
+      "log": "verification/logs/integrated-focused.log.gz"
+    },
+    {
+      "command": "cd apps/electron && bun run tsc --noEmit",
+      "result": "pass;exit0 after fresh main integration",
+      "log": "verification/logs/integrated-typecheck.log.gz"
+    },
+    {
+      "command": "bun run vite build --config apps/electron/vite.config.ts",
+      "result": "pass;exit0 after fresh main integration;existing chunk/case warnings retained",
+      "log": "verification/logs/integrated-build.log.gz"
+    }
+  ],
+  "failureHistory": "verification/failure-history.json",
+  "sourceManifest": "verification/source-manifest.json",
+  "originalContract": "verification/original-contract.json",
+  "originalRequirementsChanged": false,
+  "leadOwnedGaps": [
+    "NavigationContext resolves explicit missing/cross-workspace sessions to unrelated auto-selected chat",
+    "Raw invalid parser/context routes can become default session state before generic fallback"
+  ],
+  "externalPrerequisites": [
+    "Lead-owned parser/context correction and real URL/history proof",
+    "SVC-003 real reconnect/capability/current-workspace callbacks and independently readable canonical receipts for every entity family",
+    "WIN-002 native Windows10 and11 artifacts plus100/150/200percent scaling/overlap/modal-focus proof",
+    "MAC-002 native macOS artifact Retina/overlay/modal-focus proof",
+    "WEB-001/WEB-003 authorized actual hosted ingress/fixture and zoom/history/restart proof",
+    "INT-016 immutable integrated candidate replay on original targets"
+  ],
+  "notExecuted": [
+    "Deployment",
+    "Signing",
+    "Real provider calls",
+    "Installed native Windows/macOS acceptance",
+    "Actual hosted browser acceptance"
+  ],
+  "fullDoDClosed": false,
+  "delivery": {
+    "status": "verified_and_ready_for_authorized_main_merge; final remote receipt is recorded separately to avoid a self-referential commit hash"
+  },
+  "review": {
+    "independentReview": "/root/patch_scout",
+    "sourceRevision": "536eaa1483550a2cb2916c7cf090b07fe710ee2c",
+    "result": "No remaining actionable issue in owned changes; P2 synchronous workspace resize cancellation corrected and mounted timer regression passed; preexisting lead context/parser gaps retained."
+  }
+}
