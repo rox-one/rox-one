@@ -28,7 +28,7 @@ export function resolveTourRoute(key: RouteKey, binding: TourBinding): ViewRoute
     case 'feed': return routes.view.feed()
     case 'inbox': return routes.view.inbox()
     case 'learning': return routes.view.settings('learning')
-    case 'meetings': return routes.view.meetings()
+    case 'meetings': return routes.view.meetings(binding.entityId)
     case 'memory': return routes.view.memory()
     case 'notes': return routes.view.notes()
     case 'projects': return routes.view.projects()
