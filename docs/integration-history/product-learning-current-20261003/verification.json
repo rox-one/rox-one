@@ -395,5 +395,122 @@
     "Built fixture omitted ui.html, then inherited parent login HTML entry; explicit owned two-entry map repaired",
     "Earlier positive workspace expectation contradicted current restricted WebUI; restored frozen5069 blocked-capability expectation",
     "Latest dictation whitespace separator gap reproduced old0/1 and recovered25/0 without trimming existing draft/trailing preference"
+  ],
+  "reconciled_main": "c00828493d340e8dbdb389daf642b1624039f762",
+  "post_qualification_merge": {
+    "pr_dependencies": [
+      1449,
+      1452
+    ],
+    "own_learning_and_actual_app_source_blobs_changed": false,
+    "resolution": "append-only docs union; preserve inherited startup and portable-resource changes",
+    "actual_app_fingerprint_recheck": "exit0: current source matches qualified1c7d8c792d44ef8d1a47b92eb9c0b15b698f52d348e45e01e228a99654a78a54 build"
+  },
+  "evidence_artifacts": [
+    {
+      "path": "logs/product-native-current-focused.log.gz",
+      "raw_sha256": "0bd62a37e56b45fbef5318ee4fa65228121a89c3922c64321079fe6a9844718c",
+      "gzip_sha256": "d7a8205529272b249f5e4c25eee6e77f7240e2e76c46bfabca5fe3ff6fe153b2"
+    },
+    {
+      "path": "logs/product-native-final-main-build.log.gz",
+      "raw_sha256": "1a86387599a8ee7a886eb283a112012056bc130a48b8fb36a7468ecc141c394c",
+      "gzip_sha256": "7e8d151c7abd9619ff1518726d5bc7713a0f77c93ae12b5a1ee6d66aff3942c1"
+    },
+    {
+      "path": "logs/product-native-final-preload-build.log.gz",
+      "raw_sha256": "5f2b572850839749bdb24be6b069d694b7bab19297e8ea3aa797a1e34e5a2618",
+      "gzip_sha256": "f04252b054ac3c6b560a75a62b573a823ec0fdfb4b19762d9138a4190320debf"
+    },
+    {
+      "path": "logs/product-native-voice-whitespace-after.log.gz",
+      "raw_sha256": "16f57716642fff4705c66f79fa14a8f28d90e88fc0c22dbc596663ad92d6a6b2",
+      "gzip_sha256": "e4d92ca8129646d22b11f833dbdb7c2c9251983f0edd77380ac8018061afc67a"
+    },
+    {
+      "path": "logs/product-native-voice-whitespace-before.log.gz",
+      "raw_sha256": "cd8542fd8842ce839ad6fd949725db17b68665b3c196d716aca36025669d0f59",
+      "gzip_sha256": "c6c30f5f0021d3cab7609315152cdfc91aebe7f5248ad51a519e724c35c462de"
+    },
+    {
+      "path": "logs/product-tour-current-actual-app-ui-final.log.gz",
+      "raw_sha256": "28620b6938b8586cf7e205bf3b0ba5a2c142df1b89fdeee59bdb1d2d989a6614",
+      "gzip_sha256": "8bc3f45ea9d8d9a33a0b701ba78614337a441c13e518a19b7b0b6860e064a3bf"
+    },
+    {
+      "path": "logs/product-tour-current-actual-app-ui-qualified.log.gz",
+      "raw_sha256": "6fe5101c7c527ad692c7691bfbd1abf54d6107db2008b093c527f5f6776ea5fd",
+      "gzip_sha256": "ea7db87c9869e8165231bbb90b79f161441b524928b55cf956b0846b50ee9f8e"
+    },
+    {
+      "path": "logs/product-tour-current-app-build-final.log.gz",
+      "raw_sha256": "977a006908e78ab794860159fbdccde744651657a4c68a5b9c6a5c4a8f992ace",
+      "gzip_sha256": "a8379aa2c49ad1a40945ae4dc6d13ac6908ac248652eae73e5feeacf8889a63c"
+    },
+    {
+      "path": "logs/product-tour-current-app-build-qualified.log.gz",
+      "raw_sha256": "dd3ffcedeb3b7dc68ac90738a727ae039b35f4db19ef345d9f23f42eee57a9f0",
+      "gzip_sha256": "dc80928f1392afd8a8db2a202d4aa4abca1d33972155a491ba0353c63ef8a86f"
+    },
+    {
+      "path": "logs/product-tour-current-final-i18n.log.gz",
+      "raw_sha256": "9deb1eea1754c52565451a13949c637c537a0b89fe434c900839f00403958bb3",
+      "gzip_sha256": "f48f1ab4628b2af4a577887954d425f687a019b28fe16533eb103d91d3bc9743"
+    },
+    {
+      "path": "logs/product-tour-current-input-continuity-dom-final.log.gz",
+      "raw_sha256": "e1d20de9e39c0c501bfa2aeb5b27598832c1ca9744b4b9db030d99c1998f718b",
+      "gzip_sha256": "0612d91e238dbaf5f9504c754b624c28e78fdda32e389f75a141c21ce795eebf"
+    },
+    {
+      "path": "logs/product-tour-current-input-dom-replay.log.gz",
+      "raw_sha256": "f0ebb0653097c12e423e9fdb9f7acd53cafa58bdba1260d0d1cd5dcbec70559b",
+      "gzip_sha256": "1da5f946f9dff826b34a2660ab9fcdc4217ddaf23ca4c05870437694fafa13b5"
+    },
+    {
+      "path": "logs/product-tour-current-joined-electron-types-qualified.log.gz",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "logs/product-tour-current-joined-webui-types-qualified.log.gz",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "logs/product-tour-current-node-input-continuity.log.gz",
+      "raw_sha256": "f155db956ea07d8297e6d0cb6b1f28222d21540628beeb45063755690a2d7578",
+      "gzip_sha256": "166f4a5635a95dc62add4ab729f6718c00cee8e96df2ae0cb9bd7dd5b9af85af"
+    },
+    {
+      "path": "logs/product-tour-current-node-isolated-actual-final.log.gz",
+      "raw_sha256": "6d523355ee203f168ef80b135a9b27b861b38ba845aadf8cefecafc87737fea5",
+      "gzip_sha256": "a4fa658bcbf4b17c6020173bd421b7aec8b5e86799cbe9023d180080aa2eb374"
+    },
+    {
+      "path": "logs/product-tour-current-node-meetings-final.log.gz",
+      "raw_sha256": "eb86540c369d4389209c8992dce2e2bd3ad30fe37c17a57bb004e90b13e407fd",
+      "gzip_sha256": "20d8c0d31eb47d99dc5da316c7fe9c073c6612cf10322a686b2a63c03781454d"
+    },
+    {
+      "path": "logs/product-tour-current-provider-geometry-dom-final.log.gz",
+      "raw_sha256": "230e3e540cfa4c0728040e74aa6946e075b8f4115deb19654b149d81466a4068",
+      "gzip_sha256": "89cf1cc46c321db51831356f8cab3a654b17872f2217a9670f0ffc7ae35943a6"
+    },
+    {
+      "path": "logs/product-tour-current-provider-geometry-dom-replay.log.gz",
+      "raw_sha256": "2ea5bbf1e4e2a9322f6510b54940964fe716d35cb62d84062df869b82b6fd1fe",
+      "gzip_sha256": "e67530f378531e0cd85d05c4a0ffabec475a6896e1398534be4419f167a56541"
+    },
+    {
+      "path": "logs/product-tour-current-pure-process-replay.log.gz",
+      "raw_sha256": "9aa3a26fb9e9b7844294dc9eebc0cefa6b67361f4c255227e1d55289558360f4",
+      "gzip_sha256": "a4091bb42cc121d14cd7cdc93cd51e32c3a6f6d7c40b101a36a438f5424b5281"
+    },
+    {
+      "path": "logs/product-tour-current-real-idb-replay.log.gz",
+      "raw_sha256": "d398119498130f1ba8bacbc7aaf5215663e6a2d3496bbefcd1f957cf43dcf8c0",
+      "gzip_sha256": "9bbeed02e2919b06448f96886364a4f1f3ce8a54ddce8c552d45c6cf3051a352"
+    }
   ]
 }

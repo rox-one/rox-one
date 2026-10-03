@@ -915,3 +915,6 @@ Owner: root branch integration. Dependency: route recovery #1446, current Window
 ### Golden voice append recovery — 2026-10-03
 
 Owner: recent_features; dependency: current native Voice capture and Product Learning consumer. Append the completed transcript to the latest draft without adding a second separator when that draft already ends in whitespace. Preserve the explicit trailing-space delivery preference, current capture identity, consent and single-STOP ownership. Verification uses the actual VoiceDictationControl DOM with deferred STOP and all six space/newline/tab × delivery-preference combinations; existing consent, cancellation, clipboard and stale-attempt controls remain required.
+## Portable resources follow-up (2026-10-03)
+
+Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.
