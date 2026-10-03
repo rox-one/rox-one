@@ -630,7 +630,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Mirror isFocusedPanel into a ref so the ResizeObserver closure reads the latest value
   const isFocusedPanelRef = React.useRef(isFocusedPanel)
   isFocusedPanelRef.current = isFocusedPanel
-  const { capture: captureScrollOwner, follow: followOutput, owns: ownsScrollViewport } = useChatOutputFollow(session?.id, scrollViewportRef, isFocusedPanelRef, isStickToBottomRef)
+  const { capture: captureScrollOwner, follow: followOutput, owns: ownsScrollViewport, begin: beginOutputMotion, ownsScroll: isOutputScroll, interrupt: interruptOutputFollow } = useChatOutputFollow(session?.id, scrollViewportRef, isFocusedPanelRef, isStickToBottomRef)
   const pendingHistoryAnchorRef = React.useRef<{ viewport: HTMLDivElement; owner: ReturnType<typeof captureScrollOwner>; height: number; top: number } | null>(null)
   // Skip smooth scroll briefly after session switch (instant scroll already happened)
   const skipSmoothScrollUntilRef = React.useRef(0)
@@ -919,12 +919,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         const buffer = 128
         const isVisible = rect.top >= buffer && rect.bottom <= window.innerHeight - buffer
         if (!isVisible) {
+          interruptOutputFollow()
           turnEl.scrollIntoView({ behavior: 'instant', block: 'center' })
         }
       }
       shouldScrollToMatchRef.current = false
     }
-  }, [validMatches, currentMatchIndex, session?.id, visibleTurnCount])
+  }, [validMatches, currentMatchIndex, session?.id, visibleTurnCount, interruptOutputFollow])
 
   // ---------------------------------------------------------------------------
   // CSS Custom Highlight API — non-destructive text highlighting
@@ -1244,7 +1245,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     const { scrollTop, scrollHeight, clientHeight } = viewport
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight
     // 20px threshold for "at bottom" detection
-    isStickToBottomRef.current = distanceFromBottom < 20
+    if (!isOutputScroll(viewport)) isStickToBottomRef.current = distanceFromBottom < 20
 
     // Load more turns when scrolling near top (within 100px)
     if (scrollTop < 100) {
@@ -1263,7 +1264,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         return prev + TURNS_PER_PAGE
       })
     }
-  }, [captureScrollOwner, ownsScrollViewport])
+  }, [captureScrollOwner, isOutputScroll])
 
   React.useLayoutEffect(() => {
     const anchor = pendingHistoryAnchorRef.current
@@ -1277,9 +1278,24 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   React.useEffect(() => {
     const viewport = scrollViewportRef.current
     if (!viewport) return
+    const interruptOnKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target?.closest('input, textarea, [contenteditable="true"]')) return
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) interruptOutputFollow()
+    }
     viewport.addEventListener('scroll', handleScroll)
-    return () => viewport.removeEventListener('scroll', handleScroll)
-  }, [handleScroll])
+    viewport.addEventListener('wheel', interruptOutputFollow, { passive: true })
+    viewport.addEventListener('touchstart', interruptOutputFollow, { passive: true })
+    viewport.addEventListener('pointerdown', interruptOutputFollow)
+    viewport.addEventListener('keydown', interruptOnKey)
+    return () => {
+      viewport.removeEventListener('scroll', handleScroll)
+      viewport.removeEventListener('wheel', interruptOutputFollow)
+      viewport.removeEventListener('touchstart', interruptOutputFollow)
+      viewport.removeEventListener('pointerdown', interruptOutputFollow)
+      viewport.removeEventListener('keydown', interruptOnKey)
+    }
+  }, [handleScroll, interruptOutputFollow])
 
   // Auto-scroll using ResizeObserver for streaming content
   // Initial scroll is handled by ScrollOnMount (useLayoutEffect, before paint)
@@ -1686,6 +1702,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   }) => {
     const targetTurnIndex = assistantTurnIndexByMessageId.get(item.messageId)
     if (targetTurnIndex == null) return
+    interruptOutputFollow()
 
     const ensureVisibleCount = allTurns.length - targetTurnIndex
 
@@ -1697,6 +1714,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       const turnContainer = turnRefs.current.get(turnKey)
       if (!turnContainer) return false
 
+      interruptOutputFollow()
       turnContainer.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return true
     }
@@ -1720,7 +1738,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         void scrollToTurn()
       })
     }
-  }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount])
+  }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount, interruptOutputFollow])
 
   const scrollToMessage = useCallback((messageId: string) => {
     if (!messageId) return
@@ -1743,6 +1761,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       if (mapped != null) targetTurnIndex = mapped
     }
     if (targetTurnIndex < 0) return
+    interruptOutputFollow()
 
     const ensureVisibleCount = allTurns.length - targetTurnIndex
     const scrollToTurn = () => {
@@ -1754,11 +1773,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         // Last resort: element with message id (assistant markdown)
         const byId = document.getElementById(messageId)
         if (byId) {
+          interruptOutputFollow()
           byId.scrollIntoView({ behavior: 'smooth', block: 'center' })
           return true
         }
         return false
       }
+      interruptOutputFollow()
       turnContainer.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return true
     }
@@ -1808,7 +1829,7 @@ const handleFollowUpChipClick = useCallback((item: {
       anchorY: anchor?.y,
       nonce: followUpOpenNonceRef.current,
     })
-  }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount])
+  }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount, interruptOutputFollow])
 
   const handleFollowUpIndexClick = useCallback((item: {
     messageId: string
@@ -1933,6 +1954,7 @@ const handleFollowUpChipClick = useCallback((item: {
                     viewportRef={scrollViewportRef}
                     skip={skipScrollToBottom}
                     onScroll={() => {
+                      beginOutputMotion()
                       skipSmoothScrollUntilRef.current = Date.now() + 500
                     }}
                   />
