@@ -706,6 +706,13 @@ Owner: branch integration lead. Source: checkpoint/session-audit-20260821-craft-
 
 Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/installation, schema3 restart, current actions plus creation event, foreign workspace exclusion and update/delete trigger refusal. The negative control runs the actual new test against unchanged main. Existing kernel/connection/revalidation and consumed server types must pass. Deliver independently and retain the source branch. This supplies audit metadata for the separately recovered Connections UI; no native/provider acceptance is claimed.
 
+## Explicit Connection host import recovery — 2026-10-03
+
+1. Historical worker verifies actual source delta and local-only Electron handler -> current adapter -> existing importer/host-runner call chain. Lead retains integration; original source branch remains unchanged.
+2. Recover commit defaults, preserving direct injected importer overrides. Add internal low-level runner ports used only by tests and host composition. Keep candidate previews free of helper password/process execution, except explicit metadata/public-identity list operations.
+3. Test all five positive selected paths, output masking/copy/reference behavior, unknown candidate refusal before secret access, helper failure without Connection/copy, and explicit override precedence. Prove negative controls by restoring exact pre-change adapter blobs, then restore candidate before final checks.
+4. Run existing importer/runner/workgraph/handler controls and consumed server-core/Electron types. Publish a separate codex PR and exact remote-head/proof receipt; lead merges after qualification. No actual host credential reads or external sends are part of verification.
+
 ### Calendar synchronization ownership recovery (2026-10-03)
 
 - Owner: recent-features integration worker; dependency: current canonical CalendarStore and adapters.
