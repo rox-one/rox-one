@@ -646,6 +646,15 @@ Owner: historical integration; parent retains merge. Dependency: existing useWor
 3. Execute delivered component/hook with actual atoms: initial list, state update, interaction, removal/reconciliation, disabled transfer, unmount and late-event/list controls. Run existing browser/chrome checks and renderer validation.
 4. Publish a separate PR with exact source/head and bounded evidence; original branches remain untouched.
 
+## Voice command transport recovery — 2026-10-03
+
+Owner: recent feature worker; main integration owner: branch audit lead. Dependencies: current HOTKEY wire channel, native window/client binding and composer consent/permission/generation guards at main 3d04470f9be127945dd15c582775ed1e0401ed50.
+
+1. Restore actual toggle/cancel delivery and foreground Right Option pairing onto current contracts. Dispose registrations/held state, preserve application shortcuts and idle Escape, and fail closed for unmanaged/unbound clients.
+2. Route all four commands into current composer capture. Cancel pending/released/finalizing requests and retain current native host ownership; do not copy old capture singleton, provider defaults or authorization.
+3. Verify actual Electron registration adapter with isolated ports, input-to-client-to-controller behavior, repeated/unpaired/foreign/unbound keys, permission-release and finalization cancellation, and unchanged voice/meeting/privacy regressions; run package types and main/renderer builds.
+4. Commit, push and attach a separate PR, preserving every source branch. Lead owns remote main merge; current live ASR, global native key input and visual microphone acceptance remain explicitly unverified.
+
 ## Selective editor block recovery — 2026-10-03
 
 Owner: recent feature worker; integration owner: branch audit lead. Source dependency: `1f56af31d3658ee9880105361ad5312324f36ab8`; base: live main `3d04470f9be127945dd15c582775ed1e0401ed50`.
