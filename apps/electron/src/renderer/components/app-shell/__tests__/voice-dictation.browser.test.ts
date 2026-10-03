@@ -291,4 +291,25 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
     expect((await calls()).filter((call) => call.method === 'transcribeVoice')).toHaveLength(0)
   }, timeout)
 
+  it('explicit clipboard completion uses the current local port and preserves the draft', async () => {
+    await load('delivery=clipboard'); await start(); await finish()
+    await page.waitForFunction(() => (window as any).__voiceFixture.calls.some((call: any) => call.method === 'copyVoiceText'))
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    expect((await calls()).filter(call => call.method === 'copyVoiceText')).toEqual([{ method: 'copyVoiceText', args: { text: 'Synthetic first paragraph.\n\nSynthetic second paragraph.' } }])
+  }, timeout)
+  it('refused clipboard completion preserves the draft and reports the delivery failure', async () => {
+    await load('delivery=clipboard&failedCopy=true'); await start(); await finish()
+    await page.waitForFunction(() => (window as any).__voiceFixture.calls.some((call: any) => call.method === 'copyVoiceText'))
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    await expectDOM(page.getByText('Synthetic clipboard denial', { exact: true })).toBeVisible()
+  }, timeout)
+
+  it('the explicit trailing-space preference applies to both current draft and clipboard completion', async () => {
+    await load('trailingSpace=true'); await start(); await finish()
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph. ')
+    await load('delivery=clipboard&trailingSpace=true'); await start(); await finish()
+    await page.waitForFunction(() => (window as any).__voiceFixture.calls.some((call: any) => call.method === 'copyVoiceText'))
+    expect((await calls()).find(call => call.method === 'copyVoiceText')?.args).toEqual({ text: 'Synthetic first paragraph.\n\nSynthetic second paragraph. ' })
+  }, timeout)
+
 })

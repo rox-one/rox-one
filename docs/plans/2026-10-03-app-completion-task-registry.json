@@ -14,6 +14,7 @@
         "auth_backend",
         "auth_dom",
         "auth_routing",
+        "final9f_native_affected",
         "integrated_critical_regressions",
         "merge_main_critical",
         "merge_main_local_gates",
@@ -23,7 +24,7 @@
         "exact_login_error",
         "rox_cloud_approval"
       ],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
@@ -38,6 +39,9 @@
       "evidenceIds": [
         "central_meetings",
         "deepgram_adapter",
+        "final9f_browser",
+        "final9f_focused",
+        "final9f_gates",
         "integrated_critical_regressions",
         "integrated_frontend_chromium",
         "merge_main_critical",
@@ -50,7 +54,7 @@
         "production_all_users",
         "provider_live"
       ],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
@@ -65,6 +69,9 @@
       "evidenceIds": [
         "central_meetings",
         "deepgram_adapter",
+        "final9f_browser",
+        "final9f_focused",
+        "final9f_gates",
         "integrated_critical_regressions",
         "integrated_frontend_chromium",
         "native_voice",
@@ -72,7 +79,7 @@
         "voice_dom"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
@@ -91,6 +98,11 @@
         "asset_validation_missing_baseline",
         "auth_backend",
         "confirmed_task_conversions_current",
+        "fd6_native_checkpoint",
+        "final9f_browser",
+        "final9f_focused",
+        "final9f_gates",
+        "final9f_native_affected",
         "final_routing_current",
         "final_secret_scan_current",
         "full_types_accepted_current",
@@ -151,7 +163,7 @@
         "voice_cancel_current"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "All assigned native authority/custody/source/sharing/Notes/startup seams are implemented and focused-verified. Four task conversions pass 19 production Chromium cases / 65 assertions; four voice CANCEL sites pass 12 / 45; native Notes XP authoritative gate passes 37 / 657. Source is frozen; root affected types/builds and all eight native scenarios pass; final published identity is in external reviews/PR records.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
@@ -166,6 +178,9 @@
       "evidenceIds": [
         "central_meetings",
         "deepgram_adapter",
+        "final9f_browser",
+        "final9f_focused",
+        "final9f_gates",
         "integrated_critical_regressions",
         "merge_main_critical",
         "merge_main_local_gates",
@@ -176,7 +191,7 @@
         "production_all_users",
         "provider_live"
       ],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
@@ -198,7 +213,7 @@
         "omp_sdk_offline"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
@@ -221,7 +236,7 @@
         "production_all_users",
         "provider_live"
       ],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
@@ -237,7 +252,7 @@
         "memory"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
@@ -254,7 +269,7 @@
         "widget_unit"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
@@ -277,7 +292,7 @@
       "externalBlockers": [
         "native_skill_links"
       ],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "Fresh merged skill/marketplace/native-auth gate 80/2360. Stable aliases/app ownership/foreign preservation and rollback proof survive merge; physical Windows/macOS links remain separate. 330 bundled catalogue entries do not prove live external provider authorization.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
@@ -296,7 +311,7 @@
         "integrated_frontend_chromium"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; affected integrated types/builds and scoped native gate pass. This surface is outside the eight-script installed native acceptance scope; its focused production component/native WS evidence remains the basis of verification.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
@@ -318,7 +333,7 @@
       "externalBlockers": [
         "provider_live"
       ],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; affected integrated types/builds and scoped native gate pass.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
@@ -331,13 +346,14 @@
         "quests"
       ],
       "evidenceIds": [
+        "final9f_native_affected",
         "native_note_xp_current",
         "native_quests",
         "native_tasks_app_current",
         "quests"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "Native task earned receipt/deduplication and Notes post-canonical first_note award verified. Authoritative root combined gate 37/657 across four files includes 28 inner actual WS checks and overlaps older NativeReplica runs. Focused 1/3 wrapper is part of this scope, not additive. Award/retry/restart stays once-only, actor/caller scoped, receipt unchanged; denied/read/plan/assets/stale authority produce no reward. Affected integrated types/builds pass; native Notes replay preserves already-earned XP30. Integrated Notes profile already earned first_note (XP30); five native Notes checks verify identical receipt/XP30 replay. Fresh first-note 15-to-30 award remains original corrected-listener UI plus actual fresh-actor WS evidence.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
@@ -359,7 +375,7 @@
         "startup_optional_effects"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "Rox Runtime remains independent of optional OpenClaw. Earlier App debug/update six-case catch proof plus final desktop/mobile debug/theme eight-case Chromium proof prevent optional denied probes from producing page errors. SessionTable initial optional preference denial is quiet; explicit writes retain normal error handling. Final clean native rerun remains pending.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
@@ -380,7 +396,7 @@
         "native_inbox_producer_final"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "Trusted native MemoryService and messaging producers are implemented and focused-verified: 119 tests / 253 assertions across 7 files includes 11 scoped Inbox WS cases, real queued-turn actor context and 15 registry/gateway/Commands/WS cases. Durable private pairing, restart/client-close, same-owner repair, forged/foreign/stale/disabled denial and one exact scoped PENDING_CHANGED event passed. 24 Chromium / 32 assertions verifies consumer identity behavior. External messaging adapters/model boundaries are synthetic; actual rebuilt app remains pending. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; affected integrated types/builds and scoped native gate pass. This surface is outside the eight-script installed native acceptance scope; its focused production component/native WS evidence remains the basis of verification.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
@@ -403,7 +419,7 @@
         "sharing_busy_chromium"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
@@ -428,6 +444,11 @@
         "asset_validation_missing_baseline",
         "auth_backend",
         "confirmed_task_conversions_current",
+        "fd6_native_checkpoint",
+        "final9f_browser",
+        "final9f_focused",
+        "final9f_gates",
+        "final9f_native_affected",
         "final_routing_current",
         "final_secret_scan_current",
         "full_types_accepted_current",
@@ -498,7 +519,7 @@
         "referenced_screenshot",
         "windows_macos_compositor"
       ],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "All 9 original areas implemented and focused-verified; preserve per-area hardware/provider/screenshot gaps rather than marking the entire scope unimplemented.",
       "subtasks": [
         {
@@ -582,6 +603,11 @@
       ],
       "evidenceIds": [
         "asset_validation_missing_baseline",
+        "fd6_native_checkpoint",
+        "final9f_browser",
+        "final9f_focused",
+        "final9f_gates",
+        "final9f_native_affected",
         "final_routing_current",
         "final_secret_scan_current",
         "independent_reviews",
@@ -610,8 +636,8 @@
         "startup_optional_effects"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
-      "evidence": "Independent code-commit Spec review has zero open source findings; Standards verifies frozen blobs with zero hard findings and one nonblocking duplicated-marker-restoration smell. All local gates and8native scenarios pass. External artifacts and PR records name final document-inclusive published revision.",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
+      "evidence": "Final9f Spec and Standards have zero open source findings; cleanup removes prior nonblocking duplicated rollback smell. Final13gates/focused/browser/scoped native acceptance pass. External merge-review artifacts and PR records name final immutable published commit.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
@@ -630,7 +656,7 @@
         "native_tasks_current"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "26 tests / 103 assertions across 5 files, including 13 renderer authority/cache/transition recovery cases and a real native WS fixture. Rejected-switch recovery, lost ACK, ABA, unmount and late success are verified; integrated native Tasks create/edit/XP/reload passes. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; affected integrated types/builds and scoped native gate pass. Integrated native Tasks now passes three create/edit/first_task-attribution/reload checks with zero page errors; local affected types/builds pass.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
@@ -649,7 +675,7 @@
       "externalBlockers": [
         "external_rss_x"
       ],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "49 tests / 164 assertions across 6 files include 42 inner real native WS checks and 11 Chromium scenarios. Feed explicitly opts into exact native Notes CREATE recovery; the final 71-test creation gate covers its 11 browser cases plus native/outbox/compatibility paths. Active-view refresh and acknowledged Note/Task conversions verified. External RSS/X and final rebuilt Feed UI remain pending.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
@@ -669,42 +695,42 @@
         "native_inbox_producer_final"
       ],
       "externalBlockers": [],
-      "finalIntegration": "latest_main_membership_and_affected_types_builds_pass_new_native_eight_running",
+      "finalIntegration": "final9f13gates_focused_browser_scoped_native_CoreNotes12_plus_retained6_fd6_scenarios_complete_external_limits_preserved",
       "evidence": "Trusted native MemoryService and messaging producers are implemented and focused-verified: 119 tests / 253 assertions across 7 files includes 11 scoped Inbox WS cases, real queued-turn actor context and 15 registry/gateway/Commands/WS cases. Durable private pairing, restart/client-close, same-owner repair, forged/foreign/stale/disabled denial and one exact scoped PENDING_CHANGED event passed. 24 Chromium / 32 assertions verifies consumer identity behavior. External messaging adapters/model boundaries are synthetic; actual rebuilt app remains pending. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; affected integrated types/builds and scoped native gate pass. This surface is outside the eight-script installed native acceptance scope; its focused production component/native WS evidence remains the basis of verification.",
       "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     }
   ],
   "schema": 2,
-  "updatedAt": "2026-10-03T16:36:18.303014+00:00",
-  "finalized": false,
+  "updatedAt": "2026-10-03T17:01:06.868382+00:00",
+  "finalized": true,
   "acceptanceDocument": "docs/plans/2026-10-03-app-completion-acceptance.md",
   "verificationDocument": "docs/plans/2026-10-03-app-completion-verification.md",
   "countingPolicy": "Separate overlapping runs are never summed into a unique-test total; nested fixture counts are identified.",
   "finalGates": {
-    "typecheckAll": "full_latest_main_pass_plus_post_fix_affected_server_core_server_electron_types_pass",
-    "webuiTypes": "pass_latest_main_pre_project_correction",
-    "electronTypes": "pass_latest_main_post_membership_fix",
-    "main": "pass_latest_main_post_membership_fix",
-    "preload": "pass_latest_main_post_membership_fix",
-    "renderer": "pass_latest_main_pre_project_correction",
-    "webuiBuild": "pass_latest_main_pre_project_correction",
-    "localeParitySortingCoverage": "pass7889keys_all12_15coverage_cases",
+    "typecheckAll": "pass_final9f_frozen_combined_source",
+    "webuiTypes": "pass_final9f_frozen_combined_source",
+    "electronTypes": "pass_final9f_frozen_combined_source",
+    "main": "pass_final9f_frozen_combined_source",
+    "preload": "pass_final9f_frozen_combined_source",
+    "renderer": "pass_final9f_frozen_combined_source",
+    "webuiBuild": "pass_final9f_frozen_combined_source",
+    "localeParitySortingCoverage": "pass_English7908keys_normalized_parity12_allowed_plural_raw_variants_15coverage_tests",
     "routing": "focused_integrated24_pass_1039assertions",
-    "actualNativeApp": "pending_new_latest_main_gate_prior35_historical",
-    "immutableReview": "accepted498_historical_new_freeze_and_published_revision_review_pending",
-    "secretScan": "pass_root_final14908files13values0matches",
-    "resourceCopy": "pass_latest_main_resources_and_asset_copy",
+    "actualNativeApp": "pass_fresh9f_Core7Notes5_12checks0uncaught_errors_plus_retained6_fd6_scenarios_not8new9f_runners",
+    "immutableReview": "Spec_Standards_zero_open_source_findings_final_published_commit_named_in_external_merge_review_artifacts",
+    "secretScan": "pass_final9f14935files13values0matches",
+    "resourceCopy": "pass_final9f_frozen_combined_source",
     "assetValidation": "existing_script_target_absent_no_validation_pass_claim",
     "workerPages": "absent_in_current_OSS_export",
-    "productionFreeze": "283_latest_main_hashes_match_excluding3mutable_docs",
+    "productionFreeze": "284_final9f_hashes_match_three_mutable_docs_excluded",
     "remoteCI": "accepted498_ubuntu_pass_historical_latest_main_remote_unconfirmed_vercel_account_blocked",
-    "subprocess": "pass_latest_main_post_membership_fix",
-    "discord": "pass_latest_main_post_membership_fix"
+    "subprocess": "pass_final9f_frozen_combined_source",
+    "discord": "pass_final9f_frozen_combined_source"
   },
   "actualAppProgress": {
     "workspace": "/workspace/rox-one-integration",
-    "finalPass": false,
-    "integratedInstalledAppAcceptance": "pending_latest_main_project_fix_backend_BUILD_READY_and_new8scenario_gate",
+    "finalPass": true,
+    "integratedInstalledAppAcceptance": "final9f_scoped_pass_fresh2_scenarios12checks_plus6_retained_fd6_scenarios",
     "originalOnlyNativeEvidence": {
       "baselineScripts": 8,
       "baselineChecks": 34,
@@ -759,27 +785,38 @@
       "backendSolePort9110Owner": 171789,
       "electronProcess": 172183,
       "sourceFreezeMatchedPaths": 283,
-      "nativeEight": "running",
-      "overallPass": false
+      "nativeEight": "fd6_complete8scenarios35checks0errors",
+      "overallPass": true,
+      "scope": "historical_fd6_checkpoint_only"
+    },
+    "latest9fReadyCheckpoint": {
+      "backendSolePort9110Owner": 178906,
+      "electronProcess": 179441,
+      "sourceFreezeMatchedPaths": 284,
+      "affectedNative": "Core7_Notes5_pass12checks0uncaught_errors",
+      "overallPass": true,
+      "productionFiles": 2421,
+      "sourceDrift": 0
+    },
+    "latest9fAffected": {
+      "scenarios": 2,
+      "checks": 12,
+      "uncaughtErrors": 0,
+      "optionalCaughtConsoleDiagnostics": "separate_not_uncaught_page_errors",
+      "notesXpScope": "already_earnedXP30_exact_replay_revision1_sequence17",
+      "aggregate": "/workspace/scratch/rox-ui-review-2026-10-03/final-main-native-affected-final.json",
+      "rootVerifiedAggregate": "/workspace/scratch/rox-ui-review-2026-10-03/final-main-native-affected-root-verified.json",
+      "productionFiles": 2421,
+      "sourceDrift": 0,
+      "retainedEvidence": "six_unaffected_fd6_scenarios_own_provenance_no8new9f_runners"
     }
   },
   "sourceSecretScan": {
-    "integratedTarget": {
-      "files": 14802,
-      "suppliedValues": 13,
-      "hits": 0,
-      "publicSecretsFound": false,
-      "evidence": "/tmp/rox-completion-integrated-final-secret-scan.json",
-      "scope": "Final poststartup source and built artifact checkpoint"
-    },
-    "historicalOriginal": {
-      "files": 2862,
-      "suppliedValues": 13,
-      "hits": 0,
-      "scope": "latest_source_and_artifact_checkpoint",
-      "evidence": "/tmp/rox-completion-final-secret-scan.json",
-      "latestRendererWebUIBundle": "new_build_running_final_scan_scope_pending_root"
-    }
+    "files": 14935,
+    "suppliedValues": 13,
+    "hits": 0,
+    "scope": "final9f_source_and_build_artifacts",
+    "evidence": "/tmp/rox-last-main-final-secrets.log"
   },
   "legacyBaselineFindings": [
     {
@@ -827,12 +864,12 @@
       "Windows/macOS compositor/OS consent",
       "Exact unknown supplied login error and absent screenshot"
     ],
-    "finalOutcome": "pending_latest_main_native_eight_prior498_35check_gate_historical"
+    "finalOutcome": "complete_scoped9f_CoreNotes12_plus_retained6_fd6_scenarios_fd6all8_35_is_checkpoint"
   },
   "target": {
     "workspace": "/workspace/rox-one-integration",
     "branch": "codex/app-completion-follow-up",
-    "upstreamBase": "fd6e2f2cebafeb5bbf464aef45604ce4e7fcaca1",
+    "upstreamBase": "9f742f5fcd301f8fb5538158596e7693dd918a83",
     "namespace": "@rox",
     "priorPullRequest": {
       "number": 1391,
@@ -846,14 +883,15 @@
       "codeCommit": "d45cfc2439650ffd4afb854ced4cd9710b22a9cf"
     },
     "immutableRevision": "Final published commit is recorded in external reviews and PR commit records; no self-referential docs SHA",
-    "integrationState": "fd6_intermediate_affected_gates_pass_native_eight_running_next9f_upstream_combined_validation_required",
+    "integrationState": "final9f_local_gates_and_scoped_native_acceptance_complete_user_authorized_merge",
     "implementationBase": "234827b0f6ee47d5813291c7c6ae2b36b20f76da",
-    "sourceFreezeManifest": "/tmp/rox-merge-main-final-source-freeze.json",
-    "sourceFreezePaths": 283,
+    "sourceFreezeManifest": "/tmp/rox-last-main-final-source-freeze.json",
+    "sourceFreezePaths": 284,
     "mutableDocsExcluded": 3,
     "testReleaseCommit": "9e28eb5b3ad6873ff7097c728a032cee1f1b59a1",
-    "latestMainMerge": "no_conflicts_137_paths",
-    "cleanupCheckpoint": "b223f32867440563a1ce9c77affde6a4f2545ba2"
+    "latestMainMerge": "clean_61_material_paths_after_fd6_checkpoint",
+    "cleanupCheckpoint": "b223f32867440563a1ce9c77affde6a4f2545ba2",
+    "lastAcceptedMergeCommit": "6d9470cfbbbc5b5de3952a33bb19f30c55ab7f65"
   },
   "historicalOriginalCheckpoint": {
     "workspace": "/workspace/rox-one",
@@ -1107,9 +1145,9 @@
   },
   "importConsentScope": "Preselected import preferences are user settings, not OS grants on install; mocked adapters do not prove actual OS consent.",
   "externalPublishedCommitReviews": {
-    "spec": "/tmp/rox-completion-final-spec-review.json",
-    "standards": "/tmp/rox-completion-final-standards-review.json",
-    "authority": "Immutable implementation code d45 independently reviewed with no open hard/source findings. External artifacts and PR commit records name the final document-inclusive published commit; documents do not embed their own self-referential SHA."
+    "spec": "/tmp/rox-merge-final-spec-review.json",
+    "standards": "/tmp/rox-merge-final-standards-review.json",
+    "authority": "Both have zero open source findings. Artifacts and PR commit records identify the final immutable published commit after root commit; no self-referential document SHA. Prior498 artifacts are historical."
   },
   "publicationCI": {
     "checkpoint": "/tmp/rox-completion-pr1435-ci-checkpoint.json",
@@ -1276,9 +1314,92 @@
       "latestCheckpoint": "/tmp/rox-completion-pr1435-ci-latest.json"
     },
     "remoteUbuntuCI": "passed_at_accepted498_checkpoint_root_verified",
-    "scope": "Historical accepted pre-latest-main code and35check native gate; does not establish new project correction/native acceptance."
+    "scope": "Historical accepted pre-latest-main code and35check native gate; does not establish new project correction/native acceptance.",
+    "externalPublishedCommitReviews": {
+      "spec": "/tmp/rox-completion-final-spec-review.json",
+      "standards": "/tmp/rox-completion-final-standards-review.json",
+      "authority": "Immutable implementation code d45 independently reviewed with no open hard/source findings. External artifacts and PR commit records name the final document-inclusive published commit; documents do not embed their own self-referential SHA."
+    }
   },
   "mergeValidation": {
+    "upstreamMain": "9f742f5fcd301f8fb5538158596e7693dd918a83",
+    "previousAcceptedMergeCommit": "6d9470cfbbbc5b5de3952a33bb19f30c55ab7f65",
+    "mergeConflicts": 0,
+    "mergedPaths": 61,
+    "materialAreas": [
+      "voice_history_delivery",
+      "notes_responsive",
+      "12_locales"
+    ],
+    "freshAffectedFocused": {
+      "tests": 302,
+      "failed": 0,
+      "assertions": 3069,
+      "files": 17,
+      "matchingHashes": 17,
+      "results": "/tmp/rox-last-main-focused-regression-results.json"
+    },
+    "freshProductionBrowser": {
+      "dictation": {
+        "tests": 21,
+        "assertions": 73
+      },
+      "history": {
+        "tests": 10,
+        "assertions": 29
+      },
+      "notesResponsive": {
+        "tests": 6,
+        "assertions": 20
+      },
+      "notesUnits": {
+        "tests": 10,
+        "assertions": 40
+      },
+      "failed": 0,
+      "sourceHashesMatched": 270,
+      "logDigestsMatched": 4,
+      "manifest": "/tmp/rox-last-main-browser-manifest.json"
+    },
+    "typesBuildsLocales": {
+      "gates": 13,
+      "failed": 0,
+      "results": "/tmp/rox-last-main-final-gates-results.json",
+      "EnglishKeys": 7908,
+      "locales": 12,
+      "parity": "normalized_allowed_plural_variants_raw_totals_can_differ",
+      "coverageTests": 15
+    },
+    "finalSourceFreeze": {
+      "manifest": "/tmp/rox-last-main-final-source-freeze.json",
+      "paths": 284,
+      "matches": 284,
+      "mismatches": 0
+    },
+    "actualNativeAffected": {
+      "coreChecksExpected": 7,
+      "notesChecksExpected": 5,
+      "status": "passed",
+      "scenarios": 2,
+      "checks": 12,
+      "uncaughtErrors": 0,
+      "productionFiles": 2421,
+      "sourceDrift": 0,
+      "aggregate": "/workspace/scratch/rox-ui-review-2026-10-03/final-main-native-affected-final.json",
+      "rootVerifiedAggregate": "/workspace/scratch/rox-ui-review-2026-10-03/final-main-native-affected-root-verified.json"
+    },
+    "unchangedSixScenarioEvidence": "fd6_actual_checkpoint_preserve_source_provenance_not_a_new9f_full8_run",
+    "priorCriticalProof": "473test gate and manifests remain fd6-source evidence; no retagging changed Voice/Notes production files",
+    "externalLimits": "unchanged_no_live_keys_all_user_deployment_hardware_cloud_error_claim",
+    "finalSecretScan": {
+      "files": 14935,
+      "suppliedValues": 13,
+      "matches": 0,
+      "log": "/tmp/rox-last-main-final-secrets.log"
+    },
+    "finalImmutableSpecArtifact": "/tmp/rox-merge-final-spec-review.json"
+  },
+  "historicalFd6Validation": {
     "upstreamMain": "fd6e2f2cebafeb5bbf464aef45604ce4e7fcaca1",
     "cleanupCheckpoint": "b223f32867440563a1ce9c77affde6a4f2545ba2",
     "mergeConflicts": 0,
@@ -1335,7 +1456,7 @@
       "limits": "actual_authority_WS_with_deterministic_SessionManager_fixture_no_model_request_no_permission_expansion"
     },
     "affectedBackendBuild": "all_pass_after_membership_fix",
-    "newNativeEight": "running_verified_listener171789_Electron172183",
+    "newNativeEight": "passed_intermediate_checkpoint",
     "finalSourceFreeze": {
       "manifest": "/tmp/rox-merge-main-final-source-freeze.json",
       "paths": 283,
@@ -1366,6 +1487,16 @@
         "12_locales"
       ],
       "validation": "pending_combined_affected_types_builds_browser_voice_notes_and_native_Core_Notes"
+    },
+    "acceptedMergeCommit": "6d9470cfbbbc5b5de3952a33bb19f30c55ab7f65",
+    "nativeEight": {
+      "scenarios": 8,
+      "checks": 35,
+      "uncaughtErrors": 0,
+      "sourceFiles": 2414,
+      "sourceDrift": 0,
+      "aggregate": "/workspace/scratch/rox-ui-review-2026-10-03/latest-main-native-eight-scenario-final.json",
+      "mapExecution": "one_clean_runner_world440x280_to677x461"
     }
   }
 }

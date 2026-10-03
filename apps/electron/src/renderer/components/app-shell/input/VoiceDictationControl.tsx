@@ -129,7 +129,11 @@ export function VoiceDictationControl({
       const text = result.text.trim()
       if (text) {
         const latest = latestInputRef.current
-        latest.onInputChange?.(latest.inputValue ? `${latest.inputValue} ${text}` : text)
+        const deliveredText = prefs?.trailingSpace ? `${text} ` : text
+        if (prefs?.delivery === 'clipboard') {
+          await window.electronAPI.copyVoiceText({ text: deliveredText })
+          if (captureId !== captureIdRef.current) return
+        } else latest.onInputChange?.(latest.inputValue ? `${latest.inputValue} ${deliveredText}` : deliveredText)
       }
       else if (result.noSpeech) toast.error(t('settings.input.voiceNoSpeech'))
     } catch (error) {
@@ -142,7 +146,7 @@ export function VoiceDictationControl({
         setTranscribing(false)
       }
     }
-  }, [prefs?.sttEngine, stopTracks, t])
+  }, [prefs?.sttEngine, prefs?.delivery, prefs?.trailingSpace, stopTracks, t])
 
   const cancelRecording = useCallback(() => {
     captureIdRef.current += 1

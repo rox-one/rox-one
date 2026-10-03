@@ -1,3 +1,4 @@
+import { readVoiceAudioChunk } from './voice-audio-read'
 import { readBoundedRegularFile } from '@rox/shared/utils/bounded-file'
 /**
  * Voice RPC — private actor preferences, client audio capture and Deepgram ASR.
@@ -81,6 +82,9 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.voice.HISTORY_FAVORITE,
   RPC_CHANNELS.voice.HISTORY_DELETE,
   RPC_CHANNELS.voice.HISTORY_EXPORT,
+  RPC_CHANNELS.voice.HISTORY_EDIT,
+  RPC_CHANNELS.voice.HISTORY_SELECT,
+  RPC_CHANNELS.voice.HISTORY_AUDIO,
   RPC_CHANNELS.voice.RETRANSCRIBE,
   RPC_CHANNELS.voice.REPROCESS,
   RPC_CHANNELS.voice.PROCESS,
@@ -284,7 +288,7 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
     } finally { clearTimeout(timeout); state.transcriptions.delete(controller) }
   }
   const index = (context: RequestContext) => loadHistoryIndex(directory(context))
-  const publicRecording = (context: RequestContext, recording: VoiceRecording) => context.principal ? { ...recording, audioPath: '' } : recording
+  const publicRecording = (context: RequestContext, recording: VoiceRecording) => ({ ...recording, audioPath: '' })
   const record = (context: RequestContext, id: unknown) => {
     const history = index(context)
     const found = typeof id === 'string' ? history.recordings.find(item => item.id === id) : undefined
@@ -489,6 +493,43 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
     const { history, recording } = record(context, body.id)
     const publicHistory = { ...history, recordings: history.recordings.map(item => publicRecording(context, item)) }
     return { text: exportRecording(publicHistory, recording.id, body.format === 'srt' || body.format === 'json' ? body.format : 'txt') }
+  }, readOptions)
+  handle(RPC_CHANNELS.voice.HISTORY_EDIT, async (context, payload: unknown) => {
+    const body = bodyOf(payload)
+    const { history, recording } = record(context, body.id)
+    directory(context, 'write')
+    if (typeof body.text !== 'string' || !body.text.trim() || Buffer.byteLength(body.text, 'utf8') > 1_000_000) throw new Error('A bounded transcript is required')
+    const selected = history.revisions.find(item => item.id === recording.selectedRevisionId && item.recordingId === recording.id)
+    if (!selected || body.expectedRevisionId !== selected.id) throw new Error('Transcript changed; reload before editing')
+    const revision = { id: randomUUID(), recordingId: recording.id, parentId: selected.id, kind: 'manual' as const,
+      modelId: 'manual', text: body.text, segments: [], createdAt: Date.now() }
+    history.revisions.push(revision)
+    recording.selectedRevisionId = revision.id
+    recording.selectedRunId = undefined
+    writeIndex(context, history)
+    return { ok: true, revisionId: revision.id }
+  }, writeOptions)
+  handle(RPC_CHANNELS.voice.HISTORY_SELECT, async (context, payload: unknown) => {
+    const body = bodyOf(payload)
+    const { history, recording } = record(context, body.id)
+    directory(context, 'write')
+    if (body.expectedRevisionId !== recording.selectedRevisionId) throw new Error('Transcript changed; reload before selecting')
+    const revision = history.revisions.find(item => item.id === body.revisionId && item.recordingId === recording.id)
+    if (!revision) throw new Error('Transcript revision not found')
+    recording.selectedRevisionId = revision.id
+    recording.selectedRunId = undefined
+    writeIndex(context, history)
+    return { ok: true, revisionId: revision.id }
+  }, writeOptions)
+  handle(RPC_CHANNELS.voice.HISTORY_AUDIO, async (context, payload: unknown) => {
+    const body = bodyOf(payload)
+    const { recording } = record(context, body.id)
+    const fence = voiceRequestFence(server, authority, context, 'read')
+    const root = directory(context)
+    secureNativeVoiceDirectory(root, context)
+    const chunk = readVoiceAudioChunk(root, recording, body)
+    fence()
+    return chunk
   }, readOptions)
   handle(RPC_CHANNELS.voice.RETRANSCRIBE, async (context, payload: unknown) => {
     const body = bodyOf(payload)
