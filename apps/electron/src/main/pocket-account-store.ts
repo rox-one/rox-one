@@ -17,14 +17,22 @@ export function createPocketAccountStore(options: { directory: string; safeStora
   }
   const read = (id: string): any => {
     ready(); let fd: number | undefined
+    let stage: 'open' | 'inspect' | 'read' | 'decrypt' | 'parse' = 'open'
     try {
       fd = openSync(join(options.directory, `${id}.enc`), constants.O_RDONLY | constants.O_NOFOLLOW)
+      stage = 'inspect'
       const info = fstatSync(fd)
       if (!info.isFile() || info.size > 256_000) throw new Error('invalid secure store')
-      return JSON.parse(storage.decryptString(readFileSync(fd)))
+      stage = 'read'
+      const sealed = readFileSync(fd)
+      stage = 'decrypt'
+      const plaintext = storage.decryptString(sealed)
+      stage = 'parse'
+      return JSON.parse(plaintext)
     } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') return null
-      throw new Error('ROX_SECURE_STORE_READ_FAILED')
+      if (stage === 'open' && error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') return null
+      // Bounded metadata identifies the failure without leaking the OS exception or ciphertext.
+      throw Object.assign(new Error('ROX_SECURE_STORE_READ_FAILED'), { code: `secure_store_${stage}_failed` })
     } finally { if (fd !== undefined) closeSync(fd) }
   }
   const write = (id: string, value: unknown) => {

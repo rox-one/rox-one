@@ -15,6 +15,7 @@ mkdirSync(profile, { recursive: true, mode: 0o700 })
 app.setPath('userData', profile)
 const caller = { issuer: 'rox:native-vault-probe', subject: 'isolated-fixture' }
 const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
+const encryptedFiles = (path: string) => Object.fromEntries(readdirSync(path).sort().map(file => [file, createHash('sha256').update(readFileSync(join(path, file))).digest('hex')]))
 
 let stage: VaultStage = 'initialize'
 let encryptionAvailable = false
@@ -49,10 +50,12 @@ app.whenReady().then(async () => {
       if (bytes.includes(record.accessToken) || bytes.includes(record.refreshToken)) throw new Error('plaintext_fixture_in_sealed_store')
     }
     stage = 'hash_write'
-    writeFileSync(proofPath, JSON.stringify({ record: digest(record), logout: digest(logout), binding: digest(binding) }), { mode: 0o600 })
+    writeFileSync(proofPath, JSON.stringify({ record: digest(record), logout: digest(logout), binding: digest(binding), ciphertext: digest(encryptedFiles(storePath)) }), { mode: 0o600 })
   } else {
     stage = 'expected_read'
     const expected = JSON.parse(readFileSync(proofPath, 'utf8'))
+    stage = 'ciphertext_readback'
+    if (digest(encryptedFiles(storePath)) !== expected.ciphertext) throw new Error('ciphertext_fixture_readback_failed')
     stage = 'account_read'
     if (digest(await store.read(caller)) !== expected.record) throw new Error('native_store_restart_readback_failed')
     stage = 'logout_read'

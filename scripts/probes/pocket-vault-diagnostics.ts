@@ -1,9 +1,11 @@
 import { constants, openSync, closeSync, fsyncSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 
-export const VAULT_STAGES = ['initialize', 'bundle', 'encryption_available', 'fsync_fixture', 'account_write', 'logout_write', 'binding_write', 'plaintext_scan', 'hash_write', 'expected_read', 'account_read', 'logout_read', 'binding_read', 'account_clear', 'logout_clear', 'clear_readback', 'complete'] as const
+export const VAULT_STAGES = ['initialize', 'bundle', 'encryption_available', 'fsync_fixture', 'account_write', 'logout_write', 'binding_write', 'plaintext_scan', 'hash_write', 'expected_read', 'ciphertext_readback', 'account_read', 'logout_read', 'binding_read', 'account_clear', 'logout_clear', 'clear_readback', 'complete'] as const
 export type VaultStage = typeof VAULT_STAGES[number]
 const knownCodes = new Set(['EACCES', 'EPERM', 'EBADF', 'EINVAL', 'EIO', 'ENOSYS', 'ENOENT', 'EEXIST', 'ENOSPC', 'EROFS', 'ROX_OS_SECURE_STORAGE_UNAVAILABLE', 'ROX_SECURE_STORE_READ_FAILED', 'ROX_SECURE_STORE_WRITE_FAILED', 'plaintext_fixture_in_sealed_store', 'native_store_restart_readback_failed', 'native_store_clear_readback_failed', 'native_fsync_writable_failed', 'native_probe_bundle_failed', 'native_probe_receipt_missing', 'native_process_failed', 'unknown'])
+for (const stage of ['open', 'inspect', 'read', 'decrypt', 'parse']) knownCodes.add(`secure_store_${stage}_failed`)
+knownCodes.add('ciphertext_fixture_readback_failed')
 export function safeVaultErrorCode(error: unknown): string {
   if (error && typeof error === 'object') {
     const value = error as { code?: unknown; message?: unknown }
