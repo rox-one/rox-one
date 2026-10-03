@@ -147,7 +147,7 @@ function loadPrefs(workspaceId: string | null): FeedPagePrefs {
   }
 }
 
-const INPUT = 'h-7 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
+const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
 export default function FeedPage({ selectedId }: { selectedId?: string | null }) {
   const { t, i18n } = useTranslation()
@@ -427,7 +427,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     const src = item.sourceId ? sourceById.get(item.sourceId) : undefined
     return src
       ? <SourceIcon source={src} size={size} />
-      : <span aria-hidden className="grid shrink-0 place-items-center rounded-[6px] bg-foreground/[0.05] text-text-muted" style={{ width: size, height: size }}>{KIND_GLYPH[item.kind]}</span>
+      : <span aria-hidden className="grid shrink-0 place-items-center rounded-[var(--radius-control)] bg-foreground/[0.05] text-text-muted" style={{ width: size, height: size }}>{KIND_GLYPH[item.kind]}</span>
   }
 
   const starIcon = (on: boolean, cls = 'size-3') => <Star aria-hidden className={cn(cls, on && 'fill-current')} style={on ? { color: STAR } : undefined} />
@@ -448,7 +448,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
           data-color={item.color}
           onClick={() => select(item.id)}
           className={cn(
-            'relative mx-2 mb-2 flex cursor-default gap-3 rounded-[8px] py-3 pl-4 pr-3 outline-none',
+            'relative mx-2 mb-2 flex cursor-default gap-3 rounded-[var(--radius-card)] py-3 pl-4 pr-3 outline-none',
             isSel ? 'bg-foreground/[0.09] ring-2 ring-inset ring-accent' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
           )}
         >
@@ -483,7 +483,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
         data-color={item.color}
         onClick={() => select(item.id)}
         className={cn(
-          'relative mx-1 flex cursor-default items-start gap-2 rounded-[6px] py-2 pl-3 pr-2 outline-none',
+          'relative mx-1 flex cursor-default items-start gap-2 rounded-[var(--radius-card)] py-2 pl-3 pr-2 outline-none',
           isSel ? 'bg-foreground/[0.08] ring-1 ring-inset ring-accent' : 'hover:bg-foreground/[0.04]',
         )}
       >
@@ -540,7 +540,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
               <CheckCheck aria-hidden className="size-3.5" />
             </Button>
           ) : null}
-          <div role="group" aria-label={t('feed.density.label')} className="flex items-center rounded-[6px] bg-foreground/[0.05]">
+          <div role="group" aria-label={t('feed.density.label')} className="flex items-center rounded-[var(--radius-control)] bg-foreground/[0.05]">
             {(['list', 'cards'] as const).map((d) => (
               <button
                 key={d}
@@ -550,7 +550,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
                 title={t(`feed.density.${d}`)}
                 data-testid={`feed-density-${d}`}
                 onClick={() => setPrefs((p) => ({ ...p, density: d }))}
-                className={cn('grid h-7 w-7 place-items-center rounded-[6px] outline-none', prefs.density === d ? 'bg-accent/15 text-foreground' : 'text-text-muted hover:text-foreground')}
+                className={cn('grid h-7 w-7 place-items-center rounded-[var(--radius-control)] outline-none', prefs.density === d ? 'bg-accent/15 text-foreground' : 'text-text-muted hover:text-foreground')}
               >
                 {d === 'list' ? <ListIcon aria-hidden className="size-3.5" /> : <LayoutGrid aria-hidden className="size-3.5" />}
               </button>
@@ -620,7 +620,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
           {filtersActive ? <button type="button" onClick={resetFilters} className="ml-auto text-[11px] text-text-muted underline-offset-2 outline-none hover:text-foreground hover:underline">{t('feed.empty.resetFilters')}</button> : null}
         </div>
       </div>
-      {loadError ? <div role="alert" className="mx-3 mb-1 rounded-[6px] bg-destructive/10 px-2 py-1 text-[12px] text-destructive">{t('feed.loadError')}</div> : null}
+      {loadError ? <div role="alert" className="mx-3 mb-1 rounded-[var(--radius-card)] bg-destructive/10 px-2 py-1 text-[12px] text-destructive">{t('feed.loadError')}</div> : null}
       <div role="listbox" aria-label={t(`feed.tab.${tab}`)} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="feed-list" data-density={prefs.density}>
         {visible.length === 0 ? emptyForTab() : groups.map((g) => (
           <div key={g.key}>
@@ -634,7 +634,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
                   aria-label={t('feed.sort.dayToggle', { order: t(`feed.sort.${g.order === 'newest' ? 'oldest' : 'newest'}`) })}
                   title={t('feed.sort.dayToggle', { order: t(`feed.sort.${g.order === 'newest' ? 'oldest' : 'newest'}`) })}
                   onClick={() => setPerDay((m) => ({ ...m, [g.key]: g.order === 'newest' ? 'oldest' : 'newest' }))}
-                  className="ml-auto inline-flex h-5 items-center gap-1 rounded-[4px] px-1 normal-case tracking-normal outline-none hover:bg-foreground/[0.06] hover:text-foreground"
+                  className="ml-auto inline-flex h-5 items-center gap-1 rounded-[var(--radius-control)] px-1 normal-case tracking-normal outline-none hover:bg-foreground/[0.06] hover:text-foreground"
                 >
                   {g.order === 'newest' ? <ArrowDownWideNarrow aria-hidden className="size-3" /> : <ArrowUpNarrowWide aria-hidden className="size-3" />}
                   {t(`feed.sort.short.${g.order}`)}
@@ -734,7 +734,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
       ) : selected.url ? (
         <p className="max-w-[720px] pt-4 text-[12px] text-text-muted">{t('feed.reader.noSummary')}</p>
       ) : null}
-      {selected.error ? <pre className="mt-2 max-w-[720px] overflow-x-auto whitespace-pre-wrap rounded-[6px] bg-destructive/10 p-2 font-mono text-[12px] text-destructive">{selected.error}</pre> : null}
+      {selected.error ? <pre className="mt-2 max-w-[720px] overflow-x-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-destructive/10 p-2 font-mono text-[12px] text-destructive">{selected.error}</pre> : null}
       {selected.url ? <p className="max-w-[720px] break-all pt-3 text-[11px] text-text-muted">{selected.url}</p> : null}
 
       {selected.kind === 'automation-run' ? (

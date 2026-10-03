@@ -72,7 +72,7 @@ export function AddWorkspaceStep_OpenFolder({
         {/* Browse folder row */}
         <div
           className={cn(
-            "flex items-center justify-between gap-4 p-4 rounded-xl",
+            "flex items-center justify-between gap-4 p-4 rounded-[var(--radius-control)]",
             "border border-border/50 bg-background"
           )}
         >

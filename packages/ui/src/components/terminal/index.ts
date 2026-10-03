@@ -10,5 +10,6 @@ export {
   parseGrepOutput,
   ANSI_COLORS,
   type AnsiSpan,
+  type AnsiParseOptions,
   type GrepLine,
 } from './ansi-parser'

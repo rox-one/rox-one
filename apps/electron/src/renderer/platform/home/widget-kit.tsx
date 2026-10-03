@@ -27,6 +27,7 @@ export function WidgetFrame({
   children,
   testId,
   action,
+  fitContent = false,
 }: {
   title: string
   /** Small header action (e.g. «Запись»), hidden in edit mode. */
@@ -37,11 +38,13 @@ export function WidgetFrame({
   edit?: WidgetEditProps | null
   children: React.ReactNode
   testId: string
+  /** Fixed-content sections should not reserve empty list rows. */
+  fitContent?: boolean
 }) {
   const { t } = useTranslation()
   return (
     <section
-      className="rox-home-widget flex h-full min-h-0 min-w-0 flex-col rounded-[10px] px-3 pb-3 pt-2"
+      className={cn('rox-home-widget flex min-h-0 min-w-0 flex-col rounded-[var(--radius-card)] px-3 pb-3 pt-2', fitContent ? 'h-auto' : 'h-full')}
       data-home-widget={testId}
       aria-label={title}
     >
@@ -50,7 +53,7 @@ export function WidgetFrame({
           <button
             type="button"
             {...edit.dragHandle}
-            className="-ml-1 flex h-6 w-5 shrink-0 cursor-grab items-center justify-center rounded-[4px] text-muted-foreground hover:bg-foreground/10 hover:text-foreground active:cursor-grabbing"
+            className="-ml-1 flex h-6 w-5 shrink-0 cursor-grab items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/10 hover:text-foreground active:cursor-grabbing"
             aria-label={t('workbench.home.edit.drag', { name: title })}
             title={t('workbench.home.edit.dragHint')}
             onKeyDown={(event) => {
@@ -65,7 +68,7 @@ export function WidgetFrame({
           <button
             type="button"
             onClick={onOpen}
-            className="group flex min-w-0 items-center gap-0.5 rounded-[4px] text-[12px] font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+            className="group flex min-w-0 items-center gap-0.5 rounded-[var(--radius-control)] text-[12px] font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground"
           >
             <span className="truncate">{title}</span>
             <ChevronRight className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
@@ -78,7 +81,7 @@ export function WidgetFrame({
         {!edit && action ? <span className="ml-1 flex shrink-0 items-center">{action}</span> : null}
         {edit ? (
           <div className="flex shrink-0 items-center gap-1">
-            <div className="flex items-center rounded-[6px] bg-foreground/[0.06] p-0.5" role="radiogroup" aria-label={t('workbench.home.edit.size')}>
+            <div className="flex items-center rounded-[var(--radius-control)] bg-foreground/[0.06] p-0.5" role="radiogroup" aria-label={t('workbench.home.edit.size')}>
               {HOME_WIDGET_SIZES.map((size) => (
                 <button
                   key={size}
@@ -88,7 +91,7 @@ export function WidgetFrame({
                   title={t(`workbench.home.edit.size${size}`)}
                   onClick={() => edit.onResize(size)}
                   className={cn(
-                    'h-5 min-w-5 rounded-[4px] px-1 text-[11px] font-bold',
+                    'h-5 min-w-5 rounded-[var(--radius-control)] px-1 text-[11px] font-bold',
                     edit.size === size ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
@@ -99,7 +102,7 @@ export function WidgetFrame({
             <button
               type="button"
               onClick={edit.onRemove}
-              className="flex h-6 w-6 items-center justify-center rounded-[4px] text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+              className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
               aria-label={t('workbench.home.edit.remove', { name: title })}
               title={t('workbench.home.edit.remove', { name: title })}
             >
@@ -142,7 +145,7 @@ export function WidgetRow({
       {trailing != null ? <span className="shrink-0 text-[12px] tabular-nums text-muted-foreground">{trailing}</span> : null}
     </>
   )
-  const cls = 'rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[6px] px-1.5 py-1 text-left'
+  const cls = 'rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-1.5 py-1 text-left'
   return (
     <li className={cn('min-w-0', aside != null && 'flex items-center gap-1')} data-home-row={testId}>
       {onClick ? (
@@ -166,7 +169,7 @@ export function WidgetEmpty({ text, hint, action }: { text: string; hint?: strin
       <p className="text-foreground">{text}</p>
       {hint ? <p className="text-[12px] leading-4 text-muted-foreground">{hint}</p> : null}
       {action ? (
-        <button type="button" onClick={action.onClick} className="mt-1 rounded-[6px] bg-foreground/[0.08] px-2 py-1 text-[12px] font-bold text-foreground hover:bg-foreground/[0.14]">
+        <button type="button" onClick={action.onClick} className="mt-1 rounded-[var(--radius-control)] bg-foreground/[0.08] px-2 py-1 text-[12px] font-bold text-foreground hover:bg-foreground/[0.14]">
           {action.label}
         </button>
       ) : null}
@@ -185,7 +188,7 @@ export function WidgetStat({ label, value, sub, tone, onClick }: { label: string
     </>
   )
   return onClick ? (
-    <button type="button" onClick={onClick} className="rox-home-row min-w-0 rounded-[6px] px-1.5 py-1 text-left">{inner}</button>
+    <button type="button" onClick={onClick} className="rox-home-row min-w-0 rounded-[var(--radius-control)] px-1.5 py-1 text-left">{inner}</button>
   ) : (
     <div className="min-w-0 px-1.5 py-1">{inner}</div>
   )
@@ -236,7 +239,7 @@ export function WidgetButton({ children, onClick, tone, disabled, title }: { chi
       disabled={disabled}
       title={title}
       className={cn(
-        'flex h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded-[6px] px-2 text-[12px] font-bold disabled:opacity-60',
+        'flex h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-control)] px-2 text-[12px] font-bold disabled:opacity-60',
         tone === 'danger' ? 'bg-destructive/15 text-destructive hover:bg-destructive/25' : 'bg-foreground/[0.08] text-foreground hover:bg-foreground/[0.14]',
       )}
     >

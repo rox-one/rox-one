@@ -65,7 +65,7 @@ export function CompactSourceSelector({
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder={t('common.search')}
-                className="w-full h-11 pl-10 pr-3 rounded-[10px] bg-foreground/5 text-base outline-none focus:bg-foreground/[0.07] transition-colors"
+                className="w-full h-11 pl-10 pr-3 rounded-[var(--radius-card)] bg-foreground/5 text-base outline-none focus:bg-foreground/[0.07] transition-colors"
               />
             </div>
           </div>
@@ -89,7 +89,7 @@ export function CompactSourceSelector({
                   type="button"
                   onClick={() => onToggleSlug(source.config.slug)}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-3 rounded-[10px] text-left transition-colors',
+                    'flex items-center gap-3 px-3 py-3 rounded-[var(--radius-control)] text-left transition-colors',
                     isSelected ? 'bg-foreground/5' : 'hover:bg-foreground/5',
                   )}
                 >

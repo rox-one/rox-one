@@ -1,23 +1,11 @@
 /**
  * Gap between adjacent panels (sidebar ↔ navigator ↔ content ↔ right sidebar).
- * Rounded-panel shell: panes are borderless rounded boxes (radius
- * `--rox-radius-panel`, 10px) separated by this gap instead of hairlines, so
- * the rounding reads against the shell background.
+ * Panes meet at a single hairline; the resize hit area overlaps the seam.
  */
-export const PANEL_GAP = 4
+export const PANEL_GAP = 0
 
-/** Padding from window edges to outermost panels (4px grid). */
-export const PANEL_EDGE_INSET = 4
-
-/**
- * Corner radius tokens for floating surfaces (conation cards etc.). Shell panes
- * no longer use them: the one-surface shell has no per-panel rounded boxes.
- */
-/** Corner radius for panel edges touching the window boundary */
-export const RADIUS_EDGE = 8
-
-/** Corner radius for interior corners between panels */
-export const RADIUS_INNER = 8
+/** Large panes meet the native window boundary without an HTML gutter. */
+export const PANEL_EDGE_INSET = 0
 
 /** Minimum width for any content panel */
 export const PANEL_MIN_WIDTH = 440
@@ -33,7 +21,7 @@ export const CENTER_MIN_WIDTH = 420
 export const PANEL_STACK_VERTICAL_OVERFLOW = 0
 
 /** Space between the TopBar and the desktop panel stack. */
-export const PANEL_STACK_TOP_INSET = 4
+export const PANEL_STACK_TOP_INSET = 0
 
 /**
  * Space under the desktop panel stack. The outer shell already pads the
@@ -52,11 +40,18 @@ export const PANEL_SASH_HIT_WIDTH_COARSE = 24
 export const PANEL_SASH_LINE_WIDTH = 2
 
 /**
- * When the sash is inserted between two flex items, flex gap would apply twice
- * (item↔sash and sash↔item). Pull it back by half the gap on both sides so
- * the visible distance remains exactly PANEL_GAP.
+ * An inline sash keeps its full accessible hit width while consuming no
+ * layout space: each half overlaps its adjacent pane. Use the actual pointer
+ * hit width, including the coarse-pointer variant.
  */
-export const PANEL_SASH_FLEX_MARGIN = -(PANEL_GAP / 2)
+export function inlineSashGeometry(hitWidth: number): {
+  width: number
+  flexShrink: number
+  marginLeft: number
+  marginRight: number
+} {
+  return { width: hitWidth, flexShrink: 0, marginLeft: -hitWidth / 2, marginRight: -hitWidth / 2 }
+}
 
 /** Half-width helper for centering sash containers on seam coordinates. */
 export const PANEL_SASH_HALF_HIT_WIDTH = PANEL_SASH_HIT_WIDTH / 2

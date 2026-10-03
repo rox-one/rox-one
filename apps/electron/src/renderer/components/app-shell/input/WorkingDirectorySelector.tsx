@@ -125,9 +125,9 @@ export function WorkingDirectorySelector({
   }, [popoverOpen, showFilter])
 
   // Styles matching todo-filter-menu.tsx for consistency
-  const MENU_CONTAINER_STYLE = 'min-w-[200px] max-w-[400px] overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small p-0'
+  const MENU_CONTAINER_STYLE = 'min-w-[200px] max-w-[400px] overflow-hidden rounded-[var(--radius-overlay)] bg-background text-foreground shadow-modal-small p-0'
   const MENU_LIST_STYLE = 'max-h-[200px] overflow-y-auto p-1 [&_[cmdk-list-sizer]]:space-y-px'
-  const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-2 rounded-[6px] px-3 py-1.5 text-[13px] outline-none'
+  const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-2 rounded-[var(--radius-control)] px-3 py-1.5 text-[13px] outline-none'
 
   return (
     <>
@@ -191,7 +191,7 @@ export function WorkingDirectorySelector({
                       type="button"
                       onClick={(e) => handleRemoveRecent(e, path)}
                       data-touch-reveal="true"
-                      className="shrink-0 h-3 w-3 rounded-[4px] flex items-center justify-center opacity-0 group-hover/item:opacity-100 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all"
+                      className="shrink-0 h-3 w-3 rounded-[var(--radius-control)] flex items-center justify-center opacity-0 group-hover/item:opacity-100 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all"
                     >
                       <X className="h-3 w-3" />
                     </button>

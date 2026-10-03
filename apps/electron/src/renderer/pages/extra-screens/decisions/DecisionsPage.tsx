@@ -289,7 +289,7 @@ function CandidateView({ candidate, onAccept, onReject }: { candidate: DecisionC
           ))}
         </Card>
       )}
-      {candidate.quote && <blockquote className="mt-3 rounded-[6px] bg-foreground/[0.04] px-3 py-2 italic text-foreground/80">«{candidate.quote}»</blockquote>}
+      {candidate.quote && <blockquote className="mt-3 rounded-[var(--radius-card)] bg-foreground/[0.04] px-3 py-2 italic text-foreground/80">«{candidate.quote}»</blockquote>}
       <div className="mt-4 flex gap-1.5">
         <ScreenButton variant="primary" onClick={onAccept}>{t('extraScreens.decisions.accept')}</ScreenButton>
         <ScreenButton onClick={onReject}>{t('extraScreens.decisions.discard')}</ScreenButton>
@@ -473,7 +473,7 @@ function ExtractPanel({ workspaceId, language, data }: { workspaceId: string | n
       {recentSessions.map((s) => {
         const source: DecisionSource = { kind: 'session', id: s.id, label: sessionTitle(s) }
         return (
-          <div key={s.id} className="flex items-center gap-2 rounded-[6px] px-2 py-1 hover:bg-foreground/[0.04]">
+          <div key={s.id} className="flex items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
             <span className="min-w-0 flex-1 truncate">{source.label}</span>
             <span className="text-[12px] text-muted-foreground">{when(s.lastMessageAt)}</span>
             <ScreenButton variant="ghost" disabled={busy != null} onClick={() => { void run(source) }}>
@@ -488,7 +488,7 @@ function ExtractPanel({ workspaceId, language, data }: { workspaceId: string | n
       {recentMeetings.map((m) => {
         const source: DecisionSource = { kind: 'meeting', id: m.id, label: m.title }
         return (
-          <div key={m.id} className="flex items-center gap-2 rounded-[6px] px-2 py-1 hover:bg-foreground/[0.04]">
+          <div key={m.id} className="flex items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
             <span className="min-w-0 flex-1 truncate">{m.title}</span>
             <span className="text-[12px] text-muted-foreground">{when(m.at)}</span>
             <ScreenButton variant="ghost" disabled={busy != null} onClick={() => { void run(source) }}>

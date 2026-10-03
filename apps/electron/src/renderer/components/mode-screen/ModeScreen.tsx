@@ -189,7 +189,7 @@ export function ListRow({
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={cn(
-        'mx-1.5 flex cursor-default items-start gap-2 rounded-[6px] border-l-2 border-transparent px-2 py-1.5 outline-none',
+        'mx-1.5 flex cursor-default items-start gap-2 rounded-[var(--radius-card)] border-l-2 border-transparent px-2 py-1.5 outline-none',
         selected ? 'bg-foreground/[0.08]' : 'hover:bg-foreground/[0.04]',
         (selected || unread) && 'border-l-accent',
       )}
@@ -208,7 +208,7 @@ export function Badge({ tone = 'muted', children }: { tone?: Tone; children: Rea
     info: 'bg-info/15 text-info',
     muted: 'bg-foreground/[0.07] text-text-secondary',
   }
-  return <span className={cn('inline-flex h-[18px] shrink-0 items-center rounded-[4px] px-1.5 text-[11px] font-medium', cls[tone])}>{children}</span>
+  return <span className={cn('inline-flex h-[18px] shrink-0 items-center rounded-[var(--radius-control)] px-1.5 text-[11px] font-medium', cls[tone])}>{children}</span>
 }
 
 export function Button({
@@ -221,7 +221,7 @@ export function Button({
       type="button"
       {...props}
       className={cn(
-        'inline-flex h-7 shrink-0 items-center gap-1.5 rounded-[6px] px-2.5 text-[12px] font-medium outline-none disabled:opacity-50',
+        'inline-flex h-7 shrink-0 items-center gap-1.5 rounded-[var(--radius-control)] px-2.5 text-[12px] font-medium outline-none disabled:opacity-50',
         variant === 'primary' && 'bg-accent text-[var(--accent-foreground,white)] hover:brightness-110',
         variant === 'secondary' && 'bg-foreground/[0.07] text-foreground hover:bg-foreground/[0.11]',
         variant === 'danger' && 'bg-destructive/12 text-destructive hover:bg-destructive/20',
@@ -263,7 +263,7 @@ export function Tabs<T extends string>({
           }}
           onClick={() => onChange(tab.id)}
           className={cn(
-            'inline-flex h-7 items-center gap-1 rounded-[6px] px-2.5 text-[12px] outline-none',
+            'inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] px-2.5 text-[12px] outline-none',
             value === tab.id ? 'bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05]',
           )}
         >
@@ -284,7 +284,7 @@ export function Chip({ active, onClick, children }: { active?: boolean; onClick?
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'inline-flex h-6 items-center rounded-[6px] px-2 text-[12px] outline-none',
+        'inline-flex h-6 items-center rounded-[var(--radius-control)] px-2 text-[12px] outline-none',
         active ? 'bg-accent/15 font-semibold text-foreground' : 'bg-foreground/[0.05] text-text-secondary hover:bg-foreground/[0.09]',
       )}
     >
@@ -298,7 +298,7 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function Card({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn('rounded-[8px] bg-foreground/[0.04] p-3', className)}>{children}</div>
+  return <div className={cn('rounded-[var(--radius-card)] bg-foreground/[0.04] p-3', className)}>{children}</div>
 }
 
 export function EmptyState({

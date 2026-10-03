@@ -87,14 +87,14 @@ function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
         }
       }}
       className={cn(
-        'group chrome-label titlebar-no-drag flex h-6 max-w-[200px] min-w-0 shrink cursor-default items-center gap-1 rounded-[6px] px-2 transition-colors',
+        'group chrome-label titlebar-no-drag flex h-6 max-w-[200px] min-w-0 shrink cursor-default items-center gap-1 rounded-[var(--radius-control)] px-2 transition-colors',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         tab.focused
-          ? 'bg-foreground/10 text-foreground'
-          : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+          ? 'bg-[var(--surface-tab-active,var(--shell-selected,var(--element-selected,var(--foreground-5))))] text-foreground'
+          : 'bg-[var(--surface-tab-inactive,transparent)] text-text-secondary hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] hover:text-foreground',
       )}
     >
-      <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
+      <Icon className="h-3.5 w-3.5 shrink-0" />
       <span className="min-w-0 flex-1 truncate">{tab.title}</span>
       <button
         type="button"
@@ -104,8 +104,8 @@ function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
           closePanel(tab.panelId)
         }}
         className={cn(
-          'flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] transition-all hover:bg-foreground/10',
-          tab.focused ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover:opacity-60',
+          'flex h-4 w-4 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-text-secondary transition-all hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]',
+          tab.focused ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
         )}
       >
         <X className="h-3 w-3" />
@@ -243,9 +243,9 @@ export function SurfaceTabs() {
     <div
       role="tablist"
       aria-label={t('surfaceTabs.label')}
-      className={topBarSlot
+      className={cn('bg-[var(--surface-tab-bar,transparent)]', topBarSlot
         ? 'flex min-w-0 items-center gap-0.5 overflow-x-auto scrollbar-hide'
-        : 'flex shrink-0 items-center gap-1'}
+        : 'flex shrink-0 items-center gap-1')}
       data-surface-tabs={topBarSlot ? 'topbar' : 'strip'}
     >
       {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)}
@@ -257,11 +257,11 @@ export function SurfaceTabs() {
 
   return (
     <div
-      className="chrome-strip flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-foreground/5 px-2"
+      className="chrome-strip flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-border-subtle px-2"
       style={{ height: TAB_STRIP_HEIGHT }}
     >
       {panelTabs.length === 0 ? (
-        <span className="chrome-label px-1 text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
+        <span className="chrome-label px-1 text-text-secondary">{t('surfaceTabs.empty')}</span>
       ) : (
         tabList
       )}

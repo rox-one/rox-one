@@ -29,6 +29,7 @@ import type { RpcServer, HandlerFn, RequestContext, RpcHandlerOptions, Workspace
 import { serializeEnvelope, deserializeEnvelope } from './codec'
 import { createLogger } from '@rox/shared/utils'
 import { CLIENT_OPEN_FILE_DIALOG } from './capabilities'
+import { WEBUI_APPEARANCE_CHANNELS, validWebAppearanceArguments } from '../webui/appearance-rpc'
 import {
   createRpcCallCounterFromEnv,
   type RpcCallCounter,
@@ -62,6 +63,8 @@ interface ClientConnection {
   subscriptionFence: string | null
   /** Resolver-owned opaque result; no Actor or identity enters through handshake fields. */
   workspaceSession: WorkspaceAuthoritySession | null
+  /** Set only after validating the HTTP upgrade session cookie. */
+  webUiAuthenticated: boolean
   capabilities: Set<string>
   missedPongs: number
   alive: boolean
@@ -134,6 +137,8 @@ export interface WsRpcServerOptions {
    * If provided, a valid session cookie is accepted as an alternative to a bearer token.
    */
   validateSessionCookie?: (cookieHeader: string | null) => Promise<boolean>
+  /** Standalone web UI opt-in: current default workspace, never a client claim. */
+  webUiAppearanceWorkspaceId?: () => string | null
   /** Server identity stamp on outgoing events. Default: 'local' */
   serverId?: string
   /** TLS configuration. When provided, the server listens on wss:// instead of ws://. */
@@ -214,6 +219,7 @@ export class WsRpcServer implements RpcServer {
   private readonly onClientDisconnected: WsRpcServerOptions['onClientDisconnected']
   private readonly resolveLocalClientBinding: WsRpcServerOptions['resolveLocalClientBinding']
   private readonly httpHandler: WsRpcServerOptions['httpHandler']
+  private readonly webUiAppearanceWorkspaceId: WsRpcServerOptions['webUiAppearanceWorkspaceId']
   private readonly rpcCallCounter: RpcCallCounter | null
   private readonly nativeAuthority: NativeAuthority | null
   private readonly nativeEventChannels: ReadonlySet<string>
@@ -243,6 +249,7 @@ export class WsRpcServer implements RpcServer {
     this.onClientDisconnected = opts?.onClientDisconnected
     this.resolveLocalClientBinding = opts?.resolveLocalClientBinding
     this.httpHandler = opts?.httpHandler
+    this.webUiAppearanceWorkspaceId = opts?.webUiAppearanceWorkspaceId
     this.nativeAuthority = opts?.nativeAuthority ?? null
     this.nativeEventChannels = new Set(opts?.nativeEventChannels ?? [])
     this.disposeAuthorityListener = this.nativeAuthority?.onInvalidation(event => {
@@ -704,6 +711,7 @@ export class WsRpcServer implements RpcServer {
         const nativeToken = typeof envelope.token === 'string'
           && (envelope.token.startsWith('na_') || envelope.token.startsWith('ne_'))
         let workspaceSession: WorkspaceAuthoritySession | null = null
+        let webUiAuthenticated = false
         if (this.workspaceAuthority) {
           sharedHandshakeInProgress = true
           const fields = new Set(['id', 'type', 'protocolVersion', 'token', 'workspaceId', 'clientCapabilities', 'reconnectClientId', 'lastSeq'])
@@ -758,6 +766,7 @@ export class WsRpcServer implements RpcServer {
           }
           if (!authenticated && this.validateSessionCookie && upgradeRequestCookie) {
             authenticated = await this.validateSessionCookie(upgradeRequestCookie)
+            webUiAuthenticated = authenticated && !!this.webUiAppearanceWorkspaceId
           }
           if (!authenticated) {
             this.sendError(ws, envelope.id, 'AUTH_FAILED', 'Authentication required')
@@ -769,6 +778,11 @@ export class WsRpcServer implements RpcServer {
         const localBindingCandidate = this.bindingCandidate(envelope)
         const localBinding = this.workspaceAuthority ? null : this.resolveBinding(localBindingCandidate)
         const workspaceId = localBinding?.workspaceId ?? envelope.workspaceId ?? null
+        if (webUiAuthenticated && (!workspaceId || workspaceId !== this.webUiAppearanceWorkspaceId?.())) {
+          this.sendError(ws, envelope.id, 'AUTH_FAILED', 'Web UI workspace binding changed')
+          ws.close(4005, 'Workspace access denied')
+          return
+        }
         const webContentsId = this.workspaceAuthority ? null : localBinding?.webContentsId ?? envelope.webContentsId ?? null
         if (!workspaceSession && (principal
           ? !workspaceId || !this.nativeAuthority?.authorize(principal, workspaceId, 'read')
@@ -786,6 +800,7 @@ export class WsRpcServer implements RpcServer {
 
             if (this.workspaceAuthority && workspaceSession && prevClient.workspaceSession
               && prevClient.workspaceId === workspaceId
+              && prevClient.webUiAuthenticated === webUiAuthenticated
               && this.sameWorkspaceIdentity(prevClient.workspaceSession, workspaceSession)) {
               // Shared replay is never sourced from a transport buffer. Current authorized
               // domain.events handles durable replay; refresh is mandatory even for identical identity.
@@ -818,6 +833,7 @@ export class WsRpcServer implements RpcServer {
               this.workspaceAuthority === null
               && prevClient.workspaceSession === null
               && prevClient.workspaceId === workspaceId
+              && prevClient.webUiAuthenticated === webUiAuthenticated
               && prevClient.webContentsId === webContentsId
               && (
                 prevClient.principal === null && principal === null
@@ -844,6 +860,7 @@ export class WsRpcServer implements RpcServer {
 
               prevClient.ws = ws
               prevClient.principal = principal
+              prevClient.webUiAuthenticated = webUiAuthenticated
               prevClient.localBinding = localBinding
               prevClient.localBindingCandidate = localBindingCandidate
               if (principal) this.refreshSubscription(prevClient)
@@ -945,6 +962,7 @@ export class WsRpcServer implements RpcServer {
           principal,
           subscriptionFence: null,
           workspaceSession,
+          webUiAuthenticated,
           capabilities: new Set(principal || workspaceSession ? [] : envelope.clientCapabilities ?? []),
           missedPongs: 0,
           alive: true,
@@ -1077,6 +1095,14 @@ export class WsRpcServer implements RpcServer {
     }
     this.rpcCallCounter?.record(channel)
 
+    const webAppearance = client.webUiAuthenticated && !!client.workspaceId
+      && client.workspaceId === this.webUiAppearanceWorkspaceId?.()
+      && WEBUI_APPEARANCE_CHANNELS.has(channel)
+    if (webAppearance && !validWebAppearanceArguments(channel, args ?? [], client.workspaceId!)) {
+      this.sendResponseError(client.ws, id, channel, 'INVALID_PAYLOAD', 'Invalid appearance request')
+      return
+    }
+
     // LOCAL_ONLY is a desktop-process gate, not a second handshake
     // capability. Electron-main proof (`localBinding`) already means
     // this client is the trusted desktop. `openFileDialog` remains a
@@ -1086,6 +1112,7 @@ export class WsRpcServer implements RpcServer {
       && this.shouldEnforceLocalOnly()
       && client.localBinding === null
       && !client.capabilities.has(CLIENT_OPEN_FILE_DIALOG)
+      && !webAppearance
     ) {
       this.sendResponseError(
         client.ws,
@@ -1102,6 +1129,7 @@ export class WsRpcServer implements RpcServer {
       workspaceId: client.workspaceId,
       webContentsId: client.webContentsId,
       principal: client.principal ?? undefined,
+      webUiAuthenticated: webAppearance || undefined,
     }
     const requestFence = this.requestPermissionFence(client, registration)
     if (client.principal && !requestFence) {
@@ -1115,6 +1143,7 @@ export class WsRpcServer implements RpcServer {
       ctx = {
         clientId: client.id, workspaceId: client.workspaceId, webContentsId: client.webContentsId,
         principal: client.principal ?? undefined,
+        webUiAuthenticated: webAppearance || undefined,
         ...(current ? { actor: current.actor } : {}),
       }
       const result = await Promise.race([
@@ -1124,6 +1153,10 @@ export class WsRpcServer implements RpcServer {
             WsRpcServer.HANDLER_TIMEOUT_MS),
         ),
       ])
+      if (webAppearance && client.workspaceId !== this.webUiAppearanceWorkspaceId?.()) {
+        this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', 'Web UI workspace binding changed')
+        return
+      }
       if (!this.canReturnResponse(client, registration, ctx, requestFence)) {
         this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', 'Workspace permission changed')
         return

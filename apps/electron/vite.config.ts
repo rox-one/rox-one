@@ -110,7 +110,10 @@ export default defineConfig({
         ],
       },
     }),
-    tailwindcss(),
+    // Tailwind's Lightning CSS pass collapses the standard + WebKit
+    // backdrop-filter pair to WebKit alone. Chromium ignores that property.
+    // Let Vite's CSS minifier preserve both declarations for shipped clients.
+    tailwindcss({ optimize: false }),
     stubNpmLocksPlugin(),
     worktreeCraftPackagePlugin(),
     nodeBuiltinStubPlugin(),
@@ -130,7 +133,7 @@ export default defineConfig({
   base: './',
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
-    emptyDirBeforeWrite: true,
+    emptyOutDir: true,
     sourcemap: true,  // Source maps generated for debugging. Not uploaded to Sentry (see CLAUDE.md).
     rollupOptions: {
       input: {

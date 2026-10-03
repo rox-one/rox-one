@@ -46,13 +46,15 @@ describe('ThemeProvider wiring', () => {
     expect(source).toContain('shouldSetThemeOverride(effectiveColorTheme, isScenic)')
   })
 
-  it('paints opaque html/body/chrome when the overlay attribute is absent', () => {
+  it('keeps named palette canvases opaque unless native glass was acknowledged', () => {
     const css = readFileSync(
       join(import.meta.dir, '../../../../apps/electron/src/renderer/index.css'),
       'utf8',
     )
     expect(css).toContain('html[data-theme]:not([data-scenic]):not([data-theme-override])')
-    expect(css).toContain('html[data-theme]:not([data-scenic]):not([data-theme-override]) body')
-    expect(css).toContain('html[data-theme]:not([data-scenic]):not([data-theme-override]) .chrome-rail')
+    expect(css).toContain(':not([data-shell-material="vibrancy"]):not([data-shell-material="mica"]) body')
+    expect(css).toContain(':not([data-shell-material="vibrancy"]):not([data-shell-material="mica"]) #root')
+    expect(css).toContain('html [data-shell-role="content"]')
+    expect(css).toContain('--shell-content: rgb(from var(--canvas) r g b / 1)')
   })
 })

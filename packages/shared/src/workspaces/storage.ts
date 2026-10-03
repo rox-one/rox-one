@@ -29,6 +29,7 @@ import {
 } from '../sources/default-microservices.ts';
 import { ensureRoxLayout } from './rox-layout.ts';
 import { loadConfigDefaults } from '../config/storage.ts';
+import { isSafeThemeId } from '../config/theme-id.ts';
 import { generateSlug } from '../utils/slug.ts';
 import { parsePermissionMode, PERMISSION_MODE_ORDER } from '../agent/mode-types.ts';
 import { normalizeThinkingLevel } from '../agent/thinking-levels.ts';
@@ -508,16 +509,10 @@ export function getWorkspaceColorTheme(rootPath: string): string | undefined {
  */
 export function setWorkspaceColorTheme(rootPath: string, themeId: string | undefined): void {
   const config = loadWorkspaceConfig(rootPath);
-  if (!config) return;
+  if (!config) throw new Error('Workspace config is missing or unreadable');
 
   // Validate theme ID if provided (skip for undefined = inherit default)
-  // Only allow alphanumeric characters, hyphens, and underscores (max 64 chars)
-  if (themeId && themeId !== 'default') {
-    if (!/^[a-zA-Z0-9_-]{1,64}$/.test(themeId)) {
-      console.warn(`[workspace-storage] Invalid theme ID rejected: ${themeId}`);
-      return;
-    }
-  }
+  if (themeId !== undefined && !isSafeThemeId(themeId)) throw new Error('Invalid theme ID');
 
   // Initialize defaults if not present
   if (!config.defaults) {
@@ -531,6 +526,7 @@ export function setWorkspaceColorTheme(rootPath: string, themeId: string | undef
   }
 
   saveWorkspaceConfig(rootPath, config);
+  if (getWorkspaceColorTheme(rootPath) !== themeId) throw new Error('Workspace theme write was not persisted');
 }
 
 // ============================================================

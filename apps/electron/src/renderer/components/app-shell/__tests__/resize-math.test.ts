@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { equalSplit, solveSplit } from '../resize-math'
 import { createResizeController } from '../resize-controller'
-import { PANEL_SASH_HIT_WIDTH, PANEL_SASH_HIT_WIDTH_COARSE, PANEL_SASH_LINE_WIDTH } from '../panel-constants'
+import { inlineSashGeometry, PANEL_GAP, PANEL_EDGE_INSET, PANEL_SASH_HIT_WIDTH, PANEL_SASH_HIT_WIDTH_COARSE, PANEL_SASH_LINE_WIDTH, PANEL_STACK_TOP_INSET } from '../panel-constants'
 
 describe('solveSplit (ZS-05)', () => {
   it('clamps A=500 B=500 min=440 delta=200 to A=560 B=440', () => {
@@ -136,6 +136,21 @@ describe('resize controller (ZS-05)', () => {
 })
 
 describe('sash geometry (ZS-05)', () => {
+  it('joins shell panes without gutters', () => {
+    expect(PANEL_GAP).toBe(0)
+    expect(PANEL_EDGE_INSET).toBe(0)
+    expect(PANEL_STACK_TOP_INSET).toBe(0)
+  })
+
+  it.each([PANEL_SASH_HIT_WIDTH, PANEL_SASH_HIT_WIDTH_COARSE])('keeps a %ipx hit area centered on a zero-width inline seam', (hitWidth) => {
+    const geometry = inlineSashGeometry(hitWidth)
+    expect(geometry.width).toBe(hitWidth)
+    expect(geometry.flexShrink).toBe(0)
+    expect(geometry.width + geometry.marginLeft + geometry.marginRight).toBe(0)
+    expect(geometry.marginLeft).toBe(geometry.marginRight)
+    expect(geometry.marginLeft).toBe(-hitWidth / 2)
+  })
+
   it('uses a 12px hit area and 2px line, 24px on coarse pointers', () => {
     expect(PANEL_SASH_HIT_WIDTH).toBe(12)
     expect(PANEL_SASH_LINE_WIDTH).toBe(2)

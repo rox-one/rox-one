@@ -180,7 +180,7 @@ export function MobileAppMenu(props: AppMenuProps) {
         onClick={() => state.isOpen ? close() : dispatch({ type: 'open' })}
         aria-label={t('menu.craftMenu')}
         data-state={state.isOpen ? 'open' : 'closed'}
-        className="rounded-[8px]"
+        className="rounded-[var(--radius-card)]"
       >
         <RoxTileMark size={20} />
       </TopBarButton>

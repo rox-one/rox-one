@@ -19,6 +19,14 @@
  */
 export type CSSColor = string;
 
+/** Optional ANSI colors. Missing entries retain the terminal renderer's defaults. */
+export const TERMINAL_ANSI_COLOR_NAMES = [
+  'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
+  'brightBlack', 'brightRed', 'brightGreen', 'brightYellow', 'brightBlue', 'brightMagenta', 'brightCyan', 'brightWhite',
+  'dimBlack', 'dimRed', 'dimGreen', 'dimYellow', 'dimBlue', 'dimMagenta', 'dimCyan', 'dimWhite',
+] as const;
+export type TerminalAnsiColorName = typeof TERMINAL_ANSI_COLOR_NAMES[number];
+
 /**
  * Semantic colors plus the supported terminal palette.
  */
@@ -26,13 +34,26 @@ export interface ThemeColors {
   background?: CSSColor;
   foreground?: CSSColor;
   accent?: CSSColor; // Brand purple (Execute mode)
+  accentText?: CSSColor; // Readable accent text; accent itself remains the source fill/ring color
   info?: CSSColor; // Amber (Ask mode, warnings)
   success?: CSSColor; // Green
   destructive?: CSSColor; // Red
+  textSecondary?: CSSColor;
+  textMuted?: CSSColor;
+  textDisabled?: CSSColor;
+  focus?: CSSColor;
+  borderSubtle?: CSSColor;
+  borderStrong?: CSSColor;
+  borderFocused?: CSSColor;
+  elementHover?: CSSColor;
+  elementSelected?: CSSColor;
   terminalBackground?: CSSColor;
   terminalForeground?: CSSColor;
+  terminalBrightForeground?: CSSColor;
+  terminalDimForeground?: CSSColor;
   terminalCursor?: CSSColor;
   terminalSelection?: CSSColor;
+  terminalAnsi?: Partial<Record<TerminalAnsiColorName, CSSColor>>;
 }
 
 /**
@@ -45,6 +66,11 @@ export interface SurfaceColors {
   input?: CSSColor; // Input field background
   popover?: CSSColor; // Dropdowns, modals, context menus (always solid, no transparency)
   popoverSolid?: CSSColor; // Guaranteed 100% opaque popover bg (required for scenic mode)
+  titlebar?: CSSColor;
+  toolbar?: CSSColor;
+  tabBar?: CSSColor;
+  tabActive?: CSSColor;
+  tabInactive?: CSSColor;
 }
 
 /**
@@ -76,15 +102,27 @@ export interface ThemeOverrides extends ThemeColors, SurfaceColors {
 /**
  * Deep merge two theme objects (source wins for defined values)
  */
-const COLOR_KEYS: (keyof ThemeColors)[] = [
+const COLOR_KEYS: (Exclude<keyof ThemeColors, 'terminalAnsi'>)[] = [
   'background',
   'foreground',
   'accent',
+  'accentText',
   'info',
   'success',
   'destructive',
+  'textSecondary',
+  'textMuted',
+  'textDisabled',
+  'focus',
+  'borderSubtle',
+  'borderStrong',
+  'borderFocused',
+  'elementHover',
+  'elementSelected',
   'terminalBackground',
   'terminalForeground',
+  'terminalBrightForeground',
+  'terminalDimForeground',
   'terminalCursor',
   'terminalSelection',
 ];
@@ -95,12 +133,17 @@ const SURFACE_KEYS: (keyof SurfaceColors)[] = [
   'input',
   'popover',
   'popoverSolid',
+  'titlebar',
+  'toolbar',
+  'tabBar',
+  'tabActive',
+  'tabInactive',
 ];
 
 // Combined keys for merging (all color properties)
 const ALL_COLOR_KEYS = [...COLOR_KEYS, ...SURFACE_KEYS] as const;
 
-function mergeThemes(
+export function mergeThemeOverrides(
   base: ThemeOverrides | undefined,
   override: ThemeOverrides | undefined
 ): ThemeOverrides {
@@ -114,6 +157,9 @@ function mergeThemes(
     if (override[key] !== undefined) {
       result[key] = override[key];
     }
+  }
+  if (override.terminalAnsi) {
+    result.terminalAnsi = { ...base.terminalAnsi, ...override.terminalAnsi };
   }
 
   // Merge scenic mode properties
@@ -129,6 +175,9 @@ function mergeThemes(
         result.dark![key] = override.dark[key];
       }
     }
+    if (override.dark.terminalAnsi) {
+      result.dark.terminalAnsi = { ...base.dark?.terminalAnsi, ...override.dark.terminalAnsi };
+    }
   }
 
   return result;
@@ -141,7 +190,7 @@ function mergeThemes(
 export function resolveTheme(
   app?: ThemeOverrides
 ): ThemeOverrides {
-  return mergeThemes(undefined, app) || {};
+  return mergeThemeOverrides(undefined, app) || {};
 }
 
 /**
@@ -175,6 +224,82 @@ function hexToRgbValues(hex: string, darkenFactor: number = 1): string | null {
   return `${r}, ${g}, ${b}`;
 }
 
+/** A deliberately bounded parser for browser material fallbacks. Never copy an
+ * unresolved var/calc/relative color into a token that promises opaque paint. */
+function opaqueHexColor(color: CSSColor | undefined): string | null {
+  if (!color) return null;
+  const value = color.trim();
+  const hex = /^#([\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})$/i.exec(value);
+  if (hex) {
+    const digits = hex[1]!;
+    return `#${digits.length < 5 ? [...digits.slice(0, 3)].map(digit => digit + digit).join('') : digits.slice(0, 6)}`.toLowerCase();
+  }
+  const functional = /^(rgb|rgba|hsl|hsla|oklch)\(([^()]*)\)$/i.exec(value);
+  if (!functional) return null;
+  const kind = functional[1]!.toLowerCase();
+  const body = functional[2]!.trim();
+  const legacy = body.includes(',');
+  if (legacy && (kind === 'oklch' || body.includes('/'))) return null;
+  const slash = body.split('/');
+  if (slash.length > 2) return null;
+  const parts = legacy ? body.split(',').map(part => part.trim()) : slash[0]!.trim().split(/\s+/);
+  const alpha = legacy ? (parts.length === 4 ? parts.pop() : undefined) : slash[1]?.trim();
+  if (parts.length !== 3) return null;
+  const quantity = (token: string): number | null => {
+    if (!/^[+-]?(?:\d*\.)?\d+(?:e[+-]?\d+)?%?$/i.test(token)) return null;
+    const number = Number(token.replace(/%$/, ''));
+    return Number.isFinite(number) ? number : null;
+  };
+  if (alpha !== undefined && quantity(alpha) === null) return null;
+  const clamp = (number: number, max = 1) => Math.max(0, Math.min(max, number));
+  const encode = (channels: number[]): string | null => channels.every(Number.isFinite)
+    ? `#${channels.map(channel => Math.round(clamp(channel) * 255).toString(16).padStart(2, '0')).join('')}`
+    : null;
+  if (kind === 'rgb' || kind === 'rgba') {
+    // Legacy comma syntax requires either three numbers or three percentages.
+    if (legacy && parts.some(part => part.endsWith('%')) && !parts.every(part => part.endsWith('%'))) return null;
+    const channels = parts.map(part => {
+      const number = quantity(part);
+      return number === null ? NaN : number / (part.endsWith('%') ? 100 : 255);
+    });
+    return encode(channels);
+  }
+  const hueIndex = kind === 'oklch' ? 2 : 0;
+  const angle = /^([+-]?(?:\d*\.)?\d+(?:e[+-]?\d+)?)(deg|grad|rad|turn)?$/i.exec(parts[hueIndex]!);
+  if (!angle || !Number.isFinite(Number(angle[1]))) return null;
+  const hueUnits: Record<string, number> = { deg: 1, grad: .9, rad: 180 / Math.PI, turn: 360 };
+  const hue = ((Number(angle[1]) * hueUnits[angle[2]?.toLowerCase() ?? 'deg']!) % 360 + 360) % 360;
+  if (kind === 'hsl' || kind === 'hsla') {
+    if (!parts[1]!.endsWith('%') || !parts[2]!.endsWith('%')) return null;
+    const saturation = quantity(parts[1]!);
+    const lightness = quantity(parts[2]!);
+    if (saturation === null || lightness === null) return null;
+    const light = clamp(lightness / 100);
+    const chroma = (1 - Math.abs(2 * light - 1)) * clamp(saturation / 100);
+    const x = chroma * (1 - Math.abs((hue / 60) % 2 - 1));
+    const channels = hue < 60 ? [chroma, x, 0] : hue < 120 ? [x, chroma, 0] : hue < 180 ? [0, chroma, x]
+      : hue < 240 ? [0, x, chroma] : hue < 300 ? [x, 0, chroma] : [chroma, 0, x];
+    return encode(channels.map(channel => channel + light - chroma / 2));
+  }
+  const lightness = quantity(parts[0]!);
+  const chroma = quantity(parts[1]!);
+  if (lightness === null || chroma === null) return null;
+  const light = clamp(lightness / (parts[0]!.endsWith('%') ? 100 : 1));
+  const chromaticity = Math.max(0, chroma * (parts[1]!.endsWith('%') ? .004 : 1));
+  const a = chromaticity * Math.cos(hue * Math.PI / 180);
+  const b = chromaticity * Math.sin(hue * Math.PI / 180);
+  // OKLCH → Oklab → linear sRGB, followed by sRGB encoding. The bounded
+  // fallback clips out-of-gamut channels; it never alters the original color.
+  // https://www.w3.org/TR/css-color-4/#color-conversion-code
+  const l = (light + .3963377774 * a + .2158037573 * b) ** 3;
+  const m = (light - .1055613458 * a - .0638541728 * b) ** 3;
+  const s = (light - .0894841775 * a - 1.2914855480 * b) ** 3;
+  const linear = [4.0767416621 * l - 3.3077115913 * m + .2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - .3413193965 * s,
+    -.0041960863 * l - .7034186147 * m + 1.7076147010 * s];
+  return encode(linear.map(channel => channel <= .0031308 ? 12.92 * channel : 1.055 * channel ** (1 / 2.4) - .055));
+}
+
 /**
  * Generate CSS variable declarations from theme
  * @param theme - Resolved theme object
@@ -186,7 +311,9 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
 
   // Get effective colors (merge dark overrides if in dark mode)
   const colors: ThemeColors & SurfaceColors =
-    isDark && theme.dark ? { ...theme, ...theme.dark } : theme;
+    isDark && theme.dark
+      ? { ...theme, ...theme.dark, terminalAnsi: { ...theme.terminalAnsi, ...theme.dark.terminalAnsi } }
+      : theme;
 
   // Semantic color variables
   if (colors.background) vars.push(`--background: ${colors.background};`);
@@ -208,10 +335,28 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
     }
   }
   if (colors.info) vars.push(`--info: ${colors.info};`);
+  const stateVariables = {
+    accentText: 'accent-text',
+    textSecondary: 'text-secondary', textMuted: 'text-muted', textDisabled: 'text-disabled',
+    focus: 'focus', borderSubtle: 'border-subtle', borderStrong: 'border-strong',
+    borderFocused: 'border-focused', elementHover: 'element-hover', elementSelected: 'element-selected',
+    terminalBrightForeground: 'terminal-bright-foreground', terminalDimForeground: 'terminal-dim-foreground',
+  } as const;
+  for (const [key, variable] of Object.entries(stateVariables)) {
+    const color = colors[key as keyof typeof stateVariables];
+    if (color) vars.push(`--${variable}: ${color};`);
+  }
   if (colors.terminalBackground) vars.push(`--terminal-background: ${colors.terminalBackground};`);
   if (colors.terminalForeground) vars.push(`--terminal-foreground: ${colors.terminalForeground};`);
   if (colors.terminalCursor) vars.push(`--terminal-cursor: ${colors.terminalCursor};`);
   if (colors.terminalSelection) vars.push(`--terminal-selection: ${colors.terminalSelection};`);
+  for (const name of TERMINAL_ANSI_COLOR_NAMES) {
+    const color = colors.terminalAnsi?.[name];
+    if (color) {
+      const variable = name.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
+      vars.push(`--terminal-ansi-${variable}: ${color};`);
+    }
+  }
   if (colors.success) vars.push(`--success: ${colors.success};`);
   if (colors.destructive) vars.push(`--destructive: ${colors.destructive};`);
 
@@ -220,11 +365,29 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
   const bg = colors.background || 'var(--background)';
   vars.push(`--paper: ${colors.paper || bg};`);
   vars.push(`--navigator: ${colors.navigator || bg};`);
-  vars.push(`--input: ${colors.input || bg};`);
+  vars.push(`--input-surface: ${colors.input || bg};`);
   vars.push(`--popover: ${colors.popover || bg};`);
   // popoverSolid: guaranteed 100% opaque for scenic mode popovers
   // Falls back to popover, then background (should always be solid in scenic themes)
   vars.push(`--popover-solid: ${colors.popoverSolid || colors.popover || bg};`);
+  const chromeVariables = {
+    titlebar: 'titlebar', toolbar: 'toolbar', tabBar: 'tab-bar', tabActive: 'tab-active', tabInactive: 'tab-inactive',
+  } as const;
+  for (const [key, variable] of Object.entries(chromeVariables)) {
+    vars.push(`--surface-${variable}: ${colors[key as keyof typeof chromeVariables] || bg};`);
+  }
+
+  // Separate guaranteed-opaque RGB tokens for browsers without relative color
+  // syntax. Complex expressions fall back to the chosen canvas, then base RGB.
+  const opaqueBackground = opaqueHexColor(colors.background) ?? getBackgroundColor(isDark);
+  vars.push(`--canvas-opaque: ${opaqueBackground};`);
+  const opaqueSurfaces = {
+    paper: 'paper', navigator: 'navigator', input: 'input-surface',
+    titlebar: 'surface-titlebar', toolbar: 'surface-toolbar',
+  } as const;
+  for (const [key, variable] of Object.entries(opaqueSurfaces)) {
+    vars.push(`--${variable}-opaque: ${opaqueHexColor(colors[key as keyof typeof opaqueSurfaces]) ?? opaqueBackground};`);
+  }
 
   // Theme mode (background image is set directly on document.documentElement.style
   // to avoid style sheet size limits with large data URLs)

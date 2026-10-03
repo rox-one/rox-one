@@ -52,12 +52,9 @@ export function TerminalOutput({
   const isDark = theme === 'dark'
 
   // Theme-aware colors for inner elements (outer bg inherits from overlay's bg-background)
-  const textColor = isDark ? '#e4e4e4' : '#1a1a1a'
-  const mutedColor = isDark ? '#888888' : '#666666'
-  const matchColor = '#22c55e' // Green for grep matches
-  const cmdColor = isDark ? '#60a5fa' : '#2563eb' // Blue for command
-  const codeBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'
-  const outputBg = isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.03)'
+  const textColor = `var(--terminal-foreground, ${isDark ? '#e4e4e4' : '#1a1a1a'})`
+  const mutedColor = `var(--terminal-dim-foreground, ${isDark ? '#888888' : '#666666'})`
+  const matchColor = 'var(--terminal-ansi-green, #22c55e)'
 
   // Copy to clipboard (strip ANSI codes for clean text)
   const copyToClipboard = useCallback(async (text: string, type: 'command' | 'output') => {
@@ -73,7 +70,7 @@ export function TerminalOutput({
   // Memoize ANSI-parsed output for performance
   const parsedOutput = useMemo(() => {
     if (!output) return []
-    return parseAnsi(output)
+    return parseAnsi(output, { themeAware: true })
   }, [output])
 
   // Check if this looks like grep content output
@@ -91,7 +88,7 @@ export function TerminalOutput({
   return (
     <div
       className={cn('h-full w-full overflow-auto px-5 py-4 font-mono text-sm', className)}
-      style={{ fontFamily: 'var(--font-mono)' }}
+      style={{ fontFamily: 'var(--font-mono)', backgroundColor: 'var(--terminal-background)', color: textColor }}
     >
       {/* Command section */}
       <div className="mb-4">
@@ -116,7 +113,7 @@ export function TerminalOutput({
           </button>
         </div>
         <div className="overflow-x-auto">
-          <code className="text-foreground">{command}</code>
+          <code style={{ color: textColor }}>{command}</code>
         </div>
       </div>
 
@@ -130,8 +127,8 @@ export function TerminalOutput({
               <span
                 className="px-1.5 py-0.5 rounded text-[10px]"
                 style={{
-                  backgroundColor: exitCode === 0 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                  color: exitCode === 0 ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)',
+                  backgroundColor: `color-mix(in srgb, var(--terminal-ansi-${exitCode === 0 ? 'green' : 'red'}) 20%, transparent)`,
+                  color: `var(--terminal-ansi-${exitCode === 0 ? 'green' : 'red'})`,
                 }}
               >
                 exit {exitCode}
@@ -165,7 +162,7 @@ export function TerminalOutput({
                   key={i}
                   className="flex"
                   style={{
-                    backgroundColor: line.isMatch ? 'rgba(34, 197, 94, 0.08)' : undefined,
+                    backgroundColor: line.isMatch ? 'color-mix(in srgb, var(--terminal-ansi-green) 8%, transparent)' : undefined,
                   }}
                 >
                   {/* Line number */}
@@ -178,7 +175,7 @@ export function TerminalOutput({
                       }}
                     >
                       {line.lineNum}
-                      <span style={{ color: line.isMatch ? matchColor : (isDark ? '#444444' : '#cccccc') }}>
+                      <span style={{ color: line.isMatch ? matchColor : mutedColor }}>
                         {line.isMatch ? ':' : '-'}
                       </span>
                     </span>
@@ -188,7 +185,9 @@ export function TerminalOutput({
                     className="whitespace-pre-wrap break-words"
                     style={{ color: line.isMatch ? textColor : mutedColor }}
                   >
-                    {line.content}
+                    {parseAnsi(line.content, { themeAware: true }).map((span, index) => (
+                      <span key={index} style={{ color: span.fg, backgroundColor: span.bg, fontWeight: span.bold ? 'bold' : undefined }}>{span.text}</span>
+                    ))}
                   </span>
                 </div>
               ))}

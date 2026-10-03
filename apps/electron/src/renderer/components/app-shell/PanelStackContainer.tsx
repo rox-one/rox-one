@@ -50,8 +50,8 @@ const SPATIAL_DIRECTION_BY_KEY: Record<string, PanelSpatialDirection> = {
 /** Spring transition matching AppShell's sidebar/navigator animation */
 const PANEL_SPRING = { type: 'spring' as const, stiffness: 600, damping: 49 }
 
-/** Visual breathing room between the fixed compact TopBar and the first panel. */
-const COMPACT_PANEL_TOP_GAP = 4
+/** Compact and desktop panes share the same continuous chrome boundary. */
+const COMPACT_PANEL_TOP_GAP = 0
 
 interface PanelStackContainerProps {
   sidebarSlot: React.ReactNode

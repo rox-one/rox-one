@@ -574,7 +574,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
                     onChange={(event) => setNewTaskTitle(event.target.value)}
                     placeholder={t('tasks.quickEntryPlaceholder')}
                     aria-label={t('tasks.newTask')}
-                    className="h-7 w-40 rounded-[6px] border border-foreground/10 bg-transparent px-2 text-xs"
+                    className="h-7 w-40 rounded-[var(--radius-card)] border border-foreground/10 bg-transparent px-2 text-xs"
                   />
                   <Button size="sm" variant="ghost" type="submit" data-testid="project-new-task">
                     <Plus className="h-3.5 w-3.5 mr-1" />
@@ -938,7 +938,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
               title={t('projectInfo.tabAssets')}
               actions={
                 <label
-                  className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[6px] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors cursor-pointer"
                 >
                   <Upload className="h-3.5 w-3.5" />
                   {t('projectInfo.uploadAssets')}
@@ -1021,7 +1021,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
                   hint={t('projectInfo.iconHint')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground/5 ring-1 ring-border/50">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-control)] bg-foreground/5 ring-1 ring-border/50">
                       <ProjectIcon
                         workspaceId={workspaceId}
                         projectSlug={project.config.slug}
@@ -1031,7 +1031,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
                         iconClassName="h-5 w-5 text-foreground/60"
                       />
                     </div>
-                    <label className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[6px] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors cursor-pointer">
+                    <label className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors cursor-pointer">
                       <ImagePlus className="h-3.5 w-3.5" />
                       {t('projectInfo.iconUpload')}
                       <input

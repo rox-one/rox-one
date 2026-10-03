@@ -1062,7 +1062,7 @@ export function EditPopover({
               className="relative bg-foreground-2 overflow-hidden w-full h-full shadow-modal-small"
               style={{
                 transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
-                borderRadius: 16,
+                borderRadius: 'var(--radius-overlay)',
               }}
             >
               {/* Drag handle - floating overlay */}
@@ -1132,7 +1132,7 @@ export const EditButton = React.forwardRef<
       variant="ghost"
       size="sm"
       // Merge our base styles with any className from asChild props
-      className={cn("h-8 px-3 rounded-[6px] bg-background shadow-minimal text-foreground/70 hover:text-foreground", className)}
+      className={cn("h-8 px-3 rounded-[var(--radius-control)] bg-background shadow-minimal text-foreground/70 hover:text-foreground", className)}
       {...props}
     >
       {t("common.edit")}

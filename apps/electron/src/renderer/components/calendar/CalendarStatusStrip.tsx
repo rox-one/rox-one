@@ -83,7 +83,7 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
           onChange={(event) => setReminderDraft(event.target.value)}
           placeholder={t('calendar.localReminderPlaceholder')}
           aria-label={t('calendar.localReminders')}
-          className="h-7 min-w-0 flex-1 rounded-[6px] border border-foreground/10 bg-transparent px-2"
+          className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] border border-foreground/10 bg-transparent px-2"
         />
         <button type="submit" className="underline">{t('calendar.addLocalReminder')}</button>
       </form>

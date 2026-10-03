@@ -282,13 +282,13 @@ export default function ImportSettingsPage() {
             aria-expanded={manualOpen}
             aria-controls="session-import-manual"
             onClick={() => setManualOpen((open) => !open)}
-            className="flex w-full items-center gap-2 rounded-xl border border-border/50 bg-background/40 px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-foreground/5 hover:text-foreground"
+            className="flex w-full items-center gap-2 rounded-[var(--radius-control)] border border-border/50 bg-background/40 px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-foreground/5 hover:text-foreground"
           >
             {manualOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             {t('settings.import.manual.title')}
           </button>
           {manualOpen ? (
-          <div id="session-import-manual" className="space-y-4 rounded-xl border border-border/50 bg-background/30 p-4">
+          <div id="session-import-manual" className="space-y-4 rounded-[var(--radius-card)] border border-border/50 bg-background/30 p-4">
           <p className="text-sm opacity-70">{t('settings.import.scanHint')}</p>
           {truncated ? (
             <p className="text-sm text-amber-600 dark:text-amber-400" data-testid="session-import-truncated">

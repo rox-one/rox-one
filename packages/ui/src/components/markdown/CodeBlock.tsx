@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { codeToHtml, bundledLanguages, type BundledLanguage } from 'shiki'
 import { cn } from '../../lib/utils'
 import { useShikiTheme } from '../../context/ShikiThemeContext'
+import { resolveShikiTheme } from '../code-viewer/zedShikiThemes'
 
 export interface CodeBlockProps {
   code: string
@@ -110,7 +111,7 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
 
         const html = await codeToHtml(code, {
           lang,
-          theme,
+          theme: resolveShikiTheme(theme),
         })
 
         // Cache the result
@@ -180,7 +181,7 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
 
   // Full mode: rich styling with header and copy button
   return (
-    <div className={cn('relative group rounded-[8px] overflow-hidden border bg-muted/30', className)}>
+    <div className={cn('relative group rounded-[var(--radius-card,4px)] overflow-hidden border bg-background', className)}>
       {/* Language label + copy button */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b text-xs">
         <span className="text-muted-foreground font-medium uppercase tracking-wide">

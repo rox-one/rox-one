@@ -320,7 +320,7 @@ export function TopBar({
         <Tooltip>
           <TooltipTrigger asChild>
             <TopBarButton onClick={onToggleSidebar} aria-label={t("menu.toggleSidebar")}>
-              <PanelLeftRounded className="h-4 w-4 text-foreground/70" />
+              <PanelLeftRounded className="h-4 w-4 text-text-secondary" />
             </TopBarButton>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("menu.toggleSidebar")}</TooltipContent>
@@ -357,7 +357,7 @@ export function TopBar({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <TopBarButton onClick={onBack} disabled={!canGoBack} aria-label={t("common.back")}>
-                    <Icons.ChevronLeft className="h-4 w-4 text-foreground/70" strokeWidth={1.5} />
+                    <Icons.ChevronLeft className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
                   </TopBarButton>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">{t("common.back")} {goBackHotkey}</TooltipContent>
@@ -366,7 +366,7 @@ export function TopBar({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <TopBarButton onClick={onForward} disabled={!canGoForward} aria-label={t("common.forward")}>
-                    <Icons.ChevronRight className="h-4 w-4 text-foreground/70" strokeWidth={1.5} />
+                    <Icons.ChevronRight className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
                   </TopBarButton>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">{t("common.forward")} {goForwardHotkey}</TooltipContent>
@@ -425,7 +425,7 @@ export function TopBar({
               aria-label={t("entityView.map")}
               className="h-6 w-6 rounded-md"
             >
-              <Icons.Network className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+              <Icons.Network className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
             </TopBarButton>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("entityView.map")}</TooltipContent>
@@ -437,7 +437,7 @@ export function TopBar({
               aria-label={t("session.newSessionInPanel")}
               className="ml-1 h-[26px] w-[26px] rounded-lg"
             >
-              <SquarePenRounded className="h-4 w-4 text-foreground/50" />
+              <SquarePenRounded className="h-4 w-4 text-text-secondary" />
             </TopBarButton>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("session.newSessionInPanel")}</TooltipContent>
@@ -449,7 +449,7 @@ export function TopBar({
               aria-label={t("browser.newWindow")}
               className="h-[26px] w-[26px] rounded-lg"
             >
-              <Icons.Globe className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+              <Icons.Globe className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
             </TopBarButton>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("browser.newWindow")}</TooltipContent>
@@ -461,7 +461,7 @@ export function TopBar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <TopBarButton aria-label={t("menu.helpAndDocs")} className="h-6 w-6 rounded-md">
-              <Icons.HelpCircle className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+              <Icons.HelpCircle className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
             </TopBarButton>
           </DropdownMenuTrigger>
           <StyledDropdownMenuContent align="end" minWidth="min-w-48">
@@ -510,7 +510,7 @@ export function TopBar({
               aria-pressed={inspectorOpen}
               className="h-6 w-6 rounded-md"
             >
-              <Icons.PanelRight className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+              <Icons.PanelRight className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
             </TopBarButton>
           </TooltipTrigger>
           <TooltipContent side="bottom">{inspectorToggleLabel}</TooltipContent>
@@ -526,7 +526,7 @@ export function TopBar({
                 data-terminal-flag={WORKBENCH_FLAG.terminalV1}
                 className="h-[26px] w-[26px] rounded-lg"
               >
-                <Icons.SquareTerminal className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+                <Icons.SquareTerminal className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
               </TopBarButton>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('inspector.terminal')}</TooltipContent>

@@ -125,6 +125,7 @@ class WidgetBoundary extends React.Component<{ fallback: React.ReactNode; childr
 function SortableWidget({
   placement,
   span,
+  trackPitch,
   width,
   editing,
   onChange,
@@ -132,6 +133,7 @@ function SortableWidget({
 }: {
   placement: HomeWidgetPlacement
   span: number
+  trackPitch: number
   width: number
   editing: boolean
   layout: HomeDashboardLayout
@@ -150,17 +152,54 @@ function SortableWidget({
       }
     : null
   const Widget = def.Component
+  const contentSized = placement.id === 'summary' || placement.id === 'quickActions'
+  const cellRef = useRef<HTMLDivElement | null>(null)
+  const [contentHeight, setContentHeight] = useState(HOME_GRID_ROW_HEIGHT)
+  const setCellRef = useCallback((node: HTMLDivElement | null) => {
+    cellRef.current = node
+    setNodeRef(node)
+  }, [setNodeRef])
+  // Measure the two fixed-content frames, including their localized header and
+  // edit controls. Pixel tracks let them fit without changing saved S/M/L sizes
+  // or the exact 232/354/476 px heights of the remaining widgets.
+  useLayoutEffect(() => {
+    if (!contentSized) return
+    const cell = cellRef.current
+    if (!cell) return
+    let frame: HTMLElement | null = null
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setContentHeight(Math.ceil(entry.borderBoxSize[0]?.blockSize ?? entry.target.clientHeight + 1))
+    })
+    const observeFrame = () => {
+      const next = cell.querySelector<HTMLElement>('[data-home-widget]')
+      if (next === frame) return
+      observer.disconnect()
+      frame = next
+      if (frame) {
+        // offsetHeight rounds to whole pixels; reserve the next pixel until
+        // ResizeObserver supplies the unzoomed fractional border-box size.
+        setContentHeight(frame.offsetHeight + 1)
+        observer.observe(frame)
+      }
+    }
+    observeFrame()
+    const replacements = new MutationObserver(observeFrame)
+    replacements.observe(cell, { childList: true })
+    return () => { observer.disconnect(); replacements.disconnect() }
+  }, [contentSized])
+  const rowSpan = widgetRowSpan(placement.size)
+  const height = contentSized ? contentHeight : rowSpan * HOME_GRID_ROW_HEIGHT + (rowSpan - 1) * HOME_GRID_GAP
   return (
     <div
-      ref={setNodeRef}
+      ref={setCellRef}
       data-home-cell={placement.id}
       data-home-size={placement.size}
       className={cn('min-h-0 min-w-0', isDragging && 'relative z-10 opacity-80')}
-      style={{ gridColumn: `span ${span} / span ${span}`, gridRow: `span ${widgetRowSpan(placement.size)}`, transform: CSS.Translate.toString(transform), transition }}
+      style={{ gridColumn: `span ${span} / span ${span}`, gridRow: `span ${Math.ceil((height + HOME_GRID_GAP) / trackPitch)}`, height: contentSized ? 'fit-content' : height, alignSelf: 'start', transform: CSS.Translate.toString(transform), transition }}
     >
       <WidgetBoundary
         fallback={
-          <div className="rox-home-widget flex h-full flex-col justify-center rounded-[10px] px-3 text-[13px]">
+          <div data-home-widget={placement.id} className={cn('rox-home-widget flex flex-col justify-center rounded-[var(--radius-card)] px-3 text-[13px]', contentSized ? 'py-3' : 'h-full')}>
             <p className="font-bold">{t(def.titleKey)}</p>
             <p className="text-muted-foreground">{t('workbench.home.widgetFailed')}</p>
           </div>
@@ -177,7 +216,7 @@ function WidgetPreview({ id }: { id: HomeWidgetId }) {
   const [ref, width] = useContainerWidth<HTMLDivElement>()
   const Preview = HOME_WIDGETS[id].Component
   return (
-    <div ref={ref} role="region" className="mt-2 h-[232px] min-w-0 rounded-[10px] border border-foreground/10" data-home-preview={id} aria-label={t('workbench.home.picker.preview')}>
+    <div ref={ref} role="region" className="mt-2 h-[232px] min-w-0 rounded-[var(--radius-card)] border border-foreground/10" data-home-preview={id} aria-label={t('workbench.home.picker.preview')}>
       <WidgetBoundary fallback={<p className="p-3 text-[12px] text-muted-foreground">{t('workbench.home.widgetFailed')}</p>}>
         <Preview edit={null} width={width} size="S" />
       </WidgetBoundary>
@@ -190,7 +229,7 @@ function WidgetPicker({ layout, onToggle, onClose }: { layout: HomeDashboardLayo
   const used = new Set(layout.widgets.map((w) => w.id))
   const [previewId, setPreviewId] = useState<HomeWidgetId | null>(null)
   return (
-    <section className="rox-home-widget rounded-[12px] px-4 pb-4 pt-3" aria-label={t('workbench.home.picker.title')} data-home-picker="">
+    <section className="rox-home-widget rounded-[var(--radius-card)] px-4 pb-4 pt-3" aria-label={t('workbench.home.picker.title')} data-home-picker="">
       <div className="flex items-center gap-2">
         <h2 className="text-[15px] font-bold text-foreground">{t('workbench.home.picker.title')}</h2>
         <span className="text-[12px] text-muted-foreground">{t('workbench.home.picker.count', { used: used.size, total: HOME_WIDGET_IDS.length })}</span>
@@ -198,7 +237,7 @@ function WidgetPicker({ layout, onToggle, onClose }: { layout: HomeDashboardLayo
         <button
           type="button"
           onClick={onClose}
-          className="flex h-6 w-6 items-center justify-center rounded-[4px] text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+          className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
           aria-label={t('workbench.home.picker.close')}
           title={t('workbench.home.picker.close')}
         >
@@ -230,21 +269,21 @@ function WidgetPicker({ layout, onToggle, onClose }: { layout: HomeDashboardLayo
                       data-home-add={id}
                       title={added ? t('workbench.home.picker.removeHint') : t('workbench.home.picker.addHint')}
                       className={cn(
-                        'rox-home-tile group flex h-full w-full min-w-0 items-start gap-2.5 rounded-[10px] px-3 py-2.5 text-left',
+                        'rox-home-tile group flex h-full w-full min-w-0 items-start gap-2.5 rounded-[var(--radius-card)] px-3 py-2.5 text-left',
                         added && 'rox-home-tile-added',
                       )}
                     >
-                      <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px]', added ? 'bg-accent/20 text-accent' : 'bg-foreground/[0.08] text-foreground')}>
+                      <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-control)]', added ? 'bg-accent/20 text-accent' : 'bg-foreground/[0.08] text-foreground')}>
                         <Icon className="h-4 w-4" />
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="flex min-w-0 items-center gap-1.5">
                           <span className="truncate text-[13px] font-bold text-foreground">{t(def.titleKey)}</span>
-                          <span className="shrink-0 rounded-[4px] bg-foreground/[0.06] px-1 text-[10px] font-bold leading-4 text-muted-foreground">{HOME_WIDGET_DEFAULT_SIZE[id]}</span>
+                          <span className="shrink-0 rounded-[var(--radius-control)] bg-foreground/[0.06] px-1 text-[10px] font-bold leading-4 text-muted-foreground">{HOME_WIDGET_DEFAULT_SIZE[id]}</span>
                         </span>
                         <span className="line-clamp-2 text-[12px] leading-4 text-muted-foreground">{t(def.descriptionKey)}</span>
                       </span>
-                      <span className={cn('mt-0.5 flex h-5 shrink-0 items-center gap-0.5 rounded-[4px] px-1 text-[11px] font-bold', added ? 'text-accent' : 'text-muted-foreground group-hover:text-foreground')}>
+                      <span className={cn('mt-0.5 flex h-5 shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] px-1 text-[11px] font-bold', added ? 'text-accent' : 'text-muted-foreground group-hover:text-foreground')}>
                         {added ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                         {added ? t('workbench.home.picker.added') : t('workbench.home.picker.add')}
                       </span>
@@ -269,7 +308,7 @@ function HeaderButton({ children, onClick, primary, pressed, testId }: { childre
       aria-pressed={pressed}
       data-home-button={testId}
       className={cn(
-        'flex h-7 items-center gap-1.5 rounded-[6px] px-2.5 text-[13px] font-bold',
+        'flex h-7 items-center gap-1.5 rounded-[var(--radius-control)] px-2.5 text-[13px] font-bold',
         primary ? 'bg-foreground text-background hover:bg-foreground/85' : pressed ? 'bg-foreground/[0.14] text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground',
       )}
     >
@@ -292,6 +331,23 @@ export function HomeFrontPage() {
   const editing = draft !== null
   editingRef.current = editing
   const layout = stored.workspaceId === workspaceId ? (draft ?? stored.snapshot.layout) : readLayout(workspaceId).layout
+  const packedGridRef = useRef<HTMLDivElement>(null)
+  const [trackPitch, setTrackPitch] = useState(1)
+  const hasWidgets = layout.widgets.length > 0
+  useLayoutEffect(() => {
+    const grid = packedGridRef.current
+    if (!grid) return
+    // Fractional CSS zoom quantizes each track. Read the browser's used track
+    // size so hundreds of tracks do not accumulate a smaller inter-card gap.
+    const measure = () => {
+      const pitch = parseFloat(getComputedStyle(grid).gridTemplateRows)
+      if (Number.isFinite(pitch) && pitch > 0) setTrackPitch(pitch)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(grid)
+    return () => observer.disconnect()
+  }, [hasWidgets])
 
   useEffect(() => {
     const initial = readLayout(workspaceId)
@@ -476,7 +532,7 @@ export function HomeFrontPage() {
 
         <div ref={gridRef} className="min-w-0">
           {layout.widgets.length === 0 ? (
-            <div className="rox-home-widget flex flex-col items-start gap-2 rounded-[10px] px-4 py-6 text-[13px]" data-home-empty-layout="">
+            <div className="rox-home-widget flex flex-col items-start gap-2 rounded-[var(--radius-card)] px-4 py-6 text-[13px]" data-home-empty-layout="">
               <p className="font-bold text-foreground">{t('workbench.home.emptyLayout')}</p>
               <p className="text-muted-foreground">{t('workbench.home.emptyLayoutHint')}</p>
               <div className="flex gap-1">
@@ -494,8 +550,9 @@ export function HomeFrontPage() {
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
               <SortableContext items={ids} strategy={rectSortingStrategy}>
                 <div
+                  ref={packedGridRef}
                   className="grid"
-                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: `${HOME_GRID_ROW_HEIGHT}px`, gap: HOME_GRID_GAP }}
+                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '1px', columnGap: HOME_GRID_GAP }}
                   data-home-grid=""
                 >
                   {layout.widgets.map((placement) => (
@@ -503,6 +560,7 @@ export function HomeFrontPage() {
                       key={placement.id}
                       placement={placement}
                       span={widgetSpan(placement.size, width)}
+                      trackPitch={trackPitch}
                       width={widgetWidth(widgetSpan(placement.size, width), width)}
                       editing={editing}
                       layout={layout}
@@ -513,8 +571,8 @@ export function HomeFrontPage() {
                     <button
                       type="button"
                       onClick={() => setPickerOpen(true)}
-                      className="rox-home-add-cell flex min-w-0 flex-col items-center justify-center gap-1 rounded-[10px] text-[13px] font-bold text-muted-foreground hover:text-foreground"
-                      style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${widgetRowSpan('S')}` }}
+                      className="rox-home-add-cell flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] text-[13px] font-bold text-muted-foreground hover:text-foreground"
+                      style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${Math.ceil(widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) / trackPitch)}`, height: widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) - HOME_GRID_GAP, alignSelf: 'start' }}
                     >
                       <Plus className="h-5 w-5" />
                       {t('workbench.home.edit.addWidget')}

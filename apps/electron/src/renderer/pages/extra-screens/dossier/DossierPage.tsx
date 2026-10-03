@@ -275,7 +275,7 @@ export default function DossierPage({ itemId }: { itemId: string | null }) {
             <>
               <GroupLabel>{t('extraScreens.dossier.suggestions')}</GroupLabel>
               {suggestions.map((suggestion) => (
-                <div key={suggestion.name} className="mx-1.5 flex items-center gap-2.5 rounded-[6px] px-2.5 py-1.5">
+                <div key={suggestion.name} className="mx-1.5 flex items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-1.5">
                   <Chip>{suggestion.platform}</Chip>
                   <span className="min-w-0 flex-1 truncate">{suggestion.name}</span>
                   <ScreenButton variant="ghost" title={t('extraScreens.dossier.add')} onClick={() => addEntity(suggestion.name, 'person')}>＋</ScreenButton>
@@ -458,7 +458,7 @@ function DossierDetail({
             aria-label={t('extraScreens.dossier.namePlaceholder')}
             defaultValue={entity.name}
             onBlur={(event) => { const v = event.target.value.trim(); if (v && v !== entity.name) onUpdate({ name: v }) }}
-            className="w-full bg-transparent text-[19px] font-bold leading-tight outline-none focus-visible:rounded-[4px] focus-visible:bg-foreground/[0.05]"
+            className="w-full bg-transparent text-[19px] font-bold leading-tight outline-none focus-visible:rounded-[var(--radius-control)] focus-visible:bg-foreground/[0.05]"
           />
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-muted-foreground">
             <Chip active={entity.kind === 'person'} onClick={() => onUpdate({ kind: 'person' })}>{t('extraScreens.dossier.person')}</Chip>
@@ -468,7 +468,7 @@ function DossierDetail({
               placeholder={t('extraScreens.dossier.orgPlaceholder')}
               defaultValue={entity.org ?? ''}
               onBlur={(event) => onUpdate({ org: event.target.value.trim() || undefined })}
-              className="h-6 min-w-[160px] rounded-[6px] bg-transparent px-1.5 text-[12px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:bg-foreground/[0.06]"
+              className="h-6 min-w-[160px] rounded-[var(--radius-card)] bg-transparent px-1.5 text-[12px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:bg-foreground/[0.06]"
             />
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-1">
@@ -484,7 +484,7 @@ function DossierDetail({
               onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addAlias() } }}
               placeholder={t('extraScreens.dossier.aliasPlaceholder')}
               aria-label={t('extraScreens.dossier.aliasPlaceholder')}
-              className="h-6 w-[180px] rounded-[6px] bg-foreground/[0.05] px-1.5 text-[12px] outline-none placeholder:text-muted-foreground"
+              className="h-6 w-[180px] rounded-[var(--radius-card)] bg-foreground/[0.05] px-1.5 text-[12px] outline-none placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -508,7 +508,7 @@ function DossierDetail({
             )}
             {summary.openTasks.map((task) => (
               <button key={task.id} type="button" onClick={() => navigate(routes.view.tasks(task.id))} className="flex w-full items-center gap-2 py-0.5 text-left hover:text-accent">
-                <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-[4px] bg-foreground/15" />
+                <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-[var(--radius-control)] bg-foreground/15" />
                 <span className="truncate">{task.title}</span>
               </button>
             ))}
@@ -606,7 +606,7 @@ function DossierDetail({
             key={`${touch.kind}:${touch.id}`}
             type="button"
             onClick={() => openTouch(touch)}
-            className="flex w-full items-center gap-2 rounded-[6px] px-1.5 py-1 text-left hover:bg-foreground/5"
+            className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-1.5 py-1 text-left hover:bg-foreground/5"
           >
             <span aria-hidden className="w-4 shrink-0 text-center text-muted-foreground">{touchIcon(touch.kind)}</span>
             <span className="w-16 shrink-0 text-[12px] text-muted-foreground">{relDate(touch.at)}</span>

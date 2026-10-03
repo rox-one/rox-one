@@ -1,0 +1,48 @@
+/* The settings pane can be narrow even in a wide window with several panels. */
+.appearance-settings-page {
+  container: appearance-settings / inline-size;
+}
+
+.appearance-settings-content {
+  width: 100%;
+  min-width: 0;
+}
+
+@container appearance-settings (max-width: 480px) {
+  .appearance-settings-content {
+    padding-inline: 12px;
+  }
+
+  .appearance-settings-content [data-layout="settings-row"] {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding-inline: 12px;
+  }
+
+  .appearance-settings-content [data-layout="settings-row"] > :first-child {
+    overflow-wrap: anywhere;
+  }
+
+  .appearance-settings-content [data-layout="settings-control"] {
+    margin-left: 0;
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .appearance-settings-content [data-layout="settings-control"] > *,
+  .appearance-settings-content [data-layout="settings-control"] button {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .appearance-settings-content [role="radiogroup"] {
+    flex-wrap: wrap;
+  }
+
+  .appearance-settings-content [data-layout="settings-control"] input[type="range"] {
+    min-width: 0;
+    flex: 1;
+  }
+}

@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, type ReactNode } from 'react'
 import * as storage from '@/lib/local-storage'
+import { resolveVisualMode, persistThemeSelection } from './theme-resolution'
 import {
   resolveTheme,
+  mergeThemeOverrides,
   themeToCSS,
   DEFAULT_SHIKI_THEME,
   getShikiTheme,
@@ -55,7 +57,7 @@ interface ThemeContextType {
   /** Workspace-specific color theme override (null = inherit from app default) */
   workspaceColorTheme: string | null
   /** Set workspace-specific color theme override (null = inherit) */
-  setWorkspaceColorTheme: (theme: string | null) => void
+  setWorkspaceColorTheme: (theme: string | null) => Promise<boolean>
 
   // Derived/computed
   resolvedMode: 'light' | 'dark'
@@ -176,14 +178,22 @@ export function ThemeProvider({
 
   // Track if we're receiving an external update to prevent echo broadcasts
   const isExternalUpdate = useRef(false)
+  const themeWriteQueue = useRef<Promise<void>>(Promise.resolve())
+  const workspaceWriteQueue = useRef<Promise<void>>(Promise.resolve())
+  const selectionRequestVersion = useRef(0)
+  const workspaceReadVersion = useRef(0)
+  const workspaceRef = useRef(activeWorkspaceId)
+  workspaceRef.current = activeWorkspaceId
+  const [appTheme, setAppTheme] = useState<ThemeOverrides | null>(null)
 
   // Load app-level colorTheme from config.json on mount (only if user hasn't overridden)
   useEffect(() => {
     // Skip if user has explicitly set a theme via UI
     if (stored?.isUserOverride) return
 
+    const version = selectionRequestVersion.current
     window.electronAPI?.getColorTheme?.().then((configTheme) => {
-      if (configTheme && configTheme !== 'default') {
+      if (selectionRequestVersion.current === version && configTheme) {
         setColorThemeState(configTheme)
       }
     }).catch(() => {
@@ -191,6 +201,18 @@ export function ThemeProvider({
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run on mount
+
+  // App overrides participate in the same singleton CSS resolver as presets.
+  useEffect(() => {
+    let cancelled = false
+    let receivedLiveTheme = false
+    const api = window.electronAPI
+    api?.getAppTheme?.().then(theme => {
+      if (!cancelled && !receivedLiveTheme) setAppTheme(theme)
+    }).catch(error => console.warn('App theme overrides unavailable:', error))
+    const unsubscribe = api?.onAppThemeChange?.(theme => { receivedLiveTheme = true; if (!cancelled) setAppTheme(theme) })
+    return () => { cancelled = true; unsubscribe?.() }
+  }, [])
 
   // === Preset theme state (singleton) ===
   const [presetTheme, setPresetTheme] = useState<ThemeFile | null>(null)
@@ -204,20 +226,18 @@ export function ThemeProvider({
   const effectiveColorTheme = previewColorTheme ?? workspaceColorTheme ?? colorTheme
   const effectiveColorThemeSource: 'preview' | 'workspace' | 'app' =
     previewColorTheme !== null ? 'preview' : workspaceColorTheme !== null ? 'workspace' : 'app'
-  const isDarkFromMode = resolvedMode === 'dark'
 
-  // Load workspace theme override when workspace changes
+  // Late responses from a previous workspace cannot replace the active one.
   useEffect(() => {
-    if (!activeWorkspaceId) {
-      setWorkspaceColorThemeState(null)
-      return
+    let cancelled = false
+    const version = ++workspaceReadVersion.current
+    setWorkspaceColorThemeState(null)
+    if (activeWorkspaceId) {
+      window.electronAPI?.getWorkspaceColorTheme?.(activeWorkspaceId).then(theme => {
+        if (!cancelled && workspaceReadVersion.current === version) setWorkspaceColorThemeState(theme)
+      }).catch(() => { if (!cancelled && workspaceReadVersion.current === version) setWorkspaceColorThemeState(null) })
     }
-
-    window.electronAPI?.getWorkspaceColorTheme?.(activeWorkspaceId).then((theme) => {
-      setWorkspaceColorThemeState(theme)
-    }).catch(() => {
-      setWorkspaceColorThemeState(null)
-    })
+    return () => { cancelled = true }
   }, [activeWorkspaceId])
 
   // Load preset theme when effectiveColorTheme changes (SINGLETON - only here, not in useTheme)
@@ -285,19 +305,16 @@ export function ThemeProvider({
 
   // Resolve theme (preset → final)
   const resolvedTheme = useMemo(() => {
-    return resolveTheme(presetTheme ?? undefined)
-  }, [presetTheme])
+    return resolveTheme(mergeThemeOverrides(presetTheme ?? undefined, appTheme ?? undefined))
+  }, [presetTheme, appTheme])
 
   // Determine scenic mode (background image with glass panels)
   const isScenic = useMemo(() => {
     return resolvedTheme.mode === 'scenic' && !!resolvedTheme.backgroundImage
   }, [resolvedTheme])
 
-  // Dark-only themes (e.g. Dracula) force dark mode regardless of system mode
-  const isDarkOnlyTheme = presetTheme?.supportedModes?.length === 1 && presetTheme.supportedModes[0] === 'dark'
-
-  // isDark reflects actual visual appearance: scenic, dark-only themes, or system dark mode
-  const isDark = isScenic || isDarkOnlyTheme ? true : isDarkFromMode
+  const visualMode = resolveVisualMode(resolvedMode, presetTheme?.supportedModes, isScenic)
+  const isDark = visualMode === 'dark'
 
   // Shiki theme configuration
   const shikiConfig = useMemo(() => {
@@ -350,28 +367,11 @@ export function ThemeProvider({
   useLayoutEffect(() => {
     const root = document.documentElement
 
-    // Check if this is a dark-only theme (forces dark mode)
-    const isDarkOnlyTheme = presetTheme?.supportedModes?.length === 1 && presetTheme.supportedModes[0] === 'dark'
-
-    // Apply mode class
-    // Scenic and dark-only themes force dark mode
-    const effectiveMode = (isScenic || isDarkOnlyTheme) ? 'dark' : resolvedMode
     root.classList.remove('light', 'dark')
-    root.classList.add(effectiveMode)
-
-    // Handle themeMismatch - set solid background when:
-    // 1. Theme doesn't support current mode (e.g., dark-only Dracula in light mode), OR
-    // 2. Resolved mode differs from system preference (vibrancy mismatch)
-    const supportedModes = presetTheme?.supportedModes
-    const currentMode = isDarkFromMode ? 'dark' : 'light'
-    const themeModeUnsupported = supportedModes && supportedModes.length > 0 && !supportedModes.includes(currentMode)
-    const vibrancyMismatch = resolvedMode !== systemPreference
-
-    if (themeModeUnsupported || vibrancyMismatch) {
-      root.dataset.themeMismatch = 'true'
-    } else {
-      delete root.dataset.themeMismatch
-    }
+    root.classList.add(visualMode)
+    // The selected palette provides its own opaque reading surfaces. A mode
+    // different from the OS must not add another window-wide color overlay.
+    delete root.dataset.themeMismatch
 
     // Set scenic mode data attribute for CSS targeting
     if (isScenic) {
@@ -383,13 +383,13 @@ export function ThemeProvider({
       delete root.dataset.scenic
       root.style.removeProperty('--background-image')
     }
-    if (presetTheme?.mode === 'blurred') {
+    if (resolvedTheme.mode === 'blurred') {
       root.dataset.blurred = 'true'
     } else {
       delete root.dataset.blurred
     }
 
-  }, [presetTheme, resolvedMode, systemPreference, isScenic, resolvedTheme, isDarkFromMode])
+  }, [presetTheme, visualMode, isScenic, resolvedTheme])
 
   // Inject CSS variables
   useLayoutEffect(() => {
@@ -403,13 +403,13 @@ export function ThemeProvider({
     }
 
     // When using default theme, clear custom CSS
-    if (!effectiveColorTheme || effectiveColorTheme === 'default') {
+    if ((!effectiveColorTheme || effectiveColorTheme === 'default') && !appTheme) {
       styleEl.textContent = ''
       return
     }
 
     // Only inject CSS when preset is loaded (prevents flash with empty/wrong values)
-    if (!presetTheme) {
+    if (!presetTheme && effectiveColorTheme !== 'default' && !themeLoadError) {
       // Keep existing CSS while loading
       return
     }
@@ -422,7 +422,7 @@ export function ThemeProvider({
     } else {
       styleEl.textContent = ''
     }
-  }, [effectiveColorTheme, presetTheme, resolvedTheme, isDark])
+  }, [effectiveColorTheme, presetTheme, resolvedTheme, isDark, appTheme, themeLoadError])
 
   // === System preference listener ===
   useEffect(() => {
@@ -466,6 +466,7 @@ export function ThemeProvider({
 
     const cleanup = window.electronAPI.onThemePreferencesChange((preferences) => {
       isExternalUpdate.current = true
+      selectionRequestVersion.current += 1
       const nextContrast = isContrastMode(preferences.contrast) ? preferences.contrast : storedContrast(loadStoredTheme())
       setModeState(preferences.mode as ThemeMode)
       setColorThemeState(preferences.colorTheme)
@@ -508,19 +509,34 @@ export function ThemeProvider({
   }, [colorTheme, font, chatFont, terminalFont, contrast])
 
   const setColorTheme = useCallback((newTheme: string) => {
-    setColorThemeState(newTheme)
-    saveTheme({
-      mode,
-      colorTheme: newTheme,
-      font,
-      chatFont,
-      terminalFont,
-      contrast,
-      isUserOverride: true,
+    selectionRequestVersion.current += 1
+    // Serialize config writes. Rejected writes retain the last committed
+    // selection and never broadcast a preference that was not saved.
+    themeWriteQueue.current = themeWriteQueue.current.then(async () => {
+      try {
+        await persistThemeSelection(newTheme, window.electronAPI?.setColorTheme, () => {
+          setColorThemeState(newTheme)
+          const current = loadStoredTheme()
+          const preferences = {
+            mode: current?.mode ?? mode,
+            colorTheme: newTheme,
+            font: normalizeUiFont(current?.font ?? font),
+            chatFont: current?.chatFont ?? chatFont,
+            terminalFont: current?.terminalFont ?? terminalFont,
+            contrast: current?.contrast ?? contrast,
+            isUserOverride: true,
+          }
+          saveTheme(preferences)
+          setThemeLoadError(null)
+          if (!isExternalUpdate.current) {
+            window.electronAPI?.broadcastThemePreferences?.(preferences)
+          }
+        })
+      } catch (error) {
+        console.error('Failed to persist theme selection:', error)
+        setThemeLoadError('THEME_SAVE_FAILED')
+      }
     })
-    if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
-      window.electronAPI.broadcastThemePreferences({ mode, colorTheme: newTheme, font, contrast })
-    }
   }, [mode, font, chatFont, terminalFont, contrast])
 
   const setFont = useCallback((newFont: FontFamily) => {
@@ -588,13 +604,29 @@ export function ThemeProvider({
     }
   }, [mode, colorTheme, font, chatFont, terminalFont])
 
-  // Set workspace-specific color theme override
+  // Workspace writes have the same acknowledgement boundary as app writes.
   const setWorkspaceColorTheme = useCallback((newTheme: string | null) => {
-    if (!activeWorkspaceId) return
-    setWorkspaceColorThemeState(newTheme)
-    window.electronAPI?.setWorkspaceColorTheme?.(activeWorkspaceId, newTheme)
-    // Broadcast to other windows
-    window.electronAPI?.broadcastWorkspaceThemeChange?.(activeWorkspaceId, newTheme)
+    const workspaceId = activeWorkspaceId
+    if (!workspaceId) return Promise.resolve(false)
+    workspaceReadVersion.current += 1
+    const result = workspaceWriteQueue.current.then(async () => {
+      try {
+        await window.electronAPI?.setWorkspaceColorTheme?.(workspaceId, newTheme)
+        if (workspaceRef.current === workspaceId) {
+          workspaceReadVersion.current += 1
+          setWorkspaceColorThemeState(newTheme)
+          setThemeLoadError(null)
+        }
+        window.electronAPI?.broadcastWorkspaceThemeChange?.(workspaceId, newTheme)
+        return true
+      } catch (error) {
+        console.error('Failed to persist workspace theme:', error)
+        if (workspaceRef.current === workspaceId) setThemeLoadError('THEME_SAVE_FAILED')
+        return false
+      }
+    })
+    workspaceWriteQueue.current = result.then(() => {})
+    return result
   }, [activeWorkspaceId])
 
   // Listen for workspace theme changes from other windows
@@ -604,6 +636,7 @@ export function ThemeProvider({
     const cleanup = window.electronAPI.onWorkspaceThemeChange(({ workspaceId, themeId }) => {
       // Only update if this is our active workspace
       if (workspaceId === activeWorkspaceId) {
+        workspaceReadVersion.current += 1
         setWorkspaceColorThemeState(themeId)
       }
     })
@@ -635,7 +668,7 @@ export function ThemeProvider({
         setWorkspaceColorTheme,
 
         // Derived
-        resolvedMode,
+        resolvedMode: visualMode,
         systemPreference,
         effectiveColorTheme,
         previewColorTheme,
