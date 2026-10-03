@@ -104,15 +104,10 @@ export class RoxAccountAuthority {
     await this.flow(caller).clear()
     const pending = await this.store.readLogout(caller)
     if (pending) {
-      // An in-flight refresh may have rotated on the server before invalidation
-      // fenced its response. Recover that exact result before revoking the device.
-      let token = pending.accessToken
-      if (pending.refreshId) {
-        const approved = await this.client.refresh(pending.refreshToken, pending.refreshId)
-        if (approved.user.id !== pending.accountId) throw new Error('ROX_AUTH_INVALID_RESPONSE')
-        token = approved.accessToken
-      }
-      await this.client.logout(token)
+      // The broker's logout-only ancestry accepts this exact device's prior
+      // access proof after refresh rotation; it grants no account/read access.
+      // Revocation must not depend on the 60-second refresh replay cache.
+      await this.client.logout(pending.accessToken)
       await this.store.clearLogout(caller)
     }
   }

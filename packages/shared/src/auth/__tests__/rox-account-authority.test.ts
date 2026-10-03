@@ -83,7 +83,7 @@ describe('Pocket host account authority', () => {
   expect(f.records.size).toBe(0)
   expect((await f.authority.state(LOCAL_ROX_CALLER)).connected).toBe(false)
  })
- it('recovers an in-flight rotated refresh before logout revokes the device', async () => {
+ it('uses sealed prior access proof to revoke a device after an in-flight refresh rotation', async () => {
   const f = createPocketFixture(); await connect(f)
   const stored = f.records.get(JSON.stringify(LOCAL_ROX_CALLER))!; stored.expiresAt = 0
   let firstResolve!: (value: any) => void
@@ -95,7 +95,7 @@ describe('Pocket host account authority', () => {
   const read = restarted.state(LOCAL_ROX_CALLER); await Bun.sleep(1)
   const logout = restarted.logout(LOCAL_ROX_CALLER); await Bun.sleep(1)
   firstResolve(approved); await read; await logout
-  expect(revoked).toBe('current-device-access')
+  expect(revoked).toBe('access-fixture')
   expect(f.records.size).toBe(0)
  })
  it('fences a running executor when account key generation changes', async () => {
@@ -129,6 +129,19 @@ describe('Pocket host account authority', () => {
   expect(revoked).toBe('access-fixture')
   expect(f.pendingLogouts.size).toBe(0)
   expect((await relaunched.state(LOCAL_ROX_CALLER)).connected).toBe(false)
+ })
+ it('revokes via logout-only prior access proof without an expired refresh replay', async () => {
+  const f = createPocketFixture(); await connect(f)
+  const record = f.records.get(JSON.stringify(LOCAL_ROX_CALLER))!
+  record.expiresAt = 0; record.refreshId = 'consumed-refresh-proof'
+  let refreshed = false; f.client.refresh = async () => { refreshed = true; throw new Error('ROX_AUTH_EXPIRED') }
+  let revoked: string | undefined; f.client.logout = async token => { revoked = token }
+  const relaunched = new RoxAccountAuthority(f.store, f.client)
+  await relaunched.logout(LOCAL_ROX_CALLER)
+  expect(revoked).toBe('access-fixture')
+  expect(refreshed).toBe(false)
+  expect(f.records.size).toBe(0)
+  expect(f.pendingLogouts.size).toBe(0)
  })
 
 })

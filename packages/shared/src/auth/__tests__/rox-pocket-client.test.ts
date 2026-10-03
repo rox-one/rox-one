@@ -22,6 +22,10 @@ describe('Pocket v2 proof client', () => {
  it('rejects foreign broker redirect and malformed token envelopes', async () => {
   globalThis.fetch = (async () => respond({device_code:'d',user_code:'u',verification_uri:'https://evil.example.test/auth',expires_in:900})) as typeof fetch
   await expect(startPocketDeviceFlow(new AbortController().signal)).rejects.toThrow('ROX_AUTH_INVALID_RESPONSE')
+  for (const query of ['', '?v=1', '?v=2&v=1']) {
+   globalThis.fetch = (async () => respond({device_code:'d',user_code:'u',verification_uri:`https://rox.one/login/device${query}`,expires_in:900})) as typeof fetch
+   await expect(startPocketDeviceFlow(new AbortController().signal)).rejects.toThrow('ROX_AUTH_INVALID_RESPONSE')
+  }
   globalThis.fetch = (async () => respond({...approved,refresh_token:null})) as typeof fetch
   await expect(refreshPocketSession('fixture-refresh','fixture-operation')).rejects.toThrow('ROX_AUTH_INVALID_RESPONSE')
  })

@@ -45,7 +45,7 @@ export async function startPocketDeviceFlow(signal: AbortSignal): Promise<{ star
     let url: URL
     try { url = new URL(value) } catch { throw new Error('ROX_AUTH_INVALID_RESPONSE') }
     const base = new URL(getRoxAuthBaseUrl())
-    if (url.origin !== base.origin || url.pathname !== '/login/device' || url.hash || [...url.searchParams.keys()].some(key => !['v', 'user_code'].includes(key)) || url.username || url.password || url.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(url.hostname)) throw new Error('ROX_AUTH_INVALID_RESPONSE')
+    if (url.origin !== base.origin || url.pathname !== '/login/device' || url.searchParams.get('v') !== '2' || url.searchParams.getAll('v').length !== 1 || url.hash || [...url.searchParams.keys()].some(key => !['v', 'user_code'].includes(key)) || url.username || url.password || url.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(url.hostname)) throw new Error('ROX_AUTH_INVALID_RESPONSE')
     return url.href
   }
   return { started: { deviceCode: data.device_code, userCode: data.user_code, verificationUri: verify(data.verification_uri), verificationUriComplete: verify(data.verification_uri_complete ?? data.verification_uri), expiresIn: data.expires_in, interval: Math.max(2, Math.min(30, Number(data.interval) || 5)) }, proof: { codeVerifier: pkce.codeVerifier, redemptionId: randomUUID() } }
