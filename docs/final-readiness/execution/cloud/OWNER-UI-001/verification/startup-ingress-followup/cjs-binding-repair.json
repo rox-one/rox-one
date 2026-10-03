@@ -1,0 +1,68 @@
+{
+  "baseRevision": "c30bea0ab0a579507cc11f933f37fbd181affa59",
+  "createdAtUtc": "2026-10-03T18:21:40.115186+00:00",
+  "changedFixture": "scripts/electron-main-cjs.test.ts",
+  "beforeSha256": "42704fb0eedde299fea4f143d9a7787a781975954399aa03fb705e99ecce234e",
+  "afterSha256": "54905a247baff5fb8600e4ccd51fbc22b9138756da99ea6ae3aa0d4408de8294",
+  "change": "Pass argv:[] and OUTPUT_FILE into actual getBuildDefines/build-command extraction. Canonical default output is substituted with the existing task-local temporary outfile before invoking esbuild. Empty env remains; no credential or .env read.",
+  "productCodeChanged": false,
+  "assertionsChanged": false,
+  "timeoutsChanged": false,
+  "remoteBaseline": {
+    "job": 111261465376,
+    "pass": 230,
+    "fail": 2,
+    "assertions": 1457,
+    "files": 27,
+    "actualFailures": "Missing process.argv in fixture; actual startup callback suite6/0 passed."
+  },
+  "localInitial": {
+    "pass": 0,
+    "fail": 2,
+    "exitCode": 1,
+    "error": "Missing process.argv; fixture module was loaded before the subsequent edit, running command completed afterwards; preserve timing qualification."
+  },
+  "localIntermediate": {
+    "pass": 0,
+    "fail": 2,
+    "exitCode": 1,
+    "error": "After supplying argv, extracted command also needed OUTPUT_FILE. This intermediate red result is preserved."
+  },
+  "localCompleteBindings": {
+    "pass": 2,
+    "fail": 0,
+    "assertions": 14,
+    "exitCode": 0,
+    "bun": "1.3.14",
+    "node": "24.21.0"
+  },
+  "command": "PATH=<Bun1.3.14>:<Node24.21.0>:$PATH bun test ./scripts/electron-main-cjs.test.ts",
+  "logs": [
+    {
+      "name": "expanded-startup-c30-durable-ubuntu-failure.log",
+      "sha256": "b9dc360cf14e9a210a0732fe0ecdea41fc830c74ab62c1704d5d5385449f599d",
+      "gzipSha256": "2d82c212a318ef1ff74172d08bf0157060fb36cffe1e9dc461133509d0a20ac8",
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-startup-c30-durable-ubuntu-failure.log.gz"
+    },
+    {
+      "name": "expanded-main-cjs-c30-red.log",
+      "sha256": "70a8567cd7a51fbe5416942785121a0dc7ba7afd9c0d317e0e5b84a13ab59272",
+      "gzipSha256": "a1a92ef4e8c39634bbb7e8d76fd48912e86355fe5ca303245b8f3cf915171293",
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-main-cjs-c30-red.log.gz"
+    },
+    {
+      "name": "expanded-main-cjs-c30-green.log",
+      "sha256": "fbf1f39165ffb96e945bb4a7fb3706a1ad182a9f41c1a0079cfe1aeb329d5d14",
+      "gzipSha256": "6e985d12f037a303704029dd46139aeafd6130a5cee2af00f3f9499b50c42b6d",
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-main-cjs-c30-green.log.gz"
+    },
+    {
+      "name": "expanded-main-cjs-c30-complete-bindings.log",
+      "sha256": "5eb11c0f0ce2e40319946965e4fc23e9662afe57f8b0542aa1c86d420d3c87e2",
+      "gzipSha256": "b17c7a3096164aaaf9e6036f33245cfa97687ae7eb0c07ab9b6e9dbc731bb4ec",
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-main-cjs-c30-complete-bindings.log.gz"
+    }
+  ],
+  "nativeProofRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "fullDoDClosed": false
+}
