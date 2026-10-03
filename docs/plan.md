@@ -969,7 +969,27 @@ Owner root. Depends on existing rail-links/Popover/Select and current product-to
 3. Run source/current SourceManager and adjacent builder/builtin credential controls, shared/Electron types; freeze source and bounded receipt. Compare actual old consumers to prove the gap, retain failure history, reconcile current main and publish/attach separate PR for lead review/merge.
 4. Continue #1436 host Bash lifetime and collection/knowledge performance actual consumers and function-level ledger; no whole original branch acceptance from this slice.
 
+## Host Bash recovery graph (2026-10-03)
+
+1. Scout selectively restores the #1436 host environment/context/process slice onto current main. Preserve exact managed18.4.12/policy, current source/MCP credential context, canonical env blocklist, sandbox and cwd controls. Keep all original branches and the parent's dirty checkout untouched.
+2. Exercise the actual factory → context → core registry → Bash with an owned managed CLI, under Bun and native Node, and the same no-provider negative. Exercise fresh per-call values, blocked credentials, Windows case folding, startup-file/function refusal, private provider failure/deadline/no-late-spawn and actual inherited pipes after root exit. Retain the original native Windows fixtures and add actual configured shell/cmd/descendant lifetime controls with explicit off-platform skips.
+3. Compare baseline/source against exact startup canary and orphan-pipe probes; retain failed fixture history and bounded cleanup of fixture-owned PIDs. Run focused/adjacent session runtime and tool-definition controls plus shared/Electron typechecks. Freeze exact implementation and receipt, commit/push/attach a separate PR; root owns remote merge.
+4. Continue Knowledge availability cache and the exhaustive137-path function/caller disposition. Historical owns the independent AppShell collection persistence/grouping gap. Native Windows execution and full installed release acceptance remain separately stated.
+
+
+## Collection preference recovery — 2026-10-03
+
+1. Historical worker: reproduce reset and grouping failures on the exact current AppShell consumer with real native JSON storage (original 0/9).
+2. Restore current preference loads and sole canonical grouping; add per-store load/edit/event/ABA ownership and dispatched-write ordering, including previous-workspace projection isolation.
+3. Qualify native persistence and current related callbacks (33/0/80), mounted exact AppShell callbacks in Chromium, and current Electron types after main reconciliation. Preserve original failure history and all source branches; lead reviews and merges the separate PR. Installed/native platform acceptance remains separate.
 
 ### Golden task date validation recovery — 2026-10-03
 
 Owner recent_features: restore exact ISO calendar-day validation in the current parser; verify impossible-date refusal and valid leap-day persistence through the actual TaskDetail form. Keep before-fix unit/browser failures, full personal-task regression checks and both timezone offsets; qualify current core types and production component/CSS bundle. Parent owns ordered PR merge; source branches stay preserved. Broader Golden/native release acceptance remains separate.
+
+Collection recovery qualification completed on current bb047:33/0/80 native-storage/current callbacks,5/0 mounted Chromium and full Electron Node22 types0. Prior test-type diagnostics were corrected by precise literal fixture types; all source failures remain in the archived evidence.
+
+
+### Golden per-task form draft recovery — 2026-10-04
+
+Owner recent_features; depends on current Tasks1456, strict date1470 and Product1454. Preserve old source and modern Things UI. Exercise actual two-task link/kind/tag retention, submitted-field-only clearing, actor/workspace ABA, unmount and stale pre-render button denial, plus all retained task import/responsive cases and current native commit controls. Retain the before-fix lost draft and fixture failure history; qualify current Electron types with own workspace dependency resolution, record exact source/log hashes, reconcile all current docs without deletions, publish separate PR for parent review/merge.
