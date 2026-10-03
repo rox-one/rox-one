@@ -1,7 +1,7 @@
 {
   "source_sha": "35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5",
-  "integration_main": "2f03faa5dcc075d4acbd364dd7bdb3ba14993596",
-  "source_branch": "codex/product-tour-a6-integration",
+  "integration_main": "ae19683e69f079893cd09065487cfa7653d01154",
+  "source_branch": "codex/product-learning-a6-20261003",
   "owner": "pr_scout",
   "dependent_owner": "historical_sweep (UI/runtime and actual consumers)",
   "prefixes": [
@@ -14,7 +14,7 @@
     {
       "path": "apps/electron/src/renderer/features/product-tour/analytics/analytics.test.ts",
       "source_sha256": "c0213f699565bf4e4e221d05100684e8e26cdec5a852533d8310663ab6ed840b",
-      "integrated_sha256": "64ac7800ef14f548609f7e92eb822bf58d1a63399b8365df912e090504e3ea3c"
+      "integrated_sha256": "1d0fd7d0c403df663a0a378eb55a94d47e99b6e8f5d4c97581b02b9f9292c48b"
     },
     {
       "path": "apps/electron/src/renderer/features/product-tour/analytics/diagnostics.ts",
@@ -44,12 +44,12 @@
     {
       "path": "apps/electron/src/renderer/features/product-tour/core/engine.test.ts",
       "source_sha256": "f8d15d7c3435e0805668f7d8f85b448b0447e47a80cb7f093ba001f2a4e22c5c",
-      "integrated_sha256": "f8d15d7c3435e0805668f7d8f85b448b0447e47a80cb7f093ba001f2a4e22c5c"
+      "integrated_sha256": "83385e844e50b2593fb765fcadab20ade4f934e7d8e2943a2641b3f2c25cd2a6"
     },
     {
       "path": "apps/electron/src/renderer/features/product-tour/core/index.ts",
       "source_sha256": "2ccd8d96e573df9283d645e731ea2b13d8dd3847803d6794c7fccd4462388f24",
-      "integrated_sha256": "2ccd8d96e573df9283d645e731ea2b13d8dd3847803d6794c7fccd4462388f24"
+      "integrated_sha256": "942217bd2568b9e593b31e726aaa08434c7cb636522f0a0315c3a5bfaeba2647"
     },
     {
       "path": "apps/electron/src/renderer/features/product-tour/persistence/browser-test-entry.ts",
@@ -94,7 +94,9 @@
   ],
   "adaptations": [
     "Contract comment describes current foundation/dependent consumer scope; interfaces are unchanged.",
-    "Diagnostics allowlist captures enumerable own data descriptors once; getters and inherited properties cannot smuggle private values between validation and serialization. Negative controls plus actual IndexedDB readback cover the reproduced leak."
+    "Diagnostics allowlist captures enumerable own data descriptors once; getters and inherited properties cannot smuggle private values between validation and serialization. Negative controls plus actual IndexedDB readback cover the reproduced leak.",
+    "Pure engine rejects unknown evidence origins/levels from untyped callers rather than promoting them into verified native outcomes; typed interface and legitimate native/UI observations unchanged.",
+    "Local test-only retention deadline override is capped at120s; source20s default and all production TTL/retention values remain unchanged. Earlier under-load deadline failure retained in receipt."
   ],
   "acceptance_limit": "Pure engine and real IndexedDB durable/multi-window foundation only. No claim of activated routes, spotlight UI, native provider operations or full Product Learning feature acceptance until dependent current-consumer integration."
 }

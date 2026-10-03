@@ -80,6 +80,8 @@ import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
 import { visibleExtraScreens } from "@/pages/extra-screens/registry"
 import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
 import { SidebarChrome } from "./SidebarChrome"
+import { focusServicePanelAtom } from "./service-navigation"
+import type { AppNavDestinationId } from "./nav-destinations"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
 import { useShellAppearance } from "@/hooks/useShellAppearance"
 import { resolvePromoSlot } from "@/platform/promo-slot"
@@ -1824,9 +1826,16 @@ function AppShellContent({
     commitShellLayout({ workspaceId: activeWorkspaceId, collapsedSectionIds: [...collapsedItems] })
   }, [collapsedItems, activeWorkspaceId, workspaceUiStateId])
 
+  const focusServicePanel = useSetAtom(focusServicePanelAtom)
+  const handleServiceClick = useCallback((serviceId: AppNavDestinationId) => {
+    if (focusServicePanel(serviceId)) return
+    const route = APP_NAV_DESTINATIONS_BY_ID[serviceId].route?.()
+    if (route) navigate(route)
+  }, [focusServicePanel, navigate])
+
   const handleAllSessionsClick = useCallback(() => {
-    navigate(routes.view.allSessions())
-  }, [navigate])
+    handleServiceClick('sessions')
+  }, [handleServiceClick])
 
   const handleFlaggedClick = useCallback(() => {
     navigate(routes.view.flagged())
@@ -1880,8 +1889,8 @@ function AppShellContent({
 
   // Handler for sources view (all sources)
   const handleSourcesClick = useCallback(() => {
-    navigate(routes.view.sources())
-  }, [])
+    handleServiceClick('sources')
+  }, [handleServiceClick])
 
   // Handlers for source type filter views (subcategories in Sources dropdown)
   const handleSourcesApiClick = useCallback(() => {
@@ -1898,41 +1907,41 @@ function AppShellContent({
 
   // Handler for skills view
   const handleSkillsClick = useCallback(() => {
-    navigate(routes.view.skills())
-  }, [])
+    handleServiceClick('skills')
+  }, [handleServiceClick])
 
   // Handler for memory view
   const handleMemoryClick = useCallback(() => {
-    navigate(routes.view.memory())
-  }, [])
+    handleServiceClick('memory')
+  }, [handleServiceClick])
 
   const handleTasksClick = useCallback(() => {
-    navigate(routes.view.tasks())
-  }, [])
+    handleServiceClick('tasks')
+  }, [handleServiceClick])
 
   const handleMeetingsClick = useCallback(() => {
-    navigate(routes.view.meetings())
-  }, [])
+    handleServiceClick('meetings')
+  }, [handleServiceClick])
 
   // Handler for workspace-local Notes.
   const handleNotesClick = useCallback(() => {
-    navigate(routes.view.notes())
-  }, [])
+    handleServiceClick('notes')
+  }, [handleServiceClick])
 
   // Handlers for automations view
   const handleAutomationsClick = useCallback(() => {
-    navigate(routes.view.automations())
-  }, [])
+    handleServiceClick('automations')
+  }, [handleServiceClick])
 
   // Handler for projects view
   const handleProjectsClick = useCallback(() => {
-    navigate(routes.view.projects())
-  }, [])
+    handleServiceClick('projects')
+  }, [handleServiceClick])
 
   // Handler for pages view
   const handlePagesClick = useCallback(() => {
-    navigate(routes.view.pages())
-  }, [])
+    handleServiceClick('pages')
+  }, [handleServiceClick])
 
   const handleAutomationsScheduledClick = useCallback(() => {
     navigate(routes.view.automationsScheduled())
@@ -1949,8 +1958,12 @@ function AppShellContent({
   // Handler for settings view. With no arg → bare `settings` route (navigator-only
   // in compact mode, App fallback on desktop). With an arg → `settings/<subpage>`.
   const handleSettingsClick = useCallback((subpage?: SettingsSubpage) => {
+    if (!subpage && !isAutoCompact) {
+      handleServiceClick('settings')
+      return
+    }
     navigate(routes.view.settings(subpage))
-  }, [])
+  }, [handleServiceClick, isAutoCompact, navigate])
 
 
   // ============================================================================
@@ -2689,7 +2702,7 @@ function AppShellContent({
       title: t(APP_NAV_DESTINATIONS_BY_ID.connections.labelKey),
       icon: APP_NAV_DESTINATIONS_BY_ID.connections.icon,
       variant: isConnectionsNavigation(navState) ? "default" : "ghost",
-      onClick: () => navigate(routes.view.connections()),
+      onClick: () => handleServiceClick('connections'),
     },
     // --- Settings (What's New moved to TopBar) ---
     {
@@ -2824,6 +2837,7 @@ function AppShellContent({
                 </div>
                 <div className="shrink-0">
                   <SidebarChrome
+                    workspaceId={activeWorkspaceId}
                     profile={profileStripWithSpend}
                     onProfileClick={() => handleSettingsClick('account')}
                     promoKind={promoKind}
