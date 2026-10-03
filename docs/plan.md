@@ -1102,5 +1102,5 @@ Runtime renderer bounded qualification complete: actual19 browser cases and39 mo
 
 - [x] Freeze c2e8 source and current producer caller/blob audit; agree historical collector seven-file dependency and producer fourteen-file partition. Preserve SSO suppliedExecution and spawn authority bind.
 - [x] Reproduce current TaskRunner and native observer negatives in an isolated unchanged baseline; retain fixture/timeout failures separately.
-- [ ] Recover only actual producer origin/output/private projection/native lifecycle intent; qualify current account/native/host process negative controls, native mock-provider loop and package types.
-- [ ] Publish separate qualified PR with exact source and current-main additive docs union; root reviews/merges.
+- [x] Recover actual producer origin/output/private projection/native lifecycle intent; qualify 94/0 current producer cases, 48/0 authority/source-proxy cases, 3/0 selected fixture cases, native mock-provider loop and explicit package type gates; preserve all negative history.
+- [x] Prepare the separate qualified review candidate with exact source hashes and current-main additive docs union. Root owns remote review/merge; publication and merge receipts are separate from bounded qualification.
