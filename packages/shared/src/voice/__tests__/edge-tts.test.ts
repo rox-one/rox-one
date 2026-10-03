@@ -29,7 +29,7 @@ describe('edge-tts synthesis', () => {
         await writeFile(output, Buffer.from('fixture-mp3'))
       },
     })
-    const result = await speakWithPolicy(getDefaultVoicePrefs(), { text }, { edge, fish: edge })
+    const result = await speakWithPolicy({...getDefaultVoicePrefs(), ttsEngine: 'edge'}, { text }, { edge, fish: edge })
     expect(result).toEqual({ engine: 'edge', uploaded: false, textSent: true, audioBase64: Buffer.from('fixture-mp3').toString('base64'), mimeType: 'audio/mpeg' })
     await expect(access(directory)).rejects.toThrow()
   })

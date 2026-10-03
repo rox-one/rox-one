@@ -13,6 +13,9 @@ export {
   isModelHealthStatus,
   type SttEngine,
   type TtsEngine,
+  type SpeakAdapter,
+  type SpeakInput,
+  type SpeakResult,
   type AudioRetention,
   type LocalArchivePolicy,
   type ModelHealthStatus,
@@ -42,6 +45,7 @@ export {
 export {
   VoicePrivacyError,
   transcribeWithPolicy,
+  speakWithPolicy,
   assertEditableTranscript,
 } from './transcribe.ts'
 

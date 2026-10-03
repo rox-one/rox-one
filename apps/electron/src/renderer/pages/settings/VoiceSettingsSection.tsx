@@ -152,6 +152,7 @@ export function VoiceSettingsSection() {
             onValueChange={(value) => void save({ ttsEngine: value as TtsEngine })}
             options={[
               { value: 'system', label: t('settings.input.ttsSystem'), description: t('settings.input.ttsSystemDesc') },
+              { value: 'edge', label: t('settings.input.ttsEdge'), description: t('settings.input.ttsEdgeDesc') },
             ]}
           />
           <SettingsMenuSelectRow

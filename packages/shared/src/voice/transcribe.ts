@@ -4,6 +4,9 @@ import type {
   TranscribeInput,
   TranscribeResult,
   VoicePrefs,
+  SpeakAdapter,
+  SpeakInput,
+  SpeakResult,
 } from './types.ts'
 
 export class VoicePrivacyError extends Error {
@@ -63,9 +66,10 @@ export async function transcribeWithPolicy(
 export async function speakWithPolicy(
   prefs: VoicePrefs,
   input: SpeakInput,
-  adapters: { edge: SpeakAdapter; fish: SpeakAdapter },
+  adapters: { edge: SpeakAdapter; fish?: SpeakAdapter },
 ): Promise<SpeakResult> {
-  const adapter = prefs.ttsEngine === 'fish-speech' ? adapters.fish : adapters.edge
+  if (prefs.ttsEngine !== 'edge') throw new Error('Online TTS is not selected')
+  const adapter = adapters.edge
   const result = await adapter.speak(input)
   return { ...result, engine: prefs.ttsEngine, uploaded: false }
 }

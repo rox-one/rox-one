@@ -9,7 +9,7 @@ export const VOICE_PREFS_VERSION = 3 as const
 export const DEFAULT_WAKE_PHRASE = 'Так, Рокс!'
 
 export type SttEngine = 'local-whisper' | 'cloud-rox'
-export type TtsEngine = 'system'
+export type TtsEngine = 'system' | 'edge'
 export type AudioRetention = 'none' | 'session' | 'cloud-policy'
 export type LocalArchivePolicy = 'until-delete' | 'session' | 'none'
 export type ModelHealthStatus = 'missing' | 'downloading' | 'ready' | 'error' | 'unsupported'
@@ -21,7 +21,7 @@ export type RecognitionLanguage = 'auto' | 'en' | 'ru'
 
 export const STT_ENGINES: readonly SttEngine[] = ['local-whisper', 'cloud-rox'] as const
 
-export const TTS_ENGINES: readonly TtsEngine[] = ['system'] as const
+export const TTS_ENGINES: readonly TtsEngine[] = ['system', 'edge'] as const
 
 export const AUDIO_RETENTION_POLICIES: readonly AudioRetention[] = [
   'none',
@@ -117,6 +117,9 @@ export interface SpeakResult {
   textSent?: boolean
   audioBase64?: string
   mimeType?: 'audio/mpeg'
+  playback?: 'audio' | 'native' | 'renderer' | 'none'
+  voice?: string
+  reason?: 'russian-system-voice-unavailable'
 }
 
 export interface TranscribeAdapter {
@@ -124,12 +127,9 @@ export interface TranscribeAdapter {
   transcribe(input: TranscribeInput): Promise<TranscribeResult>
 }
 
-export interface SpeakResult {
+export interface SpeakAdapter {
   engine: TtsEngine
-  uploaded: false
-  playback: 'native' | 'renderer' | 'none'
-  voice?: string
-  reason?: 'russian-system-voice-unavailable'
+  speak(input: SpeakInput): Promise<SpeakResult>
 }
 
 export function isSttEngine(value: unknown): value is SttEngine {

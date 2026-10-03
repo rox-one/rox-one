@@ -36,6 +36,8 @@ import {
   saveVoicePrefs,
   setFavorite,
   transcribeWithPolicy,
+  speakWithPolicy,
+  type SpeakAdapter,
   voiceGatewayBaseUrl,
   VOICE_PREFS_VERSION,
   type TranscribeAdapter,
@@ -134,9 +136,7 @@ function cloudAdapter(caps: VoiceCapabilities): TranscribeAdapter {
   }
 }
 
-function fishSpeakAdapter(): SpeakAdapter {
-  return { engine: 'fish-speech', async speak() { return { engine: 'fish-speech', uploaded: false } } }
-}
+
 
 let cachedCaps: VoiceCapabilities = {
   ...LAST_KNOWN_GOOD_CAPABILITIES,
@@ -284,7 +284,7 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps, opt
       try {
         const policy = await speakWithPolicy(prefs, { text, language: prefs.recognitionLanguage, signal: controller.signal }, {
           edge: edgeSpeaker,
-          fish: fishSpeakAdapter(),
+
         })
         if (controller.signal.aborted) return { engine: prefs.ttsEngine, uploaded: false, playback: 'none' as const }
         if (policy.audioBase64) return { ...policy, playback: 'audio' as const }

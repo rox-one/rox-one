@@ -41,7 +41,7 @@ module.exports = async function afterPack(context) {
   }
 
   const appPath = context.appOutDir;
-  const resourcesDir = path.join(appPath, 'Craft Agents.app', 'Contents', 'Resources');
+  const resourcesDir = path.join(appPath, `${context.packager.appInfo.productFilename}.app`, 'Contents', 'Resources');
   const precompiledAssets = path.join(context.packager.projectDir, 'resources', 'Assets.car');
   const sourceSvg = path.join(context.packager.projectDir, 'resources', 'icon.icon', 'Assets', 'icon.svg');
 

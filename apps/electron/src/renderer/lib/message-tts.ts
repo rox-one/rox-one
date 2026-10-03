@@ -13,14 +13,7 @@ export type SpeakVoiceResult = {
   voice?: string
   reason?: string
 }
-export type SpeakVoiceApi = (payload: { text?: string; stop?: boolean; status?: boolean }) => Promise<{
-  playback?: 'audio' | 'native' | 'renderer' | 'none'
-  audioBase64?: string
-  mimeType?: 'audio/mpeg'
-  speaking?: boolean
-  voice?: string
-  reason?: string
-}
+export type SpeakVoiceApi = (payload: { text?: string; stop?: boolean; status?: boolean }) => Promise<SpeakVoiceResult>
 
 export type MessageAudio = {
   play(): Promise<void>
@@ -74,6 +67,7 @@ export function createMessageTts(deps: MessageTtsDeps) {
   const clearIntervalFn = deps.clearInterval ?? ((id) => globalThis.clearInterval(id as ReturnType<typeof setInterval>))
   let poll: unknown = null
   let token = 0
+  let requestTail: Promise<void> | null = null
   let audio: MessageAudio | null = null
 
   const clearAudio = () => {
@@ -107,6 +101,12 @@ export function createMessageTts(deps: MessageTtsDeps) {
       clearPoll()
       clearAudio()
       deps.synth?.cancel()
+      const previous = requestTail
+      const {promise, resolve: finishRequest} = Promise.withResolvers<void>()
+      requestTail = promise
+      if (previous) await previous
+      try {
+      if (mine !== token) return 'unavailable'
       let ended = false
       const finish = () => {
         if (mine !== token || ended) return
@@ -116,6 +116,7 @@ export function createMessageTts(deps: MessageTtsDeps) {
         onEnd()
       }
       let native = false
+      let audioAttempted = false
       try {
         const result = await deps.speakVoice?.({ text: trimmed })
         if (mine !== token) {
@@ -124,6 +125,7 @@ export function createMessageTts(deps: MessageTtsDeps) {
         }
         if (result?.playback === 'none') return 'unavailable'
         if (result?.playback === 'audio' && result.audioBase64) {
+          audioAttempted = true
           const createAudio = deps.createAudio ?? (typeof Audio !== 'undefined' ? createBrowserAudio : undefined)
           if (createAudio) {
             audio = createAudio(result.audioBase64, result.mimeType ?? 'audio/mpeg')
@@ -138,7 +140,7 @@ export function createMessageTts(deps: MessageTtsDeps) {
       } catch {
         if (mine !== token) return 'unavailable'
         clearAudio()
-        native = false
+        return audioAttempted ? speakWeb(trimmed, finish) : 'unavailable'
       }
       if (mine !== token) return 'unavailable'
       if (native) {
@@ -155,6 +157,7 @@ export function createMessageTts(deps: MessageTtsDeps) {
         return 'native'
       }
       return speakWeb(trimmed, finish)
+      } finally { finishRequest() }
     },
     stop() {
       token += 1

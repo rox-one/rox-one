@@ -356,16 +356,16 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
       if (mode === 'clarify') {
         const questions = shared.parseClarifyResponse(result.text)
         if (!questions.length) return { ok: false, error: 'unparseable', raw: result.text.slice(0, 2000) }
-        return { ok: true, mode, questions, model: result.model, roadmapRevision: roadmap.revision }
+        return { ok: true, mode, questions, model: result.model, requestedModel: result.requestedModel, effectiveModel: result.effectiveModel ?? null, warning: result.warning, roadmapRevision: roadmap.revision }
       }
       if (mode === 'improve') {
         const improved = shared.stripImprovedText(result.text)
         if (!improved) return { ok: false, error: 'empty-answer' }
-        return { ok: true, mode, text: improved, model: result.model, roadmapRevision: roadmap.revision }
+        return { ok: true, mode, text: improved, model: result.model, requestedModel: result.requestedModel, effectiveModel: result.effectiveModel ?? null, warning: result.warning, roadmapRevision: roadmap.revision }
       }
       const proposal = shared.parseSpecResponse(result.text)
       if (!proposal) return { ok: false, error: 'unparseable', raw: result.text.slice(0, 2000) }
-      return { ok: true, mode: 'spec', proposal, model: result.model, roadmapRevision: roadmap.revision }
+      return { ok: true, mode: 'spec', proposal, model: result.model, requestedModel: result.requestedModel, effectiveModel: result.effectiveModel ?? null, warning: result.warning, roadmapRevision: roadmap.revision }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       log.warn(`PROJECTS_AI_ROADMAP failed for ${projectSlug}: ${message}`)
