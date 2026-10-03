@@ -1,3 +1,4 @@
+import type { NativeVoiceOverlayHost } from './voice-overlay-host'
 import type { NativeAuthority } from '../authority/native-authority.ts'
 import type { NativeJournal } from '../authority/native-journal.ts'
 import type { PendingCommandsStore } from '../command-gateway'
@@ -74,6 +75,8 @@ export interface HandlerDeps<
   browserCredentials?: BrowserCredentialHost
   /** Optional because standalone/headless hosts do not compose a managed OpenClaw runtime. */
   openClawSecurity?: OpenClawSecurityService
+  /** Optional GUI-only overlay; never controlled through an untrusted SET_OVERLAY RPC. */
+  voiceOverlay?: NativeVoiceOverlayHost
   commandGateway?: PendingCommandsStore
   /** Host-owned canonical adapters for native objects linked from workspace tasks. */
   workspaceWorkReferences?: {

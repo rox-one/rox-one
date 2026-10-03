@@ -1,0 +1,469 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-03T16:36:22.963140+00:00",
+  "pr": 1420,
+  "headRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "testedCheckoutRevision": "e1e389932b628e1a41b7b078602dc268b11c987c",
+  "testedCheckoutParents": [
+    "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
+    "8e3f6d841f2e5d332ee388985220de0819da4c81"
+  ],
+  "sourceBinding": "GitHub job reports the PR head8e; actual checkout log and commit API identify its integration merge candidate. All45 current authored product files exactly match that remote Git tree.",
+  "ownedProductReadback": {
+    "count": 45,
+    "mismatches": [],
+    "files": [
+      {
+        "path": "apps/electron/src/main/deep-link.ts",
+        "sha256": "4bc5762d28f14fb03980980662a5beeb9832fe3f6d7caf1f4616ad4a55e0521a",
+        "gitBlobSha": "2c1b1d3e95578a0716941b2c341db3814890df3f",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/main/index.ts",
+        "sha256": "9ecdfcbd0080d60628a67a199f4ec438d399f8d5d49ab234bba28fcf7a50f8bd",
+        "gitBlobSha": "82be1319c9e786169ecce6c3ff737d32e125e64e",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/atoms/panel-stack.ts",
+        "sha256": "329cde215256c531e259d034382f45a246117739ad75f9dfb25f263997317024",
+        "gitBlobSha": "b20d7fd70001a1a6b09603533d9e4ba981d3563d",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+        "sha256": "e4246c8ca6c5d99d16aa42705d7520c05ca54be7aa3a556cd2a2d6c39628d27e",
+        "gitBlobSha": "cebb26ae8b9134245236ebce9465b1e13a6cccdf",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx",
+        "sha256": "a4edf3356beecf2a4b273c18b28263f45b7c2d83d15d709aa8bfba422036ebbd",
+        "gitBlobSha": "2fdcdab7327614d313d3bc1e57079e91c3bf3c36",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx",
+        "sha256": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
+        "gitBlobSha": "c2a0faabc06bf035506f72060c869d2895d54494",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/service-navigation.ts",
+        "sha256": "c70de20413482f2873923d92a7582336b6ff29bb7e77038b6b37eff5867decfd",
+        "gitBlobSha": "d60b2f081d7687c48459f894c56de2f9d6bb518a",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/components/pages/PageView.tsx",
+        "sha256": "e9379e0f6ff8f2cb72f0d8703dabc6234c528957d4af11cb1bcdef4bc34432dc",
+        "gitBlobSha": "a0c968871a6104a84e7f4b88bed64f73bf139943",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+        "sha256": "807106e633dd513c1d76623ff938deca99069301c9ddb00f81e041a1136b1d98",
+        "gitBlobSha": "3e43761f71f70f859b1079138535b9392c249ea1",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/contexts/navigation-history.ts",
+        "sha256": "9da735adc486083d686878e9afa108a486ff19dcf465d0486e1b86845110f3b6",
+        "gitBlobSha": "c0ac08b32a8fb1f225ef4cd5a535597e710796e9",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/contexts/navigation-reconcile.ts",
+        "sha256": "e881a85c503f492fe47186b9dd9241a6884855dda46072bdcfbbfcc932fd0e2b",
+        "gitBlobSha": "64308ae7632c9ef140b928ed12c9a9f05f6bafc0",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/hooks/usePages.ts",
+        "sha256": "71c548d1434745eccd9e54ed9d4770f36433e25dfc62a72e533efb7e41082120",
+        "gitBlobSha": "6c19af541de7b32f89faac967dd4b2480a107c98",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/knowledge/knowledge-entity-projection.ts",
+        "sha256": "58b0f76a9693ef7bf15776bda2339f41c9d1ab4f441aa8265fd8605fcf197842",
+        "gitBlobSha": "a03791cba5c48fbf8c0bba00f41ce45b0b64fe04",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/extra-screens/use-rox-sources.ts",
+        "sha256": "c20b796dd2f6b4e4532e885d9bfea3c6e059f8bfa7430ffc1d925b0113d3c8f2",
+        "gitBlobSha": "4676f4895ca95f863019b3d7e282f08537d7194f",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/nav-helpers.ts",
+        "sha256": "4e8845e112e8f7c2bcfe0b6d29cf9cf097e405dada90778e11f746f132729e56",
+        "gitBlobSha": "1b81e504e32668bb20658606be77e80171a02bff",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/panel-url.ts",
+        "sha256": "0c250ec0f83eaa0e1e473e17254dece63674f91da60185ec2e5e2fa88714de2c",
+        "gitBlobSha": "12b60bf5230f1673f98609a4c24697d93a83b413",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/route-recovery.tsx",
+        "sha256": "9f3a29dc956e4be7ea8437482c345794434bff3bdb741ca35b18296d929c0ea5",
+        "gitBlobSha": "7dd25193fd09c0ac432f6c4593ba4795f7ef4581",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/BrowserPanelPage.tsx",
+        "sha256": "48f4978e3247e3717c856df8303ed4f4f62c6f23c98cfe7a63b76f13e5e5b79c",
+        "gitBlobSha": "3fe3b79cbbb962b1ecfc9d289fd83104663778fe",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/CloudRunSurfacePage.tsx",
+        "sha256": "0af227fe3309c4829ac6f6acb1946963b722cb1ecfe7eebe5dc47baf49964617",
+        "gitBlobSha": "6cd2bd4fe9c2ad39367742a8eb3f8b823c9a35b3",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/ExtensionSurfacePage.tsx",
+        "sha256": "a3ebd80eeef2763fa3abb1c951d4eb3e75e9469ba91185c651608e0341700f13",
+        "gitBlobSha": "a11d9d7ab0acd11fb32c0653cf9d31d66224e3c2",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/KnowledgeEntityPage.tsx",
+        "sha256": "2277c34e2953d2174e70f62a1df2c08cd24506fdf5926ee1efa215bdfd25988b",
+        "gitBlobSha": "8c9b6e32d19c7c7d841eeecf3e6c0b0255ea992f",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/KnowledgeSurfacePage.tsx",
+        "sha256": "6bd10ad0cd0d31c9d181948b456284a216fa70ce4fa58e750304fbe00f247018",
+        "gitBlobSha": "bb5897326abdb2c30e9c6531383ad463b140f892",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "sha256": "5224f6f8d196b1e8a955a73250928fd922c1a306469f4f58821f775c6a612365",
+        "gitBlobSha": "b14ba96de496dfd98c89740562c82c6865b7e383",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "sha256": "7ce67af216e392ec74922c52ddbda811c940e1a931c11903375d5f9363a088eb",
+        "gitBlobSha": "b294add83a8903ba6e217a7ee374147e2a711d24",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/TerminalSurfacePage.tsx",
+        "sha256": "68d3f60fbbea7362f9e0d430eb252130e793482ad2729c7c753e7bf26cf65fa9",
+        "gitBlobSha": "ab24150bcf3b1c105e81d9212f6c463b813c68ea",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/extra-screens/ExtraScreenHost.tsx",
+        "sha256": "7502a5f389399cd0fc311dd938cfbb77b1c3606cbf8c164c8111c9bbe35b9679",
+        "gitBlobSha": "2c3d83072be5debabee9c0105cca726ac58df568",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/extra-screens/ExtraScreenItemUnavailable.tsx",
+        "sha256": "34d1c597b42d70976213091fc1d3093fdd23ab4f011948f277c2e6f6d854c8ea",
+        "gitBlobSha": "ac9466adc1a0090bcd835758a9c010724ab73477",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/extra-screens/decisions/DecisionsPage.tsx",
+        "sha256": "234e0d5e66ace6d6e9fbfd5cadae4973d80576c7e2f3970460ab657e94c2102c",
+        "gitBlobSha": "6135097084bbe2cb7ec9f3d15a6e371da242fc05",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+        "sha256": "90440bc95f29458e74fa388f2b50572aded115653331aa485199f36313312e39",
+        "gitBlobSha": "91c373b8754e33a55c485189a6dca59bda941a6c",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/extra-screens/radar/RadarPage.tsx",
+        "sha256": "9bbca9a4b4be93a9275ea84cae23a76761ce1133f1ae0e26517b62848f27e732",
+        "gitBlobSha": "d0ad17ff979802e736b7d356c8735ab74648c8d5",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/renderer/platform/layout-snapshot.ts",
+        "sha256": "578f2cf151c88678e92b19583ac4a17493c564a752721ae94bd2b9596a7bc723",
+        "gitBlobSha": "399d2946010b9386f2889dc3b0aa5e768b072a14",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/shared/route-parser.ts",
+        "sha256": "613068e6cc643848b45f9ee3a4fb8a991cbb80873bd31bbf1f40d48f2bfe8ad5",
+        "gitBlobSha": "078127b92494c7b71e5d0a1a1fdee789a7c3d183",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "apps/electron/src/shared/types.ts",
+        "sha256": "ff0793b61402da98e5634d643e5ff8f2ddd1095c8c9687b681822e6ec5ff603f",
+        "gitBlobSha": "68ecfdb45a6c2e15d43532884a5e645b790b71f9",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ar.json",
+        "sha256": "59385879b4a65a898dc8a97024adab3b965ff05a3dcb372c6bba81c7c50d789b",
+        "gitBlobSha": "13d223bd537320e614e8e3237cdec31d83853d57",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/de.json",
+        "sha256": "f7b341a16d9cc4955c5e090d669e78cb7b8c5dd5f54f8cd4c1bbeddbeb877617",
+        "gitBlobSha": "ab1481b08aa9cb021d69fe7636d756d236d835f9",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/en.json",
+        "sha256": "1f6d09387b755125e44ec2212badfc80fcf79fba69731e5b1552ed764ac8ddb3",
+        "gitBlobSha": "a13a6110a51f74c0659cd78f3f7ead0521111fa3",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/es.json",
+        "sha256": "3c0853b413379b6f24acc61e47fd3b5a024394f3288805fe6fdb0149b1708cf4",
+        "gitBlobSha": "83c57fa68c1aa11f2eb7cc718343676a0dc9965e",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/fr.json",
+        "sha256": "67a2e3450fc47c6c804e37042acd0147ebc5e587b9b8be9aaa51a51c19a44b99",
+        "gitBlobSha": "17e730f2995d3b9ce48ce7cc583053557eb5fb07",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/hu.json",
+        "sha256": "521c51dd73944cbd29be676377d99856667da9130d0971c4aba76b1a29fa09fe",
+        "gitBlobSha": "2e499ca3c0cb33b37586ecbb03a8a87db25d1e03",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ja.json",
+        "sha256": "0b4d2e7d8d88fe9eb2c57728802de62700b72b9f9ef3488f1be8400f6c9b3964",
+        "gitBlobSha": "e64c68c7d539ab8be20a0990d95e38443f23541c",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ko.json",
+        "sha256": "50843da9e68d8baa82e44f5caacc1f6b33eb343ee551348ac36490d30dbf1b75",
+        "gitBlobSha": "cbca1d5c3eb7734866218391069c808109657f99",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/pl.json",
+        "sha256": "b9a313597b663634c4538ca1eccecd078f4bfdfaa908d6d1a78811e377bc774f",
+        "gitBlobSha": "7f9edc338b02d569da8f7612a92dcb76a65fc578",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ru.json",
+        "sha256": "17b2728e5d535b7dbaca60690e1e6e70f1fbe313d1406fca77f8a5be2a08b714",
+        "gitBlobSha": "6130b2d1e9a77be7495c00613ee6567e558841e0",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+        "sha256": "000ca92e51878457496bb263f0d1f868a5fd9a202239e99fae1a62fe60050d1c",
+        "gitBlobSha": "01dff4910939556bf2836a39421e69d28312171f",
+        "matchesTestedRemoteMergeTree": true
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+        "sha256": "8b2ef11bad4e908505282b1b8e7dfaff95c37dcd9c9de20e40a109a8aa1be7ba",
+        "gitBlobSha": "d49b8cd120c5874fc3d0111a66e3a184daaf5f87",
+        "matchesTestedRemoteMergeTree": true
+      }
+    ]
+  },
+  "job": {
+    "id": 111240757468,
+    "run_id": 37136075137,
+    "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+    "status": "completed",
+    "conclusion": "success",
+    "name": "validate (ubuntu-24.04)",
+    "started_at": "2026-10-03T16:13:47Z",
+    "completed_at": "2026-10-03T16:18:00Z",
+    "runner_name": "GitHub Actions 1000017713",
+    "runner_group_name": "GitHub Actions"
+  },
+  "jobUrl": "https://github.com/rox-one/rox-one/actions/runs/37136075137/job/111240757468",
+  "runtime": {
+    "bun": "1.3.14",
+    "revision": "0d9b296af",
+    "environment": "GitHub Actions Ubuntu24.04"
+  },
+  "command": "bun run validate:ci",
+  "validateStep": {
+    "name": "Run bun run validate:ci",
+    "status": "completed",
+    "conclusion": "success",
+    "started_at": "2026-10-03T16:14:21Z",
+    "completed_at": "2026-10-03T16:17:09Z"
+  },
+  "scriptExitCode": 0,
+  "exitCodeBasis": "Completed SUCCESS step executes bash -e and the complete validate:ci script; the API success is the process exit receipt, not an invented literal log exit line.",
+  "steps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run actions/checkout@v4",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run actions/setup-node@v4",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run oven-sh/setup-bun@v2",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run astral-sh/setup-uv@v5",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run bun install --frozen-lockfile",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run bun test packages/core",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run bun run validate:ci",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Verify bundled MCP provisioning and first-session onboarding",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run astral-sh/setup-uv@v5",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run oven-sh/setup-bun@v2",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run actions/setup-node@v4",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run actions/checkout@v4",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Complete job",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "actualLog": {
+    "source": "work/patch-scout-ubuntu-validate-8e3-direct.log",
+    "sha256": "6dc689d5841d175033634196d122dc1af5369ba7ed659079e106fb94262f7b4d",
+    "bytes": 343624,
+    "relevantLines": [
+      {
+        "line": 93,
+        "text": "2026-10-03T16:13:50.3555310Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e1e389932b628e1a41b7b078602dc268b11c987c:refs/remotes/pull/1420/merge"
+      },
+      {
+        "line": 95,
+        "text": "2026-10-03T16:14:00.9630312Z  * [new ref]         e1e389932b628e1a41b7b078602dc268b11c987c -> pull/1420/merge"
+      },
+      {
+        "line": 157,
+        "text": "2026-10-03T16:14:03.0260845Z HEAD is now at e1e3899 Merge 8e3f6d841f2e5d332ee388985220de0819da4c81 into b697e96daeab9fe3cdc8fc8cca0d3169c66d96be"
+      },
+      {
+        "line": 159,
+        "text": "2026-10-03T16:14:03.0396973Z [command]/usr/bin/git log -1 --format=%H"
+      },
+      {
+        "line": 160,
+        "text": "2026-10-03T16:14:03.0425421Z e1e389932b628e1a41b7b078602dc268b11c987c"
+      },
+      {
+        "line": 178,
+        "text": "2026-10-03T16:14:03.6441149Z   bun-version: 1.3.14"
+      },
+      {
+        "line": 189,
+        "text": "2026-10-03T16:14:05.3626050Z Using a cached version of Bun: 1.3.14+0d9b296af"
+      },
+      {
+        "line": 228,
+        "text": "2026-10-03T16:14:09.4737379Z bun install v1.3.14 (0d9b296a)"
+      },
+      {
+        "line": 1798,
+        "text": "2026-10-03T16:14:21.4902046Z ##[group]Run bun run validate:ci"
+      },
+      {
+        "line": 1805,
+        "text": "2026-10-03T16:14:21.5086770Z $ bun run validate:dev && bun run lint:i18n:parity && bun run lint:i18n:sorted && bun run lint:i18n:coverage"
+      },
+      {
+        "line": 1806,
+        "text": "2026-10-03T16:14:21.5123635Z $ bun run typecheck:all && bun run test:shared:all && bun run test:connection-fabric && bun run test:config-isolation && bun run test:doc-tools"
+      },
+      {
+        "line": 1807,
+        "text": "2026-10-03T16:14:21.5160626Z $ cd packages/core && bun run tsc --noEmit && cd ../shared && bun run tsc --noEmit && cd ../server-core && bun run tsc --noEmit && cd ../server && bun run tsc --noEmit && cd ../session-tools-core && bun run tsc --noEmit && cd ../pi-agent-server && bun run typecheck && cd ../../apps/electron && bun run typecheck && cd ../../packages/ui && bun run tsc --noEmit && cd ../.. && bun run typecheck:pages-worker && bun run workspace-service:typecheck"
+      },
+      {
+        "line": 1810,
+        "text": "2026-10-03T16:16:25.5377478Z $ if [ -d workers/pages ]; then cd workers/pages && bun run typecheck; else echo 'workers/pages not present (OSS export) - skipping'; fi"
+      },
+      {
+        "line": 1811,
+        "text": "2026-10-03T16:16:25.5415951Z workers/pages not present (OSS export) - skipping"
+      },
+      {
+        "line": 2324,
+        "text": "2026-10-03T16:17:03.4121064Z Ran 19 tests in 10.635s"
+      },
+      {
+        "line": 2328,
+        "text": "2026-10-03T16:17:03.5188012Z i18n parity OK (11 locales, 7857 keys each)"
+      },
+      {
+        "line": 2331,
+        "text": "2026-10-03T16:17:09.2030760Z i18n coverage OK (7574 literal references, 5463 unique keys, 7857 English keys)"
+      }
+    ]
+  },
+  "qualifications": [
+    "Full CI typecheck/validation success on the tested merge candidate; bare8e local CI has its independent receipt.",
+    "OSS-export pages worker absent and skipped by the existing script; workspace-service typecheck ran.",
+    "No native installed Windows/macOS or hosted-web acceptance is inferred."
+  ],
+  "fullDoDClosed": false
+}

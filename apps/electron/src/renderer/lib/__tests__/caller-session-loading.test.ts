@@ -38,7 +38,33 @@ test('late local inventory and error cannot repopulate or display a host denial 
     else resolve([{ id: 'private-host-session' }])
     expect(await pending).toEqual({ kind: 'unavailable' })
     expect(requests).toBe(1)
-    expect(unavailable).toBe(1)
+    expect(unavailable).toBe(0)
+  }
+})
+
+test('bound native callers load only their workspace inventory and surface actual failures', async () => {
+  const sessions = [{ id: 'owned', workspaceId: 'native-workspace' }]
+  const ports = { getAuthority: () => 'native' as const, getNativeWorkspaceId: () => 'native-workspace',
+    request: async () => sessions, markUnavailable: () => { throw Error('bound native inventory is available') } }
+  expect(await loadCallerSessionInventory(ports)).toEqual({ kind: 'available', sessions })
+  await expect(loadCallerSessionInventory({ ...ports, request: async () => [{ id: 'foreign', workspaceId: 'other' }] }))
+    .rejects.toThrow('native-session-workspace-mismatch')
+  const denied = Error('actual workspace grant revoked')
+  await expect(loadCallerSessionInventory({ ...ports, request: async () => { throw denied } })).rejects.toBe(denied)
+})
+
+test('a native workspace A-B-A transition never publishes an old inventory or clears the newer one', async () => {
+  for (const rejected of [false, true]) {
+    let scope = {}, workspaceId = 'A', unavailable = 0
+    let resolve!: (value: { id: string; workspaceId: string }[]) => void, reject!: (error: Error) => void
+    const response = new Promise<{ id: string; workspaceId: string }[]>((done, fail) => { resolve = done; reject = fail })
+    const pending = loadCallerSessionInventory({ getAuthority: () => 'native', getNativeWorkspaceId: () => workspaceId,
+      getScopeKey: () => scope, request: () => response, markUnavailable: () => { unavailable++ } })
+    workspaceId = 'B'; scope = {}; workspaceId = 'A'; scope = {}
+    if (rejected) reject(Error('old grant denied'))
+    else resolve([{ id: 'old', workspaceId: 'A' }])
+    expect(await pending).toEqual({ kind: 'unavailable' })
+    expect(unavailable).toBe(0)
   }
 })
 

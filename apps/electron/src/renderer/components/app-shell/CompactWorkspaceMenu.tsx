@@ -1,3 +1,4 @@
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { Check, PanelsTopLeft, PanelTop } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -6,7 +7,7 @@ import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { getSessionTitle } from '@/utils/session'
 import { buildSurfaceTabViews } from '@/platform/surface-tab-model'
-import { parseRouteToNavigationState } from '../../../shared/route-parser'
+import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { TopBarButton } from '@/components/ui/TopBarButton'
 import {
   DropdownMenu,
@@ -24,6 +25,7 @@ import {
 
 /** Always available in compact chrome, including a chat's custom header. */
 export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { onOpenBrowser: () => void; showServices?: boolean }) {
+  const tourWorkspaceTarget = useTourTarget('workspace.switcher', { scope: 'shell', variant: 'compact' })
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const navigation = useNavigationState()
@@ -63,6 +65,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { o
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <TopBarButton
+          ref={showServices ? tourWorkspaceTarget : undefined}
           aria-label={showServices ? `${t('rail.title')} · ${t('surfaceTabs.panel')}` : t('navigation.openPanels')}
           data-compact-workspace-menu="true"
           className="h-9 w-9 shrink-0 focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
@@ -82,11 +85,12 @@ export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { o
                 {t('surfaceTabs.panel')}
               </div>
               {tabs.map((tab, index) => {
-                const state = parseRouteToNavigationState(entries[index].route)
+                const state = parseRouteToNavigationStateOrUnavailable(entries[index].route)
                 const serviceId = state ? getActiveService(state) : null
                 const service = serviceId ? APP_NAV_DESTINATIONS_BY_ID[serviceId] : null
                 const Icon = service?.icon ?? PanelTop
-                const title = tab.kind === null && service ? t(service.labelKey) : tab.title
+                const title = state.navigator === 'unavailable' ? t('common.unavailable')
+                  : tab.kind === null && service ? t(service.labelKey) : tab.title
                 return (
                   <StyledDropdownMenuItem
                     key={tab.panelId}

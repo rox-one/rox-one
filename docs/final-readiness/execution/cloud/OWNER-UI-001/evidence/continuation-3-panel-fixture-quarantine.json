@@ -1,0 +1,13 @@
+{
+  "reason": "Retain failed fixture input outside source before commit",
+  "observedAt": "2026-10-03T14:32:43.077932+00:00",
+  "items": [
+    {
+      "source": "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-nav-temp-z6mBSv",
+      "destination": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/quarantined-ui001-fixtures/rox-readiness-ui-001-nav-temp-z6mBSv",
+      "files": {
+        "rox-readiness-ui-001.entry.tsx": "59cbc619cf322531acd5e46b698dac218d8039c0c208e32cc6ea7941431f2f78"
+      }
+    }
+  ]
+}

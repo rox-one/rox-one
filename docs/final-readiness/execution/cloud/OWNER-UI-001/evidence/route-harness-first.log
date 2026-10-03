@@ -1,0 +1,14 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+SyntaxError: Export named 'renderToReadableStream' not found in module '/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/node_modules/react-dom/server.node.js'.
+-------------------------------
+
+
+ 0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [167.00ms]

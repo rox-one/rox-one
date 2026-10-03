@@ -13,12 +13,12 @@
  * when the stack becomes empty.
  */
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSetAtom, useAtomValue } from 'jotai'
 import { cn } from '@/lib/utils'
 import { X, ChevronLeft } from 'lucide-react'
-import { parseRouteToNavigationState } from '../../../shared/route-parser'
+import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { closePanelAtom, focusedPanelIdAtom, primaryPanelIdAtom, type PanelStackEntry } from '@/atoms/panel-stack'
 import { useAppShellContext, AppShellProvider } from '@/context/AppShellContext'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
@@ -46,6 +46,9 @@ interface PanelSlotProps {
   sash?: React.ReactNode
   /** Compact (mobile) mode — shows back button in panel header */
   isCompact?: boolean
+  /** Layout mode changes keep hidden siblings mounted and inert. */
+  isHidden?: boolean
+  layoutStyle?: React.CSSProperties
 }
 
 export function PanelSlot({
@@ -56,6 +59,8 @@ export function PanelSlot({
   proportion,
   sash,
   isCompact,
+  isHidden = false,
+  layoutStyle,
 }: PanelSlotProps) {
   const { t } = useTranslation()
   const closePanel = useSetAtom(closePanelAtom)
@@ -64,7 +69,14 @@ export function PanelSlot({
   const navigation = useContext(NavigationContext)
   const sidebarTarget = useContext(ShellSidebarContext)
   const primaryId = useAtomValue(primaryPanelIdAtom)
-  const navState = parseRouteToNavigationState(entry.route)
+  const navState = useMemo(() => parseRouteToNavigationStateOrUnavailable(entry.route), [entry.route])
+  const panelRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const panel = panelRef.current
+    if (!panel) return
+    panel.inert = isHidden
+    if (isHidden && panel.contains(document.activeElement)) (document.activeElement as HTMLElement | null)?.blur()
+  }, [isHidden])
 
   const handleClose = useCallback(() => {
     closePanel(entry.id)
@@ -79,7 +91,7 @@ export function PanelSlot({
         tooltip={t("common.close")}
       />
     )
-  }, [handleClose])
+  }, [handleClose, t])
 
   // Build back button for compact mode — closes the panel to reveal the session list.
   // Same PanelHeaderCenterButton style as X and share, just on the left side.
@@ -92,32 +104,35 @@ export function PanelSlot({
         tooltip={t("common.backToList")}
       />
     )
-  }, [isCompact, handleClose])
+  }, [isCompact, handleClose, t])
 
   // Override AppShellContext so ChatPage/PanelHeader gets our per-panel close button,
   // back button (compact mode), and isFocusedPanel for input field appearance
   const contextOverride = useMemo(() => ({
     ...parentContext,
+    panelId: entry.id,
     rightSidebarButton: closeButton,
     leadingAction: backButton,
     isFocusedPanel,
-    panelId: entry.id,
   }), [parentContext, closeButton, backButton, isFocusedPanel, entry.id])
   const panelNavigation = navigation && navState ? { ...navigation, navigationState: navState } : navigation
 
   const handlePointerDown = useCallback(() => {
-    if (!isFocusedPanel) {
+    if (!isHidden && !isFocusedPanel) {
       setFocusedPanel(entry.id)
     }
-  }, [isFocusedPanel, setFocusedPanel, entry.id])
+  }, [isHidden, isFocusedPanel, setFocusedPanel, entry.id])
 
   return (
     <>
       {sash}
       <div
+        ref={panelRef}
+        id={entry.id}
+        aria-hidden={isHidden || undefined}
         onPointerDown={handlePointerDown}
         onFocusCapture={() => {
-          if (!isFocusedPanel) setFocusedPanel(entry.id)
+          if (!isHidden && !isFocusedPanel) setFocusedPanel(entry.id)
         }}
         data-panel-role="content"
         data-panel-id={entry.id}
@@ -150,6 +165,8 @@ export function PanelSlot({
             : { flexGrow: entry.tool ? 0 : proportion, flexShrink: entry.tool ? 0 : 1,
                 flexBasis: entry.tool ? 360 : 0, minWidth: entry.tool ? 300 : PANEL_MIN_WIDTH }
           ),
+          ...layoutStyle,
+          ...(isHidden ? { visibility: 'hidden', pointerEvents: 'none' } : {}),
         }}
       >
         <div className="h-full flex flex-col">

@@ -8,24 +8,11 @@
  * - Action: action/{name}[/{id}] - Trigger side effects
  * - Compound: {filter}[/session/{sessionId}] - View routes for full navigation state
  *
- * Unified-shell surface routes (W1 scaffolding, spec S-02 §3.6) — well-formed
- * surface routes round-trip exactly (parse ↔ build); anything malformed or any
- * consumer path without a surface handler degrades to the nearest existing
- * view until dedicated hosts land (W2/W5):
- *
- * | Route form                        | Parsed NavigationState          | Degradation target (W1)                    |
- * |-----------------------------------|---------------------------------|--------------------------------------------|
- * | knowledge/{kind}/{id}             | navigator 'knowledge'           | sessions/allSessions (until W2 host)       |
- * | knowledge/database/{id}           | 'knowledge', kind 'database'    | same route (database tab rides knowledge)  |
- * | cloud-run/{runId}                 | navigator 'cloud-run'           | sessions/allSessions (runs UI in sessions) |
- * | extension/{extId}[/{viewId}]      | navigator 'extension'           | settings (Extension Center is W5)          |
- * | diff/{proposalId}                 | navigator 'diff'                | sessions/allSessions (until K-05 host)     |
- * | terminal/{terminalId}             | navigator 'terminal'            | identity (dedicated terminal surface)      |
- * | knowledge/{unknownKind}/{id}      | n/a (malformed)                 | sessions/allSessions (lossy, by design)    |
- * | surface routes via parseRoute()   | convertCompoundToViewRoute      | '{allSessions}' view route fallthrough     |
- *
- * Renderers resolve a surface state through `degradeSurfaceNavigationState`
- * until their host component exists; see spec S-02 §3.5 for host mapping.
+ * Surface routes retain their own navigator and entity identity. Malformed
+ * encodings return null from the parser; resolveRouteNavigationState keeps the
+ * exact unavailable view address for rendering/history without action effects.
+ * degradeSurfaceNavigationState remains an explicit compatibility adapter for
+ * consumers that deliberately do not host these surfaces.
  */
 
 import type {
@@ -35,6 +22,7 @@ import type {
   AutomationFilter,
   RightSidebarPanel,
   KnowledgeRefKind,
+  UnavailableNavigationState,
 } from './types'
 import { isValidSettingsSubpage, type SettingsSubpage } from './settings-registry'
 import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
@@ -106,14 +94,40 @@ export function isCompoundRoute(route: string): boolean {
   return COMPOUND_ROUTE_PREFIXES.includes(firstSegment)
 }
 
+function splitRouteQuery(route: string): [string, string | undefined] {
+  const queryIndex = route.indexOf('?')
+  return queryIndex < 0 ? [route, undefined] : [route.slice(0, queryIndex), route.slice(queryIndex + 1)]
+}
+
+function strictPathSegments(path: string): string[] | null {
+  const segments = path.split('/')
+  if (segments.some(segment => !segment)) return null
+  // Validate every segment, including raw slug fields and extra-screen IDs.
+  // Keep their established decoding semantics; this only rejects corrupt URLs.
+  for (const segment of segments) decodeURIComponent(segment)
+  return segments
+}
+
 export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
+  try {
+    // Validate the query as well; URLSearchParams otherwise repairs corrupt escapes.
+    decodeURIComponent(route)
+    return parseCompoundRouteSegments(route)
+  } catch {
+    // Retain malformed addresses on the unavailable surface without throwing.
+    return null
+  }
+}
+
+function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
   // Keep the query separate from slash-delimited route segments.
-  const [pathPart, queryPart] = route.split('?')
-  const segments = pathPart.split('/').filter(Boolean)
-  if (segments.length === 0) return null
+  const [pathPart, queryPart] = splitRouteQuery(route)
+  const segments = strictPathSegments(pathPart)
+  if (!segments) return null
 
   const first = segments[0]
   if (first === 'search') {
+    if (segments.length !== 1) return null
     return {
       navigator: 'search',
       query: queryPart ? new URLSearchParams(queryPart).get('q') ?? '' : '',
@@ -124,6 +138,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
   // Encoded as its own prefix (not `allSessions/board`) so it never collides
   // with the positional `{filter}/session/{id}` detail parsing below.
   if (first === 'board') {
+    if (segments.length !== 1 && (segments.length !== 3 || segments[1] !== 'session')) return null
     const sessionId = segments[1] === 'session' && segments[2] ? decodeURIComponent(segments[2]) : undefined
     return {
       navigator: 'sessions',
@@ -137,6 +152,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
   // Encoded as its own prefix (not `allSessions/table`) so it never collides
   // with the positional `{filter}/session/{id}` detail parsing below.
   if (first === 'table') {
+    if (segments.length !== 1) return null
     return {
       navigator: 'sessions',
       sessionFilter: { kind: 'allSessions' },
@@ -146,6 +162,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
   }
 
   if (first === 'heatmap') {
+    if (segments.length !== 1) return null
     return {
       navigator: 'sessions',
       sessionFilter: { kind: 'allSessions' },
@@ -156,6 +173,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
 
   // Settings navigator
   if (first === 'settings') {
+    if (segments.length > 2) return null
     const subpage = segments[1]
     if (subpage === undefined) {
       // Bare `settings` route — Overview in the detail panel.
@@ -189,7 +207,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
       const sourceFilter: SourceFilter = { kind: 'type', sourceType }
 
       // Check for source selection within filtered view: sources/api/source/{sourceSlug}
-      if (segments[2] === 'source' && segments[3]) {
+      if (segments.length === 4 && segments[2] === 'source' && segments[3]) {
         return {
           navigator: 'sources',
           sourceFilter,
@@ -198,11 +216,11 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
       }
 
       // Just the filter, no selection
-      return { navigator: 'sources', sourceFilter, details: null }
+      return segments.length === 2 ? { navigator: 'sources', sourceFilter, details: null } : null
     }
 
     // Unfiltered source selection: sources/source/{sourceSlug}
-    if (segments[1] === 'source' && segments[2]) {
+    if (segments.length === 3 && segments[1] === 'source' && segments[2]) {
       return {
         navigator: 'sources',
         details: { type: 'source', id: segments[2] },
@@ -219,7 +237,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     }
 
     // skills/skill/{skillSlug}
-    if (segments[1] === 'skill' && segments[2]) {
+    if (segments.length === 3 && segments[1] === 'skill' && segments[2]) {
       return {
         navigator: 'skills',
         details: { type: 'skill', id: segments[2] },
@@ -231,53 +249,57 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
 
   // Memory navigator (self-learning lessons / context / history)
   if (first === 'memory') {
+    if (segments.length !== 1) return null
     return { navigator: 'memory', details: null }
   }
 
   // Personal tasks (Things-style; Issue 17)
   if (first === 'tasks') {
-    if (segments[1] === 'task' && segments[2]) {
+    if (segments.length === 3 && segments[1] === 'task' && segments[2]) {
       return {
         navigator: 'tasks',
         details: { type: 'task', id: decodeURIComponent(segments[2]) },
       }
     }
-    return { navigator: 'tasks', details: null }
+    return segments.length === 1 ? { navigator: 'tasks', details: null } : null
   }
 
   if (first === 'inbox') {
-    if (segments[1] === 'item' && segments[2]) {
+    if (segments.length === 3 && segments[1] === 'item' && segments[2]) {
       return { navigator: 'inbox', details: { type: 'item', id: decodeURIComponent(segments[2]) } }
     }
-    return { navigator: 'inbox', details: null }
+    return segments.length === 1 ? { navigator: 'inbox', details: null } : null
   }
 
   if (first === 'feed') {
-    if (segments[1] === 'item' && segments[2]) {
+    if (segments.length === 3 && segments[1] === 'item' && segments[2]) {
       return { navigator: 'feed', details: { type: 'item', id: decodeURIComponent(segments[2]) } }
     }
-    return { navigator: 'feed', details: null }
+    return segments.length === 1 ? { navigator: 'feed', details: null } : null
   }
 
   if (first === 'meetings') {
-    if (segments[1] === 'meeting' && segments[2]) {
+    if (segments.length === 3 && segments[1] === 'meeting' && segments[2]) {
       return {
         navigator: 'meetings',
         details: { type: 'meeting', id: decodeURIComponent(segments[2]) },
       }
     }
-    return { navigator: 'meetings', details: null }
+    return segments.length === 1 ? { navigator: 'meetings', details: null } : null
   }
 
   if (first === 'connections') {
+    if (segments.length !== 1) return null
     return { navigator: 'connections', details: null }
   }
 
   if (first === 'home') {
+    if (segments.length !== 1) return null
     return { navigator: 'home', details: null }
   }
 
   // Extra workbench screens: <screenId>[/item/<itemId>]
+  if (isExtraScreenId(first) && segments.length !== 1 && (segments.length !== 3 || segments[1] !== 'item')) return null
   const extraScreen = parseExtraScreenSegments(segments)
   if (extraScreen) {
     return {
@@ -289,10 +311,10 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
 
   // Browser navigator — embedded browser instance panel: browser/instance/{instanceId}
   if (first === 'browser') {
-    if (segments[1] === 'instance' && segments[2]) {
+    if (segments.length === 3 && segments[1] === 'instance' && segments[2]) {
       return {
         navigator: 'browser',
-        details: { type: 'browser', id: segments[2] },
+        details: { type: 'browser', id: decodeURIComponent(segments[2]) },
       }
     }
     return null
@@ -303,7 +325,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     if (segments.length === 1) {
       return { navigator: 'projects', details: null }
     }
-    if (segments[1] === 'project' && segments[2]) {
+    if (segments.length === 3 && segments[1] === 'project' && segments[2]) {
       return {
         navigator: 'projects',
         details: { type: 'project', id: segments[2] },
@@ -318,7 +340,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     if (segments.length === 1) {
       return { navigator: 'pages', details: null }
     }
-    if (segments[1] === 'page' && segments[2]) {
+    if (segments.length === 3 && segments[1] === 'page' && segments[2]) {
       return {
         navigator: 'pages',
         details: { type: 'page', id: segments[2] },
@@ -334,6 +356,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     }
 
     if (segments[1] === 'note' && segments[2]) {
+      // Retain nested Notes path IDs as one complete native address.
       return {
         navigator: 'notes' as NavigatorType,
         details: { type: 'note', id: decodeURIComponent(segments.slice(2).join('/')) },
@@ -343,19 +366,6 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     return null
   }
 
-  // Pages navigator
-  if (first === 'pages') {
-    if (segments.length === 1) {
-      return { navigator: 'pages', details: null }
-    }
-    if (segments[1] === 'page' && segments[2]) {
-      return {
-        navigator: 'pages',
-        details: { type: 'page', id: segments[2] },
-      }
-    }
-    return null
-  }
 
   // Automations navigator - supports type filters (scheduled, event, agentic)
   if (first === 'automations') {
@@ -370,7 +380,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
       const automationFilter: AutomationFilter = { kind: 'type', automationType }
 
       // Check for automation selection within filtered view: automations/scheduled/automation/{automationId}
-      if (segments[2] === 'automation' && segments[3]) {
+      if (segments.length === 4 && segments[2] === 'automation' && segments[3]) {
         return {
           navigator: 'automations',
           automationFilter,
@@ -379,11 +389,11 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
       }
 
       // Just the filter, no selection
-      return { navigator: 'automations', automationFilter, details: null }
+      return segments.length === 2 ? { navigator: 'automations', automationFilter, details: null } : null
     }
 
     // Unfiltered automation selection: automations/automation/{automationId}
-    if (segments[1] === 'automation' && segments[2]) {
+    if (segments.length === 3 && segments[1] === 'automation' && segments[2]) {
       return {
         navigator: 'automations',
         details: { type: 'automation', id: segments[2] },
@@ -395,8 +405,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
 
   // ------------------------------------------------------------------
   // Unified-shell surface navigators (W1 scaffolding, spec S-02 §3.6).
-  // Well-formed routes round-trip exactly; malformed shapes degrade to the
-  // nearest existing view (sessions/allSessions) instead of null.
+  // Well-formed routes round-trip exactly; malformed shapes remain unavailable.
   // ------------------------------------------------------------------
 
   // Knowledge surface — knowledge/{kind}/{id}; kind 'database' doubles as the
@@ -408,25 +417,26 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
       return { navigator: 'knowledge', details: null }
     }
     if (segments[1] === 'view') {
-      const viewId = segments[2] ? decodeURIComponent(segments.slice(2).join('/')) : ''
+      if (segments.length !== 3) return null
+      const viewId = decodeURIComponent(segments[2])
       if (viewId) {
         return {
           navigator: 'knowledge',
           details: { type: 'knowledge-view', id: viewId },
         }
       }
-      return { navigator: 'knowledge', details: null }
+      return null
     }
+    if (segments.length !== 3) return null
     const kind = segments[1]
-    const id = segments[2] ? decodeURIComponent(segments.slice(2).join('/')) : ''
+    const id = decodeURIComponent(segments[2])
     if (id && (['notebook', 'document', 'block', 'database', 'asset'] as const).includes(kind as KnowledgeRefKind)) {
       return {
         navigator: 'knowledge',
         details: { type: 'knowledge', id, kind: kind as KnowledgeRefKind },
       }
     }
-    // Unknown ref kind / missing id — degrade to nearest existing view
-    return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
+    return null
   }
 
   // Cloud run surface — cloud-run/{runId}
@@ -434,10 +444,9 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     if (segments.length === 1) {
       return { navigator: 'cloud-run', details: null }
     }
-    const runId = decodeURIComponent(segments.slice(1).join('/'))
-    if (!runId) {
-      return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
-    }
+    if (segments.length !== 2) return null
+    const runId = decodeURIComponent(segments[1])
+    if (!runId) return null
     return { navigator: 'cloud-run', details: { type: 'cloud-run', id: runId } }
   }
 
@@ -446,8 +455,9 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     if (segments.length === 1) {
       return { navigator: 'extension', details: null }
     }
+    if (segments.length > 3) return null
     const extensionId = decodeURIComponent(segments[1])
-    const viewId = segments[2] ? decodeURIComponent(segments.slice(2).join('/')) : undefined
+    const viewId = segments[2] ? decodeURIComponent(segments[2]) : undefined
     return {
       navigator: 'extension',
       details: { type: 'extension', id: extensionId, ...(viewId ? { viewId } : {}) },
@@ -459,10 +469,9 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     if (segments.length === 1) {
       return { navigator: 'diff', details: null }
     }
-    const proposalId = decodeURIComponent(segments.slice(1).join('/'))
-    if (!proposalId) {
-      return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
-    }
+    if (segments.length !== 2) return null
+    const proposalId = decodeURIComponent(segments[1])
+    if (!proposalId) return null
     return { navigator: 'diff', details: { type: 'diff', id: proposalId } }
   }
 
@@ -471,10 +480,9 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     if (segments.length === 1) {
       return { navigator: 'terminal', details: null }
     }
-    const terminalId = decodeURIComponent(segments.slice(1).join('/'))
-    if (!terminalId) {
-      return { navigator: 'terminal', details: null }
-    }
+    if (segments.length !== 2) return null
+    const terminalId = decodeURIComponent(segments[1])
+    if (!terminalId) return null
     return { navigator: 'terminal', details: { type: 'terminal', id: terminalId } }
   }
 
@@ -520,13 +528,14 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
   if (segments.length > detailsStartIndex) {
     const detailsType = segments[detailsStartIndex]
     const detailsId = segments[detailsStartIndex + 1]
-    if (detailsType === 'session' && detailsId) {
+    if (detailsType === 'session' && detailsId && segments.length === detailsStartIndex + 2) {
       return {
         navigator: 'sessions',
         sessionFilter,
-        details: { type: 'session', id: detailsId },
+        details: { type: 'session', id: decodeURIComponent(detailsId) },
       }
     }
+    return null
   }
 
   return {
@@ -618,7 +627,7 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
 
   if (parsed.navigator === 'browser') {
     if (!parsed.details) return 'browser'
-    return `browser/instance/${parsed.details.id}`
+    return `browser/instance/${encodeURIComponent(parsed.details.id)}`
   }
 
   if (parsed.navigator === 'projects') {
@@ -719,6 +728,7 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
  */
 export function parseRoute(route: string): ParsedRoute | null {
   try {
+    decodeURIComponent(route)
     // Check if this is a compound route (preferred format)
     if (isCompoundRoute(route)) {
       const compound = parseCompoundRoute(route)
@@ -728,10 +738,9 @@ export function parseRoute(route: string): ParsedRoute | null {
     }
 
     // Parse action routes: action/{name}[/{id}]
-    const [pathPart, queryPart] = route.split('?')
-    const segments = pathPart.split('/').filter(Boolean)
-
-    if (segments.length < 2) {
+    const [pathPart, queryPart] = splitRouteQuery(route)
+    const segments = strictPathSegments(pathPart)
+    if (!segments || segments.length < 2 || segments.length > 3) {
       return null
     }
 
@@ -762,6 +771,18 @@ export function parseRoute(route: string): ParsedRoute | null {
  * Convert a parsed compound route to ParsedRoute format (type: 'view')
  */
 function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute {
+  if (['knowledge', 'cloud-run', 'extension', 'diff', 'terminal'].includes(compound.navigator)) {
+    return {
+      type: 'view',
+      name: compound.navigator,
+      id: compound.details?.id,
+      params: {
+        ...(compound.details?.kind ? { kind: compound.details.kind } : {}),
+        ...(compound.details?.viewId ? { viewId: compound.details.viewId } : {}),
+        ...(compound.details ? { detailType: compound.details.type } : {}),
+      },
+    }
+  }
   if (compound.navigator === 'search') {
     return { type: 'view', name: 'search', params: compound.query ? { q: compound.query } : {} }
   }
@@ -911,6 +932,83 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
 // =============================================================================
 
 /**
+ * Require complete view-route shapes at the renderer boundary. The legacy
+ * parser remains permissive for callers that still rely on its old contract.
+ * IDs containing slashes use the encoded single segment produced by builders.
+ */
+function hasCompleteViewRouteShape(route: string): boolean {
+  if (route.includes('#') || /[\u0000-\u001f\u007f]/.test(route)) return false
+  const segments = route.split('?')[0].split('/')
+  if (segments.some(segment => !segment)) return false
+  const [root, second, third] = segments
+  const count = segments.length
+  const detail = (name: string) => count === 1 || (count === 3 && second === name)
+
+  switch (root) {
+    case 'allSessions':
+    case 'flagged':
+    case 'archived':
+    case 'board':
+      return detail('session')
+    case 'state':
+    case 'label':
+    case 'view':
+      return count === 2 || (count === 4 && third === 'session')
+    case 'search':
+    case 'table':
+    case 'heatmap':
+    case 'memory':
+    case 'home':
+    case 'connections':
+      return count === 1
+    case 'sources': {
+      const filtered = ['api', 'mcp', 'local'].includes(second)
+      return detail('source') || (filtered && (count === 2 || (count === 4 && third === 'source')))
+    }
+    case 'automations': {
+      const filtered = ['scheduled', 'event', 'agentic'].includes(second)
+      return detail('automation') || (filtered && (count === 2 || (count === 4 && third === 'automation')))
+    }
+    case 'skills': return detail('skill')
+    case 'projects': return detail('project')
+    case 'pages': return detail('page')
+    case 'notes': return detail('note')
+    case 'tasks': return detail('task')
+    case 'meetings': return detail('meeting')
+    case 'inbox':
+    case 'feed': return detail('item')
+    case 'settings': return count === 1 || count === 2
+    case 'browser': return count === 3 && second === 'instance'
+    case 'knowledge':
+      return count === 1 || (count === 3 && ['notebook', 'document', 'block', 'database', 'asset', 'view'].includes(second))
+    case 'cloud-run':
+    case 'diff':
+    case 'terminal': return count === 1 || count === 2
+    case 'extension': return count <= 3
+    default: return isExtraScreenId(root) && detail('item')
+  }
+}
+
+/**
+ * Resolve view routes without replacing unknown or malformed addresses with a
+ * different screen. Action dispatch stays with the caller; this is view-only.
+ */
+export function parseRouteToNavigationStateOrUnavailable(
+  route: string,
+  sidebarParam?: string
+): NavigationState {
+  if (hasCompleteViewRouteShape(route)) {
+    const state = parseRouteToNavigationState(route, sidebarParam)
+    if (state) return state
+  }
+  const rightSidebar = parseRightSidebarParam(sidebarParam)
+  return {
+    navigator: 'unavailable', route, details: null,
+    ...(rightSidebar ? { rightSidebar } : {}),
+  }
+}
+
+/**
  * Parse a route string directly to NavigationState (the unified state)
  *
  * This is the preferred way to parse routes - returns the unified state that
@@ -957,6 +1055,13 @@ export function parseRouteToNavigationState(
     }
   }
   return state
+}
+
+/** Resolve a view address without substituting an unrelated default view.
+ * Action addresses in restored URLs are unavailable, never executed.
+ */
+export function resolveRouteNavigationState(route: string, sidebarParam?: string): NavigationState {
+  return parseRouteToNavigationStateOrUnavailable(route, sidebarParam)
 }
 
 /**
@@ -1344,16 +1449,6 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
         }
       }
       return { navigator: 'projects', details: null }
-    case 'pages':
-      return { navigator: 'pages', details: null }
-    case 'page-info':
-      if (parsed.id) {
-        return {
-          navigator: 'pages',
-          details: { type: 'page', pageSlug: parsed.id },
-        }
-      }
-      return { navigator: 'pages', details: null }
     case 'session':
       if (parsed.id) {
         // Reconstruct filter from params
@@ -1428,7 +1523,7 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
 /**
  * Convert NavigationState to ParsedCompoundRoute
  */
-function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundRoute {
+function navigationStateToCompoundRoute(state: Exclude<NavigationState, UnavailableNavigationState>): ParsedCompoundRoute {
   if (state.navigator === 'search') {
     return { navigator: 'search', query: state.query, details: null }
   }
@@ -1616,6 +1711,7 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
  * Build a route string from NavigationState
  */
 export function buildRouteFromNavigationState(state: NavigationState): string {
+  if (state.navigator === 'unavailable') return state.route
   return buildCompoundRoute(navigationStateToCompoundRoute(state))
 }
 

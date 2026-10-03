@@ -1,0 +1,14 @@
+[
+  {
+    "source": "/tmp/rox-branch-integration-20261003/pocket-account-store-before-descriptor.ts",
+    "exit": "timeout",
+    "result": "owned child blocked on FIFO and was terminated",
+    "elapsed": 2.009
+  },
+  {
+    "source": "/private/tmp/rox-branch-integration-20261003/credential-meta-review-worktree/apps/electron/src/main/pocket-account-store.ts",
+    "exit": 0,
+    "result": "regular-file rejection",
+    "elapsed": 0.039
+  }
+]

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { planMeetingActions } from '@rox/shared/meeting-agents/browser'
 import i18n from 'i18next'
 import type { LocalMeeting, MeetingsLocalApi } from '../../../shared/meetings-local'
 import { meetingsApi } from './recorder'
@@ -28,10 +29,12 @@ export function needsAutomaticExtraction(meeting: LocalMeeting): boolean {
     && meeting.summaryAutoRevision !== (meeting.transcript.revision ?? 0)
 }
 
-export async function startMeetingExtraction(api: MeetingsLocalApi, meeting: LocalMeeting, language: 'ru' | 'en', automatic = false, engine = runtime): Promise<void> {
+export async function startMeetingExtraction(api: MeetingsLocalApi, meeting: LocalMeeting, language: 'ru' | 'en', automatic = false, engine = runtime, slash?: string): Promise<void> {
   if (!meeting.workspaceId || extractionBusy(meeting)) return
   const transcript = await api.readTranscript(meeting.id)
   if (!transcript?.segments.length) return
+  // Reject invalid commands before acquiring a durable claim or starting a session.
+  planMeetingActions({ meetingId: meeting.id, recipeId: meeting.recipeId ?? 'standup', slash }, transcript.revision)
   const claim = await api.claimExtraction(meeting.id, { workspaceId: meeting.workspaceId, transcriptRevision: transcript.revision, automatic })
   if (!claim.ok) return
   const run = claim.value.extraction!
@@ -39,7 +42,7 @@ export async function startMeetingExtraction(api: MeetingsLocalApi, meeting: Loc
   try {
     await engine.start({ workspaceId: run.workspaceId, name: i18n.t('meetings.local.summaryRunName', { title: claim.value.title }),
       enabledSourceSlugs: [],
-      prompt: buildSummaryPrompt({ title: claim.value.title, participants: claim.value.participants, segments: transcript.segments, language }),
+      prompt: buildSummaryPrompt({ title: claim.value.title, participants: claim.value.participants, segments: transcript.segments, language, recipeId: claim.value.recipeId ?? 'standup', slash }),
       onCreated: async (id) => {
         sessionId = id
         const attached = await api.attachExtraction(meeting.id, { runId: run.id, sessionId: id })

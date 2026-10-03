@@ -13,6 +13,7 @@ await i18n.use(initReactI18next).init({ lng: 'en', fallbackLng: 'en', resources:
 const calls: Array<{ method: string; id?: string; rect?: unknown; args?: unknown }> = []
 const pending: Array<{ resolve: (id: string) => void; reject: (error: Error) => void }> = []
 const mode = new URLSearchParams(location.search).get('mode')
+const liveInstances = new Set(['shared'])
 let created = 0
 let deferNext = false
 ;(window as any).__nativeFixture = { calls, finishAttachment: () => pending.shift()?.resolve('late-inspector'), rejectAttachment: () => pending.shift()?.reject(new Error('Obsolete attachment failure')), openCurrent: () => window.dispatchEvent(new CustomEvent(INTERNAL_BROWSER_OPEN_EVENT)), openDeferred: () => { deferNext = true; window.dispatchEvent(new CustomEvent(INTERNAL_BROWSER_OPEN_EVENT)) } }
@@ -20,13 +21,16 @@ let deferNext = false
   browserCookieAutoStatus: async () => ({ consent: mode !== 'stale', domains: ['example.invalid'] }),
   browserPane: {
     syncBounds: async (id: string, rect: unknown) => { calls.push({ method: 'sync', id, rect }) },
-    onRemoved: () => () => {}, onStateChanged: () => () => {}, list: async () => [],
+    onRemoved: () => () => {}, onStateChanged: () => () => {}, list: async () => [...liveInstances].map(id => ({ id })),
     createEmbedded: async (args: unknown) => {
       calls.push({ method: 'create', args })
-      if (mode === 'late' || deferNext) { deferNext = false; return await new Promise<string>((resolve, reject) => pending.push({ resolve, reject })) }
-      return `fixture-inspector-${++created}`
+      const id = mode === 'late' || deferNext
+        ? await new Promise<string>((resolve, reject) => { deferNext = false; pending.push({ resolve, reject }) })
+        : `fixture-inspector-${++created}`
+      liveInstances.add(id)
+      return id
     },
-    destroy: async (id: string) => { calls.push({ method: 'destroy', id }) },
+    destroy: async (id: string) => { liveInstances.delete(id); calls.push({ method: 'destroy', id }) },
     navigate: async (id: string, url: string) => { calls.push({ method: 'navigate', id, args: url }) },
   },
 }

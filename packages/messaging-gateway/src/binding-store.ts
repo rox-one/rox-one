@@ -15,6 +15,8 @@ import {
   mkdirSync,
   existsSync,
   copyFileSync,
+  renameSync,
+  rmSync,
 } from 'node:fs'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
@@ -95,13 +97,13 @@ export class BindingStore {
     channelName?: string,
     config?: Partial<ChannelBinding['config']>,
     threadId?: number,
+    nativeOwner?: ChannelBinding['nativeOwner'],
+    beforeCommit?: (binding: ChannelBinding) => void,
   ): ChannelBinding {
     // One channel → one session: evict any existing binding for the
     // (platform, channelId, threadId) tuple. Different topics in the same
     // supergroup are independently bindable.
-    this.bindings = this.bindings.filter(
-      (b) => !(b.platform === platform && b.channelId === channelId && (b.threadId ?? undefined) === threadId),
-    )
+    const previous = this.bindings
 
     const binding: ChannelBinding = {
       id: randomUUID(),
@@ -114,10 +116,12 @@ export class BindingStore {
       enabled: true,
       createdAt: Date.now(),
       config: normalizeBindingConfig(platform, config),
+      ...(nativeOwner ? { nativeOwner: { ...nativeOwner } } : {}),
     }
 
-    this.bindings.push(binding)
-    this.save()
+    beforeCommit?.(binding)
+    this.bindings = [...previous.filter(b => !(b.platform === platform && b.channelId === channelId && (b.threadId ?? undefined) === threadId)), binding]
+    try { this.save(!!nativeOwner) } catch (error) { this.bindings = previous; throw error }
     this.log.info('binding created', {
       event: 'binding_created',
       workspaceId,
@@ -266,22 +270,26 @@ export class BindingStore {
     }
   }
 
-  private save(): void {
+  private save(strict = false): void {
+    const temporary = strict ? `${this.filePath}.${randomUUID()}.tmp` : undefined
     try {
       if (!existsSync(this.dirPath)) {
         mkdirSync(this.dirPath, { recursive: true })
       }
-      writeFileSync(this.filePath, JSON.stringify(this.bindings, null, 2), 'utf-8')
+      writeFileSync(temporary ?? this.filePath, JSON.stringify(this.bindings, null, 2), { encoding: 'utf-8', ...(strict ? { mode: 0o600, flag: 'wx' } : {}) })
+      if (temporary) renameSync(temporary, this.filePath)
       // Fire the listener only after the write succeeds — otherwise the UI
       // shows a "binding added" event for state that will disappear on
       // restart.
       this.changeListener?.()
     } catch (err) {
+      if (temporary) { try { rmSync(temporary) } catch {} }
       this.log.error('failed to save bindings store', {
         event: 'bindings_save_failed',
         filePath: this.filePath,
         error: err,
       })
+      if (strict) throw err
     }
   }
 }

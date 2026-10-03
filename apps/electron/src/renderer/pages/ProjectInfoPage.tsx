@@ -9,7 +9,7 @@ import ProjectRoadmapPage from './ProjectRoadmapPage'
 import { SharedProjectDetails } from '@/components/projects/SharedProjectProjection'
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useAtomValue } from 'jotai'
 import { ArrowDown, ArrowUp, FolderOpen, Plus, Trash2, Upload, ImagePlus } from 'lucide-react'
 import { ProjectIcon, invalidateProjectIconCache } from '@/components/projects/ProjectIcon'
@@ -43,6 +43,8 @@ import { PROJECT_COLOR_PALETTE } from '@/utils/project-colors'
 import { InlineColorPickerRow } from '@/components/ui/inline-color-picker-row'
 import type { LoadedProject, OkrCycle, OkrKeyResult, OkrObjective, OkrProgress, ProjectOkrDocument, ProjectAsset } from '@rox/shared/projects/types'
 import { calculateOkrCycle, createOkrCycle } from '@rox/shared/projects'
+import { useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { deriveProjectSignals } from '@/features/product-tour/adapters/work/tasks-projects'
 
 interface ProjectInfoPageProps {
   projectSlug: string
@@ -61,12 +63,28 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id
+  const tour = useTourSignals({ workspaceId, entityId: projectSlug })
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const { onCreateSession, onOpenFile } = useAppShellContext()
 
   const [project, setProject] = useState<LoadedProject | null>(null)
+  const projectRequestRef = useRef(0)
+  const projectMountedRef = useRef(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const projectReadsMountedRef = projectMountedRef
+  const projectReadRevisionRef = projectRequestRef
+  useEffect(() => tour.capability('projects.available', loading
+    ? { state: 'pending', reason: 'installing' }
+    : error ? { state: 'unavailable', reason: 'api-unavailable' }
+      : project ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' }), [tour, loading, error, project])
+  useEffect(() => {
+    if (loading || error || !project) return
+    const observation = tour.capture()
+    for (const signal of deriveProjectSignals(observation, project, true)) {
+      tour.emit(observation, signal.name, signal.level, signal.origin, signal.eventToken)
+    }
+  }, [tour, loading, error, project])
   const [tab, setTab] = useState<TabKey>('sessions')
   const [taskStore, setTaskStore] = useState(loadPersonalTaskStore)
   const [newTaskTitle, setNewTaskTitle] = useState('')
@@ -87,6 +105,14 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const [newCycleStart, setNewCycleStart] = useState('')
   const [newCycleEnd, setNewCycleEnd] = useState('')
   const [newCycleTimezone, setNewCycleTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone)
+
+  React.useLayoutEffect(() => {
+    projectReadsMountedRef.current = true
+    return () => {
+      projectReadsMountedRef.current = false
+      projectReadRevisionRef.current += 1
+    }
+  }, [workspaceId, projectSlug])
 
   const selectedCycle = useMemo(
     () => okrCycles.find((cycle) => cycle.id === selectedCycleId) ?? null,
@@ -240,14 +266,28 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
 
   // Load project (and re-load on broadcast)
   const loadProject = useCallback(async () => {
-    if (!workspaceId) return
+    const request = ++projectReadRevisionRef.current
+    const isCurrent = () => projectReadsMountedRef.current && request === projectReadRevisionRef.current
+    if (!isCurrent()) return
+    if (!workspaceId) {
+      setProject(null)
+      setError(t('common.unavailable'))
+      setLoading(false)
+      return
+    }
     const listed = soupProjectListResult({ source: 'native', nativeIds: projectSlug ? [projectSlug] : [] })
     const read = soupProjectReadResult({ source: 'native', nativeId: projectSlug })
-    if (!isClaimableLive(listed.result) || !isClaimableLive(read.result)) return
+    if (!isClaimableLive(listed.result) || !isClaimableLive(read.result)) {
+      setProject(null)
+      setError(t('common.unavailable'))
+      setLoading(false)
+      return
+    }
     setLoading(true)
     setError(null)
     try {
       const result = await window.electronAPI.getProject(workspaceId, projectSlug)
+      if (!isCurrent()) return
       if (!result) {
         setError(t('projectInfo.notFound'))
         setProject(null)
@@ -261,15 +301,22 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
       setEditDetails(loaded.config.details ?? '')
       setEditColor(loaded.config.color ?? '')
     } catch (err) {
+      if (!isCurrent()) return
       console.error('[ProjectInfoPage] Failed to load project:', err)
-      setError(err instanceof Error ? err.message : String(err))
+      setProject(null)
+      setError(t('common.unavailable'))
     } finally {
-      setLoading(false)
+      if (isCurrent()) setLoading(false)
     }
   }, [workspaceId, projectSlug, t])
 
   useEffect(() => {
-    loadProject()
+    projectMountedRef.current = true
+    void loadProject()
+    return () => {
+      projectMountedRef.current = false
+      ++projectRequestRef.current
+    }
   }, [loadProject])
 
   useEffect(() => {
@@ -390,8 +437,13 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
     if (!isClaimableLive(act)) return
     try {
       await window.electronAPI.deleteProject(workspaceId, project.config.slug)
+      if (!projectMountedRef.current) return
+      ++projectRequestRef.current
+      setProject(null)
+      setLoading(false)
       navigate(routes.view.projects())
     } catch (err) {
+      if (!projectMountedRef.current) return
       console.error('[ProjectInfoPage] Delete failed:', err)
       toast.error(t('projectInfo.deleteFailed'))
     }
@@ -482,6 +534,20 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
       toast.error(t('projectInfo.iconUploadFailed'))
     }
   }, [workspaceId, project, loadProject, t])
+
+  if (!loading && error) {
+    return (
+      <Info_Page>
+        <Info_Page.Header title={projectSlug} />
+        <div role="status" aria-live="polite" data-testid="project-surface-unavailable" className="flex flex-1 flex-col items-center justify-center gap-3 p-4 text-center text-muted-foreground">
+          <p className="text-sm">{error}</p>
+          <button type="button" data-testid="project-surface-retry" onClick={() => void loadProject()} className="rounded-md border border-border px-3 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            {t('common.retry')}
+          </button>
+        </div>
+      </Info_Page>
+    )
+  }
 
   return (
     <Info_Page

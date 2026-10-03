@@ -28,6 +28,7 @@ import {
 import type { SettingsMenuItem } from "../../../shared/menu-schema"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useAtom, useAtomValue, useSetAtom } from "jotai"
+import { PanelWorkspaceMenu } from './PanelWorkspaceMenu'
 import { BrowserTabStrip } from "../browser/BrowserTabStrip"
 import type { Workspace } from "../../../shared/types"
 import { AccountMenu } from "./AccountMenu"
@@ -444,6 +445,7 @@ export function TopBar({
       {/* === RIGHT: Browser strip + add + help === */}
       {!isCompact && (
       <div ref={rightSlotRef} className="rox-topbar-right-actions flex min-w-0 shrink-0 items-center justify-end gap-0.5" style={{ paddingRight: 8, maxWidth: showModePill ? modePillLayout?.rightMax : undefined }}>
+        <PanelWorkspaceMenu />
         <DeviceStatusChip />
         {!chrome.hideBrowserTabStrip && (
         <div className="rox-topbar-browser-strip min-w-0 shrink overflow-hidden">

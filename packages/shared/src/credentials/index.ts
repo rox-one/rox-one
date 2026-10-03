@@ -23,6 +23,7 @@
  */
 
 export { CredentialManager, getCredentialManager } from './manager.ts';
+export type { RoxCloudOwner } from './manager.ts';
 export type { CredentialId, CredentialType, StoredCredential } from './types.ts';
 export { credentialIdToAccount, accountToCredentialId, openClawGatewayCredentialId, SOURCE_CREDENTIAL_TYPES } from './types.ts';
 export type { CredentialBackend } from './backends/types.ts';
@@ -170,3 +171,5 @@ export type {
   CredentialMigrationSnapshot,
   CredentialMigrationStatus,
 } from './backends/types.ts';
+
+export { NamedCredentialBackend } from './backends/types.ts';

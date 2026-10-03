@@ -44,6 +44,8 @@ import { computeNextRuns } from './utils'
 import { ContextBindingEditor, saveAutomationContextBinding } from './ContextBindingEditor'
 import { useAutomationContextCatalog } from './useAutomationContextCatalog'
 import './automations.css'
+import { TourScopeContext, useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
 
 // ============================================================================
 // Draft model
@@ -211,9 +213,9 @@ const GROUP_KEYS: Record<AutomationGroup, string> = {
 const WEEK: number[] = [1, 2, 3, 4, 5, 6, 0]
 const WEEKDAY_TOKENS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
 
-function Step({ n, title, hint, children, testId }: { n: number; title: string; hint?: string; children: React.ReactNode; testId?: string }) {
+function Step({ n, title, hint, children, testId, tourRef }: { n: number; title: string; hint?: string; children: React.ReactNode; testId?: string; tourRef?: React.Ref<HTMLElement> }) {
   return (
-    <section className="rox-autom-step" data-testid={testId}>
+    <section ref={tourRef} className="rox-autom-step" data-testid={testId}>
       <span className="rox-autom-step-num">{n}</span>
       <div className="rox-autom-step-head">
         <span className="rox-autom-step-title">{title}</span>
@@ -468,6 +470,7 @@ function ConditionRow({
 function RunHistory({ entries, loading, onRefresh }: { entries: ExecutionEntry[]; loading: boolean; onRefresh: () => void }) {
   const { t, i18n } = useTranslation()
   const { navigateToSession } = useNavigation()
+
   const locale = i18n.language || 'ru'
   return (
     <div data-testid="automation-history">
@@ -517,6 +520,24 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
   const locale = i18n.language || 'ru'
   const { onToggleAutomation, onDeleteAutomation, getAutomationHistory } = useAppShellContext()
   const { navigateToSession } = useNavigation()
+
+  const tourScope = React.useContext(TourScopeContext)
+  const tourSignals = useTourSignals()
+  const nativeTargetScope = { workspaceId: workspaceId ?? undefined, entityId: automation.id }
+  const triggerTarget = useTourTarget('automation.trigger', nativeTargetScope)
+  const actionTarget = useTourTarget('automation.action', nativeTargetScope)
+  const controlsTarget = useTourTarget('automation.controls', nativeTargetScope)
+
+  React.useEffect(() => {
+    const capabilities = meetingsAutomationCapabilities({
+      surface: 'automation', workspaceId,
+      apiAvailable: Boolean(window.electronAPI),
+      selectedId: tourScope?.entityId, automation,
+    })
+    const available = tourSignals.capability('automations.available', capabilities['automations.available']!)
+    const entity = tourSignals.capability('automation.entity-present', capabilities['automation.entity-present']!)
+    return () => { available(); entity() }
+  }, [tourSignals, tourScope?.entityId, workspaceId, automation.id, automation.revision])
 
   const [draft, setDraft] = React.useState<Draft>(() => draftFrom(automation))
   const [saving, setSaving] = React.useState(false)
@@ -673,7 +694,7 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
 
   return (
     <div className={cn('rox-autom-editor', className)} data-testid="automation-editor" data-automation-id={automation.id}>
-      <div className="rox-autom-editor-bar">
+      <div ref={controlsTarget} className="rox-autom-editor-bar">
         <input
           className="rox-autom-title-input"
           value={draft.name}
@@ -717,7 +738,7 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
             onSave={async reference => { await saveAutomationContextBinding(workspaceId, automation, reference); contextCatalog.refresh() }} />
           <button type="button" className="rox-autom-btn is-ghost" onClick={contextCatalog.refresh}>{t('automations.context.refreshCatalog')}</button>
         </>}
-        <Step n={1} title={t('automations.stepWhen')} hint={t('automations.stepWhenHint')} testId="automation-step-when">
+        <Step tourRef={triggerTarget} n={1} title={t('automations.stepWhen')} hint={t('automations.stepWhenHint')} testId="automation-step-when">
           <div className="rox-autom-inline" role="group" aria-label={t('automations.stepWhen')}>
             {(['scheduled', 'event', 'agent'] as AutomationGroup[]).map((g) => (
               <button
@@ -798,7 +819,7 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
           </div>
         </Step>
 
-        <Step n={3} title={t('automations.stepDo')} hint={t('automations.stepDoHint')} testId="automation-step-do">
+        <Step tourRef={actionTarget} n={3} title={t('automations.stepDo')} hint={t('automations.stepDoHint')} testId="automation-step-do">
           {promptAction ? (
             <>
               <Field label={t('automations.promptLabel')}>

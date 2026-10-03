@@ -10,8 +10,10 @@ const PREFIX = 'craft-'
  * Centralized here to avoid magic strings and key collisions.
  */
 export const KEYS = {
+  featureProductTourV1: 'feature-product-tour-v1',
   // Chat sidebar
   sidebarVisible: 'sidebar-visible',
+  sidebarDismissedGuidance: 'sidebar-dismissed-guidance',
   sidebarWidth: 'sidebar-width',
   sessionListWidth: 'session-list-width',
   sidebarMode: 'sidebar-mode',
@@ -33,6 +35,7 @@ export const KEYS = {
   theme: 'theme',
 
   // Panel layouts (dynamic key suffix)
+  panelWorkspaceLayout: 'panel-workspace-layout', // Geometry only, scoped to workspace id
   panelLayout: 'panel-layout', // Used as: panelLayout:${key}
 
   // Tabs (workspace-scoped)

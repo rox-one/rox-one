@@ -1,4 +1,7 @@
 import * as React from 'react'
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
+import { pageLeaseMatches } from '@/features/product-tour/adapters/knowledge'
 import { AlertTriangle, ArrowLeft, Check, FolderKanban, FolderOpen, Globe2, KeyRound, MoreHorizontal, Pencil, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAtomValue } from 'jotai'
@@ -33,6 +36,7 @@ interface PageViewProps {
 }
 
 interface LeaseState {
+  workspaceId: string
   lease: PageRenderLease
   content: string
 }
@@ -48,30 +52,48 @@ interface LeaseState {
  * live pages flows into the frame as a replacement snapshot.
  */
 export function PageView({ pageSlug }: PageViewProps) {
-  const { activeWorkspaceId, onOpenFile, enabledSources } = useAppShellContext()
+  const { activeWorkspaceId } = useAppShellContext()
+  return <ScopedPageView key={`${activeWorkspaceId ?? ''}\0${pageSlug}`} pageSlug={pageSlug} />
+}
+
+function ScopedPageView({ pageSlug }: PageViewProps) {
+  const { activeWorkspaceId, workspaces, onOpenFile, enabledSources } = useAppShellContext()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const pages = useAtomValue(pagesAtom)
+  const knowledgeSignals = useKnowledgeSignals({ workspaceId: activeWorkspaceId ?? undefined, entityId: pageSlug })
+  const pageHostTarget = useTourTarget('pages.host', { workspaceId: activeWorkspaceId ?? undefined, entityId: pageSlug })
+  const pageFreshnessTarget = useTourTarget('pages.freshness', { workspaceId: activeWorkspaceId ?? undefined, entityId: pageSlug })
+  const pagesAvailable = typeof window.electronAPI.createPageLease === 'function' && typeof window.electronAPI.getPageData === 'function'
+  React.useEffect(() => knowledgeSignals.capability('pages.available', pagesAvailable ? { state: 'ready' } : { state: 'unavailable', reason: 'api-unavailable' }), [knowledgeSignals, pagesAvailable])
 
   // Prefer the live atom copy; fall back to a direct fetch for deep links
   // that land before the initial pages load.
+  const workspaceRootPath = workspaces.find(workspace => workspace.id === activeWorkspaceId)?.rootPath
   const pageFromAtom = React.useMemo(
-    () => pages.find(p => p.config.slug === pageSlug) ?? null,
-    [pages, pageSlug],
+    () => pages.find(p => p.config.slug === pageSlug && (workspaceRootPath
+      ? p.workspaceRootPath === workspaceRootPath
+      : Boolean(activeWorkspaceId) && p.workspaceId === activeWorkspaceId)) ?? null,
+    [pages, pageSlug, activeWorkspaceId, workspaceRootPath],
   )
-  const [fallback, setFallback] = React.useState<{ slug: string; page: LoadedPage | null } | null>(null)
-  const page = pageFromAtom ?? (fallback?.slug === pageSlug ? fallback.page : null)
-  const fallbackResolved = fallback?.slug === pageSlug
+  const [fallback, setFallback] = React.useState<{
+    workspaceId: string; slug: string; list: LoadedPage[]; page: LoadedPage | null
+  } | null>(null)
+  const fallbackCurrent = fallback?.workspaceId === activeWorkspaceId
+    && fallback?.slug === pageSlug && fallback?.list === pages
+  const page = pageFromAtom ?? (fallbackCurrent ? fallback.page : null)
+  const fallbackResolved = !activeWorkspaceId || fallbackCurrent
 
   React.useEffect(() => {
     if (pageFromAtom || !activeWorkspaceId) return
     let stale = false
+    if (typeof window.electronAPI.getPage !== 'function') { setFallback({ workspaceId: activeWorkspaceId, slug: pageSlug, list: pages, page: null }); return }
     window.electronAPI
       .getPage(activeWorkspaceId, pageSlug)
-      .then(loaded => { if (!stale) setFallback({ slug: pageSlug, page: loaded }) })
-      .catch(() => { if (!stale) setFallback({ slug: pageSlug, page: null }) })
+      .then(loaded => { if (!stale) setFallback({ workspaceId: activeWorkspaceId, slug: pageSlug, list: pages, page: loaded }) })
+      .catch(() => { if (!stale) setFallback({ workspaceId: activeWorkspaceId, slug: pageSlug, list: pages, page: null }) })
     return () => { stale = true }
-  }, [activeWorkspaceId, pageSlug, pageFromAtom])
+  }, [activeWorkspaceId, pageSlug, pageFromAtom, pages])
 
   // ------------------------------------------------------------------
   // Render lease (keyed by content digest; released on cleanup)
@@ -80,58 +102,74 @@ export function PageView({ pageSlug }: PageViewProps) {
   const hasContent = Boolean(contentDigest)
   const pageLoaded = Boolean(page)
   const [leaseState, setLeaseState] = React.useState<LeaseState | null>(null)
-  const [leaseError, setLeaseError] = React.useState<string | null>(null)
+  const [leaseError, setLeaseError] = React.useState<{ contentDigest: string; message: string } | null>(null)
   const [leaseRetry, setLeaseRetry] = React.useState(0)
 
   React.useEffect(() => {
-    if (!activeWorkspaceId || !pageLoaded || !hasContent) return
-    let stale = false
-    let heldLeaseId: string | null = null
     setLeaseState(null)
     setLeaseError(null)
+    if (!activeWorkspaceId || !pageLoaded || !hasContent || !contentDigest) return
+    let stale = false
+    let heldLeaseId: string | null = null
+    const releaseLease = (leaseId: string) => {
+      void window.electronAPI.releasePageLease(activeWorkspaceId, leaseId)
+        .catch(error => console.warn('[PageView] Render lease release failed:', error))
+    }
 
+    if (!pagesAvailable) { setLeaseError({ contentDigest, message: t('common.unavailable') }); return }
     window.electronAPI
       .createPageLease(activeWorkspaceId, pageSlug)
       .then(result => {
         if (stale) {
-          void window.electronAPI.releasePageLease(activeWorkspaceId, result.lease.leaseId)
+          releaseLease(result.lease.leaseId)
           return
         }
         heldLeaseId = result.lease.leaseId
-        setLeaseState(result)
+        setLeaseState({ ...result, workspaceId: activeWorkspaceId })
       })
       .catch(err => {
-        if (!stale) setLeaseError(err instanceof Error ? err.message : String(err))
+        if (!stale) setLeaseError({ contentDigest, message: err instanceof Error ? err.message : String(err) })
       })
 
     return () => {
       stale = true
-      if (heldLeaseId) void window.electronAPI.releasePageLease(activeWorkspaceId, heldLeaseId)
+      if (heldLeaseId) releaseLease(heldLeaseId)
     }
-  }, [activeWorkspaceId, pageSlug, contentDigest, hasContent, pageLoaded, leaseRetry])
+  }, [activeWorkspaceId, pageSlug, contentDigest, hasContent, pageLoaded, leaseRetry, pagesAvailable, t])
+
+  const currentLease = leaseState?.workspaceId === activeWorkspaceId
+    && leaseState?.lease.pageSlug === pageSlug && leaseState?.lease.contentDigest === contentDigest
+    ? leaseState : null
+  const currentLeaseError = leaseError?.contentDigest === contentDigest ? leaseError?.message : null
 
   // ------------------------------------------------------------------
   // Data snapshot (re-read when a refresh stamps page.json)
   // ------------------------------------------------------------------
   const refreshStamp = page?.config.lastRefresh?.at ?? 0
   const updatedStamp = page?.config.updatedAt ?? 0
-  const [snapshotState, setSnapshotState] = React.useState<{
-    slug: string
-    loaded: boolean
-    data: PageDataSnapshot | null
-  }>({ slug: pageSlug, loaded: false, data: null })
+  const snapshotKey = `${activeWorkspaceId ?? ''}\0${pageSlug}\0${contentDigest ?? ''}\0${refreshStamp}\0${updatedStamp}`
+  const [snapshotState, setSnapshotState] = React.useState<{ key: string; data: PageDataSnapshot | null } | null>(null)
 
   React.useEffect(() => {
-    if (!activeWorkspaceId || !pageLoaded) return
+    setSnapshotState(null)
+    if (!activeWorkspaceId || !pageLoaded || !pagesAvailable) return
     let stale = false
     window.electronAPI
       .getPageData(activeWorkspaceId, pageSlug)
-      .then(data => { if (!stale) setSnapshotState({ slug: pageSlug, loaded: true, data }) })
-      .catch(() => { if (!stale) setSnapshotState({ slug: pageSlug, loaded: true, data: null }) })
+      .then(data => { if (!stale) setSnapshotState({ key: snapshotKey, data }) })
+      .catch(() => { if (!stale) setSnapshotState({ key: snapshotKey, data: null }) })
     return () => { stale = true }
-  }, [activeWorkspaceId, pageSlug, pageLoaded, refreshStamp, updatedStamp])
+  }, [activeWorkspaceId, pageSlug, pageLoaded, snapshotKey, pagesAvailable])
 
-  const snapshotReady = snapshotState.slug === pageSlug && snapshotState.loaded
+  const snapshotReady = snapshotState?.key === snapshotKey
+  const [renderedLeaseId, setRenderedLeaseId] = React.useState<string | null>(null)
+  React.useEffect(() => knowledgeSignals.capability('pages.entity-present', pageLoaded ? { state: 'ready' } : { state: 'pending', reason: 'missing-entity' }), [knowledgeSignals, pageLoaded])
+  React.useEffect(() => {
+    if (!activeWorkspaceId || !currentLease || !contentDigest || !snapshotReady || renderedLeaseId !== currentLease.lease.leaseId
+      || !pageLeaseMatches(currentLease.lease, pageSlug, contentDigest)) return
+    // Current-state policy observes the trusted mounted host. No iframe document is inspected.
+    knowledgeSignals.publish(knowledgeSignals.capture(), { kind: 'page-host-rendered', workspaceId: activeWorkspaceId, pageSlug, contentDigest, lease: currentLease.lease })
+  }, [knowledgeSignals, currentLease, contentDigest, snapshotReady, renderedLeaseId, activeWorkspaceId, pageSlug])
 
   // ------------------------------------------------------------------
   // Actions
@@ -276,7 +314,7 @@ export function PageView({ pageSlug }: PageViewProps) {
           </span>
         )}
         <PageKindBadge kind={config.kind} />
-        <PageFreshness config={config} className="hidden @[28rem]/panel:inline-flex" />
+        <span ref={pageFreshnessTarget} className="hidden @[28rem]/panel:inline-flex"><PageFreshness config={config} /></span>
         <div className="ml-auto flex items-center gap-1">
           {(sharingEnabled || config.share) && (
             <button
@@ -408,11 +446,11 @@ export function PageView({ pageSlug }: PageViewProps) {
               </button>
             </div>
           </div>
-        ) : leaseError ? (
+        ) : currentLeaseError ? (
           <div className="mx-auto max-w-xl pt-8">
             <Info_Alert variant="error" icon={<AlertTriangle className="h-4 w-4" />}>
               <Info_Alert.Title>{t('pages.loadFailed')}</Info_Alert.Title>
-              <Info_Alert.Description className="break-all">{leaseError}</Info_Alert.Description>
+              <Info_Alert.Description className="break-all">{currentLeaseError}</Info_Alert.Description>
             </Info_Alert>
             <button
               onClick={() => setLeaseRetry(n => n + 1)}
@@ -421,19 +459,20 @@ export function PageView({ pageSlug }: PageViewProps) {
               {t('common.retry')}
             </button>
           </div>
-        ) : !leaseState || !snapshotReady || !activeWorkspaceId ? (
+        ) : !currentLease || !snapshotReady || !activeWorkspaceId ? (
           <div className="flex h-full items-center justify-center">
             <LoadingIndicator label={t('common.loading')} />
           </div>
         ) : (
-          <div className="h-full w-full overflow-hidden rounded-lg border border-border/60 shadow-minimal">
+          <div ref={pageHostTarget} className="h-full w-full overflow-hidden rounded-lg border border-border/60 shadow-minimal">
             <PageFrame
-              key={leaseState.lease.leaseId}
+              key={currentLease.lease.leaseId}
               workspaceId={activeWorkspaceId}
               page={page}
-              lease={leaseState.lease}
-              content={leaseState.content}
-              snapshot={snapshotState.data}
+              lease={currentLease.lease}
+              content={currentLease.content}
+              snapshot={snapshotState?.data ?? null}
+              onHostLoad={() => setRenderedLeaseId(currentLease.lease.leaseId)}
             />
           </div>
         )}
@@ -450,7 +489,7 @@ export function PageView({ pageSlug }: PageViewProps) {
         <SharePageDialog
           workspaceId={activeWorkspaceId}
           page={page}
-          hasSnapshot={snapshotState.data !== null}
+          hasSnapshot={snapshotReady && snapshotState?.data !== null}
           sharingEnabled={sharingEnabled}
           open={shareOpen}
           onOpenChange={setShareOpen}

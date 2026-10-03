@@ -1,4 +1,15 @@
 import * as React from "react"
+import { useAtom } from "jotai"
+import { suggestionHistoryAtom } from "@/atoms/header-status"
+import { rememberSuggestion } from "@/lib/contextual-suggestions"
+import { appendStarterPrompt, canShowStarterPrompts, selectStarterPrompts, starterHistoryId, type StarterPrompt } from "@/lib/starter-prompts"
+import { EmptyChatWelcome } from "@/components/chat/EmptyChatWelcome"
+import { StarterPromptList } from "@/components/chat/StarterPromptList"
+import { followChatOutput } from "./chat-scroll"
+import { useChatOutputFollow } from "./useChatOutputFollow"
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { resolvePublishedToolSource } from '@/features/product-tour/adapters/connections'
+import { beginChatUserTurn, beginChatPermissionResponse, cancelChatUserTurn, deriveExecutionCapabilities, observeChatSessionReopened } from '@/features/product-tour/adapters/chat'
 import { createMessageTts } from '@/lib/message-tts'
 import { useAuthenticatedReactionActor } from '@/hooks/useMessageReactionActor'
 import { messageActionId } from '@/lib/message-action-id'
@@ -455,18 +466,17 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
  * Uses useLayoutEffect to ensure scroll happens before content is visible.
  */
 function ScrollOnMount({
-  targetRef,
+  viewportRef,
   onScroll,
   skip = false
 }: {
-  targetRef: React.RefObject<HTMLDivElement | null>
+  viewportRef: React.RefObject<HTMLDivElement | null>
   onScroll?: () => void
   skip?: boolean
 }) {
   React.useLayoutEffect(() => {
     if (skip) return
-    targetRef.current?.scrollIntoView({ behavior: 'instant' })
-    onScroll?.()
+    if (followChatOutput(viewportRef.current, { stickToBottom: true, focused: false, reducedMotion: true, documentVisible: document.visibilityState === 'visible' })) onScroll?.()
   }, [skip])
   return null
 }
@@ -596,19 +606,59 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
+  const runtimePanelId = (appShellContext as typeof appShellContext & { panelId?: string })?.panelId
 
   const handleOpenWorkflow = useCallback(() => {
     if (!session?.id) return
     window.dispatchEvent(new CustomEvent('craft:session-view', {
-      detail: { sessionId: session.id, view: 'map' },
+      detail: { sessionId: session.id, view: 'map', mode: 'editor', panelId: runtimePanelId },
     }))
-  }, [session?.id])
+  }, [session?.id, runtimePanelId])
+
+  const runtimeMapSessionRef = React.useRef(session)
+  runtimeMapSessionRef.current = session
+  const handleShowRuntimeMap = useCallback((messageId: string) => {
+    const current = runtimeMapSessionRef.current
+    if (!current || current.id !== session?.id) return
+    window.dispatchEvent(new CustomEvent('craft:runtime-map-focus', {
+      detail: { sessionId: current.id, messageId: messageActionId(current.messages, messageId), panelId: runtimePanelId },
+    }))
+  }, [session?.id, runtimePanelId])
+
+  const [starterHistory, setStarterHistory] = useAtom(suggestionHistoryAtom)
+  const emptyWelcome = Boolean(session && session.messages.length === 0 && !compactMode && !messagesLoading && !messagesLoadError && !session.isProcessing)
+  const starterOptions = {
+    session,
+    skills: skills ?? EMPTY_SKILLS,
+    sources: sources ?? [],
+    active: isFocusedPanel && !compactMode && !disabled && !connectionUnavailable && !messagesLoading && !messagesLoadError && Boolean(onInputChange),
+    hasPendingRequest: Boolean(pendingPermission || pendingCredential),
+    history: starterHistory,
+    now: Date.now(),
+  }
+  const starterPrompts = selectStarterPrompts(starterOptions)
+  const prepareStarterPrompt = (prompt: StarterPrompt) => {
+    // Recheck the live dependency state before preparing a draft. This path
+    // never calls handleSubmit, onSendMessage, an auth flow, or a provider.
+    if (!session || !canShowStarterPrompts(starterOptions) || !starterPrompts.some(item => item.id === prompt.id)) return
+    let text = t(prompt.promptKey, prompt.values)
+    if (prompt.skill && !(inputValue ?? '').includes(`[skill:${prompt.skill.slug}]`)) text = `[skill:${prompt.skill.slug}] ${text}`
+    onInputChange?.(appendStarterPrompt(inputValue ?? '', text))
+    const dependencies = prompt.dependencies.filter(ref => ref.kind === 'source').map(ref => ref.id)
+    if (dependencies.length) onSourcesChange?.([...new Set([...(session.enabledSourceSlugs ?? []), ...dependencies])])
+    setStarterHistory(history => rememberSuggestion(history, starterHistoryId(session, prompt.id), Date.now()))
+    textareaRef?.current?.focus()
+  }
+  const dismissStarterPrompts = () => {
+    if (!session) return
+    setStarterHistory(history => starterPrompts.reduce((current, prompt) => rememberSuggestion(current, starterHistoryId(session, prompt.id), Date.now()), history))
+  }
 
   useContextualSuggestions({
     session,
     skills: skills ?? EMPTY_SKILLS,
     draft: inputValue ?? '',
-    active: isFocusedPanel,
+    active: isFocusedPanel && !emptyWelcome,
     hasPendingRequest: Boolean(pendingPermission || pendingCredential),
     onDraftChange: (draft) => {
       onInputChange?.(draft)
@@ -619,7 +669,6 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Input is only disabled when explicitly disabled (e.g., agent needs activation)
   // User can type during streaming - submitting will stop the stream and send
   const isInputDisabled = disabled
-  const messagesEndRef = React.useRef<HTMLDivElement>(null)
   const scrollViewportRef = React.useRef<HTMLDivElement>(null)
   const prevSessionIdRef = React.useRef<string | null>(null)
   // Reverse pagination: show last N turns initially, load more on scroll up
@@ -630,6 +679,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Mirror isFocusedPanel into a ref so the ResizeObserver closure reads the latest value
   const isFocusedPanelRef = React.useRef(isFocusedPanel)
   isFocusedPanelRef.current = isFocusedPanel
+  const { capture: captureScrollOwner, follow: followOutput, owns: ownsScrollViewport, begin: beginOutputMotion, ownsScroll: isOutputScroll, interrupt: interruptOutputFollow } = useChatOutputFollow(session?.id, scrollViewportRef, isFocusedPanelRef, isStickToBottomRef)
+  const pendingHistoryAnchorRef = React.useRef<{ viewport: HTMLDivElement; owner: ReturnType<typeof captureScrollOwner>; height: number; top: number } | null>(null)
   // Skip smooth scroll briefly after session switch (instant scroll already happened)
   const skipSmoothScrollUntilRef = React.useRef(0)
   // Track message commit boundaries so we can auto-scroll when a new user message
@@ -917,12 +968,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         const buffer = 128
         const isVisible = rect.top >= buffer && rect.bottom <= window.innerHeight - buffer
         if (!isVisible) {
+          interruptOutputFollow()
           turnEl.scrollIntoView({ behavior: 'instant', block: 'center' })
         }
       }
       shouldScrollToMatchRef.current = false
     }
-  }, [validMatches, currentMatchIndex, session?.id, visibleTurnCount])
+  }, [validMatches, currentMatchIndex, session?.id, visibleTurnCount, interruptOutputFollow])
 
   // ---------------------------------------------------------------------------
   // CSS Custom Highlight API — non-destructive text highlighting
@@ -1117,10 +1169,20 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Diff viewer settings - loaded from user preferences on mount, persisted on change
   // These settings are stored in ~/.craft-agent/preferences.json (not localStorage)
   const [diffViewerSettings, setDiffViewerSettings] = useState<Partial<DiffViewerSettings>>({})
+  const preferencesScope = React.useMemo(() => ({}), [workspaceId, session?.id, appShellContext.runtimeSummary])
+  const preferencesScopeRef = React.useRef<object | undefined>(preferencesScope)
+  preferencesScopeRef.current = preferencesScope
+  const preferencesRevisionRef = React.useRef(0)
 
   // Load diff viewer settings from preferences on mount
   useEffect(() => {
-    window.electronAPI.readPreferences().then(({ content }) => {
+    const scope = preferencesScope
+    preferencesScopeRef.current = scope
+    const revision = ++preferencesRevisionRef.current
+    let current = true
+    setDiffViewerSettings({})
+    void window.electronAPI.readPreferences().then(({ content }) => {
+      if (!current || preferencesScopeRef.current !== scope || preferencesRevisionRef.current !== revision) return
       try {
         const prefs = JSON.parse(content)
         if (prefs.diffViewer) {
@@ -1129,25 +1191,30 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       } catch {
         // Ignore parse errors, use defaults
       }
-    })
-  }, [])
+    }).catch(() => { /* Host preferences may be unavailable to a scoped native caller. */ })
+    return () => { current = false; if (preferencesScopeRef.current === scope) preferencesScopeRef.current = undefined }
+  }, [preferencesScope])
 
   // Persist diff viewer settings to preferences when changed
   const handleDiffViewerSettingsChange = useCallback((settings: DiffViewerSettings) => {
     setDiffViewerSettings(settings)
-    // Read current preferences, merge in new settings, write back
-    window.electronAPI.readPreferences().then(({ content }) => {
+    const scope = preferencesScope
+    const revision = ++preferencesRevisionRef.current
+    // Read current preferences, merge in new settings, write back while this view remains current.
+    void window.electronAPI.readPreferences().then(async ({ content }) => {
+      if (preferencesScopeRef.current !== scope || preferencesRevisionRef.current !== revision) return
+      let prefs: Record<string, unknown>
       try {
-        const prefs = JSON.parse(content)
-        prefs.diffViewer = settings
-        prefs.updatedAt = Date.now()
-        window.electronAPI.writePreferences(JSON.stringify(prefs, null, 2))
+        const parsed = JSON.parse(content)
+        prefs = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
       } catch {
-        // If preferences malformed, create fresh with just diffViewer
-        window.electronAPI.writePreferences(JSON.stringify({ diffViewer: settings, updatedAt: Date.now() }, null, 2))
+        prefs = {}
       }
-    })
-  }, [])
+      prefs.diffViewer = settings
+      prefs.updatedAt = Date.now()
+      if (preferencesScopeRef.current === scope && preferencesRevisionRef.current === revision) await window.electronAPI.writePreferences(JSON.stringify(prefs, null, 2))
+    }).catch(() => { /* Preserve this view's setting when host persistence is unavailable. */ })
+  }, [preferencesScope])
 
   // Close overlay handler
   const handleCloseOverlay = useCallback(() => {
@@ -1242,7 +1309,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     const { scrollTop, scrollHeight, clientHeight } = viewport
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight
     // 20px threshold for "at bottom" detection
-    isStickToBottomRef.current = distanceFromBottom < 20
+    if (!isOutputScroll(viewport)) isStickToBottomRef.current = distanceFromBottom < 20
 
     // Load more turns when scrolling near top (within 100px)
     if (scrollTop < 100) {
@@ -1253,25 +1320,46 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
         // Remember scroll height before adding more items
         const prevScrollHeight = viewport.scrollHeight
+        const owner = captureScrollOwner()
 
-        // Schedule scroll position adjustment after render
-        requestAnimationFrame(() => {
-          const newScrollHeight = viewport.scrollHeight
-          viewport.scrollTop = newScrollHeight - prevScrollHeight + scrollTop
-        })
+        // Measure only after React commits the added turns; a frame may run before that commit.
+        pendingHistoryAnchorRef.current = { viewport, owner, height: prevScrollHeight, top: scrollTop }
 
         return prev + TURNS_PER_PAGE
       })
     }
-  }, [])
+  }, [captureScrollOwner, isOutputScroll])
+
+  React.useLayoutEffect(() => {
+    const anchor = pendingHistoryAnchorRef.current
+    if (!anchor) return
+    pendingHistoryAnchorRef.current = null
+    if (!ownsScrollViewport(anchor.owner) || document.visibilityState !== 'visible') return
+    anchor.viewport.scrollTop = anchor.viewport.scrollHeight - anchor.height + anchor.top
+  }, [visibleTurnCount, session?.id, ownsScrollViewport])
 
   // Set up scroll event listener
   React.useEffect(() => {
     const viewport = scrollViewportRef.current
     if (!viewport) return
+    const interruptOnKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target?.closest('input, textarea, [contenteditable="true"]')) return
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) interruptOutputFollow()
+    }
     viewport.addEventListener('scroll', handleScroll)
-    return () => viewport.removeEventListener('scroll', handleScroll)
-  }, [handleScroll])
+    viewport.addEventListener('wheel', interruptOutputFollow, { passive: true })
+    viewport.addEventListener('touchstart', interruptOutputFollow, { passive: true })
+    viewport.addEventListener('pointerdown', interruptOutputFollow)
+    viewport.addEventListener('keydown', interruptOnKey)
+    return () => {
+      viewport.removeEventListener('scroll', handleScroll)
+      viewport.removeEventListener('wheel', interruptOutputFollow)
+      viewport.removeEventListener('touchstart', interruptOutputFollow)
+      viewport.removeEventListener('pointerdown', interruptOutputFollow)
+      viewport.removeEventListener('keydown', interruptOnKey)
+    }
+  }, [handleScroll, interruptOutputFollow])
 
   // Auto-scroll using ResizeObserver for streaming content
   // Initial scroll is handled by ScrollOnMount (useLayoutEffect, before paint)
@@ -1290,11 +1378,14 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
     // Debounced scroll for streaming - waits for layout to settle
     let debounceTimer: ReturnType<typeof setTimeout> | null = null
+    let disposed = false
+    const owner = captureScrollOwner()
 
     const resizeObserver = new ResizeObserver(() => {
-      // Unfocused panels: always scroll to bottom instantly (user isn't reading them)
+      if (disposed) return
+      // Unfocused panels: always follow their own viewport instantly.
       if (!isFocusedPanelRef.current) {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' })
+        followOutput(owner)
         return
       }
 
@@ -1305,8 +1396,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       if (debounceTimer) clearTimeout(debounceTimer)
       debounceTimer = setTimeout(() => {
         // Skip smooth scroll if we just did an instant scroll (session switch/lazy load)
-        if (Date.now() < skipSmoothScrollUntilRef.current) return
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+        if (disposed || Date.now() < skipSmoothScrollUntilRef.current) return
+        followOutput(owner)
       }, 200)
     })
 
@@ -1317,10 +1408,11 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     }
 
     return () => {
+      disposed = true
       resizeObserver.disconnect()
       if (debounceTimer) clearTimeout(debounceTimer)
     }
-  }, [session?.id])
+  }, [session?.id, captureScrollOwner, followOutput])
 
   // Commit-time auto-scroll for new user messages.
   // This complements submit-time scrolling and covers cases where attachments delay
@@ -1350,17 +1442,17 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
     // Sending a message should always re-stick to bottom.
     isStickToBottomRef.current = true
+    beginOutputMotion()
 
-    requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({
-        behavior: isFocusedPanelRef.current ? 'smooth' : 'instant',
-      })
-    })
-  }, [session?.id, messageCount, lastMessageId, lastMessageRole])
+    const owner = captureScrollOwner()
+    requestAnimationFrame(() => { followOutput(owner) })
+  }, [session?.id, messageCount, lastMessageId, lastMessageRole, captureScrollOwner, followOutput, beginOutputMotion])
 
   // Handle message submission from InputContainer
   // Backend handles interruption and queueing if currently processing
   const handleSubmit = (message: string, attachments?: FileAttachment[], skillSlugs?: string[]) => {
+    const scrollOwner = captureScrollOwner()
+    if (session) beginChatUserTurn(tourSignals.capture(), session)
     const hasBaseMessage = message.trim().length > 0
     const followUpSection = formatFollowUpSection(pendingFollowUpAnnotations, {
       includeTopSeparator: hasBaseMessage,
@@ -1372,6 +1464,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
     // Force stick-to-bottom when user sends a message
     isStickToBottomRef.current = true
+    beginOutputMotion()
     onSendMessage(normalizedMessage, attachments, skillSlugs)
 
     // Persist sent marker on follow-up annotations so TurnCard can distinguish
@@ -1406,9 +1499,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
     // Immediately scroll to bottom after sending - use requestAnimationFrame
     // to ensure the DOM has updated with the new message
-    requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    })
+    requestAnimationFrame(() => { followOutput(scrollOwner) })
   }
 
   const handleSaveAndSendFollowUp = useCallback((_target: {
@@ -1564,6 +1655,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // silent=true when redirecting (sending new message), silent=false when user clicks Stop button
   const handleStop = (silent = false) => {
     if (!session?.isProcessing) return
+    cancelChatUserTurn(session.id)
 
     // Explicit Stop (not a redirect/new-message send): put the in-flight prompt
     // back in the input so the user can tweak and resend. Append to any draft.
@@ -1595,6 +1687,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Handle structured input responses (permissions and credentials)
   const handleStructuredResponse = (response: StructuredResponse) => {
     if ((response.type === 'permission' || response.type === 'admin_approval') && pendingPermission && onRespondToPermission) {
+      beginChatPermissionResponse(tourSignals.capture(), pendingPermission.sessionId, pendingPermission.requestId)
       if (response.type === 'permission') {
         const permResponse = response as PermissionResponse
         onRespondToPermission(
@@ -1648,6 +1741,31 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     return undefined
   }, [pendingPermission, pendingCredential])
 
+  const tourSignals = useTourSignals({ sessionId: session?.id, workspaceId: session?.workspaceId })
+  const tourVariant = compactMode ? 'compact' : 'regular'
+  const entryTarget = useTourTarget('session.entry', { sessionId: session?.id, variant: tourVariant })
+  const executionTarget = useTourTarget('session.execution', { sessionId: session?.id, variant: tourVariant })
+  const finalTarget = useTourTarget('session.final-result', { sessionId: session?.id, variant: tourVariant })
+  const toolResultTarget = useTourTarget('session.tool-result', { sessionId: session?.id, variant: tourVariant })
+  const tourFinalMessageId = useMemo(() => {
+    if (!session) return undefined
+    const userIndex = session.messages.findLastIndex(message => message.role === 'user' && !message.isPending && !message.isQueued && !message.hidden)
+    if (userIndex < 0) return undefined
+    return session.messages.slice(userIndex + 1).findLast(message => message.role === 'assistant' && !message.isIntermediate && !message.isPending && !message.isStreaming && !message.isError && !message.hidden && !message.parentToolUseId && message.content.trim())?.id
+  }, [session?.messages])
+  useEffect(() => {
+    const cleanups = Object.entries(deriveExecutionCapabilities(session, !!pendingPermission)).map(([id, capability]) => tourSignals.capability(id as 'sessions.available' | 'permissions.pending', capability!))
+    if (session && !messagesLoading && !messagesLoadError) {
+      const captured = tourSignals.capture()
+      tourSignals.emit(captured, 'session.ready', 'observed', 'ui-observation', `ready:${captured?.operationToken}`)
+      if (session.isProcessing || tourFinalMessageId) tourSignals.emit(captured, 'execution.state-visible', 'observed', 'ui-observation', `execution:${captured?.operationToken}`)
+      for (const evidence of observeChatSessionReopened(session)) {
+        tourSignals.emit({ binding: evidence.binding, operationToken: evidence.operationToken!, at: evidence.operationStartedAt! }, evidence.name, evidence.level, evidence.origin, evidence.eventToken)
+      }
+    }
+    return () => { cleanups.forEach(cleanup => cleanup()) }
+  }, [tourSignals, session?.id, session?.isProcessing, pendingPermission, messagesLoading, messagesLoadError, tourFinalMessageId])
+
   // Memoize turn grouping - avoids O(n) iteration on every render/keystroke
   const allTurns = React.useMemo(() => {
     if (!session) return []
@@ -1678,6 +1796,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   }) => {
     const targetTurnIndex = assistantTurnIndexByMessageId.get(item.messageId)
     if (targetTurnIndex == null) return
+    interruptOutputFollow()
 
     const ensureVisibleCount = allTurns.length - targetTurnIndex
 
@@ -1689,6 +1808,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       const turnContainer = turnRefs.current.get(turnKey)
       if (!turnContainer) return false
 
+      interruptOutputFollow()
       turnContainer.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return true
     }
@@ -1712,7 +1832,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         void scrollToTurn()
       })
     }
-  }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount])
+  }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount, interruptOutputFollow])
 
   const scrollToMessage = useCallback((messageId: string) => {
     if (!messageId) return
@@ -1735,6 +1855,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       if (mapped != null) targetTurnIndex = mapped
     }
     if (targetTurnIndex < 0) return
+    interruptOutputFollow()
 
     const ensureVisibleCount = allTurns.length - targetTurnIndex
     const scrollToTurn = () => {
@@ -1746,11 +1867,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         // Last resort: element with message id (assistant markdown)
         const byId = document.getElementById(messageId)
         if (byId) {
+          interruptOutputFollow()
           byId.scrollIntoView({ behavior: 'smooth', block: 'center' })
           return true
         }
         return false
       }
+      interruptOutputFollow()
       turnContainer.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return true
     }
@@ -1800,7 +1923,7 @@ const handleFollowUpChipClick = useCallback((item: {
       anchorY: anchor?.y,
       nonce: followUpOpenNonceRef.current,
     })
-  }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount])
+  }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount, interruptOutputFollow])
 
   const handleFollowUpIndexClick = useCallback((item: {
     messageId: string
@@ -1822,7 +1945,7 @@ const handleFollowUpChipClick = useCallback((item: {
     <div ref={zoneRef} className="flex h-full flex-col min-w-0" data-focus-zone="chat">
       {session ? (
         <>
-        <div className="flex flex-1 flex-col min-h-0 min-w-0 relative">
+        <div ref={entryTarget} className="flex flex-1 flex-col min-h-0 min-w-0 relative">
           {session.branchFromSessionId ? (
             <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 text-xs text-muted-foreground">
               <span>
@@ -1840,7 +1963,8 @@ const handleFollowUpChipClick = useCallback((item: {
           {/* Content layer */}
           <div className="flex flex-1 flex-col min-h-0 min-w-0 relative z-10">
           {/* === MESSAGES AREA: Scrollable list of message bubbles === */}
-          <div className="relative flex-1 min-h-0">
+          <div ref={executionTarget} className="relative flex-1 min-h-0">
+            {emptyWelcome && !pendingPermission && !pendingCredential && <EmptyChatWelcome />}
             {/* Mask wrapper - fades content at top and bottom over transparent/image backgrounds */}
             <div
               className="h-full"
@@ -1922,9 +2046,10 @@ const handleFollowUpChipClick = useCallback((item: {
                   {/* Scroll to bottom before paint - fires via useLayoutEffect */}
                   {/* Skip when search is active on session switch - scroll to first match instead */}
                   <ScrollOnMount
-                    targetRef={messagesEndRef}
+                    viewportRef={scrollViewportRef}
                     skip={skipScrollToBottom}
                     onScroll={() => {
+                      beginOutputMotion()
                       skipSmoothScrollUntilRef.current = Date.now() + 500
                     }}
                   />
@@ -1983,6 +2108,7 @@ const handleFollowUpChipClick = useCallback((item: {
                             onPickSideThread={handlePickSideThread}
                             onListen={(text) => { void handleListen(text, turn.message.id) }}
                             isListening={listeningTurnId === turn.message.id}
+                            onShowRuntimeMap={handleShowRuntimeMap}
                             onBranch={session?.supportsBranching && !turn.message.isPending && !turn.message.isQueued ? handleMessageBranch : undefined}
                           />
                         </div>
@@ -2052,10 +2178,12 @@ const handleFollowUpChipClick = useCallback((item: {
 
                     // Assistant turns - render with TurnCard (buffered streaming)
                     const assistantUiKey = getAssistantTurnUiKey(turn, index)
+                    const isNativeFinal = !!turn.response?.messageId && turn.response.messageId === tourFinalMessageId
+                    const hasNativeSourceResult = isLatestAssistantTurn && turn.activities.some(activity => activity.type === 'tool' && activity.status === 'completed' && !activity.error && !!activity.toolName && !!resolvePublishedToolSource(activity.toolName, session.enabledSourceSlugs ?? []))
                     return (
                       <div
                         key={turnKey}
-                        ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
+                        ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey); if (isNativeFinal) finalTarget(el); if (hasNativeSourceResult) toolResultTarget(el) }}
                         className={cn(
                           "pt-2",
                           "rounded-lg transition-all duration-200",
@@ -2093,6 +2221,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         onQuote={handleQuoteMessage}
                         onLearnFromMessage={handleLearnFromMessage}
                         onPickSideThread={handlePickSideThread}
+                        onShowRuntimeMap={handleShowRuntimeMap}
                         onBranch={session?.supportsBranching ? handleMessageBranch : undefined}
                         onAddAnnotation={persistAnnotation}
                         onRemoveAnnotation={removeAnnotation}
@@ -2235,12 +2364,20 @@ const handleFollowUpChipClick = useCallback((item: {
                   )
                 })()}
                 {/* Scroll Anchor: For auto-scroll to bottom */}
-                <div ref={messagesEndRef} />
+                <div data-chat-output-end />
               </div>
               </ScrollArea>
             </div>
           </div>
 
+          {/* Recommendations stay directly above the existing lower composer. */}
+          <StarterPromptList
+            prompts={starterPrompts}
+            sources={sources ?? []}
+            workspaceId={session.workspaceId}
+            onSelect={prepareStarterPrompt}
+            onDismiss={dismissStarterPrompts}
+          />
           {/* === INPUT CONTAINER: FreeForm or Structured Input === */}
           <ChatInputZone
             compactMode={compactMode}
@@ -2493,6 +2630,7 @@ interface MessageBubbleProps {
   onListen?: (text: string) => void
   isListening?: boolean
   onBranch?: (messageId: string) => void
+  onShowRuntimeMap?: (messageId: string) => void
 }
 
 /**
@@ -2520,7 +2658,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
         <div className="text-xs text-destructive/50 mb-0.5 font-semibold">
           {message.errorTitle || t('common.error')}
         </div>
-        <p className="text-sm text-destructive">{message.content}</p>
+        <p className="text-sm text-destructive">{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</p>
 
         {/* Action buttons */}
         {actions && actions.length > 0 && (
@@ -2588,6 +2726,7 @@ function MessageBubble({
   onListen,
   isListening,
   onBranch,
+  onShowRuntimeMap,
 }: MessageBubbleProps) {
   const { t } = useTranslation()
   const messageContent = useMemo(() => linkifyNoteReferences(message.content), [message.content])
@@ -2615,6 +2754,7 @@ function MessageBubble({
         onListen={onListen}
         isListening={isListening}
         onBranch={onBranch}
+        onShowRuntimeMap={onShowRuntimeMap}
       />
     )
   }
@@ -2693,7 +2833,7 @@ function MessageBubble({
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
           <Spinner className="text-[10px]" />
         </div>
-        <span>{message.content}</span>
+        <span>{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</span>
       </div>
     )
   }
@@ -2728,7 +2868,7 @@ function MessageBubble({
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
           <Icon className="w-3 h-3" />
         </div>
-        <span>{message.content}</span>
+        <span>{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</span>
       </div>
     )
   }
@@ -2741,7 +2881,7 @@ function MessageBubble({
           <div className="text-xs text-info/50 mb-0.5 font-semibold">
             Warning
           </div>
-          <p className="text-sm text-info">{message.content}</p>
+          <p className="text-sm text-info">{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</p>
         </div>
       </div>
     )
@@ -2774,6 +2914,7 @@ const MemoizedMessageBubble = React.memo(MessageBubble, (prev, next) => {
     prev.onListen === next.onListen &&
     prev.isListening === next.isListening &&
     prev.onBranch === next.onBranch &&
+    prev.onShowRuntimeMap === next.onShowRuntimeMap &&
     prev.onQuote === next.onQuote &&
     prev.onLearnFromMessage === next.onLearnFromMessage &&
     prev.onPickSideThread === next.onPickSideThread

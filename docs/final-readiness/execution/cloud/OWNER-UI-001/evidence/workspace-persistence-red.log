@@ -1,0 +1,72 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late sources responses after workspace/directory change [105.45ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live sources deletion ahead of a pending initial snapshot [24.84ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late skills responses after workspace/directory change [40.81ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live skills deletion ahead of a pending initial snapshot [12.25ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > recovers from request rejection and unmount without installing stale data [15.31ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > restores workspace geometry before an old pending keyboard resize can commit [20.68ms]
+110 |         activeWorkspaceId: 'next', workspaceUiStateId: 'old',
+111 |         viewFiltersMap: { oldFilter: {} }, collapsedItems: new Set(['old-section']),
+112 |         storage: { KEYS: realStorage.KEYS, set: (...args: unknown[]) => { writes.push(args) } },
+113 |         commitShellLayout: (...args: unknown[]) => { writes.push(args) },
+114 |       })
+115 |       expect(writes).toEqual([])
+                           ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   [
++     "view-filters",
++     {
++       "oldFilter": {},
++     },
++     "next",
++   ],
++ ]
+
+- Expected  - 1
++ Received  + 9
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:115:22)
+(fail) ROX UI-001 workspace persistence isolation > does not save old viewFilters over the next workspace during restoration [14.11ms]
+110 |         activeWorkspaceId: 'next', workspaceUiStateId: 'old',
+111 |         viewFiltersMap: { oldFilter: {} }, collapsedItems: new Set(['old-section']),
+112 |         storage: { KEYS: realStorage.KEYS, set: (...args: unknown[]) => { writes.push(args) } },
+113 |         commitShellLayout: (...args: unknown[]) => { writes.push(args) },
+114 |       })
+115 |       expect(writes).toEqual([])
+                           ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   [
++     "collapsed-sidebar-items",
++     [
++       "old-section",
++     ],
++     "next",
++   ],
++   [
++     {
++       "collapsedSectionIds": [
++         "old-section",
++       ],
++       "workspaceId": "next",
++     },
++   ],
++ ]
+
+- Expected  - 1
++ Received  + 17
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:115:22)
+(fail) ROX UI-001 workspace persistence isolation > does not save old collapsedSidebarItems over the next workspace during restoration [11.04ms]
+
+ 6 pass
+ 2 fail
+ 22 expect() calls
+Ran 8 tests across 1 file. [594.00ms]

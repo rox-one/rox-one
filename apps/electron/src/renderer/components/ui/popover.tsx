@@ -2,11 +2,13 @@ import * as React from "react"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
 
 import { cn } from "@/lib/utils"
+import { useTourNativeLayer } from '@/features/product-tour/runtime/native-layer'
 
 function Popover({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
-  return <PopoverPrimitive.Root data-slot="popover" {...props} />
+  const state = useTourNativeLayer(props, props.modal ?? false)
+  return <PopoverPrimitive.Root data-slot="popover" {...props} {...state} />
 }
 
 function PopoverTrigger({

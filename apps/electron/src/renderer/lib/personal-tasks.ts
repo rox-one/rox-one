@@ -17,8 +17,12 @@ import {
   type PersonalTaskBundle,
   type PersonalTaskCacheLoad,
   type PersonalTask,
+  type PersonalTaskKv,
 } from '@rox/core/tasks/personal'
 import type { PersonalTaskConflict } from '@rox/core/tasks/personal'
+import type { VersionedPersonalTask } from '@rox/core/tasks/personal'
+import { samePersonalTask } from '../features/product-tour/adapters/work/tasks-projects'
+import { commitPersonalTaskLink } from '../features/product-tour/adapters/work/tasks-projects/native-commit'
 import {
   bundleFromSnapshot,
   diffPersonalTaskBundles,
@@ -50,14 +54,157 @@ let hydrating: Promise<void> | null = null
 let unsubscribeServer: (() => void) | null = null
 let retryTimer: number | null = null
 let syncConflicts: PersonalTaskConflict[] = []
+const nativeCommitListeners = new Set<(record: VersionedPersonalTask) => void>()
 
-function kv(): Storage {
-  return localStorage
+/** Canonical receipts only. Cache mutations and optimistic rows never notify. */
+export function subscribePersonalTaskCommits(listener: (record: VersionedPersonalTask) => void): () => void {
+  nativeCommitListeners.add(listener)
+  return () => { nativeCommitListeners.delete(listener) }
+}
+
+function notifyNativeCommit(record: VersionedPersonalTask): void {
+  for (const listener of nativeCommitListeners) {
+    try { listener(structuredClone(record)) } catch { /* Observers cannot turn a durable commit into a write failure. */ }
+  }
+}
+
+export function personalTasksNativeAvailable(): boolean { return callerScope !== null && api() !== null }
+
+/** Read-only lifetime fence; no identity or grant is exposed to consumers. */
+export function capturePersonalTaskScope(): () => boolean {
+  const generation = scopeGeneration
+  return () => callerScope !== null && generation === scopeGeneration
+}
+export interface PersonalTaskCallerScope {
+  authority: 'native' | 'local'
+  userId: string
+  issuer?: string
+  workspaceId: string | null
+}
+let callerScope: PersonalTaskCallerScope | null = null
+let scopeGeneration = 0
+let offIdentity: (() => void) | null = null
+let identityGeneration = 0
+let snapshotGeneration = 0
+let confirmedImport: { generation: number } | null = null
+let backgroundGeneration = 0
+const backgroundTasks = new Set<{ generation: number; promise: Promise<void> }>()
+
+function trackBackgroundTask(generation: number, operation: () => Promise<void>): Promise<void> {
+  // Register before the operation opens a transport, including synchronous pushes.
+  const promise = Promise.resolve().then(operation)
+  const task = { generation, promise }
+  backgroundTasks.add(task)
+  void promise.then(() => backgroundTasks.delete(task), () => backgroundTasks.delete(task))
+  return promise
+}
+
+
+/** Invalidate before any actor/workspace transition; late replies never publish into a successor scope. */
+export function setPersonalTaskScope(scope: PersonalTaskCallerScope | null): void {
+  const normalized = scope && scope.userId && (scope.authority === 'local' || scope.issuer && scope.workspaceId) ? { ...scope } : null
+  if (normalized && JSON.stringify(callerScope) === JSON.stringify(normalized)) return
+  callerScope = normalized
+  confirmedImport = null
+  ++scopeGeneration
+  ++backgroundGeneration
+  ++snapshotGeneration
+  unsubscribeServer?.(); unsubscribeServer = null
+  if (retryTimer !== null) clearTimeout(retryTimer)
+  retryTimer = null
+  currentBundle = synced = null
+  revisions = {}
+  loadStatus = 'empty'
+  syncState = normalized ? 'local' : 'syncing'
+  hydrating = null
+  syncConflicts = []
+  emit()
+  if (normalized) void hydratePersonalTasks()
+}
+
+/** A rejected switch/logout must rebind from fresh authority, never from its former cached identity. */
+export async function runPersonalTaskScopeTransition<T>(
+  operation: () => Promise<T>,
+  isCurrent: () => boolean,
+  committedScope: { authority: 'native' | 'local' | null; workspaceId: string | null } | null = callerScope,
+): Promise<T> {
+  const expected = committedScope ? { authority: committedScope.authority, workspaceId: committedScope.workspaceId } : null
+  setPersonalTaskScope(null)
+  const generation = scopeGeneration
+  const current = () => generation === scopeGeneration && isCurrent()
+  try {
+    const result = await operation()
+    if (!current()) throw new Error('Personal task transition changed')
+    return result
+  }
+  catch (error) {
+    if (current()) {
+      try {
+        const candidate = window.electronAPI
+        const identity = await candidate.getOrgIdentity()
+        if (!current()) throw new Error('Personal task transition changed')
+        const workspaceId = await candidate.getWindowWorkspace()
+        if (!current()) throw new Error('Personal task transition changed')
+        const confirmedIdentity = await candidate.getOrgIdentity()
+        if (!current() || identity.authority !== confirmedIdentity.authority || identity.userId !== confirmedIdentity.userId
+          || identity.issuer !== confirmedIdentity.issuer) throw new Error('Personal task identity changed')
+        const confirmedWorkspace = await candidate.getWindowWorkspace()
+        if (!current() || confirmedWorkspace !== workspaceId || !expected
+          || confirmedIdentity.authority !== expected.authority || confirmedWorkspace !== expected.workspaceId) throw new Error('Personal task workspace changed')
+        setPersonalTaskScope({ ...confirmedIdentity, workspaceId: confirmedWorkspace })
+      } catch { /* Failed fresh authority stays unavailable; no stale profile is restored. */ }
+    }
+    throw error
+  }
+}
+
+function cacheKey(key: string): string {
+  if (!callerScope) throw new Error('Personal task caller unavailable')
+  return callerScope.authority === 'local' ? key : `${key}.native.${encodeURIComponent(JSON.stringify([callerScope.issuer, callerScope.userId, callerScope.workspaceId]))}`
+}
+
+function watchIdentity(): void {
+  if (offIdentity || typeof window === 'undefined') return
+  const candidate = window.electronAPI
+  if (typeof candidate?.onIdentityChanged !== 'function' || typeof candidate.getOrgIdentity !== 'function') return
+  offIdentity = candidate.onIdentityChanged(() => {
+    const request = ++identityGeneration
+    setPersonalTaskScope(null)
+    const generation = scopeGeneration
+    void (async () => {
+      const identity = await candidate.getOrgIdentity()
+      const workspaceId = await candidate.getWindowWorkspace()
+      if (request !== identityGeneration || generation !== scopeGeneration) return
+      setPersonalTaskScope({ ...identity, workspaceId })
+    })().catch(() => {})
+  })
+}
+
+function kv(): PersonalTaskKv {
+  const generation = scopeGeneration
+  return {
+    getItem: key => generation === scopeGeneration && callerScope ? localStorage.getItem(cacheKey(key)) : null,
+    setItem: (key, value) => { if (generation === scopeGeneration && callerScope) localStorage.setItem(cacheKey(key), value) },
+  }
 }
 
 function api(): (PersonalTasksApi & { onPersonalTasksChanged?: (cb: () => void) => () => void }) | null {
   const candidate = typeof window !== 'undefined' ? (window as unknown as { electronAPI?: unknown }).electronAPI : undefined
   return isPersonalTasksApi(candidate) ? (candidate as PersonalTasksApi & { onPersonalTasksChanged?: (cb: () => void) => () => void }) : null
+}
+
+/** Fence before each transport call, including PUT→DELETE sequences, so a successor workspace is never mutated. */
+function scopedApi(remote: PersonalTasksApi, generation: number, isCurrent: () => boolean = () => true): PersonalTasksApi {
+  const invoke = <T>(operation: () => Promise<T>): Promise<T> => {
+    if (!callerScope || generation !== scopeGeneration || !isCurrent()) return Promise.reject(new Error('Personal task caller changed'))
+    return operation()
+  }
+  return {
+    personalTasksList: () => invoke(() => remote.personalTasksList()),
+    personalTasksPut: (writes, meta) => invoke(() => remote.personalTasksPut(writes, meta)),
+    personalTasksDelete: deletes => invoke(() => remote.personalTasksDelete(deletes)),
+    personalTasksMigrate: input => invoke(() => remote.personalTasksMigrate(input)),
+  }
 }
 
 function emit(): void {
@@ -101,6 +248,8 @@ export function resolvePersonalTaskConflict(id: string, choice: 'local' | 'serve
 }
 
 export function loadPersonalTaskStore(): PersonalTaskStore {
+  watchIdentity()
+  if (!callerScope) return new PersonalTaskStore()
   if (currentBundle) return new PersonalTaskStore(currentBundle)
   const loaded = loadPersonalTaskCache(kv())
   loadStatus = loaded.status
@@ -109,6 +258,7 @@ export function loadPersonalTaskStore(): PersonalTaskStore {
 }
 
 export function persistPersonalTaskStore(store: PersonalTaskStore): void {
+  if (!callerScope) return
   currentBundle = store.snapshot()
   persistPersonalTaskCache(kv(), store, loadStatus)
   const remote = api()
@@ -116,60 +266,168 @@ export function persistPersonalTaskStore(store: PersonalTaskStore): void {
   emit()
 }
 
-async function syncBundle(remote: PersonalTasksApi, next: PersonalTaskBundle): Promise<void> {
-  const base = synced
-  if (!base) return
-  const diff = diffPersonalTaskBundles(base, next)
-  if (isEmptyDiff(diff)) return
-  syncState = 'syncing'
-  const result = await pushPersonalTaskDiff(remote, diff, revisions)
-  syncConflicts = result.conflicts
-  const acceptedIds = new Set(result.accepted.map(({ task }) => task.id))
-  for (const accepted of result.accepted) revisions[accepted.task.id] = accepted.revision
-  for (const id of result.removed) delete revisions[id]
-  if (synced) {
-    const tasks = synced.tasks.filter((task) => !acceptedIds.has(task.id) && !result.removed.includes(task.id))
-    synced = { ...synced, tasks: [...tasks, ...result.accepted.map(({ task }) => task)] }
-  }
-  for (const conflict of result.conflicts) {
-    if (conflict.current) {
-      revisions[conflict.id] = conflict.current.revision
-      if (synced) synced = { ...synced, tasks: [...synced.tasks.filter((task) => task.id !== conflict.id), conflict.current.task] }
+function syncBundle(remote: PersonalTasksApi, next: PersonalTaskBundle): Promise<void> {
+  const generation = scopeGeneration
+  if (confirmedImport?.generation === generation) return Promise.resolve()
+  const background = backgroundGeneration
+  const current = () => generation === scopeGeneration && background === backgroundGeneration
+  return trackBackgroundTask(generation, async () => {
+    if (!current()) return
+    const base = synced
+    if (!base) return
+    const diff = diffPersonalTaskBundles(base, next)
+    if (isEmptyDiff(diff)) return
+    syncState = 'syncing'
+    const result = await pushPersonalTaskDiff(scopedApi(remote, generation, current), diff, { ...revisions })
+    if (!current()) return
+    syncConflicts = result.conflicts
+    const acceptedIds = new Set(result.accepted.map(({ task }) => task.id))
+    for (const accepted of result.accepted) revisions[accepted.task.id] = accepted.revision
+    for (const id of result.removed) delete revisions[id]
+    if (synced) {
+      const tasks = synced.tasks.filter((task) => !acceptedIds.has(task.id) && !result.removed.includes(task.id))
+      synced = { ...synced, tasks: [...tasks, ...result.accepted.map(({ task }) => task)] }
+    }
+    for (const conflict of result.conflicts) {
+      if (conflict.current) {
+        revisions[conflict.id] = conflict.current.revision
+        if (synced) synced = { ...synced, tasks: [...synced.tasks.filter((task) => task.id !== conflict.id), conflict.current.task] }
+      } else {
+        delete revisions[conflict.id]
+        if (synced) synced = { ...synced, tasks: synced.tasks.filter((task) => task.id !== conflict.id) }
+      }
+    }
+    if (syncConflicts.length > 0) syncState = 'error'
+    if (result.ok) {
+      try {
+        const snapshot = await scopedApi(remote, generation, current).personalTasksList()
+        if (!current()) return
+        synced = bundleFromSnapshot(snapshot)
+        revisions = snapshot.revisions
+        syncState = 'synced'
+        for (const accepted of result.accepted) {
+          const saved = snapshot.tasks.find(task => task.id === accepted.task.id)
+          if (saved && snapshot.revisions[saved.id] === accepted.revision && samePersonalTask(saved, accepted.task)) {
+            notifyNativeCommit({ task: saved, revision: accepted.revision })
+          }
+        }
+      } catch {
+        if (!current()) return
+        syncState = 'error'
+      }
     } else {
-      delete revisions[conflict.id]
-      if (synced) synced = { ...synced, tasks: synced.tasks.filter((task) => task.id !== conflict.id) }
-    }
-  }
-  if (syncConflicts.length > 0) syncState = 'error'
-  if (result.ok) {
-    try {
-      const snapshot = await remote.personalTasksList()
-      synced = bundleFromSnapshot(snapshot)
-      revisions = snapshot.revisions
-      syncState = 'synced'
-    } catch {
       syncState = 'error'
+      if (result.conflicts.length === 0 && result.rejected.length === 0) {
+        if (retryTimer !== null) clearTimeout(retryTimer)
+        retryTimer = window.setTimeout(() => {
+          if (!current()) return
+          retryTimer = null
+          void syncBundle(remote, loadPersonalTaskStore().snapshot())
+        }, 5000)
+      }
     }
-  } else {
-    syncState = 'error'
-    if (result.conflicts.length === 0 && result.rejected.length === 0) {
-      if (retryTimer !== null) clearTimeout(retryTimer)
-      retryTimer = window.setTimeout(() => {
-        retryTimer = null
-        void syncBundle(remote, loadPersonalTaskStore().snapshot())
-      }, 5000)
+    emit()
+  })
+}
+
+function equalTaskData(left: unknown, right: unknown): boolean {
+  const stable = (value: unknown) => JSON.stringify(value, (_key, entry) =>
+    entry && typeof entry === 'object' && !Array.isArray(entry)
+      ? Object.fromEntries(Object.keys(entry).sort().map(key => [key, entry[key]])) : entry)
+  return stable(left) === stable(right)
+}
+
+function applyTaskDiff(base: PersonalTaskBundle, diff: ReturnType<typeof diffPersonalTaskBundles>): PersonalTaskBundle {
+  const changed = new Set(diff.put.map(task => task.id))
+  return { ...base, tasks: [...base.tasks.filter(task => !changed.has(task.id) && !diff.remove.includes(task.id)), ...diff.put], ...(diff.meta ?? {}) }
+}
+
+/** Explicit import uses the current caller's CAS and canonical readback, preserving edits made at every await. */
+export async function importPersonalTasksConfirmed(incoming: PersonalTaskBundle, isCurrent: () => boolean): Promise<void> {
+  const generation = scopeGeneration
+  const token = { generation }
+  const remote = api()
+  const current = () => callerScope !== null && generation === scopeGeneration && isCurrent()
+  if (!remote || !current() || confirmedImport) throw new Error('Personal task import unavailable')
+  confirmedImport = token
+  ++backgroundGeneration
+  ++snapshotGeneration
+  let verified = false
+  try {
+    // An already-dispatched native write can still commit. Drain its ACK first;
+    // invalidated background continuations cannot open another call or publish.
+    await Promise.allSettled([...backgroundTasks].filter(task => task.generation === generation).map(task => task.promise))
+    if (!current()) throw new Error('Personal task caller changed')
+    await hydratePersonalTasks()
+    if (!current() || !synced) throw new Error('Personal task caller changed')
+    const transport = scopedApi(remote, generation)
+    const oldBase = synced
+    const snapshot = await transport.personalTasksList()
+    if (!current()) throw new Error('Personal task caller changed')
+    const canonical = bundleFromSnapshot(snapshot)
+    const before = loadPersonalTaskStore().snapshot()
+    // Cached edits are explicit local intentions; the fresh snapshot supplies
+    // ownership and revisions. The file never imports a stale cached snapshot.
+    const base = applyTaskDiff(canonical, diffPersonalTaskBundles(oldBase, before))
+    const next = new PersonalTaskStore(base)
+    next.importBundle(incoming, 'merge')
+    const wanted = next.snapshot()
+    const diff = diffPersonalTaskBundles(canonical, wanted)
+    synced = canonical
+    revisions = snapshot.revisions
+    syncState = 'syncing'
+    emit()
+    const receipt = await pushPersonalTaskDiff(transport, structuredClone(diff), { ...snapshot.revisions })
+    if (!current()) throw new Error('Personal task caller changed')
+    syncConflicts = receipt.conflicts
+    const accepted = new Map(receipt.accepted.map(record => [record.task.id, record]))
+    if (!receipt.ok || accepted.size !== diff.put.length || new Set(receipt.removed).size !== diff.remove.length
+      || diff.put.some(task => {
+        const record = accepted.get(task.id)
+        return !record || !equalTaskData(task, record.task) || !Number.isSafeInteger(record.revision)
+          || record.revision <= (snapshot.revisions[task.id] ?? 0)
+      }) || diff.remove.some(id => !receipt.removed.includes(id))) throw new Error('Personal task import was not confirmed')
+    const readback = await transport.personalTasksList()
+    if (!current()) throw new Error('Personal task caller changed')
+    if (diff.put.some(task => !equalTaskData(readback.tasks.find(row => row.id === task.id), task)
+      || readback.revisions[task.id] !== accepted.get(task.id)!.revision)
+      || diff.remove.some(id => readback.tasks.some(task => task.id === id))
+      || diff.meta && !equalTaskData(bundleFromSnapshot(readback), { ...bundleFromSnapshot(readback), ...diff.meta })) {
+      throw new Error('Personal task import readback did not match')
+    }
+    const edits = diffPersonalTaskBundles(before, loadPersonalTaskStore().snapshot())
+    synced = bundleFromSnapshot(readback)
+    revisions = readback.revisions
+    currentBundle = applyTaskDiff(synced, edits)
+    persistPersonalTaskCache(kv(), new PersonalTaskStore(currentBundle), loadStatus)
+    verified = true
+    syncState = isEmptyDiff(diffPersonalTaskBundles(synced, currentBundle)) ? 'synced' : 'syncing'
+    emit()
+  } catch (error) {
+    if (current()) { syncState = 'error'; emit() }
+    throw error
+  } finally {
+    if (confirmedImport === token) {
+      confirmedImport = null
+      // Changes and pushes queued during the explicit import are reconciled
+      // from native storage after it retires; partial writes never fake success.
+      if (current()) {
+        if (verified && currentBundle && synced && !isEmptyDiff(diffPersonalTaskBundles(synced, currentBundle))) void syncBundle(remote, currentBundle)
+        else if (!verified) void refreshFromServer(remote).catch(() => {})
+      }
     }
   }
-  emit()
 }
 
 /** Home quick-add commits to the existing cache only after native ACK. */
 export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<void> {
+  const generation = scopeGeneration
   const remote = api()
-  if (!remote) throw new PersonalTaskCreationError(task, new Error('Native personal task storage unavailable'))
+  if (!remote || !callerScope) throw new PersonalTaskCreationError(task, new Error('Native personal task storage unavailable'))
   syncState = 'syncing'
   try {
-    const accepted = await putPersonalTaskConfirmed(remote, task)
+    const accepted = await putPersonalTaskConfirmed(scopedApi(remote, generation), task)
+    if (generation !== scopeGeneration) throw new PersonalTaskCreationError(task, new Error('Personal task caller changed'))
     // A server push or another screen may have updated the shared store while
     // this write was in flight. Acknowledge only this ID and preserve other edits.
     const latest = loadPersonalTaskStore().snapshot()
@@ -183,31 +441,90 @@ export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<
     syncState = syncConflicts.length > 0 ? 'error'
       : synced && isEmptyDiff(diffPersonalTaskBundles(synced, next)) ? 'synced' : 'syncing'
     emit()
+    // A native ACK owns the cache update; only exact canonical read-back owns
+    // learning evidence. Denied/stale reads do not turn a committed create into
+    // a retryable write failure or publish into a successor actor/workspace.
+    try {
+      const snapshot = await scopedApi(remote, generation).personalTasksList()
+      if (generation !== scopeGeneration) return
+      const saved = snapshot.tasks.find(entry => entry.id === accepted.task.id)
+      if (saved && snapshot.revisions[saved.id] === accepted.revision && samePersonalTask(saved, accepted.task)) {
+        notifyNativeCommit({ task: saved, revision: accepted.revision })
+      }
+    } catch { /* The create is committed, but teaching evidence remains absent. */ }
   } catch (cause) {
+    if (generation !== scopeGeneration) throw cause instanceof PersonalTaskCreationError ? cause : new PersonalTaskCreationError(task, cause)
     syncState = 'error'
     emit()
     throw cause instanceof PersonalTaskCreationError ? cause : new PersonalTaskCreationError(task, cause)
   }
 }
 
-async function refreshFromServer(remote: PersonalTasksApi): Promise<void> {
-  const snapshot = await remote.personalTasksList()
-  const remoteBundle = bundleFromSnapshot(snapshot)
-  const local = currentBundle ?? loadPersonalTaskStore().snapshot()
-  const pending = synced ? diffPersonalTaskBundles(synced, local) : null
-  synced = remoteBundle
-  revisions = snapshot.revisions
-  if (pending && !isEmptyDiff(pending)) {
-    currentBundle = local
-    persistPersonalTaskCache(kv(), new PersonalTaskStore(local), loadStatus)
+/** Delegation waits for durable task→session linkage before submitting work. */
+export async function persistPersonalTaskSessionLink(taskId: string, sessionId: string): Promise<VersionedPersonalTask> {
+  const generation = scopeGeneration
+  const remote = api()
+  if (!remote || !callerScope) throw new Error('Native personal task storage unavailable')
+  await hydratePersonalTasks()
+  if (generation !== scopeGeneration) throw new Error('Personal task caller changed')
+  const latest = loadPersonalTaskStore().snapshot()
+  const task = latest.tasks.find(entry => entry.id === taskId)
+  if (!task) throw new Error('Personal task no longer exists')
+  try {
+    const accepted = await commitPersonalTaskLink(scopedApi(remote, generation), task, sessionId, revisions[taskId] ?? null)
+    if (generation !== scopeGeneration) throw new Error('Personal task caller changed')
+    // Merge only the confirmed link if another edit arrived during the write.
+    const current = loadPersonalTaskStore().snapshot()
+    const local = current.tasks.find(entry => entry.id === taskId)
+    if (local && samePersonalTask(local, task)) {
+      currentBundle = { ...current, tasks: current.tasks.map(entry => entry.id === taskId ? accepted.task : entry) }
+    } else if (local) {
+      const linked = structuredClone(local)
+      if (!linked.links.some(link => link.kind === 'session' && link.id === sessionId)) linked.links.push({ kind: 'session', id: sessionId })
+      currentBundle = { ...current, tasks: current.tasks.map(entry => entry.id === taskId ? linked : entry) }
+    }
+    revisions[taskId] = accepted.revision
+    if (synced) synced = { ...synced, tasks: [...synced.tasks.filter(entry => entry.id !== taskId), accepted.task] }
+    if (currentBundle) persistPersonalTaskCache(kv(), new PersonalTaskStore(currentBundle), loadStatus)
+    syncState = synced && currentBundle && isEmptyDiff(diffPersonalTaskBundles(synced, currentBundle)) ? 'synced' : 'syncing'
+    notifyNativeCommit(accepted)
+    emit()
+    if (synced && currentBundle && syncState === 'syncing') void syncBundle(remote, currentBundle)
+    return accepted
+  } catch (error) {
+    if (generation !== scopeGeneration) throw error
     syncState = 'error'
-    void syncBundle(remote, local)
-  } else {
-    currentBundle = remoteBundle
-    persistPersonalTaskCache(kv(), new PersonalTaskStore(remoteBundle), loadStatus)
-    syncState = 'synced'
+    emit()
+    throw error
   }
-  emit()
+}
+
+function refreshFromServer(remote: PersonalTasksApi): Promise<void> {
+  const generation = scopeGeneration
+  if (confirmedImport?.generation === generation) return Promise.resolve()
+  const background = backgroundGeneration
+  return trackBackgroundTask(generation, async () => {
+    if (background !== backgroundGeneration || generation !== scopeGeneration) return
+    const request = ++snapshotGeneration
+    const snapshot = await remote.personalTasksList()
+    if (generation !== scopeGeneration || background !== backgroundGeneration || request !== snapshotGeneration) return
+    const remoteBundle = bundleFromSnapshot(snapshot)
+    const local = currentBundle ?? loadPersonalTaskStore().snapshot()
+    const pending = synced ? diffPersonalTaskBundles(synced, local) : null
+    synced = remoteBundle
+    revisions = snapshot.revisions
+    if (pending && !isEmptyDiff(pending)) {
+      currentBundle = local
+      persistPersonalTaskCache(kv(), new PersonalTaskStore(local), loadStatus)
+      syncState = 'error'
+      void syncBundle(remote, local)
+    } else {
+      currentBundle = remoteBundle
+      persistPersonalTaskCache(kv(), new PersonalTaskStore(remoteBundle), loadStatus)
+      syncState = 'synced'
+    }
+    emit()
+  })
 }
 
 /**
@@ -215,32 +532,50 @@ async function refreshFromServer(remote: PersonalTasksApi): Promise<void> {
  * then keeps the in-memory store in sync with personalTasks:changed pushes.
  */
 export function hydratePersonalTasks(): Promise<void> {
+  watchIdentity()
   if (hydrating) return hydrating
   const remote = api()
-  if (!remote) return Promise.resolve()
+  if (!remote || !callerScope) return Promise.resolve()
+  const generation = scopeGeneration
+  const authority = callerScope.authority
   syncState = 'syncing'
   hydrating = (async () => {
     try {
       const cached = loadPersonalTaskStore().snapshot()
-      const result = await hydratePersonalTasksFrom(remote, kv())
+      // Native scopes never migrate a desktop-global blob, and read-only native callers can hydrate without a write grant.
+      const result = authority === 'native'
+        ? await remote.personalTasksList().then(snapshot => ({ bundle: bundleFromSnapshot(snapshot), revisions: snapshot.revisions, cacheStatus: 'ok' as const }))
+        : await hydratePersonalTasksFrom(scopedApi(remote, generation), kv())
+      if (generation !== scopeGeneration) return
       if (result.cacheStatus === 'quarantine') loadStatus = 'quarantine'
       synced = result.bundle
-      const pending = diffPersonalTaskBundles(synced, cached)
+      let next = cached
+      if (authority === 'native') {
+        // A saved cache is a display hint, not authority to delete server tasks or resurrect old ones.
+        // Preserve only edits made explicitly during this hydration, rebased on the fresh canonical snapshot.
+        const edited = diffPersonalTaskBundles(cached, currentBundle ?? cached)
+        const changedIds = new Set(edited.put.map(task => task.id))
+        next = { ...synced, tasks: [...synced.tasks.filter(task => !changedIds.has(task.id) && !edited.remove.includes(task.id)), ...edited.put], ...(edited.meta ?? {}) }
+      }
+      const pending = diffPersonalTaskBundles(synced, next)
       revisions = result.revisions
       if (!isEmptyDiff(pending)) {
-        currentBundle = cached
-        persistPersonalTaskCache(kv(), new PersonalTaskStore(cached), loadStatus)
+        currentBundle = next
+        persistPersonalTaskCache(kv(), new PersonalTaskStore(next), loadStatus)
         syncState = 'error'
-        void syncBundle(remote, cached)
+        void syncBundle(remote, next)
       } else {
         currentBundle = synced
         persistPersonalTaskCache(kv(), new PersonalTaskStore(synced), loadStatus)
         syncState = 'synced'
       }
       if (!unsubscribeServer && typeof remote.onPersonalTasksChanged === 'function') {
-        unsubscribeServer = remote.onPersonalTasksChanged(() => { void refreshFromServer(remote).catch(() => {}) })
+        unsubscribeServer = remote.onPersonalTasksChanged(() => {
+          if (generation === scopeGeneration) void refreshFromServer(remote).catch(() => {})
+        })
       }
     } catch {
+      if (generation !== scopeGeneration) return
       // Server unavailable: keep working from the localStorage cache; retry on next mount.
       syncState = 'error'
       hydrating = null
@@ -252,7 +587,10 @@ export function hydratePersonalTasks(): Promise<void> {
 
 export function subscribePersonalTasks(onChange: () => void): () => void {
   const onStorage = (event: StorageEvent) => {
-    if (event.key === PERSONAL_TASKS_STORAGE_KEY || event.key === PERSONAL_TASKS_QUARANTINE_KEY) onChange()
+    if (callerScope && (event.key === cacheKey(PERSONAL_TASKS_STORAGE_KEY) || event.key === cacheKey(PERSONAL_TASKS_QUARANTINE_KEY))) {
+      currentBundle = null
+      onChange()
+    }
   }
   window.addEventListener(PERSONAL_TASKS_CHANGED_EVENT, onChange)
   window.addEventListener('storage', onStorage)

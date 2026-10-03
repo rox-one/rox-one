@@ -180,6 +180,19 @@ describe('kinds: git-npm (gbrain)', () => {
     return dir;
   }
 
+  function writeUsableGitNpmFixture(ctx: GitNpmInstallContext): void {
+    const source = path.join(ctx.versionDir, 'source');
+    fs.mkdirSync(path.join(source, '.git'), { recursive: true });
+    fs.mkdirSync(path.join(ctx.versionDir, 'bin'), { recursive: true });
+    const commit = '15b9863d13635d173562a54f55a1d388bfcf546b';
+    fs.writeFileSync(path.join(source, '.git', 'HEAD'), `${commit}\n`);
+    fs.writeFileSync(path.join(source, 'bun.lock'), 'fixture frozen upstream lock\n');
+    fs.writeFileSync(path.join(ctx.versionDir, 'bin', process.platform === 'win32' ? 'gbrain.exe' : 'gbrain'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    fs.writeFileSync(path.join(ctx.versionDir, '.craft-toolchain-install-complete'), JSON.stringify({
+      format: 'git-npm-local-source-v1', repo: 'garrytan/gbrain', commit,
+    }));
+  }
+
   it('ensureAll видит git-npm default-on без artifacts: планирует, ставит через gitNpmInstallImpl, статус ready', async () => {
     const installs: string[] = [];
     const { manager, fetchCalls } = makeManager([gbrainEntry], {
@@ -187,7 +200,7 @@ describe('kinds: git-npm (gbrain)', () => {
       gitNpmInstallImpl: async (ctx) => {
         installs.push(`${ctx.entry.name}@${ctx.entry.version}`);
         // реальный defaultGitNpmInstall кладёт дерево в versionDir (BUN_INSTALL) — эмулируем факт.
-        fs.mkdirSync(ctx.versionDir, { recursive: true });
+        writeUsableGitNpmFixture(ctx);
       },
     });
 
@@ -212,7 +225,7 @@ describe('kinds: git-npm (gbrain)', () => {
       pathEnv: stubBunPathEnv(),
       gitNpmInstallImpl: async (ctx) => {
         installs++;
-        fs.mkdirSync(ctx.versionDir, { recursive: true });
+        writeUsableGitNpmFixture(ctx);
       },
     });
     const st = await manager.update('gbrain');

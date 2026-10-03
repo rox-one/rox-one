@@ -219,6 +219,8 @@ export interface SkillCandidate {
   /** SKILL.md body without frontmatter */
   body: string
   source: {
+    /** Native personal custody, assigned only by a trusted producer. */
+    owner?: LessonOwner
     sessionId?: string
     ts: string
     toolCallStats?: Record<string, number>

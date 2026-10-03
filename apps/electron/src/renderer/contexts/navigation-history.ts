@@ -24,12 +24,7 @@ export function buildSemanticHistoryKey({
   focusedPanelIndex,
   sidebarParam,
 }: SemanticHistoryKeyInput): string {
-  return [
-    workspaceSlug ?? '',
-    panelRoutes.join('|'),
-    String(focusedPanelIndex),
-    sidebarParam,
-  ].join('::')
+  return JSON.stringify([workspaceSlug ?? '', panelRoutes, focusedPanelIndex, sidebarParam])
 }
 
 /**
@@ -43,3 +38,6 @@ export function canRunInitialRestore({
 }: InitialRestoreGateInput): boolean {
   return isReady && isSessionsReady && !!workspaceId && !initialRouteRestored
 }
+
+// Retain existing test/adapter imports while using the canonical panel codec.
+export { encodePanelEntries as serializePanelHistory, decodePanelEntries as parsePanelHistory } from '../lib/panel-url'

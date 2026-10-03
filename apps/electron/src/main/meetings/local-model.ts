@@ -18,6 +18,7 @@ import {
   type LocalTranscriptRevision,
   type TranscriptStatus,
 } from '../../shared/meetings-local'
+import { recipeById } from '@rox/shared/meeting-agents/browser'
 
 export const MEETING_ID_RE = /^m-[0-9a-z-]{4,64}$/
 
@@ -204,6 +205,7 @@ export function normalizeMeeting(raw: unknown, id: string): LocalMeeting | null 
     source: o.source === 'microphone' || o.source === 'import' ? o.source : 'none',
     participants: Array.isArray(o.participants) ? o.participants.map((p) => str(p).trim()).filter(Boolean) : [],
     notes: str(o.notes),
+    recipeId: recipeById(str(o.recipeId))?.id,
     audio: audioFile && !audioFile.includes('/') && !audioFile.includes('\\')
       ? {
           file: audioFile,
@@ -282,6 +284,7 @@ export function applyPatch(meeting: LocalMeeting, patch: LocalMeetingPatch, now:
   if (typeof patch.title === 'string') next.title = patch.title.trim() || meeting.title
   if (Array.isArray(patch.participants)) next.participants = patch.participants.map((p) => String(p).trim()).filter(Boolean).slice(0, 100)
   if (typeof patch.notes === 'string') next.notes = patch.notes.slice(0, 200_000)
+  if (typeof patch.recipeId === 'string' && recipeById(patch.recipeId)) next.recipeId = recipeById(patch.recipeId)!.id
   if ('scheduledAt' in patch) {
     next.scheduledAt = typeof patch.scheduledAt === 'number' && Number.isFinite(patch.scheduledAt) ? patch.scheduledAt : undefined
     if (next.status === 'planned' && !next.scheduledAt) next.status = 'ready'

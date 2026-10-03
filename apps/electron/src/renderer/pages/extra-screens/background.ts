@@ -5,7 +5,7 @@
  * module lock + a per-day claim in localStorage.
  */
 import { useAutomaticMeetingExtraction } from '@/lib/meetings/auto-extraction'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAtomValue } from 'jotai'
 import i18n from 'i18next'
 import { extraScreenFlagAtoms } from '@/atoms/extra-screens'
@@ -34,7 +34,8 @@ export function claimDailySweep(workspaceId: string, now: number, storage: Pick<
   }
 }
 
-export async function maybeRunDailyRadar(workspaceId: string, now = Date.now()): Promise<boolean> {
+export async function maybeRunDailyRadar(workspaceId: string, now = Date.now(), isCurrent?: () => boolean): Promise<boolean> {
+  if (isCurrent?.() === false) return false
   if (radarInflight) return false
   const data = loadRadar(workspaceId)
   if (!shouldRunDailySweep(data, now)) return false
@@ -42,7 +43,7 @@ export async function maybeRunDailyRadar(workspaceId: string, now = Date.now()):
   radarInflight = true
   try {
     const ru = (i18n.language ?? 'ru').startsWith('ru')
-    await runRadarSweep(workspaceId, 'daily', ru ? 'ru' : 'en', `${ru ? 'Радар' : 'Radar'} · ${localDateKey(now)}`)
+    await runRadarSweep(workspaceId, 'daily', ru ? 'ru' : 'en', `${ru ? 'Радар' : 'Radar'} · ${localDateKey(now)}`, { isCurrent })
     return true
   } catch (error) {
     console.warn('[radar] daily sweep failed', error)
@@ -80,6 +81,8 @@ export async function maybeWriteDaySummary(workspaceId: string, now = Date.now()
 }
 
 export function useExtraScreensBackground(workspaceId: string | null): void {
+  const radarContext = useRef({ workspaceId, generation: 0 })
+  if (radarContext.current.workspaceId !== workspaceId) radarContext.current = { workspaceId, generation: radarContext.current.generation + 1 }
   useAutomaticMeetingExtraction(workspaceId)
   const radarOn = useAtomValue(extraScreenFlagAtoms.radar)
   const focusOn = useAtomValue(extraScreenFlagAtoms.focus)
@@ -95,10 +98,14 @@ export function useExtraScreensBackground(workspaceId: string | null): void {
   }, [workspaceId, focusOn])
   useEffect(() => {
     if (!workspaceId || !radarOn) return
-    const tick = () => { void maybeRunDailyRadar(workspaceId) }
+    const generation = radarContext.current.generation
+    let alive = true
+    const isCurrent = () => alive && radarContext.current.generation === generation && radarContext.current.workspaceId === workspaceId
+    const tick = () => { void maybeRunDailyRadar(workspaceId, Date.now(), isCurrent) }
     const first = window.setTimeout(tick, FIRST_CHECK_MS)
     const timer = window.setInterval(tick, CHECK_EVERY_MS)
     return () => {
+      alive = false
       window.clearTimeout(first)
       window.clearInterval(timer)
     }

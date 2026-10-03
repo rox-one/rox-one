@@ -1,3 +1,5 @@
+import { createPocketAccountStore } from './pocket-account-store'
+import { RoxAccountAuthority, setRoxAccountAuthority } from '@rox/shared/auth'
 import { validateConfigurationCliEntries } from './configuration-cli-compat'
 import { resolveNumberedUserDataDir } from './numbered-user-data'
 // Load user's shell environment first (before other imports that may use env)
@@ -110,6 +112,7 @@ import { initModelRefreshService, getModelRefreshService, setFetcherPlatform } f
 import { setSearchPlatform, setImageProcessor } from '@rox/server-core/services'
 import { createApplicationMenu } from './menu'
 import { WindowManager } from './window-manager'
+import { readBoundWindowWorkspace } from './bootstrap-window-workspace'
 import { stopAllExtensionHosts } from './extension-host-manager'
 import { loadWindowState, saveWindowState } from './window-state'
 import { getWorkspaces, getWorkspaceByNameOrId, loadStoredConfig, addWorkspace, saveConfig, CONFIG_DIR } from '@rox/shared/config'
@@ -123,6 +126,7 @@ import { ensureDefaultPermissions } from '@rox/shared/agent/permissions-config'
 import { ensureToolIcons, ensurePresetThemes } from '@rox/shared/config'
 import { setBundledAssetsRoot } from '@rox/shared/utils'
 import { initializeBackendHostRuntime } from '@rox/shared/agent/backend'
+import { prependPath, pathEnvKey } from '@rox/shared/toolchain'
 import { setPowerShellValidatorRoot } from '@rox/shared/agent'
 import { handleDeepLink } from './deep-link'
 import { BrowserPaneManager } from './browser-pane-manager'
@@ -143,7 +147,7 @@ import { createLocalClientBindingRegistry } from './local-client-binding'
 import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
 import { registerMailIpc } from './mail/local-ipc'
-import { registerNativeReplicaIpc } from './native-replica'
+import { registerNativeReplicaForWindows } from './native-replica-bootstrap'
 import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@rox/server-core/openclaw'
 
 // Initialize electron-log for renderer process support
@@ -189,7 +193,8 @@ if (isDebugMode) {
   process.env.CRAFT_UV = bundledUvExists ? uvBinary : (fallbackUv ?? uvBinary)
 
   // Bun runtime (packaged builds should prefer bundled runtime over PATH)
-  const bunBinary = join(resourcesBase, 'vendor', 'bun', process.platform === 'win32' ? 'bun.exe' : 'bun')
+  const bunBase = app.isPackaged && process.platform === 'win32' ? process.resourcesPath : resourcesBase
+  const bunBinary = join(bunBase, 'vendor', 'bun', process.platform === 'win32' ? 'bun.exe' : 'bun')
   if (existsSync(bunBinary)) {
     process.env.CRAFT_BUN = bunBinary
   }
@@ -206,7 +211,16 @@ if (isDebugMode) {
   // Prepend both generic wrappers dir and platform uv dir:
   // - binDir exposes wrapper commands (pdf-tool, docx-tool, ...)
   // - uvPlatformDir exposes raw `uv` for direct shell usage / debugging
-  process.env.PATH = `${binDir}${delimiter}${uvPlatformDir}${delimiter}${process.env.PATH}`
+  const rgDir = join(resourcesBase, 'node_modules', '@vscode', 'ripgrep', 'bin')
+  const rgBinary = join(rgDir, process.platform === 'win32' ? 'rg.exe' : 'rg')
+  const prefix = [binDir, uvPlatformDir,
+    ...(existsSync(bunBinary) ? [join(bunBase, 'vendor', 'bun')] : []),
+    ...(existsSync(rgBinary) ? [rgDir] : []),
+  ].join(delimiter)
+  const next = prependPath(process.env, prefix)
+  const pathKey = pathEnvKey(process.env)
+  for (const key of Object.keys(process.env)) if (key !== pathKey && key.toUpperCase() === 'PATH') delete process.env[key]
+  process.env[pathKey] = next[pathKey]
 
   if (!bundledUvExists) {
     mainLog.warn('Bundled uv binary missing, CLI document tools may fail unless uv is available on PATH.', {
@@ -268,6 +282,10 @@ if (userDataOverride) {
 }
 
 function registerDeeplinkScheme(scheme: string): void {
+  // Isolated developer verification must preserve the user's OS URL associations.
+  // Packaged applications retain the primary and legacy registrations.
+  if (!app.isPackaged && process.env.ROX_DEV_DISABLE_PROTOCOL_REGISTRATION === '1') return
+
   if (process.defaultApp) {
     if (process.argv.length >= 2) {
       app.setAsDefaultProtocolClient(scheme, process.execPath, [process.argv[1]])
@@ -277,9 +295,13 @@ function registerDeeplinkScheme(scheme: string): void {
   }
 }
 
-registerDeeplinkScheme(DEEPLINK_SCHEME)
-if (DEEPLINK_SCHEME !== LEGACY_DEEPLINK_SCHEME) {
-  registerDeeplinkScheme(LEGACY_DEEPLINK_SCHEME)
+// Isolated product tests still exercise deep-link dispatch, while avoiding
+// changes to the user's OS protocol handlers for either supported scheme.
+if (!(process.env.NODE_ENV === 'test' && process.env.ROX_SKIP_PROTOCOL_REGISTRATION === '1')) {
+  registerDeeplinkScheme(DEEPLINK_SCHEME)
+  if (DEEPLINK_SCHEME !== LEGACY_DEEPLINK_SCHEME) {
+    registerDeeplinkScheme(LEGACY_DEEPLINK_SCHEME)
+  }
 }
 
 // Apply network proxy settings early (Node-level only — Electron sessions require app.whenReady)
@@ -328,6 +350,10 @@ if (!gotTheLock) {
       handleDeepLink(url, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(err => {
         mainLog.error('Failed to handle deep link:', err)
       })
+    } else if (url) {
+      // Startup (including Windows dependency bootstrap) can precede the manager.
+      // Reuse the same latest-link replay as the macOS open-url callback.
+      pendingDeepLink = url
     } else if (windowManager) {
       // No deep link - just focus the first window
       const windows = windowManager.getAllWindows()
@@ -440,6 +466,20 @@ app.whenReady().then(async () => {
   // (docs, permissions, themes, tool-icons resolve via getBundledAssetsDir)
   setBundledAssetsRoot(__dirname)
 
+  if (process.platform === 'win32' && !process.env.CRAFT_SERVER_URL) {
+    const { initializeWindowsBootstrap } = await import('./windows-bootstrap')
+    const { getToolchainDependencyMode, getGitBashPath } = await import('@rox/shared/config')
+    const result = await initializeWindowsBootstrap({
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath,
+      managedRoot: join(CONFIG_DIR, 'toolchain'),
+      preference: getToolchainDependencyMode(),
+      gitBashPreference: getGitBashPath(),
+    })
+    if (result?.missingTools.length || result?.recoveryCode) mainLog.warn('[windows-bootstrap]', result)
+    else if (result) mainLog.info('[windows-bootstrap]', result)
+  }
+
   // Initialize backend runtime bootstrapping (Codex vendor root, Claude SDK runtime paths).
   initializeBackendHostRuntime({
     hostRuntime: {
@@ -537,10 +577,33 @@ app.whenReady().then(async () => {
     browserPaneManager.registerToolbarIpc()
     browserPaneManager.registerCapabilityIpc()
 
-    const { registerVoiceHotkeys, showVoiceOverlay } = await import('./voice/overlay-window')
-    registerVoiceHotkeys(() => {
-      showVoiceOverlay()
-    })
+    const { registerVoiceHotkeys } = await import('./voice/overlay-window')
+    const { sendVoiceHotkeyToClient } = await import('./voice/command-input')
+    const sendVoiceCommand = (command: import('@rox/shared/voice/hotkey-types').HotkeyCommand, webContentsId?: number, recordingId?: string) => {
+      const target = webContentsId === undefined
+        ? windowManager?.getLastActiveWindow()
+        : windowManager?.getWindowByWebContentsId(webContentsId)
+      if (!target || target.isDestroyed() || target.webContents.isDestroyed()) return false
+      return sendVoiceHotkeyToClient({
+        webContentsId: target.webContents.id,
+        isManagedWindow: id => Boolean(windowManager?.getWindowByWebContentsId(id)),
+        resolveClient: id => windowManager?.getClientIdForWindow(id),
+        push: windowManager?.getRpcEventSink(),
+        channel: RPC_CHANNELS.voice.HOTKEY,
+      }, command, recordingId)
+    }
+    const disposeVoiceHotkeys = registerVoiceHotkeys(sendVoiceCommand, id => windowManager?.getFocusedWindow()?.webContents.id === id)
+    const { createNativeVoiceOverlayHost } = await import('./voice/overlay-owner')
+    const voiceOverlay = !isHeadless && !isClientOnly ? createNativeVoiceOverlayHost({
+      resolveOwner(context) {
+        if (context.webContentsId == null || !context.workspaceId) return null
+        const owner = windowManager?.getWindowByWebContentsId(context.webContentsId)
+        return owner && !owner.isDestroyed() && windowManager?.getWorkspaceForWindow(context.webContentsId) === context.workspaceId
+          && windowManager?.getClientIdForWindow(context.webContentsId) === context.clientId ? owner : null
+      },
+      sendCommand: (context, command, recordingId) => context.webContentsId != null && sendVoiceCommand(command, context.webContentsId, recordingId),
+    }) : undefined
+    app.once('will-quit', () => { disposeVoiceHotkeys(); voiceOverlay?.dispose() })
     registerMeetingCaptureIpc()
     const localMeetings = registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
       getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
@@ -577,13 +640,39 @@ app.whenReady().then(async () => {
       e.returnValue = e.sender.id
     })
     ipcMain.on('__get-workspace-id', (e) => {
-      e.returnValue = windowManager?.getWorkspaceForWindow(e.sender.id) ?? ''
+      e.returnValue = readBoundWindowWorkspace(e, windowManager)
     })
     ipcMain.on('__get-local-client-proof', (e) => {
       const owner = windowManager?.getWindowByWebContentsId(e.sender.id)
       e.returnValue = owner && !owner.isDestroyed() && owner.webContents === e.sender
         ? localClientBindingRegistry.issue(e.sender)
         : ''
+    })
+
+    // Language change: sync from renderer to main process, persist, and rebuild native menu.
+    // Persistence here is what lets the next app launch hydrate main's i18n correctly —
+    // see the `getPersistedUiLanguage()` block at the top of this file.
+    ipcMain.handle('i18n:changeLanguage', async (_event, lang: unknown) => {
+      const previousResolved = i18n.resolvedLanguage ?? null
+      if (typeof lang !== 'string' || !SUPPORTED_LANGUAGE_CODES.includes(lang as LanguageCode)) {
+        // Defense-in-depth: renderer guarantees a supported code, but if a renegade
+        // caller hands us garbage we drop it silently rather than poison i18n state.
+        mainLog.warn('[i18n] changeLanguage IPC rejected — unsupported code', {
+          incoming: lang,
+          previousResolved,
+        })
+        return
+      }
+      const code = lang as LanguageCode
+      await i18n.changeLanguage(code)
+      setPersistedUiLanguage(code)
+      mainLog.info('[i18n] changeLanguage IPC applied', {
+        incoming: code,
+        previousResolved,
+        newResolved: i18n.resolvedLanguage ?? null,
+      })
+      const { rebuildMenu } = await import('./menu')
+      await rebuildMenu()
     })
 
     // Transport diagnostics bridge — preload reports remote WS connection state changes
@@ -678,29 +767,25 @@ app.whenReady().then(async () => {
       },
     )
 
+    // Thin clients also keep local encrypted Notes custody; the remote server
+    // supplies canonical actor/workspace context through the preload bridge.
+    cleanupNativeReplicaIpc = registerNativeReplicaForWindows(ipcMain, {
+      configDir: realpathSync(CONFIG_DIR),
+      credentials: getCredentialManager(),
+      getWindowManager: () => windowManager,
+    })
+
     if (!isClientOnly) {
-      // Keep durable Notes replica custody in main and the existing encrypted credential store.
-      cleanupNativeReplicaIpc = registerNativeReplicaIpc(ipcMain, {
-        configDir: realpathSync(CONFIG_DIR),
-        credentials: getCredentialManager(),
-        getWorkspaceForWindow: webContentsId => {
-          const owner = windowManager?.getWindowByWebContentsId(webContentsId)
-          if (!owner || owner.isDestroyed() || owner.webContents.id !== webContentsId) return null
-          return windowManager?.getWorkspaceForWindow(webContentsId) ?? null
-        },
-      })
       // Restore persisted Git Bash path on Windows (must happen before any SDK subprocess spawn)
       if (process.platform === 'win32') {
-        const { getGitBashPath, clearGitBashPath } = await import('@rox/shared/config')
+        const { getGitBashPath } = await import('@rox/shared/config')
         const gitBashPath = getGitBashPath()
         if (gitBashPath) {
           const validation = await validateGitBashPath(gitBashPath)
           if (validation.valid) {
-            process.env.CLAUDE_CODE_GIT_BASH_PATH = validation.path
+            process.env.CLAUDE_CODE_GIT_BASH_PATH ??= validation.path
           } else {
-            clearGitBashPath()
-            delete process.env.CLAUDE_CODE_GIT_BASH_PATH
-            mainLog.warn(`Cleared invalid persisted Git Bash path: ${gitBashPath}`)
+            mainLog.warn('Persisted Git Bash path is unusable; preference retained for repair')
           }
         }
       }
@@ -846,6 +931,7 @@ app.whenReady().then(async () => {
         },
         bindRpcServer: (sm, server) => sm.setRpcServer(server),
         createHandlerDeps: ({ sessionManager: sm, platform: p, oauthFlowStore: ofs, nativeAuthority, nativeJournal, collaborationSync }) => {
+          setRoxAccountAuthority(new RoxAccountAuthority(createPocketAccountStore({ directory: join(app.getPath('userData'), 'pocket-accounts'), safeStorage })))
           localNativeAuthority = nativeAuthority
           const browserCredentialPermissions = createBrowserCredentialPermissionAdapter({
             async confirm(request) {
@@ -933,6 +1019,7 @@ app.whenReady().then(async () => {
               },
             },
             ...(!isHeadless ? { browserCredentials } : {}),
+            ...(voiceOverlay ? { voiceOverlay } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
             nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
           }
@@ -1183,32 +1270,6 @@ app.whenReady().then(async () => {
       ipcMain.handle('app:relaunch', () => {
         app.relaunch()
         app.exit(0)
-      })
-
-      // Language change: sync from renderer to main process, persist, and rebuild native menu.
-      // Persistence here is what lets the next app launch hydrate main's i18n correctly —
-      // see the `getPersistedUiLanguage()` block at the top of this file.
-      ipcMain.handle('i18n:changeLanguage', async (_event, lang: unknown) => {
-        const previousResolved = i18n.resolvedLanguage ?? null
-        if (typeof lang !== 'string' || !SUPPORTED_LANGUAGE_CODES.includes(lang as LanguageCode)) {
-          // Defense-in-depth: renderer guarantees a supported code, but if a renegade
-          // caller hands us garbage we drop it silently rather than poison i18n state.
-          mainLog.warn('[i18n] changeLanguage IPC rejected — unsupported code', {
-            incoming: lang,
-            previousResolved,
-          })
-          return
-        }
-        const code = lang as LanguageCode
-        await i18n.changeLanguage(code)
-        setPersistedUiLanguage(code)
-        mainLog.info('[i18n] changeLanguage IPC applied', {
-          incoming: code,
-          previousResolved,
-          newResolved: i18n.resolvedLanguage ?? null,
-        })
-        const { rebuildMenu } = await import('./menu')
-        await rebuildMenu()
       })
 
       ipcMain.on('__get-ws-port', (e) => {

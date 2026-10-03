@@ -1,0 +1,83 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:
+(pass) ROX UI-001 real persisted layout atoms > bounds live writes before consumers read them and saves the same value [1.77ms]
+(pass) ROX UI-001 real persisted layout atoms > retains the inspector host range instead of narrowing valid saved widths [0.42ms]
+(pass) ROX UI-001 real persisted layout atoms > rounds updater callbacks and reloads canonical values in a fresh store [0.55ms]
+(pass) ROX UI-001 real persisted layout atoms > recovers malformed JSON, wrong types and non-finite JSON on reload [1.03ms]
+(pass) ROX UI-001 real persisted layout atoms > keeps valid live sizes usable when persistence or reset is denied [0.61ms]
+(pass) ROX UI-001 real persisted layout atoms > normalizes cross-window storage events and unsubscribes on unmount [91.57ms]
+(pass) ROX UI-001 persisted shell geometry > rounds and bounds preferences within the controls existing supported ranges [0.08ms]
+(pass) ROX UI-001 persisted shell geometry > recovers malformed and non-finite reload values to a usable default [0.05ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts:
+(pass) UI-001 selected resource canonical callbacks > source deletion wins over an older initial load and does not navigate away [3853.90ms]
+(pass) UI-001 selected resource canonical callbacks > a malformed source event reports unavailable without throwing [1017.25ms]
+58 |         getSources: () => Promise.reject(new Error('offline')),
+59 |         onSourcesChanged: (callback: typeof changed) => { changed = callback; return () => {} },
+60 |       } },
+61 |     })
+62 |     await settle()
+63 |     expect(state.status).toBe('unavailable')
+                              ^
+error: expect(received).toBe(expected)
+
+Expected: "unavailable"
+Received: undefined
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts:63:26)
+(fail) UI-001 selected resource canonical callbacks > source read rejection becomes unavailable and recovers from a real subscription callback [354.52ms]
+(pass) UI-001 selected resource canonical callbacks > unmount suppresses an obsolete source read and missing capability is explicit [799.12ms]
+(pass) UI-001 selected resource canonical callbacks > skill events re-read project/global resolution context and reject an older response [16.00ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late sources responses after workspace/directory change [1787.08ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live sources deletion ahead of a pending initial snapshot [699.97ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late skills responses after workspace/directory change [2492.15ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live skills deletion ahead of a pending initial snapshot [42.52ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps project and OMP skills when a workspace-only event invalidates the full catalog [840.69ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > accepts only the newest scoped skill refresh after consecutive workspace events [277.38ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > retains the complete skill catalog through a failed refresh and accepts a later recovery [43.92ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > recovers from request rejection and unmount without installing stale data [1257.04ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > restores workspace geometry before an old pending keyboard resize can commit [558.62ms]
+(pass) ROX UI-001 workspace persistence isolation > does not save old viewFilters over the next workspace during restoration [21.00ms]
+(pass) ROX UI-001 workspace persistence isolation > does not save old collapsedSidebarItems over the next workspace during restoration [31.97ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts:
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1352:9:
+      1352 │     case 'pages':
+           ╵          ~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1326:9:
+      1326 │     case 'pages':
+           ╵          ~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1354:9:
+      1354 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1328:9:
+      1328 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+killed 1 dangling process
+(fail) (unnamed) [5028.66ms]
+  ^ a beforeEach/afterEach hook timed out for this test.
+
+2 tests failed:
+(fail) UI-001 selected resource canonical callbacks > source read rejection becomes unavailable and recovers from a real subscription callback [354.52ms]
+(fail) (unnamed) [5028.66ms]
+  ^ a beforeEach/afterEach hook timed out for this test.
+
+ 23 pass
+ 2 fail
+ 96 expect() calls
+Ran 25 tests across 4 files. [31.98s]

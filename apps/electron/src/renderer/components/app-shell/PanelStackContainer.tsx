@@ -1,51 +1,49 @@
 /**
- * PanelStackContainer
+ * Persistent workspace for sidebar, navigator and content panels.
  *
- * Horizontal layout container for ALL panels:
- * Sidebar → Navigator → Content Panel(s) with resize sashes.
- *
- * Content panels use CSS flex-grow with their proportions as weights:
- * - Each panel gets `flex: <proportion> 1 0px` with `min-width: PANEL_MIN_WIDTH`
- * - Flex distributes available space proportionally — panels fill the viewport
- * - When panels hit min-width, overflow-x: auto kicks in naturally
- *
- * Sidebar and Navigator are NOT part of the proportional layout —
- * they have their own fixed/user-resizable widths managed by AppShell.
- * They just reduce the available width for content panels and scroll with everything else.
- *
- * The right sidebar stays OUTSIDE this container.
- *
- * Compact mode (mobile / narrow window):
- * The flex layout is replaced with an absolute-positioned, transform-animated
- * stack — navigator and the focused content panel both stay mounted and slide
- * in/out via CompactPanelTransition. This produces an iOS UINavigationController
- * feel rather than a CSS reflow.
+ * Content slots are one flat, keyed list in every arrangement. Grid, focus and
+ * compact navigation only change placement/visibility; they never reparent a
+ * panel, so its draft, scroll position and embedded surface survive.
  */
-
-import { useRef, useEffect, useCallback, useState } from 'react'
+import { useRef, useEffect, useMemo, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { cn } from '@/lib/utils'
-import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
 import { visibleWorkspacePanels } from './auxiliary-layout'
-import { parseRouteToNavigationState } from '../../../shared/route-parser'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { motion, useReducedMotion } from 'motion/react'
+import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
+import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
+import { compactPanelShowsContent, panelGridFocusTarget, panelGridKey, panelGridShape, resolvePanelGridTracks } from '@/lib/panel-workspace-layout'
+import { usePanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
+import { isPanelResizeActive } from './resize-activity'
 import { PanelSlot } from './PanelSlot'
-const SPATIAL_DIRECTION_BY_KEY: Record<string, PanelSpatialDirection> = {
-  ArrowLeft: 'left',
-  ArrowRight: 'right',
-  ArrowUp: 'up',
-  ArrowDown: 'down',
-}
+import { PanelGridResizeSash } from './PanelGridResizeSash'
+import {
+  PANEL_GAP,
+  PANEL_EDGE_INSET,
+  PANEL_GRID_MIN_HEIGHT,
+  PANEL_GRID_MIN_WIDTH,
+  PANEL_STACK_VERTICAL_OVERFLOW,
+  PANEL_STACK_TOP_INSET,
+  PANEL_STACK_BOTTOM_INSET,
+} from './panel-constants'
+
+const SPATIAL_DIRECTION_BY_KEY: Record<string, PanelSpatialDirection> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' }
+
+const PANEL_TRANSITION = { type: 'tween' as const, duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as [number, number, number, number] }
+const COMPACT_PANEL_TOP_GAP = 4
 
 interface PanelStackContainerProps {
   sidebarSlot: React.ReactNode
   sidebarWidth: number
   navigatorSlot: React.ReactNode
   navigatorWidth: number
+  /** Absolute separators share the panels' coordinate and scroll owner. */
+  resizeHandles?: React.ReactNode
+  /** Session catalog fills the workspace until there is a real detail target. */
+  navigatorExpanded?: boolean
   isSidebarAndNavigatorHidden: boolean
   isRightSidebarVisible?: boolean
-  /** Compact mode: single-panel, list/content toggle (mobile or narrow window) */
   isCompact?: boolean
   isResizing?: boolean
 }
@@ -55,44 +53,57 @@ export function PanelStackContainer({
   sidebarWidth,
   navigatorSlot,
   navigatorWidth,
+  resizeHandles,
+  navigatorExpanded = false,
   isSidebarAndNavigatorHidden,
+  isRightSidebarVisible,
   isCompact = false,
+  isResizing,
 }: PanelStackContainerProps) {
-  const panelStack = useAtomValue(panelStackAtom)
+  const panels = useAtomValue(panelStackAtom)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
+  const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
   const focusedRoute = useAtomValue(focusedPanelRouteAtom)
   const primaryId = useAtomValue(primaryPanelIdAtom)
   const lastTool = useAtomValue(lastAuxiliaryToolAtom)
   const { t } = useTranslation()
-  const layoutRef = useRef<HTMLDivElement | null>(null)
+  const layoutRef = useRef<HTMLDivElement>(null)
   const [availableWidth, setAvailableWidth] = useState(0)
   useEffect(() => {
     const element = layoutRef.current
     if (!element) return
     const observer = new ResizeObserver(() => setAvailableWidth(element.clientWidth))
-    observer.observe(element)
-    setAvailableWidth(element.clientWidth)
+    observer.observe(element); setAvailableWidth(element.clientWidth)
     return () => observer.disconnect()
   }, [])
-
-  const contentPanels = panelStack
-
-  // Compact mode: drill-in is "detail focused", not just "session selected".
-  // For sessions: a session is selected. For settings: Overview and every
-  // subpage are detail surfaces so compact shows Overview on bare settings.
-  const focusedNavState = focusedRoute ? parseRouteToNavigationState(focusedRoute) : null
-  const isDetailFocused = isDetailNavState(focusedNavState)
-  const hasSelectedContent = isCompact && isDetailFocused
-
-  const scrollRef = useRef<HTMLDivElement | null>(null)
-  const setFocusedPanel = useSetAtom(focusedPanelIdAtom)
-  const hasTools = contentPanels.some(entry => entry.tool)
-  const visibleIds = new Set(isCompact
-    ? contentPanels.filter(entry => entry.id === focusedPanelId).map(entry => entry.id)
-    : visibleWorkspacePanels(contentPanels, Math.max(0, availableWidth - (isSidebarAndNavigatorHidden ? 0 : sidebarWidth + navigatorWidth)), focusedPanelId, lastTool, primaryId))
-
+  const hasTools = panels.some(entry => entry.tool)
+  const visibleIds = isCompact ? [focusedPanelId ?? panels[0]?.id].filter((id): id is string => !!id)
+    : visibleWorkspacePanels(panels, Math.max(0, availableWidth - (isSidebarAndNavigatorHidden ? 0 : sidebarWidth + navigatorWidth)), focusedPanelId, lastTool, primaryId)
+  const { mode, preferences, setTracks } = usePanelWorkspaceLayout()
+  const reduceMotion = useReducedMotion()
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const previousFocusedPanelRef = useRef(focusedPanelId)
+  const lastDomFocusRef = useRef<{ element: Element; panelId: string | null } | null>(null)
+  const composingRef = useRef(false)
+  const focusedId = panels.some((entry) => entry.id === focusedPanelId) ? focusedPanelId : panels[0]?.id
+  const singlePanel = hasTools ? visibleIds.length <= 1 : isCompact || mode === 'focus' || panels.length <= 1
+  const shape = useMemo(() => panelGridShape(hasTools ? visibleIds.length : panels.length, singlePanel ? 'focus' : hasTools ? 'columns' : mode), [panels.length, visibleIds.length, hasTools, singlePanel, mode])
+  const tracks = useMemo(() => resolvePanelGridTracks(preferences, shape, panels.map((entry) => entry.proportion)), [preferences, shape, panels])
+  const gridKey = panelGridKey(shape)
+  const panelIds = useMemo(() => panels.map((entry) => entry.id), [panels])
+  const panelIdentity = `${preferences.workspaceId}:${panelIds.join(':')}`
+  const hasSidebar = !isCompact && !isSidebarAndNavigatorHidden && sidebarWidth > 0
+  const hasNavigator = !isSidebarAndNavigatorHidden && navigatorWidth > 0
+  const expandedNavigator = !hasTools && navigatorExpanded && hasNavigator && !isCompact
+  const isLeftEdge = !hasSidebar && !hasNavigator
+  const focusedNavState = focusedRoute ? parseRouteToNavigationStateOrUnavailable(focusedRoute) : null
+  const hasSelectedContent = isCompact && (hasTools || compactPanelShowsContent(panels.length, hasNavigator, isDetailNavState(focusedNavState)))
+  const transition = isResizing || reduceMotion ? { duration: 0 } : PANEL_TRANSITION
+  const gridMinWidth = hasTools || singlePanel ? 0 : shape.columns * PANEL_GRID_MIN_WIDTH + (shape.columns - 1) * PANEL_GAP
+  const gridMinHeight = hasTools || shape.rows <= 1 ? 0 : shape.rows * PANEL_GRID_MIN_HEIGHT + (shape.rows - 1) * PANEL_GAP
 
   const focusPanelInDirection = useCallback((direction: PanelSpatialDirection): boolean => {
+    if (singlePanel || isPanelResizeActive()) return false
     const container = scrollRef.current
     if (!container) return false
     const containerRect = container.getBoundingClientRect()
@@ -106,15 +117,17 @@ export function PanelStackContainer({
       const id = element.dataset.panelId
       return id && right > left && bottom > top ? [{ id, left, top, right, bottom }] : []
     })
-    const nextPanelId = findPanelInDirection(focusedPanelId, bounds, direction)
+    const topologyTarget = panelGridFocusTarget(hasTools ? visibleIds : panelIds, focusedId, shape, direction)
+    const nextPanelId = topologyTarget && bounds.some(bound => bound.id === topologyTarget)
+      ? topologyTarget : findPanelInDirection(focusedId, bounds, direction)
     if (!nextPanelId) return false
 
     const nextPanel = elements.find((element) => element.dataset.panelId === nextPanelId)
     if (!nextPanel) return false
-    setFocusedPanel(nextPanelId)
+    setFocusedPanelId(nextPanelId)
     nextPanel.focus({ preventScroll: true })
     return true
-  }, [focusedPanelId, setFocusedPanel])
+  }, [focusedId, setFocusedPanelId, singlePanel, panelIds, shape, hasTools, visibleIds])
 
   const handleSpatialPanelKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     const direction = SPATIAL_DIRECTION_BY_KEY[event.key]
@@ -142,45 +155,217 @@ export function PanelStackContainer({
       focusPanelInDirection(direction)
     })
   }, [focusPanelInDirection])
-  const previousFocusedPanelRef = useRef(focusedPanelId)
-  useEffect(() => {
-    const previousFocusedPanelId = previousFocusedPanelRef.current
-    previousFocusedPanelRef.current = focusedPanelId
-    if (!previousFocusedPanelId || panelStack.some((panel) => panel.id === previousFocusedPanelId) || !focusedPanelId) return
 
+  // Removal blurs a focused DOM node to body before the new panel is painted.
+  // Remember its owner so a close cannot steal focus from unrelated live UI.
+  useEffect(() => {
+    const rememberFocus = (event: FocusEvent) => {
+      if (!(event.target instanceof Element)) return
+      const element = event.target
+      const content = element.closest<HTMLElement>('[data-panel-role="content"][data-panel-id]')
+      const tab = element.closest<HTMLElement>('[role="tab"][aria-controls]')
+      const panelId = content && scrollRef.current?.contains(content)
+        ? content.dataset.panelId ?? null : tab?.getAttribute('aria-controls') ?? null
+      lastDomFocusRef.current = { element, panelId }
+    }
+    const beginComposition = () => { composingRef.current = true }
+    const endComposition = () => { composingRef.current = false }
+    document.addEventListener('focusin', rememberFocus, true)
+    document.addEventListener('compositionstart', beginComposition, true)
+    document.addEventListener('compositionend', endComposition, true)
+    return () => {
+      document.removeEventListener('focusin', rememberFocus, true)
+      document.removeEventListener('compositionstart', beginComposition, true)
+      document.removeEventListener('compositionend', endComposition, true)
+    }
+  }, [])
+
+  useEffect(() => {
+    const previousId = previousFocusedPanelRef.current
+    previousFocusedPanelRef.current = focusedPanelId
+    if (!previousId || panels.some(panel => panel.id === previousId) || !focusedId) return
     const frame = requestAnimationFrame(() => {
-      const nextPanel = Array.from(
-        scrollRef.current?.querySelectorAll<HTMLElement>('[data-panel-role="content"][data-panel-id]') ?? [],
-      ).find((element) => element.dataset.panelId === focusedPanelId)
-      nextPanel?.focus({ preventScroll: true })
+      if (isPanelResizeActive() || composingRef.current || document.querySelector('[role="dialog"]')) return
+      const active = document.activeElement
+      if (active && active !== document.body && active !== document.documentElement && active.isConnected) return
+      const previousOwner = lastDomFocusRef.current
+      if (!previousOwner || previousOwner.panelId !== previousId || previousOwner.element.isConnected) return
+      const target = Array.from(scrollRef.current?.querySelectorAll<HTMLElement>('[data-panel-role="content"][data-panel-id]') ?? [])
+        .find(element => element.dataset.panelId === focusedId)
+      if (!target?.isConnected || target.closest('[inert], [aria-hidden="true"]')) return
+      const bounds = target.getBoundingClientRect()
+      if (bounds.width <= 0 || bounds.height <= 0) return
+      target.focus({ preventScroll: true })
     })
     return () => cancelAnimationFrame(frame)
-  }, [focusedPanelId, panelStack])
+  }, [focusedPanelId, focusedId, panels])
 
-  // Tool switching changes visibility, never mounting/ownership of the main object.
-  return <div ref={element => { layoutRef.current = element; scrollRef.current = element }} onKeyDown={handleSpatialPanelKeyDown} className="flex min-w-0 flex-1 flex-col" data-workspace-tool-layout>
-      <div hidden={!hasTools} role="tablist" aria-label={t('navigation.openPanels')} className={cn("shrink-0 gap-1 overflow-x-auto border-b border-foreground/5 px-2 py-1", hasTools ? "flex" : "hidden")}>
-        {contentPanels.map(entry => <button key={entry.id} type="button" role="tab"
-          aria-selected={entry.id === focusedPanelId} onClick={() => setFocusedPanel(entry.id)}
-          className={`whitespace-nowrap rounded px-3 py-1 text-xs ${entry.id === focusedPanelId ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}>
+  // Focus via tabs, shortcuts and opening a panel all reveal the actual cell,
+  // including the lower rows of a workspace that is smaller than its contents.
+  useEffect(() => {
+    if (singlePanel || !focusedId) return
+    const frame = requestAnimationFrame(() => {
+      const panel = document.getElementById(focusedId)
+      if (panel && scrollRef.current?.contains(panel)) {
+        panel.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest', inline: 'nearest' })
+      }
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [focusedId, panels.length, singlePanel, mode, reduceMotion])
+
+  return (
+    <div
+      ref={layoutRef}
+      onKeyDown={handleSpatialPanelKeyDown}
+      data-mobile-menu-root="true"
+      data-shell-density={isCompact ? 'compact' : 'regular'}
+      data-panel-layout={isCompact ? 'compact' : mode}
+      className="flex-1 min-h-0 min-w-0 flex flex-col relative z-panel panel-scroll @container/shell"
+      style={{
+        overflowX: isCompact ? 'hidden' : 'auto',
+        overflowY: isCompact ? 'hidden' : 'auto',
+        paddingBlock: PANEL_STACK_VERTICAL_OVERFLOW,
+        marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
+        paddingTop: isCompact ? undefined : PANEL_STACK_TOP_INSET,
+        paddingBottom: PANEL_STACK_BOTTOM_INSET,
+        paddingRight: isCompact ? 0 : PANEL_EDGE_INSET,
+        marginRight: isCompact ? 0 : -PANEL_EDGE_INSET,
+      }}
+    >
+      {hasTools && <div role="tablist" aria-label={t('navigation.openPanels')} className="flex shrink-0 gap-1 overflow-x-auto border-b border-border px-2 py-1">
+        {panels.map(entry => <button key={entry.id} type="button" role="tab" aria-controls={entry.id} aria-selected={entry.id === focusedId}
+          onClick={() => setFocusedPanelId(entry.id)} className={`whitespace-nowrap rounded px-3 py-1 text-xs ${entry.id === focusedId ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}>
           {entry.tool ? t(`navigation.tools.${entry.tool}`) : t('navigation.mainSurface')}
         </button>)}
-      </div>
-      <div className="flex min-h-0 min-w-0 flex-1">
-        {!isCompact && !isSidebarAndNavigatorHidden && <>
-          <div className="h-full shrink-0 overflow-hidden border-r border-foreground/5" style={{ width: sidebarWidth }}>{sidebarSlot}</div>
-          {navigatorSlot && <div className="h-full shrink-0 overflow-hidden border-r border-foreground/5" style={{ width: navigatorWidth }}>{navigatorSlot}</div>}
-        </>}
-        {isCompact && !hasTools && navigatorSlot && <div hidden={hasSelectedContent} className={cn("h-full min-w-0 flex-1", hasSelectedContent && "hidden")}>{navigatorSlot}</div>}
-        <div className={cn("min-w-0 flex-1", isCompact && !hasTools && navigatorSlot && !hasSelectedContent ? "hidden" : "flex")}>
-          {contentPanels.map(entry => <div key={entry.id} hidden={!visibleIds.has(entry.id)}
-            className={cn('h-full min-w-0', visibleIds.has(entry.id) ? 'flex' : 'hidden')}
-            style={{ flex: entry.tool && visibleIds.size > 1 ? '0 0 360px' : '1 1 0' }}>
-            <PanelSlot entry={entry} isOnly={true} isFocusedPanel={entry.id === focusedPanelId}
-              isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden} isAtLeftEdge={!entry.tool}
-              isAtRightEdge={true} proportion={entry.proportion} isCompact={isCompact} />
-          </div>)}
+      </div>}
+      <motion.div
+        className="flex min-h-0 flex-1 relative"
+        initial={false}
+        animate={{ paddingLeft: !hasSidebar && !isCompact ? PANEL_EDGE_INSET : 0 }}
+        transition={transition}
+        style={{ gap: PANEL_GAP, flexGrow: 1, minWidth: 0, minHeight: 0 }}
+      >
+        <motion.div
+          data-panel-role="sidebar"
+          initial={false}
+          animate={{
+            width: hasSidebar ? sidebarWidth : 0,
+            marginRight: hasSidebar ? 0 : -PANEL_GAP,
+            opacity: hasSidebar ? 1 : 0,
+          }}
+          transition={transition}
+          aria-hidden={!hasSidebar || undefined}
+          {...(!hasSidebar ? { inert: '' } : {})}
+          className="h-full relative shrink-0 overflow-hidden rox-shell-pane"
+          style={{ overflowX: 'clip', overflowY: 'visible', display: isCompact ? 'none' : undefined }}
+        >
+          <div className="h-full" style={{ width: sidebarWidth }}>{sidebarSlot}</div>
+        </motion.div>
+
+        <motion.div
+          data-panel-role="navigator"
+          data-navigator-expanded={expandedNavigator || undefined}
+          initial={false}
+          animate={{
+            width: isCompact ? '100%' : expandedNavigator ? 0 : hasNavigator ? navigatorWidth : 0,
+            marginRight: isCompact || hasNavigator ? 0 : -PANEL_GAP,
+            opacity: hasNavigator ? 1 : 0,
+            x: isCompact && hasSelectedContent ? '-30%' : '0%',
+          }}
+          transition={transition}
+          aria-hidden={!hasNavigator || (isCompact && hasSelectedContent) || undefined}
+          {...(!hasNavigator || (isCompact && hasSelectedContent) ? { inert: '' } : {})}
+          className="overflow-hidden shrink-0 z-[2] rox-shell-pane rox-shell-divider-r"
+          style={{
+            position: isCompact ? 'absolute' : 'relative',
+            flexGrow: expandedNavigator ? 1 : 0,
+            height: isCompact ? undefined : '100%',
+            top: isCompact ? COMPACT_PANEL_TOP_GAP : undefined,
+            bottom: isCompact ? 0 : undefined,
+            left: isCompact ? 0 : undefined,
+            pointerEvents: !hasNavigator || (isCompact && hasSelectedContent) ? 'none' : 'auto',
+          }}
+        >
+          <div className="h-full" style={{ width: isCompact || expandedNavigator ? '100%' : navigatorWidth }}>{navigatorSlot}</div>
+        </motion.div>
+
+        <div
+          ref={scrollRef}
+          data-panel-grid-viewport="true"
+          aria-hidden={expandedNavigator || undefined}
+          {...(expandedNavigator ? { inert: '' } : {})}
+          className="relative h-full min-h-0 min-w-0 flex-1 overscroll-contain panel-scroll"
+          style={{
+            overflow: isCompact ? 'hidden' : 'auto',
+            display: expandedNavigator ? 'none' : undefined,
+            // Preserve a usable content viewport even when saved rail widths
+            // exceed this window. The outer shell supplies overflow as fallback.
+            minWidth: hasTools || isCompact ? 0 : PANEL_GRID_MIN_WIDTH,
+          }}
+        >
+          <motion.div
+            data-panel-grid={gridKey}
+            data-panel-role="workspace"
+            initial={false}
+            animate={{ x: isCompact && !hasSelectedContent ? '100%' : '0%' }}
+            transition={transition}
+            aria-hidden={(isCompact && !hasSelectedContent) || undefined}
+            {...(isCompact && !hasSelectedContent ? { inert: '' } : {})}
+            className="grid flex-1 min-h-0 isolate"
+            style={{
+              position: isCompact ? 'absolute' : 'relative',
+              width: '100%',
+              height: isCompact ? undefined : '100%',
+              top: isCompact ? COMPACT_PANEL_TOP_GAP : undefined,
+              bottom: isCompact ? 0 : undefined,
+              left: isCompact ? 0 : undefined,
+              zIndex: isCompact ? 10 : undefined,
+              minWidth: gridMinWidth,
+              minHeight: gridMinHeight,
+              gridTemplateColumns: hasTools ? visibleIds.map(id => panels.find(entry => entry.id === id)?.tool && visibleIds.length > 1 ? '360px' : 'minmax(0, 1fr)').join(' ') : singlePanel ? 'minmax(0, 1fr)' : tracks.columns.map((weight) => `minmax(${PANEL_GRID_MIN_WIDTH}px, ${weight}fr)`).join(' '),
+              gridTemplateRows: shape.rows === 1 ? 'minmax(0, 1fr)' : tracks.rows.map((weight) => `minmax(${PANEL_GRID_MIN_HEIGHT}px, ${weight}fr)`).join(' '),
+              gap: PANEL_GAP,
+              pointerEvents: isCompact && !hasSelectedContent ? 'none' : 'auto',
+            }}
+          >
+            {panels.map((entry, index) => {
+              const isFocused = entry.id === focusedId
+              const isHidden = hasTools ? !visibleIds.includes(entry.id) : singlePanel && !isFocused
+              const column = hasTools ? Math.max(0, visibleIds.indexOf(entry.id)) : singlePanel ? 0 : index % shape.columns
+              return (
+                <PanelSlot
+                  key={entry.id}
+                  entry={entry}
+                  isOnly={singlePanel}
+                  isFocusedPanel={isFocused}
+                  isHidden={isHidden}
+                  isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden}
+                  isAtLeftEdge={column === 0 && isLeftEdge}
+                  isAtRightEdge={(singlePanel || column === shape.columns - 1) && !isRightSidebarVisible}
+                  proportion={entry.proportion}
+                  isCompact={isCompact}
+                  layoutStyle={{
+                    gridColumn: column + 1,
+                    gridRow: hasTools || singlePanel ? 1 : Math.floor(index / shape.columns) + 1,
+                    minWidth: 0,
+                    minHeight: 0,
+                    width: '100%',
+                    position: isHidden ? 'absolute' : 'relative',
+                    inset: isHidden ? 0 : undefined,
+                  }}
+                />
+              )
+            })}
+            {!hasTools && !singlePanel && Array.from({ length: shape.columns - 1 }, (_, index) => (
+              <PanelGridResizeSash key={`${gridKey}:x:${index}:${panelIdentity}`} axis="x" index={index} shape={shape} tracks={tracks} panelIds={panelIds} onTracksChange={setTracks} />
+            ))}
+            {!hasTools && !singlePanel && Array.from({ length: shape.rows - 1 }, (_, index) => (
+              <PanelGridResizeSash key={`${gridKey}:y:${index}:${panelIdentity}`} axis="y" index={index} shape={shape} tracks={tracks} panelIds={panelIds} onTracksChange={setTracks} />
+            ))}
+          </motion.div>
         </div>
-      </div>
+        {resizeHandles}
+      </motion.div>
     </div>
+  )
 }

@@ -1,3 +1,4 @@
+import { TourConnectionPolicyContext } from '@/features/product-tour/runtime/hooks'
 import * as React from "react"
 import { useTranslation, Trans } from "react-i18next"
 import { isInternalAgentSession } from "@rox/shared/sessions/internal-prompts"
@@ -79,7 +80,10 @@ import { LeftSidebar, type LinkItem, type SidebarItem as SidebarLinkItem } from 
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
+import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarChrome } from "./SidebarChrome"
+import { focusServicePanelAtom } from "./service-navigation"
+import type { AppNavDestinationId } from "./nav-destinations"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
 import { useShellAppearance } from "@/hooks/useShellAppearance"
 import { resolvePromoSlot } from "@/platform/promo-slot"
@@ -118,11 +122,11 @@ import { useFocusContext } from "@/context/FocusContext"
 import { getSessionTitle } from "@/utils/session"
 import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSource, LoadedSkill, PermissionMode, SourceFilter, AutomationFilter } from "../../../shared/types"
 import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/atoms/sessions"
-import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
+import { collectionDisplayAtom, loadCollectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
-import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
+import { collectionFiltersAtom, collectionFilterKeyAtom, loadCollectionFiltersAtom } from "@/atoms/collection-filters"
 import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
-import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@rox/shared/sessions/collection"
+import { compareSessions, filterSessionMeta } from "@rox/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
 import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
@@ -171,6 +175,9 @@ import { usePages } from "@/hooks/usePages"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { PanelHeader } from "./PanelHeader"
 import { OnboardingDialog } from "./OnboardingDialog"
+import { useProductLearning } from '@/features/product-tour/runtime'
+import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { beginChatSessionCreation } from '@/features/product-tour/adapters/chat'
 import { FabNewChat } from "./FabNewChat"
 import { SendToWorkspaceDialog } from "./SendToWorkspaceDialog"
 import { CreateProjectDialog } from "../projects/CreateProjectDialog"
@@ -328,11 +335,11 @@ function AppShellContent({
   const isPrimarySidebarRendered = true
   const [shellSidebarSlot, setShellSidebarSlot] = useState<HTMLElement | null>(null)
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
-    return loadShellLayout(null).sidebarWidth
+    return loadShellLayout(activeWorkspaceId).sidebarWidth
   })
   // Session list width in pixels (min 240, max 480)
   const [storedSessionListWidth, setSessionListWidth] = React.useState(() => {
-    return loadShellLayout(null).navigatorWidth
+    return loadShellLayout(activeWorkspaceId).navigatorWidth
   })
 
   // Hides both sidebar and navigator (CMD+. toggle)
@@ -433,7 +440,6 @@ function AppShellContent({
             xpIntoLevel: gamification.value.xpIntoLevel,
             xpForNext: gamification.value.xpForNext,
             nextThreshold: gamification.value.nextThreshold,
-            balance: gamification.value.balance,
           } : {}),
         }))
       } catch (err) {
@@ -451,7 +457,6 @@ function AppShellContent({
         xpIntoLevel: payload.xpIntoLevel,
         xpForNext: payload.xpForNext,
         nextThreshold: payload.nextThreshold,
-        balance: payload.balance,
       }))
     })
     const offIdentity = window.electronAPI.onIdentityChanged?.(() => {
@@ -467,20 +472,20 @@ function AppShellContent({
 
 
   // Real rox.one balance for the connected Rox cloud account (null → «—»).
-  const [roxCloudBalance, setRoxCloudBalance] = React.useState<number | null>(null)
+  const [roxCloudAccount, setRoxCloudAccount] = React.useState<import('@rox/shared/auth').RoxAccountSnapshot | null>(null)
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
-        const res = await window.electronAPI.getRoxBalance?.()
+        const res = await window.electronAPI.getRoxCloudState()
         if (cancelled || !res) return
-        setRoxCloudBalance(res.status === 'ok' ? res.balance : null)
+        setRoxCloudAccount(res.account ?? null)
       } catch {
-        if (!cancelled) setRoxCloudBalance(null)
+        if (!cancelled) setRoxCloudAccount(null)
       }
     }
     void load()
-    const timer = window.setInterval(() => { void load() }, 5 * 60 * 1000)
+    const timer = window.setInterval(() => { void load() }, 30_000)
     return () => { cancelled = true; window.clearInterval(timer) }
   }, [])
 
@@ -574,6 +579,9 @@ function AppShellContent({
     store.set(openAuxiliaryPanelAtom, { tool, route: route as import('../../../shared/routes').ViewRoute, context })
   }
   const panelStack = useAtomValue(panelStackAtom)
+  const productLearning = useProductLearning()
+  const tourNewSessionTarget = useTourTarget('session.new', { variant: 'regular' })
+  const tourSignals = useTourSignals()
   const panelCount = useAtomValue(panelCountAtom)
   const focusedSessionId = useAtomValue(focusedSessionIdAtom)
 
@@ -624,7 +632,7 @@ function AppShellContent({
   // without this the navigator column stayed mounted and empty beside them.
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
   const hideModuleMiddleNav =
-    isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -685,6 +693,8 @@ function AppShellContent({
 
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
   const setCollectionDisplay = useSetAtom(setCollectionDisplayAtom)
+  const loadCollectionDisplay = useSetAtom(loadCollectionDisplayAtom)
+  const loadCollectionFilters = useSetAtom(loadCollectionFiltersAtom)
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const setCollectionFilterKey = useSetAtom(collectionFilterKeyAtom)
@@ -779,31 +789,23 @@ function AppShellContent({
   const [searchActive, setSearchActive] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
 
-  // Grouping mode for chat list: CollectionDisplay.groupBy is live; viewFiltersMap
-  // groupingMode is leftover compact cycle chrome when groupBy is none.
+  // CollectionDisplay is the workspace-persisted grouping owner. A legacy
+  // per-view grouping preference must not override the current groupBy.
   const isStateSubView = sessionFilter?.kind === 'state'
 
   const chatGroupingMode: ChatGroupingMode = isStateSubView
     ? 'date'
     : collectionDisplay.groupBy === 'status'
       ? 'status'
-      : collectionDisplay.groupBy === 'none'
-        ? (viewFiltersMap[sessionFilterKey ?? '']?.groupingMode ?? 'date')
+      : collectionDisplay.groupBy === 'project'
+        ? 'project'
         : 'date'
 
   const setChatGroupingMode = useCallback((mode: ChatGroupingMode) => {
-    setViewFiltersMap(prev => {
-      if (!sessionFilterKey) return prev
-      const existing = prev[sessionFilterKey] ?? { statuses: {}, labels: {} }
-      return {
-        ...prev,
-        [sessionFilterKey]: { ...existing, groupingMode: mode }
-      }
-    })
     void setCollectionDisplay({
-      groupBy: mode === 'status' ? 'status' : 'none',
+      groupBy: mode === 'status' ? 'status' : mode === 'project' ? 'project' : 'none',
     })
-  }, [sessionFilterKey, setCollectionDisplay])
+  }, [setCollectionDisplay])
 
   const compactViewFilters = sessionFilterKey ? viewFiltersMap[sessionFilterKey] : undefined
 
@@ -943,7 +945,7 @@ function AppShellContent({
   // Track which expandable sidebar items are collapsed
   // Labels are collapsed by default; user preference is persisted once toggled
   const [collapsedItems, setCollapsedItems] = React.useState<Set<string>>(() => {
-    const saved = loadShellLayout(null).collapsedSectionIds
+    const saved = loadShellLayout(activeWorkspaceId).collapsedSectionIds
     if (saved.length > 0) return new Set(saved)
     return new Set(['nav:labels'])
   })
@@ -1016,6 +1018,7 @@ function AppShellContent({
 
   // Whether local MCP servers are enabled (affects stdio source status)
   const [localMcpEnabled, setLocalMcpEnabled] = React.useState(true)
+  const [learningSourcePolicy, setLearningSourcePolicy] = React.useState<{ workspaceId: string; localMcpEnabled: boolean | null } | null>(null)
 
   // Enabled permission modes for Shift+Tab cycling (min 2 modes)
   const [enabledModes, setEnabledModes] = React.useState<PermissionMode[]>(['safe', 'ask', 'allow-all'])
@@ -1023,7 +1026,11 @@ function AppShellContent({
   // Load workspace settings (for localMcpEnabled and cyclablePermissionModes) on workspace change
   React.useEffect(() => {
     if (!activeWorkspaceId) return
+    let cancelled = false
+    setLearningSourcePolicy(null)
     window.electronAPI.getWorkspaceSettings(activeWorkspaceId).then((settings) => {
+      if (cancelled) return
+      setLearningSourcePolicy({ workspaceId: activeWorkspaceId, localMcpEnabled: settings ? (settings.localMcpEnabled ?? true) : null })
       if (settings) {
         setLocalMcpEnabled(settings.localMcpEnabled ?? true)
         // Load cyclablePermissionModes from workspace settings
@@ -1032,8 +1039,9 @@ function AppShellContent({
         }
       }
     }).catch((err) => {
-      console.error('[Chat] Failed to load workspace settings:', err)
+      if (!cancelled) console.error('[Chat] Failed to load workspace settings:', err)
     })
+    return () => { cancelled = true }
   }, [activeWorkspaceId])
 
   // Reset UI state when workspace changes
@@ -1048,8 +1056,6 @@ function AppShellContent({
 
     // Clear transient UI state only on workspace SWITCH (not initial mount)
     if (previousWorkspaceId !== null && previousWorkspaceId !== activeWorkspaceId) {
-      setCollectionFilters({ ...DEFAULT_COLLECTION_FILTERS })
-
       // Clear search state
       setSearchActive(false)
       setSearchQuery('')
@@ -1059,6 +1065,10 @@ function AppShellContent({
     // Load workspace-scoped state on BOTH initial mount AND workspace switch
     // This fixes CMD+R losing filters - previously only ran on workspace switch
     if (previousWorkspaceId !== activeWorkspaceId) {
+      // Loading preferences must never persist a default filter reset over the
+      // newly selected workspace. Atom request leases fence stale snapshots.
+      void loadCollectionDisplay(activeWorkspaceId)
+      void loadCollectionFilters(activeWorkspaceId)
       // Cancel pointer/keyboard previews before restoring the next workspace,
       // so a delayed commit cannot save old dimensions under the new id.
       sidebarResize.handleKeyCancel()
@@ -1079,7 +1089,7 @@ function AppShellContent({
 
     setWorkspaceUiStateId(activeWorkspaceId)
     previousWorkspaceRef.current = activeWorkspaceId
-  }, [activeWorkspaceId])
+  }, [activeWorkspaceId, loadCollectionDisplay, loadCollectionFilters, sidebarResize.handleKeyCancel, navigatorResize.handleKeyCancel])
 
   // A live update is newer than the initial snapshot; obsolete loads must not
   // resurrect deleted entities or cross a workspace boundary.
@@ -1528,8 +1538,8 @@ function AppShellContent({
     return known ? total : null
   }, [workspaceSessionMetas])
   const profileStripWithSpend = useMemo(
-    () => ({ ...profileStrip, balance: roxCloudBalance ?? profileStrip.balance, spentUsd: workspaceSpentUsd }),
-    [profileStrip, roxCloudBalance, workspaceSpentUsd],
+    () => accountProfileStrip(profileStrip, roxCloudAccount, workspaceSpentUsd, t('profile.defaultName')),
+    [profileStrip, roxCloudAccount, workspaceSpentUsd, t],
   )
 
   // Active sessions exclude archived - use this for all counts and filters except archived view
@@ -1749,10 +1759,13 @@ function AppShellContent({
 
   // Ensure session messages are loaded when selected
   React.useEffect(() => {
-    if (session.selected) {
-      ensureMessagesLoaded(session.selected)
-    }
-  }, [session.selected, ensureMessagesLoaded])
+    if (!session.selected || !activeWorkspaceId) return
+    // Read current ownership at the side-effect boundary: another selection
+    // writer or a workspace transition may have invalidated the rendered map.
+    const meta = store.get(sessionMetaMapAtom).get(session.selected)
+    if (!meta || (meta.workspaceId !== activeWorkspaceId && meta.workspaceId !== remoteWorkspaceId)) return
+    ensureMessagesLoaded(session.selected)
+  }, [session.selected, activeWorkspaceId, remoteWorkspaceId, sessionMetaMap, ensureMessagesLoaded, store])
 
   // Wrap delete handler to clear selection when deleting the currently selected session
   // This prevents stale state during re-renders that could cause crashes
@@ -1776,6 +1789,7 @@ function AppShellContent({
     enabledSources: sources,
     skills,
     activeSessionWorkingDirectory,
+    localMcpEnabled,
     labels: displayLabelConfigs,
     onSessionLabelsChange: handleSessionLabelsChange,
     projects: projectMenuOptions,
@@ -1799,7 +1813,7 @@ function AppShellContent({
     automationTestResults,
     getAutomationHistory,
     onReplayAutomation: handleReplayAutomation,
-  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
+  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, localMcpEnabled, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
   // Persist expanded folders to localStorage (workspace-scoped)
   React.useEffect(() => {
     if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
@@ -1857,9 +1871,17 @@ function AppShellContent({
     commitShellLayout({ workspaceId: activeWorkspaceId, collapsedSectionIds: [...collapsedItems] })
   }, [collapsedItems, activeWorkspaceId, workspaceUiStateId])
 
+  const focusServicePanel = useSetAtom(focusServicePanelAtom)
+  const handleServiceClick = useCallback((serviceId: AppNavDestinationId) => {
+    // An explicit service selection must recover a stale workspace URL through navigate.
+    if (navState.navigator !== 'unavailable' && focusServicePanel(serviceId)) return
+    const route = APP_NAV_DESTINATIONS_BY_ID[serviceId].route?.()
+    if (route) navigate(route)
+  }, [focusServicePanel, navigate, navState.navigator])
+
   const handleAllSessionsClick = useCallback(() => {
-    navigate(routes.view.allSessions())
-  }, [navigate])
+    handleServiceClick('sessions')
+  }, [handleServiceClick])
 
   const handleFlaggedClick = useCallback(() => {
     navigate(routes.view.flagged())
@@ -1913,8 +1935,8 @@ function AppShellContent({
 
   // Handler for sources view (all sources)
   const handleSourcesClick = useCallback(() => {
-    navigate(routes.view.sources())
-  }, [])
+    handleServiceClick('sources')
+  }, [handleServiceClick])
 
   // Handlers for source type filter views (subcategories in Sources dropdown)
   const handleSourcesApiClick = useCallback(() => {
@@ -1931,41 +1953,41 @@ function AppShellContent({
 
   // Handler for skills view
   const handleSkillsClick = useCallback(() => {
-    navigate(routes.view.skills())
-  }, [])
+    handleServiceClick('skills')
+  }, [handleServiceClick])
 
   // Handler for memory view
   const handleMemoryClick = useCallback(() => {
-    navigate(routes.view.memory())
-  }, [])
+    handleServiceClick('memory')
+  }, [handleServiceClick])
 
   const handleTasksClick = useCallback(() => {
-    navigate(routes.view.tasks())
-  }, [])
+    handleServiceClick('tasks')
+  }, [handleServiceClick])
 
   const handleMeetingsClick = useCallback(() => {
-    navigate(routes.view.meetings())
-  }, [])
+    handleServiceClick('meetings')
+  }, [handleServiceClick])
 
   // Handler for workspace-local Notes.
   const handleNotesClick = useCallback(() => {
-    navigate(routes.view.notes())
-  }, [])
+    handleServiceClick('notes')
+  }, [handleServiceClick])
 
   // Handlers for automations view
   const handleAutomationsClick = useCallback(() => {
-    navigate(routes.view.automations())
-  }, [])
+    handleServiceClick('automations')
+  }, [handleServiceClick])
 
   // Handler for projects view
   const handleProjectsClick = useCallback(() => {
-    navigate(routes.view.projects())
-  }, [])
+    handleServiceClick('projects')
+  }, [handleServiceClick])
 
   // Handler for pages view
   const handlePagesClick = useCallback(() => {
-    navigate(routes.view.pages())
-  }, [])
+    handleServiceClick('pages')
+  }, [handleServiceClick])
 
   const handleAutomationsScheduledClick = useCallback(() => {
     navigate(routes.view.automationsScheduled())
@@ -1982,8 +2004,12 @@ function AppShellContent({
   // Handler for settings view. With no arg → bare `settings` route (navigator-only
   // in compact mode, App fallback on desktop). With an arg → `settings/<subpage>`.
   const handleSettingsClick = useCallback((subpage?: SettingsSubpage) => {
+    if (!subpage && !isAutoCompact) {
+      handleServiceClick('settings')
+      return
+    }
     navigate(routes.view.settings(subpage))
-  }, [])
+  }, [handleServiceClick, isAutoCompact, navigate])
 
 
   // ============================================================================
@@ -2193,6 +2219,7 @@ function AppShellContent({
     const inherited = resolveInheritedNewSessionParams()
 
     // Delegate to NavigationContext which handles session creation
+    beginChatSessionCreation(tourSignals.capture())
     navigate(
       routes.action.newSession(inherited ?? undefined),
       newPanel ? { newPanel: true, targetLaneId: 'main' } : undefined
@@ -2200,7 +2227,7 @@ function AppShellContent({
 
     // Focus the chat input after navigation completes
     setTimeout(() => focusZone('chat', { intent: 'programmatic' }), 50)
-  }, [activeWorkspace, focusZone, handleNewKnowledgeNote, navigate, navState, resolveInheritedNewSessionParams])
+  }, [activeWorkspace, focusZone, handleNewKnowledgeNote, navigate, navState, resolveInheritedNewSessionParams, tourSignals])
 
   const setInspectorVisible = useSetAtom(inspectorVisibleAtom)
   const setInspectorChromeCollapsed = useSetAtom(inspectorChromeCollapsedAtom)
@@ -2443,7 +2470,7 @@ function AppShellContent({
       actions: (
         <div className="flex shrink-0 items-center gap-0.5">
           <button type="button" onClick={() => window.dispatchEvent(new Event('craft:join-session'))} title={t('sessionMenu.join')} aria-label={t('sessionMenu.join')} className="grid size-7 place-items-center rounded-lg text-foreground/50 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring"><Link2 className="size-3.5" aria-hidden /></button>
-          <button type="button" onClick={event => handleNewChat(event.metaKey || event.ctrlKey)} title={`${t('session.newSession')} ${newChatHotkey}`} aria-label={t('session.newSession')} data-tutorial="new-chat-button" className="grid size-7 place-items-center rounded-lg bg-accent/10 text-accent hover:bg-accent/20 focus-visible:ring-1 focus-visible:ring-ring"><Plus className="size-3.5" aria-hidden /></button>
+          <button ref={tourNewSessionTarget} type="button" onClick={event => handleNewChat(event.metaKey || event.ctrlKey)} title={`${t('session.newSession')} ${newChatHotkey}`} aria-label={t('session.newSession')} data-tutorial="new-chat-button" className="grid size-7 place-items-center rounded-lg bg-accent/10 text-accent hover:bg-accent/20 focus-visible:ring-1 focus-visible:ring-ring"><Plus className="size-3.5" aria-hidden /></button>
         </div>
       ),
       contextMenu: {
@@ -2721,7 +2748,7 @@ function AppShellContent({
       title: t(APP_NAV_DESTINATIONS_BY_ID.connections.labelKey),
       icon: APP_NAV_DESTINATIONS_BY_ID.connections.icon,
       variant: isConnectionsNavigation(navState) ? "default" : "ghost",
-      onClick: () => navigate(routes.view.connections()),
+      onClick: () => handleServiceClick('connections'),
     },
     // --- Settings (What's New moved to TopBar) ---
     {
@@ -2749,6 +2776,7 @@ function AppShellContent({
     </>
   )
   return (
+    <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
     <AppShellProvider value={appShellContextValue}>
       <WorkspaceBrowserRegistry enabled={browserSurfaceEnabled} />
       <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
@@ -2864,6 +2892,7 @@ function AppShellContent({
                 </div>
                 <div className="shrink-0">
                   <SidebarChrome
+                    workspaceId={activeWorkspaceId}
                     profile={profileStripWithSpend}
                     onProfileClick={() => handleSettingsClick('account')}
                     promoKind={promoKind}
@@ -3440,9 +3469,10 @@ function AppShellContent({
       <PublishSessionDialogHost />
 
       {/* Y4: first-run memory onboarding — shown once when no lessons exist */}
-      <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} />
+      <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} />
 
       </ShellSidebarContext.Provider>
     </AppShellProvider>
+    </TourConnectionPolicyContext.Provider>
   )
 }

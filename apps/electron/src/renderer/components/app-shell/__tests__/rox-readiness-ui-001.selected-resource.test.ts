@@ -9,7 +9,7 @@ describe('UI-001 selected resource canonical callbacks', () => {
     let removed = false
     const off = mainPanelEffect({
       workspaceId: 'ws-a', kind: 'source', slug: 'selected', workingDirectory: undefined, identity: 'source-a',
-      setState: (next: any) => { state = next },
+      setState: (next: any) => { state = typeof next === 'function' ? next(state) : next },
       window: { electronAPI: {
         getSources: () => initial.promise,
         onSourcesChanged: (callback: typeof changed) => { changed = callback; return () => { removed = true } },
@@ -35,7 +35,7 @@ describe('UI-001 selected resource canonical callbacks', () => {
     let changed!: (workspace: string, rows: any) => void
     const off = mainPanelEffect({
       workspaceId: 'ws-a', kind: 'source', slug: 'selected', workingDirectory: undefined, identity: 'source-a',
-      setState: (value: any) => { state = value },
+      setState: (value: any) => { state = typeof value === 'function' ? value(state) : value },
       window: { electronAPI: {
         getSources: async () => [{config:{slug:'selected'}}],
         onSourcesChanged: (callback: typeof changed) => { changed = callback; return () => {} },
@@ -53,7 +53,7 @@ describe('UI-001 selected resource canonical callbacks', () => {
     let changed!: (workspace: string, sources: any[]) => void
     const off = mainPanelEffect({
       workspaceId: 'ws-a', kind: 'source', slug: 'selected', workingDirectory: undefined, identity: 'source-a',
-      setState: (next: any) => { state = next },
+      setState: (next: any) => { state = typeof next === 'function' ? next(state) : next },
       window: { electronAPI: {
         getSources: () => Promise.reject(new Error('offline')),
         onSourcesChanged: (callback: typeof changed) => { changed = callback; return () => {} },
@@ -71,7 +71,7 @@ describe('UI-001 selected resource canonical callbacks', () => {
     let state: any
     const bindings = {
       workspaceId: 'ws-a', kind: 'source', slug: 'selected', workingDirectory: undefined, identity: 'source-a',
-      setState: (next: any) => { state = next },
+      setState: (next: any) => { state = typeof next === 'function' ? next(state) : next },
       window: { electronAPI: { getSources: () => initial.promise } },
     }
     const off = mainPanelEffect(bindings)
@@ -90,7 +90,7 @@ describe('UI-001 selected resource canonical callbacks', () => {
     let index = 0
     const off = mainPanelEffect({
       workspaceId: 'ws-a', kind: 'skill', slug: 'global-skill', workingDirectory: '/project/a', identity: 'skill-a',
-      setState: (value: any) => { state = value },
+      setState: (value: any) => { state = typeof value === 'function' ? value(state) : value },
       window: { electronAPI: {
         getSkills: (...args: unknown[]) => { requests.push(args); return reads[index++]!.promise },
         onSkillsChanged: (callback: typeof changed) => { changed = callback; return () => {} },

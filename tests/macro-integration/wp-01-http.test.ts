@@ -2,7 +2,8 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { SQL } from 'bun'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
-import { createServer, request as nodeRequest, type Server } from 'node:http'
+import { createServer, type Server } from 'node:http'
+import { createConnection } from 'node:net'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { decodeJwt, importJWK, SignJWT } from 'jose'
@@ -74,9 +75,30 @@ beforeAll(async () => {
 }, 30000)
 
 afterAll(async () => {
-  await Promise.all(servers.map(server => new Promise<void>(resolve => {
-    server.close(() => resolve()); server.closeAllConnections()
-  })))
+  await Promise.all(servers.map(async server => {
+    const address = server.address()
+    if (!address || typeof address === 'string') throw new Error('Missing owned HTTP fixture listener')
+    // Bun clears its listener handle in close(), so force-close first to cancel
+    // rejected request bodies too. Node still uses its ordinary close callback.
+    server.closeAllConnections()
+    await new Promise<void>((resolve, reject) => server.close(error => {
+      if (error && (!('code' in error) || error.code !== 'ERR_SERVER_NOT_RUNNING' || server.listening)) reject(error)
+      else resolve()
+    }))
+    expect(server.listening).toBe(false)
+    await new Promise<void>((resolve, reject) => {
+      const socket = createConnection({ host: '127.0.0.1', port: address.port })
+      const timer = setTimeout(() => { socket.destroy(); reject(new Error('HTTP fixture shutdown readback timed out')) }, 5000)
+      socket.once('connect', () => {
+        clearTimeout(timer); socket.destroy(); reject(new Error('Owned HTTP fixture listener still accepts connections'))
+      })
+      socket.once('error', error => {
+        clearTimeout(timer); socket.destroy()
+        if ('code' in error && error.code === 'ECONNREFUSED') resolve()
+        else reject(error)
+      })
+    })
+  }))
   if (database) { await database.unsafe(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`); await database.close() }
   if (state) await rm(state, { recursive: true, force: true })
 })
@@ -137,21 +159,75 @@ function requireStatus(status: number | undefined): number {
   return status
 }
 
-/** Actual Node wire requests preserve duplicate headers, GET bodies and unnormalized paths. */
-function wire(path: string, headers: string[], body: string | Buffer = '', method = 'GET', url = base): Promise<{ status: number; text: string }> {
+/** Raw TCP retains malformed paths, duplicate headers and real chunked framing on Bun and Node. */
+function wire(path: string, headers: string[], body: string | Buffer = '', method = 'GET', url = base,
+  pauseAfterFirstByte?: () => Promise<void>): Promise<{ status: number; text: string }> {
   const target = new URL(url)
+  const fields: string[] = ['Host', target.host, 'Connection', 'close', ...headers]
+  const hasHeader = (name: string) => fields.some((field, index) => index % 2 === 0 && field.toLowerCase() === name)
+  const bytes = typeof body === 'string' ? Buffer.from(body) : body
+  const chunked = fields.some((field, index) => index % 2 === 0 && field.toLowerCase() === 'transfer-encoding'
+    && fields[index + 1]?.toLowerCase() === 'chunked')
+  if (bytes.length && !chunked && !hasHeader('content-length')) fields.push('Content-Length', String(bytes.length))
+  const payload = chunked ? bytes.length
+    ? Buffer.concat([Buffer.from(bytes.length.toString(16) + '\r\n'), bytes, Buffer.from('\r\n0\r\n\r\n')])
+    : Buffer.from('0\r\n\r\n') : bytes
+  const head = Buffer.from(`${method} ${path} HTTP/1.1\r\n`
+    + fields.filter((_, index) => index % 2 === 0).map((field, index) => `${field}: ${fields[index * 2 + 1]}\r\n`).join('') + '\r\n')
   return new Promise((resolve, reject) => {
-    const request = nodeRequest({ hostname: target.hostname, port: target.port, method, path,
-      headers: ['Host', target.host, ...headers] }, response => {
-      const chunks: Buffer[] = []
-      response.on('data', chunk => chunks.push(chunk))
-      response.on('end', () => {
-        try { resolve({ status: requireStatus(response.statusCode), text: Buffer.concat(chunks).toString() }) }
-        catch (error) { reject(error) }
-      })
+    const socket = createConnection({ host: target.hostname, port: Number(target.port) })
+    const chunks: Buffer[] = []
+    let received = 0
+    let settled = false
+    const timer = setTimeout(() => finish(undefined, new Error('Bounded HTTP wire response timed out')), 5000)
+    function finish(value?: { status: number; text: string }, error?: unknown) {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      socket.destroy()
+      if (error) reject(error)
+      else if (value) resolve(value)
+      else reject(new Error('HTTP wire response unavailable'))
+    }
+    function response(ended: boolean) {
+      const bytes = Buffer.concat(chunks, received)
+      const separator = bytes.indexOf('\r\n\r\n')
+      if (separator < 0) {
+        if (ended) throw new Error('Incomplete HTTP wire headers')
+        return
+      }
+      const head = bytes.subarray(0, separator).toString('latin1')
+      const statusMatch = /^HTTP\/1\.[01] ([0-9]{3})(?: |$)/m.exec(head)
+      const status = requireStatus(statusMatch ? Number(statusMatch[1]) : undefined)
+      const length = /^Content-Length:\s*([0-9]+)\s*$/im.exec(head)
+      const body = bytes.subarray(separator + 4)
+      if (length) {
+        const expected = Number(length[1])
+        if (body.length >= expected) finish({ status, text: body.subarray(0, expected).toString() })
+        else if (ended) throw new Error('Incomplete HTTP wire body')
+      } else if (ended) finish({ status, text: body.toString() })
+    }
+    socket.on('data', chunk => {
+      received += chunk.length
+      if (received > 1048576) { finish(undefined, new Error('HTTP wire response exceeded fixture bound')); return }
+      chunks.push(chunk)
+      try { response(false) } catch (error) { finish(undefined, error) }
     })
-    request.on('error', reject)
-    request.end(body)
+    socket.once('end', () => {
+      if (!settled) { try { response(true) } catch (error) { finish(undefined, error) } }
+    })
+    socket.once('error', error => finish(undefined, error))
+    socket.once('close', () => { if (!settled) finish(undefined, new Error('HTTP wire closed before response')) })
+    socket.once('connect', () => {
+      void (async () => {
+        socket.write(head)
+        if (pauseAfterFirstByte && payload.length) {
+          socket.write(payload.subarray(0, 1))
+          await pauseAfterFirstByte()
+          if (!settled) socket.write(payload.subarray(1))
+        } else socket.write(payload)
+      })().catch(error => finish(undefined, error))
+    })
   })
 }
 
@@ -286,24 +362,13 @@ describe('WP-01 HTTP facade with real JWT and PostgreSQL authority', () => {
       async authenticate(token) { const result = await resolver.authenticate(token); authenticated.resolve(); return result },
       revalidate: bound => resolver.revalidate(bound),
     } })
-    const target = new URL(url)
     const body = JSON.stringify(command(f.id, 'must not commit'))
-    const response = Promise.withResolvers<{ status: number; text: string }>()
-    const request = nodeRequest({ hostname: target.hostname, port: target.port, method: 'POST',
-        path: f.route + '/commands/project.createShared', headers: { Authorization: 'Bearer ' + f.ownerToken,
-          'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } }, res => {
-        const chunks: Buffer[] = []; res.on('data', chunk => chunks.push(chunk));
-        res.on('end', () => {
-          try { response.resolve({ status: requireStatus(res.statusCode), text: Buffer.concat(chunks).toString() }) }
-          catch (error) { response.reject(error) }
-        })
+    const response = wire(f.route + '/commands/project.createShared', ['Authorization', 'Bearer ' + f.ownerToken,
+      'Content-Type', 'application/json', 'Content-Length', String(Buffer.byteLength(body))], body, 'POST', url, async () => {
+        await authenticated.promise
+        await auth.revokeSession(requireString(decodeJwt(f.ownerToken).sid))
       })
-    request.on('error', response.reject)
-    request.write(body.slice(0, 1))
-    await authenticated.promise
-    await auth.revokeSession(requireString(decodeJwt(f.ownerToken).sid))
-    request.end(body.slice(1))
-    expect(await response.promise).toEqual({ status: 401, text: '{"error":{"code":"UNAUTHENTICATED"}}' })
+    expect(await response).toEqual({ status: 401, text: '{"error":{"code":"UNAUTHENTICATED"}}' })
     expect((await database.unsafe(`SELECT count(*)::integer AS n FROM "${schema}".project WHERE workspace_id=$1`, [f.id]))[0].n).toBe(0)
   })
 

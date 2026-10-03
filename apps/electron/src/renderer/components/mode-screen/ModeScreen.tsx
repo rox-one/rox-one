@@ -7,12 +7,22 @@
  * accent bar and bold text, so it never relies on a subtle tint alone.
  */
 import * as React from 'react'
+import { ResponsiveModeScreenLayout, type ResponsiveModeScreen } from './ResponsiveModeScreen'
 import { cn } from '@/lib/utils'
 import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 import { useTranslation } from 'react-i18next'
 import { Archive, Bell, CalendarDays, CheckCheck, ChevronRight, Clock3, Folder, Inbox, ListFilter, Mail, MessageCircle, Newspaper, Radio, ShieldCheck, Sparkles, Tag, Users, type LucideIcon } from 'lucide-react'
 
-export function ModeScreenLayout({
+export function ModeScreenLayout(props: {
+  navigator: React.ReactNode; list: React.ReactNode; detail: React.ReactNode; status?: React.ReactNode
+  testId?: string; wideList?: boolean; detailKey?: string | null; responsive?: ResponsiveModeScreen
+}) {
+  return props.responsive
+    ? <ResponsiveModeScreenLayout {...props} responsive={props.responsive} />
+    : <FallbackModeScreenLayout {...props} />
+}
+
+function FallbackModeScreenLayout({
   navigator,
   list,
   detail,
@@ -53,7 +63,9 @@ export function ModeScreenLayout({
         <ShellSidebarPortal className={cn('shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3', narrow ? pane === 'navigation' ? 'w-full' : 'hidden' : 'w-[220px]')}>
           {navigator}
         </ShellSidebarPortal>
-        {wideList ? (
+        {detail == null ? (
+          <section className="flex min-w-0 flex-1 flex-col bg-foreground/[0.025]">{list}</section>
+        ) : wideList ? (
           <>
             <section className={cn('min-w-0 flex-1 flex-col bg-foreground/[0.025]', narrow && pane !== 'list' ? 'hidden' : 'flex')}>{list}</section>
             <section className={cn('min-w-0 flex-col overflow-y-auto bg-background', narrow ? pane === 'detail' ? 'flex flex-1' : 'hidden' : 'flex w-[320px] shrink-0')}>{detail}</section>

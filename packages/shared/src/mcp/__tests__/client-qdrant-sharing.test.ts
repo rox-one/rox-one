@@ -471,3 +471,44 @@ test('closing a stalled SSE handshake settles direct and pool connection promise
     await new Promise<void>(resolve => server.close(() => resolve()));
   }
 });
+
+
+describe('bounded Qdrant lease startup and discovery', () => {
+  test('one lease deadline during initialize leaves the shared process and waiting session intact', async () => {
+    const gate = join(root, `deadline-initialize-gate-${++sequence}`);
+    const settings = config({MCP_TEST_INITIALIZE_GATE:gate});
+    const probe = client(settings);
+    const session = client(settings);
+    const timed = probe.connect({timeoutMs:200}).catch(error => error);
+    const waiting = session.connect();
+    try {
+      await waitFor(() => events(settings).some(event => event.event === 'initialize'));
+      expect((await timed).message).toBe('MCP connection timed out after 200ms');
+      expect(events(settings).filter(event => event.event === 'exit')).toHaveLength(0);
+      expect(probe.isConnected()).toBe(false);
+      writeFileSync(gate, 'ready');
+      await waiting;
+      expect(await session.callTool('echo', {text:'survived'})).toMatchObject({content:[{text:'survived'}]});
+      expect(events(settings).filter(event => event.event === 'spawn')).toHaveLength(1);
+    } finally { writeFileSync(gate, 'ready'); await timed; await waiting; }
+  });
+
+  test('one tools/list deadline cannot cancel another lease shared discovery request', async () => {
+    const gate = join(root, `deadline-list-gate-${++sequence}`);
+    const settings = config({MCP_TEST_LIST_GATE:gate});
+    const first = client(settings);
+    const second = client(settings);
+    await Promise.all([first.connect(),second.connect()]);
+    const timed = first.listTools({timeoutMs:200}).catch(error => error);
+    const waiting = second.listTools();
+    try {
+      await waitFor(() => events(settings).filter(event => event.event === 'tools/list').length === 2);
+      expect((await timed).message).toBe('MCP tools/list timed out after 200ms');
+      expect(second.isConnected()).toBe(true);
+      expect(events(settings).filter(event => event.event === 'notifications/cancelled')).toHaveLength(0);
+      writeFileSync(gate, 'ready');
+      expect((await waiting).map(tool => tool.name)).toEqual(['echo']);
+      expect(await first.callTool('echo', {text:'usable'})).toMatchObject({content:[{text:'usable'}]});
+    } finally {writeFileSync(gate, 'ready'); await timed; await waiting;}
+  });
+});

@@ -18,8 +18,10 @@ import {
   type TaskWhen,
 } from '@rox/core/tasks/personal'
 import { cn } from '@/lib/utils'
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { Badge, Button, Card, SectionLabel, Tabs } from '@/components/mode-screen/ModeScreen'
 import { ConfirmDialog, Glyph, MiniCalendar, TaskCheckbox } from './parts'
+import type { TaskDetailDraft } from './use-task-detail-drafts'
 import { checklistProgress, daysUntil, deriveTaskSource, mergeNotesMarkers, visibleNotes, type AgentChip, type AgentSessionLike } from './task-model'
 
 const LINK_KINDS: TaskLinkKind[] = ['note', 'session', 'message', 'meeting', 'feed', 'mail', 'workflowRun']
@@ -32,6 +34,10 @@ type Popover = 'when' | 'deadline' | null
 
 export interface TaskDetailProps {
   task: PersonalTask
+  draft: TaskDetailDraft | undefined
+  isDraftCurrent: () => boolean
+  onDraftChange: (patch: Partial<TaskDetailDraft>) => void
+  onDraftSubmit: <K extends keyof TaskDetailDraft>(field: K, submitted: TaskDetailDraft[K]) => void
   store: PersonalTaskStore
   mutate: (fn: (store: PersonalTaskStore) => void) => void
   now: number
@@ -58,15 +64,17 @@ export interface TaskDetailProps {
 
 export function TaskDetail(props: TaskDetailProps) {
   const { task, mutate, now } = props
+  const delegateTarget = useTourTarget('tasks.delegate', { entityId: task.id })
   const { t, i18n } = useTranslation()
   const [tab, setTab] = React.useState<DetailTab>('details')
   const [editingNotes, setEditingNotes] = React.useState(false)
   const [checkDraft, setCheckDraft] = React.useState('')
-  const [tagDraft, setTagDraft] = React.useState('')
+  const { tagDraft = '', linkKind = 'note', linkId = '' } = props.draft ?? {}
+  const setTagDraft = (tagDraft: string) => props.onDraftChange({ tagDraft })
   const [nlDate, setNlDate] = React.useState('')
   const [subDraft, setSubDraft] = React.useState('')
-  const [linkKind, setLinkKind] = React.useState<TaskLinkKind>('note')
-  const [linkId, setLinkId] = React.useState('')
+  const setLinkKind = (linkKind: TaskLinkKind) => props.onDraftChange({ linkKind })
+  const setLinkId = (linkId: string) => props.onDraftChange({ linkId })
   const [confirmPurge, setConfirmPurge] = React.useState(false)
   const notesRef = React.useRef<HTMLTextAreaElement>(null)
   const dateFmt = React.useMemo(() => new Intl.DateTimeFormat(i18n.language, { weekday: 'short', day: 'numeric', month: 'short' }), [i18n.language])
@@ -121,10 +129,11 @@ export function TaskDetail(props: TaskDetailProps) {
   }
 
   const addTag = (raw: string) => {
+    if (!props.isDraftCurrent()) return
     const tags = raw.split(',').map((tag) => tag.trim().replace(/^#/, '')).filter(Boolean)
     if (!tags.length) return
     update({ tags: [...new Set([...task.tags, ...tags])] })
-    setTagDraft('')
+    props.onDraftSubmit('tagDraft', tagDraft)
   }
   const tagSuggestions = tagDraft.trim()
     ? props.allTags.filter((tag) => tag.toLowerCase().startsWith(tagDraft.trim().replace(/^#/, '').toLowerCase()) && !task.tags.includes(tag)).slice(0, 6)
@@ -471,6 +480,7 @@ export function TaskDetail(props: TaskDetailProps) {
                     value={tagDraft}
                     onChange={(event) => setTagDraft(event.target.value)}
                     onKeyDown={(event) => {
+                      if (!props.isDraftCurrent()) return
                       if (event.key === 'Enter' || event.key === ',') {
                         event.preventDefault()
                         addTag(tagDraft)
@@ -521,9 +531,11 @@ export function TaskDetail(props: TaskDetailProps) {
             <div className="text-[13px] font-semibold">{t('tasks.delegate.title')}</div>
             <div className="mt-1 text-[12px] text-text-secondary">{t('tasks.delegate.body')}</div>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <Button variant="primary" data-testid="task-delegate" disabled={props.delegating || !props.canDelegate || trashed} onClick={props.onDelegate}>
-                {props.delegating ? t('tasks.delegate.running') : t('tasks.delegate.action')} <span className="opacity-70">⌘↵</span>
-              </Button>
+              <span ref={delegateTarget} className="inline-flex" data-tour="tasks.delegate">
+                <Button variant="primary" data-testid="task-delegate" disabled={props.delegating || !props.canDelegate || trashed} onClick={props.onDelegate}>
+                  {props.delegating ? t('tasks.delegate.running') : t('tasks.delegate.action')} <span className="opacity-70">⌘↵</span>
+                </Button>
+              </span>
               {props.agentChip ? (
                 <>
                   <Badge tone={CHIP_TONE[props.agentChip.chip]}>{t(`tasks.chip.${props.agentChip.chip}`)}</Badge>
@@ -557,7 +569,7 @@ export function TaskDetail(props: TaskDetailProps) {
           </div>
           <div className="mt-1.5 flex gap-1">
             <input className="h-7 min-w-0 flex-1 rounded-[6px] bg-foreground/[0.04] px-2 text-[12px] outline-none" value={linkId} onChange={(event) => setLinkId(event.target.value)} placeholder={t('tasks.linkIdPlaceholder')} aria-label={t('tasks.linkIdPlaceholder')} />
-            <Button onClick={() => { if (!linkId.trim()) return; const id = linkId.trim(); mutate((current) => { current.link(task.id, { kind: linkKind, id }) }); setLinkId('') }}>{t('tasks.addLink')}</Button>
+            <Button onClick={() => { if (!props.isDraftCurrent() || !linkId.trim()) return; const id = linkId.trim(); mutate((current) => { current.link(task.id, { kind: linkKind, id }) }); props.onDraftSubmit('linkId', linkId) }}>{t('tasks.addLink')}</Button>
           </div>
         </>
       ) : null}

@@ -15,6 +15,7 @@ import { RPC_CHANNELS } from './channels'
 // ---------------------------------------------------------------------------
 
 export const LOCAL_ONLY_CHANNELS = new Set<string>([
+  RPC_CHANNELS.voice.COPY_TEXT,
   // Repository capture uses the verified local Electron source owner.
   RPC_CHANNELS.codeIntelligence.PREVIEW,
   RPC_CHANNELS.codeIntelligence.BIND,
@@ -32,6 +33,13 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.workspaces.UPDATE_REMOTE,
 
   // workgraph — app-owned local database, never remote/headless.
+  RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES,
+  RPC_CHANNELS.workgraph.INSPECT_CONNECTION,
+  RPC_CHANNELS.workgraph.MOVE_CONNECTION,
+  RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN,
+  RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN,
+  RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN,
+  RPC_CHANNELS.workgraph.RECONNECT_CONNECTION,
   RPC_CHANNELS.workgraph.GET_HEALTH,
   RPC_CHANNELS.workgraph.GET_VERSION,
   RPC_CHANNELS.workgraph.LIST_CONNECTIONS,
@@ -98,10 +106,6 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.credentials.GET_MIGRATION_STATUS,
   RPC_CHANNELS.credentials.ROLLBACK_MIGRATION,
 
-  // Native onboarding may inspect host runtime configuration only through
-  // the local Electron window's bounded, credential-free projection.
-  RPC_CHANNELS.llmConnections.GET_STARTUP_SUMMARY,
-
   // shell — local OS shell (openFile/showInFolder guarded for remote)
   RPC_CHANNELS.shell.OPEN_URL,
   RPC_CHANNELS.shell.OPEN_FILE,
@@ -124,7 +128,6 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.system.IS_DEBUG_MODE,
 
   // toolchain — local config-dir downloads/install state
-  RPC_CHANNELS.toolchain.STATUS_CHANGED,
   RPC_CHANNELS.toolchain.UPDATE,
   RPC_CHANNELS.toolchain.GET_DISABLED,
   RPC_CHANNELS.toolchain.SET_DISABLED,
@@ -435,14 +438,12 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.environment.SAVE,
   RPC_CHANNELS.environment.CHANGED,
 
-  // orgs — local-only identity/membership bookkeeping (CONFIG_DIR)
+  // orgs — host organization/membership bookkeeping stays local.
   RPC_CHANNELS.orgs.LIST,
   RPC_CHANNELS.orgs.CREATE,
   RPC_CHANNELS.orgs.INVITE,
   RPC_CHANNELS.orgs.ACCEPT,
   RPC_CHANNELS.orgs.LIST_MEMBERS,
-  RPC_CHANNELS.orgs.GET_IDENTITY,
-  RPC_CHANNELS.orgs.UPDATE_IDENTITY,
   RPC_CHANNELS.orgs.SET_WORKSPACE_ORG,
   RPC_CHANNELS.orgs.UPDATE_MEMBER_ROLE,
   RPC_CHANNELS.orgs.REMOVE_MEMBER,
@@ -452,7 +453,6 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.identity.CONNECT,
   RPC_CHANNELS.identity.DISCONNECT,
   RPC_CHANNELS.identity.REFRESH_STATUS,
-  RPC_CHANNELS.identity.CHANGED,
 
   // Connection Fabric — local providers, OS discovery, credential grants, and leases.
   RPC_CHANNELS.fabric.LIST_CONNECTIONS,
@@ -481,6 +481,18 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.workspaceWork.DELETE,
   RPC_CHANNELS.workspaceWork.SNAPSHOT_PROFILE,
   RPC_CHANNELS.workspaceWork.CHANGED,
+  RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT,
+  RPC_CHANNELS.runtimeTrace.READ_EVENTS,
+  RPC_CHANNELS.runtimeTrace.READ_PAYLOAD,
+  // Private self profile belongs to the authenticated workspace principal.
+  RPC_CHANNELS.orgs.GET_IDENTITY,
+  RPC_CHANNELS.orgs.UPDATE_IDENTITY,
+  RPC_CHANNELS.identity.CHANGED,
+  RPC_CHANNELS.toolchain.STATUS_CHANGED,
+  // Public workspace runtime metadata, without host accounts or credentials.
+  RPC_CHANNELS.llmConnections.GET_STARTUP_SUMMARY,
+  // Read-only Meeting plans use a verified native workspace read grant.
+  RPC_CHANNELS.meetings.PLAN_ACTIONS,
   // voice — private actor state and client-supplied audio; OS playback stays on the client
   RPC_CHANNELS.voice.GET,
   RPC_CHANNELS.voice.SAVE,
@@ -500,6 +512,9 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.voice.HISTORY_FAVORITE,
   RPC_CHANNELS.voice.HISTORY_DELETE,
   RPC_CHANNELS.voice.HISTORY_EXPORT,
+  RPC_CHANNELS.voice.HISTORY_EDIT,
+  RPC_CHANNELS.voice.HISTORY_SELECT,
+  RPC_CHANNELS.voice.HISTORY_AUDIO,
   RPC_CHANNELS.voice.RETRANSCRIBE,
   RPC_CHANNELS.voice.REPROCESS,
   RPC_CHANNELS.voice.PROCESS,
@@ -561,6 +576,7 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.sessions.GET_PROVENANCE,
   RPC_CHANNELS.sessions.EVENT,
   RPC_CHANNELS.sessions.GET_MODEL,
+  RPC_CHANNELS.sessions.GET_MODEL_CATALOG,
   RPC_CHANNELS.sessions.SET_MODEL,
   RPC_CHANNELS.sessions.GET_FILES,
   RPC_CHANNELS.sessions.GET_NOTES,
@@ -938,14 +954,14 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.pages.REGENERATE_THUMBNAIL,
   RPC_CHANNELS.pages.CHANGED,
 
-  // personalTasks — local config-dir task files; migration source is local renderer storage
+  // personalTasks — server-owned personal tasks; native actor/workspace custody, legacy desktop config custody
   RPC_CHANNELS.personalTasks.LIST,
   RPC_CHANNELS.personalTasks.PUT,
   RPC_CHANNELS.personalTasks.DELETE,
   RPC_CHANNELS.personalTasks.MIGRATE,
   RPC_CHANNELS.personalTasks.CHANGED,
 
-  // feed — device-local sources, fetched items and X token (Лента)
+  // feed — workspace server; native actors keep private sources/items/X credentials
   RPC_CHANNELS.feed.LIST,
   RPC_CHANNELS.feed.CHANGED,
   RPC_CHANNELS.feed.SOURCES_ADD,

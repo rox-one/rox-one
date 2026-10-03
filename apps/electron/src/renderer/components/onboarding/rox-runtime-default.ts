@@ -27,12 +27,13 @@ export type RoxRuntimeDefaultApi = {
   setDefaultLlmConnection(slug: string): Promise<{ success: boolean; error?: string }>
 }
 
-export type RoxRuntimeDefaultResult =
+export type RoxRuntimeDefaultResult = (
   | { status: 'already-default'; slug: string }
   | { status: 'preserved-default'; slug: string }
   | { status: 'set-default'; slug: string }
   | { status: 'created'; slug: string }
   | { status: 'failed'; error: string }
+) & { runtimeSummary?: StartupRuntimeSummary }
 
 function uniqueSlug(base: string, taken: ReadonlySet<string>): string {
   if (!taken.has(base)) return base
@@ -60,7 +61,7 @@ export async function ensureRoxRuntimeDefault(api: RoxRuntimeDefaultApi): Promis
       }
       // Native onboarding observes configuration without requesting host
       // accounts, refreshing credentials, or changing the host's default.
-      return { status: summary.providerType === ROX_RUNTIME_PROVIDER ? 'already-default' : 'preserved-default', slug: summary.slug }
+      return { status: summary.providerType === ROX_RUNTIME_PROVIDER ? 'already-default' : 'preserved-default', slug: summary.slug, runtimeSummary: summary }
     }
     const connections = await api.listLlmConnectionsWithStatus()
     const current = connections.find((c) => c.isDefault)

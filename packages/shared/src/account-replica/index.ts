@@ -14,7 +14,7 @@ export {
   wrapAccountKey,
 } from './crypto.ts';
 export { SqliteReplicaOutbox, validateReplicaOperation } from './outbox.ts';
-export type { ReplicaOutboxPort, ReplicaServerAcknowledgement } from './outbox.ts';
+export type { ReplicaCreationAttempt, ReplicaOutboxPort, ReplicaServerAcknowledgement } from './outbox.ts';
 export {
   EXCLUDED_REPLICA_CATEGORIES,
   REPLICA_CATEGORIES,

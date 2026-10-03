@@ -27,6 +27,16 @@ export interface NativeWorkspace {
   readonly entityRoots: readonly string[]
 }
 
+export interface NativeMessagingBinding {
+  id: string
+  workspaceId: string
+  sessionId: string
+  platform: string
+  channelId: string
+  threadId?: number
+  nativeOwner?: { issuer: string; subject: string }
+}
+
 export interface NativeAuthorityInvalidation {
   readonly subject: string
   readonly credentialId?: string
@@ -180,6 +190,13 @@ export class NativeAuthority {
         sequence INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL, event TEXT NOT NULL,
         subject_id TEXT, credential_id TEXT, workspace_id TEXT, detail TEXT NOT NULL DEFAULT '{}'
       );
+      CREATE TABLE IF NOT EXISTS session_messaging_bindings (
+        binding_id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id),
+        session_id TEXT NOT NULL, platform TEXT NOT NULL, channel_id TEXT NOT NULL, thread_id INTEGER,
+        issuer TEXT NOT NULL, subject_id TEXT NOT NULL REFERENCES subjects(id),
+        credential_id TEXT NOT NULL REFERENCES credentials(id), credential_version INTEGER NOT NULL,
+        grant_version INTEGER NOT NULL
+      );
     `)
     const generatedIssuer = randomUUID()
     this.#db.prepare("INSERT OR IGNORE INTO authority_meta(key,value) VALUES('issuer_id',?)").run(generatedIssuer)
@@ -193,6 +210,12 @@ export class NativeAuthority {
   get issuerId(): string {
     this.#assertOpen()
     return this.#issuerId
+  }
+
+  /** Validated server-owned custody root; never part of a renderer projection. */
+  get stateDirectory(): string {
+    this.#assertOpen()
+    return this.#stateDir
   }
 
   bootstrapLocalAdministrator(label: string): NativeIssuedCredential {
@@ -436,6 +459,51 @@ export class NativeAuthority {
       JOIN grant_versions v ON v.subject_id=g.subject_id AND v.workspace_id=g.workspace_id AND v.action=g.action AND v.version=g.version
       LEFT JOIN self_profiles p ON p.subject_id=s.id AND p.issuer=?
       WHERE s.disabled=0 ORDER BY s.id`).all(workspaceId, this.#issuerId) as Array<{ id: string; name: string }>
+  }
+
+  /** Pairing provenance lives in private authority custody, not an editable
+   * workspace binding file. Only an authenticated session delegate can write it. */
+  registerMessagingBinding(principal: NativePrincipal, binding: NativeMessagingBinding, nativeRoot: string): void {
+    if (!this.authorize(principal, binding.workspaceId, 'write', nativeRoot)) throw new Error('Native binding registration denied')
+    const grant = this.#currentAuthorization(principal, binding.workspaceId, 'write')!
+    for (const value of [binding.id, binding.workspaceId, binding.sessionId, binding.platform]) validId(value)
+    if (typeof binding.channelId !== 'string' || !binding.channelId.length || binding.channelId.length > 512 || /[\u0000-\u001f\u007f]/.test(binding.channelId)) throw new Error('Invalid native binding channel')
+    if (binding.threadId !== undefined && !Number.isSafeInteger(binding.threadId)) throw new Error('Invalid native binding thread')
+    const previous = this.#db.prepare('SELECT issuer,subject_id FROM session_messaging_bindings WHERE binding_id=?').get(binding.id) as { issuer: string; subject_id: string } | undefined
+    if (previous && (previous.issuer !== principal.issuer || previous.subject_id !== principal.subject)) throw new Error('Native binding owner changed')
+    this.#db.prepare(`INSERT INTO session_messaging_bindings(binding_id,workspace_id,session_id,platform,channel_id,thread_id,issuer,subject_id,credential_id,credential_version,grant_version)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(binding_id) DO UPDATE SET credential_id=excluded.credential_id,credential_version=excluded.credential_version,grant_version=excluded.grant_version`)
+      .run(binding.id, binding.workspaceId, binding.sessionId, binding.platform, binding.channelId, binding.threadId ?? null,
+        principal.issuer, principal.subject, principal.credentialId, principal.credentialVersion, grant.grantVersion)
+  }
+
+  /** An exact receipt can identify its original owner for fresh re-pairing.
+   * This grants no routing authority and deliberately ignores the old grant. */
+  getMessagingBindingOwner(binding: NativeMessagingBinding, nativeRoot: string): { issuer: string; subject: string } | null {
+    this.#assertOpen()
+    const row = this.#db.prepare('SELECT workspace_id,session_id,platform,channel_id,thread_id,issuer,subject_id FROM session_messaging_bindings WHERE binding_id=?').get(binding.id) as {
+      workspace_id: string; session_id: string; platform: string; channel_id: string; thread_id: number | null; issuer: string; subject_id: string;
+    } | undefined
+    if (!row || row.workspace_id !== binding.workspaceId || row.session_id !== binding.sessionId || row.platform !== binding.platform
+      || row.channel_id !== binding.channelId || row.thread_id !== (binding.threadId ?? null)
+      || !this.#rootBelongsToWorkspace(binding.workspaceId, nativeRoot)) return null
+    return { issuer: row.issuer, subject: row.subject_id }
+  }
+
+  /** Returns only personal provenance. The credential selector never leaves custody. */
+  authorizeMessagingBinding(binding: NativeMessagingBinding, nativeRoot: string): { issuer: string; subject: string } | null {
+    this.#assertOpen()
+    const row = this.#db.prepare('SELECT * FROM session_messaging_bindings WHERE binding_id=?').get(binding.id) as {
+      workspace_id: string; session_id: string; platform: string; channel_id: string; thread_id: number | null;
+      issuer: string; subject_id: string; credential_id: string; credential_version: number; grant_version: number;
+    } | undefined
+    if (!row || !binding.nativeOwner || row.workspace_id !== binding.workspaceId || row.session_id !== binding.sessionId || row.platform !== binding.platform
+      || row.channel_id !== binding.channelId || row.thread_id !== (binding.threadId ?? null)
+      || row.issuer !== binding.nativeOwner?.issuer || row.subject_id !== binding.nativeOwner.subject
+      || !this.#rootBelongsToWorkspace(binding.workspaceId, nativeRoot)) return null
+    const grant = this.#currentAuthorization({ issuer: row.issuer, subject: row.subject_id,
+      credentialId: row.credential_id, credentialVersion: row.credential_version }, binding.workspaceId, 'write')
+    return grant?.grantVersion === row.grant_version ? { issuer: row.issuer, subject: row.subject_id } : null
   }
 
   /** Private self metadata is selected solely by a currently authenticated principal. */

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { WORKSPACE_WORK_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/workspace-work'
+import { HANDLED_CHANNELS as RUNTIME_TRACE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/runtime-trace'
 import { HANDLED_CHANNELS as CODE_INTELLIGENCE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/code-intelligence'
 
 const registeredChannels: string[] = []
@@ -139,6 +140,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     tasks,
     toolchain,
     projects,
+    codeIntelligence,
     kanban,
     collection,
     gamification,
@@ -188,6 +190,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/tasks'),
     import('@rox/server-core/handlers/rpc/toolchain'),
     import('@rox/server-core/handlers/rpc/projects'),
+    import('@rox/server-core/handlers/rpc/code-intelligence'),
     import('@rox/server-core/handlers/rpc/kanban'),
     import('@rox/server-core/handlers/rpc/collection'),
     import('@rox/server-core/handlers/rpc/gamification'),
@@ -219,6 +222,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...personalTasks.PERSONAL_TASKS_HANDLED_CHANNELS,
     ...feed.FEED_HANDLED_CHANNELS,
     ...WORKSPACE_WORK_HANDLED_CHANNELS,
+    ...RUNTIME_TRACE_HANDLED_CHANNELS,
     ...CODE_INTELLIGENCE_HANDLED_CHANNELS,
     ...auth.HANDLED_CHANNELS,
     ...automations.HANDLED_CHANNELS,
@@ -261,6 +265,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...tasks.HANDLED_CHANNELS,
     ...toolchain.HANDLED_CHANNELS,
     ...projects.HANDLED_CHANNELS,
+    ...codeIntelligence.HANDLED_CHANNELS,
     ...kanban.HANDLED_CHANNELS,
     ...collection.HANDLED_CHANNELS,
     ...gamification.HANDLED_CHANNELS,
@@ -276,6 +281,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...siyuan.HANDLED_CHANNELS,
     ...extensionHost.HANDLED_CHANNELS,
     ...extensionSurface.HANDLED_CHANNELS,
+    'voice:copyText',
   ])
 }
 

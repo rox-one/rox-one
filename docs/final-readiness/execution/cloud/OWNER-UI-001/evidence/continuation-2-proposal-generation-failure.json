@@ -1,0 +1,7 @@
+{
+  "operation": "prepare version 3 proposal using temporary Git index",
+  "exitCode": 1,
+  "error": "FileNotFoundError: temporary directory requested inside non-existent checkout/work directory",
+  "remedy": "Use existing task scratch directory outside the repository; no source files were changed",
+  "observedAt": "2026-10-03T12:26:04.540408+00:00"
+}

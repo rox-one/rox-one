@@ -1,5 +1,5 @@
 import type { RpcClient } from '@rox/server-core/transport'
-import { RPC_CHANNELS, type NativeDataContext, type NativeDataEntitySnapshot, type NativeDataMutationInput, type NativeDataReadEntityInput, type NativeDataReceipt, type NoteDocument } from '@rox/shared/protocol'
+import { RPC_CHANNELS, type NativeDataContext, type NativeDataEntitySnapshot, type NativeDataMutationInput, type NativeDataReadEntityInput, type NativeDataReceipt, type NoteCreateOptions, type NoteDocument } from '@rox/shared/protocol'
 import { NATIVE_REPLICA_IPC, isNativeReplicaNetworkLoss, type NativeReplicaCreatePlan, type NativeReplicaQueuedMutation, type NativeReplicaPublicApi } from '@rox/shared/protocol/native-replica'
 import type { TransportConnectionState } from '../transport/client'
 
@@ -101,8 +101,15 @@ export function createNativeReplicaBridge({ client, invokeIpc }: NativeReplicaBr
     close: async handle => {
       const previous = contexts.get(handle)
       contexts.delete(handle)
-      forgetReceipts(previous)
       if (!previous) return
+      // Ordinary handle cleanup is not a permission-context change. Another
+      // Notes panel can still own the same context or be opening concurrently.
+      // Retain receipt custody only while a matching original context is live.
+      if (![...contexts.values()].some(context => sameContext(context, previous))) {
+        for (const [key, receipt] of serverReceipts) {
+          if (receipt.issuer === previous.issuer && receipt.subject === previous.subject && receipt.workspaceId === previous.workspaceId) serverReceipts.delete(key)
+        }
+      }
       await invokeIpc(NATIVE_REPLICA_IPC.CLOSE, { handle })
     },
   }
@@ -140,7 +147,7 @@ export function createNativeReplicaBridge({ client, invokeIpc }: NativeReplicaBr
     }
     return receipt
   }
-  const createNote = async (workspaceId: string, title: string, folder?: string, operation?: { operationId: string; expectedRevision: number | null; schemaVersion: 1 }): Promise<NoteDocument> => {
+  const createNote = async (workspaceId: string, title: string, folder?: string, operation?: NoteCreateOptions): Promise<NoteDocument> => {
     if (disposed) throw new Error('native replica bridge has been disposed')
     const generation = receiptGeneration
     const assertCreation = () => {
@@ -150,6 +157,19 @@ export function createNativeReplicaBridge({ client, invokeIpc }: NativeReplicaBr
     assertCreation()
     if (plan === null) return client.invoke(RPC_CHANNELS.notes.CREATE, workspaceId, title, folder, operation)
     if (!plan?.context || plan.context.workspaceId !== workspaceId) throw new Error('native Notes creation returned a mismatched context')
+    if (operation && (typeof operation.operationId !== 'string' || !operation.operationId || operation.operationId.length > 512 ||
+        /[\u0000-\u001f]/.test(operation.operationId) || operation.expectedRevision !== null || operation.schemaVersion !== 1 ||
+        (operation.recoverCreation !== undefined && operation.recoverCreation !== true))) {
+      throw new Error('native Notes creation requires a valid creation attempt')
+    }
+    const callerAttemptId = operation?.recoverCreation === true ? operation.operationId : undefined
+    const verifyCreationPlan = async () => {
+      assertCreation()
+      const currentPlan = await client.invoke(RPC_CHANNELS.notes.PREPARE_CREATE, workspaceId, title, folder) as NativeReplicaCreatePlan | null
+      assertCreation()
+      if (!currentPlan || !sameContext(currentPlan.context, plan.context) || currentPlan.writePermissionFence !== plan.writePermissionFence ||
+          JSON.stringify(currentPlan.mutation) !== JSON.stringify(plan.mutation)) throw new Error('native Notes creation authority changed before enqueue or recovery')
+    }
     const existing = [...contexts.entries()].find(([, context]) => sameContext(context, plan.context))
     const owned = !existing
     const handle = existing?.[0] ?? await nativeReplica.open(workspaceId)
@@ -157,20 +177,27 @@ export function createNativeReplicaBridge({ client, invokeIpc }: NativeReplicaBr
       assertCreation()
       await refresh(handle)
       assertCreation()
-      const currentPlan = await client.invoke(RPC_CHANNELS.notes.PREPARE_CREATE, workspaceId, title, folder) as NativeReplicaCreatePlan | null
-      assertCreation()
-      if (!currentPlan || !sameContext(currentPlan.context, plan.context) || currentPlan.writePermissionFence !== plan.writePermissionFence ||
-          JSON.stringify(currentPlan.mutation) !== JSON.stringify(plan.mutation)) throw new Error('native Notes creation authority changed before enqueue')
+      await verifyCreationPlan()
       const context = contexts.get(handle)
       if (!context || !sameContext(context, plan.context)) throw new Error('native Notes creation context changed before enqueue')
-      const queued = await invokeIpc(NATIVE_REPLICA_IPC.ENQUEUE_CREATE, { handle, plan }) as NativeReplicaQueuedMutation
+      const queued = await invokeIpc(NATIVE_REPLICA_IPC.ENQUEUE_CREATE, { handle, plan, callerAttemptId }) as NativeReplicaQueuedMutation
       assertCreation()
       // Only the main-assigned stable operation can be submitted, including after a crash/replay.
       await refresh(handle)
       assertCreation()
+      await verifyCreationPlan()
       const receipt = await mutate(queued)
+      assertCreation()
+      await verifyCreationPlan()
       if (!await nativeReplica.acknowledge(handle, receipt)) throw new Error('native Notes creation remains unacknowledged')
-      return await readNote(workspaceId, queued.nativeId)
+      assertCreation()
+      await verifyCreationPlan()
+      const note = await readNote(workspaceId, queued.nativeId)
+      assertCreation()
+      await refresh(handle)
+      assertCreation()
+      await verifyCreationPlan()
+      return note
     } finally {
       if (owned) await nativeReplica.close(handle).catch(() => {})
     }

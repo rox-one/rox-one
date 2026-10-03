@@ -3,7 +3,7 @@ import type { ChildProcess } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { delimiter } from 'node:path';
-import { CraftMcpClient, type McpClientConfig } from '../client.ts';
+import { CraftMcpClient, mergeMcpStdioEnvironment, type McpClientConfig } from '../client.ts';
 import { McpClientPool } from '../mcp-pool.ts';
 import { getToolchain } from '../../toolchain-runtime.ts';
 
@@ -93,4 +93,14 @@ describe('CraftMcpClient lifecycle', () => {
       resolver.toolchainPathPrefix = originalPrefix;
     }
   });
+});
+
+
+test('Windows source PATH projection removes conflicting aliases and preserves explicit empty overrides', () => {
+  for (const key of ['PATH','Path','pAtH']) {
+    expect(mergeMcpStdioEnvironment({PATH:'inherited',Path:'conflicting',KEPT:'inherited'}, {[key]:'source',MCP_CUSTOM:'kept'},'win32')).toEqual({KEPT:'inherited',MCP_CUSTOM:'kept',PATH:'source'});
+    expect(mergeMcpStdioEnvironment({PATH:'inherited'}, {[key]:''},'win32')).toEqual({PATH:''});
+  }
+  expect(mergeMcpStdioEnvironment({Path:'inherited'}, {},'win32')).toEqual({PATH:'inherited'});
+  expect(mergeMcpStdioEnvironment({PATH:'posix'}, {Path:'ordinary env'},'darwin')).toEqual({PATH:'posix',Path:'ordinary env'});
 });

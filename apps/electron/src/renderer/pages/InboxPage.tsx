@@ -47,13 +47,15 @@ import {
   type PendingSkillLike,
   type PermissionLike,
 } from './inbox/inbox-model'
-import type { MailFolder } from '../../shared/mail-local'
+import { isOptionalMailSetup, type MailFolder } from '../../shared/mail-local'
 import { useMail } from './inbox/mail/useMail'
 import { MailCompose, MailListPanel, MailReader, folderLabel, useComposeState } from './inbox/mail/MailPanels'
 import { emailIdFromItem, mailItemId, mailToInboxItem, statusKey } from './inbox/mail/mail-view'
 import type { TeamInboxItem } from '@rox/shared/team'
 import { InboxSidebar, InboxKindIcon, isMailFilter, type InboxPageFilter } from './inbox/InboxSidebar'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inbox-feed'
 
 const KIND_TONE: Record<InboxKind, Tone> = {
   permission: 'warning',
@@ -69,10 +71,14 @@ const KIND_TONE: Record<InboxKind, Tone> = {
 }
 
 const KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error', 'team-recipient']
+const SWITCH_CLASS = 'relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-xs before:transition-transform checked:before:translate-x-3 motion-reduce:transition-none motion-reduce:before:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-60'
 
 export default function InboxPage({ selectedId }: { selectedId?: string | null }) {
   const { t, i18n } = useTranslation()
   const canHandleKeyboard = usePanelKeyboardGuard()
+  const tourSignals = useTourSignals()
+  const listTourRef = useTourTarget('inbox.list')
+  const actionsTourRef = useTourTarget('inbox.actions')
   const teamInboxEnabled = useTeamFlag(TEAM_FLAG.mentions)
   const teamState = useTeamState()
   const teamRoster = useTeamRoster()
@@ -85,10 +91,8 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       : [],
     [teamInboxEnabled, teamInboxConnected, trustedViewer, teamRoster.selfUserId, teamRoster.members, teamState],
   )
-  const { items, state, setState, counts, now, loaded, loading, errors, staleSources, reload, workspaceId, shell, sessions } = useInboxItems({ withRemote: true, teamInbox })
-  const contextRef = useRef({ workspaceId })
-  if (contextRef.current.workspaceId !== workspaceId) contextRef.current = { workspaceId }
-  useEffect(() => { const context = contextRef.current; return () => { if (contextRef.current === context) contextRef.current = { workspaceId } } }, [workspaceId])
+  const teamActorKey = trustedViewer && teamRoster.selfUserId ? JSON.stringify(['native', teamRoster.identityIssuer, teamRoster.selfUserId]) : null
+  const { items, state, setState, counts, now, loaded, loading, errors, staleSources, reload, workspaceId, shell, sessions, actorContext, actorContextRef: contextRef } = useInboxItems({ withRemote: true, teamInbox, teamActorKey })
   const [preferences, setPreferences] = useAtom(inboxPreferencesAtom)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<InboxPageFilter>('decisions')
@@ -96,8 +100,9 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   const [bulkAction, setBulkAction] = useState<'read' | 'archive' | null>(null)
   const [bulkFailures, setBulkFailures] = useState<Record<string, string>>({})
   const [bulkBusy, setBulkBusy] = useState(false)
-  const mail = useMail({ active: true, workspaceId })
+  const mail = useMail({ active: !!actorContext.actorKey, workspaceId, actorContext, actorContextRef: contextRef })
   const composeState = useComposeState(mail)
+  const closeCompose = composeState.close
   const [mailSelected, setMailSelected] = useState<string | null>(null)
   const [pinnedMail, setPinnedMail] = useState<InboxItem | null>(null)
   const inMail = isMailFilter(filter)
@@ -108,17 +113,20 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   const routeBound = selectedId !== undefined
   const currentId = routeBound ? selectedId ?? null : localSelected
   const select = useCallback((id: string | null) => {
+    if (contextRef.current !== actorContext) return
     if (routeBound) navigate(routes.view.inbox(id ?? undefined))
     else setLocalSelected(id)
-  }, [routeBound])
-  const previousWorkspace = useRef(workspaceId)
+  }, [routeBound, actorContext, contextRef])
+  const previousContext = useRef(actorContext)
+  const contextChanged = previousContext.current !== actorContext
   useEffect(() => {
-    if (previousWorkspace.current === workspaceId) return
-    previousWorkspace.current = workspaceId
+    if (previousContext.current === actorContext) return
+    previousContext.current = actorContext
     setSelectedIds(new Set()); setBulkFailures({}); setBulkBusy(false); setBulkAction(null); setBusy(null); setActionError(null)
-    setLocalSelected(null); setMailSelected(null); setPinnedMail(null); setPlanPath(null); composeState.close()
+    setLocalSelected(null); setMailSelected(null); setPinnedMail(null); setPlanPath(null); closeCompose()
+    setQuery(''); setFilter('all')
     if (routeBound) select(null)
-  }, [workspaceId, routeBound, select, composeState.close])
+  }, [actorContext, routeBound, select, closeCompose])
 
   const locale = i18n.resolvedLanguage || i18n.language
   const timeFmt = useMemo(() => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }), [locale])
@@ -132,9 +140,9 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   const mailItems = useMemo(() => {
     if (!mailReady) return []
     const list = mail.unread.map((m) => mailToInboxItem(m, noSubject))
-    if (pinnedMail && !unreadMailIds.has(pinnedMail.id)) list.push(pinnedMail)
+    if (!contextChanged && pinnedMail && !unreadMailIds.has(pinnedMail.id)) list.push(pinnedMail)
     return list
-  }, [mailReady, mail.unread, noSubject, pinnedMail, unreadMailIds])
+  }, [mailReady, mail.unread, noSubject, pinnedMail, unreadMailIds, contextChanged])
   const allItems = useMemo(() => {
     if (!mailItems.length) return items
     return sortInbox([...items, ...mailItems])
@@ -157,7 +165,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     () => (isMailFilter(filter) ? [] : filterInbox(allItems, state, filter, now).filter(matchesQuery)),
     [allItems, state, filter, now, matchesQuery],
   )
-  const selected = useMemo(() => (inMail ? null : visible.find((i) => i.id === currentId) ?? null), [visible, currentId, inMail])
+  const selected = useMemo(() => (inMail || contextChanged ? null : visible.find((i) => i.id === currentId) ?? (pinnedMail?.id === currentId ? pinnedMail : null)), [visible, currentId, inMail, pinnedMail, contextChanged])
   const selectedEmailId = selected?.kind === 'mail' ? emailIdFromItem(selected.id) : null
   const decisions = visible.filter((i) => i.group === 'decision')
   const messages = visible.filter((i) => i.group === 'message')
@@ -186,12 +194,14 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   }, [selectedEmailId, inMail])
 
   const selectMail = useCallback((id: string | null) => {
+    if (contextRef.current !== actorContext || !actorContext.actorKey) return
     setMailSelected(id)
     composeState.close()
     void mail.open(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mail.open])
+  }, [mail.open, actorContext, contextRef])
   const openFolder = (f: MailFolder) => {
+    if (contextRef.current !== actorContext || !actorContext.actorKey) return
     setFilter({ mail: f.id })
     mail.setFolder({ folderId: f.id === 'inbox' ? null : f.id, role: f.role })
     selectMail(null)
@@ -206,10 +216,10 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     setPlanPath(null)
     if (selected?.kind === 'plan' && selected.sessionId) {
       let cancelled = false
-      void window.electronAPI?.getPendingPlanExecution?.(selected.sessionId).then((p) => { if (!cancelled) setPlanPath(p?.planPath ?? null) }).catch(() => undefined)
+      void window.electronAPI?.getPendingPlanExecution?.(selected.sessionId).then((p) => { if (!cancelled && contextRef.current === actorContext) setPlanPath(p?.planPath ?? null) }).catch(() => undefined)
       return () => { cancelled = true }
     }
-  }, [selected?.id, selected?.kind, selected?.sessionId])
+  }, [selected?.id, selected?.kind, selected?.sessionId, actorContext, contextRef])
 
   const nextAfter = (id: string) => {
     const idx = ordered.findIndex((i) => i.id === id)
@@ -217,11 +227,12 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   }
 
   const done = async (item: InboxItem) => {
+    if (contextRef.current !== actorContext || !actorContext.actorKey) return
     if (busy === item.id) return
     const next = nextAfter(item.id)
     setBusy(item.id)
     setActionError(null)
-    const context = contextRef.current
+    const context = actorContext
     try {
       if (item.kind === 'team-recipient') throw new Error('This team request needs its authorized recipient action')
       if (item.kind === 'mail') {
@@ -249,6 +260,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   }
 
   const toggleSelected = (id: string, checked: boolean) => {
+    if (contextRef.current !== actorContext || !actorContext.actorKey) return
     setSelectedIds((previous) => {
       const next = new Set(previous)
       if (checked) next.add(id)
@@ -258,8 +270,9 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   }
 
   const runBulk = async (action: 'read' | 'archive', ids: string[]) => {
+    if (contextRef.current !== actorContext || !actorContext.actorKey) return
     if (bulkBusy) return
-    const context = contextRef.current
+    const context = actorContext
     setBulkBusy(true)
     setBulkAction(action)
     setBulkFailures({})
@@ -302,16 +315,19 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     setBulkBusy(false)
   }
   const snoozeItem = (item: InboxItem, until: number) => {
+    if (contextRef.current !== actorContext || !actorContext.actorKey) return
     const next = nextAfter(item.id)
     setState((s) => snooze(s, item.id, until))
     select(next)
   }
   const openSession = (item: InboxItem) => {
+    if (contextRef.current !== actorContext || !actorContext.actorKey) return
     if (item.sessionId) navigate(routes.view.allSessions(item.sessionId))
   }
 
   const run = async (item: InboxItem, fn: () => Promise<unknown> | void, after?: () => void) => {
-    const context = contextRef.current
+    if (contextRef.current !== actorContext || !actorContext.actorKey) return
+    const context = actorContext
     setBusy(item.id)
     setActionError(null)
     try {
@@ -357,6 +373,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing || !canHandleKeyboard(event.target)) return
+      if (contextRef.current !== actorContext || !actorContext.actorKey) return
       const target = event.target as HTMLElement | null
       if (target?.closest('input, textarea, [contenteditable="true"]')) return
       if (target?.closest('[data-inbox-sidebar]')) return
@@ -365,8 +382,8 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
         const m = mail.message && mail.message.id === mailSelected ? mail.message : null
         if (!m || composeState.compose) return
         const next = mailNext(m.id)
-        if (event.key === 'e') { event.preventDefault(); void mail.act((a) => a.move([m.id], 'archive')).then(() => selectMail(next), (e) => mail.setError(String(e))) }
-        if (event.key === '#') { event.preventDefault(); void mail.act((a) => a.remove([m.id])).then(() => selectMail(next), (e) => mail.setError(String(e))) }
+        if (event.key === 'e') { event.preventDefault(); void mail.act((a) => a.move([m.id], 'archive')).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(String(e)) }) }
+        if (event.key === '#') { event.preventDefault(); void mail.act((a) => a.remove([m.id])).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(String(e)) }) }
         if (event.key === 'r') { event.preventDefault(); composeState.start('reply', m) }
         if (event.key === 'Escape') selectMail(null)
         return
@@ -397,16 +414,17 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
         testId={`inbox-row-${item.kind}`}
         selected={item.id === currentId}
         unread={unread}
-        onClick={() => select(item.id)}
+        onClick={() => { if (item.kind === 'mail') setPinnedMail(item); select(item.id) }}
       >
         <input
           type="checkbox"
           role="switch"
           aria-label={t('inbox.selectItem', { title: item.title, defaultValue: `Select ${item.title}` })}
           checked={selectedIds.has(item.id)}
+          disabled={bulkBusy}
           onClick={(event) => event.stopPropagation()}
           onChange={(event) => toggleSelected(item.id, event.currentTarget.checked)}
-          className="relative mt-1 h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-xs before:transition-transform checked:before:translate-x-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          className={`${SWITCH_CLASS} mt-1`}
         />
         <InboxKindIcon kind={item.kind} />
         <span className="min-w-0 flex-1">
@@ -422,10 +440,19 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     )
   }
 
-  const errorEntries = [...Object.entries(errors).filter(([, value]) => value), ...(mail.error ? [['mail', mail.error]] : [])]
+  const optionalMailSetup = isOptionalMailSetup(mail.status)
+  const mailFailure = optionalMailSetup && !inMail ? null : mail.error ?? (mail.status?.enabled && (mail.status.state === 'error' || mail.status.state === 'unreachable') ? mail.status.error ?? t(statusKey(mail.status)) : null)
+  const errorEntries = [...Object.entries(errors).filter(([, value]) => value), ...(mailFailure ? [['mail', mailFailure]] : [])]
   const initialLoading = !!workspaceId && (!loaded.memory || !loaded.skills || !loaded.senders)
-    || mail.statusLoading || mailReady && mail.loading && mail.unread.length === 0
+    || mail.statusLoading || mail.status?.state === 'provisioning' || mailReady && mail.loading && mail.unread.length === 0
   const refreshing = Object.values(loading).some(Boolean) || mail.loading || mail.statusLoading
+  const inboxFailed = errorEntries.length > 0 && visible.length === 0
+  const inboxCapability = useMemo(() => inboxFeedCapabilities({
+    workspacePresent: !!workspaceId, inboxApi: !!shell, inboxLoaded: !initialLoading, inboxFailed,
+    feedApi: false, feedLoaded: false, feedFailed: false, feedItems: [],
+  })['inbox.available']!, [workspaceId, shell, initialLoading, inboxFailed])
+  useEffect(() => tourSignals.capability('inbox.available', inboxCapability),
+    [tourSignals, inboxCapability])
   const refreshInbox = async () => {
     await Promise.all([reload(), mail.refreshStatus().then(() => mail.refresh())])
   }
@@ -446,7 +473,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   ) : (
     <>
       <ListHeader
-        title={typeof filter === 'object' ? kindLabel(filter.kind) : t(`inbox.view.${filter}`)}
+        title={filter === 'all' ? t('inbox.title') : typeof filter === 'object' ? kindLabel(filter.kind) : t(`inbox.view.${filter}`)}
         subtitle={visibleBlockingCount ? t('inbox.blockingCount', { count: visibleBlockingCount }) : undefined}
         actions={<Button variant="ghost" disabled={refreshing} onClick={() => void refreshInbox()}>{refreshing ? <LoaderCircle aria-hidden className="size-3.5 animate-spin motion-reduce:animate-none" /> : null}{t('inbox.refresh')}</Button>}
       />
@@ -468,7 +495,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
             role="switch"
             checked={preferences.unreadOnly}
             onChange={(event) => setPreferences((p) => ({ ...p, unreadOnly: event.currentTarget.checked }))}
-            className="relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-xs before:transition-transform checked:before:translate-x-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            className={SWITCH_CLASS}
           />
           {t('inbox.unreadOnly', { defaultValue: 'Unread only' })}
         </label>
@@ -489,7 +516,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
               return next
             })
           }}
-          className="relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-xs before:transition-transform checked:before:translate-x-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          className={SWITCH_CLASS}
         />
         <span>{t('inbox.selectedCount', { count: selectedVisibleIds.length, defaultValue: `${selectedVisibleIds.length} selected` })}</span>
         <Button variant="ghost" disabled={bulkBusy || selectedIds.size === 0} onClick={() => setSelectedIds(new Set())}>{t('inbox.clearSelection', { defaultValue: 'Clear selection' })}</Button>
@@ -516,7 +543,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       ) : null}
       <div role="listbox" aria-label={t('inbox.title')} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="inbox-list">
         {visible.length === 0 ? (
-          <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center px-5 py-10 text-center" role={initialLoading ? 'status' : undefined}>
+          <div ref={actionsTourRef} data-tour-id="inbox.actions" className="flex min-h-[300px] flex-1 flex-col items-center justify-center px-5 py-10 text-center" role={initialLoading ? 'status' : undefined}>
           <span aria-hidden="true" className="mb-2 flex size-16 items-center justify-center rounded-2xl bg-accent/10 text-accent">
             {initialLoading ? <LoaderCircle className="size-7 animate-spin motion-reduce:animate-none" /> : errorEntries.length || !workspaceId ? <Inbox className="size-7" /> : narrowed ? <Search className="size-7" /> : <CheckCheck className="size-7" />}
           </span>
@@ -543,9 +570,9 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     const targets = snoozeTargets(now)
     const isDone = state.done[item.id] !== undefined
     return (
-      <div className="flex flex-wrap items-center gap-1.5 pt-4">
+      <div ref={actionsTourRef} data-tour-id="inbox.actions" className="flex flex-wrap items-center gap-1.5 pt-4">
         {item.kind !== 'team-recipient' ? (isDone ? (
-          <Button onClick={() => setState((s) => reopen(s, item.id))}>{t('inbox.reopen')}</Button>
+          <Button onClick={() => { if (contextRef.current === actorContext) setState((s) => reopen(s, item.id)) }}>{t('inbox.reopen')}</Button>
         ) : (
           <Button disabled={busy === item.id} onClick={() => void done(item)} title="E">{t('inbox.done')}</Button>
         )) : null}
@@ -614,8 +641,8 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
               </>
             ) : null}
             <div className="flex flex-wrap gap-1.5 pt-3">
-              <Button variant="primary" disabled={!workspaceId || isBusy} onClick={() => void run(item, () => window.electronAPI.approveMemoryProposal(workspaceId!, proposal.id, 'global'), () => void reload('memory'))}>{t('inbox.memory.approve')}</Button>
-              <Button variant="danger" disabled={!workspaceId || isBusy} onClick={() => void run(item, () => window.electronAPI.rejectMemoryProposal(workspaceId!, proposal.id), () => void reload('memory'))}>{t('inbox.memory.reject')}</Button>
+              <Button variant="primary" disabled={!workspaceId || isBusy} onClick={() => void run(item, () => window.electronAPI.approveMemoryProposal(workspaceId!, proposal.id, 'global'), () => { select(null); void reload('memory') })}>{t('inbox.memory.approve')}</Button>
+              <Button variant="danger" disabled={!workspaceId || isBusy} onClick={() => void run(item, () => window.electronAPI.rejectMemoryProposal(workspaceId!, proposal.id), () => { select(null); void reload('memory') })}>{t('inbox.memory.reject')}</Button>
               {item.sessionId ? <Button variant="ghost" onClick={() => openSession(item)}>{t('inbox.openSession')}</Button> : null}
             </div>
           </>
@@ -627,8 +654,8 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
           <>
             <p className="text-[13px] text-text-secondary">{skill.description}</p>
             <div className="flex flex-wrap gap-1.5 pt-3">
-              <Button variant="primary" disabled={!workspaceId || isBusy} onClick={() => void run(item, () => window.electronAPI.approvePendingSkill(workspaceId!, skill.slug), () => void reload('skills'))}>{t('inbox.skill.approve')}</Button>
-              <Button variant="danger" disabled={!workspaceId || isBusy} onClick={() => void run(item, () => window.electronAPI.dismissPendingSkill(workspaceId!, skill.slug), () => void reload('skills'))}>{t('inbox.skill.dismiss')}</Button>
+              <Button variant="primary" disabled={!workspaceId || isBusy} onClick={() => void run(item, () => window.electronAPI.approvePendingSkill(workspaceId!, skill.slug), () => { select(null); void reload('skills') })}>{t('inbox.skill.approve')}</Button>
+              <Button variant="danger" disabled={!workspaceId || isBusy} onClick={() => void run(item, () => window.electronAPI.dismissPendingSkill(workspaceId!, skill.slug), () => { select(null); void reload('skills') })}>{t('inbox.skill.dismiss')}</Button>
             </div>
           </>
         )
@@ -641,8 +668,8 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
             <p className="text-[13px] text-text-secondary">{t('inbox.sender.body', { platform: sender.platform, count: sender.attemptCount })}</p>
             {sender.username ? <p className="pt-1 text-[12px] text-text-muted">@{sender.username} · {sender.userId}</p> : null}
             <div className="flex flex-wrap gap-1.5 pt-3">
-              <Button variant="primary" disabled={isBusy} onClick={() => void run(item, () => window.electronAPI.allowMessagingPendingSender(sender.platform, sender.userId, key), () => void reload('senders'))}>{t('inbox.sender.allow')}</Button>
-              <Button variant="danger" disabled={isBusy} onClick={() => void run(item, () => window.electronAPI.dismissMessagingPendingSender(sender.platform, sender.userId, key), () => void reload('senders'))}>{t('inbox.sender.dismiss')}</Button>
+              <Button variant="primary" disabled={isBusy} onClick={() => void run(item, () => window.electronAPI.allowMessagingPendingSender(sender.platform, sender.userId, key), () => { select(null); void reload('senders') })}>{t('inbox.sender.allow')}</Button>
+              <Button variant="danger" disabled={isBusy} onClick={() => void run(item, () => window.electronAPI.dismissMessagingPendingSender(sender.platform, sender.userId, key), () => { select(null); void reload('senders') })}>{t('inbox.sender.dismiss')}</Button>
             </div>
           </>
         )
@@ -690,7 +717,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     }
   }
 
-  const composeDetail = composeState.compose ? (
+  const composeDetail = !contextChanged && composeState.compose ? (
     <MailCompose key={composeState.compose.key} mail={mail} draft={composeState.compose.draft} source={composeState.compose.source} onClose={() => composeState.close()} />
   ) : null
   const openMessage = mail.message
@@ -718,7 +745,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
           onAfterRemove={() => { setPinnedMail(null); select(nextAfter(selected.id)) }}
         />
       ) : null}
-      <div className="px-5 pb-4">
+      <div ref={actionsTourRef} data-tour-id="inbox.actions" className="px-5 pb-4">
         <Button disabled={busy === selected.id} onClick={() => void done(selected)} title="E">{t('inbox.done')}</Button>
       </div>
     </div>
@@ -742,11 +769,35 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
 
   const status = (
     <>
-      <span>{t('inbox.status.blocking', { count: counts.blocking })}</span>
-      <span aria-hidden>·</span>
-      <span data-testid="mail-status">{t(statusKey(mail.status), { address: mail.status?.address ?? '', url: mail.status?.serverUrl ?? '', error: mail.status?.error ?? '', flag: mail.status?.flag ?? '' })}</span>
+      {counts.blocking > 0 ? <span>{t('inbox.status.blocking', { count: counts.blocking })}</span> : null}
+      {mail.available && (mailReady || inMail || mailFailure) ? <span className="truncate" data-testid="mail-status">{t(statusKey(mail.status), { address: mail.status?.address ?? '', url: mail.status?.serverUrl ?? '', error: mail.status?.error ?? '', flag: mail.status?.flag ?? '' })}</span> : null}
     </>
   )
-
-  return <ModeScreenLayout testId="inbox-page" navigator={navigator} list={listPanel} detail={selected || currentId || mailSelected || composeState.compose ? detail : null} status={status} />
+  const hasDetail = !!(selected || currentId || mailSelected || composeState.compose)
+  const closeDetail = () => { composeState.close(); selectMail(null); select(null) }
+  return (
+    <div data-testid="inbox-page" className="flex h-full min-h-0 min-w-0 flex-col bg-background font-sans text-[13px] text-foreground">
+      <div className="flex min-h-0 min-w-0 flex-1">
+        <ShellSidebarPortal className="hidden w-[220px] shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3 md:flex">{navigator}</ShellSidebarPortal>
+        <section ref={listTourRef} data-tour-id="inbox.list" className={`min-h-0 min-w-0 flex-1 flex-col bg-foreground/[0.025] ${hasDetail ? 'hidden lg:flex' : 'flex'}`} data-testid="inbox-queue">
+          <label className="mx-3 mt-2 flex items-center gap-2 text-[12px] text-text-secondary md:hidden">
+            <span>{t('inbox.viewLabel')}</span>
+            <select aria-label={t('inbox.viewLabel')} value={inMail ? `mail:${filter.mail}` : typeof filter === 'object' ? filter.kind : filter}
+              onChange={(event) => { const value = event.currentTarget.value; if (value.startsWith('mail:')) { const id = value.slice(5); openFolder(mail.folders.find((folder) => folder.id === id) ?? { id, name: id, role: 'inbox', total: 0, unread: 0 }) } else setFilter(['all', 'decisions', 'messages', 'snoozed', 'done'].includes(value) ? value as InboxFilter : { kind: value as InboxKind }) }}
+              className="min-w-0 flex-1 rounded-lg border border-foreground/10 bg-background px-2 py-1.5 text-foreground">
+              {(['all', 'decisions', 'messages', 'snoozed', 'done'] as const).map((view) => <option key={view} value={view}>{t(`inbox.view.${view}`)}</option>)}
+              {KINDS.map((kind) => <option key={kind} value={kind}>{kindLabel(kind)}</option>)}
+              {mail.folders.length ? mail.folders.map((folder) => <option key={folder.id} value={`mail:${folder.id}`}>{folderLabel(t, folder)}</option>) : <option value="mail:inbox">{t('inbox.kind.mail')}</option>}
+            </select>
+          </label>
+          {listPanel}
+        </section>
+        {hasDetail ? <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background lg:max-w-[48%]" data-testid="inbox-detail-pane">
+          <div className="flex shrink-0 border-b border-foreground/[0.06] px-4 py-2"><Button variant="ghost" onClick={closeDetail}><ArrowLeft className="size-3.5" aria-hidden />{t('common.backToList')}</Button></div>
+          {detail}
+        </section> : null}
+      </div>
+      {counts.blocking > 0 || mail.available && (mailReady || inMail || mailFailure) ? <div className="flex h-7 min-w-0 shrink-0 items-center gap-2 bg-surface-rail px-3 text-[11px] text-text-muted" role="status">{status}</div> : null}
+    </div>
+  )
 }

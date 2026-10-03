@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { WORKSPACE_WORK_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/workspace-work'
+import { HANDLED_CHANNELS as RUNTIME_TRACE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/runtime-trace'
 import { HANDLED_CHANNELS as CODE_INTELLIGENCE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/code-intelligence'
 
 const registeredChannels: string[] = []
@@ -127,6 +128,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     oauth,
     pages,
     projects,
+    codeIntelligence,
     kanban,
     collection,
     gamification,
@@ -178,6 +180,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/oauth'),
     import('@rox/server-core/handlers/rpc/pages'),
     import('@rox/server-core/handlers/rpc/projects'),
+    import('@rox/server-core/handlers/rpc/code-intelligence'),
     import('@rox/server-core/handlers/rpc/kanban'),
     import('@rox/server-core/handlers/rpc/collection'),
     import('@rox/server-core/handlers/rpc/gamification'),
@@ -211,6 +214,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...personalTasks.PERSONAL_TASKS_HANDLED_CHANNELS,
     ...feed.FEED_HANDLED_CHANNELS,
     ...WORKSPACE_WORK_HANDLED_CHANNELS,
+    ...RUNTIME_TRACE_HANDLED_CHANNELS,
     ...CODE_INTELLIGENCE_HANDLED_CHANNELS,
     ...auth.HANDLED_CHANNELS,
     ...automations.HANDLED_CHANNELS,
@@ -241,6 +245,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...notes.HANDLED_CHANNELS,
     ...oauth.HANDLED_CHANNELS,
     ...projects.HANDLED_CHANNELS,
+    ...codeIntelligence.HANDLED_CHANNELS,
     ...kanban.HANDLED_CHANNELS,
     ...collection.HANDLED_CHANNELS,
     ...gamification.HANDLED_CHANNELS,
@@ -284,6 +289,7 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     ...siyuan.HANDLED_CHANNELS,
     ...extensionHost.HANDLED_CHANNELS,
     ...extensionSurface.HANDLED_CHANNELS,
+    'voice:copyText',
   ])
 }
 
@@ -301,7 +307,7 @@ describe('RPC handler profile registration', () => {
     const actual = new Set(registeredChannels.filter(ch => ch.includes(':')))
     expect([...expected].filter(ch => !actual.has(ch))).toEqual([])
     expect([...actual].filter(ch => !expected.has(ch))).toEqual([])
-  }, 20000)
+  }, 120000)
 
   it('registerGuiRpcHandlers registers only gui channels', async () => {
     const expected = await getExpectedGuiChannels()

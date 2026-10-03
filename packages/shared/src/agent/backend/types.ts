@@ -171,6 +171,8 @@ export interface CoreBackendConfig {
   /** Frozen server-owned profile; legacy unbound sessions omit this capability ceiling. */
   agentProfileSnapshot?: import('../../workspace-work/types.ts').AgentProfileSnapshot;
   allowedSkillSlugs?: readonly string[];
+  /** Supplied by host authority; renderer and model inputs cannot set identity. */
+  roxExecutionContext?: import('../../auth/rox-account-authority.ts').RoxExecutionContext;
   /** Workspace configuration */
   workspace: Workspace;
 

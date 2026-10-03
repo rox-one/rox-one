@@ -3,7 +3,7 @@
  * Writes a durable lesson only after Global / This project approval.
  */
 import { existsSync, readFileSync } from 'fs'
-import { join } from 'path'
+import { dirname, join } from 'path'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
@@ -38,6 +38,9 @@ import { MemoryFileStore } from '../../memory/MemoryFileStore'
 import { MemoryProposalStore } from '../../memory/MemoryProposalStore'
 import { approveMemoryProposalDurably } from '../../memory/approve-memory-proposal'
 import type { LessonOwner } from '@rox/shared/memory/types'
+import { assertNativeInboxPath, assertNativeInboxWorkspace } from './native-inbox-scope'
+import { assertNativeSession } from './native-session-scope'
+import { readNativeProjects } from './native-sidebar-metadata'
 
 export const PROPOSAL_HANDLED_CHANNELS = [
   RPC_CHANNELS.memory.LIST_PROPOSALS,
@@ -69,14 +72,23 @@ function workspaceMemoryEnabled(workspaceRoot: string): boolean {
   }
 }
 
-function storeFor(workspaceId: string): { store: MemoryProposalStore; root: string; workspaceId: string } | null {
-  const workspace = getWorkspaceByNameOrId(workspaceId)
+function storeFor(workspaceId: string, request: RequestContext, deps: HandlerDeps, server: RpcServer, action: 'read' | 'write' | 'delete' = 'read'): { store: MemoryProposalStore; root: string; workspaceId: string } | null {
+  const root = assertNativeInboxWorkspace(request, deps, server, workspaceId, action)
+  const workspace = root ? { rootPath: root } : getWorkspaceByNameOrId(workspaceId)
   if (!workspace) return null
+  if (request.principal) {
+    assertNativeInboxPath(workspace.rootPath, ['memory', 'proposals.jsonl'])
+    assertNativeInboxPath(workspace.rootPath, ['memory', 'proposals.jsonl.tmp'])
+  }
   const memoryDir = new MemoryFileStore('workspace', workspace.rootPath).memoryDir
   return { store: new MemoryProposalStore(memoryDir), root: workspace.rootPath, workspaceId }
 }
 
 function existingRules(workspaceRoot: string, owner?: LessonOwner): string[] {
+  if (owner) {
+    assertNativeInboxPath(dirname(new MemoryFileStore('global').memoryDir), ['memory'], true)
+    assertNativeInboxPath(workspaceRoot, ['memory', 'lessons.jsonl'])
+  }
   const workspace = new LessonStore(new MemoryFileStore('workspace', workspaceRoot).lessonsPath, 'workspace').listForOwner(owner)
   const global = new LessonStore(new MemoryFileStore('global').lessonsPath, 'global').listForOwner(owner)
   return [...workspace, ...global].map((l) => l.rule)
@@ -92,7 +104,7 @@ function writableProposal(store: MemoryProposalStore, id: string, workspaceId: s
   const proposal = store.get(id)
   if (!proposal) return null
   if (proposal.workspaceId !== workspaceId) throw new Error('Memory proposal workspace access denied')
-  if (lessonOwnerKey(proposal.owner) !== lessonOwnerKey(owner)) throw new Error('Memory proposal owner access denied')
+  if (lessonOwnerKey(proposal.owner) !== lessonOwnerKey(owner)) return null
   if (proposal.approval || proposal.status.startsWith('approved_')) throw new Error('An approval has already started; retry approval to finish it')
   return proposal
 }
@@ -107,7 +119,7 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
     const owner = authorizeWorkspace(request, workspaceId, deps)
     const listed = rpcMemoryProposalsListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
-    const ctx = storeFor(workspaceId)
+    const ctx = storeFor(workspaceId, request, deps, server)
     if (!ctx) return []
     return ctx.store.list().filter((p) => p.workspaceId === workspaceId && lessonOwnerKey(p.owner) === lessonOwnerKey(owner)
       && (!sessionId || p.sessionId === sessionId) && p.status !== 'deleted')
@@ -121,13 +133,19 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
       nativeId: args?.sessionId ?? 'extract',
     })
     if (!isClaimableLive(act)) throw new Error('memory extract is not live')
-    const ctx = storeFor(args.workspaceId)
+    const ctx = storeFor(args.workspaceId, request, deps, server, 'write')
     const empty = { proposals: [] as MemoryProposal[], preview: [] as string[], scannedMessages: 0, source: 'none' as const }
     if (!ctx) return { disabled: false, ...empty }
     if (!workspaceMemoryEnabled(ctx.root)) {
       return { disabled: true, ...empty }
     }
-    const messages = args.messages ?? []
+    let messages = args.messages ?? []
+    if (request.principal) {
+      assertNativeSession(request, deps, server, args.sessionId)
+      const session = await deps.sessionManager.getSession(args.sessionId)
+      assertNativeInboxWorkspace(request, deps, server, args.workspaceId, 'write', ctx.root)
+      messages = (session?.messages ?? []).filter(message => !message.hidden && (message.role === 'user' || message.role === 'assistant')).map(message => ({ id: message.id, role: message.role, content: message.content }))
+    }
     const scannedMessages = proposalTranscriptMessages(messages).length
     const query = deps.sessionManager?.querySessionLlm?.bind(deps.sessionManager)
     // The request's workspace grant cannot authorize a one-shot connection
@@ -150,6 +168,8 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
     if (server.isRequestContextCurrent && !server.isRequestContextCurrent(request, 'write')) throw new Error('Memory request is no longer authorized')
     const { extracted, source, warning } = await extractWithLlmFallback(input, query)
     if (server.isRequestContextCurrent && !server.isRequestContextCurrent(request, 'write')) throw new Error('Memory request is no longer authorized')
+    assertNativeInboxWorkspace(request, deps, server, args.workspaceId, 'write', ctx.root)
+    if (request.principal) assertNativeInboxPath(ctx.root, ['memory', 'proposals.jsonl'])
     const saved = ctx.store.saveMany(extracted.map(proposal => ({ ...proposal, ...(owner ? { owner } : {}) })))
     broadcast(args.workspaceId)
     return {
@@ -177,10 +197,18 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
       if (!isClaimableLive(read.result)) return null
       const act = rpcMemoryProposalsActResult({ source: 'native', action: 'write', nativeId: proposalId })
       if (!isClaimableLive(act)) return null
-      const ctx = storeFor(workspaceId)
+      const ctx = storeFor(workspaceId, request, deps, server, 'write')
       if (!ctx) return null
       const current = ctx.store.get(proposalId)
       if (current && current.workspaceId !== workspaceId) throw new Error('Memory proposal workspace access denied')
+      if (request.principal) {
+        if (scope === 'project') {
+          const project = readNativeProjects(ctx.root, workspaceId).find(project => project.config.id === (projectId ?? current?.projectId ?? ''))
+          if (!project) throw new Error('Project memory target not found')
+          assertNativeInboxPath(ctx.root, ['projects', project.config.slug], true)
+        } else if (scope === 'workspace') assertNativeInboxPath(ctx.root, ['memory'], true)
+        else assertNativeInboxPath(dirname(new MemoryFileStore('global').memoryDir), ['memory'], true)
+      }
       const next = approveMemoryProposalDurably({
         store: ctx.store,
         workspaceRoot: ctx.root,
@@ -198,7 +226,7 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
 
   server.handle(RPC_CHANNELS.memory.REJECT_PROPOSAL, async (request, workspaceId: string, proposalId: string) => {
     const owner = authorizeWorkspace(request, workspaceId, deps)
-    const ctx = storeFor(workspaceId)
+    const ctx = storeFor(workspaceId, request, deps, server, 'write')
     if (!ctx) return null
     const current = writableProposal(ctx.store, proposalId, workspaceId, owner)
     if (!current) return null
@@ -210,7 +238,7 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
 
   server.handle(RPC_CHANNELS.memory.EDIT_PROPOSAL, async (request, workspaceId: string, proposalId: string, text: string) => {
     const owner = authorizeWorkspace(request, workspaceId, deps)
-    const ctx = storeFor(workspaceId)
+    const ctx = storeFor(workspaceId, request, deps, server, 'write')
     if (!ctx) return null
     const current = writableProposal(ctx.store, proposalId, workspaceId, owner)
     if (!current) return null
@@ -231,14 +259,14 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
       nativeId: proposalId,
     })
     if (!isClaimableLive(act)) return false
-    const ctx = storeFor(workspaceId)
+    const ctx = storeFor(workspaceId, request, deps, server, 'write')
     if (!ctx) return false
     const current = writableProposal(ctx.store, proposalId, workspaceId, owner)
     if (!current) return false
     ctx.store.save(deleteProposal(current))
     broadcast(workspaceId)
     return true
-  }, { access: 'nativeOrLocalElectron', nativeAction: 'delete' })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'write' })
 }
 
 type SessionLlmQuery = (

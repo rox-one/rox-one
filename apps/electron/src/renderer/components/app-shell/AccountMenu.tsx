@@ -1,3 +1,4 @@
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 /**
  * AccountMenu — unified Identity Center surface (S-07) for the top bar and
  * compact panel header. Four sections: Profile, Workspaces, Connections,
@@ -101,6 +102,7 @@ export function AccountMenu({
   workspaceUnreadMap,
 }: AccountMenuProps) {
   const { t } = useTranslation()
+  const tourWorkspaceTarget = useTourTarget('workspace.switcher', { scope: 'shell', workspaceId: activeWorkspaceId ?? undefined, variant: compact ? 'compact' : 'regular' })
   const [open, setOpen] = React.useState(false)
   const [showCreationScreen, setShowCreationScreen] = React.useState(false)
   const [reconnectTarget, setReconnectTarget] = React.useState<Workspace | null>(null)
@@ -343,6 +345,7 @@ export function AccountMenu({
   const triggerButton = (
     <button
       type="button"
+      ref={tourWorkspaceTarget}
       data-account-menu={compact ? 'compact' : 'topbar'}
       className={cn(
         'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-[30px] rounded-[8px] border border-border/50 bg-[var(--surface-elevated)] text-[13px] text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',

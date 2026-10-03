@@ -1,3 +1,71 @@
+## MCP connection deadline/privacy recovery plan — 2026-10-03
+
+1. Freeze source1436 and current4fec, compare actual symbols. Retain current Qdrant storage ownership, local resolver authority, pool config/generation/recovery semantics; recover only proven missing budgets/diagnostic filtering.
+2. Add per-lease total startup/discovery budgets and physical startup deadline, observe fetch/start cancellation, and await SDK shutdown. Preserve another Qdrant lease and never replay failed tools. Redact SDK diagnostic credentials with linear URL handling; filter inherited validation host credentials.
+3. Exercise actual transports/children with held initialize/list responses, stale/terminal close, explicit cancellation, stubborn EOF, hostile URL/error bodies and Qdrant shared continuity, alongside current pool/source/redirect/no-replay tests. Retain failure history; run inherited strict types and actual main/preload build.
+4. Reconcile current main, freeze source/log receipt and publish/attach separate candidate. Root reviews/merges; original branches remain intact, native Windows/provider acceptance is bounded explicitly.
+
+## Windows dependency/bootstrap selective recovery plan — 2026-10-03
+
+1. Freeze source1436, enumerate137 actual diff paths and CodeQL annotations; compare current OMP/native/MCP consumers before selecting dependencies. Preserve all original branches and dirty user checkout.
+2. Recover coherent dependency/bootstrap/packaging/toolchain slice; adapt only current Electron startup and config. Preserve current upgrade identity/CJS flags/pinned OMP/native policy and current shell consumers. Remaining MCP/local-source/host Bash/perf scopes remain owned follow-ups.
+3. Fix receipt descriptor/size/replacement race with actual adversarial filesystem checks; qualify explicit modes, real private/system exclusions, companion removal, re-probes, damaged generated launcher repair/rollback, pinned payload corruption and production OEM refusal. Run inherited relevant tests/types/current builds, retaining source mismatch history and native Windows skips.
+4. Reconcile latest main, freeze revision/proof hashes, commit/push a separate attached PR. Root reviews/merges. Actual installed Windows execution, NSIS provisioning and OEM release payload remain external platform/release gates, distinct from bounded source acceptance.
+
+
+## Inspector resize recovery task graph — 2026-10-03
+
+Owner: branch audit lead; depends on merged Golden Gate controller/native/panels and Connections consumers. Source audit → adapt sash into current InspectorHost with transient preview/current bounds → exercise actual host pointer/keyboard/cancel/unmount/reload and old-consumer negative → package type/build/locale gates → separate reviewed PR, exact merge/readback. Shared files: currentInspectorHost and12locale keys only; original source branches remain intact. No old layout widths or section ownership are restored.
+
+## Golden Gate chat output recovery plan — 2026-10-03
+
+1. Freeze source helper/current auto-scroll sites and coordinate ChatDisplay regions with Product Learning worker. pr_scout owns output scroll only; root owns merge and Inspector/credential integration.
+2. Restore private viewport follow and committed incarnation ownership through real initial/ResizeObserver/submit/user-commit consumers; retain unfocused follow, user-up history, suppression and lazy height anchor, and all explicit search jumps.
+3. Exercise real production ChatDisplay/Radix/messages in nested DOM: outer/window position, reduced/normal motion, focused/unfocused history, document hidden, delayed commit, old ResizeObserver/queued frames A→B→A/unmount, history anchoring and explicit jump. Keep failure history and controlled fixture boundaries explicit; run types/build and current adjacent tests.
+4. Reconcile live main, freeze source/proof/log receipts, publish/attach separate PR, preserve every source branch. Notify dependent instrumentation owner of exact ChatDisplay source before parent merges.
+
+## Единый аккаунт ROX через Pocket ID — 2026-10-03
+
+План принятой SSO-интеграции сохранён отдельно в [docs/pocket-sso/plan.md](pocket-sso/plan.md). Существующая программа ниже сохранена; SSO-задачи и критерии приёмки дополняют её.
+
+## Product Learning foundation recovery plan — 2026-10-03
+
+1. Freeze final a6 source and import only contracts/core/persistence/analytics; pr_scout owns these interfaces, historical_sweep integrates dependent UI/runtime/current consumers without copying old shell/pages.
+2. Inspect evidence/correlation and durable ownership boundaries. Retain original negative controls; reproduce and fix diagnostic accessor validation/serialization race through single captured own data properties, preserving interfaces.
+3. Exercise pure engine and real Chromium IndexedDB across isolated windows, storage/transaction/future-version failures, scoped reset and privacy/retention. Verify all foundation modules with strict renderer compiler options and actual browser bundling without claiming route/native feature acceptance.
+4. Reconcile live main, freeze source/proof/log receipt, publish/attach a separate PR. Notify dependent worker of exact interfaces/head and preserve every original branch; lead reviews and merges.
+
+## Golden Gate Settings menu recovery plan — 2026-10-03
+
+1. Verify actual current consumers and source intent before import: current menu is a Popover with no arrow/typeahead model; Appearance and ZenShell custom SettingsRow slots lack label/description relationships.
+2. Recover pure source navigation/context helpers and adapt only current MenuSelect/Row behavior. Preserve existing classes/locale strings and keep SettingsSelect unchanged. pr_scout owns these files; root owns remaining Golden semantic audit and main merge.
+3. Execute real production row/menu/Radix controls: field descriptions/overrides, enabled filtered navigation without commit, typeahead/preview/Escape, search caret/empty result, IME/modifier/default-prevented and disabled choices/control, changing options, selection/focus return. Retain source helper/i18n tests and run Electron/WebUI types, renderer build and locale gates.
+4. Reconcile live main, freeze source/head/proof receipt, publish/attach a separate PR, preserving all original branches. Real native route/screenshot/provider and full feature acceptance remain separate.
+
+# Golden Gate surface tab recovery — 2026-10-03
+
+Owner: root. Source5def9ffd36dc160fdc7c908784e0ef97ba6a732e → current-consumer comparison → title loader/navigation helpers → unit failure/cache/workspace controls and actual Chromium SurfaceTabs interactions → renderer strict types/build → separate PR/exact merge readback. Depends on current unified-shell atoms and pending panel focus repair1415; preserve its aria-controls contract when integrating.
+
+## Connections consumer recovery plan — 2026-10-03
+
+1. Freeze source intent and current UI gap; backend1414 is the dependency. pr_scout owns page/lifecycle/device/connection-info consumers only; root owns main integration and SurfaceTabs/remaining Golden semantics.
+2. Restore safe inspect projection and shared committed-scope lifecycle controls, active lease consent, current test/repair/rotate, registered move target and public GitHub device flow. Preserve current page and unrelated inspector contracts.
+3. Exercise actual production page/inspector consumers with controlled backend promises: latest selection, A→B→A, duplicate writes, stale receipts, sanitized errors/retry, confirmations, URI/secret refusal, cancellation/late-start, one poll, slow_down, denial/expiry and scoped import refresh. Retain source history and all locale catalogs.
+4. Reconcile live main, freeze delivered candidate, run scoped UI/projection tests, renderer types/build and localization, record exact source/head/log receipt, push and attach a separate PR. Lead reviews and merges; real native/provider/backend acceptance remains explicit.
+
+## Golden Gate persisted panel workspace recovery plan — 2026-10-03
+
+Closing a focused panel restores DOM focus only when the disconnected node belongs to that removed panel or tab. Preserve another live focus owner, dialog, IME, resize and hidden targets; exercise actual closePanelAtom and production PanelStackContainer in browser adverse controls.
+
+1. Establish the live gap: current main horizontal flex has no workspace grid modes or persisted row/column tracks. Bind the missing closure to the source manifest.
+2. Recover state/parser/atom/hook/menu/sash and adapt current container/slot/axis resize; preserve current native focus and UI-001 guards.
+3. Verify mode and committed fraction persistence, preview/cancel, workspace isolation, malformed stored data, ragged focus, route identity and retained drafts with production renderer components.
+4. Run complete types, WebUI/Electron renderer and i18n gates; publish separate candidate and exact remote readback. Root retains independent review and serial merge; all source branches remain.
+
+# Golden Gate meeting request ownership integration (2026-10-03)
+
+Owner: pr_scout; merge owner: root. Depends on main UI/native/profile contracts; preserve LocalMeetingDetail profile and analysis work owned by historical_sweep. Graph: source/consumer comparison → committed request tracker + current callbacks → executed production-callback adverse timing tests and current Notes equivalence controls → renderer typecheck/build/localization → exact source readback and separate PR. Original branches are retained. Tests cover duplicate submission, edited draft, rejection/retry, A→B→A, disposal, latest record/deletion, stale subscriber, pending catalogue overlay and transcript success/refusal.
+
 ## Golden Gate device diagnostics recovery plan — 2026-10-03
 
 1. Historical scout identified exact source revision and runtime files absent from main; integration worker audited the diagnostic dependency closure and recorded source hashes.
@@ -622,6 +690,17 @@ Dependencies: current server entry point and helper build commands at main
 Binding replay recovery: compare the exact legacy identity alongside the canonical encoded identity; verify raw-key migration followed by repeated imports, and negative controls for wrong kind, unrelated ID and foreign workspace. Run the existing platform-contract tests before separate PR publication.
 The recent worker owns the gstack command redirect prerequisite in an isolated security worktree. Input is the three identical shipped BrowseClient copies at runtime revision `05f1e3741`; dependencies are the existing bearer/port validation and portable provenance catalogs. Verify real HTTP redirects fail before any destination request, direct commands retain authentication, and patch hashes match all parent and portable notices. The lead integrates the committed prerequisite into the runtime PR and retains remote CodeQL closure as a separate pending gate.
 
+
+## Connections producer recovery — 2026-10-03
+
+Owner: branch integration lead. Source: `checkpoint/session-audit-20260821-craft-agents` at `86154e8c812746261282bb4c517b16ad7becc0ec`. Dependencies: existing WorkGraph canonical SQLite kernel, credential registry/broker, generated Electron preload and trusted local window/workspace transport.
+
+Restore the seven missing Connections controller operations: lease metadata, inspection, backend move, reconnect, GitHub device start/poll/cancel. Preserve current ROX config resolution, credential migration contracts and legacy broker ID-only revoke API. Only metadata may cross renderer transport. Device flows belong to the initiating authenticated local client/workspace; revoked/cancelled or concurrent polls cannot commit a late approval. Existing OAuth client configuration is required; no new client ID, account/device grant or real credential import is performed by this integration.
+
+Backend move must verify destination contents before deleting the source, refuse existing destinations and simultaneous moves, revoke outstanding leases before attempting a move, restore the source and clear the destination on recoverable failure, and return a distinct rollback failure when storage recovery cannot be proven. Real credential/backend availability and OAuth sign-in remain environment-dependent; fixture proof does not certify a real provider or native UI.
+
+The existing Connections UI remains a separate consumer recovery; this PR restores its missing backend and transport dependency. Acceptance: original source branch retained; current strict types and the configured validation assertions; real temporary SQLite audits and workspace isolation; generated channel/access inventory; deterministic memory-backend write/readback/delete/rollback failures; OAuth pending/approved/cancel race and concurrent-poll controls. Record exact delivered revision and test receipt under `docs/integration-history/connections-86154e8c/`.
+
 ## Native Notes Knowledge read projection (2026-10-03)
 
 Owner: historical branch recovery. Add NativeNotesKnowledgeProvider over nativeNotesKnowledgeAccess and explicitly authenticated RPC read handlers; preserve existing SiYuan compatibility reads for legacy contexts. Verify real WebSocket principal authentication, committed note search/read/backlinks, exclusion of loose Markdown files, foreign workspace/global connection rejection, forged/missing principal denial, invalidation of captured readers after revocation, and explicit CAPABILITY_DISABLED for unscoped agent calls. Existing Knowledge RPC/tool runtime tests remain green. Native visual Notes/agent adoption is outside this bounded API proof.
@@ -635,6 +714,25 @@ Owner: historical integration; parent retains merge. Dependency: existing useWor
 3. Execute delivered component/hook with actual atoms: initial list, state update, interaction, removal/reconciliation, disabled transfer, unmount and late-event/list controls. Run existing browser/chrome checks and renderer validation.
 4. Publish a separate PR with exact source/head and bounded evidence; original branches remain untouched.
 
+## Bounded historical recovery: Meeting profiles, slash and followup planning (2026-10-03)
+
+Owner: historical integration; parent merges. Dependency: current packaged roles/recipes, safe analysis session port, local Meeting store, NativeAuthority read fences and canonical MeetingJournal. Preserve concurrent voice/PTT producer/consumer work, native Notes authority and current glass/navigation.
+
+1. Map richer historical recipe/followup intent to actual routed consumers; reject synthetic receipts, writable-file grants and invented host principal.
+2. Bind profile/slash to current durable claim/attach/finish analysis and persist profile through existing local store; retain CAS, no-source-tool sessions, source-revision result validation and manual-edit supersession.
+3. Publish context-bound read-only plan RPC with canonical revision and policy projection; refuse unsafe/background execution, independent scheduling writes and corrupt-tail repair.
+4. Verify actual safe analysis callback, store restart, real authenticated WebSocket planning, foreign/missing/forged/revoked identities, asynchronous revocation, unknown/unpermitted slash and no journal/outbox/schedule mutation. Check routing, all locale catalogs, changed package/renderer types and relevant builds. Reconcile current built-in MCP provisioning and prove real SessionManager empty per-session source selection survives nonempty workspace defaults and persisted headers.
+5. Deliver separate PR with exact source/head and explicitly bounded receipts. The missing real authenticated backend/scheduler delegation ports remain named acceptance limits.
+
+## Voice command transport recovery — 2026-10-03
+
+Owner: recent feature worker; main integration owner: branch audit lead. Dependencies: current HOTKEY wire channel, native window/client binding and composer consent/permission/generation guards at main 3d04470f9be127945dd15c582775ed1e0401ed50.
+
+1. Restore actual toggle/cancel delivery and foreground Right Option pairing onto current contracts. Dispose registrations/held state, preserve application shortcuts and idle Escape, and fail closed for unmanaged/unbound clients.
+2. Route all four commands into current composer capture. Cancel pending/released/finalizing requests and retain current native host ownership; do not copy old capture singleton, provider defaults or authorization.
+3. Verify actual Electron registration adapter with isolated ports, input-to-client-to-controller behavior, repeated/unpaired/foreign/unbound keys, permission-release and finalization cancellation, and unchanged voice/meeting/privacy regressions; run package types and main/renderer builds.
+4. Commit, push and attach a separate PR, preserving every source branch. Lead owns remote main merge; current live ASR, global native key input and visual microphone acceptance remain explicitly unverified.
+
 ## Selective editor block recovery — 2026-10-03
 
 Owner: recent feature worker; integration owner: branch audit lead. Source dependency: `1f56af31d3658ee9880105361ad5312324f36ab8`; base: live main `3d04470f9be127945dd15c582775ed1e0401ed50`.
@@ -646,3 +744,265 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 # Текущая пересборка навигации
 
 Владельцы, зависимости и проверки: [navigation-rebuild/plan.md](navigation-rebuild/plan.md). Последующие исторические записи сохранены.
+
+
+# Credential locator boundary validation — 2026-10-03
+
+| Task | Owner | Dependency | Verification |
+| --- | --- | --- | --- |
+| Freeze current main and preserve existing work | Lead | Live GitHub SHA | Clean isolated branch at 635fc495; primary dirty CSS remains untouched |
+| Reproduce own-field fallback at all boundaries | Lead | Frozen source | Initial 63-case suite: base 10 pass / 53 fail; final 64-case suite also covers inherited descriptor.value; fixtures restored synchronously |
+| Snapshot own descriptor values into a null-prototype record | Lead | Failing regressions | Own fields only, zero getter/get-trap reads, frozen compatibility, no mutation on rejection |
+| Validate candidate and independently review | Lead / integration-status reviewer | Correction | Full core, core TypeScript, unchanged validate:ci and source review |
+| Integrate concurrent main repair without losing either matrix | Lead / independent reviewer | PR #1407 production fix and 54 regressions | Preserve identical upstream executable source and all 64 added boundary cases; revalidate combined revision |
+| Publish and merge the exact verified PR head | Lead | Passed checks and review | Hosted validation/lifecycle, bound merge request, remote main ancestry/source readback |
+
+Evidence and delivery receipt: `docs/credential-locator-own-data-validation.md`. .codegraph is absent in the frozen repository; targeted symbol/caller inspection supplies the bounded source map. Native work and Vercel account deployment status remain outside this locator correction.
+
+## Credential metadata own-data repair and integration — 2026-10-03
+
+The user authorized full source repair, GitHub writes and merge into `main`. The original checkout and its unrelated CSS edits are preserved. One lead owns the isolated `fix/credential-metadata-own-data-20261003` source branch; an independent reviewer owns separate evidence artifacts. Initial integration base: `829e2cbd840e2980b421038457866d0efd0893f2`.
+
+The integration at `b1526a85f6db5a6cdf668438e484f62ce15e6f29` preserves PR #1407's locator implementation and inherited-field tests, adds only distinct locator controls, and retains main's MCP onboarding step. A prior macOS full-CI attempt hit 17 subprocess timeouts; the unchanged 109-test config gate subsequently passed with the original deadlines. Preserve both receipts and verify the complete integrated candidate on Linux and hosted runners.
+
+| Task | Owner | Dependencies | Verification / delivery |
+| --- | --- | --- | --- |
+| LOC-STATE | Lead | none | Exact fresh main, clean isolated checkout, live PR and publishing policy readback |
+| LOC-FIX | Lead | LOC-STATE | Own-data snapshots in registry/attachment; regressions for all locator variants, accessors, frozen controls and persisted state |
+| LOC-REVIEW | Independent reviewer | LOC-STATE, LOC-FIX | Source hashes, adversarial holdout, negative controls and actionable compatibility findings |
+| LOC-VERIFY | Lead | LOC-FIX | Pinned Linux Bun 1.3.14 full core, core TypeScript, unchanged CI alias and separate MCP onboarding script; preserve any initial failures and exact logs |
+| LOC-CI | Lead | LOC-FIX | Full core suite, unchanged CI alias and main's separate MCP onboarding step on hosted Ubuntu 24.04 and macOS 15; existing permissions/install/deadlines/assertions retained |
+| LOC-DELIVER | Lead | LOC-REVIEW, LOC-VERIFY, LOC-CI | Commit/push scoped files, publish a current PR, resolve actionable feedback, merge main, read back delivered source and save revision-bound report |
+
+The earlier local-only candidate and its results remain historical evidence. They do not replace complete verification of this new base or the delivered revision. Integration receipts, commands, exits, source/artifact hashes, actual hosted run URLs and final main identity are saved outside the checkout; no publication or acceptance is inferred from a task launch. This slice does not change broader native/provider/platform acceptance.
+
+
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
+
+## Credential locator repair plan — 2026-10-03
+
+| Task | Owner | Depends on | Owned files | Verification |
+|---|---|---|---|---|
+| LOC-01: Audit current main and merged PR lineage | Lead + independent scouts | none | task-owned evidence | exact remote SHA; validate current source rather than stale PR body |
+| LOC-02: Add inherited-property regression matrix | locator_audit worker | LOC-01 | credential-types.test.ts | red run on original validator, restoration of polluted prototype before assertions |
+| LOC-03: Capture only own descriptor values | Lead | LOC-02 red proof | credential-types.ts | green focused test, every required field rejects inherited substitution |
+| LOC-04: Validate current integration and built runtime | Lead + independent reviewer | LOC-03 | isolated Linux dependencies/artifacts; task-owned logs | full core/types, validate:ci, WebUI types, three builds and built lifecycle |
+| LOC-05: Publish, review and merge main | Lead | LOC-04 | scoped PR and verification receipt | exact pushed HEAD, check readback, merge SHA and main ancestry; retain unrelated work |
+
+The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
+
+
+### Session project membership metadata recovery (2026-10-03)
+
+- Owner: recent-features worker; dependencies: current shared serialized session writer, SessionManager, current workspace-confined project delete path and collection query.
+- Selectively adapt source `c0ef036e9c9b627589ad4e2a055abac0212b4295` metadata/storage helpers, preserve primary defaults and canonical project access. Exclude old closed-project-only visibility helpers; current readable-context authority remains canonical.
+- Verify actual create/list/reload/unrelated-save round trips, primary/secondary unlink with transcript preservation, existing manager primary/bulk mutations, workspace-isolated live-owner unlink, secondary filter and external disk mutation during a queued write. Run current persistence/bulk/cold metadata regressions, relevant package types and renderer event controls.
+- Delivery: separate codex branch and PR; original branches retained, lead owns ordered main merge.
+## Recovered connection audit action projection — 2026-10-03
+
+Owner: branch integration lead. Source: checkpoint/session-audit-20260821-craft-agents @86154e8c812746261282bb4c517b16ad7becc0ec; dependency: delivered Connections producer PR1414 and current canonical WorkGraph SQLite. Recover the missing additive schema3 action column and creation audit projection. V1/V2 migration SQL/checksums must remain identical; migration3 SQL matches the source. Older ledger rows remain immutable and expose event type as the fallback action. Only metadata action labels cross transport; never restore payload content.
+
+Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/installation, schema3 restart, current actions plus creation event, foreign workspace exclusion and update/delete trigger refusal. The negative control runs the actual new test against unchanged main. Existing kernel/connection/revalidation and consumed server types must pass. Deliver independently and retain the source branch. This supplies audit metadata for the separately recovered Connections UI; no native/provider acceptance is claimed.
+
+## Explicit Connection host import recovery — 2026-10-03
+
+1. Historical worker verifies actual source delta and local-only Electron handler -> current adapter -> existing importer/host-runner call chain. Lead retains integration; original source branch remains unchanged.
+2. Recover commit defaults, preserving direct injected importer overrides. Add internal low-level runner ports used only by tests and host composition. Keep candidate previews free of helper password/process execution, except explicit metadata/public-identity list operations.
+3. Test all five positive selected paths, output masking/copy/reference behavior, unknown candidate refusal before secret access, helper failure without Connection/copy, and explicit override precedence. Prove negative controls by restoring exact pre-change adapter blobs, then restore candidate before final checks.
+4. Run existing importer/runner/workgraph/handler controls and consumed server-core/Electron types. Publish a separate codex PR and exact remote-head/proof receipt; lead merges after qualification. No actual host credential reads or external sends are part of verification.
+
+### Calendar synchronization ownership recovery (2026-10-03)
+
+- Owner: recent-features integration worker; dependency: current canonical CalendarStore and adapters.
+- Recover the absent per-account request fence from source `1dd90c5031087855e72cd3ecfce7dd057a2a6208`, preserving current conflict/identity and provider-readiness behavior.
+- Verification: deterministic deferred adapters reproduce stale event/cursor overwrite, stale conflict/delete replacement and newer-failure/older-success races before the fix; after the fix verify all three and independent-account/revocation controls, plus the complete calendar suite and core types.
+- Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.
+
+
+### Voice archive recovery ownership and verification (2026-10-03)
+
+- Owner: recent-features worker. Dependencies: current actor-scoped voice HistoryIndex, native authority and request fences, registered RPC/channel-map and actual Settings/composer lifecycle. Lead owns ordered merge; original source branches remain intact.
+- Recover current UI search/detail/revisions/edit/select/delete/export/play plus explicit draft/clipboard completion. Add scoped handlers where current ports are absent; retain expected-selected CAS, foreign-record ownership, bounded text, path-free bounded audio frames, final integrity verification and local-only managed-owner clipboard writes. No legacy global capture, fake receipt/provider or default cloud consent is restored.
+- Verify actual authenticated WS actor/read-only/stale/oversize/symlink/persistence/restart controls; actual local-only clipboard RPC remote/forged/dead/moved-owner rejection; complete audio-byte/frame replacement/digest/dispose controls; actual Chromium current UI search/edit/select/stale/copy/export/play/delete/out-of-order/unmount/web denial and composer delivery. Run relevant shared/server/Electron types, protocol catalog/routing and all locale parity; qualify renderer/main/preload builds on the delivered source.
+- Native OS microphone/provider/installed clipboard acceptance and the full Voice/Meeting program remain separate from synthetic bounded integration evidence.
+
+Current foreground PTT also restores the explicit Right Control and disabled presets alongside the default Right Alt/Option. Stored current-schema preferences are normalized and consumed by the same managed foreground key owner; left/wrong modifiers remain untouched, repeat is paired once, changed held modifiers cancel once, and the existing key-up completion contract survives mode changes. These controls do not claim OS-wide modifier capture.
+
+An explicit current-schema trailing-space preference applies to draft and clipboard completion, while the missing/legacy preference preserves current no-trailing-space behavior. Real Chromium completion controls verify both targets.
+## Validated personal task import recovery — 2026-10-03
+
+1. Historical worker maps Golden's consumed import guard to actual current TasksPage onImport and cache tryFromJson consumers. Root owns other Golden UI; this recovery changes core validation and tests only.
+2. Add a pure current-model row validator at tryFromJson before store construction. Preserve old empty/missing-collection/version compatibility and richer modern optional fields and link kinds. Use existing quarantine reason/raw preservation.
+3. Verify modern rich export roundtrip, malformed/duplicate/nested rows, nonfinite JSON overflow, cache original/staging separation, and executed current file callback refusing writes for invalid input and preserving existing tasks for valid input. Restore exact old store for negative controls, then restore candidate.
+4. Run relevant personal task/cache/import tests and consumed core/Electron types. Publish a separate PR with exact source/revision/proof; root merges. Retain original Golden branch and do not imply other Golden UI or installed/native acceptance.
+
+## Scoped Notes comment draft recovery — 2026-10-03
+
+1. Historical worker verifies Golden source comment helper is consumed in old NotesPage and finds the same genuine unscoped quote/body state in actual current NativeNotesPage. Parent owns other Golden/layout/focus work; no shared UI layout files are edited here.
+2. Recover the pure keyed draft map and bind current floating composer setters to workspace plus active document identity. Preserve current write/mutation authority and in-page draft lifetime.
+3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
+4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
+
+Review qualification: each audio frame binds the opened leaf to captured BigInt dev/ino identities for every ancestor before any read and rechecks them after the frame; canonical path equality alone is insufficient. A deterministic real-directory replacement fixture returns a foreign frame on the earlier helper and rejects before any foreign descriptor read after the repair. All19 newly added labels have authored translations in all12 locales. Native WS fixture initialization is sequenced through authenticated read readiness; 500ms transport and 20s test deadlines, concurrent capture and all privacy assertions remain intact.
+
+## Golden narrow Notes tools and sash — 2026-10-03
+
+1. Historical integration recovers only the consumed width lease, responsive rail and focus helpers; current NativeNotesPage remains the sole data/editor owner. Depend on existing Dialog and localized Contents/Comments labels, current EntityViewTabs and primary-sidebar vault portal.
+2. Wire sheets for hidden Contents/Comments, using current auto-hide computation rather than source360px all-rail policy. Scope-close to workspace/document/view; keep existing editor mounted and native authority unchanged.
+3. Recover Notes sash keyboard/leased pointer callbacks with current width bounds, foreign-pointer isolation and Escape/blur/cancel/unmount cleanup.
+4. Run actual component/NativeNotesPage callback, observer, hidden/inert/visibility/focus and pointer cancellation tests; substitute original page/sash as before-source negative controls then restore exact candidate. Run relevant existing Notes document/view/comment controls and Electron types, reconcile latestmain, push/attach separate PR. Final Chromium qualification:38 tests/251 assertions pass across6 files, including6 production-component DOM cases, hidden/inert/scope close, focus return, document-draft retention, pointer cancellation and IME/current normalized bounds. Fixture controls the document owner; complete NativeNotesPage/backend and installed native acceptance remain independently gated. Original failure evidence is retained: corrected fixture inert property and allowed bounded browser teardown, without relaxing production guards. Actual Inspector/RightSession narrow sheets are a separate pending recovery.
+
+## Golden service navigation and guidance recovery — 2026-10-03
+
+1. Historical integration owns selective `findServicePanel`/focus atom recovery onto the current registry and routes; compose it only into current AppShell root callbacks. Depend on the existing panel stack and its NavigationContext history subscriber. Keep explicit subroutes and compact Settings drill-in.
+2. Recover the source's workspace-scoped dismissal key/helper; compose it into today's flat SidebarChrome/PromoSlot using the existing all-locale `common.dismiss` key. Fence focus by captured workspace and connected/visible profile owner. Keep reminders independent.
+3. Execute actual component callbacks with real panel atoms and controlled local storage: mounted-route/draft preservation, preferred match, missing-service fallback, explicit subroutes, compact mode, durable workspace isolation and stale-callback focus. Verify current DOM keyboard/disclosure, panel lanes, promo policy and Electron types. Run before-source negative controls, restore exact files, reconcile live main without replacing later docs, publish a separate PR and retain all source branches.
+4. Acceptance is bounded source and renderer integration; do not claim installed native UI, old sidebar layout recovery, full Golden source-family completion or production acceptance.
+
+
+## Golden current Notes auxiliary sheets — 2026-10-03
+
+Owner: historical integration; dependency: PR1433 production responsive rail and focus owner. Source Golden5def9ffd actually wraps NoteInspector and RightSessionShell in narrow sheets. Recover that behavior on today's real owners without replaying source1100px policy, toolbar, sidebar or authority. Current Notes460px document plus existing320px Inspector/32px collapsed rail and380px session determine whether auxiliary owners fit; retained hidden panels preserve the last useful width. Narrow Inspector button opens a sheet without changing its persisted collapse preference; workspace/document/view changes revoke it. Existing session creation, prompt draft callback, send/close and bound entity reference remain canonical. Narrow session context opens its same shell in a sheet; expanding to fit must retain the session rather than invoke close. Hidden/inert owners revoke sheets through the same current guard; close restores focus only in its captured scope.
+
+Verify actual current page delegation and toggle callbacks, width policy and real Chromium production Inspector/RightSession consumers across narrow/wide, edit/Escape, draft retention, hidden/scope close and persisted preference refusal. Use controlled document/auth ports; no new server authority or installed native acceptance. Publish a separate PR after1433, retain original branches; lead owns merge.
+
+Auxiliary verification receipt: 33 tests / 142 assertions pass across six consumed control and browser files, including six real current NoteInspector/RightSessionShell Chromium cases. Original current page fails three regression controls while two independent helper/wide controls still pass. Existing read-generation, document IA, contextual session and keyed comment drafts remain passing. Fixture supplies controlled note/context callbacks and drafts; no backend/native credentials, external actions or installed-native acceptance. Source fixture failure from an incomplete NoteDocument shape was corrected without relaxing production guards.
+
+Voice archive follow-up: open the leaf with NOFOLLOW/NONBLOCK before validating its regular-file size and current path identity, then verify all ancestor identities before any read and after the frame. This removes reliance on a pre-open leaf path stat while retaining bounded/no-read failure controls.
+
+### Scoped native voice overlay recovery — 2026-10-03
+
+Owner: voice feature worker; integration/remote merge: lead. Recover the source overlay's genuine owner/event-producer gap via current authenticated VoiceHost, rather than legacy raw SET_OVERLAY. Build the child-only preload in development, package aliases and Windows/native desktop routes; verify snapshot/subscription lifetime and rendered recording identity. Exercise foreign sender/recording, remote/background actor, revoke/disconnect/close, repeated stop, owner blur/focus and command denial; retain current consent and composer finalization. Deliver as a separate PR with revision-bound native-port, actual Chromium, WS, types and build receipts. Full OS focus/microphone/native acceptance is not established by mocks or browser fixtures.
+
+Overlay qualification: archive dependency PR1430 is merged into main d4846751fe993f076d9fce329bdc7e1f6f342899. The recovered overlay passes 110 focused tests / 381 assertions, three actual Chromium cases / seven assertions, and a real authenticated WebSocket owner/revocation control. Shared, server-core and Electron TypeScript checks and main, all three preloads and renderer builds pass. The earlier comprehensive native fixture remains unqualified on this candidate because its existing 500ms handshake gate timed out under concurrent host load before the added overlay assertions; its deadlines remain unchanged, and the new narrow actual WS control uses production client defaults. Full OS focus/microphone/provider acceptance remains separate.
+The earlier163-test runtime checkpoint and its missing-producer type errors are retained as historical evidence, not current acceptance. The current clean recovery composes the authenticated native-domain producer layer, canonical personal-task CAS/read-back, Notes per-handle custody, actual chat/input hooks and source5069 continuity/reset/presentation fixes. Foundation1434 own-data diagnostic projection and unknown signal level/origin rejection remain intact. Current qualification and failures are recorded separately in docs/integration-history/product-learning-current-20261003; no older cumulative source tree, generated report or zero-execution child run is accepted as this candidate.
+
+### Product Learning native producers — foundation slice
+
+Owner: native producer worker. Dependencies: exact runtime `0b4e79ae6`, current native Notes/Tasks authority and source-selector controls. Selectively recover source finala6 producer hunks without copying old screens. First qualify actual source-selection browser and canonical native task creation/link observations; then fix shared Notes close custody using source/current negative controls. Preserve original tests and document the overlap fixture's intentional custody change: the obsolete opening is released before awaiting the latest start, with an explicit no-premature-start control. Re-run native replica authority/receipt and current Notes revision controls. Commit a coherent reviewed slice for runtime qualification; remaining Notes/Tasks/Projects/Memory/Pages/Search/Feed/Meetings/Connections screen targets and actual observations continue in the same bounded producer branch.
+
+## Product Learning native domain producer recovery — 2026-10-03
+
+Owner: recent feature worker; dependency: current Product Learning runtime/adapters and foundation1434; lead owns ordered merge. Select only existing canonical Notes, Tasks/Projects, Memory, Pages, Search, Feed/Inbox, Meetings/Automations and Connections/Sources/Skills consumers from preserved finala6@35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5. Scope targets by their real workspace/panel/entity. Capture each original learning attempt before the native operation; publish content-free evidence only after matching native receipt/revision and required exact canonical readback, or actual trusted current view/iframe load. Unknown native availability, policy, entity, pending or rejected reads are not successful completion. Retain current Notes comment drafts/responsive/auxiliary controls, Connections request generations/workspace filters, Meetings pushed-state/lifecycle fences and personal-task import validation.
+
+Native Notes shared bridge custody serializes obsolete open/close across remount/StrictMode controllers while preserving issuer/actor/workspace/permission fences; ordinary close of one handle never globally revokes another verified handle. Task observers run only after accepted native CAS and canonical readback; observer errors cannot reverse durable saves. Task delegation requires durable session linkage before sending a prompt, exact saved task/session/prompt evidence and the original mounted workspace generation throughout. Disabled learning adds no observation-driven mutations or extra creation readback. Source picker selection intent waits for the actual App session source-changed event.
+
+Verification uses actual component callbacks with controlled native ports, real private task persistence/restart, native Notes custody/receipt controls, real production source-picker/Meeting/Automation/Feed browser surfaces, and retained current lifecycle/privacy regressions. Negative before-source controls are retained separately. Relevant package types/main/preload/renderer builds qualify delivery; physical microphone, host secrets, installed native interaction and full program acceptance remain separate. Original source branches remain unchanged.
+
+## Product Learning runtime integration graph — 2026-10-03
+
+1. pr_scout delivered final a6 contracts/core/persistence/analytics and hardened private diagnostics in1434; historical integration owns subsequent frozen5069 foundation deltas plus UI/runtime/catalogue/adapters/App/shell/settings/modal composition and all12 translation unions. recent_features owns selective existing native-domain producer target refs/committed observations without editing new adapter paths. Parent owns exact-head merges; every original source branch is retained.
+2. Apply bounded source hunks to today's App/AppShell/MainContentPanel and native UI registries; preserve current route/panel/scope/credential/consent owners rather than replace cumulative old files. Bind welcome/session events to the canonical event processor and correlate actual accepted/final responses.
+3. Qualify source catalogue/target/geometry/modal/engine policies and negative scope/lease/evidence cases; use the real source browser/native harness with isolated throwaway profile and real authenticated Notes journal. Browser/native receipts must identify actual passing cases and failure history. Feature flag stays opt-in and absent capability must remain blocked.
+4. Compose independently qualified producer layer, exercise all actual user paths and current failure/recovery controls, then source-family close each of9new tips with exact per-layer source/final commit mapping. No foundational pure test, static render or private draft PR establishes full installed-native or production acceptance.
+## Product Learning renderer runtime recovery — 2026-10-03
+
+Owner: historical integration; foundation: PR1434 contracts/core/persistence/analytics. Source finala6 `35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5` includes the substantive A1/A2/A3/A8/A9 learning system patches; separately retain a7 isolated browser-test fix, a10 required real-browser reader checks and baseline1933748 native workflow. Recover runtime, catalogue, domain adapters, measured target registry/geometry/spotlight, explicit Settings enable/replay/reset and current App/session/modal bridges. The feature remains disabled by default. Preserve current panel/workspace/session binding, canonical native domain authority, real commit/event evidence, capability refusals and twelve locale unions. Merely mounting targets or optimistic callbacks cannot complete a durable/native step. No workflow supplies new grants, credentials or provider authority.
+
+The earlier163-test runtime checkpoint and its missing-producer type errors are retained as historical evidence, not current acceptance. The current clean recovery composes the authenticated native-domain producer layer, canonical personal-task CAS/read-back, Notes per-handle custody, actual chat/input hooks and source5069 continuity/reset/presentation fixes. Foundation1434 own-data diagnostic projection and unknown signal level/origin rejection remain intact. Current qualification and failures are recorded separately in docs/integration-history/product-learning-current-20261003; no older cumulative source tree, generated report or zero-execution child run is accepted as this candidate.
+
+
+## Route recovery integration graph —2026-10-03
+
+Integration lead owns current isolatedmain plus source1420 merge, comparative1412/1417 semantic review, meaningful raw-query delta and current route/native resource consumers. Review source → execute canonical entity/source callback adverse controls → real mounted NavigationProvider/history/readiness/ABA Chromium → native query isolated callbacks → type/build/12locale gates → immutable source/qualification receipt → separate PR/merge/readback. Source execution archives remain on preserved original branches. Source1417 distinct SkillInfo watch/draft repair is delivered separately after this source owner is stable. Workers independently own ChatScroll, ProductLearning and Windows runtime.
+
+### Product Learning native domain reconciliation (2026-10-03)
+
+Voice learning observes the existing consent-gated capture and actual draft insertion only, preserving original attempt identity, single STOP, current input and explicit clipboard delivery. The native microphone prompt opens and closes the captured handoff; refusal, cancellation, no speech and clipboard-only completion emit no insertion evidence. Fresh bounded DOM evidence: 16 cases, 0 failures, 61 assertions; Notes/Meetings/current consumer callbacks: 21 cases, 0 failures, 80 assertions. These use private controlled ports, not OS microphone/clipboard acceptance. Preserve current Notes workspace generation and PageView digest-scoped error ownership. Owner: recent_features; dependencies: current main/native authority and the clean Product runtime (b001 lineage); final current-main reconciliation and scoped native task tests remain pending.
+
+
+### Current native caller integration for Product Learning (2026-10-03)
+
+The native-domain producer preserves main 4fec686d ownership: actor/workspace-scoped task cache, per-call transport fencing, current Feed caller verification, Inbox queue/detail controls, Notes committed generations, and consent-gated bounded Voice audio frames. Task delegation captures the existing task authority lifetime before session creation, commits the task/session link by native CAS with exact canonical read-back before sending the ordinary prompt, and refuses continuation after a same-workspace actor switch. A native quick-create ACK updates the cache; teaching evidence requires matching canonical read-back, and a denied read does not turn an accepted write into a retryable failure. Stable delegation errors from source5069 are translated in all12 locales and keep private native/RPC messages out of the UI. Owner: recent_features; framework/adapter composition: historical_sweep. Evidence: task/source callback controls27/0/473 plus actual private-store scope-transition child2/0; operational old3342 task callback negative0/4 then recovered callbacks7/0/37. Fresh combined framework types, browser, and build qualify final publication.
+## Skill and history recovery integration (2026-10-03)
+
+Owner: root branch integration. Dependency: route recovery #1446, current Windows bootstrap #1443 and fixture repair #1445. Adapt the remaining #1417 skill catalog/draft behavior and history switch failure signal onto current owner/revision guards; preserve newer main. Verify actual mounted callbacks and real native inputs with controlled backends, restore old source in isolated fixture bundles as negative controls, then run Electron types and renderer build. Browser fixtures compile with Node before launch. The Skill lane uses Node's test runner because the Bun host repeatedly stalled while closing Chromium; all behavior assertions and failure history are retained. Commit and merge a separate PR while retaining both source and integration branches.
+
+### Golden Tasks recovery verification — 2026-10-03
+
+Owner: recent_features; integration/remote merge owner: root. Dependencies: current native PersonalTaskPersistStore, personalTasks RPC CAS and caller-scope lifetime, current Tasks import validation and shell sidebar ownership. Implement a confirmed merge-import seam in the existing shared renderer store; connect the actual file callback and an opt-in responsive layout in the current Tasks consumer. Verify real native disk restart, denied/forged/partial ACK/readback, mid-await edits and actor/workspace ABA; exercise actual TasksPage DOM with compiled production stylesheet for pending file reads, persistence refusal, focus return, outside focus, narrow navigation and resize. Retain failures and exact source fingerprints; reconcile fresh main and current Product Learning producers before final delivery. Original source branches are preserved.
+
+
+
+## Infrastructure recovery graph — 2026-10-03
+
+1. Scout owns exact1448 installer/manager, RPC transport/types plus current Workspace License guard, serial runner/package test entry, and the reproduced extension-worker custom output-path repair. Depend on merged1443 Windows bootstrap and1450 MCP privacy; preserve all current namespaces, pins and native authority. Lead owns1448 navigation/resources/native executable harness and original branch disposition.
+2. Run actual pinned Bun local frozen CLI install and launcher replay after temporary/local dependency removal, ancestor manifest/lock isolation, same-version reload repair, malformed/linked/oversized receipt refusal, invalid partial pre-flip admission and current pointer mismatch. Retain current Windows/binary/Python/npm controls.
+3. Exercise actual WebSocket response revoke/expiry/replacement/native generation plus Workspace guard composition, zero serialization on denial. Exercise serial runner child mock/profile isolation, byte-complete output/failed prerequisites/continued failure history and actual repository inventory. Run relevant types, full default/custom main worker build and preload; preserve failed source comparison history.
+4. Freeze source and environment/hash receipt, reconcile freshmain, commit/push separate PR and attach. Parent owns merge. Native Windows/installed Electron/physical capture/provider acceptance is separate; no whole1448 or full branch-audit completion claim.
+
+### Golden voice append recovery — 2026-10-03
+
+Owner: recent_features; dependency: current native Voice capture and Product Learning consumer. Append the completed transcript to the latest draft without adding a second separator when that draft already ends in whitespace. Preserve the explicit trailing-space delivery preference, current capture identity, consent and single-STOP ownership. Verification uses the actual VoiceDictationControl DOM with deferred STOP and all six space/newline/tab × delivery-preference combinations; existing consent, cancellation, clipboard and stale-attempt controls remain required.
+## Portable resources follow-up (2026-10-03)
+
+Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.
+
+
+## UI-001 route integration graph —2026-10-03
+Root recovers actual public parser/current route leaves and93 remaining source paths; scout14 infrastructure already1455 and native resources1452. Historical worker proves1457 against the real mounted35-case history route. Qualify isolated native/PG UTF8/current compatibility/Swift consumers, retain failed fixtures, reconcile latestmain then repeat affected build/types. Commit revision/consumer/log receipts and merge one separate UI PR preserving every source branch.
+
+- Tasks import follow-up ownership review: register the background operation before opening transport; import invalidates background epochs, drains already dispatched same-owner work, then reads current canonical storage. Cover a held earlier refresh and held earlier write ACK with real native persistence (baseline8pass/2fail; recovered10pass/0fail). Refresh/sync cannot publish or issue a later call across that import lifetime.
+
+### Recover native overlay recording custody (2026-10-03)
+
+- Owner: recent_features; integrate source A7 `eeddeb5bd0af59b93fd121c10b8a7a52956ff0b7` in a separate `codex/` branch after merged Product Learning. Preserve all original branches.
+- Carry recording ID only for authenticated overlay stop/cancel, validate command/ID and managed native client, retain current private child sender/phase/owner checks.
+- Bind queued START/permission commands to the current native recording and capture generation; clear on completion/cancel/failure; cancellation wins. Preserve current learning observation and native consent/PTT paths.
+- Verify actual two-composer/browser owner pipeline with before/after negative proof, delayed START and grant, idle/foreign/retired packets, current 25 dictation regressions, native command/owner and authority/protocol suites, full Electron types and main/preload bundles. Retain failure history; controlled browser/native ports do not establish OS microphone or clipboard acceptance. Parent owns remote merge; delivery receipt remains separate from implementation.
+
+## Legacy MCP SSE recovery graph (2026-10-03)
+
+1. Scout adapts only the missing #1436 pool negotiation onto current #1450 deadlines/privacy and #1455 infrastructure, preserving all modern recovery/config/source ownership. Root reviews and merges a separate qualified PR; source branches stay intact.
+2. Exercise real SDK legacy-SSE servers with HTTP initialize 400/404/405, header retention, mapped tool call and unchanged-config resync. Exercise actual HTTP401/403/429/500/503, health/discovery405 and both-failure credential scrub; preserve current transient retry and no-replay controls.
+3. Exercise deterministic lifecycle cancellation during HTTP cleanup and SSE initialization, shrinking connection budget, expired-budget cleanup. Run all current MCP controls and shared/Electron types with pinned Bun and exact owned workspace dependency bindings. Retain initial failed fixture/cancellation observations, source regression proof and exact revision receipt.
+4. Publish/attach the bounded PR, record exact remote head and parent merge readback, then continue local-source health/migration, host Bash and performance residuals. No whole137-path completion claim.
+
+
+## Workspace shortcut popover integration —2026-10-03
+Owner root. Depends on existing rail-links/Popover/Select and current product-tour hooks. Import1447 selectively, repair viewport constraints, qualify nine actual DOM cases and old25px negative, run full Electron types; commit proof and merge a separate PR preserving source branch. Completed local checks in docs/integration-history/workspace-link-popover-20261003.
+
+
+## Pocket recovery integration graph —2026-10-03
+1. Root freezes1453 source26441 and reviews all179 paths; recent_features reconciles only existing execution/native-memory/OMP consumers.
+2. Root proves native FIFO refusal, auth/store/flow/startup/probe and absent-vault registered callbacks; worker proves held preparation/child and sealed queue failures. Preserve failed probes and exact blobs.
+3. Reconcile latest main through normal merge, retain RuntimeMap observers and current Tasks/A7 changes, recheck owned execution/type/build controls. Publish and merge one separate PR, preserve original branches. Public rollout and native release have separate prerequisites.
+
+## Passive Runtime Map integration graph — 2026-10-03
+
+1. Owner historical_sweep audits all 127 exact PR #1444 source paths, retains current native/account/Product Learning authorities and recovers passive producers, canonical ingress, scoped reader and actual retained ChatPage consumers. Root reviews and merges a separate PR; original branches remain intact.
+2. Reproduce source getter/prototype disclosure and delayed child misbinding, repair own-descriptor projection and actual dispatch custody, preserve invalid-before-blob-write and native observer quota controls. Retain source and intermediate failure history.
+3. Exercise current privacy/authority/producer/failure controls, hardcoded IPC inventories, all 12 actual locale catalogues, real Chromium runtime UI/performance and retained App/Notes flows, and the actual pinned OMP SDK using a network-free controlled model. Distinguish hook-port race proof from normal native SDK execution and installed/native acceptance.
+4. Preserve append-only shared documentation when reconciling current main, publish/attach the exact qualified PR and record remote head. Receipts name disjoint later merges and the precise revision of each gate instead of claiming full release acceptance.
+
+## Local source recovery integration graph (2026-10-03)
+
+1. Scout recovers storage/local-state + actual SourceManager/BaseAgent consumers, source credential admission and public MCP builder semantics; preserve current builtin catalog, managed stdio account secrets, live MCP definitions and explicit source ownership. Adapt exact old Windows default migration through bounded same-descriptor file admission, not the original path-check/path-write race.
+2. Exercise actual local variable resolution, repeated agent context, explicit empty/disabled/missing folders, metadata arrival order, stale-type auth and current managed credential guards. Exercise real temporary-file obsolete migration/idempotence/custom prefs/old-path evidence, link/hardlink/FIFO/oversize/content replacement refusal and fresh exclusive default seeding. Keep native Windows migration controls explicitly skipped off Windows.
+3. Run source/current SourceManager and adjacent builder/builtin credential controls, shared/Electron types; freeze source and bounded receipt. Compare actual old consumers to prove the gap, retain failure history, reconcile current main and publish/attach separate PR for lead review/merge.
+4. Continue #1436 host Bash lifetime and collection/knowledge performance actual consumers and function-level ledger; no whole original branch acceptance from this slice.
+
+## Host Bash recovery graph (2026-10-03)
+
+1. Scout selectively restores the #1436 host environment/context/process slice onto current main. Preserve exact managed18.4.12/policy, current source/MCP credential context, canonical env blocklist, sandbox and cwd controls. Keep all original branches and the parent's dirty checkout untouched.
+2. Exercise the actual factory → context → core registry → Bash with an owned managed CLI, under Bun and native Node, and the same no-provider negative. Exercise fresh per-call values, blocked credentials, Windows case folding, startup-file/function refusal, private provider failure/deadline/no-late-spawn and actual inherited pipes after root exit. Retain the original native Windows fixtures and add actual configured shell/cmd/descendant lifetime controls with explicit off-platform skips.
+3. Compare baseline/source against exact startup canary and orphan-pipe probes; retain failed fixture history and bounded cleanup of fixture-owned PIDs. Run focused/adjacent session runtime and tool-definition controls plus shared/Electron typechecks. Freeze exact implementation and receipt, commit/push/attach a separate PR; root owns remote merge.
+4. Continue Knowledge availability cache and the exhaustive137-path function/caller disposition. Historical owns the independent AppShell collection persistence/grouping gap. Native Windows execution and full installed release acceptance remain separately stated.
+
+
+## Collection preference recovery — 2026-10-03
+
+1. Historical worker: reproduce reset and grouping failures on the exact current AppShell consumer with real native JSON storage (original 0/9).
+2. Restore current preference loads and sole canonical grouping; add per-store load/edit/event/ABA ownership and dispatched-write ordering, including previous-workspace projection isolation.
+3. Qualify native persistence and current related callbacks (33/0/80), mounted exact AppShell callbacks in Chromium, and current Electron types after main reconciliation. Preserve original failure history and all source branches; lead reviews and merges the separate PR. Installed/native platform acceptance remains separate.
+
+### Golden task date validation recovery — 2026-10-03
+
+Owner recent_features: restore exact ISO calendar-day validation in the current parser; verify impossible-date refusal and valid leap-day persistence through the actual TaskDetail form. Keep before-fix unit/browser failures, full personal-task regression checks and both timezone offsets; qualify current core types and production component/CSS bundle. Parent owns ordered PR merge; source branches stay preserved. Broader Golden/native release acceptance remains separate.
+
+Collection recovery qualification completed on current bb047:33/0/80 native-storage/current callbacks,5/0 mounted Chromium and full Electron Node22 types0. Prior test-type diagnostics were corrected by precise literal fixture types; all source failures remain in the archived evidence.
+
+
+### Golden per-task form draft recovery — 2026-10-04
+
+Owner recent_features; depends on current Tasks1456, strict date1470 and Product1454. Preserve old source and modern Things UI. Exercise actual two-task link/kind/tag retention, submitted-field-only clearing, actor/workspace ABA, unmount and stale pre-render button denial, plus all retained task import/responsive cases and current native commit controls. Retain the before-fix lost draft and fixture failure history; qualify current Electron types with own workspace dependency resolution, record exact source/log hashes, reconcile all current docs without deletions, publish separate PR for parent review/merge.

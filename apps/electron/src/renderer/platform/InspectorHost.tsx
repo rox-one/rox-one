@@ -15,7 +15,7 @@
  * Mounted by `WorkspaceSurfaceHost` / `UnifiedShellLayout` when the
  * workbench rollout or harness inspector flag is enabled.
  */
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useState } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -38,7 +38,6 @@ import {
   inspectorVisibleAtom,
   type InspectorSectionId,
 } from '@/atoms/unified-shell'
-import { selectedConnectionAtom } from '@/atoms/connections'
 import { isConnectionsNavigation, useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
@@ -46,7 +45,7 @@ import { getSessionTitle } from '@/utils/session'
 import { getAppLocale } from '@rox/shared/i18n'
 import { APP_NAV_DESTINATIONS } from '@/components/app-shell/nav-destinations'
 import { CENTER_MIN_WIDTH, PANEL_MIN_WIDTH } from '@/components/app-shell/panel-constants'
-import { projectConnectionInspector } from './connection-inspector-model'
+import { ConnectionInfoSection } from './ConnectionInfoSection'
 import { SessionInspectorBody } from '@/components/session-inspector/SessionInspectorBody'
 import { InspectorBrowserPane } from '@/components/session-inspector/InspectorBrowserPane'
 import { InspectorTerminal } from '@/components/session-inspector/InspectorTerminal'
@@ -57,6 +56,8 @@ import {
   normalizeInspectorSection,
   resolveInspectorToggle,
 } from './inspector-model'
+import { InspectorResizeSash } from './InspectorResizeSash'
+import { inspectorResizeLimit } from './inspector-resize'
 import { CHROME_DENSITY } from './chrome-density'
 import { countSessionFiles, resolveInspectorLayout } from './inspector-layout'
 
@@ -92,101 +93,6 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
   )
 }
 
-function ConnectionInfoSection() {
-  const { t } = useTranslation()
-  const selected = useAtomValue(selectedConnectionAtom)
-  const [confirmRotate, setConfirmRotate] = useState(false)
-  const [consumers, setConsumers] = useState<Array<{ consumerId: string; status: string }>>([])
-  const [testLogin, setTestLogin] = useState('')
-  if (!selected) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
-        <Info className="h-6 w-6 text-muted-foreground/40" />
-        <span className="text-[13px] font-medium text-foreground/80">
-          {t('inspector.empty.connections.title')}
-        </span>
-        <span className="text-[12px] leading-relaxed text-muted-foreground/60">
-          {t('inspector.empty.connections.body')}
-        </span>
-      </div>
-    )
-  }
-  const fields = projectConnectionInspector(selected)
-  const workspaceId = selected.workspaceId
-  return (
-    <div className="flex min-h-0 flex-1 flex-col divide-y divide-foreground/5 overflow-y-auto">
-      <InfoRow label={t('inspector.field.provider')} value={fields.provider} />
-      <InfoRow label={t('inspector.field.storageMode')} value={fields.storageMode} mono />
-      <InfoRow label={t('inspector.field.credentialRef')} value={fields.credentialRef} mono />
-      <InfoRow label={t('inspector.field.scopes')} value={fields.scopes} mono />
-      {testLogin ? <InfoRow label={t('inspector.field.testLogin')} value={testLogin} mono /> : null}
-      {consumers.length > 0 ? (
-        <InfoRow
-          label={t('inspector.field.consumers')}
-          value={consumers.map((row) => `${row.consumerId}: ${row.status}`).join(', ')}
-        />
-      ) : null}
-      <div className="flex flex-wrap gap-1 px-2.5 py-1.5">
-        <button
-          type="button"
-          className="rounded border px-2 py-1 text-[12px]"
-          onClick={async () => {
-            const testConnection = window.electronAPI?.workgraph?.testConnection
-            if (!workspaceId || typeof testConnection !== 'function') return
-            const result = await testConnection({ workspaceId, connectionId: selected.id })
-            setTestLogin(result.login)
-          }}
-        >
-          {t('connections.test')}
-        </button>
-        <button
-          type="button"
-          className="rounded border px-2 py-1 text-[12px]"
-          onClick={async () => {
-            const repairConnection = window.electronAPI?.workgraph?.repairConnection
-            if (!workspaceId || typeof repairConnection !== 'function') return
-            const result = await repairConnection({ workspaceId, connectionId: selected.id })
-            setConsumers(result.consumers)
-          }}
-        >
-          {t('connections.repair')}
-        </button>
-        {confirmRotate ? (
-          <>
-            <button
-              type="button"
-              className="rounded border px-2 py-1 text-[12px]"
-              onClick={async () => {
-                const rotateConnection = window.electronAPI?.workgraph?.rotateConnection
-                if (!workspaceId || typeof rotateConnection !== 'function') return
-                const result = await rotateConnection({ workspaceId, connectionId: selected.id })
-                setConsumers(result.consumers)
-                setConfirmRotate(false)
-              }}
-            >
-              {t('connections.rotateConfirm')}
-            </button>
-            <button
-              type="button"
-              className="rounded border px-2 py-1 text-[12px]"
-              onClick={() => setConfirmRotate(false)}
-            >
-              {t('connections.rotateCancel')}
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            className="rounded border px-2 py-1 text-[12px]"
-            onClick={() => setConfirmRotate(true)}
-          >
-            {t('connections.rotate')}
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
 
 function InfoSection() {
   const { t } = useTranslation()
@@ -276,7 +182,8 @@ export function InspectorHost() {
   const [panelWidth, setPanelWidth] = useAtom(inspectorPanelWidthAtom)
   // The bottom dock owns the terminal (one entry point: the top-bar button).
   const setBottomTerminalOpen = useSetAtom(bottomTerminalOpenAtom)
-  const widthDrag = useRef<{ startX: number; startW: number } | null>(null)
+  const [resizePreview, setResizePreview] = useState<number | null>(null)
+  const controlsId = useId()
   const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const route = useAtomValue(focusedPanelRouteAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
@@ -369,7 +276,7 @@ export function InspectorHost() {
     fileCount,
     terminalOpen,
     availableWidth,
-    storedWidth: panelWidth,
+    storedWidth: resizePreview ?? panelWidth,
     minWidth: INSPECTOR_MIN_WIDTH,
     maxWidth: INSPECTOR_MAX_WIDTH,
     viewportCap: Math.floor(typeof window !== 'undefined' ? window.innerWidth * 0.72 : INSPECTOR_MAX_WIDTH),
@@ -461,37 +368,18 @@ export function InspectorHost() {
               : 'relative',
           )}
           style={layout.overlay ? { width: layout.width, right: INSPECTOR_RAIL_WIDTH } : { width: layout.width }}
+          id={controlsId}
           data-inspector-panel={layout.overlay ? 'overlay' : 'docked'}
         >
-          <div
-            className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize hover:bg-foreground/15"
-            onPointerDown={(event) => {
-              event.preventDefault()
-              widthDrag.current = { startX: event.clientX, startW: layout.width }
-              const move = (e: PointerEvent) => {
-                const drag = widthDrag.current
-                if (!drag) return
-                const viewportCap = Math.max(
-                  INSPECTOR_MIN_WIDTH,
-                  Math.floor(window.innerWidth * 0.72),
-                )
-                const next = Math.min(
-                  INSPECTOR_MAX_WIDTH,
-                  viewportCap,
-                  Math.max(INSPECTOR_MIN_WIDTH, drag.startW + (drag.startX - e.clientX)),
-                )
-                setPanelWidth(next)
-              }
-              const up = () => {
-                widthDrag.current = null
-                window.removeEventListener('pointermove', move)
-                window.removeEventListener('pointerup', up)
-                window.removeEventListener('pointercancel', up)
-              }
-              window.addEventListener('pointermove', move)
-              window.addEventListener('pointerup', up)
-              window.addEventListener('pointercancel', up)
-            }}
+          <InspectorResizeSash
+            width={layout.width}
+            viewportWidth={typeof window !== 'undefined' ? window.innerWidth : INSPECTOR_MAX_WIDTH}
+            maxWidth={inspectorResizeLimit(typeof window !== 'undefined' ? window.innerWidth : INSPECTOR_MAX_WIDTH, availableWidth, layout.overlay)}
+            controlsId={controlsId}
+            active={panelShown}
+            onPreview={setResizePreview}
+            onCommit={width => { setPanelWidth(width); setResizePreview(null) }}
+            onCancel={() => setResizePreview(null)}
           />
           <div className="rox-shell-divider-b flex h-8 shrink-0 items-center justify-between gap-2 pl-2.5 pr-1.5">
             <span className="chrome-label truncate font-medium tracking-tight">{t(titleKey)}</span>

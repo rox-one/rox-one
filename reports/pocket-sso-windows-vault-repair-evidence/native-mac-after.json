@@ -1,0 +1,56 @@
+{
+  "receipts": [
+    {
+      "phase": "write",
+      "platform": "darwin",
+      "electron": "39.2.7",
+      "encryptionAvailable": true,
+      "backend": "Keychain",
+      "stage": "complete",
+      "passed": true,
+      "code": null,
+      "fsync": [
+        {
+          "access": "readonly",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        },
+        {
+          "access": "writable",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        }
+      ]
+    },
+    {
+      "phase": "read",
+      "platform": "darwin",
+      "electron": "39.2.7",
+      "encryptionAvailable": true,
+      "backend": "Keychain",
+      "stage": "complete",
+      "passed": true,
+      "code": null,
+      "fsync": [
+        {
+          "access": "readonly",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        },
+        {
+          "access": "writable",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        }
+      ]
+    }
+  ],
+  "platform": "darwin",
+  "nativeStoreRestartPassed": true,
+  "failure": null,
+  "scope": "Actual OS encryption and store restart; no OAuth, provider or GUI acceptance."
+}

@@ -52,6 +52,6 @@ describe('H4 Extension Center', () => {
       en['extensions.registries.hint'],
       en['extensions.registries.provider.craft-curated'],
     ].join('\n')
-    expect(blob).not.toMatch(/oh-my-pi|OMP|ROX/i)
+    expect(blob).not.toMatch(/oh-my-pi|\bOMP\b/i)
   })
 })

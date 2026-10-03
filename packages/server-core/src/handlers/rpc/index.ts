@@ -23,6 +23,7 @@ import { registerOAuthHandlers } from './oauth'
 import { registerResourcesHandlers } from './resources'
 import { registerOnboardingHandlers } from './onboarding'
 import { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
+import { registerRuntimeTraceHandlers } from './runtime-trace'
 import { registerSessionForeignImportHandlers } from './session-foreign-import'
 import { registerNotesHandlers, cleanupNotesWatchForClient } from './notes'
 import { registerNativeDataHandlers } from './native-data.ts'
@@ -108,6 +109,7 @@ export function registerCoreRpcHandlers(
   registerOnboardingHandlers(server, deps)
   registerResourcesHandlers(server, deps)
   registerSessionsHandlers(server, deps)
+  registerRuntimeTraceHandlers(server, deps)
   registerSessionForeignImportHandlers(server, deps)
   if (serverCtx) registerServerHandlers(server, deps, serverCtx)
   registerSettingsHandlers(server, deps)

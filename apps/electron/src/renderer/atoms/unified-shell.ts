@@ -79,8 +79,8 @@ function boundedNumberStorage(min: number, max: number, fallback: number) {
       const target = window
       const onStorage = (event: StorageEvent) => {
         if (event.storageArea !== storage || (event.key !== key && event.key !== null)) return
-        // Read the event snapshot: the backing store may have advanced again.
-        callback(event.key === null ? fallback : parse(event.newValue))
+        // A queued event may describe an older write. Publish the current canonical value.
+        callback(this.getItem(key, fallback))
       }
       target.addEventListener('storage', onStorage)
       return () => target.removeEventListener('storage', onStorage)

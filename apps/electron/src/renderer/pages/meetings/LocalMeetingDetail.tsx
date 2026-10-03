@@ -18,6 +18,7 @@ import { createMeetingWorkspaceTask, linkMeetingTaskAfterCommit, MeetingTaskBack
 import { workspaceProjectOptions, workspaceWorkFailure, type WorkspaceProjectOption, type WorkspaceWorkErrorCode } from '@/lib/workspace-work-client'
 import type { PersonalTask } from '@rox/core/tasks/personal'
 import type { WorkspaceWorkSnapshot } from '@rox/shared/workspace-work'
+import { useConfirmedTaskConversion } from '@/hooks/useConfirmedTaskConversion'
 import {
   DECISIONS_NS,
   loadDecisions,
@@ -37,6 +38,7 @@ import {
 } from '@/lib/meetings/recorder'
 import { formatRecClock } from '@/components/meetings/MeetingRecordingIndicator'
 import { MEETING_SOURCE_SEEK_SESSION_KEY } from '../../../shared/meetings-local'
+import { MEETING_PROFILE_IDS, type MeetingProfileId } from '@rox/shared/meeting-agents/browser'
 import type { LocalAsrEngine, LocalMeeting, LocalMeetingAction, LocalMeetingTaskRef, LocalTranscript, LocalTranscriptSegmentPatch } from '../../../shared/meetings-local'
 import {
   activeSegmentIndex,
@@ -48,6 +50,30 @@ import {
 } from './local-meetings-model'
 
 export type DetailTab = 'overview' | 'recording' | 'transcript' | 'decisions' | 'actions' | 'documents'
+
+export function MeetingActionToTask({ action, meeting, workspaceId, onChanged }: {
+  action: LocalMeetingAction; meeting: LocalMeeting; workspaceId: string | null; onChanged: (meeting: LocalMeeting) => void
+}) {
+  const { t } = useTranslation()
+  const api = meetingsApi()
+  const conversion = useConfirmedTaskConversion({
+    sourceKey: JSON.stringify([workspaceId, meeting.id, action.id]), source: action, workspaceId,
+    input: { title: action.text, notes: t('meetings.local.taskNotes', { title: meeting.title }) },
+    onConfirmed: async (task, current) => {
+      if (!api) return false
+      const fresh = await api.get(meeting.id)
+      if (!current() || !fresh || fresh.workspaceId !== meeting.workspaceId) return false
+      const original = fresh.actions.find(item => item.id === action.id)
+      if (!original || original.text !== action.text || original.taskId && original.taskId !== task.id) return false
+      if (original.taskId === task.id) { onChanged(fresh); return true }
+      const result = await api.saveAction(meeting.id, { actionId: action.id, patch: { taskId: task.id } })
+      if (!current() || !result.ok || result.value.actions.find(item => item.id === action.id)?.taskId !== task.id) return false
+      onChanged(result.value)
+      return true
+    },
+  })
+  return <><Button data-testid="meeting-action-to-task" disabled={conversion.busy} onClick={() => { void conversion.convert() }}>{t('meetings.local.toTask')}</Button>{conversion.failed ? <span role="alert" data-testid="meeting-task-error" className="text-xs text-destructive">{t('tasks.toastCreateFailed')}</span> : null}</>
+}
 
 const input = 'h-7 min-w-0 rounded-[6px] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
@@ -97,6 +123,8 @@ export function LocalMeetingDetail(props: {
   currentWorkspaceId.current = workspaceId
   const locale = i18n.resolvedLanguage || i18n.language
   const language: 'ru' | 'en' = locale.startsWith('ru') ? 'ru' : 'en'
+  const [recipeSlash, setRecipeSlash] = useState('')
+  useEffect(() => { setRecipeSlash('') }, [m.id])
   const recordingThis = rec.meetingId === m.id && rec.status !== 'idle'
   const [, tick] = useState(0)
   useEffect(() => {
@@ -326,7 +354,7 @@ export function LocalMeetingDetail(props: {
     if (!api) return
     onBanner(null)
     try {
-      await startMeetingExtraction(api, m, language)
+      await startMeetingExtraction(api, m, language, false, undefined, recipeSlash.trim() || undefined)
       const fresh = await api.get(m.id)
       if (fresh) onChanged(fresh)
     } catch { onBanner('summary-failed') }
@@ -462,6 +490,28 @@ export function LocalMeetingDetail(props: {
         </>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-2 text-[12px] text-text-secondary">
+          {t('meetings.local.analysisProfile')}
+          <select
+            data-testid="meeting-analysis-profile"
+            aria-label={t('meetings.local.analysisProfile')}
+            value={m.recipeId ?? 'standup'}
+            disabled={extractionBusy(m)}
+            onChange={(event) => void update({ recipeId: event.target.value as MeetingProfileId })}
+            className="h-7 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px]"
+          >
+            {MEETING_PROFILE_IDS.map(id => <option key={id} value={id}>{t(`meetings.local.profile.${id}`)}</option>)}
+          </select>
+        </label>
+        <input
+          data-testid="meeting-analysis-slash"
+          aria-label={t('meetings.skillCommand')}
+          placeholder={t('meetings.skillCommand')}
+          value={recipeSlash}
+          disabled={extractionBusy(m)}
+          onChange={(event) => setRecipeSlash(event.target.value)}
+          className="h-7 min-w-0 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px]"
+        />
         {m.summary?.generated ? <span className="text-[11px] text-text-muted">{t('meetings.local.generatedLabel')}</span> : null}
         <Button
           data-testid="meeting-generate-summary"

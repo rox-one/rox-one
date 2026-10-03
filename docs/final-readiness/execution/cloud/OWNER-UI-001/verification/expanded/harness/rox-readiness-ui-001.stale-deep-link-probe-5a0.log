@@ -1,0 +1,97 @@
+{
+  "sourceRevision": "5a0b769b894aed2ed09ba8bcbe01a41cf8149d76",
+  "fixture": "unchanged navigation fixture and actual production NavigationProvider; explicit mocked IPC",
+  "before": {
+    "snapshot": {
+      "nav": {
+        "navigator": "home",
+        "details": null
+      },
+      "panels": [
+        {
+          "id": "panel-1-1791040915969",
+          "route": "home",
+          "proportion": 1,
+          "panelType": "other",
+          "laneId": "main"
+        }
+      ],
+      "ws": "ws-a",
+      "slug": "a"
+    },
+    "retainedListeners": 4,
+    "creations": []
+  },
+  "afterOldCallback": {
+    "snapshot": {
+      "nav": {
+        "navigator": "home",
+        "details": null
+      },
+      "panels": [
+        {
+          "id": "panel-1-1791040915969",
+          "route": "home",
+          "proportion": 1,
+          "panelType": "other",
+          "laneId": "main"
+        }
+      ],
+      "ws": "ws-a",
+      "slug": "a"
+    },
+    "creations": [
+      {
+        "workspaceId": "ws-b"
+      }
+    ]
+  },
+  "afterReply": {
+    "snapshot": {
+      "nav": {
+        "navigator": "sessions",
+        "filter": {
+          "kind": "allSessions"
+        },
+        "details": {
+          "type": "session",
+          "sessionId": "stale-b-session"
+        }
+      },
+      "panels": [
+        {
+          "id": "panel-1-1791040915969",
+          "route": "allSessions/session/stale-b-session",
+          "proportion": 1,
+          "panelType": "session",
+          "laneId": "main"
+        }
+      ],
+      "ws": "ws-a",
+      "slug": "a"
+    },
+    "actions": {
+      "commands": [],
+      "inputs": [],
+      "messages": [
+        {
+          "id": "stale-b-session",
+          "input": "STALE-WORKSPACE-B"
+        }
+      ]
+    }
+  }
+}
+node:child_process:283
+    validateObject(options, 'options');
+    ^
+
+TypeError [ERR_INVALID_ARG_TYPE]: The "options" argument must be of type object. Received type string ('utf8')
+    at normalizeExecFileArgs (node:child_process:283:5)
+    at execFileSync (node:child_process:968:30)
+    at file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.stale-deep-link-probe-5a0.mjs:33:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  code: 'ERR_INVALID_ARG_TYPE'
+}
+
+Node.js v26.8.2

@@ -3,9 +3,9 @@
 Этот файл читают кодовые агенты, работающие в этом репозитории (форк `craft-ai-agents/craft-agents-oss`), и привязан к нашей runtime-интеграции с OMP.
 
 ## Стек и воркфлоу
-- Менеджер: **Bun** (`bun install`, isolated linker).
+- Менеджер: **Bun** (`bun install`, hoisted linker из `bunfig.toml`).
 - Тесты: `bun test <path>`; typecheck: `bun run tsc --noEmit` внутри пакета.
-- i18n: ВСЕ user-facing строки — через `t()` из react-i18next; переводы в `packages/shared/src/i18n/locales/*.json` (10 локалей: de, en, es, fr, hu, ja, pl, ru, zh-Hans, zh-Hant; ru — дефолт UI-язык, `fallbackLng: ['ru','en']`). Новый ключ → все 10 файлов, ключи ASCII-сортировкой; паритет проверяется `bun test packages/shared/src/i18n`.
+- i18n: ВСЕ user-facing строки — через `t()` из react-i18next; переводы в `packages/shared/src/i18n/locales/*.json` (12 локалей: ar, de, en, es, fr, hu, ja, ko, pl, ru, zh-Hans, zh-Hant; ru — дефолт UI-язык, `fallbackLng: ['ru','en']`). Новый ключ → все 12 файлов, ключи ASCII-сортировкой; паритет проверяется `bun test packages/shared/src/i18n`.
 - Русские плюральные ключи: `_one/_few/_many`; `_other` добавляем по польской конвенции.
 
 ## OMP-бэкенд (провайдер `omp`)
@@ -14,7 +14,7 @@
 - Реализация: `packages/shared/src/agent/omp-agent.ts` (OmpAgent extends BaseAgent).
 - Протокол: `docs/omp-rpc-notes.md` (**обязательно к прочтению перед изменениями транспорта** — там критичный факт про обязательные `extension_ui_response` и shape `set_model`).
 - Интеграционный статус: `docs/omp-integration-gap.md` — **v2 закрыт** (G1–G4: source proxies, thinking stream, branching, skills sync); v1-ограничения ниже сняты.
-- Подключение дефолта: `storage.ts#seedDefaultLlmConnection` создаёт `rox-kimi` (providerType `'omp'`, authType `'none'`, defaultModel `rox/standard`, публичный каталог `rox/explore|standard|max|vision|fast`) — OMP получает auth через сохранённые ROX credentials и настроенный source profile, с отдельным managed profile для публичного ROX-каталога. `spawn_session` без `model` на ROX-родителе уходит в `rox/fast`.
+- Подключение дефолта: `storage.ts#seedDefaultLlmConnection` создаёт подключение Rox (providerType `'omp'`, authType `'none'`, defaultModel `rox/r1-max`). Единственная встроенная модель в публичном выборе — Rox R1 Max; модели отдельно подключённых провайдеров сохраняются. OMP получает auth через сохранённые ROX credentials и настроенный source profile, с отдельным managed profile для публичного ROX-каталога. `spawn_session` без `model` на ROX-родителе использует `rox/r1-max`.
 - Permission mapping: craft `allow-all` ⇄ `--approval-mode yolo` (spawn-time, флип режима = респавн); `ask/safe` — диалоги `extension_ui_request`-времени проксируются в craft-пермишны.
 
 ### ROX-инструменты внутри OMP (host tools)

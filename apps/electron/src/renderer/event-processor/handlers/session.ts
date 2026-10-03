@@ -142,6 +142,7 @@ export function handleError(
     id: generateMessageId(),
     role: 'error',
     content: event.error,
+    errorCode: event.errorCode,
     timestamp: event.timestamp ?? Date.now(),
   }
 
@@ -725,6 +726,7 @@ export function handleProjectIdChanged(
       session: {
         ...session,
         projectId: event.projectId ?? undefined,
+        projectIds: event.projectIds ?? (event.projectId ? [event.projectId] : []),
       },
       streaming,
     },

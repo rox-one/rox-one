@@ -29,6 +29,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'sessions':
       return navState.details !== null
     case 'settings':
+    case 'unavailable':
       return true
     case 'sources':
     case 'skills':
@@ -38,6 +39,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'notes':
       return navState.details !== null
     case 'pages':
+      // A failed address owns a content surface, including compact mode.
       return true
     case 'memory':
     case 'connections':

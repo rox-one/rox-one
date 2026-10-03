@@ -141,6 +141,7 @@ export interface ErrorEvent {
   type: 'error'
   sessionId: string
   error: string
+  errorCode?: string
   code?: string
   title?: string
   details?: string
@@ -184,6 +185,7 @@ export interface ProjectIdChangedEvent {
   type: 'project_id_changed'
   sessionId: string
   projectId: string | null
+  projectIds?: string[]
 }
 
 /**

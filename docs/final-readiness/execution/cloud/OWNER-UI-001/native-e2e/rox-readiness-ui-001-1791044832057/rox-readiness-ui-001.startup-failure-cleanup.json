@@ -1,0 +1,54 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "inputRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "attempt": "rox-readiness-ui-001-1791044832057",
+  "recordedAtUtc": "2026-10-03T16:40:35.086881+00:00",
+  "classification": "native startup gate timeout before first window; no functional route assertion completed",
+  "statusPreserved": "failed",
+  "error": "electronApplication.firstWindow: Timeout 30000ms exceeded while waiting for event \"window\"",
+  "originalTimeoutMs": 30000,
+  "stage": "boot-native-product",
+  "observedStages": [
+    {
+      "name": "boot-native-product",
+      "at": "2026-10-03T16:28:51.737Z"
+    }
+  ],
+  "rendererErrorEvents": [],
+  "screenshotsCount": 0,
+  "runtimeObservation": {
+    "firstRecordedBootStage": "2026-10-03T16:28:51.737Z",
+    "firstTimestampedNativeMainInitializationLog": "2026-10-03T16:29:24.906Z",
+    "secondsAfterBootStage": 33.169,
+    "qualification": "Main initialization is timestamped33.169s after boot-stage entry. The exact start of firstWindow wait is not separately timestamped; this is timing context, not proof of timeout causality."
+  },
+  "context": "Lead reports local full CI was running concurrently and completed PASS8e afterward. Resource contention is plausible; this evidence does not establish causality or dismiss the failed startup gate.",
+  "sameSourceAndHarnessAsPassingRetry": {
+    "inputRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+    "buildSourceManifestEqual": true,
+    "harnessFiveEqual": true,
+    "passingRetryAttempt": "rox-readiness-ui-001-1791045258553"
+  },
+  "originalEvidenceSha256": {
+    "result": "382d490f091336e1b784b5d1bc972ddc2840effa662bcccae2257513e61a806b",
+    "nativeLog": "9f6a4509551686c3010ed8e5f273a52aad10369b674e236812455b8ac2e2db65",
+    "harness": "7a01f1a61d76ddde66614733fbb394224f0997c729331d7c1a4a341b31411265"
+  },
+  "cleanup": {
+    "attempt": "rox-readiness-ui-001-1791044832057",
+    "profile": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-x15wBH",
+    "pidFile": "work/rox-readiness-ui-001-x15wBH/electron.pid",
+    "recordedPid": 56352,
+    "recordedPidProcessReadback": "",
+    "exactProfileProcessMatches": [],
+    "recordedPidAbsent": true,
+    "exactProfileProcessesAbsent": true,
+    "signalsSentByThisWorker": []
+  },
+  "failureHistoryPreserved": true,
+  "originalFilesModified": false,
+  "fullDoDClosed": false
+}

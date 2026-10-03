@@ -24,12 +24,16 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
   const authorities: unknown[] = []
   const workspaces: unknown[] = []
   const configurations: unknown[] = []
+  const runtimeConfigurations: unknown[] = []
+  const workspaceConfigurations: unknown[] = []
   const setups: unknown[] = []
   const errors: unknown[] = []
+  const taskScopes: unknown[] = []
   const api: Record<string, unknown> = {
     getWindowWorkspace: async () => { calls.push('workspace'); return 'ws-a' },
     getOrgIdentity: async () => { calls.push('identity'); return nativeIdentity },
     getStartupRuntimeSummary: async () => { calls.push('summary'); return summary },
+    getRoxCloudState: async () => { calls.push('cloud-account'); return { required: true, connected: true, account: { user: { id: 'cloud-account-a' } } } },
     getSetupNeeds: async () => { calls.push('setup'); return { isFullyConfigured: false } },
     listLlmConnectionsWithStatus: async () => { calls.push('host-accounts'); return [{ slug: 'existing', isDefault: true, providerType: 'omp' }] },
     ...overrides,
@@ -42,10 +46,13 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
     probeWithRetry: (read: () => Promise<unknown>, options?: object) => probeWithRetry(read, { delaysMs: [0], deadlineMs: 3000, ...options }),
     waitForTransportConnected: async () => { calls.push('transport-wait'); return { status: 'connected' } },
     decideStartupAppState, isStartupAuthorityDenial, ensureRoxRuntimeDefault,
+    setPersonalTaskScope: (value: unknown) => taskScopes.push(value),
     setCallerAuthority: (value: unknown) => authorities.push(value),
     setWindowWorkspaceId: (value: unknown) => workspaces.push(value),
     setSetupNeeds: (value: unknown) => setups.push(value), setLlmConnections: (value: unknown) => configurations.push(value),
     setDefaultLlmConnectionSlug: (value: unknown) => configurations.push(value),
+    setRuntimeSummary: (value: unknown) => runtimeConfigurations.push(value),
+    setWorkspaceDefaultLlmConnection: (value: unknown) => workspaceConfigurations.push(value),
     setAppState: (value: string) => states.push(value), setStartupBootstrapError: (value: unknown) => errors.push(value),
     resolveDefaultConnectionSlug: (connections: Array<{ slug: string }>) => connections[0]?.slug,
     // Even a stale profile fixture cannot act as startup identity.
@@ -54,7 +61,7 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
     ...environmentOverrides,
   }
   const actual = new Function(...Object.keys(environment), 'let cancelled = false; ' + code + '; return { run: actual, cancel: () => { cancelled = true } }')(...Object.values(environment))
-  return { ...actual, calls, states, authorities, workspaces, configurations, setups, errors }
+  return { ...actual, calls, states, authorities, workspaces, configurations, runtimeConfigurations, workspaceConfigurations, setups, errors, taskScopes }
 }
 
 describe('actual App startup caller boundary', () => {
@@ -63,6 +70,7 @@ describe('actual App startup caller boundary', () => {
     const h = harness({ getOrgIdentity: async () => { identityCalls++; throw Object.assign(new Error('denied'), { code: 'AUTH_FAILED' }) } })
     await h.run()
     expect(identityCalls).toBe(1)
+    expect(h.taskScopes).toEqual([null])
     expect(h.states).toEqual(['transport-unavailable'])
     expect(h.authorities).toEqual([null])
     expect(h.workspaces).toEqual([])
@@ -82,6 +90,8 @@ describe('actual App startup caller boundary', () => {
     const h = harness()
     await h.run()
     expect(h.states).toEqual(['ready'])
+    expect(h.runtimeConfigurations).toEqual([summary])
+    expect(h.workspaceConfigurations).toEqual(['omp'])
     expect(h.authorities).toEqual(['native'])
     expect(h.workspaces).toEqual(['ws-a'])
     expect(h.configurations).toEqual([[], 'omp'])
@@ -91,12 +101,12 @@ describe('actual App startup caller boundary', () => {
     expect(h.calls).not.toContain('setup')
   })
 
-  it('a verified local identity without a display name still requires Welcome', async () => {
+  it('a ready Pocket account allows local startup without a local display name', async () => {
     const h = harness({ getOrgIdentity: async () => ({ ...nativeIdentity, authority: 'local', name: '' }) })
     await h.run()
-    expect(h.states).toEqual(['onboarding'])
+    expect(h.states).toEqual(['ready'])
     expect(h.authorities).toEqual(['local'])
-    expect(h.calls).not.toContain('host-accounts')
+    expect(h.calls).toContain('host-accounts')
     expect(h.calls).not.toContain('summary')
   })
 
@@ -149,23 +159,23 @@ describe('actual App startup caller boundary', () => {
     expect(h.configurations).toEqual([])
   })
 
-  it('same-actor cleared display name uses current Welcome routing, not cached completion', async () => {
+  it('clearing a local display name cannot revoke a ready central account', async () => {
     let changed = false
     const h = harness({ getOrgIdentity: async () => ({ ...nativeIdentity, name: changed ? '' : nativeIdentity.name }) }, {
       ensureRoxRuntimeDefault: async () => { changed = true; return { status: 'already-default', slug: 'omp' } },
     })
     await h.run()
-    expect(h.states).toEqual(['onboarding'])
-    expect(h.configurations).toEqual([])
+    expect(h.states).toEqual(['ready'])
+    expect(h.configurations).toEqual([[], 'omp'])
   })
 
-  it('a newly completed same-actor profile cannot skip runtime preparation during initial Welcome', async () => {
+  it('a central account still requires runtime preparation when the local profile changes', async () => {
     let reads = 0
     const h = harness({ getOrgIdentity: async () => ({ ...nativeIdentity, name: ++reads === 1 ? '' : nativeIdentity.name }) })
     await h.run()
-    expect(h.states).toEqual(['transport-unavailable'])
-    expect(h.authorities).toEqual([null])
-    expect(h.calls).not.toContain('summary')
+    expect(h.states).toEqual(['ready'])
+    expect(h.authorities).toEqual(['native'])
+    expect(h.calls).toContain('summary')
   })
 
   it('local setup information cannot publish after an actor switch during runtime setup', async () => {
@@ -203,4 +213,25 @@ describe('actual App startup caller boundary', () => {
     expect(h.authorities).toEqual([null])
     expect(h.workspaces).toEqual(['web-workspace'])
   })
+  it('an upgraded named local profile cannot bypass the mandatory cloud gate', async () => {
+    const h = harness({ getOrgIdentity: async () => ({ ...nativeIdentity, authority: 'local' }), getRoxCloudState: async () => ({ required: true, connected: false, account: null }) })
+    await h.run()
+    expect(h.states).toEqual(['onboarding'])
+    expect(h.setups.at(-1)).toMatchObject({ needsRoxCloud: true, shouldShowOnboardingOnLaunch: true })
+    expect(h.calls).not.toContain('host-accounts')
+  })
+  it('a failed cloud read is unavailable even with a named local profile and existing workspace', async () => {
+    const h = harness({ getRoxCloudState: async () => { throw new Error('offline') } })
+    await h.run()
+    expect(h.states).toEqual(['transport-unavailable'])
+    expect(h.calls).not.toContain('summary')
+  })
+  it('changing the cloud account during runtime setup requires fresh startup readback', async () => {
+    let reads = 0
+    const h = harness({ getRoxCloudState: async () => ({ required: true, connected: true, account: { user: { id: ++reads === 1 ? 'account-a' : 'account-b' } } }) })
+    await h.run()
+    expect(h.states).toEqual(['transport-unavailable'])
+    expect(h.configurations).toEqual([])
+  })
+
 })

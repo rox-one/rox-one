@@ -126,7 +126,12 @@ export function parseDateExpression(input: string, now: number): number | null {
     }
   }
   m = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(text)
-  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime()
+  if (m) {
+    const year = Number(m[1]), month = Number(m[2]) - 1, day = Number(m[3])
+    const date = new Date(year, month, day)
+    return date.getFullYear() === year && date.getMonth() === month && date.getDate() === day
+      ? date.getTime() : null
+  }
   m = /^(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?$/u.exec(text)
   if (m) return resolveDayMonth(Number(m[1]), Number(m[2]) - 1, m[3] ? normYear(Number(m[3])) : null, today)
   m = /^(\d{1,2})\s+(\S+)(?:\s+(\d{4}))?$/u.exec(text)

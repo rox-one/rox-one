@@ -104,7 +104,7 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.voice.CHANGED]: [payload: VoicePrefs]
   [RPC_CHANNELS.voice.JOB]: [payload: VoiceJob]
   [RPC_CHANNELS.voice.OVERLAY]: [payload: OverlayState]
-  [RPC_CHANNELS.voice.HOTKEY]: [payload: { command: 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel' }]
+  [RPC_CHANNELS.voice.HOTKEY]: [payload: import('../voice/hotkey-types').VoiceHotkeyPayload]
   [RPC_CHANNELS.environment.CHANGED]: [payload: EnvironmentPrefs]
 
   // Theme broadcasts (global)

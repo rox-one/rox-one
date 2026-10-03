@@ -5,7 +5,7 @@
  * These are necessary for reliable CI builds on Windows.
  */
 
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import { existsSync, mkdirSync, rmSync, readdirSync, statSync, cpSync } from 'fs';
 import { join } from 'path';
 import type { BuildConfig } from './common';
@@ -115,54 +115,9 @@ async function safeRmDir(dir: string, maxRetries = 5): Promise<void> {
  * Build main process with OAuth defines (Windows-specific inline build)
  */
 function buildMainProcess(config: BuildConfig): void {
-  const { rootDir } = config;
-
-  console.log('  Building main process...');
-
-  const mainArgs = [
-    'apps/electron/src/main/index.ts',
-    '--bundle',
-    '--platform=node',
-    '--format=cjs',
-    '--outfile=apps/electron/dist/main.cjs',
-    '--external:electron',
-    // SDK 0.3.x is pure ESM and calls createRequire(import.meta.url) at module init.
-    // esbuild's CJS bundling leaves import.meta.url undefined for inlined ESM, crashing
-    // the packaged app on load (ERR_INVALID_ARG_VALUE at sdk.mjs). Externalize so Node
-    // loads it natively as ESM; electron-builder.yml copies the SDK core into
-    // app/node_modules/@anthropic-ai/claude-agent-sdk (asar:false) so the require resolves.
-    // Must stay in sync with package.json build:main, electron-dev.ts, electron-build-main.ts.
-    '--external:@anthropic-ai/claude-agent-sdk',
-    // Replace grammY's bundled polyfills (node-fetch@2 + abort-controller@3)
-    // with native Node globals. Keeps parity with electron-dev.ts,
-    // electron-build-main.ts, and apps/electron/package.json build:main.
-    '--alias:node-fetch=./apps/electron/src/main/shims/node-fetch.cjs',
-    '--alias:abort-controller=./apps/electron/src/main/shims/abort-controller.cjs',
-  ];
-
-  // Add OAuth defines if env vars are set
-  const oauthDefines = [
-    ['GOOGLE_OAUTH_CLIENT_ID', process.env.GOOGLE_OAUTH_CLIENT_ID],
-    ['GOOGLE_OAUTH_CLIENT_SECRET', process.env.GOOGLE_OAUTH_CLIENT_SECRET],
-    ['SLACK_OAUTH_CLIENT_ID', process.env.SLACK_OAUTH_CLIENT_ID],
-    ['SLACK_OAUTH_CLIENT_SECRET', process.env.SLACK_OAUTH_CLIENT_SECRET],
-    ['MICROSOFT_OAUTH_CLIENT_ID', process.env.MICROSOFT_OAUTH_CLIENT_ID],
-  ];
-
-  for (const [key, value] of oauthDefines) {
-    if (value) {
-      mainArgs.push(`--define:process.env.${key}="'${value}'"`);
-    }
-  }
-
-  // Use node to run esbuild directly
-  run(`node ./node_modules/esbuild/bin/esbuild ${mainArgs.join(' ')}`, rootDir);
-
-  console.log('  Building extension-host worker...');
-  run(
-    'node ./node_modules/esbuild/bin/esbuild apps/electron/src/main/extension-host/worker.ts --bundle --platform=node --format=cjs --outfile=apps/electron/dist/extension-host-worker.cjs --external:electron',
-    rootDir,
-  );
+  // Canonical script includes ONNX/sharp externals, SQLite/polyfill shims, and
+  // worker builds. Avoid another drifting manual esbuild command line.
+  execFileSync('bun', ['run', 'scripts/electron-build-main.ts'], { cwd: config.rootDir, stdio: 'inherit', windowsHide: true });
 }
 
 /**
@@ -189,6 +144,8 @@ export async function buildElectronAppWindows(config: BuildConfig): Promise<void
     'node ./node_modules/esbuild/bin/esbuild apps/electron/src/preload/bootstrap.ts --bundle --platform=node --format=cjs --outfile=apps/electron/dist/bootstrap-preload.cjs --external:electron --alias:@anthropic-ai/claude-agent-sdk=apps/electron/src/renderer/shims/claude-agent-sdk-stub.ts',
     rootDir
   );
+
+  run('node ./node_modules/esbuild/bin/esbuild apps/electron/src/preload/voice-overlay.ts --bundle --platform=node --format=cjs --outfile=apps/electron/dist/voice-overlay-preload.cjs --external:electron', rootDir);
 
   // Build renderer - invoke vite directly via node
   console.log('  Building renderer...');

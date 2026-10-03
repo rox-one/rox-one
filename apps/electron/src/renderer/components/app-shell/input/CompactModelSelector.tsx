@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
+
 import { useTranslation } from 'react-i18next'
 import {
   AlertCircle,
@@ -42,6 +44,7 @@ import { derivePickerMode } from './picker-mode'
 import {
   formatTokenCount,
   getConnectionModelsForPicker,
+  getRuntimeModelsForPicker,
   getConnectionPickerMeta,
   groupConnectionsByProvider,
   stripPiPrefixForDisplay,
@@ -84,21 +87,39 @@ export function CompactModelSelector({
   contextStatus,
 }: CompactModelSelectorProps) {
   const { t } = useTranslation()
+  const modelTarget = useTourTarget('composer.model', { variant: 'compact' })
+  const tourSignals = useTourSignals()
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
   const [open, setOpen] = React.useState(false)
+  const pickerObservation = React.useRef<{ observation: TourObservation | null; emitted: boolean } | null>(null)
+  React.useEffect(() => {
+    const pending = pickerObservation.current
+    if (!pending) return
+    if (open && !pending.emitted) {
+      // The native Drawer child has committed and registered its real layer before this parent effect.
+      tourSignals.handoff(pending.observation, true)
+      pending.emitted = true
+      tourSignals.emit(pending.observation, 'model-picker.opened', 'observed', 'ui-observation')
+    } else if (!open) {
+      pickerObservation.current = null
+      if (pending.emitted) tourSignals.handoff(pending.observation, false)
+    }
+  }, [open, tourSignals])
   const [expandedConnection, setExpandedConnection] = React.useState<string | null>(null)
 
   const appShellCtx = useOptionalAppShellContext()
   const llmConnections = appShellCtx?.llmConnections ?? []
+  const runtimeSummary = appShellCtx?.sessionModelCatalog === undefined ? appShellCtx?.runtimeSummary : appShellCtx.sessionModelCatalog
+  const hasPublicRuntime = !!appShellCtx?.runtimeSummary || appShellCtx?.sessionModelCatalog !== undefined
   const workspaceDefaultConnection = appShellCtx?.workspaceDefaultLlmConnection
 
   const toggleVision = useModelVisionToggle()
 
-  const effectiveConnection = resolveEffectiveConnectionSlug(
+  const effectiveConnection = appShellCtx?.sessionModelCatalog?.slug ?? resolveEffectiveConnectionSlug(
     currentConnection,
     workspaceDefaultConnection,
     llmConnections,
-  )
+  ) ?? runtimeSummary?.slug
 
   const effectiveConnectionDetails = React.useMemo(() => {
     if (!effectiveConnection) return null
@@ -122,9 +143,9 @@ export function CompactModelSelector({
 
   const availableModels = React.useMemo(() => {
     if (connectionUnavailable) return []
-    if (!effectiveConnectionDetails) return ANTHROPIC_MODELS
+    if (!effectiveConnectionDetails) return runtimeSummary ? getRuntimeModelsForPicker(runtimeSummary, currentConnection) : hasPublicRuntime ? [] : ANTHROPIC_MODELS
     return getConnectionModelsForPicker(effectiveConnectionDetails)
-  }, [effectiveConnectionDetails, connectionUnavailable])
+  }, [effectiveConnectionDetails, runtimeSummary, hasPublicRuntime, currentConnection, connectionUnavailable])
 
   const currentModelDisplayName = React.useMemo(() => {
     const modelToDisplay = connectionDefaultModel ?? currentModel
@@ -179,9 +200,13 @@ export function CompactModelSelector({
   )
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <Drawer open={open} onOpenChange={next => {
+      if (next) pickerObservation.current = { observation: tourSignals.capture(), emitted: false }
+      setOpen(next)
+    }}>
       <DrawerTrigger asChild>
         <button
+          ref={modelTarget}
           type="button"
           aria-label={connectionUnavailable
             ? t('common.unavailable')

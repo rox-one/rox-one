@@ -1,0 +1,8 @@
+version: 0.11.8
+files:
+  - url: Rox-x64.exe
+    sha512: C+VOhzRhYWs5ogss5WI/kQRKAVZJRYE7NXBu53HTds+vbRUE/vbENL+VdBvtwAZBpB+6e18xIeNCvl3m+ytBZg==
+    size: 283584315
+path: Rox-x64.exe
+sha512: C+VOhzRhYWs5ogss5WI/kQRKAVZJRYE7NXBu53HTds+vbRUE/vbENL+VdBvtwAZBpB+6e18xIeNCvl3m+ytBZg==
+releaseDate: '2026-10-03T20:27:40.512Z'

@@ -61,14 +61,14 @@ export interface MemoryProposalCost {
 }
 
 export interface MemoryProposal {
+  /** Personal native authority owner; absent proposals remain host-private. */
+  owner?: { issuer: string; subject: string }
   id: string
   text: string
   kind: MemoryProposalKind
   status: MemoryProposalStatus
   sessionId: string
   workspaceId: string
-  /** Server-authenticated author; unowned proposals remain local legacy data. */
-  owner?: { issuer: string; subject: string }
   projectId?: string
   sourceMessageIds: string[]
   provenance: {

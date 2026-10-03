@@ -1,0 +1,105 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/capabilities/packs.test.ts:
+(pass) capability packs > groups the requested tools into the six packs [0.64ms]
+(pass) capability packs > does not auto-enable high-risk tools [0.11ms]
+(pass) install/uninstall idempotency > installs once and reports already-installed on repeat [14.24ms]
+(pass) install/uninstall idempotency > skips high-risk tools unless allowHighRisk is set [0.39ms]
+(pass) install/uninstall idempotency > uninstall is idempotent [2.62ms]
+(pass) provenance and selection fixtures > builds a provenance manifest with pins and enabled flags [0.48ms]
+(pass) provenance and selection fixtures > selects the smallest installed code-intelligence tool for a repository task [0.20ms]
+(pass) provenance and selection fixtures > does not select high-risk research tools for a URL task [0.11ms]
+(pass) AGENTS.md heuristics and offline report > writes when-to-activate, expected output, permission, and unusual-use [0.53ms]
+(pass) AGENTS.md heuristics and offline report > emits an offline capability report with checksums [0.20ms]
+(pass) provider-aware tokenizer > matches the shared heuristic for Rox/OpenAI and reconciles actual usage [0.24ms]
+
+packages/core/src/runtime-trace/projector.test.ts:
+(pass) runtime projection > validates canonical typed fixture; rejects malformed nested payload and schema [1.68ms]
+(pass) runtime projection > batch, incremental, reversed delivery and duplicate delivery match [15.74ms]
+(pass) runtime projection > workspace/root identities are scoped; source duplicate uses stable emitter identity [1.10ms]
+(pass) runtime projection > only explicit causal/data/parent edges; no temporal arrows [1.30ms]
+(pass) runtime projection > terminal cancellation sticks after late output; retry keeps previous attempt [1.06ms]
+(pass) runtime projection > missing parent and delivery gap explicit; gaps repair on catch-up [0.58ms]
+(pass) runtime projection > delta updates retain topology and authoritative complete replaces reasoning [0.58ms]
+(pass) runtime projection > different clock domains and negative elapsed are never exact duration [0.38ms]
+(pass) runtime projection > immutable previous state retains normalized entities and event pages [0.15ms]
+(pass) usage > dedup final replaces interim; aggregate is separate; unknown optional caches stay unknown [0.79ms]
+(pass) usage > unknown values remain unknown; missing usage does not become zero [0.13ms]
+(pass) legacy reconstruction > persisted transcript exposes only messages/tools and incomplete coverage [11.39ms]
+(pass) terminal stdout and stderr chunks accumulate independently; exact chunk tokens are not aggregate tokens [0.49ms]
+(pass) provider reasoning and a summary never become one fabricated chain [0.27ms]
+(pass) evidence references to old streamed output resolve to its correlated operation node [0.38ms]
+(pass) parentage and causal edges survive correlated lifecycle completion [1.76ms]
+(pass) out-of-order earlier phase invalidates geometry token without text delta relayout [0.43ms]
+(pass) explicit cumulative output snapshots replace prior text without duplication [0.60ms]
+(pass) attempt lifecycle uses explicit attempt identity; retries retain failed attempt [0.39ms]
+
+apps/electron/src/renderer/lib/capability-catalog.test.ts:
+(pass) capability catalog identity, status and filters > keeps same-name sources and skill scopes separate; missing usage stays unknown [0.88ms]
+(pass) capability catalog identity, status and filters > never turns saved/anonymous credentials into a tested connection [0.11ms]
+(pass) capability catalog identity, status and filters > intersects semantic category, transport and status without losing unknown resources [0.36ms]
+(pass) capability catalog identity, status and filters > uses verified bundled membership for skill aliases without categorizing display-name lookalikes [0.15ms]
+(pass) capability catalog identity, status and filters > retains recorded prompt hits without inventing assigned agents or runtime usage [0.06ms]
+(pass) capability catalog identity, status and filters > expired model credentials and disabled native tools do not appear connected [0.07ms]
+(pass) capability catalog identity, status and filters > model credentials remain distinct from MCP transport and source identities [0.11ms]
+(pass) catalog store mutations with actual readback > enables a real bundled pack and reads the installed files back [5.12ms]
+(pass) catalog store mutations with actual readback > reports partial install and mismatched readback without claiming success [0.37ms]
+(pass) catalog store mutations with actual readback > source config write/readback preserves failed/revoked state and workspace identity [6.11ms]
+
+apps/electron/src/renderer/lib/starter-prompts.test.ts:
+(pass) starter prompts are local draft preparation > offers general prompts and only available, enabled skill/source dependencies [1.17ms]
+(pass) starter prompts are local draft preparation > preserves every draft character and only appends a prompt once [0.12ms]
+(pass) starter prompts are local draft preparation > suppresses starter advice during streaming, permissions, loading and old conversations [0.12ms]
+(pass) starter prompts are local draft preparation > uses shared dismissal history scoped by workspace/session and skips shadowed skills [0.27ms]
+
+packages/server-core/src/sessions/runtime-trace/journal.test.ts:
+(pass) portable runtime trace journal > orders concurrent delivery, reloads, and resumes a bounded cursor without duplicating rows [80.16ms]
+(pass) portable runtime trace journal > marks torn/corrupt history partial and recovers before appending [12.11ms]
+(pass) portable runtime trace journal > caps blobs, uses opaque hashes and rejects traversal or tampering [73.47ms]
+(pass) portable runtime trace journal > never writes a journal or reads a blob through a symlink [14.49ms]
+(pass) runtime trace privacy > scrubs registered credentials and nested/inline credentials before storage while retaining measurements [1.03ms]
+
+packages/server-core/src/sessions/runtime-trace/service.test.ts:
+(pass) runtime session collector > records real tool inputs/results and usage, restores cursor and preserves parent child identity [131.72ms]
+(pass) runtime session collector > keeps late tool output in its originating run after a new prompt starts [23.72ms]
+(pass) runtime session collector > deduplicates native child observations and maps nested native identities [6.55ms]
+(pass) runtime session collector > stores redacted large content and authorizes references by actual session/run ownership [16.31ms]
+(pass) runtime session collector > rejects malformed payloads before writing and prevents metadata from replacing collector scope [16.31ms]
+(pass) runtime session collector > uses a fresh native generation for repeated child ids and preserves executor retry attempts [36.57ms]
+
+packages/server-core/src/sessions/runtime-trace/conductor.test.ts:
+[task] "actual-task" permission mode: allow-all
+(pass) canonical Conductor observations > publishes actual DAG dependencies and durable verification verdict, separately from node completion [97.75ms]
+
+apps/electron/src/renderer/lib/__tests__/runtime-trace-navigation.test.ts:
+(pass) runtime/chat navigation preserves mounted optimistic identity [0.52ms]
+(pass) tool identity resolves without message text heuristics [0.10ms]
+
+apps/electron/src/renderer/event-processor/__tests__/runtime-trace-ingress.test.ts:
+(pass) canonical trace ingress > snapshot response merges events received while snapshot was in flight [3.33ms]
+(pass) canonical trace ingress > single live source runs with map closed, duplicate dedup and gap catch-up [3.26ms]
+(pass) canonical trace ingress > wrong workspace or malformed event never reaches another session [0.19ms]
+(pass) canonical trace ingress > deletion invalidates outstanding snapshot generation [0.94ms]
+(pass) canonical trace ingress > concurrent readers share RPC and do not attach live subscriptions [2.22ms]
+(pass) canonical trace ingress > untrusted RPC response fails closed and retains explicit partial coverage [0.86ms]
+(pass) authorized child alias merges live root race and receives future rooted events [1.59ms]
+(pass) deleted identity can reload without waiting for stale reader, no active run resurrection [1.25ms]
+
+apps/electron/src/renderer/components/runtime-map/__tests__/stable-layout.test.ts:
+(pass) runtime canvas real-observation layout > places actual workers below parent and gives each assignment a lane [13.03ms]
+(pass) runtime canvas real-observation layout > token deltas update one correlated node without changing topology or old positions [0.89ms]
+(pass) runtime canvas real-observation layout > true time uses source timestamps only within a single known clock domain [2.23ms]
+(pass) runtime canvas real-observation layout > bounds rendered cards while retaining navigation to every page [10.52ms]
+(pass) runtime canvas real-observation layout > filters observations without turning terminal output into actions [1.63ms]
+
+apps/electron/src/renderer/components/runtime-map/__tests__/runtime-ui-model.test.ts:
+(pass) honest runtime measurements and inert content > never turns a missing token/time measurement into zero [0.10ms]
+(pass) honest runtime measurements and inert content > context occupancy uses the particular input and model window [0.13ms]
+(pass) honest runtime measurements and inert content > removes active terminal controls and obvious credentials from every viewer/copy [0.27ms]
+(pass) map attention and independent split scope > manual inspection stops follow until explicit resume [0.21ms]
+(pass) map attention and independent split scope > keeps both 360px sides and never transfers widths between panels [0.07ms]
+
+ 76 pass
+ 0 fail
+ 279 expect() calls
+Ran 76 tests across 11 files. [1.83s]

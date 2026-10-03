@@ -60,6 +60,7 @@ export const ImportIcon = ({ className }: IconProps) => <DownloadCloud className
  * Used by both AppMenu and SettingsNavigator for consistent icons.
  */
 export const SETTINGS_ICONS: Record<SettingsSubpage, React.ComponentType<IconProps>> = {
+  learning: KnowledgeIcon,
   account: AccountIcon,
   privacy: PrivacySettingsIcon,
   runtime: RuntimeIcon,

@@ -3,17 +3,20 @@
  */
 import './memory-test-setup'
 import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'fs'
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync, existsSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RpcServer, HandlerFn, RequestContext } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { NativeAuthority } from '../../authority/native-authority'
 
 let workspaceRoot: string
 const configDir = process.env.CRAFT_CONFIG_DIR!
+let nativeFixture: { authority: NativeAuthority; credential: string } | undefined
 
 mock.module('@rox/shared/config', () => ({
+  resolveConfigDir: () => configDir,
   getWorkspaceByNameOrId: (id: string) =>
     id === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
   getWorkspaces: () => [{ id: 'ws1', name: 'ws1', rootPath: workspaceRoot }],
@@ -26,6 +29,30 @@ import { approveMemoryProposalDurably } from '../../memory/approve-memory-propos
 import { LessonStore } from '../../memory/LessonStore'
 import type { MemoryProposal } from '@rox/shared/memory/proposals'
 
+function nativeActor(label: string): NonNullable<RequestContext['principal']> {
+  if (!nativeFixture) {
+    const authority = new NativeAuthority({ stateDir: join(workspaceRoot, 'authority') })
+    const descriptor = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY')
+    let administrator: ReturnType<NativeAuthority['bootstrapLocalAdministrator']>
+    try {
+      Object.defineProperty(process.stdin, 'isTTY', { configurable: true, value: true })
+      administrator = authority.bootstrapLocalAdministrator('memory fixture operator')
+    } finally {
+      if (descriptor) Object.defineProperty(process.stdin, 'isTTY', descriptor)
+      else Reflect.deleteProperty(process.stdin, 'isTTY')
+    }
+    authority.registerWorkspace(administrator.credential, 'ws1', workspaceRoot)
+    nativeFixture = { authority, credential: administrator.credential }
+  }
+  const { authority, credential } = nativeFixture
+  const actor = authority.redeemEnrollment(authority.issueEnrollment(credential, label, Date.now() + 60000), label)
+  if (!actor) throw new Error('Native fixture enrollment failed')
+  authority.grantWorkspace(credential, actor.principal.subject, 'ws1', ['read', 'write'])
+  const principal = authority.authenticate(actor.credential)
+  if (!principal) throw new Error('Native fixture authentication failed')
+  return principal
+}
+
 function createHarness(context?: Partial<RequestContext>, sessionManager?: Partial<HandlerDeps['sessionManager']>, current?: () => boolean) {
   const handlers = new Map<string, HandlerFn>()
   const server: RpcServer = {
@@ -34,11 +61,12 @@ function createHarness(context?: Partial<RequestContext>, sessionManager?: Parti
     async invokeClient() { return undefined },
     hasClientCapability() { return false },
     findClientsWithCapability() { return [] },
-    ...(current ? { isRequestContextCurrent: current } : {}),
+    ...(current || context?.principal ? { isRequestContextCurrent: current ?? (() => true) } : {}),
   }
   const deps: HandlerDeps = {
     sessionManager: (sessionManager ?? {}) as HandlerDeps['sessionManager'],
     oauthFlowStore: {} as HandlerDeps['oauthFlowStore'],
+    ...(context?.principal && nativeFixture ? { nativeData: { authority: nativeFixture.authority } as HandlerDeps['nativeData'] } : {}),
     platform: {
       appRootPath: '/',
       resourcesPath: '/',
@@ -60,9 +88,13 @@ function createHarness(context?: Partial<RequestContext>, sessionManager?: Parti
 }
 
 beforeEach(() => {
-  workspaceRoot = mkdtempSync(join(tmpdir(), 'mem-prop-ws-'))
+  workspaceRoot = realpathSync(mkdtempSync(join(tmpdir(), 'mem-prop-ws-')))
+  nativeFixture = undefined
   rmSync(configDir, { recursive: true, force: true })
   mkdirSync(configDir, { recursive: true })
+  writeFileSync(join(configDir, 'config.json'), JSON.stringify({
+    workspaces: [{ id: 'ws1', name: 'ws1', rootPath: workspaceRoot, createdAt: 1 }], activeWorkspaceId: 'ws1',
+  }))
   mkdirSync(join(workspaceRoot, 'projects', 'rox'), { recursive: true })
   writeFileSync(join(workspaceRoot, 'projects', 'rox', 'config.json'), JSON.stringify({
     id: 'proj_rox',
@@ -158,18 +190,22 @@ describe('durable approval, ownership and recovery', () => {
   })
 
   it('rejects stale workspace bindings and hides another author’s proposals', async () => {
-    const owner = { issuer: 'test', subject: 'alice' }
+    const alice = nativeActor('alice')
+    const owner = { issuer: alice.issuer, subject: alice.subject }
     savedProposal(owner)
     const stale = createHarness({ workspaceId: 'foreign' })
     await expect(stale.invoke(RPC_CHANNELS.memory.LIST_PROPOSALS, 'ws1')).rejects.toThrow('Workspace access denied')
-    const principal = { issuer: 'test', subject: 'bob' } as RequestContext['principal']
+    const principal = nativeActor('bob')
     const other = createHarness({ workspaceId: 'ws1', principal })
     expect(await other.invoke(RPC_CHANNELS.memory.LIST_PROPOSALS, 'ws1')).toEqual([])
+    await expect(other.invoke(RPC_CHANNELS.memory.LIST_PROPOSALS, 'foreign')).rejects.toThrow('Workspace access denied')
     await expect(other.invoke(RPC_CHANNELS.memory.APPROVE_PROPOSAL, 'ws1', 'mp_durable', 'personal')).rejects.toThrow('owner access denied')
   })
 })
 
 afterEach(() => {
+  nativeFixture?.authority.close()
+  nativeFixture = undefined
   rmSync(workspaceRoot, { recursive: true, force: true })
 })
 
@@ -262,13 +298,14 @@ describe('memory proposal LLM extraction with regex fallback', () => {
     it(`rejects a foreign or missing canonical session before any ${native ? 'native' : 'local'} LLM call`, async () => {
       let calls = 0
       const context: Partial<RequestContext> = { workspaceId: 'ws1',
-        ...(native ? { principal: { issuer: 'test', subject: 'alice' } as RequestContext['principal'] } : {}) }
+        ...(native ? { principal: nativeActor('alice') } : {}) }
       const { invoke } = createHarness(context, {
         getSessions: () => [{ id: 'owned', workspaceId: 'ws1' }, { id: 'foreign', workspaceId: 'ws2' }] as ReturnType<HandlerDeps['sessionManager']['getSessions']>,
+        getSession: async id => ({ id, workspaceId: 'ws1', messages: input.messages }) as Awaited<ReturnType<HandlerDeps['sessionManager']['getSession']>>,
         querySessionLlm: async () => { calls++; return { text: '{"proposals":[]}' } },
       })
       for (const sessionId of ['foreign', 'missing']) {
-        await expect(invoke(RPC_CHANNELS.memory.EXTRACT_PROPOSALS, { ...input, sessionId })).rejects.toThrow('Memory session workspace access denied')
+        await expect(invoke(RPC_CHANNELS.memory.EXTRACT_PROPOSALS, { ...input, sessionId })).rejects.toThrow(native ? 'Session access denied' : 'Memory session workspace access denied')
       }
       expect(calls).toBe(0)
       expect(new MemoryProposalStore(join(workspaceRoot, 'memory')).list()).toHaveLength(0)

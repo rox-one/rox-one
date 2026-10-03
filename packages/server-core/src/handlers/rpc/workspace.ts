@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync, unlinkSync, readdirSync } from
 import { spawn } from 'node:child_process'
 import { homedir } from 'node:os'
 import { join, basename } from 'path'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   addWorkspace,
   createAndActivateLocalWorkspace,
@@ -21,6 +21,8 @@ import {
 import { perf } from '@rox/shared/utils'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { assertNativeMetadataRead, readNativeViews } from './native-sidebar-metadata'
+import { readNativeWorkspaceMetadata } from './native-workspace-registry'
 import { isValidWorkingDirectory, isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
 import { isSensitiveAgentCwd } from '@rox/shared/sessions'
 import type { RemoteServerConfig, Workspace } from '@rox/core/types'
@@ -97,9 +99,12 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
       }
       // The authenticated window observes its own workspace metadata; host
       // roster entries and remote connection credentials never enter this projection.
-      return sessionManager.getWorkspaces().filter(workspace => workspace.id === ctx.workspaceId
-        && deps.nativeData?.authority.authorize(ctx.principal!, workspace.id, 'read', workspace.rootPath))
-        .map(({ id, name, slug, createdAt, kind, orgId }) => ({ id, name, slug, rootPath: '', createdAt, kind, orgId }))
+      const workspace = readNativeWorkspaceMetadata(ctx.workspaceId)
+      if (!workspace || deps.nativeData.authority.resolveWorkspace(workspace.id)?.nativeRoot !== workspace.rootPath
+        || !deps.nativeData.authority.authorize(ctx.principal, workspace.id, 'read', workspace.rootPath)
+        || !server.isRequestContextCurrent?.(ctx, 'read')) throw new CodedError('FORBIDDEN', 'Workspace access denied')
+      const { id, name, slug, createdAt, kind, orgId } = workspace
+      return [{ id, name, slug, rootPath: '', createdAt, kind, orgId }]
     }
     const listed = rpcWorkspaceListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
@@ -528,13 +533,16 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
   // ============================================================
 
   // List views for a workspace (dynamic expression-based filters stored in views.json)
-  server.handle(RPC_CHANNELS.views.LIST, async (_ctx, workspaceId: string) => {
+  server.handle(RPC_CHANNELS.views.LIST, async (ctx, workspaceId: string) => {
+    const nativeWorkspace = assertNativeMetadataRead(ctx, deps, server, workspaceId)
+    if (nativeWorkspace) return readNativeViews(nativeWorkspace.rootPath)
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
     const { listViews } = await import('@rox/shared/views/storage')
+    assertNativeMetadataRead(ctx, deps, server, workspaceId, workspace.rootPath)
     return listViews(workspace.rootPath)
-  })
+  }, { nativeAction: 'read' })
 
   // Save views (replaces full array)
   server.handle(RPC_CHANNELS.views.SAVE, async (_ctx, workspaceId: string, views: import('@rox/shared/views').ViewConfig[]) => {

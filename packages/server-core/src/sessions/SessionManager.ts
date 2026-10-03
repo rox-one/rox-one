@@ -1,5 +1,8 @@
+import { getRoxAccountAuthority, peekRoxAccountAuthority, type RoxExecutionContext } from '@rox/shared/auth'
 import type { EventSink, RpcServer } from '@rox/server-core/transport'
 import { annotationPayloadRejection } from './annotation-payload'
+import { RuntimeTraceService } from './runtime-trace/service'
+import { known, unknown, type RuntimeContextBlock, type RuntimeTraceQuery, type RuntimeEventsQuery, type RuntimePayloadQuery, type RuntimeLaunch } from '@rox/core/runtime-trace'
 import { CLIENT_BROWSER_INVOKE } from '@rox/server-core/transport'
 import type { ISessionManager, IBrowserPaneManager, ExecutePromptAutomationInput } from '@rox/server-core/handlers'
 import { resolveWorkspaceAutomationContext } from '../automations/context-resolver'
@@ -42,7 +45,7 @@ import { getLlmConnection, getLlmConnections, getDefaultLlmConnection, getDefaul
 import type { MidStreamBehavior, LlmProviderType } from '@rox/shared/config'
 import { PrivilegedExecutionBroker } from '@rox/server-core/services'
 import { isValidWorkingDirectory } from '../utils/path-validation'
-import { MemoryService } from '../memory/MemoryService'
+import { MemoryService, type NativeMemoryContext } from '../memory/MemoryService'
 import { ensureFirstSessionWelcome } from './first-session-welcome'
 import { readProvenance, writeProvenance, type SessionProvenance } from '../memory/provenance'
 import { appendSkillUsage, extractSkillMentions } from '../memory/skill-usage'
@@ -99,6 +102,8 @@ import {
   type SessionHeader,
   type SessionPriority,
   pickSessionFields,
+  sessionProjectIds,
+  withProjectMembership,
   lexorankValidate,
   lexorankBetween,
   backfillRanks,
@@ -847,6 +852,7 @@ type CollectionMutableField =
   | 'priority'
   | 'dueDate'
   | 'projectId'
+  | 'projectIds'
   | 'labels'
   | 'kanbanColumn'
 
@@ -858,6 +864,9 @@ interface ManagedSession {
   isProcessing: boolean
   /** Exact persisted submission currently entering the runtime, excluding queued future prompts. */
   activeUserMessageId?: string
+  /** Exact memory blocks supplied to this backend instance, not guessed from its reply. */
+  runtimeMemoryBlocks?: RuntimeContextBlock[]
+  runtimeLaunchByMessageId?: Map<string, RuntimeLaunch>
   /** Set when user requests stop - allows event loop to drain before clearing isProcessing */
   stopRequested?: boolean
   lastMessageAt: number
@@ -923,8 +932,9 @@ interface ManagedSession {
   agentProfileSnapshot?: AgentProfileSnapshot
   // Labels applied to this session (additive tags, many-per-session)
   labels?: string[]
-  // Workspace-scoped project binding (undefined = unbound)
+  // Workspace-scoped membership metadata; only the primary is used for project defaults.
   projectId?: string
+  projectIds?: string[]
   // Parent session id — when set, this session is a subtask of the parent (undefined = top-level task)
   parentSessionId?: string
   // Kanban board column id ('todo' | 'in-progress' | 'done'); independent of sessionStatus
@@ -1002,6 +1012,9 @@ interface ManagedSession {
     options?: SendMessageOptions
     messageId?: string  // Pre-generated ID for matching with UI
     optimisticMessageId?: string  // Frontend's ID for reliable event matching
+    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext }
+    roxExecutionContext?: RoxExecutionContext // Captured host owner, retained through deferred replay.
+    roxOwnerResource?: string // Sealed exact-generation owner for crash/restart recovery.
   }>
   // Map of shellId -> command for killing background shells
   backgroundShellCommands: Map<string, string>
@@ -1301,7 +1314,121 @@ export function resolveMidStreamDeliveryOutcome(
 }
 
 export class SessionManager implements ISessionManager {
+  private roxExecutions = new Map<string, RoxExecutionContext>()
+  private roxResourceLeases = new Map<string, { context?: RoxExecutionContext; count: number }>()
+  private sameRoxExecution(a?: RoxExecutionContext, b?: RoxExecutionContext): boolean {
+    return a === b || !!(a && b && a.caller.issuer === b.caller.issuer && a.caller.subject === b.caller.subject && a.cloudAccountId === b.cloudAccountId && a.authGeneration === b.authGeneration)
+  }
+  private assertRoxSessionExecution(sessionId: string, context?: RoxExecutionContext): void {
+    if (!context) {
+      if (this.roxExecutions.has(sessionId)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+      return
+    }
+    getRoxAccountAuthority().assertCurrent(context)
+    if (!this.sameRoxExecution(this.roxExecutions.get(sessionId), context)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+  }
+  private selectRoxSessionExecution(sessionId: string, context: RoxExecutionContext, publish = true): void {
+    getRoxAccountAuthority().assertCurrent(context)
+    const previous = this.roxExecutions.get(sessionId)
+    if (previous && !this.sameRoxExecution(previous, context)) {
+      // Sessions are caller resources. Switching the same local caller's cloud
+      // account requires invalidation first; another live caller cannot adopt it.
+      if (previous.caller.issuer !== context.caller.issuer || previous.caller.subject !== context.caller.subject) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+      let oldCurrent = true
+      try { getRoxAccountAuthority().assertCurrent(previous) } catch { oldCurrent = false }
+      if (oldCurrent) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+      if (publish) {
+        const managed = this.sessions.get(sessionId)
+        managed?.agent?.destroy()
+        if (managed) managed.agent = null
+      }
+    }
+    if (!publish) return
+    this.roxExecutions.set(sessionId, Object.freeze({ ...context, caller: Object.freeze({ ...context.caller }) }))
+  }
+  private acquireRoxSessionLease(sessionId: string, requested?: RoxExecutionContext): () => void {
+    const context = requested ?? this.roxExecutions.get(sessionId)
+    const held = this.roxResourceLeases.get(sessionId)
+    if (held && !this.sameRoxExecution(held.context, context)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+    if (context) this.selectRoxSessionExecution(sessionId, context, false)
+    const lease = held ?? { context, count: 0 }
+    lease.count++
+    this.roxResourceLeases.set(sessionId, lease)
+    return () => { if (--lease.count === 0) this.roxResourceLeases.delete(sessionId) }
+  }
+  private fenceRoxSessionCallback<T extends (...args: any[]) => any>(sessionId: string, context: RoxExecutionContext | undefined, callback: T, ignoreStale = false): T {
+    return ((...args: Parameters<T>) => {
+      let release: () => void
+      try {
+        this.assertRoxSessionExecution(sessionId, context)
+        release = this.acquireRoxSessionLease(sessionId, context)
+      }
+      catch (error) { if (ignoreStale) return; throw error }
+      let asynchronous = false
+      try {
+        this.assertRoxSessionExecution(sessionId, context)
+        const result = callback(...args)
+        if (result && typeof result.then === 'function') {
+          asynchronous = true
+          return Promise.resolve(result).then(value => { this.assertRoxSessionExecution(sessionId, context); return value }).finally(release)
+        }
+        this.assertRoxSessionExecution(sessionId, context)
+        return result
+      } finally { if (!asynchronous) release() }
+    }) as T
+  }
+  private fenceRoxSessionCallbacks<T extends object>(sessionId: string, context: RoxExecutionContext | undefined, callbacks: T): T {
+    return Object.fromEntries(Object.entries(callbacks).map(([key, value]) => [key,
+      typeof value === 'function' ? this.fenceRoxSessionCallback(sessionId, context, value as (...args: any[]) => any,
+        ['onSdkSessionIdUpdate', 'onSdkSessionIdCleared', 'onBranchForkInvalidated', 'markBranchSeedApplied', 'markTransferredSessionSummaryApplied'].includes(key))
+        : key === 'browserPaneFns' && value && typeof value === 'object'
+          ? this.fenceRoxSessionCallbacks(sessionId, context, value) : value,
+    ])) as T
+  }
+  private mergeRoxSessionToolCallbacks(sessionId: string, context: RoxExecutionContext | undefined, callbacks: Parameters<typeof mergeSessionScopedToolCallbacks>[1]): void {
+    mergeSessionScopedToolCallbacks(sessionId, this.fenceRoxSessionCallbacks(sessionId, context, callbacks))
+  }
+  private async roxExecutionForSession(managed: ManagedSession): Promise<RoxExecutionContext | undefined> {
+    const existing = this.roxExecutions.get(managed.id)
+    if (existing) { getRoxAccountAuthority().assertCurrent(existing); return existing }
+    const restored = await peekRoxAccountAuthority()?.bound(`session:${managed.workspace.id}:${managed.id}`)
+    const selected = this.roxExecutions.get(managed.id)
+    if (selected && !this.sameRoxExecution(selected, restored)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+    const lease = this.roxResourceLeases.get(managed.id)
+    if (lease?.context && !this.sameRoxExecution(lease.context, restored)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+    if (restored) {
+      if (lease && !lease.context) lease.context = restored
+      this.selectRoxSessionExecution(managed.id, restored)
+    }
+    return selected ?? restored
+  }
   private sessions: Map<string, ManagedSession> = new Map()
+  private readonly runtimeTrace = new RuntimeTraceService(id => {
+    const session = this.sessions.get(id)
+    return session ? { id, workspaceId: session.workspace.id, directory: getSessionStoragePath(session.workspace.rootPath, id), parentSessionId: session.parentSessionId } : undefined
+  }, event => this.sendEvent({ type: 'runtime_trace', sessionId: event.rootSessionId, event }, event.workspaceId), health => this.sendEvent({ type: 'runtime_trace_health', ...health }, health.workspaceId))
+
+  /** Observability is passive: a trace disk/render failure must not stop an executing chat. */
+  private async captureRuntime(operation: () => Promise<unknown>): Promise<void> {
+    try { await operation() } catch (error) { sessionLog.warn('Runtime trace recording failed:', error instanceof Error ? error.message : String(error)) }
+  }
+
+  observeTaskRun(observation: import('./runtime-trace/conductor').TaskRuntimeObservation): Promise<void> {
+    return this.captureRuntime(() => this.runtimeTrace.conductor(observation))
+  }
+  assignTaskRuntimeChild(parentSessionId: string, childSessionId: string, prompt: string, node: import('@rox/shared/tasks').TaskNode, taskRunId: string): Promise<void> {
+    return this.captureRuntime(async () => {
+      const run = this.runtimeTrace.getConductorRun(parentSessionId, taskRunId)
+      if (!run) return
+      await this.runtimeTrace.assign(parentSessionId, childSessionId, { name: node.title || node.id, task: await this.runtimeTrace.content(run, node.prompt ?? prompt),
+        prompt: await this.runtimeTrace.content(run, prompt), nativeKind: 'rox-session', sessionId: childSessionId }, run)
+    })
+  }
+
+  getRuntimeTraceSnapshot(query: RuntimeTraceQuery) { return this.runtimeTrace.getSnapshot(query) }
+  readRuntimeTraceEvents(query: RuntimeEventsQuery) { return this.runtimeTrace.readEvents(query) }
+  readRuntimeTracePayload(query: RuntimePayloadQuery) { return this.runtimeTrace.readPayload(query) }
+
   private budgetLedger: AgentBudgetLedger | null = null
   // Delta batching for performance - reduces IPC events from 50+/sec to ~20/sec
   private pendingDeltas: Map<string, PendingDelta> = new Map()
@@ -1687,9 +1814,9 @@ export class SessionManager implements ISessionManager {
     }
 
     // Project binding (no dedicated event today — handled via metaChanged broadcast)
-    if (managed.projectId !== header.projectId) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
-      managed.projectId = header.projectId
+    if (managed.projectId !== header.projectId || JSON.stringify(sessionProjectIds(managed)) !== JSON.stringify(sessionProjectIds(header))) {
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
+      Object.assign(managed, withProjectMembership(sessionProjectIds(header)))
       changed = true
     }
 
@@ -1981,7 +2108,9 @@ export class SessionManager implements ISessionManager {
                   model: pending.model,
                   thinkingLevel: pending.thinkingLevel,
                   automationName: pending.automationName,
+                  roxExecutionContext: pending.matcherId ? await peekRoxAccountAuthority()?.bound(`automation:${workspaceId}:${pending.matcherId}`) : undefined,
                   telegramTopic: pending.telegramTopic,
+                  runtimeLaunch: { kind: pending.scheduledAt ? 'scheduled' : 'unknown', scheduleId: pending.scheduledAt ? pending.matcherId : undefined, triggerId: pending.matcherId, occurrenceId: pending.occurrenceKey },
                 })
                 if (occurrence) {
                   setAutomationOccurrenceOutcome(workspaceRootPath, occurrence.key, occurrence.runId, 'succeeded')
@@ -2252,6 +2381,7 @@ export class SessionManager implements ISessionManager {
   private async runMemoryDistillOneShot(
     workspace: { id: string; rootPath: string },
     prompt: string,
+    roxExecutionContext?: RoxExecutionContext,
   ): Promise<string> {
     const wsConfig = loadWorkspaceConfig(workspace.rootPath)
     const backendContext = resolveBackendContext({
@@ -2266,6 +2396,7 @@ export class SessionManager implements ISessionManager {
       context: backendContext,
       hostRuntime: buildBackendHostRuntimeContext(),
       coreConfig: {
+        roxExecutionContext,
         workspace: workspace as Workspace,
         session: {
           id: `memory-distill-${Date.now()}`,
@@ -2284,6 +2415,7 @@ export class SessionManager implements ISessionManager {
     })
     try {
       const text = await agent.runMiniCompletion(prompt)
+      if (roxExecutionContext) getRoxAccountAuthority().assertCurrent(roxExecutionContext)
       if (text == null) throw new Error('runMiniCompletion returned null')
       return text
     } finally {
@@ -2297,10 +2429,10 @@ export class SessionManager implements ISessionManager {
    * the workspace by id (throws when unknown). Callers must treat failures as
    * skippable — this spawns a scratch backend agent per call.
    */
-  async runDistillOneShot(workspaceId: string, prompt: string): Promise<string> {
+  async runDistillOneShot(workspaceId: string, prompt: string, roxExecutionContext?: RoxExecutionContext): Promise<string> {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`runDistillOneShot: unknown workspace '${workspaceId}'`)
-    return this.runMemoryDistillOneShot({ id: workspace.id, rootPath: workspace.rootPath }, prompt)
+    return this.runMemoryDistillOneShot({ id: workspace.id, rootPath: workspace.rootPath }, prompt, roxExecutionContext)
   }
 
   private broadcastSourcesChanged(workspaceId: string, sources: LoadedSource[]): void {
@@ -2310,6 +2442,24 @@ export class SessionManager implements ISessionManager {
 
   // Self-learning memory services, one per workspace, created lazily.
   private memoryServices = new Map<string, MemoryService>()
+  private nativeMemoryContexts = new Map<string, NativeMemoryContext>()
+  private nativeMemoryStarts = new Map<string, NativeMemoryContext>()
+  private nativeMemoryContextRequired?: (workspaceId: string) => boolean
+
+  setNativeMemoryContextPolicy(required: (workspaceId: string) => boolean): void {
+    this.nativeMemoryContextRequired = required
+  }
+
+  private nativeMemoryContextFor(sessionId: string, workspaceId: string): NativeMemoryContext | undefined {
+    const context = this.nativeMemoryContexts.get(sessionId)
+    if (context) return { owner: { ...context.owner }, assertAuthorized: () => {
+      context.assertAuthorized()
+      if (this.sessions.get(sessionId)?.workspace.id !== workspaceId) throw new Error('Native memory session changed')
+    } }
+    let required = false
+    try { required = this.nativeMemoryContextRequired?.(workspaceId) ?? false } catch { required = true }
+    if (required) return { owner: { issuer: '', subject: '' }, assertAuthorized: () => { throw new Error('Native memory requires an authorized turn') } }
+  }
 
   /**
    * Lazily build the workspace's MemoryService (distill triggers, prompt
@@ -2344,12 +2494,13 @@ export class SessionManager implements ISessionManager {
         // all memory writes (distill/branch/idle triggers). Unknown sessions default
         // to 'persistent' so a session being torn down never loses lessons it earned.
         getSessionMode: (sessionId) => this.sessions.get(sessionId)?.agentProfileSnapshot?.memoryScope === 'none' ? 'temporary' : this.sessions.get(sessionId)?.memoryMode ?? 'persistent',
+        getNativeContext: (sessionId) => this.nativeMemoryContextFor(sessionId, workspace.id),
         // L1: session provenance (F4) for the feedback loop — which lessons the
         // session saw, so a bad ending can attribute conflicts per scope.
         readSessionProvenance: (sessionId) => readProvenance(workspace.rootPath, sessionId)?.lessons ?? [],
       })
       svc.attachSessionCompletion((cb) => this.onSessionComplete((evt) => { if (evt.workspaceId === workspace.id) cb(evt) }))
-      svc.setDistiller((prompt) => this.runMemoryDistillOneShot(workspace, prompt))
+      svc.setDistiller(async (prompt, sessionId) => this.runMemoryDistillOneShot(workspace, prompt, sessionId ? await peekRoxAccountAuthority()?.bound(`session:${workspace.id}:${sessionId}`) : undefined))
       svc.start()
       this.memoryServices.set(workspace.rootPath, svc)
     } catch (err) {
@@ -2708,6 +2859,7 @@ export class SessionManager implements ISessionManager {
           managed.messageQueue.push({
             message: msg.content,
             messageId: msg.id,
+            roxOwnerResource: `queued-message:${managed.workspace.id}:${managed.id}:${msg.id}`,
             attachments: undefined,
             storedAttachments: msg.attachments,
             options: undefined,
@@ -3244,6 +3396,7 @@ export class SessionManager implements ISessionManager {
           managed.messageQueue.push({
             message: msg.content,
             messageId: msg.id,
+            roxOwnerResource: `queued-message:${managed.workspace.id}:${managed.id}:${msg.id}`,
             attachments: undefined,  // Attachments already stored on disk
             storedAttachments: msg.attachments,
             options: undefined,
@@ -3307,8 +3460,9 @@ export class SessionManager implements ISessionManager {
     // announced to the renderer (see notifySessionCreated). Callers that register the session
     // themselves — the `sessions:create` RPC adds it from the return value — pass
     // `{ emitCreatedEvent: false }` to avoid a redundant hydrate.
-    internal?: { emitCreatedEvent?: boolean; initialAssistantMessage?: string; agentProfileSnapshot?: AgentProfileSnapshot | null },
+    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; initialAssistantMessage?: string; agentProfileSnapshot?: AgentProfileSnapshot | null },
   ): Promise<Session> {
+    internal?.nativeMemoryContext?.assertAuthorized()
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) {
       throw new Error(`Workspace ${workspaceId} not found`)
@@ -3828,6 +3982,10 @@ export class SessionManager implements ISessionManager {
       hydratePreviousPermissionMode(storedSession.id, managed.previousPermissionMode)
     }
     this.sessions.set(storedSession.id, managed)
+    if (internal?.nativeMemoryContext) {
+      this.nativeMemoryContexts.set(storedSession.id, internal.nativeMemoryContext)
+      internal.nativeMemoryContext.assertAuthorized()
+    }
 
     // Eagerly load messages for branched sessions so the renderer gets the full
     // conversation immediately (needed for scroll-to-bottom on panel open)
@@ -4171,6 +4329,9 @@ export class SessionManager implements ISessionManager {
    * 4. fallback: no connection configured
    */
   private async getOrCreateAgent(managed: ManagedSession): Promise<AgentInstance> {
+    const execution = await this.roxExecutionForSession(managed)
+    const assertOwner = () => this.assertRoxSessionExecution(managed.id, execution)
+    assertOwner()
     // Refresh runtime config in-place when the connection has drifted since
     // the agent was created. May null out `managed.agent` if the in-place
     // refresh fails, in which case the create branch below rebuilds it.
@@ -4300,6 +4461,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const onSdkSessionIdUpdate = (sdkSessionId: string) => {
+        assertOwner()
         managed.sdkSessionId = sdkSessionId
         // Retire branch-only fork metadata now that child session is established
         if (managed.branchFromSdkSessionId) {
@@ -4315,6 +4477,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const onSdkSessionIdCleared = () => {
+        assertOwner()
         managed.sdkSessionId = undefined
         sessionLog.info(`SDK session ID cleared for ${managed.id} (resume recovery)`)
         this.persistSession(managed)
@@ -4322,6 +4485,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const onBranchForkInvalidated = () => {
+        assertOwner()
         managed.sdkSessionId = undefined
         managed.branchFromSdkSessionId = undefined
         managed.branchFromSdkCwd = undefined
@@ -4332,6 +4496,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const getRecoveryMessages = () => {
+        assertOwner()
         const relevantMessages = managed.messages
           .filter(m => m.role === 'user' || m.role === 'assistant')
           .filter(m => !m.isIntermediate)
@@ -4343,6 +4508,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const getBranchFallbackMessages = () => {
+        assertOwner()
         if (!managed.branchFromMessageId) return []
         return managed.messages
           .filter(m => m.role === 'user' || m.role === 'assistant')
@@ -4354,6 +4520,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const getBranchSeedMessages = () => {
+        assertOwner()
         if (managed.branchContextStrategy !== 'seeded-fresh-session') return []
         if (managed.branchSeedApplied) return []
 
@@ -4368,6 +4535,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const markBranchSeedApplied = () => {
+        assertOwner()
         if (managed.branchContextStrategy !== 'seeded-fresh-session') return
         if (managed.branchSeedApplied) return
         managed.branchSeedApplied = true
@@ -4378,12 +4546,14 @@ export class SessionManager implements ISessionManager {
       }
 
       const getTransferredSessionSummary = () => {
+        assertOwner()
         const summary = managed.transferredSessionSummaryApplied ? null : (managed.transferredSessionSummary ?? null)
         sessionLog.info(`[transfer-context] getTransferredSessionSummary for ${managed.id}: applied=${managed.transferredSessionSummaryApplied}, has_summary=${!!managed.transferredSessionSummary}, returning=${summary ? `${summary.length} chars` : 'null'}`)
         return summary
       }
 
       const markTransferredSessionSummaryApplied = () => {
+        assertOwner()
         if (managed.transferredSessionSummaryApplied || !managed.transferredSessionSummary) return
         managed.transferredSessionSummaryApplied = true
         this.persistSession(managed)
@@ -4408,7 +4578,9 @@ export class SessionManager implements ISessionManager {
         .trim()
       let memoryBlocks = managed.memoryMode === 'temporary' || managed.agentProfileSnapshot?.memoryScope === 'none'
         ? undefined
-        : await this.memoryServiceFor(managed.workspace)?.buildMemoryBlocks({ query: memoryQuery || undefined, workspaceOnly: !!managed.agentProfileSnapshot })
+        : await this.memoryServiceFor(managed.workspace)?.buildMemoryBlocks({ query: memoryQuery,
+          workspaceOnly: !!managed.agentProfileSnapshot,
+          nativeContext: this.nativeMemoryContextFor(managed.id, managed.workspace.id) })
       // P2.7: FTS-retrieve local source docs into the same memoryBlocks payload
       // (sourcesBlock). Same memoryQuery as lessons; fail-soft on missing index.
       if (memoryQuery && managed.workspace?.rootPath) {
@@ -4441,10 +4613,33 @@ export class SessionManager implements ISessionManager {
         }
       }
 
+      const traceRun = this.runtimeTrace.getActive(managed.id)
+      const runtimeMemoryBlocks: RuntimeContextBlock[] = []
+      managed.runtimeMemoryBlocks = runtimeMemoryBlocks
+      await this.captureRuntime(async () => {
+      if (traceRun && memoryBlocks) {
+        for (const [key, text] of Object.entries(memoryBlocks)) {
+          if (typeof text !== 'string' || !text) continue
+          const block: RuntimeContextBlock = { id: `memory:${key}`, kind: key === 'sourcesBlock' ? 'source' : 'memory', label: key,
+            source: 'SessionManager.backend.memoryBlocks', order: runtimeMemoryBlocks.length,
+            included: true, content: { text, byteLength: Buffer.byteLength(text) } }
+          runtimeMemoryBlocks.push(block)
+          if (block.kind === 'memory') await this.captureRuntime(() => this.runtimeTrace.record(traceRun, 'memory.included', { id: block.id, content: block.content }))
+        }
+      }
+
+      })
+
+      const { getEnable1MContext } = await import('@rox/shared/config/storage')
+      const enable1MContext = getEnable1MContext()
+      assertOwner()
+      this.nativeMemoryContextFor(managed.id, managed.workspace.id)?.assertAuthorized()
+
       managed.agent = createBackendFromResolvedContext({
         context: backendContext,
         hostRuntime: buildBackendHostRuntimeContext(),
-        coreConfig: {
+        coreConfig: this.fenceRoxSessionCallbacks(managed.id, execution, {
+        roxExecutionContext: execution,
         workspace: managed.workspace,
         agentProfileSnapshot: managed.agentProfileSnapshot,
         allowedSkillSlugs: managed.agentProfileSnapshot?.skillSlugs,
@@ -4473,7 +4668,7 @@ export class SessionManager implements ISessionManager {
         automationSystem: managed.agentProfileSnapshot && !managed.agentProfileSnapshot.automationEnabled ? undefined : this.automationSystems.get(managed.workspace.rootPath),
         systemPromptPreset: managed.systemPromptPreset,
         debugMode: _platform?.isDebugMode ? { enabled: true, logFilePath: _platform.getLogFilePath?.() } : undefined,
-        enable1MContext: await (async () => { const { getEnable1MContext } = await import('@rox/shared/config/storage'); return getEnable1MContext(); })(),
+        enable1MContext,
         // Image resize callback — prevents oversized images from entering conversation history
         onImageResize: async (filePath: string, maxSizeBytes: number): Promise<string | null> => {
           try {
@@ -4486,7 +4681,9 @@ export class SessionManager implements ISessionManager {
             await mkdir(sessionTmpDir, { recursive: true })
             const ext = result.format === 'jpeg' ? 'jpg' : 'png'
             const outPath = join(sessionTmpDir, `resized-${randomUUID()}.${ext}`)
+            assertOwner()
             await writeFile(outPath, result.buffer)
+            assertOwner()
 
             sessionLog.info(`Image resized for Read: ${(buffer.length / 1024 / 1024).toFixed(1)}MB → ${(result.buffer.length / 1024 / 1024).toFixed(1)}MB (→ ${result.width}×${result.height})`)
             return outPath
@@ -4502,7 +4699,7 @@ export class SessionManager implements ISessionManager {
           apiServers,
           enabledSlugs,
         },
-        },
+        }),
       }) as AgentInstance
 
       sessionLog.info(`Created ${provider} agent for session ${managed.id} (model: ${backendContext.resolvedModel})${managed.sdkSessionId ? ' (resuming)' : ''}`)
@@ -4538,6 +4735,7 @@ export class SessionManager implements ISessionManager {
 
       // Unified auth callback — replaces per-backend onChatGptAuthRequired/onGithubAuthRequired
       managed.agent.onBackendAuthRequired = (reason: string) => {
+        assertOwner()
         sessionLog.warn(`Backend auth required for session ${managed.id}: ${reason}`)
         this.sendEvent({
           type: 'info',
@@ -4549,6 +4747,7 @@ export class SessionManager implements ISessionManager {
 
       // Run post-init (auth injection) — each backend handles its own
       const postInitResult = await managed.agent.postInit()
+      assertOwner()
       if (postInitResult.authWarning) {
         sessionLog.warn(`Auth warning for session ${managed.id}: ${postInitResult.authWarning}`)
         this.sendEvent({
@@ -4646,7 +4845,7 @@ export class SessionManager implements ISessionManager {
         }
 
         sessionLog.info('[browser-pane] BPF registering browserPaneFns', { sessionId: sid })
-        mergeSessionScopedToolCallbacks(sid, {
+        this.mergeRoxSessionToolCallbacks(sid, execution, {
           browserPaneFns: {
             openPanel: async (options) => {
               const instanceId = options?.background
@@ -4968,6 +5167,7 @@ export class SessionManager implements ISessionManager {
 
       // Set up mode change handlers
       managed.agent.onPermissionModeChange = (mode) => {
+        assertOwner()
         if (managed.permissionMode === mode) {
           return
         }
@@ -4996,10 +5196,12 @@ export class SessionManager implements ISessionManager {
 
       // Wire up onPlanSubmitted to add plan message to conversation
       managed.agent.onPlanSubmitted = async (planPath) => {
+        assertOwner()
         sessionLog.info(`Plan submitted for session ${managed.id}:`, planPath)
         try {
           // Read the plan file content
           const planContent = await readFile(planPath, 'utf-8')
+          assertOwner()
 
           // Mark the SubmitPlan tool message as completed (it won't get a tool_result due to forceAbort)
           const submitPlanMsg = managed.messages.find(
@@ -5064,6 +5266,7 @@ export class SessionManager implements ISessionManager {
 
       // Wire up onAuthRequest to add auth message to conversation and pause execution
       managed.agent.onAuthRequest = (request) => {
+        assertOwner()
         sessionLog.info(`Auth request for session ${managed.id}:`, request.type, request.sourceSlug)
 
         // Create auth-request message
@@ -5134,6 +5337,7 @@ export class SessionManager implements ISessionManager {
 
       // Wire up onSpawnSession to create independent sessions from agent tool calls
       managed.agent.onSpawnSession = async (request) => {
+        assertOwner()
         sessionLog.info(`Spawn session request from session ${managed.id}:`, request.name || '(unnamed)')
 
         const session = await this.createSession(managed.workspace.id, {
@@ -5179,10 +5383,22 @@ export class SessionManager implements ISessionManager {
           if (attachments.length > 0) fileAttachments = attachments
         }
 
+        await this.captureRuntime(async () => {
+          const run = this.runtimeTrace.getActive(managed.id)
+          if (!run) return
+          await this.runtimeTrace.assign(managed.id, session.id, { name: session.name || request.name || session.id,
+            task: await this.runtimeTrace.content(run, request.prompt), prompt: await this.runtimeTrace.content(run, request.prompt),
+            sessionId: session.id, nativeKind: 'rox-session', permissionMode: session.permissionMode,
+            model: { requested: session.model, confirmed: unknown('not-emitted'), contextWindow: unknown('not-emitted') } })
+        })
+
         // (session_created is emitted by createSession above.)
 
         // Fire and forget — send the message but don't await completion
-        this.sendMessage(session.id, request.prompt, fileAttachments).catch(err => {
+        assertOwner()
+        const inheritedExecution = execution
+        if (inheritedExecution) { getRoxAccountAuthority().assertCurrent(inheritedExecution); this.roxExecutions.set(session.id, inheritedExecution); await getRoxAccountAuthority().bind(`session:${managed.workspace.id}:${session.id}`, inheritedExecution) }
+        this.sendMessage(session.id, request.prompt, fileAttachments, undefined, undefined, undefined, undefined, undefined, { roxExecutionContext: inheritedExecution }).catch(err => {
           sessionLog.error(`Failed to send message to spawned session ${session.id}:`, err)
         })
 
@@ -5196,7 +5412,7 @@ export class SessionManager implements ISessionManager {
       }
 
       // Wire up session self-management tools (set_session_labels, set_session_status, etc.)
-      mergeSessionScopedToolCallbacks(managed.id, {
+      this.mergeRoxSessionToolCallbacks(managed.id, execution, {
         setSessionLabelsFn: async (sessionId: string | undefined, labels: string[]) => {
           await this.setSessionLabels(sessionId ?? managed.id, labels)
         },
@@ -5273,6 +5489,10 @@ export class SessionManager implements ISessionManager {
           }
 
           const created = await createTaskFromSpec(this, ws.id, ws.rootPath, parsed.data, { agentProfileSnapshot: managed.agentProfileSnapshot ?? null })
+          await this.captureRuntime(async () => {
+            const run = this.runtimeTrace.getActive(managed.id)
+            if (run) await this.runtimeTrace.record(run, 'artifact.created', { artifact: { id: `task:${created.slug}`, label: parsed.data.title, kind: 'task-spec', uri: `task://${created.slug}`, content: await this.runtimeTrace.content(run, JSON.stringify(parsed.data)) } })
+          })
           return { ...created, warnings: [...warnings, ...created.warnings] }
         },
         // Pages tools (list_pages/get_page/create_page/update_page/
@@ -5424,7 +5644,8 @@ export class SessionManager implements ISessionManager {
           // target starts processing immediately. sendMessage throws for an
           // unknown session — that rejection propagates to the handler's catch.
           const targetBusy = this.sessions.get(sessionId)?.isProcessing === true
-          await this.sendMessage(sessionId, message, fileAttachments)
+          assertOwner()
+          await this.sendMessage(sessionId, message, fileAttachments, undefined, undefined, undefined, undefined, undefined, { roxExecutionContext: execution })
           return {
             delivery: targetBusy ? ('queued' as const) : ('delivered' as const),
             targetBusy,
@@ -5464,8 +5685,11 @@ export class SessionManager implements ISessionManager {
       // it lands while the session is idle. During a turn these events flow through
       // the chat() generator as usual; this only covers the idle gap. No-op unless
       // the backend supports a persistent cross-turn query (Claude keep-alive).
+      const backgroundEventSink = this.fenceRoxSessionCallback(managed.id, execution, async (event: AgentEvent) => {
+        await this.processEvent(managed, event, execution)
+      })
       managed.agent.setBackgroundEventSink?.((event: AgentEvent) => {
-        void this.processEvent(managed, event)
+        try { void backgroundEventSink(event).catch(() => {}) } catch { /* Late invalidated owner. */ }
       })
 
       // Wire up onSourceActivationRequest to auto-enable sources when agent tries to use them
@@ -5573,10 +5797,18 @@ export class SessionManager implements ISessionManager {
           changedAt: diagnostics.lastChangedAt,
         })
       }
+      // These closures can outlive the send promise. Their original owner is
+      // checked before entry and after asynchronous completion, never reread.
+      for (const key of ['onPermissionRequest', 'onPermissionModeChange', 'onPlanSubmitted', 'onAuthRequest', 'onSpawnSession', 'onBackendAuthRequired', 'onSourceActivationRequest'] as const) {
+        const callback = managed.agent[key]
+        if (callback) (managed.agent as any)[key] = this.fenceRoxSessionCallback(managed.id, execution, callback as (...args: any[]) => any,
+          ['onPermissionRequest', 'onPermissionModeChange', 'onAuthRequest', 'onBackendAuthRequired'].includes(key))
+      }
       managed.backendRuntimeSignature = runtimeSignature
       managed.backendRestartSignature = restartSignature
       end()
     }
+    assertOwner()
     return managed.agent
   }
 
@@ -6120,13 +6352,26 @@ export class SessionManager implements ISessionManager {
    * Uses the last few user messages to capture what the session has evolved into.
    * Automatically uses the same provider as the session (Claude or OpenAI).
    */
-  async refreshTitle(sessionId: string): Promise<{ success: boolean; title?: string; error?: string }> {
+  async refreshTitle(sessionId: string, roxExecutionContext?: RoxExecutionContext): Promise<{ success: boolean; title?: string; error?: string }> {
+    const release = this.acquireRoxSessionLease(sessionId, roxExecutionContext)
+    try { return await this.refreshTitleWithOwner(sessionId, roxExecutionContext) } finally { release() }
+  }
+
+  private async refreshTitleWithOwner(sessionId: string, roxExecutionContext?: RoxExecutionContext): Promise<{ success: boolean; title?: string; error?: string }> {
     sessionLog.info(`refreshTitle called for session ${sessionId}`)
     const managed = this.sessions.get(sessionId)
+    if (managed && roxExecutionContext) {
+      getRoxAccountAuthority().assertCurrent(roxExecutionContext)
+      await getRoxAccountAuthority().bind(`session:${managed.workspace.id}:${sessionId}`, roxExecutionContext)
+      this.selectRoxSessionExecution(sessionId, roxExecutionContext)
+    }
     if (!managed) {
       sessionLog.warn(`refreshTitle: Session ${sessionId} not found`)
       return { success: false, error: 'Session not found' }
     }
+
+    const execution = await this.roxExecutionForSession(managed)
+    this.assertRoxSessionExecution(managed.id, execution)
 
     // Ensure messages are loaded from disk (lazy loading support)
     await this.ensureMessagesLoaded(managed)
@@ -6172,6 +6417,7 @@ export class SessionManager implements ISessionManager {
         const resolvedMiniModel = connection ? (getMiniModel(connection) ?? connection.defaultModel) : undefined
 
         agent = createBackendFromConnection(managed.llmConnection, {
+          roxExecutionContext: execution,
           workspace: managed.workspace,
           miniModel: resolvedMiniModel,
           session: {
@@ -6207,7 +6453,9 @@ export class SessionManager implements ISessionManager {
     this.sendEvent({ type: 'title_regenerating', sessionId, isRegenerating: true }, managed.workspace.id)
 
     try {
+      this.assertRoxSessionExecution(sessionId, execution)
       const title = await agent.regenerateTitle(userMessages, assistantResponse, titleOptions)
+      this.assertRoxSessionExecution(sessionId, execution)
       sessionLog.info(`refreshTitle: regenerateTitle returned: ${title ? `"${title}"` : 'null'}`)
       if (title) {
         managed.name = title
@@ -6251,10 +6499,15 @@ export class SessionManager implements ISessionManager {
   async querySessionLlm(
     sessionId: string,
     request: SessionLlmQueryRequest,
-    options: { preferFastModel?: boolean } = {},
+    options: { preferFastModel?: boolean; roxExecutionContext?: RoxExecutionContext } = {},
   ): Promise<SessionLlmQueryResult> {
     const managed = this.sessions.get(sessionId)
     if (!managed) throw new Error('Session not found')
+    // RPC helpers own their captured caller, including a fresh unsent draft.
+    // Select and fence it before any backend/auth work; a saved session owner
+    // may belong to another live caller or an earlier account generation.
+    const executionContext = options.roxExecutionContext ?? await this.roxExecutionForSession(managed)
+    if (executionContext) getRoxAccountAuthority().assertCurrent(executionContext)
 
     const workspaceRootPath = managed.workspace.rootPath
     const wsConfig = loadWorkspaceConfig(workspaceRootPath)
@@ -6279,6 +6532,7 @@ export class SessionManager implements ISessionManager {
       context: backendContext,
       hostRuntime: buildBackendHostRuntimeContext(),
       coreConfig: {
+        roxExecutionContext: executionContext,
         workspace: managed.workspace,
         session: {
           id: `${managed.id}-oneshot-${Date.now().toString(36)}`,
@@ -6319,7 +6573,9 @@ export class SessionManager implements ISessionManager {
         if (typeof queryable.queryLlm !== 'function') {
           throw new Error('This connection does not support one-shot LLM queries')
         }
+        if (executionContext) getRoxAccountAuthority().assertCurrent(executionContext)
         const result = await Promise.race([queryable.queryLlm({ ...request, model }), timeout])
+        if (executionContext) getRoxAccountAuthority().assertCurrent(executionContext)
         return { text: result.text ?? '', model: result.model ?? model, warning: result.warning }
       } finally {
         if (timer) clearTimeout(timer)
@@ -6363,7 +6619,7 @@ export class SessionManager implements ISessionManager {
   async queryWorkspaceLlm(
     workspaceId: string,
     request: SessionLlmQueryRequest,
-    options: { timeoutMs?: number } = {},
+    options: { timeoutMs?: number; roxExecutionContext?: RoxExecutionContext } = {},
   ): Promise<SessionLlmQueryResult> {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
@@ -6398,6 +6654,7 @@ export class SessionManager implements ISessionManager {
         context: backendContext,
         hostRuntime: buildBackendHostRuntimeContext(),
         coreConfig: {
+          roxExecutionContext: options.roxExecutionContext,
           workspace: workspace as Workspace,
           session: {
             id: `workspace-oneshot-${Date.now().toString(36)}`,
@@ -6459,7 +6716,7 @@ export class SessionManager implements ISessionManager {
    * Does not persist; the renderer replaces the composer text.
    * Real provider errors are returned so the renderer can show them.
    */
-  async improveDraft(sessionId: string, text: string): Promise<{ success: boolean; text?: string; error?: string }> {
+  async improveDraft(sessionId: string, text: string, roxExecutionContext?: RoxExecutionContext): Promise<{ success: boolean; text?: string; error?: string }> {
     const trimmed = text.trim()
     if (!trimmed) {
       return { success: false, error: 'Draft is empty' }
@@ -6480,7 +6737,8 @@ export class SessionManager implements ISessionManager {
         systemPrompt,
         prompt: `Draft:\n${trimmed}`,
         temperature: 0.3,
-      })
+      }, roxExecutionContext ? { roxExecutionContext } : {})
+      if (roxExecutionContext) getRoxAccountAuthority().assertCurrent(roxExecutionContext)
       const improved = stripImprovedDraft(result.text)
       if (!improved) {
         return { success: false, error: 'The model returned an empty answer' }
@@ -6880,7 +7138,23 @@ export class SessionManager implements ISessionManager {
     sessionLog.info(`Deleted session ${sessionId}`)
   }
 
-  async sendMessage(
+  async sendMessage(...args: Parameters<ISessionManager['sendMessage']>): Promise<void> {
+    const sessionId = args[0], managed = this.sessions.get(sessionId)
+    const supplied = args[8]?.nativeMemoryContext
+    const context = supplied ? { ...supplied, owner: { ...supplied.owner } } : undefined
+    context?.assertAuthorized()
+    if (context) args[8] = { ...args[8], nativeMemoryContext: context }
+    const release = this.acquireRoxSessionLease(sessionId, args[8]?.roxExecutionContext)
+    const ownsStart = !!context && !!managed && !managed.isProcessing && !this.nativeMemoryStarts.has(sessionId)
+    if (ownsStart) this.nativeMemoryStarts.set(sessionId, context!)
+    try { await this.sendMessageWithOwner(...args) }
+    finally {
+      if (ownsStart && this.nativeMemoryStarts.get(sessionId) === context) this.nativeMemoryStarts.delete(sessionId)
+      release()
+    }
+  }
+
+  private async sendMessageWithOwner(
     sessionId: string,
     message: string,
     attachments?: FileAttachment[],
@@ -6902,7 +7176,7 @@ export class SessionManager implements ISessionManager {
      * that should host this session's browser tools. Pass undefined when calling
      * directly (tests, intra-server flows) to leave the existing pin in place.
      */
-    rpcContext?: { callerClientId?: string },
+    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext; roxExecutionContext?: RoxExecutionContext; runtimeLaunch?: RuntimeLaunch },
     /**
      * Internal retry mode. Kept as the trailing argument so public/RPC call sites
      * don't need to know about retry bookkeeping.
@@ -6913,6 +7187,20 @@ export class SessionManager implements ISessionManager {
     if (!managed) {
       throw new Error(`Session ${sessionId} not found`)
     }
+    if (rpcContext?.nativeMemoryContext) {
+      rpcContext.nativeMemoryContext.assertAuthorized()
+    }
+    if (rpcContext?.roxExecutionContext) {
+      getRoxAccountAuthority().assertCurrent(rpcContext.roxExecutionContext)
+      await getRoxAccountAuthority().bind(`session:${managed.workspace.id}:${sessionId}`, rpcContext.roxExecutionContext)
+      this.selectRoxSessionExecution(sessionId, rpcContext.roxExecutionContext)
+    } else {
+      const inherited = this.roxExecutions.get(sessionId)
+      if (inherited) getRoxAccountAuthority().assertCurrent(inherited)
+    }
+    const execution = await this.roxExecutionForSession(managed)
+    this.assertRoxSessionExecution(sessionId, execution)
+    rpcContext?.nativeMemoryContext?.assertAuthorized()
     this.setLastMessageClientId(sessionId, rpcContext?.callerClientId)
     assertProfileSkills(managed.agentProfileSnapshot, [...(options?.skillSlugs ?? []), ...extractSkillMentions([message])])
 
@@ -6933,6 +7221,7 @@ export class SessionManager implements ISessionManager {
 
     // Ensure messages are loaded before we try to add new ones
     await this.ensureMessagesLoaded(managed)
+    rpcContext?.nativeMemoryContext?.assertAuthorized()
 
     // If currently processing, behavior depends on the connection's
     // `midStreamBehavior` (resolved via {@link resolveMidStreamBehavior},
@@ -6945,11 +7234,12 @@ export class SessionManager implements ISessionManager {
     // - 'queue': hold the message untouched; the current turn keeps running
     //   to natural completion; replay as a new turn afterwards. NO call to
     //   `agent.redirect()`, NO forceAbort, NO interruption.
-    if (managed.isProcessing) {
+    if (managed.isProcessing || this.nativeMemoryStarts.has(sessionId)
+      && this.nativeMemoryStarts.get(sessionId) !== rpcContext?.nativeMemoryContext) {
       const connection = resolveSessionConnection(managed.llmConnection, undefined)
       // Fallback to 'steer' when no connection is resolvable — preserves
       // today's exact behavior (call redirect, take whatever it returns).
-      const behavior = connection ? resolveMidStreamBehavior(connection) : 'steer'
+      const behavior = !managed.isProcessing ? 'queue' : connection ? resolveMidStreamBehavior(connection) : 'steer'
 
       const agent = managed.agent
       let steered = false
@@ -6980,6 +7270,7 @@ export class SessionManager implements ISessionManager {
         ...(options?.hidden ? { hidden: true } : {}),
       }
       managed.messages.push(userMessage)
+      if (rpcContext?.runtimeLaunch) (managed.runtimeLaunchByMessageId ??= new Map()).set(userMessage.id, rpcContext.runtimeLaunch)
 
       const delivery = resolveMidStreamDeliveryOutcome(behavior, steered)
 
@@ -6998,7 +7289,11 @@ export class SessionManager implements ISessionManager {
         // for both queue-direct (current turn still running) and
         // queue-after-abort (backend already aborted) — the replay path in
         // processNextQueuedMessage is identical.
-        managed.messageQueue.push({ message, attachments, storedAttachments, options, messageId: userMessage.id, optimisticMessageId: options?.optimisticMessageId })
+        const roxOwnerResource = `queued-message:${managed.workspace.id}:${sessionId}:${userMessage.id}`
+        if (execution) await getRoxAccountAuthority().bind(roxOwnerResource, execution)
+        this.assertRoxSessionExecution(sessionId, execution)
+        rpcContext?.nativeMemoryContext?.assertAuthorized()
+        managed.messageQueue.push({ message, attachments, storedAttachments, options, messageId: userMessage.id, optimisticMessageId: options?.optimisticMessageId, rpcContext, roxExecutionContext: execution, ...(execution ? { roxOwnerResource } : {}) })
         // Only claim interruption when a steer attempt actually aborted the
         // in-flight turn. In 'queue' mode the current turn runs to natural
         // completion, so the replayed turn must NOT inject the "previous response
@@ -7014,6 +7309,18 @@ export class SessionManager implements ISessionManager {
       await this.flushSession(managed.id)
       onAck?.(userMessage.id)
       return
+    }
+
+    // A queued sender cannot replace the active turn's memory custody. Carry
+    // provenance through the queue and bind it only when that turn starts.
+    if (rpcContext?.nativeMemoryContext) {
+      const previous = this.nativeMemoryContexts.get(sessionId)
+      if (managed.agent && (previous?.owner.issuer !== rpcContext.nativeMemoryContext.owner.issuer
+        || previous.owner.subject !== rpcContext.nativeMemoryContext.owner.subject)) {
+        await this.disposeManagedAgentRuntime(managed, 'native memory owner changed')
+        rpcContext.nativeMemoryContext.assertAuthorized()
+      }
+      this.nativeMemoryContexts.set(sessionId, rpcContext.nativeMemoryContext)
     }
 
     // Add user message with stored attachments for persistence
@@ -7039,6 +7346,7 @@ export class SessionManager implements ISessionManager {
         ...(options?.hidden ? { hidden: true } : {}),
       }
       managed.messages.push(userMessage)
+      if (rpcContext?.runtimeLaunch) (managed.runtimeLaunchByMessageId ??= new Map()).set(userMessage.id, rpcContext.runtimeLaunch)
 
       // Update lastMessageRole for badge display. Skip for hidden messages so the
       // session-list preview isn't briefly driven by an invisible system nudge.
@@ -7127,6 +7435,7 @@ export class SessionManager implements ISessionManager {
     managed.lastMessageAt = Date.now()
     managed.activeUserMessageId = userMessage.id
     this.setProcessing(managed, true)
+    this.nativeMemoryStarts.delete(sessionId)
     managed.streamingText = ''
     managed.streamingTurnId = undefined
     managed.processingGeneration++
@@ -7145,6 +7454,17 @@ export class SessionManager implements ISessionManager {
       managed.rateLimitFailoverTriedConnections = undefined
       managed.rateLimitFailoverInProgress = false
     }
+
+    await this.captureRuntime(async () => {
+      const run = await this.runtimeTrace.begin(sessionId, userMessage.content, { messageId: userMessage.id,
+        retry: !!(isAuthRetry || isFailoverRetry),
+        launch: rpcContext?.runtimeLaunch ?? managed.runtimeLaunchByMessageId?.get(userMessage.id) ?? (managed.triggeredBy ? { kind: 'unknown', triggerId: managed.triggeredBy.event } : undefined) })
+      managed.runtimeLaunchByMessageId?.delete(userMessage.id)
+      for (const slug of options?.skillSlugs ?? []) {
+        const skill = loadSkillBySlug(managed.workspace.rootPath, slug, managed.workingDirectory)
+        await this.runtimeTrace.record(run, 'skill.selected', { capability: { kind: 'skill', id: slug, label: skill?.metadata.name ?? slug, scope: 'session' } }, { messageId: userMessage.id })
+      }
+    })
 
     // Store message/attachments for potential retry after auth refresh
     // (SDK subprocess caches token at startup, so if it expires mid-session,
@@ -7369,11 +7689,33 @@ export class SessionManager implements ISessionManager {
       }
 
 
+      await this.captureRuntime(async () => {
+        const run = this.runtimeTrace.getActive(sessionId)
+        if (!run) return
+        const originalPrompt = await this.runtimeTrace.content(run, userMessage.content)
+        const effectivePrompt = await this.runtimeTrace.content(run, effectiveMessage)
+        const blocks: RuntimeContextBlock[] = [...(managed.runtimeMemoryBlocks ?? [])]
+        for (const source of sources) blocks.push({ id: `source:${source.config.slug}`, kind: 'source', label: source.config.name,
+          source: 'SessionManager.enabledSources', order: blocks.length, included: true, content: { availability: 'not-recorded' },
+          capability: { kind: 'source', id: source.config.slug, scope: 'workspace', label: source.config.name } })
+        for (const attachment of modelInputAttachments.attachments ?? []) blocks.push({ id: `attachment:${attachment.name}`, kind: 'attachment', label: attachment.name,
+          source: 'SessionManager.modelInputAttachments', order: blocks.length, included: true, content: { availability: 'not-recorded', byteLength: attachment.size } })
+        await this.runtimeTrace.capture(sessionId, { id: `${run.runId}:server-context`, version: 1, capturedAt: known(Date.now(), 'server-context'),
+          originalPrompt, effectivePrompt, model: { requested: managed.model, confirmed: unknown('not-emitted'), contextWindow: unknown('not-emitted') },
+          permissionMode: managed.permissionMode, workingDirectory: managed.workingDirectory,
+          inputTokens: unknown('not-emitted'), blocks,
+          coverage: { state: 'partial', source: 'runtime', missing: ['native-final-prompt', 'provider-request-context', 'provider-model-readback'] } }, userMessage.id)
+      })
+
       sendSpan.mark('chat.starting')
+      this.assertRoxSessionExecution(sessionId, execution)
+      rpcContext?.nativeMemoryContext?.assertAuthorized()
       const chatIterator = agent.chat(effectiveMessage, modelInputAttachments.attachments)
       sessionLog.info('Got chat iterator, starting iteration...')
 
+      this.assertRoxSessionExecution(sessionId, execution)
       for await (const event of chatIterator) {
+        this.assertRoxSessionExecution(sessionId, execution)
         // Log events (skip noisy text_delta / thinking_delta)
         if (event.type !== 'text_delta' && event.type !== 'thinking_delta') {
           if (event.type === 'tool_start') {
@@ -7944,6 +8286,7 @@ export class SessionManager implements ISessionManager {
     const managed = this.sessions.get(sessionId)
     if (!managed) return
 
+    await this.captureRuntime(() => this.runtimeTrace.finish(sessionId, reason))
     sessionLog.info(`Processing stopped for session ${sessionId}: ${reason}`)
     if (managed.budgetRunId) {
       // Missing final usage is not a zero-cost success: retain the reservation
@@ -8101,7 +8444,16 @@ export class SessionManager implements ISessionManager {
     const managed = this.sessions.get(sessionId)
     if (!managed || managed.messageQueue.length === 0) return
 
-    const next = managed.messageQueue.shift()!
+    const next = managed.messageQueue[0]!
+    try { next.rpcContext?.nativeMemoryContext?.assertAuthorized() }
+    catch {
+      managed.messageQueue.shift()
+      if (managed.messageQueue.length) this.processNextQueuedMessage(sessionId)
+      return
+    }
+    managed.messageQueue.shift()
+    const replayExecution = next.roxExecutionContext ?? (next.roxOwnerResource ? undefined : this.roxExecutions.get(sessionId))
+    next.roxExecutionContext = replayExecution
     sessionLog.info('replay queued', {
       sessionId,
       messageId: next.messageId,
@@ -8133,14 +8485,23 @@ export class SessionManager implements ISessionManager {
 
     // Process message (use setImmediate to allow current stack to clear)
     setImmediate(() => {
-      this.sendMessage(
+      const replay = async () => {
+        const authority = peekRoxAccountAuthority()
+        const execution = next.roxExecutionContext ?? (next.roxOwnerResource ? await authority?.bound(next.roxOwnerResource, true) : undefined)
+        if (next.roxOwnerResource && !execution) throw new Error('ROX_TRUSTED_ACCOUNT_REQUIRED')
+        return this.sendMessage(
         sessionId,
         next.message,
         next.attachments,
         next.storedAttachments,
         next.options,
-        next.messageId
-      ).catch(err => {
+        next.messageId,
+        undefined,
+        undefined,
+        { ...next.rpcContext, roxExecutionContext: execution }
+        )
+      }
+      replay().catch(err => {
         sessionLog.error('replay failed', {
           sessionId,
           messageId: next.messageId,
@@ -8371,6 +8732,7 @@ export class SessionManager implements ISessionManager {
           sessionLog.warn(`Admin approval rejected by broker for ${requestId}: ${brokerResult.reason}`)
           // Broker rejection should fail closed.
           managed.agent.respondToPermission(requestId, false, false)
+          void this.captureRuntime(() => this.runtimeTrace.resolveApproval(sessionId, requestId, false))
           return false
         }
 
@@ -8381,6 +8743,7 @@ export class SessionManager implements ISessionManager {
 
       sessionLog.info(`Permission response for ${requestId}: allowed=${allowed}, alwaysAllow=${alwaysAllow}`)
       managed.agent.respondToPermission(requestId, allowed, alwaysAllow)
+      void this.captureRuntime(() => this.runtimeTrace.resolveApproval(sessionId, requestId, allowed))
       return true
     } else {
       sessionLog.warn(`Cannot respond to permission - no agent for session ${sessionId}`)
@@ -8651,10 +9014,11 @@ export class SessionManager implements ISessionManager {
       }
       if (patch.projectId !== undefined) {
         const projectId = patch.projectId ?? undefined
-        affectedFields.push('projectId')
+        affectedFields.push('projectId', 'projectIds')
         before.projectId = managed.projectId
-        optimistic.projectId = projectId
-        headerPatch.projectId = projectId
+        before.projectIds = managed.projectIds
+        Object.assign(optimistic, withProjectMembership(projectId ? [projectId] : []))
+        Object.assign(headerPatch, withProjectMembership(projectId ? [projectId] : []))
       }
 
       const nextLabels = resolveBulkLabels(managed.labels, patch)
@@ -8721,6 +9085,9 @@ export class SessionManager implements ISessionManager {
               break
             case 'projectId':
               managed.projectId = before.projectId
+              break
+            case 'projectIds':
+              managed.projectIds = before.projectIds
               break
             case 'labels':
               managed.labels = before.labels
@@ -8796,16 +9163,22 @@ export class SessionManager implements ISessionManager {
    * the project binding is only used as a default for newly created sessions.
    */
   async setSessionProjectId(sessionId: string, projectId: string | null): Promise<void> {
+    await this.setSessionProjectIds(sessionId, projectId === null ? [] : [projectId])
+  }
+
+  /** Internal metadata writer. Existing RPC authorization still owns project access. */
+  async setSessionProjectIds(sessionId: string, projectIds: readonly string[]): Promise<void> {
     const managed = this.sessions.get(sessionId)
     if (managed) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
-      managed.projectId = projectId ?? undefined
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
+      Object.assign(managed, withProjectMembership(projectIds))
       this.setMetadataWriteGuard(managed)
 
       this.sendEvent({
         type: 'project_id_changed',
         sessionId: managed.id,
         projectId: managed.projectId ?? null,
+        projectIds: [...(managed.projectIds ?? [])],
       }, managed.workspace.id)
 
       this.persistSession(managed)
@@ -8813,6 +9186,19 @@ export class SessionManager implements ISessionManager {
       const watcher = this.configWatchers.get(managed.workspace.rootPath)
       watcher?.notifyFileChange(`sessions/${sessionId}/session.jsonl`)
     }
+  }
+
+  /** Remove metadata edges through the live owner before a project is deleted. */
+  async unlinkProjectFromSessions(workspaceId: string, projectId: string): Promise<number> {
+    let touched = 0
+    for (const managed of this.sessions.values()) {
+      if (managed.workspace.id !== workspaceId) continue
+      const ids = sessionProjectIds(managed)
+      if (!ids.includes(projectId)) continue
+      await this.setSessionProjectIds(managed.id, ids.filter(id => id !== projectId))
+      touched++
+    }
+    return touched
   }
 
   /**
@@ -9017,9 +9403,9 @@ export class SessionManager implements ISessionManager {
     managed.taskSlug = taskSlug
     managed.taskDraft = false
     if (reconcile?.projectId !== undefined) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
     }
-    if (reconcile?.projectId !== undefined) managed.projectId = reconcile.projectId
+    if (reconcile?.projectId !== undefined) Object.assign(managed, withProjectMembership(reconcile.projectId ? [reconcile.projectId] : []))
     if (connectionChanged) managed.llmConnection = reconcile!.llmConnection
     const renamed = Boolean(reconcile?.name && reconcile.name !== managed.name)
     if (renamed) managed.name = reconcile!.name!
@@ -9038,8 +9424,8 @@ export class SessionManager implements ISessionManager {
     // One-shot board promotion: clearing taskDraft (sent as `false`, never `undefined` — undefined
     // is dropped over the JSON wire) reveals the already-announced tile; taskSlug/projectId
     // reconcile its metadata. `false` is falsy for the board's `if (meta.taskDraft)` skip.
-    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string } = { taskDraft: false, taskSlug }
-    if (reconcile?.projectId !== undefined) changes.projectId = reconcile.projectId
+    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string; projectIds?: string[] } = { taskDraft: false, taskSlug }
+    if (reconcile?.projectId !== undefined) { changes.projectId = managed.projectId; changes.projectIds = managed.projectIds }
     this.sendEvent({ type: 'session_metadata_changed', sessionId, changes }, managed.workspace.id)
     if (renamed) {
       this.sendEvent({ type: 'name_changed', sessionId, name: managed.name }, managed.workspace.id)
@@ -9107,9 +9493,9 @@ export class SessionManager implements ISessionManager {
     managed.taskSlug = taskSlug
     managed.taskDraft = false
     if (reconcile?.projectId !== undefined) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
     }
-    if (reconcile?.projectId !== undefined) managed.projectId = reconcile.projectId
+    if (reconcile?.projectId !== undefined) Object.assign(managed, withProjectMembership(reconcile.projectId ? [reconcile.projectId] : []))
     if (connectionChanged) managed.llmConnection = reconcile!.llmConnection
     const renamed = Boolean(reconcile?.name && reconcile.name !== managed.name)
     if (renamed) managed.name = reconcile!.name!
@@ -9125,8 +9511,8 @@ export class SessionManager implements ISessionManager {
     this.persistSession(managed)
     await this.flushSession(managed.id)
 
-    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string } = { taskDraft: false, taskSlug }
-    if (reconcile?.projectId !== undefined) changes.projectId = reconcile.projectId
+    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string; projectIds?: string[] } = { taskDraft: false, taskSlug }
+    if (reconcile?.projectId !== undefined) { changes.projectId = managed.projectId; changes.projectIds = managed.projectIds }
     this.sendEvent({ type: 'session_metadata_changed', sessionId, changes }, managed.workspace.id)
     if (renamed) {
       this.sendEvent({ type: 'name_changed', sessionId, name: managed.name }, managed.workspace.id)
@@ -9172,6 +9558,13 @@ export class SessionManager implements ISessionManager {
    * If no agent exists, creates a temporary one using the session's connection.
    */
   private async generateTitle(managed: ManagedSession, userMessage: string): Promise<void> {
+    const release = this.acquireRoxSessionLease(managed.id)
+    try { await this.generateTitleWithOwner(managed, userMessage) } finally { release() }
+  }
+
+  private async generateTitleWithOwner(managed: ManagedSession, userMessage: string): Promise<void> {
+    const execution = await this.roxExecutionForSession(managed)
+    this.assertRoxSessionExecution(managed.id, execution)
     sessionLog.info(`[generateTitle] Starting for session ${managed.id}`)
 
     // Use existing agent or create temporary one
@@ -9194,6 +9587,7 @@ export class SessionManager implements ISessionManager {
         const connection = getLlmConnection(managed.llmConnection)
 
         agent = createBackendFromConnection(managed.llmConnection, {
+          roxExecutionContext: execution,
           workspace: managed.workspace,
           miniModel: connection ? (getMiniModel(connection) ?? connection.defaultModel) : undefined,
           session: {
@@ -9228,7 +9622,9 @@ export class SessionManager implements ISessionManager {
         resolvedLanguage: i18n.resolvedLanguage ?? null,
         titleLanguage: titleLanguage ?? null,
       })
+      this.assertRoxSessionExecution(managed.id, execution)
       const title = await agent.generateTitle(userMessage, { language: titleLanguage })
+      this.assertRoxSessionExecution(managed.id, execution)
       if (title) {
         managed.name = title
         this.persistSession(managed)
@@ -9268,11 +9664,26 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  private async processEvent(managed: ManagedSession, event: AgentEvent): Promise<void> {
+  private async processEvent(managed: ManagedSession, event: AgentEvent, suppliedExecution?: RoxExecutionContext): Promise<void> {
     const sessionId = managed.id
     const workspaceId = managed.workspace.id
+    const execution = suppliedExecution ?? this.roxExecutions.get(sessionId)
+    const nativeContext = this.nativeMemoryContextFor(sessionId, workspaceId)
+    const assertOwner = () => {
+      this.assertRoxSessionExecution(sessionId, execution)
+      nativeContext?.assertAuthorized()
+    }
+    assertOwner()
+
+    // This manager creates OMP backends via createOmpSessionBackendFromResolvedContext.
+    // Root host Bash publishes actual executor observations after authorization; a tool request alone does not start a shell.
+    await this.captureRuntime(() => this.runtimeTrace.agentEvent(sessionId, event as unknown as { type: string; [key: string]: unknown }, { structuredHostTerminals: true }))
+    assertOwner()
 
     switch (event.type) {
+      case 'runtime_observation':
+        // The passive collector already persisted this executor-owned observation.
+        break
       case 'text_delta':
         managed.streamingText += event.text
         managed.streamingTurnId = event.turnId
@@ -9309,6 +9720,8 @@ export class SessionManager implements ISessionManager {
           turnId: event.turnId,
           parentToolUseId: event.parentToolUseId,
         }
+        await this.captureRuntime(() => this.runtimeTrace.publishMessage(sessionId, assistantMessage.id, event.text, event.turnId, !!event.isIntermediate))
+        assertOwner()
         managed.messages.push(assistantMessage)
         managed.streamingText = ''
         managed.streamingTurnId = undefined
@@ -10127,7 +10540,7 @@ export class SessionManager implements ISessionManager {
         // Steer message was not delivered (no PreToolUse fired before turn ended).
         // Re-queue it so it's sent as a normal message on the next turn.
         sessionLog.info(`Steer message undelivered, re-queuing for session ${sessionId}`)
-        managed.messageQueue.push({ message: event.message })
+        managed.messageQueue.push({ message: event.message, roxExecutionContext: this.roxExecutions.get(managed.id) })
         managed.wasInterrupted = true
         break
 
@@ -10234,6 +10647,7 @@ export class SessionManager implements ISessionManager {
       telegramTopic,
       waitForCompletion,
       automationContext,
+      runtimeLaunch,
     } = input
 
     if (automationContext) {
@@ -10275,6 +10689,11 @@ export class SessionManager implements ISessionManager {
       thinkingLevel,
     })
 
+    if (input.roxExecutionContext) {
+      getRoxAccountAuthority().assertCurrent(input.roxExecutionContext)
+      this.roxExecutions.set(session.id, input.roxExecutionContext)
+      await getRoxAccountAuthority().bind(`session:${workspaceId}:${session.id}`, input.roxExecutionContext)
+    }
     // Populate triggeredBy metadata so title generation is explicitly skipped
     // and the session is identifiable as automation-initiated after reload
     const managed = this.sessions.get(session.id)
@@ -10315,7 +10734,7 @@ export class SessionManager implements ISessionManager {
     if (waitForCompletion === false) {
       void this.sendMessage(session.id, prompt, undefined, undefined, {
         skillSlugs: resolved?.skillSlugs,
-      }).catch((err) => {
+      }, undefined, undefined, undefined, { runtimeLaunch }).catch((err) => {
         sessionLog.error('[Automations] background sendMessage failed for test run', {
           sessionId: session.id,
           error: err instanceof Error ? err.message : String(err),
@@ -10326,7 +10745,7 @@ export class SessionManager implements ISessionManager {
 
     await this.sendMessage(session.id, prompt, undefined, undefined, {
       skillSlugs: resolved?.skillSlugs,
-    })
+    }, undefined, undefined, undefined, { runtimeLaunch })
 
     return { sessionId: session.id }
   }
@@ -10392,6 +10811,7 @@ export class SessionManager implements ISessionManager {
       context: backendContext,
       hostRuntime: buildBackendHostRuntimeContext(),
       coreConfig: {
+        roxExecutionContext: await this.roxExecutionForSession(managed),
         workspace: managed.workspace,
         session: {
           id: `${managed.id}-remote-transfer-summary`,

@@ -85,4 +85,15 @@ describe('executePromptAutomation waitForCompletion', () => {
     await expect(sm.executePromptAutomation({ workspaceId: 'ws_test', workspaceRootPath: tmpRoot, prompt: 'Unsupported source', automationContext: { workspaceId: 'ws_test', object: { kind: 'mail', id: 'unknown' } } })).rejects.toThrow('unavailable')
     expect(created).toBe(1)
   })
+  it('preserves the internally supplied scheduler occurrence as runtime launch context', async () => {
+    let launch: unknown
+    ;(sm as unknown as { sendMessage: unknown }).sendMessage = (...args: unknown[]) => {
+      launch = (args[8] as { runtimeLaunch?: unknown })?.runtimeLaunch
+      return Promise.resolve()
+    }
+    const runtimeLaunch = { kind: 'scheduled' as const, scheduleId: 'matcher-1', triggerId: 'matcher-1', occurrenceId: 'actual-occurrence' }
+    await sm.executePromptAutomation({ workspaceId: 'ws_test', workspaceRootPath: tmpRoot, prompt: 'scheduled request', runtimeLaunch })
+    expect(launch).toEqual(runtimeLaunch)
+  })
+
 })

@@ -1,0 +1,219 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "status": "qualified local macOS unpackaged native lane passed",
+  "updatedAt": "2026-10-03T15:47:26.923181+00:00",
+  "fullDoDClosed": false,
+  "acceptanceLane": "actual local macOS unpackaged Electron through shipped NavigationProvider/RPC and profile-owned canonical storage",
+  "historyPreserved": true,
+  "attempts": [
+    {
+      "evidenceDirectory": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791033632172",
+      "resultSha256": "e9c318423a4a4cab72398705013c1bc269a915b5d7684f53c1cd0523168836c9",
+      "inputRevision": "9fa0dea8b7667fd472fe651849ca0d093bf0a006",
+      "status": "failed",
+      "lastStage": "boot-native-product",
+      "error": "launch: Timeout 60000ms exceeded.",
+      "diagnosticSkippedRoutes": [],
+      "diagnosticFailures": [],
+      "buildProvenanceQualified": false,
+      "quitRecovery": null,
+      "screenshots": 0
+    },
+    {
+      "evidenceDirectory": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791033957961",
+      "resultSha256": "21326efa49474b632fe9e3c69c90ac77a82dfcc9d6ed38940ec66dbf83f1ce68",
+      "inputRevision": "9fa0dea8b7667fd472fe651849ca0d093bf0a006",
+      "status": "failed",
+      "lastStage": "boot-native-product",
+      "error": "launch: Timeout 120000ms exceeded.",
+      "diagnosticSkippedRoutes": [],
+      "diagnosticFailures": [],
+      "buildProvenanceQualified": false,
+      "quitRecovery": null,
+      "screenshots": 0
+    },
+    {
+      "evidenceDirectory": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791034261424",
+      "resultSha256": "dd5a5e4d7247924ef4d4ad523e916c2ab9fba076dde13925d2c49af688fd9d34",
+      "inputRevision": "9fa0dea8b7667fd472fe651849ca0d093bf0a006",
+      "status": "failed",
+      "lastStage": "boot-native-product",
+      "error": "locator.waitFor: Error: strict mode violation: locator('[data-shell-role=\"chrome\"]') resolved to 3 elements:\n    1) <div data-shell-role=\"chrome\" class=\"chrome-topbar fixed top-0 right-0 z-panel titlebar-drag-region\">\u2026</div> aka locator('#root div').filter({ hasText: '\u0413\u043b\u0430\u0432\u043d\u0430\u044f\u0421\u0435\u0441\u0441\u0438\u0438\u0412\u0441\u0442\u0440\u0435\u0447\u0438\u0417\u0430\u0434\u0430\u0447\u0438\u0417\u0430\u043c\u0435\u0442\u043a\u0438\u041b\u0435\u043d\u0442\u0430\u0412\u0445\u043e\u0434\u044f\u0449\u0438\u0435\u0413\u043b\u0430\u0432\u043d\u0430\u044f\u0421\u0435\u0441\u0441\u0438\u0438\u0412\u0441\u0442\u0440\u0435\u0447\u0438\u0417\u0430\u0434\u0430\u0447\u0438\u0417\u0430\u043c\u0435\u0442\u043a\u0438\u041b' }).nth(3)\n    2) <div tabindex=\"-1\" data-shell-role=\"chrome\" data-focus-zone=\"sidebar\" class=\"h-full font-sans relative chrome-rail\">\u2026</div> aka locator('.relative > div > div > div > div > div > div > div > div').first()\n    3) <div data-shell-role=\"chrome\" class=\"h-full flex flex-col min-w-0 relative z-panel chrome-strip\">\u2026</div> aka getByText('\u0421\u0435\u0441\u0441\u0438\u0438\u0421\u0435\u0433\u043e\u0434\u043d\u044f \u00b7 2 UI001')\n\nCall log:\n\u001b[2m  - waiting for locator('[data-shell-role=\"chrome\"]') to be visible\u001b[22m\n",
+      "diagnosticSkippedRoutes": [],
+      "diagnosticFailures": [],
+      "buildProvenanceQualified": false,
+      "quitRecovery": null,
+      "screenshots": 1
+    },
+    {
+      "evidenceDirectory": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791037356225",
+      "resultSha256": "270771004af91111d68e394c13506fe29f728d2447c7dec6da28b8ffe5b81dde",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "lastStage": "unavailable-capability-routes",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"browser-surface-missing\"], [data-testid=\"browser-surface-unavailable\"]') to be visible\u001b[22m\n",
+      "diagnosticSkippedRoutes": [],
+      "diagnosticFailures": [],
+      "buildProvenanceQualified": true,
+      "quitRecovery": "normal quit exceeded 20s after state save; owned process terminated",
+      "screenshots": 9
+    },
+    {
+      "evidenceDirectory": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791037843427",
+      "resultSha256": "b1a9410aa1809f0556d9f05177421be7e04016eae317f076ed732b1d113234c8",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "lastStage": "unavailable-capability-routes",
+      "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+      "diagnosticSkippedRoutes": [],
+      "diagnosticFailures": [],
+      "buildProvenanceQualified": true,
+      "quitRecovery": "normal quit exceeded 20s after state save; owned process terminated",
+      "screenshots": 11
+    },
+    {
+      "evidenceDirectory": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791038195365",
+      "resultSha256": "82c6c56ba7d256e9a5a35da95fea39967f98b672e912c0084749e95c3fab502c",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "lastStage": "unavailable-capability-routes",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"extension-surface-unavailable\"]') to be visible\u001b[22m\n",
+      "diagnosticSkippedRoutes": [
+        "knowledge/block/ui001-absent-block"
+      ],
+      "diagnosticFailures": [],
+      "buildProvenanceQualified": true,
+      "quitRecovery": "normal quit exceeded 20s after state save; owned process terminated",
+      "screenshots": 11
+    },
+    {
+      "evidenceDirectory": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791038554362",
+      "resultSha256": "24c3964a80460e45e3c0bda6e8adf233fddec0b03bb9e2ae57f7e3b101d72031",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "lastStage": "unavailable-capability-routes",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('extra-screen-item-unavailable') to be visible\u001b[22m\n\u001b[2m    64 \u00d7 locator resolved to hidden <div class=\"h-full\" data-screen=\"radar\" data-item-id=\"ui001-absent-item\" data-testid=\"extra-screen-item-unavailable\">\u2026</div>\u001b[22m\n",
+      "diagnosticSkippedRoutes": [
+        "knowledge/block/ui001-absent-block",
+        "extension/ui001-absent-extension/ui001-absent-view"
+      ],
+      "diagnosticFailures": [],
+      "buildProvenanceQualified": true,
+      "quitRecovery": null,
+      "screenshots": 12
+    },
+    {
+      "evidenceDirectory": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791038809376",
+      "resultSha256": "1e1bb32089b083cef3e3a52c56f924562a36ab04ec546923950387049b6d5fcf",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "lastStage": "unknown-raw-link-unavailable",
+      "error": "Diagnostic continuation found 4 additional failures; see diagnosticFailures",
+      "diagnosticSkippedRoutes": [
+        "knowledge/block/ui001-absent-block",
+        "extension/ui001-absent-extension/ui001-absent-view"
+      ],
+      "diagnosticFailures": [
+        {
+          "name": "radar-missing",
+          "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('extra-screen-item-unavailable') to be visible\u001b[22m\n\u001b[2m    27 \u00d7 locator resolved to hidden <div class=\"h-full\" data-screen=\"radar\" data-item-id=\"ui001-absent-item\" data-testid=\"extra-screen-item-unavailable\">\u2026</div>\u001b[22m\n"
+        },
+        {
+          "name": "zoom-layout",
+          "error": "expect(received).toBeGreaterThan(expected)\n\nExpected: > 0\nReceived:   0"
+        },
+        {
+          "name": "skill-deletion",
+          "error": "expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true"
+        },
+        {
+          "name": "note-deletion",
+          "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('route-note-missing') to be visible\u001b[22m\n"
+        }
+      ],
+      "buildProvenanceQualified": true,
+      "quitRecovery": "normal quit exceeded 20s after state save; owned process terminated",
+      "screenshots": 29
+    },
+    {
+      "evidenceDirectory": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791040637580",
+      "resultSha256": "00401bfbd45b3a8db29433d43eb415ed2557d8b70bb95c1764214d1f1e879c39",
+      "inputRevision": "5a0b769b894aed2ed09ba8bcbe01a41cf8149d76",
+      "status": "failed",
+      "lastStage": "deleted-note-retry",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('route-note-missing') to be visible\u001b[22m\n",
+      "diagnosticSkippedRoutes": [],
+      "diagnosticFailures": [],
+      "buildProvenanceQualified": true,
+      "quitRecovery": "normal quit exceeded 20s after state save; owned process terminated",
+      "screenshots": 28
+    },
+    {
+      "evidenceDirectory": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791041783025",
+      "resultSha256": "723b75375edb8753c8f2a96816f4ac9e0258b953d9ac6b3fceedbbb321373607",
+      "inputRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+      "status": "passed",
+      "lastStage": "unknown-raw-link-unavailable",
+      "error": null,
+      "diagnosticSkippedRoutes": [],
+      "diagnosticFailures": [],
+      "buildProvenanceQualified": true,
+      "quitRecovery": "normal quit exceeded 20s after state save; owned process terminated",
+      "screenshots": 32
+    }
+  ],
+  "externalPrerequisites": [
+    "Windows10/11 installed app and OS DPI100/150/200 acceptance",
+    "macOS installed/distributed application acceptance",
+    "hosted browser ingress and transport",
+    "OS deep-link registration/dispatch (test guard bypasses registration)",
+    "clean normal quit (observed bounded owned-process recovery remains explicit)"
+  ],
+  "finalVerification": {
+    "productRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+    "result": {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791041783025/rox-readiness-ui-001.result.json",
+      "sha256": "723b75375edb8753c8f2a96816f4ac9e0258b953d9ac6b3fceedbbb321373607"
+    },
+    "cleanup": {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791041783025/rox-readiness-ui-001.cleanup.json",
+      "sha256": "0a64e7f5d73592e5df39e361b737314ac25e56d5bc877297aeddea785f35e924"
+    },
+    "buildReceipts": [
+      {
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001.build-5e5493-main.final.json",
+        "sha256": "16c1c5f4020979e122beca40ee7c2b1e606575503651ca2a180e49eb4fd59596",
+        "sourceManifestSha256": "9135605f00553e0fc97cebc36e48b826cd2e6ac13117dc21e397cf7fea077b6a",
+        "sourceInputCount": 2776
+      },
+      {
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001.build-5e5493-renderer.final.json",
+        "sha256": "7d3f93b0cc793bea84a8007cb40288f76cc64434fd0b2a056555a1e0201a8a5b",
+        "sourceManifestSha256": "9135605f00553e0fc97cebc36e48b826cd2e6ac13117dc21e397cf7fea077b6a",
+        "sourceInputCount": 2776
+      }
+    ],
+    "driverExitCode": 0,
+    "diagnosticSkippedRoutes": [],
+    "rendererErrors": [],
+    "screenshots": 32,
+    "completedStages": 19,
+    "sourceInputCount": 2776,
+    "sourceManifestSha256": "9135605f00553e0fc97cebc36e48b826cd2e6ac13117dc21e397cf7fea077b6a",
+    "harnessReceipt": {
+      "capturedBeforeSeedAndNativeLaunch": true,
+      "capturedAt": "2026-10-03T15:36:23.025Z",
+      "hashes": {
+        "tests/final-readiness/rox-readiness-ui-001.product.test.ts": "1f41b6b50669fa51f3025d0a22d92f727c368fbb4d3b9dd22997e51a8d791941",
+        "tests/final-readiness/rox-readiness-ui-001.seed.ts": "67392804b4afadb1e9b572748bc206fc925d62c05af4400112819931d91bab86",
+        "tests/final-readiness/rox-readiness-ui-001.node-driver.ts": "c84ba4b82c326e8e22ab4dd24476b976281bc744e492279b89848c3c43696abf",
+        "tests/final-readiness/rox-readiness-ui-001.build.ts": "09622fb6a63d66431e26a95d51171b22e72f39edc36e600c682337f79634c522",
+        "work/rox-readiness-ui-001.native-driver.cjs": "09397836ee85f2bb52fd6ac789b785fb523e1a861f7daee6142f5189109b2895"
+      }
+    },
+    "fullDoDClosed": false
+  }
+}

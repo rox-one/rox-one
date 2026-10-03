@@ -484,6 +484,7 @@ import type {
   NoteAssetRenameResult,
   NoteBacklink,
   NoteDocument,
+  NoteCreateOptions,
   NoteMutationOptions,
   NativeDataReadEntityInput,
   NativeDataMutationInput,
@@ -534,6 +535,10 @@ export interface ElectronAPI {
   workspaceWorkDelete(workspaceId: string, input: import('@rox/shared/workspace-work').WorkspaceWorkDelete): Promise<import('@rox/shared/workspace-work').WorkspaceWorkResult>
   workspaceWorkSnapshotProfile(workspaceId: string, profileId?: string): Promise<import('@rox/shared/workspace-work').AgentProfileSnapshot | null>
   onWorkspaceWorkChanged(callback: (workspaceId: string, revision: number) => void): () => void
+  getRuntimeTraceSnapshot(query: import('@rox/core/runtime-trace').RuntimeTraceQuery): Promise<import('@rox/core/runtime-trace').RuntimeTraceSnapshot>
+  readRuntimeTraceEvents(query: import('@rox/core/runtime-trace').RuntimeEventsQuery): Promise<import('@rox/core/runtime-trace').RuntimeEventsPage>
+  readRuntimeTracePayload(query: import('@rox/core/runtime-trace').RuntimePayloadQuery): Promise<import('@rox/core/runtime-trace').RuntimePayloadPage>
+
   // Cloud Runs (PRD docs/cloud-runs-prd.md)
   getCloudRunsConfig(): Promise<{
     enabled: boolean
@@ -662,6 +667,7 @@ export interface ElectronAPI {
   getTaskResults(workspaceId: string, slug: string, runId?: string): Promise<TaskResultsDto>
   listMeetings(workspaceId: string, cursor?: string, limit?: number): Promise<unknown>
   getMeeting(workspaceId: string, meetingId: string): Promise<unknown>
+  planMeetingActions(workspaceId: string, input: import('@rox/shared/meeting-agents').MeetingPlanInput): Promise<import('@rox/shared/meeting-agents').MeetingActionPlan>
   searchMeetings(
     workspaceId: string,
     query: string,
@@ -984,7 +990,7 @@ export interface ElectronAPI {
   checkProjectRepositoryFreshness(input: import('@rox/shared/code-intelligence').RepositorySnapshotInput): Promise<import('@rox/shared/code-intelligence').RepositoryFreshness>
   cancelProjectRepositoryRequest(input: import('@rox/shared/code-intelligence').RepositoryProjectInput): Promise<boolean>
   saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string, operationOrSourceStoreId?: NoteMutationOptions | string): Promise<NoteDocument>
-  createNote(workspaceId: string, title: string, folder?: string, operation?: NoteMutationOptions): Promise<NoteDocument>
+  createNote(workspaceId: string, title: string, folder?: string, operation?: NoteCreateOptions): Promise<NoteDocument>
   renameNote(workspaceId: string, noteId: string, nextTitle: string, operation?: NoteMutationOptions): Promise<NoteRenameResult>
   moveNote(workspaceId: string, noteId: string, targetFolder: string, operation: NoteMutationOptions): Promise<{ note: NoteDocument }>
   deleteNote(workspaceId: string, noteId: string, operation?: NoteMutationOptions): Promise<boolean>
@@ -1098,6 +1104,86 @@ export interface ElectronAPI {
     importAdc(input: { credentialsPath: string; candidateId: string; workspaceId: string }): Promise<WorkGraphConnectionRecord>
     previewSshAgent(): Promise<Array<{ candidateId: string; label: string; maskedSummary: string }>>
     importSshAgent(input: { candidateId: string; workspaceId: string }): Promise<WorkGraphConnectionRecord>
+      listConnectionLeases(input: {
+      workspaceId: string
+      connectionId: string
+    }): Promise<Array<{
+      id: string
+      consumerId: string
+      purpose: string
+      action: string
+      status: string
+    }>>
+    inspectConnection(input: {
+      workspaceId: string
+      connectionId: string
+    }): Promise<{
+      connectionId: string
+      credentialRefId: string
+      health: string
+      expiry: string
+      provenance: string
+      fingerprint: string
+      kind: string
+      versionId: string
+    }>
+    moveConnection(input: {
+      workspaceId: string
+      connectionId: string
+      targetBackend: string
+    }): Promise<{
+      connectionId: string
+      credentialRefId: string
+      from: string
+      to: string
+      consumers: Array<{ consumerId: string; status: string }>
+      leases: Array<{ consumerId: string; status: string }>
+      inspect: {
+        connectionId: string
+        credentialRefId: string
+        health: string
+        expiry: string
+        provenance: string
+        fingerprint: string
+        kind: string
+        versionId: string
+      }
+    }>
+    startGithubDeviceLogin(): Promise<{
+      flowId: string
+      userCode: string
+      verificationUri: string
+      interval: number
+      expiresIn?: number
+    }>
+    pollGithubDeviceLogin(input: {
+      flowId: string
+      workspaceId: string
+    }): Promise<
+      | { status: 'pending'; interval?: number }
+      | { status: 'slow_down'; interval?: number }
+      | { status: 'denied' }
+      | { status: 'expired' }
+      | { status: 'imported'; connectionId: string }
+    >
+    cancelGithubDeviceLogin(input: { flowId: string }): Promise<{ cancelled: true }>
+    reconnectConnection(input: {
+      workspaceId: string
+      connectionId: string
+    }): Promise<{
+      consumers: Array<{ consumerId: string; status: string }>
+      leases: Array<{ consumerId: string; status: string }>
+      inspect: {
+        connectionId: string
+        credentialRefId: string
+        health: string
+        expiry: string
+        provenance: string
+        fingerprint: string
+        kind: string
+        versionId: string
+      }
+    }>
   }
 
   knowledge: {
@@ -1564,6 +1650,7 @@ export interface ElectronAPI {
     connected: boolean
     authBaseUrl: string
     user: { id?: string; email?: string; name?: string } | null
+    account?: import('@rox/shared/auth').RoxAccountSnapshot | null
     connectError?: string | null
     connectExpiresAt?: number | null
   }>
@@ -1603,6 +1690,7 @@ export interface ElectronAPI {
 
   // Session-specific model (overrides global)
   getSessionModel(sessionId: string, workspaceId: string): Promise<string | null>
+  getSessionModelCatalog(sessionId: string): Promise<import('@rox/shared/protocol').SessionModelCatalog | null>
   setSessionModel(sessionId: string, workspaceId: string, model: string | null, connection?: string): Promise<void>
 
   // Workspace Settings (per-workspace configuration)
@@ -1735,6 +1823,10 @@ export interface ElectronAPI {
   cancelVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob | null>
   grantVoicePermission(): Promise<import('@rox/shared/voice').VoiceJob>
   sendVoiceChunk(payload: { audioBase64: string }): Promise<{ ok: true }>
+  editVoiceTranscript(payload: { id: string; expectedRevisionId: string; text: string }): Promise<{ ok: true; revisionId: string }>
+  selectVoiceTranscript(payload: { id: string; expectedRevisionId: string; revisionId: string }): Promise<{ ok: true; revisionId: string }>
+  readVoiceRecordingAudio(payload: { id: string; offset: number; token?: string }): Promise<{ audioBase64: string; offset: number; totalBytes: number; token: string; hash: string; mimeType: string }>
+  copyVoiceText(payload: { text: string }): Promise<{ ok: true }>
   listVoiceHistory(query?: { cursor?: string; limit?: number; search?: string; favorite?: boolean }): Promise<{ page: unknown[]; continueCursor: string | null; isDone: boolean }>
   getVoiceHistoryItem(payload: { id: string }): Promise<{ recording: unknown; revisions: unknown[]; runs: unknown[] }>
   favoriteVoiceRecording(payload: { id: string; favorite: boolean }): Promise<{ ok: true }>
@@ -1746,7 +1838,7 @@ export interface ElectronAPI {
   listVoiceModels(): Promise<{ families: string[]; catalog: unknown[] }>
   onVoiceJob(callback: (job: import('@rox/shared/voice').VoiceJob) => void): () => void
   onVoiceOverlay(callback: (state: import('@rox/shared/voice').OverlayState) => void): () => void
-  onVoiceHotkey(callback: (payload: { command: 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel' }) => void): () => void
+  onVoiceHotkey(callback: (payload: import('@rox/shared/voice/hotkey-types').VoiceHotkeyPayload) => void): () => void
 
   // Session Drafts (persisted composer state — text + attachment refs)
   getDraft(sessionId: string): Promise<import('@rox/shared/config').SessionDraft | null>
@@ -2708,6 +2800,15 @@ export interface TerminalNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+/** A view address that cannot be resolved; retain it for recovery and history. */
+export interface UnavailableNavigationState {
+  navigator: 'unavailable'
+  route: string
+  details?: null
+  reason?: 'unsupported-route' | 'invalid-encoding' | 'workspace-mismatch'
+  rightSidebar?: RightSidebarPanel
+}
+
 /**
  * Unified navigation state
  */
@@ -2735,6 +2836,11 @@ export type NavigationState =
   | ConnectionsNavigationState
   | HomeNavigationState
   | ScreenNavigationState
+  | UnavailableNavigationState
+
+export const isUnavailableNavigation = (
+  state: NavigationState
+): state is UnavailableNavigationState => state.navigator === 'unavailable'
 
 export const isSessionsNavigation = (
   state: NavigationState
@@ -2834,6 +2940,10 @@ export const DEFAULT_NAVIGATION_STATE: NavigationState = {
 }
 
 export const getNavigationStateKey = (state: NavigationState): string => {
+  if (state.navigator === 'unavailable') {
+    // JSON also preserves invalid percent escapes and lone surrogates safely.
+    return `unavailable:${JSON.stringify(state.reason ? { route: state.route, reason: state.reason } : state.route)}`
+  }
   if (state.navigator === 'search') {
     return `search${state.query ? `?q=${encodeURIComponent(state.query)}` : ''}`
   }
@@ -2956,6 +3066,29 @@ export const getNavigationStateKey = (state: NavigationState): string => {
 }
 
 export const parseNavigationStateKey = (key: string): NavigationState | null => {
+  try {
+    return parseNavigationStateKeyUnchecked(key)
+  } catch {
+    return null
+  }
+}
+
+const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null => {
+  // Retain saved keys produced before versioned unavailable-route keys.
+  if (key.startsWith('unavailable/')) {
+    return { navigator: 'unavailable', route: decodeURIComponent(key.slice('unavailable/'.length)), details: null }
+  }
+  if (key.startsWith('unavailable:')) {
+    const legacy = /^unavailable:(unsupported-route|invalid-encoding|workspace-mismatch):(.*)$/.exec(key)
+    if (legacy) return { navigator: 'unavailable', reason: legacy[1] as UnavailableNavigationState['reason'], route: decodeURIComponent(legacy[2]) }
+    const value: unknown = JSON.parse(key.slice('unavailable:'.length))
+    if (typeof value === 'string') return { navigator: 'unavailable', route: value, details: null }
+    if (value && typeof value === 'object' && 'route' in value && typeof value.route === 'string'
+      && 'reason' in value && ['unsupported-route', 'invalid-encoding', 'workspace-mismatch'].includes(String(value.reason))) {
+      return { navigator: 'unavailable', route: value.route, reason: value.reason as UnavailableNavigationState['reason'] }
+    }
+    return null
+  }
   // Handle sources
   if (key === 'sources') return { navigator: 'sources', details: null }
   if (key.startsWith('sources/source/')) {
@@ -3169,10 +3302,11 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
     }
   }
 
-  // Check for session details
-  if (key.includes('/session/')) {
-    const [filterPart, , sessionId] = key.split('/')
-    return parseSessionsKey(filterPart, sessionId)
+  // Preserve canonical /chat/ keys and legacy /session/ keys with complete ids.
+  const sessionMarker = key.includes('/session/') ? '/session/' : key.includes('/chat/') ? '/chat/' : null
+  if (sessionMarker) {
+    const index = key.indexOf(sessionMarker)
+    return parseSessionsKey(key.slice(0, index), key.slice(index + sessionMarker.length))
   }
 
   // Simple filter key

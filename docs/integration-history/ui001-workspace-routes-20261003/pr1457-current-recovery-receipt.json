@@ -1,0 +1,83 @@
+{
+  "source_pr": 1457,
+  "frozen_source": "b033150d220766f76b7b99be4a835d465a4f88d9",
+  "latest_source": "df46bf3ec03a4a88a63da4f29a5f8efad132d45a",
+  "later_source_production_change": false,
+  "root_ui_base": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+  "root_owns_integration": true,
+  "staged_paths": [
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts",
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.history-switch-lease.test.ts"
+  ],
+  "source_branch_preserved": true,
+  "disposition": "genuine_history_lease_gap_recovered_current_owner_pending_root_delivery",
+  "source_vs_current": "Original source late failed switches were fenced by action owner that changes on focus/remote rotation; local history requires independent workspace/history lease. Adapt current request sequence and requested slug/current unknown-workspace URL retention, rather than old source URL rewrite. Popbegin claims history before any readiness branch; local workspace change/ABA invalidates all old history leases.",
+  "negative": {
+    "mounted_current_before": {
+      "pass": 30,
+      "fail": 5,
+      "log": "/tmp/rox-branch-integration-20261003/pr1457-current-before-browser.log"
+    },
+    "actual_callbacks_before": {
+      "pass": 35,
+      "fail": 2,
+      "log": "/tmp/rox-branch-integration-20261003/pr1457-current-before-callbacks.log"
+    }
+  },
+  "qualified": {
+    "mounted_actual_provider": {
+      "pass": 37,
+      "fail": 0,
+      "log": "/tmp/rox-branch-integration-20261003/pr1457-joined-current-browser.log",
+      "includes_actual_React_StrictMode": 2
+    },
+    "actual_callbacks": {
+      "pass": 50,
+      "fail": 0,
+      "assertions": 268,
+      "log": "/tmp/rox-branch-integration-20261003/pr1457-joined-current-callbacks-second.log",
+      "incoming_lease_harness_adaptation": "Executes exact current requestWorkspaceSwitch plus handlePopState and all committed layout effects; added current refs/collaborator bindings, preserves intentional unavailable foreign URL instead of old rewrite assertion; all old lease assertions retained with current contract."
+    }
+  },
+  "types": {
+    "status": "passed",
+    "log": "/tmp/rox-branch-integration-20261003/pr1457-joined-current-electron-types.log",
+    "exit_code": 0
+  },
+  "files": {
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": {
+      "sha256": "043db03383e22503b434319d836fa2a7bd921030a8c05815fac82d6db82c19c0",
+      "git_blob": "979d29d343db6b6124d7abbcdb3c002273080266"
+    },
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": {
+      "sha256": "19e1ae0c1b357b6df4e770f38c4c40547c39a91281c31f71a5f499a514a4f12a",
+      "git_blob": "0f369dfd28d07d3bc4d72b9537107d5f3e6079ba"
+    },
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts": {
+      "sha256": "32b6c13a559417a1c96fd4e22c81dac46e2e8f177eb7254370f82948e2b4946d",
+      "git_blob": "06e4fe1d492fc5d2f48dc96fe28e0db37948bb50"
+    },
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.history-switch-lease.test.ts": {
+      "sha256": "63afe825002251bcbf513a7ebfd495f87cf9422a38a2fb55df5df60e9ee025c8",
+      "git_blob": "413a8fe8ac9fa46fcfd3d7b31bd99d2eaa3f5560"
+    }
+  },
+  "limits": "Controlled Chromium application provider and extracted current callback tests; no installed/native/Windows/provider acceptance claim. Root commits and merges separately.",
+  "latest_external_merge": "c9f149554f22b89cb3db1b65a3b9cb6b882f8dbb",
+  "qualification_before_external_merge": {
+    "mounted_actual_provider": {
+      "pass": 35,
+      "fail": 0,
+      "log": "/tmp/rox-branch-integration-20261003/pr1457-current-after-browser.log",
+      "runner": "Node22 lifecycle adapter; original real React/Jotai/NavigationProvider imports and case assertions retained, controlled data/IPC ports only; unknown-workspace expectation adapted to intentional current unavailable URL retention"
+    },
+    "actual_callbacks": {
+      "pass": 37,
+      "fail": 0,
+      "assertions": 208,
+      "log": "/tmp/rox-branch-integration-20261003/pr1457-current-after-callbacks.log"
+    }
+  }
+}
