@@ -13,6 +13,7 @@ import {
   buildRouteFromNavigationState, buildRightSidebarParam,
 } from '../../../../shared/route-parser'
 import { isSessionsNavigation, DEFAULT_NAVIGATION_STATE } from '../../../../shared/types'
+import { sessionMetaMapAtom } from '../../../atoms/sessions'
 import { preserveRouteQuery, normalizePanelRouteForReconcile } from '../../../contexts/navigation-reconcile'
 
 import { decodePanelEntries, encodePanelEntries } from '../../../lib/panel-url'
@@ -53,7 +54,7 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   reconcile(params)
   const navigate = productionClosure(navURL, 'navigate', {
     parseRoute, resolveRouteNavigationState, parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState, buildRouteFromNavigationState, preserveRouteQuery, isSessionsNavigation, navigationOwnerRef: { current: { active: true, revision: 0 } },
-    store, updateFocusedPanelRouteAtom, sessionMetaMapAtom: {}, workspaceId: 'a', remoteWorkspaceId: null,
+    store, updateFocusedPanelRouteAtom, sessionMetaMapAtom, workspaceId: 'a', remoteWorkspaceId: null,
     workspaceSlug: 'a', requestedWorkspaceSlugRef, setRequestedWorkspaceSlug: (value: string) => { requestedWorkspaceSlug = value },
     isReady: true, isSessionsReady: true, initialRouteRestoredRef: { current: true }, isPopstateSwitchRef: { current: false },
     pendingNavigationRef: { current: null }, suppressAutoSelectRef: { current: false }, actionEpochRef: { current: 0 },
@@ -65,7 +66,8 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   const readNavigation = () => productionClosure(navURL, 'navigationState', {
     unavailableWorkspaceSlug: requestedWorkspaceSlug !== 'a' ? requestedWorkspaceSlug : null,
     focusedRoute: store.get(focusedPanelRouteAtom), resolveRouteNavigationState, DEFAULT_NAVIGATION_STATE,
-    rightSidebar: rightSidebarRef.current,
+    rightSidebar: rightSidebarRef.current, isSessionsNavigation,
+    sessionMetaMap: store.get(sessionMetaMapAtom), workspaceId: 'a', remoteWorkspaceId: null,
   })()
   const focusServicePanel = (id: any) => store.set(focusServicePanelAtom, id)
   const serviceNavigate = (route: string) => { writes.push(route); return navigate(route) }

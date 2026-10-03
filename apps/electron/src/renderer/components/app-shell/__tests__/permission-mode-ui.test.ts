@@ -75,6 +75,8 @@ function uiHarness(kind: 'desktop' | 'compact') {
     Popover: 'popover', PopoverContent: 'popover-content', PopoverTrigger: 'popover-trigger',
     SlashCommandMenu: 'slash-menu', DEFAULT_SLASH_COMMAND_GROUPS: [],
     PermissionModeIcon: 'permission-icon', ModeIcon: 'permission-icon', ChevronDown: 'chevron', Check: 'check',
+    // No active learning runtime is installed in this controlled UI fixture.
+    useTourTarget: () => () => {},
     Drawer: 'drawer', DrawerTrigger: 'drawer-trigger', DrawerContent: 'drawer-content', DrawerHeader: 'drawer-header', DrawerTitle: 'drawer-title', DrawerClose: 'drawer-close',
   }
   const path = kind === 'desktop'

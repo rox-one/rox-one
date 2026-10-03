@@ -265,7 +265,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
 }
 
 async function getExpectedGuiChannels(): Promise<Set<string>> {
-  const [browser, system, workspace, settings, siyuan, extensionHost, extensionSurface] = await Promise.all([
+  const [browser, system, workspace, settings, siyuan, extensionHost, extensionSurface, voiceClipboard] = await Promise.all([
     import('../browser'),
     import('../system'),
     import('../workspace'),
@@ -273,6 +273,7 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     import('../siyuan'),
     import('../extension-host'),
     import('../extension-surface'),
+    import('../voice-clipboard'),
   ])
 
   return new Set([
@@ -283,6 +284,7 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     ...siyuan.HANDLED_CHANNELS,
     ...extensionHost.HANDLED_CHANNELS,
     ...extensionSurface.HANDLED_CHANNELS,
+    ...voiceClipboard.HANDLED_CHANNELS,
   ])
 }
 

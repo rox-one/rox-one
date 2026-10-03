@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import { createRequire } from 'node:module'
+import { observeFirstNativeWindow } from './native-startup'
 
 const repository = resolve(import.meta.dirname, '../../..')
 
@@ -27,10 +28,14 @@ export async function bootNativeProduct(): Promise<{ app: ElectronApplication; p
     TMPDIR: join(profile, 'tmp'), TMP: join(profile, 'tmp'), TEMP: join(profile, 'tmp'),
     APPDATA: join(profile, 'appData'), LOCALAPPDATA: join(profile, 'localAppData'),
     CRAFT_INSTANCE_NUMBER: `product-tour-native-${process.pid}`,
+    ROX_DEV_DISABLE_PROTOCOL_REGISTRATION: '1',
+    ROX_SKIP_PROTOCOL_REGISTRATION: '1',
+    NODE_ENV: 'test',
   })
   let app: ElectronApplication
   try { app = await _electron.launch({ executablePath, args: [main], cwd: repository, env }) }
   catch (error) { await rm(profile, { recursive: true, force: true }); throw error }
-  const page = await app.firstWindow()
+  const page = await observeFirstNativeWindow(app, profile,
+    resolve(repository, 'test-results/product-tour/native', `startup-${process.pid}.json`))
   return { app, page, async dispose() { await app.close(); await rm(profile, { recursive: true, force: true }) } }
 }

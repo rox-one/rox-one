@@ -74,6 +74,10 @@ jobs:
       - name: Verify product-tour policies, native domain adapters and browser harnesses
         run: bun run test:product-tour
       - name: Exercise production App, scoped targets and isolated native stores
+        env:
+          # Bind the same App assertions to a completed source-fingerprinted
+          # build; cold optimizer chunk replacement is not startup evidence.
+          PRODUCT_TOUR_APPLICATION_STATIC: '1'
         run: bun run test:product-tour:e2e
       - name: Upload browser and domain evidence
         if: always()

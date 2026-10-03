@@ -7,6 +7,7 @@ import * as navigationGuards from '../../../../shared/types'
 import { parseRouteToNavigationState } from '../../../../shared/route-parser'
 import { createStore } from 'jotai/vanilla'
 import { bottomTerminalOpenAtom } from '../../../atoms/unified-shell'
+import { navigationEntity } from '../../../features/product-tour/runtime/routes'
 
 const mainContentSource = readFileSync(join(__dirname, '../MainContentPanel.tsx'), 'utf8')
 const navContextSource = readFileSync(
@@ -49,12 +50,12 @@ function dispatch(route: string): React.ReactElement {
     useIsMultiSelectActive: () => false, useSelectionCount: () => 0,
     useSelectedIds: () => new Set(), useSelection: () => ({ clearMultiSelect() {} }),
   }
-  const names = ['Panel', 'StoplightProvider', 'RouteErrorBoundary', 'SendResourceToWorkspaceDialog',
+  const names = ['Panel', 'StoplightProvider', 'TourPanelScope', 'RouteErrorBoundary', 'SendResourceToWorkspaceDialog',
     'TerminalSurfacePage', 'CloudRunSurfacePage', 'ChatPage']
   const sessionMetaMapAtom = Symbol()
   const state = parseRouteToNavigationState(route)!
   const bindings: Record<string, unknown> = {
-    ...navigationGuards, ...Object.fromEntries(names.map(name => [name, name])), React,
+    ...navigationGuards, ...Object.fromEntries(names.map(name => [name, name])), React, navigationEntity,
     useCallback: (callback: unknown) => callback, useEffect() {}, useMemo: (callback: () => unknown) => callback(),
     useState: (initial: unknown) => [initial, () => {}], useTranslation: () => ({ t: (key: string) => key }),
     useNavigationState: () => state, useNavigation: () => ({ isSessionsReady: true }),
