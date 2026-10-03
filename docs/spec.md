@@ -451,3 +451,7 @@ credentials require their own verification. See `docs/cursor-cloud-server.md`.
 
 
 The canonical and portable gstack browser clients must send authenticated commands only to their selected literal loopback endpoint. HTTP redirects must fail through the existing non-2xx error contract without forwarding the command body or capability. Real HTTP 307/308 negative controls cover both same-origin and another-port destinations; normal authenticated POST commands retain their arguments and tab scope.
+
+## Native Notes Knowledge read projection (2026-10-03)
+
+Recover the useful read-only local-Markdown Knowledge API from codex/rox-ui-dev-loop-20260901 @1f56af31d3658ee9880105361ad5312324f36ab8 as a projection of authenticated canonical Native Notes. List connections, capabilities, ranked search with path/attribute/notebook filters, get, context and backlinks must use the current journal-backed Notes reader and captured authorization fence. Local references retain the current wire contract with provider local-markdown and workspace connection ID. No credential/default connection is persisted and no alternate filesystem producer exists. Mutations, automatic provider promotion, watch and external deep links stay unavailable. Agent native reads remain unavailable until the host supplies authenticated session delegation; session/workspace IDs cannot create a NativePrincipal.
