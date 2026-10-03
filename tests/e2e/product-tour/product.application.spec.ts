@@ -148,12 +148,11 @@ test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creati
   await attachEvidence(page, info)
 })
 
-test('T-WORKSPACE-SCOPE: the real App resolves a shell target for the voluntary workspace explanation', async ({ page }, info) => {
+test('T-WORKSPACE-SCOPE: restricted WebUI blocks an unavailable workspace switcher without inventing a control', async ({ page }, info) => {
   await openApp(page, 'settings/learning', true)
   await page.getByTestId('learning-start-OBT-02').click()
   const popup = page.locator('[data-product-tour-popover]')
-  await expect(popup).toHaveAttribute('data-product-tour-step', 'workspace.scope')
-  await popup.getByRole('button', { name: /^(Next|Finish)$/i }).click()
+  await expect(page.getByTestId('product-tour-status')).toContainText('The required control has not appeared yet.')
   await expect(popup).toHaveCount(0)
   await attachEvidence(page, info)
 })

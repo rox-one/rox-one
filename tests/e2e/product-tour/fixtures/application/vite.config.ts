@@ -9,5 +9,5 @@ export default mergeConfig(renderer, defineConfig({
   root,
   cacheDir: resolve(repository, 'apps/electron/.vite-worktree/product-tour-application'),
   server: { host: '127.0.0.1', strictPort: true, hmr: false, fs: { allow: [repository, resolve(realpathSync(resolve(repository, 'node_modules')), '..')] }, proxy: {} },
-  build: { outDir: resolve(repository, 'test-results/product-tour/harness-build'), rollupOptions: { input: resolve(root, 'index.html') } },
+  build: { outDir: resolve(repository, 'test-results/product-tour/harness-build'), rollupOptions: { input: { app: resolve(root, 'index.html'), components: resolve(root, 'ui.html') } } },
 }))

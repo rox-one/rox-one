@@ -21,7 +21,7 @@ const stubs: Record<string, string> = {
     export const stopRecording=()=>window.fixture.mutations.push('stop');`,
   '@/lib/meetings/auto-extraction': `export const extractionBusy=()=>false; export const startMeetingExtraction=async()=>window.fixture.mutations.push('extract');`,
   '@/lib/extra-screens/storage': `export const newLocalId=()=> 'fixture-id'; export const subscribeWorkspaceJson=()=>()=>{};`,
-  '@/lib/extra-screens/personal-task-bridge': `export const createPersonalTask=async()=>{window.fixture.mutations.push('task');return {id:'task-fixture'}};`,
+  '@/lib/extra-screens/personal-task-bridge': `const refuse=async()=>{window.fixture.mutations.push('task');throw new Error('Unexpected task mutation in read-only native surface fixture')}; export const createPersonalTask=refuse; export const createPersonalTaskConfirmed=refuse;`,
   'decisions-store': `export const DECISIONS_NS='fixture'; export const loadDecisions=()=>({decisions:[],candidates:[],extractions:[]}); export const saveDecisions=()=>window.fixture.mutations.push('decision'); export const removeDecisionLessons=async()=>{}; export const syncDecisionLessons=async()=>[];`,
   'AutomationsListPanel': `import * as React from 'react'; export const AutomationSwitch=({checked,onToggle,label})=><button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={onToggle}>switch</button>;`,
   sonner: `export const toast={error(){},success(){}};`,

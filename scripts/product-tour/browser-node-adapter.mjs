@@ -44,11 +44,22 @@ globalThis.Bun = {
   spawn(command, options = {}) {
     // Original isolated Bun tests recursively select one case in this same bundle.
     // Change only the test runner, preserving the original environment/case selector.
-    const args = command[1] === 'test' ? ['--test', process.env.ROX_PRODUCT_TOUR_NODE_BUNDLE] : command.slice(1)
-    const child = spawn(command[0], args, { env: options.env ?? process.env, stdio: ['ignore', 'pipe', 'pipe'] })
+    const isolated = command[1] === 'test'
+    const args = isolated ? ['--test', '--test-reporter=tap', process.env.ROX_PRODUCT_TOUR_NODE_BUNDLE] : command.slice(1)
+    const env = { ...(options.env ?? process.env) }
+    // Node's parent test IPC context is private to that runner. Inheriting it can
+    // make a nested runner exit successfully without executing its selected case.
+    delete env.NODE_TEST_CONTEXT
+    const child = spawn(command[0], args, { env, stdio: ['ignore', 'pipe', 'pipe'] })
+    let report = ''
+    child.stdout.on('data', chunk => { report = (report + chunk).slice(-65_536) })
     const exited = new Promise((resolve, reject) => {
       child.once('error', reject)
-      child.once('exit', (code, signal) => resolve(code ?? (signal === 'SIGTERM' ? 143 : 137)))
+      child.once('exit', (code, signal) => setImmediate(() => {
+        if (isolated && code === 0 && (!/# tests 1\b/.test(report) || !/# pass 1\b/.test(report) || !/# fail 0\b/.test(report))) {
+          reject(new Error(`Selected browser child did not execute exactly one passing test:\n${report}`))
+        } else resolve(code ?? (signal === 'SIGTERM' ? 143 : 137))
+      }))
     })
     return { stdout: Readable.toWeb(child.stdout), stderr: Readable.toWeb(child.stderr), exited,
       kill: signal => child.kill(signal ?? 'SIGTERM') }
