@@ -111,6 +111,7 @@ async function fixtureBundle() {
       const [sidebarWidth, setSidebarWidth] = React.useState(320);
       const [sessionListWidth, setSessionListWidth] = React.useState(300);
       const noop = () => {};
+      const loadCollectionDisplay = noop, loadCollectionFilters = noop;
       const setCollectionFilters = noop, DEFAULT_COLLECTION_FILTERS = {}, setSearchActive = noop,
         setSearchQuery = noop, setFocusedSidebarItemId = noop, setViewFiltersMap = noop,
         setExpandedFolders = noop, setCollapsedItems = noop;
