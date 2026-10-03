@@ -76,7 +76,7 @@ describe('installGitNpmPinned', () => {
       `git fetch -q --depth 1 origin ${COMMIT}`,
       `git -c advice.detachedHead=false checkout -q FETCH_HEAD`,
       `/bun install --frozen-lockfile`,
-      `/bun install --global ${workDir}`,
+      `/bun install --global ${join(versionDir, 'source')}`,
     ]);
     expect(calls[4]?.cwd).toBe(workDir);
     expect(logs).toEqual([]);

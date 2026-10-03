@@ -332,7 +332,7 @@ async function buildExtensionHostWorker(): Promise<void> {
       "--bundle",
       "--platform=node",
       "--format=cjs",
-      "--outfile=apps/electron/dist/extension-host-worker.cjs",
+      `--outfile=${EXTENSION_HOST_WORKER_OUTPUT}`,
       "--external:electron",
     ],
     cwd: ROOT_DIR,
