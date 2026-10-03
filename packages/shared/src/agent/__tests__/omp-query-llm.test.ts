@@ -12,6 +12,9 @@
  */
 import { afterEach, describe, expect, it } from 'bun:test';
 import { OmpAgent } from '../omp-agent.ts';
+import type { BackendConfig } from '../backend/types.ts';
+import { createPocketFixture } from '../../auth/__tests__/pocket-test-fixture.ts';
+import { setRoxAccountAuthority, LOCAL_ROX_CALLER } from '../../auth/rox-account-authority.ts';
 import {
   createFakeOmp,
   useFakeOmpEnv,
@@ -23,10 +26,10 @@ let fake: FakeOmp | null = null;
 let restoreEnv: (() => void) | null = null;
 const agents: OmpAgent[] = [];
 
-function setup(scenario = 'healthy'): { agent: OmpAgent; fake: FakeOmp } {
+function setup(scenario = 'healthy', overrides: Partial<BackendConfig> = {}): { agent: OmpAgent; fake: FakeOmp } {
   fake = createFakeOmp(scenario);
   restoreEnv = useFakeOmpEnv(fake);
-  const agent = new OmpAgent(makeOmpConfig(fake, { model: 'kimi-K3' }));
+  const agent = new OmpAgent(makeOmpConfig(fake, { model: 'kimi-K3', ...overrides }));
   agents.push(agent);
   return { agent, fake };
 }
@@ -115,9 +118,18 @@ describe('OmpAgent.queryLlm — model honesty', () => {
 
 describe('OmpAgent.runMiniCompletion', () => {
   it('uses the public Rox fast route for clean-install titles instead of a legacy foreign mini model', async () => {
-    const {agent,fake}=setup();(agent as any)._model='rox/standard';(agent as any).config.miniModel='claude-haiku-4-5';
+    const pocket = createPocketFixture();
+    await pocket.authority.start(LOCAL_ROX_CALLER);
+    await pocket.authority.state(LOCAL_ROX_CALLER);
+    setRoxAccountAuthority(pocket.authority);
+    const {agent,fake}=setup('healthy', { model: 'rox/standard', miniModel: 'claude-haiku-4-5', roxExecutionContext: await pocket.authority.capture(LOCAL_ROX_CALLER) });
     expect(await agent.runMiniCompletion('title')).toContain('fake-omp answer');const argv=fake.readArgvLog().find(a=>a.includes('-p'))!;
     expect(argv[argv.indexOf('--model')+1]).toBe('rox/fast');expect(argv[argv.indexOf('-p')+1]).toBe('orchestrate workflowz ultrathink\n\ntitle');
+  });
+  it('ownerless public titles cannot dispatch a one-shot child', async () => {
+    const { agent, fake } = setup('healthy', { model: 'rox/standard' });
+    expect(await agent.runMiniCompletion('title')).toBeNull();
+    expect(fake.readArgvLog()).toHaveLength(0);
   });
   it('returns trimmed stdout text from the one-shot', async () => {
     const { agent } = setup();

@@ -1,0 +1,51 @@
+{
+  "integratedMain": "a3754c9eaab274b2f99d6a931659b0cac91a9993",
+  "mergedCommit": "a37ad010cb998c5aeb95db9aa640e6af071d5eb7",
+  "runtime": "Bun1.3.14",
+  "sessionManagerSourceSha256": "57cafc798e40da38ed43b00ddb0ffa4e14e8faec9a95f073cc27a776d7fd9ada",
+  "checks": [
+    {
+      "name": "integrated-auth-i18n",
+      "exitCode": 0,
+      "verifiedSource": "a37ad010c",
+      "log": "integrated-auth-i18n.log",
+      "sha256": "9b213f6239813e3168c2d864f2913aa04bdc66911651278921941df4af486ec2"
+    },
+    {
+      "name": "integrated-core-tsc",
+      "exitCode": 0,
+      "verifiedSource": "a37ad010c",
+      "log": "integrated-core-tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "integrated-electron-tsc",
+      "exitCode": 0,
+      "verifiedSource": "a37ad010c",
+      "log": "integrated-electron-tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "helper-owner-before",
+      "exitCode": 1,
+      "verifiedSource": "a37ad010c",
+      "log": "helper-owner-before.log",
+      "sha256": "18bda8b8ae7f1cae14d7f72769c1e962be23ce0cb254127aeca9f98535546046"
+    },
+    {
+      "name": "helper-owner-after",
+      "exitCode": 0,
+      "verifiedSource": "root F1 candidate source blob",
+      "log": "helper-owner-after.log",
+      "sha256": "b01fd8d1c8052e817c24c05780ffcb6adb358cbe5c9b425bced5a2dfaa1ec258"
+    },
+    {
+      "name": "helper-core-tsc",
+      "exitCode": 0,
+      "verifiedSource": "root F1 candidate source blob",
+      "log": "helper-core-tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limits": "Independent review initial four P1; F1 root repaired5/0+Core types0; other three P1 under repair. All native/live acceptance pending."
+}

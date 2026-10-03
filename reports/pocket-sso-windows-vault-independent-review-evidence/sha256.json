@@ -1,0 +1,23 @@
+{
+  ".github/workflows/desktop-release.yml": "a75b62177dab1e2635de78fb722f4fa511a9580591934b9919bba011f6446110",
+  ".github/workflows/pocket-native-vault.yml": "2928137ab53907a247fb6cc9012834a6c8a4449c18f9174dd11f24c0f2e17f2b",
+  "apps/electron/src/main/pocket-account-store.ts": "f4d85c151bb89481e868629ef7981513cfa534a73404d5e74b640146468dda21",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/electron-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/frozen-before.log": "6aaa6f499ddfd8f0f71968ffc557edf8c6ede0e646d0488f33ee7de8e4184c92",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/proof-strict-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/receipt-contract-control.log": "9c68ffbf954c12620331f9c57acca8d0c78da41e3c089f6e873d8111ad8a40a1",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/receipt-contract-control.ts": "8e899af74097b120c45e710fde18877a8324e5941c93799d61861b62c29f465b",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/runner-controls-hardened.log": "dafee037c99735cd0ad02afe9115d07a6f3aef3ac27e5b24d48e64339c2e4918",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/runner-controls.log": "b979bbb4d890f85373b7574b5bd25f26da3fd8a7948d68ceb52abf52576b0017",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/saved-mac-compatibility.log": "40282ada5f61e37eec89bc4bced5df4556b8c0952cae71eadf8a667d6799dab8",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/targeted-hardened.log": "d4081c93a163a51c9935d261d5735058bca661a6ad41d49268a1839572f8a99d",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/targeted.log": "29f411a941f0e0c4ce86f07d7ba3a8f1b3ec193671cee400396cc33a066afe97",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/validator-before-negative.log": "174912a452f3a3a281c3c003e2f34726a80c3ed2fa94d6e44d263a6bdb11dd97",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/validator-before/pocket-vault-diagnostics.test.ts.fixture": "f1409d7767a6153cbd0dfb176ba4203ab1983fbb748888efec9c7c86c6415abc",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/validator-before/pocket-vault-diagnostics.ts": "586eabf28649d94a5ea427e71c415ee516079ab201a5c808f827c7d026f85da2",
+  "reports/pocket-sso-windows-vault-independent-review-evidence/workflow-readback.json": "3a9b08a63d05bd1ef1e4e8b8ed6dcd2f8dec1a59fe28a6f609d4ca4bde791f1e",
+  "reports/pocket-sso-windows-vault-independent-review.md": "8874d1e7a0876df54c39d3a098d9ac719ddd3764011041c083f2518c5b24319f",
+  "scripts/probes/pocket-vault-diagnostics.test.ts": "1192a78953cd4cdb329acb4eed876b58726faa0b9f50477f1d2a756a3f5bf92c",
+  "scripts/probes/pocket-vault-diagnostics.ts": "8b283e86769f7281239352412dd7b84b6ef4ac42d6ef037630a6c20c17a7af9a",
+  "scripts/probes/run-pocket-vault-native.ts": "259a5cff7c5bee804cc107f3eaedf8a6ce626af326266a3d17ca932e954962dc"
+}

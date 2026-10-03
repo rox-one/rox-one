@@ -19,6 +19,10 @@ Owner: pr_scout; root owns main merge and historical_sweep adds dependent Produc
 
 Queued callbacks capture the committed session/viewport incarnation and are refused after unmount, replacement or A→B→A; current sticky/focus, reduced-motion and document visibility are checked when execution actually occurs. Disconnected or zero-height viewports cannot follow. Hidden documents do not auto-follow. Forward events belonging to our own output animation preserve stickiness; backwards scrolling, reader gestures and explicit navigation interrupt it before queued output can take ownership. New user intent reseeds the motion baseline. Lazy-load anchoring measures its original height formula only after added turns commit to DOM but an obsolete queue cannot move a replacement session. No focus, shell, consent or native authority changes. Acceptance is actual current ChatDisplay and real Radix/message DOM in a nested viewport with adverse history/hidden/motion/unfocused/late callbacks, source helper/current adjacent tests, complete Electron/WebUI types and renderer build. Explicit search jumps remain user-requested navigation; installed native/full chat acceptance remains separate.
 
+## Единый аккаунт ROX через Pocket ID — 2026-10-03
+
+Спецификация принятой SSO-интеграции сохранён отдельно в [docs/pocket-sso/spec.md](pocket-sso/spec.md). Существующая программа ниже сохранена; SSO-задачи и критерии приёмки дополняют её.
+
 ## Product Learning durable foundation recovery — 2026-10-03
 
 Owner: pr_scout; integration lead owns main merge, historical_sweep owns dependent current UI/runtime/consumer wiring. Recover final a6 `35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5` contracts/core/persistence/analytics as a coherent foundation, preserving all source branches. Current main has none of these feature modules. The transition engine has no domain-mutation, clock, DOM or storage port: acknowledged, observed and native verified evidence stay distinct, bindings/operation correlation and captured clocks reject stale callbacks; foreground/modal/capability/scope changes pause or block without automatic resumption.
@@ -775,6 +779,10 @@ Each existing bounded connection attempt shares its 30-second budget across HTTP
 ## Workspace shortcut popover integration —2026-10-03
 Move the existing per-workspace shortcut editor to an accessible bounded Radix portal; preserve native storage, draft cancellation, keyboard submit and current TourTarget. Acceptance: real desktop/narrow320px DOM, all three kinds, reload/workspace isolation, validation, nested Escape and no-write cancellation; full installed native release remains open.
 
+
+## Current Pocket account integration recovery —2026-10-03
+Preserve source179-path account program and current native-memory/task/voice contracts. Reject blocking/nonregular credential descriptors, stale one-shot account domains and unresolved sealed queue owners. GET_AUTH_STATE may report absent vault without provisioning it. Root owns integration; recent_features owns scoped execution reconciliation. Current public rollout/native installed E2E remains unaccepted.
+
 ## Passive Runtime Map recovery — 2026-10-03
 
 Owner: historical_sweep; integration lead owns merge. Recover the complete 127-path source program from preserved PR #1444 at `28d1d7433a00743194d3a138dd2d0573c4872595`, adapted to current native, Product Learning, Tasks and Voice authorities. RuntimeTraceService, native observation and retained ChatPage runtime dock expose scoped, read-only journal/blob data. Observability never grants execution or credentials and cannot convert a successful durable operation into a failure. Native principals cannot read host payloads; revocation and workspace scope are checked around asynchronous reads. Privacy projections inspect own data descriptors without executing getters or accepting prototype pollution. A delayed native child must bind to its actual parent dispatch reservation or explicit native receipt; ambiguous provenance fails closed and reports partial coverage. Current route, chat draft, permissions and native recording ownership remain intact. Full installed desktop, live provider and R01–R30 acceptance remain outside this bounded verification. Exact source dispositions, failures, 121 focused controls, 43 protocol controls, 278 locale controls, actual Runtime Map Chromium cases, 63 native SDK observations and current build receipts are archived in `docs/integration-history/runtime-map-current-20261003`.
@@ -804,3 +812,7 @@ Recover the strict local calendar-day check from preserved Golden source5def9ffd
 ## Zed appearance reconciliation —2026-10-04
 
 Recover geometry0/4/6, chrome-only material, opaque reading surfaces and three licensed UI/code/terminal themes from PR1469 on current main. Preserve current navigation, native authority, task conversion, Product Learning refs, keyboard access, resize and workspace source errors. Existing saved themes survive; only a physically missing config seeds Nordfox. Cookie theme grants remain scoped to the authenticated current workspace with post-await withdrawal checks. Historical source native/WebUI receipts are not acceptance of this combined revision.
+
+### Golden per-task form draft recovery — 2026-10-04
+
+Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
