@@ -1,3 +1,11 @@
+## Golden Gate native surface ownership recovery — 2026-10-03
+
+Owner: isolated `codex/recover-golden-native-surfaces-20261003`. Restore the absent owner arbiter, DOM visibility/clipping invalidator, bounds hook, placeholder and retained-surface primitive from preserved Golden Gate revision `5def9ffd36dc160fdc7c908784e0ef97ba6a732e`. `docs/golden-native-source.json` records original file hashes and current-main decisions.
+
+Browser and extension hosts use one compositor contract: the latest visible owner holds an instance; hiding/releasing another owner cannot erase it; bounds writes serialize/coalesce and a final hide cannot be overtaken by a prior update. A partially clipped, hidden, inert, unfocused or overlay-suppressed surface sends null without destroying its persistent native instance. Responsive inspector suppression retains local React state while its subtree is hidden/inert. Inspector cleanup acts only on its claimed id and safely releases late async attachments; it never enumerates and hides sibling instances. Preserve current imported-cookie consent controls and per-request opt-in. Preserve the current explicit SiYuan removal/redirect to Rox Notes, all current inspector rail/layout contracts and external #1400 route/geometry/storage work.
+
+Acceptance: source owner/invalidator/visibility and backend extension lifetime tests, production BrowserPanel/InspectorBrowser/RetainedSurface in headless browser with synthetic native bridge (duplicates, clipping, overlay suppression, draft retention, late attachment and consent), complete types and WebUI/Electron renderer builds, locale parity/sorting/coverage. These prove renderer/RPC ownership behavior, not native hardware compositor acceptance. Panel workspace persistence/resize and current Notes/Meetings/task request lifecycle remain separate recovery slices.
+
 # Unified Rox / Conation / RMA / Golden Gate behavioral specification
 
 ## Desktop runtime 0.11.8 delivery — 2026-10-03
@@ -466,6 +474,12 @@ The canonical and portable gstack browser clients must send authenticated comman
 ## Native Notes Knowledge read projection (2026-10-03)
 
 Recover the useful read-only local-Markdown Knowledge API from codex/rox-ui-dev-loop-20260901 @1f56af31d3658ee9880105361ad5312324f36ab8 as a projection of authenticated canonical Native Notes. List connections, capabilities, ranked search with path/attribute/notebook filters, get, context and backlinks must use the current journal-backed Notes reader and captured authorization fence. Local references retain the current wire contract with provider local-markdown and workspace connection ID. No credential/default connection is persisted and no alternate filesystem producer exists. Mutations, automatic provider promotion, watch and external deep links stay unavailable. Agent native reads remain unavailable until the host supplies authenticated session delegation; session/workspace IDs cannot create a NativePrincipal.
+
+## Bounded historical recovery: browser registry ownership (2026-10-03)
+
+Owner: historical branch integration. Source: `rox-workbench-convergence-bb11` at `07a954df1a19a80d9fcd6670916ff2a779f2e850`. The source's browser lifecycle extraction kept OS-window IPC state independent of visible chrome. Current main retains the guarded, workspace-filtered hook but only mounts it through BrowserTabStrip, which the default browser-surface preference hides. Toolbar browser status therefore has no state producer in that configuration.
+
+AppShell must mount one nonvisual registry inside its workspace provider while browser-surface mode hides the strip; otherwise the visible strip retains ownership. Mini mode has no strip and owns the registry directly. This recovers list/state/removal/interaction updates without adding OS-window chips to SurfaceTabs or changing current glass/navigation, embedded browser ownership, authorization, or the explicit disabled SiYuan decision. Flag transfer and unmount must clean subscriptions/timers and discard late IPC results. Acceptance is actual component/hook behavior with real Jotai atoms and substituted scheduling/IPC, existing browser/chrome tests, and renderer types/build; installed native UI acceptance is separate.
 
 ## Voice command transport recovery — 2026-10-03
 
