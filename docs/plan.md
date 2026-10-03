@@ -1,3 +1,11 @@
+## Golden Gate device diagnostics recovery plan — 2026-10-03
+
+1. Historical scout identified exact source revision and runtime files absent from main; integration worker audited the diagnostic dependency closure and recorded source hashes.
+2. Recover the 13 source modules/tests, localized keys and minimal TopBar/main/preload wiring, preserving current shell behavior.
+3. Cover arbitrary command/path/sender denial, native cancellation/replacement, bounded/redacted logs including links/FIFOs, browser closed cost and open/tab/close behavior.
+4. Run targeted tests, complete package types and WebUI/Electron main/preload/renderer builds; publish a separate PR after main/release reconciliation. Lead owns independent review and serial main merge; all original branches remain.
+5. Recover remaining panel/native/request/task clusters in coherent subsequent slices with actual callers and behavior evidence.
+
 # September program implementation plan
 
 ## Current execution policy — 2026-10-03
