@@ -1,205 +1,103 @@
 {
-  "recorded_at": "2026-10-03T15:35:35.017240+00:00",
-  "production_snapshot_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+  "recorded_at": "2026-10-03T17:14:52.699762+00:00",
+  "production_snapshot_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
   "baseline_sha": "c9b7330357fb55a5e88a223783029d2768849828",
-  "synchronized_main_sha": "ae19683e69f079893cd09065487cfa7653d01154",
+  "synchronized_main_sha": "d4846751fe993f076d9fce329bdc7e1f6f342899",
   "scope": {
     "tours": 25,
     "atomic_steps": 56,
     "referenced_targets": 54,
     "locales": 12
   },
+  "receipt_count": 18,
   "receipts": {
     "feature": {
       "command": "bun run test:product-tour",
       "exit_code": 0,
-      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
       "dirty_diff_sha256": null,
-      "seconds": 82.39,
+      "seconds": 77.25,
       "log": "/workspace/product-tour-gates/feature.log"
-    },
-    "e2e": {
-      "command": "bun run test:product-tour:e2e",
-      "environment": {
-        "CHROMIUM_EXECUTABLE": "/usr/bin/chromium",
-        "platform": "linux",
-        "viewport": "1280x900",
-        "locale": "en-US",
-        "reducedMotion": "reduce"
-      },
-      "sourceSha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
-      "trackedWorktreeDirty": false,
-      "exitCode": 0,
-      "passed": 13,
-      "failed": 0,
-      "skipped": 0,
-      "durationSeconds": 105.72621400000001,
-      "logPath": "/workspace/product-tour-a9-final-c8d83576-e2e.log",
-      "scope": "Real App/native-store adapters7 plus production components6. Guided Notes verifies actual UI/bridge/journal/file readback/durable progress and stable mask offset<=2 CSS px.",
-      "nativeMacOSWindowsMicrophone": "NOT_RUN",
-      "status": "PASS",
-      "previousSnapshotStartupTimeout": {
-        "sourceSha": "7e0f6061e86a90c3a86949d35841c31d97895371",
-        "exitCode": 1,
-        "passed": 12,
-        "failed": 1,
-        "durationSeconds": 217.050714,
-        "logPath": "/workspace/product-tour-a9-final-7e0f6061-e2e.log",
-        "tracePath": "/workspace/product-tour-a9-first-7e0f6061-flag-off-timeout.zip",
-        "reason": "First App mount exceeded unchanged60s budget during concurrent cold transforms and multiple builders. No import exception. Same-source rerun after builders finished passed13 in102.280619s; final synchronized a49 also passes unchanged test."
-      },
-      "resolvedGeometryRegression": {
-        "previousSourceSha": "bf82a328",
-        "previousActualOffsetCSSPixels": 112.4375,
-        "maximumCSSPixels": 2,
-        "fixSourceSha": "a0ff359a219902158c12543a2437fb7fe6ffa68f",
-        "freshFinalAppPass": true
-      }
-    },
-    "native": {
-      "command": "bun run test:product-tour:native",
-      "exit_code": 2,
-      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
-      "dirty_diff_sha256": null,
-      "seconds": 0.2,
-      "log": "/workspace/product-tour-gates/native.log"
     },
     "electron-types": {
       "command": "bun run typecheck:electron",
       "exit_code": 0,
-      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
       "dirty_diff_sha256": null,
-      "seconds": 66.19,
+      "seconds": 51.14,
       "log": "/workspace/product-tour-gates/electron-types.log"
     },
     "all-types": {
       "command": "bun run typecheck:all",
       "exit_code": 0,
-      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
       "dirty_diff_sha256": null,
-      "seconds": 149.26,
+      "seconds": 120.68,
       "log": "/workspace/product-tour-gates/all-types.log"
     },
     "webui-types": {
       "command": "bun run webui:typecheck",
       "exit_code": 0,
-      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
       "dirty_diff_sha256": null,
-      "seconds": 58.36,
+      "seconds": 44.72,
       "log": "/workspace/product-tour-gates/webui-types.log"
+    },
+    "webui-build": {
+      "command": "bun run webui:build",
+      "exit_code": 0,
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
+      "dirty_diff_sha256": null,
+      "seconds": 59.91,
+      "log": "/workspace/product-tour-gates/webui-build.log"
     },
     "lint": {
       "command": "bun run lint:electron",
       "exit_code": 0,
-      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
       "dirty_diff_sha256": null,
-      "seconds": 23.55,
+      "seconds": 14.77,
       "log": "/workspace/product-tour-gates/lint.log"
     },
     "locales-parity": {
       "command": "bun run lint:i18n:parity",
       "exit_code": 0,
-      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
       "dirty_diff_sha256": null,
-      "seconds": 0.14,
+      "seconds": 0.1,
       "log": "/workspace/product-tour-gates/locales-parity.log"
     },
     "locales-sorted": {
       "command": "bun run lint:i18n:sorted",
       "exit_code": 0,
-      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
       "dirty_diff_sha256": null,
-      "seconds": 0.25,
+      "seconds": 0.15,
       "log": "/workspace/product-tour-gates/locales-sorted.log"
     },
     "locales-coverage": {
       "command": "bun run lint:i18n:coverage",
       "exit_code": 0,
-      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
       "dirty_diff_sha256": null,
-      "seconds": 5.24,
+      "seconds": 4.69,
       "log": "/workspace/product-tour-gates/locales-coverage.log"
-    },
-    "webui-build": {
-      "command": "bun run webui:build",
-      "exit_code": 0,
-      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
-      "dirty_diff_sha256": null,
-      "seconds": 77.86,
-      "log": "/workspace/product-tour-gates/webui-build.log"
     },
     "rx": {
       "command": "bun run rx:validate",
       "exit_code": 0,
-      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
       "dirty_diff_sha256": null,
-      "seconds": 0.05,
+      "seconds": 0.07,
       "log": "/workspace/product-tour-gates/rx.log"
     },
     "diff": {
       "command": "git diff --check",
       "exit_code": 0,
-      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
       "dirty_diff_sha256": null,
-      "seconds": 0.05,
+      "seconds": 0.03,
       "log": "/workspace/product-tour-gates/diff.log"
-    },
-    "build": {
-      "command": "bun scripts/electron-build-renderer.ts",
-      "sourceSha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
-      "trackedWorktreeDirty": false,
-      "exitCode": 0,
-      "durationSeconds": 83,
-      "logPath": "/workspace/product-tour-a9-final-c8d83576-renderer.log",
-      "bundleCommand": "bun scripts/product-tour/bundle-report.ts /workspace/rox-workers/A9-baseline/apps/electron/dist/renderer",
-      "bundleExitCode": 0,
-      "bundleLogPath": "/workspace/product-tour-a9-final-c8d83576-bundle.log",
-      "baselineSha": "c9b7330357fb55a5e88a223783029d2768849828",
-      "bundle": {
-        "caseId": "BUILD-01",
-        "commitSha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
-        "trackedWorktreeDirty": false,
-        "baseline": {
-          "directory": "/workspace/rox-workers/A9-baseline/apps/electron/dist/renderer",
-          "artifactSha256": "aca02b2ad7f8ac9ef8e54fa2c7734087d74e58d7f1a535ade54c6cfa153a956f",
-          "js": {
-            "files": 386,
-            "rawBytes": 26537285,
-            "gzipBytes": 6555262
-          },
-          "css": {
-            "files": 6,
-            "rawBytes": 395895,
-            "gzipBytes": 60636
-          },
-          "leakedMarkers": []
-        },
-        "candidate": {
-          "directory": "/workspace/rox-product-learning/apps/electron/dist/renderer",
-          "artifactSha256": "eab4c0db06554d355315d8bfb0890a4e2373539bdd231ecca9291485fbac5c2f",
-          "js": {
-            "files": 389,
-            "rawBytes": 27138848,
-            "gzipBytes": 6710069
-          },
-          "css": {
-            "files": 6,
-            "rawBytes": 392764,
-            "gzipBytes": 60414
-          },
-          "leakedMarkers": []
-        },
-        "delta": {
-          "jsRawBytes": 601563,
-          "jsGzipBytes": 154807,
-          "cssRawBytes": -3131,
-          "cssGzipBytes": -222
-        },
-        "status": "PASS",
-        "method": "Sum raw file bytes and gzip level 9 bytes independently per JS/CSS file; source maps excluded. Builds must be produced separately at recorded SHAs."
-      },
-      "status": "PASS",
-      "notes": "Renderer-only production build. Native platform acceptance remains NOT_RUN. Mainline changes between baseline and candidate are included in this actual delta."
     },
     "upstream-critical": {
       "command": "CHROMIUM_EXECUTABLE=/usr/bin/chromium bun test packages/core/src/tasks/personal/import-validation.test.ts apps/electron/src/renderer/pages/__tests__/task-import-validation.test.ts apps/electron/src/renderer/features/product-tour/adapters/work/tasks-projects apps/electron/src/renderer/pages/__tests__/connection-inspect-own-fields.test.ts apps/electron/src/renderer/pages/__tests__/connections-lifecycle.browser.test.ts apps/electron/src/renderer/pages/__tests__/connections-list.test.ts apps/electron/src/renderer/pages/__tests__/connections-page.test.ts apps/electron/src/renderer/platform/__tests__/inspector-host-connections.test.ts packages/core/src/platform/identity/credential-types.test.ts packages/core/src/platform/identity/attach-credential-ref.test.ts",
@@ -231,7 +129,189 @@
       "skipped": 0,
       "test_seconds": 11.69,
       "log": "/workspace/product-tour-final-settings-service.log"
+    },
+    "e2e": {
+      "command": "bun run test:product-tour:e2e",
+      "environment": {
+        "CHROMIUM_EXECUTABLE": "/usr/bin/chromium",
+        "platform": "linux",
+        "viewport": "1280x900",
+        "locale": "en-US",
+        "reducedMotion": "reduce"
+      },
+      "sourceSha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
+      "trackedWorktreeDirty": false,
+      "exitCode": 0,
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 95.61613,
+      "logPath": "/workspace/product-tour-a9-final-f4c090ca-e2e.log",
+      "scope": "Real App/native-store adapters7 plus production components6. Guided Notes verifies actual UI/bridge/journal/file readback/durable progress and stable mask offset<=2 CSS px.",
+      "nativeMacOSWindowsMicrophone": "NOT_RUN",
+      "status": "PASS",
+      "previousSnapshotStartupTimeout": {
+        "sourceSha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+        "exitCode": 1,
+        "passed": 12,
+        "failed": 1,
+        "durationSeconds": 217.050714,
+        "logPath": "/workspace/product-tour-a9-final-7e0f6061-e2e.log",
+        "tracePath": "/workspace/product-tour-a9-first-7e0f6061-flag-off-timeout.zip",
+        "reason": "First App mount exceeded unchanged60s budget during concurrent cold transforms and multiple builders. No import exception. Same-source rerun after builders finished passed13 in102.280619s; final synchronized a49 also passes unchanged test."
+      },
+      "resolvedGeometryRegression": {
+        "previousSourceSha": "bf82a328",
+        "previousActualOffsetCSSPixels": 112.4375,
+        "maximumCSSPixels": 2,
+        "fixSourceSha": "a0ff359a219902158c12543a2437fb7fe6ffa68f",
+        "freshFinalAppPass": true
+      },
+      "sourceShaAfter": "f4c090ca9f09a05a38d653326f247eedc62cef46",
+      "startedAt": "2026-10-03T17:11:27.477294+00:00",
+      "flaky": 0,
+      "wallDurationSeconds": 96.205768
+    },
+    "build": {
+      "command": "bun scripts/electron-build-renderer.ts",
+      "sourceSha": "616f3af10b7db097d9816b0fe96e9bda20ed807a",
+      "trackedWorktreeDirty": false,
+      "sourceShaAfter": "616f3af10b7db097d9816b0fe96e9bda20ed807a",
+      "startedAt": "2026-10-03T16:51:15.279120+00:00",
+      "exitCode": 0,
+      "durationSeconds": 70.349773,
+      "logPath": "/workspace/product-tour-a9-final-616f3af1-renderer.log",
+      "status": "PASS",
+      "notes": "Renderer-only production build. Native platform acceptance remains NOT_RUN. Mainline changes between baseline and candidate are included in this actual delta.",
+      "bundleCommand": "bun scripts/product-tour/bundle-report.ts /workspace/rox-workers/A9-baseline/apps/electron/dist/renderer",
+      "bundleExitCode": 0,
+      "bundleLogPath": "/workspace/product-tour-a9-final-616f3af1-bundle.log",
+      "baselineSha": "c9b7330357fb55a5e88a223783029d2768849828",
+      "bundle": {
+        "caseId": "BUILD-01",
+        "commitSha": "616f3af10b7db097d9816b0fe96e9bda20ed807a",
+        "trackedWorktreeDirty": false,
+        "baseline": {
+          "directory": "/workspace/rox-workers/A9-baseline/apps/electron/dist/renderer",
+          "artifactSha256": "aca02b2ad7f8ac9ef8e54fa2c7734087d74e58d7f1a535ade54c6cfa153a956f",
+          "js": {
+            "files": 386,
+            "rawBytes": 26537285,
+            "gzipBytes": 6555262
+          },
+          "css": {
+            "files": 6,
+            "rawBytes": 395895,
+            "gzipBytes": 60636
+          },
+          "leakedMarkers": []
+        },
+        "candidate": {
+          "directory": "/workspace/rox-product-learning/apps/electron/dist/renderer",
+          "artifactSha256": "bedd614f055b051368d3e24d80183b4dfdc8d331ee7a8854821cf95667239444",
+          "js": {
+            "files": 389,
+            "rawBytes": 27175555,
+            "gzipBytes": 6720806
+          },
+          "css": {
+            "files": 6,
+            "rawBytes": 393382,
+            "gzipBytes": 60496
+          },
+          "leakedMarkers": []
+        },
+        "delta": {
+          "jsRawBytes": 638270,
+          "jsGzipBytes": 165544,
+          "cssRawBytes": -2513,
+          "cssGzipBytes": -140
+        },
+        "status": "PASS",
+        "method": "Sum raw file bytes and gzip level 9 bytes independently per JS/CSS file; source maps excluded. Builds must be produced separately at recorded SHAs."
+      }
+    },
+    "native": {
+      "command": "bun run test:product-tour:native",
+      "exit_code": 2,
+      "source_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
+      "dirty_diff_sha256": null,
+      "seconds": 0.06,
+      "log": "/workspace/product-tour-gates/native.log"
+    },
+    "native-a9": {
+      "command": "bun run test:product-tour:native",
+      "sourceSha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
+      "trackedWorktreeDirty": false,
+      "runnerExitCode": 2,
+      "nativeTestExitCode": null,
+      "status": "NOT_RUN",
+      "releaseBlocking": true,
+      "durationSeconds": 0.06,
+      "logPath": "/workspace/product-tour-gates/native.log",
+      "readiness": {
+        "commitSha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
+        "trackedWorktreeDirty": false,
+        "platform": "linux",
+        "status": "NOT_RUN",
+        "releaseBlocking": true,
+        "automatedSmoke": {
+          "status": "NOT_RUN",
+          "scope": "Real Electron fresh setup / no automatic tour; macOS and Windows unavailable on this host",
+          "exitCode": null,
+          "runner": "node-playwright-cli",
+          "timeoutMs": 180000,
+          "elapsedMs": 0,
+          "timedOut": false,
+          "signal": null,
+          "error": null
+        },
+        "cases": [
+          {
+            "id": "NATIVE-01",
+            "status": "NOT_RUN",
+            "reason": "Full macOS Start/Pause/Resume, menu and native-dialog acceptance needs recorded platform evidence."
+          },
+          {
+            "id": "NATIVE-02",
+            "status": "NOT_RUN",
+            "reason": "Full Windows Start/Pause/Resume, Git Bash, menu and drawer acceptance needs recorded platform evidence."
+          },
+          {
+            "id": "NATIVE-03",
+            "status": "NOT_RUN",
+            "reason": "OS microphone permission denial requires an operator and recorded system-dialog evidence."
+          }
+        ]
+      },
+      "derivedFromActualRootCanonicalReceipt": "/workspace/product-tour-gates/native.json",
+      "retainedEarlierReceipt": "/workspace/product-tour-ci/native-a9-dd9faa70.json"
     }
+  },
+  "pending_local_gates": {},
+  "history": {
+    "pre_publication_snapshot_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+    "pre_publication_receipt_count": 17,
+    "pre_publication_archive": "/workspace/product-tour-ci/validation-pre-publication-c8d83576.json",
+    "introduced_fixture_type_failure_json": "/workspace/product-tour-ci/types-616f3af1-introduced-fixture-errors/all-types.json",
+    "introduced_fixture_type_failure_log": "/workspace/product-tour-ci/types-616f3af1-introduced-fixture-errors/all-types.log",
+    "review_resolution_appendix": "/workspace/product-tour-review-resolution.md",
+    "retained_earlier_native_a9_receipt": "/workspace/product-tour-ci/native-a9-dd9faa70.json"
+  },
+  "release_inventory": {
+    "comparison_main_sha": "d4846751fe993f076d9fce329bdc7e1f6f342899",
+    "candidate_code_sha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
+    "production_and_test_paths": 181,
+    "prospective_release_artifact_paths": 3,
+    "total_paths": 184,
+    "manifest": "changed-files.txt"
+  },
+  "delivery": {
+    "pull_request": "https://github.com/rox-one/rox-one/pull/1437",
+    "new_remote_ci": "PENDING",
+    "new_codeql_alerts_1040_1041": "PENDING",
+    "merged_main_sha": "PENDING",
+    "post_merge_smoke": "PENDING"
   },
   "limits": [
     "Earlier-source checks are recorded with their actual SHAs; affected Electron/WebUI/App checks were repeated after main sync.",
