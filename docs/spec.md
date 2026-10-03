@@ -812,3 +812,10 @@ Recover the strict local calendar-day check from preserved Golden source5def9ffd
 ### Golden per-task form draft recovery — 2026-10-04
 
 Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
+
+
+### Knowledge availability recovery — 2026-10-03
+
+- Owner: `pr_scout`; source #1436 `384843bfc4cf7d4a1f34c902a66a9a3198043c9f`. Recover its offline fast path through the current `KnowledgeNotebookTree` and `KnowledgeHome`, preserving native RPC authority, current Rox Notes routes, search, and saved-view operations.
+- Cache by API identity, explicit workspace and connection. Confirmed probes expire after 30 seconds; missing/error/timeout is unknown with at most one second of reuse. A three-second renderer budget does not cancel the native operation or certify a service is absent. Native changes invalidate once before mounted consumers refresh. Late invalidated responses cannot replace fresh entries.
+- Offline/unknown reads retain workspace-local views/envelopes and skip notebook/title calls. Render hides old-workspace rows immediately; request tickets prevent late event/workspace continuations from publishing rows or starting obsolete kernel reads. No new service, data store, installation CTA or authorization path is introduced.
