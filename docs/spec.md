@@ -799,3 +799,8 @@ Owner: branch integration historical worker. Dependency: current native collecti
 ### Golden task date validation recovery — 2026-10-03
 
 Recover the strict local calendar-day check from preserved Golden source5def9ffd into the current Tasks schedule form, through its existing parseDateExpression port. ISO dates must round-trip the exact year/month/day; impossible dates return no schedule change or native write. Valid leap days retain local midnight. Current native task actor/workspace custody, CAS/ACK/readback, import/background barriers and Product Learning producers remain canonical. Owner: recent_features; dependency: current Tasks1456 and runtime main; no legacy CatalogPanel or alternate store.
+
+
+### Golden per-task form draft recovery — 2026-10-04
+
+Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
