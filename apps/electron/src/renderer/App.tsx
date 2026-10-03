@@ -896,7 +896,13 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           if (cancelled) return
         }
         if (!workspaceProbe.ok) throw workspaceProbe.error
-        const startupState = decideStartupAppState({ identityProbe, workspaceProbe })
+        const cloudProbe = await probeWithRetry(() => window.electronAPI.getRoxCloudState())
+        if (cancelled) return
+        if (!cloudProbe.ok) throw cloudProbe.error
+        if (cloudProbe.value.required && !cloudProbe.value.connected) {
+          startupSetupNeeds = { ...(startupSetupNeeds ?? { needsBillingConfig: false, needsCredentials: false, isFullyConfigured: false }), needsRoxCloud: true, shouldShowOnboardingOnLaunch: true, isFullyConfigured: false }
+        }
+        const startupState = decideStartupAppState({ identityProbe, workspaceProbe, cloudProbe })
         if (startupState === 'transport-unavailable') throw new Error('runtime-identity-unavailable')
         let startupConnections: LlmConnectionWithStatus[] | null = null
         let startupDefaultSlug: string | undefined
@@ -935,7 +941,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         if (cancelled) return
         if (!finalWorkspaceProbe.ok) throw finalWorkspaceProbe.error
         if (finalWorkspaceProbe.value !== workspaceProbe.value) throw new Error('runtime-workspace-changed')
-        const finalStartupState = decideStartupAppState({ identityProbe: finalIdentityProbe, workspaceProbe: finalWorkspaceProbe })
+        const finalCloudProbe = await probeWithRetry(() => window.electronAPI.getRoxCloudState())
+        if (cancelled) return
+        if (!finalCloudProbe.ok) throw finalCloudProbe.error
+        if (cloudProbe.value.account?.user.id !== finalCloudProbe.value.account?.user.id) throw new Error('ROX_ACCOUNT_CHANGED')
+        const finalStartupState = decideStartupAppState({ identityProbe: finalIdentityProbe, workspaceProbe: finalWorkspaceProbe, cloudProbe: finalCloudProbe })
         if (finalStartupState === 'transport-unavailable'
           || startupState === 'onboarding' && finalStartupState !== 'onboarding') {
           // A newly completed profile needs a fresh pass through runtime setup.

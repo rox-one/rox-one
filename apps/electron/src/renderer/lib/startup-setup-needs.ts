@@ -75,12 +75,16 @@ export function probeSetupNeeds(fetchNeeds: () => Promise<SetupNeeds>, options: 
 export function decideStartupAppState(input: {
   identityProbe: ProbeResult<{ authority: 'native' | 'local'; name?: string } | null>
   workspaceProbe: ProbeResult<string | null>
+  cloudProbe?: ProbeResult<{ required: boolean; connected: boolean }>
 }): StartupAppState {
   const { identityProbe, workspaceProbe } = input
   if (!identityProbe.ok || !workspaceProbe.ok) return 'transport-unavailable'
   const identity = identityProbe.value
   if (!identity || identity.authority !== 'native' && identity.authority !== 'local') return 'transport-unavailable'
-  if (!identity.name?.trim()) return 'onboarding'
+  if (input.cloudProbe) {
+    if (!input.cloudProbe.ok) return 'transport-unavailable'
+    if (input.cloudProbe.value.required && !input.cloudProbe.value.connected) return 'onboarding'
+  } else if (!identity.name?.trim()) return 'onboarding'
   return workspaceProbe.value ? 'ready' : 'workspace-picker'
 }
 
