@@ -18,6 +18,7 @@ import { PanelHost } from './PanelHost'
 import { SurfaceTabs } from './SurfaceTabs'
 import { resolveWorkbenchAvailability } from './workbench-rollout'
 import { resolveWorkbenchChrome } from './workbench-chrome'
+import { RetainedSurface } from './RetainedSurface'
 
 export interface WorkspaceSurfaceHostProps {
   children: ReactNode
@@ -66,7 +67,9 @@ export function WorkspaceSurfaceHost({
         <BottomTerminalDock />
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
-      {!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />}
+      <RetainedSurface visible={!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed)}>
+        <InspectorHost />
+      </RetainedSurface>
       <PanelHost slot="inspector" />
     </div>
   )

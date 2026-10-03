@@ -5,46 +5,17 @@ import BrowserPanelPage from '@/pages/BrowserPanelPage'
 import { INTERNAL_BROWSER_OPEN_EVENT, planRetainedBrowserOpen } from '@craft-agent/shared/browser/retained-pane'
 import { takePendingInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
 import type { BrowserCookieAutoStatus } from '../../../shared/types'
+import { createNativeSurfaceLifetime } from '@/lib/native-surface-owners'
+import { releaseNativeSurface } from '@/lib/native-surface-dom'
 
 /** Embedded BrowserView hosted in the inspector column. */
 export function InspectorBrowserPane() {
   const { t } = useTranslation()
   const [instanceId, setInstanceId] = React.useState<string | null>(null)
   const [error, setError] = React.useState<string | null>(null)
-  const createdRef = React.useRef<string | null>(null)
   const [cookieStatus, setCookieStatus] = React.useState<BrowserCookieAutoStatus | null>(null)
   const [useImportedCookies, setUseImportedCookies] = React.useState(false)
   const createdImportedRef = React.useRef<string | null>(null)
-
-  const attach = React.useCallback(async (url?: string) => {
-    if (useImportedCookies && cookieStatus?.consent) {
-      const id = await window.electronAPI.browserPane.createEmbedded({
-        url,
-        useImportedCookies: true,
-      })
-      createdRef.current = id
-      createdImportedRef.current = id
-      setInstanceId(id)
-      return
-    }
-    if (createdImportedRef.current) {
-      const previous = createdImportedRef.current
-      createdImportedRef.current = null
-      createdRef.current = null
-      await window.electronAPI.browserPane.destroy(previous)
-    }
-    const existing = await window.electronAPI.browserPane.list()
-    const plan = planRetainedBrowserOpen(existing, url)
-    if (plan.action === 'navigate') {
-      createdRef.current = plan.id
-      setInstanceId(plan.id)
-      if (plan.url) await window.electronAPI.browserPane.navigate(plan.id, plan.url)
-      return
-    }
-    const id = await window.electronAPI.browserPane.createEmbedded(plan.url ? { url: plan.url } : undefined)
-    createdRef.current = id
-    setInstanceId(id)
-  }, [cookieStatus?.consent, useImportedCookies])
 
   React.useEffect(() => {
     const refreshConsent = () => {
@@ -62,25 +33,61 @@ export function InspectorBrowserPane() {
 
   React.useEffect(() => {
     let cancelled = false
-    void attach(takePendingInternalBrowserUrl()).catch((err) => {
-      if (!cancelled) setError(err instanceof Error ? err.message : String(err))
-    })
+    let requestGeneration = 0
+    const hide = (id: string) => {
+      void releaseNativeSurface(id, (nativeId, rect) => window.electronAPI.browserPane.syncBounds(nativeId, rect)).catch(() => undefined)
+    }
+    const lifetime = createNativeSurfaceLifetime(hide)
+    const claim = (id: string, generation: number) => {
+      if (cancelled || generation !== requestGeneration) { hide(id); return false }
+      return lifetime.claim(id)
+    }
+    const attach = async (url?: string) => {
+      const generation = ++requestGeneration
+      try {
+        if (useImportedCookies && cookieStatus?.consent) {
+          const id = await window.electronAPI.browserPane.createEmbedded({ url, useImportedCookies: true })
+          if (!claim(id, generation)) {
+            // This cookie-isolated instance was created only for the superseded request.
+            void window.electronAPI.browserPane.destroy(id).catch(() => undefined)
+            return
+          }
+          createdImportedRef.current = id
+          setInstanceId(id)
+          setError(null)
+          return
+        }
+        if (createdImportedRef.current) {
+          const previous = createdImportedRef.current
+          createdImportedRef.current = null
+          await window.electronAPI.browserPane.destroy(previous)
+        }
+        const existing = await window.electronAPI.browserPane.list()
+        if (cancelled || generation !== requestGeneration) return
+        const plan = planRetainedBrowserOpen(existing, url)
+        const id = plan.action === 'navigate' ? plan.id
+          : await window.electronAPI.browserPane.createEmbedded(plan.url ? { url: plan.url } : undefined)
+        if (!claim(id, generation)) return
+        setInstanceId(id)
+        setError(null)
+        if (plan.action === 'navigate' && plan.url) await window.electronAPI.browserPane.navigate(id, plan.url)
+      } catch (err) {
+        if (!cancelled && generation === requestGeneration) setError(err instanceof Error ? err.message : String(err))
+      }
+    }
+    void attach(takePendingInternalBrowserUrl())
     const onOpen = (event: Event) => {
       const nextUrl = (event as CustomEvent<{ url?: string }>).detail?.url ?? takePendingInternalBrowserUrl()
-      void attach(nextUrl).catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err))
-      })
+      void attach(nextUrl)
     }
     window.addEventListener(INTERNAL_BROWSER_OPEN_EVENT, onOpen)
     return () => {
       cancelled = true
+      requestGeneration += 1
       window.removeEventListener(INTERNAL_BROWSER_OPEN_EVENT, onOpen)
-      const id = createdRef.current
-      if (id) {
-        void window.electronAPI.browserPane.syncBounds(id, null).catch(() => undefined)
-      }
+      lifetime.release()
     }
-  }, [attach])
+  }, [cookieStatus?.consent, useImportedCookies])
 
   if (error) {
     return (

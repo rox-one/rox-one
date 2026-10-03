@@ -391,18 +391,6 @@ export function InspectorHost() {
     }
   }, [sessionMode, navigationState.rightSidebar, setChromeCollapsed, setSection, setVisible])
 
-  useEffect(() => {
-    if (panelShown && !terminalOpen && activeSection === 'browser') return
-    void (async () => {
-      const list = await window.electronAPI.browserPane.list().catch(() => [])
-      await Promise.all(
-        list
-          .filter((item) => item.embedded)
-          .map((item) => window.electronAPI.browserPane.syncBounds(item.id, null).catch(() => undefined)),
-      )
-    })()
-  }, [panelShown, terminalOpen, activeSection])
-
   const handleSectionClick = (clicked: InspectorSectionId) => {
     if (terminalOpen) setBottomTerminalOpen(true)
     setTerminalOpen(false)

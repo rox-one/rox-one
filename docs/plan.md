@@ -1,3 +1,11 @@
+## Golden Gate native surface ownership recovery plan — 2026-10-03
+
+1. Audit actual missing source closure and current callers. Preserve current deliberate SiYuan removal and cookie consent behavior; exclude historical shell replacements.
+2. Restore nine source modules/tests/callers, adapt scoped inspector attachment cleanup and retain inspector state across responsive suppression. Remove the reproduced all-instance hide.
+3. Verify duplicate owners, deferred writes and rejected RPC retry, bounds clipping/visibility, backend extension reference ownership, real production renderer behavior with fixture native responses, and unchanged consent opt-in.
+4. Run complete types, WebUI/Electron renderer bundles and i18n gates; publish a separate verified commit/PR. Lead owns current-main reconciliation, independent review and serial merge; no branch deletion.
+5. Continue remaining source clusters through current callers, retaining explicit superseded decisions rather than reviving disabled product paths.
+
 # September program implementation plan
 
 ## Current execution policy — 2026-10-03
