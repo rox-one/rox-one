@@ -150,7 +150,39 @@
       ],
       "sourcePaths": {
         "impeccable": "cursor-plugin/skills/impeccable"
-      }
+      },
+      "securityPatches": [
+        {
+          "pack": "impeccable",
+          "path": "impeccable/LOCAL-SECURITY.md",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "3507161a8d43123d3021b5255d1a4ee442abe271bdb33b2193c654f02858e7a2"
+        },
+        {
+          "pack": "impeccable",
+          "path": "impeccable/impeccable/scripts/live-browser-dom.js",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "c9faf17fff050bb0c4221cc9079dc07e31f70d9a711416dbc11e75349cd8cdcf"
+        },
+        {
+          "pack": "impeccable",
+          "path": "impeccable/impeccable/scripts/live-browser.js",
+          "alerts": [
+            925,
+            610,
+            609,
+            603,
+            602,
+            601,
+            600
+          ],
+          "change": "Root db1906fd2: cryptographic IDs+origin-checked live browser messages; presenter source/origin check; HWP transforms use descriptor reads/writes with object identity checks.; Impeccable helper script origin is literal localhost and integer port validated; source loading is explicitly requested local live-mode capability, not arbitrary remote script URL.",
+          "sha256": "992126d63b47ff9734c41514b86ad9f2a332d34ed38a3c33f7f16f1ac1045dd8"
+        }
+      ],
+      "securityNotice": "VENDOR-SECURITY-PATCHES.json"
     },
     {
       "slug": "obsidian-skills",
@@ -282,7 +314,87 @@
         "ce-simplify-code": "skills/ce-simplify-code",
         "ce-optimize": "skills/ce-optimize",
         "ce-plan": "skills/ce-plan"
-      }
+      },
+      "securityPatches": [
+        {
+          "pack": "compound-engineering",
+          "path": "compound-engineering/LOCAL-SECURITY.md",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "607b270bc65de2bc246f03e2865fe1712097046b7fc7410f978dbe68e268b35e"
+        },
+        {
+          "pack": "compound-engineering",
+          "path": "compound-engineering/ce-brainstorm/scripts/light-webserver.js",
+          "alerts": [
+            813,
+            561,
+            560,
+            559,
+            557
+          ],
+          "change": "Source-proven intended route auth / local authored executable prototype / authenticated configured helper/provider requests. Actual loopback negative controls deny wrong/missing credentials and origins; active authored prototype preserved. Per-alert detail: apps/electron/resources/skills/compound-engineering/LOCAL-SECURITY.md; no suppression or exclusion.; Descriptor confinement/private output/same-origin reload fix. 7 tests/101 assertions pass; post-check/open races and actual loopback helper/auth tests. Detail: apps/electron/resources/skills/compound-engineering/LOCAL-SECURITY.md",
+          "sha256": "d2e6ce752076d6e62f09d5703c883cc1ce92a0f5eb15cb42e77c8e0f6ea3be4a"
+        },
+        {
+          "pack": "compound-engineering",
+          "path": "compound-engineering/ce-brainstorm/scripts/safe-files.js",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "09b6cbe9c034cbc4e8cf3ab833ea20dcb8f072f2ae239314728abd78833f2b4e"
+        },
+        {
+          "pack": "compound-engineering",
+          "path": "compound-engineering/ce-polish/scripts/live-endpoint.js",
+          "alerts": [
+            905,
+            904,
+            903,
+            819,
+            818,
+            817
+          ],
+          "change": "Descriptor confinement/private output/same-origin reload fix. 7 tests/101 assertions pass; post-check/open races and actual loopback helper/auth tests. Detail: apps/electron/resources/skills/compound-engineering/LOCAL-SECURITY.md; Source-proven intended route auth / local authored executable prototype / authenticated configured helper/provider requests. Actual loopback negative controls deny wrong/missing credentials and origins; active authored prototype preserved. Per-alert detail: apps/electron/resources/skills/compound-engineering/LOCAL-SECURITY.md; no suppression or exclusion.",
+          "sha256": "a89baa72f80ea3d3716032307f99f8e193893d989490d77dce93523c2c4280dd"
+        },
+        {
+          "pack": "compound-engineering",
+          "path": "compound-engineering/ce-polish/scripts/safe-files.js",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "09b6cbe9c034cbc4e8cf3ab833ea20dcb8f072f2ae239314728abd78833f2b4e"
+        },
+        {
+          "pack": "compound-engineering",
+          "path": "compound-engineering/ce-prototype/assets/annotate.js",
+          "alerts": [
+            556
+          ],
+          "change": "Descriptor confinement/private output/same-origin reload fix. 7 tests/101 assertions pass; post-check/open races and actual loopback helper/auth tests. Detail: apps/electron/resources/skills/compound-engineering/LOCAL-SECURITY.md",
+          "sha256": "7707bc3a8c51241836125c8f1a6381948fc8288eba0ad1e831c73159e5b3d799"
+        },
+        {
+          "pack": "compound-engineering",
+          "path": "compound-engineering/ce-prototype/scripts/light-webserver.js",
+          "alerts": [
+            814,
+            564,
+            563,
+            562,
+            558
+          ],
+          "change": "Source-proven intended route auth / local authored executable prototype / authenticated configured helper/provider requests. Actual loopback negative controls deny wrong/missing credentials and origins; active authored prototype preserved. Per-alert detail: apps/electron/resources/skills/compound-engineering/LOCAL-SECURITY.md; no suppression or exclusion.; Descriptor confinement/private output/same-origin reload fix. 7 tests/101 assertions pass; post-check/open races and actual loopback helper/auth tests. Detail: apps/electron/resources/skills/compound-engineering/LOCAL-SECURITY.md",
+          "sha256": "d2e6ce752076d6e62f09d5703c883cc1ce92a0f5eb15cb42e77c8e0f6ea3be4a"
+        },
+        {
+          "pack": "compound-engineering",
+          "path": "compound-engineering/ce-prototype/scripts/safe-files.js",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "09b6cbe9c034cbc4e8cf3ab833ea20dcb8f072f2ae239314728abd78833f2b4e"
+        }
+      ],
+      "securityNotice": "VENDOR-SECURITY-PATCHES.json"
     },
     {
       "slug": "open-dynamic-workflows",
@@ -421,7 +533,8 @@
           "change": "Privately save credentials through upstream setup helper; remove token, profile and API-key printing.",
           "sha256": "8fbc514f7bb72ab2af2e98c17d8260ea89164bb3e1c49b0cc1aac3541558bedf"
         }
-      ]
+      ],
+      "securityNotice": "VENDOR-SECURITY-PATCHES.json"
     },
     {
       "slug": "jev",
@@ -601,7 +714,43 @@
         "oma-translation": " Upstream _shared resources copied into the skill directory; ../_shared references adjusted to ./_shared for a self-contained flat installation.",
         "oma-video": " Upstream _shared resources copied into the skill directory; ../_shared references adjusted to ./_shared for a self-contained flat installation.",
         "oma-voice": " Upstream _shared resources copied into the skill directory; ../_shared references adjusted to ./_shared for a self-contained flat installation."
-      }
+      },
+      "securityPatches": [
+        {
+          "pack": "oh-my-agent",
+          "path": "oh-my-agent/LOCAL-SECURITY.md",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "cb859195f11246b1e5475f17af2f10bf21e4cfaa38ce9a0a4207ec0d9e4cc1e3"
+        },
+        {
+          "pack": "oh-my-agent",
+          "path": "oh-my-agent/oma-hwp/resources/flatten-tables.ts",
+          "alerts": [
+            810,
+            809
+          ],
+          "change": "Root db1906fd2: cryptographic IDs+origin-checked live browser messages; presenter source/origin check; HWP transforms use descriptor reads/writes with object identity checks.",
+          "sha256": "0abd4bf19249a57ba9cd4d510e63d48acf9a559ef1c8f9b28a8bf889164e8982"
+        },
+        {
+          "pack": "oh-my-agent",
+          "path": "oh-my-agent/oma-hwp/resources/safe-file-transform.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "2bbd81a1fbad0e52f3064ae591dcb17099a44c8720520063094ba9f413c47005"
+        },
+        {
+          "pack": "oh-my-agent",
+          "path": "oh-my-agent/oma-slide/resources/assets/deck-stage.js",
+          "alerts": [
+            924
+          ],
+          "change": "Root db1906fd2: cryptographic IDs+origin-checked live browser messages; presenter source/origin check; HWP transforms use descriptor reads/writes with object identity checks.",
+          "sha256": "90368e50f690dcd817d7edcc038cc33f228a93656f89257a79e0b631904051dd"
+        }
+      ],
+      "securityNotice": "VENDOR-SECURITY-PATCHES.json"
     },
     {
       "slug": "gbrain",
@@ -968,12 +1117,2073 @@
       "securityPatches": [
         {
           "pack": "gstack",
+          "path": "gstack/LOCAL-SECURITY-AUTOPLAN.md",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "6858fbf08ecf6e4f9c82ad952305c55caf045e3c827b7d42b892329a22170de8"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/LOCAL-SECURITY-BROWSE.md",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "e53aa10d2a05b3d7e976d646266e39335f39963be47d77d73d7161b65d03f535"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/LOCAL-SECURITY-CONTEXT.md",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "6ffb62c7bc73a6185d71d391504eabcedf5ca1b7639c82833feed3a9f20214fa"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/autoplan/bin/phase-publication-hook.ts",
+          "alerts": [
+            710
+          ],
+          "change": "Opened no-follow/nonblocking descriptor; bounded 32 MiB+1 read; bigint identity, timestamp and mode checks. Actual replacement/growth refusal, initialization rollback, exact amendment, and two-way link regressions pass. See LOCAL-SECURITY-AUTOPLAN.md.",
+          "sha256": "1ab62e5922ed2afe87e098cdb2dee14e2163f795db9c44effc12b58f5361d997"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/browse-client.ts",
+          "alerts": [
+            816,
+            815
+          ],
+          "change": "Authenticated daemon IPC deliberately sends local/scoped bearer token and commands to literal127.0.0.1 endpoints; port/state/token types now validated before URL construction (e7c7e0e25). Pair-agent remote health probe is explicit opt-in and carries no bearer token. Regression rejects authority injection and header controls.",
+          "sha256": "fb1184356a9a4bab26eee91af2661ddd2092f2ba4a715a1b8fff11b032d656d3"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/browser-skill-commands.ts",
+          "alerts": [
+            712,
+            711
+          ],
+          "change": "Captured output is read through one nonblocking no-follow descriptor with fstat regular-file check and bounded buffer.",
+          "sha256": "c31116c4216677044d13ec0a1a43f5cbc18bdf99618e8841b5e3b4e632f50574"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/browser-skill-write.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "ea729446d348f7276e0d5cea35c6690bbf62c530bf0e71e252c3447315e9bbc5"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/browser-skills.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "a760ec62c436430b6ec39ab68dea4d993a1790449b2471d25c383667711bcdbe"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/claude-bin.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "24566530d78eb3faa13729242a8633162a2a127242bbc3df3e518a66d3ddf2dd"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/cli.ts",
+          "alerts": [
+            836,
+            835,
+            834,
+            833,
+            832,
+            831,
+            830,
+            829,
+            828,
+            827,
+            826,
+            825,
+            824,
+            823,
+            822,
+            821,
+            820
+          ],
+          "change": "Authenticated daemon IPC deliberately sends local/scoped bearer token and commands to literal127.0.0.1 endpoints; port/state/token types now validated before URL construction (e7c7e0e25). Pair-agent remote health probe is explicit opt-in and carries no bearer token. Regression rejects authority injection and header controls.",
+          "sha256": "fafd70565cc4a46c37f13bdc7a5a897f254f8b07496d10f28d88f2ea3108002b"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/config.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "c8971bec68a7cb5a1bddc23b12512e742bd51923623371790f906a16cf3dec1a"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/domain-skill-commands.ts",
+          "alerts": [
+            614
+          ],
+          "change": "Edit body is exclusively created mode0600 inside mkdtemp private directory; always cleaned in finally.",
+          "sha256": "6fcf3b8eedbb48f01330d8f4cd56408a420df8df063d65eb7d9a33bd070a3847"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/domain-skills.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "884228de333ae5d04526543060aa54d09a0271075a3ac2ceb53bbc7fb5411d02"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/error-handling.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "532911e61efcb36e9f5d2cd355b50790bfb512f5fd61d46cdbb6fe7a55be5acd"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/file-permissions.ts",
+          "alerts": [
+            906,
+            713
+          ],
+          "change": "Private write/append operate on opened no-follow/nonblocking regular owned inode; POSIX fchmod before mutation; Windows retains icacls plus identity verification.",
+          "sha256": "22ddc560b64ece2e170ca1e662b84663eaac1aa0a2bf43aaf2a84948512a92b5"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/loopback-auth.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "880e39f82eb3a6774fb2d8d6e68286445ed1f6719a4205864560c1570a8cc756"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/network-capture.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "5727a156b05e508817ae888412bf1abbee5206ca785bd293466a790528520176"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/read-commands.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "cca4fc50a8f5df759b445609fc97a78bdfd22966891f15ab897386c45545949c"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/routes/core.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "8ebd0106cf80010f1e1d79aec37a854b1094ab40f58d857fad94051f163299b3"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/screenshot-size-guard.ts",
+          "alerts": [
+            615
+          ],
+          "change": "ea12ab774; LOCAL-SECURITY-BROWSE.md and gstack-browse-io.test.ts actual both-copy dispatch/write/lock regressions 6 tests38assertions",
+          "sha256": "29e90e015611e52df978265f5f21fc86de0f2e038c7a70d8427a091967528087"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/security-classifier.ts",
+          "alerts": [
+            586
+          ],
+          "change": "htmlToPlainText output is consumed solely by testsavantClassifier(plain) as natural-language classifier input, not rendered as HTML.",
+          "sha256": "538419aedc09a334432c6d996d36a5095125cdc80343a52576d786a70c1c7e6d"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/server.ts",
+          "alerts": [
+            838,
+            837
+          ],
+          "change": "Private terminal/browser IPC sends internal/session credential to literal127.0.0.1 numeric parsed port, not arbitrary remote host. server grant/restart and terminal active-tab synchronization are intentional authenticated local broker operations.",
+          "sha256": "ca811bc94817ace9da664ab9174362dbe2b524341e31a4d56e9ce1d8d3d9f3b6"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/telemetry.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "2e4c2d4b48bf674713f6b37b751982a668b9a7a2b101e72c79e8aa3f988ff460"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/terminal-agent-control.ts",
+          "alerts": [
+            715,
+            714
+          ],
+          "change": "ea12ab774; LOCAL-SECURITY-BROWSE.md and gstack-browse-io.test.ts actual both-copy dispatch/write/lock regressions 6 tests38assertions",
+          "sha256": "ef19eeaba7337edb6d86a705007bd65c2200c7acb83ff8cf8e83dad1d4a777f1"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/terminal-agent.ts",
+          "alerts": [
+            839
+          ],
+          "change": "Private terminal/browser IPC sends internal/session credential to literal127.0.0.1 numeric parsed port, not arbitrary remote host. server grant/restart and terminal active-tab synchronization are intentional authenticated local broker operations.",
+          "sha256": "8b8c02008041a073354fc9aab1e7023f9077ba16a223f6175753e212b1620f7c"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/tunnel-denial-log.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "d5b1da30f4e1c7a602daad86e894883d9042b65887eb2a31d03c8ef30a42f343"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/browse/src/write-commands.ts",
+          "alerts": [
+            716,
+            619,
+            618,
+            617,
+            616
+          ],
+          "change": "ea12ab774; LOCAL-SECURITY-BROWSE.md and gstack-browse-io.test.ts actual both-copy dispatch/write/lock regressions 6 tests38assertions",
+          "sha256": "e053777d8d15c0e117235987d4686098e7c351123366edd923a7a0226177f984"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/ROOT-HELPER-SECURITY.md",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "6df620b39f9f87306f116f00f6c3d364a1c9e9c3a768f1617047966db276642f"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/autoplan/bin/phase-publication-hook.ts",
+          "alerts": [
+            718
+          ],
+          "change": "Opened no-follow/nonblocking descriptor; bounded 32 MiB+1 read; bigint identity, timestamp and mode checks. Actual replacement/growth refusal, initialization rollback, exact amendment, and two-way link regressions pass. See LOCAL-SECURITY-AUTOPLAN.md.",
+          "sha256": "1ab62e5922ed2afe87e098cdb2dee14e2163f795db9c44effc12b58f5361d997"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/bin/gstack-autoplan-snapshot.ts",
+          "alerts": [
+            727,
+            726,
+            725,
+            724,
+            723,
+            722,
+            721,
+            720
+          ],
+          "change": "Opened no-follow/nonblocking descriptor; bounded 32 MiB+1 read; bigint identity, timestamp and mode checks. Actual replacement/growth refusal, initialization rollback, exact amendment, and two-way link regressions pass. See LOCAL-SECURITY-AUTOPLAN.md.",
+          "sha256": "49cea03171b43b2281ebc6fd03f567d9c76ad9ace2498d9121c57022f4e14053"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/bin/gstack-design-detect.ts",
+          "alerts": [
+            730
+          ],
+          "change": "gstack/gstack/ROOT-HELPER-SECURITY.md; gstack-root-helpers.test.ts 6 tests / 36 assertions",
+          "sha256": "ebbfcb6e94cc45572238bf326efa4d8e5fc6f95752ca8c562d36e003e4681d02"
+        },
+        {
+          "pack": "gstack",
           "path": "gstack/gstack/bin/gstack-detach",
           "alerts": [
             551
           ],
           "change": "Create detached worker logs with 0600 and tighten existing logs through the opened descriptor.",
           "sha256": "430659a0217599de0c8cc4f75ca56eec947f5b542924958551e0bf109a382116"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/bin/gstack-gbrain-read-capability.ts",
+          "alerts": [
+            729,
+            728
+          ],
+          "change": "Sync state stable descriptor max64KiB before external CLI; isolated real capability CLI negative controls. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.; Source pin stable descriptor max512B before external CLI; isolated real capability CLI negative controls. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.",
+          "sha256": "624450557ab54dcc49d145e2f3e798985889fd1b0c2ffca9ab7ee906d8587c3f"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/bin/gstack-gbrain-sync.ts",
+          "alerts": [
+            732,
+            731
+          ],
+          "change": "Dream marker cleanup bounded stable descriptor max4KiB; tests preserve symlinks/another PID and remove owned regular marker. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.; Sync lock cleanup bounded stable descriptor max4KiB; existing PID ownership preserved. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.",
+          "sha256": "f1e1dd9215565622b275228a70a70d7bbec36dba65cc821e5b200b3def43dd0e"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/bin/gstack-memory-ingest.ts",
+          "alerts": [
+            736,
+            735,
+            734
+          ],
+          "change": "Scan fingerprint/raw body/provenance from same bounded stable snapshot max64MiB; test source hash/size/body consistency. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.; Appended failure range opens nofollow/nonblock descriptor, max16MiB and stable inode/size/timestamps; tests replacement/growth/truncation/symlink/cap; unsafe output retries all sources. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.; Artifact body/hash/size from one bounded stable source snapshot max64MiB; provenance/symlink/oversize tests. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.",
+          "sha256": "ad9823a8ccf444025ef13fe7c7c3e42be3b02828c0d8fa40e3d4b9870f6b7fca"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/bin/gstack-office-hours-review",
+          "alerts": [
+            733
+          ],
+          "change": "gstack/gstack/ROOT-HELPER-SECURITY.md; gstack-root-helpers.test.ts 6 tests / 36 assertions",
+          "sha256": "4d15a7fd672b0f59d89d4575c2566c433afff4ff1462dbfd831d5f9ec1c1eba2"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/browse-client.ts",
+          "alerts": [
+            841,
+            840
+          ],
+          "change": "Authenticated daemon IPC deliberately sends local/scoped bearer token and commands to literal127.0.0.1 endpoints; port/state/token types now validated before URL construction (e7c7e0e25). Pair-agent remote health probe is explicit opt-in and carries no bearer token. Regression rejects authority injection and header controls.",
+          "sha256": "fb1184356a9a4bab26eee91af2661ddd2092f2ba4a715a1b8fff11b032d656d3"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/browser-skill-commands.ts",
+          "alerts": [
+            738,
+            737
+          ],
+          "change": "Captured output is read through one nonblocking no-follow descriptor with fstat regular-file check and bounded buffer.",
+          "sha256": "c31116c4216677044d13ec0a1a43f5cbc18bdf99618e8841b5e3b4e632f50574"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/cli.ts",
+          "alerts": [
+            858,
+            857,
+            856,
+            855,
+            854,
+            853,
+            852,
+            851,
+            850,
+            849,
+            848,
+            847,
+            846,
+            845,
+            844,
+            843,
+            842
+          ],
+          "change": "Authenticated daemon IPC deliberately sends local/scoped bearer token and commands to literal127.0.0.1 endpoints; port/state/token types now validated before URL construction (e7c7e0e25). Pair-agent remote health probe is explicit opt-in and carries no bearer token. Regression rejects authority injection and header controls.",
+          "sha256": "fafd70565cc4a46c37f13bdc7a5a897f254f8b07496d10f28d88f2ea3108002b"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/config.ts",
+          "alerts": [
+            620
+          ],
+          "change": "State directory ignore file uses private descriptor writer, refusing symlink clobber.",
+          "sha256": "79db4a85d633c9846362547cc48d1dadd19fb0bad80b4d6cf3c1e62688ccd583"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/domain-skill-commands.ts",
+          "alerts": [
+            621
+          ],
+          "change": "Edit body is exclusively created mode0600 inside mkdtemp private directory; always cleaned in finally.",
+          "sha256": "6fcf3b8eedbb48f01330d8f4cd56408a420df8df063d65eb7d9a33bd070a3847"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/file-permissions.ts",
+          "alerts": [
+            907,
+            739,
+            622
+          ],
+          "change": "Private write/append operate on opened no-follow/nonblocking regular owned inode; POSIX fchmod before mutation; Windows retains icacls plus identity verification.; Opening existing directory O_RDONLY|O_DIRECTORY|O_NOFOLLOW for fchmod, not creating temporary file. fstat shouldHardenDir requires ownership and refuses shared/world-writable directories.",
+          "sha256": "22ddc560b64ece2e170ca1e662b84663eaac1aa0a2bf43aaf2a84948512a92b5"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/loopback-auth.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "880e39f82eb3a6774fb2d8d6e68286445ed1f6719a4205864560c1570a8cc756"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/network-capture.ts",
+          "alerts": [
+            623
+          ],
+          "change": "Captured network export uses private descriptor writer with no-follow/type/owner/link checks.",
+          "sha256": "5727a156b05e508817ae888412bf1abbee5206ca785bd293466a790528520176"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/read-commands.ts",
+          "alerts": [
+            625,
+            624
+          ],
+          "change": "ea12ab774; LOCAL-SECURITY-BROWSE.md and gstack-browse-io.test.ts actual both-copy dispatch/write/lock regressions 6 tests38assertions",
+          "sha256": "29419f7980fcdc3f6c88892d440bfbef97e1bd5f1027f98c712124ca7caf5e33"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/screenshot-size-guard.ts",
+          "alerts": [
+            626
+          ],
+          "change": "ea12ab774; LOCAL-SECURITY-BROWSE.md and gstack-browse-io.test.ts actual both-copy dispatch/write/lock regressions 6 tests38assertions",
+          "sha256": "da11936da4b61dee92831e00e0eac8863ebda5180a7ad1a578940f46ca70dad6"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/terminal-agent-control.ts",
+          "alerts": [
+            741,
+            740
+          ],
+          "change": "ea12ab774; LOCAL-SECURITY-BROWSE.md and gstack-browse-io.test.ts actual both-copy dispatch/write/lock regressions 6 tests38assertions",
+          "sha256": "e4acc8435a57956b41f7fb0dbe7173bb110003ee35c17e9c62db6f7e9fa832ed"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browse/src/write-commands.ts",
+          "alerts": [
+            742,
+            630,
+            629,
+            628,
+            627
+          ],
+          "change": "ea12ab774; LOCAL-SECURITY-BROWSE.md and gstack-browse-io.test.ts actual both-copy dispatch/write/lock regressions 6 tests38assertions",
+          "sha256": "3d2289690a3e8dca50e6a55ea6b3dc33bd1d9f540766528a0bfe1a7b20f99b6e"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/browser-skills/hackernews-frontpage/_lib/browse-client.ts",
+          "alerts": [
+            879,
+            878
+          ],
+          "change": "Authenticated daemon IPC deliberately sends local/scoped bearer token and commands to literal127.0.0.1 endpoints; port/state/token types now validated before URL construction (e7c7e0e25). Pair-agent remote health probe is explicit opt-in and carries no bearer token. Regression rejects authority injection and header controls.",
+          "sha256": "fb1184356a9a4bab26eee91af2661ddd2092f2ba4a715a1b8fff11b032d656d3"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/bun.lock",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "b2c06592a36c8cc76d907c909ec63bb7620b38eea2b40c74c0f9fadeb7d94a89"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/prototype.ts",
+          "alerts": [
+            908,
+            673
+          ],
+          "change": "Design image generation explicitly fetches fixed https://api.openai.com/v1/responses and persists returned base64 image bytes to user-selected output with writeSecureFile; prototype/generate/evolve/iterate/variants source reviewed. File IO hardening independently covered by history commit ab1e520ea and private writer fixtures.; Design outputs now writeSecureFile nofollow, regular/singlelink/owner check,0600 descriptor; prototype directorymkdtemp; symlinkvictim regression passed.",
+          "sha256": "6959c447cea9d234bd84913a3c505071710b40cf3d0b3541ebd80ce7eb54cd68"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/src/compare.ts",
+          "alerts": [
+            674
+          ],
+          "change": "Design outputs now writeSecureFile nofollow, regular/singlelink/owner check,0600 descriptor; prototype directorymkdtemp; symlinkvictim regression passed.",
+          "sha256": "93f609e8bc583ce1ee527805f0b4a513237b19a0987a3ffe9539221d35d01dd4"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/src/daemon-client.ts",
+          "alerts": [
+            886,
+            885,
+            760
+          ],
+          "change": "publishBoard and shutdown validate numeric integer port1..65535 before literal127.0.0.1 fetch, redirectmanual; regression verifies injected authority rejected before network.; Design input/log reads now boundedstable descriptor with nofollow, inode,size/mode and post-read identity checks.",
+          "sha256": "16c3612ebef53cc5173223d6a5910868d521ec04b61d1983b995105273f7cf09"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/src/daemon-state.ts",
+          "alerts": [
+            887
+          ],
+          "change": "Design health discovery deliberately contacts literal127.0.0.1. State read validates pid/port/timestamps/strings through stable bounded64KiB descriptor; health port integer1..65535 and redirect manual; state atomic0600. Invalid authority fixtures rejected without fetch.",
+          "sha256": "f8d85ae6d632673572ea674c3d69511fdb59457f25014fd89c30270a2627e72e"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/src/daemon.ts",
+          "alerts": [
+            762,
+            761
+          ],
+          "change": "Design input/log reads now boundedstable descriptor with nofollow, inode,size/mode and post-read identity checks.",
+          "sha256": "885d52ddac65b44054827eb80b7fce356427dd60f22e24ad74bdab62eedb7f2a"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/src/evolve.ts",
+          "alerts": [
+            909,
+            675
+          ],
+          "change": "Design image generation explicitly fetches fixed https://api.openai.com/v1/responses and persists returned base64 image bytes to user-selected output with writeSecureFile; prototype/generate/evolve/iterate/variants source reviewed. File IO hardening independently covered by history commit ab1e520ea and private writer fixtures.; Design outputs now writeSecureFile nofollow, regular/singlelink/owner check,0600 descriptor; prototype directorymkdtemp; symlinkvictim regression passed.",
+          "sha256": "42f56a82d0647b363fafafe67051a886ee875ffe27831486ece0888c6f93950d"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/src/gallery.ts",
+          "alerts": [
+            677
+          ],
+          "change": "Design outputs now writeSecureFile nofollow, regular/singlelink/owner check,0600 descriptor; prototype directorymkdtemp; symlinkvictim regression passed.",
+          "sha256": "ea5adc27b9903dfec91c1e4452d2bc39085d7a0ea005fe24648b1f5ad4990a3e"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/src/generate.ts",
+          "alerts": [
+            910,
+            676
+          ],
+          "change": "Design image generation explicitly fetches fixed https://api.openai.com/v1/responses and persists returned base64 image bytes to user-selected output with writeSecureFile; prototype/generate/evolve/iterate/variants source reviewed. File IO hardening independently covered by history commit ab1e520ea and private writer fixtures.; Design outputs now writeSecureFile nofollow, regular/singlelink/owner check,0600 descriptor; prototype directorymkdtemp; symlinkvictim regression passed.",
+          "sha256": "6188535555e447584e9701bbc8a71e1584d1c0160a5d98bfa43997ded95b6dfe"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/src/iterate.ts",
+          "alerts": [
+            912,
+            911,
+            679,
+            678
+          ],
+          "change": "Design image generation explicitly fetches fixed https://api.openai.com/v1/responses and persists returned base64 image bytes to user-selected output with writeSecureFile; prototype/generate/evolve/iterate/variants source reviewed. File IO hardening independently covered by history commit ab1e520ea and private writer fixtures.; Design outputs now writeSecureFile nofollow, regular/singlelink/owner check,0600 descriptor; prototype directorymkdtemp; symlinkvictim regression passed.",
+          "sha256": "997c9d435421e76c8d4708f95c086385221a4c553b73e568c5f61495f81c17c3"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/src/serve.ts",
+          "alerts": [
+            763,
+            680
+          ],
+          "change": "Design input/log reads now boundedstable descriptor with nofollow, inode,size/mode and post-read identity checks.; Design outputs now writeSecureFile nofollow, regular/singlelink/owner check,0600 descriptor; prototype directorymkdtemp; symlinkvictim regression passed.",
+          "sha256": "344c80509f469853dbc5a7ec37b7230387a0d4e25090246c49dc205f0e5c6601"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/src/session.ts",
+          "alerts": [
+            914,
+            913
+          ],
+          "change": "Design session IDs are random UUIDs (legacy PID-Date remains allowed), path IDs validated, new state exclusively published and updates atomic private0600; readBoundedStable16MiB rejects aliases. Real local regression leaves symlink victim unchanged.",
+          "sha256": "556b8d1624149ebb4a7b91f9e574ba0737a6c5b23fe8d42838a8138ddb89976e"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/design/src/variants.ts",
+          "alerts": [
+            915,
+            681
+          ],
+          "change": "Design image generation explicitly fetches fixed https://api.openai.com/v1/responses and persists returned base64 image bytes to user-selected output with writeSecureFile; prototype/generate/evolve/iterate/variants source reviewed. File IO hardening independently covered by history commit ab1e520ea and private writer fixtures.; Design outputs now writeSecureFile nofollow, regular/singlelink/owner check,0600 descriptor; prototype directorymkdtemp; symlinkvictim regression passed.",
+          "sha256": "8f9901d35e702727d601c66f05ab2c262d70525caec7851d28517f20649ca539"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/hosts/claude/hooks/timeline-stop-hook.ts",
+          "alerts": [
+            764
+          ],
+          "change": "gstack/gstack/ROOT-HELPER-SECURITY.md; gstack-root-helpers.test.ts 6 tests / 36 assertions",
+          "sha256": "ce16ef9a0c89aed0f2388b3b87642bab028f46b0adab523c82fd934ace17c442"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/ios-qa/daemon/src/audit.ts",
+          "alerts": [
+            917,
+            916
+          ],
+          "change": "Audit/attempt rows are intentional authorized local security logs; appendSecureFile enforces no-follow regular owned single-link descriptor and fchmod0600 before write. Salt read via stable bounded4096 descriptor. Both-copy regressions reject symlink victim writes.",
+          "sha256": "2226f568e757f3173a3c0010395c31e16b1717af8dc808bc28bbc5206b565579"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/ios-qa/daemon/src/devicectl.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "cd2501429c06003beee941a19b71b4fb0bafea3e24e712e744af4f2f517c79ec"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/ios-qa/daemon/src/single-instance.ts",
+          "alerts": [
+            766,
+            765
+          ],
+          "change": "readBoundedStable uses nofollow descriptor+identity checks; exclusive pidfile claim; new private mutation-lock serializes stale recovery and generation-checked release; tests reject duplicate claim and preserve differentgeneration.",
+          "sha256": "0e1738204a19b81235edf3073ada68fc158c942f22d546c1039a90966e51a07f"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/ios-qa/daemon/src/tunnel-bootstrap.ts",
+          "alerts": [
+            890,
+            889,
+            888
+          ],
+          "change": "Explicit user-selected paired iPhone bootstrap intentionally copies app-container boot credential and sends it only to validated IPv6 endpoint + integer port1..65535 to rotate. All health/rotation fetches redirect manual; fixtures prove no following cross-host bearer redirect, invalid authority rejected. No live devices used.",
+          "sha256": "cbf6fd025b3971865f3a2e73fdfb7f7110a305210377c271af81e4c241f9bf8b"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/ios-qa/scripts/gen-accessors.ts",
+          "alerts": [
+            767
+          ],
+          "change": "Cache reads boundedstable descriptor; cached and generated outputs writeSecureFile nofollow+singlelink+ownership+0600 descriptor, no pathname copy sink.",
+          "sha256": "92dda8a38d4679440e12792292e1a66947f1a09a9d83c0e07dd913f372306eef"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/claude-code-migration.ts",
+          "alerts": [
+            768
+          ],
+          "change": "gstack/gstack/ROOT-HELPER-SECURITY.md; gstack-root-helpers.test.ts 6 tests / 36 assertions",
+          "sha256": "556f07e8fb4894e12ceb2592cd33018ef6b53c1ef00af632b3df8fe3d37aa621"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/code-intelligence/graphify-adapter.ts",
+          "alerts": [
+            769
+          ],
+          "change": "Graphify status bounded stable graph read, max5MiB; tested regular/large/symlink graphs. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.",
+          "sha256": "2acb0510a94823974a0229c6991fb46bf577f0f980e01a3429903f7ae1b680ea"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/cso/bounded-file.ts",
+          "alerts": [
+            770
+          ],
+          "change": "readBoundedStable opens O_RDONLY|O_NOFOLLOW|O_NONBLOCK; verifies named/opened/current identities and timestamps, nlink/type and max+1 bounded reads. Regression rejects symlinks and oversized files.",
+          "sha256": "656cea75406a0a62d233c1bc2db911cd805913f5c0fa3c9ae1b5ed1f4e82c76f"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/cso/bounded-range-file.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "783264af3dffa3f4ec2d1eaf9d78b0a0348d810f64856de68b739e325dbf2e16"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/cso/cache.ts",
+          "alerts": [
+            771
+          ],
+          "change": "Lock protocol uses stable descriptor read with original METADATA_LIMIT cap.",
+          "sha256": "7e0b827c6a2ac05d808b6377119aaf0bf9d5f4e5dd70e918b252c2175caf1445"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/cso/cli.ts",
+          "alerts": [
+            772
+          ],
+          "change": "Run event content uses stable descriptor read with original8192 cap.",
+          "sha256": "b3479ee0ab136a1749b474d8bdcc2f681661f32da770258839e03b48121d55b4"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/cso/preparation-container.ts",
+          "alerts": [
+            891,
+            773
+          ],
+          "change": "Standalone helper uses no-follow/nonblocking descriptor, same-inode/type checks and bounded MAX_POLICY buffer before JSON parsing.",
+          "sha256": "bad58c4704de660b1299cf8d178851512925edd1940869a2997edc0fa70de82b"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/cso/preparation-docker.ts",
+          "alerts": [
+            775
+          ],
+          "change": "Export manifest uses readBoundedStable with original MAX_MANIFEST cap.",
+          "sha256": "2d440603e304744f29f84c9019489f6566486a224de111f6fa89912dfe615549"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/cso/preparation-executor.ts",
+          "alerts": [
+            774
+          ],
+          "change": "Existing opened-descriptor identity/type checks retained; O_NONBLOCK closes FIFO replacement hang window.",
+          "sha256": "cd32fcf76d0fe8ef16001c5aaf27a08eb937d55d337fc23b6cdd8c9d3bc13bda"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/cso/preparation.ts",
+          "alerts": [
+            776
+          ],
+          "change": "Dependency metadata uses readBoundedStable with original MAX_METADATA cap.",
+          "sha256": "8706fd58fef39a7f5ef8963b83024cc03ddc877b94b52694a0ef4ce538f5efcf"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/cso/state.ts",
+          "alerts": [
+            786,
+            785,
+            694
+          ],
+          "change": "Event/report reads use readBoundedStable with existing limits instead of lstat then path read.; Interrupted publication recovery opens existing file O_RDONLY|O_NOFOLLOW|O_NONBLOCK, compares exactFstat against allowed recoveryIdentity and validates private ownership/links/size. No temporary-file creation.",
+          "sha256": "115e90d270f20908d12c9a778c2ddb815075d431b618bc92241c3f0ac8dec70b"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/cso/verification.ts",
+          "alerts": [
+            783,
+            782,
+            781,
+            780
+          ],
+          "change": "Tree/harness/startup/preimage reads use stable no-follow bounded descriptors; repair writes atomically replace final path preserving mode. Quoted pytest suppression flags additionally rejected.",
+          "sha256": "16314642d379025e4dc8ed6fb246f2b6160f7d37d3ba616f4523b44adac492af"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/design-md.ts",
+          "alerts": [
+            923
+          ],
+          "change": "Unit alternatives grouped and anchored as (?:px|rem|em)$, preventing substring-only units.",
+          "sha256": "bec76ca697c9dc683d55cdacc94ff424887d957f778c0abf8e85c25249a3fee1"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/egress-receipt.ts",
+          "alerts": [
+            784
+          ],
+          "change": "Ledger uses descriptor-based private append, no-follow/ownership/type checks and hardening before mutation.",
+          "sha256": "d6750c7eaf4a50e4c0cbc5c1038d09778db4cf817a2bef2ad8ac5abe082bbefa"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/fs-atomic.ts",
+          "alerts": [
+            919,
+            918,
+            695
+          ],
+          "change": "Random same-directory temporary file uses exclusive wx creation, private default0600; cleanup only occurs after successful own creation.",
+          "sha256": "3530f594b2e276e9666a291b326170ad6216408d0cfa0e24e274edd13bca912a"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/gstack-memory-helpers.ts",
+          "alerts": [
+            787
+          ],
+          "change": "Secret-scan report bounded stable read max16MiB; fake scanner tests normal/oversize/symlink preserves source and denies unscanned. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.",
+          "sha256": "618459d0b0c393658c0ff1d12cc79965a6212e9490d26df9081cc750418952aa"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/qa-evidence.ts",
+          "alerts": [
+            599
+          ],
+          "change": "Capture identifier escaped as literal before constructing anchored command-reference regexp; malicious regex metacharacters regression.",
+          "sha256": "1ab56ad57c1ce6f4a987a8dce97fe5f1278b5e406b6e22fe1799b7a71ceea6da"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/lib/review-evidence.ts",
+          "alerts": [
+            788
+          ],
+          "change": "No-follow/nonblocking read on opened descriptor, after fstat identity/timestamps comparison against before metadata, and bytes compared to canonical Git blob.",
+          "sha256": "3e49477dfc99b9af363adae777de48d946a0720d25c683fba0534415d62efc64"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/make-pdf/src/diagram-prepass.ts",
+          "alerts": [
+            789
+          ],
+          "change": "Local images read through one nonblocking no-follow descriptor with size-bounded buffer; diagram SVG reconstructed via separate conservative parser allowlist.",
+          "sha256": "b07baddacfe445a25df366315c90389f67a5f90a2f7aab404e5635c94d7a5463"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/make-pdf/src/htmlparser2.d.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "9ff5c564e35552e747e20a7634c90000d14e543562949c8a3295748bc9dc835a"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/make-pdf/src/orchestrator.ts",
+          "alerts": [
+            898,
+            698,
+            697,
+            696,
+            606
+          ],
+          "change": "Default output directory is mkdtemp private; explicit HTML/DOCX outputs use opened no-follow descriptors with ownership/type checks and fchmod0600 before mutation.",
+          "sha256": "b58b9a5f4f05a3cb9d11d9cf4bdc079c362c0e7514b4bc4e1a699b59a4f8395f"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/make-pdf/src/render.ts",
+          "alerts": [
+            577,
+            576,
+            575,
+            574,
+            573,
+            572,
+            571,
+            570,
+            566,
+            565
+          ],
+          "change": "stripNonRendering/stripTags are text/heading/preamble classifiers, not sanitizer. Their displayed metadata is escaped; the actual HTML boundary now uses sanitizeParsedHtml.; Regex blacklist replaced by parser-based reconstructed HTML allowlist; malformed tags, foreign SVG/MathML, handlers, unsafe URLs dropped; post-sanitizer quote decoding removed. Both copies regression tested.",
+          "sha256": "48fa42fefe5729352c6c5fbff055c7044c15f0432f48e846a9e39035d566daa9"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/make-pdf/src/safe-html.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "b43a522bd3c8deba90b2013e213353a50914a49c6d4bbc06108c198d73d0e275"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/make-pdf/src/setup.ts",
+          "alerts": [
+            699
+          ],
+          "change": "Smoke fixture uses exclusive wx0600 in private random output directory.",
+          "sha256": "e3b503868ab5e7b8b257ae40b4ab86b0ec8a83f864dce5630db60ede44d7fdb8"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/package.json",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "b1bcef5a92e9a1d7ee46551fbefa2902779c6162a361c8f71827db50d1405235"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/cso-attestation-evidence.ts",
+          "alerts": [
+            790
+          ],
+          "change": "Attestation JSON uses bounded stable descriptor with original MAX_BYTES.",
+          "sha256": "49da69a2c706a4fd06137ca4b20acb913bea129ceb2e113ea41a388d07b86968"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/cso-eval-producer.ts",
+          "alerts": [
+            793
+          ],
+          "change": "Producer installation descriptor retains no-follow+fstat identity/type/mode/size checks; nonblocking flag closes FIFO hang window.",
+          "sha256": "5f87368611b8bc64dbef5f2c1755e134b2320d53a9d68b30a59d710f37b73d8b"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/cso-runtime-promotion.ts",
+          "alerts": [
+            792,
+            791
+          ],
+          "change": "Qualification/catalog content uses bounded stable descriptors with original MAX_EVIDENCE_BYTES, retaining canonical metadata comparisons.",
+          "sha256": "4cb4522620bd3909e958d3e4bed78abf2eb0cce53ce2c51b08b9295131b68e62"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/cso-scanner-catalog.ts",
+          "alerts": [
+            795,
+            794
+          ],
+          "change": "Catalog/version output use bounded stable descriptor with original limits.",
+          "sha256": "8849eb448fae01e21dffe0a04f7bc7d365d666a1b8447c75f8ad7bced00143a1"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/dev-skill.ts",
+          "alerts": [
+            607
+          ],
+          "change": "Development regeneration passes executable and argv directly to execFileSync, including render path; JSON.stringify is no longer treated as shell escaping.",
+          "sha256": "14887e66683b6e484e6a33322ba84b12476b02f39c931e730c987ab84ec81418"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/e2e-shard-reuse.ts",
+          "alerts": [
+            796
+          ],
+          "change": "Receipt JSON uses bounded stable descriptor with original maxBytes.",
+          "sha256": "ba8761cf8377ae37c46c8184784f402e7f3a4a7a582d7cb87701380c0194f88a"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/eval-input-cache.ts",
+          "alerts": [
+            798,
+            797
+          ],
+          "change": "Evaluation input uses bounded stable descriptor; receipt open includes nonblocking/no-follow and fstat checks.",
+          "sha256": "01f13eb11c5c490ef4b925c839961132e27e91b5786a69b9e0c320e723303e06"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/garry-output-comparison.ts",
+          "alerts": [
+            901,
+            900,
+            899
+          ],
+          "change": "Git paths/email filters are passed as literal execFileSync argv; commit values restricted to full HEX hash; actual temporary Git repo and shell-metacharacter path/email regression.",
+          "sha256": "eb6b63a83155c741880b9438d333d9f213f2fa105f096577a7f05c7aa1d47cb7"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/preflight-codex-overlap.ts",
+          "alerts": [
+            799
+          ],
+          "change": "gstack/gstack/ROOT-HELPER-SECURITY.md; gstack-root-helpers.test.ts 6 tests / 36 assertions",
+          "sha256": "092e5f52839025e8cd17927cddf680af01ae07178e47c544586ca477ba2a8f92"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/test-free-shards.ts",
+          "alerts": [
+            806
+          ],
+          "change": "Browser state uses bounded stable descriptor with original65536 limit.",
+          "sha256": "ff263c510f344f49e5b64b6f1e35070c62a131916b64d1073ab045a4f5f39ee5"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/test-paid-shards.ts",
+          "alerts": [
+            803,
+            702
+          ],
+          "change": "Shard tail size comes from opened no-follow/nonblocking regular-file descriptor; buffer capped to requested tail, never full log.",
+          "sha256": "01993a6cb9cdd9b0e1b563e6b2a502ae4f460bdca35086a2f5e356d0f6bc001f"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/gstack/scripts/update-readme-throughput.ts",
+          "alerts": [
+            802,
+            801,
+            800
+          ],
+          "change": "README publication uses exclusive private temporary inode followed by atomic rename; final public mode644 deliberately preserved.",
+          "sha256": "0c68c04ff461b3f0b63b56cedefc531f790c070b405b9e312845ca87b9ad441d"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/ios-qa/daemon/src/audit.ts",
+          "alerts": [
+            921,
+            920
+          ],
+          "change": "Audit/attempt rows are intentional authorized local security logs; appendSecureFile enforces no-follow regular owned single-link descriptor and fchmod0600 before write. Salt read via stable bounded4096 descriptor. Both-copy regressions reject symlink victim writes.",
+          "sha256": "e1783e4af5162910b38dc074a1092d240d2d004e926eb5b43a2e5544f404f4cb"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/ios-qa/daemon/src/devicectl.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "fa17fb2b51e2261d657952c648751311b2fb997a2d7e4da0931d29523171c525"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/ios-qa/daemon/src/single-instance.ts",
+          "alerts": [
+            805,
+            804
+          ],
+          "change": "readBoundedStable uses nofollow descriptor+identity checks; exclusive pidfile claim; new private mutation-lock serializes stale recovery and generation-checked release; tests reject duplicate claim and preserve differentgeneration.",
+          "sha256": "0f024f90fa3d7411a21c1dbb038344e4d982449436817f0b0838a6ede18d365c"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/ios-qa/daemon/src/tunnel-bootstrap.ts",
+          "alerts": [
+            897,
+            896,
+            895
+          ],
+          "change": "Explicit user-selected paired iPhone bootstrap intentionally copies app-container boot credential and sends it only to validated IPv6 endpoint + integer port1..65535 to rotate. All health/rotation fetches redirect manual; fixtures prove no following cross-host bearer redirect, invalid authority rejected. No live devices used.",
+          "sha256": "cbf6fd025b3971865f3a2e73fdfb7f7110a305210377c271af81e4c241f9bf8b"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/ios-qa/scripts/gen-accessors.ts",
+          "alerts": [
+            807
+          ],
+          "change": "Cache reads boundedstable descriptor; cached and generated outputs writeSecureFile nofollow+singlelink+ownership+0600 descriptor, no pathname copy sink.",
+          "sha256": "07063e15edc9727850195b65de15518720032a21bca3c04907ff53a6dbb0e1ae"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/make-pdf/src/diagram-prepass.ts",
+          "alerts": [
+            808
+          ],
+          "change": "Local images read through one nonblocking no-follow descriptor with size-bounded buffer; diagram SVG reconstructed via separate conservative parser allowlist.",
+          "sha256": "b07baddacfe445a25df366315c90389f67a5f90a2f7aab404e5635c94d7a5463"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/make-pdf/src/htmlparser2.d.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "9ff5c564e35552e747e20a7634c90000d14e543562949c8a3295748bc9dc835a"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/make-pdf/src/orchestrator.ts",
+          "alerts": [
+            902,
+            707,
+            706,
+            705,
+            608
+          ],
+          "change": "Default output directory is mkdtemp private; explicit HTML/DOCX outputs use opened no-follow descriptors with ownership/type checks and fchmod0600 before mutation.",
+          "sha256": "b58b9a5f4f05a3cb9d11d9cf4bdc079c362c0e7514b4bc4e1a699b59a4f8395f"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/make-pdf/src/render.ts",
+          "alerts": [
+            585,
+            584,
+            583,
+            582,
+            581,
+            580,
+            579,
+            578,
+            568,
+            567
+          ],
+          "change": "stripNonRendering/stripTags are text/heading/preamble classifiers, not sanitizer. Their displayed metadata is escaped; the actual HTML boundary now uses sanitizeParsedHtml.; Regex blacklist replaced by parser-based reconstructed HTML allowlist; malformed tags, foreign SVG/MathML, handlers, unsafe URLs dropped; post-sanitizer quote decoding removed. Both copies regression tested.",
+          "sha256": "48fa42fefe5729352c6c5fbff055c7044c15f0432f48e846a9e39035d566daa9"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/make-pdf/src/safe-html.ts",
+          "alerts": [],
+          "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+          "sha256": "b43a522bd3c8deba90b2013e213353a50914a49c6d4bbc06108c198d73d0e275"
+        },
+        {
+          "pack": "gstack",
+          "path": "gstack/make-pdf/src/setup.ts",
+          "alerts": [
+            708
+          ],
+          "change": "Smoke fixture uses exclusive wx0600 in private random output directory.",
+          "sha256": "e3b503868ab5e7b8b257ae40b4ab86b0ec8a83f864dce5630db60ede44d7fdb8"
+        }
+      ],
+      "securityNotice": "VENDOR-SECURITY-PATCHES.json",
+      "removedDevelopmentFiles": [
+        {
+          "path": "gstack/ios-qa/daemon/test/session-tokens.test.ts",
+          "originalSha256": "cd9309c8ca80998ed156f7c1ab497d9f86decc5b9aca5db981b9f20a603a71a3",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/ios-qa/daemon/test/cli-mint.test.ts",
+          "originalSha256": "92dac3583d666589e055892d4e522e4e581a1ec8512c7399dd9c840db0f6b1e8",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/ios-qa/daemon/test/audit.test.ts",
+          "originalSha256": "cee7d31c2b0a3f75ecf8e0101c82f955e6ffd2d5c519030212e373cd2d926bd7",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/ios-qa/daemon/test/daemon-integration.test.ts",
+          "originalSha256": "35aab3b21875b38b654ce62bad11eb06fb6fa67cbd2120f7c456d78c2f445b43",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/ios-qa/daemon/test/proxy-classify.test.ts",
+          "originalSha256": "f50bfeaeb7ffeba1b0fa55fcebb5f908c29400ecc2da359013d7546720ca85e3",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/ios-qa/daemon/test/tunnel-bootstrap.test.ts",
+          "originalSha256": "0f04d5711c9d4a5104582fc4d80e4d46937abc99a0fb41f951f4aa06e1184339",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/ios-qa/daemon/test/tailscale-localapi.test.ts",
+          "originalSha256": "2731faf6400406d78e35261222fed0c9d52f184a87609fcc12d6c0d4288c9b9f",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/ios-qa/daemon/test/single-instance.test.ts",
+          "originalSha256": "29e049959ffe51aef52383e23582bf63436f75cfb0487ffe7ca2a731cf884422",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/ios-qa/daemon/test/auth-mint.test.ts",
+          "originalSha256": "3fe3ce7eb6a042dde5f97f00d910be86470ea2fc13e8e02cad1c509da7db53a0",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/design/test/variants-retry-after.test.ts",
+          "originalSha256": "b518d395fa1dbcba6435e26d4e9542338cc73c2df9d4287cb2323a7b957ad9c6",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/design/test/serve.test.ts",
+          "originalSha256": "6df0f1d17242781abeb2e5ae30bc92a5f332db9b5d13a008cbd1c16ef50862b5",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/design/test/image-gen-pairing.test.ts",
+          "originalSha256": "77216fa515400e3226e86538fa9a3a1bf07bee860e1cbd81f9621ee982185e75",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/design/test/receipted-fetch.test.ts",
+          "originalSha256": "198d3abe1c5418423a14e5964533c045aa4cfa2065173273472ffdfcca7daec4",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/design/test/feedback-roundtrip-daemon.test.ts",
+          "originalSha256": "523e66bc8522e7439da06a87f16b3c9687a876aba3bd3396926a352c86db9a50",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/design/test/daemon.test.ts",
+          "originalSha256": "01c94f362784aace55a727653782b0fbd7341651ee4ab3cc81ddabed2199fb01",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/design/test/brief.test.ts",
+          "originalSha256": "449b30d567d4ac22dbcbd9d797bfe1a405dbbaee99b1a460738cb9fdfa95f84a",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/design/test/feedback-roundtrip.test.ts",
+          "originalSha256": "fae9ddf657af323bb832501a17b75285bba7085a03b0e2ae42f82245f61ece26",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/design/test/daemon-discovery.test.ts",
+          "originalSha256": "3f74bdcaf96180feae0c91c649f01e99d9284323c20b249977edd3a5bad4b172",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/design/test/gallery.test.ts",
+          "originalSha256": "cbf904659fdc3c8d45b50cf14fa1c84e5cb7aa246f3514226a914206de5649f3",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/ios-qa/daemon/test/session-tokens.test.ts",
+          "originalSha256": "cd9309c8ca80998ed156f7c1ab497d9f86decc5b9aca5db981b9f20a603a71a3",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/ios-qa/daemon/test/cli-mint.test.ts",
+          "originalSha256": "92dac3583d666589e055892d4e522e4e581a1ec8512c7399dd9c840db0f6b1e8",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/ios-qa/daemon/test/audit.test.ts",
+          "originalSha256": "cee7d31c2b0a3f75ecf8e0101c82f955e6ffd2d5c519030212e373cd2d926bd7",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/ios-qa/daemon/test/daemon-integration.test.ts",
+          "originalSha256": "35aab3b21875b38b654ce62bad11eb06fb6fa67cbd2120f7c456d78c2f445b43",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/ios-qa/daemon/test/proxy-classify.test.ts",
+          "originalSha256": "f50bfeaeb7ffeba1b0fa55fcebb5f908c29400ecc2da359013d7546720ca85e3",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/ios-qa/daemon/test/tunnel-bootstrap.test.ts",
+          "originalSha256": "0f04d5711c9d4a5104582fc4d80e4d46937abc99a0fb41f951f4aa06e1184339",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/ios-qa/daemon/test/tailscale-localapi.test.ts",
+          "originalSha256": "2731faf6400406d78e35261222fed0c9d52f184a87609fcc12d6c0d4288c9b9f",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/ios-qa/daemon/test/single-instance.test.ts",
+          "originalSha256": "29e049959ffe51aef52383e23582bf63436f75cfb0487ffe7ca2a731cf884422",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/ios-qa/daemon/test/auth-mint.test.ts",
+          "originalSha256": "3fe3ce7eb6a042dde5f97f00d910be86470ea2fc13e8e02cad1c509da7db53a0",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cdp-inspector-history-cap.test.ts",
+          "originalSha256": "eeef2651ab44d0233ec10cfe4e645fec7f0c648a78b03e5805562a11750555d6",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/tab-each.test.ts",
+          "originalSha256": "722f461bc994845c0f8f9c42baa4b9d5db247c7b07a48913a9fa80896826506f",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/busy-daemon-iron-rule.test.ts",
+          "originalSha256": "a09a504f7734c630bc032a85069bce7f644c9716b8ffe143fa55bb2bbcb057c2",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/screenshot-size-guard.test.ts",
+          "originalSha256": "450c3a8e8849429e90eee4132cb25c5fe801de007ef64e1238630fdb1fcab930",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/browse-client.test.ts",
+          "originalSha256": "1b41f6d8938a30d564120d653e24fcfbabcd6d60bd77cb3e3da3fa27c77d03ad",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/security-classifier-download-cleanup.test.ts",
+          "originalSha256": "e856b0f17b61411cc517d69bcdc428a7fa630b5b4efa16cd5c8378fc85258936",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/server-tmp-state-path.test.ts",
+          "originalSha256": "fe7b7faf14c1fe9c7c69f9577f5bed46a08f85ea1acc634c4c223ba815145b7c",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/learnings-injection.test.ts",
+          "originalSha256": "887f5d1265beec0017dfed0d43e128c575eb2770b329081a8536805a5b14eb0c",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-fixture-delete-lease.test.ts",
+          "originalSha256": "bf901ef5a9da750a2fd16d54ccfe4d0dc683ad8da24f9a12fdc6b65f8aaeb669",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/welcome-page.test.ts",
+          "originalSha256": "104946e3e4464a9c3bc35bdef4fd83a4a864a1490355780802608b1119c3fe18",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/sse-helpers.test.ts",
+          "originalSha256": "77c82774bb2998f73d9f70d866b7d9d368f7d942e8090a28fd1e8814e305ea78",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/extension-token.test.ts",
+          "originalSha256": "27d3d24f0a4f23f1aa9bef37bfa8ca5cf923343253fbd87635a8189a6c0c8434",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/pair-agent-tunnel-eval.test.ts",
+          "originalSha256": "060777aacc6790800695ce766e19ebebc716246cdc6e0e2a684ce28d7b9da865",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/security.test.ts",
+          "originalSha256": "0cd4e2629a197856b922556a20307cf2c0397fa42345031ef76e41e7fd40726e",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/telemetry.test.ts",
+          "originalSha256": "72b1eb1884ece492959a79c79bbb617a533024d1316d22a585e3b095e1af77e0",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/busy-daemon-recovery.test.ts",
+          "originalSha256": "0ed4c9c7f6ac5a2f9a53d0613d60a910d7d34c8c9e9aa8b137426b9cadea7016",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/file-permissions.test.ts",
+          "originalSha256": "ee7a1a11996de0a04eddd592e1a5e0a66142d60da27576d0303de517cefc94fd",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/security-audit-r2.test.ts",
+          "originalSha256": "b82082e85fafe81ac4611df01b0f30c40359e2d8aeeacbc2d9c759271fc2f685",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/sanitize.test.ts",
+          "originalSha256": "a535d4ab78298546b5945d7727dbdcbc13c340cb9054b544ddc9cc2a9605d60c",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cli-start-final-healthcheck.test.ts",
+          "originalSha256": "794da0eae6a8cdde3f9b7a3715b3497b34ebbf2a7782adae3a3299e0b0f96d45",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/url-validation.test.ts",
+          "originalSha256": "53d212b3e5e61221561d3db8964aa39c280519fddb1c3afe7223402ddbdddd25",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/build-command-response.test.ts",
+          "originalSha256": "22dc3243bc4570bc45c8f2b05bb2a90a19acce9f4a939d8f3809d52a0f9fee70",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/server-no-import-side-effects.test.ts",
+          "originalSha256": "6f599dfb2828de8715def2c1258e60c962621c4bb2f2f83bbf8960f797645a62",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/browse-eval-wrapping.test.ts",
+          "originalSha256": "6c76f362b90988a44fcdffcbb0459c022c8d0457c5c0c0a81bb8e6d060d8401f",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-credential-deadline.test.ts",
+          "originalSha256": "dd8cf9d4ceef393dda89c195ef542f4398f8ae09040652b6f0cd4d2adc1a94b1",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/content-security.test.ts",
+          "originalSha256": "964d44c20aee6bcb75f06eb0bd046717926e27e18842953df0f5fcf8de4e8907",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/memory-command.test.ts",
+          "originalSha256": "6d18537159fa3f6ecadc13bfa50280c9ab6d45deb8ac94bc1e609a9efe2eb737",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/domain-skills-storage.test.ts",
+          "originalSha256": "3d46c5821765eb31e3de5493fdb6d23635bfe8b2eecfe74530d0d972c7725eff",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/from-file-path-validation.test.ts",
+          "originalSha256": "44f464df311b8a9831320f1d4118f04a252c71d974850e014296aae0cfaa47d6",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/adversarial-security.test.ts",
+          "originalSha256": "95d596c392446cb06dad796d9ccdf9d6ca8c042d8632af9cb1e8cd13da4e094f",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/headless-gpu-and-reap.test.ts",
+          "originalSha256": "e307b83d36840f2faf232d13e4bfeabe1d0d976563c59bbb699f200e9eb8c5d0",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent-keepalive.test.ts",
+          "originalSha256": "724bdecdc1933197bfdd7cff3c9818d457ccb9375bb4d36b280cc77808f2d907",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/restart-env.test.ts",
+          "originalSha256": "d0141360958eb9c1ede8c540ea9295cc05ed7aa57c5ec71a16fc4565b3cacd5f",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/error-handling.test.ts",
+          "originalSha256": "a415874e19378faeeadfb447dba2da60ffddfbd3a042c2b19ef88428627ece34",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/findport.test.ts",
+          "originalSha256": "c24382cd307a69ff7f0d1fda33bfdf4d0c18267b10ecc735cb8622ce677ec664",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/skill-token.test.ts",
+          "originalSha256": "002061357b91bcf3302562e12b445f504eae9ae0f4a7299d87647572d635a428",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-auth-verification.test.ts",
+          "originalSha256": "971a82ef33a5e82db1ddd4583a34d452f634daf19997ee9dabec53ea839674fb",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent-publication-lock.test.ts",
+          "originalSha256": "b4f2c85e67df35e542fdbf932ecad6d48a5dc250e0cff1b7dbaa07132abbdc9b",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/security-adversarial.test.ts",
+          "originalSha256": "d7a3f5f97a1a13dd25e21438a39b985df3e91ce56451ff82f193d142e967d498",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/commands.test.ts",
+          "originalSha256": "1e66e0bcf78190781db79a4ffe696fbc3a374eb8dd8638ce55fb1b5615269d34",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/chromium-profile-isolation.test.ts",
+          "originalSha256": "e7a94d92196ede04cf84c8cd87a8becd6490dc5158445adb890aee515bec7f76",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent-ring-buffer-runtime.test.ts",
+          "originalSha256": "d0bddf0f09a577403ed705c03cb834573ba6dbcb6499a5f4f1c97b4d21d3fe14",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-picker-binding-browser.test.ts",
+          "originalSha256": "f3a6b02e003730f49e69df9e84b104bf50bde883dca7fb3daba1e3c261aad7c3",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/security-integration.test.ts",
+          "originalSha256": "68709de385d6c5b26685e96442ed3caa4d47b948bf518a132bd9d8d2894dc1e9",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/fill-change-event.test.ts",
+          "originalSha256": "f14fd1c737a2134bf34a66649eeae2d9f7d2b6d77561a839a840dc090ecff10b",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent-detach-reattach.test.ts",
+          "originalSha256": "764f51e200d650acfe09fc51a52e5ea12cba56a394e2898a8bf68f6d1c45d272",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/session-cookie-store.test.ts",
+          "originalSha256": "214a37174f9333e9085546c70d68d10bf2880bc8f0c589eee16edd5956e6be8e",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/token-registry.test.ts",
+          "originalSha256": "9272f44d2e97fad49910d937b3479111e1b01faa7ffbaeae199fe5e99d819788",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/platform.test.ts",
+          "originalSha256": "31bfb444b0793469b78dab40de311595b5d90b1298be60f802107bd5be906ce7",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/stealth-webdriver.test.ts",
+          "originalSha256": "b4d5463458ccfde369041dd7f032da1858b80f57c8a8d2dec76a7393e9d91972",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-import-operation.test.ts",
+          "originalSha256": "206de5bc222b730d3c3f39f940313c4faf2374a2647bffea50821a8ce401c12b",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/tunnel-gate-unit.test.ts",
+          "originalSha256": "3b49aecced92b6b70000466fd302896c1ba571d293723ec3466fd92213581413",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/dia-macos-qualification.test.ts",
+          "originalSha256": "775d82223643b81799768d5de5846a5fada502d377c670a7685e78366ba526d1",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-picker-ui.test.ts",
+          "originalSha256": "78a8919bcff5af53e4462465cddbca8e67360096dda7cabd8a4fd3521b7cf15e",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/sidebar-ux.test.ts",
+          "originalSha256": "f56572ef560e5d7905222154d7e35a5ce41b1b6fab8858ce91f77eeab260a0aa",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-database.test.ts",
+          "originalSha256": "f6c7328a917421f842afcc5dc8eb09f36d31bafe09fe8b265ec858dabf17274a",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/server-proxy-fail-fast.test.ts",
+          "originalSha256": "53add4cbfd4360f22574018bb4ceaf47b3cfbc9c7db410b05a3c5d005269ad74",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/sidepanel-reattach.test.ts",
+          "originalSha256": "8779ac63485e09e53026574e5dfce873546a45574eafc7f8e90dbdc614cd86d9",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/path-validation.test.ts",
+          "originalSha256": "a6db5b3e47352ca61d0a8ceabe43af88522fde7aed35e31a2b9ac11ee2d9f5c5",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/stop-ack-before-shutdown.test.ts",
+          "originalSha256": "64cb2fa4e6892fff119f81b37b5af64e4df2d88eaa044606ea3d9d66ac005f93",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cli-setsid-daemonize.test.ts",
+          "originalSha256": "4226e5883b0ff911550886dc65b697d29b0155e31966f41d208598d97d6b8679",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/browser-manager-custom-chromium.test.ts",
+          "originalSha256": "7ac6039027035dab66d6f6ded0d5dd472c87ef320941240c4201392afbf61b4c",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/xprotect-heal.test.ts",
+          "originalSha256": "dfe7dc2b418ad6378f19783ee9c81faeac6acc615ddcbf683bfae69815096c1a",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/server-lock-errors.test.ts",
+          "originalSha256": "6adc12f8f182bfbba123d5e1725f72d37f0581e8491c166b82de8dc61f5df287",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/activity.test.ts",
+          "originalSha256": "8f52f582c708e102e99e0807e6e088bf7b341e21575f43743f30be9fc5108f22",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/sidepanel-restart-dispose.test.ts",
+          "originalSha256": "889d379333630ab3c7d16b52ee637f84c849a245692b86a8115e6e0ddec32f5f",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/server-pty-lease-routes.test.ts",
+          "originalSha256": "f3a8338b3f9c3d4ea0a844b1162447829c96b432a256082f94ef762bd987a666",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/build.test.ts",
+          "originalSha256": "dcb1e23cf5b81ba919c18c20c687f1657af7322f7322c491d5cd71e8a2dc1b60",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent-watchdog.test.ts",
+          "originalSha256": "b514b5a6980f1f9e4ce1eacf0907d33fd2956cad7d22cb0ca7c0bca526fec133",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/security-adversarial-fixes.test.ts",
+          "originalSha256": "ff3713984432fd0f4aaffd91771caff717cc57c246880d33780370fa2134e59c",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/temp-dirs.test.ts",
+          "originalSha256": "1ad7df435b552d3637fbc6826aabf031ed5d926cc3a321cff585b154dd02318a",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/session-persist.test.ts",
+          "originalSha256": "513301ee53b5f2a18dadfd1c51637cf6936f19fb02338af9bde96f735e4b12f6",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/stealth-layer-c.test.ts",
+          "originalSha256": "27d5c4cafff36152094ed35c00508bf963045276ce6e333170956f1870193b9b",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/snapshot.test.ts",
+          "originalSha256": "33b3d6b7769cef9ff6a6a49c95d902005fdb4daf059d4da7225122c9b5db8717",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/extension-sender-auth.test.ts",
+          "originalSha256": "42340791d4e900c7aa03aba0612b43c92fe23ed5bd8d9aa8f1939d729e2f1d05",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/handoff.test.ts",
+          "originalSha256": "8ea1d88a7b8eeb94f505225cc3814b89c778acf1c2d76acc77901c9440d697bd",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cdp-mutex.test.ts",
+          "originalSha256": "ef58644bd68e6c4a05ae3d62ff903c36ae959a651b0aa739e872e11f8c11d99d",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/bun-polyfill.test.ts",
+          "originalSha256": "c6131c18046ec04a9ec1c2a65d37fc267df7ca8ddaa05cee3f57ce89428eaab8",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/sidebar-tabs.test.ts",
+          "originalSha256": "da7aaf894d3adb334dc77f874aff8e3c8bf69ad33a34495345616a2929f043c3",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent.test.ts",
+          "originalSha256": "b77aaab1986fdc5e43a1c74965401aad7e224d9155d2f6250387b7dcfbd58921",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/browser-skill-write.test.ts",
+          "originalSha256": "7fcdd3a07d08d6db270b2c2cf7d92d541c325bd669c6bbec828aeaac4dcb80e5",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent-lifecycle.test.ts",
+          "originalSha256": "b8cb5050a4b73b8fed13392c8eabea90667ffc5b52dd89aa12d5326b71ad4f3a",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/security-bench.test.ts",
+          "originalSha256": "27c133e11be71f15d9d7bface347c689db314e2a55956ee33d74a1749abe83c5",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/file-drop.test.ts",
+          "originalSha256": "0299c181a02ce34487ded5219b9f0da35a9860a7d3fe2f42865317fedac7d13a",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/data-platform.test.ts",
+          "originalSha256": "5dd9c551b0f4d5b7173ae85d4c7dcfe2575d1a8650f19f5e6969618fbc1fecd2",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/dx-polish.test.ts",
+          "originalSha256": "fce660a3194ded78ffa6a22c28e48ba570f12da95bdf1fa00e5c092c10a3723d",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cli-supervisor.test.ts",
+          "originalSha256": "370f251d6d19a56cc8742379ec64c1b9059253cd84df83238ff943da3f415e29",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-import-transport.test.ts",
+          "originalSha256": "8ae63708b1c46a1a37aa61f82cb8c60f8d90b58d4603be50c1cd4c56df1bd1ca",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/gstack-config.test.ts",
+          "originalSha256": "c12f114cf3c724ff93583a823b15a03df190b847db213fbc85a61cd3665efd57",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/pdf-flags.test.ts",
+          "originalSha256": "17b7108ca34f980467e395224d8efbdfd1a38cac84dd34dac6c7724a2e741714",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/regression-pr1169-pdf-from-file-invalid-json.test.ts",
+          "originalSha256": "ed8394e48f3a96dbc16e902df17623deab188529c96b9728bee1d6e2055bc55b",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/memory-leak-reproducer.test.ts",
+          "originalSha256": "5855ece88b09b4fd07d976ac6c576c67f4394f92e8fe93a5bfbda13ed734fe56",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/pair-agent-e2e.test.ts",
+          "originalSha256": "3f9c765ee4563d9e01dfbb7d8d45e8b00e8a228290b0fcb172d189684f2c07c3",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/browser-skill-commands.test.ts",
+          "originalSha256": "ed873661224b278b14d1327a43df13bf061bc5ff6b17306ec0cced011742f927",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/proxy-redact.test.ts",
+          "originalSha256": "85f25fa0ab7659e8fe38fe1c1d0a8853b41847d30808c6567626e3dfacec0e19",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cli-lock.test.ts",
+          "originalSha256": "2e218a438aea585ecdb39b7c2ab57a9bbf6c947a15115f8d0bb4048be1a46400",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/poisoned-bundle-probe.test.ts",
+          "originalSha256": "5ae7f07702ad21993dc691aaddf6f1e704dd9e1686393c7314bbadfa8d777815",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-import-browser.test.ts",
+          "originalSha256": "8fe29918a60a64a77fd288bb31410a9b949669ed1a12da45ed9aa025822c5dc9",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent-import.test.ts",
+          "originalSha256": "23ba8a1ee654b98a82c358e893de862e55dd0253f941dc39680de271471277b8",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/tab-isolation.test.ts",
+          "originalSha256": "2efb9568033654c0b3d5acd8acce018002cf5afcc1c7d1cf0639ac757ecfb76f",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/pair-agent-optin-gate.test.ts",
+          "originalSha256": "a9a45cd379573994ff2d6f3d25c99e4979b63697e461f412d7eb45de1d0ea54d",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/dual-listener.test.ts",
+          "originalSha256": "2a77527424c1f633b127ed18d3c36d9343f9068e2f68848847168fce51c7a870",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/tab-session-frame-detach.test.ts",
+          "originalSha256": "21fdcf7ad909d055b36db3de7cf950ffce0bbf9e103877bf9f1d634c7672e847",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-import-node.test.ts",
+          "originalSha256": "2030fe484197917d61037ba1ad60ec49d7b68f44fb7c5b0775bbb00b5b39b3aa",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/watch.test.ts",
+          "originalSha256": "4ae46d3067ce5d0c288b2539693815a8e0430c7a77a0805a838915b2b0d4a3f2",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/tab-guardrail.test.ts",
+          "originalSha256": "b65363dbcf475dc30217d6d80b78ec078f1fee7e9c889f7a46580bcfc551e1fd",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/dia-launch-comparison.test.ts",
+          "originalSha256": "1c8de9df3c8caf560ad4de7c1151db2163fde9ad2cdbf436f443bad76e6b7e65",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/tunnel-revoke-cli.test.ts",
+          "originalSha256": "5841a6376b8fe29fb0930fd7f9c11cc4fc67281521ab2613077d9bd9ce5d123b",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/daemon-mismatch-refuse.test.ts",
+          "originalSha256": "7e24302e24462cacd7726b22d1e1850f8ca70cc56146a4619df562a550d855e5",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/state-ttl.test.ts",
+          "originalSha256": "6057d8169ea9ec42f13d5e6abaf686aff20017598969ffb980493734d8ac930f",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/telemetry-optout.test.ts",
+          "originalSha256": "e3f299ffd81d5abac37a424983b053ff2b21c9248c15f87a456b33b26a465f4c",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/pty-inject-scan.test.ts",
+          "originalSha256": "45b092c768ddd6ca9b2c5508a2ee090e5e4f8033ecf234fe2bc13aca6bdb131e",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/bridge-chromium-e2e.test.ts",
+          "originalSha256": "db7e2ad7eb93f71a9e024700e3cff731ac729c63891fbb5871dcf0dce725b916",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent-native-observation.test.ts",
+          "originalSha256": "234d14c34cd56e5886d4aa0858867c7fecfbb3bd8163327966e78c9bca9f8223",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/batch.test.ts",
+          "originalSha256": "53780d1481ede82afebaf5a1f8651ab75899d41d3c01dd57dc94d20fb8a05090",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/pty-session-lease.test.ts",
+          "originalSha256": "038b7f10583eecb8bc4b4031b91568515e61f4cbdcefa9f9fb9d00f165daf39d",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/media-extract-unit.test.ts",
+          "originalSha256": "5dc4cca32ec3f2ff27b093bf40a7e765f89eb89096830798d9a65b8b181f23a4",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/gstack-update-check.test.ts",
+          "originalSha256": "df372f80b2f81c24a0a482a028ca023b53cd03acab3320c75309c128d03ee8cd",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/security-classifier.test.ts",
+          "originalSha256": "9b020efe3488b155173a3402d5ae20502623ff14eda3bd00252dbc9213992338",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-picker-csrf-browser.test.ts",
+          "originalSha256": "814b1dba909878482154263ba6f261161e9092aa88efa355933bd33121cdb58e",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/proxy-config.test.ts",
+          "originalSha256": "057fc891d232fa1375e51db8544bae2e6604ccc1617292cf27125dde70904689",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/playwright-core-patch.test.ts",
+          "originalSha256": "1b5f07335f1eec57e3914d9f3117f2174e9147e34c2d1463e15ee7cc67a68200",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/browser-manager-unit.test.ts",
+          "originalSha256": "59b18736ba22ea5c4620aa7e8907c01993269fa21969e6da5c7045a546e36cfa",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/stealth-extended.test.ts",
+          "originalSha256": "cceb5d2e5b499d1535c86c099f1152dac1e263ea73959d7195859f6291159ba2",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/config.test.ts",
+          "originalSha256": "aa97b9d05aaa80713c51511002efa60207742bb135f964ca7a916b4710cf7ac4",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/dia-gui-readiness.test.ts",
+          "originalSha256": "ca2b618753b9ccad4ca140f487a5cd41156c4b4d09e341a88c8d0838e72ad147",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/security-sidecar-client.test.ts",
+          "originalSha256": "f352d9a7a132bc89f2f481eba934f4e08c135f21425e4612cab8c722bc16692d",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/browser-skills-e2e.test.ts",
+          "originalSha256": "b373c848503e6788c4f452cdccfb6575224bbd108ff367c8ef7adfd67f39f13f",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/socks-bridge.test.ts",
+          "originalSha256": "547ddcb7883ae4d3dc6985c3e9759eac9b0cdefe24b8d3d7f1fad89b6c86628e",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent-port-range.test.ts",
+          "originalSha256": "c983b733f25f83f518a8de84b52df12e69a90d458ff358fb34715325be1b1ded",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cdp-e2e.test.ts",
+          "originalSha256": "0629ed6864c1f57a116595249f5613be8545b746494619c8b9ca52563ce632b4",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/launch-signal-flags.test.ts",
+          "originalSha256": "68e3dbb4559eef591286c3f7eab711eaca8f108a3abbe4b67676e5eca5193112",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-picker-routes.test.ts",
+          "originalSha256": "fa72a7f3a455421fd126f4c43db79e65f40bf2f198e341a51466a087806dafde",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/find-browse.test.ts",
+          "originalSha256": "e659782652ef6db8eb9b140ac2c30add9f40f11764c366dcb4d5f8e695ce5d6b",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/server-flush-trackers.test.ts",
+          "originalSha256": "7fe9a050d92349b5155edf593bf84a8f082db2fa4052f610dcc3082acfd698ae",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-pty-lifecycle.test.ts",
+          "originalSha256": "d66f57627ed937af67dda7679b646c2ddda103b7b8420ff59f87148f4fbc00ed",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/browser-skills-storage.test.ts",
+          "originalSha256": "ea9fb292454c1859f973336fa827daa21409fdef631dbf2db5086417af16fd82",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/domain-skills-e2e.test.ts",
+          "originalSha256": "321286c3caf7388b50692555e463d98f87ad360e1a68444a254b9d1573763384",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/compare-board.test.ts",
+          "originalSha256": "fef57edf31ec203b6556904e355d1559e5ebde7b6049b93c38cb6c44a8f9a527",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent-session-routing.test.ts",
+          "originalSha256": "3b43d90a3e341ff33270682625e9240a4e825d0a044da557caa2fefb0a2f658c",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/terminal-agent-owner-watchdog.test.ts",
+          "originalSha256": "6013062398d55404ecd6a1ccf3562c634ce69c51778b3d549e42216e872449d8",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/sidepanel-patient-autoconnect.test.ts",
+          "originalSha256": "fe62d847694967fb9e9699720f808481a978a59a0be856001c66c21de749a3cd",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/stop-dead-daemon.test.ts",
+          "originalSha256": "4456f56581dc176e7c35010ea8d229e01710b80981956afc1471d5804f82b453",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-import-reliability.test.ts",
+          "originalSha256": "ef775ec9798696639c13ef26f9e78f13e6de0125db32a1b840f9cc5b07dcacc4",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/claude-bin.test.ts",
+          "originalSha256": "edbcd1558746815cee34f6a82dae4a0df7a24d3a4b6117038fa3fdec00ee9853",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/security-live-playwright.test.ts",
+          "originalSha256": "21034912df08d658a8e38c935d8b80e3281557aa4978e8589bca57d7eacf72a6",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/browse/test/cookie-picker-binding.test.ts",
+          "originalSha256": "506560ed89464ef5667201beafaac683e5b68b177ff1b1f9dc21144f35f5f47a",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/setup-smoke.test.ts",
+          "originalSha256": "0958ea2d60a642f671383c09c9c68365fb8895ab4b00f97e67c5cbb5f756cade",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/cli-args.test.ts",
+          "originalSha256": "9e3d269b6842d7f435e419a70aa862a58695721bec1d7bbd16c7108ee6e328d7",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/image-policy.test.ts",
+          "originalSha256": "f6464c64b3c244be4d3418fe623dc2abe2c0f4255a7699e559fa0d7167eb5b97",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/asideClient.test.ts",
+          "originalSha256": "51dd303a2232ef62899a39deac56aad392069dca537c3df14007639684d090a4",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/pdftotext.test.ts",
+          "originalSha256": "09864f5795ad39562df1690b94adf58ca10ea48ecc498876dc9e5e7feb37505f",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/cli-exit-codes.test.ts",
+          "originalSha256": "c308317d753bd7500c6324fd2eae7635e7060ab3b4124c9c9ac85e6719bc70e3",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/diagram-prepass.test.ts",
+          "originalSha256": "48288562580057a62eacce9ae26181048ea1a139c42a31eaa88f2909ecd4deb3",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/render-offline-sanitize.test.ts",
+          "originalSha256": "20b947384775b45b632a861a35ff73d38007dc5fd118b116386101bcd0516ced",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/e2e/emoji-gate.test.ts",
+          "originalSha256": "c7224bfb07eff815c19bcda670f0d93aac93b0a98afa3dbe0a519c49a73d6ce1",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/e2e/combined-gate.test.ts",
+          "originalSha256": "a0d35a0862bfb46f6289e08ffe500cee63561bb02f5c85bf807af607863200fe",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/e2e/format-gate.test.ts",
+          "originalSha256": "3c0289571ab97a79b5028c54dbf26e079d3039645faf713e9410f19069212adc",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/e2e/landscape-gate.test.ts",
+          "originalSha256": "3100ec0d2d1fbe5acc6b15dcaa16a0ea9f1c21545322a7eeb8c8f01c5741460b",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/e2e/diagram-gate.test.ts",
+          "originalSha256": "d60b6d770b1672b62d381d42a9cbb7f0a5428c944d433ef1d1e32bd546d9fbea",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/e2e/ci-prereqs.test.ts",
+          "originalSha256": "d9c8aa0bd782e5fba9ed31952608c498654f353b1337ecc56828b7209a392553",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+        },
+        {
+          "path": "gstack/gstack/make-pdf/test/render.test.ts",
+          "originalSha256": "133eb5dc31ee62a5c7fec21350d5d80145949969f243a5e64043d43eca07e1d8",
+          "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
         }
       ]
     },
