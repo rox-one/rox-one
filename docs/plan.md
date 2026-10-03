@@ -1,3 +1,10 @@
+## MCP connection deadline/privacy recovery plan — 2026-10-03
+
+1. Freeze source1436 and current4fec, compare actual symbols. Retain current Qdrant storage ownership, local resolver authority, pool config/generation/recovery semantics; recover only proven missing budgets/diagnostic filtering.
+2. Add per-lease total startup/discovery budgets and physical startup deadline, observe fetch/start cancellation, and await SDK shutdown. Preserve another Qdrant lease and never replay failed tools. Redact SDK diagnostic credentials with linear URL handling; filter inherited validation host credentials.
+3. Exercise actual transports/children with held initialize/list responses, stale/terminal close, explicit cancellation, stubborn EOF, hostile URL/error bodies and Qdrant shared continuity, alongside current pool/source/redirect/no-replay tests. Retain failure history; run inherited strict types and actual main/preload build.
+4. Reconcile current main, freeze source/log receipt and publish/attach separate candidate. Root reviews/merges; original branches remain intact, native Windows/provider acceptance is bounded explicitly.
+
 ## Inspector resize recovery task graph — 2026-10-03
 
 Owner: branch audit lead; depends on merged Golden Gate controller/native/panels and Connections consumers. Source audit → adapt sash into current InspectorHost with transient preview/current bounds → exercise actual host pointer/keyboard/cancel/unmount/reload and old-consumer negative → package type/build/locale gates → separate reviewed PR, exact merge/readback. Shared files: currentInspectorHost and12locale keys only; original source branches remain intact. No old layout widths or section ownership are restored.

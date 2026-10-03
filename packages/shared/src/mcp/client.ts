@@ -5,7 +5,7 @@
  */
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { StreamableHTTPClientTransport, StreamableHTTPError } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
@@ -13,7 +13,8 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { basename, dirname, resolve } from 'node:path';
 import { realpathSync } from 'node:fs';
 import { isBlockedEnvVar } from '@rox/core/env';
-import { createMcpGuardedFetch } from './guarded-fetch.ts';
+import { createMcpGuardedFetch, McpRedirectError } from './guarded-fetch.ts';
+import { isSensitiveKeyName, REDACTED_VALUE } from '../utils/redaction.ts';
 import { getToolchain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
 
 /**
@@ -88,6 +89,74 @@ export interface PoolCallToolOptions {
   signal?: AbortSignal;
   /** Request timeout in ms (SDK default applies when omitted) */
   timeoutMs?: number;
+}
+
+export interface McpConnectOptions {
+  signal?: AbortSignal;
+  /** Total budget including executable resolution, startup and health discovery. */
+  timeoutMs?: number;
+}
+
+const DEFAULT_CONNECTION_TIMEOUT_MS = 30_000;
+
+function operationBudget(timeoutMs: number, lifetime: AbortSignal, caller: AbortSignal | undefined, label: string) {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error(`Invalid ${label} timeout`);
+  const controller = new AbortController();
+  const deadline = Date.now() + timeoutMs;
+  const closed = () => controller.abort(new Error('MCP client is closed'));
+  const cancelled = () => controller.abort(new Error('MCP connection cancelled'));
+  lifetime.addEventListener('abort', closed, { once: true });
+  caller?.addEventListener('abort', cancelled, { once: true });
+  if (lifetime.aborted) closed();
+  else if (caller?.aborted) cancelled();
+  const timer = setTimeout(() => controller.abort(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+  return {
+    signal: controller.signal,
+    remaining: () => {
+      if (Date.now() >= deadline) controller.abort(new Error(`${label} timed out after ${timeoutMs}ms`));
+      controller.signal.throwIfAborted();
+      return deadline - Date.now();
+    },
+    dispose() {
+      clearTimeout(timer);
+      lifetime.removeEventListener('abort', closed);
+      caller?.removeEventListener('abort', cancelled);
+    },
+  };
+}
+
+/** Linear suffix scan: an attacker-controlled punctuation run must not backtrack. */
+function logSafeUrlToken(token: string): string {
+  let end = token.length;
+  while (end > 0 && '),.;'.includes(token[end - 1]!)) end--;
+  return formatMcpUrlForLog(token.slice(0, end)) + token.slice(end);
+}
+
+function errorSanitizer(config: McpClientConfig): (error: unknown) => Error {
+  const secrets: string[] = [];
+  if (config.transport === 'stdio') {
+    secrets.push(...Object.entries(config.env ?? {}).filter(([key]) => isSensitiveKeyName(key)).map(([, value]) => value));
+  } else {
+    const url = new URL(config.url);
+    secrets.push(url.username, url.password, ...url.searchParams.values(), url.hash.slice(1));
+    for (const value of [url.username, url.password, url.hash.slice(1)]) {
+      try { secrets.push(decodeURIComponent(value)); } catch { /* Preserve malformed escapes for literal scrubbing. */ }
+    }
+    for (const value of Object.values(config.headers ?? {})) secrets.push(value, value.replace(/^(?:Bearer|Basic)\s+/i, ''));
+  }
+  const values = [...new Set(secrets.filter(Boolean))].sort((a, b) => b.length - a.length);
+  const scrub = (text: string) => {
+    let safe = text.replace(/https?:\/\/[^\s<>"']+/gi, logSafeUrlToken);
+    for (const secret of values) safe = safe.split(secret).join(REDACTED_VALUE);
+    return safe.slice(0, 8192);
+  };
+  return (error: unknown) => {
+    const message = scrub(error instanceof Error ? error.message : String(error));
+    // Preserve retry classification but never retain raw SDK error/cause properties.
+    if (error instanceof StreamableHTTPError) return new StreamableHTTPError(error.code, message.replace(/^Streamable HTTP error: /, ''));
+    if (error instanceof McpRedirectError) return new McpRedirectError(message, scrub(error.redirectUrl));
+    return new Error(message);
+  };
 }
 
 /**
@@ -168,8 +237,10 @@ class McpConnection {
   private listing?: Promise<Tool[]>;
   private cleanup?: Promise<void>;
   private closingTask?: Promise<void>;
+  private readonly safeError: (error: unknown) => Error;
 
   constructor(private readonly config: McpClientConfig) {
+    this.safeError = errorSanitizer(config);
     this.client = new Client({
       name: 'craft-agent',
       version: '1.0.0',
@@ -179,7 +250,8 @@ class McpConnection {
     this.transport = coalesceTransportClose(this.createTransport());
   }
 
-  private createTransport(): Transport {
+  private createTransport(signal: AbortSignal = this.controller.signal): Transport {
+    signal = AbortSignal.any([this.controller.signal, signal]);
     const config = this.config;
     if (config.transport === 'stdio') {
       return new StdioClientTransport({
@@ -201,7 +273,7 @@ class McpConnection {
           requestInit: {
             headers: config.headers,
           },
-          fetch: createMcpGuardedFetch(),
+          fetch: createMcpGuardedFetch((url, init) => fetch(url, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, signal]) : signal })),
         }
       );
     } else {
@@ -213,47 +285,59 @@ class McpConnection {
           requestInit: {
             headers: config.headers,
           },
-          fetch: createMcpGuardedFetch(),
+          fetch: createMcpGuardedFetch((url, init) => fetch(url, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, signal]) : signal })),
         }
       );
     }
   }
 
-  async connect(): Promise<void> {
-    if (this.connected) return;
-    if (this.closing) throw new Error('MCP client is closed');
+  connect(options?: McpConnectOptions): Promise<void> {
+    if (this.connected) return Promise.resolve();
+    if (this.closing) return Promise.reject(new Error('MCP client is closed'));
     if (this.connecting) return this.connecting;
+    let budget: ReturnType<typeof operationBudget>;
+    try { budget = operationBudget(options?.timeoutMs ?? DEFAULT_CONNECTION_TIMEOUT_MS, this.controller.signal, options?.signal, 'MCP connection'); }
+    catch (error) { return Promise.reject(error); }
     const work = Promise.resolve().then(async () => {
-      if (this.closing) throw new Error('MCP client is closed');
-      // Reconnection needs a fresh transport, including HTTP/SSE transports
-      // whose SDK start() flags remain set after close().
-      this.transport = coalesceTransportClose(this.createTransport());
+      budget.signal.throwIfAborted();
+      this.transport = coalesceTransportClose(this.createTransport(budget.signal));
+      // SSE start() can otherwise remain pending after EventSource.close().
+      const start = this.transport.start.bind(this.transport);
+      this.transport.start = () => {
+        budget.signal.throwIfAborted();
+        return abortable(start(), budget.signal, () => budget.signal.reason);
+      };
       try {
-        await abortable(this.client.connect(this.transport), this.controller.signal);
+        await abortable(this.client.connect(this.transport, { signal: budget.signal, timeout: budget.remaining() }), budget.signal, () => budget.signal.reason);
+        budget.signal.throwIfAborted();
         try {
-          await abortable(this.client.listTools(), this.controller.signal);
+          await abortable(this.client.listTools(undefined, { signal: budget.signal, timeout: budget.remaining() }), budget.signal, () => budget.signal.reason);
         } catch (error) {
-          throw new Error(`MCP connection failed health check: ${error instanceof Error ? error.message : String(error)}`);
+          if (budget.signal.aborted) throw budget.signal.reason;
+          throw new Error(`MCP connection failed health check: ${this.safeError(error).message}`);
         }
+        budget.signal.throwIfAborted();
         if (this.closing) throw new Error('MCP client is closed');
         this.connected = true;
       } catch (error) {
-        await this.closeTransport();
-        throw error;
+        const failure = this.safeError(budget.signal.aborted ? budget.signal.reason : error);
+        await this.closeTransport().catch(() => {});
+        throw failure;
       }
     });
-    this.connecting = work.finally(() => { this.connecting = undefined; });
+    this.connecting = work.finally(() => { budget.dispose(); this.connecting = undefined; });
     return this.connecting;
   }
 
-  async listTools(): Promise<Tool[]> {
-    if (!this.connected) {
-      await this.connect();
-    }
-
-    if (this.listing) return this.listing;
-    this.listing = this.client.listTools().then(result => result.tools)
-      .finally(() => { this.listing = undefined; });
+  async listTools(options?: PoolCallToolOptions): Promise<Tool[]> {
+    if (!this.connected) await this.connect(options);
+    if (!options && this.listing) return this.listing;
+    const work = this.client.listTools(undefined, {
+      ...(options?.signal ? { signal: options.signal } : {}),
+      timeout: options?.timeoutMs ?? DEFAULT_CONNECTION_TIMEOUT_MS,
+    }).then(result => result.tools).catch(error => { throw this.safeError(error); });
+    if (options) return work;
+    this.listing = work.finally(() => { this.listing = undefined; });
     return this.listing;
   }
 
@@ -262,7 +346,7 @@ class McpConnection {
    * Available after `connect()` resolves; undefined otherwise.
    */
   getServerInfo(): { name: string; version: string } | undefined {
-    const info = this.client.getServerVersion();
+    const info = this.connected ? this.client.getServerVersion() : undefined;
     if (!info) return undefined;
     return { name: info.name, version: info.version };
   }
@@ -276,11 +360,12 @@ class McpConnection {
       await this.connect();
     }
 
-    const result = await this.client.callTool({ name, arguments: args }, undefined, {
-      ...(options?.signal ? { signal: options.signal } : {}),
-      ...(options?.timeoutMs !== undefined ? { timeout: options.timeoutMs } : {}),
-    });
-    return result;
+    try {
+      return await this.client.callTool({ name, arguments: args }, undefined, {
+        ...(options?.signal ? { signal: options.signal } : {}),
+        ...(options?.timeoutMs !== undefined ? { timeout: options.timeoutMs } : {}),
+      });
+    } catch (error) { throw this.safeError(error); }
   }
 
   async close(): Promise<void> {
@@ -404,11 +489,16 @@ export class CraftMcpClient {
       : this.config);
   }
 
-  async connect(): Promise<void> {
-    if (this.controller.signal.aborted) throw new Error('MCP client is closed');
-    if (this.isConnected()) return;
+  connect(options?: McpConnectOptions): Promise<void> {
+    if (this.controller.signal.aborted) return Promise.reject(new Error('MCP client is closed'));
+    if (options?.signal?.aborted) return Promise.reject(new Error('MCP connection cancelled'));
+    if (this.isConnected()) return Promise.resolve();
     if (this.connecting) return this.connecting;
+    let budget: ReturnType<typeof operationBudget>;
+    try { budget = operationBudget(options?.timeoutMs ?? DEFAULT_CONNECTION_TIMEOUT_MS, this.controller.signal, options?.signal, 'MCP connection'); }
+    catch (error) { return Promise.reject(error); }
     const work = Promise.resolve().then(async () => {
+      budget.signal.throwIfAborted();
       if (this.config.transport === 'stdio' && !this.resolvedStdio) {
         const config = this.config;
         const inheritedEnv = await withToolchainPathPrefix(this.inheritedEnv);
@@ -451,24 +541,33 @@ export class CraftMcpClient {
         this.resolvedStdio = true;
       }
       if (this.controller.signal.aborted) throw new Error('MCP client is closed');
-      await this.connection.connect();
+      await this.connection.connect(this.shared ? undefined : { signal: budget.signal });
       if (this.controller.signal.aborted) throw new Error('MCP client is closed');
     });
-    this.connecting = abortable(work, this.controller.signal)
-      .finally(() => { this.connecting = undefined; });
+    this.connecting = abortable(work, budget.signal, () => budget.signal.reason)
+      .catch(async error => {
+        if (budget.signal.aborted) {
+          const failure = budget.signal.reason;
+          await this.close().catch(() => {});
+          throw failure;
+        }
+        throw error;
+      }).finally(() => { budget.dispose(); this.connecting = undefined; });
     return this.connecting;
   }
 
-  async listTools(): Promise<Tool[]> {
-    await this.connect();
-    if (this.controller.signal.aborted) throw new Error('MCP client is closed');
-    // A shared database connection may outlive this lease. Closing a chat or
-    // startup probe must still settle its own discovery wait immediately.
-    return abortable(this.connection.listTools(), this.controller.signal);
+  async listTools(options?: PoolCallToolOptions): Promise<Tool[]> {
+    const budget = operationBudget(options?.timeoutMs ?? DEFAULT_CONNECTION_TIMEOUT_MS, this.controller.signal, options?.signal, 'MCP tools/list');
+    try {
+      await abortable(this.connect({ signal: budget.signal, timeoutMs: budget.remaining() }), budget.signal, () => budget.signal.reason);
+      budget.signal.throwIfAborted();
+      // A shared physical request must not be cancelled by one lease's budget.
+      return await abortable(this.connection.listTools(this.shared ? undefined : { signal: budget.signal, timeoutMs: budget.remaining() }), budget.signal, () => budget.signal.reason);
+    } finally { budget.dispose(); }
   }
 
   getServerInfo(): { name: string; version: string } | undefined {
-    return this.connection.getServerInfo();
+    return this.isConnected() ? this.connection.getServerInfo() : undefined;
   }
 
   isConnected(): boolean {
@@ -487,7 +586,7 @@ export class CraftMcpClient {
     return abortable(this.connection.callTool(name, args, { ...options, signal }), signal, () => signal.reason);
   }
 
-  async close(): Promise<void> {
+  close(): Promise<void> {
     if (this.closingTask) return this.closingTask;
     this.controller.abort();
     this.closingTask = this.shared ? releaseQdrantConnection(this.shared) : this.connection.close();
