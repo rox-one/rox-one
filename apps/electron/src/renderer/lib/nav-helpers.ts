@@ -39,6 +39,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return navState.details !== null
     case 'pages':
     case 'unavailable':
+      // A failed address owns a content surface, including compact mode.
       return true
     case 'memory':
     case 'connections':

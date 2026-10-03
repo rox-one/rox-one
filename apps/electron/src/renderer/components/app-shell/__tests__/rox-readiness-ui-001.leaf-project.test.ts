@@ -13,7 +13,7 @@ function projectHost(getProject: (workspaceId: string, slug: string) => Promise<
     window: { electronAPI: { getProject } },
     soupProjectListResult: () => ({ result: {} }), soupProjectReadResult: () => ({ result: {} }),
     isClaimableLive: () => claimable, t: (key: string) => key,
-    projectReadsMountedRef, projectReadRevisionRef,
+    projectReadsMountedRef, projectReadRevisionRef, projectMountedRef: projectReadsMountedRef, projectRequestRef: projectReadRevisionRef,
     setProject: (value: unknown) => { state.project = value },
     setError: (value: string | null) => { state.error = value },
     setLoading: (value: boolean) => { state.loading = value },

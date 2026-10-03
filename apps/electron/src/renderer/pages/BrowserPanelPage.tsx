@@ -32,7 +32,10 @@ export interface BrowserPanelPageProps {
 export default function BrowserPanelPage({ instanceId, panelId, persist = true }: BrowserPanelPageProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
-  const [removed, setRemoved] = useState(false)
+  const [attempt, setAttempt] = useState(0)
+  const [availability, setAvailability] = useState<{ id: string; kind: 'loading' | 'ready' | 'missing' | 'unavailable' }>({ id: instanceId, kind: 'loading' })
+  const kind = availability.id === instanceId ? availability.kind : 'loading'
+  const removed = kind !== 'ready'
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
   const shell = useOptionalAppShellContext()
   const isFocused = shell?.isFocusedPanel ?? (panelId === undefined || focusedPanelId === panelId)
@@ -45,41 +48,40 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = true }
   })
 
   useEffect(() => {
-    const offRemoved = window.electronAPI.browserPane.onRemoved((id) => {
-      if (id === instanceId) setRemoved(true)
-    })
-    const offStateChanged = window.electronAPI.browserPane.onStateChanged((info) => {
-      if (info.id === instanceId) setRemoved(false)
-    })
-    return () => {
-      offRemoved()
-      offStateChanged()
+    let active = true
+    let deleted = false
+    const setKind = (kind: typeof availability.kind) => {
+      if (active) setAvailability({ id: instanceId, kind })
     }
-  }, [instanceId])
-
-  useEffect(() => {
-    if (!removed) return
-    let cancelled = false
+    setKind('loading')
+    const offRemoved = window.electronAPI.browserPane.onRemoved((id) => {
+      if (!active || id !== instanceId) return
+      deleted = true
+      setKind('missing')
+    })
+    // State broadcasts from a destroyed owner can arrive after removal.
+    // The canonical list is the only authority for an initial address lookup.
     void window.electronAPI.browserPane.list().then((items) => {
-      if (cancelled) return
-      if (items.some((item) => item.id === instanceId)) setRemoved(false)
-    }).catch(() => undefined)
-    return () => { cancelled = true }
-  }, [removed, instanceId])
+      if (!active || deleted) return
+      setKind(items.some((item) => item.id === instanceId) ? 'ready' : 'missing')
+    }).catch(() => { if (!deleted) setKind('unavailable') })
+    return () => { active = false; offRemoved() }
+  }, [instanceId, attempt])
 
   const restorePane = useCallback(() => {
     window.dispatchEvent(new CustomEvent('craft:open-vps-browser'))
-    setRemoved(false)
   }, [])
 
   const destroyGen = React.useRef(0)
+  const destroyOwnerId = React.useRef(instanceId)
   useEffect(() => {
     const id = instanceId
     const gen = ++destroyGen.current
+    destroyOwnerId.current = id
     return () => {
       if (persist) return
       queueMicrotask(() => {
-        if (destroyGen.current !== gen) return
+        if (destroyGen.current !== gen && destroyOwnerId.current === id) return
         void window.electronAPI.browserPane.destroy(id).catch(() => undefined)
       })
     }
@@ -87,10 +89,16 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = true }
 
   if (removed) {
     return (
-      <div className="flex flex-col items-center justify-center h-full w-full gap-3 bg-background text-muted-foreground">
-        <p className="text-sm">{t('browser.closed')}</p>
+      <div data-testid={`browser-surface-${kind}`} data-browser-instance={instanceId} role="status" className="flex flex-col items-center justify-center h-full w-full gap-3 bg-background text-muted-foreground">
+        <p className="text-sm">{t(kind === 'loading' ? 'common.loading' : kind === 'missing' ? 'browser.closed' : 'common.unavailable')}</p>
+        {kind !== 'loading' && (
+          <button type="button" onClick={() => setAttempt((value) => value + 1)} className="rounded-md border px-3 py-1 text-xs focus-visible:ring-2 focus-visible:ring-ring">
+            {t('common.retry')}
+          </button>
+        )}
         <button
           type="button"
+          disabled={kind === 'loading'}
           className="rounded-md border border-border px-3 py-1 text-xs text-foreground hover:bg-foreground/5"
           onClick={restorePane}
         >

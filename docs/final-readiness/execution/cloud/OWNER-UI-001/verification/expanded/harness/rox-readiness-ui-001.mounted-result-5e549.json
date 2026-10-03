@@ -1,0 +1,114 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "sourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "recordedAtUtc": "2026-10-03T15:44:58.525795+00:00",
+  "actualTestRuntime": "Node v26.8.2 + external headless Chrome153.0.8010.12; qualified Bun1.3.14 compiles actual production and source-test bundles",
+  "testCallbackAdapter": "rox-readiness-ui-001.node-adapter.mjs",
+  "fixtureBuilder": "rox-readiness-ui-001.bundle-fixture.ts",
+  "testBuilder": "rox-readiness-ui-001.build-node-tests.ts",
+  "lanes": [
+    {
+      "runtime": "Node actual source callbacks adapter",
+      "pass": 24,
+      "fail": 0,
+      "assertions": 69,
+      "cases": 24,
+      "registeredCases": 24,
+      "elapsedMs": 21977,
+      "lane": "navigation",
+      "exitCode": 0,
+      "log": "rox-readiness-ui-001.navigation-node-final-5e549.log",
+      "logSha256": "7033d9a30a63d7adddf35720131cafd5a3ab88dbdfeeb0b475e9b5b5e0fa3c60",
+      "fixtureManifest": "rox-readiness-ui-001.navigation-fixture-manifest-5e549.json",
+      "testSourcePath": "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+      "runBinding": {
+        "originalBundledAtHead": "2247242d557442976422d40217cf43fc74e7ebfe",
+        "allInputHashesEqualToFreshCommittedBundle": true,
+        "bundleBytesEqual": true,
+        "freshBundleSha256": "d86fffc48a27e0e9fe83881690b8f890d138753213c288b2a7df19a58b53cfcd",
+        "reason": "Full24 run happened before commit; a fresh build from frozen HEAD reproduced every input hash and bundle byte. Actual observed run is reused without relabeling its original build context."
+      }
+    },
+    {
+      "runtime": "Node actual source callbacks adapter",
+      "pass": 11,
+      "fail": 0,
+      "assertions": 23,
+      "cases": 11,
+      "registeredCases": 11,
+      "elapsedMs": 7182,
+      "lane": "main",
+      "exitCode": 0,
+      "log": "rox-readiness-ui-001.main-node-final-5e549.log",
+      "logSha256": "dd7531cebad550e883610bc16545c60009fdeeaef34a3d84dc5e4ad4fcd561ba",
+      "fixtureManifest": "rox-readiness-ui-001.main-fixture-manifest-5e549.json",
+      "testSourcePath": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts"
+    }
+  ],
+  "total": {
+    "passed": 35,
+    "failed": 0,
+    "assertions": 92,
+    "registeredCases": 35
+  },
+  "binding": {
+    "detail": "rox-readiness-ui-001.source-check-5e549.json",
+    "committedSourceMismatches": [],
+    "diskInputMismatches": []
+  },
+  "negativeControl": {
+    "runtime": "Node actual source callbacks adapter",
+    "pass": 1,
+    "fail": 2,
+    "assertions": 7,
+    "cases": 3,
+    "registeredCases": 24,
+    "elapsedMs": 4389,
+    "exitCode": 1,
+    "scope": "exact old committed NavigationContext from 5a0 only; all other inputs use final5e549; current same callback fixture retained",
+    "oldRevision": "5a0b769b894aed2ed09ba8bcbe01a41cf8149d76",
+    "log": "rox-readiness-ui-001.navigation-deep-owner-negative-5a0.log",
+    "fixtureManifest": "rox-readiness-ui-001.navigation-deep-owner-negative-manifest.json"
+  },
+  "commands": [
+    "ROX_UI001_BROWSER_TEST=1 ROX_UI001_NAV_FIXTURE_BUNDLE=\"$PWD/work/rox-readiness-ui-001.navigation-fixture-deep-owner.js\" ROX_UI001_CHROMIUM_CDP_URL=http://127.0.0.1:59813 node work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs",
+    "ROX_UI001_BROWSER_TEST=1 ROX_UI001_MAIN_FIXTURE_BUNDLE=\"$PWD/work/rox-readiness-ui-001.main-fixture-5e549.js\" ROX_UI001_CHROMIUM_CDP_URL=http://127.0.0.1:61186 node work/rox-readiness-ui-001.main-node-tests-5e549.mjs",
+    "ROX_UI001_TEST_FILTER='deep-link listener' ROX_UI001_BROWSER_TEST=1 ROX_UI001_NAV_FIXTURE_BUNDLE=\"$PWD/work/rox-readiness-ui-001.navigation-fixture-negative-deep-owner.js\" ROX_UI001_CHROMIUM_CDP_URL=http://127.0.0.1:59813 node work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs"
+  ],
+  "timeoutPolicy": "Original30s per-case limits unchanged; cross-window geometry explicitly brings fixture pages to front within isolated headless browser and polls at100ms.",
+  "failureHistory": [
+    "Prior Bun test subprocess/esbuild/CDP failures retained; these Node adapter passes are not qualified Bun test runner passes.",
+    "Original19/2 Node failures (zero-weight new panel and ASI test syntax), originalMain10/1 background-window timeout and all probe logs retained in adjacent earlier receipts.",
+    "Original5a0 stale-listener probe completed and recorded actual foreign-workspace create/send. Its later cleanup script TypeError caused process exit1 and remains in the retained log.",
+    "Exact old NavigationContext negative control intentionally exits1 with two regression failures; current action control still passes."
+  ],
+  "limitations": [
+    "Explicit fixture IPC/backend data; real canonical services and installed/native acceptance are independent receipts.",
+    "Windows10/11, macOS Retina/OS modality and actual hosted web full acceptance not established by this lane.",
+    "This is bounded source/callback proof; all original acceptance and external prerequisites remain unchanged."
+  ],
+  "fullDoDClosed": false,
+  "ownedProcessCleanup": [
+    {
+      "pid": 82972,
+      "profile": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.chrome-deep-owner",
+      "scope": "isolated owned headless browser only",
+      "commandReadback": "/Users/t/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing --headless=new --disable-gpu --disable-background-networking --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --no-first-run --remote-debugging-port=0 --user-data-dir=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.chrome-deep-owner about:blank",
+      "processGroup": 82972,
+      "action": "SIGTERM; SIGKILL only after bounded graceful-exit timeout if still present",
+      "exitObserved": true
+    },
+    {
+      "pid": 87246,
+      "profile": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.chrome-main-5e549",
+      "scope": "isolated owned headless browser only",
+      "commandReadback": "/Users/t/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing --headless=new --disable-gpu --disable-background-networking --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --no-first-run --remote-debugging-port=0 --user-data-dir=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.chrome-main-5e549 about:blank",
+      "processGroup": 87246,
+      "action": "SIGTERM; SIGKILL only after bounded graceful-exit timeout if still present",
+      "exitObserved": true
+    }
+  ]
+}

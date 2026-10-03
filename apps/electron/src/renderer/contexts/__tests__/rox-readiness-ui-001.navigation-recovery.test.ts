@@ -8,7 +8,10 @@ import {
 } from '../../../shared/route-parser'
 import { isSessionsNavigation, getNavigationStateKey, parseNavigationStateKey } from '../../../shared/types'
 import { normalizePanelRouteForReconcile } from '../navigation-reconcile'
-import { rendererEffect, deferred, settle } from '../../components/app-shell/__tests__/rox-readiness-ui-001.effect-harness'
+import { rendererEffect as productionRendererEffect, deferred, settle } from '../../components/app-shell/__tests__/rox-readiness-ui-001.effect-harness'
+
+import { decodePanelEntries, encodePanelEntries } from '../../lib/panel-url'
+import { focusedPanelIdAtom, focusedPanelRouteAtom } from '../../atoms/panel-stack'
 
 const sourcePath = process.env.ROX_UI001_NAV_SOURCE
   ? pathToFileURL(process.env.ROX_UI001_NAV_SOURCE) : new URL('../NavigationContext.tsx', import.meta.url)
@@ -16,8 +19,32 @@ const source = readFileSync(sourcePath, 'utf8')
 const file = ts.createSourceFile('NavigationContext.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const callbacks = new Map<string, string>()
 
+// Supply the merged production lifecycle/codec boundaries without changing any callback body.
+function mergedBindings(bindings: Record<string, any>) {
+  const owner = bindings.pendingNavigationRef?.current?.owner ?? { active: true, revision: 0 }
+  return { navigationOwnerRef: { current: owner }, decodePanelEntries, encodePanelEntries,
+    parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState,
+    isReady: true, isSessionsReady: true, pendingUrlRestoreRef: { current: null },
+    previousWorkspaceSlugRef: { current: null }, requestedWorkspaceSlugRef: { current: bindings.workspaceSlug ?? bindings.workspaceId },
+    setRequestedWorkspaceSlug: () => {}, suppressAutoSelectRef: { current: false },
+    setNavigationRevision: () => {}, focusedPanelIdAtom, focusedPanelRouteAtom,
+    ...bindings }
+}
+function rendererEffect(path: URL, text: string, bindings: Record<string, any>) {
+  return productionRendererEffect(path, text, mergedBindings(bindings))
+}
+
 // Execute production callbacks, replacing only their transport/store boundaries.
-function callback(name: string, bindings: Record<string, unknown>) {
+function callback(name: string, inputBindings: Record<string, any>) {
+  const bindings = mergedBindings(inputBindings)
+  if (name === 'handleActionNavigation' && bindings.store && !bindings.store.get) {
+    // The atom seam retains the focused target across the actual action's own route commit.
+    let route = 'home'
+    const originalSet = bindings.store.set
+    bindings.store = { ...bindings.store,
+      get: (atom: unknown) => atom === focusedPanelIdAtom ? 'fixture' : route,
+      set: (atom: unknown, value: unknown) => { if (atom === bindings.updateFocusedPanelRouteAtom) route = String(value); originalSet(atom, value) } }
+  }
   const cached = callbacks.get(name)
   if (cached) return Function(...Object.keys(bindings), cached)(...Object.values(bindings))
   let expression: ts.Expression | undefined
@@ -56,6 +83,10 @@ function navigationHarness(ready = true, workspaceId = 'a') {
 }
 
 function pendingEffect(bindings: Record<string, any>) {
+  // A queued request is created by navigate in production and owns that mounted lifecycle.
+  if (bindings.pendingNavigationRef?.current && !bindings.pendingNavigationRef.current.owner) {
+    bindings.pendingNavigationRef.current.owner = { active: true, revision: 0 }
+  }
   return rendererEffect(sourcePath, 'pendingNavigationRef.current = null', {
     isSessionsReady: true, initialRouteRestoredRef: { current: true }, isPopstateSwitchRef: { current: false },
     requestedWorkspaceSlugRef: { current: bindings.workspaceId }, workspaceSlug: bindings.workspaceId,

@@ -27,7 +27,7 @@ import type {
   ToolchainPlatform,
   ToolchainStateFile,
 } from './types';
-import { isToolName } from './types';
+import { isToolName, TOOLCHAIN_INSTALL_COMPLETE_MARKER } from './types';
 
 async function readStateFile(stateFile: string): Promise<ToolchainStateFile> {
   try {
@@ -338,6 +338,9 @@ export function createManager(
         const versionDir = path.join(toolRoot, entry.version);
         await fs.promises.rm(versionDir, { recursive: true, force: true });
         await (opts.gitNpmInstallImpl ?? defaultGitNpmInstall)({ entry, paths, versionDir, bun });
+        if (!(await hasUsableInstall(entry, versionDir, entry.version))) {
+          throw new Error(`git-npm installation is incomplete: ${entry.name}@${entry.version}`);
+        }
         await flipCurrent(toolRoot, entry.version, versionDir);
         await cleanupOldVersions(toolRoot, entry.version);
         const result = { installedPath: versionDir, installedVersion: entry.version };
@@ -431,6 +434,50 @@ export function createManager(
     return p;
   }
 
+  /** A ready git-npm version must retain its verified source and a usable managed launcher. */
+  async function hasUsableInstall(entry: ToolEntry, installedPath: string, installedVersion: string): Promise<boolean> {
+    if (!fs.existsSync(installedPath)) return false;
+    if (entry.kind !== 'git-npm') return true;
+    const lock = getGitLock(entry.name, installedVersion);
+    if (!lock || path.resolve(installedPath) !== path.resolve(paths.toolchainDir, entry.name, installedVersion)) return false;
+    const sourceDir = path.join(installedPath, 'source');
+    const isWithin = (root: string, file: string): boolean => {
+      const relative = path.relative(root, file);
+      return !!relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+    };
+    try {
+      const [root, versionRoot, sourceRoot, markerRaw, head] = await Promise.all([
+        fs.promises.realpath(paths.toolchainDir),
+        fs.promises.realpath(installedPath),
+        fs.promises.realpath(sourceDir),
+        fs.promises.readFile(path.join(installedPath, TOOLCHAIN_INSTALL_COMPLETE_MARKER), 'utf8'),
+        fs.promises.readFile(path.join(sourceDir, '.git', 'HEAD'), 'utf8'),
+      ]);
+      if (!isWithin(root, versionRoot) || !isWithin(versionRoot, sourceRoot)) return false;
+      const marker = JSON.parse(markerRaw);
+      if (marker?.format !== 'git-npm-local-source-v1' || marker.repo !== lock.repo || marker.commit !== lock.commit) return false;
+      if (head.trim() !== lock.commit) return false;
+      const frozenLock = ['bun.lock', 'bun.lockb'].find((name) => fs.existsSync(path.join(sourceDir, name)));
+      if (!frozenLock || !(await fs.promises.stat(path.join(sourceDir, frozenLock))).isFile()) return false;
+      const binary = entry.systemBinary ?? entry.name;
+      const names = process.platform === 'win32' ? [`${binary}.exe`, `${binary}.cmd`, binary] : [binary];
+      for (const name of names) {
+        try {
+          const launcher = path.join(installedPath, 'bin', name);
+          const realLauncher = await fs.promises.realpath(launcher);
+          if (!isWithin(versionRoot, realLauncher) || !(await fs.promises.stat(realLauncher)).isFile()) continue;
+          await fs.promises.access(launcher, process.platform === 'win32' ? fs.constants.F_OK : fs.constants.X_OK);
+          return true;
+        } catch {
+          // Try the other platform launcher names; a dangling link is missing.
+        }
+      }
+    } catch {
+      // Legacy, interrupted and malformed layouts are repaired by the normal installer.
+    }
+    return false;
+  }
+
   /** Причина установки для entry или null, если актуальная версия уже стоит. */
   async function planItem(entry: ToolEntry, artifact: ToolArtifact): Promise<WorkItem | null> {
     const state = await readStateFile(paths.stateFile);
@@ -438,7 +485,7 @@ export function createManager(
     if (!installed || !installed.installedVersion) return { entry, artifact, reason: 'missing' };
     if (installed.installedVersion !== entry.version) return { entry, artifact, reason: 'outdated' };
     // версия совпала, но директория могли подтереть — проверяем факт
-    if (!fs.existsSync(installed.installedPath)) return { entry, artifact, reason: 'missing' };
+    if (!(await hasUsableInstall(entry, installed.installedPath, installed.installedVersion))) return { entry, artifact, reason: 'missing' };
     return null;
   }
 
@@ -503,7 +550,7 @@ export function createManager(
         continue;
       }
 
-      if (installed?.installedVersion && fs.existsSync(installed.installedPath)) {
+      if (installed?.installedVersion && await hasUsableInstall(entry, installed.installedPath, installed.installedVersion)) {
         statuses.push(
           installed.installedVersion === entry.version
             ? {

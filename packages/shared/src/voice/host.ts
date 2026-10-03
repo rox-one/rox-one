@@ -33,6 +33,8 @@ export class VoiceHost {
   private chunks: Uint8Array[] = []
   private archiveCapture = false
   private meetingCapture: MeetingCaptureSession | null = null
+  private captureStartedAt: number | null = null
+  private captureElapsedMs = 0
   private listeners = new Set<(event: VoiceHostEvent) => void>()
   private transcription: { jobId: string; controller: AbortController } | null = null
 
@@ -82,6 +84,8 @@ export class VoiceHost {
     }
     const recordingId = randomUUID()
     const jobId = randomUUID()
+    this.captureStartedAt = null
+    this.captureElapsedMs = 0
     this.job = createVoiceJob(recordingId, jobId)
     this.job = applyJobEvent(this.job, {
       ...this.job,
@@ -102,6 +106,7 @@ export class VoiceHost {
 
   grantPermission(): VoiceJob {
     if (!this.job) throw new Error('No capture')
+    this.captureStartedAt = this.now()
     this.job = applyJobEvent(this.job, { ...this.job, seq: this.job.seq + 1, capture: 'recording' })
     this.emit()
     return this.job
@@ -126,12 +131,15 @@ export class VoiceHost {
     if (!this.job || !this.journal || this.job.capture !== 'recording') return
     this.chunks.push(bytes)
     if (this.archiveCapture) appendChunk(this.configDir, this.journal, bytes)
+    this.emit()
   }
 
   async stop(prefs: VoicePrefs, language?: string): Promise<VoiceJob> {
     if (!this.job || !this.journal) throw new Error('No capture')
     if (this.transcription) throw new Error('Transcription is already in progress')
     this.job = applyJobEvent(this.job, { ...this.job, seq: this.job.seq + 1, capture: 'finalizing', job: 'transcribing' })
+    this.captureElapsedMs = this.captureStartedAt === null ? 0 : Math.max(0, this.now() - this.captureStartedAt)
+    this.captureStartedAt = null
     const startedJob = this.job
     const journal = this.journal
     const controller = new AbortController()
@@ -223,8 +231,10 @@ export class VoiceHost {
   overlay(): OverlayState {
     return {
       recordingId: this.job?.recordingId ?? null,
-      phase: this.job ? overlayFromCapture(this.job.capture) : 'hidden',
-      elapsedMs: 0,
+      phase: !this.job ? 'hidden' : this.job.job === 'transcribing' ? 'transcribing'
+        : this.job.job === 'ready' ? 'ready' : this.job.job === 'failed' || this.job.job === 'degraded' ? 'error'
+          : overlayFromCapture(this.job.capture),
+      elapsedMs: this.captureStartedAt === null ? this.captureElapsedMs : Math.max(0, this.now() - this.captureStartedAt),
       rms: 0,
       streaming: false,
       error: this.job?.error,

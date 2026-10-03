@@ -14,7 +14,7 @@ function cloudHost(api: Record<string, unknown>, initialState: any = { kind: 'lo
   let state = initialState
   const bindings = {
     runId: 'run-A', window, document, CLOUD_RUN_REFRESH_INTERVAL_MS: 5_000,
-    setState: (value: unknown) => { state = value },
+    setSnapshot: (value: any) => { state = value.state },
     setInterval: (callback: () => void) => { tick = callback; return 1 },
     clearInterval: () => { cleared = true },
   }
@@ -84,7 +84,7 @@ describe('UI-001 selected cloud run refresh and recovery', () => {
     let attempt = 0
     let stateCall = 0
     const Component = leafComponent(source, 'CloudRunSurfacePage', {
-      React: { ...React, useState: () => ++stateCall === 1 ? [{ kind: 'unavailable', reason: 'error' }, () => {}] : [attempt, (update: (value: number) => number) => { attempt = update(attempt) }], useCallback: (fn: unknown) => fn, useEffect: () => {} },
+      React: { ...React, useState: () => ++stateCall === 1 ? [{ runId: 'run-A', state: { kind: 'unavailable', reason: 'error' } }, () => {}] : [attempt, (update: (value: number) => number) => { attempt = update(attempt) }], useCallback: (fn: unknown) => fn, useEffect: () => {} },
       useTranslation: () => ({ t: (key: string) => key }), useNavigation: () => ({ navigate: () => {} }), routes: { view: { settings: () => 'settings/cloudRuns' } },
     })
     const tree = Component({ runId: 'run-A' })

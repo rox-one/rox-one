@@ -9,7 +9,7 @@ import ProjectRoadmapPage from './ProjectRoadmapPage'
 import { SharedProjectDetails } from '@/components/projects/SharedProjectProjection'
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useAtomValue } from 'jotai'
 import { ArrowDown, ArrowUp, FolderOpen, Plus, Trash2, Upload, ImagePlus } from 'lucide-react'
 import { ProjectIcon, invalidateProjectIconCache } from '@/components/projects/ProjectIcon'
@@ -65,10 +65,12 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const { onCreateSession, onOpenFile } = useAppShellContext()
 
   const [project, setProject] = useState<LoadedProject | null>(null)
+  const projectRequestRef = useRef(0)
+  const projectMountedRef = useRef(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const projectReadsMountedRef = React.useRef(false)
-  const projectReadRevisionRef = React.useRef(0)
+  const projectReadsMountedRef = projectMountedRef
+  const projectReadRevisionRef = projectRequestRef
   const [tab, setTab] = useState<TabKey>('sessions')
   const [taskStore, setTaskStore] = useState(loadPersonalTaskStore)
   const [newTaskTitle, setNewTaskTitle] = useState('')
@@ -295,7 +297,12 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   }, [workspaceId, projectSlug, t])
 
   useEffect(() => {
-    loadProject()
+    projectMountedRef.current = true
+    void loadProject()
+    return () => {
+      projectMountedRef.current = false
+      ++projectRequestRef.current
+    }
   }, [loadProject])
 
   useEffect(() => {
@@ -416,8 +423,13 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
     if (!isClaimableLive(act)) return
     try {
       await window.electronAPI.deleteProject(workspaceId, project.config.slug)
+      if (!projectMountedRef.current) return
+      ++projectRequestRef.current
+      setProject(null)
+      setLoading(false)
       navigate(routes.view.projects())
     } catch (err) {
+      if (!projectMountedRef.current) return
       console.error('[ProjectInfoPage] Delete failed:', err)
       toast.error(t('projectInfo.deleteFailed'))
     }

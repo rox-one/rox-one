@@ -1,0 +1,128 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "inputRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "recordedAt": "2026-10-03T16:22:43.323928+00:00",
+  "status": "mounted-navigation-passed",
+  "fullDoDClosed": false,
+  "acceptanceLevel": "actual mounted production NavigationProvider React/Jotai/history with explicit backend and IPC fixtures; native acceptance has a separate receipt",
+  "sourceChange": {
+    "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+    "line": 1164,
+    "behavior": "Remote-only owner rotation reinstalls the listener, while registration-captured owner and local-active stale-listener gates stay unchanged.",
+    "dependenciesBefore": [
+      "workspaceId",
+      "navigate"
+    ],
+    "dependenciesAfter": [
+      "workspaceId",
+      "remoteWorkspaceId",
+      "navigate"
+    ],
+    "priorCommittedProductRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+    "negativeSha256": "f9849afff8791539720582497d0fbf9c9b62bad33598a864ff28970b03d98829",
+    "finalSha256": "807106e633dd513c1d76623ff938deca99069301c9ddb00f81e041a1136b1d98"
+  },
+  "testChange": {
+    "path": "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+    "sha256": "d25916b710ef86751d3f2fca0c32b120864fbe7c1aab84e23f9f37ea4ecb8001",
+    "callbackIdentities": "Stable onCreateSession/onInputChange/onSwitchWorkspaceBySlug identities prevent an unrelated navigate identity change from masking the dependency.",
+    "addedCases": [
+      "remote-only ownership rotation installs a current deep-link listener with stable callbacks",
+      "retained remote-owner listeners cannot navigate create or send after remote-only ABA"
+    ]
+  },
+  "negativeControl": {
+    "actualUnmodifiedPriorProductSource": true,
+    "sameCurrentTestBytes": true,
+    "changedBundleInputsComparedToFinal": [
+      "apps/electron/src/renderer/contexts/NavigationContext.tsx"
+    ],
+    "driverExitCode": 1,
+    "pass": 0,
+    "fail": 2,
+    "failure": "Both remote-only tests timed out waiting for current registration, because remote-only changes had invalidated the captured owner without reinstalling its listener.",
+    "originalBuildContext": "e35aa30af754a660ca595e50c7168c88d9696223",
+    "browserPid": 32105,
+    "browserExited": true
+  },
+  "positiveControl": {
+    "summary": {
+      "runtime": "Node actual source callbacks adapter",
+      "pass": 26,
+      "fail": 0,
+      "assertions": 74,
+      "cases": 26,
+      "registeredCases": 26,
+      "elapsedMs": 196562
+    },
+    "driverExitCode": 0,
+    "allCasesSelected": true,
+    "testFilter": null,
+    "inputCount": 169,
+    "bundleSha256": "f7711584df681fa5826f8b8757e28486d3b2be0a0822994c66aa08bfca3c9b7c",
+    "allInputHashesMatchedBeforeEvidenceSeal": true,
+    "finalCommittedRebuildMatchesOriginalGreenInputHashesAndBundleBytes": true,
+    "originalGreenBuildContext": "e35aa30af754a660ca595e50c7168c88d9696223",
+    "compiledNodeCallbacksPath": "work/rox-readiness-ui-001.navigation-node-tests-remote.mjs",
+    "compiledNodeCallbacksSha256": "a2d984ac3f755293430f8c5254ff4757aa6114b19358db7f22c87a363f666cdb",
+    "bunBuildVersion": "1.3.14",
+    "nodeDriverVersion": "v26.8.2",
+    "chromeVersion": "153.0.8010.12",
+    "browserPid": 41005,
+    "ownedBrowserExited": true,
+    "isolatedProfileProcessesAbsent": true,
+    "normalBrowserCleanupRecovery": "SIGTERM followed by scoped SIGKILL of the owned process group after ten seconds"
+  },
+  "preservedOrchestrationFailures": [
+    {
+      "event": "First full run exceeded outer200s orchestration budget after18 passing cases, with no testcase failure; complete replay used sufficient outer600s, preserving each testcase30s timeout.",
+      "log": "rox-readiness-ui-001.navigation-remote-owner-partial-timeout.log",
+      "partialPass": 18,
+      "qualifiedFullPass": false
+    },
+    {
+      "event": "A relaunch command omitted the app executable suffix and raised FileNotFoundError before spawning any browser or test; corrected executable used for final replay.",
+      "exactError": "[Errno 2] No such file or directory: '/Users/t/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing'",
+      "qualifiedFullPass": false
+    }
+  ],
+  "commands": {
+    "freshBundle": "bun1.3.14 docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.bundle-fixture.ts navigation work/rox-readiness-ui-001.navigation-fixture-remote-final-8e3.js",
+    "compileActualCallbacks": "bun1.3.14 docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.build-node-tests.ts apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts work/rox-readiness-ui-001.navigation-node-tests-remote.mjs",
+    "fullReplay": "ROX_UI001_BROWSER_TEST=1 ROX_UI001_NAV_FIXTURE_BUNDLE=<absolute final8e3 fixture> ROX_UI001_CHROMIUM_CDP_URL=<owned loopbackCDP> node work/rox-readiness-ui-001.navigation-node-tests-remote.mjs (ROX_UI001_TEST_FILTER unset)",
+    "negativeReplay": "same source callbacks and isolated Chromium with ROX_UI001_TEST_FILTER=remote-only and exact prior-source fixture"
+  },
+  "artifacts": [
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.navigation-remote-owner-negative-manifest.json",
+      "sha256": "1c5052e05d961308c355c121658685db9febe4ff2194d35303d59738fab4830e"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.navigation-remote-owner-provisional-green-manifest.json",
+      "sha256": "94caa93c4f6a2050e7f0d71c45862abfbe4d0864031f76fe4f1d42cf5f93b300"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.navigation-remote-owner-final-manifest-8e3.json",
+      "sha256": "d4651767ff7d3bc3009bf9fe901bce280cc6e17133cfe70c30d437cdc0dd725f"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.navigation-remote-owner-negative.log",
+      "sha256": "dd51f836721ce326fe7555dd93c9f63c41fffc4c925bd22aed8479ae9932fe07"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.navigation-remote-owner-partial-timeout.log",
+      "sha256": "307a9d0200107ca2224c1d695c734ac6fad13518a0e993a97bb3a37367dd8b73"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.navigation-remote-owner-full-8e3.log",
+      "sha256": "27848cdac36586d9297c58c99815c9b2d43ccdfa7a0c3cb3339ca68a1bebf324"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.navigation-remote-owner-runner-8e3.json",
+      "sha256": "5c24126fb29f5fe882adfce0b62f994ab839b0605ad7037d0d77ea766907f6df"
+    }
+  ]
+}

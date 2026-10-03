@@ -25,6 +25,26 @@ async function runner() {
 }
 
 describe('UI-001 repository test runner', () => {
+  test('actual fast-exit Git, Node and Bun commands retain stdout, stderr and real failure codes', async () => {
+    const root = fixture(), api = await runner()
+    const git = await api.captureTestCommand(['git', '--version'], { cwd: root })
+    expect(git.exitCode).toBe(0)
+    expect(git.stdout).toMatch(/^git version .+\n$/)
+    expect(git.stderr).toBe('')
+    for (const executable of ['node', process.execPath]) {
+      const source = "const {writeSync}=require('node:fs'); writeSync(1,'fast-stdout-é\\n'); writeSync(2,'fast-stderr-é\\n'); process.exit(7)"
+      const child = await api.captureTestCommand([executable, '--eval', source], { cwd: root })
+      expect({ exit: child.exitCode, signal: child.signal, stdout: child.stdout, stderr: child.stderr })
+        .toEqual({ exit: 7, signal: null, stdout: 'fast-stdout-é\n', stderr: 'fast-stderr-é\n' })
+      expect(child.nodeVersion).toMatch(/^v\d+\.\d+\.\d+$/)
+    }
+    const payload = 'drained-output-'.repeat(20_000)
+    const drained = await api.captureTestCommand(['node', '--eval', "process.stdout.write('drained-output-'.repeat(20000)); process.stderr.write('stderr-drained'); process.exitCode=3"], { cwd: root })
+    expect({ exit: drained.exitCode, stdout: drained.stdout, stderr: drained.stderr })
+      .toEqual({ exit: 3, stdout: payload, stderr: 'stderr-drained' })
+    await expect(api.captureTestCommand([join(root, 'missing-executable')])).rejects.toThrow('Command capture failed')
+  }, 20_000)
+
   test('Git inventory retains tracked and new source suites while excluding ignored generated copies', async () => {
     const root = fixture()
     const git = (...args: string[]) => {
@@ -70,6 +90,17 @@ describe('UI-001 repository test runner', () => {
     git('add', '.gitignore', 'src/required.test.ts')
     writeFileSync(join(root, '.git/index'), 'damaged-index-negative-control')
     await expect((await runner()).discoverSuites(root)).rejects.toThrow('Git test inventory unavailable')
+  })
+
+  test('an empty Git inventory or direct API manifest cannot become an empty successful run', async () => {
+    const root = fixture(), api = await runner()
+    const manifest = await api.discoverSuites(root)
+    expect(manifest.suites).toEqual([])
+    await expect(api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence') })).rejects.toThrow('refusing an empty green run')
+    expect(existsSync(join(root, 'evidence'))).toBe(false)
+    const git = Bun.spawnSync(['git', 'init', '--quiet'], { cwd: root, stdout: 'pipe', stderr: 'pipe' })
+    expect(git.exitCode).toBe(0)
+    await expect(api.discoverSuites(root)).rejects.toThrow('Git test inventory is empty')
   })
 
   test('keeps all Bun filename forms and supplemental isolated files while routing actual Playwright tests', async () => {
@@ -160,6 +191,23 @@ describe('UI-001 repository test runner', () => {
     }
   }, 20_000)
 
+  test('a silent successful executor is retained as a failed result with its actual execution witness', async () => {
+    const root = fixture()
+    file(root, 'embedded/package.json', '{"name":"embedded"}')
+    file(root, 'embedded/vitest.config.ts', 'export default {test:{}}')
+    file(root, 'embedded/src/required.test.ts', "import {test} from 'vitest'; test('required',()=>{});")
+    const witness = join(root, 'actual-executor-witness')
+    file(root, 'embedded/node_modules/vitest/vitest.mjs', `import {writeFileSync} from 'node:fs'; writeFileSync(${JSON.stringify(witness)},'executed-without-output');`)
+    const api = await runner(), manifest = await api.discoverSuites(root)
+    const report = await api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence') })
+    expect(readFileSync(witness, 'utf8')).toBe('executed-without-output')
+    expect(report.status).toBe('failed')
+    expect(report.summary).toMatchObject({ passed: 0, failed: 1, blocked: 0 })
+    expect(report.results[0]).toMatchObject({ status: 'failed', exitCode: 0, error: expect.stringContaining('without execution output') })
+    expect(readFileSync(report.results[0]!.log, 'utf8')).toContain('refusing an empty green result')
+    expect(JSON.parse(readFileSync(report.reportPath, 'utf8')).results[0].exitCode).toBe(0)
+  }, 20_000)
+
   test('fresh child processes isolate module mocks, globals and configuration while retaining integration environment', async () => {
     const root = fixture()
     file(root, 'dependency.ts', 'export const answer = 42')
@@ -211,13 +259,12 @@ describe('UI-001 repository test runner', () => {
   test('CLI root and artifact overrides list an immutable baseline without executing its tests', async () => {
     const root = fixture()
     file(root, 'tests/never.test.ts', "import {test} from 'bun:test'; test('never invoked by listing',()=>{throw Error('discovery executed a test')});")
-    await runner()
-    const child = Bun.spawn([process.execPath, runnerPath, '--root', root, '--list'], {
+    const api = await runner()
+    const child = await api.captureTestCommand([process.execPath, runnerPath, '--root', root, '--list'], {
       cwd: import.meta.dir,
-      env: { ...process.env, ROX_TEST_ROOT: '/wrong/root', ROX_TEST_ARTIFACT_DIR: join(root, 'evidence') },
-      stdout: 'pipe', stderr: 'pipe',
+      environment: { ...process.env, ROX_TEST_ROOT: '/wrong/root', ROX_TEST_ARTIFACT_DIR: join(root, 'evidence') },
     })
-    const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+    const { exitCode: exit, stdout, stderr } = child
     expect({ exit, stderr }).toEqual({ exit: 0, stderr: '' })
     const receipt = JSON.parse(stdout.trim())
     expect(receipt.status).toBe('listed')

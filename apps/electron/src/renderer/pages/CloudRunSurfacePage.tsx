@@ -42,7 +42,8 @@ const CLOUD_RUN_REFRESH_INTERVAL_MS = 5_000
 export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const [state, setState] = React.useState<LoadState>({ kind: 'loading' })
+  const [snapshot, setSnapshot] = React.useState<{ runId: string | null; state: LoadState }>({ runId, state: { kind: 'loading' } })
+  const state: LoadState = snapshot.runId === runId ? snapshot.state : { kind: 'loading' }
   const [attempt, setAttempt] = React.useState(0)
   const retry = React.useCallback(() => setAttempt((value) => value + 1), [])
 
@@ -55,6 +56,9 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
     let cancelled = false
     let revision = 0
     let inFlight = false
+    const setState = (state: LoadState) => {
+      if (!cancelled) setSnapshot({ runId, state })
+    }
 
     async function load(showLoading = false) {
       if (!runId || cancelled) return

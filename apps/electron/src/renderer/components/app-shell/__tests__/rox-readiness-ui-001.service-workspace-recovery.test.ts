@@ -15,6 +15,8 @@ import {
 import { isSessionsNavigation, DEFAULT_NAVIGATION_STATE } from '../../../../shared/types'
 import { normalizePanelRouteForReconcile } from '../../../contexts/navigation-reconcile'
 
+import { decodePanelEntries, encodePanelEntries } from '../../../lib/panel-url'
+
 const navURL = new URL('../../../contexts/NavigationContext.tsx', import.meta.url)
 const shellURL = new URL('../AppShell.tsx', import.meta.url)
 function productionClosure(url: URL, name: string, bindings: Record<string, unknown>, includeHook = false) {
@@ -42,14 +44,14 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   let requestedWorkspaceSlug = requestedWorkspaceSlugRef.current
   const writes: unknown[] = [], historyWrites: unknown[] = [], persisted: unknown[] = []
   const reconcile = productionClosure(navURL, 'reconcileFromUrlParams', {
-    store, reconcilePanelStackAtom, parseRouteToNavigationState, normalizePanelRouteForReconcile,
+    store, reconcilePanelStackAtom, parseRouteToNavigationState, normalizePanelRouteForReconcile, decodePanelEntries,
     resolveAutoSelectionRef: { current: (state: unknown) => state }, setRightSidebar: () => {},
   })
   const params = new URLSearchParams({ ws: 'deleted-workspace', route: 'notes/note/retained' })
   if (multiple) { params.set('panels', 'home:0.5,notes/note/retained:0.5'); params.set('fi', '0') }
   reconcile(params)
   const navigate = productionClosure(navURL, 'navigate', {
-    parseRoute, resolveRouteNavigationState, buildRouteFromNavigationState, isSessionsNavigation,
+    parseRoute, resolveRouteNavigationState, parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState, buildRouteFromNavigationState, isSessionsNavigation, navigationOwnerRef: { current: { active: true, revision: 0 } },
     store, updateFocusedPanelRouteAtom, sessionMetaMapAtom: {}, workspaceId: 'a', remoteWorkspaceId: null,
     workspaceSlug: 'a', requestedWorkspaceSlugRef, setRequestedWorkspaceSlug: (value: string) => { requestedWorkspaceSlug = value },
     isReady: true, isSessionsReady: true, initialRouteRestoredRef: { current: true }, isPopstateSwitchRef: { current: false },
@@ -81,7 +83,8 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   }, true)
   const click = renderClick()
   const syncUrl = productionClosure(navURL, 'syncUrl', {
-    requestedWorkspaceSlugRef, workspaceSlug: 'a', store, panelStackAtom, focusedPanelIndexAtom,
+    requestedWorkspaceSlugRef, workspaceSlug: 'a', store, panelStackAtom, focusedPanelIndexAtom, encodePanelEntries,
+    isReady: true, isSessionsReady: true, pendingUrlRestoreRef: { current: null }, previousWorkspaceSlugRef: { current: null },
     window: { location: { href: 'https://fixture.invalid/?ws=deleted-workspace&route=notes%2Fnote%2Fretained' } },
     rightSidebarRef: { current: undefined }, buildRightSidebarParam,
     nextHistorySeqRef: { current: 1 }, historySeqRef: { current: 0 }, historyMaxSeqRef: { current: 0 },

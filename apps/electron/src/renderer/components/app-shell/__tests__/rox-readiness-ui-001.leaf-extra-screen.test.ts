@@ -3,7 +3,7 @@ import * as React from 'react'
 import { deferred, leafClass, leafComponent, leafFunction, leafRegistry, settle } from './rox-readiness-ui-001.leaf-harness'
 
 const hostSource = new URL('../../../pages/extra-screens/ExtraScreenHost.tsx', import.meta.url)
-const panelSource = new URL('../MainContentPanel.tsx', import.meta.url)
+const panelSource = new URL('../../../lib/route-recovery.tsx', import.meta.url)
 
 describe('UI-001 nested extra-screen imports share route recovery attempts', () => {
   it('a failed nested import is reloaded on a new root Retry scope and preserves selected item', async () => {

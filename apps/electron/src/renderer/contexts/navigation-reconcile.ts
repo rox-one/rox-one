@@ -1,4 +1,4 @@
-import { buildRouteFromNavigationState, resolveRouteNavigationState } from '../../shared/route-parser'
+import { buildRouteFromNavigationState, parseRouteToNavigationStateOrUnavailable } from '../../shared/route-parser'
 import type { ViewRoute } from '../../shared/routes'
 import type { NavigationState } from '../../shared/types'
 
@@ -15,7 +15,7 @@ export function normalizePanelRouteForReconcile(
   route: ViewRoute,
   resolveAutoSelection: AutoSelectionResolver,
 ): ViewRoute {
-  const navState = resolveRouteNavigationState(route)
+  const navState = parseRouteToNavigationStateOrUnavailable(route)
   if (navState.navigator === 'unavailable') return route
 
   // Preserve explicit detail routes exactly as encoded in URL.

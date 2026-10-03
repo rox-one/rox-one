@@ -529,9 +529,10 @@ export interface GitNpmPinnedInstall {
  *   1. clone pinned коммита (git fetch <sha> --depth 1, как marketplace.installer);
  *   2. `bun install --frozen-lockfile` В ЧЕКАУТЕ — транзитивы строго по локу,
  *      рассинхрон lock↔package.json → fail-closed (bun падает);
- *   3. `bun install --global <workDir>` — bun копирует каталог целиком, включая
- *      node_modules (проверено на 1.3.14: реальная копия, не symlink), поэтому
- *      runtime-резолв кода пакета идёт по вложенным pinned-зависимостям.
+ *   3. materialize checkout + node_modules в versionDir/source, затем
+ *      `bun install --global <sourceDir>` из собственного global project.
+ *      Bun 1.3.14 может ссылаться на отдельные файлы локального пакета, поэтому
+ *      источник и pinned-зависимости сохраняются на весь срок этой версии.
  *
  * Fail-closed (no legacy unpinned fallback):
  *   - нет bun.lock/bun.lockb в апстрим-чекауте → throw (refuse unpinned transitives);
@@ -539,15 +540,20 @@ export interface GitNpmPinnedInstall {
  */
 export async function installGitNpmPinned(req: GitNpmPinnedInstall): Promise<void> {
   const runCmd = req.runCmd ?? runCommand;
+  const globalDir = path.join(req.versionDir, 'install', 'global');
+  const sourceDir = path.join(req.versionDir, 'source');
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     // BUN_INSTALL направляет глобальную установку внутрь toolchain-layout:
     // versionDir/install/global/node_modules/<pkg> + лончер versionDir/bin/<bin>.
     BUN_INSTALL: req.versionDir,
+    BUN_INSTALL_GLOBAL_DIR: globalDir,
+    BUN_INSTALL_BIN: path.join(req.versionDir, 'bin'),
     // Лончеры сгенерированных npm-wrapper'ов должны находить именно этот bun.
     CRAFT_BUN_PATH: req.bun,
   };
   await fs.promises.mkdir(req.versionDir, { recursive: true });
+  await fs.promises.rm(path.join(req.versionDir, TOOLCHAIN_INSTALL_COMPLETE_MARKER), { force: true });
 
   let hasLockfile = false;
   await fs.promises.rm(req.workDir, { recursive: true, force: true });
@@ -587,9 +593,31 @@ export async function installGitNpmPinned(req: GitNpmPinnedInstall): Promise<voi
     // Транзитивы — строго по локфайлу апстрима; расхождение lock↔package.json
     // здесь фатально (fail-closed, зеркалит npm ci --frozen-lockfile).
     await runCmd([req.bun, 'install', '--frozen-lockfile'], { cwd: req.workDir, env });
-    // Global-install из чекаута: bun копирует каталог (включая node_modules) —
-    // pinned-транзитивы едут вместе с пакетом в versionDir/install/global.
-    await runCmd([req.bun, 'install', '--global', req.workDir], { env });
+    // Materialize the frozen dependency tree before publishing local-file
+    // links. Dereferencing also keeps nested package links independent of the
+    // temporary checkout that is removed below.
+    await fs.promises.rm(sourceDir, { recursive: true, force: true });
+    await fs.promises.cp(req.workDir, sourceDir, { recursive: true, dereference: true });
+    // Bun 1.3.14 treats install --global <local path> as add in the nearest
+    // project. BUN_INSTALL only redirects its bin directory, and an empty cwd
+    // still lets it discover an ancestor workspace. Give the managed global
+    // directory its own manifest and cwd so neither the host project nor a
+    // user-supplied global directory can receive this dependency.
+    await fs.promises.mkdir(globalDir, { recursive: true });
+    try {
+      await fs.promises.writeFile(path.join(globalDir, 'package.json'), '{"private":true}\n', {
+        flag: 'wx',
+        mode: 0o600,
+      });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+    }
+    // Local-file links now point at this managed version's permanent source;
+    // its nested node_modules retain the upstream frozen transitive versions.
+    await runCmd([req.bun, 'install', '--global', sourceDir], { cwd: globalDir, env });
+    await fs.promises.writeFile(path.join(req.versionDir, TOOLCHAIN_INSTALL_COMPLETE_MARKER), JSON.stringify({
+      format: 'git-npm-local-source-v1', repo: req.repo, commit: req.commit,
+    }) + '\n', { mode: 0o600 });
   } finally {
     await fs.promises.rm(req.workDir, { recursive: true, force: true });
   }

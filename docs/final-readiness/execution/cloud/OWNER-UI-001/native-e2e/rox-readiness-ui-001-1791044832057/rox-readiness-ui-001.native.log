@@ -1,0 +1,12 @@
+Debugger ending on ws://127.0.0.1:64850/6302001a-d029-401f-96bf-be357599b24e
+For help, see: https://nodejs.org/en/docs/inspector
+2026-10-03T16:29:24.906Z INFO   2026-10-03T16:29:24.906Z [PowerShellValidator] Root set to: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/dist/resources
+2026-10-03T16:29:24.907Z INFO   2026-10-03T16:29:24.907Z [docs] Synced 0 docs
+2026-10-03T16:29:24.906Z [PowerShellValidator] Root set to: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/dist/resources
+2026-10-03T16:29:24.907Z [docs] Synced 0 docs
+2026-10-03T16:29:24.908Z INFO   2026-10-03T16:29:24.908Z [bundled-skills] Bundle root not found — skipping sync
+2026-10-03T16:29:24.908Z [bundled-skills] Bundle root not found — skipping sync
+2026-10-03T16:29:24.909Z INFO   2026-10-03T16:29:24.909Z [release-notes] Synced 0 release notes
+2026-10-03T16:29:24.909Z [release-notes] Synced 0 release notes
+2026-10-03T16:29:24.909Z INFO  [main] Registered thumbnail:// protocol handler
+2026-10-03T16:29:24.912Z INFO   [proxy] Applying proxy settings: {"enabled":false,"source":"system","hasHttpProxy":false,"hasHttpsProxy":false,"hasNoProxy":false}

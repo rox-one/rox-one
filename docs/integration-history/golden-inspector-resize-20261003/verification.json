@@ -1,0 +1,35 @@
+{
+  "source_branch": "codex/golden-gate-workspace",
+  "source_sha": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
+  "base_main": "e28bf0c6a7155fd746ad12f3f9ea8116e8e8f8af",
+  "owner": "branch-integration-root",
+  "changes": "Actual current InspectorHost uses transient shared resize controller; current limits/center/overlay/default/contents remain authoritative",
+  "runtime_sha256": {
+    "apps/electron/src/renderer/platform/InspectorHost.tsx": "31386737f86ec19245aa8b5e75183d1d43041d62f4c881a07be43fff21c3b068",
+    "apps/electron/src/renderer/platform/InspectorResizeSash.tsx": "f42cd12f2c9058faae8b97c284265bab5255186472749e52809e209857c66e6e",
+    "apps/electron/src/renderer/platform/inspector-resize.ts": "e7839ebe5a35f9e1e2f2447754dd08506dc17e5a3ad71ac565cc7ad577b98da4"
+  },
+  "checks": {
+    "actual_current_host_chromium": "5 pass,0 fail: keyboard transient/cancel/commit/reload/ARIA,pointercancel/commit,bounds/reset,drafts,unmount/body/window blur, viewport-change cancellation and explicit overlay",
+    "adjacent_layout_controller_and12locales": "295 pass,0 fail,6476 assertions",
+    "electron_strict_types": "Whole Electron strict types exit0,zero diagnostics on integrated688161516841f0a427400c416837788a8abaf80a",
+    "responsive_layout_browser": "Additional actual Chromium responsive1pass0fail; saved screenshot visually inspected",
+    "renderer_bundle": "Integrated688161 renderer build exit0 in2m26s",
+    "exact_old_host_negative": "0pass1fail: actual old Host has no accessible keyboard sash, qualified candidate restored"
+  },
+  "failure_history": [
+    "first cold fixture load timed out:0pass4fail",
+    "instrumented second run cold dependency compilation:2pass2fail; warmactualhost4pass0fail",
+    "Keyboard automatic commit250ms exceeded by remote browser round trips; fixture atomically tests actual DOM preview/cancel without changing product deadline",
+    "Viewport changes raced pointerup and persistedpreview342; synchronous native resize cancellation and captured viewport guard fix observed by final5pass",
+    "Source negative control followed by isolated screenshot fixture missing sash; preserved failure, fresh candidate fixture requalified1pass0fail",
+    "One nullable PID type diagnostic in test fixture fixed; final integrated type gate pending"
+  ],
+  "limits": [
+    "Controlled navigation and unexecuted session/browser leaf fixtures; actual InspectorHost/current atoms/controller/layout/Info DOM execute",
+    "Installed native compositor and full release acceptance not established"
+  ],
+  "original_branches_preserved": true,
+  "screenshot": "/Users/t/Pictures/Shots/Agents/rox-branch-integration-20261003/inspector-resize-overlay.png",
+  "qualified_revision": "688161516841f0a427400c416837788a8abaf80a"
+}

@@ -145,6 +145,15 @@ describe('MainContentPanel terminal + cloud-run hosts (#571)', () => {
     expect(empty.store.get(bottomTerminalOpenAtom)).toBe(false)
   })
 
+  it('terminal preserves unsupported IDs on unavailable surface with an explicit dock path', () => {
+    expect(terminalPage).not.toContain('<InspectorTerminal')
+    expect(terminalPage).toContain('bottomTerminalOpenAtom')
+    expect(terminalPage).toContain("t('terminal.surface.noTerminalSelected')")
+    expect(terminalPage).toContain("t('terminal.surface.openDock')")
+    expect(terminalPage).toContain("data-testid=\"terminal-surface-unavailable\"")
+    expect(terminalPage).toContain("data-testid=\"terminal-surface-empty\"")
+  })
+
   it('cloud-run host loads run status or honest unavailable + settings path', () => {
     expect(cloudRunPage).toContain('listCloudRuns')
     expect(cloudRunPage).toContain('getCloudRunsConfig')

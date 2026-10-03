@@ -62,7 +62,7 @@ export function leafClass(path: URL, name: string, bindings: Record<string, unkn
   const file = ts.createSourceFile(path.pathname, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   const declaration = file.statements.find((node): node is ts.ClassDeclaration => ts.isClassDeclaration(node) && node.name?.text === name)
   if (!declaration) throw new Error('Missing production class ' + name)
-  const code = ts.transpileModule(declaration.getText(file) + '; return ' + name, {
+  const code = ts.transpileModule(declaration.getText(file).replace(/^export\s+(?:default\s+)?/, '') + '; return ' + name, {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None, jsx: ts.JsxEmit.React },
   }).outputText
   return Function(...Object.keys(bindings), code)(...Object.values(bindings)) as {

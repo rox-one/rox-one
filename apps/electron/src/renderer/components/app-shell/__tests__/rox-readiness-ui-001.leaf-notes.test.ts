@@ -14,7 +14,7 @@ function noteHost(readNote: (workspaceId: string, noteId: string) => Promise<unk
   const dirtyRef = { current: false }
   const refs = {
     openNoteRequestRef, activeNoteIdRef, contentRef, dirtyRef,
-    workspaceIdRef: { current: 'workspace-A' }, readWorkspaceRef: { current: 'workspace-A' }, readsMountedRef: { current: true },
+    readWorkspaceGenerationRef: { current: 0 }, workspaceIdRef: { current: 'workspace-A' }, readWorkspaceRef: { current: 'workspace-A' }, readsMountedRef: { current: true },
     saveBlockedRef: { current: false },
     revisionsRef: { current: new Map() }, expectedRevisionByNoteRef: { current: new Map() }, nativeRevisionByNoteRef: { current: new Map() },
   }
@@ -26,7 +26,7 @@ function noteHost(readNote: (workspaceId: string, noteId: string) => Promise<unk
     noteRevisionKey: (workspaceId: string, noteId: string) => workspaceId + ':' + noteId, contentHash: (content: string) => content,
     RPC_CHANNELS: { content: { RESOLVE: 'content:resolve' } },
     t: (key: string) => key, toast: { error: () => {} },
-    setNoteReadError: (value: unknown) => { state.failure = value },
+    setNoteOpenError: (value: unknown) => { state.failure = value },
     setActiveNote: (value: unknown) => { state.activeNote = value },
     setContent: (value: string) => { state.content = value },
     setLoading: (value: boolean) => { state.loading = value },
@@ -40,7 +40,7 @@ function subscribeChanges(host: ReturnType<typeof noteHost>) {
   let externalChange: unknown = null
   let stopped = false
   const cleanup = rendererEffect(source, 'onNotesChanged', {
-    ...host.bindings, openNote: host.open, selectedNoteIdRef: { current: 'note-A#^block-A' },
+    ...host.bindings, openNote: host.open, selectedNoteId: 'note-A#^block-A', selectedNoteIdRef: { current: 'note-A#^block-A' },
     activeNoteRef: { current: host.state.activeNote }, normalizeChangedPayload: (payload: unknown) => payload, parseNoteBlockAddress,
     refreshNotes: () => {}, refreshAssets: () => {}, refreshIndexHealth: async () => {},
     nativeNotesSync: { start: async () => {}, flush: async () => {}, stop: async () => {} },
@@ -63,11 +63,11 @@ describe('UI-001 selected note recovery retains its canonical address', () => {
       return { ...document }
     })
     await host.open('note-A')
-    expect(host.state.failure).toEqual({ workspaceId: 'workspace-A', noteId: 'note-A', kind: 'missing' })
+    expect(host.state.failure).toEqual({ workspaceId: 'workspace-A', noteId: 'note-A', code: 'NOT_FOUND' })
     expect(host.state.activeNote).toBeNull()
     code = 'AUTH_FAILED'
     await host.open('note-A')
-    expect(host.state.failure.kind).toBe('unavailable')
+    expect(host.state.failure.code).toBe('AUTH_FAILED')
     code = null
     await host.open('note-A')
     expect(host.state.failure).toBeNull()
@@ -80,7 +80,7 @@ describe('UI-001 selected note recovery retains its canonical address', () => {
     const host = noteHost(async () => { calls += 1; return document }, false)
     await host.open('note-A')
     expect(calls).toBe(0)
-    expect(host.state.failure?.kind).toBe('unavailable')
+    expect(host.state.failure?.code).toBe('CAPABILITY_UNAVAILABLE')
     expect(host.state.loading).toBe(false)
   })
 
@@ -96,7 +96,7 @@ describe('UI-001 selected note recovery retains its canonical address', () => {
     old.resolve(document)
     await initial
     expect(host.state.activeNote).toBeNull()
-    expect(host.state.failure?.kind).toBe('missing')
+    expect(host.state.failure?.code).toBe('NOT_FOUND')
   })
 
   it('production workspace lease cleanup fences a pending selected-note read', async () => {
@@ -127,7 +127,7 @@ describe('UI-001 selected note recovery retains its canonical address', () => {
     changes.listener({ workspaceId: 'workspace-A', noteId: 'note-A', reason: 'external' })
     await settle()
     expect(reads).toBe(2)
-    expect(host.state.failure?.kind).toBe('missing')
+    expect(host.state.failure?.code).toBe('NOT_FOUND')
     old.resolve(document)
     await initial
     expect(host.state.activeNote).toBeNull()
@@ -173,7 +173,7 @@ describe('UI-001 selected note recovery retains its canonical address', () => {
 
   it('the recovery UI retry invokes the exact selected note callback and retains block address', async () => {
     const addresses: string[] = []
-    const render = leafComponent(source, 'SelectedNoteRecovery', { React, useTranslation: () => ({ t: (key: string) => key }) })
+    const render = leafComponent(source, 'SelectedNoteRecovery', { React, Button: 'button', routes: { view: { notes: () => 'notes' } }, useNavigation: () => ({ navigate: () => {} }), useTranslation: () => ({ t: (key: string) => key }) })
     const tree = render({ failure: { workspaceId: 'workspace-A', noteId: 'note-A', kind: 'missing' }, address: 'note-A#^block-A', onRetry: () => addresses.push('note-A') })
     const status = elementIn(tree, element => element.props['data-testid'] === 'note-surface-missing')
     expect(status?.props['data-note-address']).toBe('note-A#^block-A')

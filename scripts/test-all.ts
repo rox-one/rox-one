@@ -7,8 +7,8 @@
  * Every invocation retains its own manifest, logs and incremental result report.
  */
 import { createHash } from 'node:crypto'
-import { accessSync, constants, closeSync, existsSync, openSync, readFileSync, statSync } from 'node:fs'
-import { lstat, mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises'
+import { accessSync, constants, existsSync, readFileSync, statSync } from 'node:fs'
+import { lstat, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import ts from 'typescript'
@@ -75,6 +75,68 @@ const ISOLATED_TEST = /\.isolated\.ts$/
 const CONFIG_EXTENSIONS = ['ts', 'mts', 'cts', 'js', 'mjs', 'cjs']
 const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex')
 const portable = (value: string) => value.split('\\').join('/')
+
+// Bun's test runtime can lose subprocess pipe/descriptor output on macOS (Bun
+// #24690). An actual Node process owns the child's pipes and records completion
+// only after `close`, when both streams have drained. Bun reads the durable
+// bytes rather than relying on the affected capture path.
+const NODE_CAPTURE_DRIVER = [
+  "import { spawn } from 'node:child_process'",
+  "import { closeSync, openSync, readFileSync, writeFileSync, writeSync } from 'node:fs'",
+  "const input = JSON.parse(readFileSync(process.argv[2], 'utf8'))",
+  "const stdout = openSync(input.stdout, 'wx', 0o600)",
+  "const stderr = openSync(input.stderr, 'wx', 0o600)",
+  "const log = input.log ? openSync(input.log, 'wx', 0o600) : null",
+  "let stdoutBytes = 0, stderrBytes = 0, error",
+  "const child = spawn(input.command[0], input.command.slice(1), { cwd: input.cwd, env: input.environment, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true })",
+  "const write = (descriptor, chunk) => { let offset = 0; while (offset < chunk.length) offset += writeSync(descriptor, chunk, offset, chunk.length - offset) }",
+  "const record = (descriptor, chunk) => { write(descriptor, chunk); if (log !== null) write(log, chunk) }",
+  "child.stdout.on('data', chunk => { record(stdout, chunk); stdoutBytes += chunk.length })",
+  "child.stderr.on('data', chunk => { record(stderr, chunk); stderrBytes += chunk.length })",
+  "child.on('error', failure => { error = failure.message })",
+  "let stopped = false, forceStop",
+  "const stop = () => { if (stopped) return; stopped = true; child.kill('SIGTERM'); forceStop = setTimeout(() => child.kill('SIGKILL'), 2000); forceStop.unref() }",
+  "process.on('SIGTERM', stop); process.on('SIGINT', stop)",
+  "const parentCheck = setInterval(() => { try { process.kill(input.parentPid, 0) } catch { stop() } }, 1000)",
+  "parentCheck.unref()",
+  "const result = await new Promise(resolve => child.once('close', (exitCode, signal) => resolve({ exitCode, signal })))",
+  "clearInterval(parentCheck); if (forceStop) clearTimeout(forceStop)",
+  "closeSync(stdout); closeSync(stderr); if (log !== null) closeSync(log)",
+  "writeFileSync(input.result, JSON.stringify({ ...result, error, nodeVersion: process.version, stdoutBytes, stderrBytes }), { flag: 'wx', mode: 0o600 })",
+].join('\n')
+
+/** Capture real command output without Bun test's subprocess capture path. */
+export async function captureTestCommand(command: string[], options: {
+  cwd?: string
+  environment?: NodeJS.ProcessEnv
+  log?: string
+} = {}): Promise<{ exitCode: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string; nodeVersion: string }> {
+  if (!command[0]) throw new Error('A captured command requires an executable')
+  const directory = await mkdtemp(join(tmpdir(), 'rox-test-capture-'))
+  const driver = join(directory, 'capture.mjs'), input = join(directory, 'input.json'), result = join(directory, 'result.json')
+  const stdoutPath = join(directory, 'stdout'), stderrPath = join(directory, 'stderr')
+  const environment = options.environment ?? process.env
+  try {
+    await writeFile(driver, NODE_CAPTURE_DRIVER, { flag: 'wx', mode: 0o600 })
+    // Environment values can include integration credentials; the protected
+    // transient input is removed together with the capture directory.
+    await writeFile(input, JSON.stringify({ command, cwd: options.cwd ?? process.cwd(), environment, log: options.log,
+      stdout: stdoutPath, stderr: stderrPath, result, parentPid: process.pid }), { flag: 'wx', mode: 0o600 })
+    const broker = Bun.spawn(['node', driver, input], { env: environment, stdin: 'ignore', stdout: 'ignore', stderr: 'ignore' })
+    const brokerExit = await broker.exited
+    if (brokerExit !== 0 || !existsSync(result)) throw new Error(`Node command capture did not complete (exit ${brokerExit})`)
+    const receipt = JSON.parse(await readFile(result, 'utf8'))
+    if (receipt.error) throw new Error(`Command capture failed: ${receipt.error}`)
+    if (!(receipt.exitCode === null || Number.isInteger(receipt.exitCode)) ||
+      !(receipt.signal === null || typeof receipt.signal === 'string') || typeof receipt.nodeVersion !== 'string') {
+      throw new Error('Node command capture returned an invalid completion receipt')
+    }
+    const [stdout, stderr] = await Promise.all([readFile(stdoutPath), readFile(stderrPath)])
+    if (stdout.length !== receipt.stdoutBytes || stderr.length !== receipt.stderrBytes) throw new Error('Node command capture returned incomplete output')
+    return { exitCode: receipt.exitCode, signal: receipt.signal, nodeVersion: receipt.nodeVersion,
+      stdout: stdout.toString('utf8'), stderr: stderr.toString('utf8') }
+  } finally { await rm(directory, { recursive: true, force: true }) }
+}
 
 function imports(source: string): Set<string> {
   // Preprocessing scans imports/require calls without building thousands of full
@@ -145,8 +207,10 @@ async function gitTestInventory(root: string): Promise<string[] | null> {
       directory = parent
     }
   }
+  if (!gitRoot.trim()) throw new Error('Git test inventory returned an empty checkout binding')
   const output = await gitOutput(root, ['ls-files', '--cached', '--others', '--exclude-standard', '-z'])
   if (output === null) throw new Error('Git test inventory unavailable')
+  if (!output) throw new Error('Git test inventory is empty; refusing an empty green run')
   // Preserve whitespace in names; tracked files remain present even if an
   // ignore rule now matches them. New source files use Git's ignore policy.
   return [...new Set(output.split('\0').filter(Boolean))]
@@ -208,9 +272,8 @@ export async function discoverSuites(inputRoot: string): Promise<SuiteManifest> 
 }
 
 async function gitOutput(root: string, args: string[]) {
-  const child = Bun.spawn(['git', ...args], { cwd: root, stdout: 'pipe', stderr: 'ignore' })
-  const [exit, output] = await Promise.all([child.exited, new Response(child.stdout).text()])
-  return exit === 0 ? output : null
+  const child = await captureTestCommand(['git', ...args], { cwd: root })
+  return child.exitCode === 0 ? child.stdout : null
 }
 
 async function createArtifactRun(directory: string) {
@@ -260,19 +323,20 @@ export async function runSuites(options: {
 }): Promise<TestReport> {
   const root = resolve(options.root)
   if (resolve(options.manifest.root) !== root) throw new Error('Suite manifest belongs to a different checkout')
+  if (!options.manifest.suites.length) throw new Error('No test files discovered; refusing an empty green run')
   const environment = options.environment ?? process.env
   const bunTimeoutMs = testTimeout(environment.ROX_TEST_TIMEOUT_MS)
   const artifactDirectory = await createArtifactRun(options.artifactDirectory ?? environment.ROX_TEST_ARTIFACT_DIR ?? join(root, 'work/test-all'))
   const manifestPath = join(artifactDirectory, 'manifest.json')
   const manifest = JSON.stringify(options.manifest, null, 2) + '\n'
   await writeFile(manifestPath, manifest)
-  const node = Bun.spawn(['node', '--version'], { stdout: 'pipe', stderr: 'ignore', env: environment })
-  const [nodeExit, nodeVersion, head, diff] = await Promise.all([
-    node.exited, new Response(node.stdout).text(), gitOutput(root, ['rev-parse', 'HEAD']), gitOutput(root, ['diff', '--binary', 'HEAD']),
+  const [node, head, diff] = await Promise.all([
+    captureTestCommand(['node', '--version'], { environment }), gitOutput(root, ['rev-parse', 'HEAD']), gitOutput(root, ['diff', '--binary', 'HEAD']),
   ])
+  if (node.exitCode !== 0 || !/^v\d+\.\d+\.\d+\s*$/.test(node.stdout)) throw new Error('Node runtime qualification returned no version')
   const report: TestReport = {
     schemaVersion: 1, status: 'running', root, artifactDirectory, manifestPath, reportPath: join(artifactDirectory, 'report.json'),
-    input: { head: head?.trim() ?? null, trackedDiffSha256: diff === null ? null : hash(diff), manifestSha256: hash(manifest), runnerSha256: hash(readFileSync(import.meta.filename)), bunVersion: Bun.version, nodeVersion: nodeExit === 0 ? nodeVersion.trim() : null },
+    input: { head: head?.trim() ?? null, trackedDiffSha256: diff === null ? null : hash(diff), manifestSha256: hash(manifest), runnerSha256: hash(readFileSync(import.meta.filename)), bunVersion: Bun.version, nodeVersion: node.stdout.trim() },
     startedAt: new Date().toISOString(), serial: true, bunTimeoutMs,
     summary: { expected: options.manifest.suites.length, completed: 0, passed: 0, failed: 0, blocked: 0 }, results: [],
   }
@@ -294,13 +358,14 @@ export async function runSuites(options: {
       // that evidence boundary, while respecting a product opt-in from the caller.
       if (suite.runner === 'playwright' && suite.config === 'tests/e2e/meeting-agents/playwright.config.ts'
         && childEnv.ROX_MEETING_USE_PACKAGED_APP !== '1') childEnv.ROX_MEETING_E2E_FIXTURE ??= '1'
-      const descriptor = openSync(log, 'wx')
-      try {
-        const cwd = suite.runner === 'vitest' ? resolve(root, suite.packageRoot ?? '.') : root
-        const child = Bun.spawn(result.command, { cwd, env: childEnv, stdin: 'ignore', stdout: descriptor, stderr: descriptor })
-        result.exitCode = await child.exited
-        result.status = result.exitCode === 0 ? 'passed' : 'failed'
-      } finally { closeSync(descriptor) }
+      const cwd = suite.runner === 'vitest' ? resolve(root, suite.packageRoot ?? '.') : root
+      const child = await captureTestCommand(result.command, { cwd, environment: childEnv, log })
+      result.exitCode = child.exitCode
+      result.status = result.exitCode === 0 ? 'passed' : 'failed'
+      if (result.exitCode === 0 && !child.stdout.length && !child.stderr.length) {
+        result.status = 'failed'
+        throw new Error('Test executor exited successfully without execution output; refusing an empty green result')
+      }
     } catch (error) {
       result.error = error instanceof Error ? error.message : String(error)
       await writeFile(log, `${result.error}\n`, { flag: existsSync(log) ? 'a' : 'wx' })
