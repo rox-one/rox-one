@@ -7,6 +7,7 @@
  * accent bar and bold text, so it never relies on a subtle tint alone.
  */
 import * as React from 'react'
+import { ResponsiveModeScreenLayout, type ResponsiveModeScreen } from './ResponsiveModeScreen'
 import { cn } from '@/lib/utils'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
 import { Archive, Bell, CalendarDays, CheckCheck, ChevronRight, Clock3, Folder, Inbox, ListFilter, Mail, MessageCircle, Newspaper, Radio, ShieldCheck, Sparkles, Tag, Users, type LucideIcon } from 'lucide-react'
@@ -18,6 +19,7 @@ export function ModeScreenLayout({
   status,
   testId,
   wideList,
+  responsive,
 }: {
   navigator: React.ReactNode
   list: React.ReactNode
@@ -26,7 +28,10 @@ export function ModeScreenLayout({
   testId?: string
   /** List takes the free width (galleries); detail becomes a fixed side pane. */
   wideList?: boolean
+  /** Only explicit consumers opt into content-width master/detail and owned focus. */
+  responsive?: ResponsiveModeScreen
 }) {
+  if (responsive) return <ResponsiveModeScreenLayout navigator={navigator} list={list} detail={detail} status={status} testId={testId} responsive={responsive} />
   return (
     <div className="flex h-full min-h-0 flex-col bg-background font-sans text-[13px] text-foreground" data-testid={testId}>
       <div className="flex min-h-0 flex-1">
