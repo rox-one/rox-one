@@ -353,7 +353,8 @@
       "produces": [
         "win.signed-artifacts",
         "win.update-transition-receipt",
-        "win.publishable-feed-set"
+        "win.publishable-feed-set",
+        "signed-N-and-Nplus1-update-set"
       ],
       "hardDependencies": [
         {
@@ -961,7 +962,8 @@
       ],
       "produces": [
         "mac.complete-update-set",
-        "mac.update-transition-receipts"
+        "mac.update-transition-receipts",
+        "signed-N-and-Nplus1-update-set"
       ],
       "hardDependencies": [
         {

@@ -1,13 +1,10 @@
 {
-  "schemaVersion": 2,
-  "phase": "REQUESTED_19_PR_MERGES_VERIFIED_INDEPENDENT_RECONCILIATION_QUALIFYING",
-  "capturedAt": "2026-10-03T03:22:58.235Z",
+  "capturedAt": "2026-10-03T02:23:58.935Z",
   "repository": "rox-one/rox-one",
-  "requestedPullRequestCount": 19,
-  "allRequestedPullRequestsRemoteMerged": true,
-  "observedMainAtReadback": "980e88d7a024d43e507626e457e25af213152feb",
-  "independentReconciliationCandidate": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
-  "independentCandidateDefaultBranchPromotionVerified": false,
+  "observedDefaultBranchMain": "980e88d7a024d43e507626e457e25af213152feb",
+  "requestedPullRequests": 19,
+  "allRemoteMerged": true,
+  "allOriginalHeadsReachable": true,
   "pullRequests": [
     {
       "number": 1323,
@@ -295,14 +292,5 @@
       "headAncestorOfObservedMain": true
     }
   ],
-  "qualification": {
-    "phase": "RUNNING",
-    "qualifiedRuntime": "1.3.14",
-    "limits": "Full signed native, hosted, provider and whole-task DoD remain open. This interim receipt does not relabel historical/failed tests."
-  },
-  "initialPreparation": {
-    "leafTasks": 16,
-    "lanes": 3,
-    "fullDoDClosed": 0
-  }
+  "promotionContext": "Remote main promotion was observed during independent local integration; this receipt records GitHub state, not sole attribution or final application qualification."
 }

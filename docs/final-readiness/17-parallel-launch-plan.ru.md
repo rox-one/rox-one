@@ -25,10 +25,10 @@
 
 ## [PW-RU-NOW] Что запускаем сейчас
 
-1. **Один интегратор объединяет17 открытых PR.** Разные конфликтующие файлы разбираются параллельно, но общую ветку и merge-коммиты меняет только интегратор. Сначала читаем обе стороны и реальные контракты. После слияния проверяем frozen lockfile, типы, затронутые сценарии, сборку WebUI и запуск собранного сервера. Затем подтверждаем `main` и состояния PR через GitHub. Локальное включение коммитов не равно удалённому merge.
+1. **Один интегратор объединяет19 PR:17 исходных и2 появившихся во время интеграции.** Разные конфликтующие файлы разбираются параллельно, но общую ветку и merge-коммиты меняет только интегратор. Сначала читаем обе стороны и реальные контракты. После слияния проверяем frozen lockfile, типы, затронутые сценарии, сборку WebUI и запуск собранного сервера. Затем подтверждаем `main` и состояния PR через GitHub. Локальное включение коммитов не равно удалённому merge.
 2. **Windows, macOS и Web стартуют одновременно.** Сборочные скрипты, native staging, installer, браузерные адаптеры, identity, staging и тестовые среды разрабатываются независимо. Завершение одного целевого продукта не является входом для другого.
 3. **237 UI-задач и84 сервисные задачи распределяем по модулям.** Отдельные ветки, точные разрешённые пути, один владелец общего файла. Потребитель начинает на текущем контракте и явно описывает необходимые изменения. Синтетический успешный ответ не закрывает реальный DoD.
-4. **37 интеграционных и47 QA/release/recheck задач начинаются сразу.** Их подготовка — сценарии, fixtures, наблюдаемость, негативные контроли, CI и provisioning — не ждёт завершения разработки всех модулей. Конкретный сквозной прогон ждёт только потребляемые им результаты.
+4. **37 интеграционных и43 QA/release/recheck задач начинаются сразу.** Их подготовка — сценарии, fixtures, наблюдаемость, негативные контроли, CI и provisioning — не ждёт завершения разработки всех модулей. Конкретный сквозной прогон ждёт только потребляемые им результаты.
 5. **Среды готовим параллельно.** Windows10/11 GUI, macOS arm64/Intel, signing/notarization, provider sandboxes, HTTPS/WSS, постоянное хранилище, браузеры и update feed. Отсутствие одного ресурса блокирует его проверку, а не весь проект.
 6. **Незакоммиченный прогресс переносим через проверенные снимки.** Compound/OMP/sidebar рабочие копии сохраняются. Анализ и сравнение можно делать сразу; финальная интеграция требует конкретного коммита или хеша принятого изменения.
 
@@ -84,7 +84,7 @@
 - **UI:**81 владельцев поверхностей,237 независимых leaf-пакетов. [surface-plan.json](parallel-work/surface-plan.json) содержит разрешённые пути, ветки, необходимые producer outputs, подготовку fixtures и четыре target lanes.948 target activities — это Windows10/11/macOS/Web прогоны существующих задач, а не новые948 задачи.
 - **Сервисы:**42 доменных блока,84 независимые leaf-задачи. [service-plan.json](parallel-work/service-plan.json) содержит16 владельцев общих контрактов,22 реальных output dependencies,9 runtime sequences и10 групп сквозных contract tests.
 - **Интеграция:**37 отдельных задач. Протокол, capability matrix, grants, credential custody, sidecars, persistence, media, provider operations и сборочные артефакты проверяются сквозными сценариями по мере готовности входов.
-- **QA/release/recheck:**47 отдельных задач. Типы/CI/harness/accessibility/performance/security/recovery/install-upgrade/operations/SBOM/runbooks/source closure/final candidate/signoff готовятся одновременно с кодом. Точные IDs и владельцы каждого пакета доступны в [platform-plan.json](parallel-work/platform-plan.json).
+- **QA/release/recheck:**43 отдельные задачи:31 QA +4 release +8 recheck. Вместе с37 интеграционными задачами это80 задач. Типы/CI/harness/accessibility/performance/security/recovery/install-upgrade/operations/SBOM/runbooks/source closure/final candidate/signoff готовятся одновременно с кодом. Точные IDs и владельцы каждого пакета доступны в [platform-plan.json](parallel-work/platform-plan.json).
 
 Общие файлы `protocol`, authority, credentials, config, SQLite, OMP transport, build manifests/lock, UI shell/routes и locales имеют одного владельца продвижения изменений. Другие исполнители делают ограниченные patches и тесты в собственных ветках. Совпадение пути требует согласовать перенос, а не ждать окончания всего чужого модуля.
 
@@ -119,6 +119,6 @@
 
 **DoD:**Машинная проверка подтверждает445 unique assignments,180 rollups,625 исходных описаний. Состояния локального объединения, удалённого merge, runtime checks и финальной платформенной приёмки разделены в [PR receipt](parallel-work/pr-integration-receipt.json).
 
-**Полная функциональная проверка:**Проследить каждый leaf ID от исходного Requirements до владельца, source reference, output dependencies, target proof и parent closure. Проверить все17 исходных PR по exact head/main ancestry и фактическому GitHub state.
+**Полная функциональная проверка:**Проследить каждый leaf ID от исходного Requirements до владельца, source reference, output dependencies, target proof и parent closure. Проверить все19 PR (17 исходных и2 новых) по exact head/main ancestry и фактическому GitHub state.
 
 **Метод теста:**`bun scripts/final-readiness-parallel-plan.ts`; `bun scripts/final-readiness-audit.ts --validate`; повторный GitHub readback после merge; отдельный postmerge source/runtime check на закреплённом итоговом SHA. Исторические результаты не переименовываются в текущие.

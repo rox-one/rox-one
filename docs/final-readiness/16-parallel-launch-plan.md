@@ -22,10 +22,10 @@ Full machine-readable dispatch: [445 leaves, exact owners, code references, requ
 
 ## [PW-LAUNCH] Start now
 
-1. Root integrates the17 captured open PR heads without dropping either side's behavior; records changed contracts, focused tests and remote merged states. Integration has a single promotion owner. Draft status alone is not a product defect; qualify substantive changes before publishing.
+1. Root integrates the19 requested PR heads (17 initial plus two late arrivals) without dropping either side's behavior; records changed contracts, focused tests and remote merged states. Integration has a single promotion owner. Draft status alone is not a product defect; qualify substantive changes before publishing.
 2. Launch Windows, macOS and hosted Web source/build/environment work simultaneously. They consume the same versioned shared contracts and can build separate preliminary artifacts immediately. No target waits for another target to finish.
 3. Launch the84 service leaves and237 UI leaves in isolated source branches, bounded by actual executor capacity. Probe existing implementations first; finish the remaining requirements instead of rewriting features already delivered by PRs.
-4. Launch37 integration leaves and47 QA/release/recheck leaves: scenarios, fixtures, CI, typecheck repairs, accessibility, security and recovery work start now. Actual composed acceptance consumes concrete outputs as they become available.
+4. Launch37 integration leaves and43 QA/release/recheck leaves: scenarios, fixtures, CI, typecheck repairs, accessibility, security and recovery work start now. Actual composed acceptance consumes concrete outputs as they become available.
 5. Provision GUI machines, signing, provider sandboxes, staging TLS/storage and target browsers concurrently; a missing environment delays its specific runtime proof only.
 6. Review dirty Compound/OMP/sidebar work read-only; capture exact deltas and adopt reviewed changes into isolated branches. Existing user worktrees and active data remain preserved.
 
@@ -38,14 +38,14 @@ Full machine-readable dispatch: [445 leaves, exact owners, code references, requ
 | P-WIN-BUILD: Windows reproducible bundling and fresh helper staging | windows-build | WIN-001.1, WIN-001.2 | win.main-preload-bundles; win.generated-helper-manifest; win.unsigned-installer |
 | P-WIN-NATIVE: Windows native dependency and clean runtime closure | windows-native | WIN-002.1, WIN-002.2 | win.native-dependency-manifest; win.native-load-receipt |
 | P-WIN-INSTALL: Windows identity, launcher and retention policy | windows-installer | WIN-003.1, WIN-003.2 | win.installer-and-data-policy; win.migration-and-retention-receipt |
-| P-WIN-UPDATE: Windows signing, owned feed and interruption recovery | windows-update | WIN-004.1, WIN-004.2 | win.signed-artifacts; win.update-transition-receipt; win.publishable-feed-set |
+| P-WIN-UPDATE: Windows signing, owned feed and interruption recovery | windows-update | WIN-004.1, WIN-004.2 | win.signed-artifacts; win.update-transition-receipt; win.publishable-feed-set; signed-N-and-Nplus1-update-set |
 | P-WIN-MEDIA: Windows executable discovery, shell and documents | windows-media | WIN-005.1, WIN-005.2 | win.media-document-runtime-contract; win.real-asr-document-receipt |
 | P-WIN-SIDECAR: Windows native capability negotiation and optional transport | windows-sidecar | WIN-006.1, WIN-006.2 | windows-native-support-decision; win.native-capability-contract; win.sidecar-release-or-supported-fallback |
 | P-WIN-UX: Installed Windows callbacks and desktop UX | windows-ux | WIN-007.1, WIN-007.2 | win.callback-and-desktop-ux-receipt |
 | P-MAC-NAMES: macOS bundle/DMG/icon name repair | mac-artifacts | MAC-001.1, MAC-001.2 | mac.bundle-name-contract; mac.named-unsigned-artifacts |
 | P-MAC-NATIVE: macOS architecture-specific native dependency staging | mac-native | MAC-002.1, MAC-002.2 | mac.native-dependency-manifests; mac.native-load-receipts |
 | P-MAC-SIGN: macOS signing, notarization and minimum-OS entitlements | mac-signing | MAC-003.1, MAC-003.2 | mac.signed-notarized-artifacts; mac.minimum-os-entitlement-receipt |
-| P-MAC-UPDATE: macOS complete update set and flush/relaunch | mac-update | MAC-004.1, MAC-004.2 | mac.complete-update-set; mac.update-transition-receipts |
+| P-MAC-UPDATE: macOS complete update set and flush/relaunch | mac-update | MAC-004.1, MAC-004.2 | mac.complete-update-set; mac.update-transition-receipts; signed-N-and-Nplus1-update-set |
 | P-MAC-PERMISSIONS: macOS permission recovery and Finder runtime bootstrap | mac-runtime-permissions | MAC-005.1, MAC-005.2 | mac.permission-and-clean-bootstrap-receipts |
 | P-MAC-LIFECYCLE: Optional macOS native sidecar and application lifecycle | mac-lifecycle | MAC-006.1, MAC-006.2 | mac.sidecar-release-or-supported-exclusion; mac.dock-window-sleep-quit-receipts |
 | P-WEB-BUILD: Hosted container/standalone build and runtime pins | web-build | WEB-001.1, WEB-001.2 | web.deployable-image-and-runtime-manifest; web.standalone-delivery-manifest |
