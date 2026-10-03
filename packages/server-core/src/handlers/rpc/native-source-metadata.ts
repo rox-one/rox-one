@@ -51,6 +51,7 @@ export function readNativeSourceMetadata(workspaceId: string, rootPath: string):
 }
 
 function project(config: FolderSourceConfig, workspaceId: string): LoadedSource {
+  const transport = config.type === 'mcp' ? config.mcp?.transport : undefined
   return {
     workspaceId, workspaceRootPath: '', folderPath: '', guide: null,
     config: {
@@ -61,6 +62,8 @@ function project(config: FolderSourceConfig, workspaceId: string): LoadedSource 
       isAuthenticated: typeof config.isAuthenticated === 'boolean' ? config.isAuthenticated : undefined,
       connectionStatus: ['connected', 'needs_auth', 'failed', 'untested', 'local_disabled'].includes(config.connectionStatus ?? '') ? config.connectionStatus : undefined,
       lastTestedAt: typeof config.lastTestedAt === 'number' && Number.isFinite(config.lastTestedAt) ? config.lastTestedAt : undefined,
+      // Readiness needs the local/remote discriminator, never connection details.
+      mcp: transport === 'stdio' || transport === 'http' || transport === 'sse' ? { transport } : undefined,
     },
   }
 }
