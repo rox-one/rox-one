@@ -1,0 +1,129 @@
+/** Isolated React test entrypoint with the real ChatDisplay, split, dock and ingress. */
+import React, { useEffect, useState, useSyncExternalStore } from 'react'
+import { createRoot } from 'react-dom/client'
+import { Provider, createStore } from 'jotai'
+import { initReactI18next } from 'react-i18next'
+import { setupI18n } from '../../../packages/shared/src/i18n/setupI18n'
+import { ChatDisplay } from '../../../apps/electron/src/renderer/components/app-shell/ChatDisplay'
+import { ChatRuntimeSplit, RuntimeMapDock } from '../../../apps/electron/src/renderer/components/runtime-map'
+import { ingressRuntimeTraceEvent, type RuntimeTraceAPI } from '../../../apps/electron/src/renderer/event-processor/runtime-trace-ingress'
+import { ThemeProvider } from '../../../apps/electron/src/renderer/context/ThemeContext'
+import { FocusProvider } from '../../../apps/electron/src/renderer/context/FocusContext'
+import { EscapeInterruptProvider } from '../../../apps/electron/src/renderer/context/EscapeInterruptContext'
+import { ModalProvider } from '../../../apps/electron/src/renderer/context/ModalContext'
+import { TooltipProvider } from '../../../packages/ui/src/components/tooltip'
+import { AppShellProvider, type AppShellContextType } from '../../../apps/electron/src/renderer/context/AppShellContext'
+import { NavigationContext } from '../../../apps/electron/src/renderer/contexts/NavigationContext'
+import { DEFAULT_NAVIGATION_STATE, type Session, type Message, type FileAttachment } from '../../../apps/electron/src/shared/types'
+import type { RuntimeEvent } from '../../../packages/core/src/runtime-trace/types'
+import { createBrowserPerformanceHarness } from './browser-performance'
+import '../../../apps/electron/src/renderer/index.css'
+import './harness.css'
+
+setupI18n([initReactI18next])
+const scope = { workspaceId: 'fixture-workspace', sessionId: 'fixture-session' }
+const store = createStore()
+const listeners = new Set<() => void>()
+let received: RuntimeEvent[] = []
+const diagnostics = { chatMounts: 0, activeChatMounts: 0, chatSends: 0, permissionResponses: 0, sourceConnections: 1, receivedEvents: 0, selectedMessage: '' }
+const call = async <T,>(path: string, body?: unknown): Promise<T> => {
+  const response = await fetch(`http://127.0.0.1:4177${path}`, { method: body === undefined ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) })
+  if (!response.ok) throw new Error((await response.json()).error)
+  return await response.json() as T
+}
+const api: RuntimeTraceAPI = {
+  getRuntimeTraceSnapshot: query => call('/snapshot', query),
+  readRuntimeTraceEvents: query => call('/read-events', query),
+  readRuntimeTracePayload: query => call('/read-payload', query),
+}
+const preload = {
+  ...api, getSendMessageKey: async () => 'enter', readPreferences: async () => ({ content: '{}' }),
+  identityGetState: async () => ({ annotationActorId: 'fixture-user', profile: { displayName: 'Test user' } }),
+  getColorTheme: async () => 'pierre', getWorkspaceColorTheme: async () => null,
+  getSystemTheme: async () => false, getPlatform: async () => 'linux',
+  getAvailableModels: async () => [], getLlmConnections: async () => [],
+  listMemoryProposals: async () => [], onMemoryProposalCreated: () => () => {}, onMemoryProposalUpdated: () => () => {},
+  onMemoryChanged: () => () => {},
+  getSessionProvenance: async () => null,
+  onSystemThemeChange: () => () => {}, onThemePreferencesChange: () => () => {}, onWorkspaceThemeChange: () => () => {},
+  broadcastThemePreferences: async () => {},
+}
+window.electronAPI = preload as unknown as typeof window.electronAPI
+const source = new EventSource('http://127.0.0.1:4177/events')
+source.onmessage = message => {
+  const event = JSON.parse(message.data) as RuntimeEvent
+  ingressRuntimeTraceEvent(store, event, scope.workspaceId, api)
+  if (!received.some(item => item.eventId === event.eventId)) received = [...received, event]
+  diagnostics.receivedEvents = received.length
+  for (const listener of listeners) listener()
+}
+window.addEventListener('beforeunload', () => source.close(), { once: true })
+
+function eventMessage(event: RuntimeEvent): Message | undefined {
+  if (event.kind === 'run.accepted') return { id: event.messageId ?? event.eventId, role: 'user', content: event.payload.prompt.text ?? '', timestamp: event.receivedAt }
+  if (event.kind === 'run.started' || event.kind === 'run.completed') return undefined
+  const content = event.kind === 'context.captured' ? 'Контекст принят. Исходный и фактический запрос сохранены.'
+    : event.kind === 'plan.published' ? event.payload.plan.tasks.map(task => task.title).join(' → ')
+    : event.kind === 'agent.assigned' ? `${event.payload.assignment.name}: ${event.payload.assignment.task.text}`
+    : event.kind === 'tool.completed' ? event.payload.result?.text ?? event.payload.error ?? ''
+    : event.kind === 'terminal.completed' ? `stdout: ${event.payload.stdout?.text}; stderr: ${event.payload.stderr?.text}`
+    : event.kind === 'result.published' ? event.payload.content.text ?? ''
+    : event.kind === 'acceptance.completed' ? `${event.payload.acceptance.criterion}: ${event.payload.acceptance.status}`
+    : event.kind === 'approval.requested' ? event.payload.description : event.kind
+  return { id: event.messageId ?? event.eventId, role: 'assistant', content, timestamp: event.receivedAt, isIntermediate: event.kind !== 'result.published', turnId: 'fixture-turn' }
+}
+
+function ActualChat({ events, draft, setDraft, attachments, setAttachments }: {
+  events: RuntimeEvent[]; draft: string; setDraft: (value: string) => void; attachments: FileAttachment[]; setAttachments: (value: FileAttachment[]) => void
+}) {
+  useEffect(() => { diagnostics.chatMounts++; diagnostics.activeChatMounts++; return () => { diagnostics.activeChatMounts-- } }, [])
+  const session: Session = { ...scope, id: scope.sessionId, workspaceName: 'Isolated runtime test', lastMessageAt: events.at(-1)?.receivedAt ?? 0,
+    messages: events.map(eventMessage).filter((message): message is Message => !!message),
+    isProcessing: events.length > 0 && !events.some(event => event.kind === 'run.completed'), permissionMode: 'ask' }
+  const pending = [...events].reverse().find(event => event.kind === 'approval.requested' || event.kind === 'approval.resolved')
+  return <ChatDisplay session={session} workspaceId={scope.workspaceId} currentModel="fixture/model" onModelChange={() => {}}
+    onSendMessage={() => { diagnostics.chatSends++ }} onOpenFile={() => {}} onOpenUrl={() => {}}
+    inputValue={draft} onInputChange={setDraft} attachmentsValue={attachments} onAttachmentsChange={setAttachments}
+    sources={[]} skills={[]} permissionMode="ask" connectionUnavailable={false}
+    pendingPermission={pending?.kind === 'approval.requested' ? { requestId: pending.payload.id, toolName: 'fixture_shell', command: 'printf fixture', description: pending.payload.description } : undefined}
+    onRespondToPermission={() => { diagnostics.permissionResponses++ }} />
+}
+
+function Harness() {
+  const events = useSyncExternalStore(listener => { listeners.add(listener); return () => { listeners.delete(listener) } }, () => received)
+  const [open, setOpen] = useState(false), [draft, setDraft] = useState(''), [attachments, setAttachments] = useState<FileAttachment[]>([])
+  const [error, setError] = useState('')
+  const guarded = async (path: string) => { try { await call(path, {}); setError('') } catch (failure) { setError(String(failure)) } }
+  const shell: AppShellContextType = {
+    workspaces: [], activeWorkspaceId: scope.workspaceId, activeWorkspaceSlug: 'fixture', llmConnections: [], refreshLlmConnections: async () => {},
+    pendingPermissions: new Map(), pendingCredentials: new Map(), sessionOptions: new Map(),
+    getDraft: () => draft, getDraftAttachmentRefs: () => [], hydrateDraftAttachments: async () => attachments,
+    onCreateSession: async () => { throw new Error('Creating sessions is disabled in this isolated fixture') }, onSendMessage: () => { diagnostics.chatSends++ },
+    onRenameSession: () => {}, onFlagSession: () => {}, onUnflagSession: () => {}, onArchiveSession: () => {}, onUnarchiveSession: () => {},
+    onMarkSessionRead: () => {}, onMarkSessionUnread: () => {}, onSetActiveViewingSession: () => {}, onSessionStatusChange: () => {}, onDeleteSession: async () => false,
+    onOpenFile: () => {}, onOpenUrl: () => {}, onSelectWorkspace: () => {}, onOpenSettings: () => {}, onOpenKeyboardShortcuts: () => {}, onOpenStoredUserPreferences: () => {}, onReset: () => {},
+    onSessionOptionsChange: () => {}, onInputChange: (_, value) => setDraft(value), onAttachmentsChange: (_, value) => setAttachments(value), isFocusedPanel: true,
+  }
+  const navigation = { navigate: () => {}, isReady: true, navigationState: DEFAULT_NAVIGATION_STATE, navigationRevision: 0,
+    canGoBack: false, canGoForward: false, goBack: () => {}, goForward: () => {}, updateRightSidebar: () => {}, toggleRightSidebar: () => {}, navigateToSource: () => {}, navigateToSession: () => {} }
+  const chat = <ActualChat events={events} draft={draft} setDraft={setDraft} attachments={attachments} setAttachments={setAttachments} />
+  return <AppShellProvider value={shell}><NavigationContext.Provider value={navigation}><FocusProvider><EscapeInterruptProvider><ModalProvider><TooltipProvider>
+    <div className="runtime-test-shell">
+      <div className="runtime-test-banner" role="status">Изолированный тест · детерминированный исполнитель · без запросов к моделям</div>
+      <nav className="runtime-test-controls">
+        <button data-testid="start-run" onClick={() => guarded('/start')}>Отправить тестовый запрос</button>
+        <button data-testid="step-run" onClick={() => guarded('/step')}>Следующее событие</button>
+        <button data-testid="toggle-map" onClick={() => setOpen(value => !value)}>Карта</button>
+        <button data-testid="attach-fixture" onClick={() => setAttachments([{ type: 'text', path: '/isolated/fixture.txt', name: 'fixture.txt', mimeType: 'text/plain', size: 7, text: 'fixture' }])}>Добавить тестовое вложение</button>
+        <span data-testid="received-count">{events.length}</span>
+        {error && <span role="alert">{error}</span>}
+      </nav>
+      <ChatRuntimeSplit chat={chat} open={open} scopeKey="fixture-workspace:fixture-session:test-panel"
+        map={<RuntimeMapDock {...scope} panelId="test-panel" onClose={() => setOpen(false)} onOpenMessage={messageId => { diagnostics.selectedMessage = messageId }} />} />
+      <output data-testid="draft-value" className="runtime-test-diagnostics">{draft}</output>
+      <output data-testid="attachments-count" className="runtime-test-diagnostics">{attachments.length}</output>
+    </div>
+  </TooltipProvider></ModalProvider></EscapeInterruptProvider></FocusProvider></NavigationContext.Provider></AppShellProvider>
+}
+Object.assign(window, { runtimeDiagnostics: diagnostics, runtimeTestAPI: api, runtimeStore: store, runtimePerformance: createBrowserPerformanceHarness(store, scope) })
+createRoot(document.getElementById('root')!).render(<Provider store={store}><ThemeProvider defaultMode={new URL(location.href).searchParams.get('theme') === 'dark' ? 'dark' : 'light'}><Harness /></ThemeProvider></Provider>)

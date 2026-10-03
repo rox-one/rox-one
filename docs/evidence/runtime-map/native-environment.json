@@ -1,0 +1,15 @@
+{
+  "class": "native-environment",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "architecture": "x86_64",
+  "checks": {
+    "unix_socket": {
+      "status": "blocked",
+      "errno": 1,
+      "message": "[Errno 1] Operation not permitted"
+    },
+    "ipv4_loopback": {
+      "status": "available"
+    }
+  }
+}

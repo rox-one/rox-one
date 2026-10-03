@@ -130,7 +130,8 @@ async function bundle() {
     const TourPanelScope=Pass, navigationEntity=()=>({}), UnavailableAutomationTour=()=>null;
     const SendResourceToWorkspaceDialog=()=>null, MultiSelectPanel=()=>null, CollectionBulkBar=()=>null;
     const leaf=name=>props=>React.createElement('div',{'data-leaf':name,'data-entity':props.sessionId||props.sourceSlug||props.skillSlug||props.noteId||props.pageSlug||props.runId||props.terminalId||props.extensionId||props.screen||''},name);
-    const ChatPage=leaf('session'),SourceInfoPage=leaf('source'),SkillInfoPage=leaf('skill'),MemoryScreen=leaf('memory'),
+    const ChatPage=leaf('session'),SourceInfoPage=leaf('source'),SkillInfoPage=leaf('skill'),
+      SkillsCatalogPage=leaf('skills-catalog'),IntegrationsCatalogPage=leaf('integrations-catalog'),MemoryScreen=leaf('memory'),
       ProjectsHomeInMain=leaf('projects'),HomeFrontPage=leaf('home'),SettingsOverviewPage=leaf('settings'),
       PageView=leaf('page'),SessionHeatmapHost=leaf('heatmap'),SearchPage=leaf('search'),NotesPage=leaf('note'),
       ConnectionsPage=leaf('connections'),ExtraScreenHost=leaf('screen'),TasksPage=leaf('tasks'),MeetingsPage=leaf('meetings'),

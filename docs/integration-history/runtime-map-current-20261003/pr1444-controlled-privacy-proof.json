@@ -1,0 +1,9 @@
+{
+  "source": "28d1d7433a00743194d3a138dd2d0573c4872595",
+  "controlledPrivateGetterAccesses": 1,
+  "projected": {
+    "password": "[REDACTED]"
+  },
+  "outputOwnProtoField": false,
+  "outputInheritedMarker": "fixture"
+}

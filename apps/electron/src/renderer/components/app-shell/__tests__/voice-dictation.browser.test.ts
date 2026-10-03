@@ -105,7 +105,7 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
   const finish = () => page.getByRole('button', { name: 'Stop dictation', exact: true }).click()
 
   it('consumes STOP once and appends the returned paragraphs to the latest edited draft', async () => {
-    await load('deferredStop=true'); await start(); await finish()
+    await load('deferredStop=true'); await start(); await finish(); await waitForCall('stopVoiceCapture')
     await page.getByRole('textbox', { name: 'Draft' }).fill('Edited while transcribing')
     await page.evaluate(() => (window as any).__voiceFixture.resolveStop())
     await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Edited while transcribing Synthetic first paragraph.\n\nSynthetic second paragraph.')
@@ -295,6 +295,69 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
   }, timeout)
   const hotkey = (command: string) => page.evaluate((value) => (window as any).__voiceFixture.hotkey(value), command)
   const waitForCall = (method: string) => page.waitForFunction((name) => (window as any).__voiceFixture.calls.some((call: { method: string }) => call.method === name), method)
+
+  const overlayCommand = (command: 'toggle' | 'cancel', recordingId: string) => page.evaluate(
+    payload => (window as any).__voiceFixture.overlay(payload.command, payload.recordingId), { command, recordingId })
+
+  it('tagged overlay commands never start an idle microphone or stop a foreign capture', async () => {
+    await load()
+    await overlayCommand('toggle', 'foreign-recording'); await overlayCommand('cancel', 'foreign-recording')
+    expect((await calls()).filter(call => ['getUserMedia', 'startVoiceCapture'].includes(call.method))).toHaveLength(0)
+    await start()
+    await expectDOM(page.getByRole('button', { name: 'Stop dictation', exact: true })).toBeVisible()
+    await overlayCommand('toggle', 'foreign-recording'); await overlayCommand('cancel', 'foreign-recording')
+    expect((await calls()).filter(call => ['stopVoiceCapture', 'cancelVoiceCapture'].includes(call.method))).toHaveLength(0)
+    await overlayCommand('toggle', 'synthetic-recording')
+    await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
+    expect((await calls()).filter(call => call.method === 'stopVoiceCapture')).toHaveLength(1)
+    await overlayCommand('toggle', 'synthetic-recording')
+    expect((await calls()).filter(call => call.method === 'startVoiceCapture')).toHaveLength(1)
+  }, timeout)
+
+  it('retired overlay packets cannot stop or cancel a replacement capture', async () => {
+    await load(); await start(); await finish()
+    await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
+    await start()
+    await expectDOM(page.getByRole('button', { name: 'Stop dictation', exact: true })).toBeVisible()
+    await overlayCommand('toggle', 'synthetic-recording'); await overlayCommand('cancel', 'synthetic-recording')
+    expect((await calls()).filter(call => call.method === 'stopVoiceCapture')).toHaveLength(1)
+    expect((await calls()).filter(call => call.method === 'cancelVoiceCapture')).toHaveLength(0)
+    await overlayCommand('cancel', 'synthetic-recording-2'); await waitForCall('cancelVoiceCapture')
+    expect((await calls()).filter(call => call.method === 'startVoiceCapture')).toHaveLength(2)
+    expect((await calls()).filter(call => call.method === 'cancelVoiceCapture')).toHaveLength(1)
+  }, timeout)
+
+  for (const boundary of ['Start', 'Grant'] as const) for (const command of ['toggle', 'cancel'] as const) {
+    it(`owned overlay ${command} at pending ${boundary} ignores stale packets and completes only that capture`, async () => {
+      await load(`deferred${boundary}=true`); await start()
+      await waitForCall(boundary === 'Start' ? 'startVoiceCapture' : 'grantVoicePermission')
+      await overlayCommand(command, 'synthetic-recording')
+      await overlayCommand('cancel', 'foreign-recording')
+      if (command === 'toggle' || boundary === 'Start') {
+        expect((await calls()).filter(call => ['recorderStart', 'stopVoiceCapture', 'cancelVoiceCapture'].includes(call.method))).toHaveLength(0)
+      }
+      await page.evaluate(name => (window as any).__voiceFixture[`resolve${name}`](), boundary)
+      await waitForCall(command === 'cancel' ? 'cancelVoiceCapture' : 'stopVoiceCapture')
+      await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
+      const completed = await calls()
+      expect(completed.filter(call => call.method === 'getUserMedia')).toHaveLength(1)
+      expect(completed.filter(call => call.method === 'startVoiceCapture')).toHaveLength(1)
+      expect(completed.filter(call => call.method === 'recorderStart')).toHaveLength(command === 'cancel' ? 0 : 1)
+      expect(completed.filter(call => call.method === 'stopVoiceCapture')).toHaveLength(command === 'cancel' ? 0 : 1)
+      expect(completed.filter(call => call.method === 'cancelVoiceCapture')).toHaveLength(command === 'cancel' ? 1 : 0)
+      expect(completed.filter(call => call.method === 'grantVoicePermission')).toHaveLength(command === 'cancel' && boundary === 'Start' ? 0 : 1)
+      if (command === 'cancel') await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    }, timeout)
+  }
+
+  it('a queued owned cancel wins over stop before START returns and never starts a recorder', async () => {
+    await load('deferredStart=true'); await start(); await waitForCall('startVoiceCapture')
+    await overlayCommand('cancel', 'synthetic-recording'); await overlayCommand('toggle', 'synthetic-recording')
+    await page.evaluate(() => (window as any).__voiceFixture.resolveStart())
+    await waitForCall('cancelVoiceCapture')
+    expect((await calls()).filter(call => ['grantVoicePermission', 'recorderStart', 'stopVoiceCapture'].includes(call.method))).toHaveLength(0)
+    expect((await calls()).filter(call => call.method === 'cancelVoiceCapture')).toHaveLength(1)
+  }, timeout)
 
   it('pairs push-to-talk once and consumes the current single-STOP transcript', async () => {
     await load(); await hotkey('ptt-up'); await hotkey('cancel')

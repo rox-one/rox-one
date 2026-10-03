@@ -1,0 +1,74 @@
+{
+  "source": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-history-red-42034d8-20261003T190734Z",
+  "target": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/outputs/UI-001-expanded-history-mounted-red-42034d8-20261003T190734Z",
+  "archivedAt": "2026-10-03T19:12:03.647668+00:00",
+  "allCopiedFilesMatch": true,
+  "copiedFileHashes": {
+    "actual-source-callbacks.mjs": {
+      "sourceSha256": "a5afbec817f8adf9af23920eaca40483398fd8abffca233193e4257135c8a119",
+      "copiedSha256": "a5afbec817f8adf9af23920eaca40483398fd8abffca233193e4257135c8a119"
+    },
+    "result.json": {
+      "sourceSha256": "e7e331979d2d86470af879c954d965da054b28146b19b32f9226b96a4d13451b",
+      "copiedSha256": "e7e331979d2d86470af879c954d965da054b28146b19b32f9226b96a4d13451b"
+    },
+    "discovery-fixture.js.manifest.json": {
+      "sourceSha256": "ac319050a55a9d315f1ca96d1c21ceb12b26dc929c2f8049810b3e6201d3e97e",
+      "copiedSha256": "ac319050a55a9d315f1ca96d1c21ceb12b26dc929c2f8049810b3e6201d3e97e"
+    },
+    "chromium.log": {
+      "sourceSha256": "2f5fee2e80caf7ba6f705cc90299ac2bd75d59b764a12197046dec8848087598",
+      "copiedSha256": "2f5fee2e80caf7ba6f705cc90299ac2bd75d59b764a12197046dec8848087598"
+    },
+    "input-manifest-before.json": {
+      "sourceSha256": "9bd86c9f15091056504bbdd93d500917079ca5ae5d328eda6c557ca313a7d10d",
+      "copiedSha256": "9bd86c9f15091056504bbdd93d500917079ca5ae5d328eda6c557ca313a7d10d"
+    },
+    "immutable-fixture.js": {
+      "sourceSha256": "fa892cd0dd8fcf987936a07ed076bcf378a8f0fa6d0212843714b60cb97b1989",
+      "copiedSha256": "fa892cd0dd8fcf987936a07ed076bcf378a8f0fa6d0212843714b60cb97b1989"
+    },
+    "rox-readiness-ui-001.bundle-fixture.ts": {
+      "sourceSha256": "62947d04137784040379d6edf75de1b99458711c315948fe5f3be52eb9ad0a5f",
+      "copiedSha256": "62947d04137784040379d6edf75de1b99458711c315948fe5f3be52eb9ad0a5f"
+    },
+    "discovery-fixture.js": {
+      "sourceSha256": "fa892cd0dd8fcf987936a07ed076bcf378a8f0fa6d0212843714b60cb97b1989",
+      "copiedSha256": "fa892cd0dd8fcf987936a07ed076bcf378a8f0fa6d0212843714b60cb97b1989"
+    },
+    "discovery-build.log": {
+      "sourceSha256": "e18cd9bbf2f58052532a899bce6514f7ccce4296c791dc243e7b136a8435cd2a",
+      "copiedSha256": "e18cd9bbf2f58052532a899bce6514f7ccce4296c791dc243e7b136a8435cd2a"
+    },
+    "input-manifest-after.json": {
+      "sourceSha256": "0db8f60782cc1d9b5936ebe300417a660bdd581a5a3306cf4ec83cb55ca061da",
+      "copiedSha256": "0db8f60782cc1d9b5936ebe300417a660bdd581a5a3306cf4ec83cb55ca061da"
+    },
+    "immutable-fixture.js.manifest.json": {
+      "sourceSha256": "e4192bd0dc907073c2be2078e674d927bb5384b74972ba31420eb0a531355b35",
+      "copiedSha256": "e4192bd0dc907073c2be2078e674d927bb5384b74972ba31420eb0a531355b35"
+    },
+    "mounted-navigation.log": {
+      "sourceSha256": "da92114bb3b5d8b780fddb6bc36256726db48d0f8bd0d7e1eb33e6d1ece9848f",
+      "copiedSha256": "da92114bb3b5d8b780fddb6bc36256726db48d0f8bd0d7e1eb33e6d1ece9848f"
+    },
+    "callback-build.log": {
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "copiedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rox-readiness-ui-001.build-node-tests.ts": {
+      "sourceSha256": "6f5f7f5928973a6cd0b5bf2653f0b32969fa43fc9c8e1460f8c2aef121e4b9f0",
+      "copiedSha256": "6f5f7f5928973a6cd0b5bf2653f0b32969fa43fc9c8e1460f8c2aef121e4b9f0"
+    },
+    "immutable-build.log": {
+      "sourceSha256": "e52f1760f1cbe1e534b74353887d64d50a307142b3333094d86bb4d1139b01a5",
+      "copiedSha256": "e52f1760f1cbe1e534b74353887d64d50a307142b3333094d86bb4d1139b01a5"
+    }
+  },
+  "excluded": [
+    "chrome-profile/"
+  ],
+  "runtimeBinariesCopied": false,
+  "runnerSha256": "9fcfe7ca3734088fe25efce40ef3a2d2963790c3452405fdc7a8e752984d318a",
+  "fullDoDClosed": false
+}

@@ -79,6 +79,8 @@ const FeedPage = lazyRoutePage(() => import('@/pages/FeedPage'))
 const KnowledgeEntityPage = lazyRoutePage(() => import('@/pages/KnowledgeEntityPage'))
 const SkillInfoPage = lazyRoutePage(() => import('@/pages/SkillInfoPage'))
 const SourceInfoPage = lazyRoutePage(() => import('@/pages/SourceInfoPage'))
+const SkillsCatalogPage = lazyRoutePage(() => import('@/pages/SkillsCatalogPage'))
+const IntegrationsCatalogPage = lazyRoutePage(() => import('@/pages/IntegrationsCatalogPage'))
 const ProjectInfoPage = lazyRoutePage(() => import('@/pages/ProjectInfoPage'))
 const BrowserPanelPage = lazyRoutePage(() => import('@/pages/BrowserPanelPage'))
 const ExtensionSurfacePage = lazyRoutePage(() => import('@/pages/ExtensionSurfacePage'))
@@ -209,6 +211,7 @@ export function MainContentPanel({
     loadedProjects,
     labels,
     activeSessionWorkingDirectory,
+    localMcpEnabled,
   } = useAppShellContext()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const selectedSession = isSessionsNavigation(requestedNavState) && requestedNavState.details
@@ -408,10 +411,12 @@ export function MainContentPanel({
     }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex items-center justify-center h-full text-muted-foreground">
-          {/* Detail pane placeholder; the list owns the real «none configured» state. */}
-          <p className="text-sm">{t("sourcesList.selectSource")}</p>
-        </div>
+        <IntegrationsCatalogPage
+          workspaceId={activeWorkspaceId || ''}
+          workspaceRootPath={workspaces.find(workspace => workspace.id === activeWorkspaceId)?.rootPath}
+          sourceFilter={navState.filter}
+          localMcpEnabled={localMcpEnabled}
+        />
       </Panel>
     )
   }
@@ -442,9 +447,11 @@ export function MainContentPanel({
     }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex items-center justify-center h-full text-muted-foreground">
-          <p className="text-sm">{t("skillsList.selectSkill")}</p>
-        </div>
+        <SkillsCatalogPage
+          workspaceId={activeWorkspaceId || ''}
+          workspaceRootPath={workspaces.find(workspace => workspace.id === activeWorkspaceId)?.rootPath}
+          workingDirectory={activeSessionWorkingDirectory}
+        />
       </Panel>
     )
   }

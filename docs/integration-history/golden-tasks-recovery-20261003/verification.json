@@ -1,0 +1,91 @@
+{
+  "owner": "recent_features",
+  "source_branch": "codex/golden-gate-workspace",
+  "source_sha": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
+  "integrated_main": "89c12aec9524d6a7f5f98a07aa9d537ef134825c",
+  "qualified_source_head": "bdc316725beb7cf1160e0f0ffc2b9189eed43206",
+  "source_files": [
+    {
+      "path": "apps/electron/src/renderer/pages/TasksPage.tsx",
+      "sha256": "352d4f621bce1480f494c0e379b985ebb7852d4e62795c4319ef93b6e47c318c"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/personal-tasks.ts",
+      "sha256": "c57685dad1afd4874cda9c4171a753e57c542295778ffe4071ad48fb140c1ad0"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx",
+      "sha256": "94526a6469f1fdbf436fa6842c5b2848edb77f992a6efa8767117e51be5b206d"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/mode-screen/ResponsiveModeScreen.tsx",
+      "sha256": "71ffbcefc01e9e79ce273e0c8e0016f87bfd6045cd043dac0500457f0f5d4a53"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/__tests__/personal-tasks-import.fixture.ts",
+      "sha256": "bcf522074ab09f8e61d305e773ed126ad61d77fc501fdd5b48efc7a2fafb2dbb"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/tasks-import-responsive.fixture.tsx",
+      "sha256": "9b409931900f52a4ad915e350db6f15782e06fa1b4342cc953d4b329b04a0517"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/tasks-import-responsive.browser.node.ts",
+      "sha256": "6f45623e6c6a4f91b2694990e80846779b60c5805941debda1ebb0ad6608d757"
+    }
+  ],
+  "proofs": {
+    "actual_modern_tasks_dom": {
+      "tests": 15,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "baseline_actual_source": {
+      "tests": 2,
+      "failed": 2,
+      "outcomes": [
+        "Existing task overwrote Edited during file read",
+        "620pxpanel had780pxscrollWidth"
+      ]
+    },
+    "real_native_disk_child": {
+      "tests": 8,
+      "failed": 0,
+      "scope": "actual PersonalTaskPersistStore CAS/readback/restart with scoped controlled transport"
+    },
+    "focused_current_product_and_locales": {
+      "tests": 306,
+      "failed": 0,
+      "assertions": 6968,
+      "files": 93
+    },
+    "full_electron_types": {
+      "runtime": "Node22.23.3",
+      "exit": 0
+    },
+    "actual_component_bundle_and_production_tailwind": {
+      "exit": 0
+    }
+  },
+  "logs_sha256": {
+    "golden-tasks-product-focused-qualified.log": "14f363c46584cfa0281d44b8bb2bf32b0a5d85b20c40d30efbd3e2a52521939c",
+    "golden-tasks-product-browser-qualified.log": "4bb90ad0ff4c6ea9877a11e6db731e8b0dedeb634961d43c90801a759ad7fc60",
+    "golden-tasks-product-browser-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "golden-tasks-product-electron-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "golden-tasks-before-browser-negative.log": "425ca8a49e1eb9b24712b4b3723e3d8873881c433dcc18fdca103ee938a038f2"
+  },
+  "failed_history": [
+    "first native forged ACK used a shared request object; clone submitted diff to bind expected evidence",
+    "new drawer initially did not restore its trigger; scoped close-focus seam added",
+    "fast DOM return needed waiting for Radix deferred cleanup",
+    "hidden/visible sidebar fixture locator was ambiguous; scoped to owned dialog",
+    "initial new Node-test fixture argument order and NodeList iterable compiler errors corrected"
+  ],
+  "original_source_preserved": true,
+  "not_claimed": [
+    "installed native principal or physicalOSfilechooser from controlled renderer DOM",
+    "remote aggregateCI or CodeQL closure",
+    "legacy356-lineTasks wholesale merge"
+  ]
+}

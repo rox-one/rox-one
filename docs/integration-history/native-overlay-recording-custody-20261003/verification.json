@@ -1,0 +1,114 @@
+{
+  "source_commit": "eeddeb5bd0af59b93fd121c10b8a7a52956ff0b7",
+  "implementation_commit": "4ea0e3e00",
+  "qualified_head": "11b1f273406703a2117c7f7bfd3bfebb2a68befe",
+  "qualified_base": "5211746270f5005d551ddc103970714520b25b67",
+  "environment": {
+    "bun": "1.3.14",
+    "node": "22.23.3",
+    "browser": "Chromium headless shell 1243",
+    "native_ports": "controlled OS surfaces; real current overlay owner/router, composer and authenticated native WS"
+  },
+  "files": {
+    "apps/electron/src/main/index.ts": "62f541cc08a4e6f40d097bfc26353cda3ab08ad87256d862747a2e195835e43d",
+    "apps/electron/src/main/voice/__tests__/command-input.test.ts": "8ab57873bd547377ed47a86977f0bd66afe3729df7a12816c7d246a6bc3713d6",
+    "apps/electron/src/main/voice/__tests__/overlay-owner.isolated.ts": "30c08a5b57fb1e0f27d84c704702f3bba28fea1238e6b08276d62b11c1f5fbf1",
+    "apps/electron/src/main/voice/command-input.ts": "e5227026acf3a483c3d928d1bfeba9b1fc26ec1d5593980d8dae3256f929f886",
+    "apps/electron/src/main/voice/overlay-owner.ts": "2b89edc60942b5e296d0b2ae7b831fc8b903ad6ab48d7b048d2822a1a715de55",
+    "apps/electron/src/renderer/components/app-shell/__tests__/fixtures/voice-dictation/main.tsx": "8003516a7d22879050ab24f6204158f2620a4d4effdea94e8dbf8041d7169604",
+    "apps/electron/src/renderer/components/app-shell/__tests__/voice-dictation.browser.test.ts": "e34db674bbb25d059b598ec0c9de8df75df041025fb43bf9da37e1acc916ba03",
+    "apps/electron/src/renderer/components/app-shell/input/VoiceDictationControl.tsx": "ec2693036bd88e07aeab7c90974cd5aeb75c1401c108970b032f71f5f12a2b8c",
+    "apps/electron/src/renderer/features/product-tour/core/native-continuity.browser.test.ts": "b0eef71414478248a745ff5e9276a3d6ae034b15ee7708785f93f9da9abc60a4",
+    "apps/electron/src/renderer/features/product-tour/core/native-continuity.browser.tsx": "92959b534b40ca28b2d82c1436e130123909678f540b8fae5e931171a4545c66",
+    "apps/electron/src/shared/types.ts": "36c52211ef403915c80f0349784cba5b2a3809f45a7fe78f33e90194f38868c6",
+    "docs/plan.md": "c050a61c4854c0906967d184950302d13dc939d86d05ec269ff20b4b99e02e12",
+    "docs/spec.md": "a9c3495c8667e48f3fddacbff9384914ce3bd8f9189f5821da96da9a96727a42",
+    "packages/shared/src/protocol/events.ts": "f095dce95f884a8541b9da32c4cdb277db7e51d43c19de74132dd30df646075d",
+    "packages/shared/src/voice/hotkey-types.ts": "7b0cdce9090600908e833d05a60c0330c5b49c6a73b848522677b6e6a2ec5175"
+  },
+  "checks": {
+    "baseline_actual_two_composer_negative": {
+      "pass": 0,
+      "fail": 1,
+      "expected_failure": "idle peer microphone starts: expected1 received2"
+    },
+    "actual_owner_router_two_composer_continuity": {
+      "pass": 11,
+      "fail": 0,
+      "wrapper_assertions": 11,
+      "isolated_child_cases": 11
+    },
+    "actual_production_composer": {
+      "pass": 32,
+      "fail": 0,
+      "assertions": 148
+    },
+    "native_command_owner_and_shared_voice": {
+      "pass": 101,
+      "fail": 0,
+      "assertions": 339
+    },
+    "current_native_authority_ws_and_protocol": {
+      "pass": 39,
+      "fail": 0,
+      "assertions": 1102
+    },
+    "full_electron_types_node22": {
+      "exit": 0
+    },
+    "current_main_and_three_preload_builds": {
+      "exit": 0,
+      "existing_cjs_import_meta_warnings": 5
+    }
+  },
+  "failure_history": [
+    "31pass/1fail retained: pre-existing deferred STOP fixture resolved before actual STOP promise existed; await actual stopVoiceCapture now; assertions and case/production deadlines unchanged"
+  ],
+  "limits": [
+    "No OS microphone capture, real cloud transcription or clipboard mutation",
+    "No aggregate security scan closure claimed",
+    "All original branches preserved; parent owns remote merge"
+  ],
+  "logs": {
+    "overlay-recording-before-negative.log": {
+      "sha256": "2146d1f6275979cc30d3ca2767108bf0581038738ddd6b747fe31b6793bd9f74",
+      "gzip_sha256": "75c8d8b3580dc3e98e41118903bd9fa70752501ae380d889fe67d7acb34370cb",
+      "bytes": 1742
+    },
+    "overlay-recording-native-continuity-qualified.log": {
+      "sha256": "4c05bbe2e4dc04fcb039237b46158cfe9adf586d049649d79388fe3e7c31e003",
+      "gzip_sha256": "5642ffdb2b0b48c9acd8118ae27f18af3a1d0c5a5730c8580cc273ab71668f82",
+      "bytes": 1674
+    },
+    "overlay-recording-composer-first-failure.log": {
+      "sha256": "3d11c045031f2ecf08e9f1c34cd6f2f5496f27095e08038da3bb215d3a9dcd1b",
+      "gzip_sha256": "405983bdaa53875696fa4105947c9ffdaf94f7334e6cbfde4d9225cd0e6aca32",
+      "bytes": 7631
+    },
+    "overlay-recording-composer-qualified.log": {
+      "sha256": "5cccb8c4eef813d1e58d3539e944e0a8cc86380a7528c87189a0570b58a93494",
+      "gzip_sha256": "433b22ad6adf9ac8072d7e82306976acbc8576fcd16d0337611090cf6c1a500a",
+      "bytes": 4946
+    },
+    "overlay-recording-focused.log": {
+      "sha256": "97c91362d3bb3e32952710097588e0e137b076debf84091be9368e553d8c5a42",
+      "gzip_sha256": "eb4b6302215b320869eec655ef6469ddf9fffa07654a33b83806998df05a9c53",
+      "bytes": 12243
+    },
+    "overlay-recording-current-authority-protocol.log": {
+      "sha256": "e308f69dffcae96fe82c1e2e09d0c484af9ea9dcd82b5b514fd7a4975146c14b",
+      "gzip_sha256": "f7cc590d22b0641336440a7809731525aba8badc9bcf3c29d51a65d85ff998e6",
+      "bytes": 4324
+    },
+    "overlay-recording-current-electron-types.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 0
+    },
+    "overlay-recording-current-main-build.log": {
+      "sha256": "69dd8ed1f0153c874c57a9120e37ada12414699e9eef50ee9939f540d6b76d02",
+      "gzip_sha256": "5fe22b10383d4afe923fd247c2531ed5f6063d52768b77a4d2f676c6b94ae4e8",
+      "bytes": 3143
+    }
+  }
+}

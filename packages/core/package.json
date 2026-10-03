@@ -32,6 +32,8 @@
     "./platform/session-apply": "./src/platform/session-apply/index.ts",
     "./research": "./src/research/index.ts",
     "./rox2": "./src/rox2/index.ts",
+    "./runtime-trace": "./src/runtime-trace/index.ts",
+    "./runtime-trace/*": "./src/runtime-trace/*.ts",
     "./tasks/personal": "./src/tasks/personal/index.ts",
     "./types": "./src/types/index.ts",
     "./utils": "./src/utils/index.ts"

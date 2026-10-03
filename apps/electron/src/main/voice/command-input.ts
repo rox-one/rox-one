@@ -1,4 +1,4 @@
-import type { HotkeyCommand } from '@rox/shared/voice/hotkey-types'
+import type { HotkeyCommand, VoiceHotkeyPayload } from '@rox/shared/voice/hotkey-types'
 import type { VoicePrefs } from '@rox/shared/voice'
 
 export type VoiceKeyInput = {
@@ -94,13 +94,14 @@ export function sendVoiceHotkeyToClient(options: {
   webContentsId: number
   isManagedWindow(id: number): boolean
   resolveClient(id: number): string | undefined
-  push?: ((channel: string, target: { to: 'client'; clientId: string }, payload: { command: HotkeyCommand }) => void) | null
+  push?: ((channel: string, target: { to: 'client'; clientId: string }, payload: VoiceHotkeyPayload) => void) | null
   channel: string
-}, command: HotkeyCommand): boolean {
+}, command: HotkeyCommand, recordingId?: string): boolean {
   if (!['toggle', 'ptt-down', 'ptt-up', 'cancel'].includes(command)) return false
+  if (recordingId !== undefined && (typeof recordingId !== 'string' || !recordingId || !['toggle', 'cancel'].includes(command))) return false
   if (!options.isManagedWindow(options.webContentsId) || !options.push) return false
   const clientId = options.resolveClient(options.webContentsId)
   if (!clientId) return false
-  options.push(options.channel, { to: 'client', clientId }, { command })
+  options.push(options.channel, { to: 'client', clientId }, { command, ...(recordingId === undefined ? {} : { recordingId }) })
   return true
 }
