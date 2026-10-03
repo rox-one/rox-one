@@ -1,3 +1,5 @@
+import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
+import { beginChatCommit } from '@/features/product-tour/adapters/chat'
 import * as React from 'react'
 import { useTranslation } from "react-i18next"
 import { cn } from '@/lib/utils'
@@ -131,6 +133,17 @@ export function ActiveOptionBadges({
   className,
 }: ActiveOptionBadgesProps) {
   const { t } = useTranslation()
+  const tourSignals = useTourSignals({ sessionId })
+  const permissionsTarget = useTourTarget('composer.permissions', { sessionId })
+  const statusTarget = useTourTarget('session.status', { sessionId })
+  const labelsTarget = useTourTarget('session.labels', { sessionId })
+  const projectTarget = useTourTarget('session.project', { sessionId })
+  React.useEffect(() => tourSignals.capability('labels.available', labels.length && onLabelsChange ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' }), [tourSignals, labels.length, onLabelsChange])
+  React.useEffect(() => tourSignals.capability('projects.available', projects.length && onSetProjectId ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' }), [tourSignals, projects.length, onSetProjectId])
+  const commitLabels = (updated: string[]) => { beginChatCommit(tourSignals.capture(), 'session.labels-committed', updated); onLabelsChange?.(updated) }
+  const commitStatus = (stateId: string) => { beginChatCommit(tourSignals.capture(), 'session.status-committed', stateId); onSessionStatusChange?.(stateId) }
+  const commitProject = (id: string | null) => { beginChatCommit(tourSignals.capture(), 'session.project-committed', id); onSetProjectId?.(id) }
+
   // Resolve session label entries to their config objects + parsed values.
   // Entries may be bare IDs ("bug") or valued ("priority::3").
   // Preserves the raw value and original index for editing/removal.
@@ -195,7 +208,7 @@ export function ActiveOptionBadges({
       <div className="flex items-start gap-2 min-w-0 flex-1">
         {/* Permission Mode Badge */}
         {permissionMode && (
-          <div className="shrink-0">
+          <div ref={permissionsTarget} className="shrink-0">
             <PermissionModeDropdown
               permissionMode={permissionMode}
               onPermissionModeChange={onPermissionModeChange}
@@ -206,11 +219,11 @@ export function ActiveOptionBadges({
 
         {/* State Badge — standalone on the left, after Mode */}
         {hasState && resolvedState && (
-          <div className="shrink-0">
+          <div ref={statusTarget} className="shrink-0">
             <StateBadge
               state={resolvedState}
               sessionStatuses={sessionStatuses}
-              onSessionStatusChange={onSessionStatusChange}
+              onSessionStatusChange={commitStatus}
               sessionId={sessionId}
             />
           </div>
@@ -218,12 +231,12 @@ export function ActiveOptionBadges({
 
         {/* Projects assigner (main session chrome) */}
         {showProjectAssigner && (
-          <div className="shrink-0">
+          <div ref={projectTarget} className="shrink-0">
             <ProjectBadge
               projects={projects}
               projectId={projectId}
               projectName={boundProject?.name}
-              onSetProjectId={onSetProjectId}
+              onSetProjectId={commitProject}
               sessionId={sessionId}
             />
           </div>
@@ -231,11 +244,11 @@ export function ActiveOptionBadges({
 
         {/* Labels assigner — always present when labels exist (not only applied chips) */}
         {showLabelsAssigner && (
-          <div className="shrink-0">
+          <div ref={labelsTarget} className="shrink-0">
             <LabelsAssignBadge
               labels={labels}
               sessionLabels={sessionLabels}
-              onLabelsChange={onLabelsChange}
+              onLabelsChange={commitLabels}
               sessionId={sessionId}
             />
           </div>
@@ -272,11 +285,11 @@ export function ActiveOptionBadges({
                     // Rebuild the sessionLabels array with the updated entry
                     const updated = [...sessionLabels]
                     updated[index] = formatLabelEntry(config.id, newValue)
-                    onLabelsChange?.(updated)
+                    commitLabels(updated)
                   }}
                   onRemove={() => {
                     if (onLabelsChange) {
-                      onLabelsChange(sessionLabels.filter((_, i) => i !== index))
+                      commitLabels(sessionLabels.filter((_, i) => i !== index))
                     } else {
                       onRemoveLabel?.(config.id)
                     }

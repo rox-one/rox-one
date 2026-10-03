@@ -20,6 +20,9 @@ import {
   type PersonalTaskKv,
 } from '@rox/core/tasks/personal'
 import type { PersonalTaskConflict } from '@rox/core/tasks/personal'
+import type { VersionedPersonalTask } from '@rox/core/tasks/personal'
+import { samePersonalTask } from '../features/product-tour/adapters/work/tasks-projects'
+import { commitPersonalTaskLink } from '../features/product-tour/adapters/work/tasks-projects/native-commit'
 import {
   bundleFromSnapshot,
   diffPersonalTaskBundles,
@@ -51,6 +54,27 @@ let hydrating: Promise<void> | null = null
 let unsubscribeServer: (() => void) | null = null
 let retryTimer: number | null = null
 let syncConflicts: PersonalTaskConflict[] = []
+const nativeCommitListeners = new Set<(record: VersionedPersonalTask) => void>()
+
+/** Canonical receipts only. Cache mutations and optimistic rows never notify. */
+export function subscribePersonalTaskCommits(listener: (record: VersionedPersonalTask) => void): () => void {
+  nativeCommitListeners.add(listener)
+  return () => { nativeCommitListeners.delete(listener) }
+}
+
+function notifyNativeCommit(record: VersionedPersonalTask): void {
+  for (const listener of nativeCommitListeners) {
+    try { listener(structuredClone(record)) } catch { /* Observers cannot turn a durable commit into a write failure. */ }
+  }
+}
+
+export function personalTasksNativeAvailable(): boolean { return callerScope !== null && api() !== null }
+
+/** Read-only lifetime fence; no identity or grant is exposed to consumers. */
+export function capturePersonalTaskScope(): () => boolean {
+  const generation = scopeGeneration
+  return () => callerScope !== null && generation === scopeGeneration
+}
 export interface PersonalTaskCallerScope {
   authority: 'native' | 'local'
   userId: string
@@ -64,11 +88,6 @@ let identityGeneration = 0
 let snapshotGeneration = 0
 let confirmedImport: { generation: number } | null = null
 
-/** Read-only lifetime fence; no identity or grant is exposed to consumers. */
-export function capturePersonalTaskScope(): () => boolean {
-  const generation = scopeGeneration
-  return () => callerScope !== null && generation === scopeGeneration
-}
 
 /** Invalidate before any actor/workspace transition; late replies never publish into a successor scope. */
 export function setPersonalTaskScope(scope: PersonalTaskCallerScope | null): void {
@@ -269,6 +288,12 @@ async function syncBundle(remote: PersonalTasksApi, next: PersonalTaskBundle): P
       synced = bundleFromSnapshot(snapshot)
       revisions = snapshot.revisions
       syncState = 'synced'
+      for (const accepted of result.accepted) {
+        const saved = snapshot.tasks.find(task => task.id === accepted.task.id)
+        if (saved && snapshot.revisions[saved.id] === accepted.revision && samePersonalTask(saved, accepted.task)) {
+          notifyNativeCommit({ task: saved, revision: accepted.revision })
+        }
+      }
     } catch {
       if (generation !== scopeGeneration) return
       syncState = 'error'
@@ -377,7 +402,7 @@ export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<
   if (!remote || !callerScope) throw new PersonalTaskCreationError(task, new Error('Native personal task storage unavailable'))
   syncState = 'syncing'
   try {
-    const accepted = await putPersonalTaskConfirmed(remote, task)
+    const accepted = await putPersonalTaskConfirmed(scopedApi(remote, generation), task)
     if (generation !== scopeGeneration) throw new PersonalTaskCreationError(task, new Error('Personal task caller changed'))
     // A server push or another screen may have updated the shared store while
     // this write was in flight. Acknowledge only this ID and preserve other edits.
@@ -392,11 +417,61 @@ export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<
     syncState = syncConflicts.length > 0 ? 'error'
       : synced && isEmptyDiff(diffPersonalTaskBundles(synced, next)) ? 'synced' : 'syncing'
     emit()
+    // A native ACK owns the cache update; only exact canonical read-back owns
+    // learning evidence. Denied/stale reads do not turn a committed create into
+    // a retryable write failure or publish into a successor actor/workspace.
+    try {
+      const snapshot = await scopedApi(remote, generation).personalTasksList()
+      if (generation !== scopeGeneration) return
+      const saved = snapshot.tasks.find(entry => entry.id === accepted.task.id)
+      if (saved && snapshot.revisions[saved.id] === accepted.revision && samePersonalTask(saved, accepted.task)) {
+        notifyNativeCommit({ task: saved, revision: accepted.revision })
+      }
+    } catch { /* The create is committed, but teaching evidence remains absent. */ }
   } catch (cause) {
     if (generation !== scopeGeneration) throw cause instanceof PersonalTaskCreationError ? cause : new PersonalTaskCreationError(task, cause)
     syncState = 'error'
     emit()
     throw cause instanceof PersonalTaskCreationError ? cause : new PersonalTaskCreationError(task, cause)
+  }
+}
+
+/** Delegation waits for durable task→session linkage before submitting work. */
+export async function persistPersonalTaskSessionLink(taskId: string, sessionId: string): Promise<VersionedPersonalTask> {
+  const generation = scopeGeneration
+  const remote = api()
+  if (!remote || !callerScope) throw new Error('Native personal task storage unavailable')
+  await hydratePersonalTasks()
+  if (generation !== scopeGeneration) throw new Error('Personal task caller changed')
+  const latest = loadPersonalTaskStore().snapshot()
+  const task = latest.tasks.find(entry => entry.id === taskId)
+  if (!task) throw new Error('Personal task no longer exists')
+  try {
+    const accepted = await commitPersonalTaskLink(scopedApi(remote, generation), task, sessionId, revisions[taskId] ?? null)
+    if (generation !== scopeGeneration) throw new Error('Personal task caller changed')
+    // Merge only the confirmed link if another edit arrived during the write.
+    const current = loadPersonalTaskStore().snapshot()
+    const local = current.tasks.find(entry => entry.id === taskId)
+    if (local && samePersonalTask(local, task)) {
+      currentBundle = { ...current, tasks: current.tasks.map(entry => entry.id === taskId ? accepted.task : entry) }
+    } else if (local) {
+      const linked = structuredClone(local)
+      if (!linked.links.some(link => link.kind === 'session' && link.id === sessionId)) linked.links.push({ kind: 'session', id: sessionId })
+      currentBundle = { ...current, tasks: current.tasks.map(entry => entry.id === taskId ? linked : entry) }
+    }
+    revisions[taskId] = accepted.revision
+    if (synced) synced = { ...synced, tasks: [...synced.tasks.filter(entry => entry.id !== taskId), accepted.task] }
+    if (currentBundle) persistPersonalTaskCache(kv(), new PersonalTaskStore(currentBundle), loadStatus)
+    syncState = synced && currentBundle && isEmptyDiff(diffPersonalTaskBundles(synced, currentBundle)) ? 'synced' : 'syncing'
+    notifyNativeCommit(accepted)
+    emit()
+    if (synced && currentBundle && syncState === 'syncing') void syncBundle(remote, currentBundle)
+    return accepted
+  } catch (error) {
+    if (generation !== scopeGeneration) throw error
+    syncState = 'error'
+    emit()
+    throw error
   }
 }
 

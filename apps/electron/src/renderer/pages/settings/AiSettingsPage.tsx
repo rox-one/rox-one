@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useTranslation } from 'react-i18next'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -718,6 +719,7 @@ function getApiKeyMethodForConnection(conn: LlmConnectionWithStatus): ApiSetupMe
 export default function AiSettingsPage() {
   const { t } = useTranslation()
   const { llmConnections, refreshLlmConnections, activeWorkspaceId } = useAppShellContext()
+  const aiTarget = useTourTarget('settings.ai', { workspaceId: activeWorkspaceId ?? undefined })
 
   // API Setup overlay state
   const [showApiSetup, setShowApiSetup] = useState(false)
@@ -1182,7 +1184,7 @@ export default function AiSettingsPage() {
   }, [refreshLlmConnections])
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div ref={aiTarget} className="flex h-full min-h-0 flex-col" data-product-tour-target="settings.ai">
       <PanelHeader title={t("settings.ai.title")} actions={<HeaderMenu route={routes.view.settings('ai')} />} />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
