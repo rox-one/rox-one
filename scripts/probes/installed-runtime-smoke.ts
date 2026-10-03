@@ -57,10 +57,17 @@ const expected: Manifest = flags.has('--manifest')
 if (expected.version !== 1 || expected.appVersion !== '0.11.8' || expected.skillCount !== 330) throw new Error('Expected final 0.11.8 / 330-skill manifest');
 if (flags.has('--write-manifest')) writeFileSync(flags.get('--write-manifest')!, JSON.stringify(expected, null, 2) + '\n', { mode: 0o600 });
 const target = resolve(targetArg);
-const resources = [target, join(target, 'Contents', 'Resources'), join(target, 'resources')]
-  .find(candidate => existsSync(join(candidate, 'skills', 'SKILLS.lock')) && existsSync(join(candidate, 'app.asar')));
-if (!resources) throw new Error('Installed app.asar and packaged skills were not found');
-const skills = join(resources, 'skills');
+const layout = [target, join(target, 'Contents', 'Resources'), join(target, 'resources')]
+  .map(resources => {
+    const archive = existsSync(join(resources, 'app.asar'));
+    const unpacked = existsSync(join(resources, 'app', 'dist', 'main.cjs'));
+    const skills = [join(resources, 'app', 'dist', 'resources', 'skills'),
+      join(resources, 'app', 'resources', 'skills'), join(resources, 'skills')]
+      .find(candidate => existsSync(join(candidate, 'SKILLS.lock')));
+    return { resources, archive, unpacked, skills };
+  }).find(candidate => candidate.skills && (candidate.archive || candidate.unpacked));
+if (!layout?.skills) throw new Error('Installed app archive or unpacked app and packaged skills were not found');
+const { resources, skills } = layout;
 for (const [key, hash] of Object.entries(expected.files)) {
   if (sha(readFileSync(safeFile(skills, key))) !== hash) throw new Error(`Packaged resource hash mismatch: ${key}`);
 }
@@ -69,9 +76,12 @@ const lock = JSON.parse(readFileSync(safeFile(skills, 'SKILLS.lock'), 'utf8'));
 const slugs = lock.packs.flatMap((pack: { skills: string[] }) => pack.skills);
 if (requested.skillCount !== 330 || new Set(slugs).size !== 330 || slugs.length !== 330) throw new Error('Packaged skill catalog is incomplete or colliding');
 const asar = join(resources, 'app.asar');
-const pkg = JSON.parse(extractFile(asar, 'package.json').toString('utf8'));
+const packagedLayout = layout.archive ? 'app.asar' : 'app-directory';
+const app = join(resources, 'app');
+const readAppFile = (key: string): Buffer => layout.archive ? extractFile(asar, key) : readFileSync(safeFile(app, key));
+const pkg = JSON.parse(readAppFile('package.json').toString('utf8'));
 if (pkg.version !== '0.11.8') throw new Error('Installed app version is not final 0.11.8');
-const main = extractFile(asar, 'dist/main.cjs').toString('utf8');
+const main = readAppFile('dist/main.cjs').toString('utf8');
 // Extract without executing the Electron bundle. Esbuild preserves tagged raw
 // template contents; minified identifier names do not affect this match.
 const policy = [...main.matchAll(/String\.raw\s*`([^`]*)`/g)]
@@ -116,7 +126,7 @@ try {
   if (win32.basename('C:\\outside\\session.jsonl') === 'C:\\outside\\session.jsonl'
     || win32.basename('..\\session.jsonl') === '..\\session.jsonl'
     || win32.basename(basename(transcript)) !== basename(transcript)) throw new Error('Windows identity basename contract failed');
-  const evidence = { version: 1, appVersion: pkg.version, platform: process.platform,
+  const evidence = { version: 1, appVersion: pkg.version, platform: process.platform, packagedLayout,
     expectedManifestSha256: sha(JSON.stringify(expected)), verifiedPackagedFiles: Object.keys(expected.files).length,
     packagedSkillCount: 330, isolatedProfileSkillCount: profileSkills.length,
     compiledWorkerPolicySha256: sha(policy), isolatedHome: true, credentialReads: false,
