@@ -1,22 +1,10 @@
-## Credential metadata own-data repair and integration — 2026-10-03
+## Connections consumer recovery plan — 2026-10-03
 
-The user authorized full source repair, GitHub writes and merge into `main`. The original checkout and its unrelated CSS edits are preserved. One lead owns the isolated `fix/credential-metadata-own-data-20261003` source branch; an independent reviewer owns separate evidence artifacts. Initial integration base: `829e2cbd840e2980b421038457866d0efd0893f2`.
+1. Freeze source intent and current UI gap; backend1414 is the dependency. pr_scout owns page/lifecycle/device/connection-info consumers only; root owns main integration and SurfaceTabs/remaining Golden semantics.
+2. Restore safe inspect projection and shared committed-scope lifecycle controls, active lease consent, current test/repair/rotate, registered move target and public GitHub device flow. Preserve current page and unrelated inspector contracts.
+3. Exercise actual production page/inspector consumers with controlled backend promises: latest selection, A→B→A, duplicate writes, stale receipts, sanitized errors/retry, confirmations, URI/secret refusal, cancellation/late-start, one poll, slow_down, denial/expiry and scoped import refresh. Retain source history and all locale catalogs.
+4. Reconcile live main, freeze delivered candidate, run scoped UI/projection tests, renderer types/build and localization, record exact source/head/log receipt, push and attach a separate PR. Lead reviews and merges; real native/provider/backend acceptance remains explicit.
 
-The integration at `b1526a85f6db5a6cdf668438e484f62ce15e6f29` preserves PR #1407's locator implementation and inherited-field tests, adds only distinct locator controls, and retains main's MCP onboarding step. A prior macOS full-CI attempt hit 17 subprocess timeouts; the unchanged 109-test config gate subsequently passed with the original deadlines. Preserve both receipts and verify the complete integrated candidate on Linux and hosted runners.
-
-| Task | Owner | Dependencies | Verification / delivery |
-| --- | --- | --- | --- |
-| LOC-STATE | Lead | none | Exact fresh main, clean isolated checkout, live PR and publishing policy readback |
-| LOC-FIX | Lead | LOC-STATE | Own-data snapshots in registry/attachment; regressions for all locator variants, accessors, frozen controls and persisted state |
-| LOC-REVIEW | Independent reviewer | LOC-STATE, LOC-FIX | Source hashes, adversarial holdout, negative controls and actionable compatibility findings |
-| LOC-VERIFY | Lead | LOC-FIX | Pinned Linux Bun 1.3.14 full core, core TypeScript, unchanged CI alias and separate MCP onboarding script; preserve any initial failures and exact logs |
-| LOC-CI | Lead | LOC-FIX | Full core suite, unchanged CI alias and main's separate MCP onboarding step on hosted Ubuntu 24.04 and macOS 15; existing permissions/install/deadlines/assertions retained |
-| LOC-DELIVER | Lead | LOC-REVIEW, LOC-VERIFY, LOC-CI | Commit/push scoped files, publish a current PR, resolve actionable feedback, merge main, read back delivered source and save revision-bound report |
-
-The earlier local-only candidate and its results remain historical evidence. They do not replace complete verification of this new base or the delivered revision. Integration receipts, commands, exits, source/artifact hashes, actual hosted run URLs and final main identity are saved outside the checkout; no publication or acceptance is inferred from a task launch. This slice does not change broader native/provider/platform acceptance.
-
-
-Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
 ## Golden Gate persisted panel workspace recovery plan — 2026-10-03
 
 Closing a focused panel restores DOM focus only when the disconnected node belongs to that removed panel or tab. Preserve another live focus owner, dialog, IME, resize and hidden targets; exercise actual closePanelAtom and production PanelStackContainer in browser adverse controls.
@@ -773,3 +761,23 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 2. Recover the pure keyed draft map and bind current floating composer setters to workspace plus active document identity. Preserve current write/mutation authority and in-page draft lifetime.
 3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
 4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
+
+## Credential metadata own-data repair and integration — 2026-10-03
+
+The user authorized full source repair, GitHub writes and merge into `main`. The original checkout and its unrelated CSS edits are preserved. One lead owns the isolated `fix/credential-metadata-own-data-20261003` source branch; an independent reviewer owns separate evidence artifacts. Initial integration base: `829e2cbd840e2980b421038457866d0efd0893f2`.
+
+The integration at `b1526a85f6db5a6cdf668438e484f62ce15e6f29` preserves PR #1407's locator implementation and inherited-field tests, adds only distinct locator controls, and retains main's MCP onboarding step. A prior macOS full-CI attempt hit 17 subprocess timeouts; the unchanged 109-test config gate subsequently passed with the original deadlines. Preserve both receipts and verify the complete integrated candidate on Linux and hosted runners.
+
+| Task | Owner | Dependencies | Verification / delivery |
+| --- | --- | --- | --- |
+| LOC-STATE | Lead | none | Exact fresh main, clean isolated checkout, live PR and publishing policy readback |
+| LOC-FIX | Lead | LOC-STATE | Own-data snapshots in registry/attachment; regressions for all locator variants, accessors, frozen controls and persisted state |
+| LOC-REVIEW | Independent reviewer | LOC-STATE, LOC-FIX | Source hashes, adversarial holdout, negative controls and actionable compatibility findings |
+| LOC-VERIFY | Lead | LOC-FIX | Pinned Linux Bun 1.3.14 full core, core TypeScript, unchanged CI alias and separate MCP onboarding script; preserve any initial failures and exact logs |
+| LOC-CI | Lead | LOC-FIX | Full core suite, unchanged CI alias and main's separate MCP onboarding step on hosted Ubuntu 24.04 and macOS 15; existing permissions/install/deadlines/assertions retained |
+| LOC-DELIVER | Lead | LOC-REVIEW, LOC-VERIFY, LOC-CI | Commit/push scoped files, publish a current PR, resolve actionable feedback, merge main, read back delivered source and save revision-bound report |
+
+The earlier local-only candidate and its results remain historical evidence. They do not replace complete verification of this new base or the delivered revision. Integration receipts, commands, exits, source/artifact hashes, actual hosted run URLs and final main identity are saved outside the checkout; no publication or acceptance is inferred from a task launch. This slice does not change broader native/provider/platform acceptance.
+
+
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
