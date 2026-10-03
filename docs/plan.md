@@ -1,3 +1,10 @@
+## Golden Gate Settings menu recovery plan — 2026-10-03
+
+1. Verify actual current consumers and source intent before import: current menu is a Popover with no arrow/typeahead model; Appearance and ZenShell custom SettingsRow slots lack label/description relationships.
+2. Recover pure source navigation/context helpers and adapt only current MenuSelect/Row behavior. Preserve existing classes/locale strings and keep SettingsSelect unchanged. pr_scout owns these files; root owns remaining Golden semantic audit and main merge.
+3. Execute real production row/menu/Radix controls: field descriptions/overrides, enabled filtered navigation without commit, typeahead/preview/Escape, search caret/empty result, IME/modifier/default-prevented and disabled choices/control, changing options, selection/focus return. Retain source helper/i18n tests and run Electron/WebUI types, renderer build and locale gates.
+4. Reconcile live main, freeze source/head/proof receipt, publish/attach a separate PR, preserving all original branches. Real native route/screenshot/provider and full feature acceptance remain separate.
+
 # Golden Gate surface tab recovery — 2026-10-03
 
 Owner: root. Source5def9ffd36dc160fdc7c908784e0ef97ba6a732e → current-consumer comparison → title loader/navigation helpers → unit failure/cache/workspace controls and actual Chromium SurfaceTabs interactions → renderer strict types/build → separate PR/exact merge readback. Depends on current unified-shell atoms and pending panel focus repair1415; preserve its aria-controls contract when integrating.
