@@ -1,6 +1,6 @@
 # [ROX-FINAL] Reconciled final-readiness audit — Windows, macOS and hosted web
 
-**Canonical repository:** [rox-one/rox-one](https://github.com/rox-one/rox-one). **Audit branch:** `audit/reconciled-readiness-2026-10-03`, created from canonical main `f63294ba4fffa7238b46b24e918925a313ad0b12`. **Independently rechecked candidate:** PR1322 `de805e0dc7103b49d4c7f0a092d88c8b4222367a`. **Language:** English.
+**Canonical repository:** [rox-one/rox-one](https://github.com/rox-one/rox-one). **Audit branch:** `audit/reconciled-readiness-2026-10-03`, originally created from canonical main `f63294ba4fffa7238b46b24e918925a313ad0b12`. **Historical independently rechecked candidate:** PR1322 `de805e0dc7103b49d4c7f0a092d88c8b4222367a`. **Current integration/delivery:** [18 — Launch status](18-launch-status.md) and [PR receipt](parallel-work/pr-integration-receipt.json). **Language:** English, with a Russian launch plan.
 
 This audit accounts for accumulated ROX source beyond main: active branches, PRs, registered worktrees and uncommitted progress. The earlier main-only report is preserved as historical baseline evidence. Each original task now separates branch implementation, integration, bounded verification and remaining work. 625 independently described tasks/subtasks cover A Windows10/11, B macOS and C hosted authenticated web.
 
@@ -11,8 +11,9 @@ This audit accounts for accumulated ROX source beyond main: active branches, PRs
 3. [08 — Complete task navigation](08-task-index.md) or [machine-readable backlog](backlog.json).
 4. [16 — Parallel launch plan, exact counts and unavoidable dependencies](16-parallel-launch-plan.md); [445 individually assigned executable leaves](parallel-work/launch-plan.json).
 5. [17 — Подробный план запуска по-русски](17-parallel-launch-plan.ru.md).
+6. [18 — Actual19-PR delivery, isolated first-wave branches and qualification](18-launch-status.md).
 
-**Current findings:** root typecheck passes on the assembled candidate;16/18 workspace checks pass, with viewer and messaging gateway still failing.69 durability/lifecycle tests and34 WebUI/bootstrap tests pass. Real built-server lifecycle passes on Bun1.3.14 (4 tests) and fails at startup on Bun1.4.2. Branches contain substantial durable state, authority, product and runtime improvements; integration, remaining concrete defects, signed installed targets, live providers and deployed hosted acceptance are still open.
+**Historical de805 candidate findings:** root typecheck passed;16/18 workspace checks passed, with viewer and messaging gateway failing.69 durability/lifecycle tests and34 WebUI/bootstrap tests passed. Built-server lifecycle passed on Bun1.3.14 (4 tests) and failed at startup on Bun1.4.2. These results stay bound to de805; current source and remaining target/provider/hosted acceptance are tracked in [18](18-launch-status.md).
 
 ## [ROX-FINAL-DOCUMENTS] Detailed architecture, completion and qualification work
 
@@ -35,6 +36,7 @@ This audit accounts for accumulated ROX source beyond main: active branches, PRs
 | [15 — Fresh candidate checks](15-candidate-verification.md) | Independent18-workspace compilation, tests/build and Bun1.3.14/1.4.2 actual startup comparison. |
 | [16 — Parallel launch plan](16-parallel-launch-plan.md) | Exact445-leaf partition, all three target lanes now, shared file ownership, environment provisioning and unavoidable consumed-output gates. |
 | [17 — План запуска по-русски](17-parallel-launch-plan.ru.md) | Подсчёт, одновременные Windows/macOS/Web потоки, распределение модулей, неизбежные зависимости и формат приёмки. |
+| [18 — Launch status](18-launch-status.md) | Actual19-PR readback, current merged-source qualification and three isolated first-wave work packages. |
 
 ## [ROX-FINAL-COUNTS] Task scope
 
@@ -75,8 +77,8 @@ bun scripts/final-readiness-audit.ts --validate --export
 git diff --check
 ```
 
-Source snapshots and reviewed dispositions are inputs; refreshing them is a separate read-only action via final-readiness-progress.ts and the recorded GitHub history query. The validator resolves every immutable code path/line against its exact Git commit, validates unique IDs/parents and concluding acceptance fields, and exports task progress and navigation. This audit branch changes documentation/evidence/tooling only; product branches and active dirty state are preserved.
+Source snapshots and reviewed dispositions are inputs; refreshing them is a separate read-only action via final-readiness-progress.ts and the recorded GitHub history query. The validator resolves every immutable code path/line against its exact Git commit, validates unique IDs/parents and concluding acceptance fields, and exports task progress and navigation. Original audit commits change documentation/evidence/tooling; later integration commits and delivery receipts bind actual product changes separately. Existing dirty checkouts and user runtime data are preserved.
 
 ## [DEPENDENCY-ALERTS] Fresh dependency security evidence
 
-GitHub Dependabot reports **6 open High alerts / 5 distinct advisories**: four Electron alerts and the same Sharp advisory in desktop and server manifests. Candidate constraints remain Electron ^39.2.7 and Sharp0.35.0. These are version/dependency alerts; product exposure has not been demonstrated. [QA-013 and six explicit subtasks](13-integration-reconciliation-backlog.md#qa-013-resolve-and-qualify-the-six-open-high-dependency-alerts) specify patched version selection, actual applicability, native binary/ABI closure and installed/server regression tests. [Captured API evidence](evidence/open-dependency-alerts.json) includes advisory IDs, affected ranges and first patched versions; public official advisories were independently opened.
+The initial captured snapshot reported **6 open High alerts / 5 distinct advisories**: four Electron alerts and the same Sharp advisory in desktop and server manifests. That candidate used Electron ^39.2.7 and Sharp0.35.0. Current integration declares Sharp0.35.4; the later readback and remaining four Electron alerts are described in [18](18-launch-status.md). These are version/dependency alerts; product exposure has not been demonstrated. [QA-013 and six explicit subtasks](13-integration-reconciliation-backlog.md#qa-013-resolve-and-qualify-the-six-open-high-dependency-alerts) retain patched-version, applicability, native ABI and installed/server regression requirements. [Original captured evidence](evidence/open-dependency-alerts.json) remains unchanged.
