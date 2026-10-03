@@ -86,6 +86,7 @@ try {
     await page.evaluate(() => (window as any).ui001.navigate('sources/source/two'))
     await selected('sources', 'two')
     await page.waitForFunction(() => new URL(location.href).searchParams.get('route') === 'sources/source/two')
+    await page.waitForFunction(() => history.state.seq === 1, null, { timeout: 3500 })
     assert.equal(await page.evaluate(() => history.state.seq), 1)
     await page.goBack(); await selected('sources', 'one')
     await page.goForward(); await selected('sources', 'two')
@@ -150,6 +151,9 @@ try {
     assert.deepEqual(restored.map((panel: any) => panel.proportion), [0.5, 0.5])
     await page.reload(); await selected('unavailable')
     assert.equal((await state()).route, 'retired/surface')
+    await page.goto(`${origin}?ws=workspace-a&route=retired/surface:&panels=${encodeURIComponent('retired/surface:,home:1')}&fi=0`)
+    await selected('unavailable')
+    assert.equal((await state()).route, 'retired/surface:')
   })
   await check('Unknown and malformed incoming deep links retain an unavailable surface through reload', async () => {
     await page.goto(`${origin}?ws=workspace-a&route=home`)

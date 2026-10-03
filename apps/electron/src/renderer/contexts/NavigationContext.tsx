@@ -202,7 +202,6 @@ export function NavigationProvider({
   // Right sidebar is independent of panels (not per-panel state)
   const [rightSidebar, setRightSidebar] = useState<RightSidebarPanel | undefined>()
   const rightSidebarRef = useRef<RightSidebarPanel | undefined>(rightSidebar)
-  useEffect(() => { rightSidebarRef.current = rightSidebar }, [rightSidebar])
 
   // NavigationState derived from the focused panel's route
   const navigationState: NavigationState = useMemo(() => {
@@ -470,7 +469,8 @@ export function NavigationProvider({
         entries = panelsParam.split(',').filter(Boolean).map(entry => {
           const colonIdx = entry.lastIndexOf(':')
           if (colonIdx > 0) {
-            const proportion = Number(entry.slice(colonIdx + 1))
+            const proportionText = entry.slice(colonIdx + 1)
+            const proportion = /^(?:\d+(?:\.\d*)?|\.\d+)$/.test(proportionText) ? Number(proportionText) : NaN
             if (Number.isFinite(proportion) && proportion >= 0 && proportion <= 1) {
               const rawRoute = entry.slice(0, colonIdx) as ViewRoute
               const route = normalizePanelRouteForReconcile(rawRoute, (state) => resolveAutoSelectionRef.current(state))
@@ -1175,6 +1175,7 @@ export function NavigationProvider({
   // =========================================================================
 
   const updateRightSidebar = useCallback((panel: RightSidebarPanel | undefined) => {
+    rightSidebarRef.current = panel
     setRightSidebar(panel)
     // pushState handled by the rightSidebar change effect
   }, [])
