@@ -6,6 +6,8 @@ export interface TourObservation { readonly binding: TourBinding; readonly opera
 export interface TourRuntimePort {
   readonly enabled: boolean
   readonly attemptToken?: string
+  /** Requests belong to this provider instance even when a route host is replaced. */
+  readonly observationOwner?: object
   capture(scope: TourScope): TourObservation | null
   emit(signal: TourSignal): void
   handoff?(observation: TourObservation, open: boolean): void

@@ -139,7 +139,11 @@ export function ActiveOptionBadges({
   const labelsTarget = useTourTarget('session.labels', { sessionId })
   const projectTarget = useTourTarget('session.project', { sessionId })
   React.useEffect(() => tourSignals.capability('labels.available', labels.length && onLabelsChange ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' }), [tourSignals, labels.length, onLabelsChange])
-  React.useEffect(() => tourSignals.capability('projects.available', projects.length && onSetProjectId ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' }), [tourSignals, projects.length, onSetProjectId])
+  // Empty assignable entities do not revoke an available Projects API. Keep an
+  // absent writer unavailable without overriding the reader's real error state.
+  React.useEffect(() => !onSetProjectId
+    ? tourSignals.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
+    : undefined, [tourSignals, onSetProjectId])
   const commitLabels = (updated: string[]) => { beginChatCommit(tourSignals.capture(), 'session.labels-committed', updated); onLabelsChange?.(updated) }
   const commitStatus = (stateId: string) => { beginChatCommit(tourSignals.capture(), 'session.status-committed', stateId); onSessionStatusChange?.(stateId) }
   const commitProject = (id: string | null) => { beginChatCommit(tourSignals.capture(), 'session.project-committed', id); onSetProjectId?.(id) }
