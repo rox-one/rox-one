@@ -150,22 +150,54 @@ function SortableWidget({
       }
     : null
   const Widget = def.Component
-  // Summary and actions have a fixed amount of content. Keep the user's
-  // saved size/order and width, but do not reserve extra empty rows for them.
-  const rowSpan = placement.id === 'summary' || placement.id === 'quickActions'
-    ? Math.min(2, widgetRowSpan(placement.size))
-    : widgetRowSpan(placement.size)
+  const contentSized = placement.id === 'summary' || placement.id === 'quickActions'
+  const cellRef = useRef<HTMLDivElement | null>(null)
+  const [contentHeight, setContentHeight] = useState(HOME_GRID_ROW_HEIGHT)
+  const setCellRef = useCallback((node: HTMLDivElement | null) => {
+    cellRef.current = node
+    setNodeRef(node)
+  }, [setNodeRef])
+  // Measure the two fixed-content frames, including their localized header and
+  // edit controls. Pixel tracks let them fit without changing saved S/M/L sizes
+  // or the exact 232/354/476 px heights of the remaining widgets.
+  useLayoutEffect(() => {
+    if (!contentSized) return
+    const cell = cellRef.current
+    if (!cell) return
+    let frame: HTMLElement | null = null
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setContentHeight(Math.ceil(entry.borderBoxSize[0]?.blockSize ?? entry.target.clientHeight + 1))
+    })
+    const observeFrame = () => {
+      const next = cell.querySelector<HTMLElement>('[data-home-widget]')
+      if (next === frame) return
+      observer.disconnect()
+      frame = next
+      if (frame) {
+        // offsetHeight rounds to whole pixels; reserve the next pixel until
+        // ResizeObserver supplies the unzoomed fractional border-box size.
+        setContentHeight(frame.offsetHeight + 1)
+        observer.observe(frame)
+      }
+    }
+    observeFrame()
+    const replacements = new MutationObserver(observeFrame)
+    replacements.observe(cell, { childList: true })
+    return () => { observer.disconnect(); replacements.disconnect() }
+  }, [contentSized])
+  const rowSpan = widgetRowSpan(placement.size)
+  const height = contentSized ? contentHeight : rowSpan * HOME_GRID_ROW_HEIGHT + (rowSpan - 1) * HOME_GRID_GAP
   return (
     <div
-      ref={setNodeRef}
+      ref={setCellRef}
       data-home-cell={placement.id}
       data-home-size={placement.size}
       className={cn('min-h-0 min-w-0', isDragging && 'relative z-10 opacity-80')}
-      style={{ gridColumn: `span ${span} / span ${span}`, gridRow: `span ${rowSpan}`, transform: CSS.Translate.toString(transform), transition }}
+      style={{ gridColumn: `span ${span} / span ${span}`, gridRow: `span ${Math.ceil(height + HOME_GRID_GAP)}`, height: contentSized ? 'fit-content' : height, alignSelf: 'start', transform: CSS.Translate.toString(transform), transition }}
     >
       <WidgetBoundary
         fallback={
-          <div className="rox-home-widget flex h-full flex-col justify-center rounded-[var(--radius-card)] px-3 text-[13px]">
+          <div data-home-widget={placement.id} className={cn('rox-home-widget flex flex-col justify-center rounded-[var(--radius-card)] px-3 text-[13px]', contentSized ? 'py-3' : 'h-full')}>
             <p className="font-bold">{t(def.titleKey)}</p>
             <p className="text-muted-foreground">{t('workbench.home.widgetFailed')}</p>
           </div>
@@ -500,7 +532,7 @@ export function HomeFrontPage() {
               <SortableContext items={ids} strategy={rectSortingStrategy}>
                 <div
                   className="grid"
-                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: `${HOME_GRID_ROW_HEIGHT}px`, gap: HOME_GRID_GAP }}
+                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '1px', columnGap: HOME_GRID_GAP }}
                   data-home-grid=""
                 >
                   {layout.widgets.map((placement) => (
@@ -519,7 +551,7 @@ export function HomeFrontPage() {
                       type="button"
                       onClick={() => setPickerOpen(true)}
                       className="rox-home-add-cell flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] text-[13px] font-bold text-muted-foreground hover:text-foreground"
-                      style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${widgetRowSpan('S')}` }}
+                      style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP)}`, height: widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) - HOME_GRID_GAP, alignSelf: 'start' }}
                     >
                       <Plus className="h-5 w-5" />
                       {t('workbench.home.edit.addWidget')}

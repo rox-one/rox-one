@@ -27,6 +27,7 @@ export function WidgetFrame({
   children,
   testId,
   action,
+  fitContent = false,
 }: {
   title: string
   /** Small header action (e.g. «Запись»), hidden in edit mode. */
@@ -37,11 +38,13 @@ export function WidgetFrame({
   edit?: WidgetEditProps | null
   children: React.ReactNode
   testId: string
+  /** Fixed-content sections should not reserve empty list rows. */
+  fitContent?: boolean
 }) {
   const { t } = useTranslation()
   return (
     <section
-      className="rox-home-widget flex h-full min-h-0 min-w-0 flex-col rounded-[var(--radius-card)] px-3 pb-3 pt-2"
+      className={cn('rox-home-widget flex min-h-0 min-w-0 flex-col rounded-[var(--radius-card)] px-3 pb-3 pt-2', fitContent ? 'h-auto' : 'h-full')}
       data-home-widget={testId}
       aria-label={title}
     >

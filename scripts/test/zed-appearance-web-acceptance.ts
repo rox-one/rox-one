@@ -32,7 +32,7 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 1050
 let page = await context.newPage()
 const pageErrors: string[] = []
 const report: any = { kind: 'production-authenticated-web', baseUrl, screenshots: [], matrix: [], persistence: {}, workspacePriority: {}, material: {}, responsive: [], pageErrors,
-  responsiveControls: [], screenshotReadbacks: [], limitations: [], buildIndexSha256: createHash('sha256').update(await readFile(resolve('apps/webui/dist/index.html'))).digest('hex') }
+  responsiveControls: [], screenshotReadbacks: [], themeSettling: [], limitations: [], buildIndexSha256: createHash('sha256').update(await readFile(resolve('apps/webui/dist/index.html'))).digest('hex') }
 page.on('pageerror', error => pageErrors.push(error.message))
 async function authenticate(p: Page) {
   await p.goto(baseUrl)
@@ -50,16 +50,25 @@ async function appearance(p: Page) {
   await p.getByRole('button', { name: 'Внешний вид', exact: true }).last().click()
   await p.getByText('Цветовая тема', { exact: true }).waitFor()
 }
+async function waitAppliedTheme(p: Page, testCase: typeof cases[number], phase: string, glass = true) {
+  const started = performance.now()
+  // The effective ID can be published before the asynchronous preset read
+  // supplies supportedModes, palette and the resulting material attributes.
+  await p.waitForFunction(({ id, visual, background, glass }) => {
+    const root = document.documentElement
+    return root.dataset.theme === id && root.classList.contains(visual)
+      && root.dataset.shellCssMaterial === (glass ? 'glass' : 'solid')
+      && (!background || getComputedStyle(root).getPropertyValue('--canvas').trim().toLowerCase() === background.toLowerCase())
+  }, { ...testCase, glass }, { timeout: 15_000 })
+  report.themeSettling.push({ phase, theme: testCase.id, visual: testCase.visual, material: glass ? 'glass' : 'solid', elapsedMs: performance.now() - started })
+}
 async function selectTheme(testCase: typeof cases[number]) {
   await appearance(page)
   await page.emulateMedia({ colorScheme: testCase.os })
   await page.getByRole('radio', { name: 'Системная', exact: true }).click()
   const row = page.locator('[data-layout="settings-row"]').filter({ has: page.getByText('Цветовая тема', { exact: true }) })
   await selectMenu(row, testCase.label)
-  await page.waitForFunction(({ id, background }) => {
-    const root = document.documentElement
-    return root.dataset.theme === id && (!background || (document.getElementById('craft-theme-overrides')?.textContent ?? '').toLowerCase().includes(background.toLowerCase()))
-  }, testCase, { timeout: 15_000 })
+  await waitAppliedTheme(page, testCase, 'app-theme-selection')
   await page.waitForTimeout(150)
 }
 async function selectMenu(row: Locator, label: string) {
@@ -279,16 +288,16 @@ try {
   const selected = cases[2]
   await selectTheme(selected)
   await page.reload()
-  await page.waitForFunction(() => document.documentElement.dataset.theme === 'siri-light' && document.documentElement.classList.contains('light'))
+  await waitAppliedTheme(page, selected, 'app-theme-reload')
   report.persistence.reload = await snapshot(page)
   assertSurface(report.persistence.reload, selected)
   const second = await context.newPage()
   await authenticate(second)
-  await second.waitForFunction(() => document.documentElement.dataset.theme === 'siri-light')
+  await waitAppliedTheme(second, selected, 'second-tab')
   report.persistence.secondTab = await snapshot(second)
   assertSurface(report.persistence.secondTab, selected)
   await selectTheme(cases[0])
-  await second.waitForFunction(() => document.documentElement.dataset.theme === 'nordfox-opaque')
+  await waitAppliedTheme(second, cases[0], 'live-second-tab')
   report.persistence.liveSecondTab = await snapshot(second)
   assertSurface(report.persistence.liveSecondTab, cases[0])
   report.persistence.api = await page.evaluate(() => (window as any).electronAPI.getColorTheme())
@@ -300,7 +309,7 @@ try {
   const workspaceId = workspace.id
   const workspaceRow = page.locator('[data-layout="settings-row"]').filter({ has: page.getByText(workspace.name, { exact: true }) })
   await selectMenu(workspaceRow, cases[2].label)
-  await page.waitForFunction(() => document.documentElement.dataset.theme === 'siri-light')
+  await waitAppliedTheme(page, cases[2], 'workspace-theme-selection')
   const appRow = page.locator('[data-layout="settings-row"]').filter({ has: page.getByText('Цветовая тема', { exact: true }) })
   await selectMenu(appRow, cases[1].label)
   await page.waitForFunction(async () => await (window as any).electronAPI.getColorTheme() === 'min-dark-blurred')
@@ -313,12 +322,12 @@ try {
   assert.deepEqual(report.workspacePriority.api, { app: cases[1].id, workspace: cases[2].id })
   await screenshot('workspace-siri-over-min-app-default')
   await page.reload()
-  await page.waitForFunction(() => document.documentElement.dataset.theme === 'siri-light')
+  await waitAppliedTheme(page, cases[2], 'workspace-theme-reload')
   report.workspacePriority.reload = await snapshot(page)
   assertSurface(report.workspacePriority.reload, cases[2])
   await appearance(page)
   await selectMenu(workspaceRow, 'Использовать по умолчанию (Min Dark (Blurred))')
-  await page.waitForFunction(() => document.documentElement.dataset.theme === 'min-dark-blurred')
+  await waitAppliedTheme(page, cases[1], 'workspace-theme-clear')
   report.workspacePriority.cleared = await snapshot(page)
   assertSurface(report.workspacePriority.cleared, cases[1])
   assert.equal(await page.evaluate(id => (window as any).electronAPI.getWorkspaceColorTheme(id), workspaceId), null)
