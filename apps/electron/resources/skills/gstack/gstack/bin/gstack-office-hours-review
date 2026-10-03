@@ -2,6 +2,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { atomicWriteSync } from '../lib/fs-atomic.ts';
+import { readBoundedStable } from '../lib/cso/bounded-file.ts';
 import { assessOfficeHoursReviews, loadOfficeHoursReviews, renderOfficeHoursReview, renderOfficeHoursReviewerPrompt, replaceOfficeHoursReviewBlock } from '../lib/office-hours-review.ts';
 
 function main(args) {
@@ -42,7 +43,7 @@ function main(args) {
     if (fs.lstatSync(verdictPath, { throwIfNoEntry: false })) throw new Error('next verdict already exists; check it before preparing another attempt');
     const existing = fs.lstatSync(promptPath, { throwIfNoEntry: false });
     if (existing) {
-      if (!existing.isFile() || fs.readFileSync(promptPath, 'utf8') !== prompt) throw new Error('existing review prompt differs from the complete saved evidence');
+      if (!existing.isFile() || readBoundedStable(promptPath, 16 * 1024 * 1024, 'review prompt').toString('utf8') !== prompt) throw new Error('existing review prompt differs from the complete saved evidence');
     } else atomicWriteSync(promptPath, prompt, { mode: 0o600 });
     const dispatch = `Read ${JSON.stringify(promptPath)} and execute the independent spec review as instructed.\nDocument: ${designPath}\nPrompt: ${promptPath}\nVerdict: ${verdictPath}`;
     console.log(JSON.stringify({ round, promptPath, verdictPath, dispatch }));
@@ -58,8 +59,8 @@ function main(args) {
   const rendered = renderOfficeHoursReview(rounds, options['--unreviewed']);
   // Validate/read/render both destinations before publishing either. Each rename
   // is atomic; any publication error fails the command and final verification.
-  const design = fs.readFileSync(designPath, 'utf8');
-  const report = reportPath ? fs.readFileSync(reportPath, 'utf8') : '';
+  const design = readBoundedStable(designPath, 16 * 1024 * 1024, 'design document').toString('utf8');
+  const report = reportPath ? readBoundedStable(reportPath, 16 * 1024 * 1024, 'review report').toString('utf8') : '';
   const nextDesign = replaceOfficeHoursReviewBlock(design, 'concerns', rendered.concerns);
   const nextReport = reportPath ? replaceOfficeHoursReviewBlock(report, 'report', rendered.report) : null;
   if (nextDesign !== design) atomicWriteSync(designPath, nextDesign, { mode: fs.statSync(designPath).mode & 0o777 });

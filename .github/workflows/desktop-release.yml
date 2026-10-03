@@ -54,6 +54,8 @@ jobs:
           packages/shared/src/skills/__tests__/browser-helper-security.test.ts
           packages/shared/src/skills/__tests__/compound-helper-security.test.ts
           packages/shared/src/skills/__tests__/gstack-security.test.ts
+          packages/shared/src/skills/__tests__/gstack-boundaries.test.ts
+          packages/shared/src/skills/__tests__/gstack-root-helpers.test.ts
           scripts/probes/omp-worker-loop.test.ts
           packages/shared/src/toolchain/__tests__/acpx.test.ts
           packages/shared/src/credentials/backends/__tests__/keychain-master-key.test.ts

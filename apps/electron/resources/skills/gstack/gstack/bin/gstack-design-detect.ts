@@ -86,6 +86,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { createHash } from 'crypto';
+import { atomicWriteSync } from '../lib/fs-atomic';
 import { spawnSync } from 'child_process';
 import {
   SENTINEL, TESTED_ENGINE_VERSIONS, ADVISORY_RULE_IDS, DETECT_LIMITS,
@@ -699,10 +700,7 @@ async function install(args: InstallArgs): Promise<number> {
   const actual = createHash('sha256').update(buf).digest('hex');
   if (actual !== expected) return installRefused(`checksum mismatch: expected ${expected}, got ${actual}; nothing written`);
   fs.mkdirSync(destDir, { recursive: true, mode: 0o755 });
-  const tmp = `${dest}.tmp-${process.pid}`;
-  fs.writeFileSync(tmp, buf, { mode: 0o755 });
-  fs.chmodSync(tmp, 0o755);
-  fs.renameSync(tmp, dest);
+  atomicWriteSync(dest, buf, { mode: 0o755 });
   process.stdout.write(`${SENTINEL.INSTALLED}: ${dest} version=${version} sha256=${actual} bytes=${total}\n`);
   analytics({ verb: 'install', sentinel: 'INSTALLED', engine: version, exit: 0 });
   const p = probe(args.host);
@@ -712,14 +710,19 @@ async function install(args: InstallArgs): Promise<number> {
 
 /** Identity label for an engine with no version source: size + the first few MB hashed (a whole-binary read per probe is wasted work). */
 function engineIdentity(file: string): string {
+  let fd: number | undefined;
   try {
-    const st = fs.statSync(file);
-    const fd = fs.openSync(file, 'r');
+    fd = fs.openSync(file, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
+    const st = fs.fstatSync(fd), named = fs.lstatSync(file);
+    if (!st.isFile() || !named.isFile() || st.dev !== named.dev || st.ino !== named.ino) return 'unreadable';
     const buf = Buffer.alloc(Math.min(st.size, DETECT_LIMITS.engineHashBytes));
     const n = fs.readSync(fd, buf, 0, buf.length, 0);
-    fs.closeSync(fd);
+    const after = fs.fstatSync(fd), current = fs.lstatSync(file);
+    if (!current.isFile() || current.dev !== st.dev || current.ino !== st.ino
+      || after.size !== st.size || after.mtimeMs !== st.mtimeMs || after.ctimeMs !== st.ctimeMs) return 'unreadable';
     return createHash('sha256').update(String(st.size)).update(buf.subarray(0, n)).digest('hex').slice(0, 12);
   } catch { return 'unreadable'; }
+  finally { if (fd !== undefined) fs.closeSync(fd); }
 }
 
 /** The sentinel NAME (IMPECCABLE_READY, ...) for analytics, one vocabulary for probe and scan. */

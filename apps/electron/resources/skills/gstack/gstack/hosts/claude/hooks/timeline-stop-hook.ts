@@ -38,6 +38,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { runBin } from './spawn-bin';
+import { readBoundedRangeStable } from '../../../lib/cso/bounded-range-file';
+import { appendSecureFile } from '../../../browse/src/file-permissions';
 import { resolveStateRoot } from '../../../lib/state-root';
 import { logHookError as sharedLogHookError } from './hook-log';
 
@@ -53,21 +55,13 @@ const startedAt = Date.now();
  * the fail-open handling.
  */
 function readTimelineTail(timelinePath: string, size: number): string {
-  const fd = fs.openSync(timelinePath, 'r');
-  try {
-    const offset = Math.max(0, size - TAIL_WINDOW_BYTES);
-    const length = size - offset;
-    const buf = Buffer.alloc(length);
-    const bytesRead = fs.readSync(fd, buf, 0, length, offset);
-    let text = buf.subarray(0, bytesRead).toString('utf8');
-    if (offset > 0) {
-      const firstNewline = text.indexOf('\n');
-      text = firstNewline === -1 ? '' : text.slice(firstNewline + 1);
-    }
-    return text;
-  } finally {
-    fs.closeSync(fd);
+  const offset = Math.max(0, size - TAIL_WINDOW_BYTES);
+  let text = readBoundedRangeStable(timelinePath, offset, TAIL_WINDOW_BYTES, 'timeline tail').toString('utf8');
+  if (offset > 0) {
+    const firstNewline = text.indexOf('\n');
+    text = firstNewline === -1 ? '' : text.slice(firstNewline + 1);
   }
+  return text;
 }
 
 function logHookError(msg: string): void {
@@ -191,7 +185,7 @@ function main(): void {
     )
     .join('\n');
   try {
-    fs.appendFileSync(timelinePath, lines + '\n');
+    appendSecureFile(timelinePath, lines + '\n');
   } catch (err) {
     logHookError(`could not append completions: ${err instanceof Error ? err.message : String(err)}`);
   }

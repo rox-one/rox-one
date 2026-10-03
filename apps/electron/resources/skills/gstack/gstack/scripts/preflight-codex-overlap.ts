@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { discoverTemplates, includesSkill } from './discover-skills';
 import { externalSkillName, extractNameAndDescription } from './external-skill-names';
 import { getHostConfig } from '../hosts';
+import { readBoundedStable } from '../lib/cso/bounded-file';
 
 const args = process.argv.slice(2);
 const value = (flag: string): string => {
@@ -87,9 +88,10 @@ const checkReplace = (file: string, operation: string) => {
 const userOwnedRoot = (root: string): boolean => {
   const stat = exists(root);
   const skill = path.join(root, 'SKILL.md');
-  return !!stat && stat.isDirectory() && !stat.isSymbolicLink()
-    && !!fs.statSync(skill, { throwIfNoEntry: false })?.isFile()
-    && !fs.readFileSync(skill, 'utf8').includes('<!-- AUTO-GENERATED from');
+  if (!stat || !stat.isDirectory() || stat.isSymbolicLink()) return false;
+  if (!exists(skill)) return false;
+  try { return !readBoundedStable(skill, 4 * 1024 * 1024, 'user skill').toString('utf8').includes('<!-- AUTO-GENERATED from'); }
+  catch { return true; } // uncertain ownership protects existing user content
 };
 const linkIsOurs = (file: string): boolean => {
   try { return inside(physical(file), source); }

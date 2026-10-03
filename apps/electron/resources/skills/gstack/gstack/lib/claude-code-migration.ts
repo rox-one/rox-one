@@ -3,6 +3,8 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { readBoundedStable } from './cso/bounded-file';
+import { atomicWriteSync } from './fs-atomic';
 
 const OLD = 'gstack-claude';
 const NEXT = 'gstack-claude-code';
@@ -24,7 +26,7 @@ export interface RenameOptions {
 function exists(file: string): boolean { return fs.lstatSync(file, { throwIfNoEntry: false }) !== undefined; }
 function generated(file: string): boolean {
   try {
-    const header = fs.readFileSync(file, 'utf8').slice(0, 8192);
+    const header = readBoundedStable(file, 4 * 1024 * 1024, 'generated skill').toString('utf8').slice(0, 8192);
     return header.includes(BANNER) && header.includes('<!-- Regenerate: bun run gen:skill-docs -->');
   } catch { return false; }
 }
@@ -61,12 +63,16 @@ function owned(entry: string, root: string): boolean {
 }
 function atomicCopy(source: string, target: string): void {
   fs.mkdirSync(path.dirname(target), { recursive: true });
-  const tmp = `${target}.rename-${process.pid}-${Math.random().toString(36).slice(2)}`;
-  try {
-    fs.copyFileSync(source, tmp);
-    fs.chmodSync(tmp, fs.statSync(source).mode);
-    fs.renameSync(tmp, target);
-  } finally { fs.rmSync(tmp, { force: true }); }
+  const canonicalSource = fs.realpathSync(source);
+  const before = fs.lstatSync(canonicalSource);
+  const data = readBoundedStable(canonicalSource, 64 * 1024 * 1024, 'migration source');
+  const after = fs.lstatSync(canonicalSource);
+  if (!after.isFile() || after.dev !== before.dev || after.ino !== before.ino
+    || after.mode !== before.mode || after.size !== before.size
+    || after.mtimeMs !== before.mtimeMs || after.ctimeMs !== before.ctimeMs) {
+    throw new Error('migration source changed while copying');
+  }
+  atomicWriteSync(target, data, { mode: before.mode & 0o777 });
 }
 function preserveCopy(file: string): void {
   let backup = `${file}.before-claude-code`;
@@ -96,7 +102,7 @@ function copySkill(source: string, target: string, root: string, preserve = fals
         fs.mkdirSync(parent, { recursive: true });
       }
     }
-    if (preserve && fs.lstatSync(dest, { throwIfNoEntry: false })?.isFile() && !fs.readFileSync(src).equals(fs.readFileSync(dest))) {
+    if (preserve && fs.lstatSync(dest, { throwIfNoEntry: false })?.isFile() && !readBoundedStable(fs.realpathSync(src), 64 * 1024 * 1024, 'migration source').equals(readBoundedStable(dest, 64 * 1024 * 1024, 'existing skill'))) {
       preserveCopy(dest);
     }
     atomicCopy(src, dest);
@@ -110,7 +116,7 @@ function retire(entry: string, root: string, oldSources: string[]): void {
   // the old skill, without a SKILL.md that could keep the retired command alive.
   const file = path.join(entry, 'SKILL.md');
   if (fs.lstatSync(file, { throwIfNoEntry: false })?.isFile() && !oldSources.some(source => {
-    try { return fs.readFileSync(source).equals(fs.readFileSync(file)); } catch { return false; }
+    try { return readBoundedStable(fs.realpathSync(source), 64 * 1024 * 1024, 'old source').equals(readBoundedStable(file, 64 * 1024 * 1024, 'retired skill')); } catch { return false; }
   })) {
     preserveCopy(file);
   } else {

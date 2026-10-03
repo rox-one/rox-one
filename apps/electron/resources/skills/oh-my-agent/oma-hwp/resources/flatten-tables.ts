@@ -14,7 +14,7 @@
  *     the pragmatic default for AI / plain-MD consumption.
  *
  * Usage: bun flatten-tables.ts <file.md> [<file.md>...]
- * (also runs under node >= 22.6 via type stripping)
+ * Run with Bun (the shipped relative .js imports resolve TypeScript helpers).
  */
 
 import { transformFileSafely } from "./safe-file-transform.js";
