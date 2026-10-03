@@ -76,6 +76,21 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
     expect((await calls()).filter((call) => call.method === 'transcribeVoice')).toHaveLength(0)
   }, timeout)
 
+  it('preserves the latest draft ending in space, newline or tab with both trailing-space preferences', async () => {
+    const transcript = 'Synthetic first paragraph.\n\nSynthetic second paragraph.'
+    for (const ending of [' ', '\n', '\t']) {
+      for (const trailingSpace of [false, true]) {
+        await load(`deferredStop=true&trailingSpace=${trailingSpace}`)
+        await start(); await finish(); await waitForCall('stopVoiceCapture')
+        const draft = `Edited while transcribing${ending}`
+        await page.getByRole('textbox', { name: 'Draft' }).fill(draft)
+        await page.evaluate(() => (window as any).__voiceFixture.resolveStop())
+        await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue(`${draft}${transcript}${trailingSpace ? ' ' : ''}`)
+        expect((await calls()).filter(call => call.method === 'stopVoiceCapture')).toHaveLength(1)
+      }
+    }
+  }, timeout)
+
   it('asks for cloud upload consent at first use and starts only after the saved grant', async () => {
     await load('consent=false&migration=true'); await start()
     await expectDOM(page.getByRole('dialog')).toBeVisible()

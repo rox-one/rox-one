@@ -146,7 +146,7 @@ export function VoiceDictationControl({
           await window.electronAPI.copyVoiceText({ text: deliveredText })
           if (captureId !== captureIdRef.current) return
         } else if (latest.onInputChange) {
-          latest.onInputChange(latest.inputValue ? `${latest.inputValue} ${deliveredText}` : deliveredText)
+          latest.onInputChange(latest.inputValue ? `${latest.inputValue}${/\s$/.test(latest.inputValue) ? '' : ' '}${deliveredText}` : deliveredText)
           tourSignals.emit(dictationObservation, 'dictation.inserted', 'observed', 'native-event')
         }
       }
