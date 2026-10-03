@@ -89,6 +89,10 @@ export function ensureBuiltinQmdCollection(
   if (!ownsDefaultPaths(config)) return { created: false, canUpdate: false };
   const sourcePath = join(workspaceRootPath, 'sources', 'qmd');
   const configPath = join(sourcePath, 'config', `${BUILTIN_QMD_INDEX}.yml`);
+  // The runtime pins INDEX_PATH to this isolated database. QMD skips its
+  // default cache-directory mkdir when INDEX_PATH is set, including on first
+  // launch or after cache cleanup, so provision the parent ourselves.
+  mkdirSync(join(sourcePath, 'cache', 'qmd'), { recursive: true });
   if (existsSync(configPath)) {
     return { created: false, canUpdate: canUpdateWithoutHooks(configPath), configPath };
   }
@@ -101,7 +105,6 @@ export function ensureBuiltinQmdCollection(
   const collectionPath = notesPath || join(sourcePath, 'documents');
   const collectionName = notesPath ? 'notes' : 'documents';
   mkdirSync(join(sourcePath, 'config'), { recursive: true });
-  mkdirSync(join(sourcePath, 'cache'), { recursive: true });
   if (!notesPath) mkdirSync(collectionPath, { recursive: true });
   const document = {
     collections: {

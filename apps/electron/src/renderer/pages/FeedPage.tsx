@@ -78,6 +78,9 @@ import {
 import { ColorFilter, ColorPicker, FEED_COLOR_HEX, SourceIcon, TagChip, TagEditor } from './feed/FeedParts'
 import { SourceEditor, SourcesView } from './feed/FeedSources'
 import { FeedSidebar, type FeedView } from './feed/FeedSidebar'
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inbox-feed'
+import { useFeedReaderTour } from '@/features/product-tour/adapters/work/inbox-feed/use-feed-reader-tour'
 
 type View = FeedView
 type Density = 'list' | 'cards'
@@ -154,6 +157,8 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   const shell = useOptionalAppShellContext()
   const workspaceId = shell?.activeWorkspaceId ?? null
   const api = typeof window !== 'undefined' ? window.electronAPI : undefined
+  const tourSignals = useTourSignals()
+  const sourcesTourRef = useTourTarget('feed.sources')
 
   const [data, setData] = useState<FeedListResult>(EMPTY)
   const [loadedWorkspaceId, setLoadedWorkspaceId] = useState<string | null | undefined>()
@@ -301,6 +306,15 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   const selected = useMemo(() => allItems.find((i) => i.id === currentId) ?? null, [allItems, currentId])
   const suggestions = useMemo(() => suggestTags(allItems, data.sources, [], 10, t('feed.tags.defaults').split(',').map((x) => x.trim()).filter(Boolean)), [allItems, data.sources, t])
   const filtersActive = !!(query || chip !== 'all' || sourceFilter || colors.size || tagFilter || mark !== 'all')
+  const { selectItem: selectFeedItem, readerRef: readerTourRef } = useFeedReaderTour({
+    selected, workspaceId, readerVisible: view !== 'sources', loaded, failed: !!loadError, select,
+  })
+  const feedCapability = useMemo(() => inboxFeedCapabilities({
+    workspacePresent: !!workspaceId, inboxApi: false, inboxLoaded: false, inboxFailed: false,
+    feedApi: typeof api?.feedList === 'function', feedLoaded: loaded, feedFailed: !!loadError, feedItems: data.items,
+  })['feed.available']!, [workspaceId, api?.feedList, loaded, loadError, data.items])
+  useEffect(() => tourSignals.capability('feed.available', feedCapability),
+    [tourSignals, feedCapability])
 
   const locale = i18n.resolvedLanguage || i18n.language
   const timeFmt = useMemo(() => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }), [locale])
@@ -398,11 +412,12 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     setSent({ itemId: item.id, kind: 'note', id: created.id })
   })
 
-  const onListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openItem)
+  const onListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, selectFeedItem, openItem)
 
   // ── navigator ────────────────────────────────────────────────────────────
   const xConnected = data.x.state === 'connected'
   const navigator = (
+    <div ref={view === 'sources' ? undefined : sourcesTourRef} data-tour-id={view === 'sources' ? undefined : 'feed.sources'}>
     <FeedSidebar
       view={view} sourceFilter={sourceFilter} tagFilter={tagFilter}
       sources={data.sources} tags={tabTags} counts={counts} visibleCount={visible.length} attention={attention}
@@ -411,6 +426,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
       onSourceSelect={(id) => { switchView('news'); setSourceFilter(id) }}
       onTagSelect={setTagFilter}
     />
+    </div>
   )
 
   // ── list: feed tabs ──────────────────────────────────────────────────────
@@ -446,7 +462,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
           tabIndex={isSel ? 0 : -1}
           data-testid={`feed-row-${item.kind}`}
           data-color={item.color}
-          onClick={() => select(item.id)}
+          onClick={() => selectFeedItem(item)}
           className={cn(
             'relative mx-2 mb-2 flex cursor-default gap-3 rounded-[8px] py-3 pl-4 pr-3 outline-none',
             isSel ? 'bg-foreground/[0.09] ring-2 ring-inset ring-accent' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
@@ -481,7 +497,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
         tabIndex={isSel ? 0 : -1}
         data-testid={`feed-row-${item.kind}`}
         data-color={item.color}
-        onClick={() => select(item.id)}
+        onClick={() => selectFeedItem(item)}
         className={cn(
           'relative mx-1 flex cursor-default items-start gap-2 rounded-[6px] py-2 pl-3 pr-2 outline-none',
           isSel ? 'bg-foreground/[0.08] ring-1 ring-inset ring-accent' : 'hover:bg-foreground/[0.04]',
@@ -621,7 +637,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
         </div>
       </div>
       {loadError ? <div role="alert" className="mx-3 mb-1 rounded-[6px] bg-destructive/10 px-2 py-1 text-[12px] text-destructive">{t('feed.loadError')}</div> : null}
-      <div role="listbox" aria-label={t(`feed.tab.${tab}`)} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="feed-list" data-density={prefs.density}>
+      <div ref={!selected ? readerTourRef : undefined} data-tour-id={!selected ? 'feed.reader' : undefined} role="listbox" aria-label={t(`feed.tab.${tab}`)} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="feed-list" data-density={prefs.density}>
         {visible.length === 0 ? emptyForTab() : groups.map((g) => (
           <div key={g.key}>
             <div className="flex items-center gap-2 px-3 pb-1 pt-3 text-[11px] uppercase tracking-wide text-text-muted" data-testid="feed-day">
@@ -678,7 +694,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   const retryState = selected?.automationId ? automations.automationTestResults[selected.automationId]?.state : undefined
   const selSource = selected?.sourceId ? sourceById.get(selected.sourceId) : undefined
   const itemDetail = selected ? (
-    <div className="flex flex-col px-6 py-4" data-testid="feed-detail" data-kind={selected.kind}>
+    <div ref={readerTourRef} data-tour-id="feed.reader" className="flex flex-col px-6 py-4" data-testid="feed-detail" data-kind={selected.kind}>
       <div className="flex min-w-0 items-center gap-2 text-[12px] text-text-muted">
         {selSource ? <SourceIcon source={selSource} size={20} /> : null}
         <span className="min-w-0 truncate">{selected.author ?? (selSource ? sourceLabel(selSource) : selected.sourceTitle) ?? ''}</span>

@@ -93,6 +93,8 @@ export class SourceServerBuilder {
     }
 
     const builtinOptions = {
+      workspaceRootPath: source.workspaceRootPath,
+      sourceFolderPath: source.folderPath,
       token,
       credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
     };
@@ -362,10 +364,14 @@ export class SourceServerBuilder {
             debug(`[SourceServerBuilder] Built MCP server for ${source.config.slug}`);
             mcpServers[source.config.slug] = config;
           } else if (getBuiltinMcpReadiness(source.config, {
+            workspaceRootPath: source.workspaceRootPath,
+            sourceFolderPath: source.folderPath,
             token,
             credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
           }).status !== 'ready') {
             const readiness = getBuiltinMcpReadiness(source.config, {
+              workspaceRootPath: source.workspaceRootPath,
+              sourceFolderPath: source.folderPath,
               token,
               credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
             });

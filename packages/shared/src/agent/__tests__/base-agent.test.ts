@@ -7,6 +7,8 @@
  */
 import { describe, it, expect, beforeEach } from 'bun:test';
 import { AbortReason } from '../backend/types.ts';
+import { McpClientPool } from '../../mcp/mcp-pool.ts';
+import { join } from 'node:path';
 import {
   TestAgent,
   createMockBackendConfig,
@@ -140,6 +142,44 @@ describe('BaseAgent', () => {
 
       agent.setAllSources(sources);
       expect(agent.getAllSources()).toHaveLength(2);
+    });
+
+    it('keeps a failed MCP selected without claiming its tools connected', async () => {
+      const pool = new McpClientPool();
+      const pooledAgent = new TestAgent(createMockBackendConfig({ mcpPool: pool }));
+      try {
+        pooledAgent.setAllSources([createMockSource({ slug: 'missing' })]);
+        await pooledAgent.setSourceServers({ missing: {
+          type: 'stdio', command: 'rox-nonexistent-mcp-regression-fixture',
+        } }, {}, ['missing']);
+        expect(pooledAgent.getActiveSourceSlugs()).toEqual(['missing']);
+        expect(pooledAgent.isSourceServerActive('missing')).toBe(false);
+        expect(pooledAgent.getSourceManager().formatSourceState()).toContain('missing (no tools)');
+      } finally {
+        pooledAgent.destroy();
+        await pool.disconnectAll();
+      }
+    });
+
+    it('refreshes availability before the next turn when a connected transport closes', async () => {
+      const pool = new McpClientPool();
+      const pooledAgent = new TestAgent(createMockBackendConfig({ mcpPool: pool }));
+      try {
+        pooledAgent.setAllSources([createMockSource({ slug: 'echo' })]);
+        await pooledAgent.setSourceServers({ echo: {
+          type: 'stdio', command: 'node',
+          args: [join(import.meta.dir, '../../mcp/__tests__/fixtures/mcp-server-echo.mjs')],
+        } }, {}, ['echo']);
+        expect(pooledAgent.isSourceServerActive('echo')).toBe(true);
+        await pool.disconnect('echo');
+        await collectEvents(pooledAgent.chat('continue after transport closed'));
+        expect(pooledAgent.getActiveSourceSlugs()).toEqual(['echo']);
+        expect(pooledAgent.isSourceServerActive('echo')).toBe(false);
+        expect(pooledAgent.getSourceManager().formatSourceState()).toContain('echo (no tools)');
+      } finally {
+        pooledAgent.destroy();
+        await pool.disconnectAll();
+      }
     });
 
     it('should allow marking source as unseen', () => {

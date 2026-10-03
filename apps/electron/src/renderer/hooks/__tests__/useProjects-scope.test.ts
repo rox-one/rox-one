@@ -82,7 +82,8 @@ function harness() {
     useEffect: (create: () => unknown, deps: unknown[]) => effect(create, deps, effects),
     useLayoutEffect: (create: () => unknown, deps: unknown[]) => effect(create, deps, layouts),
   }
-  const useProjects = evaluate(process.env.ROX_USE_PROJECTS_TEST_SOURCE ?? resolve(import.meta.dir, '../useProjects.ts'), {
+  // The controlled hook scheduler above runs production closures directly.
+  const renderProjects = evaluate(process.env.ROX_USE_PROJECTS_TEST_SOURCE ?? resolve(import.meta.dir, '../useProjects.ts'), {
     react: hooks, jotai: { useSetAtom: () => setAtom }, '@/atoms/projects': { projectsAtom },
   }).useProjects
   const previousWindow = globalThis.window
@@ -98,7 +99,7 @@ function harness() {
   } } as any
   console.error = (...args: unknown[]) => errors.push(args)
   const render = (id: string | null | undefined) => {
-    workspace = id; cursor = 0; result = useProjects(id)
+    workspace = id; cursor = 0; result = renderProjects(id)
     while (layouts.length) layouts.shift()!()
     while (effects.length) effects.shift()!()
     return result

@@ -220,7 +220,7 @@ describe('built-in MCP startup', () => {
   })
 
   it('waits for credential changes rather than repeatedly retrying unauthorized sources', async () => {
-    const h = harness()
+    const h = harness([source('mem0', { mcp: { transport: 'http', url: 'https://mcp.mem0.ai/mcp', authType: 'bearer' } })])
     const service = h.create({ createClient: () => ({
       listTools: async () => { h.counts.lists++; throw new Error('Unauthorized 401') },
       callTool: async () => ({}), close: async () => {},
@@ -228,7 +228,110 @@ describe('built-in MCP startup', () => {
     await service.ensureWorkspace('/workspace/test')
     await new Promise(resolve => setTimeout(resolve, 15))
     expect(h.counts.lists).toBe(1)
-    expect(h.configs.get('deepwiki')?.connectionStatus).toBe('needs_auth')
+    expect(h.configs.get('mem0')?.connectionStatus).toBe('needs_auth')
+  })
+
+  it('retries a public HTTP endpoint 403 without asking for nonexistent source credentials', async () => {
+    const h = harness()
+    let online = false
+    const recovered = deferred<void>()
+    const service = h.create({ createClient: () => ({
+      listTools: async () => {
+        h.counts.lists++
+        if (!online) throw new Error('HTTP 403 Forbidden from the public endpoint')
+        recovered.resolve()
+        return []
+      },
+      callTool: async () => ({}), close: async () => {},
+    }) }, { attempts: 1, retryIntervalMs: 5 })
+    await service.ensureWorkspace('/workspace/test')
+    expect(h.configs.get('deepwiki')?.connectionStatus).toBe('failed')
+    online = true
+    await recovered.promise
+    await service.ensureWorkspace('/workspace/test')
+    expect(h.counts.lists).toBe(2)
+    expect(h.configs.get('deepwiki')?.connectionStatus).toBe('connected')
+  })
+
+  it('recognizes optional HTTP source authentication supplied by runtime headers', async () => {
+    const h = harness([source('context7')])
+    const service = h.create({
+      buildServers: async () => ({ mcpServers: {context7:{type:'http', url:'https://mcp.context7.com/mcp', headers:{Authorization:'Bearer test-key'}}}, errors:[] }),
+      createClient: () => ({
+        listTools: async () => { h.counts.lists++; throw new Error('HTTP 403 Forbidden: invalid API key') },
+        callTool: async () => ({}), close: async () => {},
+      }),
+    }, { attempts: 1, retryIntervalMs: 2 })
+    await service.ensureWorkspace('/workspace/test')
+    await new Promise(resolve => setTimeout(resolve, 15))
+    expect(h.counts.lists).toBe(1)
+    expect(h.configs.get('context7')?.connectionStatus).toBe('needs_auth')
+  })
+
+  it('retries public embedding download failures instead of requiring credentials for local Qdrant', async () => {
+    const h = harness([source('qdrant', { mcp: { transport: 'stdio', command: 'uvx', args: ['--from', 'mcp-server-qdrant==0.8.1', 'mcp-server-qdrant', '--transport', 'stdio'], authType: 'none' } })])
+    let online = false
+    const recovered = deferred<void>()
+    const service = h.create({ createClient: () => ({
+      listTools: async () => {
+        h.counts.lists++
+        if (!online) throw new Error('Embedding model download failed: HTTP 403 Forbidden')
+        recovered.resolve()
+        return []
+      },
+      callTool: async () => ({}), close: async () => {},
+    }) }, { attempts: 1, retryIntervalMs: 5 })
+    await service.ensureWorkspace('/workspace/test')
+    expect(h.configs.get('qdrant')?.connectionStatus).toBe('failed')
+    online = true
+    await recovered.promise
+    await service.ensureWorkspace('/workspace/test')
+    expect(h.counts.lists).toBe(2)
+    expect(h.configs.get('qdrant')?.connectionStatus).toBe('connected')
+  })
+
+  it.each([false, true])('requires an actual remote Qdrant key before classifying HTTP 403 as source authentication (key=%s)', async hasKey => {
+    const h = harness([source('qdrant', { mcp: { transport: 'stdio', command: 'uvx', args: ['mcp-server-qdrant==0.8.1'], authType: 'none' } })])
+    let online = false
+    const recovered = deferred<void>()
+    const service = h.create({
+      buildServers: async () => ({mcpServers:{qdrant:{type:'stdio', command:'/managed/bin/uvx', args:['mcp-server-qdrant==0.8.1'],
+        env:{QDRANT_URL:'https://qdrant.example.test', ...(hasKey ? {QDRANT_API_KEY:'test-key'} : {})}}}, errors:[]}),
+      createClient: () => ({
+        listTools: async () => {
+          h.counts.lists++
+          if (!online) throw new Error('HTTP 403 Forbidden')
+          recovered.resolve()
+          return []
+        },
+        callTool: async () => ({}), close: async () => {},
+      }),
+    }, { attempts: 1, retryIntervalMs: 5 })
+    await service.ensureWorkspace('/workspace/test')
+    if (hasKey) {
+      await new Promise(resolve => setTimeout(resolve, 15))
+      expect(h.configs.get('qdrant')?.connectionStatus).toBe('needs_auth')
+      expect(h.counts.lists).toBe(1)
+    } else {
+      expect(h.configs.get('qdrant')?.connectionStatus).toBe('failed')
+      online = true
+      await recovered.promise
+      await service.ensureWorkspace('/workspace/test')
+      expect(h.configs.get('qdrant')?.connectionStatus).toBe('connected')
+      expect(h.counts.lists).toBe(2)
+    }
+  })
+
+  it('still requests credentials for an unauthorized authenticated stdio source', async () => {
+    const h = harness([source('firecrawl-mcp', { mcp: { transport: 'stdio', command: 'npx', args: ['-y', 'firecrawl-mcp@3.27.3'], authType: 'none' } })])
+    const service = h.create({ createClient: () => ({
+      listTools: async () => { h.counts.lists++; throw new Error('Unauthorized API key: HTTP 401') },
+      callTool: async () => ({}), close: async () => {},
+    }) }, { attempts: 1, retryIntervalMs: 2 })
+    await service.ensureWorkspace('/workspace/test')
+    await new Promise(resolve => setTimeout(resolve, 15))
+    expect(h.counts.lists).toBe(1)
+    expect(h.configs.get('firecrawl-mcp')?.connectionStatus).toBe('needs_auth')
   })
 
   it('cancels scheduled retries when stopped or when the source is disabled', async () => {
@@ -402,6 +505,24 @@ describe('built-in MCP startup', () => {
       .ensureWorkspace('/workspace/test')
     expect(h.configs.get('playwright')?.connectionStatus).toBe('failed')
     expect(h.configs.get('playwright')?.connectionError).toBe('Browser download unavailable')
+  })
+
+  it('keeps retrying browser download 403 failures without asking for Playwright credentials', async () => {
+    const h = harness([source('playwright', {
+      mcp: { transport: 'stdio', command: 'npx', args: ['-y', '@playwright/mcp@0.0.83'], authType: 'none' },
+    })])
+    let online = false
+    const recovered = deferred<void>()
+    const service = h.create({ installPlaywrightBrowser: async () => {
+      if (!online) throw new Error('Chromium download failed: HTTP 403 Forbidden')
+      recovered.resolve()
+    } }, { attempts: 1, retryIntervalMs: 5 })
+    await service.ensureWorkspace('/workspace/test')
+    expect(h.configs.get('playwright')?.connectionStatus).toBe('failed')
+    online = true
+    await recovered.promise
+    await service.ensureWorkspace('/workspace/test')
+    expect(h.configs.get('playwright')?.connectionStatus).toBe('connected')
   })
 
   it('checks the Everything engine before advertising a connected file search server', async () => {
