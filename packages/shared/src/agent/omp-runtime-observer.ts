@@ -40,6 +40,9 @@ const path = process.env.ROX_RUNTIME_OBSERVATION_PATH;
 const controlPath = process.env.ROX_RUNTIME_CONTROL_PATH;
 let spoolBytes = 0;
 let emitterCount = 0;
+// Native SDK rebinds the same prepared factory into descendants. The genuine
+// spawn reservation binds delayed starts to their dispatching user turn.
+const assignedRuns = new Map();
 const sensitive = /^(?:authorization|proxy.?authorization|cookie|set.?cookie|password|passwd|secret|client.?secret|api.?key|access.?token|refresh.?token|id.?token|private.?key|credential)$/i;
 const knownSecrets = Object.entries(process.env).filter(([key, value]) => /(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i.test(key) && value && value.length >= 8).map(([, value]) => value);
 function sanitized(value, state, depth = 0, key = '') {
@@ -113,15 +116,22 @@ export default function roxRuntimeObserver(pi) {
     try { control = JSON.parse(readFileSync(controlPath, 'utf8')); }
     catch { process.stderr.write('ROX_RUNTIME_OBSERVER_ERROR cannot read observation control\n'); return; }
     if (typeof control.runId !== 'string' || !control.runId) return;
-    runId = control.runId;
+    runId = ctx.agent.kind === 'sub' ? assignedRuns.get(ctx.agent.id) ?? control.runId : control.runId;
+    const activeTools = pi.getActiveTools();
     write('before_agent_start', { prompt: event.prompt, systemPrompt: event.systemPrompt,
       images: event.images?.map(image => ({ type: image.type, mimeType: image.mimeType })),
-      tools: pi.getActiveTools(), toolDefinitions: pi.getAllTools(),
+      tools: activeTools, toolDefinitions: pi.getAllTools().filter(tool => activeTools.includes(tool.name)),
       contextUsage: ctx.getContextUsage() }, ctx);
   });
   pi.on('context', (event, ctx) => write('context', { messages: event.messages, contextUsage: ctx.getContextUsage() }, ctx));
   pi.on('before_provider_request', (event, ctx) => write('before_provider_request', { providerPayload: event.payload }, ctx));
-  pi.on('before_subagent_spawn', (event, ctx) => write('before_subagent_spawn', event, ctx));
+  pi.on('before_subagent_spawn', (event, ctx) => {
+    if (runId && typeof event.spawnKey === 'string') {
+      if (assignedRuns.size >= 256 && !assignedRuns.has(event.spawnKey)) assignedRuns.delete(assignedRuns.keys().next().value);
+      assignedRuns.set(event.spawnKey, runId);
+    }
+    write('before_subagent_spawn', event, ctx);
+  });
   for (const hook of ['agent_start', 'agent_end', 'turn_start', 'turn_end', 'tool_call',
     'tool_execution_start', 'tool_execution_update', 'tool_execution_end',
     'auto_compaction_start', 'auto_compaction_end', 'auto_retry_start', 'auto_retry_end',

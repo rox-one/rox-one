@@ -9,7 +9,7 @@ import {
   resetMeetingHandlerStateForTests,
 } from '@rox/server-core/handlers/rpc/meetings'
 import type { Meeting } from '@rox/core/meetings'
-import type { MeetingGrant } from '@rox/shared/meeting-agents'
+import type { MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import {
   searchNativeMeetingsViaRpc,
   startNativeMeetingViaRpc,

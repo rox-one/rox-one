@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'bun:test'
-import { contextFill, measurementText, safeDisplayText } from '../measurements'
+import { contextFill, measurementText, runtimeNodeDuration, safeDisplayText } from '../measurements'
 import { clampChatRatio, inspectCamera, receiveCameraEvents, resumeCamera, splitStorageKey } from '../layout/viewport-policy'
 
 describe('honest runtime measurements and inert content', () => {
   it('never turns a missing token/time measurement into zero', () => {
     expect(measurementText({ state: 'unknown', reason: 'not-emitted' })).toBeUndefined()
     expect(measurementText({ state: 'known', value: 12, origin: 'estimated', source: 'fixture' })).toBe('≈12')
+  })
+  it('shows the observed executor duration when event clocks cannot be compared', () => {
+    const observed = { state: 'known' as const, value: 47, origin: 'observed' as const, source: 'bash-executor' }
+    expect(runtimeNodeDuration({ durationMs: { state: 'unknown', reason: 'unsupported' }, terminal: { command: 'pwd', durationMs: observed } })).toBe(observed)
+    expect(runtimeNodeDuration({ durationMs: observed })).toBe(observed)
   })
   it('context occupancy uses the particular input and model window', () => {
     expect(contextFill({ state: 'known', value: 500, origin: 'observed', source: 'provider' }, { state: 'known', value: 1000, origin: 'observed', source: 'model' })).toMatchObject({ state: 'known', value: 50, origin: 'derived' })

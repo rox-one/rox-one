@@ -181,6 +181,7 @@ export const readFile = (...args: unknown[]) => (
   args.length > 0 && typeof args[0] === 'string' ? '' : Promise.resolve('')
 )
 export const readFileSync = () => ''
+export const readlinkSync = (..._args: unknown[]): never => { throw new Error('Skill filesystem access requires the host API') }
 export const readSync = binaryOrEmpty
 export const readdir = fn
 export const readdirSync = binaryOrEmpty
@@ -207,6 +208,7 @@ export const totalmem = fn
 export const type = fn
 export const types = dynamic
 export const symlink = fn
+export const symlinkSync = (..._args: unknown[]): never => { throw new Error('Skill filesystem access requires the host API') }
 export const timingSafeEqual = binaryOrEmpty
 export const unlink = fn
 export const unlinkSync = binaryOrEmpty

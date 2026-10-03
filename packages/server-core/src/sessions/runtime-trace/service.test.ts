@@ -121,6 +121,24 @@ describe('runtime session collector', () => {
     expect(replay.events.map(event => event.seq)).toEqual([1, 2, 3])
   })
 
+  it('keeps a structured host request as a tool until real executor evidence arrives', async () => {
+    const { service, emitted } = await setup()
+    await service.begin('parent', 'prompt')
+    const options = { structuredHostTerminals: true }
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'bash', toolUseId: 'not-approved', input: { command: 'printf not-executed' } }, options)
+    expect(emitted.filter(event => event.kind === 'tool.started')).toHaveLength(1)
+    expect(emitted.filter(event => event.kind.startsWith('terminal.'))).toHaveLength(0)
+    await service.agentEvent('parent', { type: 'permission_request', requestId: 'permission-1', description: 'Run Bash?' }, options)
+    await service.agentEvent('parent', { type: 'tool_result', toolUseId: 'not-approved', result: 'Permission denied. exitCode: 0', isError: true }, options)
+    expect(emitted.filter(event => event.kind.startsWith('terminal.'))).toHaveLength(0)
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'bash', toolUseId: 'approved', input: { command: 'printf executed' } }, options)
+    await service.observe('parent', { kind: 'terminal.started', payload: { command: 'printf executed', cwd: '/actual-cwd', status: 'running' }, agentId: 'root', toolUseId: 'approved', sourceId: 'host:approved', sourceEventId: 'actual-start', sourceSeq: 1, occurredAt: known(Date.now(), 'host-executor'), clockDomain: 'host-monotonic', origin: 'observed' })
+    expect(emitted.filter(event => event.kind === 'terminal.started')).toHaveLength(1)
+    await service.finish('parent', 'interrupted')
+    // Stopping the model is not proof that the independently executing host process was killed.
+    expect(emitted.filter(event => event.kind === 'terminal.completed')).toHaveLength(0)
+  })
+
   it('keeps precise executor exit status after the ordinary tool result arrives', async () => {
     const { service, emitted } = await setup()
     const run = await service.begin('parent', 'prompt')
@@ -131,6 +149,30 @@ describe('runtime session collector', () => {
     expect(completed).toHaveLength(1)
     expect(completed[0]!.spanId).toBe(`${run.runId}:tool:exact-call`)
     expect(completed[0]!.kind === 'terminal.completed' && completed[0]!.payload.exitCode).toEqual(known(7, 'host-executor'))
+  })
+
+  it('evicts idle journal caches without deleting history or creating competing sequence collectors', async () => {
+    const { sessions, emitted } = await setup()
+    const service = new RuntimeTraceService(id => sessions.get(id), event => emitted.push(event), undefined, 2)
+    const oldest = await service.begin('parent', 'oldest')
+    const output = await service.content(oldest, 'recorded-payload '.repeat(2000))
+    await service.record(oldest, 'result.published', { content: output })
+    await service.finish('parent', 'complete')
+    for (let index = 0; index < 5; index++) {
+      await service.begin('parent', `next ${index}`)
+      await service.finish('parent', 'complete')
+    }
+    expect(service.getCachedJournalCount()).toBeLessThanOrEqual(2)
+    const replay = await service.getSnapshot({ sessionId: 'parent', workspaceId: 'ws', rootRunId: oldest.rootRunId })
+    expect(replay.events).toHaveLength(4)
+    const payload = await service.readPayload({ sessionId: 'parent', workspaceId: 'ws', rootRunId: oldest.rootRunId, payloadRef: output.payloadRef! })
+    expect(payload.text).toBe('recorded-payload '.repeat(2000))
+    await Promise.all(Array.from({ length: 20 }, () => service.record(oldest, 'agent.completed', { status: 'succeeded' })))
+    const complete = await service.readEvents({ sessionId: 'parent', workspaceId: 'ws', rootRunId: oldest.rootRunId, afterSeq: 0 })
+    expect(complete.events.map(event => event.seq)).toEqual(Array.from({ length: 24 }, (_, index) => index + 1))
+    expect(complete.events.map(event => event.sourceSeq)).toEqual(Array.from({ length: 24 }, (_, index) => index + 1))
+    expect(complete.coverage.missing).not.toContain('recording-failure')
+    expect(service.getCachedJournalCount()).toBeLessThanOrEqual(2)
   })
 
   it('uses a fresh native generation for repeated child ids and preserves executor retry attempts', async () => {

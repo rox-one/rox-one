@@ -25,6 +25,17 @@ describe('portable runtime trace journal', () => {
     expect((await reloaded.append(seq => ({ eventId: 'after-restart', seq, value: 51 }))).seq).toBe(51)
   })
 
+  it('keeps producer event identity idempotent across durable replay and resumed append', async () => {
+    const root = await directory()
+    const journal = new RuntimeTraceJournal<{ eventId: string; seq: number }>(join(root, 'meta', 'runtime-trace'))
+    const first = await journal.append(seq => ({ eventId: 'stable-producer-id', seq }))
+    const recovered = new RuntimeTraceJournal<{ eventId: string; seq: number }>(journal.directory)
+    const duplicate = await recovered.append(seq => ({ eventId: 'stable-producer-id', seq }))
+    expect(duplicate).toEqual(first)
+    expect((await recovered.snapshot()).rows).toHaveLength(1)
+    expect((await recovered.append(seq => ({ eventId: 'next-producer-id', seq }))).seq).toBe(2)
+  })
+
   it('marks torn/corrupt history partial and recovers before appending', async () => {
     const root = await directory()
     const journal = new RuntimeTraceJournal<{ eventId: string; seq: number }>(join(root, 'meta', 'runtime-trace'))

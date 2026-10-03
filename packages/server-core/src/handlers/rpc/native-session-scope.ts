@@ -2,14 +2,15 @@ import type { RuntimeEvent, RuntimeContent } from '@rox/core/runtime-trace'
 import type { AnnotationV1, Message } from '@rox/core/types'
 import { CodedError, RPC_CHANNELS, type Session, type SessionEvent } from '@rox/shared/protocol'
 import type { LoadedSource } from '@rox/shared/sources'
-import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { readNativeWorkspaceRegistry } from './native-workspace-registry'
 import type { HandlerDeps } from '../handler-deps'
 import type { RequestContext, RpcServer } from '../../transport/types'
+import type { NativeAuthority, NativePrincipal } from '../../authority/native-authority'
 
 /** Workspace membership, not a renderer-supplied session id, defines native access. */
 export function assertNativeWorkspace(ctx: RequestContext, deps: HandlerDeps, workspaceId: string): void {
   if (!ctx.principal) return
-  const workspace = getWorkspaceByNameOrId(workspaceId)
+  const workspace = readNativeWorkspaceRegistry(workspaceId)
   if (ctx.workspaceId !== workspaceId || !workspace
     || !deps.nativeData?.authority.authorize(ctx.principal, workspaceId, 'read', workspace.rootPath)) {
     throw new CodedError('FORBIDDEN', 'Workspace access denied')
@@ -55,10 +56,18 @@ const sessionFields = ['id', 'workspaceId', 'workspaceName', 'name', 'preview', 
   'lastReadMessageId', 'hasUnread', 'enabledSourceSlugs', 'model', 'llmConnection', 'thinkingLevel',
   'lastMessageRole', 'lastFinalMessageId', 'createdAt', 'messageCount', 'tokenUsage', 'hidden',
   'isArchived', 'archivedAt', 'supportsBranching', 'branchFromMessageId', 'branchFromSessionId',
-  'projectId', 'parentSessionId', 'kanbanColumn', 'rank', 'priority', 'dueDate'] as const
+  'parentSessionId', 'kanbanColumn', 'rank', 'priority', 'dueDate'] as const
+
+/** Public metadata IDs are never host paths or project-context capabilities. */
+function nativeProjectMembership(membership: { projectId?: unknown; projectIds?: unknown }): { projectId?: string; projectIds: string[] } {
+  const raw = [membership.projectId, ...(Array.isArray(membership.projectIds) ? membership.projectIds : [])]
+  const projectIds = [...new Set(raw.filter((id): id is string => typeof id === 'string' && /^[\p{L}\p{N}][\p{L}\p{N}._-]{0,127}$/u.test(id)))]
+  return { projectId: projectIds[0], projectIds }
+}
 
 export function nativeSession(session: Session): Session {
   const projected = Object.fromEntries(sessionFields.map(key => [key, session[key]])) as unknown as Session
+  Object.assign(projected, nativeProjectMembership(session))
   projected.messages = session.messages.map(nativeMessage).filter((message): message is Message => message !== null)
   return projected
 }
@@ -85,6 +94,10 @@ export function nativeRuntimeTraceEvent(event: RuntimeEvent): RuntimeEvent {
   delete copy.payloadRef
   const payload = copy.payload
   switch (copy.kind) {
+    case 'run.accepted':
+      // A delegated prompt is host-delivered assignment data, not the original user input.
+      if (copy.parentAgentId || copy.runId !== copy.rootRunId) copy.payload.prompt = redacted()
+      break
     case 'context.captured': case 'context.changed': {
       copy.payload.snapshot.originalPrompt = redacted()
       copy.payload.snapshot.effectivePrompt = redacted()
@@ -97,7 +110,7 @@ export function nativeRuntimeTraceEvent(event: RuntimeEvent): RuntimeEvent {
       copy.payload.input = redacted(); copy.payload.result = redacted(); copy.payload.modelContent = redacted(); copy.payload.error = undefined
       break
     case 'terminal.started': case 'terminal.output': case 'terminal.completed':
-      copy.payload.command = '[REDACTED]'; copy.payload.cwd = undefined; copy.payload.stdout = redacted(); copy.payload.stderr = redacted()
+      copy.payload.command = '[REDACTED]'; copy.payload.cwd = undefined; copy.payload.shell = undefined; copy.payload.error = undefined; copy.payload.stdout = redacted(); copy.payload.stderr = redacted()
       break
     case 'agent.assigned': copy.payload.assignment.task = redacted(); copy.payload.assignment.prompt = redacted(); copy.payload.assignment.expectedResult = redacted(); break
     case 'agent.completed': copy.payload.result = redacted(); break
@@ -138,11 +151,36 @@ export function nativeSessionEvent(event: SessionEvent): SessionEvent | null {
     case 'text_complete': return { ...identity, type: event.type, text: event.text, isIntermediate: event.isIntermediate, turnId: event.turnId, timestamp: event.timestamp, messageId: event.messageId }
     case 'thinking_delta': case 'thinking_complete': return { ...identity, type: event.type, text: event.text, turnId: event.turnId }
     case 'complete': return { ...identity, type: event.type, tokenUsage: event.tokenUsage, hasUnread: event.hasUnread, reason: event.reason, didReceiveNewFinalMessage: event.didReceiveNewFinalMessage }
-    case 'error': return { type: 'error', sessionId: event.sessionId, error: 'Session request failed', timestamp: event.timestamp }
+    case 'error': return { type: 'error', sessionId: event.sessionId, error: 'native-session-request-failed', errorCode: 'NATIVE_SESSION_REQUEST_FAILED', timestamp: event.timestamp }
     case 'title_generated': return { ...identity, type: event.type, title: event.title }
     case 'name_changed': return { ...identity, type: event.type, name: event.name }
     case 'session_created': case 'session_deleted': case 'session_flagged': case 'session_unflagged': case 'session_archived': case 'session_unarchived': return { type: event.type, sessionId: event.sessionId }
     case 'session_status_changed': return { ...identity, type: event.type, sessionStatus: event.sessionStatus }
+    case 'session_model_changed': return { ...identity, type: event.type, model: event.model }
+    case 'project_id_changed': {
+      if (event.projectIds !== undefined && !Array.isArray(event.projectIds)) return null
+      const membership = nativeProjectMembership(event)
+      return { ...identity, type: event.type, projectId: membership.projectId ?? null, projectIds: membership.projectIds }
+    }
+    case 'session_metadata_changed': {
+      if (!event.changes || typeof event.changes !== 'object'
+        || (!Object.hasOwn(event.changes, 'projectId') && !Object.hasOwn(event.changes, 'projectIds'))
+        || (event.changes.projectIds !== undefined && !Array.isArray(event.changes.projectIds))) return null
+      // Undefined is omitted by JSON, so an explicit empty metadata list must
+      // use the display event's null to clear an existing primary binding.
+      const membership = nativeProjectMembership(event.changes)
+      if (!membership.projectId && Array.isArray(event.changes.projectIds) && event.changes.projectIds.length === 0
+        && (event.changes.projectId === undefined || event.changes.projectId === null || event.changes.projectId === '')) {
+        return { type: 'project_id_changed', sessionId: event.sessionId, projectId: null, projectIds: [] }
+      }
+      return membership.projectId ? { ...identity, type: event.type, changes: membership } : null
+    }
+    case 'permission_mode_changed':
+      return ['safe', 'ask', 'allow-all'].includes(event.permissionMode) ? {
+        ...identity, type: event.type, permissionMode: event.permissionMode,
+        previousPermissionMode: event.previousPermissionMode && ['safe', 'ask', 'allow-all'].includes(event.previousPermissionMode) ? event.previousPermissionMode : undefined,
+        modeVersion: Number.isFinite(event.modeVersion) ? event.modeVersion : undefined,
+      } : null
     case 'labels_changed': return { ...identity, type: event.type, labels: event.labels }
     default: return null
   }
@@ -163,4 +201,17 @@ export function projectNativeWorkspaceEvent(
     return [workspaceId, nativeSources(args[1] as LoadedSource[])]
   }
   return args
+}
+
+/** The headless native event fence must not call migration-capable host roster getters. */
+export function projectNativeRegisteredWorkspaceEvent(
+  authority: Pick<NativeAuthority, 'authorize' | 'resolveWorkspace'>, channel: string, args: readonly unknown[], workspaceId: string,
+  principal: NativePrincipal, sessionExists: (sessionId: string, workspaceId: string) => boolean,
+): readonly unknown[] | null {
+  if (channel === RPC_CHANNELS.sessions.EVENT || channel === RPC_CHANNELS.sources.CHANGED) {
+    const workspace = readNativeWorkspaceRegistry(workspaceId)
+    if (!workspace || authority.resolveWorkspace(workspaceId)?.nativeRoot !== workspace.rootPath
+      || !authority.authorize(principal, workspaceId, 'read', workspace.rootPath)) return null
+  }
+  return projectNativeWorkspaceEvent(channel, args, workspaceId, sessionExists)
 }

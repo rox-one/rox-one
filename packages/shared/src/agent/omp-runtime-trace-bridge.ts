@@ -298,6 +298,12 @@ export class OmpRuntimeTraceBridge {
       case 'auto_compaction_end':
         make('context.compacted', { summary: event.payload.errorMessage ? content(event.payload.errorMessage) : undefined });
         break;
+      case 'retry_fallback_applied':
+        // The pinned native recovery emits this only after model change and
+        // provider-session reset. Use the actual hook context readback.
+        make('model.changed', { model });
+        make('decision.recorded', { content: content(event.payload, event.truncated), provenance: 'explicit' });
+        break;
       case 'auto_retry_start':
       case 'auto_retry_end': {
         make(event.hook === 'auto_retry_start' ? 'attempt.started' : 'attempt.completed', {

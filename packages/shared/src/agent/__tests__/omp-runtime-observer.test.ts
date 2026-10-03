@@ -8,6 +8,7 @@ import { OmpAgent } from '../omp-agent.ts';
 import { chatEvents, createFakeOmp, makeOmpConfig, useFakeOmpEnv } from './omp-fake-cli.ts';
 import type { AgentEvent } from '@rox/core/types';
 import type { HostBashObservation, SessionToolContext } from '@rox/session-tools-core';
+import { setHostBashPort } from '@rox/session-tools-core';
 
 let testNativeSequence = 0;
 const native = (hook: string, payload: Record<string, unknown>, overrides: Partial<OmpRuntimeObservation> = {}): OmpRuntimeObservation => ({
@@ -100,6 +101,37 @@ describe('OMP native runtime observation transport', () => {
       observer.drain();
       expect(events[0]!.truncated).toBe(true);
       expect((events[0]!.payload.prompt as string).length).toBe(32768);
+    } finally {
+      observer.dispose();
+      if (previous.path === undefined) delete process.env.ROX_RUNTIME_OBSERVATION_PATH; else process.env.ROX_RUNTIME_OBSERVATION_PATH = previous.path;
+      if (previous.control === undefined) delete process.env.ROX_RUNTIME_CONTROL_PATH; else process.env.ROX_RUNTIME_CONTROL_PATH = previous.control;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('binds delayed descendant starts to their actual native spawn reservation', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'rox-observation-'));
+    const previous = { path: process.env.ROX_RUNTIME_OBSERVATION_PATH, control: process.env.ROX_RUNTIME_CONTROL_PATH };
+    const events: OmpRuntimeObservation[] = [];
+    const observer = new OmpRuntimeObserver(join(root, 'observer'), event => events.push(event), () => {});
+    try {
+      Object.assign(process.env, observer.env);
+      observer.beginRun('originating-run');
+      const factory = (await import(observer.extensionPath)).default;
+      const parentHooks = new Map<string, Function>();
+      const childHooks = new Map<string, Function>();
+      const api = (hooks: Map<string, Function>) => ({ on: (name: string, handler: Function) => hooks.set(name, handler),
+        getActiveTools: () => ['read'], getAllTools: () => [{ name: 'read' }, { name: 'hidden-tool' }], getThinkingLevel: () => 'high' });
+      factory(api(parentHooks)); factory(api(childHooks));
+      const parent = { agent: { kind: 'main', id: 'Main', name: 'main', depth: 0 }, sessionManager: { getSessionId: () => 'parent-session' }, cwd: '/fixture', getContextUsage: () => undefined };
+      const child = { ...parent, agent: { kind: 'sub', id: 'reserved-child', name: 'child', depth: 1, parentId: 'Main' } };
+      parentHooks.get('before_agent_start')!({ prompt: 'parent', systemPrompt: [] }, parent);
+      parentHooks.get('before_subagent_spawn')!({ invocationKind: 'task', spawnKey: 'reserved-child' }, parent);
+      observer.beginRun('next-user-run');
+      childHooks.get('before_agent_start')!({ prompt: 'delayed actual child', systemPrompt: [] }, child);
+      observer.drain();
+      expect(events.at(-1)?.runId).toBe('originating-run');
+      expect(events.at(-1)?.payload.toolDefinitions).toEqual([{ name: 'read' }]);
     } finally {
       observer.dispose();
       if (previous.path === undefined) delete process.env.ROX_RUNTIME_OBSERVATION_PATH; else process.env.ROX_RUNTIME_OBSERVATION_PATH = previous.path;
@@ -236,6 +268,19 @@ describe('OMP typed native runtime bridge', () => {
     expect(events.some(event => event.kind === 'trace.gap')).toBe(false);
   });
 
+  it('preserves actual native fallback readback and its explicit decision evidence', () => {
+    const bridge = new OmpRuntimeTraceBridge(); bridge.beginRun('current-turn', 'request');
+    const evidence = { from: 'fixture/primary', to: 'fallback/worker', role: 'task', reason: 'Native request rejected; configured fallback selected.' };
+    const events = bridge.map(native('retry_fallback_applied', evidence, { model: { provider: 'fallback', id: 'worker' } }));
+    const changed = events.find(event => event.kind === 'model.changed');
+    if (changed?.kind !== 'model.changed') throw new Error('Missing actual fallback model readback');
+    expect(changed.payload.model.confirmed).toMatchObject({ state: 'known', value: 'fallback/worker', origin: 'observed' });
+    const decision = events.find(event => event.kind === 'decision.recorded');
+    if (decision?.kind !== 'decision.recorded') throw new Error('Missing explicit native decision');
+    expect(decision.payload.provenance).toBe('explicit');
+    expect(JSON.parse(decision.payload.content.text!)).toEqual(evidence);
+  });
+
   it('forwards native host toolCallId without substituting the RPC frame id', async () => {
     const fake = createFakeOmp();
     const agent = new OmpAgent(makeOmpConfig(fake));
@@ -274,6 +319,7 @@ describe('OMP typed native runtime bridge', () => {
       const observations = events.flatMap(event => event.type === 'runtime_observation' ? [event.observation] : []);
       expect(observations[0]?.kind).toBe('terminal.started');
       expect(observations.every(event => event.toolUseId === 'exact-provider-tool-id')).toBe(true);
+      expect(observations.every(event => event.attemptId === undefined)).toBe(true);
       const final = observations.at(-1)!;
       if (final.kind !== 'terminal.completed') throw new Error('Missing real host command completion');
       expect(final.payload).toMatchObject({ stdout: { text: 'actual-out', isDelta: false }, stderr: { text: 'actual-err', isDelta: false }, exitCode: { state: 'known', value: 7 }, durationMs: { state: 'known' }, timedOut: false, execution: 'local', status: 'failed' });
@@ -284,5 +330,41 @@ describe('OMP typed native runtime bridge', () => {
         occurredAt: Date.now(), monotonicMs: performance.now(), result: { stdout: 'late', stderr: '', exitCode: 0, timedOut: false, cwd: fake.workspaceRoot, durationMs: 1 } });
       expect(events).toHaveLength(captured);
     } finally { internals._isProcessing = false; agent.destroy(); fake.cleanup(); }
+  });
+
+  it('creates a new attempt only for an actually started sidecar-to-local fallback', async () => {
+    const fake = createFakeOmp();
+    const agent = new OmpAgent(makeOmpConfig(fake));
+    const internals = agent as unknown as {
+      _isProcessing: boolean; runtimeObservationRunId: string;
+      createHostBashObserver: (toolCallId: string, generation: string, active: () => boolean) => (evidence: HostBashObservation) => void;
+      executeHostSessionTool: (name: string, args: Record<string, unknown>, observer?: (evidence: HostBashObservation) => void) => Promise<{ content: string; isError: boolean }>;
+      eventQueue: { enqueue: (event: AgentEvent) => void };
+    };
+    const events: AgentEvent[] = [];
+    let actualSidecarCalls = 0;
+    setHostBashPort(async () => { actualSidecarCalls++; throw new Error('fixture sidecar unavailable'); });
+    internals._isProcessing = true;
+    internals.runtimeObservationRunId = 'actual-fallback-run';
+    internals.eventQueue.enqueue = event => events.push(event);
+    try {
+      const observer = internals.createHostBashObserver('same-native-tool-id', 'actual-fallback-run', () => true);
+      const result = await internals.executeHostSessionTool('bash', { command: "printf 'local-fallback-output'" }, observer);
+      expect(actualSidecarCalls).toBe(1);
+      expect(result.isError).toBe(false);
+      const observations = events.flatMap(event => event.type === 'runtime_observation' ? [event.observation] : []);
+      const sidecar = observations.filter(event => event.kind.startsWith('terminal.') && 'execution' in event.payload && event.payload.execution === 'sidecar');
+      const local = observations.filter(event => event.kind.startsWith('terminal.') && 'execution' in event.payload && event.payload.execution === 'local');
+      expect(sidecar.map(event => event.kind)).toEqual(['terminal.started', 'terminal.completed']);
+      expect(sidecar.every(event => event.attemptId === undefined)).toBe(true);
+      expect(local[0]?.kind).toBe('terminal.started');
+      expect(local.at(-1)?.kind).toBe('terminal.completed');
+      expect(local[0]?.attemptId).toBe('same-native-tool-id:local:2');
+      expect(local.every(event => event.attemptId === local[0]?.attemptId)).toBe(true);
+      expect(observations.every(event => event.toolUseId === 'same-native-tool-id' && event.spanId === 'tool:same-native-tool-id')).toBe(true);
+      const completed = local.at(-1)!;
+      if (completed.kind !== 'terminal.completed') throw new Error('Missing actual fallback completion');
+      expect(completed.payload).toMatchObject({ status: 'succeeded', stdout: { text: 'local-fallback-output', isDelta: false }, exitCode: { state: 'known', value: 0 } });
+    } finally { setHostBashPort(null); internals._isProcessing = false; agent.destroy(); fake.cleanup(); }
   });
 });

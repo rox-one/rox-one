@@ -76,7 +76,7 @@ import type {
 import { EventQueue } from './backend/event-queue.ts';
 
 import type { ThinkingLevel } from './thinking-levels.ts';
-import type { PermissionMode } from './mode-manager.ts';
+import { shouldAllowToolInMode, type PermissionMode } from './mode-manager.ts';
 import type { LLMQueryRequest, LLMQueryResult } from './llm-tool.ts';
 
 import { BaseAgent } from './base-agent.ts';
@@ -97,6 +97,8 @@ import {
 import { SESSION_TOOL_NAMES } from './backend/pi/session-tool-defs.ts';
 import { buildSessionToolDefs, type SessionToolDef } from './session-tool-defs.ts';
 import type { McpClientPool } from '../mcp/mcp-pool.ts';
+import { isBuiltinReadOnlyToolCall } from '../sources/builtin-permissions.ts';
+import { loadSourceConfig } from '../sources/storage.ts';
 import type { SdkMcpServerConfig } from './backend/types.ts';
 import {
   SESSION_TOOL_REGISTRY,
@@ -1656,10 +1658,21 @@ export class OmpAgent extends BaseAgent {
     };
 
     try {
-      // Permission gate: yolo (craft allow-all) executes immediately;
-      // ask/safe routes through craft's permission dialog like OMP's own
-      // extension_ui permission prompts.
-      if (!this.autoApproveAtSpawn && this.onPermissionRequest) {
+      // Only the pinned, active built-in provider's known read operations may
+      // skip an ask/safe dialog. Other host calls keep the permission gate.
+      const trustedReadOnlySourceCall = this.mcpPool?.isProxyTool(toolName)
+        && this.sourceManager.getAllSources().some((source) => {
+          if (source.workspaceRootPath !== this.config.workspace.rootPath
+            || !this.sourceManager.isSourceActive(source.config.slug)
+            || !isBuiltinReadOnlyToolCall(source.config, toolName, args)) return false;
+          const current = loadSourceConfig(this.config.workspace.rootPath, source.config.slug);
+          return !!current && isBuiltinReadOnlyToolCall(current, toolName, args)
+            && shouldAllowToolInMode(toolName, args, 'safe', { permissionsContext: {
+              workspaceRootPath: this.config.workspace.rootPath,
+              activeSourceSlugs: [...this.sourceManager.getActiveSlugs()],
+            } }).allowed;
+        });
+      if (!this.autoApproveAtSpawn && !trustedReadOnlySourceCall && this.onPermissionRequest) {
         const allowed = await new Promise<boolean>((resolve) => {
           const requestId = `omp-host-perm-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
           this.pendingHostToolPermissions.set(requestId, resolve);
@@ -1715,7 +1728,9 @@ export class OmpAgent extends BaseAgent {
       const observation: RuntimeAgentObservation = {
         sourceEventId: randomUUID(), sourceId: `omp-host-bash:${runtimeRunId}:${toolCallId}`, sourceSeq: ++sourceSeq,
         agentId: 'root', toolUseId: toolCallId, spanId: `tool:${toolCallId}`,
-        attemptId: `${toolCallId}:${evidence.execution}:${attempt}`,
+        // The collector already owns the primary tool attempt. Only an
+        // actually started executor fallback creates a distinct attempt.
+        attemptId: attempt > 1 ? `${toolCallId}:${evidence.execution}:${attempt}` : undefined,
         occurredAt: known(evidence.occurredAt, 'ROX host bash executor'), clockDomain: 'rox-host', origin: 'observed',
         elapsedMs: startedMonotonicMs === undefined ? undefined : evidence.monotonicMs - startedMonotonicMs,
         kind: evidence.phase === 'started' ? 'terminal.started' : complete ? 'terminal.completed' : 'terminal.output',

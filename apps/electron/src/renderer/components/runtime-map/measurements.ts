@@ -1,4 +1,4 @@
-import type { Measurement } from '@rox/core/runtime-trace'
+import type { Measurement, RuntimeNode } from '@rox/core/runtime-trace'
 
 /** Keep provenance next to every value; an unknown observation is never zero. */
 export function measurementText<T>(measurement: Measurement<T> | undefined, format: (value: T) => string = String): string | undefined {
@@ -9,6 +9,11 @@ export function measurementText<T>(measurement: Measurement<T> | undefined, form
 
 export function durationText(measurement: Measurement<number> | undefined): string | undefined {
   return measurementText(measurement, ms => ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`)
+}
+
+/** Executor observations remain valid even when event clock domains differ. */
+export function runtimeNodeDuration(node: Pick<RuntimeNode, 'durationMs' | 'terminal'>): Measurement<number> {
+  return node.terminal?.durationMs?.state === 'known' ? node.terminal.durationMs : node.durationMs
 }
 
 /** Defense in depth for summaries/copy; the server remains the redaction authority. */

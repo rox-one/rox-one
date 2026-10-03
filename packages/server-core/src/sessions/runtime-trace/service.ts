@@ -24,9 +24,13 @@ export class RuntimeTraceService {
   private active = new Map<string, RuntimeTraceRun>()
   private delegated = new Map<string, RuntimeTraceRun>()
   private journals = new Map<string, RuntimeTraceJournal<RuntimeEvent>>()
+  private journalLeases = new Map<string, number>()
+  private journalAccess = new Map<string, number>()
+  private accessClock = 0
   private sourceSeq = new Map<string, number>()
+  private sourceRoots = new Map<string, string>()
   private seen = new Set<string>()
-  private tools = new Map<string, { run: RuntimeTraceRun; startedAt: number; name: string; command?: string; shell?: string; cwd?: string }>()
+  private tools = new Map<string, { run: RuntimeTraceRun; startedAt: number; name: string; command?: string; shell?: string; cwd?: string; structuredTerminal?: boolean }>()
   private providerTurns = new Map<string, RuntimeTraceRun>()
   private terminalRuns = new Set<string>()
   private nativeRuns = new Map<string, RuntimeTraceRun>()
@@ -34,7 +38,7 @@ export class RuntimeTraceService {
   private conductorRuns = new Map<string, RuntimeTraceRun>()
   private recordingFailures = new Map<string, TraceCoverage>()
   private preciseTerminals = new Set<string>()
-  constructor(private readonly resolveSession: (id: string) => RuntimeTraceSession | undefined, private readonly emit: (event: RuntimeEvent) => void, private readonly emitHealth?: (health: RuntimeTraceHealth) => void) {}
+  constructor(private readonly resolveSession: (id: string) => RuntimeTraceSession | undefined, private readonly emit: (event: RuntimeEvent) => void, private readonly emitHealth?: (health: RuntimeTraceHealth) => void, private readonly journalCacheLimit = 64) {}
 
   private recordingFailed(run: RuntimeTraceRun, error: unknown): void {
     const reason = String(sanitizeRuntimeTrace(error instanceof Error ? error.message : String(error))).slice(0, 500)
@@ -66,20 +70,59 @@ export class RuntimeTraceService {
     if (!ID.test(rootRunId)) throw new Error('Invalid runtime run id')
     return join(session.directory, 'meta', 'runtime-trace', rootRunId)
   }
-  private journal(run: Pick<RuntimeTraceRun, 'rootSessionId' | 'rootRunId' | 'workspaceId'>): RuntimeTraceJournal<RuntimeEvent> {
+  private async withJournal<T>(run: Pick<RuntimeTraceRun, 'rootSessionId' | 'rootRunId' | 'workspaceId'>, read: (journal: RuntimeTraceJournal<RuntimeEvent>) => Promise<T>): Promise<T> {
     const session = this.session(run.rootSessionId, run.workspaceId)
     const directory = this.directory(session, run.rootRunId)
     let journal = this.journals.get(directory)
     if (!journal) { journal = new RuntimeTraceJournal(directory); this.journals.set(directory, journal) }
-    return journal
+    // Acquire synchronously before yielding: no second journal instance can append the same root concurrently.
+    this.journalLeases.set(directory, (this.journalLeases.get(directory) ?? 0) + 1)
+    this.journalAccess.set(directory, ++this.accessClock)
+    try { return await read(journal) }
+    finally {
+      const leases = (this.journalLeases.get(directory) ?? 1) - 1
+      if (leases) this.journalLeases.set(directory, leases)
+      else this.journalLeases.delete(directory)
+      this.trimJournalCache()
+    }
   }
+
+  private trimJournalCache(): void {
+    const activeRoots = new Set([...this.active.values(), ...this.conductorRuns.values()].filter(run => !this.terminalRuns.has(run.runId)).map(run => run.rootRunId))
+    const idle = [...this.journals.keys()].filter(directory => !this.journalLeases.has(directory) && !activeRoots.has(directory.split(/[\\/]/).at(-1)!))
+      .sort((a, b) => (this.journalAccess.get(a) ?? 0) - (this.journalAccess.get(b) ?? 0))
+    for (const directory of idle) {
+      if (this.journals.size <= Math.max(1, this.journalCacheLimit)) break
+      this.journals.delete(directory)
+      this.journalAccess.delete(directory)
+      const rootRunId = directory.split(/[\\/]/).at(-1)!
+      for (const [sourceId, root] of this.sourceRoots) if (root === rootRunId) { this.sourceSeq.delete(sourceId); this.sourceRoots.delete(sourceId) }
+    }
+  }
+
+  private async nextSourceSequence(run: RuntimeTraceRun, sourceId: string): Promise<number> {
+    let previous = this.sourceSeq.get(sourceId)
+    if (previous === undefined) {
+      const recorded = await this.withJournal(run, journal => journal.all())
+      const durable = recorded.rows.reduce((seq, event) => event.sourceId === sourceId ? Math.max(seq, event.sourceSeq) : seq, 0)
+      // Concurrent callers may have resumed this source while the journal was loading.
+      previous = Math.max(durable, this.sourceSeq.get(sourceId) ?? 0)
+    }
+    const next = previous + 1
+    this.sourceSeq.set(sourceId, next)
+    this.sourceRoots.set(sourceId, run.rootRunId)
+    return next
+  }
+
+  /** Diagnostics for bounded-cache tests; contents remain exclusively in authorized session journals. */
+  getCachedJournalCount(): number { return this.journals.size }
 
   async content(run: RuntimeTraceRun, value: string): Promise<RuntimeContent> {
     const text = sanitizeRuntimeTrace(value) as string
     const byteLength = Buffer.byteLength(text)
     if (byteLength <= 8192) return { text, byteLength, availability: 'available', tokens: unknown('not-emitted') }
     try {
-      const ref = await this.journal(run).storeContent(text)
+      const ref = await this.withJournal(run, journal => journal.storeContent(text))
       return { text: text.slice(0, 4096), payloadRef: ref.id, byteLength, truncated: ref.truncated, availability: 'available', tokens: unknown('not-emitted') }
     } catch (error) { this.recordingFailed(run, error); throw error }
   }
@@ -94,7 +137,7 @@ export class RuntimeTraceService {
       for (const [key, entry] of Object.entries(node)) result[key] = key === 'text' && typeof entry === 'string' && Buffer.byteLength(entry) > 8192 ? entry.slice(0, 4096) : await walk(entry)
       if (typeof (node as Record<string, unknown>).text === 'string' && Buffer.byteLength((node as { text: string }).text) > 8192) {
         const text = (node as { text: string }).text
-        const ref = await this.journal(run).storeContent(text)
+        const ref = await this.withJournal(run, journal => journal.storeContent(text))
         result.payloadRef = ref.id; result.byteLength = Buffer.byteLength(text); result.truncated = ref.truncated
       }
       return result
@@ -105,8 +148,7 @@ export class RuntimeTraceService {
   async record<K extends RuntimeEventKind>(run: RuntimeTraceRun, kind: K, payload: RuntimeEventPayloads[K], extra: Partial<RuntimeEvent> = {}): Promise<RuntimeEvent> {
     try {
       const sourceId = extra.sourceId ?? `rox-session:${run.sessionId}:${run.runId}`
-      const sourceSeq = extra.sourceSeq ?? (this.sourceSeq.get(sourceId) ?? 0) + 1
-      if (extra.sourceSeq === undefined) this.sourceSeq.set(sourceId, sourceSeq)
+      const sourceSeq = extra.sourceSeq ?? await this.nextSourceSequence(run, sourceId)
       const now = Date.now()
       const eventId = randomUUID()
       // Only producer/correlation metadata is admitted from an executor; scope and sequence belong to this collector.
@@ -120,11 +162,11 @@ export class RuntimeTraceService {
       const bounded = await this.boundedPayload(run, payload)
       const safeObservation = { ...observation, payload: bounded }
       if (!isRuntimeObservation(safeObservation)) throw new Error(`Invalid sanitized runtime observation: ${kind}`)
-      const event = await this.journal(run).append(seq => {
+      const event = await this.withJournal(run, journal => journal.append(seq => {
         const candidate = { ...safeObservation, seq, receivedAt: now } as RuntimeEvent
         if (!isRuntimeEvent(candidate)) throw new Error(`Invalid collected runtime event: ${kind}`)
         return candidate
-      })
+      }))
       this.emit(event)
       return event
     } catch (error) { this.recordingFailed(run, error); throw error }
@@ -206,7 +248,7 @@ export class RuntimeTraceService {
   }
 
   /** Correlates late tool/background output with the run which actually launched it. */
-  async agentEvent(sessionId: string, event: { type: string; [key: string]: unknown }): Promise<void> {
+  async agentEvent(sessionId: string, event: { type: string; [key: string]: unknown }, options: { structuredHostTerminals?: boolean } = {}): Promise<void> {
     const current = this.active.get(sessionId)
     if (!current) return
     if (event.type === 'runtime_observation') return await this.observe(sessionId, event.observation as RuntimeAgentObservation)
@@ -225,13 +267,13 @@ export class RuntimeTraceService {
       const input = (event.input ?? {}) as Record<string, unknown>
       const name = String(event.toolName)
       const terminal = /^(?:bash|shell|terminal|mcp__session__bash)$/i.test(name)
-      this.tools.set(toolKey, { run, startedAt: Date.now(), name, command: terminal ? String(input.command ?? input.cmd ?? '') : undefined, shell: typeof input.shell === 'string' ? input.shell : undefined, cwd: typeof input.cwd === 'string' ? input.cwd : undefined })
+      this.tools.set(toolKey, { run, startedAt: Date.now(), name, structuredTerminal: terminal && options.structuredHostTerminals, command: terminal ? String(input.command ?? input.cmd ?? '') : undefined, shell: typeof input.shell === 'string' ? input.shell : undefined, cwd: typeof input.cwd === 'string' ? input.cwd : undefined })
       await this.record(run, 'tool.started', { name, input: await content(input), status: 'running' }, extra)
-      if (terminal && !this.preciseTerminals.has(toolKey)) await this.record(run, 'terminal.started', { command: String(input.command ?? input.cmd ?? ''), shell: typeof input.shell === 'string' ? input.shell : undefined, cwd: typeof input.cwd === 'string' ? input.cwd : undefined, status: 'running' }, extra)
+      if (terminal && !options.structuredHostTerminals && !this.preciseTerminals.has(toolKey)) await this.record(run, 'terminal.started', { command: String(input.command ?? input.cmd ?? ''), shell: typeof input.shell === 'string' ? input.shell : undefined, cwd: typeof input.cwd === 'string' ? input.cwd : undefined, status: 'running' }, extra)
     } else if (event.type === 'tool_result') {
       const status = event.isError ? 'failed' : 'succeeded'
       await this.record(run, 'tool.completed', { name: String(event.toolName ?? prior?.name ?? 'tool'), result: await content(event.result), status }, extra)
-      if (prior?.command !== undefined && (!toolKey || !this.preciseTerminals.has(toolKey))) await this.record(run, 'terminal.completed', { command: prior.command, shell: prior.shell, cwd: prior.cwd, stdout: await content(event.result), exitCode: unknown('not-emitted'), status }, extra)
+      if (prior?.command !== undefined && !prior.structuredTerminal && (!toolKey || !this.preciseTerminals.has(toolKey))) await this.record(run, 'terminal.completed', { command: prior.command, shell: prior.shell, cwd: prior.cwd, stdout: await content(event.result), exitCode: unknown('not-emitted'), status }, extra)
     } else if (event.type === 'thinking_delta' || event.type === 'thinking_complete') {
       await this.record(run, 'reasoning.output', { content: await content(event.text), provenance: 'provider', complete: event.type === 'thinking_complete' }, extra)
 
@@ -308,7 +350,7 @@ export class RuntimeTraceService {
 
   private async writeLink(session: RuntimeTraceSession, rootRunId: string, rootSessionId: string): Promise<void> {
     const directory = this.directory(session, rootRunId)
-    for (const part of [join(session.directory, 'meta'), join(session.directory, 'meta', 'runtime-trace'), directory]) {
+    for (const part of [session.directory, join(session.directory, 'meta'), join(session.directory, 'meta', 'runtime-trace'), directory]) {
       await mkdir(part, { recursive: true, mode: 0o700 })
       if ((await lstat(part)).isSymbolicLink()) throw new Error('Runtime trace link directory must not be a symlink')
     }
@@ -346,7 +388,7 @@ export class RuntimeTraceService {
     const runs: RuntimeRunSummary[] = []
     for (const rootRunId of runIds) {
       const rootSessionId = await this.rootForQuery({ ...query, rootRunId })
-      const page = await this.journal({ rootSessionId, rootRunId, workspaceId: query.workspaceId }).all()
+      const page = await this.withJournal({ rootSessionId, rootRunId, workspaceId: query.workspaceId }, journal => journal.all())
       const first = page.rows.filter(isRuntimeEvent).find(event => event.kind === 'run.accepted')
       if (!first || first.kind !== 'run.accepted') continue
       const terminal = page.rows.filter(isRuntimeEvent).reverse().find(event => (event.kind === 'run.completed' || event.kind === 'run.interrupted') && event.runId === rootRunId)
@@ -365,32 +407,31 @@ export class RuntimeTraceService {
     const session = this.session(query.sessionId, query.workspaceId)
     if (!(await this.runsFor(session)).includes(query.rootRunId)) throw new Error('Runtime run does not belong to session')
     const rootSessionId = await this.rootForQuery(query)
-    const journal = this.journal({ rootSessionId, rootRunId: query.rootRunId, workspaceId: query.workspaceId })
-    const page = await journal.snapshot(query.afterSeq, query.limit)
-    const all = await journal.all()
+    const { page, all } = await this.withJournal({ rootSessionId, rootRunId: query.rootRunId, workspaceId: query.workspaceId }, async journal => ({ page: await journal.snapshot(query.afterSeq, query.limit), all: await journal.all() }))
     const valid = page.rows.filter(isRuntimeEvent).map(event => sanitizeRuntimeTrace(event) as RuntimeEvent)
     return { events: valid, cursor: { rootRunId: query.rootRunId, seq: page.cursor }, hasMore: page.hasMore, coverage: this.coverage(query.rootRunId, all.rows, all.integrity) }
   }
   async readPayload(query: RuntimePayloadQuery): Promise<RuntimePayloadPage> {
     const rootSessionId = await this.rootForQuery(query)
-    const journal = this.journal({ rootSessionId, rootRunId: query.rootRunId, workspaceId: query.workspaceId })
     const owner = this.session(query.sessionId, query.workspaceId)
     if (!(await this.runsFor(owner)).includes(query.rootRunId)) throw new Error('Runtime run does not belong to session')
-    const page = await journal.all()
-    // References are admitted only if the requested run actually published them.
-    const hasRef = page.rows.some(event => JSON.stringify(event).includes(`"payloadRef":"${query.payloadRef}"`))
-    if (!hasRef) throw new Error('Runtime payload does not belong to run')
-    const content = await journal.readContent(query.payloadRef)
-    if (content === null) throw new Error('Runtime payload unavailable')
-    const offset = query.offset ?? 0
-    const limit = query.limit ?? 65536
-    if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 262144) throw new Error('Invalid runtime payload range')
-    const text = content.slice(offset, offset + limit)
-    const referenceTruncated = (node: unknown): boolean => {
-      if (!node || typeof node !== 'object') return false
-      if ((node as Record<string, unknown>).payloadRef === query.payloadRef && (node as Record<string, unknown>).truncated === true) return true
-      return Object.values(node).some(referenceTruncated)
-    }
-    return { text, offset, nextOffset: offset + text.length < content.length ? offset + text.length : undefined, byteLength: Buffer.byteLength(content), truncated: page.rows.some(referenceTruncated) }
+    return await this.withJournal({ rootSessionId, rootRunId: query.rootRunId, workspaceId: query.workspaceId }, async journal => {
+      const page = await journal.all()
+      // References are admitted only if the requested run actually published them.
+      const hasRef = page.rows.some(event => JSON.stringify(event).includes(`"payloadRef":"${query.payloadRef}"`))
+      if (!hasRef) throw new Error('Runtime payload does not belong to run')
+      const content = await journal.readContent(query.payloadRef)
+      if (content === null) throw new Error('Runtime payload unavailable')
+      const offset = query.offset ?? 0
+      const limit = query.limit ?? 65536
+      if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 262144) throw new Error('Invalid runtime payload range')
+      const text = content.slice(offset, offset + limit)
+      const referenceTruncated = (node: unknown): boolean => {
+        if (!node || typeof node !== 'object') return false
+        if ((node as Record<string, unknown>).payloadRef === query.payloadRef && (node as Record<string, unknown>).truncated === true) return true
+        return Object.values(node).some(referenceTruncated)
+      }
+      return { text, offset, nextOffset: offset + text.length < content.length ? offset + text.length : undefined, byteLength: Buffer.byteLength(content), truncated: page.rows.some(referenceTruncated) }
+    })
   }
 }

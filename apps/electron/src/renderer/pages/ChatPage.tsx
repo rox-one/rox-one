@@ -22,7 +22,8 @@ import { toast } from 'sonner'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { StyledDropdownMenuContent, StyledDropdownMenuItem, StyledDropdownMenuSeparator } from '@/components/ui/styled-dropdown'
-import { useAppShellContext, usePendingPermission, usePendingCredential, useSessionOptionsFor, useSession as useSessionData } from '@/context/AppShellContext'
+import { AppShellProvider, useAppShellContext, usePendingPermission, usePendingCredential, useSessionOptionsFor, useSession as useSessionData } from '@/context/AppShellContext'
+import { useSessionModelCatalog } from '@/hooks/useSessionModelCatalog'
 import { rendererPerf } from '@/lib/perf'
 import { isAbsolutePath } from '@/lib/drafts'
 import { navigate, routes } from '@/lib/navigate'
@@ -119,11 +120,14 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   const [runtimeFocusMessageId, setRuntimeFocusMessageId] = React.useState<string>()
   const [runtimeFocusRequestId, setRuntimeFocusRequestId] = React.useState(0)
   const [runtimeInitialMode, setRuntimeInitialMode] = React.useState<'execution' | 'context' | 'editor'>('execution')
+  const [runtimeModeRequestId, setRuntimeModeRequestId] = React.useState(0)
 
+  const appShellContext = appShell
   const {
     activeWorkspaceId,
     panelId,
     llmConnections,
+    runtimeSummary,
     workspaceDefaultLlmConnection,
     onSendMessage,
     onOpenFile,
@@ -296,10 +300,23 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   // Track window focus state for marking session as read when app regains focus
   const [isWindowFocused, setIsWindowFocused] = React.useState(true)
   React.useEffect(() => {
-    window.electronAPI.getWindowFocusState().then(setIsWindowFocused)
-    const cleanup = window.electronAPI.onWindowFocusChange(setIsWindowFocused)
-    return cleanup
-  }, [])
+    let current = true
+    void window.electronAPI.getWindowFocusState().then(focused => {
+      if (current) setIsWindowFocused(focused)
+    }).catch(() => { if (current) setIsWindowFocused(document.hasFocus()) })
+    const updateDocumentFocus = () => { if (current) setIsWindowFocused(document.hasFocus()) }
+    window.addEventListener('focus', updateDocumentFocus)
+    window.addEventListener('blur', updateDocumentFocus)
+    const cleanup = window.electronAPI.onWindowFocusChange(focused => {
+      if (current) setIsWindowFocused(focused)
+    })
+    return () => {
+      current = false
+      cleanup()
+      window.removeEventListener('focus', updateDocumentFocus)
+      window.removeEventListener('blur', updateDocumentFocus)
+    }
+  }, [activeWorkspaceId])
 
   // Track which session user is viewing (for unread state machine).
   // This tells main process user is looking at this session, so:
@@ -371,7 +388,10 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       if (targetPanel && targetPanel !== panelId) return
       if (!targetPanel && isFocusedPanel === false) return
       if (targetId === sessionId && (view === 'map' || view === 'outline' || view === 'standard')) {
-        if (view === 'map') setRuntimeInitialMode(mode === 'editor' ? 'editor' : 'execution')
+        if (view === 'map') {
+          setRuntimeInitialMode(mode === 'editor' ? 'editor' : 'execution')
+          setRuntimeModeRequestId(previous => previous + 1)
+        }
         setSessionView(view)
       }
     }
@@ -408,9 +428,9 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   React.useEffect(() => {
     let cancelled = false
     setAttachmentsValue([])
-    hydrateDraftAttachments(sessionId).then((atts) => {
+    void hydrateDraftAttachments(sessionId).then((atts) => {
       if (!cancelled) setAttachmentsValue(atts)
-    })
+    }).catch(() => { /* Keep the empty draft when scoped attachment hydration is unavailable. */ })
     return () => { cancelled = true }
   }, [sessionId, hydrateDraftAttachments])
 
@@ -420,11 +440,15 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   }, [sessionId, onAttachmentsChange])
 
   // Session model change handler - persists per-session model and connection
-  const handleModelChange = React.useCallback((model: string, connection?: string) => {
-    if (activeWorkspaceId) {
-      window.electronAPI.setSessionModel(sessionId, activeWorkspaceId, model, connection)
+  const handleModelChange = React.useCallback(async (model: string, connection?: string) => {
+    if (!activeWorkspaceId) return
+    try {
+      await window.electronAPI.setSessionModel(sessionId, activeWorkspaceId, model, connection)
+    } catch (error) {
+      console.error('Failed to change session model:', error)
+      toast.error(t('chat.modelChangeFailed'))
     }
-  }, [sessionId, activeWorkspaceId])
+  }, [sessionId, activeWorkspaceId, t])
 
   // Session connection change handler - can only change before first message
   const handleConnectionChange = React.useCallback(async (connectionSlug: string) => {
@@ -437,25 +461,33 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   }, [sessionId])
 
   // Check if session's locked connection has been removed
-  const connectionUnavailable = React.useMemo(() =>
-    isSessionConnectionUnavailable(session?.llmConnection, llmConnections),
-    [session?.llmConnection, llmConnections]
-  )
+  const sessionConnection = session?.llmConnection ?? sessionMeta?.llmConnection
+  const catalogRead = useSessionModelCatalog(activeWorkspaceId, sessionId, sessionConnection, runtimeSummary)
+  // The startup summary describes one default, not the full connection inventory.
+  // A failed/pending read is not evidence that a locked connection was removed.
+  const connectionUnavailable = runtimeSummary
+    ? catalogRead.connectionUnavailable
+    : isSessionConnectionUnavailable(sessionConnection, llmConnections)
+  const scopedAppShellContext = React.useMemo(() => ({ ...appShellContext,
+    sessionModelCatalog: runtimeSummary ? catalogRead.catalog : undefined,
+  }), [appShellContext, runtimeSummary, catalogRead.catalog])
 
   // Effective model for this session (session-specific or global fallback)
   const effectiveModel = React.useMemo(() => {
-    if (session?.model) return session.model
+    const storedModel = session?.model ?? sessionMeta?.model
+    if (storedModel) return storedModel
 
     // When connection is unavailable, don't resolve through a different connection
-    if (connectionUnavailable) return session?.model ?? ''
+    if (connectionUnavailable) return storedModel ?? ''
 
     const connectionSlug = resolveEffectiveConnectionSlug(
       session?.llmConnection, workspaceDefaultLlmConnection, llmConnections
     )
     const connection = connectionSlug ? llmConnections.find(c => c.slug === connectionSlug) : null
 
-    return connection?.defaultModel ?? ''
-  }, [session?.id, session?.model, session?.llmConnection, workspaceDefaultLlmConnection, llmConnections, connectionUnavailable])
+    return connection?.defaultModel ?? catalogRead.catalog?.defaultModel
+      ?? (runtimeSummary && (!sessionConnection || sessionConnection === runtimeSummary.slug) ? runtimeSummary.defaultModel : '') ?? ''
+  }, [session?.id, session?.model, sessionMeta?.model, sessionConnection, workspaceDefaultLlmConnection, llmConnections, runtimeSummary, catalogRead.catalog, connectionUnavailable])
 
   // Working directory for this session
   const workingDirectory = session?.workingDirectory
@@ -796,6 +828,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
                   focusMessageId={runtimeFocusMessageId}
                   focusRequestId={runtimeFocusRequestId}
                   initialMode={runtimeInitialMode}
+                  modeRequestId={runtimeModeRequestId}
                   onClose={() => setSessionView('standard')}
                   onOpenMessage={(id, toolUseId) => {
                     const mounted = session?.messages.find(message => message.id === id || message.backendMessageId === id || (toolUseId && message.toolUseId === toolUseId))
@@ -873,6 +906,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       runtimeFocusMessageId,
       runtimeFocusRequestId,
       runtimeInitialMode,
+      runtimeModeRequestId,
       sessionMindMapLoading,
       messageLoadState.error,
       handleMindMapNavigate,
@@ -1280,10 +1314,12 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         isProcessing: sessionMeta.isProcessing || false,
         isFlagged: sessionMeta.isFlagged,
         workingDirectory: sessionMeta.workingDirectory,
+        llmConnection: sessionMeta.llmConnection,
+        model: sessionMeta.model,
         enabledSourceSlugs: sessionMeta.enabledSourceSlugs,
       }
       return (
-        <>
+        <AppShellProvider value={scopedAppShellContext}>
           <div className="h-full flex flex-col">
             <PanelHeader  title={displayTitle} titleMenu={titleMenu} compactTitleMenu={compactTitleMenu} viewSwitch={sessionViewSwitch} leadingAction={leadingAction} actions={headerActions} rightSidebarButton={rightSidebarButton} isRegeneratingTitle={isAsyncOperationOngoing} />
             <div className="flex-1 flex flex-col min-h-0">
@@ -1341,7 +1377,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
             onSubmit={handleRenameSubmit}
             placeholder={t('chat.enterSessionName')}
           />
-        </>
+        </AppShellProvider>
       )
     }
 
@@ -1358,7 +1394,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   }
 
   return (
-    <>
+    <AppShellProvider value={scopedAppShellContext}>
       <div className="h-full flex flex-col">
         <PanelHeader  title={displayTitle} titleMenu={titleMenu} compactTitleMenu={compactTitleMenu} viewSwitch={sessionViewSwitch} leadingAction={leadingAction} actions={headerActions} rightSidebarButton={rightSidebarButton} isRegeneratingTitle={isAsyncOperationOngoing} />
         <div className="flex-1 flex flex-col min-h-0">
@@ -1427,7 +1463,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         onSubmit={handleRenameSubmit}
         placeholder={t('chat.enterSessionName')}
       />
-    </>
+    </AppShellProvider>
   )
 })
 

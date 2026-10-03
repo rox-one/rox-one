@@ -16,6 +16,7 @@ export class RuntimeTraceJournal<T extends { seq: number; eventId: string }> {
   private pending: Promise<void> = Promise.resolve()
   private initialized: Promise<T[]> | undefined
   private rows: T[] = []
+  private identities = new Map<string, T>()
   private bytes = 0
   private integrity: 'complete' | 'partial' = 'complete'
 
@@ -26,7 +27,10 @@ export class RuntimeTraceJournal<T extends { seq: number; eventId: string }> {
   constructor(readonly directory: string, private readonly limits: { contentBytes?: number; contentFiles?: number } = {}) {}
 
   private loadContentInventory(): Promise<void> {
-    return this.contentInventory ??= (async () => {
+    if (this.contentInventory) return this.contentInventory
+    this.contentBytes = 0
+    this.contentFiles.clear()
+    const operation = (async () => {
       for (const entry of await readdir(join(this.directory, 'content'), { withFileTypes: true })) {
         if (entry.isSymbolicLink()) throw new Error('Runtime content must not be a symlink')
         if (!entry.isFile()) continue
@@ -36,6 +40,8 @@ export class RuntimeTraceJournal<T extends { seq: number; eventId: string }> {
       }
       if (this.contentBytes > (this.limits.contentBytes ?? MAX_RUNTIME_RUN_CONTENT_BYTES) || this.contentFiles.size > (this.limits.contentFiles ?? MAX_RUNTIME_RUN_CONTENT_FILES)) throw new Error('Runtime trace run content exceeds quota')
     })()
+    this.contentInventory = operation.catch(error => { this.contentInventory = undefined; throw error })
+    return this.contentInventory
   }
 
   private async prepare(): Promise<void> {
@@ -78,9 +84,10 @@ export class RuntimeTraceJournal<T extends { seq: number; eventId: string }> {
         if (!line) continue
         try {
           const row = JSON.parse(line) as T
-          if (!Number.isSafeInteger(row.seq) || row.seq <= previous || typeof row.eventId !== 'string') throw new Error('Invalid trace sequence')
+          if (!Number.isSafeInteger(row.seq) || row.seq <= previous || typeof row.eventId !== 'string' || this.identities.has(row.eventId)) throw new Error('Invalid trace sequence')
           previous = row.seq
           this.rows.push(row)
+          this.identities.set(row.eventId, row)
         } catch { this.integrity = 'partial' }
       }
       return this.rows
@@ -94,6 +101,8 @@ export class RuntimeTraceJournal<T extends { seq: number; eventId: string }> {
     const operation = this.pending.then(async () => {
       await this.load()
       result = createRow((this.rows.at(-1)?.seq ?? 0) + 1)
+      const existing = this.identities.get(result.eventId)
+      if (existing) { result = existing; return }
       const line = JSON.stringify(result) + '\n'
       const bytes = Buffer.byteLength(line)
       if (this.bytes + bytes > MAX_JOURNAL_BYTES) throw new Error('Runtime trace journal exceeds size limit')
@@ -104,6 +113,7 @@ export class RuntimeTraceJournal<T extends { seq: number; eventId: string }> {
       try { await file.writeFile(line) } finally { await file.close() }
       this.bytes += bytes
       this.rows.push(result)
+      this.identities.set(result.eventId, result)
     })
     // A failed write remains visible to this caller, and does not poison future recovery.
     this.pending = operation.catch(() => {})
@@ -150,7 +160,10 @@ export class RuntimeTraceJournal<T extends { seq: number; eventId: string }> {
           this.contentFiles.add(name)
           if (this.contentBytes > (this.limits.contentBytes ?? MAX_RUNTIME_RUN_CONTENT_BYTES)) throw new Error('Runtime trace run content exceeds quota')
         }
-      } else if ((await lstat(path)).isSymbolicLink()) throw new Error('Runtime content must not be a symlink')
+      } else {
+        if ((await lstat(path)).isSymbolicLink()) throw new Error('Runtime content must not be a symlink')
+        if (await this.readContent(id) !== bounded) throw new Error('Runtime content integrity mismatch')
+      }
       result = { id, bytes, truncated: source.length > MAX_RUNTIME_CONTENT_BYTES }
     })
     this.contentPending = operation.catch(() => {})

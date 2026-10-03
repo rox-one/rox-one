@@ -412,8 +412,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const readWorkspaceGenerationRef = React.useRef(0)
   const [notesReadError, setNotesReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const [assetsReadError, setAssetsReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
-  const readUnavailable = notesReadError?.workspaceId === activeWorkspaceId ? notesReadError
-    : assetsReadError?.workspaceId === activeWorkspaceId ? assetsReadError : null
+  const readUnavailable = notesReadError?.workspaceId === activeWorkspaceId ? notesReadError : null
+  const assetsUnavailable = assetsReadError?.workspaceId === activeWorkspaceId ? assetsReadError : null
   React.useLayoutEffect(() => {
     // A committed workspace lease invalidates A requests even across A → B → A.
     readWorkspaceRef.current = activeWorkspaceId
@@ -1611,7 +1611,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }
 
   const importFiles = React.useCallback(async (files: File[] | FileList) => {
-    if (!activeWorkspaceId || !activeNote) return
+    if (!activeWorkspaceId || !activeNote || assetsUnavailable) return
     const list = Array.from(files)
     if (list.length === 0) return
     try {
@@ -1627,10 +1627,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('notes.toast.importAssetFailed'))
     }
-  }, [activeWorkspaceId, activeNote, refreshAssets, t])
+  }, [activeWorkspaceId, activeNote, assetsUnavailable, refreshAssets, t])
 
   const handleImportAsset = async () => {
-    if (!activeWorkspaceId || !activeNote) return
+    if (!activeWorkspaceId || !activeNote || assetsUnavailable) return
     const paths = await window.electronAPI.openFileDialog()
     const path = paths[0]
     if (!path) return
@@ -1897,12 +1897,13 @@ h1,h2,h3{margin-top:1.5em}
   }, [sideSessionId, sideSessionPrompt, getDraft, onSendMessage, onInputChange])
 
   const openAssetRenameDialog = (asset: NoteAsset) => {
+    if (assetsUnavailable) return
     setAssetRenameTarget(asset)
     setAssetRenameName(asset.name)
   }
 
   const handleRenameAsset = async () => {
-    if (!activeWorkspaceId || !assetRenameTarget || !assetRenameName.trim()) return
+    if (!activeWorkspaceId || !assetRenameTarget || !assetRenameName.trim() || assetsUnavailable) return
     setAssetBusy(true)
     try {
       const result = await window.electronAPI.renameNoteAsset(activeWorkspaceId, assetRenameTarget.relativePath, assetRenameName.trim())
@@ -1920,7 +1921,7 @@ h1,h2,h3{margin-top:1.5em}
   }
 
   const handleDeleteAsset = async (asset: NoteAsset) => {
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId || assetsUnavailable) return
     setAssetBusy(true)
     try {
       await window.electronAPI.deleteNoteAsset(activeWorkspaceId, asset.relativePath)
@@ -1935,7 +1936,7 @@ h1,h2,h3{margin-top:1.5em}
   }
 
   const handleCleanUnusedAssets = async () => {
-    if (!activeWorkspaceId || orphanAssets.length === 0) return
+    if (!activeWorkspaceId || orphanAssets.length === 0 || assetsUnavailable) return
     setAssetBusy(true)
     try {
       for (const asset of orphanAssets) {
@@ -2227,7 +2228,9 @@ h1,h2,h3{margin-top:1.5em}
         </div>
         </DndContext>
         <div className="shrink-0 px-3 py-2 text-[11px] text-muted-foreground/80">
-          {t('notes.vault.noteCount', { count: notes.length })} · {t('notes.vault.assetCount', { count: allAssets.length })}
+          {t('notes.vault.noteCount', { count: notes.length })} · {assetsUnavailable
+            ? `${t('notes.inspector.assets')}: ${t('common.unavailable')}`
+            : t('notes.vault.assetCount', { count: allAssets.length })}
         </div>
       </ShellSidebarPortal>
       {!shellSidebarTarget && <NotesRailSash
@@ -2273,7 +2276,7 @@ h1,h2,h3{margin-top:1.5em}
           >
             <SquarePen className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote} title={t('notes.toolbar.attachAsset')}>
+          <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote || Boolean(assetsUnavailable)} title={t('notes.toolbar.attachAsset')}>
             <Paperclip className="h-4 w-4" />
           </button>
           <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
@@ -2289,6 +2292,14 @@ h1,h2,h3{margin-top:1.5em}
             {saveError ? t('notes.save.failed') : saving ? t('common.saving') : dirty ? t('notes.save.autosaving') : activeNote ? t('notes.save.saved') : ''}
           </span>
         </div>
+
+        {assetsUnavailable && (
+          <div className="mx-3 mb-2 flex min-w-0 items-center justify-between gap-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground"
+            data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code}>
+            <p role="status">{t('notes.inspector.assets')}: {t('common.unavailable')}</p>
+            <Button variant="ghost" size="sm" onClick={() => { void refreshAssets() }}>{t('common.retry')}</Button>
+          </div>
+        )}
 
         {activeNote && saveError && (
           <div role="alert" data-testid="notes-save-recovery" className="mx-3 mb-2 grid min-w-0 gap-2 rounded-md bg-destructive/5 px-3 py-2 text-xs">
@@ -2775,6 +2786,8 @@ h1,h2,h3{margin-top:1.5em}
         notes={notes}
         allTasks={allTasks}
         allAssets={allAssets}
+        assetsUnavailable={assetsUnavailable?.code}
+        onRetryAssets={() => { void refreshAssets() }}
         selectedTag={selectedTag}
         tagDraft={tagDraft}
         propertyEntries={propertyEntries}
@@ -2910,6 +2923,8 @@ h1,h2,h3{margin-top:1.5em}
       onCreateMissingLink={createMissingLinkNote}
       assetDialogOpen={assetDialogOpen}
       allAssets={allAssets}
+      assetsUnavailable={assetsUnavailable?.code}
+      onRetryAssets={() => { void refreshAssets() }}
       orphanAssets={orphanAssets}
       assetBusy={assetBusy}
       onAssetDialogOpenChange={setAssetDialogOpen}

@@ -18,15 +18,16 @@ export interface RuntimeMapDockProps {
   workspaceId: string; sessionId: string; panelId?: string
   onOpenMessage?: (messageId: string, toolUseId?: string) => void; onClose?: () => void
   editor?: React.ReactNode; selectedEventId?: string; onOpenCapability?: (ref: CapabilityRef) => void
-  focusMessageId?: string; focusToolUseId?: string; focusRequestId?: number; initialMode?: 'execution' | 'context' | 'editor'
+  requestedRootRunId?: string; eventRequestId?: number
+  focusMessageId?: string; focusToolUseId?: string; focusRequestId?: number; modeRequestId?: number; initialMode?: 'execution' | 'context' | 'editor'
   legacyMessages?: readonly Message[]
 }
 
 export function RuntimeMapDock({ workspaceId, sessionId, panelId, legacyMessages, ...props }: RuntimeMapDockProps) {
-  const [rootRunId, setRootRunId] = React.useState<string>()
+  const [rootRunId, setRootRunId] = React.useState<string | undefined>(props.requestedRootRunId)
   const [replayCursor, setReplayCursor] = React.useState<number>()
   const trace = useRuntimeTrace({ workspaceId, sessionId, rootRunId, legacyMessages })
-  React.useEffect(() => { setRootRunId(undefined); setReplayCursor(undefined) }, [workspaceId, sessionId])
+  React.useEffect(() => { setRootRunId(props.requestedRootRunId); setReplayCursor(undefined) }, [workspaceId, sessionId, props.requestedRootRunId, props.eventRequestId])
   const graph = React.useMemo(() => replayCursor === undefined ? trace.graph : buildRuntimeGraph(projectRuntimeEvents(trace.events, { ...trace.state.scope, upToSeq: replayCursor })), [trace.graph, trace.events, trace.state.scope, replayCursor])
   const focusToolUseId = props.focusToolUseId || legacyMessages?.find(message => message.id === props.focusMessageId || message.backendMessageId === props.focusMessageId)?.toolUseId
   return <RuntimeMapView key={`${workspaceId}:${sessionId}:${panelId || 'primary'}`} {...props}
@@ -44,7 +45,7 @@ export interface RuntimeMapViewProps extends Omit<RuntimeMapDockProps, 'workspac
 }
 
 /** Render-only surface is also used by the isolated renderer verification harness. */
-export function RuntimeMapView({ graph, runs, coverage, scopeKey, loading, error, onReload, readPayload, onOpenMessage, onClose, editor, selectedEventId, focusMessageId, focusToolUseId, focusRequestId, initialMode = 'execution', onOpenCapability, selectedRootRunId, onRunChange, replayCursor, replayMinimum = 0, replayMaximum = -1, onReplayCursorChange }: RuntimeMapViewProps) {
+export function RuntimeMapView({ graph, runs, coverage, scopeKey, loading, error, onReload, readPayload, onOpenMessage, onClose, editor, selectedEventId, eventRequestId, focusMessageId, focusToolUseId, focusRequestId, modeRequestId, initialMode = 'execution', onOpenCapability, selectedRootRunId, onRunChange, replayCursor, replayMinimum = 0, replayMaximum = -1, onReplayCursorChange }: RuntimeMapViewProps) {
   const { t } = useTranslation()
   const [mode, setMode] = React.useState<RuntimeMapMode>(initialMode)
   const [query, setQuery] = React.useState('')
@@ -58,6 +59,7 @@ export function RuntimeMapView({ graph, runs, coverage, scopeKey, loading, error
   const canvas = React.useRef<RuntimeCanvasApi>(null)
   const seenSeq = React.useRef(0)
   const focusedMessage = React.useRef<string | undefined>(undefined)
+  const focusedExternalEvent = React.useRef<string | undefined>(undefined)
   const maximum = graph.nodes.reduce((value, node) => Math.max(value, node.endSeq), 0)
   const layoutRootRunId = graph.nodes[0]?.event.rootRunId
   const layout = React.useMemo(() => layoutRuntimeGraph(graph, timelineMode), [graph.topologyVersion, timelineMode, scopeKey, selectedRootRunId, layoutRootRunId])
@@ -76,16 +78,21 @@ export function RuntimeMapView({ graph, runs, coverage, scopeKey, loading, error
   const selectNode = React.useCallback((node: RuntimeNode) => { setSelectedId(node.id); setFollowing(false); if ((node.messageId || node.toolUseId) && onOpenMessage) onOpenMessage(node.messageId ?? '', node.toolUseId) }, [onOpenMessage])
   function selectEvent(id: string) {
     const node = graph.nodes.find(item => item.id === id || item.events.some(event => event.eventId === id))
-    if (!node) return
+    if (!node) return false
     setQuery(''); setFilter('all'); setMode('execution')
     setCollapsed(previous => { const next = new Set(previous); next.delete(node.agentId); return next })
     selectNode(node)
     const index = graph.nodes.findIndex(item => item.id === node.id)
     setPage(Math.floor(index / 200))
     requestAnimationFrame(() => canvas.current?.focusNode(node.id))
+    return true
   }
-  React.useEffect(() => { if (selectedEventId) selectEvent(selectedEventId) }, [selectedEventId])
-  React.useEffect(() => { setMode(initialMode) }, [initialMode])
+  React.useEffect(() => {
+    if (!selectedEventId) { focusedExternalEvent.current = undefined; return }
+    const requestKey = `${selectedEventId}:${eventRequestId ?? 0}`
+    if (focusedExternalEvent.current !== requestKey && selectEvent(selectedEventId)) focusedExternalEvent.current = requestKey
+  }, [selectedEventId, eventRequestId, graph.topologyVersion])
+  React.useEffect(() => { setMode(initialMode) }, [initialMode, modeRequestId])
   React.useEffect(() => {
     const focusKey = `${focusMessageId}:${focusToolUseId}:${focusRequestId ?? 0}`
     if ((!focusMessageId && !focusToolUseId) || focusedMessage.current === focusKey) return

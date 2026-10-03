@@ -589,6 +589,7 @@ const EXPECTED_CHANNELS: string[] = [
   'server:statusChanged',
   'session:event',
   'session:getModel',
+  'session:getModelCatalog',
   'session:setModel',
   'sessions:bulkChanged',
   'sessions:bulkUpdate',

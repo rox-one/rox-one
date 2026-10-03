@@ -2,7 +2,7 @@ import * as React from 'react'
 import { ArrowLeft, ExternalLink, X, Link2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { CapabilityRef, RuntimeNode, RuntimeContent, RuntimeContextSnapshot, RuntimeToolPayload, RuntimeTerminalPayload, Measurement } from '@rox/core/runtime-trace'
-import { contextFill, durationText, measurementText, safeDisplayText } from '../measurements'
+import { contextFill, durationText, measurementText, runtimeNodeDuration, safeDisplayText } from '../measurements'
 import { nodeContent, nodeTitle } from '../nodes/node-content'
 import { ContentViewer, type ReadRuntimePayload, type RuntimeContentScope } from './ContentViewer'
 
@@ -20,6 +20,7 @@ export function RuntimeInspector({ node, readPayload, onClose, onOpenMessage, on
   const scope = { workspaceId: node.event.workspaceId, sessionId: node.event.rootSessionId, rootRunId: node.event.rootRunId }
   const viewer = (label: string, content?: RuntimeContent) => <ContentViewer key={label} label={label} content={content} scope={scope} readPayload={readPayload} />
   const event = node.event
+  const duration = runtimeNodeDuration(node)
   const messageId = node.messageId || event.messageId
   async function copyLink() {
     const query = new URLSearchParams({ workspace: scope.workspaceId, session: scope.sessionId, run: scope.rootRunId, event: node.id })
@@ -29,7 +30,7 @@ export function RuntimeInspector({ node, readPayload, onClose, onOpenMessage, on
     <header className="runtime-inspector-header"><strong>{nodeTitle(node, t)}</strong><button type="button" className="runtime-icon-button" title={t('runtimeMap.closeInspector')} aria-label={t('runtimeMap.closeInspector')} onClick={onClose}><X size={15} /></button></header>
     <div className="runtime-inspector-actions">{(messageId || node.toolUseId) && onOpenMessage && <button type="button" onClick={() => onOpenMessage(messageId ?? '', node.toolUseId)}><ArrowLeft size={13} />{t('runtimeMap.showInChat')}</button>}<button type="button" onClick={copyLink}><Link2 size={13} />{t('runtimeMap.copyEventLink')}</button></div>
     <div className="runtime-inspector-scroll">
-      <dl className="runtime-properties"><Property label={t('runtimeMap.eventType')} value={event.kind} /><Property label={t('runtimeMap.agent')} value={node.agentId} /><Property label={t('runtimeMap.sequence')} value={`#${node.seq}${node.endSeq !== node.seq ? `–${node.endSeq}` : ''}`} /><Property label={t('runtimeMap.duration')} value={durationText(node.durationMs) || t('runtimeMap.unknown')} title={node.durationMs.state === 'known' ? node.durationMs.source : undefined} />{node.status && <Property label={t('runtimeMap.state')} value={t(`runtimeMap.status.${node.status}`)} />}{node.attemptId && <Property label={t('runtimeMap.attempt')} value={node.attemptId} />}</dl>
+      <dl className="runtime-properties"><Property label={t('runtimeMap.eventType')} value={event.kind} /><Property label={t('runtimeMap.agent')} value={node.agentId} /><Property label={t('runtimeMap.sequence')} value={`#${node.seq}${node.endSeq !== node.seq ? `–${node.endSeq}` : ''}`} /><Property label={t('runtimeMap.duration')} value={durationText(duration) || t('runtimeMap.unknown')} title={duration.state === 'known' ? duration.source : undefined} />{node.status && <Property label={t('runtimeMap.state')} value={t(`runtimeMap.status.${node.status}`)} />}{node.attemptId && <Property label={t('runtimeMap.attempt')} value={node.attemptId} />}</dl>
       {(() => {
         switch (event.kind) {
           case 'context.captured': case 'context.changed': return <ContextDetails snapshot={event.payload.snapshot} scope={scope} readPayload={readPayload} onOpenCapability={onOpenCapability} />
@@ -39,7 +40,7 @@ export function RuntimeInspector({ node, readPayload, onClose, onOpenMessage, on
           }
           case 'terminal.started': case 'terminal.output': case 'terminal.completed': {
             const payload = node.terminal ?? node.events.reduce<RuntimeTerminalPayload>((current, item) => item.kind === 'terminal.started' || item.kind === 'terminal.output' || item.kind === 'terminal.completed' ? { ...current, ...item.payload } : current, { command: event.payload.command })
-            return <><p className="runtime-muted">{t('runtimeMap.inertTerminal')}</p>{viewer(t('runtimeMap.command'), { text: payload.command })}<dl className="runtime-properties"><Property label={t('runtimeMap.shell')} value={payload.shell || t('runtimeMap.unknown')} /><Property label={t('runtimeMap.workingDirectory')} value={payload.cwd || t('runtimeMap.unknown')} /><Property label={t('runtimeMap.exitCode')} value={measurementText(payload.exitCode) || t('runtimeMap.unknown')} /></dl>{viewer('stdout', payload.stdout || node.content)}{viewer('stderr', payload.stderr)}</>
+            return <><p className="runtime-muted">{t('runtimeMap.inertTerminal')}</p>{viewer(t('runtimeMap.command'), { text: payload.command })}<dl className="runtime-properties"><Property label={t('runtimeMap.shell')} value={payload.shell || t('runtimeMap.unknown')} /><Property label={t('runtimeMap.workingDirectory')} value={payload.cwd || t('runtimeMap.unknown')} /><Property label={t('runtimeMap.exitCode')} value={measurementText(payload.exitCode) || t('runtimeMap.unknown')} /></dl>{viewer('stdout', payload.stdout)}{viewer('stderr', payload.stderr)}</>
           }
           case 'agent.assigned': case 'agent.started': case 'agent.completed': {
             const assignment = node.events.find(item => item.kind === 'agent.assigned')

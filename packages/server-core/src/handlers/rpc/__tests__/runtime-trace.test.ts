@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
-import type { RuntimeTraceSnapshot, RuntimeEventsPage } from '@rox/core/runtime-trace'
+import type { RuntimeTraceSnapshot, RuntimeEventsPage, RuntimeEvent } from '@rox/core/runtime-trace'
 import { createRuntimeTraceFixture } from '@rox/core/runtime-trace/fixture'
 import { isRuntimeEvent } from '@rox/core/runtime-trace/validation'
 import type { HandlerFn, RpcServer, RequestContext } from '../../../transport/types'
@@ -54,6 +54,24 @@ describe('runtime trace RPC', () => {
     expect(wrapper?.type).toBe('runtime_trace')
     for (const event of events) expect(isRuntimeEvent(nativeRuntimeTraceEvent(event))).toBe(true)
   })
+  it('withholds delegated delivered prompts while preserving the root user request', () => {
+    const root = createRuntimeTraceFixture().find(event => event.kind === 'run.accepted')!
+    const child = { ...root, parentAgentId: root.agentId, runId: 'delegated-child-run', payload: { ...root.payload, prompt: { text: 'Host-only delegated instruction /private/host/input.txt', availability: 'available' as const } } } as RuntimeEvent
+    const projected = nativeRuntimeTraceEvent(child)
+    expect(isRuntimeEvent(projected)).toBe(true)
+    expect(JSON.stringify(projected)).not.toContain('Host-only delegated instruction')
+    expect(nativeRuntimeTraceEvent(root)).toEqual(root)
+  })
+
+  it('redacts terminal executor errors and shell paths for signed native scopes', () => {
+    const original = createRuntimeTraceFixture().find(event => event.kind === 'terminal.completed')!
+    const event = { ...original, payload: { ...original.payload, error: 'Cannot execute /private/host/hidden-command', shell: '/private/custom-shell' } } as RuntimeEvent
+    const projected = nativeRuntimeTraceEvent(event)
+    expect(isRuntimeEvent(projected)).toBe(true)
+    expect(JSON.stringify(projected)).not.toContain('/private/host/hidden-command')
+    expect(JSON.stringify(projected)).not.toContain('/private/custom-shell')
+  })
+
   it('exposes recording health without granting native host diagnostic contents', () => {
     const safe = nativeSessionEvent({ type: 'runtime_trace_health', sessionId: 'session', workspaceId: 'ws', rootRunId: 'run', coverage: { state: 'partial', source: 'runtime', missing: ['recording-failure'], reason: 'Cannot write /private/host/secret.txt' } })
     expect(safe?.type).toBe('runtime_trace_health')

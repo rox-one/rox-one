@@ -31,6 +31,11 @@ import type { SessionProvenance } from '@rox/shared/memory/types'
 import type { AgentBudgetSnapshot } from '@rox/shared/agent'
 import type { EventSink } from '../transport'
 
+export interface NativeMemoryContext {
+  owner: { issuer: string; subject: string }
+  assertAuthorized: () => void
+}
+
 export interface ISessionManager {
   getRuntimeTraceSnapshot?(query: import('@rox/core/runtime-trace').RuntimeTraceQuery): Promise<import('@rox/core/runtime-trace').RuntimeTraceSnapshot>
   readRuntimeTraceEvents?(query: import('@rox/core/runtime-trace').RuntimeEventsQuery): Promise<import('@rox/core/runtime-trace').RuntimeEventsPage>
@@ -44,6 +49,7 @@ export interface ISessionManager {
   initialize(): Promise<void>
   cleanup(): void
   setEventSink(sink: EventSink): void
+  setNativeMemoryContextPolicy?(required: (workspaceId: string) => boolean): void
   flushAllSessions(): Promise<void>
 
   // ---------------------------------------------------------------------------
@@ -62,7 +68,7 @@ export interface ISessionManager {
   createSession(
     workspaceId: string,
     options?: CreateSessionOptions,
-    internal?: { emitCreatedEvent?: boolean },
+    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext },
   ): Promise<Session>
   /** Resolved working directory of a live session (Tasks Conductor uses it so children inherit
    *  the orchestrator's cwd). */
@@ -144,7 +150,7 @@ export interface ISessionManager {
     existingMessageId?: string,
     _isAuthRetry?: boolean,
     onAck?: (messageId: string) => void,
-    rpcContext?: { callerClientId?: string; runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch },
+    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext; runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch },
     _internalRetryKind?: 'auth' | 'failover',
   ): Promise<void>
   cancelProcessing(sessionId: string, silent?: boolean): Promise<void>
