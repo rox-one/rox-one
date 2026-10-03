@@ -533,7 +533,6 @@ describe('OMP typed native runtime bridge', () => {
       _isProcessing: boolean; runtimeObservationRunId: string;
       getSessionToolContext: () => SessionToolContext;
       createHostBashObserver: (toolCallId: string, generation: string, active: () => boolean) => (evidence: HostBashObservation) => void;
-      getSessionToolContext: () => SessionToolContext;
       executeHostSessionTool: (name: string, args: Record<string, unknown>, observer?: (evidence: HostBashObservation) => void) => Promise<{ content: string; isError: boolean }>;
       eventQueue: { enqueue: (event: AgentEvent) => void };
     };

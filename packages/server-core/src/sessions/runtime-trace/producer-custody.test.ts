@@ -15,7 +15,7 @@ async function until(ready: () => boolean) {
   }
 }
 
-test('actual TaskRunner captures each output version before a blocked passive queue and canonical repair', async () => {
+test('actual TaskRunner captures each output version before a blocked passive queue and canonical verdict re-ask', async () => {
   const root = await mkdtemp(join(tmpdir(), 'rox-task-producer-custody-'))
   let release!: () => void
   const blocked = new Promise<void>(resolve => { release = resolve })
@@ -28,13 +28,17 @@ test('actual TaskRunner captures each output version before a blocked passive qu
     const sent: Array<{ id: string; prompt: string }> = []
     const observed: TaskRuntimeObservation[] = []
     let children = 0
+    let paused = false
     const host: ConductorSessionHost = {
       async createSession() { return { id: `child-${++children}` } },
       async sendMessage(id, prompt) { sent.push({ id, prompt }) },
       async setSessionStatus() {}, async setKanbanColumn() {}, async setTaskNodeCount() {}, async cancelProcessing() {},
       getSessionWorkingDirectory() { return root }, getSessionFinalText() { return undefined },
       onSessionComplete(listener) { listeners.add(listener); return () => listeners.delete(listener) },
-      async observeTaskRun(observation) { await blocked; observed.push(observation) },
+      async observeTaskRun(observation) {
+        if (observation.entry.kind === 'node-finished' && observation.entry.state === 'done') { paused = true; await blocked }
+        observed.push(observation)
+      },
     }
     const runner = new TaskRunner({ host, workspaceId: 'owned-workspace', workspaceRoot: root })
     runner.run('queued-repair', { runId: 'owned-run', orchestratorSessionId: 'orchestrator' })
@@ -44,23 +48,22 @@ test('actual TaskRunner captures each output version before a blocked passive qu
     await until(() => sent.some(call => call.id === 'child-1'))
     complete('child-1', 'FIRST_OUTPUT', 'first-answer')
     await until(() => sent.filter(call => call.id === 'orchestrator').length === 1)
-    complete('orchestrator', 'VERDICT: FAIL — improve it', 'first-verdict')
-    await until(() => sent.some(call => call.id === 'child-2'))
-    complete('child-2', 'REPAIRED_OUTPUT', 'repaired-answer')
+    await until(() => paused)
+    complete('orchestrator', 'NOT_A_VERDICT', 'first-verdict')
     await until(() => sent.filter(call => call.id === 'orchestrator').length === 2)
     complete('orchestrator', 'VERDICT: PASS', 'final-verdict')
     expect(runner.getRunState('queued-repair', 'owned-run')?.status).toBe('completed')
-    expect(readNodeOutput(root, 'queued-repair', 'owned-run', 'answer')).toEqual({ text: 'REPAIRED_OUTPUT' })
+    expect(readNodeOutput(root, 'queued-repair', 'owned-run', 'answer')).toEqual({ text: 'FIRST_OUTPUT' })
     expect(readNodeOutput(root, 'queued-repair', 'owned-run', '__verdict__')).toEqual({ text: 'VERDICT: PASS' })
-    expect(observed).toHaveLength(0)
+    expect(observed.filter(value => value.entry.kind === 'verdict')).toHaveLength(0)
     release()
     await until(() => observed.some(value => value.entry.kind === 'run-completed'))
     const outputs = observed.filter(value => value.entry.kind === 'node-finished' && value.entry.state === 'done')
-    expect(outputs.map(value => value.output)).toEqual([{ text: 'FIRST_OUTPUT' }, { text: 'REPAIRED_OUTPUT' }])
-    expect(outputs.map(value => value.messageId)).toEqual(['first-answer', 'repaired-answer'])
-    expect(outputs.map(value => value.outputRef)).toEqual(Array(2).fill('tasks/queued-repair/runs/owned-run/nodes/answer.json'))
+    expect(outputs.map(value => value.output)).toEqual([{ text: 'FIRST_OUTPUT' }])
+    expect(outputs.map(value => value.messageId)).toEqual(['first-answer'])
+    expect(outputs.map(value => value.outputRef)).toEqual(['tasks/queued-repair/runs/owned-run/nodes/answer.json'])
     const verdicts = observed.filter(value => value.entry.kind === 'verdict')
-    expect(verdicts.map(value => value.output?.text)).toEqual(['VERDICT: FAIL — improve it', 'VERDICT: PASS'])
+    expect(verdicts.map(value => value.output?.text)).toEqual(['NOT_A_VERDICT', 'VERDICT: PASS'])
     expect(verdicts.map(value => value.messageId)).toEqual(['first-verdict', 'final-verdict'])
   } finally { release(); await rm(root, { recursive: true, force: true }) }
 })
