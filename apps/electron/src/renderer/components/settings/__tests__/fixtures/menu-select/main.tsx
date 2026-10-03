@@ -1,0 +1,14 @@
+import * as React from 'react'
+import {createRoot} from 'react-dom/client'
+import {I18nextProvider,initReactI18next} from 'react-i18next'
+import i18n from 'i18next'
+import en from '../../../../../../../../../packages/shared/src/i18n/locales/en.json'
+import '@/index.css'
+import {SettingsMenuSelect,SettingsMenuSelectRow} from '@/components/settings/SettingsMenuSelect'
+import {SettingsRow} from '@/components/settings/SettingsRow'
+const initial=[{value:'en',label:'English',description:'Default language'},{value:'es',label:'Español',description:'Spanish'},{value:'blocked',label:'Unavailable',disabled:true},{value:'fr',label:'Français',description:'French'},{value:'jp',label:'日本語',description:'Japanese'}]
+const fixture={commits:[] as Array<{control:string,value:string}>,hovers:[] as Array<string|null>,disable:(_disabled:boolean)=>{},replaceOptions:(_options:typeof initial)=>{}}
+;(window as any).__settingsFixture=fixture
+function App(){const [plain,setPlain]=React.useState('en'),[search,setSearch]=React.useState('en'),[disabled,setDisabled]=React.useState(false),[options,setOptions]=React.useState(initial);fixture.disable=setDisabled;fixture.replaceOptions=setOptions;const change=(control:string,set:(value:string)=>void)=>(value:string)=>{fixture.commits.push({control,value});set(value)};return <div style={{padding:40,width:800}}><button>Outside focus</button><SettingsMenuSelectRow label="Setting language" description="Language selection stays unchanged until confirmation" value={plain} onValueChange={change('plain',setPlain)} options={options} searchable={false} disabled={disabled} onHover={value=>fixture.hovers.push(value)}/><SettingsRow label="Custom theme" description="Live theme preview"><SettingsMenuSelect value={search} onValueChange={change('search',setSearch)} options={options} searchable={true} onHover={value=>fixture.hovers.push(value)}/></SettingsRow><SettingsRow label="Disabled choices" description="No available choices"><SettingsMenuSelect value="en" onValueChange={change('empty',()=>{})} options={initial.map(option=>({...option,disabled:true}))} searchable={false}/></SettingsRow><div id="explicit-description">Caller description</div><SettingsRow label="Context fallback" description="Row description"><SettingsMenuSelect aria-label="Explicit control" aria-describedby="explicit-description" value="en" onValueChange={change('explicit',()=>{})} options={initial} searchable={false}/></SettingsRow><output data-testid="commits">{fixture.commits.length}</output><output data-testid="value">{plain}</output></div>}
+await i18n.use(initReactI18next).init({lng:'en',fallbackLng:'en',resources:{en:{translation:en}},keySeparator:false,interpolation:{escapeValue:false}})
+createRoot(document.getElementById('root')!).render(<I18nextProvider i18n={i18n}><App/></I18nextProvider>)
