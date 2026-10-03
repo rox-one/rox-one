@@ -1,0 +1,88 @@
+import { test, expect, type Page, type TestInfo } from '@playwright/test'
+
+const marker = 'rox-product-tour-application-test-only'
+const flag = 'craft-feature-product-tour-v1'
+async function openApp(page: Page, route: string, enabled = false) {
+  await page.addInitScript(({ flag, enabled }) => {
+    localStorage.setItem('i18nextLng', 'en')
+    if (enabled) localStorage.setItem(flag, JSON.stringify(true))
+    else localStorage.removeItem(flag)
+  }, { flag, enabled })
+  await page.goto(`/?mode=web&route=${encodeURIComponent(route)}`)
+  await expect(page.locator('#root')).not.toBeEmpty({ timeout: 60_000 })
+  await expect.poll(() => page.evaluate(() => (window as any).__productTourApplication?.marker)).toBe(marker)
+}
+async function evidence(page: Page) {
+  return page.request.get('/__fixture/evidence').then(response => response.json())
+}
+async function attachEvidence(page: Page, info: TestInfo) {
+  await info.attach('application-evidence', { body: Buffer.from(JSON.stringify(await evidence(page), null, 2)), contentType: 'application/json' })
+}
+
+test('APP-01/APP-06: an existing profile without the tour flag loads the real App without a forced tour', async ({ page }, info) => {
+  await openApp(page, 'allSessions')
+  await expect(page.getByText('Sessions: Unavailable', { exact: true })).toBeVisible()
+  await expect(page.locator('[data-product-tour-overlay]')).toHaveCount(0)
+  await expect(page.locator('[data-product-tour-popover]')).toHaveCount(0)
+  expect(await page.evaluate(() => localStorage.getItem('craft-feature-product-tour-v1'))).toBeNull()
+  const calls = (await evidence(page)).operations as Array<{ method: string }>
+  expect(calls.some(call => ['sendMessage', 'respondToPermission', 'startRecording', 'performOAuth', 'runAutomation'].includes(call.method))).toBe(false)
+  await attachEvidence(page, info)
+})
+
+test('APP-05: restricted WebUI keeps host inventory unavailable and denies a direct host-session read', async ({ page }, info) => {
+  await openApp(page, 'allSessions', true)
+  await expect(page.getByText('Sessions: Unavailable', { exact: true })).toBeVisible()
+  expect(await page.evaluate(async () => {
+    try { await window.electronAPI.getSessions(); return false }
+    catch { return true }
+  })).toBe(true)
+  expect(await page.evaluate(() => (window as any).__productTourApplication.restricted)).toBe(true)
+  await expect(page.locator('[data-product-tour-overlay]')).toHaveCount(0)
+  await attachEvidence(page, info)
+})
+
+test('DOMAIN-12: the real Notes UI creates, edits, commits, reloads, and finds a canonical native note', async ({ page }, info) => {
+  await openApp(page, 'notes')
+  const title = `Acceptance note ${Date.now()}`
+  const content = 'Unique acceptance phrase 49217; persisted by the actual native journal.'
+  await page.getByRole('button', { name: 'New note', exact: true }).first().click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('textbox').fill(title)
+  await dialog.getByRole('textbox').press('Enter')
+  await expect(dialog).toHaveCount(0)
+  const editor = page.locator('[contenteditable="true"]').first()
+  await expect(editor).toBeVisible()
+  await editor.fill(content)
+  await expect.poll(async () => {
+    const result = await evidence(page)
+    return result.nativeFiles.some((file: { actualContent: string; content: string }) => file.actualContent.includes(content) && file.actualContent === file.content)
+  }).toBe(true)
+  await page.reload()
+  await expect(page.locator('#root')).not.toBeEmpty()
+  await expect(page.locator('[contenteditable="true"]').first()).toContainText(content)
+  const search = await page.evaluate(async (phrase) => {
+    const workspaceId = (window as any).__productTourApplication.workspaceId
+    return window.electronAPI.searchNotes(workspaceId, phrase)
+  }, '49217')
+  expect(search.some((note: { title: string }) => note.title === title)).toBe(true)
+  const result = await evidence(page)
+  expect(result.canonicalNotes.some((note: { revision: number }) => note.revision >= 2)).toBe(true)
+  await attachEvidence(page, info)
+})
+
+test('T-LEARNING-LIBRARY/T-LEARNING-CONTROLS: production learning controls start a voluntary non-mutating tour', async ({ page }, info) => {
+  await openApp(page, 'settings/learning', true)
+  await expect(page.getByTestId('learning-settings')).toBeVisible()
+  await page.getByTestId('learning-start-OBT-25').click()
+  const popup = page.locator('[data-product-tour-popover]')
+  await expect(popup).toBeVisible()
+  await expect(popup).toHaveAttribute('data-product-tour-step', 'learning.library')
+  await popup.getByRole('button', { name: /Next|Continue/i }).click()
+  await expect(popup).toHaveAttribute('data-product-tour-step', 'learning.controls')
+  await popup.getByRole('button', { name: /Next|Continue|Finish/i }).click()
+  await expect(popup).toHaveCount(0)
+  const calls = (await evidence(page)).operations as Array<{ method: string }>
+  expect(calls.some(call => ['sendMessage', 'respondToPermission', 'performOAuth', 'runAutomation', 'toggleAutomation'].includes(call.method))).toBe(false)
+  await attachEvidence(page, info)
+})
