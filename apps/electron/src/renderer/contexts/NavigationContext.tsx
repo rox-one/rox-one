@@ -662,115 +662,129 @@ export function NavigationProvider({
       if (!workspaceId) return
       const owner = navigationOwnerRef.current
       const requestRevision = owner.revision
+      let targetPanelId = store.get(focusedPanelIdAtom)
+      let targetRoute = store.get(focusedPanelRouteAtom)
       const isCurrent = () => owner.active && navigationOwnerRef.current === owner && owner.revision === requestRevision
+        && store.get(focusedPanelIdAtom) === targetPanelId && store.get(focusedPanelRouteAtom) === targetRoute
 
       switch (parsed.name) {
+        case 'new-chat':
         case 'new-session': {
-          const createOptions: import('../../shared/types').CreateSessionOptions = {}
-          if (parsed.params.mode) {
-            const parsedMode = parsePermissionMode(parsed.params.mode)
-            if (parsedMode) {
-              createOptions.permissionMode = parsedMode
+          const previousSuppression = suppressAutoSelectRef.current
+          suppressAutoSelectRef.current = true
+          try {
+            const createOptions: import('../../shared/types').CreateSessionOptions = {}
+            if (parsed.params.mode) {
+              const parsedMode = parsePermissionMode(parsed.params.mode)
+              if (parsedMode) {
+                createOptions.permissionMode = parsedMode
+              }
             }
-          }
-          if (parsed.params.workdir) {
-            createOptions.workingDirectory = parsed.params.workdir as 'user_default' | 'none' | string
-          }
-          if (parsed.params.model) {
-            createOptions.model = parsed.params.model
-          }
-          if (parsed.params.systemPrompt) {
-            createOptions.systemPromptPreset = parsed.params.systemPrompt as 'default' | 'mini' | string
-          }
-          if (parsed.params.status) {
-            createOptions.sessionStatus = parsed.params.status
-          }
-          if (parsed.params.label) {
-            createOptions.labels = [parsed.params.label]
-          }
-          if (parsed.params.project) {
-            createOptions.projectId = parsed.params.project
-          }
-          const session = await onCreateSession(workspaceId, createOptions)
-          if (!isCurrent()) return
-
-          if (parsed.params.name) {
-            await window.electronAPI.sessionCommand(session.id, { type: 'rename', name: parsed.params.name })
-            if (!isCurrent()) return
-          }
-
-          if (parsed.params.status) {
-            updateSessionMeta(session.id, { sessionStatus: parsed.params.status })
-          }
-          if (parsed.params.label) {
-            updateSessionMeta(session.id, { labels: [parsed.params.label] })
-          }
-
-          if (parsed.params.status) {
-            await window.electronAPI.sessionCommand(session.id, { type: 'setSessionStatus', state: parsed.params.status })
-            if (!isCurrent()) return
-          }
-          if (parsed.params.label) {
-            await window.electronAPI.sessionCommand(session.id, { type: 'setLabels', labels: [parsed.params.label] })
-            if (!isCurrent()) return
-          }
-
-          // Determine navigation filter
-          const filter: import('../../shared/types').SessionFilter =
-            parsed.params.status ? { kind: 'state', stateId: parsed.params.status } :
-            parsed.params.label ? { kind: 'label', labelId: parsed.params.label } :
-            { kind: 'allSessions' }
-
-          if (options?.newPanel) {
-            // Open the new session in a new panel using lane-aware routing (pushPanel auto-focuses it)
-            pushPanel({
-              route: routes.view.allSessions(session.id) as ViewRoute,
-              targetLaneId: options.targetLaneId,
-              intent: 'explicit',
-            })
-          } else {
-            // Navigate the focused panel to the new session
-            const newState: NavigationState = {
-              navigator: 'sessions',
-              filter,
-              details: { type: 'session', sessionId: session.id },
+            if (parsed.params.workdir) {
+              createOptions.workingDirectory = parsed.params.workdir as 'user_default' | 'none' | string
             }
-            const route = buildRouteFromNavigationState(newState) as ViewRoute
-            store.set(updateFocusedPanelRouteAtom, route)
-            // Session selection sync handled by effect
-          }
-
-          setNavigationRevision(revision => revision + 1)
-
-          // Parse badges from params
-          let badges: ContentBadge[] | undefined
-          if (parsed.params.badges) {
-            try {
-              badges = JSON.parse(parsed.params.badges) as ContentBadge[]
-            } catch (e) {
-              console.warn('[Navigation] Failed to parse badges param:', e)
+            if (parsed.params.model) {
+              createOptions.model = parsed.params.model
             }
-          }
+            if (parsed.params.systemPrompt) {
+              createOptions.systemPromptPreset = parsed.params.systemPrompt as 'default' | 'mini' | string
+            }
+            if (parsed.params.status) {
+              createOptions.sessionStatus = parsed.params.status
+            }
+            if (parsed.params.label) {
+              createOptions.labels = [parsed.params.label]
+            }
+            if (parsed.params.project) {
+              createOptions.projectId = parsed.params.project
+            }
+            const session = await onCreateSession(workspaceId, createOptions)
+            if (!isCurrent()) return
 
-          // Handle input: either auto-send or pre-fill
-          if (parsed.params.input) {
-            const shouldSend = parsed.params.send === 'true'
-            if (shouldSend) {
-              setTimeout(() => {
-                if (!isCurrent()) return
-                window.electronAPI.sendMessage(
-                  session.id,
-                  parsed.params.input!,
-                  undefined,
-                  undefined,
-                  badges ? { badges } : undefined
-                )
-              }, 100)
-            } else if (onInputChange) {
-              setTimeout(() => {
-                if (!isCurrent()) return
-                onInputChange(session.id, parsed.params.input!)
-              }, 100)
+            if (parsed.params.name) {
+              await window.electronAPI.sessionCommand(session.id, { type: 'rename', name: parsed.params.name })
+              if (!isCurrent()) return
+            }
+
+            if (parsed.params.status) {
+              updateSessionMeta(session.id, { sessionStatus: parsed.params.status })
+            }
+            if (parsed.params.label) {
+              updateSessionMeta(session.id, { labels: [parsed.params.label] })
+            }
+
+            if (parsed.params.status) {
+              await window.electronAPI.sessionCommand(session.id, { type: 'setSessionStatus', state: parsed.params.status })
+              if (!isCurrent()) return
+            }
+            if (parsed.params.label) {
+              await window.electronAPI.sessionCommand(session.id, { type: 'setLabels', labels: [parsed.params.label] })
+              if (!isCurrent()) return
+            }
+
+            // Determine navigation filter
+            const filter: import('../../shared/types').SessionFilter =
+              parsed.params.status ? { kind: 'state', stateId: parsed.params.status } :
+              parsed.params.label ? { kind: 'label', labelId: parsed.params.label } :
+              { kind: 'allSessions' }
+
+            if (options?.newPanel) {
+              // Open the new session in a new panel using lane-aware routing (pushPanel auto-focuses it)
+              pushPanel({
+                route: routes.view.allSessions(session.id) as ViewRoute,
+                targetLaneId: options.targetLaneId,
+                intent: 'explicit',
+              })
+            } else {
+              // Navigate the focused panel to the new session
+              const newState: NavigationState = {
+                navigator: 'sessions',
+                filter,
+                details: { type: 'session', sessionId: session.id },
+              }
+              const route = buildRouteFromNavigationState(newState) as ViewRoute
+              store.set(updateFocusedPanelRouteAtom, route)
+              // Session selection sync handled by effect
+            }
+
+            targetPanelId = store.get(focusedPanelIdAtom)
+            targetRoute = store.get(focusedPanelRouteAtom)
+            setNavigationRevision(revision => revision + 1)
+
+            // Parse badges from params
+            let badges: ContentBadge[] | undefined
+            if (parsed.params.badges) {
+              try {
+                badges = JSON.parse(parsed.params.badges) as ContentBadge[]
+              } catch (e) {
+                console.warn('[Navigation] Failed to parse badges param:', e)
+              }
+            }
+
+            // Handle input: either auto-send or pre-fill
+            if (parsed.params.input) {
+              const shouldSend = parsed.params.send === 'true'
+              if (shouldSend) {
+                setTimeout(() => {
+                  if (!isCurrent()) return
+                  window.electronAPI.sendMessage(
+                    session.id,
+                    parsed.params.input!,
+                    undefined,
+                    undefined,
+                    badges ? { badges } : undefined
+                  )
+                }, 100)
+              } else if (onInputChange) {
+                setTimeout(() => {
+                  if (!isCurrent()) return
+                  onInputChange(session.id, parsed.params.input!)
+                }, 100)
+              }
+            }
+          } finally {
+            if (owner.active && navigationOwnerRef.current === owner && owner.revision === requestRevision) {
+              suppressAutoSelectRef.current = previousSuppression
             }
           }
           break
@@ -929,6 +943,8 @@ export function NavigationProvider({
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
+      // A browser-history request supersedes pending create/prefill/send work.
+      navigationOwnerRef.current.revision += 1
       // Update sequence tracking
       const eventSeq = event.state?.seq ?? 0
       historySeqRef.current = eventSeq

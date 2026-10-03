@@ -90,12 +90,19 @@ await mkdir(noteRoot, { recursive: true })
 const folder = workspaces.createWorkspaceAtPath(workspaceRoot, 'UI-001 acceptance', { workingDirectory: workspaceRoot },
   { id: 'ws_ui001_fixture', slug: 'ui-001', kind: 'personal' })
 await workspaces.saveWorkspaceConfig(workspaceRoot, { ...folder, notesPath: noteRoot })
+// New workspaces genuinely seed builtins. Disable every seed-owned source
+// before native boot so route proof never starts provider or MCP diagnostics.
+const disabledSeedSources = sources.loadWorkspaceSources(workspaceRoot).map(source => {
+  sources.saveSourceConfig(workspaceRoot, { ...source.config, enabled: false })
+  return source.config.slug
+})
 const workspace = config.addWorkspace({ name: folder.name, rootPath: workspaceRoot, kind: 'personal' })
 const sessionA = await sessions.createSession(workspaceRoot, { name: 'UI001 session A', workingDirectory: workspaceRoot })
 const sessionB = await sessions.createSession(workspaceRoot, { name: 'UI001 session B', workingDirectory: workspaceRoot })
-const project = projects.createProject(workspaceRoot, { name: 'UI001 project', workingDirectory: workspaceRoot })
+const project = projects.createProject(workspaceRoot, { name: 'UI001 project', description: 'UI001 canonical project description', workingDirectory: workspaceRoot })
 const page = pages.createPage(workspaceRoot, { name: 'UI001 page', content: '<!doctype html><html><body><h1>UI001 canonical page body</h1></body></html>' })
 const source = await sources.createSource(workspaceRoot, { name: 'UI001 local source', provider: 'local', type: 'local', local: { path: workspaceRoot }, enabled: false })
+if (sources.getEnabledSources(workspaceRoot).length !== 0) throw new Error('Seed has enabled sources; provider-free route proof cannot start')
 const skillSlug = 'ui001-workspace-skill'
 await mkdir(join(workspaceRoot, 'skills', skillSlug), { recursive: true })
 await writeFile(join(workspaceRoot, 'skills', skillSlug, 'SKILL.md'), '---\nname: UI001 skill\ndescription: Disposable native selection acceptance\n---\n\nUI001 canonical skill body.\n')
@@ -106,4 +113,4 @@ stored.activeSessionId = sessionA.id
 config.saveConfig(stored)
 console.log(JSON.stringify({ profile, workspaceId: workspace.id, workspaceSlug: workspace.slug, workspaceRoot, noteRoot,
   sessionA: sessionA.id, sessionB: sessionB.id, projectSlug: project.slug, pageSlug: page.slug, sourceSlug: source.slug, skillSlug,
-  noteId: 'ui001-note', runtime }))
+  noteId: 'ui001-note', runtime, disabledSeedSources }))

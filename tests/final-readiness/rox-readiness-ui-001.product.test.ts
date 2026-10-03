@@ -10,7 +10,8 @@ const sha256 = (bytes: string | Uint8Array) => createHash('sha256').update(bytes
 const redactLog = (value: string) => value
   .replace(/([?&](?:token|access_token|refresh_token)=)[^\s&"']+/gi, '$1[REDACTED]')
   .replace(/(Bearer\s+)[A-Za-z0-9._~+\/-]+/gi, '$1[REDACTED]')
-  .replace(/((?:"|')?(?:accessToken|refreshToken|access_token|refresh_token|apiKey|api_key)(?:"|')?\s*[:=]\s*(?:"|')?)[^\s,"']+/gi, '$1[REDACTED]')
+  .replace(/((?:"|')?(?:[A-Za-z_]*token|apiKey|api_key)(?:"|')?\s*[:=]\s*(?:"|')?)[^\s,"']+/gi, '$1[REDACTED]')
+  .replace(/\bsk-[A-Za-z0-9_-]{20,}\b/g, '[REDACTED]')
 
 type Seed = { profile: string; workspaceId: string; workspaceSlug: string; workspaceRoot: string; noteRoot: string;
   sessionA: string; sessionB: string; projectSlug: string; pageSlug: string; sourceSlug: string; skillSlug: string; noteId: string; runtime: unknown[] }
@@ -70,7 +71,10 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
     }))
     const qualifiedBuild = buildReceipts.every(receipt => receipt?.inputRevision === inputRevision)
       && buildReceipts[0]?.sourceManifestSha256 === buildReceipts[1]?.sourceManifestSha256
+    const russian = JSON.parse(await readFile(join(root, 'packages/shared/src/i18n/locales/ru.json'), 'utf8'))
     const observations: Record<string, unknown> = { inputRevision, sourceHashes, buildHashes, profile,
+      driver: { versions: process.versions, executablePath: process.execPath, canonicalSeedBunPath: bunPath },
+      electronExecutableSha256: sha256(await readFile(executablePath)),
       buildProvenanceQualified: qualifiedBuild, buildReceipts,
       buildQualifier: qualifiedBuild ? 'frozen source manifest checked before and after main/renderer builds'
         : 'provisional product replay; current source snapshot does not bind the earlier generated build',
@@ -85,8 +89,20 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
     const logs: string[] = []
     const stages: unknown[] = []
     let app: ElectronApplication | null = null
+    let launchCompleted = false
     let page: Page
     const stage = (name: string) => { observations.stage = name; stages.push({ name, at: new Date().toISOString() }); console.log(`UI-001 native stage: ${name}`) }
+    const closeNative = async () => {
+      if (!app) return
+      const closing = app
+      const normal = await Promise.race([closing.close().then(() => true).catch(() => false),
+        new Promise<boolean>(resolve => setTimeout(() => resolve(false), 20_000))])
+      if (!normal) {
+        observations.quitRecovery = 'normal quit exceeded 20s after state save; owned process terminated'
+        closing.process().kill('SIGKILL')
+      }
+      app = null
+    }
     const capture = async (name: string) => {
       const path = join(evidence, `rox-readiness-ui-001.${name}.png`)
       const bytes = await page.screenshot({ path })
@@ -113,10 +129,12 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       await page.waitForFunction(() => window.electronAPI.isChannelAvailable('sessions:get'), null, { timeout: 40_000 })
       const skip = page.getByRole('button', { name: 'Пропустить', exact: true })
       if (await skip.isVisible()) await skip.click()
-      await page.locator('[data-shell-role="chrome"]').waitFor({ timeout: 40_000 })
+      await page.locator('[data-shell-role="chrome"]').first().waitFor({ timeout: 40_000 })
     }
     const launch = async () => {
+      launchCompleted = false
       app = await _electron.launch({ executablePath: electronLauncher, args: ['--disable-gpu', join(root, 'apps/electron')], env: environment, timeout: 120_000 })
+      launchCompleted = true
       app.process().stderr?.on('data', bytes => logs.push(String(bytes)))
       app.process().stdout?.on('data', bytes => logs.push(String(bytes)))
       page = await app.firstWindow()
@@ -131,8 +149,21 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       await ready(); await page.waitForFunction(target => new URL(location.href).searchParams.get('route') === target, target)
     }
     const missing = async (expectedRoute: string) => {
-      await page.waitForFunction(() => !!document.querySelector('[data-testid="route-entity-missing"], [data-testid="route-unavailable"], [data-testid="route-session-missing"], [data-testid="extra-screen-item-unavailable"]')
-        || /не найден|не найдена|больше не существует|not found|unavailable|недоступ/i.test(document.body.innerText), null, { timeout: 30_000 })
+      const [, type, entity] = expectedRoute.split('/')
+      if (type === 'source' || type === 'skill') {
+        const surface = page.getByTestId('route-resource-missing'); await surface.waitFor({ timeout: 30_000 })
+        expect(await surface.getAttribute('data-route-resource')).toBe(type)
+        expect(await surface.getAttribute('data-route-entity')).toBe(entity)
+      } else if (type === 'session') {
+        const surface = page.getByTestId('route-session-missing'); await surface.waitFor({ timeout: 30_000 })
+        expect(await surface.getAttribute('data-route-entity')).toBe(entity)
+      } else if (type === 'note') await page.getByTestId('route-note-missing').waitFor({ timeout: 30_000 })
+      else if (type === 'project') await page.getByText(russian['projectInfo.notFound'], { exact: true }).waitFor({ timeout: 30_000 })
+      else if (type === 'page') await page.getByText(russian['pages.notFound'], { exact: true }).waitFor({ timeout: 30_000 })
+      else if (type === 'item') {
+        const surface = page.getByTestId('extra-screen-item-unavailable'); await surface.waitFor({ timeout: 30_000 })
+        expect(await surface.getAttribute('data-item-id')).toBe(entity)
+      } else await page.getByTestId('route-unavailable').waitFor({ timeout: 30_000 })
       expect(await route()).toBe(expectedRoute)
       expect(await page.locator('body').innerText()).not.toContain('Что-то пошло не так')
     }
@@ -140,14 +171,35 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       stage('boot-native-product'); await launch(); await capture('boot')
       const initial = await page.evaluate(async seed => ({ workspace: await window.electronAPI.getWindowWorkspace(),
         sources: (await window.electronAPI.getSources(seed.workspaceId)).map(source => source.config.slug),
+        enabledSources: (await window.electronAPI.getSources(seed.workspaceId)).filter(source => source.config.enabled).map(source => source.config.slug),
         skills: (await window.electronAPI.getSkills(seed.workspaceId, seed.workspaceRoot)).map(skill => skill.slug),
         project: await window.electronAPI.getProject(seed.workspaceId, seed.projectSlug),
         page: await window.electronAPI.getPage(seed.workspaceId, seed.pageSlug), note: await window.electronAPI.readNote(seed.workspaceId, seed.noteId) }), seed)
       expect(initial.workspace).toBe(seed.workspaceId); expect(initial.sources).toContain(seed.sourceSlug); expect(initial.skills).toContain(seed.skillSlug)
+      expect(initial.enabledSources).toEqual([])
       expect(initial.project?.config.slug).toBe(seed.projectSlug); expect(initial.page?.config.slug).toBe(seed.pageSlug)
       expect(initial.note.content).toContain('UI001 canonical note body')
       observations.canonicalReadbacks = { workspace: initial.workspace, sourcePresent: true, skillPresent: true,
         projectSlug: initial.project?.config.slug, pageSlug: initial.page?.config.slug, noteSourceHash: sha256(initial.note.content) }
+
+      stage('native-open-url-callback')
+      const nativeDeepLink = `rox://workspace/${seed.workspaceId}/allSessions/session/${seed.sessionA}`
+      const ingressInvoked = await app!.evaluate(({ app }, url) => {
+        let prevented = false
+        app.emit('open-url', { preventDefault: () => { prevented = true } }, url)
+        return prevented
+      }, nativeDeepLink)
+      expect(ingressInvoked).toBe(true)
+      await page.waitForFunction(target => new URL(location.href).searchParams.get('route') === target, `allSessions/session/${seed.sessionA}`)
+      const searchQuery = 'UI001 native query'
+      await app!.evaluate(({ app }, input) => app.emit('open-url', { preventDefault() {} },
+        `rox://workspace/${input.workspaceId}/search?q=${encodeURIComponent(input.query)}`), { workspaceId: seed.workspaceId, query: searchQuery })
+      await page.waitForFunction(target => new URL(location.href).searchParams.get('route') === target,
+        'search?' + new URLSearchParams({ q: searchQuery }).toString())
+      await page.waitForFunction(query => [...document.querySelectorAll('input')].some(input => input.value === query), searchQuery)
+      observations.nativeIngress = { registeredOpenUrlCallbackInvoked: true, canonicalSessionSelected: true,
+        searchQueryPreservedThroughMainTransportAndRenderer: true, osProtocolDispatchExercised: false }
+      await capture('native-open-url-query')
 
       stage('session-direct-reload-history')
       const sessionARoute = `allSessions/session/${seed.sessionA}`
@@ -161,9 +213,12 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       const sourceRoute = `sources/source/${seed.sourceSlug}`
       const projectRoute = `projects/project/${seed.projectSlug}`
       await navigate(sourceRoute); await page.getByText('UI001 local source', { exact: true }).first().waitFor()
+      await page.waitForFunction(expected => [...document.querySelectorAll('input')].some(input => input.value === expected), seed.workspaceRoot)
       await navigate(projectRoute); await page.getByText('UI001 project', { exact: true }).first().waitFor()
+      await page.getByText('UI001 canonical project description', { exact: true }).first().waitFor()
       await page.evaluate(() => history.back()); await page.waitForFunction(target => new URL(location.href).searchParams.get('route') === target, sourceRoute)
       await page.getByText('UI001 local source', { exact: true }).first().waitFor()
+      await page.waitForFunction(expected => [...document.querySelectorAll('input')].some(input => input.value === expected), seed.workspaceRoot)
       await page.evaluate(() => history.forward()); await page.waitForFunction(target => new URL(location.href).searchParams.get('route') === target, projectRoute)
       await page.getByText('UI001 project', { exact: true }).first().waitFor(); await capture('history-forward-project')
 
@@ -249,6 +304,7 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       await page.evaluate(seed => window.electronAPI.deleteSource(seed.workspaceId, seed.sourceSlug), seed)
       expect(await page.evaluate(async seed => (await window.electronAPI.getSources(seed.workspaceId)).some(source => source.config.slug === seed.sourceSlug), seed)).toBe(false)
       await missing(sourceRoute); await capture('source-deleted'); await page.reload(); await ready(); await missing(sourceRoute)
+      await page.getByTestId('route-resource-retry').click(); await missing(sourceRoute)
 
       stage('live-skill-deletion')
       const skillRoute = `skills/skill/${seed.skillSlug}`
@@ -256,12 +312,15 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       await page.evaluate(seed => window.electronAPI.deleteSkill(seed.workspaceId, seed.skillSlug), seed)
       expect(await page.evaluate(async seed => (await window.electronAPI.getSkills(seed.workspaceId, seed.workspaceRoot)).some(skill => skill.slug === seed.skillSlug), seed)).toBe(false)
       await missing(skillRoute); await capture('skill-deleted')
+      await page.getByTestId('route-resource-retry').click(); await missing(skillRoute)
+      await page.reload(); await ready(); await missing(skillRoute)
 
       stage('live-project-deletion')
       await navigate(projectRoute)
       await page.evaluate(seed => window.electronAPI.deleteProject(seed.workspaceId, seed.projectSlug), seed)
       expect(await page.evaluate(seed => window.electronAPI.getProject(seed.workspaceId, seed.projectSlug), seed)).toBeNull()
       await missing(projectRoute); await capture('project-deleted')
+      await page.reload(); await ready(); await missing(projectRoute)
 
       stage('live-page-deletion')
       const pageRoute = `pages/page/${seed.pageSlug}`
@@ -269,6 +328,7 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       const pageDeleteReceipt = await page.evaluate(seed => window.electronAPI.deletePage(seed.workspaceId, seed.pageSlug), seed)
       expect(await page.evaluate(seed => window.electronAPI.getPage(seed.workspaceId, seed.pageSlug), seed)).toBeNull()
       await missing(pageRoute); observations.pageDeleteReceipt = pageDeleteReceipt; await capture('page-deleted')
+      await page.reload(); await ready(); await missing(pageRoute)
 
       stage('live-note-deletion')
       const noteRoute = `notes/note/${seed.noteId}`
@@ -277,12 +337,14 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       expect(noteDeleteReceipt).toBe(true)
       expect(await stat(join(seed.noteRoot, seed.noteId + '.md')).then(() => true).catch(() => false)).toBe(false)
       await missing(noteRoute); observations.noteDeleteReceipt = noteDeleteReceipt; await capture('note-deleted')
+      await page.getByTestId('route-note-missing').getByRole('button', { name: russian['common.retry'], exact: true }).click()
+      await missing(noteRoute); await page.reload(); await ready(); await missing(noteRoute)
 
       stage('live-session-deletion-and-native-restart')
       await navigate(sessionBRoute)
       await page.evaluate(seed => window.electronAPI.deleteSession(seed.sessionB), seed)
       await missing(sessionBRoute); await capture('session-deleted')
-      await app!.close(); app = null; await launch()
+      await closeNative(); await launch()
       expect(await route()).toBe(sessionBRoute); await missing(sessionBRoute); await capture('native-restart-deleted-session')
 
       stage('unknown-raw-link-unavailable')
@@ -299,11 +361,11 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       if (app && page!) await capture('failure').catch(() => {})
       throw error
     } finally {
+      await closeNative()
       observations.stages = stages; observations.screenshots = screenshots; observations.errors = errors
       await writeFile(join(evidence, 'rox-readiness-ui-001.result.json'), JSON.stringify(observations, null, 2))
       await writeFile(join(evidence, 'rox-readiness-ui-001.native.log'), redactLog(logs.join('')))
-      await app?.close().catch(() => {})
-      if (!app) {
+      if (!launchCompleted) {
         const pid = Number(await readFile(electronPidPath, 'utf8').catch(() => ''))
         if (Number.isInteger(pid) && pid > 1) {
           try { process.kill(pid, 'SIGTERM') } catch {}

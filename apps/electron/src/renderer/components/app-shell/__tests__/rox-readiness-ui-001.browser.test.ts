@@ -35,6 +35,7 @@ function workspaceRestoreEffect() {
 }
 
 async function fixtureBundle() {
+  if (process.env.ROX_UI001_MAIN_FIXTURE_BUNDLE) return readFileSync(process.env.ROX_UI001_MAIN_FIXTURE_BUNDLE, 'utf8')
   const dispatcher = productionFunctions()
   const contents = `
     import * as React from 'react';
@@ -165,7 +166,9 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
     })
     await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve))
     base = 'http://127.0.0.1:'+ (server.address() as any).port
-    browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE, channel: process.env.ROX_UI001_CHROMIUM_EXECUTABLE ? undefined : process.env.ROX_UI001_BROWSER_CHANNEL ?? 'chrome', headless:true })
+    browser = process.env.ROX_UI001_CHROMIUM_CDP_URL
+      ? await chromium.connectOverCDP(process.env.ROX_UI001_CHROMIUM_CDP_URL)
+      : await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE, channel: process.env.ROX_UI001_CHROMIUM_EXECUTABLE ? undefined : process.env.ROX_UI001_BROWSER_CHANNEL ?? 'chrome', headless:true })
     mkdirSync(evidence,{recursive:true})
   }, 30_000)
   beforeEach(async () => { context=await browser.newContext(); page=await context.newPage(); page.setDefaultTimeout(2000); await page.goto(base); await page.waitForFunction(()=>!!(window as any).ui001) })

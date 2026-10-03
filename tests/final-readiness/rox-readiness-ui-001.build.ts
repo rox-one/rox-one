@@ -48,8 +48,8 @@ if (process.argv.includes('--renderer')) {
   // Maps and compression reporting do not affect executable behavior; omit
   // them in the bounded native proof lane and never load checkout env files.
   await build({ configFile: resolve(root, 'apps/electron/vite.config.ts'), envDir: false,
-    build: { sourcemap: false, reportCompressedSize: false } })
-  await receipt('renderer', { shippedViteConfig: true, envDir: false, sourcemap: false, reportCompressedSize: false })
+    build: { sourcemap: false, reportCompressedSize: false, emptyOutDir: true } })
+  await receipt('renderer', { shippedViteConfig: true, envDir: false, sourcemap: false, reportCompressedSize: false, generatedOutputCleared: true })
   console.log('Built actual renderer with shipped Vite config, no env files, sourcemaps or gzip reporting')
   process.exit(0)
 }

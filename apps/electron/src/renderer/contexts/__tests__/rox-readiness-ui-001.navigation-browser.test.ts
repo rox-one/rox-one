@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
 import { createServer, type Server } from 'node:http'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { build } from 'esbuild'
 import { chromium, type Browser, type BrowserContext, type Page } from '@playwright/test'
@@ -12,6 +13,9 @@ const root = join(import.meta.dir, '../../../../../..')
 let server: Server, browser: Browser, context: BrowserContext, page: Page, base: string
 
 async function fixtureBundle() {
+  // A separately bundled immutable fixture and external CDP endpoint keep
+  // this lane runnable when the Bun test host cannot spawn child processes.
+  if (process.env.ROX_UI001_NAV_FIXTURE_BUNDLE) return readFileSync(process.env.ROX_UI001_NAV_FIXTURE_BUNDLE, 'utf8')
   const contents = `
     import React from 'react';
     import { createRoot } from 'react-dom/client';
@@ -20,7 +24,7 @@ async function fixtureBundle() {
     import { sessionMetaMapAtom } from './apps/electron/src/renderer/atoms/sessions';
     import { usePages } from './apps/electron/src/renderer/hooks/usePages';
     import { pagesAtom } from './apps/electron/src/renderer/atoms/pages';
-    import { panelStackAtom, focusedPanelRouteAtom } from './apps/electron/src/renderer/atoms/panel-stack';
+    import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom } from './apps/electron/src/renderer/atoms/panel-stack';
     const store = createStore();
     let ready=true, sessionsReady=true, ws='ws-a', slug='a', deepLink;
     let state, pagesChanged;
@@ -56,11 +60,13 @@ async function fixtureBundle() {
       ready(value,sessions=value){ready=value;sessionsReady=sessions;render()},
       workspace(id, nextSlug){ws=id;slug=nextSlug;render()},
       delete(id){const next=new Map(store.get(sessionMetaMapAtom));next.delete(id);store.set(sessionMetaMapAtom,next)},
+      publishSession(id){const next=new Map(store.get(sessionMetaMapAtom));next.set(id,{id,workspaceId:ws,lastMessageAt:10});store.set(sessionMetaMapAtom,next)},
       pages(){return store.get(pagesAtom)},
       resolvePages(index,rows){pageRequests[index].resolve(rows)},
       emitPages(workspace,rows){pagesChanged(workspace,rows)},
       emitOldPages(index,workspace,rows){pageSubscriptions[index](workspace,rows)},
       resizePanels(){store.set(panelStackAtom,store.get(panelStackAtom).map(panel=>({...panel,proportion:0.75})))},
+      focus(index){store.set(focusedPanelIdAtom,store.get(panelStackAtom)[index].id)},
       creations(){return createRequests.map(request=>({workspaceId:request.workspaceId}))},
       resolveCreate(index,id){createRequests[index].resolve({id,workspaceId:createRequests[index].workspaceId})},
       actionCalls(){return{commands,inputs,messages}},
@@ -92,7 +98,9 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     })
     await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve))
     base='http://127.0.0.1:'+(server.address() as any).port
-    browser=await chromium.launch({executablePath:process.env.ROX_UI001_CHROMIUM_EXECUTABLE,channel:process.env.ROX_UI001_CHROMIUM_EXECUTABLE?undefined:'chrome',headless:true})
+    browser=process.env.ROX_UI001_CHROMIUM_CDP_URL
+      ? await chromium.connectOverCDP(process.env.ROX_UI001_CHROMIUM_CDP_URL)
+      : await chromium.launch({executablePath:process.env.ROX_UI001_CHROMIUM_EXECUTABLE,channel:process.env.ROX_UI001_CHROMIUM_EXECUTABLE?undefined:'chrome',headless:true})
   },30000)
   beforeEach(async()=>{context=await browser.newContext();page=await context.newPage();page.setDefaultTimeout(3000)})
   afterEach(async()=>{await context?.close()},15000)
@@ -292,6 +300,30 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[],messages:[]})
   })
 
+  browserTest('actual same-workspace Back cancels an older deferred create response',async()=>{
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/older'));await routeIs('notes/note/older')
+    await page.evaluate(()=>{void (window as any).ui001nav.navigate('action/new-session?input=old&send=true')})
+    await page.waitForFunction(()=>(window as any).ui001nav.creations().length===1)
+    await page.goBack();await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.resolveCreate(0,'old-after-back'))
+    await page.waitForTimeout(150)
+    expect((await snapshot()).panels.map((panel:any)=>panel.route)).toEqual(['home'])
+    expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[],messages:[]})
+  })
+
+  browserTest('focusing another existing panel cancels the former panel deferred create response',async()=>{
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/owner',{newPanel:true}));await routeIs('notes/note/owner')
+    await page.evaluate(()=>{void (window as any).ui001nav.navigate('action/new-session?input=old&send=true')})
+    await page.waitForFunction(()=>(window as any).ui001nav.creations().length===1)
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.resolveCreate(0,'old-after-focus'))
+    await page.waitForTimeout(150)
+    expect((await snapshot()).panels.map((panel:any)=>panel.route)).toEqual(['home','notes/note/owner'])
+    expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[],messages:[]})
+  })
+
   browserTest('current create actions still navigate, rename, prefill and send using actual callbacks',async()=>{
     await page.goto(base+'/?ws=a&route=home');await routeIs('home')
     await page.evaluate(()=>{
@@ -316,5 +348,23 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await routeIs('allSessions/session/current-send')
     await page.evaluate(()=>(window as any).ui001nav.fireActionTimers())
     expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toMatchObject({messages:[{id:'current-send',input:'send'}]})
+  })
+
+  browserTest('session-created metadata cannot steal a pending list-route new-chat action and its prefill',async()=>{
+    await page.goto(base+'/?ws=a&route=allSessions%2Fsession%2Ffirst-a');await routeIs('allSessions/session/first-a')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('allSessions',{skipAutoSelect:true}));await routeIs('allSessions')
+    await page.evaluate(()=>{
+      (window as any).ui001nav.holdActionTimers()
+      void (window as any).ui001nav.navigate('action/new-chat?input=from-list')
+    })
+    await page.waitForFunction(()=>(window as any).ui001nav.creations().length===1)
+    await page.evaluate(()=>(window as any).ui001nav.publishSession('created-list'))
+    await page.waitForTimeout(100)
+    expect((await snapshot()).panels[0].route).toBe('allSessions')
+    await page.evaluate(()=>(window as any).ui001nav.resolveCreate(0,'created-list'))
+    await page.waitForFunction(()=>(window as any).ui001nav.timers()===1)
+    await routeIs('allSessions/session/created-list')
+    await page.evaluate(()=>(window as any).ui001nav.fireActionTimers())
+    expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[{id:'created-list',input:'from-list'}],messages:[]})
   })
 })
