@@ -1003,3 +1003,10 @@ Collection recovery qualification completed on current bb047:33/0/80 native-stor
 ### Golden per-task form draft recovery — 2026-10-04
 
 Owner recent_features; depends on current Tasks1456, strict date1470 and Product1454. Preserve old source and modern Things UI. Exercise actual two-task link/kind/tag retention, submitted-field-only clearing, actor/workspace ABA, unmount and stale pre-render button denial, plus all retained task import/responsive cases and current native commit controls. Retain the before-fix lost draft and fixture failure history; qualify current Electron types with own workspace dependency resolution, record exact source/log hashes, reconcile all current docs without deletions, publish separate PR for parent review/merge.
+
+
+### 2026-10-04 — Интеграция платформенных подсказок PR #1466
+
+- [x] Перенести только форматирование и локализованные параметры подсказок; сохранить текущие native/Task draft/Product Learning потребители.
+- [x] Подтвердить исходный дефект Windows/Linux и положительный macOS контроль настоящими кнопками Tasks.
+- [x] Квалифицировать свежий совмещенный source: 25 actual Chromium controls, 300 SSR/i18n tests и full strict Electron types без ошибок; сохранить точные хеши и журналы, подготовить отдельный integration PR без удаления исходной ветки.

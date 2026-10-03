@@ -1,0 +1,164 @@
+{
+  "source_pr": 1466,
+  "source_head": "27de1d0f9ddd72e5ddda9dba5bd1b2799883ac42",
+  "source_tip_readback": "b528aa2efad72af371779b90502dbd9e5520725c",
+  "source_tip_scope": "only normal main integration after frozen change; TaskDetail retains current Product target; adapted current1476 draft props",
+  "comparison_main": "0a4497f2679a6799474eed80e6094e47c1aa60a9",
+  "source_revision": "a438f74a55d44fc6323cd9aa5a3fa81a02da3d61",
+  "original_branches_preserved": true,
+  "scope": "platform display hints only; registered key bindings unchanged; canonical task draft/import/native authority and Product targets preserved",
+  "checks": {
+    "baseline": "actual Tasks Chromium3cases: Windows/Linux wrong Command glyph fail; macOS display and actual schedule chord pass",
+    "current_browser": "25 cases pass,0fail,0skip; actual schedule key events on Win32/Linux/MacIntel plus22existing task import/draft/focus/date controls",
+    "current_ssr_i18n": "300pass0fail6786assertions across89files, includes22 formatter+SSRplatform+all12locale interpolation",
+    "component_css_build": "exit0; production Tasks/TaskDetail and actual Tailwind renderer stylesheet",
+    "full_electron_types": "exit0; full inherited Electron include/strict configuration, current workspace UI/session-tools alias resolution; source tuple a438f74a5 on0a4497f26 (new SSO/account owners retained)"
+  },
+  "source_fingerprints": [
+    {
+      "path": "apps/electron/src/renderer/actions/registry.tsx",
+      "sha256": "81ca7b9732ffd5c83a9fbbe4d3f2c3788eeedf41f74c5a9244d29cbf6fc7def6"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/MultiSelectPanel.tsx",
+      "sha256": "ad1f0ebdd852fdf8e60cc3e39c926c860d6af151ac9439bfb6520f7cd165fa65"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/memory/MemoryScreen.tsx",
+      "sha256": "231f732308d9fbde5f9f2eef3bb0d14096d56212782b8c5215ac96d06dff7912"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/__tests__/platform-shortcuts.test.ts",
+      "sha256": "a9ead2fa145336f21a053b71894dd80d776788656626be9ad68f8153c2408a78"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/platform.ts",
+      "sha256": "efff1b2c1bc09e0ebe57518d0a1521305397a1d6a109f3a5b8c6dcf9100137ff"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+      "sha256": "16ed9e4fe7a442cbf58dfb56cdb9e8ac414645d88e25d7a67f97c4770fefae5d"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/TasksPage.tsx",
+      "sha256": "c1dda9e25ab8a650ceb4d6913ef153e8d9be5665e0da8f2564c248b35ab4365a"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/fixtures/shortcut-hints.tsx",
+      "sha256": "0f2ea7519daddda54bd8db981b486850f4e3a2a230081d29d45662817ecefd9a"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/shortcut-hints.test.ts",
+      "sha256": "efdf59e29abad8f40c81e21dccbce07cc378e3bf3ab4e9725db2568cf160ae02"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/tasks-import-responsive.browser.node.ts",
+      "sha256": "7d5aacdf451b05a981277dea160ce1932b863bc907e1098da3691ab9d11c7d3e"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/tasks-import-responsive.fixture.mjs",
+      "sha256": "c9140113e4dbd00fc16f5b3f87a229068c2b9ea766f68f8b4fd78e9953939a56"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+      "sha256": "ed6ddd65834fec3073831adec89b1ccd63a466bed01ac299ede40078b2de7a5a"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+      "sha256": "11c3e83fd4b32d73192856b5ada6cb6e2add883e9be07562127fdf422eef2363"
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/home/widgets.tsx",
+      "sha256": "dc5b736c788a398c8e4c067fa7a6e1a959473b8fa706892c7db07c068cbf9911"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ar.json",
+      "sha256": "1feaab1e3a18c7c584ab029c1c3a3b4e0cb79a2ba0a4726f643bf3d10d32f383"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "sha256": "e87acc2eb708132e325a15131c8f593e462eb78f64a7c9d4e3059a37cd056fd5"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "sha256": "5ebc2dba747e8826796c6d2750ba7d2acb5bd6f42c7ec39e44ccda88c4add63d"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "sha256": "af9148e946729ceb5706767ee57c8e995483d8aa75e6c98b0b9ee1a8641daf89"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/fr.json",
+      "sha256": "65dff5874c53c00cf511423f293476e788f76dab865cab469e596498eb6b308d"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "sha256": "dc769df435e6b2d308c638111ab7bf18242afa96f553f935d2e05c073de4f5cf"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "sha256": "39c4fd9574c7a2fc8d323ff2fc273466485ba8ec6b208f3be0f17bc643f8c759"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ko.json",
+      "sha256": "5765c94c118c0c277e01ca7443bf6f9a7ab771fb2627d227c59ef9c38b8b3ae8"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "sha256": "36bc9f9336cd32c646585f8a7a9f61a87729870d41af4a2e53fd7b1958dbc7f7"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "sha256": "a6fcaffd6fd65f4742000474422cdc7b5ffafdbf10e2c068c1b79d339036095a"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "sha256": "2db61cb49d767ad870702d93bd8490418f6730e8ee98cffc72774b74ddf5fcb5"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+      "sha256": "a87488b4df959fd2dc5d5332fbb73607a44c48028dd0732645da09cc7a850a7d"
+    }
+  ],
+  "logs": {
+    "baseline": {
+      "path": "docs/integration-history/platform-shortcuts-recovery-20261004/baseline.log.gz",
+      "sha256": "c37b1dd6364c1606784e3d911b4aa0e38c36a5bf28652b5fd22a9b9bdc715809"
+    },
+    "rendered_initial_fixture_failure": {
+      "path": "docs/integration-history/platform-shortcuts-recovery-20261004/rendered_initial_fixture_failure.log.gz",
+      "sha256": "517a8df98e84723191d4e46df9a78a0e6807d6bbd2f310b582abbd060f0bcde6"
+    },
+    "rendered_fixture_repair": {
+      "path": "docs/integration-history/platform-shortcuts-recovery-20261004/rendered_fixture_repair.log.gz",
+      "sha256": "788b95736e62d2cf9f068da7931da75c5d172bfdfa55eb595b663d905585770d"
+    },
+    "current_browser": {
+      "path": "docs/integration-history/platform-shortcuts-recovery-20261004/current_browser.log.gz",
+      "sha256": "eaf56f020d659e31d8a249b5b16f8484625f686d7af43d2e03c0a036da5bd5c1"
+    },
+    "current_ssr_i18n": {
+      "path": "docs/integration-history/platform-shortcuts-recovery-20261004/current_ssr_i18n.log.gz",
+      "sha256": "41c0f713cd4451cea6c4d294c7b64adc17fc858427d0c60020f5092333b9d4ce"
+    },
+    "component_css_build": {
+      "path": "docs/integration-history/platform-shortcuts-recovery-20261004/component_css_build.log.gz",
+      "sha256": "9ea004cc6b66905a3a6f61fddce7b979971f1468464990fa80fa6fd524792d68"
+    },
+    "full_electron_types": {
+      "path": "docs/integration-history/platform-shortcuts-recovery-20261004/electron-types.log.gz",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "limits": [
+    "Chromium navigator platform is a controlled synthetic boundary; no installed Windows/Linux native desktop acceptance claimed",
+    "Mounted Tasks uses explicitly synthetic owned native RPC/storage seam; installed account, credentials and persisted user files untouched",
+    "Original upstream screenshots retained as historical artifacts, not fresh native proof"
+  ],
+  "typecheck_config": {
+    "path": "docs/integration-history/golden-task-drafts-recovery-20261004/typecheck-config.json",
+    "sha256": "2fb5dc125e628739dc715b7bcec11499b47a603c03f894c9e5e8fb6a7bdaaec7",
+    "exclusions_added": false,
+    "strictness_relaxed": false
+  }
+}

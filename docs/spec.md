@@ -812,3 +812,8 @@ Recover the strict local calendar-day check from preserved Golden source5def9ffd
 ### Golden per-task form draft recovery — 2026-10-04
 
 Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
+
+
+### 2026-10-04 — Подсказки клавиш по платформе (источник PR #1466)
+
+Tasks, Memory, Meetings, множественный выбор и домашние виджеты отображают Ctrl/Shift/Alt на Windows/Linux и символы Command/Option на macOS через единый форматтер. Реальные сочетания клавиш, нативная авторизация, подтверждения записи Tasks и черновики полей сохраняются. Владение: recent_features; зависимость: свежий main с Pocket SSO и Tasks drafts. Проверка: реальный компонент Tasks в Chromium на трех платформах, SSR Tasks/Memory/Meetings и паритет всех 12 локалей.
