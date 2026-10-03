@@ -8,6 +8,9 @@ import * as navigationGuards from '../../../../shared/types'
 import { parseRouteToNavigationState } from '../../../../shared/route-parser'
 import { createStore } from 'jotai/vanilla'
 import { bottomTerminalOpenAtom } from '../../../atoms/unified-shell'
+import { runtimeTraceScopeKey, runtimeTraceSessionAtomFamily } from '../../../atoms/runtime-trace'
+import { runtimeCatalogCapabilities, runtimeCatalogScope } from '../../../lib/runtime-catalog-capabilities'
+import { loadRuntimeTrace } from '../../../event-processor/runtime-trace-ingress'
 
 const mainContentSource = readFileSync(join(__dirname, '../MainContentPanel.tsx'), 'utf8')
 const navContextSource = readFileSync(
@@ -53,15 +56,18 @@ function dispatch(route: string): React.ReactElement {
   const names = ['Panel', 'StoplightProvider', 'RouteErrorBoundary', 'SendResourceToWorkspaceDialog',
     'TerminalSurfacePage', 'CloudRunSurfacePage', 'ChatPage']
   const sessionMetaMapAtom = Symbol()
+  const store = createStore()
   const state = parseRouteToNavigationState(route)!
   const bindings: Record<string, unknown> = {
     ...navigationGuards, ...Object.fromEntries(names.map(name => [name, name])), React,
     useCallback: (callback: unknown) => callback, useEffect() {}, useMemo: (callback: () => unknown) => callback(),
     useState: (initial: unknown) => [initial, () => {}], useTranslation: () => ({ t: (key: string) => key }),
     useNavigationState: () => state, useNavigation: () => ({ isSessionsReady: true }),
-    useAppShellContext: () => ({ activeWorkspaceId: 'workspace-owner', workspaces: [], sessionStatuses: [], projects: [], loadedProjects: [], labels: [] }),
+    useAppShellContext: () => ({ activeWorkspaceId: 'workspace-owner', workspaces: [], sessionStatuses: [], projects: [], loadedProjects: [], labels: [], skills: [] }),
     sessionMetaMapAtom, automationsAtom: Symbol(),
-    useAtomValue: (atom: symbol) => atom === sessionMetaMapAtom ? new Map() : [], useSetAtom: () => () => {},
+    useAtomValue: (atom: symbol | Parameters<typeof store.get>[0]) => typeof atom === 'symbol' ? atom === sessionMetaMapAtom ? new Map() : [] : store.get(atom), useSetAtom: () => () => {},
+    useSession: () => [{ selected: null }, () => {}], useStore: () => store,
+    runtimeTraceScopeKey, runtimeTraceSessionAtomFamily, runtimeCatalogCapabilities, runtimeCatalogScope, loadRuntimeTrace,
     knowledgeHomeViewAtom: Symbol(), knowledgeActiveViewIdAtom: Symbol(),
     navigationEntity, TourPanelScope: ({ children }: { children: React.ReactNode }) => children, sourceSelection: selection, skillSelection: selection, automationSelection: selection,
     useSelectedResourceAvailability: () => ({ status: 'ready', retry() {} }),

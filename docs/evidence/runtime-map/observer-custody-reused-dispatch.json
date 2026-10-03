@@ -1,0 +1,66 @@
+{
+  "class": "production-observer-factory-hook-contract-regression",
+  "scope": "Controlled native hook and lifecycle-bus inputs exercise the actual standalone observer factory and private spool. This receipt is not an actual native SDK worker-loop result.",
+  "regression": "Repeated same-parent spawn and TaskTool call receipts across user runs must never bind a late ambiguous worker to the successor.",
+  "before": [
+    {
+      "phase": "Unfixed overwrite of ambiguous source receipt",
+      "sourceSha256": "b0be10ae1cfaff3022525074fb72ed05297b6db950f821de958ef39204621b71",
+      "exitCode": 1,
+      "expectedSubagentIdentityRecords": 0,
+      "actualSubagentIdentityRecords": 2
+    },
+    {
+      "phase": "Ambiguous dispatch closure followed by a fresh unique parent reservation",
+      "sourceSha256": "5096c493ec7f91a82fed7ee571efbfc0ea061445c9de2e0b94e689f63bc9a7c9",
+      "exitCode": 1,
+      "expectedUnboundChildRecords": 0,
+      "actualUnboundChildRecords": 1
+    }
+  ],
+  "after": {
+    "command": "bun test packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts packages/shared/src/agent/__tests__/omp-runtime-observer-watch.test.ts",
+    "exitCode": 0,
+    "testsPassed": 21,
+    "testsFilteredOut": 0,
+    "assertions": 130,
+    "ambiguousLifecycleRecords": 0,
+    "ambiguousChildRecords": 0,
+    "exactFreshIdentityCaptured": true,
+    "exactFreshRunId": "successor-run",
+    "sourceSha256": "5d6a12c9cefdd1cca75488a6782d8a9a6d27b78c0137fb1b7e90fd8b893bd3b1",
+    "testSha256": "802c162f5c226361da408982cfd58f971771c5c243787b7f69c193667368a720",
+    "focusedRegression": {
+      "exitCode": 0,
+      "testsPassed": 1,
+      "assertions": 6
+    },
+    "files": 2,
+    "sourceRevision": "700233cc7c0653b457f4233ee49489ea8cd60675"
+  },
+  "implementedEvidence": [
+    "Ambiguous exact spawn receipts are refused by lifecycle and structured result bindings.",
+    "Reused same-parent TaskTool call history remains ambiguous after active call deletion.",
+    "Ambiguous parent-only fallback stays refused after reservation closure.",
+    "An actual exact native actor receipt can still bind a fresh proven child to its true run."
+  ],
+  "limits": [
+    "This offline controlled fixture does not replace the hosted pinned SDK task/eval/restricted worker proof.",
+    "Native execution, locks, permission responses, models and provider behavior are unchanged."
+  ],
+  "independentSourceReview": {
+    "reviewer": "W3 projection owner",
+    "result": "passed",
+    "scope": "Readonly review of ambiguity persistence, exact fresh actor branch and bounded fail-closed capture; no native execution claim"
+  },
+  "finalRevalidation": {
+    "sourceCommitWithSameFingerprint": "9e50962b9e2c0816599b098aa0be931fd4ead161",
+    "sourceSha256": "8ba08484b8d053a853bab11a58ed649cce0b072daef7b3f13ac1e5d3c0ff6a12",
+    "command": "bun test packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts packages/shared/src/agent/__tests__/omp-runtime-observer-watch.test.ts",
+    "exitCode": 0,
+    "testsPassed": 21,
+    "testsFailed": 0,
+    "assertions": 134,
+    "files": 2
+  }
+}

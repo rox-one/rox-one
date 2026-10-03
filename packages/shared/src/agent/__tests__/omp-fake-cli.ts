@@ -198,10 +198,31 @@ function rpcLoop() {
           send({ type: 'turn_start' });
           send({ type: 'host_tool_call', id: 'htc-1', toolName: 'mcp__session__mermaid_validate', arguments: { code: 'graph TD\n  A-->B' } });
           send({ type: 'host_tool_call', id: 'htc-2', toolName: 'mcp__session__no_such_tool', arguments: {} });
+        } else if (scenario === 'host-tool-spawn') {
+          send({ type: 'agent_start' });
+          send({ type: 'turn_start' });
+          send({ type: 'host_tool_call', id: 'htc-spawn', toolCallId: 'actual-spawn-call', toolName: 'mcp__session__spawn_session', arguments: { name: 'Fixture child', prompt: 'Actual delivered child prompt', permissionMode: 'allow-all' } });
         } else if (scenario === 'host-tool-bash') {
           send({ type: 'agent_start' });
           send({ type: 'turn_start' });
           send({ type: 'host_tool_call', id: 'htc-bash', toolName: 'bash', arguments: { command: 'echo omp-host-bash' } });
+        } else if (scenario === 'host-tool-bash-cancel' || scenario === 'host-tool-bash-abort') {
+          send({ type: 'agent_start' });
+          send({ type: 'turn_start' });
+          send({ type: 'host_tool_call', id: 'htc-cancel', toolCallId: 'exact-cancel-call', toolName: 'bash', arguments: { command: "printf 'before-cancel'; printf started > fixture-started; sleep 0.3; printf 'late-after-cancel'; printf finished > fixture-finished" } });
+          if (scenario === 'host-tool-bash-cancel') {
+            const fixturePath = require('node:path');
+            const workspace = fixturePath.join(fixturePath.dirname(SCENARIO_FILE), 'workspace');
+            let cancelled = false;
+            const poll = setInterval(() => {
+              if (!cancelled && fs.existsSync(fixturePath.join(workspace, 'fixture-started'))) {
+                cancelled = true;
+                send({ type: 'host_tool_cancel', targetId: 'htc-cancel' });
+                clearInterval(poll);
+                setTimeout(emitTurnStream, 20);
+              }
+            }, 10);
+          }
         } else {
           emitTurnStream();
         }
@@ -211,7 +232,7 @@ function rpcLoop() {
         if (scenario === 'host-tool' && hostToolResultsReceived >= 2) {
           emitTurnStream();
         }
-        if (scenario === 'host-tool-bash' && hostToolResultsReceived >= 1) {
+        if ((scenario === 'host-tool-bash' || scenario === 'host-tool-spawn') && hostToolResultsReceived >= 1) {
           emitTurnStream();
         }
         break;

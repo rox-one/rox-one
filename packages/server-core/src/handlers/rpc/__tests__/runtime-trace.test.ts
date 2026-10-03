@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'bun:test'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
-import type { RuntimeTraceSnapshot, RuntimeEventsPage, RuntimeEvent } from '@rox/core/runtime-trace'
+import type { RuntimeTraceSnapshot, RuntimeEventsPage, RuntimeEvent, RuntimeRunSummary } from '@rox/core/runtime-trace'
 import { createRuntimeTraceFixture } from '@rox/core/runtime-trace/fixture'
 import { isRuntimeEvent } from '@rox/core/runtime-trace/validation'
 import type { HandlerFn, RpcServer, RequestContext } from '../../../transport/types'
 import { registerRuntimeTraceHandlers, HANDLED_CHANNELS } from '../runtime-trace'
-import { nativeRuntimeTraceEvent, nativeSessionEvent } from '../native-session-scope'
+import { nativeRuntimeTraceEvent, nativeRuntimeTraceRunSummary, nativeSessionEvent } from '../native-session-scope'
 
 function setup() {
   const handlers = new Map<string, HandlerFn>()
@@ -61,6 +61,34 @@ describe('runtime trace RPC', () => {
     expect(isRuntimeEvent(projected)).toBe(true)
     expect(JSON.stringify(projected)).not.toContain('Host-only delegated instruction')
     expect(nativeRuntimeTraceEvent(root)).toEqual(root)
+  })
+
+  it('withholds host task goals, unproven summaries and file-backed verdicts while retaining proven root input', () => {
+    const events = createRuntimeTraceFixture()
+    const original = events.find(event => event.kind === 'run.accepted')!
+    const privateText = 'Host workflow goal /private/host/template.txt'
+    const task = { ...original, messageId: undefined, payload: { prompt: { text: privateText }, launch: { kind: 'unknown', triggerId: 'task:private:run' } } } as RuntimeEvent
+    expect(JSON.stringify(nativeRuntimeTraceEvent(task))).not.toContain(privateText)
+    const unknown = { ...original, payload: { ...original.payload, launch: { kind: 'unknown' } } } as RuntimeEvent
+    expect(JSON.stringify(nativeRuntimeTraceEvent(unknown))).not.toContain(original.kind === 'run.accepted' ? original.payload.prompt.text! : '')
+    const summary: RuntimeRunSummary = { rootRunId: original.rootRunId, sessionId: original.rootSessionId, agentId: original.agentId, status: 'running', startedAt: original.receivedAt, prompt: privateText, coverage: { state: 'partial', source: 'runtime', missing: [] } }
+    const header = { ...summary, title: privateText, excerpt: privateText }
+    expect(JSON.stringify(nativeRuntimeTraceRunSummary(header, [task]))).not.toContain(privateText)
+    expect(nativeRuntimeTraceRunSummary(header, []).prompt).toBe('')
+    expect(nativeRuntimeTraceRunSummary(header, [original]).prompt).toBe(original.kind === 'run.accepted' ? original.payload.prompt.text! : '')
+    const artifact = { ...original, kind: 'artifact.created', payload: { artifact: { id: 'host-artifact', label: privateText, uri: '/private/host/__verdict__.json', content: { text: privateText } } } } as RuntimeEvent
+    const verdict = { ...original, messageId: undefined, kind: 'result.published', payload: { content: { text: privateText }, artifactIds: ['host-artifact'] } } as RuntimeEvent
+    for (const event of [task, unknown, artifact, verdict]) {
+      const projected = nativeRuntimeTraceEvent(event)
+      expect(isRuntimeEvent(projected)).toBe(true)
+      expect(JSON.stringify(projected)).not.toContain('/private/host/')
+    }
+    const plan = events.find(event => event.kind === 'plan.published')!
+    if (plan.kind !== 'plan.published') throw new Error('Missing plan')
+    plan.payload.plan.title = privateText
+    plan.payload.plan.tasks[0]!.title = privateText
+    plan.payload.plan.tasks[0]!.criteria = [privateText]
+    expect(JSON.stringify(nativeRuntimeTraceEvent(plan))).not.toContain(privateText)
   })
 
   it('redacts terminal executor errors and shell paths for signed native scopes', () => {

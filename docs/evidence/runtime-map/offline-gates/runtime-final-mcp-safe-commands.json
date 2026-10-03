@@ -1,0 +1,64 @@
+{
+  "excluded": [
+    "packages/server-core/src/sessions/first-session-welcome-persistence.test.ts",
+    "packages/server-core/src/sessions/workspace-mcp-defaults.test.ts"
+  ],
+  "reason": "real SessionManager startup boundary can probe seeded remote sources including Context7",
+  "groups": [
+    {
+      "args": [
+        "bun",
+        "test",
+        "packages/shared/src/mcp/__tests__"
+      ],
+      "exitCode": 0,
+      "log": "runtime-final-mcp-safe-1.log"
+    },
+    {
+      "args": [
+        "bun",
+        "test",
+        "packages/shared/src/sources/__tests__/builtin-mcp.test.ts",
+        "packages/shared/src/sources/__tests__/builtin-mcp-installer.test.ts",
+        "packages/shared/src/sources/__tests__/builtin-mcp-qmd.test.ts",
+        "packages/shared/src/sources/__tests__/builtin-sources-seed.test.ts",
+        "packages/shared/src/sources/__tests__/source-config-validation.test.ts",
+        "packages/shared/src/sources/__tests__/server-builder-flow.test.ts",
+        "packages/shared/src/sources/__tests__/server-builder-authScheme.test.ts",
+        "packages/shared/src/workspaces/__tests__/builtin-mcp-install.test.ts",
+        "packages/shared/src/prompts/__tests__/mcp-guidance.test.ts",
+        "packages/shared/src/agent/core/__tests__/source-manager.test.ts",
+        "packages/shared/src/agent/__tests__/source-state.test.ts",
+        "packages/shared/src/agent/__tests__/base-agent.test.ts",
+        "packages/shared/src/agent/__tests__/omp-session-flow.test.ts",
+        "packages/shared/src/agent/__tests__/omp-rpc-transport.test.ts",
+        "packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts",
+        "packages/shared/src/agent/__tests__/omp-history-recovery.test.ts",
+        "packages/shared/src/agent/__tests__/omp-permission-mode.test.ts",
+        "packages/shared/src/agent/__tests__/omp-query-llm.test.ts",
+        "packages/shared/src/agent/__tests__/omp-source-proxy.test.ts",
+        "packages/shared/src/agent/__tests__/claude-context-mcp-runtime.test.ts",
+        "packages/session-tools-core/src/handlers/source-test.test.ts",
+        "packages/server-core/src/sources/__tests__/builtin-mcp-startup.test.ts",
+        "packages/server-core/src/sources/__tests__/default-session-sources.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/mcp-tools-runtime.test.ts",
+        "packages/server-core/src/sessions/first-session-welcome.test.ts",
+        "apps/electron/src/renderer/components/onboarding/__tests__/first-session-welcome.test.ts",
+        "packages/shared/src/skills/__tests__/bundled.test.ts",
+        "scripts/build/__tests__/bundled-assets.test.ts",
+        "scripts/build/__tests__/electron-packaging-files.test.ts"
+      ],
+      "exitCode": 0,
+      "log": "runtime-final-mcp-safe-2.log"
+    },
+    {
+      "args": [
+        "bun",
+        "test",
+        "packages/server-core/src/handlers/rpc/__tests__/sources.test.ts"
+      ],
+      "exitCode": 0,
+      "log": "runtime-final-mcp-safe-3.log"
+    }
+  ]
+}

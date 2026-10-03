@@ -1,0 +1,95 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/workflows/__tests__/canvas-spec.test.ts:
+(pass) session WorkflowSpec > round-trips save/reopen through the document store [9.92ms]
+(pass) session WorkflowSpec > rejects cycles, port mismatches, missing required inputs, and bad permission [0.18ms]
+(pass) session WorkflowSpec > promotes a session trace with provenance and stable layout [0.52ms]
+(pass) session WorkflowSpec > runs a saved version twice with identical artifacts [0.65ms]
+(pass) session WorkflowSpec > run node / from-here / selection / pipeline select different frontiers [0.82ms]
+(pass) session WorkflowSpec > in-process runner is simulate-only and never production success [0.22ms]
+(pass) session WorkflowSpec > simulated and waiting_approval copy is never production-success copy [0.88ms]
+(pass) session WorkflowSpec > forks a version and compares node/edge edits [0.45ms]
+(pass) session WorkflowSpec > import/export keeps an immutable spec [0.19ms]
+(pass) session WorkflowSpec > converts a note into an output sink [0.06ms]
+
+packages/core/src/mindmap/__tests__/session-map-pin.test.ts:
+(pass) sessionMapPinStorageKey > uses rox.sessionMap.layout prefix [0.05ms]
+(pass) parseSessionMapPin > returns null for missing or empty raw [0.10ms]
+(pass) parseSessionMapPin > returns null for non-JSON [0.08ms]
+(pass) parseSessionMapPin > returns null for array [0.04ms]
+(pass) parseSessionMapPin > returns null for wrong version [0.02ms]
+(pass) parseSessionMapPin > returns null when sessionId is missing [0.02ms]
+(pass) parseSessionMapPin > returns null on sessionId mismatch [0.03ms]
+(pass) parseSessionMapPin > returns null when nodes is not an object [0.25ms]
+(pass) serializeSessionMapPin / parseSessionMapPin > valid pin round-trips and keeps optional viewport [0.10ms]
+(pass) serializeSessionMapPin / parseSessionMapPin > round-trips without viewport [0.12ms]
+(pass) pruneSessionMapPin > drops unknown node ids and keeps known nodes, viewport, camera, sessionId [0.11ms]
+
+packages/core/src/mindmap/__tests__/session-scene-graph.test.ts:
+(pass) projectSessionScenes > empty transcript [0.22ms]
+(pass) projectSessionScenes > nests tools under the user scene and does not drop them [0.23ms]
+(pass) projectSessionScenes > linear scenes chain as continue [0.14ms]
+(pass) projectSessionScenes > skips status chrome [0.06ms]
+(pass) projectSessionScenes > orphan assistant before first user keeps tools [0.04ms]
+(pass) projectSessionScenes > fork via parentToolUseId does not drop tools [0.24ms]
+(pass) projectSessionScenes > cycle via parentToolUseId is broken as orphaned [0.13ms]
+(pass) planFanOutJobs > caps at 32 and parallel 8 [0.26ms]
+
+apps/electron/src/renderer/components/session-workbench/__tests__/to-flow-elements.test.ts:
+(pass) toFlowElements > one scene + continue edge → one node + one edge [0.65ms]
+(pass) toFlowElements > user + assistant projects one scene scn_u1 [0.08ms]
+(pass) toFlowElements > camera map vs flow keeps the same node ids [0.18ms]
+(pass) toFlowElements > pin.nodes[scene.id] overrides auto position [0.25ms]
+(pass) toFlowElements > unknown pin ids are ignored [0.07ms]
+(pass) toFlowElements > core pin helpers are used, not duplicated [0.07ms]
+
+apps/electron/src/renderer/components/session-workbench/__tests__/workflow-spec-editor.test.ts:
+(pass) workflow spec editor wiring > valid named-port imports render default handles and retain canonical ports on export [1.40ms]
+(pass) workflow spec editor wiring > short condition port names normalize to named canvas handles on import [0.33ms]
+(pass) workflow spec editor wiring > import/export preserves sticker color, frame role and user-resized boxes [0.46ms]
+(pass) workflow spec editor wiring > palette, conversion, promote, version, and run actions are wired [0.57ms]
+(pass) workflow spec editor wiring > round-trips expanded kinds through the workflow document adapter [0.15ms]
+(pass) workflow spec editor wiring > empty map hides layout and document actions in both menus [0.46ms]
+
+apps/electron/src/renderer/components/session-workbench/__tests__/canvas-node-editing.test.ts:
+(pass) port changes during node conversion > existing steps bind to the visible true branch after converting to a condition [1.05ms]
+(pass) port changes during node conversion > old saved condition edges restore default and named false handles [0.26ms]
+(pass) port changes during node conversion > keyboard links use a real branch and reject foreign handles [0.10ms]
+(pass) port changes during node conversion > converting both branches to a tool coalesces duplicate steps and clears old ports [0.07ms]
+(pass) port changes during node conversion > frame conversion removes incident execution/context links and respects minimum size [0.06ms]
+(pass) port changes during node conversion > output conversion removes outgoing execution links while preserving incoming context [0.04ms]
+(pass) port changes during node conversion > converting a sticky to a tool restores tool appearance without changing text or position [0.06ms]
+(pass) canvas refresh while editing > title/transcript updates preserve multiple selected nodes [0.13ms]
+(pass) canvas refresh while editing > a transcript refresh preserves live drag/resize but applies explicit layout changes afterward [0.04ms]
+
+apps/electron/src/renderer/components/session-workbench/__tests__/draft-nodes.test.ts:
+(pass) session draft nodes > legacy note-shaped frames retain layout as non-executable annotations [0.56ms]
+(pass) session draft nodes > new stickers use varied translucent colors and preserve the chosen color on reload [0.21ms]
+(pass) session draft nodes > serializes local draft nodes separately from scene layout pins [0.06ms]
+(pass) session draft nodes > persists draft edges only when both endpoints are draft nodes [0.07ms]
+(pass) session draft nodes > rejects draft edge cycles before persistence [0.18ms]
+(pass) session draft nodes > generates unique draft ids within the same millisecond [0.04ms]
+(pass) session draft nodes > drops malformed draft node snapshots [0.17ms]
+
+apps/electron/src/renderer/components/session-workbench/__tests__/map-editing-ux.test.ts:
+(pass) map connection validation > frames and groups are annotations, while an output accepts steps without starting another [0.16ms]
+(pass) map connection validation > condition branches keep their distinct ports through storage and workflow export [0.22ms]
+(pass) map connection validation > draft → draft is a step edge; cycles and duplicates are refused [0.07ms]
+(pass) map connection validation > scene ↔ draft is a context edge in either drag direction, normalized to scene → draft [0.06ms]
+(pass) map connection validation > scene → scene, self and branch links are refused with a specific message [0.09ms]
+(pass) map connection validation > context notes are collected for a scene and appended to the rewrite prompt [0.24ms]
+(pass) map connection validation > context edges survive the draft graph round-trip but are not workflow steps [0.11ms]
+(pass) map connection validation > editor uses directed connection mode with hover validation and no drop-to-fork [0.19ms]
+(pass) node resize persistence > scene resize is saved in the pin with position and clamped size [0.15ms]
+(pass) node resize persistence > draft resize is saved on the node and survives parse [0.13ms]
+(pass) node resize persistence > layout boxes use measured, then set, then default sizes (no 198×88) [0.27ms]
+(pass) node resize persistence > scene and draft nodes render a NodeResizer when selected [0.04ms]
+(pass) scene node visuals > repeated tools collapse into «name ×N» chips [0.22ms]
+(pass) scene node visuals > anchor chips show a short scene title, never the raw scn_ id [0.11ms]
+(pass) scene node visuals > no monospace chips; 2-line title with the kind chip on its own row [0.04ms]
+(pass) map menus and inspector > one overlay inspector, a node context menu and a canvas «+» / right-click picker [0.36ms]
+
+ 73 pass
+ 0 fail
+ 246 expect() calls
+Ran 73 tests across 8 files. [285.00ms]

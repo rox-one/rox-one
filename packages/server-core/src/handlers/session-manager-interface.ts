@@ -213,7 +213,7 @@ export interface ISessionManager {
    * Used by the messaging gateway so Telegram/WhatsApp accept buttons produce
    * the same server-side effect as the desktop accept button.
    */
-  acceptPlan(sessionId: string, planPath?: string): Promise<void>
+  acceptPlan(sessionId: string, planPath?: string, runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch): Promise<void>
 
   // ---------------------------------------------------------------------------
   // Sharing

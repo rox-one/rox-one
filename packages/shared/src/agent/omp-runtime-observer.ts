@@ -40,24 +40,45 @@ const path = process.env.ROX_RUNTIME_OBSERVATION_PATH;
 const controlPath = process.env.ROX_RUNTIME_CONTROL_PATH;
 let spoolBytes = 0;
 let emitterCount = 0;
-// Native SDK rebinds the same prepared factory into descendants. Task spawn
-// keys and generated agent ids differ, so never infer ownership from the
-// latest control file. A unique actual-parent reservation can bind a child;
-// ambiguous or absent receipts deliberately leave its observations unavailable.
+// Native SDK rebinds the same prepared factory into descendants. The genuine
+// spawn reservation binds delayed starts to their dispatching user turn.
 const assignedRuns = new Map();
 const parentReservations = new Map();
+const ambiguousParents = new Set();
 let reservationQuotaExceeded = false;
-const sensitive = /^(?:authorization|proxy.?authorization|cookie|set.?cookie|password|passwd|secret|client.?secret|api.?key|access.?token|refresh.?token|id.?token|private.?key|credential|credentials|env|environment|envOverrides|thumbnailBase64|base64|dataUrl)$/i;
-const knownSecrets = Object.entries(process.env).filter(([key, value]) => /(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i.test(key) && value && value.length >= 8).map(([, value]) => value);
+const identityKey = (id, parentId) => JSON.stringify([parentId, id]);
+const ambiguousIdentity = (id, parentId) => {
+  const key = identityKey(id, parentId);
+  return assignedRuns.has(key) && !assignedRuns.get(key);
+};
+const rememberIdentity = (id, reservation) => {
+  const key = identityKey(id, reservation.parentId);
+  if (assignedRuns.size >= 256 && !assignedRuns.has(key)) { reservationQuotaExceeded = true; return; }
+  const previous = assignedRuns.get(key);
+  // A reused actor receipt across turns cannot identify a delayed start safely.
+  const ambiguous = assignedRuns.has(key) && (!previous || previous.runId !== reservation.runId);
+  if (ambiguous) ambiguousParents.add(reservation.parentId);
+  assignedRuns.set(key, ambiguous ? undefined : reservation);
+};
+const sensitive = /^(?:authorization|proxy.?authorization|cookie|set.?cookie|password|passwd|secret|client.?secret|api.?key|access.?token|refresh.?token|id.?token|private.?key|credentials?|env|environment|envOverrides|base64|thumbnailBase64|dataUrl)$/i;
+const knownSecrets = Object.entries(process.env).filter(([key, value]) => /(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i.test(key) && value && value.length >= 4).map(([, value]) => value).sort((a, b) => b.length - a.length);
 function sanitized(value, state, depth = 0, key = '') {
   if (sensitive.test(key)) return '[REDACTED]';
   if (typeof value === 'string') {
     for (const secret of knownSecrets) value = value.split(secret).join('[REDACTED]');
     value = value.replace(/Bearer\s+[A-Za-z0-9._~+\/-]+/gi, 'Bearer [REDACTED]')
-      .replace(/((?:api[_-]?key|access[_-]?token|password|secret)["']?\s*[=:]\s*["']?)[^\s,;"']+/gi, '$1[REDACTED]')
-      .replace(/((?:authorization|cookie|set-cookie)\s*:\s*)[^\r\n"']+/gi, '$1[REDACTED]')
+      .replace(/(\b(?:cookie|set-cookie)\s*:\s*)[^\r\n]+/gi, '$1[REDACTED]')
+      .replace(/((["']?)\b(?:[A-Za-z0-9]{1,64}[_-])?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|id[_-]?token|client[_-]?secret|password|passwd|authorization|proxy-authorization|cookie|set-cookie|token|secret|credentials?)["']?\s*[=:]\s*)("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s"'&;,}\n]+)/gi,
+        (_match, prefix, _keyQuote, secret) => prefix + ((secret[0] === '"' || secret[0] === "'") ? secret[0] + '[REDACTED]' + secret[0] : '[REDACTED]'))
       .replace(/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g, '[REDACTED PRIVATE KEY]')
       .replace(/([a-z][a-z0-9+.-]{0,20}:\/\/[^:\s/]{1,256}:)[^@\s/]{1,2048}@/gi, '$1[REDACTED]@');
+    if (depth < 12 && value.length <= 32768 && /^[{\[]/.test(value.trim())) {
+      try {
+        const parsed = JSON.parse(value);
+        const safe = sanitized(parsed, state, depth + 1);
+        if (JSON.stringify(safe) !== JSON.stringify(parsed)) value = JSON.stringify(safe);
+      } catch { /* Privacy-only decoding; ordinary output is still text. */ }
+    }
     if (value.length > 32768) { state.truncated = true; value = value.slice(0, 32768); }
     state.chars += value.length;
     if (state.chars > 200000) { state.truncated = true; return '[CONTENT TRUNCATED]'; }
@@ -90,6 +111,47 @@ function sanitized(value, state, depth = 0, key = '') {
   }
   return undefined;
 }
+// ToolInfo.parameters may be a callable ArkType. Serialize its documented
+// schema API explicitly; generic functions and accessors remain uncaptured.
+function dataProperty(value, name, inherited = false) {
+  try {
+    for (let depth = 0; value && depth < (inherited ? 8 : 1); depth++) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, name);
+      if (descriptor) return 'value' in descriptor ? descriptor.value : undefined;
+      value = Object.getPrototypeOf(value);
+    }
+  } catch { /* An unsupported descriptor cannot stop the native invocation. */ }
+  return undefined;
+}
+function toolDefinitions(pi, activeTools) {
+  let available;
+  try { available = pi.getAllTools(); } catch { available = []; }
+  return activeTools.map(name => {
+    const tool = Array.isArray(available) ? available.find(tool => dataProperty(tool, 'name') === name) : undefined;
+    const definition = { name, description: dataProperty(tool, 'description'), sourceInfo: dataProperty(tool, 'sourceInfo'),
+      parametersAvailability: 'unknown', parametersSource: 'OMP ExtensionAPI.getAllTools' };
+    const parameters = dataProperty(tool, 'parameters');
+    try {
+      // Match the public native isArkSchema surface; other callable values
+      // are not a supported schema API and must never be invoked here.
+      const toJsonSchema = typeof parameters === 'function' && typeof dataProperty(parameters, 'assert', true) === 'function'
+        ? dataProperty(parameters, 'toJsonSchema', true) : undefined;
+      if (typeof toJsonSchema === 'function') {
+        definition.parameters = Reflect.apply(toJsonSchema, parameters, [{ target: 'draft-2020-12', fallback: context => context.base }]);
+        definition.parametersConversion = 'ArkType.toJsonSchema';
+      } else if ((parameters && typeof parameters === 'object' && !Array.isArray(parameters)) || typeof parameters === 'boolean') {
+        definition.parameters = parameters;
+        definition.parametersConversion = 'JSON Schema';
+      } else return definition;
+      if ((definition.parameters && typeof definition.parameters === 'object' && !Array.isArray(definition.parameters)) || typeof definition.parameters === 'boolean') {
+        definition.parametersAvailability = 'available';
+      } else delete definition.parameters;
+    } catch {
+      definition.parametersUnavailableReason = 'native-schema-conversion-failed';
+    }
+    return definition;
+  });
+}
 export default function roxRuntimeObserver(pi) {
   if (!path || !controlPath) return;
   if (++emitterCount > 128) { process.stderr.write('ROX_RUNTIME_OBSERVER_ERROR emitter quota exceeded\n'); return; }
@@ -98,13 +160,16 @@ export default function roxRuntimeObserver(pi) {
   const startedAt = performance.now();
   let sourceSeq = 0;
   let quotaReported = false;
-  const write = (hook, payload, ctx) => {
-    if (!runId) return;
+  const spawnReservations = new Map();
+  const taskInvocations = new Map();
+  const taskInvocationRuns = new Map();
+  const write = (hook, payload, ctx, observedRunId = runId) => {
+    if (!observedRunId) return;
     try {
     const state = { truncated: false, chars: 0 };
     const model = ctx.model ? { provider: ctx.model.provider, id: ctx.model.id, contextWindow: ctx.model.contextWindow } : undefined;
     const record = sanitized({ version: 1, id: randomUUID(), sourceId: emitterId, sourceSeq: ++sourceSeq,
-      observedAt: Date.now(), elapsedMs: performance.now() - startedAt, runId,
+      observedAt: Date.now(), elapsedMs: performance.now() - startedAt, runId: observedRunId,
       nativeSessionId: ctx.sessionManager.getSessionId(), agent: ctx.agent, hook,
       model, cwd: ctx.cwd, thinkingLevel: pi.getThinkingLevel(),
       payload }, state);
@@ -129,37 +194,62 @@ export default function roxRuntimeObserver(pi) {
     catch { process.stderr.write('ROX_RUNTIME_OBSERVER_ERROR cannot read observation control\n'); return; }
     if (typeof control.runId !== 'string' || !control.runId) return;
     if (ctx.agent.kind === 'sub') {
-      const direct = assignedRuns.get(ctx.agent.id);
+      const key = identityKey(ctx.agent.id, ctx.agent.parentId);
+      const direct = assignedRuns.get(key);
       const reservations = parentReservations.get(ctx.agent.parentId);
       const candidates = new Set(reservations ? [...reservations.values()].map(value => value.runId) : []);
-      const ambiguousIdentity = assignedRuns.has(ctx.agent.id) && !direct;
-      runId = !reservationQuotaExceeded && !ambiguousIdentity && direct && direct.parentId === ctx.agent.parentId
-        ? direct.runId : !reservationQuotaExceeded && candidates.size === 1 ? [...candidates][0] : undefined;
-      if (ambiguousIdentity) runId = undefined;
+      const ambiguousActor = assignedRuns.has(key) && !direct;
+      // Closing an ambiguous dispatch does not prove its pending child vanished.
+      // Exact actor receipts remain usable; parent-only fallback stays refused.
+      const ambiguousParentReceipt = ambiguousParents.has(ctx.agent.parentId)
+        || (reservations && [...reservations.keys()].some(id => ambiguousIdentity(id, ctx.agent.parentId)));
+      runId = !reservationQuotaExceeded && !ambiguousActor && direct && direct.parentId === ctx.agent.parentId
+        ? direct.runId : !reservationQuotaExceeded && !ambiguousActor && !ambiguousParentReceipt && candidates.size === 1 ? [...candidates][0] : undefined;
       if (!runId) { process.stderr.write('ROX_RUNTIME_OBSERVER_ERROR cannot bind native child to originating run\n'); return; }
     } else runId = control.runId;
     const activeTools = pi.getActiveTools();
     write('before_agent_start', { prompt: event.prompt, systemPrompt: event.systemPrompt,
       images: event.images?.map(image => ({ type: image.type, mimeType: image.mimeType })),
-      tools: activeTools, toolDefinitions: pi.getAllTools().filter(tool => activeTools.includes(tool.name)),
+      tools: activeTools, toolDefinitions: toolDefinitions(pi, activeTools),
       contextUsage: ctx.getContextUsage() }, ctx);
   });
-  pi.on('context', (event, ctx) => write('context', { messages: event.messages, contextUsage: ctx.getContextUsage() }, ctx));
+  pi.on('context', (event, ctx) => {
+    const activeTools = pi.getActiveTools();
+    write('context', { messages: event.messages, tools: activeTools, toolDefinitions: toolDefinitions(pi, activeTools), contextUsage: ctx.getContextUsage() }, ctx);
+  });
   pi.on('before_provider_request', (event, ctx) => write('before_provider_request', { providerPayload: event.payload }, ctx));
   pi.on('before_subagent_spawn', (event, ctx) => {
     if (runId && typeof event.spawnKey === 'string') {
-      if (assignedRuns.size >= 256 && !assignedRuns.has(event.spawnKey)) reservationQuotaExceeded = true;
+      const reservation = { runId, parentId: ctx.agent.id, ctx, invocationKind: event.invocationKind };
+      rememberIdentity(event.spawnKey, reservation);
       if (!reservationQuotaExceeded) {
-        const reservation = { runId, parentId: ctx.agent.id };
-        // A reused receipt spanning different runs is ambiguous too.
-        const previous = assignedRuns.get(event.spawnKey);
-        assignedRuns.set(event.spawnKey, assignedRuns.has(event.spawnKey) && (!previous || previous.runId !== runId) ? undefined : reservation);
         let reservations = parentReservations.get(ctx.agent.id);
         if (!reservations) { reservations = new Map(); parentReservations.set(ctx.agent.id, reservations); }
         reservations.set(event.spawnKey, reservation);
       }
+      if (spawnReservations.size >= 256 && !spawnReservations.has(event.spawnKey)) spawnReservations.delete(spawnReservations.keys().next().value);
+      spawnReservations.set(event.spawnKey, reservation);
     }
     write('before_subagent_spawn', event, ctx);
+  });
+  // Synchronous task dispatch reserves its actor id *after* the spawn hook.
+  // Native lifecycle carries the actual id and the exact dispatch call/index.
+  // Observe that bus, rather than guessing identity from generated names.
+  pi.events?.on('task:subagent:lifecycle', payload => {
+    if (!payload || payload.status !== 'started' || typeof payload.id !== 'string') return;
+    const dispatchKey = typeof payload.parentToolCallId === 'string' && Number.isSafeInteger(payload.index)
+      ? payload.parentToolCallId + ':' + payload.index : undefined;
+    const key = spawnReservations.has(payload.id) ? payload.id : dispatchKey;
+    // Named task ids may receive a uniqueness suffix after the spawn hook.
+    // The native lifecycle's exact parent tool call still binds them to the
+    // actual TaskTool invocation, including its captured dispatch generation.
+    const reserved = key && spawnReservations.get(key);
+    const reservation = reserved ?? taskInvocations.get(payload.parentToolCallId);
+    if (!reservation || reservationQuotaExceeded || (reserved && ambiguousIdentity(key, reservation.parentId))) return;
+    if (reserved) spawnReservations.delete(key);
+    rememberIdentity(payload.id, reservation);
+    write('subagent_identity', { id: payload.id, invocationKind: reservation.invocationKind,
+      spawnKey: reserved ? key : undefined, parentToolCallId: payload.parentToolCallId, index: payload.index }, reservation.ctx, reservation.runId);
   });
   const releaseReservations = (event, ctx) => {
     const reservations = parentReservations.get(ctx.agent.id);
@@ -167,16 +257,16 @@ export default function roxRuntimeObserver(pi) {
     const callId = own(event, 'toolCallId');
     if (!reservations || own(event, 'toolName') !== 'task' || typeof callId !== 'string') return;
     const results = own(own(own(event, 'result'), 'details'), 'results');
-    // Actual task-result ids close dispatch reservations. Retain exact native
-    // identity receipts, including a worker that starts after its dispatch.
+    // Actual structured task-result ids close dispatch reservations, retaining
+    // exact receipts for a worker whose first hook arrives after its dispatch.
     if (Array.isArray(results)) for (let index = 0; index < Math.min(results.length, 200); index++) {
       const result = own(results, String(index));
       const id = own(result, 'id');
       const childIndex = own(result, 'index');
       if (typeof id !== 'string' || !Number.isSafeInteger(childIndex)) continue;
-      const key = callId + ':' + childIndex;
-      const reservation = reservations.get(key);
-      if (reservation) assignedRuns.set(id, reservation);
+      const spawnKey = callId + ':' + childIndex;
+      const reservation = reservations.get(spawnKey);
+      if (reservation && !ambiguousIdentity(spawnKey, ctx.agent.id)) rememberIdentity(id, reservation);
     }
     for (const key of reservations.keys()) if (key.startsWith(callId + ':')) reservations.delete(key);
     if (!reservations.size) parentReservations.delete(ctx.agent.id);
@@ -187,8 +277,24 @@ export default function roxRuntimeObserver(pi) {
     'retry_fallback_applied', 'retry_fallback_succeeded', 'todo_reminder', 'goal_updated',
     'tool_approval_requested', 'tool_approval_resolved']) {
     pi.on(hook, (event, ctx) => {
+      if (hook === 'tool_execution_start' && event.toolName === 'task' && typeof event.toolCallId === 'string') {
+        const key = identityKey(event.toolCallId, ctx.agent.id);
+        if (taskInvocationRuns.size >= 128 && !taskInvocationRuns.has(key)) reservationQuotaExceeded = true;
+        else {
+          const previous = taskInvocationRuns.get(key);
+          const ambiguous = taskInvocationRuns.has(key) && (!previous || previous !== runId);
+          if (ambiguous) ambiguousParents.add(ctx.agent.id);
+          taskInvocationRuns.set(key, ambiguous ? undefined : runId);
+        }
+        if (taskInvocations.size >= 128 && !taskInvocations.has(event.toolCallId)) taskInvocations.delete(taskInvocations.keys().next().value);
+        // A reused parent call id does not identify an old asynchronous launch.
+        // Retain its ambiguity even after a tool-end removes the active entry.
+        taskInvocations.set(event.toolCallId, taskInvocationRuns.get(key) === runId && runId
+          ? { runId, parentId: ctx.agent.id, ctx, invocationKind: 'task' } : undefined);
+      }
       if (hook === 'tool_execution_end') releaseReservations(event, ctx);
       write(hook, event, ctx);
+      if (hook === 'tool_execution_end') taskInvocations.delete(event.toolCallId);
     });
   }
   pi.on('message_update', (event, ctx) => {

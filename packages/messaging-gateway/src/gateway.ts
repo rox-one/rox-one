@@ -8,6 +8,7 @@
 import type { ISessionManager } from '@rox/server-core/handlers'
 import type { PushTarget } from '@rox/shared/protocol'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { RuntimeLaunch } from '@rox/core/runtime-trace'
 import {
   evaluateBindingAccess,
   evaluatePreBindingAccess,
@@ -127,6 +128,7 @@ interface PendingCompactAccept {
   messageId: string
   planPath: string
   createdAt: number
+  runtimeLaunch: RuntimeLaunch
 }
 
 const COMPACT_ACCEPT_TTL_MS = 10 * 60 * 1000
@@ -646,6 +648,14 @@ export class MessagingGateway {
       return
     }
 
+    const binding = this.bindingStore.findByChannel(platform, press.channelId, press.threadId)
+    const runtimeLaunch: RuntimeLaunch = {
+      kind: 'channel',
+      triggerId: press.messageId,
+      ...(binding ? { channel: { kind: 'channel-identity' as const, id: binding.id, scope: 'workspace' as const,
+        label: `${platform}: ${binding.channelName ?? press.channelId}` } } : {}),
+    }
+
     // Disable the buttons so the user can't tap twice. Non-fatal if it fails.
     const record = this.planMessages.get(token)
     if (record && adapter.clearButtons) {
@@ -657,7 +667,7 @@ export class MessagingGateway {
 
     if (action === 'accept') {
       try {
-        await this.sessionManager.acceptPlan(entry.sessionId, entry.planPath)
+        await this.sessionManager.acceptPlan(entry.sessionId, entry.planPath, runtimeLaunch)
         await adapter.sendText(press.channelId, '✅ Plan accepted. Agent resuming.', pressOpts)
       } catch (err) {
         this.log.error('acceptPlan failed', {
@@ -677,7 +687,6 @@ export class MessagingGateway {
     // action === 'compact': persist the "waiting for compaction" intent, send
     // /compact, and let onSessionEvent → finishPendingCompactAccept dispatch
     // the approval once compaction finishes.
-    const binding = this.bindingStore.findByChannel(platform, press.channelId, press.threadId)
     if (!binding) return
 
     this.pendingCompactAccepts.set(entry.sessionId, {
@@ -690,11 +699,13 @@ export class MessagingGateway {
       messageId: record?.messageId ?? '',
       planPath: entry.planPath,
       createdAt: Date.now(),
+      runtimeLaunch,
     })
 
     try {
       await this.sessionManager.setPendingPlanExecution(entry.sessionId, entry.planPath)
-      await this.sessionManager.sendMessage(entry.sessionId, '/compact')
+      await this.sessionManager.sendMessage(entry.sessionId, '/compact', undefined, undefined, undefined, undefined, undefined, undefined,
+        { runtimeLaunch })
       await adapter.sendText(
         press.channelId,
         '♻️ Compacting conversation, then executing the plan…',
@@ -837,7 +848,7 @@ export class MessagingGateway {
     const adapter = this.adapters.get(entry.platform)
     const opts = entry.threadId !== undefined ? { threadId: entry.threadId } : {}
     try {
-      await this.sessionManager.acceptPlan(sessionId, entry.planPath)
+      await this.sessionManager.acceptPlan(sessionId, entry.planPath, entry.runtimeLaunch)
       await this.sessionManager.clearPendingPlanExecution(sessionId)
       if (adapter?.isConnected()) {
         await adapter.sendText(entry.channelId, '✅ Plan executing after compaction.', opts)

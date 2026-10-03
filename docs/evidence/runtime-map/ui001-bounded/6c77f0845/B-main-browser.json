@@ -1,0 +1,23 @@
+{
+  "label": "B-main-browser",
+  "command": [
+    "/workspace/scratch/d0a9c1c6c094/tooling/node_modules/@oven/bun-linux-x64/bin/bun",
+    "test",
+    "--timeout",
+    "60000",
+    "./apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts"
+  ],
+  "cwd": "/workspace/scratch/d0a9c1c6c094/worktrees/ui001-qualification",
+  "startedUtc": "2026-10-03T22:39:43.748451+00:00",
+  "elapsedSeconds": 5.462,
+  "exitCode": 0,
+  "timedOut": false,
+  "timeoutSeconds": 180,
+  "environment": {
+    "ROX_UI001_CHROMIUM_EXECUTABLE": "/root/.cache/ms-playwright/chromium_headless_shell-1148/chrome-linux/headless_shell",
+    "ROX_UI001_EVIDENCE_DIR": "/workspace/scratch/d0a9c1c6c094/worktrees/ui001-qualification/docs/evidence/runtime-map/ui001-bounded/6c77f0845/screens",
+    "ROX_UI001_BROWSER_TEST": "1",
+    "ROX_UI001_MAIN_FIXTURE_BUNDLE": "/workspace/scratch/d0a9c1c6c094/ui001-bounded-6c77f0845/main-fixture.js"
+  },
+  "log": "B-main-browser.log"
+}

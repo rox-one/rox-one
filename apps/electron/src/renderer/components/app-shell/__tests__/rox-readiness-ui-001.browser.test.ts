@@ -9,7 +9,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from '@playwri
 // Explicit opt-in: a real isolated Chromium fixture, never installed/native or hosted acceptance.
 const enabled = process.env.ROX_UI001_BROWSER_TEST === '1'
 const root = join(import.meta.dir, '../../../../../../..')
-const evidence = join(root, 'docs/final-readiness/execution/cloud/OWNER-UI-001/verification/browser')
+const evidence = process.env.ROX_UI001_EVIDENCE_DIR ?? join(root, 'docs/final-readiness/execution/cloud/OWNER-UI-001/verification/browser')
 let server: Server, browser: Browser, context: BrowserContext, page: Page, base: string
 
 function productionFunctions(): string {
@@ -43,13 +43,17 @@ async function fixtureBundle() {
     import { useCallback, useEffect, useMemo, useState } from 'react';
     import { createRoot } from 'react-dom/client';
     import { flushSync } from 'react-dom';
-    import { useNavigation } from '@/contexts/NavigationContext';
     import { TourPanelScope, useTourSignals } from './apps/electron/src/renderer/features/product-tour/runtime/hooks';
     import { navigationEntity } from './apps/electron/src/renderer/features/product-tour/runtime/routes';
     import { usePanelResize } from './apps/electron/src/renderer/hooks/usePanelResize';
     import * as storage from './apps/electron/src/renderer/lib/local-storage';
     import { loadShellLayout, commitShellLayout } from './apps/electron/src/renderer/lib/shell-layout-preferences';
     import { createStore, getDefaultStore } from 'jotai/vanilla';
+    import { useAtomValue as useProductionAtomValue, useStore } from 'jotai';
+    import { useSession } from './apps/electron/src/renderer/hooks/useSession';
+    import { runtimeTraceScopeKey, runtimeTraceSessionAtomFamily } from './apps/electron/src/renderer/atoms/runtime-trace';
+    import { loadRuntimeTrace } from './apps/electron/src/renderer/event-processor/runtime-trace-ingress';
+    import { runtimeCatalogCapabilities, runtimeCatalogScope } from './apps/electron/src/renderer/lib/runtime-catalog-capabilities';
     import * as guards from './apps/electron/src/shared/types';
     import { parseRouteToNavigationStateOrUnavailable as parseRouteToNavigationState, buildRouteFromNavigationState } from './apps/electron/src/shared/route-parser';
     import { inspectorPanelWidthAtom, bottomDockHeightAtom, bottomTerminalOpenAtom } from './apps/electron/src/renderer/atoms/unified-shell';
@@ -66,6 +70,10 @@ async function fixtureBundle() {
     const sourceListeners = new Set(), skillListeners = new Set(), reads = [];
     let deferredSource, deferredCloud, delaySource = false, delayCloud = false, failSource = false, failPage = false, rejectLazy = false, lazyAttempts = 0, cloudRows = ['a','b'], failCloud = false;
     window.electronAPI = {
+      getRuntimeTraceSnapshot: async query => ({schemaVersion:1,workspaceId:query.workspaceId,sessionId:query.sessionId,
+        runs:[],events:[],coverage:{state:'unavailable',source:'runtime',missing:['ui001-runtime-not-recorded'],reason:'UI-001 route fixture does not record runtime execution'}}),
+      readRuntimeTraceEvents: async () => { throw new Error('Runtime event paging is outside this route fixture'); },
+      readRuntimeTracePayload: async () => { throw new Error('Runtime payload reads are outside this route fixture'); },
       getSources(ws) { reads.push(['sources', ws]); if(failSource) { failSource=false; return Promise.reject(new Error('fixture transport offline')); } if (!delaySource) return Promise.resolve(rows);
         delaySource = false; return new Promise(resolve => { deferredSource = resolve }); },
       getSkills(ws, cwd) { reads.push(['skills', ws, cwd]); return Promise.resolve([]); },
@@ -78,9 +86,10 @@ async function fixtureBundle() {
       }))}), getCloudRunStatus: async () => null,
     };
     const useNavigationState = () => nav;
-    const useAppShellContext = () => ({activeWorkspaceId:workspace,workspaces:[{id:workspace}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]});
+    const useNavigation = () => ({isSessionsReady:true,unavailableWorkspaceSlug:undefined});
+    const useAppShellContext = () => ({activeWorkspaceId:workspace,workspaces:[{id:workspace}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[],skills:[],localMcpEnabled:false});
     const useTranslation = () => ({ t: key => key });
-    const useAtomValue = atom => atom === sessionMetaMapAtom ? sessionRows : [];
+    const useAtomValue = atom => typeof atom === 'symbol' ? atom === sessionMetaMapAtom ? sessionRows : [] : useProductionAtomValue(atom);
     const useSetAtom = () => () => {};
     const sessionMetaMapAtom = Symbol(), automationsAtom = Symbol(), knowledgeHomeViewAtom = Symbol(), knowledgeActiveViewIdAtom = Symbol();
     const selection = {useIsMultiSelectActive:()=>false,useSelectionCount:()=>0,useSelectedIds:()=>new Set(),useSelection:()=>({clearMultiSelect(){}})};
@@ -88,10 +97,11 @@ async function fixtureBundle() {
     const Pass = props => React.createElement('section', null, props.children);
     const Panel = Pass, StoplightProvider = Pass, SendResourceToWorkspaceDialog = () => null;
     const SourceInfoPage = props => React.createElement('div', {'data-fixture-source':props.sourceSlug}, 'Address '+props.sourceSlug);
-    const SkillInfoPage = () => null, MemoryScreen = () => null, ProjectsHomeInMain = () => null,
+    const SkillInfoPage = () => null, SkillsCatalogPage = () => null, IntegrationsCatalogPage = () => null,
+      MemoryScreen = () => null, ProjectsHomeInMain = () => null,
       MultiSelectPanel = () => null, CollectionBulkBar = () => null, ChatPage = props => React.createElement('div',{'data-fixture-chat':props.sessionId},'Chat '+props.sessionId), HomeFrontPage = () => null,
       SettingsOverviewPage = () => null, PageView = () => null, SessionHeatmapHost = () => null, SearchPage = () => null,
-      NotesPage = () => null, ConnectionsPage = () => null, SkillsCatalogPage = () => null, IntegrationsCatalogPage = () => null, ExtraScreenHost = () => null, TasksPage = () => null,
+      NotesPage = () => null, ConnectionsPage = () => null, ExtraScreenHost = () => null, TasksPage = () => null,
       MeetingsPage = () => null, InboxPage = () => null, FeedPage = () => null, KnowledgeEntityPage = () => null,
       ProjectInfoPage = () => null, BrowserPanelPage = () => null,
       PagesHome = () => null, KanbanBoardContainer = () => null,

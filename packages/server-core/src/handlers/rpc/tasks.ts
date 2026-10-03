@@ -13,6 +13,7 @@
  * and intentionally left untouched; retiring it is a separate cleanup.
  */
 import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER } from '@rox/shared/auth'
 import type {
   TaskCreateRequest,
   TaskCreateResult,
@@ -28,6 +29,7 @@ import type {
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   parseTaskYaml,
+  assertSafePathSegment,
   saveTaskSpec,
   loadTaskSpec,
   listTaskSlugs,
@@ -107,11 +109,11 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
   }
 
   function runnerFor(workspaceId: string): TaskRunner {
-    let runner = runners.get(workspaceId)
+    const ws = workspaceOrThrow(workspaceId)
+    let runner = runners.get(ws.id)
     if (!runner) {
-      const ws = workspaceOrThrow(workspaceId)
       runner = new TaskRunner({ host: deps.sessionManager, workspaceId: ws.id, workspaceRoot: ws.rootPath })
-      runners.set(workspaceId, runner)
+      runners.set(ws.id, runner)
     }
     return runner
   }
@@ -200,10 +202,12 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
   // session is a hidden taskDraft (off the board) until adopted by tasks:create; the editor
   // discards an unadopted draft on close, and because drafts are hidden a give-up-early client
   // never leaves a visible orphan tile.
-  server.handle(RPC_CHANNELS.tasks.GENERATE, async (_ctx, workspaceId: string, req: TaskGenerateRequest): Promise<TaskGenerateAck> => {
+  server.handle(RPC_CHANNELS.tasks.GENERATE, async (ctx, workspaceId: string, req: TaskGenerateRequest): Promise<TaskGenerateAck> => {
     const act = rpcTasksActResult({ source: 'native', action: 'write', nativeId: workspaceId })
     if (!isClaimableLive(act)) throw new Error('task generate is not live')
     workspaceOrThrow(workspaceId) // validate the workspace exists; generate no longer writes task.yaml
+    const execution = await peekRoxAccountAuthority()?.capture(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER)
+    if (execution) getRoxAccountAuthority().assertCurrent(execution)
     const orchestrator = await deps.sessionManager.createSession(workspaceId, {
       name: req.title?.trim() || 'New task',
       sessionStatus: 'todo',
@@ -226,6 +230,7 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
       ...(req.permissionMode ? { permissionMode: req.permissionMode } : {}),
     })
     const sessionId = orchestrator.id
+    if (execution) getRoxAccountAuthority().assertCurrent(execution)
     tasksLog.info('generate started', {
       workspaceId,
       sessionId,
@@ -257,7 +262,10 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
           finish(() => resolve(text))
         })
         timer = setTimeout(() => finish(() => reject(new Error('Task generation timed out'))), GENERATE_TIMEOUT_MS)
-        void Promise.resolve(deps.sessionManager.sendMessage(sessionId, prompt))
+        try { if (execution) getRoxAccountAuthority().assertCurrent(execution) }
+        catch (error) { finish(() => reject(error)); return }
+        void Promise.resolve(deps.sessionManager.sendMessage(sessionId, prompt, undefined, undefined, undefined, undefined, undefined, undefined,
+          { roxExecutionContext: execution, runtimeLaunch: { kind: 'unknown', triggerId: `task-draft:${sessionId}` } }))
           .catch((err: unknown) => finish(() => reject(err instanceof Error ? err : new Error(String(err)))))
       })
 
@@ -320,13 +328,20 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
   })
 
   // tasks:run — start a run.
-  server.handle(RPC_CHANNELS.tasks.RUN, async (_ctx, workspaceId: string, req: TaskRunRequest) => {
+  server.handle(RPC_CHANNELS.tasks.RUN, async (ctx, workspaceId: string, req: TaskRunRequest) => {
     const act = rpcTasksActResult({ source: 'native', action: 'write', nativeId: req.slug })
     if (!isClaimableLive(act)) throw new Error('task run is not live')
+    const workspace = workspaceOrThrow(workspaceId)
+    assertSafePathSegment(req.slug)
+    if (req.runId !== undefined) assertSafePathSegment(req.runId)
+    const execution = await peekRoxAccountAuthority()?.capture(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER)
+    if (execution && req.orchestratorSessionId) await getRoxAccountAuthority().bind(`session:${workspace.id}:${req.orchestratorSessionId}`, execution)
+    if (execution) getRoxAccountAuthority().assertCurrent(execution)
     return runnerFor(workspaceId).run(req.slug, {
       runId: req.runId,
       orchestratorSessionId: req.orchestratorSessionId,
       params: req.params,
+      roxExecutionContext: execution,
     })
   })
 
@@ -334,8 +349,21 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
     runnerFor(workspaceId).pause(slug, runId)
   })
 
-  server.handle(RPC_CHANNELS.tasks.RESUME, async (_ctx, workspaceId: string, slug: string, runId: string) => {
-    runnerFor(workspaceId).resume(slug, runId)
+  server.handle(RPC_CHANNELS.tasks.RESUME, async (ctx, workspaceId: string, slug: string, runId: string) => {
+    const workspace = workspaceOrThrow(workspaceId)
+    assertSafePathSegment(workspace.id)
+    assertSafePathSegment(slug)
+    assertSafePathSegment(runId)
+    const authority = peekRoxAccountAuthority()
+    const execution = await authority?.capture(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER)
+    if (authority && execution) {
+      const sealed = await authority.bound(`task-run:${workspace.id}:${slug}:${runId}`, true)
+      if (!sealed) throw new Error('ROX_TASK_RUN_OWNER_UNKNOWN')
+      authority.assertCurrent(execution)
+      if (sealed.caller.issuer !== execution.caller.issuer || sealed.caller.subject !== execution.caller.subject
+        || sealed.cloudAccountId !== execution.cloudAccountId || sealed.authGeneration !== execution.authGeneration) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+    }
+    runnerFor(workspaceId).resume(slug, runId, execution)
   })
 
   server.handle(RPC_CHANNELS.tasks.STOP, async (_ctx, workspaceId: string, slug: string, runId: string) => {
