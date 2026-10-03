@@ -4,12 +4,18 @@ on:
   pull_request:
     paths:
       - 'apps/electron/src/shared/**'
+      - 'apps/electron/src/main/deep-link.ts'
+      - 'apps/electron/src/main/__tests__/deep-link-*.test.ts'
+      - 'apps/electron/src/main/__tests__/rox-readiness-ui-001.native-preload.ts'
       - 'apps/electron/src/renderer/**'
       - '.github/workflows/ui-route-recovery.yml'
   push:
     branches: [main]
     paths:
       - 'apps/electron/src/shared/**'
+      - 'apps/electron/src/main/deep-link.ts'
+      - 'apps/electron/src/main/__tests__/deep-link-*.test.ts'
+      - 'apps/electron/src/main/__tests__/rox-readiness-ui-001.native-preload.ts'
       - 'apps/electron/src/renderer/**'
       - '.github/workflows/ui-route-recovery.yml'
   workflow_dispatch:

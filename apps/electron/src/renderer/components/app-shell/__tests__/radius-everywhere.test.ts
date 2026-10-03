@@ -29,8 +29,8 @@ describe('one-surface shell', () => {
   })
 
   it('renders sidebar and navigator as flush panes with a hairline divider', () => {
-    const desktop = stack.slice(stack.indexOf('DESKTOP BRANCH'))
-    const sidebar = desktop.slice(desktop.indexOf('data-panel-role="sidebar"'), desktop.indexOf('data-panel-role="navigator"'))
+    // Grid, focus and compact arrangements now share one persistent container.
+    const sidebar = stack.slice(stack.indexOf('data-panel-role="sidebar"'), stack.indexOf('data-panel-role="navigator"'))
     expect(sidebar).toContain('rox-shell-pane')
     expect(sidebar).toContain('rox-shell-divider-r')
     expect(sidebar).not.toContain('rox-panel')

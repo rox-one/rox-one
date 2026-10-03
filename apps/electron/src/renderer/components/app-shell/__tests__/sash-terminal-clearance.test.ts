@@ -21,8 +21,8 @@ describe('sash terminal clearance', () => {
     expect(appShell).toContain('bottom: terminalClearance')
     expect(appShell).not.toMatch(/bottom:\s*PANEL_STACK_VERTICAL_OVERFLOW/)
 
-    const desktop = panelStack.slice(panelStack.indexOf('DESKTOP BRANCH'))
-    expect(desktop).toContain('paddingTop: PANEL_STACK_TOP_INSET')
-    expect(desktop).not.toContain('marginTop: -PANEL_STACK_TOP_INSET')
+    // The persistent container chooses its desktop inset without separate branches.
+    expect(panelStack).toContain('paddingTop: isCompact ? undefined : PANEL_STACK_TOP_INSET')
+    expect(panelStack).not.toContain('marginTop: -PANEL_STACK_TOP_INSET')
   })
 })
