@@ -1,45 +1,52 @@
 {
   "objective": "Continue, verify and improve UI-001 within original owner scope",
-  "acceptance": [
-    "Owned source patch and real callback/component checks delivered",
-    "Original target acceptance remains explicitly open"
-  ],
   "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+  "productCommit": "4c46b06c4a4b85ce903993878877216e19db9adb",
+  "acceptance": [
+    "Owned source and actual callback/component evidence delivered locally",
+    "Original full target acceptance remains open"
+  ],
   "tasks": [
     {
-      "id": "source-implementation",
+      "id": "owned-implementation",
       "status": "complete",
-      "productCommit": "3b32a3e44b08d09966b336e0acf038f9dce7af5a"
+      "productCommit": "4c46b06c4a4b85ce903993878877216e19db9adb"
     },
     {
       "id": "owned-verification",
       "status": "complete",
       "evidence": [
-        "evidence/owned-tests.json",
-        "evidence/browser-final.json",
-        "evidence/final-typecheck.json",
-        "evidence/renderer-build-final.json"
+        "evidence/continuation-2-owned-stable.json",
+        "evidence/continuation-2-editor-refresh-green.json",
+        "evidence/continuation-2-original-browser-stable.json",
+        "evidence/continuation-2-typecheck-stable.json",
+        "evidence/continuation-2-renderer-stable.json",
+        "evidence/continuation-2-app-shell-stable.json",
+        "evidence/continuation-2-layout-stable.json",
+        "evidence/continuation-2-parser-gaps-stable.json",
+        "evidence/continuation-2-proposal-stable.json"
       ]
     },
     {
-      "id": "non-owned-integration",
-      "status": "external-prerequisite",
-      "reason": "Lead-owned parser/session auto-selection and two regression assertions"
+      "id": "shared-proposal",
+      "status": "qualified-unapplied",
+      "artifact": "lead-route-recovery-proposal-v4.patch"
     },
     {
-      "id": "full-target-acceptance",
-      "status": "not-observed",
-      "reason": "See target-workflows.json and result externalPrerequisites"
+      "id": "local-delivery",
+      "status": "ready-for-replay-and-archive-readback"
+    },
+    {
+      "id": "lead-integration-and-original-targets",
+      "status": "external-prerequisite",
+      "reason": "See original contract, target-workflows and result prerequisites"
     }
   ],
-  "decisions": [
-    "No further delegation; no push/PR/main or global changes",
-    "Preserve all prior and local failure history; fullDoDClosed false"
-  ],
-  "evidence": [
-    "result.json",
-    "source-manifest.json"
-  ],
   "active_ids": {},
-  "next_action": "Lead integrates the unapplied proposals and supplies actual target/service fixtures, then execute target-workflows.json against the immutable integrated candidate."
+  "decisions": [
+    "Original ownership/no delegation retained",
+    "No push/PR/main/provider/global actions",
+    "All historical failures retained; fullDoDClosed false"
+  ],
+  "next_action": "Package version 2 outputs, verify exact base replay and archive readback; integration then belongs to original lead/target owners."
 }
