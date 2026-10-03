@@ -4,7 +4,7 @@
   "originalTaskInputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
   "candidateRevisionBinding": "The Git HEAD in each receipt binds these exact source bytes. A tracked manifest cannot embed its own commit id.",
   "sourceSha256": {
-    ".github/workflows/product-tour-native.yml": "d43c00c9ee24b29667ac75b11b3513ae49e68fa4956bffa5d7a0843e1dd6dfd5",
+    ".github/workflows/product-tour-native.yml": "20c1331901e7ded9a4ce1970f31580cd16270efaebc762535eff173b77375aff",
     ".github/workflows/sqlite-runtime-recovery.yml": "1906ea6a70b6395d115b4d8d47f4ccef67e8619800f0b9335e00cf34bc13b295",
     ".github/workflows/ui-001-recovery.yml": "b99bf4ec2f1d761cdc2c0f00e00a815f44bfecbadc02a105b25a9dd52777bb7a",
     "apps/electron/resources/skills/gstack/gstack/browse/test/cookie-import-native-job.test.ts": "e96b8b5733f0519c090a574afb64c4e9d53eae54b9aad0f72defc7a9b2b37977",
@@ -96,9 +96,6 @@
     "packages/messaging-gateway/src/__tests__/access-control.test.ts": "d36033d8d159e01e1e98c78721c23768bec76aae9a083e9e82813a2616cf370b",
     "packages/messaging-gateway/src/__tests__/gateway-button-access.test.ts": "64a61cb0de23052aad81ff90cfc95c420aa956880b191167bec046f705b90b9a",
     "packages/messaging-gateway/src/access-control.ts": "b48b96f6a5af7fb75702dd3caceb29fe6e29121c2b5d9ffccf535373ef1cbbdc",
-    "packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts": "83deacfc342ad8f9f1072813befa54af82e3988db0b104bed854112d3ca6cd87",
-    "packages/server-core/src/authority/native-authority.ts": "1eb9f20c07b6b7d7bb2966243fc6a4e6a713ac48032cb1a36d0c1d5c02b5735e",
-    "packages/server-core/src/authority/native-os-owner.ts": "80c376beda505142f9f4659ca0a56de6d2c2666691078d3d3a452b104842a9b9",
     "packages/server-core/src/bootstrap/lock-identity.test.ts": "74dbbc6f0b337a7b467f036e55af5b105eb5b8dd96b45d38b6a73609662f8393",
     "packages/server-core/src/handlers/rpc/__tests__/roadmap-model-provenance.test.ts": "8ccede0d4f8461ee5b0cfd6ea3098c3336e2447af10f2f040d22565e41786a47",
     "packages/server-core/src/sessions/refresh-connection-runtime.test.ts": "930c0d43ddfc9b0dc3b21823803fbb3f1ce6cd99868218b11c12b8bb7fc46859",
@@ -149,5 +146,5 @@
   },
   "priorManifest": "verification/history/pre-2b14-root-source-manifest-v3.json",
   "incomingMainManifest": "verification/history/main-2b14-source-manifest-v3.json",
-  "updatedAt": "2026-10-03T22:37:05.279617+00:00"
+  "updatedAt": "2026-10-03T22:15:17.021873+00:00"
 }
