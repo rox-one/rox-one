@@ -1,0 +1,633 @@
+{
+  "schemaVersion": 1,
+  "repository": "rox-one/rox-one",
+  "sourceRevision": "57871f492d1b21177ab767454d90395d72496b4e",
+  "rootVersion": "0.11.8",
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "!packages/craft-cli",
+    "!packages/craft-agents-commands"
+  ],
+  "workspaceCount": 18,
+  "rootManifest": {
+    "path": "package.json",
+    "sha256": "999100cd459b8f2cf3870997d8480207e51f0425d02a12f6a0ca1902f90f306a",
+    "dependencies": {
+      "@anthropic-ai/claude-agent-sdk": "0.3.258",
+      "@anthropic-ai/sdk": "^0.100.0",
+      "@dnd-kit/dom": "^0.4.0-beta-20260227032529",
+      "@dnd-kit/helpers": "^0.4.0-beta-20260227032529",
+      "@github/copilot-sdk": "^0.1.23",
+      "@earendil-works/pi-ai": "0.85.1",
+      "@earendil-works/pi-coding-agent": "0.85.1",
+      "@modelcontextprotocol/sdk": "^1.29.0",
+      "@radix-ui/react-avatar": "^1.1.11",
+      "@radix-ui/react-collapsible": "^1.1.12",
+      "@radix-ui/react-dropdown-menu": "^2.1.16",
+      "@radix-ui/react-scroll-area": "^1.2.10",
+      "@radix-ui/react-select": "^2.2.6",
+      "@radix-ui/react-separator": "^1.1.8",
+      "@radix-ui/react-slot": "^1.2.4",
+      "@radix-ui/react-tabs": "^1.1.13",
+      "@radix-ui/react-tooltip": "^1.2.8",
+      "@sentry/electron": "^7.7.0",
+      "@sentry/react": "^10.36.0",
+      "@shikijs/cli": "^3.19.0",
+      "@tailwindcss/typography": "^0.5.19",
+      "@tiptap/extension-bubble-menu": "^3.20.0",
+      "@tiptap/extension-file-handler": "^3.20.0",
+      "@tiptap/extension-image": "^3.20.0",
+      "@tiptap/extension-mathematics": "^3.20.0",
+      "@tiptap/extension-placeholder": "^3.20.0",
+      "@tiptap/extension-task-item": "^3.20.0",
+      "@tiptap/extension-task-list": "^3.20.0",
+      "@tiptap/markdown": "^3.20.0",
+      "@tiptap/react": "^3.20.0",
+      "@tiptap/starter-kit": "^3.20.0",
+      "@tiptap/suggestion": "^3.20.0",
+      "@vscode/ripgrep": "^1.17.1",
+      "beautiful-mermaid": "^1.1.3",
+      "class-variance-authority": "^0.7.1",
+      "clsx": "^2.1.1",
+      "date-fns": "^4.1.0",
+      "gray-matter": "^4.0.3",
+      "jotai": "^2.16.0",
+      "js-yaml": "^4.1.1",
+      "katex": "^0.16.33",
+      "linkify-it": "^5.0.0",
+      "lucide-react": "^0.561.0",
+      "marked": "^17.0.1",
+      "markitdown-js": "^0.0.14",
+      "open": "^11.0.0",
+      "prosemirror-highlight": "^0.15.0",
+      "react": "^18.3.1",
+      "react-dom": "^18.3.1",
+      "react-markdown": "^10.1.0",
+      "react-resizable-panels": "^3.0.6",
+      "rehype-katex": "^7.0.1",
+      "rehype-raw": "^7.0.0",
+      "remark-gfm": "^4.0.1",
+      "remark-math": "^6.0.0",
+      "semver": "^7.7.3",
+      "shiki": "^3.19.0",
+      "tailwind-merge": "^3.4.0",
+      "tiptap-extension-code-block-shiki": "^1.0.0",
+      "tiptap-markdown": "^0.9.0",
+      "zod": "^4.0.0"
+    },
+    "devDependencies": {
+      "@aws-sdk/client-s3": "^3.947.0",
+      "@electron/packager": "^19.0.1",
+      "@playwright/test": "1.49.1",
+      "@rollup/rollup-win32-arm64-msvc": "^4.55.1",
+      "@sentry/vite-plugin": "^4.8.0",
+      "@tailwindcss/vite": "^4.1.18",
+      "@types/bun": "latest",
+      "@types/js-yaml": "^4.0.9",
+      "@types/katex": "^0.16.8",
+      "@types/linkify-it": "^5.0.0",
+      "@types/node": "^25.0.8",
+      "@types/react": "^18.3.0",
+      "@types/react-dom": "^18.3.0",
+      "@types/semver": "^7.7.1",
+      "@types/shell-quote": "^1.7.5",
+      "@types/uuid": "^11.0.0",
+      "@typescript-eslint/eslint-plugin": "^8.52.0",
+      "@typescript-eslint/parser": "^8.52.0",
+      "@vitejs/plugin-react": "^5.1.2",
+      "autoprefixer": "^10.4.23",
+      "concurrently": "^9.2.1",
+      "electron": "^39.2.7",
+      "electron-builder": "^26.0.12",
+      "esbuild": "^0.25.0",
+      "eslint": "^9.39.2",
+      "eslint-plugin-react": "^7.37.5",
+      "eslint-plugin-react-hooks": "^7.0.1",
+      "htmlparser2": "3.10.1",
+      "husky": "^9.1.7",
+      "openai": "^6.18.0",
+      "postcss": "^8.5.6",
+      "react-devtools-core": "^6.1.1",
+      "tailwindcss": "^4.1.18",
+      "tar": "^7.5.2",
+      "typescript": "^5.0.0",
+      "vite": "^6.2.4"
+    }
+  },
+  "manifests": [
+    {
+      "path": "apps/cli/package.json",
+      "name": "@rox/cli",
+      "version": "0.11.8",
+      "sha256": "510a8ac3620e9745f8ef282226908f463b8f9580d9983487c50483690e526582",
+      "dependencies": {
+        "@rox/shared": "workspace:*",
+        "@rox/server-core": "workspace:*"
+      },
+      "devDependencies": {
+        "typescript": "^5.8.2",
+        "@types/node": "^22.0.0",
+        "@types/bun": "latest"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "start": "bun run src/index.ts",
+        "typecheck": "tsc --noEmit",
+        "test": "bun test src/"
+      }
+    },
+    {
+      "path": "apps/cloud-gateway/package.json",
+      "name": "@rox/cloud-gateway",
+      "version": "0.1.0",
+      "sha256": "e7fb8a5c933ae6bbbb0b38340082c5134c00692785e085285123959c0bcf2b90",
+      "dependencies": {
+        "@cloudflare/computer": "0.1.0-alpha.1"
+      },
+      "devDependencies": {
+        "@cloudflare/workers-types": "^4.20260702.1",
+        "typescript": "^5.9.0",
+        "wrangler": "^4.115.0"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "dev": "wrangler dev",
+        "deploy": "wrangler deploy",
+        "tail": "wrangler tail",
+        "typecheck": "tsc --noEmit"
+      }
+    },
+    {
+      "path": "apps/electron/package.json",
+      "name": "@rox/electron",
+      "version": "0.11.8",
+      "sha256": "f5bdd2fad16b352a68e08d7a0f77504ed9abec4428ebda4f0f9bc93abb45bc68",
+      "dependencies": {
+        "@rox/core": "workspace:*",
+        "@rox/messaging-gateway": "workspace:*",
+        "@rox/server-core": "workspace:*",
+        "@rox/shared": "workspace:*",
+        "@rox/ui": "workspace:*",
+        "@dnd-kit/core": "^6.3.1",
+        "@dnd-kit/sortable": "^10.0.0",
+        "@dnd-kit/utilities": "^3.2.2",
+        "@paper-design/shaders-react": "^0.0.69",
+        "@pierre/diffs": "^1.0.4",
+        "@radix-ui/react-context-menu": "^2.2.16",
+        "@radix-ui/react-dialog": "^1.1.15",
+        "@radix-ui/react-dropdown-menu": "^2.1.16",
+        "@radix-ui/react-label": "^2.1.8",
+        "@radix-ui/react-popover": "^1.1.15",
+        "@radix-ui/react-switch": "^1.2.6",
+        "@tanstack/react-table": "^8.21.3",
+        "@xyflow/react": "^12.11.3",
+        "buffer": "^6.0.3",
+        "chrono-node": "^2.9.0",
+        "cmdk": "^1.1.1",
+        "electron-log": "^5.4.3",
+        "electron-updater": "^6.8.0",
+        "i18next-browser-languagedetector": "^8.2.1",
+        "jotai-family": "^1.0.1",
+        "motion": "^12.23.26",
+        "next-themes": "^0.4.6",
+        "process": "^0.11.10",
+        "qrcode.react": "^4.2.0",
+        "react": "^18.3.1",
+        "react-colorful": "^5.7.0",
+        "react-day-picker": "^9.13.0",
+        "react-dom": "^18.3.1",
+        "react-i18next": "^17.0.2",
+        "react-pdf": "^10.3.0",
+        "react-simple-code-editor": "^0.14.1",
+        "remark": "^15.0.1",
+        "sharp": "0.35.4",
+        "sonner": "^2.0.7",
+        "strip-markdown": "^6.0.0",
+        "undici": "^7.22.0",
+        "unist-util-visit": "^5.0.0",
+        "vaul": "^1.1.2",
+        "ws": "^8.19.0"
+      },
+      "devDependencies": {
+        "@types/ws": "^8.18.1"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "build:main": "source ../../.env 2>/dev/null || true; esbuild src/main/index.ts --bundle --platform=node --format=cjs --outfile=dist/main.cjs --external:electron --external:@anthropic-ai/claude-agent-sdk --external:onnxruntime-node --external:@xenova/transformers --external:sharp --external:bun:* --alias:node-fetch=./src/main/shims/node-fetch.cjs --alias:abort-controller=./src/main/shims/abort-controller.cjs --define:process.env.GOOGLE_OAUTH_CLIENT_ID=\\\"${GOOGLE_OAUTH_CLIENT_ID:-}\\\" --define:process.env.GOOGLE_OAUTH_CLIENT_SECRET=\\\"${GOOGLE_OAUTH_CLIENT_SECRET:-}\\\" --define:process.env.SLACK_OAUTH_CLIENT_ID=\\\"${SLACK_OAUTH_CLIENT_ID:-}\\\" --define:process.env.SLACK_OAUTH_CLIENT_SECRET=\\\"${SLACK_OAUTH_CLIENT_SECRET:-}\\\" --define:process.env.MICROSOFT_OAUTH_CLIENT_ID=\\\"${MICROSOFT_OAUTH_CLIENT_ID:-}\\\"",
+        "build:main:win": "esbuild src/main/index.ts --bundle --platform=node --format=cjs --outfile=dist/main.cjs --external:electron --external:@anthropic-ai/claude-agent-sdk --external:onnxruntime-node --external:@xenova/transformers --external:sharp --external:bun:* --alias:node-fetch=./src/main/shims/node-fetch.cjs --alias:abort-controller=./src/main/shims/abort-controller.cjs",
+        "build:preload": "esbuild src/preload/voice-overlay.ts --bundle --platform=node --format=cjs --outfile=dist/voice-overlay-preload.cjs --external:electron && esbuild src/preload/bootstrap.ts --bundle --platform=node --format=cjs --outfile=dist/bootstrap-preload.cjs --external:electron --alias:@anthropic-ai/claude-agent-sdk=./src/renderer/shims/claude-agent-sdk-stub.ts",
+        "build:preload-toolbar": "esbuild src/preload/browser-toolbar.ts --bundle --platform=node --format=cjs --outfile=dist/browser-toolbar-preload.cjs --external:electron --alias:@anthropic-ai/claude-agent-sdk=./src/renderer/shims/claude-agent-sdk-stub.ts",
+        "build:interceptor": "esbuild ../../packages/shared/src/unified-network-interceptor.ts --bundle --platform=node --format=cjs --outfile=dist/interceptor.cjs",
+        "build:renderer": "vite build",
+        "build:copy": "bun scripts/copy-assets.ts",
+        "build:validate": "bun scripts/validate-assets.ts",
+        "build": "bun run lint && bun run build:main && bun run build:extension-host-worker && bun run build:preload && bun run build:preload-toolbar && bun run build:interceptor && bun run build:renderer && bun run build:copy && bun run build:validate",
+        "build:win": "bun run build:main:win && bun run build:extension-host-worker && bun run build:preload && bun run build:preload-toolbar && bun run build:interceptor && bun run build:renderer && bun run build:copy && bun run build:validate",
+        "start": "bun run build && electron .",
+        "start:win": "bun run build:win && electron .",
+        "dev": "vite dev",
+        "typecheck": "tsc --noEmit",
+        "dist:mac": "bash scripts/build-dmg.sh arm64",
+        "dist:mac:x64": "bash scripts/build-dmg.sh x64",
+        "dist:win": "powershell -ExecutionPolicy Bypass -File scripts/build-win.ps1",
+        "lint": "eslint src/",
+        "lint:fix": "eslint src/ --fix",
+        "build:extension-host-worker": "esbuild src/main/extension-host/worker.ts --bundle --platform=node --format=cjs --outfile=dist/extension-host-worker.cjs --external:electron"
+      }
+    },
+    {
+      "path": "apps/viewer/package.json",
+      "name": "@rox/viewer",
+      "version": "0.11.8",
+      "sha256": "7720779960c868d6927798a8e7471f2d80e211b54d8570bf4f9049d314e6152e",
+      "dependencies": {
+        "@rox/core": "workspace:*",
+        "@rox/ui": "workspace:*",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "react-i18next": "^17.0.2"
+      },
+      "devDependencies": {
+        "@tailwindcss/typography": "^0.5.16",
+        "@tailwindcss/vite": "^4.0.0",
+        "@vitejs/plugin-react": "^4.4.1",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "lucide-react": "^0.501.0",
+        "motion": "^12.0.0",
+        "react-markdown": "^9.0.3",
+        "rehype-raw": "^7.0.0",
+        "remark-gfm": "^4.0.1",
+        "shiki": "^3.0.0",
+        "tailwind-merge": "^2.6.0",
+        "tailwindcss": "^4.0.0",
+        "typescript": "^5.7.3",
+        "vite": "^6.2.5"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.functions.json"
+      }
+    },
+    {
+      "path": "apps/webui/package.json",
+      "name": "@rox/webui",
+      "version": "0.11.8",
+      "sha256": "61905767cfed00dd80dc4bba844225cc98f875e182ed1a5402a4ab342d766515",
+      "dependencies": {
+        "@rox/core": "workspace:*",
+        "@rox/shared": "workspace:*",
+        "@rox/ui": "workspace:*",
+        "i18next": "^26.0.3",
+        "i18next-browser-languagedetector": "^8.2.1",
+        "jotai": "^2.16.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "react-i18next": "^17.0.2",
+        "sonner": "^2.0.7"
+      },
+      "devDependencies": {},
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "typecheck": "tsc --noEmit",
+        "preview": "vite preview"
+      }
+    },
+    {
+      "path": "apps/workspace-service/package.json",
+      "name": "@rox/workspace-service",
+      "version": "0.11.5",
+      "sha256": "9f0ad2276908a484e725e19862bee3b0d325e73ef55b3cbb840535baa984db48",
+      "dependencies": {
+        "@rox/shared": "workspace:*",
+        "@rox/server-core": "workspace:*",
+        "jose": "^6.0.0",
+        "ws": "^8.19.0"
+      },
+      "devDependencies": {},
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "start": "bun run src/index.ts",
+        "build": "bun build src/index.ts --target bun --outdir dist --metafile=dist/build-metafile.json",
+        "typecheck": "tsc --noEmit",
+        "test": "bun test ../../tests/macro-integration/wp-01-runtime.test.ts"
+      }
+    },
+    {
+      "path": "packages/cloud-runner/package.json",
+      "name": "@rox/cloud-runner",
+      "version": "0.1.0",
+      "sha256": "4c0f418952aeabac26051e9adea8b8fb085ebb0760ad751967836b0be01218c2",
+      "dependencies": {},
+      "devDependencies": {},
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "typecheck": "tsc --noEmit",
+        "test": "bun test src/__tests__/"
+      }
+    },
+    {
+      "path": "packages/core/package.json",
+      "name": "@rox/core",
+      "version": "0.11.8",
+      "sha256": "e1c6b0c9534b5143a3aad4cac180fba4334b5dbbb575880e1bce4cd14452aa02",
+      "dependencies": {
+        "yaml": "^2.8.2"
+      },
+      "devDependencies": {
+        "@types/uuid": "^11.0.0"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {
+        "@anthropic-ai/claude-agent-sdk": "0.3.258",
+        "@modelcontextprotocol/sdk": ">=1.29.0"
+      },
+      "scripts": {}
+    },
+    {
+      "path": "packages/messaging-discord-worker/package.json",
+      "name": "@rox/messaging-discord-worker",
+      "version": "0.11.0",
+      "sha256": "76d3a48a15e254ad17231c357bb21ffc17e9fc44742d70aa767dd6b11af273e4",
+      "dependencies": {
+        "discord.js": "^14.16.0"
+      },
+      "devDependencies": {
+        "typescript": "^5.8.2",
+        "@types/node": "^22.0.0"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "typecheck": "tsc --noEmit"
+      }
+    },
+    {
+      "path": "packages/messaging-gateway/package.json",
+      "name": "@rox/messaging-gateway",
+      "version": "0.11.8",
+      "sha256": "18f4a53df562e4be49a42b65a3878276b10baba5d8e72d76b63d194b7b53982d",
+      "dependencies": {
+        "@rox/core": "workspace:*",
+        "@rox/messaging-discord-worker": "workspace:*",
+        "@rox/messaging-whatsapp-worker": "workspace:*",
+        "@rox/server-core": "workspace:*",
+        "@rox/shared": "workspace:*",
+        "@larksuiteoapi/node-sdk": "^1.62.1",
+        "grammy": "^1.35.0",
+        "qrcode-terminal": "0.12.0"
+      },
+      "devDependencies": {
+        "typescript": "^5.8.2",
+        "@types/node": "^22.0.0"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "typecheck": "tsc --noEmit"
+      }
+    },
+    {
+      "path": "packages/messaging-whatsapp-worker/package.json",
+      "name": "@rox/messaging-whatsapp-worker",
+      "version": "0.11.8",
+      "sha256": "216cc1053a6268a2672d6bd6705fbeedc2a105a08317fb64321f04d6e669a7c5",
+      "dependencies": {
+        "@whiskeysockets/baileys": "^6.7.0"
+      },
+      "devDependencies": {
+        "typescript": "^5.8.2",
+        "@types/node": "^22.0.0"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "typecheck": "tsc --noEmit"
+      }
+    },
+    {
+      "path": "packages/pi-agent-server/package.json",
+      "name": "@rox/pi-agent-server",
+      "version": "0.11.8",
+      "sha256": "83f745caf222f4f7ce2e00c4f12e3efe083c080326f388092543da48ff5c4ef6",
+      "dependencies": {
+        "@rox/session-tools-core": "workspace:*",
+        "@rox/core": "workspace:*",
+        "@earendil-works/pi-coding-agent": "0.85.1",
+        "@earendil-works/pi-agent-core": "0.85.1",
+        "@earendil-works/pi-ai": "0.85.1",
+        "duck-duck-scrape": "^2.2.7",
+        "node-html-parser": "^6.1.0",
+        "pdfjs-dist": "^5.4.0",
+        "turndown": "^7.2.0"
+      },
+      "devDependencies": {
+        "@types/node": "^22.0.0"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "build": "bun build src/index.ts --outdir=dist --target=bun --format=esm --external koffi",
+        "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+        "validate": "bun run typecheck && bun run build"
+      }
+    },
+    {
+      "path": "packages/server-core/package.json",
+      "name": "@rox/server-core",
+      "version": "0.11.8",
+      "sha256": "bec098a2e19626460366529a4a0f86d0c8e67e3f164afcc8d1a83187558839bf",
+      "dependencies": {
+        "@rox/cloud-runner": "workspace:*",
+        "@rox/core": "workspace:*",
+        "@rox/session-tools-core": "workspace:*",
+        "@rox/shared": "workspace:*",
+        "@earendil-works/pi-ai": "0.85.1",
+        "@tursodatabase/database": "0.7.2",
+        "@xenova/transformers": "2.17.2",
+        "gray-matter": "^4.0.3",
+        "jose": "^6.0.0",
+        "js-yaml": "^4.1.1",
+        "sharp": "0.35.4",
+        "ws": "^8.19.0"
+      },
+      "devDependencies": {
+        "typescript": "^5.8.2"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {}
+    },
+    {
+      "path": "packages/server/package.json",
+      "name": "@rox/server",
+      "version": "0.11.8",
+      "sha256": "5ffa52b881917a3a61db9b78ea5bffa4f57720dc1d0d62fc347f0e40c254970b",
+      "dependencies": {
+        "@rox/core": "workspace:*",
+        "@rox/messaging-gateway": "workspace:*",
+        "@rox/server-core": "workspace:*",
+        "@rox/shared": "workspace:*"
+      },
+      "devDependencies": {
+        "typescript": "^5.8.2",
+        "@types/node": "^22.0.0",
+        "ws": "^8.16.0"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "start": "bun run src/index.ts",
+        "generate-token": "bun run src/index.ts --generate-token",
+        "typecheck": "tsc --noEmit"
+      }
+    },
+    {
+      "path": "packages/session-mcp-server/package.json",
+      "name": "@rox/session-mcp-server",
+      "version": "0.11.8",
+      "sha256": "1746909bf41c908bf9b9901d3524c5a6539d574e768dc5c2835fcb5bac1995e6",
+      "dependencies": {
+        "@rox/session-tools-core": "workspace:*",
+        "@rox/shared": "workspace:*",
+        "@modelcontextprotocol/sdk": "^1.29.0",
+        "zod": "^4.0.0"
+      },
+      "devDependencies": {
+        "@types/node": "^22.0.0"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "build": "bun build src/index.ts --outdir=dist --target=node --format=cjs",
+        "dev": "bun run src/index.ts"
+      }
+    },
+    {
+      "path": "packages/session-tools-core/package.json",
+      "name": "@rox/session-tools-core",
+      "version": "0.11.8",
+      "sha256": "e1ef9df72d39fb5533414d56f6c359acc410a47b3f69b128d595015480a0d5c1",
+      "dependencies": {
+        "@rox/core": "workspace:*",
+        "beautiful-mermaid": "*",
+        "zod": "^3.23.0",
+        "zod-to-json-schema": "^3.25.0",
+        "gray-matter": "^4.0.3"
+      },
+      "devDependencies": {
+        "typescript": "^5.8.2"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {},
+      "scripts": {
+        "typecheck": "tsc --noEmit"
+      }
+    },
+    {
+      "path": "packages/shared/package.json",
+      "name": "@rox/shared",
+      "version": "0.11.8",
+      "sha256": "19b34d486c2eaa0ac4f6220462776b36f2da94aa32b44a0b46fe624e445c3208",
+      "dependencies": {
+        "@rox/core": "workspace:*",
+        "@rox/session-tools-core": "workspace:*",
+        "@earendil-works/pi-agent-core": "0.85.1",
+        "@earendil-works/pi-ai": "0.85.1",
+        "@earendil-works/pi-coding-agent": "0.85.1",
+        "@isaacs/ttlcache": "^2.1.4",
+        "@leeoniya/ufuzzy": "^1.0.19",
+        "bash-parser": "^0.5.0",
+        "croner": "^10.0.1",
+        "date-fns": "^4.1.0",
+        "filtrex": "^3.1.0",
+        "glob": "^13.0.0",
+        "i18next": "^26.0.3",
+        "incr-regex-package": "^1.0.4",
+        "shell-quote": "^1.8.3",
+        "yaml": "^2.8.2"
+      },
+      "devDependencies": {
+        "@types/shell-quote": "^1.7.5",
+        "@types/uuid": "^11.0.0"
+      },
+      "optionalDependencies": {},
+      "peerDependencies": {
+        "@anthropic-ai/claude-agent-sdk": "0.3.258",
+        "@modelcontextprotocol/sdk": ">=1.29.0",
+        "zod": ">=4.0.0"
+      },
+      "scripts": {
+        "sync:craft-agent-bash-patterns": "bun run src/config/sync-craft-agent-bash-patterns.ts",
+        "test": "bun test",
+        "test:watch": "bun test --watch"
+      }
+    },
+    {
+      "path": "packages/ui/package.json",
+      "name": "@rox/ui",
+      "version": "0.11.8",
+      "sha256": "4ded3e953c7d13ee93efdf9731cce20752a2d978087055c298470cc72a3a86b9",
+      "dependencies": {
+        "@rox/core": "workspace:*",
+        "@rox/shared": "workspace:*",
+        "@paper-design/shaders-react": "^0.0.69",
+        "beautiful-mermaid": "*",
+        "@types/mdast": "^4.0.0",
+        "@uiw/react-json-view": "^2.0.0-alpha.40",
+        "fflate": "^0.8.2",
+        "nice-ticks": "^1.0.2",
+        "unified": "^11.0.0",
+        "unist-util-visit": "^5.0.0"
+      },
+      "devDependencies": {},
+      "optionalDependencies": {},
+      "peerDependencies": {
+        "@radix-ui/react-context-menu": ">=2.0.0",
+        "@radix-ui/react-dialog": ">=1.0.0",
+        "@radix-ui/react-dropdown-menu": ">=2.0.0",
+        "@pierre/diffs": ">=0.1.0",
+        "@tailwindcss/typography": ">=0.5.0",
+        "class-variance-authority": ">=0.7.0",
+        "clsx": ">=2.0.0",
+        "jotai": ">=2.0.0",
+        "lucide-react": ">=0.400.0",
+        "motion": ">=11.0.0",
+        "react": ">=18.0.0",
+        "react-dom": ">=18.0.0",
+        "katex": ">=0.16.0",
+        "react-markdown": ">=9.0.0",
+        "rehype-katex": ">=7.0.0",
+        "rehype-raw": ">=7.0.0",
+        "remark-gfm": ">=4.0.0",
+        "remark-math": ">=6.0.0",
+        "shiki": "^3.21.0",
+        "tailwind-merge": ">=2.0.0",
+        "tailwindcss": ">=4.0.0",
+        "react-pdf": ">=10.0.0",
+        "i18next": ">=26.0.0",
+        "react-i18next": ">=17.0.0",
+        "vaul": ">=1.0.0"
+      },
+      "scripts": {}
+    }
+  ],
+  "lockfile": {
+    "path": "bun.lock",
+    "sha256": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+  },
+  "acceptance": "SOURCE_INVENTORY_ONLY; no installed/runtime/release acceptance"
+}
