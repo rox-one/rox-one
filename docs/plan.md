@@ -601,3 +601,12 @@ The recent worker owns the gstack command redirect prerequisite in an isolated s
 ## Native Notes Knowledge read projection (2026-10-03)
 
 Owner: historical branch recovery. Add NativeNotesKnowledgeProvider over nativeNotesKnowledgeAccess and explicitly authenticated RPC read handlers; preserve existing SiYuan compatibility reads for legacy contexts. Verify real WebSocket principal authentication, committed note search/read/backlinks, exclusion of loose Markdown files, foreign workspace/global connection rejection, forged/missing principal denial, invalidation of captured readers after revocation, and explicit CAPABILITY_DISABLED for unscoped agent calls. Existing Knowledge RPC/tool runtime tests remain green. Native visual Notes/agent adoption is outside this bounded API proof.
+
+## Voice command transport recovery — 2026-10-03
+
+Owner: recent feature worker; main integration owner: branch audit lead. Dependencies: current HOTKEY wire channel, native window/client binding and composer consent/permission/generation guards at main 1cd651a921b5f7f8f6f27c4e1bb30502ef8081c3.
+
+1. Restore actual toggle/cancel delivery and foreground Right Option pairing onto current contracts. Dispose registrations/held state, preserve application shortcuts and idle Escape, and fail closed for unmanaged/unbound clients.
+2. Route all four commands into current composer capture. Cancel pending/released/finalizing requests and retain current native host ownership; do not copy old capture singleton, provider defaults or authorization.
+3. Verify actual Electron registration adapter with isolated ports, input-to-client-to-controller behavior, repeated/unpaired/foreign/unbound keys, permission-release and finalization cancellation, and unchanged voice/meeting/privacy regressions; run package types and main/renderer builds.
+4. Commit, push and attach a separate PR, preserving every source branch. Lead owns remote main merge; current live ASR, global native key input and visual microphone acceptance remain explicitly unverified.
