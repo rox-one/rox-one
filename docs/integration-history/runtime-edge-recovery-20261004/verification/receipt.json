@@ -1,0 +1,50 @@
+{
+  "source_pr": 1448,
+  "frozen_source": "e572bbdf0b6952b3a0274f1312f347157aee52d1",
+  "source_base": "bb047b946da41346301cffe88a43db0adf621dcf",
+  "comparison_main": "f058d638e227e57f4aa046e1caedd281ff31ea9c",
+  "production_paths": {
+    ".github/workflows/product-tour-native.yml": "20c1331901e7ded9a4ce1970f31580cd16270efaebc762535eff173b77375aff",
+    "packages/cloud-runner/src/local-provider.ts": "33f0607206651427702ab80d8d6257433474712d43d590373aeef4c7644ad84d",
+    "packages/server-core/src/transport/codec.ts": "ddce0bd4d8b666453c7606ce0eea2d82534f267979e31df86d12c5a83735a562",
+    "packages/shared/src/credentials/backends/secure-storage.ts": "7d8ebdf4defe8f26916717e22c4eb221650063b3b1970ef4849965c097df4a78"
+  },
+  "before_codec": {
+    "pass": 0,
+    "fail": 3
+  },
+  "after_codec_and_existing_transport": {
+    "pass": 12,
+    "fail": 0,
+    "assertions": 33
+  },
+  "actual_provider_controls": {
+    "pass": 10,
+    "fail": 0,
+    "keychain_executable": "private hanging child, three3secondSIGKILL attempts per emulatedDarwin/Linux branch",
+    "linux_proc": "controlled filesystem/process dependency through actual LocalSubprocessProvider",
+    "real_user_keychain_calls": 0,
+    "native_linux_acceptance": false
+  },
+  "local_provider_conformance": {
+    "pass": 4,
+    "fail": 0,
+    "assertions": 10,
+    "host": "macOSarm64"
+  },
+  "credential_regressions": {
+    "log": "rpc-edges-credential-regressions.log.gz",
+    "providers": "unavailable synthetic preload, private stores only"
+  },
+  "strict_types_exit": {
+    "server_core": 0,
+    "shared": 0,
+    "cloud_runner": 0
+  },
+  "failure_history": [
+    "original codec0/3",
+    "first proc test adapter self-import recursion, corrected without production/assertion changes"
+  ],
+  "branch_deletion": false,
+  "full_native_or_production_acceptance": false
+}

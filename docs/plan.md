@@ -1047,3 +1047,9 @@ Owner recent_features; parent owns ordered integration. Retain held-prepare dest
 2. Reproduce origin/privacy/artifact/verdict negatives, including the explicitly pending TaskRunner producer fixture. Restore only the bounded collector layer, then qualify four independent suites (53/0/247), core and server-core Node22 types. Archive source failures and the initial dependent-fixture type diagnostics.
 3. Publish a separate collector PR with qualified hashes and pending producer/UI boundaries. pr_scout preserves current third suppliedExecution argument and spawn authority bind while implementing tagged actual producers in its separate PR. Root owns sequential merge.
 4. Historical worker recovers current renderer context/export/link/retry behavior from the same finite source head; end-to-end producer/UI acceptance needs its own actual consumers and refreshed scoped proof.
+
+## Late UI1448 runtime edges — 2026-10-04
+
+1. Freeze source52/9 and reject stale account/navigation regressions; isolate four root-owned production files from worker manager/runner ownership.
+2. Retain codec baseline0/3; qualify12/0 transport,10 actual provider controls with private hanging OS-provider executable/controlled Linux proc and4 real macOS subprocess conformance. Credential regressions use an unavailable synthetic provider; no real user Keychain/Secret Service access.
+3. Qualify full strict Shared/server-core/cloud-runner Node22 types0, preserve first adapter failure and per-file hashes, merge current main with documentation union, publish separate PR. Root integrates qualified worker2-path PR independently; source branches stay intact.
