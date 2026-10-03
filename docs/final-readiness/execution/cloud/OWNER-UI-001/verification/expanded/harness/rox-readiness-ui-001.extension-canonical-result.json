@@ -1,0 +1,48 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "recordedAtUtc": "2026-10-03T14:56:50.356850+00:00",
+  "baselineRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+  "testedState": "uncommitted product patch after native diagnostic unlock; source hashes below bind this result",
+  "sourceHashes": {
+    "apps/electron/src/renderer/pages/ExtensionSurfacePage.tsx": "a3ebd80eeef2763fa3abb1c951d4eb3e75e9469ba91185c651608e0341700f13",
+    "apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.extension-lifecycle.test.ts": "649baeb31a3c306f31b018629c7437d0975087f10031afac34c78cbeee1b16b7",
+    "apps/electron/src/renderer/pages/__tests__/knowledge-extension-surface-i18n.test.ts": "d8234e5fbf37739b96f52f3b435c00fd4ddbc9fea0f10db345f9d8d1380b481f",
+    "packages/shared/src/extensions/types.ts": "bb712bfe5bafd638921091f020df033200f0ae1b7403145cfd6b3ea836eb1d25",
+    "apps/electron/src/shared/types.ts": "f7bfb8c694fe23a7b3a219b3e26bbc07cd98f1ac9897b0bd732dc7079e22b993"
+  },
+  "command": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun test apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.extension-lifecycle.test.ts apps/electron/src/renderer/pages/__tests__/knowledge-extension-surface-i18n.test.ts",
+  "runtime": {
+    "bunVersion": "1.3.14",
+    "bunRevision": "0d9b296a",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "result": {
+    "exitCode": 0,
+    "passed": 17,
+    "failed": 0,
+    "assertions": 165,
+    "extensionLifecycleCases": 13,
+    "extensionLifecycleAssertions": 69
+  },
+  "behavior": [
+    "canonical installed ID/enabled/runtime validation before native creation",
+    "absent/blank/about:blank/malformed URL and missing native/canonical capability are unavailable with no native create",
+    "valid explicit URL acquires native owner; refusal and removal stay explicit",
+    "canonical broadcasts scope workspace and supersede older list requests",
+    "pending old lookup does not block workspace A-to-B-to-A or Retry",
+    "canonical removal during creation cleans late lease without publishing it; removal terminal until Retry",
+    "hide/destroy serialize before fresh creation and run at most once per owner",
+    "all 12 existing locales define error/loading/removed/loadUrlHint keys"
+  ],
+  "limits": [
+    "Direct actual source effect callbacks and URL normalization; this receipt alone does not prove native Electron or installed Windows/hosted-web acceptance.",
+    "Record schema contains no view URL; route without an explicit URL remains unavailable, without inventing metadata.",
+    "Broader native replay and final candidate binding are handled by lead."
+  ],
+  "fullDoDClosed": false,
+  "log": "rox-readiness-ui-001.extension-canonical-tests.log"
+}

@@ -277,9 +277,13 @@ function registerDeeplinkScheme(scheme: string): void {
   }
 }
 
-registerDeeplinkScheme(DEEPLINK_SCHEME)
-if (DEEPLINK_SCHEME !== LEGACY_DEEPLINK_SCHEME) {
-  registerDeeplinkScheme(LEGACY_DEEPLINK_SCHEME)
+// Isolated product tests still exercise deep-link dispatch, while avoiding
+// changes to the user's OS protocol handlers for either supported scheme.
+if (!(process.env.NODE_ENV === 'test' && process.env.ROX_SKIP_PROTOCOL_REGISTRATION === '1')) {
+  registerDeeplinkScheme(DEEPLINK_SCHEME)
+  if (DEEPLINK_SCHEME !== LEGACY_DEEPLINK_SCHEME) {
+    registerDeeplinkScheme(LEGACY_DEEPLINK_SCHEME)
+  }
 }
 
 // Apply network proxy settings early (Node-level only — Electron sessions require app.whenReady)
@@ -539,7 +543,7 @@ app.whenReady().then(async () => {
 
     const { registerVoiceHotkeys } = await import('./voice/overlay-window')
     const { sendVoiceHotkeyToClient } = await import('./voice/command-input')
-    const disposeVoiceHotkeys = registerVoiceHotkeys((command, webContentsId) => {
+    const sendVoiceCommand = (command: import('@rox/shared/voice/hotkey-types').HotkeyCommand, webContentsId?: number) => {
       const target = webContentsId === undefined
         ? windowManager?.getLastActiveWindow()
         : windowManager?.getWindowByWebContentsId(webContentsId)
@@ -551,8 +555,19 @@ app.whenReady().then(async () => {
         push: windowManager?.getRpcEventSink(),
         channel: RPC_CHANNELS.voice.HOTKEY,
       }, command)
-    }, id => windowManager?.getFocusedWindow()?.webContents.id === id)
-    app.once('will-quit', disposeVoiceHotkeys)
+    }
+    const disposeVoiceHotkeys = registerVoiceHotkeys(sendVoiceCommand, id => windowManager?.getFocusedWindow()?.webContents.id === id)
+    const { createNativeVoiceOverlayHost } = await import('./voice/overlay-owner')
+    const voiceOverlay = !isHeadless && !isClientOnly ? createNativeVoiceOverlayHost({
+      resolveOwner(context) {
+        if (context.webContentsId == null || !context.workspaceId) return null
+        const owner = windowManager?.getWindowByWebContentsId(context.webContentsId)
+        return owner && !owner.isDestroyed() && windowManager?.getWorkspaceForWindow(context.webContentsId) === context.workspaceId
+          && windowManager?.getClientIdForWindow(context.webContentsId) === context.clientId ? owner : null
+      },
+      sendCommand: (context, command) => context.webContentsId != null && sendVoiceCommand(command, context.webContentsId),
+    }) : undefined
+    app.once('will-quit', () => { disposeVoiceHotkeys(); voiceOverlay?.dispose() })
     registerMeetingCaptureIpc()
     registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
       getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
@@ -938,6 +953,7 @@ app.whenReady().then(async () => {
             oauthFlowStore: ofs,
             messagingRegistry: messagingHandle.registry,
             ...(!isHeadless ? { browserCredentials } : {}),
+            ...(voiceOverlay ? { voiceOverlay } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
             nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
           }

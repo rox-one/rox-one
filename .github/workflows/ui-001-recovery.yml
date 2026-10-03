@@ -87,6 +87,12 @@ jobs:
         run: bunx playwright install --with-deps chromium
       - name: Mounted NavigationProvider and browser history
         run: bun docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts
+      - name: Mounted owner, readiness and deferred action recovery
+        env:
+          ROX_UI001_BROWSER_TEST: '1'
+        run: |
+          export ROX_UI001_CHROMIUM_EXECUTABLE="$(bun -e 'import {chromium} from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
+          bun test --timeout 60000 apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts
       - name: Resource, editor and cross-window persistence recovery
         run: bun docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts
       - name: Retry, lazy loading and resize callbacks

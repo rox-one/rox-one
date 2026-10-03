@@ -126,18 +126,19 @@ describe('route-parser: unified shell surfaces', () => {
   })
 
   // ------------------------------------------------------------------
-  // Unavailable addresses must not masquerade as sessions.
+  // Degradation paths (until W2/W5 hosts exist)
   // ------------------------------------------------------------------
-  it('keeps a knowledge route with an unknown ref kind unavailable', () => {
+  it('degrades knowledge route with unknown ref kind to sessions/allSessions', () => {
     const state = parseRouteToNavigationState('knowledge/not-a-kind/doc-1')!
-    expect(state).toEqual({ navigator: 'unavailable', route: 'knowledge/not-a-kind/doc-1', reason: 'unsupported-route' })
-    expect(buildRouteFromNavigationState(state)).toBe('knowledge/not-a-kind/doc-1')
+    expect(state.navigator).toBe('sessions')
+    expect(state.navigator === 'sessions' && state.details).toBeNull()
+    expect(buildRouteFromNavigationState(state)).toBe('allSessions')
   })
 
-  it('keeps a knowledge route missing its id unavailable', () => {
+  it('degrades knowledge route missing its id to sessions/allSessions', () => {
     const state = parseRouteToNavigationState('knowledge/document')!
-    expect(state).toEqual({ navigator: 'unavailable', route: 'knowledge/document', reason: 'unsupported-route' })
-    expect(buildRouteFromNavigationState(state)).toBe('knowledge/document')
+    expect(state.navigator).toBe('sessions')
+    expect(buildRouteFromNavigationState(state)).toBe('allSessions')
   })
 
   it('keeps bare surface roots as navigator-only states that rebuild exactly', () => {
@@ -149,9 +150,9 @@ describe('route-parser: unified shell surfaces', () => {
     }
   })
 
-  it('does not disguise a knowledge surface as a session in the compatibility parser', () => {
+  it('degrades legacy parseRoute() of a surface route to the allSessions view', () => {
     const parsed = parseRoute(routes.view.siyuan({ kind: 'document', id: 'doc-1' }))
-    expect(parsed).toBeNull()
+    expect(parsed).toEqual({ type: 'view', name: 'allSessions', params: {} })
   })
 
   it('maps surface states to nearest existing views via degradeSurfaceNavigationState', () => {

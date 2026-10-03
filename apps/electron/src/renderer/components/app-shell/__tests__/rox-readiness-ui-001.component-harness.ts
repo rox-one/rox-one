@@ -78,7 +78,7 @@ export async function buildMainFixture(
   writeFileSync(entry, `import * as React from 'react';
 import {MainContentPanel} from ${JSON.stringify(main)};
 import {ShellContext,NavContext} from 'rox-ui001-bindings';
-import {parseRouteToNavigationState} from ${JSON.stringify(parser)};
+import {parseRouteToNavigationStateOrUnavailable as parseRouteToNavigationState} from ${JSON.stringify(parser)};
 export function Fixture({route='sources/source/one',workspace='workspace-a',directory,override}) {
  const nav=override??parseRouteToNavigationState(route);
  return <ShellContext.Provider value={{activeWorkspaceId:workspace,workspaces:[],sessionStatuses:[],projects:[],loadedProjects:[],labels:[],activeSessionWorkingDirectory:directory}}>

@@ -34,11 +34,7 @@ describe('route-parser: canonical Notes routes', () => {
   it('does not expose retired legacy Notes routes', () => {
     expect(isCompoundRoute('notes-legacy')).toBe(false)
     expect(parseCompoundRoute('notes-legacy/note/foo')).toBeNull()
-    expect(parseRouteToNavigationState('notes-legacy/note/foo')).toEqual({
-      navigator: 'unavailable',
-      route: 'notes-legacy/note/foo',
-      reason: 'unsupported-route',
-    })
+    expect(parseRouteToNavigationState('notes-legacy/note/foo')).toBeNull()
     expect(parseNavigationStateKey('notes-legacy/note/foo')).toBeNull()
   })
 

@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation, initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { setupI18n } from '@rox/shared/i18n'
@@ -10,7 +10,15 @@ export { VOICE_OVERLAY_REQUIRES_CONATION_FLAG, VOICE_OVERLAY_SURFACE_ID, voiceOv
 
 setupI18n([LanguageDetector, initReactI18next])
 
-function OverlayApp() {
+declare global {
+  interface Window { voiceOverlay?: {
+    onState(callback: (state: OverlayState) => void): () => void
+    stop(recordingId: string | null): Promise<{ ok: boolean }>
+    cancel(recordingId: string | null): Promise<{ ok: boolean }>
+  } }
+}
+
+export function OverlayApp() {
   if (VOICE_OVERLAY_REQUIRES_CONATION_FLAG) {
     throw new Error('Voice overlay is native and must not require Conation')
   }
@@ -23,9 +31,28 @@ function OverlayApp() {
     streaming: false,
   })
 
+  const generation = useRef(0)
+  const mounted = useRef(false)
+  const [commandError, setCommandError] = useState(false)
+  const [pending, setPending] = useState(false)
   useEffect(() => {
-    return window.electronAPI.onVoiceOverlay?.((next) => setState(next))
+    mounted.current = true
+    const unsubscribe = window.voiceOverlay?.onState(next => {
+      generation.current++
+      setState(next); setCommandError(false); setPending(false)
+    })
+    return () => { mounted.current = false; generation.current++; unsubscribe?.() }
   }, [])
+  const command = async (action: 'stop' | 'cancel') => {
+    const current = generation.current
+    setPending(true); setCommandError(false)
+    try {
+      const reply = await window.voiceOverlay?.[action](state.recordingId)
+      if (mounted.current && current === generation.current && !reply?.ok) { setCommandError(true); setPending(false) }
+    } catch {
+      if (mounted.current && current === generation.current) { setCommandError(true); setPending(false) }
+    }
+  }
 
   if (state.phase === 'hidden') return null
 
@@ -59,9 +86,11 @@ function OverlayApp() {
       <span style={{ width: 48, height: 8, background: '#27272a', borderRadius: 4, overflow: 'hidden' }}>
         <span style={{ display: 'block', height: '100%', width: `${Math.min(100, state.rms * 400)}%`, background: '#f4f4f5', transition: 'width 150ms linear' }} />
       </span>
+      <span style={{ fontSize: 11 }}>{`${Math.floor(state.elapsedMs / 60000)}:${String(Math.floor(state.elapsedMs / 1000) % 60).padStart(2, '0')}`}</span>
+      {commandError ? <span role="alert">{t('voice.overlay.error')}</span> : null}
       {state.streaming && state.partialTranscript ? <span style={{ fontSize: 11 }}>{state.partialTranscript}</span> : null}
-      <button type="button" className="rounded-md px-2 py-0.5 text-xs hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40" onClick={() => void window.electronAPI.stopVoiceCapture?.()}>{t('voice.overlay.stop')}</button>
-      <button type="button" className="rounded-md px-2 py-0.5 text-xs hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40" onClick={() => void window.electronAPI.cancelVoiceCapture?.()}>{t('voice.overlay.cancel')}</button>
+      <button type="button" className="rounded-md px-2 py-0.5 text-xs hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40" disabled={pending || state.phase !== 'recording'} onClick={() => void command('stop')}>{t('voice.overlay.stop')}</button>
+      <button type="button" className="rounded-md px-2 py-0.5 text-xs hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40" disabled={pending || !['permission', 'recording', 'saving', 'transcribing', 'enhancing'].includes(state.phase)} onClick={() => void command('cancel')}>{t('voice.overlay.cancel')}</button>
     </div>
   )
 }

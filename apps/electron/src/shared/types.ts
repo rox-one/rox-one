@@ -1811,6 +1811,10 @@ export interface ElectronAPI {
   cancelVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob | null>
   grantVoicePermission(): Promise<import('@rox/shared/voice').VoiceJob>
   sendVoiceChunk(payload: { audioBase64: string }): Promise<{ ok: true }>
+  editVoiceTranscript(payload: { id: string; expectedRevisionId: string; text: string }): Promise<{ ok: true; revisionId: string }>
+  selectVoiceTranscript(payload: { id: string; expectedRevisionId: string; revisionId: string }): Promise<{ ok: true; revisionId: string }>
+  readVoiceRecordingAudio(payload: { id: string; offset: number; token?: string }): Promise<{ audioBase64: string; offset: number; totalBytes: number; token: string; hash: string; mimeType: string }>
+  copyVoiceText(payload: { text: string }): Promise<{ ok: true }>
   listVoiceHistory(query?: { cursor?: string; limit?: number; search?: string; favorite?: boolean }): Promise<{ page: unknown[]; continueCursor: string | null; isDone: boolean }>
   getVoiceHistoryItem(payload: { id: string }): Promise<{ recording: unknown; revisions: unknown[]; runs: unknown[] }>
   favoriteVoiceRecording(payload: { id: string; favorite: boolean }): Promise<{ ok: true }>
@@ -2784,18 +2788,19 @@ export interface TerminalNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
-/**
- * Unified navigation state
- */
+/** A view address that cannot be resolved; retain it for recovery and history. */
 export interface UnavailableNavigationState {
   navigator: 'unavailable'
   route: string
-  reason: 'unsupported-route' | 'invalid-encoding' | 'workspace-mismatch'
+  details?: null
+  reason?: 'unsupported-route' | 'invalid-encoding' | 'workspace-mismatch'
   rightSidebar?: RightSidebarPanel
 }
 
+/**
+ * Unified navigation state
+ */
 export type NavigationState =
-  | UnavailableNavigationState
   | SessionsNavigationState
   | SourcesNavigationState
   | SettingsNavigationState
@@ -2819,6 +2824,11 @@ export type NavigationState =
   | ConnectionsNavigationState
   | HomeNavigationState
   | ScreenNavigationState
+  | UnavailableNavigationState
+
+export const isUnavailableNavigation = (
+  state: NavigationState
+): state is UnavailableNavigationState => state.navigator === 'unavailable'
 
 export const isSessionsNavigation = (
   state: NavigationState
@@ -2919,7 +2929,8 @@ export const DEFAULT_NAVIGATION_STATE: NavigationState = {
 
 export const getNavigationStateKey = (state: NavigationState): string => {
   if (state.navigator === 'unavailable') {
-    return `unavailable:${state.reason}:${encodeURIComponent(state.route)}`
+    // JSON also preserves invalid percent escapes and lone surrogates safely.
+    return `unavailable:${JSON.stringify(state.reason ? { route: state.route, reason: state.reason } : state.route)}`
   }
   if (state.navigator === 'search') {
     return `search${state.query ? `?q=${encodeURIComponent(state.query)}` : ''}`
@@ -3043,17 +3054,24 @@ export const getNavigationStateKey = (state: NavigationState): string => {
 }
 
 export const parseNavigationStateKey = (key: string): NavigationState | null => {
-  const unavailable = /^unavailable:(unsupported-route|invalid-encoding|workspace-mismatch):(.*)$/.exec(key)
-  if (unavailable) {
-    try {
-      return {
-        navigator: 'unavailable',
-        reason: unavailable[1] as UnavailableNavigationState['reason'],
-        route: decodeURIComponent(unavailable[2]),
-      }
-    } catch {
-      return null
+  try {
+    return parseNavigationStateKeyUnchecked(key)
+  } catch {
+    return null
+  }
+}
+
+const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null => {
+  if (key.startsWith('unavailable:')) {
+    const legacy = /^unavailable:(unsupported-route|invalid-encoding|workspace-mismatch):(.*)$/.exec(key)
+    if (legacy) return { navigator: 'unavailable', reason: legacy[1] as UnavailableNavigationState['reason'], route: decodeURIComponent(legacy[2]) }
+    const value: unknown = JSON.parse(key.slice('unavailable:'.length))
+    if (typeof value === 'string') return { navigator: 'unavailable', route: value, details: null }
+    if (value && typeof value === 'object' && 'route' in value && typeof value.route === 'string'
+      && 'reason' in value && ['unsupported-route', 'invalid-encoding', 'workspace-mismatch'].includes(String(value.reason))) {
+      return { navigator: 'unavailable', route: value.route, reason: value.reason as UnavailableNavigationState['reason'] }
     }
+    return null
   }
   // Handle sources
   if (key === 'sources') return { navigator: 'sources', details: null }
@@ -3268,7 +3286,7 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
     }
   }
 
-  // Preserve legacy /chat/ keys as well as canonical /session/ keys.
+  // Preserve canonical /chat/ keys and legacy /session/ keys with complete ids.
   const sessionMarker = key.includes('/session/') ? '/session/' : key.includes('/chat/') ? '/chat/' : null
   if (sessionMarker) {
     const index = key.indexOf(sessionMarker)

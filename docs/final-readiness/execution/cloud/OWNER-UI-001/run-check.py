@@ -6,6 +6,7 @@ paths=["apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx","a
 paths += ["apps/electron/src/renderer/components/app-shell/PanelSlot.tsx", "apps/electron/src/renderer/hooks/usePanelResize.ts", "apps/electron/src/renderer/components/app-shell/panel-constants.ts", "apps/electron/src/renderer/lib/panel-workspace-layout.ts", "apps/electron/src/renderer/atoms/sessions.ts", "apps/electron/src/renderer/lib/local-storage.ts", "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx"]
 paths += ["apps/electron/src/renderer/App.tsx", "apps/electron/src/renderer/components/app-shell/service-navigation.ts", "apps/electron/src/renderer/components/app-shell/nav-destinations.ts"]
 paths += ["apps/electron/src/renderer/contexts/navigation-history.ts"]
+paths += ["apps/electron/src/renderer/lib/panel-url.ts", "apps/electron/src/renderer/lib/route-recovery.tsx", "apps/electron/src/renderer/contexts/navigation-reconcile.ts"]
 source={p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in paths}
 started=datetime.datetime.now(datetime.timezone.utc).isoformat()
 log=owner/"evidence"/(label+".log")

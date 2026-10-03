@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { APP_NAV_DESTINATIONS_BY_ID } from '../nav-destinations'
+import { routes } from '../../../../shared/routes'
 
 const appShellPath = join(__dirname, '../AppShell.tsx')
 const chatPageSource = readFileSync(join(__dirname, '../../../pages/ChatPage.tsx'), 'utf8')
@@ -15,6 +17,7 @@ describe('Notes shell navigation', () => {
     )
 
     expect(handler).toContain("handleServiceClick('notes')")
+    expect(APP_NAV_DESTINATIONS_BY_ID.notes.route?.()).toBe(routes.view.notes())
     expect(handler).not.toContain('navigate(routes.view.knowledge())')
   })
 

@@ -1,0 +1,27 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/pages/__tests__/knowledge-extension-surface-i18n.test.ts:
+(pass) Knowledge/Extension surface fallbacks are i18n > uses existing surface keys and skips English defaultValue leftovers [1.38ms]
+(pass) Knowledge/Extension surface fallbacks are i18n > English locale keeps the existing surface copy [9.96ms]
+(pass) Knowledge/Extension surface fallbacks are i18n > Russian copy is distinct from English [0.40ms]
+(pass) Knowledge/Extension surface fallbacks are i18n > all 12 locales already define the wired surface keys [77.73ms]
+
+apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.extension-lifecycle.test.ts:
+(pass) UI-001 actual extension native owner and removal callbacks > removal is terminal for the current instance and state broadcasts cannot revive it [4.16ms]
+(pass) UI-001 actual extension native owner and removal callbacks > Retry waits for old owner hide/destroy before acquiring a fresh instance [0.33ms]
+(pass) UI-001 actual extension native owner and removal callbacks > late create after leaving the route is hidden/destroyed without publishing its ID [0.09ms]
+(pass) UI-001 actual extension native owner and removal callbacks > create refusal remains explicit error and cleanup has no unrelated native side effects [0.12ms]
+(pass) UI-001 actual extension native owner and removal callbacks > unknown selected IDs are unavailable before native creation [0.08ms]
+(pass) UI-001 actual extension native owner and removal callbacks > absent, blank, placeholder, and malformed URLs never create an empty native surface [0.30ms]
+(pass) UI-001 actual extension native owner and removal callbacks > canonical disabled, source-disabled, state-disabled and unsupported runtimes fail closed [0.58ms]
+(pass) UI-001 actual extension native owner and removal callbacks > missing canonical or native capabilities produce explicit unavailable state [0.16ms]
+(pass) UI-001 actual extension native owner and removal callbacks > unanswered lookup releases promptly so workspace A→B→A and Retry can progress [12.90ms]
+(pass) UI-001 actual extension native owner and removal callbacks > new canonical broadcast supersedes an older lookup before it can create [0.22ms]
+(pass) UI-001 actual extension native owner and removal callbacks > removal during native acquisition releases its late lease and valid broadcasts cannot revive it [0.13ms]
+(pass) UI-001 actual extension native owner and removal callbacks > canonical removal hides/destroys exactly once; unrelated or still-valid changes retain the owner [0.12ms]
+(pass) UI-001 actual extension native owner and removal callbacks > canonical list failures remain unavailable and Retry validates a fresh request [0.12ms]
+
+ 17 pass
+ 0 fail
+ 165 expect() calls
+Ran 17 tests across 2 files. [5.19s]

@@ -47,7 +47,7 @@ const resources = platform === 'darwin'
   ? join(releaseDir, arch === 'arm64' ? 'mac-arm64' : 'mac', 'Rox.app/Contents/Resources')
   : join(releaseDir, 'win-unpacked/resources');
 const app = join(resources, 'app');
-for (const file of ['dist/main.cjs', 'dist/bootstrap-preload.cjs', 'dist/renderer/index.html', 'resources/pi-agent-server/index.js', 'node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs', `node_modules/@anthropic-ai/claude-agent-sdk-binary/claude${platform === 'win32' ? '.exe' : ''}`, `node_modules/@tursodatabase/database-${platform}-${arch}${platform === "win32" ? "-msvc" : ""}/package.json`]) {
+for (const file of ['dist/main.cjs', 'dist/bootstrap-preload.cjs', 'dist/voice-overlay-preload.cjs', 'dist/renderer/voice-overlay.html', 'dist/renderer/index.html', 'resources/pi-agent-server/index.js', 'node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs', `node_modules/@anthropic-ai/claude-agent-sdk-binary/claude${platform === 'win32' ? '.exe' : ''}`, `node_modules/@tursodatabase/database-${platform}-${arch}${platform === "win32" ? "-msvc" : ""}/package.json`]) {
   if (!existsSync(join(app, file))) throw new Error(`Packaged resource missing: ${file}`);
 }
 await run(['node', '--check', join(app, 'dist/main.cjs')]);

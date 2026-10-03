@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-03T16:40:40.338311+00:00",
+  "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "actualNativeResult": {
+    "path": "native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.result.json",
+    "sha256": "d44e1f5c18bd8e1c29ffb74a496aa19d4cab0557f09d03dd573cffed0fe278ac",
+    "status": "passed",
+    "acceptanceLevel": "actual local macOS unpackaged Electron with shipped RPC and disposable canonical backend",
+    "buildProvenanceQualified": true,
+    "coordinatorObservedExitCode": 0,
+    "stages": 19,
+    "screenshots": 32,
+    "diagnosticSkippedRoutes": [],
+    "diagnosticFailures": [],
+    "errors": []
+  },
+  "independentReadback": {
+    "sourceManifestSha256": "bc5d5ab42efec5de666561f71e717b8a54684e218ed0d2816052a1e93f7e3a97",
+    "sourceFiles": 2776,
+    "sourceHashMismatches": [],
+    "buildFiles": 395,
+    "buildHashMismatches": [],
+    "harnessFiles": 5,
+    "harnessHashMismatches": [],
+    "screenshots": 32,
+    "screenshotHashMismatches": []
+  },
+  "qualifications": [
+    "Independent byte binding and public-result readback; native screenshots are not reinterpreted as installed-platform acceptance.",
+    "Actual run uses local unpackaged macOS Electron and disposable canonical backend with shipped RPC.",
+    "The firstWindow30000ms failure remains preserved; retry used unchanged product, driver, build, testcase bounds.",
+    "Installed Windows/macOS, hostedweb and real-provider acceptance remain external prerequisites."
+  ],
+  "fullDoDClosed": false
+}

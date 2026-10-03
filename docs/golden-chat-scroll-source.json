@@ -1,0 +1,21 @@
+{
+  "source_sha": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
+  "source_branch": "codex/golden-gate-workspace",
+  "source_pr": 584,
+  "integration_main": "a3754c9eaab274b2f99d6a931659b0cac91a9993",
+  "owner": "pr_scout",
+  "dependent_overlap_owner": "historical_sweep adds Product Learning target/signal instrumentation after this current ChatDisplay integration",
+  "source_helper": {
+    "path": "apps/electron/src/renderer/components/app-shell/chat-scroll.ts",
+    "source_sha256": "c4ae3218d529e931842fd9893b8e1ff5a2a0353ae407bf9d481b87522cd53ed7"
+  },
+  "current_consumer": "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx",
+  "adaptations": [
+    "Current unfocused panels still follow instantly; focused readers retain sticky-bottom control.",
+    "Viewport-only scrollTo replaces initial/stream/submit/user-commit output scrollIntoView, retaining explicit search/message jumps.",
+    "Own forward output motion does not disable sticky-bottom mid-animation; backwards scrolling, reader gestures, and explicit navigation interrupt it before queued follow can take over.",
+    "Live reduced-motion/document-visibility and connected viewport guards apply at callback execution.",
+    "Committed session+viewport incarnation ownership prevents queued callbacks across unmount and A-B-A; disposed observer guard and post-commit lazy-history anchor ownership retain existing policies."
+  ],
+  "acceptance_limit": "Actual production ChatDisplay, real Radix ScrollArea, real message grouping/rendering in nested DOM; unrelated native/shell/theme context and input bridge are controlled fixture boundaries. Installed native/full chat or Product Learning acceptance separate."
+}

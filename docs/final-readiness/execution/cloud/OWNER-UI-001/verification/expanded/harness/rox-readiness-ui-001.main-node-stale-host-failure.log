@@ -1,0 +1,6 @@
+Actual test callbacks via task-local Node adapter; Node v26.8.2; external Chromium; no Bun pass claim
+[HARNESS FAIL] Error: Hook/case timeout 30000ms
+    at Timeout.<anonymous> (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-main-node-tests.mjs:63:39)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+{"runtime":"Node actual source callbacks adapter","pass":0,"fail":1,"assertions":0,"cases":11,"elapsedMs":30009}

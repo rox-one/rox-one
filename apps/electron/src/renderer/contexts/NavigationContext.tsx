@@ -31,6 +31,7 @@ import {
   useContext,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   useMemo,
@@ -45,6 +46,7 @@ import { matchesLabelFilter } from '@rox/shared/labels'
 import {
   parseRoute,
   parseRouteToNavigationState,
+  parseRouteToNavigationStateOrUnavailable,
   buildRouteFromNavigationState,
   buildRightSidebarParam,
   type ParsedRoute,
@@ -53,7 +55,8 @@ import { routes, type Route, type ViewRoute } from '../../shared/routes'
 import { parsePermissionMode } from '@rox/shared/agent/mode-types'
 import { NAVIGATE_EVENT, type NavigateOptions } from '../lib/navigate'
 import { normalizePanelRouteForReconcile } from './navigation-reconcile'
-import { buildSemanticHistoryKey, canRunInitialRestore, parsePanelHistory, serializePanelHistory } from './navigation-history'
+import { encodePanelEntries, decodePanelEntries } from '@/lib/panel-url'
+import { buildSemanticHistoryKey, canRunInitialRestore } from './navigation-history'
 import * as storage from '@/lib/local-storage'
 import type {
   DeepLinkNavigation,
@@ -178,6 +181,14 @@ export function NavigationProvider({
   remoteWorkspaceId,
 }: NavigationProviderProps) {
   const { t } = useTranslation()
+  const navigationOwnerRef = useRef({ active: true, revision: 0 })
+  useLayoutEffect(() => {
+    const owner = { active: true, revision: 0 }
+    navigationOwnerRef.current.active = false
+    navigationOwnerRef.current = owner
+    suppressAutoSelectRef.current = false
+    return () => { owner.active = false }
+  }, [workspaceId, remoteWorkspaceId])
   const [, setSession] = useSession()
 
   // Read session metadata directly from atom (reactive to session changes)
@@ -206,7 +217,7 @@ export function NavigationProvider({
   // NavigationState derived from the focused panel's route
   const navigationState: NavigationState = useMemo(() => {
     const base = focusedRoute
-      ? parseRouteToNavigationState(focusedRoute) ?? DEFAULT_NAVIGATION_STATE
+      ? parseRouteToNavigationStateOrUnavailable(focusedRoute)
       : DEFAULT_NAVIGATION_STATE
     let state = base
     if (isSessionsNavigation(base) && base.details) {
@@ -242,9 +253,11 @@ export function NavigationProvider({
 
   // Flag: workspace switch was triggered by popstate (URL already correct)
   const isPopstateSwitchRef = useRef(false)
+  const pendingUrlRestoreRef = useRef<string | null>(null)
+  const previousWorkspaceSlugRef = useRef<string | null>(null)
 
   // Queue navigation if not ready yet
-  const pendingNavigationRef = useRef<{ route: Route; options?: NavigateOptions } | null>(null)
+  const pendingNavigationRef = useRef<{ route: Route; options?: NavigateOptions; owner: { active: boolean } } | null>(null)
 
   // Suppress auto-select for one cycle (used by skipAutoSelect to prevent the effect from re-selecting)
   const suppressAutoSelectRef = useRef(false)
@@ -288,6 +301,8 @@ export function NavigationProvider({
    * Also persists the URL per-workspace in localStorage for workspace switch restoration.
    */
   const syncUrl = useCallback((push: boolean = false) => {
+    if (!isReady || !isSessionsReady || pendingUrlRestoreRef.current !== null) return
+    if (previousWorkspaceSlugRef.current !== null && previousWorkspaceSlugRef.current !== workspaceSlug) return
     const panels = store.get(panelStackAtom)
     const focusedIdx = store.get(focusedPanelIndexAtom)
     if (panels.length === 0) return
@@ -305,7 +320,7 @@ export function NavigationProvider({
 
     // ?panels= encodes ALL panels in stack order
     if (panels.length > 1) {
-      const encoded = serializePanelHistory(panels)
+      const encoded = encodePanelEntries(panels.map(({ route, proportion }) => ({ route, proportion })))
       url.searchParams.set('panels', encoded)
     } else {
       url.searchParams.delete('panels')
@@ -342,19 +357,21 @@ export function NavigationProvider({
     if (workspaceSlug) {
       storage.set(storage.KEYS.workspaceUrl, url.search, workspaceSlug)
     }
-  }, [store, workspaceSlug, updateCanGoBackForward])
+  }, [store, workspaceSlug, isReady, isSessionsReady, updateCanGoBackForward])
 
   const syncUrlRef = useRef(syncUrl)
   useEffect(() => { syncUrlRef.current = syncUrl }, [syncUrl])
 
   const maybePushHistoryForSemanticChange = useCallback(() => {
     if (!historyMountedRef.current) return
+    if (!isReady || !isSessionsReady || pendingUrlRestoreRef.current !== null) return
+    if (previousWorkspaceSlugRef.current !== null && previousWorkspaceSlugRef.current !== workspaceSlug) return
     const currentSemanticKey = getSemanticHistoryKey()
     if (currentSemanticKey === lastSemanticHistoryKeyRef.current) return
 
     syncUrlRef.current?.(true)
     lastSemanticHistoryKeyRef.current = currentSemanticKey
-  }, [getSemanticHistoryKey])
+  }, [getSemanticHistoryKey, isReady, isSessionsReady, workspaceSlug])
 
   const finishHistoryReconcile = useCallback(() => {
     const revision = ++historyReconcileRevisionRef.current
@@ -406,14 +423,18 @@ export function NavigationProvider({
   useEffect(() => {
     let prevFocusId = store.get(focusedPanelIdAtom)
     const unsub = store.sub(focusedPanelIdAtom, () => {
-      if (suppressPushRef.current || !initialRouteRestoredRef.current) return
       const newFocusId = store.get(focusedPanelIdAtom)
       if (newFocusId !== prevFocusId) {
+        // A focus-away-and-back intent must invalidate pending work even when
+        // the original panel identity and route become equal again.
+        navigationOwnerRef.current.revision += 1
+        suppressAutoSelectRef.current = false
+        prevFocusId = newFocusId
+        if (suppressPushRef.current || !initialRouteRestoredRef.current) return
         if (!pendingPushRef.current) {
           pendingPushRef.current = true
           queueMicrotask(() => { pendingPushRef.current = false; maybePushHistoryForSemanticChange() })
         }
-        prevFocusId = newFocusId
       }
     })
     return unsub
@@ -464,7 +485,7 @@ export function NavigationProvider({
       let focusedIndex = 0
 
       if (panelsParam) {
-        entries = parsePanelHistory(panelsParam).map(({ route, proportion }) => ({
+        entries = decodePanelEntries(panelsParam).map(({ route, proportion }) => ({
           route: normalizePanelRouteForReconcile(route as ViewRoute, state => resolveAutoSelectionRef.current(state)),
           proportion,
         }))
@@ -484,15 +505,13 @@ export function NavigationProvider({
       }
       if (entries.length === 0 && initialRoute) {
         // Single panel from ?route=
-        const navState = parseRouteToNavigationState(initialRoute)
-        if (navState) {
-          const finalRoute = ('details' in navState && navState.details)
-            ? (initialRoute as ViewRoute)
-            : (buildRouteFromNavigationState(resolveAutoSelectionRef.current(navState)) as ViewRoute)
-          entries = [{ route: finalRoute, proportion: 1 }]
-        }
+        const route = normalizePanelRouteForReconcile(initialRoute as ViewRoute, (state) => resolveAutoSelectionRef.current(state))
+        entries = [{ route, proportion: 1 }]
       }
 
+      if (entries.length === 0 && (initialRoute || panelsParam)) {
+        entries = [{ route: normalizePanelRouteForReconcile((initialRoute || panelsParam!) as ViewRoute, (state) => resolveAutoSelectionRef.current(state)), proportion: 1 }]
+      }
       if (entries.length > 0) {
         store.set(reconcilePanelStackAtom, { entries, focusedIndex })
       }
@@ -680,7 +699,7 @@ export function NavigationProvider({
 
       return nextState
     },
-    [store, workspaceId, remoteWorkspaceId, getLastSelectedSessionId, getFirstSessionId]
+    [getLastSelectedSessionId, getFirstSessionId, store, workspaceId, remoteWorkspaceId]
   )
 
   // Ref keeps resolveAutoSelection fresh for reconcileFromUrlParams (defined earlier in the file)
@@ -694,106 +713,134 @@ export function NavigationProvider({
   const handleActionNavigation = useCallback(
     async (parsed: ParsedRoute, options?: { newPanel?: boolean; targetLaneId?: 'main' }) => {
       if (!workspaceId) return
+      const owner = navigationOwnerRef.current
+      let requestRevision = owner.revision
+      let targetPanelId = store.get(focusedPanelIdAtom)
+      let targetRoute = store.get(focusedPanelRouteAtom)
+      const isCurrent = () => owner.active && navigationOwnerRef.current === owner && owner.revision === requestRevision
+        && store.get(focusedPanelIdAtom) === targetPanelId && store.get(focusedPanelRouteAtom) === targetRoute
 
       switch (parsed.name) {
+        case 'new-chat':
         case 'new-session': {
-          const createOptions: import('../../shared/types').CreateSessionOptions = {}
-          if (parsed.params.mode) {
-            const parsedMode = parsePermissionMode(parsed.params.mode)
-            if (parsedMode) {
-              createOptions.permissionMode = parsedMode
+          const previousSuppression = suppressAutoSelectRef.current
+          suppressAutoSelectRef.current = true
+          try {
+            const createOptions: import('../../shared/types').CreateSessionOptions = {}
+            if (parsed.params.mode) {
+              const parsedMode = parsePermissionMode(parsed.params.mode)
+              if (parsedMode) {
+                createOptions.permissionMode = parsedMode
+              }
             }
-          }
-          if (parsed.params.workdir) {
-            createOptions.workingDirectory = parsed.params.workdir as 'user_default' | 'none' | string
-          }
-          if (parsed.params.model) {
-            createOptions.model = parsed.params.model
-          }
-          if (parsed.params.systemPrompt) {
-            createOptions.systemPromptPreset = parsed.params.systemPrompt as 'default' | 'mini' | string
-          }
-          if (parsed.params.status) {
-            createOptions.sessionStatus = parsed.params.status
-          }
-          if (parsed.params.label) {
-            createOptions.labels = [parsed.params.label]
-          }
-          if (parsed.params.project) {
-            createOptions.projectId = parsed.params.project
-          }
-          const session = await onCreateSession(workspaceId, createOptions)
-
-          if (parsed.params.name) {
-            await window.electronAPI.sessionCommand(session.id, { type: 'rename', name: parsed.params.name })
-          }
-
-          if (parsed.params.status) {
-            updateSessionMeta(session.id, { sessionStatus: parsed.params.status })
-          }
-          if (parsed.params.label) {
-            updateSessionMeta(session.id, { labels: [parsed.params.label] })
-          }
-
-          if (parsed.params.status) {
-            await window.electronAPI.sessionCommand(session.id, { type: 'setSessionStatus', state: parsed.params.status })
-          }
-          if (parsed.params.label) {
-            await window.electronAPI.sessionCommand(session.id, { type: 'setLabels', labels: [parsed.params.label] })
-          }
-
-          // Determine navigation filter
-          const filter: import('../../shared/types').SessionFilter =
-            parsed.params.status ? { kind: 'state', stateId: parsed.params.status } :
-            parsed.params.label ? { kind: 'label', labelId: parsed.params.label } :
-            { kind: 'allSessions' }
-
-          if (options?.newPanel) {
-            // Open the new session in a new panel using lane-aware routing (pushPanel auto-focuses it)
-            pushPanel({
-              route: routes.view.allSessions(session.id) as ViewRoute,
-              targetLaneId: options.targetLaneId,
-              intent: 'explicit',
-            })
-          } else {
-            // Navigate the focused panel to the new session
-            const newState: NavigationState = {
-              navigator: 'sessions',
-              filter,
-              details: { type: 'session', sessionId: session.id },
+            if (parsed.params.workdir) {
+              createOptions.workingDirectory = parsed.params.workdir as 'user_default' | 'none' | string
             }
-            const route = buildRouteFromNavigationState(newState) as ViewRoute
-            store.set(updateFocusedPanelRouteAtom, route)
-            // Session selection sync handled by effect
-          }
-
-          // Parse badges from params
-          let badges: ContentBadge[] | undefined
-          if (parsed.params.badges) {
-            try {
-              badges = JSON.parse(parsed.params.badges) as ContentBadge[]
-            } catch (e) {
-              console.warn('[Navigation] Failed to parse badges param:', e)
+            if (parsed.params.model) {
+              createOptions.model = parsed.params.model
             }
-          }
+            if (parsed.params.systemPrompt) {
+              createOptions.systemPromptPreset = parsed.params.systemPrompt as 'default' | 'mini' | string
+            }
+            if (parsed.params.status) {
+              createOptions.sessionStatus = parsed.params.status
+            }
+            if (parsed.params.label) {
+              createOptions.labels = [parsed.params.label]
+            }
+            if (parsed.params.project) {
+              createOptions.projectId = parsed.params.project
+            }
+            const session = await onCreateSession(workspaceId, createOptions)
+            if (!isCurrent()) return
 
-          // Handle input: either auto-send or pre-fill
-          if (parsed.params.input) {
-            const shouldSend = parsed.params.send === 'true'
-            if (shouldSend) {
-              setTimeout(() => {
-                window.electronAPI.sendMessage(
-                  session.id,
-                  parsed.params.input!,
-                  undefined,
-                  undefined,
-                  badges ? { badges } : undefined
-                )
-              }, 100)
-            } else if (onInputChange) {
-              setTimeout(() => {
-                onInputChange(session.id, parsed.params.input!)
-              }, 100)
+            if (parsed.params.name) {
+              await window.electronAPI.sessionCommand(session.id, { type: 'rename', name: parsed.params.name })
+              if (!isCurrent()) return
+            }
+
+            if (parsed.params.status) {
+              updateSessionMeta(session.id, { sessionStatus: parsed.params.status })
+            }
+            if (parsed.params.label) {
+              updateSessionMeta(session.id, { labels: [parsed.params.label] })
+            }
+
+            if (parsed.params.status) {
+              await window.electronAPI.sessionCommand(session.id, { type: 'setSessionStatus', state: parsed.params.status })
+              if (!isCurrent()) return
+            }
+            if (parsed.params.label) {
+              await window.electronAPI.sessionCommand(session.id, { type: 'setLabels', labels: [parsed.params.label] })
+              if (!isCurrent()) return
+            }
+
+            // Determine navigation filter
+            const filter: import('../../shared/types').SessionFilter =
+              parsed.params.status ? { kind: 'state', stateId: parsed.params.status } :
+              parsed.params.label ? { kind: 'label', labelId: parsed.params.label } :
+              { kind: 'allSessions' }
+
+            if (options?.newPanel) {
+              // Open the new session in a new panel using lane-aware routing (pushPanel auto-focuses it)
+              pushPanel({
+                route: routes.view.allSessions(session.id) as ViewRoute,
+                targetLaneId: options.targetLaneId,
+                intent: 'explicit',
+              })
+            } else {
+              // Navigate the focused panel to the new session
+              const newState: NavigationState = {
+                navigator: 'sessions',
+                filter,
+                details: { type: 'session', sessionId: session.id },
+              }
+              const route = buildRouteFromNavigationState(newState) as ViewRoute
+              store.set(updateFocusedPanelRouteAtom, route)
+              // Session selection sync handled by effect
+            }
+
+            targetPanelId = store.get(focusedPanelIdAtom)
+            targetRoute = store.get(focusedPanelRouteAtom)
+            // Our own synchronous panel commit can change focus. Delayed input
+            // belongs to that committed target, with a fresh intent revision.
+            requestRevision = owner.revision
+            setNavigationRevision(revision => revision + 1)
+
+            // Parse badges from params
+            let badges: ContentBadge[] | undefined
+            if (parsed.params.badges) {
+              try {
+                badges = JSON.parse(parsed.params.badges) as ContentBadge[]
+              } catch (e) {
+                console.warn('[Navigation] Failed to parse badges param:', e)
+              }
+            }
+
+            // Handle input: either auto-send or pre-fill
+            if (parsed.params.input) {
+              const shouldSend = parsed.params.send === 'true'
+              if (shouldSend) {
+                setTimeout(() => {
+                  if (!isCurrent()) return
+                  window.electronAPI.sendMessage(
+                    session.id,
+                    parsed.params.input!,
+                    undefined,
+                    undefined,
+                    badges ? { badges } : undefined
+                  )
+                }, 100)
+              } else if (onInputChange) {
+                setTimeout(() => {
+                  if (!isCurrent()) return
+                  onInputChange(session.id, parsed.params.input!)
+                }, 100)
+              }
+            }
+          } finally {
+            if (owner.active && navigationOwnerRef.current === owner && owner.revision === requestRevision) {
+              suppressAutoSelectRef.current = previousSuppression
             }
           }
           break
@@ -868,23 +915,17 @@ export function NavigationProvider({
 
   const navigate = useCallback(
     async (route: Route, options?: NavigateOptions) => {
+      navigationOwnerRef.current.revision += 1
       // Reset auto-select suppression on any normal navigation
       if (!options?.skipAutoSelect) {
         suppressAutoSelectRef.current = false
       }
 
-      // Resolve view failures before parsing actions: unavailable links still
-      // select their own surface, including invalid percent encodings.
-      const newNavState = parseRouteToNavigationState(route)
-      const parsed = newNavState ? null : parseRoute(route)
-      if (!newNavState && (!parsed || parsed.type !== 'action')) {
-        console.warn('[Navigation] Invalid route:', route)
-        return
-      }
-
-      if (!isReady) {
-        // Preserve the complete address and options until navigation is ready.
-        pendingNavigationRef.current = { route, options }
+      const parsed = parseRoute(route)
+      if (!isReady || !isSessionsReady) {
+        // Preserve raw route encoding, query parameters and caller options.
+        // Reconstructing ParsedRoute drops nested routes and action payloads.
+        pendingNavigationRef.current = { route, options, owner: navigationOwnerRef.current }
         return
       }
 
@@ -906,6 +947,7 @@ export function NavigationProvider({
           targetLaneId: options.targetLaneId,
           intent: 'explicit',
         })
+        setNavigationRevision(revision => revision + 1)
         return
       }
 
@@ -913,6 +955,8 @@ export function NavigationProvider({
       // navigator-only view in compact mode, App-page fallback on desktop. We
       // intentionally do NOT auto-redirect to the last-visited subpage; doing so
       // would defeat the compact-mode drill-in UX.
+      const newNavState = parseRouteToNavigationStateOrUnavailable(route)
+
       // Suppress auto-select effect
       if (options?.skipAutoSelect) {
         suppressAutoSelectRef.current = true
@@ -934,7 +978,7 @@ export function NavigationProvider({
         setNavigationRevision(revision => revision + 1)
       }
     },
-    [isReady, handleActionNavigation, resolveAutoSelection, store, pushPanel, workspaceId]
+    [isReady, isSessionsReady, handleActionNavigation, resolveAutoSelection, store, pushPanel, workspaceId]
   )
 
   // =========================================================================
@@ -955,6 +999,8 @@ export function NavigationProvider({
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
+      // A browser-history request supersedes pending create/prefill/send work.
+      navigationOwnerRef.current.revision += 1
       // Update sequence tracking
       const eventSeq = event.state?.seq ?? 0
       historySeqRef.current = eventSeq
@@ -991,9 +1037,10 @@ export function NavigationProvider({
         return
       }
 
-      if (!isSessionsReady) {
-        // Session metadata is not initialized yet; initial restore will reconcile
-        // current URL state once metadata is available.
+      if (!isReady || !isSessionsReady) {
+        // Initial restore may already have run. Retain a later history change
+        // until this workspace's metadata becomes ready again.
+        pendingUrlRestoreRef.current = window.location.search
         return
       }
 
@@ -1005,16 +1052,23 @@ export function NavigationProvider({
 
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
-  }, [workspaceSlug, onSwitchWorkspaceBySlug, updateCanGoBackForward, finishHistoryReconcile, isSessionsReady, syncUrl, getSemanticHistoryKey])
+  }, [workspaceSlug, onSwitchWorkspaceBySlug, updateCanGoBackForward, finishHistoryReconcile, isReady, isSessionsReady, syncUrl, getSemanticHistoryKey])
+
+  useEffect(() => {
+    if (!isReady || !isSessionsReady || pendingUrlRestoreRef.current === null) return
+    const search = pendingUrlRestoreRef.current
+    pendingUrlRestoreRef.current = null
+    suppressPushRef.current = true
+    reconcileFromUrlParamsRef.current(new URLSearchParams(search))
+    finishHistoryReconcile()
+  }, [isReady, isSessionsReady, finishHistoryReconcile])
 
   // =========================================================================
   // WORKSPACE SWITCH
   // =========================================================================
 
-  const previousWorkspaceSlugRef = useRef<string | null>(null)
-
   useEffect(() => {
-    if (!workspaceId || !workspaceSlug || !isSessionsReady) return
+    if (!workspaceId || !workspaceSlug || !isReady || !isSessionsReady) return
 
     if (previousWorkspaceSlugRef.current === null) {
       // First mount — initial route restoration handles it
@@ -1050,6 +1104,9 @@ export function NavigationProvider({
         url.searchParams.set('route', 'allSessions')
       }
 
+      // Stored history cannot change the workspace selected by the caller.
+      url.searchParams.set('ws', workspaceSlug)
+
       // Push a new history entry for the workspace switch
       const seq = nextHistorySeqRef.current++
       history.pushState({ seq }, '', url.toString())
@@ -1065,7 +1122,7 @@ export function NavigationProvider({
     initialRouteRestoredRef.current = true
 
     finishHistoryReconcile()
-  }, [workspaceId, workspaceSlug, store, updateCanGoBackForward, getSemanticHistoryKey, finishHistoryReconcile, isSessionsReady])
+  }, [workspaceId, workspaceSlug, store, updateCanGoBackForward, getSemanticHistoryKey, finishHistoryReconcile, isReady, isSessionsReady])
 
   // =========================================================================
   // INITIAL ROUTE RESTORATION (CMD+R reload)
@@ -1107,13 +1164,14 @@ export function NavigationProvider({
   // =========================================================================
 
   useEffect(() => {
-    if (isReady && pendingNavigationRef.current) {
+    if (isReady && isSessionsReady && pendingNavigationRef.current) {
       const pending = pendingNavigationRef.current
       pendingNavigationRef.current = null
-
-      void navigate(pending.route, pending.options)
+      if (pending.owner.active && pending.owner === navigationOwnerRef.current) {
+        void navigate(pending.route, pending.options)
+      }
     }
-  }, [isReady, navigate])
+  }, [isReady, isSessionsReady, navigate])
 
   // =========================================================================
   // DEEP LINK LISTENER
@@ -1122,7 +1180,10 @@ export function NavigationProvider({
   useEffect(() => {
     if (!workspaceId) return
 
+    const owner = navigationOwnerRef.current
+    let active = true
     const cleanup = window.electronAPI.onDeepLinkNavigate((nav: DeepLinkNavigation) => {
+      if (!active || !owner.active || navigationOwnerRef.current !== owner) return
       let route: string | null = null
 
       if (nav.view) {
@@ -1146,14 +1207,17 @@ export function NavigationProvider({
           toast.error(t('toast.invalidLink'), {
             description: t('toast.invalidLinkDesc'),
           })
-          return
         }
+        // Keep the failed view address visible and recoverable in history.
         navigate(route as Route)
       }
     })
 
-    return cleanup
-  }, [workspaceId, navigate])
+    return () => {
+      active = false
+      cleanup()
+    }
+  }, [workspaceId, remoteWorkspaceId, navigate])
 
   // =========================================================================
   // INTERNAL NAVIGATION EVENT LISTENER
@@ -1250,11 +1314,11 @@ export function NavigationProvider({
 
   useEffect(() => {
     if (suppressAutoSelectRef.current) return
-    if (!isReady || !workspaceId) return
+    if (!isReady || !isSessionsReady || !workspaceId) return
     // Earlier restoration effects can change the focused route in this same
     // effect pass; the render-time navigationState may still describe sessions.
     const currentRoute = store.get(focusedPanelRouteAtom)
-    const currentState = currentRoute ? parseRouteToNavigationState(currentRoute) : null
+    const currentState = currentRoute ? parseRouteToNavigationStateOrUnavailable(currentRoute) : null
     if (!currentState || !isSessionsNavigation(currentState) || currentState.details) return
 
     const resolved = resolveAutoSelection(currentState)
@@ -1263,6 +1327,7 @@ export function NavigationProvider({
     }
   }, [
     isReady,
+    isSessionsReady,
     workspaceId,
     navigationState,
     resolveAutoSelection,

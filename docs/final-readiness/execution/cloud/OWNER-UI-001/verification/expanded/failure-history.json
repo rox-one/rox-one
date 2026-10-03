@@ -1,0 +1,709 @@
+{
+  "schemaVersion": 1,
+  "owner": "OWNER-UI-001",
+  "packagedAtUtc": "2026-10-03T16:41:46.139331+00:00",
+  "acceptance": "Diagnostic history only. Evolving or unbound source runs are unqualified as frozen-source acceptance; successful counts do not close original DoD. Root owns structured final results and revision-bound delivery.",
+  "fullDoDClosed": false,
+  "preservedPriorSnapshot": [
+    {
+      "path": "verification/history/pre-expanded-result.json",
+      "sha256": "6206d7dc3b3f61190d5304a4120853d906be126d633257bff8066c2178b0d5ff",
+      "bytes": 12148,
+      "newCopyMatchesCurrentSource": true,
+      "preservation": "created byte-for-byte if absent; existing snapshot retained unchanged"
+    },
+    {
+      "path": "verification/history/pre-expanded-report.md",
+      "sha256": "5b403436865a5633b842622940949800a315203b62d92d652e7b2d1fdd10c538",
+      "bytes": 2499,
+      "newCopyMatchesCurrentSource": true,
+      "preservation": "created byte-for-byte if absent; existing snapshot retained unchanged"
+    }
+  ],
+  "supersededRuns": "Superseded build/CI termination status143 is retained separately from product assertions; explicit signal logs and coordinator-reported status are distinguished in manifest.",
+  "cases": [
+    {
+      "log": "verification/expanded/logs/expanded-browser-fourth.log.gz",
+      "classification": "mixed_assertion_and_browser_harness_failure",
+      "observedCounts": {
+        "pass": 13,
+        "fail": 5,
+        "assertions": 34
+      },
+      "interpretation": "13 pass/5 fail: explicit selected-resource assertions plus target/browser closure and hook teardown failures while source evolved; all retained, no final acceptance inferred."
+    },
+    {
+      "log": "verification/expanded/logs/expanded-browser-third.log.gz",
+      "classification": "browser_harness_failure",
+      "observedCounts": {
+        "pass": 5,
+        "fail": 4,
+        "assertions": 17
+      },
+      "interpretation": "5 pass/4 fail; test/hook timeouts, target browser closed and esbuild service stopped. Not qualified product acceptance."
+    },
+    {
+      "log": "verification/expanded/logs/expanded-focused-final.log.gz",
+      "classification": "evolving_source_product_and_contract_fixture_failure",
+      "observedCounts": {
+        "pass": 537,
+        "skip": 29,
+        "fail": 3,
+        "assertions": 2575
+      },
+      "interpretation": "537 pass/29 skip/3 fail: fragment/control unavailable-route contract failures (subsequently fixed) and existing source-wiring assertion required canonical-list authority update."
+    },
+    {
+      "log": "verification/expanded/logs/expanded-focused-frozen.log.gz",
+      "classification": "wire_contract_fixture_and_subprocess_failure",
+      "observedCounts": {
+        "pass": 683,
+        "skip": 72,
+        "fail": 3,
+        "assertions": 2748
+      },
+      "interpretation": "683 pass/72 skip/3 fail: two RPC fixture expectations use793 channels while merged contract contains795; ProfileStrip isolation child output empty. Source qualification requires root final disposition."
+    },
+    {
+      "log": "verification/expanded/logs/expanded-focused-second.log.gz",
+      "classification": "mixed_product_and_isolation_fixture_failure",
+      "observedCounts": {
+        "pass": 540,
+        "skip": 34,
+        "fail": 2,
+        "assertions": 2605
+      },
+      "interpretation": "540 pass/34 skip/2 fail: session ID remained percent-encoded (subsequently fixed) and ProfileStrip child-process output empty; isolated rerun required."
+    },
+    {
+      "log": "verification/expanded/logs/expanded-isolation-first.log.gz",
+      "classification": "test_expectation_shape_failure",
+      "observedCounts": {
+        "pass": 5,
+        "fail": 1,
+        "assertions": 22
+      },
+      "interpretation": "5 pass/1 fail: visibleSessionIdsAtom returns Set but new test expected array; test fixture was corrected to compare Set contents."
+    },
+    {
+      "log": "verification/expanded/logs/expanded-navigation-first.log.gz",
+      "classification": "evolving_source_incomplete_integration",
+      "observedCounts": {
+        "pass": 0,
+        "fail": 1
+      },
+      "interpretation": "Missing parseRouteToNavigationStateOrUnavailable export while parallel source integration was incomplete; 0 pass/1 setup fail."
+    },
+    {
+      "log": "verification/expanded/logs/expanded-navigation-second.log.gz",
+      "classification": "mixed_product_and_harness_failure",
+      "observedCounts": {
+        "pass": 5,
+        "fail": 2,
+        "assertions": 16
+      },
+      "interpretation": "5 pass/2 fail: sourceSlug remained encoded (actual parser contract defect, subsequently fixed) and unnamed hook teardown timeout."
+    },
+    {
+      "log": "verification/expanded/logs/expanded-profile-isolated-final.log.gz",
+      "classification": "test_invocation_failure",
+      "observedCounts": {},
+      "interpretation": "No test files matched because explicit .isolated.tsx path omitted leading ./; no test execution or pass claim."
+    },
+    {
+      "log": "verification/expanded/logs/expanded-profile-wrapper-final.log.gz",
+      "classification": "bun_subprocess_harness_failure",
+      "observedCounts": {
+        "pass": 0,
+        "fail": 1,
+        "assertions": 3
+      },
+      "interpretation": "0 pass/1 fail/3 assertions. Wrapper received empty Bun child stdout; direct isolated ProfileStrip actual-product tests independently passed5/0/25. The wrapper assertion fails on subprocess receipt, not the actual product accessibility behavior."
+    },
+    {
+      "log": "verification/expanded/logs/expanded-typecheck-first.log.gz",
+      "classification": "evolving_source_typecheck_failure",
+      "observedCounts": {},
+      "interpretation": "Unavailable navigation union exhausted old nav-helpers switch and nullable test matcher overload; both corrected during integration."
+    },
+    {
+      "log": "verification/expanded/logs/expanded-validate-ci-final.log.gz",
+      "classification": "superseded_coordinator_disposition",
+      "observedCounts": {
+        "pass": 1,
+        "fail": 0,
+        "assertions": 2
+      },
+      "interpretation": "Earlier exit143 report associated with the reused filename is preserved as coordinator history. The exact same archived raw SHA now has a confirmed completed older validate:ci exit0 receipt; it is not a failed product assertion or current-source proof.",
+      "preservedEarlierDisposition": {
+        "classification": "superseded_incomplete_run",
+        "interpretation": "Partial typecheck pipeline only; superseded CI run, exit143 reported by coordinator; no success claim.",
+        "coordinatorReportedExitStatus": 143
+      }
+    },
+    {
+      "log": "verification/expanded/logs/expanded-validate-ci-frozen.log.gz",
+      "classification": "superseded_interrupted_run",
+      "observedCounts": {},
+      "interpretation": "SIGTERM explicitly recorded in typecheck/validate scripts; exit143 reported by coordinator; not a product test assertion.",
+      "coordinatorReportedExitStatus": 143
+    },
+    {
+      "log": "verification/expanded/logs/expanded-validate-ci.log.gz",
+      "classification": "evolving_source_incomplete_integration",
+      "observedCounts": {},
+      "interpretation": "Typecheck failed while panel-url utility file was absent and route-isolation test expected wrong Set shape; parallel implementation incomplete."
+    },
+    {
+      "log": "verification/expanded/logs/patch-scout-deep-link-path-red.log.gz",
+      "classification": "product_negative_control",
+      "observedCounts": {
+        "pass": 2,
+        "fail": 19,
+        "assertions": 22
+      },
+      "interpretation": "Malformed view path collapse and unsafe empty action segments; 2 pass/19 fail before path preservation/rejection implementation."
+    },
+    {
+      "log": "verification/expanded/logs/patch-scout-deep-link-query-red.log.gz",
+      "classification": "product_negative_control",
+      "observedCounts": {
+        "pass": 2,
+        "fail": 7,
+        "assertions": 9
+      },
+      "interpretation": "View query loss on actual main parser; 2 pass/7 fail before query retention implementation."
+    },
+    {
+      "log": "verification/expanded/logs/patch-scout-panel-url-green.log.gz",
+      "classification": "product_assertion_failure",
+      "observedCounts": {
+        "pass": 143,
+        "fail": 1,
+        "assertions": 645
+      },
+      "interpretation": "143 pass/1 fail; encoded browser durable reference exposed builder/parser roundtrip mismatch, subsequently fixed."
+    },
+    {
+      "log": "verification/expanded/logs/patch-scout-panel-url-red.log.gz",
+      "classification": "product_negative_control",
+      "observedCounts": {
+        "pass": 0,
+        "fail": 14,
+        "assertions": 23
+      },
+      "interpretation": "0 pass/14 fail; v2 codec absent, malformed/delimiter panel transport before implementation."
+    },
+    {
+      "log": "verification/expanded/logs/rox-readiness-ui-001-build-da81-renderer.log.gz",
+      "classification": "ongoing_build_snapshot",
+      "observedCounts": {},
+      "interpretation": "Frozen-candidate renderer log still evolving at archive snapshot; no successful build inference. Root owns final receipt."
+    },
+    {
+      "log": "verification/expanded/logs/rox-readiness-ui-001-build-renderer-final.log.gz",
+      "classification": "superseded_incomplete_run",
+      "observedCounts": {},
+      "interpretation": "Renderer transform marker only, no successful final bundle marker; earlier build superseded/interrupted, exit143 reported by coordinator.",
+      "coordinatorReportedExitStatus": 143
+    },
+    {
+      "log": "verification/expanded/logs/rox-readiness-ui-001-build-renderer.log.gz",
+      "classification": "superseded_incomplete_run",
+      "observedCounts": {},
+      "interpretation": "Renderer build began and was superseded/interrupted before completion; exit143 reported by coordinator for superseded build runs; no completed build claim.",
+      "coordinatorReportedExitStatus": 143
+    },
+    {
+      "log": "verification/expanded/logs/ui001-navigation-browser-node-adapter-final.log.gz",
+      "classification": "ongoing_adapter_snapshot",
+      "observedCounts": {},
+      "interpretation": "Node task-local actual-source callback adapter final run ongoing at evidence snapshot; no final outcome inferred."
+    },
+    {
+      "log": "verification/expanded/logs/ui001-navigation-browser-node-adapter.log.gz",
+      "classification": "mixed_corrected_product_and_adapter_failure",
+      "observedCounts": {
+        "pass": 19,
+        "fail": 2,
+        "assertions": 56,
+        "cases": 21
+      },
+      "interpretation": "Node v26.8.2 task-local adapter,19 pass/2 fail/56 assertions/21 cases. Genuine product defect: pushPanelAtom created newEntry with proportion0; the new pane was invisible and v2 restore rejected the zero-weight panel, losing the prior home route. Corrected to reserve the existing average positive panel weight before normalization, preserving prior size ratios. Other failure resolveCreate(...) is not a function was test adapter/fixture invocation. Coordinator reports final navigation21/0/59 after correction; final log refresh follows receipt. No Bun/native/fullDoD claim."
+    },
+    {
+      "log": "verification/expanded/logs/ui001-navigation-browser-qualified-external.log.gz",
+      "classification": "browser_websocket_setup_harness_failure",
+      "observedCounts": {
+        "pass": 0,
+        "fail": 1
+      },
+      "interpretation": "0 pass/1 unnamed beforeEach hook timeout connecting external Chromium; no product assertion outcome, websocket/setup diagnosis from coordinator."
+    },
+    {
+      "log": "verification/expanded/logs/ui001-navigation-browser-qualified-retry1.log.gz",
+      "classification": "bun_subprocess_harness_failure",
+      "observedCounts": {
+        "pass": 0,
+        "fail": 1
+      },
+      "interpretation": "0 pass/1 setup fail on retry; esbuild service stopped under Bun; no product assertions executed."
+    },
+    {
+      "log": "verification/expanded/logs/ui001-navigation-browser-qualified.log.gz",
+      "classification": "bun_subprocess_harness_failure",
+      "observedCounts": {
+        "pass": 0,
+        "fail": 1
+      },
+      "interpretation": "0 pass/1 setup fail; esbuild service stopped under Bun; no product assertions executed."
+    },
+    {
+      "log": "verification/expanded/logs/patch-scout-meetings-source-red.log.gz",
+      "classification": "product_negative_control",
+      "observedCounts": {
+        "pass": 0,
+        "fail": 5,
+        "assertions": 6
+      },
+      "interpretation": "0 pass/5 fail before useMeetings added explicit completion/workspace ownership and fenced canonical replies; actual extracted effect callbacks exercise latest reply, disposal, rejection and owner changes.",
+      "originalSha256": "c1b5f7174b90306ea9e74d31251c8625b747fc8ae5b097b22ae0ad5e4f31aa25"
+    },
+    {
+      "log": "verification/expanded/logs/patch-scout-radar-selected-red.log.gz",
+      "classification": "product_negative_control",
+      "observedCounts": {
+        "pass": 1,
+        "fail": 5,
+        "assertions": 8
+      },
+      "interpretation": "1 pass/5 fail before the Radar selected-address full-width repair. The selected missing-detail surface was hidden behind fixed overview columns; relevant source completion/failure did not own a visible pane.",
+      "originalSha256": "20ea0e85804aea4eebd23d4e738975270b79b5c80938426b6917a1b2aefbaee5"
+    },
+    {
+      "log": "verification/expanded/logs/rox-readiness-ui-001-build-463168-main.log.gz",
+      "classification": "ongoing_build_snapshot",
+      "observedCounts": {},
+      "interpretation": "Build-output snapshot without final completion/exit receipt; no pass claim.",
+      "originalSha256": "0b76c2d60ef0ba5a34ab1d49edde745a95463283be495084fb7df98f0f407808"
+    },
+    {
+      "log": "verification/expanded/logs/rox-readiness-ui-001-build-final-main.log.gz",
+      "classification": "ongoing_build_snapshot",
+      "observedCounts": {},
+      "interpretation": "Build-output snapshot without final completion/exit receipt; no pass claim.",
+      "originalSha256": "0b76c2d60ef0ba5a34ab1d49edde745a95463283be495084fb7df98f0f407808"
+    },
+    {
+      "log": "verification/expanded/logs/ui001-extension-repair-notes-generation-negative-control.log.gz",
+      "classification": "product_negative_control",
+      "observedCounts": {
+        "pass": 8,
+        "fail": 4,
+        "assertions": 39
+      },
+      "interpretation": "8 pass/4 fail using the pre-repair actual Notes source callbacks. Retained listener and descriptor replies could publish after unsubscribe, workspace ABA or same-note reopening. Production success proof is separately retained.",
+      "originalSha256": "2a721fd8e97cbb1310d3135ec5d052099dac4bcc19adcbb96bde53901944e5bd"
+    },
+    {
+      "log": "verification/expanded/logs/expanded-isolated-5a0b769b8.log.gz",
+      "classification": "test_module_mock_isolation_failure",
+      "observedCounts": {
+        "pass": 39,
+        "fail": 1,
+        "error": 1,
+        "assertions": 119
+      },
+      "interpretation": "39 pass/1 fail/1 error. A missing-items SSR mock for use-rox-sources leaked into the meetings-source file in the same Bun process, making normalizeMeetingList unavailable. Separate-process reruns preserve isolation and are packaged independently; no product regression inferred from this combined invocation.",
+      "originalSha256": "8f903a50944637831cfab1fd246cfe90da8b40a16a2380efd81bc6216746db45"
+    },
+    {
+      "log": "verification/expanded/logs/expanded-regression-5a0b769b8.log.gz",
+      "classification": "static_source_fixture_failure",
+      "observedCounts": {
+        "pass": 698,
+        "fail": 2,
+        "skip": 75,
+        "assertions": 2821
+      },
+      "interpretation": "698 pass/75 skip/2 fail/2821 assertions on the frozen source. Both preexisting static tests slice from the deleted DESKTOP BRANCH comment after upstream unified-grid integration. Prepared test-only replacements check actual conditional desktop padding and flush pane styles; product source was unchanged by the preparation.",
+      "originalSha256": "fff191dcb9f1b6b655a965e37fff175f74e8b441b4b0a4202933c1ed61e1c090"
+    },
+    {
+      "log": "verification/expanded/logs/expanded-validate-ci-53a5a0fe4.log.gz",
+      "classification": "ongoing_validate_ci_snapshot",
+      "observedCounts": {},
+      "interpretation": "Snapshot of the newer integrated-source validation while the coordinator still reports it running; no exit0 or complete pipeline inferred.",
+      "originalSha256": "1a06bdf21aaabdf2642d580f2335b9541d3bf2c163653491735fc97a46eaa47f"
+    },
+    {
+      "log": "verification/expanded/logs/expanded-validate-ci-53a5a0fe4.snapshot-d0f27d99e345.log.gz",
+      "classification": "contended_load_default_timeout",
+      "observedCounts": {
+        "pass": 108,
+        "fail": 1,
+        "assertions": 291
+      },
+      "interpretation": "108 pass/1 fail/291 assertions in the shared config stage; the existing legacy Opus migration integration test reached7953ms against its unchanged default5000ms timeout. No assertion mismatch is logged. The coordinator reports all typechecks passed before this stage; full validate:ci failed and remains pending rerun.",
+      "originalSha256": "d0f27d99e345066e12fcbb133eff7ed3f77fdf05ffbb1d51eb30715c396a52c9",
+      "coordinatorReportedExitStatus": 1
+    },
+    {
+      "log": "verification/expanded/logs/patch-scout-service-strict-red.log.gz",
+      "classification": "product_negative_control",
+      "observedCounts": {
+        "pass": 4,
+        "fail": 1,
+        "assertions": 18
+      },
+      "interpretation": "4 pass/1 fail/18 assertions before the new service-navigation strict boundary fix. Actual findServicePanel and AppShell Notes callback recognized a malformed selected route as an existing Notes service, blocking the valid-root fallback.",
+      "originalSha256": "d3aafe6f47a6f65eafbff462a5d900f8f8012ed372d67fb9b01c3795dd975837"
+    },
+    {
+      "log": "verification/expanded/logs/patch-scout-static-upstream-negative-control-ae196.log.gz",
+      "classification": "upstream_static_source_fixture_negative_control",
+      "observedCounts": {
+        "pass": 5,
+        "fail": 2,
+        "assertions": 33
+      },
+      "interpretation": "5 pass/2 fail/33 assertions with exact unmodified upstreamae196 tests and all source/CSS inputs they read. The two DESKTOP BRANCH slicing failures occur in upstream itself; this control does not mount product UI.",
+      "originalSha256": "2cb1bcd3212b81d510e6969fdad71c2d469242e06908e985ec088f9c4301ef29"
+    },
+    {
+      "log": "verification/expanded/logs/expanded-regression-5e5493b4e.log.gz",
+      "classification": "scratch_control_discovery_and_upstream_static_fixture_failure",
+      "observedCounts": {
+        "pass": 720,
+        "fail": 4,
+        "skip": 78,
+        "assertions": 2978
+      },
+      "interpretation": "720 pass/78 skip/4 fail. Two failures came from deliberately red upstream scratch controls because fuzzy Bun path filters discovered work copies; two production-directory source-text assertions still expected old direct Notes/Connections navigation after incoming service-helper integration. Root reruns actual directories with ./ anchors and prepares minimal test-only source-binding updates. No new product failure inferred from these four fixtures.",
+      "originalSha256": "7050134600b2122740fc249f561efa06a600d4ba415fe766a797dee9fd48db94"
+    },
+    {
+      "log": "verification/expanded/logs/rox-readiness-ui-001-build-5e5493-main.log.gz",
+      "classification": "ongoing_build_snapshot",
+      "observedCounts": {},
+      "interpretation": "Build-output snapshot without final completion/exit receipt; no pass claim.",
+      "originalSha256": "0b76c2d60ef0ba5a34ab1d49edde745a95463283be495084fb7df98f0f407808"
+    },
+    {
+      "log": "verification/expanded/logs/rox-readiness-ui-001-build-5e5493-renderer.log.gz",
+      "classification": "ongoing_build_snapshot",
+      "observedCounts": {},
+      "interpretation": "Build-output snapshot without final completion/exit receipt; no pass claim.",
+      "originalSha256": "4e92ac5f624192dd0ba7ff4c2237011617eb20872f5e030506a74bcbad5183db"
+    },
+    {
+      "log": "verification/expanded/logs/expanded-validate-ci-5e5493b4e.snapshot-bba8ef63cbe9.log.gz",
+      "classification": "ongoing_validate_ci_snapshot",
+      "observedCounts": {},
+      "interpretation": "Validation pipeline snapshot without final process/coverage completion receipt. Passing intermediate stage summaries do not prove the full command passed.",
+      "originalSha256": "bba8ef63cbe9d1b0097cd69a855f957c0ba298cb3c3417369670b3ccecc56cdc"
+    },
+    {
+      "log": "verification/expanded/logs/expanded-validate-ci-5e5493b4e.snapshot-13d335b4413b.log.gz",
+      "classification": "ongoing_validate_ci_snapshot",
+      "observedCounts": {
+        "pass": 11,
+        "fail": 0,
+        "assertions": 22
+      },
+      "interpretation": "Validation pipeline snapshot without final process/coverage completion receipt. Passing intermediate stage summaries do not prove the full command passed.",
+      "originalSha256": "13d335b4413bf1f144d6438f3b8063f4028845d7fb69d917a312325172ed444e"
+    },
+    {
+      "log": "verification/expanded/logs/expanded-regression-5e5493b4e-anchored.log.gz",
+      "classification": "upstream_service_source_assertion_fixture_failure",
+      "observedCounts": {
+        "pass": 707,
+        "fail": 2,
+        "skip": 78,
+        "assertions": 2886
+      },
+      "interpretation": "707 pass/78 skip/2 fail/2886 assertions with explicit ./ production-directory anchors. Scratch negative controls are no longer discovered. Only the old Notes/Connections direct-navigation source-text expectations fail after incoming service-helper integration; actual callbacks independently passed30/0/127 and the prepared minimal source-binding tests passed5/0/17.",
+      "originalSha256": "e6889ce1f5daa972a103d8bc6bafc7abe102d535d5af3352459013ef96205a2b"
+    },
+    {
+      "log": "verification/expanded/logs/rox-readiness-ui-001.navigation-remote-negative.followup-dd51f836721c.log.gz",
+      "classification": "actual_mounted_product_negative_control",
+      "observedCounts": {
+        "pass": 0,
+        "fail": 2,
+        "assertions": 0,
+        "cases": 2
+      },
+      "interpretation": "Actual mounted old-source/current-regression Node adapter:0 pass/2 fail, both waiting for a new subscription after remote-only ownership rotation; the stale subscription cannot handle current ingress. Stable callback props prevent incidental navigate identity changes masking the defect.",
+      "originalSha256": "dd51f836721ce326fe7555dd93c9f63c41fffc4c925bd22aed8479ae9932fe07"
+    },
+    {
+      "log": "verification/expanded/logs/rox-readiness-ui-001.navigation-remote-positive.followup-307a9d020010.log.gz",
+      "classification": "incomplete_outer_orchestration_timeout",
+      "observedCounts": {},
+      "interpretation": "Initial full run reached18 passing cases, then the200s outer orchestration deadline ended execution. No testcase failure was reported, but no full-suite pass is claimed. The retry raised only the outer harness deadline to600s; unchanged30s testcase limits and same169-input bundle yielded26/0/74.",
+      "originalSha256": "307a9d0200107ca2224c1d695c734ac6fad13518a0e993a97bb3a37367dd8b73",
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81"
+    },
+    {
+      "log": "verification/expanded/logs/expanded-native-8e3f6d841-final.followup-22618baae15d.log.gz",
+      "classification": "failed_native_startup_original_bound",
+      "observedCounts": {},
+      "interpretation": "Current qualified8e native attempt failed firstWindow30000ms startup bound under contention; no renderer error observed. Preserve actual failed native attempt before unchanged-bound retry.",
+      "originalSha256": "22618baae15dee103a44a10938d9e0fb87fbff60d85d4ac1903b6250ebfed9a8",
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81"
+    }
+  ],
+  "unloggedHistory": [
+    "Earlier parser/knowledge/extra-screen red/green attempts were captured in tool outputs without standalone log files; no log filenames or raw artifacts were invented. Root retains those attempt counts in structured history."
+  ],
+  "excluded": [
+    "Native profile/databases/private logs (spec_review owns native evidence)",
+    "Dependency package files, configuration/env files, unrelated context/memory",
+    "Secrets: selected text logs passed bounded credential-pattern scan; no profile/config/env content was read or copied"
+  ],
+  "reviewedResolutions": [
+    {
+      "id": "new-panel-zero-width",
+      "originalFailureLog": "verification/expanded/logs/ui001-navigation-browser-node-adapter.log.gz",
+      "cause": "Actual product pushPanelAtom inserted a panel with zero proportion; invisible pane also failed positive v2 URL codec validation.",
+      "correction": "Reserve average existing panel weight before normalization; existing relative size ratios preserved.",
+      "scopedProof": "verification/expanded/logs/expanded-panel-weight-final.log.gz",
+      "observedCounts": {
+        "pass": 17,
+        "fail": 0,
+        "assertions": 90
+      },
+      "coordinatorFinalNavigationReceipt": {
+        "pass": 21,
+        "fail": 0,
+        "assertions": 59,
+        "log": "verification/expanded/logs/ui001-navigation-browser-node-adapter-final.snapshot-5b3b3c00c9bd.log.gz",
+        "logRefreshPending": false,
+        "runtime": "Node actual callbacks adapter with external Chromium; no Bun/native acceptance claim"
+      }
+    },
+    {
+      "id": "profile-wrapper-empty-child-output",
+      "originalFailureLog": "verification/expanded/logs/expanded-profile-wrapper-final.log.gz",
+      "cause": "Bun subprocess wrapper did not receive child stdout.",
+      "actualProductProof": "verification/expanded/logs/expanded-profile-isolated-final-retry.log.gz",
+      "observedCounts": {
+        "pass": 5,
+        "fail": 0,
+        "assertions": 25
+      },
+      "verifiedScope": "Actual ProfileStrip rendered component accessibility contract in isolated test; native acceptance remains separate."
+    },
+    {
+      "id": "radar-selected-zero-width",
+      "originalFailureLog": "verification/expanded/logs/patch-scout-radar-selected-red.log.gz",
+      "cause": "Selected detail was squeezed to zero width by fixed overview columns; missing selected content was present but hidden.",
+      "correction": "Explicit selected addresses own a full-width detail surface; source-backed IDs wait for actual completion/failure.",
+      "scopedProof": "verification/expanded/logs/patch-scout-radar-selected-product-green.log.gz",
+      "observedCounts": {
+        "pass": 6,
+        "fail": 0,
+        "assertions": 47
+      },
+      "currentFrozenProof": "verification/expanded/logs/expanded-isolated-5a0b769b8-3.log.gz"
+    },
+    {
+      "id": "notes-retained-listener-descriptor-aba",
+      "originalFailureLog": "verification/expanded/logs/ui001-extension-repair-notes-generation-negative-control.log.gz",
+      "cause": "Actual pre-repair retained listener/descriptor callbacks could publish after unsubscribe, workspace A→B→A or reopening the same note.",
+      "correction": "Committed owner generation and subscription/opening leases fence both descriptor success and catch paths.",
+      "scopedProof": "verification/expanded/logs/ui001-extension-repair-notes-generation-final-5a0.log.gz",
+      "observedCounts": {
+        "pass": 12,
+        "fail": 0,
+        "assertions": 50
+      }
+    },
+    {
+      "id": "strict-service-matching-after-main-integration",
+      "originalFailureLog": "verification/expanded/logs/patch-scout-service-strict-red.log.gz",
+      "cause": "New upstream service helper used permissive public route parsing, treating malformed Notes paths as a concrete service and suppressing the valid root fallback.",
+      "correction": "Use the route-preserving strict boundary; unavailable states cannot match service destination predicates. Actual callbacks retain supported selected-panel focus and exact root recovery.",
+      "scopedProof": "verification/expanded/logs/patch-scout-service-strict-green.log.gz",
+      "observedCounts": {
+        "pass": 30,
+        "fail": 0,
+        "assertions": 127
+      },
+      "finalRevisionBindingPending": true
+    },
+    {
+      "id": "upstream-unified-grid-static-fixture",
+      "originalFailureLog": "verification/expanded/logs/expanded-regression-5a0b769b8.log.gz",
+      "cause": "Two untouched upstream tests sliced from the removed DESKTOP BRANCH comment and asserted an empty source segment. Exact unmodified incoming-main inputs reproduce both failures.",
+      "upstreamNegativeControl": "verification/expanded/logs/patch-scout-static-upstream-negative-control-ae196.log.gz",
+      "upstreamObservedCounts": {
+        "pass": 5,
+        "fail": 2,
+        "assertions": 33
+      },
+      "correction": "Minimal test-only assertions target actual unified desktop inset and flush pane DOM styles.",
+      "preparedTestProof": "verification/expanded/logs/patch-scout-static-tests-candidate-green.log.gz",
+      "observedCounts": {
+        "pass": 8,
+        "fail": 0,
+        "assertions": 59
+      }
+    }
+  ],
+  "nativeFailureReferences": [
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791033632172/rox-readiness-ui-001.result.json",
+      "resultSha256": "e9c318423a4a4cab72398705013c1bc269a915b5d7684f53c1cd0523168836c9",
+      "inputRevision": "9fa0dea8b7667fd472fe651849ca0d093bf0a006",
+      "status": "failed",
+      "stage": "boot-native-product",
+      "error": "launch: Timeout 60000ms exceeded.",
+      "errors": [],
+      "acceptanceLevel": "actual local macOS Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791033957961/rox-readiness-ui-001.result.json",
+      "resultSha256": "21326efa49474b632fe9e3c69c90ac77a82dfcc9d6ed38940ec66dbf83f1ce68",
+      "inputRevision": "9fa0dea8b7667fd472fe651849ca0d093bf0a006",
+      "status": "failed",
+      "stage": "boot-native-product",
+      "error": "launch: Timeout 120000ms exceeded.",
+      "errors": [],
+      "buildProvenanceQualified": false,
+      "buildQualifier": "provisional product replay; current source snapshot does not bind the earlier generated build",
+      "acceptanceLevel": "actual local macOS Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791034261424/rox-readiness-ui-001.result.json",
+      "resultSha256": "dd5a5e4d7247924ef4d4ad523e916c2ab9fba076dde13925d2c49af688fd9d34",
+      "inputRevision": "9fa0dea8b7667fd472fe651849ca0d093bf0a006",
+      "status": "failed",
+      "stage": "boot-native-product",
+      "error": "locator.waitFor: Error: strict mode violation: locator('[data-shell-role=\"chrome\"]') resolved to 3 elements:\n    1) <div data-shell-role=\"chrome\" class=\"chrome-topbar fixed top-0 right-0 z-panel titlebar-drag-region\">…</div> aka locator('#root div').filter({ hasText: 'ГлавнаяСессииВстречиЗадачиЗаметкиЛентаВходящиеГлавнаяСессииВстречиЗадачиЗаметкиЛ' }).nth(3)\n    2) <div tabindex=\"-1\" data-shell-role=\"chrome\" data-focus-zone=\"sidebar\" class=\"h-full font-sans relative chrome-rail\">…</div> aka locator('.relative > div > div > div > div > div > div > div > div').first()\n    3) <div data-shell-role=\"chrome\" class=\"h-full flex flex-col min-w-0 relative z-panel chrome-strip\">…</div> aka getByText('СессииСегодня · 2 UI001')\n\nCall log:\n\u001b[2m  - waiting for locator('[data-shell-role=\"chrome\"]') to be visible\u001b[22m\n",
+      "errors": [],
+      "buildProvenanceQualified": false,
+      "buildQualifier": "provisional product replay; current source snapshot does not bind the earlier generated build",
+      "acceptanceLevel": "actual local macOS Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791037356225/rox-readiness-ui-001.result.json",
+      "resultSha256": "270771004af91111d68e394c13506fe29f728d2447c7dec6da28b8ffe5b81dde",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "stage": "unavailable-capability-routes",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"browser-surface-missing\"], [data-testid=\"browser-surface-unavailable\"]') to be visible\u001b[22m\n",
+      "errors": [],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "actual local macOS Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791037843427/rox-readiness-ui-001.result.json",
+      "resultSha256": "b1a9410aa1809f0556d9f05177421be7e04016eae317f076ed732b1d113234c8",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "stage": "unavailable-capability-routes",
+      "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+      "errors": [],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "actual local macOS Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791038195365/rox-readiness-ui-001.result.json",
+      "resultSha256": "82c6c56ba7d256e9a5a35da95fea39967f98b672e912c0084749e95c3fab502c",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "stage": "unavailable-capability-routes",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"extension-surface-unavailable\"]') to be visible\u001b[22m\n",
+      "errors": [],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "diagnostic continuation with known knowledge redirect excluded; no readiness acceptance",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791038554362/rox-readiness-ui-001.result.json",
+      "resultSha256": "24c3964a80460e45e3c0bda6e8adf233fddec0b03bb9e2ae57f7e3b101d72031",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "stage": "unavailable-capability-routes",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('extra-screen-item-unavailable') to be visible\u001b[22m\n\u001b[2m    64 × locator resolved to hidden <div class=\"h-full\" data-screen=\"radar\" data-item-id=\"ui001-absent-item\" data-testid=\"extra-screen-item-unavailable\">…</div>\u001b[22m\n",
+      "errors": [],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "diagnostic continuation with explicitly listed known gaps excluded; no readiness acceptance",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791038809376/rox-readiness-ui-001.result.json",
+      "resultSha256": "1e1bb32089b083cef3e3a52c56f924562a36ab04ec546923950387049b6d5fcf",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "stage": "unknown-raw-link-unavailable",
+      "error": "Diagnostic continuation found 4 additional failures; see diagnosticFailures",
+      "errors": [
+        "Paper Shaders: WebGL is not supported in this browser"
+      ],
+      "diagnosticFailures": [
+        {
+          "name": "radar-missing",
+          "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('extra-screen-item-unavailable') to be visible\u001b[22m\n\u001b[2m    27 × locator resolved to hidden <div class=\"h-full\" data-screen=\"radar\" data-item-id=\"ui001-absent-item\" data-testid=\"extra-screen-item-unavailable\">…</div>\u001b[22m\n"
+        },
+        {
+          "name": "zoom-layout",
+          "error": "expect(received).toBeGreaterThan(expected)\n\nExpected: > 0\nReceived:   0"
+        },
+        {
+          "name": "skill-deletion",
+          "error": "expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true"
+        },
+        {
+          "name": "note-deletion",
+          "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('route-note-missing') to be visible\u001b[22m\n"
+        }
+      ],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "diagnostic continuation with explicitly listed known gaps excluded; no readiness acceptance",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791040637580/rox-readiness-ui-001.result.json",
+      "resultSha256": "00401bfbd45b3a8db29433d43eb415ed2557d8b70bb95c1764214d1f1e879c39",
+      "inputRevision": "5a0b769b894aed2ed09ba8bcbe01a41cf8149d76",
+      "status": "failed",
+      "stage": "deleted-note-retry",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('route-note-missing') to be visible\u001b[22m\n",
+      "errors": [],
+      "diagnosticFailures": [],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "actual local macOS unpackaged Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    }
+  ],
+  "followupReceipts": [
+    {
+      "path": "verification/expanded/review-receipt-remote-workspace-followup.json",
+      "sha256": "7fd3a524ac45da5cf0baf6f84e06498137c9515abfc3f6009e3d818f6d7619ab"
+    }
+  ]
+}
