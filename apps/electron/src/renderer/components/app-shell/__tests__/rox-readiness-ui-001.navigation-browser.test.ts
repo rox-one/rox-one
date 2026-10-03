@@ -260,6 +260,18 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     expect(state.panels[1].id).toBe(state.focused)
   }, 30000)
 
+  it('mixed zero and positive restored weights allocate usable panels across compatible transports and reload', async () => {
+    for (const panels of ['[["tasks",0],["notes",1]]', 'json:[{"route":"tasks","proportion":0},{"route":"notes","proportion":1}]', 'tasks:0,notes:1']) {
+      await open('tasks', {panels, fi:'1'})
+      await page.locator('[data-focused="true"] [data-leaf="note"]').waitFor()
+      expect((await snapshot()).panels.map(panel => [panel.route,panel.proportion])).toEqual([['tasks',0.5],['notes',0.5]])
+      expect(await page.locator('[data-leaf="tasks"]').count()).toBe(1)
+      await page.reload()
+      await page.locator('[data-focused="true"] [data-leaf="note"]').waitFor()
+      expect((await snapshot()).panels.map(panel => [panel.route,panel.proportion])).toEqual([['tasks',0.5],['notes',0.5]])
+    }
+  }, 30000)
+
   it('legacy bracket-prefixed unknown panels keep their sibling and proportions after reload', async () => {
     for (const route of ['[future]', '[[future]]']) {
       await open(route, { panels: `${route}:0.6000,tasks:0.4000`, fi: '0' })

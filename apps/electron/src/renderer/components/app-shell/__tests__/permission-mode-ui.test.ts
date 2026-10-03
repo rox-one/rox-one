@@ -71,6 +71,9 @@ function uiHarness(kind: 'desktop' | 'compact') {
   }
   const bindings = {
     React: react, useTranslation: () => ({ t: (key: string) => key }), cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
+    // Tour registration is outside this callback harness; permission selection
+    // and reconciliation still execute the actual component and App callbacks.
+    useTourTarget: () => () => {},
     PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, isWebUI: false,
     Popover: 'popover', PopoverContent: 'popover-content', PopoverTrigger: 'popover-trigger',
     SlashCommandMenu: 'slash-menu', DEFAULT_SLASH_COMMAND_GROUPS: [],
