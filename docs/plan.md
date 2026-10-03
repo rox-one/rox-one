@@ -1017,3 +1017,9 @@ Owner recent_features; depends on current Tasks1456, strict date1470 and Product
 - [x] Перенести только форматирование и локализованные параметры подсказок; сохранить текущие native/Task draft/Product Learning потребители.
 - [x] Подтвердить исходный дефект Windows/Linux и положительный macOS контроль настоящими кнопками Tasks.
 - [x] Квалифицировать свежий совмещенный source: 25 actual Chromium controls, 300 SSR/i18n tests и full strict Electron types без ошибок; сохранить точные хеши и журналы, подготовить отдельный integration PR без удаления исходной ветки.
+
+## Notes source-path classification recovery — 2026-10-04
+
+1. Freeze source1465/6f59 and its external merge2338; retain negative current-source evidence. After correcting only the fixture's canonical root, actual current controls reproduce35pass/2fail for a corrupt parent directory and its transport classification.
+2. Validate ancestors before the requested file, preserving exact ENOENT-path matching, canonical-root and symlink guards, unchanged current native ownership fences and positive missing-note behavior.
+3. Qualify the actual registered Notes/content handlers, real temporary files and loopback transport, current Notes page callbacks, relevant authority controls and server-core types. Retain prior failures, append documentation, push a separate narrow PR; parent owns review/merge.
