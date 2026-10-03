@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync, mkdirSync, writeFileSync } from 'n
 import { resolve, join } from 'node:path'
 import { gzipSync } from 'node:zlib'
 import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 
 const repository = resolve(import.meta.dirname, '../..')
 const baseline = process.argv[2]
@@ -14,11 +15,14 @@ function inspect(directory: string) {
   const paths = files(resolve(directory))
   const measure = (suffix: string) => paths.filter(path => path.endsWith(suffix)).reduce((sum, path) => { const content = readFileSync(path); return { files: sum.files + 1, rawBytes: sum.rawBytes + content.length, gzipBytes: sum.gzipBytes + gzipSync(content, { level: 9, mtime: 0 } as any).length } }, { files: 0, rawBytes: 0, gzipBytes: 0 })
   const leakedMarkers = paths.filter(path => /\.(js|html|css)$/.test(path)).flatMap(path => forbidden.filter(marker => readFileSync(path, 'utf8').includes(marker)).map(marker => ({ path, marker })))
-  return { directory: resolve(directory), js: measure('.js'), css: measure('.css'), leakedMarkers }
+  const artifactHash = createHash('sha256')
+  for (const path of paths.filter(path => /\.(js|html|css)$/.test(path)).sort()) { artifactHash.update(path.slice(resolve(directory).length)); artifactHash.update(readFileSync(path)) }
+  return { directory: resolve(directory), artifactSha256: artifactHash.digest('hex'), js: measure('.js'), css: measure('.css'), leakedMarkers }
 }
 const before = inspect(baseline), after = inspect(candidate)
 const report = {
   caseId: 'BUILD-01', commitSha: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repository, encoding: 'utf8' }).stdout.trim(),
+  trackedWorktreeDirty: !!spawnSync('git', ['status', '--porcelain', '--untracked-files=no'], { cwd: repository, encoding: 'utf8' }).stdout.trim(),
   baseline: before, candidate: after,
   delta: { jsRawBytes: after.js.rawBytes - before.js.rawBytes, jsGzipBytes: after.js.gzipBytes - before.js.gzipBytes, cssRawBytes: after.css.rawBytes - before.css.rawBytes, cssGzipBytes: after.css.gzipBytes - before.css.gzipBytes },
   status: after.leakedMarkers.length === 0 && after.js.files > 0 && before.js.files > 0 ? 'PASS' : 'FAIL',
