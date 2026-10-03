@@ -12,7 +12,7 @@ const platform = process.platform
 const available = platform === 'darwin' || platform === 'win32'
 const report = {
   commitSha: sha, trackedWorktreeDirty: dirty, platform, status: 'NOT_RUN', releaseBlocking: true,
-  automatedSmoke: { status: 'NOT_RUN', scope: 'Real Electron fresh setup / focus / no automatic tour', exitCode: null as number | null },
+  automatedSmoke: { status: 'NOT_RUN', scope: 'Real Electron fresh setup / no automatic tour', exitCode: null as number | null },
   cases: [
     { id: 'NATIVE-01', status: 'NOT_RUN', reason: 'Full macOS Start/Pause/Resume, menu and native-dialog acceptance needs recorded platform evidence.' },
     { id: 'NATIVE-02', status: 'NOT_RUN', reason: 'Full Windows Start/Pause/Resume, Git Bash, menu and drawer acceptance needs recorded platform evidence.' },
