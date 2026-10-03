@@ -1,5 +1,5 @@
 {
-  "state": "qualified_current_candidate_pending_latestmain_merge",
+  "state": "qualified_current_candidate",
   "source_head": "2d93d2fcca9e0504668e2bc4c757decbe26b06eb",
   "base_main": "ab431f5a35ef6be44c68b9f973eb79c40cd7e315",
   "source_path_count": 225,
@@ -123,7 +123,7 @@
   "existing_source_historical_OS_receipts_are_not_this_head": true,
   "original_branch_deleted": false,
   "runtime_composition_receipt": "sso-runtime-session-omp-qualification.json",
-  "currentmain_reconciled": "f86660e7d84fbe35342d90b56db0189ae4e62ed4",
+  "currentmain_reconciled": "63dd527439cd422d0c392cd8fce1461db333168b",
   "runtime_composition_repair": "Actual held collector append reproduced obsolete-account output. ProcessEvent retains execution/native grant and rechecks both after trace await; chat/backend creation rechecks native grant after trace capture.",
   "current_checks": [
     {
@@ -243,7 +243,89 @@
       "log": "pocket-latest-toolbar-build.log",
       "bytes": 287,
       "sha256": "f789219f826daed76187a9e2360098d7b4c2cdd9fb550acfa334e6f1ab8e3ff0"
+    },
+    {
+      "log": "pocket-composed-latestmain-controls.log",
+      "bytes": 3860,
+      "sha256": "58b08ba295cfff8e4c6fb88cb4b30dca1b29de22d2d563a0855bd3d583b2b5c5"
+    },
+    {
+      "log": "pocket-composed-latestmain-electron-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "log": "pocket-composed-latestmain-server-types-repaired.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "log": "pocket-composed-latestmain-server-types.log",
+      "bytes": 262,
+      "sha256": "39b145f234a8e000031645bf9c5f9b960ab60085dbdb0962a16933c1e98d1e5d"
     }
   ],
-  "application_receipt_sha256": "4d8abd77bcaa3b32d966f5bb824bdfdff14a2a49bcef458a84a9c4a2d280480c"
+  "application_receipt_sha256": "4d8abd77bcaa3b32d966f5bb824bdfdff14a2a49bcef458a84a9c4a2d280480c",
+  "qualified_code_commit": "4948e98c6bd943b57b70e1b0081b313393648f88",
+  "qualified_composed_commit": "63e33d22e17260efe7e4a333e4eed132e519be4e",
+  "later_independent_draft_source_preserved": true,
+  "composition_checks": [
+    {
+      "name": "current SessionManager account owner +OMP domains/query +collection load/edit",
+      "pass": 28,
+      "fail": 0,
+      "assertions": 111,
+      "files": 4
+    },
+    {
+      "name": "full server-core strict local transport alias",
+      "exit": 0
+    },
+    {
+      "name": "full Electron strict types",
+      "exit": 0
+    }
+  ],
+  "composition_preservation": [
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "sha256": "730842d43d0d1a60a954d817e8137c168b2e562e6fe6cc6887942aee6f50bc16",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/server-core/src/memory/MemoryService.ts",
+      "sha256": "159e9ca63489be82c62c22124a52de741be17afa1d1477338bd3a30d3d4c580e",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/sessions.ts",
+      "sha256": "3609205799c561a647dfda608e4b82aebb0bd1692752368258e362957caec578",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+      "sha256": "715610eb1452ba79724862b0de2fa06e7966e246ab4541b939b54c1be5aae472",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/shared/src/agent/omp-agent.ts",
+      "sha256": "bb8ff894ce6df443b54ce0669d9de8d7f8e06727372155920b3df8795ad1983c",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts",
+      "sha256": "80922e70a8cee7bdfacd8f9a5f7afba67ee6804bd4ac9822f2b9d7f5ef991b9b",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-query-llm.test.ts",
+      "sha256": "b10cc0e1410c0e7b1a94a32333abee828766cf978bfd7233c396e237d36a5b83",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/server-core/src/sessions/pocket-session-resource-owner.test.ts",
+      "sha256": "9fd646ecb520ad6defa4ec10668ec999d12f8e34436f2997b36457f67a9565c9",
+      "unchanged_from_owned_qualification": true
+    }
+  ]
 }

@@ -120,7 +120,7 @@
     {
       "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
       "source_blob": "e976e2b50bf4fd8625d5c909d673738b431b020e",
-      "current_blob": "4558550fecfe173a81b52158529b739574f4861d",
+      "current_blob": "acda12c855a361f70d79f3427b326d0a264f348b",
       "status": "adapted_preserving_current_consumers",
       "function_disposition": "current_startup_account_strip_and_account_settings_consumers",
       "qualification_refs": [
@@ -259,7 +259,7 @@
     {
       "path": "docs/plan.md",
       "source_blob": "f442a0d1ceefa0971eae318cf9760bf2b9269f9c",
-      "current_blob": "abcfb58f3ed19d84c54e7bfb013c2f2517e6d62d",
+      "current_blob": "58cec6e1b5fac74b3ef0249fb9d7b63f25774966",
       "status": "adapted_preserving_current_consumers",
       "function_disposition": "current_append_only_spec_plan",
       "qualification_refs": [],
@@ -322,7 +322,7 @@
     {
       "path": "docs/spec.md",
       "source_blob": "a282e5a99f229d82d33f7f39d15c49b293411df9",
-      "current_blob": "80487131206e7e083541e2182dba3c1d187b3a3e",
+      "current_blob": "1a3798e3786f8740c7030832e04bcfa8b6f9407c",
       "status": "adapted_preserving_current_consumers",
       "function_disposition": "current_append_only_spec_plan",
       "qualification_refs": [],
@@ -2276,7 +2276,7 @@
   ],
   "public_deployment_performed": false,
   "native_OS_E2E_current_acceptance": false,
-  "current_candidate": "cab4452780d49bba1d6cc83e97d3d7a65c0db766",
+  "current_candidate": "1e2759b9d554b48cb16346d0432a2e0cf1214e45",
   "previous_source_head": "26441ca2949c4fa8c01c44cee6b9734fe4c8dfd1",
   "source_history_retained": true,
   "production_source_head": "609c2446c870c26817eae1909bd9c27eec135aba"
