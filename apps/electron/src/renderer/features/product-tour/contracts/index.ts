@@ -81,6 +81,7 @@ export interface TourSignalBase {
   readonly name: SignalName;
   readonly binding: TourBinding; // Runtime only; never serialize to diagnostics.
   readonly operationToken?: string;
+  readonly operationStartedAt?: number;
   readonly eventToken: string;
   readonly at: number;
 }
