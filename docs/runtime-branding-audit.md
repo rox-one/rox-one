@@ -30,3 +30,17 @@
 Regression coverage includes canonical import, unchanged source, ROX conflict precedence plus archive, plural legacy import, one-time behavior, override isolation, ROX-only context loading, alias precedence, seeding, CRUD, sanitization, project override, and actual system prompt integration. Tests operate in temporary directories; user documents and credentials are never read into test output.
 
 The migration intentionally does not continue importing edits made later in legacy trees. New runtime edits belong in the canonical selected ROX root. Preserved sources and conflict archives remain available for explicit recovery.
+
+## Follow-up closure
+
+- Permissions directory and updater log now use the canonical resolver.
+- Main boot uses the resolver directly instead of the contradictory old migration helper.
+- Config validation/path classification covers `~/.rox`, the explicit configured root, and legacy compatibility paths; configured-root sibling prefixes do not match.
+- Safe-mode error guidance derives the workspace root from the supplied plans directory and uses the selected config root. Actual authorization containment/realpath logic was already independent of branding and remains unchanged.
+- Newly generated workspace-session links use `rox://`; deep-link documentation now describes the primary scheme. Existing legacy links continue to parse.
+
+## Credentials and application identity
+
+`credentials/backends/secure-storage.ts` uses a fixed OS keychain service `craft-agent.credentials`, account `master`, and an encrypted file header `CRAFT01\\0`. A raw string replacement can strand existing credentials: installations with only the keychain copy would generate a different master key after a service rename. Keep the legacy read service as a compatibility boundary, prefer a ROX primary service for new writes, and copy the same validated existing key to the ROX entry while preserving the legacy entry. Verify decryption before committing any change. Do not rewrite the encrypted file header without a dual-format decoder and authenticated migration.
+
+Electron `app.setName()` already defaults to Rox, so default `userData` uses the Rox product directory. Numbered development instances still have a legacy hardcoded userData override in `main/index.ts`; migrate that separately without dropping cookies, browser state or local storage. Changing the appId can affect macOS Keychain access ACLs, OS permission records and Windows NSIS uninstall/upgrade registration. The shared credential backend itself uses the explicit service above, rather than deriving it from appId. Preserve its access and verify master-key recovery before replacing app identifiers. No live keychain values were queried or printed during this audit.

@@ -1,7 +1,4 @@
-/**
- * Issue 33: copy ~/.craft-agent → ~/.rox before other config modules freeze
- * CONFIG_DIR. This file must stay the first import of the Electron main entry.
- */
-import { runBrandConfigMigration } from '@craft-agent/shared/identity'
+/** Select and safely import the canonical config before other modules freeze paths. */
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 
-runBrandConfigMigration()
+resolveConfigDir()

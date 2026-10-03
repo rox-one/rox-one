@@ -130,3 +130,12 @@ describe('handleDeepLink routing', () => {
     expect(sent[0]?.target).toEqual({ to: 'client', clientId: 'client-target' })
   })
 })
+
+describe('ROX protocol compatibility', () => {
+  it('parses ROX as primary and keeps existing legacy links readable', async () => {
+    const { parseDeepLink } = await import('../deep-link');
+    expect(parseDeepLink('rox://allSessions/session/example')).toEqual(parseDeepLink('craftagents://allSessions/session/example'));
+    expect(parseDeepLink('rox://allSessions/session/example')).not.toBeNull();
+    expect(parseDeepLink('unrelated://allSessions/session/example')).toBeNull();
+  });
+});
