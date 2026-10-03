@@ -10,13 +10,13 @@
     "dee3e15c0fff97ae11bb7d5b7a9373a220351ca2"
   ],
   "sourceContentHashes": {
-    ".github/workflows/ui-route-recovery.yml": "807e0e2c6e3ed1929fe284dae8db71725acf32c9e348fbdec42a43b5a6b9fab8",
+    ".github/workflows/ui-route-recovery.yml": "03024fedae3d138504b6f48307ab44a0044b8e3a58a093056a099e7c5b4f902d",
     "apps/electron/src/main/__tests__/deep-link-parse.test.ts": "2e63c8d9d11d5a8cc8ecb5bb62c3b59c783afd54e6a18f34f3a621165104354e",
     "apps/electron/src/main/__tests__/deep-link-routing.test.ts": "c11d4408f86a523a69d66429c6749abc3e37cd7cf25a0f6b2564c4d1a0754d88",
     "apps/electron/src/main/__tests__/rox-readiness-ui-001.native-preload.ts": "8ee9639c26727e58fa8ebe501574c0a1784df45ae6adfad31c12a254bc51f3da",
     "apps/electron/src/main/deep-link.ts": "0e70f480c456e92130f9f39c0032311ab3b7071f71eea61fd78c6b23c3fd0c40",
     "apps/electron/src/renderer/atoms/panel-stack.ts": "12fb6c1fd4458dcd33bbe272b87af1d403698c97b61b96ae866e1a1026b6adf7",
-    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "b8b84eeb39750ba0a252d39abd31188857c84527f9fb760e8367299d5550f65c",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "d8982a1ef07cbc3087d5dece9d162d6929942ba0e1603659870384c7c6664ca7",
     "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx": "77412f323402a792f684179b1c0797a2f8335e7d4ba873474be54e451dd00ae1",
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "9e8e4236f97d5e21653b8cd1292bd2921d92b9ebb50aed36a277c134d0383d09",
     "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "35bdbe03154e6af7646f33dabcb9455dd48d969223e76d15b12692add7345d94",
@@ -109,6 +109,16 @@
       "path": "77-third-review-regression-green.log",
       "originalCaptureSha256": "6b15532e09cce922ad3fc0f3059b6b786477b0646fae4ea48af25ebb341fd895",
       "capturedFrom": "ui001-live-77-third-review-regression.log"
+    },
+    {
+      "path": "78-Bun-electron-types.log",
+      "originalCaptureSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "capturedFrom": "ui001-live-78-Bun-electron-types.log"
+    },
+    {
+      "path": "79-b697-integrated-regression-green.log",
+      "originalCaptureSha256": "d81e14e02042a2de4294951d44a7ace3ad581e3a244740924bd19b835114fae8",
+      "capturedFrom": "ui001-live-79-b697-integrated-regression.log"
     }
   ],
   "qualifiedBun": "1.3.14",
@@ -119,12 +129,51 @@
     "stoppedOwnedPid": 26601,
     "verifiedCommand": "node /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/.bin/tsc --noEmit",
     "reason": "17-minute Node compiler on contended host; retry exact frozen TypeScript compiler under qualified task-local Bun 1.3.14",
-    "replacement": "bun node_modules/typescript/bin/tsc --noEmit -p apps/electron/tsconfig.json"
+    "replacement": "bun node_modules/typescript/bin/tsc --noEmit -p apps/electron/tsconfig.json",
+    "exitCode": 0,
+    "qualificationBoundary": "Run78 started on468eb81ed and completed after865d526c integration; fresh stable-source82 is the final graph gate."
   },
   "testResults": {
     "Chromium": "16 pass / 0 fail / 261 assertions; actual NavigationProvider/URL/history/Jotai/menu/recovery; declared leaves are fixtures",
     "exactGitHubAppShellCallbacks": "9 pass / 0 fail / 72 assertions; actual source 01723bb2; actual callbacks, actual focus atoms; recording navigation sink",
     "regression": "563 pass / 0 fail / 83 explicit opt-in browser skips / 2363 assertions / 102 files",
-    "BunTypeCompiler": "running; receipt will be added after completion"
-  }
+    "BunTypeCompiler": "78 exit0 with transition boundary; fresh final82 running",
+    "integratedRegression": "571 pass / 0 fail / 83 opt-in skips / 2395 assertions / 104 files",
+    "FinalPackageValidation": "80 running; prior full372/19 typegraph receipt retained",
+    "FinalRendererBuild": "81 running; prior build65 exit0 retained"
+  },
+  "reviewCompletion": {
+    "publishedSource": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
+    "rootComment": 4173760729,
+    "submittedReply": 4173912557,
+    "submittedReview": 5401649228,
+    "reviewState": "COMMENTED",
+    "isResolved": true,
+    "bodySha256": "a8c03ce2de5f772c804ecffb2764cc705b8ffb38dee7f2a8c87f07caba410ae8"
+  },
+  "currencyRepair": {
+    "plan": {
+      "head": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
+      "base": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
+      "conflictFingerprint": "c8d211d6e171a76f2dc0aa736251a6b89795caea1db3fd719b97deb10df5f220",
+      "preview": "6a389b75d005103c7bf98e66357eba68bbaeba9b\n100644 b00cdbdccfe3972c1ea710077761de0f028166b7 2\tapps/electron/src/renderer/components/app-shell/service-navigation.ts\n100644 4c1d0e4ecb764c3921509b5eee34a40a8f510b80 3\tapps/electron/src/renderer/components/app-shell/service-navigation.ts\n\nAuto-merging apps/electron/src/renderer/components/app-shell/AppShell.tsx\nAuto-merging apps/electron/src/renderer/components/app-shell/service-navigation.ts\nCONFLICT (add/add): Merge conflict in apps/electron/src/renderer/components/app-shell/service-navigation.ts\nAuto-merging docs/plan.md\nAuto-merging docs/spec.md\n",
+      "mechanicalIntent": "Preserve incoming shared desktop/compact API and actual focus atom verbatim; replace legacy parser with strict resolver and guard unknown destination. Exact incoming source differs only in these validated edits. No other manual resolution required.",
+      "directPushEvidence": "Normal push dee3 -> 468eb81ed succeeded and PR REST head readback equals468eb81ed",
+      "noPlausibleAlternative": "Both main and reviewed patch use the shared helper API; permissive parser is the actual reproduced defect, tests68/72/76/77 prove strict replacement."
+    },
+    "preflight": {
+      "head": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
+      "base": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
+      "localHead": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
+      "clean": true,
+      "directPushAuthority": "Normal non-force push 468eb81ed verified; same-repository branch owned by this task",
+      "exactMechanicalPreview": "ui001-currency11-plan.json"
+    },
+    "mergeCommit": "865d526c2a7d879d3bc400a1abc5e6f31ec77921",
+    "conflictSourcePreserved": "Incoming shared API/focus atom preserved except the validated strict-parser/guard edits",
+    "confirmation": "Pending normal push and exact host/base ancestry readback"
+  },
+  "integratedInputHead": "865d526c2a7d879d3bc400a1abc5e6f31ec77921",
+  "integratedBase": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
+  "workflowTypecheck": "Ubuntu/macOS matrix verifies the complete Electron TypeScript graph before browser/native callback fixtures"
 }

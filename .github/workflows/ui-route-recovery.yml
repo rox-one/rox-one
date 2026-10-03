@@ -52,6 +52,8 @@ jobs:
           apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts
           apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts
           apps/electron/src/renderer/platform/__tests__/layout-snapshot.test.ts
+      - name: Typecheck Electron renderer and shared contracts
+        run: bun run typecheck:electron
       - name: Install isolated Chromium
         run: bunx playwright install --with-deps chromium
       - name: Main-process protocol callbacks with synthetic windows and transport
