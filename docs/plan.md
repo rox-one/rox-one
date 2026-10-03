@@ -504,3 +504,8 @@ Verification covers unchanged real fixture bytes, interrupted WAL refusal, unrea
 ## PR1315 portable runtime historical source and evidence
 
 The [original plan.md](integration-history/pr1315/plan.md) and its September task/evidence snapshots are retained under integration-history/pr1315. Their older source and bounded execution claims do not replace current native authority, request fences or later September evidence. Portable recovery deltas are reconciled against the current implementation.
+
+
+## PR1292 baseline recovery evidence
+
+The [original plan](integration-history/pr1292/plan.md) remains a source-bound historical record. Its descriptor/explicit-clock fixes are preserved in current implementation.

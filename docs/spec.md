@@ -383,3 +383,8 @@ Acceptance: real filesystem fixtures preserve inspected bytes and directory entr
 ## PR1315 portable runtime historical source and evidence
 
 The [original spec.md](integration-history/pr1315/spec.md) and its September task/evidence snapshots are retained under integration-history/pr1315. Their older source and bounded execution claims do not replace current native authority, request fences or later September evidence. Portable recovery deltas are reconciled against the current implementation.
+
+
+## PR1292 baseline recovery evidence
+
+The [original spec](integration-history/pr1292/spec.md) remains a source-bound historical record. Its descriptor/explicit-clock fixes are preserved in current implementation.
