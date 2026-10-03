@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@rox/ui'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ServerConfig, ServerStatus } from '@rox/shared/config/server-config'
+import { LicenseEvidencePanel } from './LicenseEvidencePanel'
 import { nativeSidecarHealthView, type NativeSidecarHealthView } from './native-sidecar-health'
 import { settingsPageActionAllowed, settingsRuntimeSource } from './settings-rox2-surface'
 
@@ -207,6 +208,7 @@ export default function ServerSettingsPage() {
         <div className="flex-1 min-h-0 mask-fade-y">
           <ScrollArea className="h-full">
             <div className="px-5 py-7 max-w-3xl mx-auto space-y-5">
+              <LicenseEvidencePanel />
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Spinner />
@@ -238,6 +240,8 @@ export default function ServerSettingsPage() {
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
         <div className="px-5 py-7 max-w-3xl mx-auto space-y-5">
+
+          <LicenseEvidencePanel />
 
           {/* Enable toggle + restart banner */}
           <SettingsSection title={t("settings.server.remoteAccess")}>

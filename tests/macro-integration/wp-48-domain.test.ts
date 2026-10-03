@@ -31,8 +31,10 @@ export async function fixture(delayChecker = false) {
   let service:Awaited<ReturnType<typeof createWorkspaceServer>>|undefined;const clients:WsRpcClient[]=[]
   let listenerPort=0
   const current=()=>required(service)
-  async function stop(){for(const client of clients.splice(0))client.destroy();if(service){service.server.close();service=undefined}}
-  cleanups.push(async()=>{await stop();try{await database.unsafe(`DROP SCHEMA "${schema}" CASCADE`)}finally{await database.close();rmSync(root,{recursive:true,force:true})}})
+  async function stop(){for(const client of clients.splice(0))client.destroy();if(service){await service.server.close();service=undefined}}
+  let disposed=false
+  async function dispose(){if(disposed)return;disposed=true;const index=cleanups.indexOf(dispose);if(index>=0)cleanups.splice(index,1);await stop();try{await database.unsafe(`DROP SCHEMA "${schema}" CASCADE`)}finally{await database.close();rmSync(root,{recursive:true,force:true})}}
+  cleanups.push(dispose)
   await database.unsafe(`CREATE SCHEMA "${schema}"`)
   async function start(registry?:TrustedLicenseRegistry){service=await createWorkspaceServer({database,schema,migrations,host:'127.0.0.1',port:listenerPort,serverId:'wp48-'+schema,licenseRegistry:registry,authentication:{mode:'local-bootstrap',configuration:{mode:'local-bootstrap',issuer,audience:'wp48-test',stateDirectory:authDirectory,checkoutDirectory:process.cwd(),tokenLifetimeSeconds:300}}});await service.server.listen();listenerPort=service.server.port}
   await start()
@@ -70,7 +72,7 @@ export async function fixture(delayChecker = false) {
   const command=async()=>{const row=await get();return {commandId:randomUUID(),schemaVersion:2,workspaceId,idempotencyKey:randomUUID(),expectedRevision:row.revision,payload:{artifactDigest:row.artifactDigest,sbomDigest:row.sbomDigest,decisionManifest:row.decisionManifest}}}
   const counts=async()=>{const [row]=await database.unsafe<{receipts:number;events:number;revision:string}[]>(`SELECT (SELECT count(*)::integer FROM "${schema}".license_audit_receipt) AS receipts,(SELECT count(*)::integer FROM "${schema}".project_event WHERE type='audit.license_reviewed') AS events,(SELECT revision::text FROM "${schema}".license_component WHERE resource_id=$1) AS revision`,[resourceId]);return required(row)}
   const restart=async()=>{await stop();await database.close();database=new SQL(url,{max:12});await start(await TrustedLicenseRegistry.load(configPath))}
-  return {root,get database(){return database},restart,schema,workspaceId,resourceId,entityId,registry,configPath,registryConfig,current,start,stop,http,ws,prefix,owner,member,outsider,ownerToken,memberToken,outsiderToken,password,get,command,counts,stateDirectory}
+  return {root,get database(){return database},restart,schema,workspaceId,resourceId,entityId,registry,configPath,registryConfig,current,start,stop,dispose,http,ws,prefix,owner,member,outsider,ownerToken,memberToken,outsiderToken,password,get,command,counts,stateDirectory}
 }
 test('actual checker persists review_required through canonical HTTP/WS, receipt and atomic reference event',async()=>{
   const f=await fixture();const client=await f.ws(f.ownerToken);const initial=await f.get();expect(initial.revision).toBe('0');expect(initial.evidence).toBeNull();expect(initial.canAudit).toBe(true)

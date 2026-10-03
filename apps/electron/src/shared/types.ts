@@ -2160,6 +2160,14 @@ export interface ElectronAPI {
   connectProjectAuthority(workspaceId: string, input: import('./project-authority').ProjectAuthorityLoginInput): Promise<import('./project-authority').ProjectAuthorityMutationResult>
   disconnectProjectAuthority(workspaceId: string): Promise<import('./project-authority').ProjectAuthorityMutationResult>
   onProjectAuthorityChanged(callback: () => void): () => void
+  getLicenseComponents(workspaceId: string, body: unknown): Promise<import('@rox/shared/workspace-domain/licenses/contracts').LicensePage>
+  getLicenseComponent(workspaceId: string, body: unknown): Promise<import('@rox/shared/workspace-domain/licenses/contracts').LicenseComponent>
+  auditReleaseLicense(workspaceId: string, body: unknown): Promise<import('@rox/shared/workspace-domain/licenses/contracts').LicenseAuditResult>
+  getLicenseEvents(workspaceId: string, body: unknown): Promise<import('@rox/shared/workspace-domain/licenses/contracts').LicenseEventPage>
+  getLicenseAuditIntent(workspaceId: string): Promise<import('./license-audit-intent').LicenseAuditIntentView>
+  queueLicenseAudit(workspaceId: string, body: unknown): Promise<import('./license-audit-intent').LicenseAuditIntentView>
+  retryLicenseAudit(workspaceId: string): Promise<import('./license-audit-intent').LicenseAuditAttempt>
+  cancelLicenseAudit(workspaceId: string): Promise<import('./license-audit-intent').LicenseAuditIntentView>
   getSharedProjects(workspaceId: string, body: unknown): Promise<import('@rox/shared/workspace-domain/identity/contracts').ProjectPage>
   getSharedProject(workspaceId: string, body: unknown): Promise<import('@rox/shared/workspace-domain/identity/contracts').SharedProject>
   createSharedProject(workspaceId: string, body: unknown): Promise<import('@rox/shared/workspace-domain/identity/contracts').SharedProjectResult>

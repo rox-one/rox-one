@@ -1,0 +1,62 @@
+$ source ../../.env 2>/dev/null || true; esbuild src/main/index.ts --bundle --platform=node --format=cjs --outfile=dist/main.cjs --external:electron --external:@anthropic-ai/claude-agent-sdk --external:onnxruntime-node --external:@xenova/transformers --external:sharp --external:bun:* --alias:node-fetch=./src/main/shims/node-fetch.cjs --alias:abort-controller=./src/main/shims/abort-controller.cjs --define:process.env.GOOGLE_OAUTH_CLIENT_ID=\"${GOOGLE_OAUTH_CLIENT_ID:-}\" --define:process.env.GOOGLE_OAUTH_CLIENT_SECRET=\"${GOOGLE_OAUTH_CLIENT_SECRET:-}\" --define:process.env.SLACK_OAUTH_CLIENT_ID=\"${SLACK_OAUTH_CLIENT_ID:-}\" --define:process.env.SLACK_OAUTH_CLIENT_SECRET=\"${SLACK_OAUTH_CLIENT_SECRET:-}\" --define:process.env.MICROSOFT_OAUTH_CLIENT_ID=\"${MICROSOFT_OAUTH_CLIENT_ID:-}\"
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    src/shared/route-parser.ts:1352:9:
+      1352 │     case 'pages':
+           ╵          ~~~~~~~
+
+  The earlier case clause is here:
+
+    src/shared/route-parser.ts:1326:9:
+      1326 │     case 'pages':
+           ╵          ~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    src/shared/route-parser.ts:1354:9:
+      1354 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    src/shared/route-parser.ts:1328:9:
+      1328 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+▲ [WARNING] "import.meta" is not available with the "cjs" output format and will be empty [empty-import-meta]
+
+    src/main/ssh-tunnel/server-artifact.ts:40:30:
+      40 │       : dirname(fileURLToPath(import.meta.url))
+         ╵                               ~~~~~~~~~~~
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+▲ [WARNING] "import.meta" is not available with the "cjs" output format and will be empty [empty-import-meta]
+
+    ../../packages/cloud-runner/src/local-provider.ts:65:13:
+      65 │   if (typeof import.meta.url === 'string' && import.meta.url) {
+         ╵              ~~~~~~~~~~~
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+▲ [WARNING] "import.meta" is not available with the "cjs" output format and will be empty [empty-import-meta]
+
+    ../../packages/cloud-runner/src/local-provider.ts:65:45:
+      65 │   if (typeof import.meta.url === 'string' && import.meta.url) {
+         ╵                                              ~~~~~~~~~~~
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+▲ [WARNING] "import.meta" is not available with the "cjs" output format and will be empty [empty-import-meta]
+
+    ../../packages/cloud-runner/src/local-provider.ts:66:47:
+      66 │ ...oin(dirname(fileURLToPath(import.meta.url)), 'runners', 'stub-r...
+         ╵                              ~~~~~~~~~~~
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+6 warnings
+
+  dist/main.cjs  51.9mb ⚠️
+
+⚡ Done in 10637ms

@@ -1,0 +1,32 @@
+{
+  "recordedAt": "2026-09-30T16:55:26.304222+00:00",
+  "state": "USER_COORDINATION_CONSUMED_ACK",
+  "rootBranch": "feat/rox-compound-workspace-20260930",
+  "manifest": "/tmp/rox-live-ledger-reconciliation-20260930/ready-root-review-manifest.json",
+  "manifestSha256": "91a5de501df39d41ebbc4894e94522a68ddc201f0b920752c6ba4b7185f12e65",
+  "liveLedgerPreserved": {
+    "packages": 143,
+    "notStarted": 130,
+    "rootIntegration": 8,
+    "awaitingRootReview": 5,
+    "fullDoD": 0
+  },
+  "historicalSuiteWorkers": "PROCESS_EXITED_NO_ACTIVE_WRITER",
+  "independentExternalSemanticOwners": {
+    "RS-ADM": "repo_audit",
+    "RS-AUT+RS-MTG": "terminal_history",
+    "RS-DRV+RS-MSG": "cloud_recovery"
+  },
+  "noDuplicateSuiteReviewDispatch": true,
+  "reportedRecoveryRefs": {
+    "PR1319": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed",
+    "synthetic": "95b18 parents7ae+bdd",
+    "PR1317": "bbb",
+    "PR1318": "8c1",
+    "audit1320": "d31d91338"
+  },
+  "reportedCloudState": "R15 single external integrator; provider cloudconnected; fullElectron/optimizedUI/sourcepublication pending",
+  "reportedCountsAreNotLocalAcceptance": true,
+  "legacyCriteriaPreserved": "143compound/109September/297remaining; Voice/Mini/Channels/Team/Settings oldcriteria notobsolete",
+  "nextAction": "own WP01 actualnative87696; own WP48native32+packaging root gates; external5reviews findings await custody-preserving integration"
+}

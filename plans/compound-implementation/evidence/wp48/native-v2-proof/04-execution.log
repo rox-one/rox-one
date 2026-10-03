@@ -1,0 +1,30 @@
+bun test v1.4.2 (43848b5a7)
+
+event-proof-controls.test.ts:
+(pass) matching command event beyond first25 is located by the exact opaque authorized cursor [6.57ms]
+(pass) matching event ACTOR substitution denies proof before success [2.01ms]
+(pass) matching event CAUSE_AND_CORRELATION substitution denies proof before success [1.19ms]
+(pass) matching event CORRELATION substitution denies proof before success [2.25ms]
+(pass) matching event REVISION substitution denies proof before success [0.92ms]
+(pass) matching event ORIGINAL_POLICY_EPOCH substitution denies proof before success [1.90ms]
+(pass) matching event TIME substitution denies proof before success [1.14ms]
+(pass) matching event ARTIFACT substitution denies proof before success [0.77ms]
+(pass) matching event SBOM substitution denies proof before success [4.25ms]
+(pass) matching event AUDIT_DIGEST substitution denies proof before success [1.77ms]
+(pass) matching event ENTITY substitution denies proof before success [1.09ms]
+(pass) dropped matching event never yields proof from an empty page [0.79ms]
+(pass) same event ID repeated across cursor pages denies rather than duplicates activity [1.22ms]
+(pass) operation invalidation while actual asynchronous page port returns discards proof [1.17ms]
+(pass) already invalid operation never invokes the page port [0.75ms]
+
+validator-controls.test.ts:
+(pass) positive typed controls use canonical request hash and exact original readback; unknown mutation field denies [1.45ms]
+(pass) current policy may advance without rewriting historical receipt identity [0.68ms]
+(pass) valid-shaped wrong request hash must not become native receipt_verified [0.46ms]
+(pass) license event causation and correlation must agree before native use [0.42ms]
+(pass) duplicate event IDs must not create duplicate native activity effects [0.37ms]
+
+ 20 pass
+ 0 fail
+ 27 expect() calls
+Ran 20 tests across 2 files. [73.00ms]

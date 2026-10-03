@@ -1,0 +1,320 @@
+{
+  "state": "SEALED_EXACT_NATIVE_V2_DELTA",
+  "dependency": {
+    "path": "/tmp/rox-wp48-domain/native-v1/manifest.json",
+    "sha256": "5a2d6b8f8328f2f49f42100800498a5407bd2cc1bfde0246d89cb7be70cc466c"
+  },
+  "instruction": "Apply only v1 product 30 paths; root domain fixture is already adapted. Then apply these 10 deltas, whose domain fixture preimage is current root SHA 3e3e65c.",
+  "patches": [
+    {
+      "path": "apps/electron/src/main/project-authority.ts",
+      "baseSource": "sealed native-v1 result",
+      "baseSha256": "22db06ac31506dde3608062cb19993db1928ea5fad37eb2ae4eaa1a49169976f",
+      "resultSha256": "f16905a4c87aa9fc7b76b8bc8780060163720ef3bc7c0dfdcb91012a814b55ef",
+      "patchSha256": "c60c3ec72f1e0cc98877a89392b977304c88868a99c5b4aebe09f2547f1b9366",
+      "patch": "patches/apps__electron__src__main__project-authority.ts.patch"
+    },
+    {
+      "path": "apps/electron/src/main/project-create-intent.ts",
+      "baseSource": "sealed native-v1 result",
+      "baseSha256": "f95a6fb8509f73dc0c445207a8c39b422816ee28c10991cd8d2bb9ca03d4bb47",
+      "resultSha256": "fad8d3d3b62fcdf34bdbb0c17a26cdf867440b95d7891085d3ee662eca040e79",
+      "patchSha256": "c77bdc443194aa258879c6e7b2262dae5ff9e5711b4c52e16386ccf809c1b9d9",
+      "patch": "patches/apps__electron__src__main__project-create-intent.ts.patch"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+      "baseSource": "sealed native-v1 result",
+      "baseSha256": "2977e1f25a1eb16a53ab9e114703d46a26f77fbe4099bd302bd395a4d81a30f1",
+      "resultSha256": "2afe003d52f4cbbfc651ca018470a7f3cdd30669ff94ffeac44aefa941e1d2e1",
+      "patchSha256": "dca3675e34fb6152d6e2b60f9891eede797990b8f1b3687a4b5bac9f983aab18",
+      "patch": "patches/apps__electron__src__renderer__pages__settings__LicenseEvidencePanel.tsx.patch"
+    },
+    {
+      "path": "apps/electron/src/shared/license-audit-intent.ts",
+      "baseSource": "sealed native-v1 result",
+      "baseSha256": "933b46a20146ab4abc1370301f0ba00ae2e3d290802c1090adbe582740e76e5b",
+      "resultSha256": "4812236bbb94e28a42c4fd9efbcdf8cc95efbc0264c31c7cd676d50882248180",
+      "patchSha256": "d49c23bea4d1d3968f74378e871bf380335948861bf424f127956e7f28b91728",
+      "patch": "patches/apps__electron__src__shared__license-audit-intent.ts.patch"
+    },
+    {
+      "path": "apps/electron/src/shared/license-evidence.ts",
+      "baseSource": "sealed native-v1 result",
+      "baseSha256": "944e40f1ba2b8d30e4ce5a35778d7e0ba337c2b5bcff6214ddee24919323d2cc",
+      "resultSha256": "ddaf9d1257bc61eb66d7065948ef703196852279b7d8ac20bc7fcbf1a8e1c81c",
+      "patchSha256": "2a3a38808615eb51b31672b37fdcc94edb8a9ade66e0719c82c0665f0053b02a",
+      "patch": "patches/apps__electron__src__shared__license-evidence.ts.patch"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-domain.test.ts",
+      "baseSource": "CURRENT root fixture including root dependency repair",
+      "baseSha256": "3e3e65c75dffe74af561949ff69281c86b702274e171b2a0156c826d6f779279",
+      "resultSha256": "871c7b6af4b1f92ebc9289a79b567823f3c627300345cc3ef60cc14f8f2de1b0",
+      "patchSha256": "28b4cf89b5b32484e02ba8600120684d93570481601365ad783e1217aff105a5",
+      "patch": "patches/tests__macro-integration__wp-48-domain.test.ts.patch"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native-child.ts",
+      "baseSource": "sealed native-v1 result",
+      "baseSha256": "eb63eb0014e6d92da7cbcfb9eda94fed739030e502794caf4b338d26e548420a",
+      "resultSha256": "bea5cac85c805961416226f3ba723010ef8c5a4d9f59d044891cb65e3cd7240b",
+      "patchSha256": "4cc828673823d9773619c1466d979e89feb3da729d315bf0f7f312b6d0193080",
+      "patch": "patches/tests__macro-integration__wp-48-native-child.ts.patch"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native-policy.test.ts",
+      "baseSource": "new absent file",
+      "baseSha256": null,
+      "resultSha256": "0f6ea5b7527929714fb4c94fb2f336c5ff89ebb3ad3376bb471745e3dd46c3ba",
+      "patchSha256": "7242916a7c68391935126e9060d1c7656edef6e53871574f18451150a58bbb78",
+      "patch": "patches/tests__macro-integration__wp-48-native-policy.test.ts.patch"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native-service.test.ts",
+      "baseSource": "sealed native-v1 result",
+      "baseSha256": "573463535bb592b411a99e5563b413aeb4d27dcb88b5eeb78ce4ee7e87446fc4",
+      "resultSha256": "4e7d28a454f85eae848b9d574fb4d36ff045d51f8de64aea76de765d4d682155",
+      "patchSha256": "2cf0674cd97587be937370c9e958a1e7388126dcc8dccf83bade5fb11071c535",
+      "patch": "patches/tests__macro-integration__wp-48-native-service.test.ts.patch"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native.test.ts",
+      "baseSource": "sealed native-v1 result",
+      "baseSha256": "3e40d44e38447a4847b4daff33c75a4210daaf530c9309e9e3aa52993a71ec7c",
+      "resultSha256": "6226243da172d7de3483c3e5d1ebdfd120c846515e5b1ac64bbd23eb0997ebe1",
+      "patchSha256": "e3dd161c30cadb040140dcc3ddd4fe85b4752bf73bebbfdc31448e78f7bcafce",
+      "patch": "patches/tests__macro-integration__wp-48-native.test.ts.patch"
+    }
+  ],
+  "sourceCheckoutWritten": false,
+  "v1HistoryPreserved": true,
+  "sealedAt": "2026-09-30T16:20:30.496Z",
+  "finalPathCountAfterComposition": 32,
+  "superseded": "The native-v1 domain fixture patch must not be applied. This delta retains current root dependency-resolution repair and adds explicit owned fixture disposal.",
+  "verification": {
+    "tests": {
+      "pass": 34,
+      "fail": 0,
+      "assertions": 537,
+      "fileCount": 4,
+      "filtered": false,
+      "actualPgHttpWsEncryptedCustodyAndSubprocess": true
+    },
+    "strictTestTypecheck": {
+      "exitCode": 0,
+      "ambientStubsAdded": false
+    },
+    "electronTypecheck": {
+      "baseline": 128,
+      "proposed": 128,
+      "newDiagnostics": 0,
+      "limitation": "Outside physical copy includes existing alias-resolution baseline. Root normal Electron gate remains independent."
+    },
+    "ast": {
+      "newAny": 0,
+      "newNonNull": 0,
+      "suppressions": 0,
+      "disabledTests": 0
+    },
+    "sourceNegativeControls": 5,
+    "cleanup": {
+      "observedAt": "2026-09-30T16:19:27.541Z",
+      "actualOsTmpdir": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T",
+      "remainingObservedMatchingSchemas": 0,
+      "remainingMatchingPrivateDirectories": 0,
+      "ownershipClaimForUnknownState": false,
+      "readOnly": true
+    }
+  },
+  "environmentAdapter": {
+    "description": "Physical outside sources preserve candidate bytes except exact package-import normalization. Bun.resolveSync respects import-only package exports; installed dependencies accessed read-only. Root production imports unchanged. Owned empty run/node_modules allows current root fixture realpath; its deliberate temporary link never targets checkout.",
+    "piAiCompat": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/node_modules/@earendil-works/pi-ai/dist/compat.js",
+      "sha256": "cde63dcc0cd419767f6ac8b7c0d8fcb8446902cb1e1800c61aea343839c48999"
+    }
+  },
+  "evidence": [
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-final-lifecycle-tests.log",
+      "sha256": "d45b3fd9d7bef3da6cf3971426537082c727df2f8fe22c4a959e8d5b5bf36979"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-final-cleanup.json",
+      "sha256": "ac8eb59dcefdf78b6ba201c912859b75e64a6a6239005090a6653d59a695cb36"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-final-cleanup.log",
+      "sha256": "3bfc47955c61e4dae79cbb10df573e45aa7cd95a3235f857cbb88f04d31e7fea"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-final-type-source-proof.json",
+      "sha256": "c464958ba79a8dfbd283858a94a1538ad450818f26e8b0a2802aa2631213075c"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-test-only-lifecycle-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-test-only-tsconfig.json",
+      "sha256": "42ae7fd6fd5553ca887ff9ed945a1e3dd7a37502be3b24fe315a46b4743f6b19"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-electron-lifecycle-final.log",
+      "sha256": "1de495ff7584ab07587b9d064ba954594dbc94ee6408f78acb6ea81be356e948"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-baseline-ts2.log",
+      "sha256": "fc575a90090bda19ce474a5088922452b0600817ddc392674d8a8cfcb620cb4d"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-syntax-proof.json",
+      "sha256": "838f27735208c4903809fb2db3569171aef86c39e2f6d5feaf230bf37a2d4732"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-negative-controls.json",
+      "sha256": "bed1b0c811de1334b1e9b0e3d600dba5b2661418054cb48e773320cf3e769bc0"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-controls-final.log",
+      "sha256": "a2b215563a573d9ec8b67e936d64447b5c1907bc2174b1ec9478d9efd225782b"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-owned-disposal.json",
+      "sha256": "0892a6ab39236bbe01e4bc57738386a6c4af0846041f676b97865d5fa312a4c1"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-retained-schema-bindings.json",
+      "sha256": "9171be361422adf8c11d0025bb653b4697e152edbc41b5c8dd473c884d7a5bc1"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-disposal-proof.log",
+      "sha256": "aa37b90b3c95bf66623d5127342f4073ab5a78996ef95dcb58105bf1dca08982"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/setup-native-v2.cjs",
+      "sha256": "6054476f76464a99e4210d67ffc086bdc5eb9c95db8195636d3e569b7fb10e8a"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/setup-native-run.cjs",
+      "sha256": "4a6411ac796d033683d1f92dd55ecbc2f2cd3e222dda289bd73e7b0acae0a039"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/setup-run.cjs",
+      "sha256": "1ccd3fef385e13d973b82debaec3ef65c7d19592f103654e61f183ecabc3bbe5"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/read-native-v2-final-cleanup.ts",
+      "sha256": "d1e358d6b0b1a6c7255c605f298ece3a2a17e99d5d12253694b840f25ed5d57c"
+    }
+  ],
+  "preservedFailures": [
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-disposed-full-proof.log",
+      "sha256": "77785e26b5461bfab9cd89aa3be1c6be0c6101139da6add89a1e1b0011372bc3"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-lifecycle-proof.log",
+      "sha256": "2a26601797504f1853121544115d991e49b998e91e96822195198e9abd7f46f1"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-child-import-diagnostic.log",
+      "sha256": "489def8f49553340f814982f0a15fc71beba8577ec1711238c2e1069c0d8e54b"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-controls.log",
+      "sha256": "dcfa7e29ffb69cccebb6fed6d0c6ac95d468d8d7f9fe7887250fcb841744fe0f"
+    },
+    {
+      "path": "/tmp/rox-wp48-domain/native-v2-cleanup.json",
+      "sha256": "155155833639ab7ee5799d2a2e3cc062db943179df52e84955e51248349e187a"
+    }
+  ],
+  "sourceBindings": [
+    {
+      "path": "apps/electron/src/main/project-authority.ts",
+      "sourceSha256": "f16905a4c87aa9fc7b76b8bc8780060163720ef3bc7c0dfdcb91012a814b55ef",
+      "runtimeSha256": "20dc0aee83e70b688f0df678af2af6d8dc831f19bc4405160a671001bc86846c",
+      "typeSourceExact": true,
+      "runtimeOnlyImportNormalization": true
+    },
+    {
+      "path": "apps/electron/src/main/project-create-intent.ts",
+      "sourceSha256": "fad8d3d3b62fcdf34bdbb0c17a26cdf867440b95d7891085d3ee662eca040e79",
+      "runtimeSha256": "dc724a9ed2186a3deba313106d7e45f2ed6c7d45c01ca65354b2f22abce4ce76",
+      "typeSourceExact": true,
+      "runtimeOnlyImportNormalization": true
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+      "sourceSha256": "2afe003d52f4cbbfc651ca018470a7f3cdd30669ff94ffeac44aefa941e1d2e1",
+      "runtimeSha256": "56600c0b11bb86e7003d1b2fd0d7f39a36bee5d03432a09fe7fe1a0a2bd0c0cb",
+      "typeSourceExact": true,
+      "runtimeOnlyImportNormalization": true
+    },
+    {
+      "path": "apps/electron/src/shared/license-audit-intent.ts",
+      "sourceSha256": "4812236bbb94e28a42c4fd9efbcdf8cc95efbc0264c31c7cd676d50882248180",
+      "runtimeSha256": "4812236bbb94e28a42c4fd9efbcdf8cc95efbc0264c31c7cd676d50882248180",
+      "typeSourceExact": true,
+      "runtimeOnlyImportNormalization": true
+    },
+    {
+      "path": "apps/electron/src/shared/license-evidence.ts",
+      "sourceSha256": "ddaf9d1257bc61eb66d7065948ef703196852279b7d8ac20bc7fcbf1a8e1c81c",
+      "runtimeSha256": "cfa172b6a11c024e6a7cefd93b99c3b52c95439ce1d847b468d8829c37b18215",
+      "typeSourceExact": true,
+      "runtimeOnlyImportNormalization": true
+    },
+    {
+      "path": "tests/macro-integration/wp-48-domain.test.ts",
+      "sourceSha256": "871c7b6af4b1f92ebc9289a79b567823f3c627300345cc3ef60cc14f8f2de1b0",
+      "runtimeSha256": "fb3bf1be6b662bedbb5b0b18041ec07be8373d2ce5f5f4ae8a0e47a5ea193fee",
+      "typeSourceExact": true,
+      "runtimeOnlyImportNormalization": true
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native-child.ts",
+      "sourceSha256": "bea5cac85c805961416226f3ba723010ef8c5a4d9f59d044891cb65e3cd7240b",
+      "runtimeSha256": "bea5cac85c805961416226f3ba723010ef8c5a4d9f59d044891cb65e3cd7240b",
+      "typeSourceExact": true,
+      "runtimeOnlyImportNormalization": true
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native-policy.test.ts",
+      "sourceSha256": "0f6ea5b7527929714fb4c94fb2f336c5ff89ebb3ad3376bb471745e3dd46c3ba",
+      "runtimeSha256": "0f6ea5b7527929714fb4c94fb2f336c5ff89ebb3ad3376bb471745e3dd46c3ba",
+      "typeSourceExact": true,
+      "runtimeOnlyImportNormalization": true
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native-service.test.ts",
+      "sourceSha256": "4e7d28a454f85eae848b9d574fb4d36ff045d51f8de64aea76de765d4d682155",
+      "runtimeSha256": "4e7d28a454f85eae848b9d574fb4d36ff045d51f8de64aea76de765d4d682155",
+      "typeSourceExact": true,
+      "runtimeOnlyImportNormalization": true
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native.test.ts",
+      "sourceSha256": "6226243da172d7de3483c3e5d1ebdfd120c846515e5b1ac64bbd23eb0997ebe1",
+      "runtimeSha256": "6226243da172d7de3483c3e5d1ebdfd120c846515e5b1ac64bbd23eb0997ebe1",
+      "typeSourceExact": true,
+      "runtimeOnlyImportNormalization": true
+    }
+  ],
+  "cleanupHistory": "Six exact worker-owned policy fixtures were independently bound before disposal. Bun cached imported fixture afterEach did not own later file; explicit idempotent dispose/finally repairs lifecycle. Prior /tmp-only directory observation was incomplete on macOS; final proof reads actual os.tmpdir and namespace catalog. Unknown schema ownership not asserted or dropped.",
+  "helper": {
+    "name": "requireLicenseAuditEventReplay",
+    "signature": "(result: LicenseAuditResult, actorPrincipalId: string, readPage: (cursor?: string) => Promise<unknown>, isCurrent: () => boolean): Promise<LicenseEventPage[\"events\"][number]>",
+    "bound": "At most 100 pages, 25 events per page; missing canonical event retains encrypted intent as uncertain."
+  },
+  "limits": [
+    "Root integration/build/normal dependency context requires its own gates.",
+    "Actual Electron pixels, keyboard, privacy and two-account native acceptance remain root-owned.",
+    "Genuine qualified review and complete accepted release attribution remain review_required where absent; no legal approval asserted.",
+    "Future generic WP03 grants/WP04 durable DLQ are not replaced by a parallel authority or fake DLQ."
+  ],
+  "checkoutWritten": false,
+  "uiLaunched": false,
+  "gitWritten": false
+}

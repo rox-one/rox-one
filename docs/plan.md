@@ -553,3 +553,28 @@ The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 i
 Workers use isolated new branches. The lead merges accepted PRs sequentially and refreshes main before each integration. No original branch is deleted or rewritten; the original release checkout contains an unrelated in-progress merge and is preserved. Review/code/CI failures are repaired within scope. External Vercel account blocking is reported separately from source validation.
 
 Runtime follow-up gate: marker contention, replacement generation, symlink refusal, live stale owner and private permissions are exercised by the actual imported vendor helper. Update every portable provenance SHA and keep remote security closure explicitly unverified until the new scan is read back.
+
+
+## Compound native license recovery — 2026-10-03
+
+| Task | Owner | Dependency | Verification / delivery |
+|---|---|---|---|
+| Classify all nine assigned recent branches | recent_features | Frozen origin/main and full remote inventory | Patch equivalence, merged PR history and current source; eight already integrated |
+| Recover the absent WP48 native slice | recent_features | Original d141e962 and canonical backend already in main | Isolated codex/recover-compound-native-license-20261003; clean cherry-pick, original proof/history preserved |
+| Exercise native intent and affected contracts | recent_features | Own frozen dependencies and Bun1.3.14 | Strict DTO/negative cases, real PostgreSQL HTTP/WS, encrypted SIGKILL/restart/replay, Project neighbor, locale/channel parity, consumed package types |
+| Review and deliver the separate recovery PR | recent_features / root | Focused checks and exact remote head readback | Worker publishes PR; root serially reviews/merges and verifies resulting main |
+| Full native Settings and release acceptance | Existing program owners | Actual Electron interaction and native/license/release prerequisites | Original full acceptance remains pending; recovered source tests do not close it |
+
+
+## Cursor Cloud headless server setup (2026-10-03)
+
+Owner: historical-branch integration worker; integration owner: branch audit lead.
+Dependencies: current server entry point and helper build commands at main
+`76228cc33e44518e5fab5e59f5c754f4051d1e8c`.
+
+1. Adapt `.cursor/environment.json`, install and startup scripts to ROX — complete.
+2. Validate JSON and shell syntax, frozen preparation twice and actual helper builds — complete.
+3. Exercise authenticated RPC ping, graceful stop, restart, token permissions and
+   token rotation, plus failed install/entropy negative controls — complete.
+4. Deliver a separate PR preserving the original branch; main integration remains
+   owned by the lead. Hosted Cursor provisioning remains unverified.

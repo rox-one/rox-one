@@ -106,7 +106,7 @@ export class RoutedClient implements RpcClient {
       if (!this.projectAuthority) throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
       return this.projectAuthority.invoke(channel, ...args)
     }
-    if (channel.startsWith('domain.project.')) throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
+    if ((channel.startsWith('domain.project.') || channel.startsWith('domain.license.') || channel.startsWith('domain.audit.'))) throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
     const isLocal = isLocalOnly(channel)
     const target = isLocal ? this.localClient : this.workspaceClient
 
@@ -137,7 +137,7 @@ export class RoutedClient implements RpcClient {
   }
 
   on(channel: string, callback: (...args: any[]) => void): () => void {
-    if (channel.startsWith('domain.project.')) throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
+    if ((channel.startsWith('domain.project.') || channel.startsWith('domain.license.') || channel.startsWith('domain.audit.'))) throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
     if (isLocalOnly(channel)) {
       return this.localClient.on(channel, callback)
     }
@@ -194,7 +194,7 @@ export class RoutedClient implements RpcClient {
 
   isChannelAvailable(channel: string): boolean {
     if (isProjectAuthorityChannel(channel)) return this.projectAuthority?.isAvailable(channel) === true
-    if (channel.startsWith('domain.project.')) return false
+    if ((channel.startsWith('domain.project.') || channel.startsWith('domain.license.') || channel.startsWith('domain.audit.'))) return false
     const target = isLocalOnly(channel) ? this.localClient : this.workspaceClient
     return target.isChannelAvailable(channel)
   }

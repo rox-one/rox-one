@@ -1,0 +1,913 @@
+{
+  "resultPath": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/result.json",
+  "resultSha256": "79af30eecbbd71b62e6e74b44d943e24eb7e53b618b616857cd76bc9d6131528",
+  "sourceSha256": "cac6ec003b57812e29eb660a39473f939292e3e94edf8d5d87324c5199c26630",
+  "status": "PASS_NATIVE_WP01_CONSUMER",
+  "screenshotsValidated": 27,
+  "pngCRCAndRGBAValidated": 27,
+  "manualPrivateRGBAEqualsBrowser": false,
+  "privacyExactPNGAndRGBA": true,
+  "privacyExactText": true,
+  "screenshots": [
+    {
+      "name": "A-native-Connections-login",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-native-Connections-login.png",
+      "sha256": "7d378e31d4f2eb1e810d66b9eb4a06165aec4e1742979593f4e2d5285deb849e",
+      "width": 2800,
+      "height": 1800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "ee979081c467074fe2bf7835a9030e133139d43295cb41e3d9377458b3a6ced0",
+      "rgbaBytes": 20160000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 305873,
+        "backingLength": 305873
+      },
+      "rowContrast": {
+        "y120": 1.0527380952380951,
+        "y240": 0.0014285714285714286
+      },
+      "whiteBands": [],
+      "chunkCount": 79
+    },
+    {
+      "name": "B-native-Connections-login",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-native-Connections-login.png",
+      "sha256": "b18deb03a53403d7dab72db903f23abc20f6b7ec23942b5310249b07956db45b",
+      "width": 2800,
+      "height": 1800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "93a9ed558a55dcf9d180d6396350e0901f98d6ccc22d3a8ac29a78f198aa9021",
+      "rgbaBytes": 20160000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 304802,
+        "backingLength": 304802
+      },
+      "rowContrast": {
+        "y120": 1.0527380952380951,
+        "y240": 0.0014285714285714286
+      },
+      "whiteBands": [],
+      "chunkCount": 79
+    },
+    {
+      "name": "A-native-name-active-IME-composition",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-native-name-active-IME-composition.png",
+      "sha256": "0750fac4e6ccb5c6010adac7dbf71c2657b1cc4569520262c67272a94ef32f02",
+      "width": 2800,
+      "height": 1800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "ee3a73ab18618d53352ab273dffacd84008db8a92bc7b393cae851dae910cee1",
+      "rgbaBytes": 20160000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 147333,
+        "backingLength": 147333
+      },
+      "rowContrast": {
+        "y120": 0.7648809523809523,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 40
+    },
+    {
+      "name": "create-reviewed-7fe5dfa8",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/create-reviewed-7fe5dfa8.png",
+      "sha256": "220219dc3dddde54d2b7af21f2ee5e2a25b9d9875be45741a9981ae10126e189",
+      "width": 2800,
+      "height": 1800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "6174616e2452d745bdec9ff13e2a2b6d0135653ddd2f722589706b7b05793a65",
+      "rgbaBytes": 20160000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 148911,
+        "backingLength": 148911
+      },
+      "rowContrast": {
+        "y120": 0.7648809523809523,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 41
+    },
+    {
+      "name": "create-reviewed-f5d466d6",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/create-reviewed-f5d466d6.png",
+      "sha256": "b555dd16a801463b911208199827b9c8d0083acf1efd2d9abd215484f115c10b",
+      "width": 2800,
+      "height": 1800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "54d51a51ff72db8d84a580bc7a1da1dac12a84f949f80ada9f0fa0232a54975f",
+      "rgbaBytes": 20160000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 144793,
+        "backingLength": 144793
+      },
+      "rowContrast": {
+        "y120": 0.7648809523809523,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 40
+    },
+    {
+      "name": "A-private-native-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-private-native-detail.png",
+      "sha256": "1a21caa1d98fabfe08cf9b93cf0685c1f0a1d829083e6acc7863ba5dbff3aff5",
+      "width": 2800,
+      "height": 1800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "ba780beb237cd85bd567fae1e3082114b4b67596eb80aa1f8ed7cc3993d43adb",
+      "rgbaBytes": 20160000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 103098,
+        "backingLength": 103098
+      },
+      "rowContrast": {
+        "y120": 1.0527380952380951,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 30
+    },
+    {
+      "name": "B-private-native-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-private-native-detail.png",
+      "sha256": "75902b3e84a349bdb90d9770a6e2789f72ed8ca2745105d3a32f386eb5940698",
+      "width": 2800,
+      "height": 1800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "be05a414da14e395af71948f032bdd12b8c2de91dbe25c036bd164ca9f901ecb",
+      "rgbaBytes": 20160000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 97023,
+        "backingLength": 97023
+      },
+      "rowContrast": {
+        "y120": 1.0527380952380951,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 28
+    },
+    {
+      "name": "B-native-Connections-403-quiesced-live-preserved-durable",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-native-Connections-403-quiesced-live-preserved-durable.png",
+      "sha256": "2e88e629628d8de377ac815e5c10f547a62f6de37821ff38c07430ddde2d0a05",
+      "width": 2678,
+      "height": 2580,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "dcc5b9d35beeafdeac780bfac12094fc441b698ff236d81b8b37254dbe372d11",
+      "rgbaBytes": 27636960,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 423730,
+        "backingLength": 423730
+      },
+      "rowContrast": {
+        "y120": 1.1006970375902414,
+        "y240": 0.0014936519790888724
+      },
+      "whiteBands": [],
+      "chunkCount": 108
+    },
+    {
+      "name": "B-nonmember-denied-local-folder-preserved",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-nonmember-denied-local-folder-preserved.png",
+      "sha256": "5646b7409dc37fe7baa91ac70a6b5b99b225047f388fde2a125022bece74d107",
+      "width": 2678,
+      "height": 2580,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "1e12eecc4441c9a0d0f42b22027520500566ce3e1b2b3ec7793af28b14436635",
+      "rgbaBytes": 27636960,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 111871,
+        "backingLength": 111871
+      },
+      "rowContrast": {
+        "y120": 1.599950211600697,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 32
+    },
+    {
+      "name": "B-native-Connections-login-capture-2",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-native-Connections-login-capture-2.png",
+      "sha256": "2c632bb80d9b6f598e0bdb24e563c5939a7cd8200b4dca28d7211ebe4707c08b",
+      "width": 2678,
+      "height": 2580,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "2c6ab6a8f6d96de9457b1b3643784367ac9d058129a41ecf5a83014a9f7810a0",
+      "rgbaBytes": 27636960,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 406882,
+        "backingLength": 406882
+      },
+      "rowContrast": {
+        "y120": 1.1006970375902414,
+        "y240": 0.0014936519790888724
+      },
+      "whiteBands": [],
+      "chunkCount": 103
+    },
+    {
+      "name": "create-reviewed-b5534566",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/create-reviewed-b5534566.png",
+      "sha256": "d3ba7f4a29b85eb6b6d47e687a3830c72508ec240c714ba4d4c60dadce7355d1",
+      "width": 2800,
+      "height": 1800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "f26cb18399b7f17a068103317252a31c73eb21244687b974c795efb467d96386",
+      "rgbaBytes": 20160000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 154309,
+        "backingLength": 154309
+      },
+      "rowContrast": {
+        "y120": 0.7648809523809523,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 42
+    },
+    {
+      "name": "B-projection-before-rejected-private-get",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-projection-before-rejected-private-get.png",
+      "sha256": "6aa695201da66b3f4aacdbb74d497e07f68ef3595964e86cd915a7a97b8c5a64",
+      "width": 1832,
+      "height": 312,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "cc3b2dc8d52507618415b06af9b662fcff38bcf1b4cd7de533ec1be9c31fbf67",
+      "rgbaBytes": 2286336,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 37321,
+        "backingLength": 37321
+      },
+      "rowContrast": {
+        "y120": 0.3773653566229985,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 13
+    },
+    {
+      "name": "B-projection-after-rejected-private-get",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-projection-after-rejected-private-get.png",
+      "sha256": "6aa695201da66b3f4aacdbb74d497e07f68ef3595964e86cd915a7a97b8c5a64",
+      "width": 1832,
+      "height": 312,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "cc3b2dc8d52507618415b06af9b662fcff38bcf1b4cd7de533ec1be9c31fbf67",
+      "rgbaBytes": 2286336,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 37321,
+        "backingLength": 37321
+      },
+      "rowContrast": {
+        "y120": 0.3773653566229985,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 13
+    },
+    {
+      "name": "B-private-canonical-route-denied-no-title",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-private-canonical-route-denied-no-title.png",
+      "sha256": "4feed2c96bcfc9604608a4e0d9eb9d625d3172bc057b93bc54bdddb2f602c25a",
+      "width": 2678,
+      "height": 2580,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "75771052a4e3c51b69de479efa8ee5d0992d1dc9be3ffcb8bebbea49743344fc",
+      "rgbaBytes": 27636960,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 72717,
+        "backingLength": 72717
+      },
+      "rowContrast": {
+        "y120": 1.1006970375902414,
+        "y240": 8.171023151605675
+      },
+      "whiteBands": [],
+      "chunkCount": 22
+    },
+    {
+      "name": "A-members-shared-native-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-members-shared-native-detail.png",
+      "sha256": "7546ffb7df8b67e1938e9067ad5c98ddd2ba15f7b70d4a4e2612284887614d82",
+      "width": 2800,
+      "height": 1800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "72cff36f18403ca7ce9b996188e31a61be604f8e4d95cbe43a8aa106232521e4",
+      "rgbaBytes": 20160000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 100022,
+        "backingLength": 100022
+      },
+      "rowContrast": {
+        "y120": 1.0527380952380951,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 29
+    },
+    {
+      "name": "B-same-shared-canonical-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-same-shared-canonical-detail.png",
+      "sha256": "322b4c0b59f65e647b449c338084754a9c70875263fd715beded14c04b87dba1",
+      "width": 2678,
+      "height": 2580,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "881a54119f75a2a7ed871b44e0b3d06b17b867f81cd2ee98e012d747b54926cb",
+      "rgbaBytes": 27636960,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 105714,
+        "backingLength": 105714
+      },
+      "rowContrast": {
+        "y120": 1.1006970375902414,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 30
+    },
+    {
+      "name": "A-visible-sidebar-keyboard-resize-preserved",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-visible-sidebar-keyboard-resize-preserved.png",
+      "sha256": "f9b4fe4309362c3329be6fc57a6267a5e1459f02d405ef13309208b0fef71f6b",
+      "width": 2800,
+      "height": 1800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "38ffc16addc8dc3dcd15036238000432b6efec85fd3c97a5bc1c92b88fedfa64",
+      "rgbaBytes": 20160000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 167853,
+        "backingLength": 167853
+      },
+      "rowContrast": {
+        "y120": 4.567738095238095,
+        "y240": 0.21785714285714286
+      },
+      "whiteBands": [],
+      "chunkCount": 45
+    },
+    {
+      "name": "A-dark-native-shared-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-native-shared-detail.png",
+      "sha256": "63838617a98931c2e07dbeb736503718aabb8d2d03e4dc6e0ab7862711297415",
+      "width": 2800,
+      "height": 1800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "3a9ae00acc4a9168e3af95be972cdbbbf412ac3ef97cc2de23b31a6c1ddb8257",
+      "rgbaBytes": 20160000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 100177,
+        "backingLength": 100177
+      },
+      "rowContrast": {
+        "y120": 1.0527380952380951,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 29
+    },
+    {
+      "name": "A-dark-200-percent-narrow-before-refresh-scroll",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-200-percent-narrow-before-refresh-scroll.png",
+      "sha256": "5287240eda4118b7e812756d063aa049f3edbc60c5e61d8861feee3ca0602334",
+      "width": 980,
+      "height": 800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "624ac527c7625f28fd578ef9f24a5c75c336866e0cfc1cb0672d2048147d6f0f",
+      "rgbaBytes": 3136000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 70589,
+        "backingLength": 70589
+      },
+      "rowContrast": {
+        "y120": 1.1142857142857143,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 22
+    },
+    {
+      "name": "A-dark-200-percent-narrow-keyboard",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-200-percent-narrow-keyboard.png",
+      "sha256": "5287240eda4118b7e812756d063aa049f3edbc60c5e61d8861feee3ca0602334",
+      "width": 980,
+      "height": 800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "624ac527c7625f28fd578ef9f24a5c75c336866e0cfc1cb0672d2048147d6f0f",
+      "rgbaBytes": 3136000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 70589,
+        "backingLength": 70589
+      },
+      "rowContrast": {
+        "y120": 1.1142857142857143,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 22
+    },
+    {
+      "name": "A-light-native-shared-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-native-shared-detail.png",
+      "sha256": "79f30ed6b2f13358bfe62bb73efa13f2224ea9441aab61ec422d1acd34226e4b",
+      "width": 2640,
+      "height": 1700,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "346a77157fb70be102db1918a5bf95d71492a189ce43c217a09ddd037f333656",
+      "rgbaBytes": 17952000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 95950,
+        "backingLength": 95950
+      },
+      "rowContrast": {
+        "y120": 1.0766414141414142,
+        "y240": 0
+      },
+      "whiteBands": [
+        [
+          240,
+          599
+        ]
+      ],
+      "chunkCount": 28
+    },
+    {
+      "name": "A-light-200-percent-narrow-before-refresh-scroll",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-200-percent-narrow-before-refresh-scroll.png",
+      "sha256": "d019e9cdfa5f5b38bded7cc5d2a8108aee4b88584dfb73401fdc7dfdae11d967",
+      "width": 980,
+      "height": 800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "4df48d4c1c356f4352ad7c756e69df18357f61a6b7ee1b79a0c5a04decbed0dd",
+      "rgbaBytes": 3136000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 70034,
+        "backingLength": 70034
+      },
+      "rowContrast": {
+        "y120": 1.096938775510204,
+        "y240": 0
+      },
+      "whiteBands": [
+        [
+          240,
+          599
+        ]
+      ],
+      "chunkCount": 21
+    },
+    {
+      "name": "A-light-200-percent-narrow-keyboard",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-200-percent-narrow-keyboard.png",
+      "sha256": "d019e9cdfa5f5b38bded7cc5d2a8108aee4b88584dfb73401fdc7dfdae11d967",
+      "width": 980,
+      "height": 800,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "4df48d4c1c356f4352ad7c756e69df18357f61a6b7ee1b79a0c5a04decbed0dd",
+      "rgbaBytes": 3136000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 70034,
+        "backingLength": 70034
+      },
+      "rowContrast": {
+        "y120": 1.096938775510204,
+        "y240": 0
+      },
+      "whiteBands": [
+        [
+          240,
+          599
+        ]
+      ],
+      "chunkCount": 21
+    },
+    {
+      "name": "A-post-service-and-profile-restart",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-post-service-and-profile-restart.png",
+      "sha256": "02df7e0a729696ea3abaf14b06336280746d3945dabba57afd33fba2b2d13f05",
+      "width": 2640,
+      "height": 1700,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "b8ad2610b7f6b51891cdad530e656fdb2042108f4456cd5ecd7e3a2f4c39c59c",
+      "rgbaBytes": 17952000,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 120941,
+        "backingLength": 120941
+      },
+      "rowContrast": {
+        "y120": 1.6204545454545454,
+        "y240": 0
+      },
+      "whiteBands": [
+        [
+          240,
+          599
+        ]
+      ],
+      "chunkCount": 34
+    },
+    {
+      "name": "B-post-service-and-profile-restart",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-post-service-and-profile-restart.png",
+      "sha256": "ed31dcc4704d42e135e007248f33a6e46a455571aa3f779581b9ba254b0d76bf",
+      "width": 2008,
+      "height": 2580,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "3112167d752b00a126f4b13a821789cbe5fcf168a6aaaac6a2f29bb275896591",
+      "rgbaBytes": 20722560,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 108910,
+        "backingLength": 108910
+      },
+      "rowContrast": {
+        "y120": 2.1337981407702524,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 31
+    },
+    {
+      "name": "B-revoked-session-denied-host-folder-preserved",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-revoked-session-denied-host-folder-preserved.png",
+      "sha256": "e86e03ceb27cbb8cff3f203a61ba4a3c9a647f0ad92eb3f3534af4ae4088fabc",
+      "width": 2008,
+      "height": 2580,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "7dc6a7c04ab3a23568299efa0b474a00e21deae4d05153a9bae89fd4cbea0bdd",
+      "rgbaBytes": 20722560,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 109081,
+        "backingLength": 109081
+      },
+      "rowContrast": {
+        "y120": 2.1337981407702524,
+        "y240": 0
+      },
+      "whiteBands": [],
+      "chunkCount": 31
+    },
+    {
+      "name": "B-explicit-native-disconnect-no-durable-token",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-explicit-native-disconnect-no-durable-token.png",
+      "sha256": "26a1183d3bdd52c22bed8d6535f08e4d33ca863de778e00706fb161e3694daeb",
+      "width": 2008,
+      "height": 2580,
+      "colorType": 2,
+      "crcValid": true,
+      "rgbaSha256": "cbb1167665814a70e3be8f508340e01fff8c2067487afd99e190a405d5d8feb8",
+      "rgbaBytes": 20722560,
+      "pngBuffer": {
+        "byteOffset": 0,
+        "byteLength": 387713,
+        "backingLength": 387713
+      },
+      "rowContrast": {
+        "y120": 1.467961487383798,
+        "y240": 0.00199203187250996
+      },
+      "whiteBands": [],
+      "chunkCount": 99
+    }
+  ],
+  "criticalTranscripts": [
+    {
+      "name": "B-native-Connections-403-quiesced-live-preserved-durable",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-native-Connections-403-quiesced-live-preserved-durable.txt",
+      "sha256": "eed607321d15caae6c0e9518b9b15f9cf690a0d301de204e27f2ada45a6a21a0",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка B\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nНастроить память\n\nДобавьте несколько уроков памяти, чтобы Rox запомнил, как вы работаете.\n\nОткрыть память\nПриёмка WP01\nСтандарт · Баланс —\nСоединения\n\nИсточники, мессенджеры и аккаунты, к которым подключён Rox\n\nОбновить\nПодключить\nОбзор\nУчётные данные\nИмпорты\nПолитики\nАудит\nСервис общих проектов\n\nВойдите в существующий аккаунт сервиса. Пароль используется только для входа, токен хранится зашифрованным на этом устройстве.\n\nURL сервиса\nАдрес сервиса без пути, например https://service.example. HTTP разрешён только для локального сервиса.\nUUID рабочего пространства в сервисе\nUUID пространства в сервисе, а не идентификатор локальной папки ROX.\nНазвание рабочего пространства в сервисе\nВведите название точно как в сервисе. Оно требуется для создания проекта.\nАккаунт\nПароль\nВойти и подключить\nОтключить\n\nДоступ запрещён. Войдите снова или проверьте членство в рабочем пространстве.\n\nЭтот аккаунт не имеет доступа. Проверьте членство в рабочем пространстве и права на проект.\nFORBIDDEN · HTTP 403\n\nИсточники10\nДобавить источник\n🧩\nApplications\nЛокальная папка · Applications and ~/Library/Applications\nПодключено\nОткрыть\nУдалить\n🔎\nExa\nAPI · Neural web search & research (Exa)\nВыключено\nОткрыть\nУдалить\n🔥\nFirecrawl\nAPI · Crawl & extract clean page content (Firecrawl)\nВыключено\nОткрыть\nУдалить\n🗂️\nFolder tree\nЛокальная папка · Workspace folder tree\nПодключено\nОткрыть\nУдалить\n💬\nLast sessions\nЛокальная папка · Imported and archived session transcripts\nПодключено\nОткрыть\nУдалить\n🧠\nMemory\nЛокальная папка · Self-learning memory files\nПодключено\nОткрыть\nУдалить\n📓\nNotes vault\nЛокальная папка · Markdown notes, backlinks, tags, properties, daily notes, and assets\nПодключено\nОткрыть\nУдалить\n📁\nProjects\nЛокальная папка · Workspace projects\nПодключено\nОткрыть\nУдалить\n✅\nTasks\nЛокальная папка · Workspace task specs\nПодключено\nОткрыть\nУдалить\n✈️\nTelegram Application Support\nЛокальная папка · Telegram Application Support folder\nПодключено\nОткрыть\nУдалить\nМессенджеры0\nНастроить\nTelegram\nНе подключено\nНе настроено\nПодключить\nDiscord\nНе подключено\nНе настроено\nПодключить\nLark / Feishu\nНе подключено\nНе настроено\nПодключить\nWeChat\nНе подключено\nНе настроено\nПодключить\nWhatsApp\nНе подключено\nНе настроено\nПодключить\nАккаунты0\nНастроить\nСервисных подключений пока нет. Подключите облачную синхронизацию ниже или добавьте сервисы позже.\nСохранённые учётные данные0\nСоздать подключение\nСохранённых учётных данных нет. Нажмите «Подключить», чтобы импортировать их из GitHub, AWS, Docker, Keychain или SSH-агента.\nИнфо\nПодключение не выбрано\nВыберите подключение, чтобы увидеть провайдера, области доступа и где оно используется."
+    },
+    {
+      "name": "B-projection-before-rejected-private-get",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-projection-before-rejected-private-get.txt",
+      "sha256": "f989d6171db425d387272ddb65e7ad188d3c85b0827cf276cd0d0e087aa87a2d",
+      "text": "Общие проекты\nСоздать общий проект\n\nЛокальные папки и сеансы работают на этом устройстве. Общие проекты загружаются из подключённого сервиса.\n\nОбщий проект с настоящим каноническим ID\nДля участников\nОбновить"
+    },
+    {
+      "name": "B-projection-after-rejected-private-get",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-projection-after-rejected-private-get.txt",
+      "sha256": "f989d6171db425d387272ddb65e7ad188d3c85b0827cf276cd0d0e087aa87a2d",
+      "text": "Общие проекты\nСоздать общий проект\n\nЛокальные папки и сеансы работают на этом устройстве. Общие проекты загружаются из подключённого сервиса.\n\nОбщий проект с настоящим каноническим ID\nДля участников\nОбновить"
+    },
+    {
+      "name": "B-private-canonical-route-denied-no-title",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-private-canonical-route-denied-no-title.txt",
+      "sha256": "302d8496295185b8e1023420da6d7551c3509d0582edaf628b04a65f90bad3c2",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка B\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nНастроить память\n\nДобавьте несколько уроков памяти, чтобы Rox запомнил, как вы работаете.\n\nОткрыть память\nПриёмка WP01\nСтандарт · Баланс —\nОбщие проекты\n\nЭтот аккаунт не имеет доступа. Проверьте членство в рабочем пространстве и права на проект.\nFORBIDDEN\n\nОбновить\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "A-dark-native-shared-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-native-shared-detail.txt",
+      "sha256": "f21769065f110202c47e07cd5423b55238c374810aba4a171586a63488741b32",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка A\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nНастроить память\n\nДобавьте несколько уроков памяти, чтобы Rox запомнил, как вы работаете.\n\nОткрыть память\nПриёмка WP01\nСтандарт · Баланс —\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "A-dark-200-percent-narrow-before-refresh-scroll",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-200-percent-narrow-before-refresh-scroll.txt",
+      "sha256": "4040b879106e765dc773f859f096120d5adf893df10251967ddcf25aa54130df",
+      "text": "П\nП\nПриёмка WP01 A\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить"
+    },
+    {
+      "name": "A-dark-200-percent-narrow-keyboard",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-200-percent-narrow-keyboard.txt",
+      "sha256": "4040b879106e765dc773f859f096120d5adf893df10251967ddcf25aa54130df",
+      "text": "П\nП\nПриёмка WP01 A\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить"
+    },
+    {
+      "name": "A-light-native-shared-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-native-shared-detail.txt",
+      "sha256": "f21769065f110202c47e07cd5423b55238c374810aba4a171586a63488741b32",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка A\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nНастроить память\n\nДобавьте несколько уроков памяти, чтобы Rox запомнил, как вы работаете.\n\nОткрыть память\nПриёмка WP01\nСтандарт · Баланс —\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "A-light-200-percent-narrow-before-refresh-scroll",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-200-percent-narrow-before-refresh-scroll.txt",
+      "sha256": "4040b879106e765dc773f859f096120d5adf893df10251967ddcf25aa54130df",
+      "text": "П\nП\nПриёмка WP01 A\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить"
+    },
+    {
+      "name": "A-light-200-percent-narrow-keyboard",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-200-percent-narrow-keyboard.txt",
+      "sha256": "4040b879106e765dc773f859f096120d5adf893df10251967ddcf25aa54130df",
+      "text": "П\nП\nПриёмка WP01 A\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить"
+    },
+    {
+      "name": "A-post-service-and-profile-restart",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-post-service-and-profile-restart.txt",
+      "sha256": "66dc75ffe942b33f5c538551a13e173841be08c5f1f1e034de94613ea8fafe77",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка A\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nПриёмка WP01\nСтандарт · Баланс —\nВсе проекты\n1\nДобавить проект\nОбщие проекты\nСоздать общий проект\n\nЛокальные папки и сеансы работают на этом устройстве. Общие проекты загружаются из подключённого сервиса.\n\nПРИВАТНЫЙ_ПРОЕКТ_A_入力_🧭_c2f20568\nПриватный\nОбщий проект с настоящим каноническим ID\nДля участников\nОбновить\nЛокальные проекты\nНастоящая локальная папка A\n/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/A/workspaces/native-A\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "B-post-service-and-profile-restart",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-post-service-and-profile-restart.txt",
+      "sha256": "11ede4775ea25102f80048afea0c4c49c426d232e5e4d0254f6929ae02a4cb5c",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка B\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nПриёмка WP01\nСтандарт · Баланс —\nВсе проекты\n1\nДобавить проект\nОбщие проекты\nСоздать общий проект\n\nЛокальные папки и сеансы работают на этом устройстве. Общие проекты загружаются из подключённого сервиса.\n\nОбщий проект с настоящим каноническим ID\nДля участников\nОбновить\nЛокальные проекты\nНастоящая локальная папка B\n/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/B/workspaces/native-B\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "B-revoked-session-denied-host-folder-preserved",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-revoked-session-denied-host-folder-preserved.txt",
+      "sha256": "9741994445ca39221e27f64fa5de8e49786c9ccc2c3e423c7ab17cb6b1c7ac5a",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка B\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nПриёмка WP01\nСтандарт · Баланс —\nВсе проекты\n1\nДобавить проект\nОбщие проекты\nСоздать общий проект\n\nЛокальные папки и сеансы работают на этом устройстве. Общие проекты загружаются из подключённого сервиса.\n\nДоступ запрещён. Войдите снова или проверьте членство в рабочем пространстве.\n\nОбновить\nЛокальные проекты\nНастоящая локальная папка B\n/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/B/workspaces/native-B\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "B-explicit-native-disconnect-no-durable-token",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-explicit-native-disconnect-no-durable-token.txt",
+      "sha256": "5384ce6bd7b2cfc470ba9817eb63f92d31c8cd8538e0b9f7f95967f1dae2ac7e",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка B\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nПриёмка WP01\nСтандарт · Баланс —\nСоединения\n\nИсточники, мессенджеры и аккаунты, к которым подключён Rox\n\nОбновить\nПодключить\nОбзор\nУчётные данные\nИмпорты\nПолитики\nАудит\nСервис общих проектов\n\nВойдите в существующий аккаунт сервиса. Пароль используется только для входа, токен хранится зашифрованным на этом устройстве.\n\nURL сервиса\nАдрес сервиса без пути, например https://service.example. HTTP разрешён только для локального сервиса.\nUUID рабочего пространства в сервисе\nUUID пространства в сервисе, а не идентификатор локальной папки ROX.\nНазвание рабочего пространства в сервисе\nВведите название точно как в сервисе. Оно требуется для создания проекта.\nАккаунт\nПароль\nВойти и подключить\nОтключить\n\nПодключение к сервису общих проектов не настроено.\n\nИсточники10\nДобавить источник\n🧩\nApplications\nЛокальная папка · Applications and ~/Library/Applications\nПодключено\nОткрыть\nУдалить\n🔎\nExa\nAPI · Neural web search & research (Exa)\nВыключено\nОткрыть\nУдалить\n🔥\nFirecrawl\nAPI · Crawl & extract clean page content (Firecrawl)\nВыключено\nОткрыть\nУдалить\n🗂️\nFolder tree\nЛокальная папка · Workspace folder tree\nПодключено\nОткрыть\nУдалить\n💬\nLast sessions\nЛокальная папка · Imported and archived session transcripts\nПодключено\nОткрыть\nУдалить\n🧠\nMemory\nЛокальная папка · Self-learning memory files\nПодключено\nОткрыть\nУдалить\n📓\nNotes vault\nЛокальная папка · Markdown notes, backlinks, tags, properties, daily notes, and assets\nПодключено\nОткрыть\nУдалить\n📁\nProjects\nЛокальная папка · Workspace projects\nПодключено\nОткрыть\nУдалить\n✅\nTasks\nЛокальная папка · Workspace task specs\nПодключено\nОткрыть\nУдалить\n✈️\nTelegram Application Support\nЛокальная папка · Telegram Application Support folder\nПодключено\nОткрыть\nУдалить\nМессенджеры0\nНастроить\nTelegram\nНе подключено\nНе настроено\nПодключить\nDiscord\nНе подключено\nНе настроено\nПодключить\nLark / Feishu\nНе подключено\nНе настроено\nПодключить\nWeChat\nНе подключено\nНе настроено\nПодключить\nWhatsApp\nНе подключено\nНе настроено\nПодключить\nАккаунты0\nНастроить\nСервисных подключений пока нет. Подключите облачную синхронизацию ниже или добавьте сервисы позже.\nСохранённые учётные данные0\nСоздать подключение\nСохранённых учётных данных нет. Нажмите «Подключить», чтобы импортировать их из GitHub, AWS, Docker, Keychain или SSH-агента.\nИнфо\nПодключение не выбрано\nВыберите подключение, чтобы увидеть провайдера, области доступа и где оно используется."
+    }
+  ],
+  "htmlBindings": [
+    {
+      "name": "B-native-Connections-403-quiesced-live-preserved-durable",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-native-Connections-403-quiesced-live-preserved-durable.html",
+      "sha256": "f80286ffb18f0321c4368e380753447bc80dea0e38e88b27b9f41c018399980b",
+      "bytes": 117410,
+      "rootClasses": null,
+      "projectHeading": "Соединения",
+      "hasCanonicalSharedID": false,
+      "hasForbidden": true,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "B-private-canonical-route-denied-no-title",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-private-canonical-route-denied-no-title.html",
+      "sha256": "6bb061f35f41067b8348e69d37bde6062d3fd6b6dc6399688716cab027176827",
+      "bytes": 74540,
+      "rootClasses": null,
+      "projectHeading": "Общие проекты",
+      "hasCanonicalSharedID": false,
+      "hasForbidden": true,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-dark-native-shared-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-native-shared-detail.html",
+      "sha256": "718c5cce2c173c92f7514b271b66900f3cd4ddf3ccbaa9b3af1ca44cf890c1d1",
+      "bytes": 74976,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-dark-200-percent-narrow-before-refresh-scroll",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-200-percent-narrow-before-refresh-scroll.html",
+      "sha256": "312312ccaf55f30492877599b0daf6698be52f96abf52f4a35d364237b5ee15b",
+      "bytes": 22314,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-dark-200-percent-narrow-keyboard",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-200-percent-narrow-keyboard.html",
+      "sha256": "312312ccaf55f30492877599b0daf6698be52f96abf52f4a35d364237b5ee15b",
+      "bytes": 22314,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-light-native-shared-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-native-shared-detail.html",
+      "sha256": "9048ddd5e7246d93b5b96fe9d1d3afe7dda7b39701187bde175b5e70b9a24de8",
+      "bytes": 74979,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-light-200-percent-narrow-before-refresh-scroll",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-200-percent-narrow-before-refresh-scroll.html",
+      "sha256": "ea18eabbb3fdcf8130f06a6d4b7dd23c8ece4141de7272a90032be3101edd472",
+      "bytes": 22314,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-light-200-percent-narrow-keyboard",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-200-percent-narrow-keyboard.html",
+      "sha256": "ea18eabbb3fdcf8130f06a6d4b7dd23c8ece4141de7272a90032be3101edd472",
+      "bytes": 22314,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-post-service-and-profile-restart",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-post-service-and-profile-restart.html",
+      "sha256": "0f32c8f512851125df6fc5b78b718ba91c6c15da4183f6e1de754d9eb39bebd1",
+      "bytes": 79353,
+      "rootClasses": null,
+      "projectHeading": null,
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": true,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "B-post-service-and-profile-restart",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-post-service-and-profile-restart.html",
+      "sha256": "0211c6759f8ba7049a819bfe80b590e48138de0ea75196883401780e6b019c51",
+      "bytes": 78626,
+      "rootClasses": null,
+      "projectHeading": null,
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "B-revoked-session-denied-host-folder-preserved",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-revoked-session-denied-host-folder-preserved.html",
+      "sha256": "3be8e6bb334fe33ef721b8e46de563900230f829eb3e129f6b0c67b655f94c72",
+      "bytes": 77948,
+      "rootClasses": null,
+      "projectHeading": null,
+      "hasCanonicalSharedID": false,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "B-explicit-native-disconnect-no-durable-token",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-explicit-native-disconnect-no-durable-token.html",
+      "sha256": "36ed34537cc300d2ad458391d012a851dac480d1f64848ab9e8a32b6bbd56d81",
+      "bytes": 116116,
+      "rootClasses": null,
+      "projectHeading": "Соединения",
+      "hasCanonicalSharedID": false,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    }
+  ],
+  "captureChecks": [
+    {
+      "name": "A-dark-native-shared-detail",
+      "state": null
+    },
+    {
+      "name": "A-dark-200-percent-narrow-before-refresh-scroll",
+      "state": null
+    },
+    {
+      "name": "A-dark-200-percent-narrow-keyboard",
+      "state": null
+    },
+    {
+      "name": "A-light-native-shared-detail",
+      "state": null
+    },
+    {
+      "name": "A-light-200-percent-narrow-before-refresh-scroll",
+      "state": null
+    },
+    {
+      "name": "A-light-200-percent-narrow-keyboard",
+      "state": null
+    }
+  ],
+  "visualReviewPending": false,
+  "visualReview": "Personally viewed dark/light full+narrow, private before/after, private canonical FORBIDDEN, Connections403, A+B restart, revokedB, disconnectB. Correct themes/text/IDs/routes and ownedlocalfolder; no foreigncontent established. Narrow PNGs980x800 crop at approx4pixel/CSS despite strict DOM490x400 and button fullywithin afterscroll; capture projection mismatch limits screenshot proof of visible200%layout.",
+  "fullFeatureDoDComplete": false,
+  "consumer5CompleteClaimed": false
+}

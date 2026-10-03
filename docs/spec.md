@@ -428,3 +428,23 @@ Classify source changes using exact ancestry, patch equivalence, related merged 
 For the runtime lane, preserve the release branch's OMP recovery, mandatory policy, context migration and skill provenance. The exact-head validation failure comprised ten TypeScript errors in three gstack regression fixtures. Correct the mocks and fixture argument validation while retaining every security assertion; exercise the focused suites, full repository validation, runtime regressions and remote CI. Security scan findings require source-based disposition; a passing analyzer job does not prove no findings.
 
 Runtime security follow-up: gbrain sync/dream markers serialize acquisition, stale takeover and release through an exclusive mutation directory. A stale marker owned by a live PID is retained. Only the exact UUID generation acquired by this process can be removed; publication uses exclusive private files. A crashed mutation guard remains conservative rather than being reclaimed automatically.
+
+
+## Recovered Compound native license evidence — 2026-10-03
+
+Branch audit against main `76228cc33e44518e5fab5e59f5c754f4051d1e8c` found the unmerged native slice in `feat/rox-compound-workspace-20260930` commit `d141e962185fd808f177a2d01760b211f47f0832`. The canonical WP48 backend was already present; the Settings consumer, strict native evidence schemas and typed license audit operation in the existing encrypted Project intent slot were absent. This recovery retains those additions and their original source-bound proofs without replacing newer main contracts.
+
+Acceptance for this integration is the existing canonical authority and credential storage, strict workspace/window scope, one discriminated pending intent, explicit retry/cancel, receipt and independent event replay plus live readback before intent deletion, uncertainty after a lost response, rejection of unknown formats and preservation of the Project intent path. Private evidence retracts when authority or workspace changes. All user-facing labels retain locale parity. No installed identity, license, authorization or release configuration is changed by integration.
+
+Original proof artifacts and the Compound handoff remain historical evidence tied to their recorded September revisions. They do not establish current native pixels, legal approval, complete WP48 acceptance or full program DoD. Current verification is recorded in [the recovery receipt](integration-history/compound-d141e962/recovery-verification.json); delivery is tracked separately; actual native Settings product acceptance remains a separate gate.
+
+
+## Cursor Cloud headless server setup (2026-10-03)
+
+Port the useful environment setup from `cursor/cloud-agent-env-setup-2fc0` onto
+current ROX. Preparation must terminate, use Bun 1.3.14 and the frozen lockfile,
+and build the session MCP/server subprocess helpers. The terminal must bind the
+server to loopback, isolate development context by default, persist each new
+bearer token with mode 0600, and never print its value. Installation or entropy
+failure must stop before subsequent work. Hosted Cursor execution and provider
+credentials require their own verification. See `docs/cursor-cloud-server.md`.
