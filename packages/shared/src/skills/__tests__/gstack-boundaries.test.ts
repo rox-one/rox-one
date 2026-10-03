@@ -175,3 +175,27 @@ test('bounded failure-range descriptor detects replacement after open and growth
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('bounded failure range preserves bigint file IDs beyond Number precision', async () => {
+  const { readBoundedRangeStable } = await import(path.join(vendor, 'lib/cso/bounded-range-file.ts'));
+  const dir = sandbox(), fstat = fs.fstatSync, lstat = fs.lstatSync;
+  try {
+    const file = path.join(dir, 'log'); fs.writeFileSync(file, 'data');
+    const identity = 9007199254740992n; let observedBigint = false;
+    fs.fstatSync = ((fd: any, options: any) => {
+      observedBigint = options?.bigint === true;
+      const stat = (fstat as any)(fd, options);
+      return Object.assign(Object.create(Object.getPrototypeOf(stat)), stat, { ino: identity });
+    }) as typeof fs.fstatSync;
+    fs.lstatSync = ((name: any, options: any) => {
+      const stat = (lstat as any)(name, options);
+      return Object.assign(Object.create(Object.getPrototypeOf(stat)), stat, { ino: identity + 1n });
+    }) as typeof fs.lstatSync;
+    expect(() => readBoundedRangeStable(file, 0, 32, 'Full-width identity')).toThrow();
+    expect(observedBigint).toBe(true);
+    expect(Number(identity)).toBe(Number(identity + 1n));
+    fs.fstatSync = fstat; fs.lstatSync = lstat;
+    expect(() => readBoundedRangeStable(file, Number.MAX_SAFE_INTEGER + 1, 32, 'Invalid offset')).toThrow();
+    expect(() => readBoundedRangeStable(file, 0, Number.MAX_SAFE_INTEGER + 1, 'Invalid cap')).toThrow();
+  } finally { fs.fstatSync = fstat; fs.lstatSync = lstat; fs.rmSync(dir, { recursive: true, force: true }); }
+});
