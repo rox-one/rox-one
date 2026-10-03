@@ -1,0 +1,185 @@
+{
+  "checkedAtUtc": "2026-10-03T17:47:40.227232+00:00",
+  "headRevision": "a3c1247170b85f3d7076a42c1e00fa5c8dfff355",
+  "jobId": 111256814380,
+  "runId": 37141535127,
+  "url": "https://github.com/rox-one/rox-one/actions/runs/37141535127/job/111256814380",
+  "conclusion": "success",
+  "startedAtUtc": "2026-10-03T17:43:25Z",
+  "completedAtUtc": "2026-10-03T17:46:33Z",
+  "steps": [
+    {
+      "name": "Set up job",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:43:25Z",
+      "completedAt": "2026-10-03T17:43:27Z"
+    },
+    {
+      "name": "Run actions/checkout@v4",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:43:27Z",
+      "completedAt": "2026-10-03T17:43:45Z"
+    },
+    {
+      "name": "Run actions/setup-node@v4",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:43:45Z",
+      "completedAt": "2026-10-03T17:43:46Z"
+    },
+    {
+      "name": "Run oven-sh/setup-bun@v2",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:43:46Z",
+      "completedAt": "2026-10-03T17:43:47Z"
+    },
+    {
+      "name": "Confirm tested source and runtimes",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:43:47Z",
+      "completedAt": "2026-10-03T17:43:47Z"
+    },
+    {
+      "name": "Install exact lockfile",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:43:47Z",
+      "completedAt": "2026-10-03T17:44:03Z"
+    },
+    {
+      "name": "Check SQLite consumers and WebUI types",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:44:03Z",
+      "completedAt": "2026-10-03T17:45:09Z"
+    },
+    {
+      "name": "Verify real SQLite durability, authorization and adverse controls",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:45:09Z",
+      "completedAt": "2026-10-03T17:45:19Z"
+    },
+    {
+      "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:45:19Z",
+      "completedAt": "2026-10-03T17:45:30Z"
+    },
+    {
+      "name": "Verify published September process-loss recovery",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:45:30Z",
+      "completedAt": "2026-10-03T17:45:31Z"
+    },
+    {
+      "name": "Build actual subprocess, WebUI and server",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:45:31Z",
+      "completedAt": "2026-10-03T17:46:19Z"
+    },
+    {
+      "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:46:19Z",
+      "completedAt": "2026-10-03T17:46:30Z"
+    },
+    {
+      "name": "Verify tracked source and lockfile stayed unchanged",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:46:30Z",
+      "completedAt": "2026-10-03T17:46:30Z"
+    },
+    {
+      "name": "Post Run oven-sh/setup-bun@v2",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:46:30Z",
+      "completedAt": "2026-10-03T17:46:30Z"
+    },
+    {
+      "name": "Post Run actions/setup-node@v4",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:46:30Z",
+      "completedAt": "2026-10-03T17:46:30Z"
+    },
+    {
+      "name": "Post Run actions/checkout@v4",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:46:30Z",
+      "completedAt": "2026-10-03T17:46:31Z"
+    },
+    {
+      "name": "Complete job",
+      "conclusion": "success",
+      "startedAt": "2026-10-03T17:46:31Z",
+      "completedAt": "2026-10-03T17:46:31Z"
+    }
+  ],
+  "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-durable-a3c-ubuntu-success-job.log",
+  "logSha256": "e0b9ca5a2690ce52f43e7ce42959f93456efd8d661c897b11f84bf9e6de62ec0",
+  "observedRuntimeAndCheckout": [
+    "2026-10-03T17:43:47.2052875Z ##[group]Run git rev-parse HEAD",
+    "2026-10-03T17:43:47.2053119Z git rev-parse HEAD",
+    "2026-10-03T17:43:47.2053267Z bun --version",
+    "2026-10-03T17:43:47.2053399Z node --version",
+    "2026-10-03T17:43:47.2286750Z shell: /usr/bin/bash -e {0}",
+    "2026-10-03T17:43:47.2286949Z env:",
+    "2026-10-03T17:43:47.2287090Z   ELECTRON_SKIP_BINARY_DOWNLOAD: 1",
+    "2026-10-03T17:43:47.2287251Z ##[endgroup]",
+    "2026-10-03T17:43:47.2394541Z ec8ef3710a3983659fbbb7cbd505d7551f483f32",
+    "2026-10-03T17:43:47.2408617Z 1.3.14",
+    "2026-10-03T17:43:47.2457642Z v24.21.0",
+    "2026-10-03T17:43:47.2500778Z ##[group]Run bun install --frozen-lockfile",
+    "2026-10-03T17:43:47.2501000Z bun install --frozen-lockfile",
+    "2026-10-03T17:43:47.2555003Z shell: /usr/bin/bash -e {0}",
+    "2026-10-03T17:43:47.2555322Z env:",
+    "2026-10-03T17:43:47.2555490Z   ELECTRON_SKIP_BINARY_DOWNLOAD: 1",
+    "2026-10-03T17:43:47.2556938Z   GITHUB_TOKEN: ***",
+    "2026-10-03T17:43:47.2557068Z ##[endgroup]",
+    "2026-10-03T17:43:47.2654482Z bun install v1.3.14 (0d9b296a)",
+    "2026-10-03T17:43:47.2819591Z Resolving dependencies"
+  ],
+  "suiteSummaries": [
+    "2026-10-03T17:45:19.5384159Z (pass) executeMutationOps \u2014 partial apply compensation (\u00a73.8 soft rollback) > op 2 of 3 fails \u2192 op 1 compensated best-effort, PartialApplyError carries audit fields [0.42ms]",
+    "2026-10-03T17:45:19.5476841Z  1206 pass",
+    "2026-10-03T17:45:19.5477150Z  0 fail",
+    "2026-10-03T17:45:19.5477319Z  9286 expect() calls",
+    "2026-10-03T17:45:19.5477531Z Ran 1207 tests across 103 files. [9.61s]",
+    "2026-10-03T17:45:30.1606103Z  226 pass",
+    "2026-10-03T17:45:30.1606275Z  0 fail",
+    "2026-10-03T17:45:30.1606463Z  1449 expect() calls",
+    "2026-10-03T17:45:30.1606712Z Ran 226 tests across 26 files. [10.57s]",
+    "2026-10-03T17:45:31.8306482Z  24 pass",
+    "2026-10-03T17:45:31.8306664Z  0 fail",
+    "2026-10-03T17:45:31.8306861Z  147 expect() calls",
+    "2026-10-03T17:45:31.8307112Z Ran 24 tests across 4 files. [1.61s]",
+    "2026-10-03T17:46:30.0566252Z  4 pass",
+    "2026-10-03T17:46:30.0566389Z  0 fail",
+    "2026-10-03T17:46:30.0566522Z  37 expect() calls",
+    "2026-10-03T17:46:30.0566687Z Ran 4 tests across 1 file. [10.29s]"
+  ],
+  "fullDoDClosed": false,
+  "actualCheckoutRevision": "ec8ef3710a3983659fbbb7cbd505d7551f483f32",
+  "actualCheckoutTree": "915a002ca2ad1c9f4f4e723dd8b50ae0ebd07c44",
+  "testedHeadTree": "915a002ca2ad1c9f4f4e723dd8b50ae0ebd07c44",
+  "checkoutTreeEqualsTestRepairHead": true,
+  "integratedSuite": {
+    "pass": 226,
+    "fail": 0,
+    "assertions": 1449,
+    "files": 26
+  },
+  "durabilitySuite": {
+    "pass": 1206,
+    "skip": 1,
+    "fail": 0,
+    "assertions": 9286,
+    "files": 103
+  },
+  "processRecoverySuite": {
+    "pass": 24,
+    "fail": 0,
+    "assertions": 147
+  },
+  "builtServerSmoke": {
+    "pass": 4,
+    "fail": 0,
+    "assertions": 37
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "source_heads": {
+    "1420": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+    "1412": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
+    "1417": "20842365c55889d8dec7b3a164ad7d20df24238b"
+  },
+  "qualified_candidate": "8fd32630746c500a7b956cacacb405737ca91a85",
+  "integrated_candidate": "fedc8cb2e859c2f5e3ba49a110b94d1764b02413",
+  "integrated_main": "4fec686d766c1d2513f4db0b685e6d3924e14a9d",
+  "external_delivery": {
+    "1435": "4fec686d766c1d2513f4db0b685e6d3924e14a9d",
+    "note": "Current main already contains the production1420 route and resource recovery. This PR adds only the remaining useful query/strict/chrome/geometry details."
+  },
+  "runtime_sha256": {
+    "apps/electron/src/renderer/atoms/panel-stack.ts": "b669a999d338e69c5d6975e322aaab1170638141351696d05d219d786239259c",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "a29699db1fdeda3205113d7256c174e7ebf29e3a1d7e96e3cdac15bb53ab8959",
+    "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx": "d555e4495a056f1aef25a2cc3802a5d30a708ca8b59f778879bb0e03d72aae42",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "6bb608937cf52749f2678b15fb9aa6bc769bf4a85f9b7a3f42becb069b15ae0c",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "ee59b524a80d15d7a2fdf86752a3915499ae8fd63755b96f25a829684f8a954b",
+    "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts": "de619e44feba3c52be583ea596643ddec212c900858eae21afc903134a38fccf",
+    "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011",
+    "apps/electron/src/renderer/lib/panel-url.ts": "e55219e5e87388ffae325273bd8fbcb18a7ca2fd8ad3242946c21da670fa2a51",
+    "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7"
+  },
+  "checks": {
+    "source_unit_matrix": {
+      "pass": 232,
+      "fail": 0,
+      "assertions": 1095,
+      "files": 16
+    },
+    "extra_units_and_all12_locales": {
+      "pass": 303,
+      "fail": 0,
+      "assertions": 6539,
+      "files": 90,
+      "overlap_with_source_matrix": true
+    },
+    "native_deep_link_query": {
+      "pass": 21,
+      "fail": 0,
+      "assertions": 33
+    },
+    "mounted_NavigationProvider_and_usePages_Chromium": {
+      "pass": 26,
+      "fail": 0,
+      "assertions": 74
+    },
+    "actual_MainContentPanel_source_functions_Chromium": {
+      "pass": 11,
+      "fail": 0,
+      "assertions": 23,
+      "includes": "real CloudRunSurfacePage,TerminalSurfacePage,lazyRoutePage,RouteErrorBoundary,usePanelResize,localStorage"
+    },
+    "current_chrome_and_query_controls": {
+      "pass": 152,
+      "fail": 0,
+      "assertions": 792,
+      "files": 8,
+      "overlap_with_previous": true
+    },
+    "exact_old_parser_negative": {
+      "pass": 1,
+      "fail": 114,
+      "restored_in_finally": true
+    },
+    "whole_Electron_types_before_main_merge": 0,
+    "whole_Electron_types_on_integrated_candidate": 0,
+    "renderer_build": 0
+  },
+  "logs_sha256": {
+    "route-family-unit.log": "8b47b84f3be7326dc4faab651543b28575f4fe78f3d955a0f843dfa4b2a377d4",
+    "route-family-extra-unit.log": "6dad269b46e1aa0005f6ea2af6346db2eb682ea79ab804ee38317e3a23e0b1fd",
+    "route-family-native-query-final.log": "c78ae78bf56e259e76390981b9f86197ded2856cfc8a42a0ffe0fa3a59c1525a",
+    "route-family-browser-prebundled.log": "3344429b1303def4eb6783725311810347dc0a1ed5d02b0e188a0547540360f2",
+    "route-family-main-browser-navigation-setup.log": "d3f7231401754e3cb65da25b8bdb4060c89afc56283b44275329865ec7d04a8d",
+    "route-family-current-chrome-controls.log": "1e69eb878b0ab528293661876ff6b00f4305a4a6f28912d6e3b08c563a1344d9",
+    "route-family-old-parser-negative.log": "c5e2ae658b8b6d341c6856d6cf693c0c48063e8626bafe8fd3ccc999e0da7012",
+    "route-family-types-current.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "route-family-integrated-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "route-family-build-current.log": "5f49d1d727d4d1b68822631f6522c619409ca4866aacea6b360b750d4c5c8e07"
+  },
+  "failure_history": [
+    "Cold Bun/esbuild fixture startup closed owned Chromium:26 failed; separately prebundled fixture then26 passed.",
+    "Initial Main fixture beforeEach5s hardwareGPU cold startup:0/11 plus setup error.",
+    "First successful Main lane10pass2fail because test-only browser reload inherited2s navigation timeout. Final harness uses30s navigation/setup, DOMContentLoaded; production timeouts and assertion2s unchanged;11 passed.",
+    "Original isolated native query invocation omitted ./, matched no tests; corrected exact path produced21/0."
+  ],
+  "documentation_disposition": "Original generated source archives retained at immutable original ancestry. Later independently merged main1435 archives are preserved unchanged; append integration receipts only.",
+  "remaining_distinct_source1417": "SkillInfo watcher/draft/save lease and failed workspace history reconciliation are owned by the next separate integration.",
+  "limits": [
+    "Controlled backend/IPC ports; mounted NavigationProvider executes actual source. Main fixture AST selects exact production functions, while unrelated page leaves/context/API are controlled.",
+    "No installed Electron, Windows, provider, hosted publication or complete UI-001 program acceptance inferred.",
+    "Qualified source whole type/build preceded an EOF-only blank-line trim in route-recovery.tsx. Integrated whole Electron types then passed on the recorded final production source.",
+    "Counts overlap; do not add them as unique tests."
+  ],
+  "original_branches_preserved": true
+}
