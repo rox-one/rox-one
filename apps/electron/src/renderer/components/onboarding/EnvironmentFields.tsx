@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { PremiumMenuSelect } from '@craft-agent/ui'
+import { PremiumMenuSelect } from '@rox/ui'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,7 +15,7 @@ import {
   type SttChoice,
   type SyncPurpose,
   type TtsChoice,
-} from '@craft-agent/shared/environment'
+} from '@rox/shared/environment'
 import { BrowserImportPreferences } from './BrowserImportPreferences'
 
 const MODEL_KEYS: Record<ModelPlacement, { label: string; desc: string }> = {

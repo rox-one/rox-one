@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import type { FeedItem, FeedSource } from '@craft-agent/shared/feed'
-import type { TeamActivityEvent } from '@craft-agent/shared/team'
+import type { FeedItem, FeedSource } from '@rox/shared/feed'
+import type { TeamActivityEvent } from '@rox/shared/team'
 import {
   attentionCount,
   buildTeamItems,

@@ -3,7 +3,7 @@ import { Socket } from 'node:net'
 import {
   PROTOCOL_VERSION,
   type MessageEnvelope,
-} from '@craft-agent/shared/protocol'
+} from '@rox/shared/protocol'
 import { encodeFrame, FrameDecoder } from './framing.ts'
 
 const DEFAULT_TIMEOUT_MS = 30_000

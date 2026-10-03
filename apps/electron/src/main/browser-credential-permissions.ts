@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process'
 import { pbkdf2Sync } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { win32 } from 'node:path'
-import type { DiscoveredProfile } from '@craft-agent/shared/browser/profile-import'
+import type { DiscoveredProfile } from '@rox/shared/browser/profile-import'
 
 export type BrowserCredentialMechanism = 'macos-keychain' | 'linux-secret-service' | 'windows-dpapi'
 export type BrowserCredentialAccessFailure = {

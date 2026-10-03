@@ -9,14 +9,14 @@
  * never freezes. Settings + last status live in `<workspace>/.rox/`.
  */
 
-import { getActiveWorkspace, getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { getActiveWorkspace, getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   discoverForeignSessionsAsync,
   loadForeignImportRegistry,
   persistForeignSession,
   type ForeignAutoImportStatus,
   type ForeignIndexEntry,
-} from '@craft-agent/shared/sessions'
+} from '@rox/shared/sessions'
 import type { HandlerDeps } from '../handler-deps'
 import { readAutoImportFile, writeAutoImportFile } from './session-foreign-auto-import-storage'
 

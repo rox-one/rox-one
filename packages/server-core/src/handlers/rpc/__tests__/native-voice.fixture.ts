@@ -5,10 +5,10 @@ import { createHash } from 'node:crypto'
 import { NativeAuthority } from '../../../authority/native-authority'
 import { WsRpcServer } from '../../../transport/server'
 import { WsRpcClient } from '../../../transport/client'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { registerVoiceHandlers } from '../voice'
 import type { HandlerDeps } from '../../handler-deps'
-import type { TranscribeAdapter, TranscribeInput } from '@craft-agent/shared/voice'
+import type { TranscribeAdapter, TranscribeInput } from '@rox/shared/voice'
 import type { RpcServer } from '../../../transport'
 
 const configDir = process.env.CRAFT_CONFIG_DIR!

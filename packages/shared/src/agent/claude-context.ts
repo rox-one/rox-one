@@ -24,7 +24,7 @@ import type {
   ApiTestResult,
   SourceConfig,
   DeveloperFeedback,
-} from '@craft-agent/session-tools-core';
+} from '@rox/session-tools-core';
 import {
   validateConfig,
   validateSource,
@@ -50,6 +50,10 @@ import {
 } from '../sources/storage.ts';
 import type { FolderSourceConfig, LoadedSource as SharedLoadedSource } from '../sources/types.ts';
 import { getSourceCredentialManager } from '../sources/index.ts';
+import { isMultiHeaderCredential } from '../sources/credential-manager.ts';
+import { getSourceServerBuilder } from '../sources/server-builder.ts';
+import { buildRuntimeBuiltinMcpConfig, getBuiltinMcpReadiness, isManagedBuiltinMcpSource } from '../sources/builtin-mcp.ts';
+import { getToolchain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
 import {
   inferGoogleServiceFromUrl,
   inferSlackServiceFromUrl,
@@ -65,7 +69,7 @@ import { updatePreferences as updatePreferencesImpl } from '../config/preference
 import { resolveConfigDir } from "../config/paths.ts"
 
 // Re-export types that may be needed by consumers
-export type { SessionToolContext, SessionToolCallbacks } from '@craft-agent/session-tools-core';
+export type { SessionToolContext, SessionToolCallbacks } from '@rox/session-tools-core';
 
 /**
  * Options for creating a Claude context
@@ -173,9 +177,71 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
   };
 
   // MCP validation
+  const resolveStdioMcpSourceConfig: NonNullable<SessionToolContext['resolveStdioMcpSourceConfig']> = async source => {
+    const sharedSource: SharedLoadedSource = {
+      // source_test may probe a disabled source before offering auto-enable.
+      config: { ...source, enabled: true } as unknown as FolderSourceConfig,
+      guide: null,
+      folderPath: getSourcePath(workspacePath, source.slug),
+      workspaceRootPath: workspacePath,
+      workspaceId,
+    };
+    const managed = isManagedBuiltinMcpSource(sharedSource.config);
+    const manager = getSourceCredentialManager();
+    const [token, credential] = managed
+      ? await Promise.all([manager.getToken(sharedSource), manager.getApiCredential(sharedSource)])
+      : [null, null];
+    const readiness = getBuiltinMcpReadiness(sharedSource.config, {
+      token, credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
+    });
+    if (readiness.status !== 'ready') return { config: null, error: readiness.reason || 'MCP source setup is incomplete.' };
+    const built = getSourceServerBuilder().buildMcpServer(sharedSource, token, credential);
+    if (built?.type !== 'stdio') return { config: null, error: 'No stdio command configured for this MCP source.' };
+    return { config: built };
+  };
+
+  const resolveHttpMcpSourceConfig: NonNullable<SessionToolContext['resolveHttpMcpSourceConfig']> = async source => {
+    const config = { ...source, enabled: true } as unknown as FolderSourceConfig;
+    if (config.type !== 'mcp' || config.mcp?.transport === 'stdio' || !isManagedBuiltinMcpSource(config)) return undefined;
+    try {
+      const sharedSource: SharedLoadedSource = {
+        config, guide: null,
+        folderPath: getSourcePath(workspacePath, source.slug),
+        workspaceRootPath: workspacePath,
+        workspaceId,
+      };
+      const manager = getSourceCredentialManager();
+      const [token, credential] = await Promise.all([manager.getToken(sharedSource), manager.getApiCredential(sharedSource)]);
+      const builtinOptions = { token, credential: credential && isMultiHeaderCredential(credential) ? credential : undefined };
+      const readiness = getBuiltinMcpReadiness(config, builtinOptions);
+      if (readiness.status !== 'ready') return { config: null, error: readiness.reason || 'MCP source setup is incomplete.' };
+      const built = getSourceServerBuilder().buildMcpServer(sharedSource, token, credential);
+      if (!built || built.type === 'stdio') return { config: null, error: 'Could not resolve the remote MCP endpoint. Check source setup and credentials.' };
+      const runtimeMcp = buildRuntimeBuiltinMcpConfig(config, builtinOptions).mcp;
+      return {
+        config: {
+          url: built.url,
+          transport: built.type,
+          headers: built.headers,
+          authType: runtimeMcp?.authType,
+          accessToken: runtimeMcp?.authType === 'oauth' || runtimeMcp?.authType === 'bearer' ? token ?? undefined : undefined,
+        },
+      };
+    } catch {
+      return { config: null, error: 'Could not resolve MCP runtime configuration. Check source setup and credentials.' };
+    }
+  };
+
   const validateStdioMcpConnection = async (config: StdioMcpConfig): Promise<StdioValidationResult> => {
     try {
-      const result = await validateStdioMcpConnectionImpl(config);
+      const inherited = await withToolchainPathPrefix({ ...process.env });
+      const env = { ...config.env };
+      if (config.env?.PATH === undefined && inherited.PATH !== undefined) env.PATH = inherited.PATH;
+      let command = config.command;
+      if (/^(?:npx|bun|uvx)$/.test(command) && config.env?.PATH === undefined) {
+        command = await getToolchain().resolver.findExecutable(command).catch(() => null) ?? command;
+      }
+      const result = await validateStdioMcpConnectionImpl({ ...config, command, env });
       return {
         success: result.success,
         error: result.error,
@@ -184,8 +250,8 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
         serverName: result.serverInfo?.name,
         serverVersion: result.serverInfo?.version,
       };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Validation failed' };
+    } catch {
+      return { success: false, error: 'MCP validation failed. Check source setup and credentials.' };
     }
   };
 
@@ -260,6 +326,8 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
     },
 
     // MCP validation
+    resolveStdioMcpSourceConfig,
+    resolveHttpMcpSourceConfig,
     validateStdioMcpConnection,
     validateMcpConnection,
 

@@ -1,11 +1,11 @@
-import { authorizeMeetingAction, type MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import { authorizeMeetingAction, type MeetingGrant } from '@rox/shared/meeting-agents'
 import {
   appendMeetingAudio,
   pauseMeetingCaptureSession,
   startMeetingCaptureSession,
   stopMeetingCaptureSession,
   type MeetingCaptureSession,
-} from '@craft-agent/shared/voice'
+} from '@rox/shared/voice'
 
 export type CaptureHost = {
   permissionGranted: boolean

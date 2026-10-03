@@ -37,10 +37,10 @@ import {
   Workflow,
 } from 'lucide-react'
 import type { LocalMeeting } from '../../../shared/meetings-local'
-import type { NoteSummary } from '@craft-agent/shared/protocol'
-import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
+import type { NoteSummary } from '@rox/shared/protocol'
+import { isInternalAgentSession } from '@rox/shared/sessions/internal-prompts'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
-import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
+import type { AgentBudgetSnapshot } from '@rox/shared/agent'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { parseAutomationsConfig, type AutomationListItem } from '@/components/automations/types'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'

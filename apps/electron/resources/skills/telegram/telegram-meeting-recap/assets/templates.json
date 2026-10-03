@@ -1,0 +1,7 @@
+[
+  {
+    "id": "recap-sections",
+    "title": "Meeting recap sections",
+    "sections": ["Context", "Decisions", "Action items", "Open questions", "Suggested next message"]
+  }
+]

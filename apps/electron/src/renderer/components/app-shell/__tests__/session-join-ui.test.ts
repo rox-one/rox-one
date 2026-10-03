@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import ts from 'typescript'
 import * as React from 'react'
-import { buildInviteUrl } from '@craft-agent/shared/collaboration'
+import { buildInviteUrl } from '@rox/shared/collaboration'
 import * as sharing from '../../../lib/session-sharing'
 import { routes } from '../../../lib/navigate'
 

@@ -10,7 +10,7 @@
 
 import i18n from 'i18next'
 import { toast } from 'sonner'
-import { openExternalUrl } from '@craft-agent/ui'
+import { openExternalUrl } from '@rox/ui'
 import { WsRpcClient } from '../../../electron/src/transport/client'
 import { buildClientApi } from '../../../electron/src/transport/build-api'
 import { CHANNEL_MAP } from '../../../electron/src/transport/channel-map'

@@ -1,7 +1,7 @@
 import { BrowserWindow } from 'electron'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
-import { setZenShellPreference } from '@craft-agent/shared/config'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
+import { setZenShellPreference } from '@rox/shared/config'
 import { parseZenShellPatch } from '../../shared/shell-appearance'
 import { peekZenShellSnapshotForWindow, reapplyZenShellOnAllWindows } from '../shell-material'
 import type { HandlerDeps } from './handler-deps'
@@ -21,7 +21,7 @@ export const GUI_HANDLED_CHANNELS = [
 export function registerSettingsGuiHandlers(server: RpcServer, deps: HandlerDeps): void {
   // Set keep awake while running setting (requires Electron power-manager)
   server.handle(RPC_CHANNELS.power.SET_KEEP_AWAKE, async (_ctx, enabled: boolean) => {
-    const { setKeepAwakeWhileRunning } = await import('@craft-agent/shared/config/storage')
+    const { setKeepAwakeWhileRunning } = await import('@rox/shared/config/storage')
     const { setKeepAwakeSetting } = await import('../power-manager')
     // Save to config
     setKeepAwakeWhileRunning(enabled)
@@ -30,14 +30,14 @@ export function registerSettingsGuiHandlers(server: RpcServer, deps: HandlerDeps
   })
 
   // Set network proxy settings (requires Electron session proxy)
-  server.handle(RPC_CHANNELS.settings.SET_NETWORK_PROXY, async (_ctx, settings: import('@craft-agent/shared/config/types').NetworkProxySettings) => {
+  server.handle(RPC_CHANNELS.settings.SET_NETWORK_PROXY, async (_ctx, settings: import('@rox/shared/config/types').NetworkProxySettings) => {
     const { updateConfiguredProxySettings } = await import('../network-proxy')
     await updateConfiguredProxySettings(settings)
   })
 
   // Set default zoom level and apply immediately to all open Electron windows
   server.handle(RPC_CHANNELS.appearance.SET_DEFAULT_ZOOM_LEVEL, async (_ctx, level: number) => {
-    const { setDefaultZoomLevel, getDefaultZoomLevel } = await import('@craft-agent/shared/config/storage')
+    const { setDefaultZoomLevel, getDefaultZoomLevel } = await import('@rox/shared/config/storage')
     setDefaultZoomLevel(level)
     const zoomFactor = getDefaultZoomLevel() / 100
     for (const win of BrowserWindow.getAllWindows()) {

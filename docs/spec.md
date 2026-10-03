@@ -4,7 +4,14 @@ Owner: PR scout/integration worker in isolated `codex/integrate-session-ux-20261
 
 This slice repairs reproducible integration blockers: fixture enrollments must succeed at runtime and narrow their nullable result; native session fixtures must use an actual attachment type; browser model controls must import the pure public model catalog directly so configuration barrels cannot bring filesystem-based managed skill code into the renderer. Acceptance requires relevant native isolation/persistence tests, complete package types and WebUI/Electron renderer builds. Secret credential reads and ASR recording uploads also use one bounded, no-follow opened-descriptor read with before/opened/after/current BigInt file identity checks. Callers must reject links/replacements/growth before publishing keys or uploading foreign bytes. The missing Inbox/Security states require all 22 keys in every current locale catalog. CodeQL findings and real-provider/native hardware acceptance are separate and must not be inferred from build success. `.codegraph/` is absent in this checkout; targeted source/dataflow reads supplied the import evidence.
 
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
+
 # Unified Rox / Conation / RMA / Golden Gate behavioral specification
+
+## Desktop runtime 0.11.8 delivery — 2026-10-03
+
+The bounded OMP runtime, transcript/branch recovery, ROX context migration, bundled skills and macOS/Windows release work is tracked in [runtime specification](runtime-0.11.8-spec.md) and [parallel plan](runtime-0.11.8-plan.md). This delivery has its own source, native acceptance and release evidence; the broader program below retains its current acceptance state.
+
 
 ## Current target and execution scope — 2026-10-03
 
@@ -418,3 +425,37 @@ The [original spec](integration-history/pr1321/spec.md) remains preserved. Curre
 ## Parallel release integration — 2026-10-03
 
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [spec](integration-history/remote-main-3dd1f98b7/spec.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
+
+
+## Branch integration request — 2026-10-03
+
+The authorized outcome is an exhaustive inventory of the live `rox-one/rox-one` branches against main, followed by separate pull requests and integration of substantive additions. All original branches and unrelated working changes must remain intact. The initial authoritative main is `76228cc33e44518e5fab5e59f5c754f4051d1e8c`; GitHub listed 665 live branches. Ahead counts alone are insufficient because the repository uses squash merges.
+
+Classify source changes using exact ancestry, patch equivalence, related merged PR ancestry, and current source semantics. Superseded recovery workflows and obsolete wording tests must not revert current behavior. Each integration candidate requires relevant checks on its exact delivered revision. Existing native/production acceptance boundaries remain in force.
+
+For the runtime lane, preserve the release branch's OMP recovery, mandatory policy, context migration and skill provenance. The exact-head validation failure comprised ten TypeScript errors in three gstack regression fixtures. Correct the mocks and fixture argument validation while retaining every security assertion; exercise the focused suites, full repository validation, runtime regressions and remote CI. Security scan findings require source-based disposition; a passing analyzer job does not prove no findings.
+
+Runtime security follow-up: gbrain sync/dream markers serialize acquisition, stale takeover and release through an exclusive mutation directory. A stale marker owned by a live PID is retained. Only the exact UUID generation acquired by this process can be removed; publication uses exclusive private files. A crashed mutation guard remains conservative rather than being reclaimed automatically.
+
+
+## Recovered Compound native license evidence — 2026-10-03
+
+Branch audit against main `76228cc33e44518e5fab5e59f5c754f4051d1e8c` found the unmerged native slice in `feat/rox-compound-workspace-20260930` commit `d141e962185fd808f177a2d01760b211f47f0832`. The canonical WP48 backend was already present; the Settings consumer, strict native evidence schemas and typed license audit operation in the existing encrypted Project intent slot were absent. This recovery retains those additions and their original source-bound proofs without replacing newer main contracts.
+
+Acceptance for this integration is the existing canonical authority and credential storage, strict workspace/window scope, one discriminated pending intent, explicit retry/cancel, receipt and independent event replay plus live readback before intent deletion, uncertainty after a lost response, rejection of unknown formats and preservation of the Project intent path. Private evidence retracts when authority or workspace changes. All user-facing labels retain locale parity. No installed identity, license, authorization or release configuration is changed by integration.
+
+Original proof artifacts and the Compound handoff remain historical evidence tied to their recorded September revisions. They do not establish current native pixels, legal approval, complete WP48 acceptance or full program DoD. Current verification is recorded in [the recovery receipt](integration-history/compound-d141e962/recovery-verification.json); delivery is tracked separately; actual native Settings product acceptance remains a separate gate.
+
+
+## Cursor Cloud headless server setup (2026-10-03)
+
+Port the useful environment setup from `cursor/cloud-agent-env-setup-2fc0` onto
+current ROX. Preparation must terminate, use Bun 1.3.14 and the frozen lockfile,
+and build the session MCP/server subprocess helpers. The terminal must bind the
+server to loopback, isolate development context by default, persist each new
+bearer token with mode 0600, and never print its value. Installation or entropy
+failure must stop before subsequent work. Hosted Cursor execution and provider
+credentials require their own verification. See `docs/cursor-cloud-server.md`.
+
+
+The canonical and portable gstack browser clients must send authenticated commands only to their selected literal loopback endpoint. HTTP redirects must fail through the existing non-2xx error contract without forwarding the command body or capability. Real HTTP 307/308 negative controls cover both same-origin and another-port destinations; normal authenticated POST commands retain their arguments and tab scope.

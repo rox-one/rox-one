@@ -12,7 +12,7 @@
  */
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 
 const CRAFT_CONFIG_DIR = process.env.CRAFT_CONFIG_DIR
 if (!CRAFT_CONFIG_DIR || !CRAFT_CONFIG_DIR.startsWith('/tmp/')) {

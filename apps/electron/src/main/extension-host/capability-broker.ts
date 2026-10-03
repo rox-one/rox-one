@@ -29,7 +29,7 @@ import {
   accountToCredentialId,
   type CredentialId,
   type StoredCredential,
-} from '@craft-agent/shared/credentials'
+} from '@rox/shared/credentials'
 
 export const DEFAULT_CAPABILITY_TTL_MS = 15 * 60 * 1000
 export const SECRETS_USE_PREFIX = 'secrets.use:'

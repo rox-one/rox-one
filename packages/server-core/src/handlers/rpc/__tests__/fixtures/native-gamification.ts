@@ -8,8 +8,8 @@ import { registerGamificationHandlers } from '../../gamification'
 import { registerNotesHandlers } from '../../notes'
 import { NativeJournal } from '../../../../authority/native-journal'
 import { CollaborationSyncService } from '../../../../collaboration/sync-service'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { awardXp, loadGamificationState } from '@craft-agent/shared/gamification'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { awardXp, loadGamificationState } from '@rox/shared/gamification'
 import type { HandlerDeps } from '../../../handler-deps'
 
 const checks: Array<{ name: string; passed: boolean }> = []

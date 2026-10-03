@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { LOCALE_REGISTRY } from '@craft-agent/shared/i18n'
+import { LOCALE_REGISTRY } from '@rox/shared/i18n'
 import {
   createOpenClawHostControlConfirmation,
   isAllowedControlUiNavigation,

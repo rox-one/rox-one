@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { RPC_CHANNELS } from '../../../shared/types'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 
 type HandlerFn = (ctx: { clientId: string }, ...args: any[]) => Promise<any> | any
@@ -8,9 +8,9 @@ type HandlerFn = (ctx: { clientId: string }, ...args: any[]) => Promise<any> | a
 const getDefaultThinkingLevelMock = mock(() => 'think')
 const setDefaultThinkingLevelMock = mock((_level: string) => true)
 
-const actualConfigExports = await import('@craft-agent/shared/config')
+const actualConfigExports = await import('@rox/shared/config')
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   ...actualConfigExports,
   getPreferencesPath: () => '/tmp/preferences.json',
   getSessionDraft: () => null,
@@ -71,7 +71,7 @@ describe('settings default thinking RPC handlers', () => {
       } as unknown as HandlerDeps['oauthFlowStore'],
     }
 
-    const { registerSettingsHandlers } = await import('@craft-agent/server-core/handlers/rpc/settings')
+    const { registerSettingsHandlers } = await import('@rox/server-core/handlers/rpc/settings')
     registerSettingsHandlers(server, deps)
   })
 

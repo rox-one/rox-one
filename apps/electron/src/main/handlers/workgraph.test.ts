@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { HandlerFn, RequestContext, RpcHandlerOptions, RpcServer } from '@craft-agent/server-core/transport'
-import type { ConnectionRecord, WorkGraphHealth, WorkGraphKernel } from '@craft-agent/server-core/workgraph'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { HandlerFn, RequestContext, RpcHandlerOptions, RpcServer } from '@rox/server-core/transport'
+import type { ConnectionRecord, WorkGraphHealth, WorkGraphKernel } from '@rox/server-core/workgraph'
 
 import { HANDLED_CHANNELS, registerWorkGraphHandlers } from './workgraph'
 

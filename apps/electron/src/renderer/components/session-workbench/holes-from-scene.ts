@@ -1,4 +1,4 @@
-import { extractSessionVariables, type SessionScene } from '@craft-agent/core/mindmap'
+import { extractSessionVariables, type SessionScene } from '@rox/core/mindmap'
 import type { PlaybookHole } from './fan-out-jobs'
 
 export function holesFromScene(scene: SessionScene): PlaybookHole[] {

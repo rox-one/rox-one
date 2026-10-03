@@ -2,7 +2,7 @@
  * Pure mapping between JMAP objects and the renderer-facing mail contract,
  * plus local-mode guards. No I/O (unit-tested).
  */
-import type { JmapAddress, JmapEmailFull, JmapEmailSummary, JmapMailbox } from '@craft-agent/shared/mail'
+import type { JmapAddress, JmapEmailFull, JmapEmailSummary, JmapMailbox } from '@rox/shared/mail'
 import type { MailAddress, MailAttachment, MailFolder, MailFolderRole, MailMessage, MailSummary } from '../../shared/mail-local'
 
 const ROLES: ReadonlySet<string> = new Set(['inbox', 'sent', 'drafts', 'archive', 'junk', 'trash'])

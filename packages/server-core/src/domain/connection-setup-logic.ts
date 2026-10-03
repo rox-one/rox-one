@@ -5,14 +5,14 @@
  * No dependency on ipcMain, sessionManager, credential manager, or file I/O.
  */
 
-import type { ModelDefinition } from '@craft-agent/shared/config/models'
+import type { ModelDefinition } from '@rox/shared/config/models'
 import {
   type LlmConnection,
   type CustomEndpointApi,
   getDefaultModelsForConnection,
   getDefaultModelForConnection,
   resolveMidStreamBehavior,
-} from '@craft-agent/shared/config'
+} from '@rox/shared/config'
 
 // ============================================================
 // Error Parsing

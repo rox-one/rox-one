@@ -1,9 +1,9 @@
 /** Repeated history/bookmark import is bound to one explicitly authorized profile. */
 import { chmodSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { atomicWriteFileSync } from '@craft-agent/shared/utils/files'
-import type { BrowserDataAutoStatus } from '@craft-agent/shared/browser/profile-import'
-import type { BrowserImportCategory } from '@craft-agent/shared/environment'
+import { atomicWriteFileSync } from '@rox/shared/utils/files'
+import type { BrowserDataAutoStatus } from '@rox/shared/browser/profile-import'
+import type { BrowserImportCategory } from '@rox/shared/environment'
 
 interface Workspace { id: string; rootPath: string }
 interface StoredData {

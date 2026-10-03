@@ -32,7 +32,7 @@ import {
   type MindMapGraph,
   type MindMapNodeId,
   type PinnedMap,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 import {
   activeMentionQuery,
   addComment,
@@ -42,7 +42,7 @@ import {
   suggestMentions,
   TEAM_FLAG,
   type TeamVersionedTarget,
-} from '@craft-agent/shared/team'
+} from '@rox/shared/team'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { toast } from 'sonner'
 import { navigate, routes } from '@/lib/navigate'

@@ -20,20 +20,20 @@ import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { CredentialId } from '@craft-agent/shared/credentials'
-import { loadSourceConfig, saveSourceConfig, type FolderSourceConfig } from '@craft-agent/shared/sources'
-import { createWorkspaceAtPath, loadWorkspaceConfig, saveWorkspaceConfig } from '@craft-agent/shared/workspaces'
-import type { HandlerFn, RequestContext, RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { CredentialId } from '@rox/shared/credentials'
+import { loadSourceConfig, saveSourceConfig, type FolderSourceConfig } from '@rox/shared/sources'
+import { createWorkspaceAtPath, loadWorkspaceConfig, saveWorkspaceConfig } from '@rox/shared/workspaces'
+import type { HandlerFn, RequestContext, RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 import { KnowledgeConnectionsStore } from '../../../knowledge'
 import { registerSourcesHandlers } from '../sources'
-import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import { resolveConfigDir } from '@rox/shared/config/paths'
 
 // Credential id string ↔ in-memory store key (`type::workspaceId::sourceId`).
 const credentials = new Map<string, { value: string }>()
 
-mock.module('@craft-agent/shared/credentials', () => ({
+mock.module('@rox/shared/credentials', () => ({
   getCredentialManager: () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
@@ -52,7 +52,7 @@ const mockWorkspaces = [
   { id: 'ws-active', name: 'ws-active', rootPath: '' },
 ]
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   getWorkspaceByNameOrId: (nameOrId: string) =>
     mockWorkspaces.find((w) => w.id === nameOrId || w.name === nameOrId) ?? null,
   getWorkspaces: () => [...mockWorkspaces],
@@ -70,6 +70,7 @@ function writeConfigDefaults(): void {
 }
 
 function createHarness() {
+  const mcpRetries: string[] = []
   const handlers = new Map<string, HandlerFn>()
   const server: RpcServer = {
     handle(channel, handler) { handlers.set(channel, handler) },
@@ -79,7 +80,7 @@ function createHarness() {
     findClientsWithCapability() { return [] },
   }
   const deps: HandlerDeps = {
-    sessionManager: {} as HandlerDeps['sessionManager'],
+    sessionManager: { retryBuiltinMcpSources: (workspaceId: string) => { mcpRetries.push(workspaceId) } } as HandlerDeps['sessionManager'],
     oauthFlowStore: {} as HandlerDeps['oauthFlowStore'],
     platform: {
       appRootPath: '/',
@@ -97,7 +98,7 @@ function createHarness() {
     if (!handler) throw new Error(`No handler for ${channel}`)
     return handler({ clientId: 'c1', workspaceId: null } as unknown as RequestContext, ...args)
   }
-  return { handlers, invoke }
+  return { handlers, invoke, mcpRetries }
 }
 
 beforeEach(() => {
@@ -110,6 +111,18 @@ beforeEach(() => {
 })
 
 describe('sources:saveCredentials — knowledge-connection fallback (P2-12)', () => {
+  it('rechecks built-in MCP after credential rotation without claiming a connection', async () => {
+    writeConfigDefaults()
+    const rootPath = mockWorkspaces[0]!.rootPath
+    createWorkspaceAtPath(rootPath, 'Credentials workspace')
+    const { invoke, mcpRetries } = createHarness()
+    await invoke(RPC_CHANNELS.sources.SAVE_CREDENTIALS, 'ws-owner', 'firecrawl-mcp', 'first-key')
+    await invoke(RPC_CHANNELS.sources.SAVE_CREDENTIALS, 'ws-owner', 'firecrawl-mcp', 'replacement-key')
+    expect(mcpRetries).toEqual(['ws-owner', 'ws-owner'])
+    expect(loadSourceConfig(rootPath, 'firecrawl-mcp')?.connectionStatus).toBe('untested')
+    expect(readFileSync(join(rootPath, 'sources', 'firecrawl-mcp', 'config.json'), 'utf8')).not.toContain('replacement-key')
+  })
+
   it('stores the bearer token under the workspace encoded in the record credentialRef, not the active workspace', async () => {
     // Connection was registered while ws-owner was the active workspace;
     // the caller now invokes the save plumbing from ws-active.
@@ -171,6 +184,17 @@ describe('sources:get — local default source seeding', () => {
       'applications',
       'telegram-support',
       'craft-agents-docs',
+      'deepwiki',
+      'context7',
+      'firecrawl-mcp',
+      'playwright',
+      'telegram-mcp',
+      'codegraph',
+      'qmd',
+      'weaviate',
+      'qdrant',
+      'mem0',
+      ...(process.platform === 'win32' ? ['everything-mcp', 'windows-commander', 'windows-mcp'] : []),
     ])
     expect(loadSourceConfig(rootPath, 'exa')?.enabled).toBe(false)
     expect(loadSourceConfig(rootPath, 'firecrawl')?.enabled).toBe(false)

@@ -3,9 +3,9 @@ import {
   getDefaultModelsForConnection,
   type LlmConnection,
 } from '@config/llm-connections'
-import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
+import { ROX_VISIBLE_TERMS } from '@rox/shared/identity'
 import type { ModelDefinition } from '@config/models'
-import { connectionUsesBuiltInRoxModels, isRoxPublicModelId, isRoxLegacyInternalModelId, toRoxSelectableModelDefinitions } from '@craft-agent/shared/config/rox-public-models'
+import { connectionUsesBuiltInRoxModels, isRoxPublicModelId, isRoxLegacyInternalModelId, toRoxSelectableModelDefinitions } from '@rox/shared/config/rox-public-models'
 
 /** Older installs may still send the five bundled endpoints before startup migration runs. */
 export function getConnectionModelsForPicker(connection: Pick<LlmConnection, 'slug' | 'name' | 'providerType' | 'models' | 'defaultModel' | 'baseUrl' | 'piAuthProvider'>): Array<string | ModelDefinition> {

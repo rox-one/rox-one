@@ -21,9 +21,9 @@
 
 import { RPC_CHANNELS, type SiyuanSurfaceState } from '../../shared/types'
 import type { EmbeddedBoundsRect } from '../browser-pane-manager'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
-import { bumpKnowledgeMetric } from '@craft-agent/server-core/knowledge'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
+import { bumpKnowledgeMetric } from '@rox/server-core/knowledge'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import type { HandlerDeps } from './handler-deps'
 import { ensureKnowledgeEngineAuthCookie, KNOWLEDGE_ENGINE_PARTITION } from '../knowledge-engine-session'
 

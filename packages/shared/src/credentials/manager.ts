@@ -19,7 +19,7 @@ import {
   decodeCredentialEnvelope,
   decodeCredentialEnvelopeOrLegacy,
 } from './envelope.ts';
-import type { CredentialKind } from '@craft-agent/core/platform';
+import type { CredentialKind } from '@rox/core/platform';
 import { createHash } from 'node:crypto';
 
 /** Authenticated caller key; only the server supplies this namespace. */

@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { LocalMeetingStore } from '../local-store'
-import type { NormalizedTranscript } from '@craft-agent/shared/voice'
+import type { NormalizedTranscript } from '@rox/shared/voice'
 
 const directories: string[] = []
 afterEach(() => directories.splice(0).forEach((dir) => rmSync(dir, { recursive: true, force: true })))

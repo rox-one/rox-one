@@ -1,6 +1,6 @@
 /**
  * KnowledgeBridgeService — the spec-05 (K-05) mutation pipeline as an
- * effect-driver over the pure engine (`@craft-agent/core/knowledge`
+ * effect-driver over the pure engine (`@rox/core/knowledge`
  * mutations.ts): bridge executes the engine's TransitionEffect plan objects
  * against provider/store/audit/push, never re-implementing status logic.
  *
@@ -36,7 +36,7 @@
  *
  * Persistence: ONE canonical record shape lives in core
  * (`MutationProposalRecord`, canonical home packages/core/src/knowledge/mutations.ts;
- * '@craft-agent/shared/protocol' re-exports it). File-level extras (updatedAt,
+ * '@rox/shared/protocol' re-exports it). File-level extras (updatedAt,
  * preStateAttributes, appliedHash, rolledBackAt) are optional fields on that record —
  * the store's fail-soft parse preserves them verbatim. The wire `diff` is a
  * unified-diff STRING (KnowledgeDiff.tsx renders it); the engine's structured
@@ -44,19 +44,19 @@
  * rebuildable from (preState, ops), so a cold record loses nothing. Mapping at this
  * boundary (`toWireRecord`/`toCoreRecord`) now only renders/rebuilds that diff.
  */
-import { CodedError } from '@craft-agent/shared/protocol'
+import { CodedError } from '@rox/shared/protocol'
 import type {
   KnowledgeChangedPayload,
   MutationInput as WireMutationInput,
   MutationProposalStatus,
-} from '@craft-agent/shared/protocol'
-import assertKnowledgeActionAllowed from '@craft-agent/shared/agent/knowledge-permissions'
+} from '@rox/shared/protocol'
+import assertKnowledgeActionAllowed from '@rox/shared/agent/knowledge-permissions'
 import type {
   KnowledgeAction,
   KnowledgeActionContext,
-} from '@craft-agent/shared/agent/knowledge-permissions'
-import { getPermissionMode } from '@craft-agent/shared/agent/mode-manager'
-import type { PermissionMode } from '@craft-agent/shared/agent/mode-types'
+} from '@rox/shared/agent/knowledge-permissions'
+import { getPermissionMode } from '@rox/shared/agent/mode-manager'
+import type { PermissionMode } from '@rox/shared/agent/mode-types'
 import {
   MutationValidationError,
   PartialApplyError,
@@ -71,7 +71,7 @@ import {
   transition,
   validateOpsWhitelist,
   validateProposalOps,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 import type {
   ApplyResult as CoreApplyResult,
   KnowledgeProvider,
@@ -81,7 +81,7 @@ import type {
   MutationProposal as CoreProposal,
   ProposalDiffDocument,
   TransitionEffect,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 
 import { KnowledgeAuditLog } from './knowledge-audit'
 import { getSharedAutomationLoopGuard, type AutomationLoopGuard } from './automation-loop-guard'

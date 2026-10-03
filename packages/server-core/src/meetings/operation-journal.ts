@@ -4,7 +4,7 @@
  * meeting snapshot. commandId includes verification so a failed apply then a
  * later verified apply is not swallowed as a duplicate.
  */
-import type { OperationResultV2 } from '@craft-agent/core/meetings'
+import type { OperationResultV2 } from '@rox/core/meetings'
 import {
   appendMeetingJournalEvents,
   type AppendJournalEventsResult,

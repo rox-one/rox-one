@@ -1,0 +1,115 @@
+{
+  "files": [
+    {
+      "path": "tests/macro-integration/ui/wp-01-electron.test.ts",
+      "baseSha256": "c48e7fbd7004b4a69b742fba1819f9075b6a10048a9c44dbdcbd883c29e4e447",
+      "resultSha256": "dde4c8f70608c82dded287afad2d54618f75668ee16348b6eb6ae72c69804988",
+      "patchSha256": "2e9922ebb723215370bf9399c8c018d5770c979bd8cae45c7d4308547b6e988c",
+      "originalExpectLines": 130,
+      "originalExpectLinesUnchanged": true,
+      "originalExpectLinesSha256": "1901586205d5c8bf301d87d8b76848bb527c42662daf3eb159bddd959178c36a"
+    },
+    {
+      "path": "tests/macro-integration/ui/wp-01-offline-electron.test.ts",
+      "baseSha256": "0a7fa041ef1dce9cdce28dd9b45a772caeec6de7dd07bb7ff081d71c919771b8",
+      "resultSha256": "3da8de63a4a9a4e4333c68fd00693e2c29bc044f0ab5f73f46261d9266bcc03d",
+      "patchSha256": "63286fb6d7eeed2f09a034bcc2257be13bd7d0e03858cc270ad9f326cec39b57",
+      "originalExpectLines": 92,
+      "originalExpectLinesUnchanged": true,
+      "originalExpectLinesSha256": "213fee4d06dcd448e1754410ed048656746318cca96c3fda6809bd07647842f5"
+    }
+  ],
+  "patchSha256": "68fcca10941edebcf102131df2c4396091b102f99f7c528ef98efc7f36a77433",
+  "patchBytes": 6916,
+  "bindings": [
+    {
+      "directory": "/tmp/rox-wp01-native-current-diagnostic/theme-input",
+      "path": "apps/electron/src/renderer/components/settings/SettingsMenuSelect.tsx",
+      "sha256": "438a010a56955e75386fcc0d621eecd200f0148ec4ab4db59b55dd40e584cda4",
+      "hashMatches": true
+    },
+    {
+      "directory": "/tmp/rox-wp01-native-current-diagnostic/theme-input",
+      "path": "apps/electron/src/renderer/components/settings/SettingsRow.tsx",
+      "sha256": "0482f747b84cf955c9eefaed4f5fe4238e2bdb245d76e71ca2e3e57f27546780",
+      "hashMatches": true
+    },
+    {
+      "directory": "/tmp/rox-wp01-native-current-diagnostic/theme-input",
+      "path": "packages/shared/src/config/storage.ts",
+      "sha256": "2e49b5c3050b0093fa063630a115632c33b9d4d2e787f2d2d51dcb049530030c",
+      "hashMatches": true
+    },
+    {
+      "directory": "/tmp/rox-wp01-native-current-diagnostic/theme-input",
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "sha256": "0be1900b2a24664985f6ac85b1d79cc399839e2064c789c45e96b91c37bf9c8f",
+      "hashMatches": true
+    },
+    {
+      "directory": "/tmp/rox-wp01-native-current-diagnostic/theme-input",
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "sha256": "af2e23a96c704b2ff613741ceee36b5f9b068408e9bc546cd8c6968b0e4d1c25",
+      "hashMatches": true
+    },
+    {
+      "directory": "/tmp/rox-wp01-native-current-diagnostic/theme-input",
+      "path": "tests/macro-integration/ui/wp-01-electron.test.ts",
+      "sha256": "c48e7fbd7004b4a69b742fba1819f9075b6a10048a9c44dbdcbd883c29e4e447",
+      "hashMatches": true
+    },
+    {
+      "directory": "/tmp/rox-wp01-native-current-diagnostic/theme-input",
+      "path": "tests/macro-integration/ui/wp-01-offline-electron.test.ts",
+      "sha256": "0a7fa041ef1dce9cdce28dd9b45a772caeec6de7dd07bb7ff081d71c919771b8",
+      "hashMatches": true
+    },
+    {
+      "directory": "/tmp/rox-wp01-native-current-diagnostic/theme-input",
+      "path": "apps/electron/src/renderer/lib/local-storage.ts",
+      "sha256": "5631e6120670357dd365d0511811d596727c27ea201a9ef41c971f6f9ff4e473",
+      "hashMatches": true
+    },
+    {
+      "directory": "/tmp/rox-wp01-native-current-diagnostic/theme-input/preset-readback",
+      "path": "packages/shared/src/config/theme.ts",
+      "sha256": "b5c40518496ffb83f6b017f06e89704c74347ebbaa93e2e796b9765d51ae2d08",
+      "hashMatches": true
+    },
+    {
+      "directory": "/tmp/rox-wp01-native-current-diagnostic/theme-input/preset-readback",
+      "path": "apps/electron/resources/themes/pierre.json",
+      "sha256": "dd1a2ac59e1873d69dc8fd31a56aa6621cacfdf294c3a12a664cb055e74b6539",
+      "hashMatches": true
+    },
+    {
+      "directory": "/tmp/rox-wp01-native-current-diagnostic/theme-input/preset-readback",
+      "path": "apps/electron/resources/themes/haze.json",
+      "sha256": "0bd21718d83bde05ca346facbe88b0ce745f6c6b33bd7f196d5b6f27e39f28c8",
+      "hashMatches": true
+    }
+  ],
+  "choice": {
+    "field": "StoredConfig.colorTheme",
+    "value": "pierre",
+    "supportedModes": [
+      "light",
+      "dark"
+    ],
+    "scenic": false,
+    "reason": "existing unmodified preset supports both modes; no default getter skip"
+  },
+  "seedReceipt": "owned theme-fixture-proof.json verifies actual stored config and production getColorTheme",
+  "nativeReceipt": "each launch records actual app config and requires null workspace theme; root dataset must settle to pierre with no scenic",
+  "workspaceInheritance": "required by actual native readback; not assumed from unexported workspace creation defaults",
+  "originalSpacePixelAndNoDisclosureContractsPreserved": true,
+  "productionThemeBehaviorChanged": false,
+  "nativeWindowMutationAdded": false,
+  "rootWriteOrNativeLaunchByWorker": false,
+  "validation": {
+    "parse": "pass",
+    "nativeExecution": "not-run-root-owned",
+    "independentPhysicalApply": "pass",
+    "whitespace": "pass"
+  }
+}

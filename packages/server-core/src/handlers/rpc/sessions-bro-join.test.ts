@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { BroInviteStore, parseInviteUrl, type JoinResult, type RoxAccount } from '@craft-agent/shared/collaboration'
-import { RPC_CHANNELS, type BroInviteCommandResult } from '@craft-agent/shared/protocol'
+import { BroInviteStore, parseInviteUrl, type JoinResult, type RoxAccount } from '@rox/shared/collaboration'
+import { RPC_CHANNELS, type BroInviteCommandResult } from '@rox/shared/protocol'
 import {
   BroInviteService,
   resetBroInviteServiceForTests,

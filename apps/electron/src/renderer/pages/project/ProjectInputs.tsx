@@ -17,8 +17,8 @@ import {
 } from '@/components/ui/styled-dropdown'
 import { cn } from '@/lib/utils'
 import { navigate, routes } from '@/lib/navigate'
-import { roadmapId, type RoadmapInput, type RoadmapInputKind } from '@craft-agent/shared/projects/roadmap'
-import type { ProjectAsset } from '@craft-agent/shared/projects/types'
+import { roadmapId, type RoadmapInput, type RoadmapInputKind } from '@rox/shared/projects/roadmap'
+import type { ProjectAsset } from '@rox/shared/projects/types'
 import { IconButton, TextButton } from './roadmap-ui'
 
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024

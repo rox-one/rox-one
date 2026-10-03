@@ -24,7 +24,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { randomUUID } from 'node:crypto'
-import type { KnowledgeRef } from '@craft-agent/core/knowledge'
+import type { KnowledgeRef } from '@rox/core/knowledge'
 
 /** Retention thresholds, AUDIT_LIMITS-style: pruned lazily inside create(). */
 export const SNAPSHOT_LIMITS = {

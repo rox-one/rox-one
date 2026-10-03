@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import type { Subprocess } from 'bun'
 import WebSocket from 'ws'
-import { PROTOCOL_VERSION } from '@craft-agent/shared/protocol'
+import { PROTOCOL_VERSION } from '@rox/shared/protocol'
 
 const REPO_ROOT = process.env.ROX_SERVER_SMOKE_REPO_ROOT
   ? resolve(process.env.ROX_SERVER_SMOKE_REPO_ROOT)

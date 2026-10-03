@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { emptyMeeting } from '@craft-agent/core/meetings'
+import { emptyMeeting } from '@rox/core/meetings'
 import { queryMeetings } from '../queries.ts'
 
 describe('meeting queries (RMA-I012)', () => {

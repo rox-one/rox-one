@@ -1,0 +1,12 @@
+[
+  {
+    "id": "availability-check",
+    "title": "Availability check",
+    "text": "Hi {{first_name}}, thanks for the note. I can take a look and get back to you by {{date}}."
+  },
+  {
+    "id": "handoff-reply",
+    "title": "Handoff reply",
+    "text": "Hi {{first_name}}, looping in {{colleague_name}} who can help with {{topic}}."
+  }
+]

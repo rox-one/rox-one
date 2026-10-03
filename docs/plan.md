@@ -1,3 +1,5 @@
+
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
 ## Session UX branch integration plan — 2026-10-03
 
 1. PR scout owns exhaustive fresh open PR/check/head inventory, retained in `/tmp/rox-branch-integration-20261003/pr-scout.json`; complete.
@@ -7,6 +9,11 @@
 5. Root owns serial release/session reconciliation, security disposition and authorized main integration; no branch deletion. Product/provider/hardware acceptance retains its existing pending state.
 
 # September program implementation plan
+
+## Desktop runtime 0.11.8 delivery — 2026-10-03
+
+The bounded OMP runtime, transcript/branch recovery, ROX context migration, bundled skills and macOS/Windows release work is tracked in [runtime specification](runtime-0.11.8-spec.md) and [parallel plan](runtime-0.11.8-plan.md). This delivery has its own source, native acceptance and release evidence; the broader program below retains its current acceptance state.
+
 
 ## Current execution policy — 2026-10-03
 
@@ -541,3 +548,46 @@ The [original plan](integration-history/pr1321/plan.md) remains preserved. Curre
 ## Parallel release integration — 2026-10-03
 
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [plan](integration-history/remote-main-3dd1f98b7/plan.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
+
+
+## Parallel branch integration — 2026-10-03
+
+| Task | Owner | Input | Dependency | Verification |
+| --- | --- | --- | --- | --- |
+| Exhaustive live branch inventory and ordered integration | Lead | 665 GitHub branch refs; initial main `76228cc33` | None | Current remote refs, exact ancestry/patch/source evidence, final readback |
+| Historical branch equivalence and useful absent configuration | Historical worker | Branches before 2026-09-25 | Frozen inventory | Patch/merge-tree comparison, superseding merged PR ancestry, relevant local checks |
+| Recent feature recovery | Recent worker | Nine Sep29–30 candidate branches | Frozen inventory | Current-source comparison and Compound WP48 domain checks |
+| Session UI and app completion integration | PR worker | PR1391 at `ddf97e3d` | Runtime ordering where shared files overlap | Fixture types, renderer build, focused domain/browser checks |
+| Runtime validation recovery | Lead | PR1392 at `29e86bcc` | None | Three gstack suites, pinned Bun1.3.14 full validation/runtime regressions, remote checks |
+
+Workers use isolated new branches. The lead merges accepted PRs sequentially and refreshes main before each integration. No original branch is deleted or rewritten; the original release checkout contains an unrelated in-progress merge and is preserved. Review/code/CI failures are repaired within scope. External Vercel account blocking is reported separately from source validation.
+
+Runtime follow-up gate: marker contention, replacement generation, symlink refusal, live stale owner and private permissions are exercised by the actual imported vendor helper. Update every portable provenance SHA and keep remote security closure explicitly unverified until the new scan is read back.
+
+
+## Compound native license recovery — 2026-10-03
+
+| Task | Owner | Dependency | Verification / delivery |
+|---|---|---|---|
+| Classify all nine assigned recent branches | recent_features | Frozen origin/main and full remote inventory | Patch equivalence, merged PR history and current source; eight already integrated |
+| Recover the absent WP48 native slice | recent_features | Original d141e962 and canonical backend already in main | Isolated codex/recover-compound-native-license-20261003; clean cherry-pick, original proof/history preserved |
+| Exercise native intent and affected contracts | recent_features | Own frozen dependencies and Bun1.3.14 | Strict DTO/negative cases, real PostgreSQL HTTP/WS, encrypted SIGKILL/restart/replay, Project neighbor, locale/channel parity, consumed package types |
+| Review and deliver the separate recovery PR | recent_features / root | Focused checks and exact remote head readback | Worker publishes PR; root serially reviews/merges and verifies resulting main |
+| Full native Settings and release acceptance | Existing program owners | Actual Electron interaction and native/license/release prerequisites | Original full acceptance remains pending; recovered source tests do not close it |
+
+
+## Cursor Cloud headless server setup (2026-10-03)
+
+Owner: historical-branch integration worker; integration owner: branch audit lead.
+Dependencies: current server entry point and helper build commands at main
+`76228cc33e44518e5fab5e59f5c754f4051d1e8c`.
+
+1. Adapt `.cursor/environment.json`, install and startup scripts to ROX — complete.
+2. Validate JSON and shell syntax, frozen preparation twice and actual helper builds — complete.
+3. Exercise authenticated RPC ping, graceful stop, restart, token permissions and
+   token rotation, plus failed install/entropy negative controls — complete.
+4. Deliver a separate PR preserving the original branch; main integration remains
+   owned by the lead. Hosted Cursor provisioning remains unverified.
+
+
+The recent worker owns the gstack command redirect prerequisite in an isolated security worktree. Input is the three identical shipped BrowseClient copies at runtime revision `05f1e3741`; dependencies are the existing bearer/port validation and portable provenance catalogs. Verify real HTTP redirects fail before any destination request, direct commands retain authentication, and patch hashes match all parent and portable notices. The lead integrates the committed prerequisite into the runtime PR and retains remote CodeQL closure as a separate pending gate.

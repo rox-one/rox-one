@@ -8,7 +8,7 @@ import {
   queuedResult,
   type Rox2Entity,
   type Rox2Result,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const SESSIONS_SURFACE_ID = 'sessions' as const
 

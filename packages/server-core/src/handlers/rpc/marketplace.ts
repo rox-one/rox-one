@@ -7,12 +7,12 @@
  * binary/npm artifact is actually installed (progress via toolchain:statusChanged).
  */
 
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { loadStoredConfig, saveConfig, type StoredConfig } from '@craft-agent/shared/config'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
+import { loadStoredConfig, saveConfig, type StoredConfig } from '@rox/shared/config'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { getToolchainManager } from '@craft-agent/shared/toolchain-runtime'
-import type { ToolName } from '@craft-agent/shared/toolchain'
+import { getToolchainManager } from '@rox/shared/toolchain-runtime'
+import type { ToolName } from '@rox/shared/toolchain'
 import {
   createConfigMetaStore,
   createFileStatsStore,
@@ -29,15 +29,15 @@ import {
   type MarketplaceFetch,
   type MarketplaceMeta,
   type MarketplaceStatsFetch,
-} from '@craft-agent/shared/marketplace'
-import { getExtensionStateStore, seedDefaultMarketplaceInstalls } from '@craft-agent/shared/extensions'
-import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+} from '@rox/shared/marketplace'
+import { getExtensionStateStore, seedDefaultMarketplaceInstalls } from '@rox/shared/extensions'
+import { resolveConfigDir } from '@rox/shared/config/paths'
 import {
   isClaimableLive,
   rpcMarketplaceActResult,
   rpcMarketplaceListResult,
   rpcMarketplaceReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.marketplace.CATALOG,
   RPC_CHANNELS.marketplace.STATS,

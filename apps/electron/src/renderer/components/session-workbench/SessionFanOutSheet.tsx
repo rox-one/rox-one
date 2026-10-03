@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { FANOUT_MAX, FANOUT_PARALLEL } from '@craft-agent/core/mindmap'
-import type { SessionScene } from '@craft-agent/core/mindmap'
+import { FANOUT_MAX, FANOUT_PARALLEL } from '@rox/core/mindmap'
+import type { SessionScene } from '@rox/core/mindmap'
 import {
   Drawer,
   DrawerContent,

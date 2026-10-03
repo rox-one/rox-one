@@ -1,8 +1,8 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { resolve } from 'node:path'
-import type { BrowserCredentialHost, BrowserCredentialAccess } from '@craft-agent/shared/browser/browser-credential-host'
-import type { DiscoveredProfile, ProtectedCredentialImport } from '@craft-agent/shared/browser/profile-import'
-import { sealNativeBrowserCredentials } from '@craft-agent/shared/browser/profile-native-credentials'
+import type { BrowserCredentialHost, BrowserCredentialAccess } from '@rox/shared/browser/browser-credential-host'
+import type { DiscoveredProfile, ProtectedCredentialImport } from '@rox/shared/browser/profile-import'
+import { sealNativeBrowserCredentials } from '@rox/shared/browser/profile-native-credentials'
 
 /** Decryption and sealing stay inside the privileged host process. */
 export async function prepareBrowserCredentialImport(input: {

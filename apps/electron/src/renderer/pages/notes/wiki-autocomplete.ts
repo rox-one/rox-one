@@ -1,4 +1,4 @@
-import { aliasesFromProperties } from '@craft-agent/shared/knowledge/vault-insights'
+import { aliasesFromProperties } from '@rox/shared/knowledge/vault-insights'
 
 export type WikiLinkNote = {
   id: string

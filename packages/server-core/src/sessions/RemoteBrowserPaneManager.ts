@@ -13,8 +13,8 @@
  * See docs/adr-transport-locality.md for the locality boundary definition.
  */
 
-import { CodedError } from '@craft-agent/shared/protocol'
-import type { BrowserInstanceInfo } from '@craft-agent/shared/protocol'
+import { CodedError } from '@rox/shared/protocol'
+import type { BrowserInstanceInfo } from '@rox/shared/protocol'
 import type {
   IBrowserPaneManager,
   BrowserScreenshotOptions,

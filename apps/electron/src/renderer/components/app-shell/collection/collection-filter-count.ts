@@ -1,4 +1,4 @@
-import type { CollectionFilters } from '@craft-agent/shared/sessions/collection'
+import type { CollectionFilters } from '@rox/shared/sessions/collection'
 
 /** Count selected values (not just dimensions) for the compact filter badge. */
 export function activeFilterCount(filters: CollectionFilters): number {

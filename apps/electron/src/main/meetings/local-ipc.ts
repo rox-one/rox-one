@@ -4,9 +4,9 @@
  */
 import { app, BrowserWindow, dialog, ipcMain, session, shell, systemPreferences, webContents } from 'electron'
 import { join } from 'node:path'
-import { CONFIG_DIR, getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { getServerServiceKey } from '@craft-agent/shared/config/server-services'
-import { DeepgramTranscriptionAdapter } from '@craft-agent/shared/voice'
+import { CONFIG_DIR, getWorkspaceByNameOrId } from '@rox/shared/config'
+import { getServerServiceKey } from '@rox/shared/config/server-services'
+import { DeepgramTranscriptionAdapter } from '@rox/shared/voice'
 import { MEETINGS_LOCAL_IPC as C, type LocalMeetingPatch, type LocalTranscriptSegmentUpdate } from '../../shared/meetings-local'
 import { detectEngine } from './local-asr'
 import { IMPORTABLE_AUDIO_EXTENSIONS, isMeetingId } from './local-model'

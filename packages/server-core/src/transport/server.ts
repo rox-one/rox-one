@@ -24,10 +24,10 @@ import {
   type MessageEnvelope,
   type PushTarget,
   type ErrorCode,
-} from '@craft-agent/shared/protocol'
+} from '@rox/shared/protocol'
 import type { RpcServer, HandlerFn, RequestContext, RpcHandlerOptions, WorkspaceAuthorityAuthentication, WorkspaceAuthoritySession } from './types'
 import { serializeEnvelope, deserializeEnvelope } from './codec'
-import { createLogger } from '@craft-agent/shared/utils'
+import { createLogger } from '@rox/shared/utils'
 import { CLIENT_OPEN_FILE_DIALOG } from './capabilities'
 import {
   createRpcCallCounterFromEnv,

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { createSessionDraftNode, serializeSessionDraftGraph, parseSessionDraftGraph } from '../draft-nodes'
 import { draftGraphToSpec, specToDraftGraph } from '../workflow-document'
 import { isSessionMapEmpty } from '../map-empty-actions'
-import { createCanvasEdge, createCanvasNode, createDraftSpec, exportSpec, importSpec } from '@craft-agent/shared/workflows'
+import { createCanvasEdge, createCanvasNode, createDraftSpec, exportSpec, importSpec } from '@rox/shared/workflows'
 
 const editorSource = readFileSync(join(__dirname, '..', 'SessionWorkflowEditor.tsx'), 'utf8')
 

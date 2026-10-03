@@ -1,6 +1,6 @@
 {
-  "name": "@craft-agent/cli",
-  "version": "0.11.7",
+  "name": "@rox/cli",
+  "version": "0.11.8",
   "license": "Apache-2.0",
   "description": "Terminal client for Craft Agent server",
   "type": "module",
@@ -14,8 +14,8 @@
     "test": "bun test src/"
   },
   "dependencies": {
-    "@craft-agent/shared": "workspace:*",
-    "@craft-agent/server-core": "workspace:*"
+    "@rox/shared": "workspace:*",
+    "@rox/server-core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.2",

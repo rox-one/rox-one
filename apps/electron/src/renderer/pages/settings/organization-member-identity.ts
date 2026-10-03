@@ -1,4 +1,4 @@
-import type { OrgMember } from '@craft-agent/shared/orgs'
+import type { OrgMember } from '@rox/shared/orgs'
 
 export interface OrgMemberIdentityLabels {
   userId: string

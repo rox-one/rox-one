@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import type { BulkUpdateSessionsPatch } from '@craft-agent/shared/protocol/dto'
-import { assertValidBulkLabelPatch, resolveBulkLabels } from '@craft-agent/shared/sessions/collection'
+import type { BulkUpdateSessionsPatch } from '@rox/shared/protocol/dto'
+import { assertValidBulkLabelPatch, resolveBulkLabels } from '@rox/shared/sessions/collection'
 
 describe('bulk label patches', () => {
   it('adds labels without removing target-specific labels', () => {

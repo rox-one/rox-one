@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { createPanelRegistry } from '@craft-agent/core/platform'
+import { createPanelRegistry } from '@rox/core/platform'
 import {
   CONATION_MAIL_PANEL_ID,
   attemptConationChannelPost,

@@ -10,8 +10,8 @@ import { registerSourcesHandlers } from '../../sources'
 import { registerWorkspaceCoreHandlers } from '../../workspace'
 import { registerServerHandlers } from '../../server'
 import { projectNativeWorkspaceEvent } from '../../native-session-scope'
-import { RPC_CHANNELS, type Session, type SessionEvent } from '@craft-agent/shared/protocol'
-import type { AnnotationV1 } from '@craft-agent/core/types'
+import { RPC_CHANNELS, type Session, type SessionEvent } from '@rox/shared/protocol'
+import type { AnnotationV1 } from '@rox/core/types'
 import type { RequestContext } from '../../../../transport/types'
 
 const directory = realpathSync(process.env.ROX_CONFIG_DIR!)

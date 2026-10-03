@@ -14,11 +14,11 @@
 
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { parseExtensionManifest } from '@craft-agent/shared/extensions'
+import { parseExtensionManifest } from '@rox/shared/extensions'
 import { assertPathAllowlisted, resolveSandboxRoots } from '../extension-host/path-allowlist'
-import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import { resolveConfigDir } from '@rox/shared/config/paths'
 import { RPC_CHANNELS } from '../../shared/types'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import {
   getExtensionHostManager,
@@ -28,9 +28,9 @@ import {
   getUrlAllowlist,
   setUrlAllowlist,
 } from '../extension-host/extension-url-allowlist'
-import type { ExtensionHostStatus } from '@craft-agent/shared/extensions'
-import {getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { loadRawWorkspacePermissions } from '@craft-agent/shared/agent'
+import type { ExtensionHostStatus } from '@rox/shared/extensions'
+import {getWorkspaceByNameOrId } from '@rox/shared/config'
+import { loadRawWorkspacePermissions } from '@rox/shared/agent'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.extensionHost.STATUS,

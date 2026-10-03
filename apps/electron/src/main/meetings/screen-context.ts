@@ -1,5 +1,5 @@
-import { bindSurfaceContext, type Rox2Context, type SurfaceContextInput } from '@craft-agent/core/rox2'
-import { authorizeMeetingAction, type MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import { bindSurfaceContext, type Rox2Context, type SurfaceContextInput } from '@rox/core/rox2'
+import { authorizeMeetingAction, type MeetingGrant } from '@rox/shared/meeting-agents'
 
 export function selectedScreenContext(input: SurfaceContextInput & { previewSurfaceId: string }) {
   if (input.surfaceId !== input.previewSurfaceId) {

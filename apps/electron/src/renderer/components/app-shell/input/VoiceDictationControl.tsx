@@ -7,7 +7,7 @@ import { isMac } from '@/lib/platform'
 import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import type { VoicePrefs } from '@craft-agent/shared/voice'
+import type { VoicePrefs } from '@rox/shared/voice'
 
 interface VoiceDictationControlProps {
   disabled?: boolean

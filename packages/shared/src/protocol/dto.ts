@@ -2,8 +2,8 @@
  * Server DTO types — data shapes used by RPC handlers and SessionManager.
  *
  * These were previously in apps/electron/src/shared/types.ts.
- * Extracted here so handler code in @craft-agent/server-core can import
- * from @craft-agent/shared/protocol without reaching into the app.
+ * Extracted here so handler code in @rox/server-core can import
+ * from @rox/shared/protocol without reaching into the app.
  */
 
 import type {
@@ -14,8 +14,8 @@ import type {
   AnnotationV1,
   SessionMemoryMode,
   PermissionRequest as BasePermissionRequest,
-} from '@craft-agent/core/types'
-import type { KnowledgeRef } from '@craft-agent/core/knowledge'
+} from '@rox/core/types'
+import type { KnowledgeRef } from '@rox/core/knowledge'
 import type { PermissionMode } from '../agent/mode-types'
 import type { ThinkingLevel } from '../agent/thinking-levels'
 import type { CustomEndpointConfig, LlmProviderType } from '../config/llm-connections'
@@ -27,7 +27,7 @@ import type {
 } from '../agent/index'
 
 // Re-export generateMessageId for handler convenience
-export { generateMessageId } from '@craft-agent/core/types'
+export { generateMessageId } from '@rox/core/types'
 
 /** Persisted default configuration only; no account or credential readiness claim. */
 export interface StartupRuntimeSummary {
@@ -308,7 +308,7 @@ export interface TaskGenerateResult {
   orchestratorSessionId: string
   /** Slug of the authored spec; empty when generation produced an invalid spec. */
   slug: string
-  /** Parsed TaskSpec when valid (consumers cast to TaskSpec from @craft-agent/shared/tasks). */
+  /** Parsed TaskSpec when valid (consumers cast to TaskSpec from @rox/shared/tasks). */
   spec?: unknown
   /** The raw task.yaml the orchestrator produced — shown and editable in the editor. */
   yaml: string
@@ -352,7 +352,7 @@ export type WorkflowRunSnapshot = TaskRunSnapshotDto
 export interface TaskGetResult {
   slug: string
   validation: TaskValidationResultDto
-  /** The parsed TaskSpec (from @craft-agent/shared/tasks) when valid; consumers cast. */
+  /** The parsed TaskSpec (from @rox/shared/tasks) when valid; consumers cast. */
   spec?: unknown
   /** Active run snapshot when a runId was supplied and known; otherwise null. */
   run?: TaskRunSnapshotDto | null
@@ -924,7 +924,7 @@ export type {
   ApplyResult,
   MutationProposalRecord,
   MutationProposal,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 
 // ---------------------------------------------------------------------------
 // Knowledge publication pipeline — P4 wire types (spec 06). CANONICAL HOME:
@@ -944,7 +944,7 @@ export type {
   PublicationRecord,
   PublishPrepareResult,
   PublishApplyResult,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 
 // ---------------------------------------------------------------------------
 // LLM connection types
@@ -1147,6 +1147,9 @@ export interface GitBashStatus {
 }
 
 export interface UpdateInfo {
+  /** Manual metadata checks never download or install through electron-updater. */
+  updateMode?: 'automatic' | 'manual'
+  releaseUrl?: string
   available: boolean
   currentVersion: string
   latestVersion: string | null
@@ -1365,4 +1368,4 @@ export type CredentialMigrationResult<T> =
 
 /** Native document block projections carry the exact authority preconditions. */
 export type { GetBlockTreeRequest, BlockTreeResult, PreviewMarkerMappingRequest, NativeMarkerMappingPreview,
-  ApplyMarkerMappingRequest, MarkerMappingCommitResult } from '@craft-agent/server-core/docs/block-tree-service'
+  ApplyMarkerMappingRequest, MarkerMappingCommitResult } from '@rox/server-core/docs/block-tree-service'

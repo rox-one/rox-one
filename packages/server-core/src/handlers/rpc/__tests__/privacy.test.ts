@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { setOwnedRootAdapter } from '@craft-agent/shared/config'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { setOwnedRootAdapter } from '@rox/shared/config'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { HANDLED_CHANNELS, registerPrivacyHandlers } from '../privacy'
 
 type Handler = (ctx: { workspaceId?: string }, ...args: unknown[]) => Promise<unknown>

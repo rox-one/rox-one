@@ -16,8 +16,8 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import i18n from 'i18next'
-import { classifyFile, type FilePreviewType } from '@craft-agent/ui'
-import { classifyLinkPolicy } from '@craft-agent/shared/utils/url-safety'
+import { classifyFile, type FilePreviewType } from '@rox/ui'
+import { classifyLinkPolicy } from '@rox/shared/utils/url-safety'
 import { getLanguageFromPath } from '@/lib/file-utils'
 
 // ── Preview state types ────────────────────────────────────────────────────────

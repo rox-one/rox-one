@@ -3,20 +3,20 @@
  *
  * Handles workspace setup and configuration persistence.
  */
-import { getOnboardingAuthPayload, saveOmpRoxCredential } from '@craft-agent/shared/auth'
+import { getOnboardingAuthPayload, saveOmpRoxCredential } from '@rox/shared/auth'
 import {
   fetchRoxBalance,
   getRoxAuthBaseUrl,
   isRoxCloudRequired,
   startRoxDeviceFlow,
   waitForRoxDeviceApproval,
-} from '@craft-agent/shared/auth/rox-cloud'
-import { isSetupDeferred, setSetupDeferred } from '@craft-agent/shared/config/storage'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@craft-agent/shared/auth'
-import { validateMcpConnection } from '@craft-agent/shared/mcp'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcServer, RequestContext } from '@craft-agent/server-core/transport'
+} from '@rox/shared/auth/rox-cloud'
+import { isSetupDeferred, setSetupDeferred } from '@rox/shared/config/storage'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@rox/shared/auth'
+import { validateMcpConnection } from '@rox/shared/mcp'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { RpcServer, RequestContext } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handlers/handler-deps'
 import { RoxConnectFlow } from './rox-connect-flow'
 

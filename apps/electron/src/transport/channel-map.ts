@@ -291,6 +291,7 @@ export const CHANNEL_MAP = {
   getRoxCloudState: invoke(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE),
   clearRoxCloud: invoke(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD),
   getRoxBalance: invoke(RPC_CHANNELS.onboarding.GET_ROX_BALANCE),
+  ensureFirstSessionWelcome: invoke(RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION),
 
   // ChatGPT OAuth
   startChatGptOAuth: invoke(RPC_CHANNELS.chatgpt.START_OAUTH),
@@ -807,6 +808,10 @@ export const CHANNEL_MAP = {
   getSharedProject: invoke('domain.project.get'),
   createSharedProject: invoke('domain.project.createShared'),
   getSharedProjectEvents: invoke('domain.project.events'),
+  getLicenseComponents: invoke('domain.license.list'),
+  getLicenseComponent: invoke('domain.license.get'),
+  auditReleaseLicense: invoke('domain.audit.releaseLicense'),
+  getLicenseEvents: invoke('domain.license.events'),
   getProjects: invoke(RPC_CHANNELS.projects.GET),
   getProject: invoke(RPC_CHANNELS.projects.GET_ONE),
   createProject: invoke(RPC_CHANNELS.projects.CREATE),

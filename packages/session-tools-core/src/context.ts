@@ -156,7 +156,7 @@ export interface SessionToolContext {
   /** Unique session identifier */
   sessionId: string;
 
-  /** Absolute path to workspace folder (~/.craft-agent/workspaces/{id}) */
+  /** Absolute path to workspace folder (~/.rox/workspaces/{id}) */
   workspacePath: string;
 
   /** Path to sources folder within workspace */
@@ -263,6 +263,16 @@ export interface SessionToolContext {
   // MCP Connection Validation (for source_test)
   // ============================================================
 
+  /** Resolve host-managed paths and encrypted credentials in memory for a stdio probe. */
+  resolveStdioMcpSourceConfig?(source: SourceConfig): Promise<{ config: StdioMcpConfig | null; error?: string }>;
+
+  /**
+   * Resolve a managed remote endpoint and credentials in memory for a probe.
+   * Return undefined for nonmanaged sources to use ordinary credential handling.
+   * Runtime URLs and secrets must never be written into the source config.
+   */
+  resolveHttpMcpSourceConfig?(source: SourceConfig): Promise<{ config: HttpMcpConfig | null; error?: string } | undefined>;
+
   /**
    * Validate a stdio MCP connection by spawning the command.
    */
@@ -293,7 +303,7 @@ export interface SessionToolContext {
 
   /**
    * Submit developer feedback. Injected by each backend:
-   * - Claude: writes JSON files to ~/.craft-agent/feedback/
+   * - Claude: writes JSON files to ~/.rox/feedback/
    * - Codex/Pi: could send over IPC or write directly
    */
   submitFeedback?(feedback: import('./types.ts').DeveloperFeedback): void;
@@ -350,7 +360,7 @@ export interface SessionToolContext {
   resolveStatus?(status: string): ResolvedStatusResult;
 
   /**
-   * Create a Craft Agents Task (board card + task.yaml + orchestrator session)
+   * Create a ROX Task (board card + task.yaml + orchestrator session)
    * WITHOUT running it. Slug derivation, node synthesis, and spec validation
    * happen behind this callback where the task primitives live. Injected by
    * backend (SessionManager); undefined in backends that don't run alongside
@@ -452,7 +462,7 @@ export interface ResolvedLabelsResult {
   available: string[];
   /**
    * Optional per-input rejection reason, keyed by the original input string.
-   * Populated by `resolveSessionLabels()` from `@craft-agent/shared/labels`.
+   * Populated by `resolveSessionLabels()` from `@rox/shared/labels`.
    * Handlers use this to build clearer errors (e.g. "label X doesn't accept a value").
    */
   reasons?: Record<string, string>;
@@ -511,7 +521,7 @@ export interface CreateTaskResult {
 // ============================================================
 // Pages Types
 // ============================================================
-// Plain JSON shapes mirroring @craft-agent/core page types — duplicated here
+// Plain JSON shapes mirroring @rox/core page types — duplicated here
 // on purpose so this package stays dependency-free (same rule as
 // CreateTaskInput). The backend maps real PageConfig/LoadedPage onto these.
 

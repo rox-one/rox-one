@@ -27,7 +27,7 @@ import {
   type MilestoneStatus,
   type RoadmapMilestone,
   type RoadmapStage,
-} from '@craft-agent/shared/projects/roadmap'
+} from '@rox/shared/projects/roadmap'
 import { AddRow, AutoTextarea, CheckBox, EmptyLine, IconButton, InlineInput } from './roadmap-ui'
 
 export const STATUS_DOT: Record<MilestoneStatus, string> = {

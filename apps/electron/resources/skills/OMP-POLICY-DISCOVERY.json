@@ -1,0 +1,17 @@
+{
+  "nativeVersion": "18.4.12",
+  "rpc": "get_available_commands",
+  "success": true,
+  "userOverrideCommand": {
+    "name": "skill:alpha",
+    "description": "USER_OVERRIDE_SENTINEL_alpha",
+    "input": {
+      "hint": "arguments"
+    },
+    "source": "skill"
+  },
+  "disabledSkillCommandAbsent": true,
+  "disabledOriginalFilePreserved": true,
+  "noHostGlobalChanges": true,
+  "paidModelPromptSent": false
+}

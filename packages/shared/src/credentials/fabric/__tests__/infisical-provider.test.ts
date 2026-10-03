@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { CredentialRefRegistry } from '@craft-agent/core/platform';
-import type { ProviderLocator } from '@craft-agent/core/platform';
+import { CredentialRefRegistry } from '@rox/core/platform';
+import type { ProviderLocator } from '@rox/core/platform';
 import { credentialPayloadFingerprint } from '../../envelope.ts';
 import type { SecretProvider } from '../types.ts';
 import {

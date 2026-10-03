@@ -5,7 +5,7 @@
 import * as React from 'react'
 import { FileText, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { Rox2Context } from '@craft-agent/core/rox2'
+import type { Rox2Context } from '@rox/core/rox2'
 import { Button } from '@/components/ui/button'
 import {
   RIGHT_SESSION_PROMPT_TEST_ID,

@@ -1,7 +1,7 @@
 /**
  * Pure view-model helpers for the Задачи screen (no React, no window).
  */
-import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
+import { isInternalAgentSession } from '@rox/shared/sessions/internal-prompts'
 import {
   isOpenTask,
   matchesFilter,
@@ -9,7 +9,7 @@ import {
   type PersonalTask,
   type TaskFilterId,
   type TaskLink,
-} from '@craft-agent/core/tasks/personal'
+} from '@rox/core/tasks/personal'
 
 export type AgentViewId = 'board' | 'running' | 'review' | 'conductor'
 

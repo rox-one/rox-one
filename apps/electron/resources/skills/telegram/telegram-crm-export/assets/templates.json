@@ -1,0 +1,7 @@
+[
+  {
+    "id": "handoff-export",
+    "title": "BD handoff export",
+    "fields": ["peer", "company", "tags", "latestSummary", "openTasks", "recentMessages"]
+  }
+]

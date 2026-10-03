@@ -3,7 +3,7 @@ import { createServer, type Server } from 'node:net'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { PROTOCOL_VERSION, type MessageEnvelope } from '@craft-agent/shared/protocol'
+import { PROTOCOL_VERSION, type MessageEnvelope } from '@rox/shared/protocol'
 import { connectNativeSidecar } from '../client.ts'
 import { encodeFrame, FrameDecoder } from '../framing.ts'
 

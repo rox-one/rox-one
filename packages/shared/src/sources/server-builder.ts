@@ -20,6 +20,7 @@ import { isManagedBuiltinSource } from './builtin-sources.ts';
 import { createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk';
 import { debug } from '../utils/debug.ts';
 import { expandVars, resolveStdioConfig } from '../utils/paths.ts';
+import { buildRuntimeBuiltinMcpConfig, getBuiltinMcpReadiness } from './builtin-mcp.ts';
 
 /**
  * Standard error messages for server build failures.
@@ -91,7 +92,16 @@ export class SourceServerBuilder {
       return null;
     }
 
-    const mcp = source.config.mcp;
+    const builtinOptions = {
+      token,
+      credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
+    };
+    const readiness = getBuiltinMcpReadiness(source.config, builtinOptions);
+    if (readiness.status !== 'ready') {
+      debug(`[SourceServerBuilder] Source ${source.config.slug} cannot start: ${readiness.reason || readiness.status}`);
+      return null;
+    }
+    const mcp = buildRuntimeBuiltinMcpConfig(source.config, builtinOptions).mcp!;
 
     // Handle stdio transport (local subprocess servers)
     if (mcp.transport === 'stdio') {
@@ -351,6 +361,15 @@ export class SourceServerBuilder {
           if (config) {
             debug(`[SourceServerBuilder] Built MCP server for ${source.config.slug}`);
             mcpServers[source.config.slug] = config;
+          } else if (getBuiltinMcpReadiness(source.config, {
+            token,
+            credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
+          }).status !== 'ready') {
+            const readiness = getBuiltinMcpReadiness(source.config, {
+              token,
+              credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
+            });
+            errors.push({ sourceSlug: source.config.slug, error: readiness.reason || readiness.status });
           } else if (source.config.mcp?.transport !== 'stdio' && source.config.mcp?.authType !== 'none') {
             // Only report auth error for HTTP/SSE sources that need auth
             // Stdio sources don't need auth

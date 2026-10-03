@@ -10,7 +10,7 @@
  */
 
 import type { ToolArtifact, ToolKind, ToolName, ToolTier, ToolchainPlatform } from './types';
-import { OPENCLAW_NPM_PIN } from './npm-locks';
+import { ACPX_NPM_PIN, OPENCLAW_NPM_PIN } from './npm-locks';
 
 export interface ManifestToolData {
   version: string;
@@ -32,6 +32,7 @@ export interface ManifestToolData {
 
 /** Матрица «инструмент → целевые платформы». git — только win32-x64 (на mac/linux git системный). */
 export const TOOL_PLATFORM_MATRIX: Record<ToolName, ToolchainPlatform[]> = {
+  acpx: ['darwin-arm64', 'darwin-x64', 'linux-x64', 'win32-x64'],
   omp: ['darwin-arm64', 'darwin-x64', 'linux-x64', 'win32-x64'],
   python: ['darwin-arm64', 'darwin-x64', 'linux-x64', 'win32-x64'],
   node: ['darwin-arm64', 'darwin-x64', 'linux-x64', 'win32-x64'],
@@ -108,6 +109,45 @@ function localNativeBin(): ToolArtifact {
 }
 
 export const MANIFEST_DATA: Partial<Record<ToolName, ManifestToolData>> = {
+  // Upstream openclaw/acpx; tarball sha256 and npm sha512 integrity verified.
+  acpx: {
+    version: ACPX_NPM_PIN.version,
+    kind: 'npm',
+    tier: 'default-on',
+    displayName: 'acpx (ACP CLI)',
+    dependsOn: ['node'],
+    artifacts: {
+      'darwin-arm64': {
+        url: ACPX_NPM_PIN.tarballUrl,
+        sha256: ACPX_NPM_PIN.tarballSha256,
+        size: ACPX_NPM_PIN.tarballSize,
+        archive: 'tar.gz',
+        binPaths: ['bin/acpx'],
+      },
+      'darwin-x64': {
+        url: ACPX_NPM_PIN.tarballUrl,
+        sha256: ACPX_NPM_PIN.tarballSha256,
+        size: ACPX_NPM_PIN.tarballSize,
+        archive: 'tar.gz',
+        binPaths: ['bin/acpx'],
+      },
+      'linux-x64': {
+        url: ACPX_NPM_PIN.tarballUrl,
+        sha256: ACPX_NPM_PIN.tarballSha256,
+        size: ACPX_NPM_PIN.tarballSize,
+        archive: 'tar.gz',
+        binPaths: ['bin/acpx'],
+      },
+      'win32-x64': {
+        url: ACPX_NPM_PIN.tarballUrl,
+        sha256: ACPX_NPM_PIN.tarballSha256,
+        size: ACPX_NPM_PIN.tarballSize,
+        archive: 'tar.gz',
+        binPaths: ['bin/acpx.cmd'],
+      },
+    },
+  },
+
   // Rox CLI 18.4.12 — npm tarball @oh-my-pi/pi-coding-agent (платформонезависимый JS).
   // sha256 скачанного tarball; npm integrity (sha512) сверен.
   // installer генерирует Rox CLI лончеры и совместимые omp/omp.cmd алиасы.

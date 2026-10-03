@@ -1,5 +1,5 @@
 /* Tailwind v4 does not inherit @source across @import boundaries. The shared
-   @craft-agent/ui/styles import brings theme tokens, but utility generation
+   @rox/ui/styles import brings theme tokens, but utility generation
    must start in this file — same pattern as apps/webui/src/index.css. */
 @import "tailwindcss" source(none);
 @plugin "@tailwindcss/typography";
@@ -11,10 +11,10 @@
 @source "../../../../packages/ui/src/components/**/*.{ts,tsx,jsx}";
 @source "../../../../packages/ui/src/lib/**/*.{ts,tsx,jsx}";
 
-@import "@craft-agent/ui/styles";
+@import "@rox/ui/styles";
 
 /* Renderer-only tokens. Core color, font, elevation, and status tokens come
-   from @craft-agent/ui/styles so Electron and shared surfaces cannot diverge. */
+   from @rox/ui/styles so Electron and shared surfaces cannot diverge. */
 :root {
   --foreground-1\.5: color-mix(in oklch, var(--foreground) 1.5%, var(--background));
   --shadow-dragging:
@@ -230,7 +230,7 @@ html[data-shell-style="zen"][data-scenic] [data-shell-role="content"] {
 }
 
 /* Renderer-only utilities. Shared shadow and popover classes come from
-   @craft-agent/ui/styles. */
+   @rox/ui/styles. */
 @layer utilities {
   /* Bare `rounded` compiles to a literal .25rem (3.75px at the 15px root);
      pin it to the xs token so it sits on the 4/6/8/10/12 radius scale. */

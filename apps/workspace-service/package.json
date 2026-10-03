@@ -1,5 +1,5 @@
 {
-  "name": "@craft-agent/workspace-service", "version": "0.11.5", "private": true, "type": "module",
+  "name": "@rox/workspace-service", "version": "0.11.5", "private": true, "type": "module",
   "main": "src/index.ts", "bin": { "rox-workspace-service": "src/index.ts" },
   "scripts": {
     "start": "bun run src/index.ts",
@@ -8,7 +8,7 @@
     "test": "bun test ../../tests/macro-integration/wp-01-runtime.test.ts"
   },
   "dependencies": {
-    "@craft-agent/shared": "workspace:*", "@craft-agent/server-core": "workspace:*",
+    "@rox/shared": "workspace:*", "@rox/server-core": "workspace:*",
     "jose": "^6.0.0", "ws": "^8.19.0"
   }
 }

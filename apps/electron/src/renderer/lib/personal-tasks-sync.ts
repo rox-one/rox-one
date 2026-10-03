@@ -22,7 +22,7 @@ import {
   type PersonalTaskWrite,
   type PersonalTasksSnapshot,
   type VersionedPersonalTask,
-} from '@craft-agent/core/tasks/personal'
+} from '@rox/core/tasks/personal'
 
 /** Verbatim copy of the localStorage blob taken right before the one-time migration. Never deleted. */
 export const PERSONAL_TASKS_PRE_MIGRATION_KEY = 'rox.personal-tasks.v1.pre-migration'

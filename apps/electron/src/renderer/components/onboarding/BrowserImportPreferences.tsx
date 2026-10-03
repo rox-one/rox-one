@@ -3,7 +3,7 @@ import { Bookmark, Cookie, History, KeyRound, Puzzle } from 'lucide-react'
 import {
   BROWSER_IMPORT_CATEGORIES,
   type BrowserImportCategory,
-} from '@craft-agent/shared/environment'
+} from '@rox/shared/environment'
 import { cn } from '@/lib/utils'
 
 const CATEGORY_ROWS = {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { parseSessionMapPin, serializeSessionMapPin } from '@craft-agent/core/mindmap'
+import { parseSessionMapPin, serializeSessionMapPin } from '@rox/core/mindmap'
 import {
   classifyMapConnection,
   connectionRejectMessageKey,

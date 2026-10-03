@@ -25,8 +25,8 @@
  */
 import { join } from 'path'
 import { AuditLog, type AuditInput } from '../memory/AuditLog'
-import type { AuditEntry, AuditAction, AuditActor } from '@craft-agent/shared/memory/types'
-import type { MutationActor } from '@craft-agent/shared/protocol'
+import type { AuditEntry, AuditAction, AuditActor } from '@rox/shared/memory/types'
+import type { MutationActor } from '@rox/shared/protocol'
 
 /**
  * Audit action strings (K-05 §3.8, full list verbatim). The proposal.*

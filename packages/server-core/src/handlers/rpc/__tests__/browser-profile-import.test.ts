@@ -1,10 +1,10 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { summaryLeaksSecrets } from '@craft-agent/shared/browser/profile-import'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { summaryLeaksSecrets } from '@rox/shared/browser/profile-import'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   getWorkspaceByNameOrId: (id: string) => (id === 'missing' ? null : { id, rootPath: '/tmp/rox-issue15-ws' }),
   getWorkspaces: () => [],
 }))

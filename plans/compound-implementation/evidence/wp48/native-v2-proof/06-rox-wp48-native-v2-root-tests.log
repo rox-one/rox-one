@@ -1,0 +1,39 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-48-native-service.test.ts:
+(pass) actual checker persists review_required through canonical HTTP/WS, receipt and atomic reference event [3147.97ms]
+(pass) real member/outsider and forged actor/workspace/approval/path cannot cross Resource boundary [1837.91ms]
+(pass) concurrent idempotency, full listener restart and authorized event cursor recover one original receipt [1949.81ms]
+(pass) server-side read/write/action grants independently deny audit and retract evidence [1444.73ms]
+(pass) actual immutable review byte tamper yields genuine error with no aggregate/receipt/event effect [1278.88ms]
+(pass) stored receipt and independent event binding corruption are rejected instead of replayed as verification [1416.28ms]
+(pass) live persisted session expiry after checker admission rolls back all canonical effects [4418.62ms]
+(pass) schema downgrade and tampered independent event references cannot produce verified replay [1360.98ms]
+(pass) actual registered final archive mutation fails before any canonical effect [1167.51ms]
+(pass) coherently changed receipt timestamp and JSON still fail independent immutable event binding [1464.27ms]
+(pass) license integration preserves authenticated identity scope and rejects body/query additions [1074.56ms]
+(pass) private audit events never enter global project replay for owner or member while inbox delivery remains atomic [2054.47ms]
+(pass) malformed persisted license event UUID fails inbox effect and watermark transaction [1595.32ms]
+(pass) GET and LIST both reject each forged immutable Resource column over HTTP and WS [1505.49ms]
+(pass) strict common audit event proof rejects invalid digest, correlation and absent Resource across event/readback/receipt/inbox paths [1800.77ms]
+(pass) coherent projection evidence plus digest cannot invent reviewed clearance on GET or LIST [1672.24ms]
+(pass) actual Resource READ revoke after domain result and before HTTP/WS serialization retracts outbound private bytes [1590.07ms]
+(pass) actual encrypted license intent survives SIGKILL, offline new process and canonical service restart without another queue [14419.29ms]
+
+tests/macro-integration/wp-48-native-policy.test.ts:
+(pass) real Resource revoke and policy advancement reconcile fresh readback with exact historical command and event identity [2829.74ms]
+
+tests/macro-integration/wp-48-domain.test.ts:
+
+tests/macro-integration/wp-48-native.test.ts:
+(pass) native strict DTO keeps unknown legal clearance absent and preserves canonical artifact refs [1.24ms]
+(pass) native parser rejects actor/path/approval forgery, malformed scope, duplicate resources and unversioned command [1.08ms]
+(pass) native applied claim requires exact original command, triad, receipt, CAS and matching independent readback [5.65ms]
+(pass) native readback reconciles current policy advancement while retaining every immutable audit and receipt field [1.63ms]
+(pass) native event replay only accepts resource-bound reference payload without paths or private titles [4.93ms]
+(pass) native event proof finds the exact original receipt beyond first page and rejects substitutions, cycles and exhaustion [58.89ms]
+
+ 25 pass
+ 0 fail
+ 296 expect() calls
+Ran 25 tests across 4 files. [48.62s]

@@ -1,4 +1,4 @@
-import type { RoadmapAiResponse } from '@craft-agent/shared/projects/roadmap-ai'
+import type { RoadmapAiResponse } from '@rox/shared/projects/roadmap-ai'
 
 /** Display only effective provenance returned by the authenticated RPC. */
 export function RoadmapModelResult({ result, t }: {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { pbkdf2Sync } from 'node:crypto'
-import type { DiscoveredProfile } from '@craft-agent/shared/browser/profile-import'
+import type { DiscoveredProfile } from '@rox/shared/browser/profile-import'
 import {
   createBrowserCredentialPermissionAdapter, runNativeCredentialCommand,
   type NativeCredentialCommand, type BrowserCredentialConfirmation,

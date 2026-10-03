@@ -40,7 +40,7 @@ mock.module('electron', () => ({
   systemPreferences: { getUserDefault: () => macReduceTransparency },
 }))
 mock.module('os', () => ({ release: () => build }))
-mock.module('@craft-agent/shared/config', () => ({ isZenShellEnabled: () => zenEnabled, getZenShellMaterialPreference: () => 'system' }))
+mock.module('@rox/shared/config', () => ({ isZenShellEnabled: () => zenEnabled, getZenShellMaterialPreference: () => 'system' }))
 mock.module('../logger', () => ({ windowLog: { warn() {} } }))
 
 const policy = await import('../shell-material')

@@ -3,7 +3,7 @@ import {
   isUiVerified,
   type OperationReceipt,
   type OperationResultV2,
-} from '@craft-agent/core/meetings'
+} from '@rox/core/meetings'
 import {
   reachableFrom,
   topologicalOrder,
@@ -13,7 +13,7 @@ import {
   type WorkflowArtifact,
   type WorkflowNodeRunStatus,
   type WorkflowRunMode,
-} from '@craft-agent/shared/workflows'
+} from '@rox/shared/workflows'
 import { isLoopbackProvider, isLoopbackTransport } from './fakes.ts'
 import { createInMemoryReceiptStore, runIdempotencyKey } from './receipts.ts'
 import type {

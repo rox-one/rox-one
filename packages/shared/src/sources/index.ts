@@ -115,6 +115,29 @@ export {
 export type { MicroserviceSeedOptions } from './default-microservices.ts';
 
 export {
+  ensureBuiltinMcpInstalled,
+  builtinMcpManagedCommand,
+  BuiltinMcpInstallError,
+  BUILTIN_WINDOWS_MCP_RELEASES,
+  BUILTIN_EVERYTHING_CLI_RELEASE,
+} from './builtin-mcp-installer.ts';
+export type { BuiltinMcpInstallOptions, BuiltinMcpInstallResult } from './builtin-mcp-installer.ts';
+
+export {
+  BUILTIN_MCP_CATALOG,
+  BUILTIN_AGENT_SKILL_PACKS,
+  ensureBuiltinMcpSources,
+  getDefaultMcpSourceSlugs,
+  getEnabledBuiltinMcpSourceSlugs,
+  getBuiltinMcpReadiness,
+  isManagedBuiltinMcpSource,
+  buildRuntimeBuiltinMcpConfig,
+} from './builtin-mcp.ts';
+export type { BuiltinMcpSpec, BuiltinMcpOptions, BuiltinMcpReadiness } from './builtin-mcp.ts';
+export { ensureBuiltinQmdCollection, BUILTIN_QMD_PACKAGE, BUILTIN_QMD_INDEX } from './builtin-mcp-qmd.ts';
+export type { BuiltinQmdCollectionResult } from './builtin-mcp-qmd.ts';
+
+export {
   computeSourceTokenStats,
   type SourceFileStat,
   type SourceTokenStats,

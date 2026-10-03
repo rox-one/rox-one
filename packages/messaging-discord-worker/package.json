@@ -1,5 +1,5 @@
 {
-  "name": "@craft-agent/messaging-discord-worker",
+  "name": "@rox/messaging-discord-worker",
   "version": "0.11.0",
   "license": "Apache-2.0",
   "description": "Discord worker subprocess for Craft Agent (discord.js-based, official Bot API)",

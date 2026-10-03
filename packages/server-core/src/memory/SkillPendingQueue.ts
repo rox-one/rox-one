@@ -39,8 +39,8 @@ import {
   type Dirent,
 } from 'fs'
 import { join } from 'path'
-import type { PendingSkill, PendingSkillDiff, SkillCandidate } from '@craft-agent/shared/memory/types'
-import { invalidateSkillsCache } from '@craft-agent/shared/skills/storage'
+import type { PendingSkill, PendingSkillDiff, SkillCandidate } from '@rox/shared/memory/types'
+import { invalidateSkillsCache } from '@rox/shared/skills/storage'
 import { AuditLog } from './AuditLog'
 
 const PENDING_DIR = '.pending'

@@ -2,14 +2,14 @@ import { describe, expect, test, beforeEach, afterEach } from 'bun:test'
 import { existsSync, mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { PersonalTaskStore } from '@craft-agent/core/tasks/personal'
-import { createNativeNotesEngine, createNotesRepository } from '@craft-agent/core/rox2'
+import { PersonalTaskStore } from '@rox/core/tasks/personal'
+import { createNativeNotesEngine, createNotesRepository } from '@rox/core/rox2'
 import { PersonalTaskPersistStore } from '../../tasks/personal-persist.ts'
 import { MeetingNotePersistStore } from '../note-persist.ts'
 import { applyNativeMeetingAction, createNativeActionHarness, isNativeNotesEngine, openNativePersistTarget, readbackNative } from '../native-actions.ts'
 import { payloadHash } from '../proposals.ts'
-import type { MeetingProposal } from '@craft-agent/core/meetings'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingProposal } from '@rox/core/meetings'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
 
 const tmpDirs: string[] = []
 

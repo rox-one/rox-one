@@ -10,7 +10,7 @@ import {
   hashKnowledgeContent,
   type KnowledgeNode,
   type KnowledgeRef,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 import {
   KnowledgeChangeWatcher,
   stopAllKnowledgeWatches,

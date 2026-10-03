@@ -6,14 +6,14 @@ import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@craft-agent/ui'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { applyPropertyPatch, previewPropertyPatch, previewPropertyDictionary, projectFrontmatter, retainSource, retainedSourceHash, type MarkdownCommitCommand, type PropertyDictionaryPreview, type PropertyValue } from '@craft-agent/core/docs'
-import type { ContentFailure, ContentResolution } from '@craft-agent/server-core/docs/descriptor-resolver'
-import type { BlockTreeResult, NativeMarkerMappingPreview } from '@craft-agent/server-core/docs/block-tree-service'
-import { applyMarkerMapping as applyBlockMarkerMapping, retainedText, retainSource as retainBlockSource } from '@craft-agent/core/docs'
-import { contentHash as blockContentHash } from '@craft-agent/core/rox2'
-import { parseNoteBlockAddress, resolveNoteBlockId } from '@craft-agent/core/mindmap/derive-note.ts'
+import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { applyPropertyPatch, previewPropertyPatch, previewPropertyDictionary, projectFrontmatter, retainSource, retainedSourceHash, type MarkdownCommitCommand, type PropertyDictionaryPreview, type PropertyValue } from '@rox/core/docs'
+import type { ContentFailure, ContentResolution } from '@rox/server-core/docs/descriptor-resolver'
+import type { BlockTreeResult, NativeMarkerMappingPreview } from '@rox/server-core/docs/block-tree-service'
+import { applyMarkerMapping as applyBlockMarkerMapping, retainedText, retainSource as retainBlockSource } from '@rox/core/docs'
+import { contentHash as blockContentHash } from '@rox/core/rox2'
+import { parseNoteBlockAddress, resolveNoteBlockId } from '@rox/core/mindmap/derive-note.ts'
 import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteMutationOptions, NoteRenameImpact, NoteSummary } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { NavigationContext } from '@/contexts/NavigationContext'
@@ -33,7 +33,7 @@ import {
   soupDocumentListResult,
   soupDocumentReadResult,
   type Rox2Context,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -51,7 +51,7 @@ import {
   useEntityView,
 } from '@/components/app-shell/EntityViewTabs'
 import { MindMapHost } from '@/mindmap/MindMapHost'
-import { deriveNoteMindMap, type MindMapGraph } from '@craft-agent/core/mindmap'
+import { deriveNoteMindMap, type MindMapGraph } from '@rox/core/mindmap'
 import { NotesCommentComposer, NotesCommentHighlights, NotesCommentTooltip, NotesComments, NotesEditorHeadlineStyles, NotesToc } from './notes/NotesReadingChrome'
 import {
   NotesBreadcrumbs,
@@ -65,7 +65,7 @@ import {
   loadPersonalTaskStore,
   persistPersonalTaskStore,
 } from '@/lib/personal-tasks'
-import { PersonalTaskStore } from '@craft-agent/core/tasks/personal'
+import { PersonalTaskStore } from '@rox/core/tasks/personal'
 import {
   applyPersistentFolds,
   defaultNoteCommands,
@@ -96,7 +96,7 @@ import {
   insertFootnote,
   undoEntityMerge,
   updateFootnoteDefinition,
-} from '@craft-agent/shared/knowledge/vault-insights'
+} from '@rox/shared/knowledge/vault-insights'
 import { EMPTY_NOTE_INSIGHTS } from './notes/VaultInsightsPanel'
 import { EMPTY_NOTE_INDEX_HEALTH } from './notes/VaultIndexHealthPanel'
 import {

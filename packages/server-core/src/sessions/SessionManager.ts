@@ -1,7 +1,7 @@
-import type { EventSink, RpcServer } from '@craft-agent/server-core/transport'
+import type { EventSink, RpcServer } from '@rox/server-core/transport'
 import { annotationPayloadRejection } from './annotation-payload'
-import { CLIENT_BROWSER_INVOKE } from '@craft-agent/server-core/transport'
-import type { ISessionManager, IBrowserPaneManager, ExecutePromptAutomationInput } from '@craft-agent/server-core/handlers'
+import { CLIENT_BROWSER_INVOKE } from '@rox/server-core/transport'
+import type { ISessionManager, IBrowserPaneManager, ExecutePromptAutomationInput } from '@rox/server-core/handlers'
 import { RemoteBrowserPaneManager } from './RemoteBrowserPaneManager'
 import {
   applyShareRevoked,
@@ -13,36 +13,38 @@ import {
   type ShareCapabilityHost,
 } from './share-capability'
 import { composeSpawnEnv } from './spawn-env'
+import { selectResumeHistory } from './resume-history'
 import { emitTurnComplete } from './turn-complete'
 import { shouldBrokerGatePermission } from './permission-broker-gate'
-import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
-import { createScopedLogger, CONSOLE_LOGGER, type PlatformServices, type Logger } from '@craft-agent/server-core/runtime'
+import { validateFilePath, getWorkspaceAllowedDirs } from '@rox/server-core/handlers'
+import { createScopedLogger, CONSOLE_LOGGER, type PlatformServices, type Logger } from '@rox/server-core/runtime'
 import { basename, dirname, join } from 'path'
 import { existsSync } from 'fs'
 import { randomUUID } from 'node:crypto'
-import { awardXpSafe } from '@craft-agent/shared/gamification'
+import { awardXpSafe } from '@rox/shared/gamification'
 import { readFile, writeFile, mkdir } from 'fs/promises'
-import { type AgentEvent, setPermissionMode, hydratePreviousPermissionMode, getPermissionModeDiagnostics, type PermissionMode, unregisterSessionScopedToolCallbacks, mergeSessionScopedToolCallbacks, AbortReason, AgentBudgetLedger, type AgentBudgetSnapshot, type AuthRequest, type AuthResult, type CredentialAuthRequest, type BrowserPaneFns, generateConversationSummary, resolveKeepBackgroundTasksAlive, resolveOmpUserBranchAnchor } from '@craft-agent/shared/agent'
+import { type AgentEvent, setPermissionMode, hydratePreviousPermissionMode, getPermissionModeDiagnostics, type PermissionMode, unregisterSessionScopedToolCallbacks, mergeSessionScopedToolCallbacks, AbortReason, AgentBudgetLedger, type AgentBudgetSnapshot, type AuthRequest, type AuthResult, type CredentialAuthRequest, type BrowserPaneFns, generateConversationSummary, resolveKeepBackgroundTasksAlive, resolveOmpUserBranchAnchor } from '@rox/shared/agent'
 import {
   resolveSessionConnection,
-  createBackendFromConnection,
-  resolveBackendContext,
-  createBackendFromResolvedContext,
+  createOmpSessionBackendFromConnection as createBackendFromConnection,
+  resolveOmpSessionContext as resolveBackendContext,
+  createOmpSessionBackendFromResolvedContext as createBackendFromResolvedContext,
   cleanupSourceRuntimeArtifacts,
   providerTypeToAgentProvider,
   type AgentBackend,
   type BackendHostRuntimeContext,
   type PostInitResult,
-} from '@craft-agent/shared/agent/backend'
-import { getLlmConnection, getLlmConnections, getDefaultLlmConnection, getDefaultThinkingLevel, resetManagedAnthropicAuthEnvVars, resolveMidStreamBehavior, getPersistedUiLanguage, resolveTitleLanguageName } from '@craft-agent/shared/config'
-import type { MidStreamBehavior, LlmProviderType } from '@craft-agent/shared/config'
-import { PrivilegedExecutionBroker } from '@craft-agent/server-core/services'
+} from '@rox/shared/agent/backend'
+import { getLlmConnection, getLlmConnections, getDefaultLlmConnection, getDefaultThinkingLevel, resetManagedAnthropicAuthEnvVars, resolveMidStreamBehavior, getPersistedUiLanguage, resolveTitleLanguageName } from '@rox/shared/config'
+import type { MidStreamBehavior, LlmProviderType } from '@rox/shared/config'
+import { PrivilegedExecutionBroker } from '@rox/server-core/services'
 import { isValidWorkingDirectory } from '../utils/path-validation'
 import { MemoryService } from '../memory/MemoryService'
+import { ensureFirstSessionWelcome } from './first-session-welcome'
 import { readProvenance, writeProvenance, type SessionProvenance } from '../memory/provenance'
 import { appendSkillUsage, extractSkillMentions } from '../memory/skill-usage'
-import { InitGate } from '@craft-agent/server-core/domain'
-import { i18n } from '@craft-agent/shared/i18n'
+import { InitGate } from '@rox/server-core/domain'
+import { i18n, setupI18n } from '@rox/shared/i18n'
 import {
   getWorkspaces,
   getWorkspaceByNameOrId,
@@ -58,9 +60,9 @@ import {
   MODEL_REGISTRY,
   type Workspace,
   type WorkspaceInfo,
-} from '@craft-agent/shared/config'
-import type { ActiveSessionInfo, SessionProcessingStatus } from '@craft-agent/core/types'
-import { loadWorkspaceConfig, saveWorkspaceConfig } from '@craft-agent/shared/workspaces'
+} from '@rox/shared/config'
+import type { ActiveSessionInfo, SessionProcessingStatus } from '@rox/core/types'
+import { loadWorkspaceConfig, saveWorkspaceConfig } from '@rox/shared/workspaces'
 import {
   // Session persistence functions
   listSessions as listStoredSessions,
@@ -99,47 +101,51 @@ import {
   backfillRanks,
   countGitCommits,
   countToolCalls,
-} from '@craft-agent/shared/sessions'
-import { loadWorkspaceSources, loadAllSources, getSourcesBySlugs, isSourceUsable, type LoadedSource, type McpServerConfig, getSourcesNeedingAuth, getSourceCredentialManager, TokenRefreshManager } from '@craft-agent/shared/sources'
-import { listTaskSlugs, parseTaskSpec, uniqueTaskSlug } from '@craft-agent/shared/tasks'
+} from '@rox/shared/sessions'
+import { loadWorkspaceSources, loadAllSources, getSourcesBySlugs, isSourceUsable, type LoadedSource, type McpServerConfig, getSourcesNeedingAuth, getSourceCredentialManager, TokenRefreshManager } from '@rox/shared/sources'
+import { listTaskSlugs, parseTaskSpec, uniqueTaskSlug } from '@rox/shared/tasks'
 import { createTaskFromSpec, resolveCreateTaskProjectId } from '../tasks'
 import { buildPagesToolCallbacks } from '../pages/tool-callbacks'
 import { buildServersFromSources as buildServersFromSourcesShared } from '../sources/build-servers'
-import { ConfigWatcher, type ConfigWatcherCallbacks } from '@craft-agent/shared/config'
-import { getValidClaudeOAuthToken } from '@craft-agent/shared/auth'
-import { resolveAuthEnvVars } from '@craft-agent/shared/config'
-import { toolMetadataStore, getLastApiError } from '@craft-agent/shared/interceptor'
-import { isParentTaskTool } from '@craft-agent/shared/utils/toolNames'
-import { restoreFiles } from '@craft-agent/shared/utils/bundle-files'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { CraftMcpClient, McpClientPool, McpPoolServer } from '@craft-agent/shared/mcp'
-import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, RPC_CHANNELS, generateMessageId } from '@craft-agent/shared/protocol'
+import { resolveDefaultSessionSources } from '../sources/default-session-sources'
+import { BuiltinMcpStartup } from '../sources/builtin-mcp-startup'
+import { ensureBuiltinMcpSources, getEnabledBuiltinMcpSourceSlugs } from '@rox/shared/sources/builtin-mcp'
+import { collectDefaultEnabledSourceSlugs } from '@rox/shared/sources'
+import { ConfigWatcher, type ConfigWatcherCallbacks } from '@rox/shared/config'
+import { getValidClaudeOAuthToken } from '@rox/shared/auth'
+import { resolveAuthEnvVars } from '@rox/shared/config'
+import { toolMetadataStore, getLastApiError } from '@rox/shared/interceptor'
+import { isParentTaskTool } from '@rox/shared/utils/toolNames'
+import { restoreFiles } from '@rox/shared/utils/bundle-files'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { CraftMcpClient, McpClientPool, McpPoolServer } from '@rox/shared/mcp'
+import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, RPC_CHANNELS, generateMessageId } from '@rox/shared/protocol'
 import type {
   BulkUpdateSessionsInput,
   BulkUpdateSessionsPatch,
   BulkUpdateSessionsResult,
-} from '@craft-agent/shared/protocol'
+} from '@rox/shared/protocol'
 import {
   assertValidBulkUpdateInput,
   assertValidBulkUpdatePatch,
 } from './bulk-labels'
-import { resolveBulkLabels } from '@craft-agent/shared/sessions/collection'
-import { messageToStored, storedToMessage, type Message, type StoredAttachment, type ToolDisplayMeta, type TokenUsage, type SessionMemoryMode } from '@craft-agent/core/types'
-import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlAsync, getEmojiIcon, resetSummarizationClient, resolveToolIcon, readFileAttachment, selectSpreadMessages, normalizePath } from '@craft-agent/shared/utils'
-import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, type LoadedSkill } from '@craft-agent/shared/skills'
-import { invalidateContextFileCache, formatSourceRetrieveForPrompt } from '@craft-agent/shared/prompts/system'
+import { resolveBulkLabels } from '@rox/shared/sessions/collection'
+import { messageToStored, storedToMessage, type Message, type StoredAttachment, type ToolDisplayMeta, type TokenUsage, type SessionMemoryMode } from '@rox/core/types'
+import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlAsync, getEmojiIcon, resetSummarizationClient, resolveToolIcon, readFileAttachment, selectSpreadMessages, normalizePath } from '@rox/shared/utils'
+import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, type LoadedSkill } from '@rox/shared/skills'
+import { invalidateContextFileCache, formatSourceRetrieveForPrompt } from '@rox/shared/prompts/system'
 import { retrieveSourcesForPrompt } from '../sources/source-index-facade'
-import { getToolIconsDir, getMiniModel, isRoxPublicModelId, ROX_DEFAULT_SUBAGENT_MODEL } from '@craft-agent/shared/config'
-import { getDefaultSummarizationModel } from '@craft-agent/shared/config/models'
-import type { SummarizeCallback } from '@craft-agent/shared/sources'
-import { type ThinkingLevel, DEFAULT_THINKING_LEVEL, normalizeThinkingLevel } from '@craft-agent/shared/agent/thinking-levels'
-import { evaluateAutoLabels } from '@craft-agent/shared/labels/auto'
-import { listLabels, loadLabelConfig } from '@craft-agent/shared/labels/storage'
-import { extractLabelId, resolveSessionLabels, findTaskItemLabelId } from '@craft-agent/shared/labels'
-import { ensureLabelsExist, ensureTaskItemLabel } from '@craft-agent/shared/labels/crud'
-import { loadStatusConfig } from '@craft-agent/shared/statuses/storage'
-import { AutomationSystem, createPromptHistoryEntry, appendAutomationHistoryEntry, type AutomationSystemMetadataSnapshot, type KnowledgeActionExecutor, type CloudRunSubmitExecutor, type KnowledgeActionExecutorContext, type KnowledgeAutomationAction, type CloudRunSubmitAction, type CloudRunSubmitExecutorContext } from '@craft-agent/shared/automations'
-import { claimAutomationOccurrence, recoverAutomationOccurrences, setAutomationOccurrenceOutcome } from '@craft-agent/shared/automations'
+import { getToolIconsDir, getMiniModel, isRoxPublicModelId, ROX_DEFAULT_SUBAGENT_MODEL } from '@rox/shared/config'
+import { getDefaultSummarizationModel } from '@rox/shared/config/models'
+import type { SummarizeCallback } from '@rox/shared/sources'
+import { type ThinkingLevel, DEFAULT_THINKING_LEVEL, normalizeThinkingLevel } from '@rox/shared/agent/thinking-levels'
+import { evaluateAutoLabels } from '@rox/shared/labels/auto'
+import { listLabels, loadLabelConfig } from '@rox/shared/labels/storage'
+import { extractLabelId, resolveSessionLabels, findTaskItemLabelId } from '@rox/shared/labels'
+import { ensureLabelsExist, ensureTaskItemLabel } from '@rox/shared/labels/crud'
+import { loadStatusConfig } from '@rox/shared/statuses/storage'
+import { AutomationSystem, createPromptHistoryEntry, appendAutomationHistoryEntry, type AutomationSystemMetadataSnapshot, type KnowledgeActionExecutor, type CloudRunSubmitExecutor, type KnowledgeActionExecutorContext, type KnowledgeAutomationAction, type CloudRunSubmitAction, type CloudRunSubmitExecutorContext } from '@rox/shared/automations'
+import { claimAutomationOccurrence, recoverAutomationOccurrences, setAutomationOccurrenceOutcome } from '@rox/shared/automations'
 import { ServerKnowledgeActionExecutor } from '../knowledge/automation-actions'
 import { KnowledgeBridgeService } from '../knowledge/bridge-service'
 import { KnowledgeMutationProposalsStore } from '../knowledge/proposals-store'
@@ -156,8 +162,8 @@ import { buildBackendRuntimeSignature, buildRestartRequiredSignature, filterAtta
 import { validateArchiveTarget } from './archive-guards'
 
 // Import from server-core domain utilities
-import { sanitizeForTitle, shouldActivateBrowserOverlay, normalizeBrowserToolName, rollbackFailedBranchCreation, releaseBrowserOwnershipOnForcedStop } from '@craft-agent/server-core/domain'
-import { resizeImageForAPI, resizeIconBuffer } from '@craft-agent/server-core/services'
+import { sanitizeForTitle, shouldActivateBrowserOverlay, normalizeBrowserToolName, rollbackFailedBranchCreation, releaseBrowserOwnershipOnForcedStop } from '@rox/server-core/domain'
+import { resizeImageForAPI, resizeIconBuffer } from '@rox/server-core/services'
 export { sanitizeForTitle }
 
 // Module-level platform ref — set once during init via setSessionPlatform()
@@ -241,7 +247,7 @@ const METADATA_WRITE_GUARD_MS = 5000
  */
 const PLAN_APPROVAL_MESSAGE = 'Plan approved, please execute.'
 
-// validateSpawnAttachmentPath removed — use shared validateFilePath from @craft-agent/server-core/handlers
+// validateSpawnAttachmentPath removed — use shared validateFilePath from @rox/server-core/handlers
 
 const PI_TURN_ANCHORS_VERSION = 1
 const PI_TURN_ANCHORS_FILE = 'pi-turn-anchors.json'
@@ -331,10 +337,9 @@ export async function copyPiTurnAnchorsForBranch(
   )
 }
 
-// OMP turn anchors: craft message id → native transcript entry id. Replies
-// are anchored as they complete; user-message entries are resolved between
-// neighbouring reply anchors before their first branch. The child resolves
-// the provider cut, or copies the selected user entry and its ancestry.
+// OMP message anchors include both native user and assistant entries; the child
+// forks a private parent copy at the exact selected entry. Legacy sessions
+// reconstruct only the selected stored ROX prefix.
 const OMP_TURN_ANCHORS_VERSION = 1
 const OMP_TURN_ANCHORS_FILE = 'omp-turn-anchors.json'
 
@@ -556,7 +561,7 @@ async function applyBridgeUpdates(
   agent: AgentInstance,
   sessionPath: string,
   enabledSources: LoadedSource[],
-  mcpServers: Record<string, import('@craft-agent/shared/agent/backend').SdkMcpServerConfig>,
+  mcpServers: Record<string, import('@rox/shared/agent/backend').SdkMcpServerConfig>,
   sessionId: string,
   workspaceRootPath: string,
   context: string,
@@ -846,6 +851,8 @@ interface ManagedSession {
   agent: AgentInstance | null  // Lazy-loaded - null until first message
   messages: Message[]
   isProcessing: boolean
+  /** Exact persisted submission currently entering the runtime, excluding queued future prompts. */
+  activeUserMessageId?: string
   /** Set when user requests stop - allows event loop to drain before clearing isProcessing */
   stopRequested?: boolean
   lastMessageAt: number
@@ -1295,10 +1302,11 @@ export class SessionManager implements ISessionManager {
   private deltaFlushTimers: Map<string, NodeJS.Timeout> = new Map()
   // Config watchers for live updates (sources, etc.) - one per workspace
   private configWatchers: Map<string, ConfigWatcher> = new Map()
+  private builtinMcpStartup = new BuiltinMcpStartup({ log: message => sessionLog.info(message) })
   // Automation systems for workspace event automations - one per workspace (includes scheduler, diffing, and handlers)
   private automationSystems: Map<string, AutomationSystem> = new Map()
   // Pending credential request resolvers (keyed by requestId)
-  private pendingCredentialResolvers: Map<string, (response: import('@craft-agent/shared/protocol').CredentialResponse) => void> = new Map()
+  private pendingCredentialResolvers: Map<string, (response: import('@rox/shared/protocol').CredentialResponse) => void> = new Map()
   // Permission request metadata tracking (keyed by requestId)
   private pendingPermissionRequests: Map<string, {
     sessionId: string
@@ -1369,6 +1377,7 @@ export class SessionManager implements ISessionManager {
   private setProcessing(managed: ManagedSession, processing: boolean): void {
     const was = managed.isProcessing
     managed.isProcessing = processing
+    if (!processing) managed.activeUserMessageId = undefined
     if (!was && processing) {
       sessionRuntimeHooks.onSessionStarted()
     } else if (was && !processing) {
@@ -1726,10 +1735,36 @@ export class SessionManager implements ISessionManager {
    * Idempotent — returns immediately if already watching.
    * workspaceId must be the global config ID (what the renderer knows).
    */
+  retryBuiltinMcpSources(workspaceId: string): void {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (workspace && !workspace.remoteServer) void this.builtinMcpStartup.retryWorkspace(workspace.rootPath)
+  }
+
   setupConfigWatcher(workspaceRootPath: string, workspaceId: string): void {
     // Check if already watching this workspace
     if (this.configWatchers.has(workspaceRootPath)) {
       return // Already watching this workspace
+    }
+
+    // Remote workspaces install on their server. Local installs seed before
+    // watching, then download/probe in the background without blocking the UI.
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (workspace && !workspace.remoteServer) {
+      const { created } = ensureBuiltinMcpSources(workspaceRootPath)
+      const config = loadWorkspaceConfig(workspaceRootPath)
+      const newDefaults = getEnabledBuiltinMcpSourceSlugs(workspaceRootPath).filter(slug => created.includes(slug))
+      if (config && newDefaults.length > 0) {
+        saveWorkspaceConfig(workspaceRootPath, {
+          ...config,
+          defaults: {
+            ...config.defaults,
+            enabledSourceSlugs: [...new Set([
+              ...(config.defaults?.enabledSourceSlugs ?? collectDefaultEnabledSourceSlugs()), ...newDefaults,
+            ])],
+          },
+        })
+      }
+      void this.builtinMcpStartup.ensureWorkspace(workspaceRootPath)
     }
 
     sessionLog.info(`Setting up ConfigWatcher for workspace: ${workspaceId} (${workspaceRootPath})`)
@@ -1745,6 +1780,9 @@ export class SessionManager implements ISessionManager {
         const sources = loadWorkspaceSources(workspaceRootPath)
         this.broadcastSourcesChanged(workspaceId, sources)
         await this.reloadSourcesForWorkspace(workspaceRootPath)
+        if (workspace && !workspace.remoteServer) {
+          void this.builtinMcpStartup.ensureWorkspace(workspaceRootPath)
+        }
       },
       onSourceGuideChange: (sourceSlug: string) => {
         sessionLog.info(`Source guide changed: ${sourceSlug}`)
@@ -1817,7 +1855,7 @@ export class SessionManager implements ISessionManager {
       onSkillChange: async (slug, skill) => {
         sessionLog.info(`Skill '${slug}' changed:`, skill ? 'updated' : 'deleted')
         // Broadcast updated list to UI
-        const { loadAllSkills } = await import('@craft-agent/shared/skills')
+        const { loadAllSkills } = await import('@rox/shared/skills')
         const skills = loadAllSkills(workspaceRootPath)
         this.broadcastSkillsChanged(workspaceId, skills)
       },
@@ -2329,7 +2367,7 @@ export class SessionManager implements ISessionManager {
     this.eventSink(RPC_CHANNELS.automations.CHANGED, { to: 'workspace', workspaceId }, workspaceId)
   }
 
-  private broadcastAppThemeChanged(theme: import('@craft-agent/shared/config').ThemeOverrides | null): void {
+  private broadcastAppThemeChanged(theme: import('@rox/shared/config').ThemeOverrides | null): void {
     if (!this.eventSink) return
     sessionLog.info(`Broadcasting app theme changed`)
     this.eventSink(RPC_CHANNELS.theme.APP_CHANGED, { to: 'all' }, theme)
@@ -2341,13 +2379,13 @@ export class SessionManager implements ISessionManager {
     this.eventSink(RPC_CHANNELS.llmConnections.CHANGED, { to: 'all' })
   }
 
-  private broadcastSkillsChanged(workspaceId: string, skills: import('@craft-agent/shared/skills').LoadedSkill[]): void {
+  private broadcastSkillsChanged(workspaceId: string, skills: import('@rox/shared/skills').LoadedSkill[]): void {
     if (!this.eventSink) return
     sessionLog.info(`Broadcasting skills changed (${skills.length} skills)`)
     this.eventSink(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, skills)
   }
 
-  private broadcastPagesChanged(workspaceId: string, pages: import('@craft-agent/shared/pages').LoadedPage[]): void {
+  private broadcastPagesChanged(workspaceId: string, pages: import('@rox/shared/pages').LoadedPage[]): void {
     if (!this.eventSink) return
     sessionLog.info(`Broadcasting pages changed (${pages.length} pages)`)
     this.eventSink(RPC_CHANNELS.pages.CHANGED, { to: 'workspace', workspaceId }, workspaceId, pages)
@@ -2841,7 +2879,7 @@ export class SessionManager implements ISessionManager {
   async handleCredentialInput(
     sessionId: string,
     requestId: string,
-    response: import('@craft-agent/shared/protocol').CredentialResponse
+    response: import('@rox/shared/protocol').CredentialResponse
   ): Promise<void> {
     const managed = this.sessions.get(sessionId)
     if (!managed?.pendingAuthRequest) {
@@ -2897,8 +2935,9 @@ export class SessionManager implements ISessionManager {
       }
 
       // Update source config to mark as authenticated
-      const { markSourceAuthenticated } = await import('@craft-agent/shared/sources')
+      const { markSourceAuthenticated } = await import('@rox/shared/sources')
       markSourceAuthenticated(managed.workspace.rootPath, request.sourceSlug)
+      this.retryBuiltinMcpSources(managed.workspace.id)
 
       // Mark source as unseen so fresh guide is injected on next message
       if (managed.agent) {
@@ -3230,14 +3269,33 @@ export class SessionManager implements ISessionManager {
     return readProvenance(managed.workspace.rootPath, sessionId)
   }
 
+  /** Start the first conversation locally; no provider request or credential flow is needed. */
+  async ensureFirstSessionWelcome(workspaceId: string): Promise<Session | null> {
+    await this.waitForInit()
+    if (!getWorkspaceByNameOrId(workspaceId)) throw new Error(`Workspace ${workspaceId} not found`)
+    return ensureFirstSessionWelcome(join(resolveConfigDir(), 'first-session-welcome.v1.json'), {
+      hasExistingSessions: () => this.sessions.size > 0,
+      createWelcome: () => {
+        setupI18n()
+        const options = { lng: getPersistedUiLanguage() }
+        return this.createSession(workspaceId, {
+          name: i18n.t('onboarding.firstSession.title', options),
+        }, {
+          emitCreatedEvent: false,
+          initialAssistantMessage: i18n.t('onboarding.firstSession.message', options),
+        })
+      },
+    })
+  }
+
   async createSession(
     workspaceId: string,
-    options?: import('@craft-agent/shared/protocol').CreateSessionOptions,
+    options?: import('@rox/shared/protocol').CreateSessionOptions,
     // Transport concern, deliberately NOT on the wire DTO: by default every created session is
     // announced to the renderer (see notifySessionCreated). Callers that register the session
     // themselves — the `sessions:create` RPC adds it from the return value — pass
     // `{ emitCreatedEvent: false }` to avoid a redundant hydrate.
-    internal?: { emitCreatedEvent?: boolean },
+    internal?: { emitCreatedEvent?: boolean; initialAssistantMessage?: string },
   ): Promise<Session> {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) {
@@ -3266,7 +3324,9 @@ export class SessionManager implements ISessionManager {
     // Get default model from workspace config (used when no session-specific model is set)
     const defaultModel = wsConfig?.defaults?.model
     // Get default enabled sources from workspace config
-    const defaultEnabledSourceSlugs = options?.enabledSourceSlugs ?? wsConfig?.defaults?.enabledSourceSlugs
+    const defaultEnabledSourceSlugs = resolveDefaultSessionSources(
+      workspaceRootPath, options?.enabledSourceSlugs, wsConfig?.defaults?.enabledSourceSlugs,
+    )
 
     // Resolve model tier hints ('fast' / 'default') to actual model IDs.
     // EditPopover uses tier hints instead of hardcoded Anthropic model names
@@ -3337,7 +3397,7 @@ export class SessionManager implements ISessionManager {
     const requestedProjectId = options?.projectId ?? inheritedProjectId
     let resolvedProjectId: string | undefined
     if (requestedProjectId) {
-      const { loadProjectById } = await import('@craft-agent/shared/projects')
+      const { loadProjectById } = await import('@rox/shared/projects')
       const project = loadProjectById(workspaceRootPath, requestedProjectId)
       if (!project) {
         // An EXPLICIT binding to a missing project is a caller bug; an inherited one
@@ -3489,13 +3549,8 @@ export class SessionManager implements ISessionManager {
             }
           }
         } else if (sourceBackendContext.provider === 'omp') {
-          // OMP: native transcript entry id persisted in the omp-turn-anchors
-          // sidecar. Unlike Pi there is no safe "full-history fork" fallback —
-          // without the anchor the child cannot cut at the requested message,
-          // and OMP's branch RPC requires a precise user-entry cut, so a missing
-          // anchor (legacy session, unanchored message, or a transcript rewritten
-          // by OMP compaction) fails the branch loudly via the subsequent
-          // branchFromSdkTurnId === undefined check below.
+          // Exact native user/assistant anchors fork a private child copy;
+          // legacy sessions reconstruct only the selected persisted prefix.
           if (branchFromSessionPath) {
             branchFromSdkTurnId = await getOmpTurnAnchor(branchFromSessionPath, options.branchFromMessageId)
             if (!branchFromSdkTurnId && branchMessage?.type === 'user') {
@@ -3510,12 +3565,13 @@ export class SessionManager implements ISessionManager {
               if (branchFromSdkTurnId) await saveOmpTurnAnchor(branchFromSessionPath, options.branchFromMessageId, branchFromSdkTurnId)
             }
             if (!branchFromSdkTurnId) {
-              sessionLog.warn('OMP branch anchor missing; branch will fail preflight', {
+              sessionLog.warn('OMP branch anchor missing; reconstructing selected persisted history', {
                 workspaceId,
                 branchFromSessionId: options.branchFromSessionId,
                 branchFromMessageId: options.branchFromMessageId,
               })
-              throw new Error('Cannot create branch: this message has no known OMP transcript entry yet. Wait for the runtime to accept this message, or choose a completed reply.')
+              // The adapter reconstructs the exact selected ROX history slice in
+              // the child when a legacy/imported session has no native anchor.
             }
           }
         } else if (sourceBackendContext.provider === 'anthropic') {
@@ -3551,7 +3607,7 @@ export class SessionManager implements ISessionManager {
         }
       }
 
-      if (branchContextStrategy === 'sdk-fork' && !branchFromSdkSessionId) {
+      if (branchContextStrategy === 'sdk-fork' && !branchFromSdkSessionId && sourceBackendContext.provider !== 'omp') {
         sessionLog.warn('Branch validation failed: sdk-fork requires parent SDK session ID', {
           workspaceId,
           branchFromSessionId: options.branchFromSessionId,
@@ -3807,6 +3863,26 @@ export class SessionManager implements ISessionManager {
       }
     }
 
+    if (internal?.initialAssistantMessage) {
+      const welcome: Message = {
+        id: generateMessageId(),
+        role: 'assistant',
+        content: internal.initialAssistantMessage,
+        timestamp: Date.now(),
+      }
+      managed.messages.push(welcome)
+      managed.lastMessageRole = 'assistant'
+      managed.lastFinalMessageId = welcome.id
+      managed.lastMessageAt = welcome.timestamp
+      managed.messageCount = managed.messages.length
+      // Direct awaited persistence makes the greeting durable before recording completion.
+      await saveStoredSession({
+        ...storedSession,
+        messages: managed.messages.map(messageToStored),
+        tokenUsage: managed.tokenUsage ?? DEFAULT_TOKEN_USAGE,
+      })
+    }
+
     // Announce by default so the renderer hydrates full metadata (name, parentSessionId, …)
     // instead of fabricating a titleless "New Chat" from the first streamed event. Emitted at
     // the very end so a thrown branch-preflight failure above never announces an orphan.
@@ -3814,7 +3890,7 @@ export class SessionManager implements ISessionManager {
       this.notifySessionCreated(workspaceId, storedSession.id)
     }
 
-    return managedToSession(managed, isBranch ? { messages: managed.messages } : undefined)
+    return managedToSession(managed, isBranch || internal?.initialAssistantMessage ? { messages: managed.messages } : undefined)
   }
 
   /**
@@ -4080,8 +4156,13 @@ export class SessionManager implements ISessionManager {
 
       // Lock the connection after first resolution
       // This ensures the session always uses the same provider
-      if (connection && !managed.connectionLocked) {
+      if (connection && (!managed.connectionLocked || managed.llmConnection !== connection.slug)) {
+        const previousConnection = managed.llmConnection
         managed.llmConnection = connection.slug
+        if (previousConnection !== connection.slug && managed.model !== backendContext.resolvedModel) {
+          managed.model = backendContext.resolvedModel
+          this.sendEvent({ type: 'session_model_changed', sessionId: managed.id, model: managed.model }, managed.workspace.id)
+        }
         managed.connectionLocked = true
         sessionLog.info(`Locked session ${managed.id} to connection "${connection.slug}"`)
         this.persistSession(managed)
@@ -4099,7 +4180,7 @@ export class SessionManager implements ISessionManager {
       if (connection) {
         sessionLog.info(`Using LLM connection "${connection.slug}" (${connection.providerType}) for session ${managed.id}`)
       } else {
-        sessionLog.warn(`No LLM connection found for session ${managed.id}, using default anthropic provider`)
+        sessionLog.warn(`No LLM connection found for session ${managed.id}, OMP connection unavailable`)
       }
 
       // Set session directory for tool metadata cross-process sharing.
@@ -4117,6 +4198,12 @@ export class SessionManager implements ISessionManager {
       // ============================================================
 
       const sessionPath = getSessionStoragePath(managed.workspace.rootPath, managed.id)
+      if (managed.enabledSourceSlugs === undefined) {
+        managed.enabledSourceSlugs = resolveDefaultSessionSources(
+          managed.workspace.rootPath, undefined,
+          loadWorkspaceConfig(managed.workspace.rootPath)?.defaults?.enabledSourceSlugs,
+        )
+      }
       const enabledSlugs = managed.enabledSourceSlugs || []
       const allSources = loadAllSources(managed.workspace.rootPath)
       const enabledSources = allSources.filter(s =>
@@ -4164,8 +4251,8 @@ export class SessionManager implements ISessionManager {
         lastUsedAt: managed.lastMessageAt,
         workingDirectory: managed.workingDirectory,
         sdkCwd: managed.sdkCwd,
-        model: managed.model,
-        llmConnection: managed.llmConnection,
+        model: backendContext.resolvedModel,
+        llmConnection: connection?.slug,
         permissionMode: managed.permissionMode,
         previousPermissionMode: managed.previousPermissionMode,
         projectId: managed.projectId,
@@ -4325,6 +4412,9 @@ export class SessionManager implements ISessionManager {
         onSdkSessionIdCleared,
         onBranchForkInvalidated,
         getRecoveryMessages,
+          getResumeMessages: () => selectResumeHistory(managed.messages, managed.activeUserMessageId, managed.messageQueue.map(item => item.messageId).filter((id): id is string => !!id)),
+        getBranchResumeMessages: () => managed.branchFromMessageId
+            ? selectResumeHistory(managed.messages, managed.activeUserMessageId, managed.messageQueue.map(item => item.messageId).filter((id): id is string => !!id)) : [],
         getBranchFallbackMessages,
         getBranchSeedMessages,
         markBranchSeedApplied,
@@ -4339,7 +4429,7 @@ export class SessionManager implements ISessionManager {
         automationSystem: this.automationSystems.get(managed.workspace.rootPath),
         systemPromptPreset: managed.systemPromptPreset,
         debugMode: _platform?.isDebugMode ? { enabled: true, logFilePath: _platform.getLogFilePath?.() } : undefined,
-        enable1MContext: await (async () => { const { getEnable1MContext } = await import('@craft-agent/shared/config/storage'); return getEnable1MContext(); })(),
+        enable1MContext: await (async () => { const { getEnable1MContext } = await import('@rox/shared/config/storage'); return getEnable1MContext(); })(),
         // Image resize callback — prevents oversized images from entering conversation history
         onImageResize: async (filePath: string, maxSizeBytes: number): Promise<string | null> => {
           try {
@@ -5090,7 +5180,7 @@ export class SessionManager implements ISessionManager {
         },
         // create_task — create a Task (board card + task.yaml + orchestrator session)
         // WITHOUT running it. Spec building happens here (not in session-tools-core,
-        // which must stay dependency-free of @craft-agent/shared); the creation flow
+        // which must stay dependency-free of @rox/shared); the creation flow
         // itself is createTaskFromSpec, shared verbatim with the tasks:create RPC.
         createTaskFn: async (input) => {
           const ws = managed.workspace
@@ -5151,7 +5241,7 @@ export class SessionManager implements ISessionManager {
           log: (message: string) => sessionLog.info(message),
           onPagesMutated: async (pageSlug: string) => {
             this.notifyConfigFileChange(managed.workspace.rootPath, `pages/${pageSlug}/page.json`)
-            const { loadWorkspacePages } = await import('@craft-agent/shared/pages')
+            const { loadWorkspacePages } = await import('@rox/shared/pages')
             this.broadcastPagesChanged(managed.workspace.id, loadWorkspacePages(managed.workspace.rootPath))
           },
           onContentChanged: (pageSlug: string) => {
@@ -5555,7 +5645,7 @@ export class SessionManager implements ISessionManager {
     }
 
     // Validate connection exists
-    const { getLlmConnection } = await import('@craft-agent/shared/config/storage')
+    const { getLlmConnection } = await import('@rox/shared/config/storage')
     const connection = getLlmConnection(connectionSlug)
     if (!connection) {
       sessionLog.warn(`setSessionConnection: connection "${connectionSlug}" not found`)
@@ -5720,7 +5810,7 @@ export class SessionManager implements ISessionManager {
    * Share session to the web viewer
    * Uploads session data and returns shareable URL
    */
-  async shareToViewer(sessionId: string): Promise<import('@craft-agent/shared/protocol').ShareResult> {
+  async shareToViewer(sessionId: string): Promise<import('@rox/shared/protocol').ShareResult> {
     return executeShareToViewer(this.shareHost(), sessionId)
   }
 
@@ -5728,7 +5818,7 @@ export class SessionManager implements ISessionManager {
    * Update an existing shared session
    * Re-uploads session data to the same URL
    */
-  async updateShare(sessionId: string): Promise<import('@craft-agent/shared/protocol').ShareResult> {
+  async updateShare(sessionId: string): Promise<import('@rox/shared/protocol').ShareResult> {
     return executeUpdateShare(this.shareHost(), sessionId)
   }
 
@@ -5736,7 +5826,7 @@ export class SessionManager implements ISessionManager {
    * Revoke a shared session
    * Deletes from viewer and clears local shared state
    */
-  async revokeShare(sessionId: string): Promise<import('@craft-agent/shared/protocol').ShareResult> {
+  async revokeShare(sessionId: string): Promise<import('@rox/shared/protocol').ShareResult> {
     return executeRevokeShare(this.shareHost(), sessionId)
   }
 
@@ -6663,7 +6753,7 @@ export class SessionManager implements ISessionManager {
     // Revoke share if session was shared (prevent orphaned viewer copies)
     if (managed.sharedId) {
       try {
-        const { VIEWER_URL } = await import('@craft-agent/shared/branding')
+        const { VIEWER_URL } = await import('@rox/shared/branding')
         const headers: Record<string, string> = {
           ...ownerCapabilityHeaders(managed.sharedOwnerKey),
         }
@@ -6988,6 +7078,7 @@ export class SessionManager implements ISessionManager {
     }
 
     managed.lastMessageAt = Date.now()
+    managed.activeUserMessageId = userMessage.id
     this.setProcessing(managed, true)
     managed.streamingText = ''
     managed.streamingTurnId = undefined
@@ -7082,6 +7173,11 @@ export class SessionManager implements ISessionManager {
     const sendSpan = perf.span('session.sendMessage', { sessionId })
 
     const workspaceRootPath = managed.workspace.rootPath
+    if (managed.enabledSourceSlugs === undefined) {
+      managed.enabledSourceSlugs = resolveDefaultSessionSources(
+        workspaceRootPath, undefined, loadWorkspaceConfig(workspaceRootPath)?.defaults?.enabledSourceSlugs,
+      )
+    }
     const enabledSlugs = managed.enabledSourceSlugs ?? []
     const hasSources = enabledSlugs.length > 0
 
@@ -8212,7 +8308,7 @@ export class SessionManager implements ISessionManager {
     requestId: string,
     allowed: boolean,
     alwaysAllow: boolean,
-    options?: import('@craft-agent/shared/protocol').PermissionResponseOptions,
+    options?: import('@rox/shared/protocol').PermissionResponseOptions,
   ): boolean {
     const managed = this.sessions.get(sessionId)
     if (managed?.agent) {
@@ -8253,7 +8349,7 @@ export class SessionManager implements ISessionManager {
    * - New unified auth flow (via handleCredentialInput)
    * - Legacy callback flow (via pendingCredentialResolvers)
    */
-  async respondToCredential(sessionId: string, requestId: string, response: import('@craft-agent/shared/protocol').CredentialResponse): Promise<boolean> {
+  async respondToCredential(sessionId: string, requestId: string, response: import('@rox/shared/protocol').CredentialResponse): Promise<boolean> {
     // First, check if this is a new unified auth flow request
     const managed = this.sessions.get(sessionId)
     if (managed?.pendingAuthRequest && managed.pendingAuthRequest.requestId === requestId) {
@@ -10582,6 +10678,8 @@ export class SessionManager implements ISessionManager {
    */
   cleanup(): void {
     sessionLog.info('Cleaning up resources...')
+
+    void this.builtinMcpStartup.stop().catch(error => sessionLog.warn('MCP startup cleanup failed:', error))
 
     // Stop all ConfigWatchers (file system watchers)
     for (const [path, watcher] of this.configWatchers) {

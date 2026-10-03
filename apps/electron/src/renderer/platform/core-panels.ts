@@ -14,7 +14,7 @@ import type {
   PanelContribution,
   PanelRegistry,
   PanelRenderer,
-} from '@craft-agent/core/platform'
+} from '@rox/core/platform'
 import { knowledgeEntityCompanionRef } from '@/knowledge/knowledge-entity-ref'
 import type { KnowledgeRef } from '../../shared/types'
 import { surfaceTabFromRoute } from './layout-snapshot'

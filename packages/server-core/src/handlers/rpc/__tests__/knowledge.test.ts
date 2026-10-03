@@ -17,9 +17,9 @@ import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { CredentialId } from '@craft-agent/shared/credentials'
-import type { HandlerFn, RequestContext, RpcServer } from '@craft-agent/server-core/transport'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
+import type { CredentialId } from '@rox/shared/credentials'
+import type { HandlerFn, RequestContext, RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 import type {
   ContextMode,
@@ -30,7 +30,7 @@ import type {
   KnowledgeRef,
   SearchInput,
   SearchPage,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 import { KnowledgeConnectionsStore, KnowledgeMutationProposalsStore } from '../../../knowledge'
 import type { KnowledgeProposalFileRecord } from '../../../knowledge/bridge-service'
 import type { SaveConnectionInput } from '../../../knowledge'
@@ -169,7 +169,7 @@ afterAll(() => {
 // never target packages another suite imports directly (bun leak, see above).
 // ---------------------------------------------------------------------------
 
-mock.module('@craft-agent/shared/credentials', () => ({
+mock.module('@rox/shared/credentials', () => ({
   getCredentialManager: () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
@@ -182,7 +182,7 @@ mock.module('@craft-agent/shared/credentials', () => ({
 
 let workspaceRoot: string
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   getWorkspaceByNameOrId: (id: string) =>
     id === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
   getWorkspaces: () =>
@@ -190,7 +190,7 @@ mock.module('@craft-agent/shared/config', () => ({
 }))
 
 import { registerKnowledgeHandlers, HANDLED_CHANNELS, __setSkipKnowledgeWatchAutoStart } from '../knowledge'
-import { getKnowledgeToolRuntime, handleKnowledgeSearch } from '@craft-agent/session-tools-core'
+import { getKnowledgeToolRuntime, handleKnowledgeSearch } from '@rox/session-tools-core'
 
 // ---------------------------------------------------------------------------
 // Harness

@@ -1,0 +1,17 @@
+[
+  {
+    "client": "OpenClaw",
+    "prompt": "Find noisy groups and recommend cleanup actions without leaving anything.",
+    "tools": ["dialogs_list", "chat_read"]
+  },
+  {
+    "client": "Codex",
+    "prompt": "Move these stale groups into a Review folder.",
+    "tools": ["folders_create", "folders_add_dialog"]
+  },
+  {
+    "client": "Claude Desktop",
+    "prompt": "Preview leaving these groups, but wait for approval.",
+    "tools": ["groups_leave_preview"]
+  }
+]

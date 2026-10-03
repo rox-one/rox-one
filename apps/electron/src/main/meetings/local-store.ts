@@ -1,5 +1,5 @@
-import { readBoundedRegularFile } from '@craft-agent/shared/utils/bounded-file'
-import { getServerServiceKey } from '@craft-agent/shared/config/server-services'
+import { readBoundedRegularFile } from '@rox/shared/utils/bounded-file'
+import { getServerServiceKey } from '@rox/shared/config/server-services'
 /**
  * Local meeting store: one folder per meeting under `<root>/<id>/`.
  *   meeting.json      — metadata (title, times, participants, actions, docs…)
@@ -54,7 +54,7 @@ import {
 } from './local-model'
 import { decodeToWav, probeDurationMs, remuxAudio, runWhisper } from './local-asr'
 import { applyExtractionResult, EXTRACTION_START_TIMEOUT_MS, EXTRACTION_RUN_TIMEOUT_MS } from './local-extraction'
-import { DeepgramTranscriptionAdapter, loadVoicePrefs, type NormalizedTranscript, type TranscriptionRequest } from '@craft-agent/shared/voice'
+import { DeepgramTranscriptionAdapter, loadVoicePrefs, type NormalizedTranscript, type TranscriptionRequest } from '@rox/shared/voice'
 
 export const MAX_IMPORT_BYTES = 2 * 1024 * 1024 * 1024
 

@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { readSessionJsonl, writeSessionJsonl, type StoredSession } from '@craft-agent/shared/sessions'
+import { readSessionJsonl, writeSessionJsonl, type StoredSession } from '@rox/shared/sessions'
 import { SessionManager, createManagedSession, managedToSession } from './SessionManager.ts'
 
 const OWNER_KEY = 'test-owner-key-32-bytes-aaaaaaaaaaaaaaaa'

@@ -141,7 +141,7 @@ export const UpdatePreferencesSchema = z.object({
   region: z.string().optional().describe("The user's state/region/province"),
   country: z.string().optional().describe("The user's country"),
   notes: z.string().optional().describe('Additional notes about the user that would be helpful to remember (preferences, context, etc.). Replaces any existing notes.'),
-  includeCoAuthoredBy: z.boolean().optional().describe("Whether to include 'Co-Authored-By: Craft Agent' trailer on git commits. Defaults to true."),
+  includeCoAuthoredBy: z.boolean().optional().describe("Whether to include 'Co-Authored-By: ROX' trailer on git commits. Defaults to true."),
 });
 
 export const TransformDataSchema = z.object({
@@ -269,7 +269,7 @@ export const CreatePageSchema = z.object({
     .optional()
     .describe('Runtime capability class: static = no JS, interactive = JS allowed, live = JS + receives data snapshot updates while open. Default: interactive.'),
   projectId: z.string().optional().describe('Stable Project ID to bind the page to'),
-  content: z.string().optional().describe('Full self-contained HTML document for index.html (inline CSS/JS, no external requests). Read ~/.craft-agent/docs/pages.md for the authoring guide and data-bridge snippet BEFORE writing page HTML.'),
+  content: z.string().optional().describe('Full self-contained HTML document for index.html (inline CSS/JS, no external requests). Read the Pages guide supplied in the ROX context for the authoring guide and data-bridge snippet BEFORE writing page HTML.'),
   refresh: PageRefreshSpecInputSchema.optional().describe('Scheduled data refresh: cron + workspace-relative Bun script that updates the page data store'),
 });
 
@@ -434,7 +434,7 @@ The plan will be displayed to the user in a special formatted view.
 - The conversation will resume when the user responds (accept, modify, or reject the plan)
 - Do NOT include any text or tool calls after SubmitPlan - they will not be executed`,
 
-  config_validate: `Validate Craft Agent configuration files.
+  config_validate: `Validate ROX configuration files.
 
 Use this after editing configuration files to check for errors before they take effect.
 Returns structured validation results with errors, warnings, and suggestions.
@@ -652,7 +652,7 @@ When spawning, the 'prompt' parameter is required.
 
 Optional overrides: \`model\`, \`llmConnection\`, \`permissionMode\`, \`thinkingLevel\`, \`enabledSourceSlugs\`, \`labels\`, \`workingDirectory\`. Omitted fields inherit from the spawning session or the workspace default, except \`model\` on a public ROX parent (\`rox/explore\`, \`rox/standard\`, \`rox/max\`, \`rox/vision\`, \`rox/fast\`): omitted model uses \`rox/fast\`. Pass \`model\` explicitly to keep another public endpoint.
 
-\`thinkingLevel\` is silently ignored on non-reasoning models (e.g. gpt-4o, gemini-2.5-flash) — the SDK drops the reasoning param rather than erroring. Use it when you want to force deeper reasoning on a supported model, or set it to \`off\` when spawning a session that doesn't need to think.
+ROX agent sessions always enforce maximum thinking. For compatible legacy APIs, ROX spawned sessions use OMP and automatically activate orchestrate, workflowz and ultrathink with maximum thinking. The optional thinkingLevel field cannot disable this mandatory execution policy.
 
 The spawned session appears in the session list and runs fire-and-forget.
 Only use 'attachments' for existing file paths on disk — the tool reads them automatically.`,
@@ -663,7 +663,7 @@ Uses the Connection Fabric broker: the agent receives only { login }. The raw to
 
 Requires workspaceId + connectionId. Optional consumerId selects the granted lease consumer (default "agent").`,
 
-  send_developer_feedback: `Send freeform feedback to the Craft Agent development team.
+  send_developer_feedback: `Send freeform feedback to the ROX development team.
 
 Use this to share anything that would help improve the product — issues you hit, ideas for better tools, suggestions for improved workflows, or patterns you notice. Write in markdown with as much detail as possible. This is your direct line to the developers.`,
 
@@ -684,7 +684,7 @@ IMPORTANT: never move a task into a closed status (such as "done" or "cancelled"
 Archiving removes a session from the active list and unread counts — it does NOT delete it (pass archived=false to restore). Use it to tidy up finished or superseded sessions.
 Requires an explicit sessionId and cannot target your own session. Use list_sessions / get_session_info to find the target session's ID.`,
 
-  create_task: `Create a Craft Agents Task on the kanban board — writes tasks/<slug>/task.yaml and creates its orchestrator session. CREATION ONLY: the task lands in "todo" and is NOT run; starting it is the user's (or an automation's) decision.
+  create_task: `Create a ROX Task on the kanban board — writes tasks/<slug>/task.yaml and creates its orchestrator session. CREATION ONLY: the task lands in "todo" and is NOT run; starting it is the user's (or an automation's) decision.
 
 Provide title + description (the description becomes the task goal and the initial node prompt). Optional: acceptanceCriteria (verification rubric), sources / skills (workspace slugs), llmConnection + model, workingDirectory, projectId. When projectId is omitted, the task inherits the invoking session's project.
 
@@ -700,7 +700,7 @@ The response includes absolute paths (contentPath, data.snapshotPath) — Read t
 
   create_page: `Create a new Page: a persistent, self-contained HTML document stored at pages/{slug}/ in the workspace, shown as a tile in the app's Pages section, and rendered in a sandboxed iframe.
 
-IMPORTANT — read ~/.craft-agent/docs/pages.md BEFORE authoring page HTML. Key rules: provide a FULL standalone HTML document with ALL CSS/JS inline (no external requests — shared copies get network egress blocked); to display data from the page's data store, listen for the 'craft-pages/v1' bridge messages (init/data) documented there; kind 'live' pages receive replacement data snapshots automatically while open.
+IMPORTANT — read the Pages guide supplied in the ROX context BEFORE authoring page HTML. Key rules: provide a FULL standalone HTML document with ALL CSS/JS inline (no external requests — shared copies get network egress blocked); to display data from the page's data store, listen for the 'craft-pages/v1' bridge messages (init/data) documented there; kind 'live' pages receive replacement data snapshots automatically while open.
 
 Use Pages (instead of chat previews) when the user wants something persistent: a dashboard that an automation refreshes, a report they'll revisit or share, a tracker fed by write_page_data. Returns the created page details including the slug.`,
 

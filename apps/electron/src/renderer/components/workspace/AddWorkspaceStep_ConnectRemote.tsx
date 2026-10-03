@@ -6,7 +6,7 @@ import { prepareRemoteWorkspace, type RemoteServerBinding } from "./remote-works
 import { needsRemoteTlsInspect, tlsTrustFromDecision } from "./remote-tls-connect"
 import type { RemoteTlsTrust } from "../../../shared/types"
 import { Input } from "../ui/input"
-import { PremiumMenuSelect } from "@craft-agent/ui"
+import { PremiumMenuSelect } from "@rox/ui"
 import { AddWorkspaceContainer, AddWorkspaceStepHeader, AddWorkspacePrimaryButton, AddWorkspaceSecondaryButton } from "./primitives"
 
 const CREATE_NEW_VALUE = '__create_new__'

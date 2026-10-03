@@ -6,14 +6,14 @@
  */
 
 import { describe, test, expect } from 'bun:test'
-import type { LlmConnection } from '@craft-agent/shared/config/llm-connections'
+import type { LlmConnection } from '@rox/shared/config/llm-connections'
 import {
   formatTokenCount,
   groupConnectionsByProvider,
   getConnectionModelsForPicker,
   stripPiPrefixForDisplay,
 } from '../model-picker-helpers'
-import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
+import { ROX_VISIBLE_TERMS } from '@rox/shared/identity'
 
 // -----------------------------------------------------------------------------
 // stripPiPrefixForDisplay

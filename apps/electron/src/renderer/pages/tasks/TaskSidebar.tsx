@@ -5,7 +5,7 @@ import {
   FolderOpen, Hourglass, Inbox, Layers, LayoutDashboard, ListChecks, Network,
   Play, Sun, Tag, Tags, Trash2, type LucideIcon,
 } from 'lucide-react'
-import { projectProgress, type PersonalTask, type TaskArea, type TaskFilterId, type TaskProject } from '@craft-agent/core/tasks/personal'
+import { projectProgress, type PersonalTask, type TaskArea, type TaskFilterId, type TaskProject } from '@rox/core/tasks/personal'
 import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboard'
 import { restoreFocusToToggle, SidebarDisclosureButton } from '@/components/app-shell/SidebarDisclosure'
 import { cn } from '@/lib/utils'

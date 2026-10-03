@@ -21,6 +21,7 @@ import { validateSourceConfig } from '../config/validators.ts';
 import { debug } from '../utils/debug.ts';
 import { readJsonFileSync } from '../utils/files.ts';
 import { applyBuiltinSourceAvailability, getBuiltinSourceCredential, getBuiltinSources, isBuiltinSource, getDocsSource } from './builtin-sources.ts';
+import { getBuiltinMcpReadiness, isManagedBuiltinMcpSource } from './builtin-mcp.ts';
 import { expandPath, toPortablePath } from '../utils/paths.ts';
 import { getWorkspaceSourcesPath } from '../workspaces/storage.ts';
 // Circular import (credential-manager imports from this file) is safe here:
@@ -89,7 +90,7 @@ export function loadSourceConfig(
 }
 
 /**
- * Mark a source as authenticated and connected.
+ * Mark a source as authenticated. Managed MCP connections still need a handshake.
  * Updates isAuthenticated, connectionStatus, and clears any connection error.
  *
  * @returns true if the source was found and updated, false otherwise
@@ -105,7 +106,7 @@ export function markSourceAuthenticated(
   }
 
   config.isAuthenticated = true;
-  config.connectionStatus = 'connected';
+  config.connectionStatus = isManagedBuiltinMcpSource(config) ? 'untested' : 'connected';
   config.connectionError = undefined;
 
   saveSourceConfig(workspaceRootPath, config);
@@ -409,6 +410,12 @@ export function isSourceUsable(source: LoadedSource): boolean {
 
   // Sources with no auth requirement are always usable when enabled
   if (authType === 'none' || authType === undefined) return true;
+
+  // A hosted Mem0 key can come from the environment before its first probe
+  // marks the persisted source authenticated. Check the real launch input.
+  if (source.config.slug === 'mem0' && isManagedBuiltinMcpSource(source.config)
+    && source.config.mcp?.url === 'https://mcp.mem0.ai/mcp' && authType === 'bearer'
+    && getBuiltinMcpReadiness(source.config).status === 'ready') return true;
 
   // Sources requiring auth must be authenticated
   return source.config.isAuthenticated === true || !!getBuiltinSourceCredential(source);

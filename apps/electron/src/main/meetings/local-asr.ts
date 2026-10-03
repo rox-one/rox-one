@@ -1,4 +1,4 @@
-import { getServerServiceKey } from '@craft-agent/shared/config/server-services'
+import { getServerServiceKey } from '@rox/shared/config/server-services'
 /**
  * Meeting ASR: configured Deepgram Nova for cloud transcription after consent;
  * whisper.cpp remains available for an explicitly selected local engine.
@@ -9,8 +9,8 @@ import { cpus, homedir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import type { LocalAsrEngine } from '../../shared/meetings-local'
 import { modelLabel, parseWhisperProgress, pickWhisperModel } from './local-model'
-import { DEEPGRAM_TRANSCRIPTION_MODEL } from '@craft-agent/shared/voice'
-import { loadVoicePrefs } from '@craft-agent/shared/voice'
+import { DEEPGRAM_TRANSCRIPTION_MODEL } from '@rox/shared/voice'
+import { loadVoicePrefs } from '@rox/shared/voice'
 
 const BIN_DIRS = ['/opt/homebrew/bin', '/usr/local/bin', '/opt/local/bin', '/usr/bin']
 

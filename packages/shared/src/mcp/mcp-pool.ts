@@ -18,6 +18,7 @@ import { ApiSourcePoolClient } from './api-source-pool-client.ts';
 import type { SdkMcpServerConfig } from '../agent/backend/types.ts';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StreamableHTTPError } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { isLocalMcpEnabled } from '../workspaces/storage.ts';
 import { guardLargeResult } from '../utils/large-response.ts';
 import {
@@ -74,7 +75,11 @@ function sdkConfigToClientConfig(config: SdkMcpServerConfig): McpClientConfig | 
       transport: 'stdio',
       command: config.command,
       args: config.args,
-      env: config.env,
+      env: {
+        ...Object.fromEntries((config.envVars ?? []).flatMap(name => process.env[name] === undefined ? [] : [[name, process.env[name]!]])),
+        ...config.env,
+      },
+      cwd: config.cwd,
     };
   }
   return null;
@@ -82,23 +87,51 @@ function sdkConfigToClientConfig(config: SdkMcpServerConfig): McpClientConfig | 
 
 /**
  * Check if an MCP source's config has changed in a way that requires reconnection.
- * Compares auth headers (token refresh) and URL changes.
- * Ignores stdio sources since they don't use OAuth tokens.
+ * Compares endpoint/header changes, including API keys outside Authorization.
+ * Local command/env changes also require a fresh subprocess.
  */
 function mcpConfigChanged(oldConfig: SdkMcpServerConfig, newConfig: SdkMcpServerConfig): boolean {
   if (oldConfig.type !== newConfig.type) return true;
+  const sortedEntries = (values?: Record<string, string>, lowerCaseKeys = false) =>
+    Object.entries(values ?? {}).map(([key, value]) => [lowerCaseKeys ? key.toLowerCase() : key, value]).sort(([a], [b]) => a!.localeCompare(b!));
 
   if (
     (oldConfig.type === 'http' || oldConfig.type === 'sse') &&
     (newConfig.type === 'http' || newConfig.type === 'sse')
   ) {
     if (oldConfig.url !== newConfig.url) return true;
-    const oldAuth = oldConfig.headers?.['Authorization'];
-    const newAuth = newConfig.headers?.['Authorization'];
-    if (oldAuth !== newAuth) return true;
+    if (JSON.stringify(sortedEntries(oldConfig.headers, true)) !== JSON.stringify(sortedEntries(newConfig.headers, true))) return true;
+    if (oldConfig.bearerTokenEnvVar !== newConfig.bearerTokenEnvVar) return true;
+  }
+
+  if (oldConfig.type === 'stdio' && newConfig.type === 'stdio') {
+    if (oldConfig.command !== newConfig.command) return true;
+    if (JSON.stringify(oldConfig.args ?? []) !== JSON.stringify(newConfig.args ?? [])) return true;
+    if (JSON.stringify(sortedEntries(oldConfig.env)) !== JSON.stringify(sortedEntries(newConfig.env))) return true;
+    if (JSON.stringify([...(oldConfig.envVars ?? [])].sort()) !== JSON.stringify([...(newConfig.envVars ?? [])].sort())) return true;
+    if (oldConfig.cwd !== newConfig.cwd) return true;
   }
 
   return false;
+}
+
+/** Retry connection setup only; a failed tool call may already have side effects. */
+function isConnectionFailure(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error instanceof StreamableHTTPError && [502, 503, 504].includes(error.code ?? 0)) return true;
+  return /not connected|connection closed|connection reset|server unavailable|fetch failed|network|socket|econn(?:reset|refused)|epipe|etimedout|timed out|\b(?:502|503|504)\b/i.test(error.message);
+}
+
+function needsConnectionRecovery(error: unknown): boolean {
+  // HTTP MCP uses 404 to invalidate a session after a server restart. A new
+  // handshake can restore it, whereas retrying a missing endpoint cannot.
+  return isConnectionFailure(error) || (error instanceof StreamableHTTPError && error.code === 404);
+}
+
+interface PendingConnection {
+  promise: Promise<void>;
+  client?: PoolClient;
+  cancelled: boolean;
 }
 
 export class McpClientPool {
@@ -108,7 +141,19 @@ export class McpClientPool {
   /** Configs used for active MCP connections (for change detection during sync) */
   protected activeConfigs = new Map<string, SdkMcpServerConfig>();
 
-  /** Cached tool lists keyed by source slug */
+  /** Retain the desired config across outages, until the source is explicitly removed. */
+  private desiredConfigs = new Map<string, SdkMcpServerConfig>();
+
+  /** Coalesce simultaneous reconnects and let teardown cancel an in-flight handshake. */
+  private connecting = new Map<string, PendingConnection>();
+  private recovering = new Map<string, Promise<void>>();
+  /** Serialize configuration changes and recovery for one source, independently of other sources. */
+  private sourceOperations = new Map<string, Promise<void>>();
+  private sourceGenerations = new Map<string, number>();
+  private disconnectGeneration = 0;
+  private syncGeneration = 0;
+
+  /** Last known tool lists, retained during outages so later calls can reconnect. */
   private toolCache = new Map<string, Tool[]>();
 
   /** Proxy tool name → { slug, originalName } (e.g., "mcp__linear__createIssue" → { slug: "linear", originalName: "createIssue" }) */
@@ -158,9 +203,17 @@ export class McpClientPool {
    * Register a client: connect, cache tools, build proxy mappings.
    * Shared logic for both remote MCP and in-process API sources.
    */
-  protected async registerClient(slug: string, client: PoolClient): Promise<void> {
+  protected async registerClient(slug: string, client: PoolClient, canRegister: () => boolean = () => true): Promise<void> {
     // listTools() triggers connect() internally for both CraftMcpClient and ApiSourcePoolClient
-    const tools = await client.listTools();
+    let tools: Tool[];
+    try {
+      tools = await client.listTools();
+      if (!canRegister()) throw new Error(`MCP connection cancelled for source "${slug}"`);
+    } catch (error) {
+      await client.close().catch(() => {});
+      throw error;
+    }
+    this.removeToolMappings(slug);
     this.clients.set(slug, client);
     this.toolCache.set(slug, tools);
 
@@ -177,27 +230,94 @@ export class McpClientPool {
     this.debug(`Connected source ${slug}: ${tools.length} tools`);
   }
 
+  /** Factory seam keeps transport recovery tests independent of network/process mocks. */
+  protected createClient(config: McpClientConfig): PoolClient {
+    return new CraftMcpClient(config);
+  }
+
+  private runSourceOperation(
+    slug: string,
+    operation: (canContinue: () => boolean) => Promise<void>,
+    cancellable = true,
+  ): Promise<void> {
+    const sourceGeneration = this.sourceGenerations.get(slug) ?? 0;
+    const disconnectGeneration = this.disconnectGeneration;
+    const canContinue = () => !cancellable || (
+      sourceGeneration === (this.sourceGenerations.get(slug) ?? 0) &&
+      disconnectGeneration === this.disconnectGeneration
+    );
+    const previous = this.sourceOperations.get(slug) ?? Promise.resolve();
+    const pending = previous.catch(() => {}).then(async () => {
+      if (!canContinue()) throw new Error(`MCP connection cancelled for source "${slug}"`);
+      await operation(canContinue);
+    }).finally(() => {
+      if (this.sourceOperations.get(slug) === pending) this.sourceOperations.delete(slug);
+    });
+    this.sourceOperations.set(slug, pending);
+    return pending;
+  }
+
   /**
    * Connect to an MCP source server (remote HTTP/SSE/stdio).
    * If already connected, this is a no-op.
    */
   async connect(slug: string, config: SdkMcpServerConfig): Promise<void> {
-    if (this.clients.has(slug)) return;
-    const clientConfig = sdkConfigToClientConfig(config);
+    const connectionConfig = structuredClone(config);
+    this.desiredConfigs.set(slug, connectionConfig);
+    return this.runSourceOperation(slug, () => this.connectSource(slug, connectionConfig));
+  }
+
+  /** Establish a connection within the source's serialized lifecycle operation. */
+  protected async connectSource(slug: string, config: SdkMcpServerConfig): Promise<void> {
+    const existing = this.connecting.get(slug);
+    if (existing) return existing.promise;
+    if (this.isConnected(slug)) return;
+    const connectionConfig = structuredClone(config);
+    const clientConfig = sdkConfigToClientConfig(connectionConfig);
     if (!clientConfig) {
       this.debug(`Unknown MCP server type for ${slug}: ${(config as { type: string }).type}`);
       return;
     }
-    await this.registerClient(slug, new CraftMcpClient(clientConfig));
-    this.activeConfigs.set(slug, config);
+    const pending: PendingConnection = { promise: Promise.resolve(), cancelled: false };
+    pending.promise = Promise.resolve().then(async () => {
+      await this.removeClient(slug, true);
+      for (let attempt = 0; attempt < 2; attempt++) {
+        if (pending.cancelled) throw new Error(`MCP connection cancelled for source "${slug}"`);
+        pending.client = this.createClient(clientConfig);
+        try {
+          await this.registerClient(slug, pending.client, () => !pending.cancelled);
+          if (pending.cancelled) throw new Error(`MCP connection cancelled for source "${slug}"`);
+          this.activeConfigs.set(slug, connectionConfig);
+          return;
+        } catch (error) {
+          if (pending.cancelled || attempt === 1 || !isConnectionFailure(error)) throw error;
+          this.debug(`Retrying connection to MCP source ${slug}`);
+        }
+      }
+    }).finally(() => {
+      if (this.connecting.get(slug) === pending) this.connecting.delete(slug);
+    });
+    this.connecting.set(slug, pending);
+    return pending.promise;
   }
 
   /**
    * Connect to an in-process MCP server (API source) via in-memory transport.
    */
   async connectInProcess(slug: string, mcpServer: McpServer): Promise<void> {
-    if (this.clients.has(slug)) return;
-    await this.registerClient(slug, new ApiSourcePoolClient(mcpServer));
+    return this.runSourceOperation(slug, async canContinue => {
+      if (this.clients.has(slug)) return;
+      const pending: PendingConnection = {
+        promise: Promise.resolve(), cancelled: false, client: new ApiSourcePoolClient(mcpServer),
+      };
+      pending.promise = this.registerClient(slug, pending.client!, () => !pending.cancelled && canContinue());
+      this.connecting.set(slug, pending);
+      try {
+        await pending.promise;
+      } finally {
+        if (this.connecting.get(slug) === pending) this.connecting.delete(slug);
+      }
+    });
   }
 
   /**
@@ -215,47 +335,63 @@ export class McpClientPool {
       throw new Error(`Local MCP is disabled for this workspace — cannot connect stdio source "${slug}"`);
     }
 
-    if (this.clients.has(slug)) {
-      const oldConfig = this.activeConfigs.get(slug);
-      if (!oldConfig || !mcpConfigChanged(oldConfig, config)) return;
-      this.debug(`Config changed for ${slug}, reconnecting with fresh credentials`);
-      await this.disconnect(slug);
-    }
-
-    await this.connect(slug, config);
+    const connectionConfig = structuredClone(config);
+    this.desiredConfigs.set(slug, connectionConfig);
+    return this.runSourceOperation(slug, async canContinue => {
+      if (this.clients.has(slug)) {
+        const oldConfig = this.activeConfigs.get(slug);
+        if (this.isConnected(slug) && (!oldConfig || !mcpConfigChanged(oldConfig, connectionConfig))) return;
+        this.debug(`Reconnecting source ${slug} after a config change or transport disconnect`);
+        await this.removeClient(slug, true);
+      }
+      if (!canContinue()) throw new Error(`MCP connection cancelled for source "${slug}"`);
+      await this.connectSource(slug, connectionConfig);
+    });
   }
 
   /**
    * Disconnect a source and remove its tools from the pool.
    */
   async disconnect(slug: string): Promise<void> {
-    const client = this.clients.get(slug);
-    if (client) {
-      await client.close().catch(() => {});
-      this.clients.delete(slug);
-    }
+    this.sourceGenerations.set(slug, (this.sourceGenerations.get(slug) ?? 0) + 1);
+    this.desiredConfigs.delete(slug);
+    this.removeToolMappings(slug);
+    const pending = this.connecting.get(slug);
+    if (pending) pending.cancelled = true;
+    // Interrupt the handshake immediately; queued teardown then drains earlier
+    // lifecycle operations without waiting on a recovery from inside itself.
+    const closingPending = pending?.client?.close().catch(() => {});
+    await this.runSourceOperation(slug, async () => {
+      await closingPending;
+      await this.removeClient(slug);
+    }, false);
+    this.debug(`Disconnected source: ${slug}`);
+  }
 
-    // Remove proxy tool entries for this slug
+  private removeToolMappings(slug: string): void {
     for (const [proxyName, info] of this.proxyTools) {
       if (info.slug === slug) this.proxyTools.delete(proxyName);
     }
     this.sourceToolProxyNames.delete(slug);
     this.toolCache.delete(slug);
+  }
+
+  protected async removeClient(slug: string, preserveTools = false): Promise<void> {
+    const client = this.clients.get(slug);
+    this.clients.delete(slug);
+    if (!preserveTools) this.removeToolMappings(slug);
     this.activeConfigs.delete(slug);
-    this.debug(`Disconnected source: ${slug}`);
+    await client?.close().catch(() => {});
   }
 
   /**
    * Disconnect all sources and clear all state.
    */
   async disconnectAll(): Promise<void> {
-    const closePromises = Array.from(this.clients.values()).map(c => c.close().catch(() => {}));
-    await Promise.all(closePromises);
-    this.clients.clear();
-    this.toolCache.clear();
-    this.proxyTools.clear();
-    this.sourceToolProxyNames.clear();
-    this.activeConfigs.clear();
+    this.disconnectGeneration++;
+    this.syncGeneration++;
+    const slugs = new Set([...this.clients.keys(), ...this.connecting.keys(), ...this.recovering.keys(), ...this.sourceOperations.keys(), ...this.desiredConfigs.keys()]);
+    await Promise.all(Array.from(slugs, slug => this.disconnect(slug)));
     this.debug('Disconnected all MCP clients');
   }
 
@@ -275,6 +411,7 @@ export class McpClientPool {
     mcpServers: Record<string, SdkMcpServerConfig>,
     apiServers: Record<string, ApiServerConfig> = {}
   ): Promise<string[]> {
+    const syncGeneration = ++this.syncGeneration;
     // Filter out stdio sources when local MCP is disabled for this workspace.
     const localEnabled = !this.workspaceRootPath || isLocalMcpEnabled(this.workspaceRootPath);
     const filteredMcp: Record<string, SdkMcpServerConfig> = {};
@@ -295,49 +432,27 @@ export class McpClientPool {
     }
 
     const desiredSlugs = new Set([...Object.keys(filteredMcp), ...apiSlugs.keys()]);
-    const currentSlugs = new Set(this.clients.keys());
+    const currentSlugs = new Set([...this.clients.keys(), ...this.connecting.keys(), ...this.recovering.keys(), ...this.sourceOperations.keys(), ...this.desiredConfigs.keys()]);
     const failures: string[] = [];
 
     // Disconnect sources no longer desired
-    for (const slug of currentSlugs) {
-      if (!desiredSlugs.has(slug)) {
-        await this.disconnect(slug);
-      }
-    }
+    await Promise.all(Array.from(currentSlugs).filter(slug => !desiredSlugs.has(slug)).map(slug => this.disconnect(slug)));
+    // A newer reconciliation or teardown owns the desired set now.
+    if (syncGeneration !== this.syncGeneration) return failures;
 
-    // Connect new MCP sources + reconnect existing ones whose config changed (e.g. refreshed token)
-    for (const [slug, config] of Object.entries(filteredMcp)) {
-      if (!currentSlugs.has(slug)) {
-        try {
-          await this.connect(slug, config);
-        } catch (err) {
-          this.debug(`Failed to connect MCP source ${slug}: ${err instanceof Error ? err.message : String(err)}`);
-          failures.push(slug);
-        }
-      } else {
-        const oldConfig = this.activeConfigs.get(slug);
-        if (oldConfig && mcpConfigChanged(oldConfig, config)) {
-          this.debug(`Config changed for ${slug}, reconnecting with fresh credentials`);
-          await this.disconnect(slug);
-          try {
-            await this.connect(slug, config);
-          } catch (err) {
-            this.debug(`Failed to reconnect MCP source ${slug}: ${err instanceof Error ? err.message : String(err)}`);
-            failures.push(slug);
-          }
-        }
-      }
-    }
-
-    // Connect new API sources
-    for (const [slug, server] of apiSlugs) {
-      if (!currentSlugs.has(slug)) {
-        try {
-          await this.connectInProcess(slug, server);
-        } catch (err) {
-          this.debug(`Failed to connect API source ${slug}: ${err instanceof Error ? err.message : String(err)}`);
-          failures.push(slug);
-        }
+    // Independent sources connect together so an unavailable remote server
+    // does not postpone every local server behind its handshake timeout.
+    const connections = [
+      ...Object.entries(filteredMcp).map(([slug, config]) => ({ slug, connect: () => this.ensureConnected(slug, config) })),
+      ...Array.from(apiSlugs).filter(([slug]) => !filteredMcp[slug])
+        .map(([slug, server]) => ({ slug, connect: () => this.connectInProcess(slug, server) })),
+    ];
+    const results = await Promise.allSettled(connections.map(connection => connection.connect()));
+    for (const [index, result] of results.entries()) {
+      if (result.status === 'rejected') {
+        const slug = connections[index]!.slug;
+        this.debug(`Failed to connect source ${slug}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+        failures.push(slug);
       }
     }
 
@@ -350,7 +465,7 @@ export class McpClientPool {
   // ============================================================
 
   /**
-   * Get cached tools for a source. Returns empty array if not connected.
+   * Get last known tools for a configured source, including during recovery.
    */
   getTools(slug: string): Tool[] {
     return this.toolCache.get(slug) || [];
@@ -360,14 +475,41 @@ export class McpClientPool {
    * Get all connected source slugs.
    */
   getConnectedSlugs(): string[] {
-    return Array.from(this.clients.keys());
+    return Array.from(this.clients.keys()).filter(slug => this.isConnected(slug));
   }
 
   /**
    * Check if a source is connected.
    */
   isConnected(slug: string): boolean {
-    return this.clients.has(slug);
+    const client = this.clients.get(slug);
+    return !!client && client.isConnected?.() !== false;
+  }
+
+  private async recoverClient(slug: string, failedClient?: PoolClient): Promise<void> {
+    const existing = this.recovering.get(slug);
+    if (existing) return existing;
+    const config = this.desiredConfigs.get(slug) ?? this.activeConfigs.get(slug);
+    if (!config) throw new Error(`MCP source "${slug}" has no reconnect configuration`);
+    if (config.type === 'stdio' && this.workspaceRootPath && !isLocalMcpEnabled(this.workspaceRootPath)) {
+      throw new Error(`Local MCP is disabled for this workspace — cannot reconnect stdio source "${slug}"`);
+    }
+    const recovery = this.runSourceOperation(slug, async canContinue => {
+      const current = this.clients.get(slug);
+      if (failedClient && current !== failedClient) return;
+      if (!failedClient && current && current.isConnected?.() !== false) return;
+      await this.removeClient(slug, true);
+      if (!canContinue()) {
+        throw new Error(`MCP reconnection cancelled for source "${slug}"`);
+      }
+      await this.connectSource(slug, config);
+    }).finally(() => { this.onToolsChanged?.(); });
+    this.recovering.set(slug, recovery);
+    try {
+      await recovery;
+    } finally {
+      if (this.recovering.get(slug) === recovery) this.recovering.delete(slug);
+    }
   }
 
   /**
@@ -389,7 +531,7 @@ export class McpClientPool {
   }
 
   /**
-   * Generate proxy tool definitions for all connected sources (or a subset).
+   * Generate proxy definitions for known sources (or a subset), including retryable outages.
    * These are passed to backends for tool registration.
    */
   getProxyToolDefs(slugs?: string[]): ProxyToolDef[] {
@@ -434,8 +576,8 @@ export class McpClientPool {
 
     const { slug, originalName } = info;
 
-    const client = this.clients.get(slug);
-    if (!client) {
+    let client = this.clients.get(slug);
+    if (!client && !this.desiredConfigs.has(slug)) {
       return {
         content: `MCP client for source "${slug}" is not connected.`,
         isError: true,
@@ -444,6 +586,16 @@ export class McpClientPool {
     }
 
     try {
+      // A transport known to be closed has not received this call yet. It is
+      // safe to reconnect and execute once on the replacement connection.
+      if (!client || client.isConnected?.() === false) {
+        if (options?.signal?.aborted) throw options.signal.reason ?? new Error('MCP tool call aborted');
+        await this.recoverClient(slug, client);
+        client = this.clients.get(slug);
+        if (!client || !this.getProxyToolName(slug, originalName)) {
+          throw new Error(`MCP tool "${originalName}" is unavailable after reconnecting`);
+        }
+      }
       const result = await client.callTool(originalName, args, options) as {
         content?: Array<{ type: string; text?: unknown; data?: string; mimeType?: string }>;
         isError?: boolean;
@@ -500,6 +652,14 @@ export class McpClientPool {
         isError: !!result.isError,
       };
     } catch (err) {
+      // A request may have reached the server before the transport failed.
+      // Restore the connection for subsequent calls without replaying it.
+      if (client && this.clients.get(slug) === client && this.activeConfigs.has(slug) &&
+          !options?.signal?.aborted && (client.isConnected?.() === false || needsConnectionRecovery(err))) {
+        await this.recoverClient(slug, client).catch(recoveryError => {
+          this.debug(`Failed to recover MCP source ${slug}: ${recoveryError instanceof Error ? recoveryError.message : String(recoveryError)}`);
+        });
+      }
       return {
         content: `MCP tool "${originalName}" (source: ${slug}) failed: ${err instanceof Error ? err.message : String(err)}`,
         isError: true,

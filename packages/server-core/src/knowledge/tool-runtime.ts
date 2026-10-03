@@ -1,6 +1,6 @@
 /**
  * createKnowledgeToolRuntime — the server-core implementation of the
- * KnowledgeToolRuntime seam from @craft-agent/session-tools-core. Registered
+ * KnowledgeToolRuntime seam from @rox/session-tools-core. Registered
  * once by registerKnowledgeHandlers (handlers/rpc/knowledge.ts), it lets the
  * knowledge_search / knowledge_read / knowledge_get_backlinks session tools
  * reach the SAME provider resolution path as the knowledge RPC read channels
@@ -13,12 +13,12 @@
  * - KnowledgeError from the provider passes through unchanged; anything else is
  *   wrapped as PROVIDER_ERROR — nothing raw crosses this seam.
  */
-import { KnowledgeError } from '@craft-agent/core/knowledge'
-import type { KnowledgeProvider } from '@craft-agent/core/knowledge'
+import { KnowledgeError } from '@rox/core/knowledge'
+import type { KnowledgeProvider } from '@rox/core/knowledge'
 import type {
   KnowledgeToolRuntime,
   KnowledgeReadContextMode,
-} from '@craft-agent/session-tools-core'
+} from '@rox/session-tools-core'
 import { KnowledgeConnectionsStore } from './connections-store'
 
 export interface KnowledgeToolRuntimeDeps {

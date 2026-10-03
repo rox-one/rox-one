@@ -35,7 +35,7 @@ import {
   ProposalTransitionError,
   computeInverseOps,
   hashKnowledgeContent,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 import type {
   ApplyResult,
   KnowledgeNode,
@@ -45,15 +45,15 @@ import type {
   MutationOp,
   MutationProposal,
   SelectionProof,
-} from '@craft-agent/core/knowledge'
-import type { KnowledgeChangedPayload } from '@craft-agent/shared/protocol'
-import { KNOWLEDGE_PERMISSION_DENIED_CODE } from '@craft-agent/shared/agent/knowledge-permissions'
-import type { PermissionMode } from '@craft-agent/shared/agent/mode-types'
+} from '@rox/core/knowledge'
+import type { KnowledgeChangedPayload } from '@rox/shared/protocol'
+import { KNOWLEDGE_PERMISSION_DENIED_CODE } from '@rox/shared/agent/knowledge-permissions'
+import type { PermissionMode } from '@rox/shared/agent/mode-types'
 import { KnowledgeAuditLog } from '../knowledge-audit'
 import { KnowledgeMutationProposalsStore } from '../proposals-store'
 import { KnowledgeBridgeService } from '../bridge-service'
 import type { KnowledgeBridgeProposeArgs, KnowledgeProposalFileRecord } from '../bridge-service'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 
 process.env.CRAFT_CONFIG_DIR ??= mkdtempSync(join(tmpdir(), 'craft-config-bridge-'))
 

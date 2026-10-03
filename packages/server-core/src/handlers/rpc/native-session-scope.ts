@@ -1,7 +1,7 @@
-import type { AnnotationV1, Message } from '@craft-agent/core/types'
-import { CodedError, RPC_CHANNELS, type Session, type SessionEvent } from '@craft-agent/shared/protocol'
-import type { LoadedSource } from '@craft-agent/shared/sources'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import type { AnnotationV1, Message } from '@rox/core/types'
+import { CodedError, RPC_CHANNELS, type Session, type SessionEvent } from '@rox/shared/protocol'
+import type { LoadedSource } from '@rox/shared/sources'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import type { HandlerDeps } from '../handler-deps'
 import type { RequestContext, RpcServer } from '../../transport/types'
 

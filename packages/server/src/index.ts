@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * @craft-agent/server — standalone headless Craft Agent server.
+ * @rox/server — standalone headless Craft Agent server.
  *
  * Usage:
  *   CRAFT_SERVER_TOKEN=<secret> bun run packages/server/src/index.ts
@@ -32,13 +32,13 @@
 import { join } from 'node:path'
 import { readFileSync, existsSync } from 'node:fs'
 import { version as packageVersion } from '../package.json'
-import { enableDebug } from '@craft-agent/shared/utils/debug'
-import { bootstrapServer, startHealthHttpServer, generateServerToken, maskTokenForDisplay } from '@craft-agent/server-core/bootstrap'
-import { validateSession, createWebuiHandler, nodeHttpAdapter } from '@craft-agent/server-core/webui'
-import type { WebuiHandler } from '@craft-agent/server-core/webui'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { getWorkspaces } from '@craft-agent/shared/config'
-import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@craft-agent/messaging-gateway'
+import { enableDebug } from '@rox/shared/utils/debug'
+import { bootstrapServer, startHealthHttpServer, generateServerToken, maskTokenForDisplay } from '@rox/server-core/bootstrap'
+import { validateSession, createWebuiHandler, nodeHttpAdapter } from '@rox/server-core/webui'
+import type { WebuiHandler } from '@rox/server-core/webui'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { getWorkspaces } from '@rox/shared/config'
+import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@rox/messaging-gateway'
 import { VpsBrowserPaneManager } from './vps-browser-pane-manager'
 
 // --generate-token: print a crypto-random token and exit
@@ -46,13 +46,13 @@ if (process.argv.includes('--generate-token')) {
   console.log(generateServerToken())
   process.exit(0)
 }
-import type { WsRpcTlsOptions } from '@craft-agent/server-core/transport'
-import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@craft-agent/server-core/handlers/rpc'
-import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@craft-agent/server-core/sessions'
-import { initModelRefreshService, setFetcherPlatform } from '@craft-agent/server-core/model-fetchers'
-import { setSearchPlatform, setImageProcessor } from '@craft-agent/server-core/services'
-import type { HandlerDeps } from '@craft-agent/server-core/handlers'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import type { WsRpcTlsOptions } from '@rox/server-core/transport'
+import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@rox/server-core/handlers/rpc'
+import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@rox/server-core/sessions'
+import { initModelRefreshService, setFetcherPlatform } from '@rox/server-core/model-fetchers'
+import { setSearchPlatform, setImageProcessor } from '@rox/server-core/services'
+import type { HandlerDeps } from '@rox/server-core/handlers'
+import { resolveConfigDir } from "@rox/shared/config/paths"
 
 process.env.CRAFT_IS_PACKAGED ??= 'false'
 
@@ -295,15 +295,15 @@ if (messagingHandle !== null && !messagingDisabled) {
 
 // Wire up the lazy health check now that the session manager is ready
 if (webuiHandler) {
-  const { getHealthCheck } = await import('@craft-agent/server-core/handlers/rpc/server')
+  const { getHealthCheck } = await import('@rox/server-core/handlers/rpc/server')
   const depsLike = { sessionManager: instance.sessionManager } as any
   healthCheckFn = () => getHealthCheck(depsLike)
 
   // Wire up OAuth callback deps so /api/oauth/callback works
-  const { getSourceCredentialManager, loadWorkspaceSources } = await import('@craft-agent/shared/sources')
-  const { getWorkspaceByNameOrId } = await import('@craft-agent/shared/config')
-  const { pushTyped } = await import('@craft-agent/server-core/transport')
-  const { RPC_CHANNELS } = await import('@craft-agent/shared/protocol')
+  const { getSourceCredentialManager, loadWorkspaceSources } = await import('@rox/shared/sources')
+  const { getWorkspaceByNameOrId } = await import('@rox/shared/config')
+  const { pushTyped } = await import('@rox/server-core/transport')
+  const { RPC_CHANNELS } = await import('@rox/shared/protocol')
 
   webuiHandler.setOAuthCallbackDeps({
     flowStore: instance.oauthFlowStore,

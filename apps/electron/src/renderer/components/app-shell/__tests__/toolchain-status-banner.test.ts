@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
-import { setupI18n, i18n } from '@craft-agent/shared/i18n/setupI18n'
+import { setupI18n, i18n } from '@rox/shared/i18n/setupI18n'
 
 // Bootstrap i18next with bundled resources before importing the
 // component-under-test so its top-level i18n.t() calls return real strings.

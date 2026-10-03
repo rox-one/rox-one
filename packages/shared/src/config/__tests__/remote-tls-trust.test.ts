@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import type { RemoteServerConfig } from '@craft-agent/core/types'
+import type { RemoteServerConfig } from '@rox/core/types'
 import { normalizeRemoteTlsTrust } from '../remote-tls-trust.ts'
 
 const SPKI_SHA256 = Buffer.alloc(32, 7).toString('base64')

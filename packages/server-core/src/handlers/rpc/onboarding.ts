@@ -3,19 +3,19 @@
  *
  * Handles workspace setup and configuration persistence.
  */
-import { fetchRoxBalance, getOnboardingAuthPayload, saveOmpRoxCredential } from '@craft-agent/shared/auth'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { isSetupDeferred, setSetupDeferred } from '@craft-agent/shared/config'
-import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@craft-agent/shared/auth'
-import { validateMcpConnection } from '@craft-agent/shared/mcp'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { fetchRoxBalance, getOnboardingAuthPayload, saveOmpRoxCredential } from '@rox/shared/auth'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { isSetupDeferred, setSetupDeferred } from '@rox/shared/config'
+import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@rox/shared/auth'
+import { validateMcpConnection } from '@rox/shared/mcp'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   isClaimableLive,
   rpcOnboardingActResult,
   rpcOnboardingListResult,
   rpcOnboardingReadResult,
-} from '@craft-agent/core/rox2'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/core/rox2'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 
 // ============================================
@@ -24,6 +24,7 @@ import type { HandlerDeps } from '../handler-deps'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.onboarding.GET_AUTH_STATE,
+  RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION,
   RPC_CHANNELS.onboarding.VALIDATE_MCP,
   RPC_CHANNELS.onboarding.START_MCP_OAUTH,
   RPC_CHANNELS.onboarding.START_CLAUDE_OAUTH,
@@ -37,6 +38,11 @@ export const HANDLED_CHANNELS = [
 
 export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps): void {
   const log = deps.platform.logger
+
+  server.handle(RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION, async (_ctx, workspaceId: string) => {
+    if (typeof workspaceId !== 'string' || !workspaceId.trim()) throw new Error('workspaceId is required')
+    return deps.sessionManager.ensureFirstSessionWelcome(workspaceId)
+  })
 
   // Get current auth state
   server.handle(RPC_CHANNELS.onboarding.GET_AUTH_STATE, async () => {

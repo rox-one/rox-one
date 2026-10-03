@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
 import { startNativeMeeting } from '../catalog.ts'
 import { applyNativeImportIntent, NATIVE_IMPORT_PROVIDER, NATIVE_IMPORT_REMOTE_TYPE } from '../import.ts'
 

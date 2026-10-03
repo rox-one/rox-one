@@ -1,5 +1,5 @@
-import type { Meeting } from '@craft-agent/core/meetings'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { Meeting } from '@rox/core/meetings'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
 import { i18nKeyForProposalError } from './proposal-rpc'
 
 export type MeetingListItem = {

@@ -10,7 +10,7 @@ import { TooltipProvider } from '../../../../../../../../../packages/ui/src/comp
 import { messageActionId } from '@/lib/message-action-id'
 import { createMessageTts } from '@/lib/message-tts'
 import { handleMessageAnnotationsUpdated, handleUserMessage } from '@/event-processor/handlers/session'
-import { buildSideThreadPrompt } from '@craft-agent/shared/side-threads'
+import { buildSideThreadPrompt } from '@rox/shared/side-threads'
 import en from '../../../../../../../../../packages/shared/src/i18n/locales/en.json'
 import '../../../../../index.css'
 

@@ -9,7 +9,7 @@ describe('git RPC handlers', () => {
     const server = readFileSync(join(repoRoot, 'packages/server-core/src/handlers/rpc/system.ts'), 'utf8')
     const electron = readFileSync(join(repoRoot, 'apps/electron/src/main/handlers/system.ts'), 'utf8')
     for (const src of [server, electron]) {
-      expect(src).toContain("from '@craft-agent/shared/git/exec'")
+      expect(src).toContain("from '@rox/shared/git/exec'")
       expect(src).toContain('readGitWorkingTreeStatus')
       expect(src).toContain('readGitBranchName')
       expect(src).not.toContain("execSync('git status")

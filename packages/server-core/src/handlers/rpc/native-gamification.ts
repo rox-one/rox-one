@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto'
 import { chmodSync, closeSync, lstatSync, mkdirSync, openSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
-import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
+import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { getDefaultGamificationState, getLevelForXp, getXpReward, recordXpDay, seedXpDays, QUEST_IDS, QUEST_XP_EVENT,
-  transitionQuestAction, type AwardXpResult, type GamificationState, type QuestId, type XpEventType } from '@craft-agent/shared/gamification'
+  transitionQuestAction, type AwardXpResult, type GamificationState, type QuestId, type XpEventType } from '@rox/shared/gamification'
 import type { NativePrincipal } from '../../authority/native-authority'
 
 function privateDirectory(path: string): string {

@@ -1,0 +1,6 @@
+[
+  {
+    "prompt": "Find open intro requests and create follow-up tasks.",
+    "tools": ["search_messages", "chat_read", "tasks_add"]
+  }
+]

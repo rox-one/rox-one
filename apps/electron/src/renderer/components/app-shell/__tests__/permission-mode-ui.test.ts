@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import ts from 'typescript'
 import * as React from 'react'
-import { PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, type PermissionMode } from '@craft-agent/shared/agent/modes'
+import { PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, type PermissionMode } from '@rox/shared/agent/modes'
 import { defaultSessionOptions, mergeSessionOptions, type SessionOptions } from '../../../hooks/useSessionOptions'
 import { readLocalSessionCapability } from '../../../lib/caller-session-loading'
 

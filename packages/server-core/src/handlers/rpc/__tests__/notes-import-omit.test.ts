@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isImportProvenancedRelativePath } from '@craft-agent/shared/config'
+import { isImportProvenancedRelativePath } from '@rox/shared/config'
 
 const source = readFileSync(join(import.meta.dir, '..', 'notes.ts'), 'utf8')
 

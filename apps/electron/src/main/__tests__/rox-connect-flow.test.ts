@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { RoxConnectFlow } from '../rox-connect-flow'
-import type { RoxDevicePollApproved, RoxDeviceStartResult } from '@craft-agent/shared/auth/rox-cloud'
+import type { RoxDevicePollApproved, RoxDeviceStartResult } from '@rox/shared/auth/rox-cloud'
 
 function deferred<T>() {
   let resolve!: (value: T) => void

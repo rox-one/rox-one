@@ -8,7 +8,7 @@
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import * as Icons from 'lucide-react'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@rox/ui'
 import {
   DropdownMenu,
   DropdownMenuTrigger,

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
+import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'

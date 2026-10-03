@@ -3,9 +3,9 @@ import * as React from 'react'
 import { useMemo, useEffect, useRef, useCallback, useState } from 'react'
 import i18n from 'i18next'
 import { useTranslation } from 'react-i18next'
-import type { ToolDisplayMeta, AnnotationV1 } from '@craft-agent/core'
-import { normalizePath, pathStartsWith, stripPathPrefix } from '@craft-agent/core/utils'
-import { isParentTaskTool } from '@craft-agent/shared/utils/toolNames'
+import type { ToolDisplayMeta, AnnotationV1 } from '@rox/core'
+import { normalizePath, pathStartsWith, stripPathPrefix } from '@rox/core/utils'
+import { isParentTaskTool } from '@rox/shared/utils/toolNames'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   ChevronRight,
@@ -41,7 +41,7 @@ import { parseDiffFromFile, type FileContents } from '@pierre/diffs'
 import { getDiffStats, getUnifiedDiffStats } from '../code-viewer'
 import { TurnCardActionsMenu } from './TurnCardActionsMenu'
 import { MessageHoverDock, type MessageDockExtraAction } from './MessageHoverDock'
-import type { SideThreadAction } from '@craft-agent/shared/side-threads'
+import type { SideThreadAction } from '@rox/shared/side-threads'
 import {
   aggregateReactions,
   createReactionAnnotation,

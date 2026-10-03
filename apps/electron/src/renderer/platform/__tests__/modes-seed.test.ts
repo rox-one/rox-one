@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { isModeNavigable, listPinnedModes } from '@craft-agent/core/platform'
+import { isModeNavigable, listPinnedModes } from '@rox/core/platform'
 import { CORE_MODES, modeForSlot, resolveSeededModes } from '../modes-seed'
 import { __resetModeRegistryForTests, getModeRegistry } from '../mode-registry-bootstrap'
 
