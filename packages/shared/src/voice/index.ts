@@ -80,7 +80,7 @@ export {
 } from './capabilities.ts'
 
 export { VoiceIdentityClient, memoryIdentityStore, VoiceIdentityError } from './identity.ts'
-export { RoxTranscriptionAdapter, RoxTranscriptionError } from './adapters/rox-transcription.ts'
+export { RoxTranscriptionAdapter, RoxTranscriptionError, type TranscriptionRequest } from './adapters/rox-transcription.ts'
 export { createEdgeSpeakAdapter, EdgeTtsError } from './adapters/edge-tts.ts'
 export { normalizeVerboseJson, validateAudioLimits, AudioValidationError, type NormalizedTranscript } from './adapters/audio-result.ts'
 export { VoiceHost, type VoiceHostEvent } from './host.ts'
@@ -131,3 +131,4 @@ export { voiceFlagEnabled, voiceV2Enabled } from './flags.ts'
 export * from './meeting-capture.ts';
 export * from './meeting-stream.ts';
 export * from './transcript-reducer.ts';
+export { DeepgramTranscriptionAdapter, DEEPGRAM_TRANSCRIPTION_MODEL, DEEPGRAM_TRANSCRIPTION_NAME, normalizeDeepgramTranscript } from './adapters/deepgram-transcription.ts'

@@ -542,7 +542,10 @@ app.whenReady().then(async () => {
       showVoiceOverlay()
     })
     registerMeetingCaptureIpc()
-    registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)))
+    registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
+      getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
+      getWorkspaceGenerationForWindow: (id) => windowManager?.getWorkspaceGenerationForWindow(id) ?? null,
+    })
     registerMailIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)))
 
     // Build real PlatformServices from Electron APIs

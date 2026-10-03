@@ -4,6 +4,7 @@
  * exist and the flag is on). Idempotent across re-renders/windows via a
  * module lock + a per-day claim in localStorage.
  */
+import { useAutomaticMeetingExtraction } from '@/lib/meetings/auto-extraction'
 import { useEffect } from 'react'
 import { useAtomValue } from 'jotai'
 import i18n from 'i18next'
@@ -79,6 +80,7 @@ export async function maybeWriteDaySummary(workspaceId: string, now = Date.now()
 }
 
 export function useExtraScreensBackground(workspaceId: string | null): void {
+  useAutomaticMeetingExtraction(workspaceId)
   const radarOn = useAtomValue(extraScreenFlagAtoms.radar)
   const focusOn = useAtomValue(extraScreenFlagAtoms.focus)
   useEffect(() => {

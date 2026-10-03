@@ -154,6 +154,8 @@ export interface ISessionManager {
   onSessionComplete(
     listener: (evt: import('../sessions/SessionManager').SessionCompletionEvent) => void,
   ): () => void
+  /** Server composition decides whether a workspace completion belongs to its legacy host profile. */
+  setLegacyCompletionXpPolicy?(policy: (evt: import('../sessions/SessionManager').SessionCompletionEvent) => boolean): () => void
   /** Read a session's final assistant message text (Conductor output reader). */
   getSessionFinalText(sessionId: string): string | undefined
   undoLastUserMessage(sessionId: string): Promise<{ success: boolean; userMessage?: string }>

@@ -56,8 +56,8 @@ export interface MarketplaceEntry {
   /**
    * skillpack layout:
    * - 'skills' (default): scan for SKILL.md and install every discovered skill
-   *    as ~/.agents/skills/<basename>.
-   * - 'directory': install the whole repo as one ~/.agents/skills/<id> dir
+   *    as <config>/skills/<basename>, qualifying duplicate names by pack identity.
+   * - 'directory': install the whole repo as one <config>/skills/<id> dir
    *    (clone-only; upstream install.sh is NEVER executed).
    */
   installMode?: 'skills' | 'directory'

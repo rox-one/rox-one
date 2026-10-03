@@ -18,7 +18,7 @@ import {
   type ReactionCount,
 } from './message-reactions'
 
-/** Extra overflow action rendered inside the «…» menu. */
+/** Listen/branch render directly; other actions render in the «…» menu. */
 export type MessageDockExtraAction = {
   id: string
   label: string
@@ -26,8 +26,8 @@ export type MessageDockExtraAction = {
   onSelect: () => void
 }
 
-/** Maximum number of always-visible actions; everything else lives in «…». */
-export const MESSAGE_DOCK_MAX_VISIBLE = 3
+/** Heart, copy, quote, listen and branch are directly available. */
+export const MESSAGE_DOCK_MAX_VISIBLE = 5
 
 export type MessageHoverDockProps = {
   reactionCounts: ReactionCount[]
@@ -35,6 +35,7 @@ export type MessageHoverDockProps = {
   pickerOpen?: boolean
   onToggleHeart: () => void
   onToggleEmoji: (emoji: string) => void
+  reactionsDisabled?: boolean
   onTogglePicker?: () => void
   /** May return a promise; the copy icon flips to a check once it resolves. */
   onCopy: () => void | Promise<void>
@@ -42,23 +43,24 @@ export type MessageHoverDockProps = {
   onLearn?: () => void
   /** Side-thread actions (rendered as a submenu of «…»). */
   onPickSideThread?: (action: SideThreadAction) => void
-  /** Additional overflow actions (Markdown, Listen, Branch…). */
+  /** Direct Listen/Branch and additional overflow actions. */
   extraActions?: MessageDockExtraAction[]
   className?: string
 }
 
 const iconButton =
-  'inline-flex h-7 w-7 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground'
+  'inline-flex h-7 w-7 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground'
 
 /**
- * Compact message action dock: at most three visible actions (heart, copy,
- * quote) and a «…» overflow menu with everything else. Flat — no border or
+ * Compact message action dock with direct listening and branching buttons,
+ * followed by a «…» overflow menu. Flat — no border or
  * pill background.
  */
 export function MessageHoverDock({
   reactionCounts,
   onToggleHeart,
   onToggleEmoji,
+  reactionsDisabled = false,
   onCopy,
   onQuote,
   onLearn,
@@ -94,8 +96,10 @@ export function MessageHoverDock({
         type="button"
         aria-pressed={heart?.mine ?? false}
         aria-label={t('chat.reactHeart')}
+        title={t('chat.reactHeart')}
+        disabled={reactionsDisabled}
         className={cn(
-          'inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-xs',
+          'inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40',
           heart?.mine ? 'text-rose-500' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
         )}
         onClick={onToggleHeart}
@@ -106,6 +110,7 @@ export function MessageHoverDock({
       <button
         type="button"
         aria-label={t('common.copy')}
+        title={t('common.copy')}
         data-copied={copied ? 'true' : undefined}
         className={iconButton}
         onClick={() => { void handleCopy() }}
@@ -113,24 +118,13 @@ export function MessageHoverDock({
         {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
       </button>
       {onQuote ? (
-        <button type="button" aria-label={t('chat.quoteReply')} className={iconButton} onClick={onQuote}>
+        <button type="button" aria-label={t('chat.quoteReply')} title={t('chat.quoteReply')} className={iconButton} onClick={onQuote}>
           <MessageSquareQuote className="h-3.5 w-3.5" />
         </button>
       ) : null}
-      {otherReactions.map((item) => (
-        <button
-          key={item.emoji}
-          type="button"
-          aria-pressed={item.mine}
-          aria-label={item.emoji}
-          className={cn(
-            'inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-xs',
-            item.mine ? 'bg-foreground/5 text-foreground' : 'text-muted-foreground hover:bg-foreground/5',
-          )}
-          onClick={() => onToggleEmoji(item.emoji)}
-        >
-          <span>{item.emoji}</span>
-          <span>{item.count}</span>
+      {['listen', 'branch'].flatMap((id) => extraActions.filter((action) => action.id === id)).map((action) => (
+        <button key={action.id} type="button" aria-label={action.label} title={action.label} className={iconButton} onClick={action.onSelect}>
+          <span className="[&_svg]:h-3.5 [&_svg]:w-3.5">{action.icon}</span>
         </button>
       ))}
       <DropdownMenu>
@@ -152,6 +146,7 @@ export function MessageHoverDock({
                     key={emoji}
                     role="option"
                     aria-label={emoji}
+                    disabled={reactionsDisabled}
                     className="h-7 w-7 justify-center p-0 pr-0 text-sm"
                     onSelect={() => onToggleEmoji(emoji)}
                   >
@@ -182,7 +177,7 @@ export function MessageHoverDock({
               </StyledDropdownMenuSubContent>
             </DropdownMenuSub>
           ) : null}
-          {extraActions.map((action) => (
+          {extraActions.filter((action) => action.id !== 'listen' && action.id !== 'branch').map((action) => (
             <StyledDropdownMenuItem key={action.id} onSelect={action.onSelect}>
               {action.icon}
               <span>{action.label}</span>
@@ -190,6 +185,23 @@ export function MessageHoverDock({
           ))}
         </StyledDropdownMenuContent>
       </DropdownMenu>
+      {otherReactions.map((item) => (
+        <button
+          key={item.emoji}
+          type="button"
+          aria-pressed={item.mine}
+          disabled={reactionsDisabled}
+          aria-label={item.emoji}
+          className={cn(
+            'inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-xs',
+            item.mine ? 'bg-foreground/5 text-foreground' : 'text-muted-foreground hover:bg-foreground/5',
+          )}
+          onClick={() => onToggleEmoji(item.emoji)}
+        >
+          <span>{item.emoji}</span>
+          <span>{item.count}</span>
+        </button>
+      ))}
     </div>
   )
 }

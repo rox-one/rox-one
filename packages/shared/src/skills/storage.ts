@@ -21,8 +21,10 @@ import matter from 'gray-matter';
 import type { LoadedSkill, SkillMetadata, SkillSource } from './types.ts';
 import { listOmpSkills } from './omp-discovery.ts';
 import { getWorkspaceSkillsPath } from '../workspaces/storage.ts';
+import { resolveConfigDir } from '../config/paths.ts';
 import { getBundledSkillsDisabled } from '../config/storage.ts';
 import { SLUG_RE } from '../tasks/schema.ts';
+import { chooseManagedSkillName, isInsideSkillStore, isSafeSkillName } from './managed.ts';
 import {
   validateIconValue,
   findIconFile,
@@ -37,6 +39,8 @@ import {
 
 /** Global agent skills directory: ~/.agents/skills/ */
 export const GLOBAL_AGENT_SKILLS_DIR = join(homedir(), '.agents', 'skills');
+/** Bundled skills are owned by the application, independent of external agents. */
+export const APP_MANAGED_SKILLS_DIR = join(resolveConfigDir(), 'skills');
 
 /** Project-level agent skills relative directory name */
 export const PROJECT_AGENT_SKILLS_DIR = '.agents/skills';
@@ -128,14 +132,12 @@ function isDirectoryOrSymlinkToDirectory(parentDir: string, entry: Dirent): bool
  */
 function loadSkillFromDir(skillsDir: string, slug: string, source: SkillSource): LoadedSkill | null {
   // Dot entries (.pending, .versions) are internal state, never skills.
-  if (slug.startsWith('.')) return null;
+  if (!isSafeSkillName(slug)) return null;
   const skillDir = join(skillsDir, slug);
   const skillFile = join(skillDir, 'SKILL.md');
 
   // Check directory exists
-  if (!existsSync(skillDir) || !statSync(skillDir).isDirectory()) {
-    return null;
-  }
+  try { if (!statSync(skillDir).isDirectory()) return null; } catch { return null; }
 
   // Check SKILL.md exists
   if (!existsSync(skillFile)) {
@@ -224,7 +226,7 @@ export function loadWorkspaceSkills(workspaceRoot: string): LoadedSkill[] {
 const skillsCache = new Map<string, { skills: LoadedSkill[]; ts: number }>();
 const SKILLS_CACHE_TTL = 5 * 60_000; // 5 minutes
 
-/** Dot-dir under ~/.agents/skills holding per-pack sync state (bundled.ts). */
+/** Dot-dir under the application skill store holding per-pack sync state. */
 const BUNDLED_STATE_DIR = '.bundled';
 
 /**
@@ -232,7 +234,7 @@ const BUNDLED_STATE_DIR = '.bundled';
  * Kept local to avoid storage ↔ bundled import cycle.
  */
 export function getDisabledBundledSkillSlugsFromDisk(
-  targetRoot: string = GLOBAL_AGENT_SKILLS_DIR,
+  targetRoot: string = APP_MANAGED_SKILLS_DIR,
   disabled: string[] = getBundledSkillsDisabled(),
 ): Set<string> {
   const out = new Set<string>();
@@ -240,6 +242,7 @@ export function getDisabledBundledSkillSlugsFromDisk(
   const stateDir = join(targetRoot, BUNDLED_STATE_DIR);
   if (!existsSync(stateDir)) return out;
   for (const packSlug of disabled) {
+    if (!isSafeSkillName(packSlug)) continue;
     try {
       const path = join(stateDir, `${packSlug}.json`);
       if (!existsSync(path)) continue;
@@ -247,7 +250,7 @@ export function getDisabledBundledSkillSlugsFromDisk(
       if (!parsed || parsed.pack !== packSlug || typeof parsed.files !== 'object' || !parsed.files) continue;
       for (const key of Object.keys(parsed.files)) {
         const slash = key.indexOf('/');
-        if (slash > 0) out.add(key.slice(0, slash));
+        if (slash > 0 && isSafeSkillName(key.slice(0, slash))) out.add(key.slice(0, slash));
       }
     } catch {
       // corrupt state — skip pack
@@ -308,6 +311,8 @@ export function loadAllSkills(workspaceRoot: string, projectRoot?: string, optio
   //    ~/.omp/agent/skills/ and {workspaceRoot}/.omp/skills/
   if (includeOmp) {
     for (const omp of listOmpSkills(workspaceRoot)) {
+      // The canonical application tier handles these links, including disabled packs.
+      if (isInsideSkillStore(omp.path, APP_MANAGED_SKILLS_DIR)) continue;
       skillsBySlug.set(omp.slug, {
         slug: omp.slug,
         metadata: { name: omp.name, description: omp.description },
@@ -330,25 +335,37 @@ export function loadAllSkills(workspaceRoot: string, projectRoot?: string, optio
 
   const disabledBundled = getDisabledBundledSkillSlugsFromDisk();
 
-  // 1. Global skills (lowest craft priority): ~/.agents/skills/
-  //    Skip slugs owned by disabled bundled packs (files stay on disk).
+  const workspaceSkills = loadWorkspaceSkills(workspaceRoot);
+  const projectSkills = projectRoot ? loadSkillsFromDir(join(projectRoot, PROJECT_AGENT_SKILLS_DIR), 'project') : [];
+  // 1. Foreign global skills (lowest craft priority): ~/.agents/skills/.
   for (const skill of loadSkillsFromDir(GLOBAL_AGENT_SKILLS_DIR, 'global')) {
-    if (disabledBundled.has(skill.slug)) continue;
+    // Application links are discovered through their canonical directory below.
+    // This also keeps disabled bundles hidden when a foreign skill required a link alias.
+    if (isInsideSkillStore(skill.path, APP_MANAGED_SKILLS_DIR)) continue;
     mergeCraftSkill(skill);
   }
 
+  // Keep app skills selectable when a user/workspace/project skill has the same name.
+  // The original user skill keeps its existing mention; the app gets a stable explicit alias.
+  const applicationSkills = loadSkillsFromDir(APP_MANAGED_SKILLS_DIR, 'global');
+  const reserved = new Set([...skillsBySlug.keys(), ...workspaceSkills.map(s => s.slug), ...projectSkills.map(s => s.slug), ...applicationSkills.map(s => s.slug)]);
+  for (const skill of loadSkillsFromDir(APP_MANAGED_SKILLS_DIR, 'global')) {
+    if (disabledBundled.has(skill.slug)) continue;
+    const collision = skillsBySlug.has(skill.slug) || workspaceSkills.some(s => s.slug === skill.slug) || projectSkills.some(s => s.slug === skill.slug);
+    if (collision) {
+      const alias = chooseManagedSkillName('rox', skill.slug, name => !reserved.has(name));
+      reserved.add(alias);
+      mergeCraftSkill({ ...skill, slug: alias });
+    } else mergeCraftSkill(skill);
+  }
+
   // 2. Workspace skills (medium priority) — user/workspace content always visible.
-  for (const skill of loadWorkspaceSkills(workspaceRoot)) {
+  for (const skill of workspaceSkills) {
     mergeCraftSkill(skill);
   }
 
   // 3. Project skills (highest priority): {projectRoot}/.agents/skills/
-  if (projectRoot) {
-    const projectSkillsDir = join(projectRoot, PROJECT_AGENT_SKILLS_DIR);
-    for (const skill of loadSkillsFromDir(projectSkillsDir, 'project')) {
-      mergeCraftSkill(skill);
-    }
-  }
+  for (const skill of projectSkills) mergeCraftSkill(skill);
 
   const result = [...skillsBySlug.values(), ...shadowedOmp];
   skillsCache.set(cacheKey, { skills: result, ts: now });
@@ -364,6 +381,7 @@ export function loadAllSkills(workspaceRoot: string, projectRoot?: string, optio
  * @param projectRoot - Optional project root for project-level skills
  */
 export function loadSkillBySlug(workspaceRoot: string, slug: string, projectRoot?: string): LoadedSkill | null {
+  if (!isSafeSkillName(slug)) return null;
   // Highest priority: project-level
   if (projectRoot) {
     const projectSkillsDir = join(projectRoot, PROJECT_AGENT_SKILLS_DIR);
@@ -375,9 +393,12 @@ export function loadSkillBySlug(workspaceRoot: string, slug: string, projectRoot
   const workspaceSkill = loadSkillFromDir(getWorkspaceSkillsPath(workspaceRoot), slug, 'workspace');
   if (workspaceSkill) return workspaceSkill;
 
-  // Lowest priority: global — hide slugs owned by disabled bundled packs
-  if (getDisabledBundledSkillSlugsFromDisk().has(slug)) return null;
-  return loadSkillFromDir(GLOBAL_AGENT_SKILLS_DIR, slug, 'global');
+  const foreignGlobal = loadSkillFromDir(GLOBAL_AGENT_SKILLS_DIR, slug, 'global');
+  if (foreignGlobal && !isInsideSkillStore(foreignGlobal.path, APP_MANAGED_SKILLS_DIR)) return foreignGlobal;
+  const applicationSkill = getDisabledBundledSkillSlugsFromDisk().has(slug) ? null : loadSkillFromDir(APP_MANAGED_SKILLS_DIR, slug, 'global');
+  if (applicationSkill) return applicationSkill;
+  // Explicit collision aliases are rare; ordinary reads retain the O(1) path.
+  return slug.startsWith('rox--') ? loadAllSkills(workspaceRoot, projectRoot).find(skill => skill.slug === slug) ?? null : null;
 }
 
 /**
