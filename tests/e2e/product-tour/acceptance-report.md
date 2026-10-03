@@ -1,34 +1,44 @@
-Independent acceptance is **not release-complete**. This report distinguishes implemented checks from executed evidence; missing application or platform evidence blocks the corresponding acceptance case.
+Independent acceptance is **partial; release gates remain open**. The feature must remain off by default until the required application/platform evidence is collected. Automated component or synthetic domain evidence does not establish native application success.
 
-Contract base: `f00ffcacc6a94a88b6e99b2f708224050842be7f`. Application baseline runs below used that checkout plus A9 test code, before tour integration. The production catalogue/reducer/component checks must run again against the integrated candidate SHA.
+The contract base is `f00ffcacc6a94a88b6e99b2f708224050842be7f`. Integrated checks below ran in `/workspace/rox-product-learning` as owners committed code and root runtime integration changed. Tested snapshots include `3652ad73`, `c49e76f3`, and `302cc0d4` plus root working-tree changes. Final immutable candidate checks must follow subsequent runtime corrections.
 
-| Check | Actual result | Evidence |
+| Check | Actual result | Scope and evidence |
 | --- | --- | --- |
-| Baseline production renderer build at `c9b7330357fb55a5e88a223783029d2768849828` | PASS, exit 0 | `/workspace/rox-workers/A9-baseline-renderer-build.log`; 386 JS files, 26,537,285 raw / 6,540,568 gzip bytes; CSS 395,895 raw / 60,588 gzip bytes. |
-| APP-01 / APP-06 flag absent | Baseline application PASS | Real App rendered; no forced tour, no overlay or automatic domain mutations. |
-| APP-05 restricted WebUI | Baseline application PASS | Real App rendered Sessions unavailable; direct host `getSessions` rejected. |
-| DOMAIN-12 native Notes UI | BLOCKED, application command exit 1 | `refreshAssets` calls native-denied `notes.LIST_ASSETS`, disabling the Notes surface. A temporary accessory adapter exposed an additional autosave startup race; that adapter was removed and no success counted. |
-| macOS, Windows, microphone denial | NOT_RUN, native command exit 2 on Linux | Native runner writes `test-results/product-tour/native-readiness.json`; no fixture fallback. |
-| Playwright discovery | PASS, exit 0 | Nine initial tests discovered across application/component projects. Discovery is not execution. |
-| 56 policy positive / premature / foreign event matrix | Implemented, NOT_RUN before core/catalogue integration | Production reducer and catalogue imports; fixture is expected policy data only. |
-| Production UI spotlight / cleanup | Implemented, NOT_RUN before UI integration | Production registry and overlay, separate component evidence project. |
-| Candidate bundle comparison | NOT_RUN | `bundle-report.ts` requires separately built production baseline and candidate artifacts and rejects fixture markers. |
+| Independent 25-tour / 56-policy matrix and normal/fast first response | PASS, exit 0: 125 tests, 1181 assertions | `/workspace/product-tour-a9-core-final.log`; production reducer/catalogue; synthetic evidence. |
+| Full integrated feature suite | PASS, exit 0: 257 tests, 14541 assertions, 14 files | `/workspace/product-tour-a9-feature-final.log`; includes production reducer, real Chromium IndexedDB, diagnostics, native Notes/task adapter stores and locale checks. |
+| Six production UI component browser checks | PASS | `/workspace/product-tour-a9-browser-final.log`; panel scoping, stale cleanup, visible variants, hidden/clipped/frame rejection, <=2 CSS px geometry, retained draft/focus, reduced motion, ordinary click, higher-layer Escape and observer cleanup. Application/native variants remain separate gates. |
+| APP-01 / APP-06 flag absent | Application PASS | Real App in authenticated isolated profile: no forced overlay/automatic mutation and no learning database open. |
+| APP-05 restricted WebUI | Application subset PASS | Sessions unavailable; direct host getSessions rejects. Remaining routes remain open. |
+| DOMAIN-12 canonical Notes | Application PASS | Actual Notes UI creation/edit -> production native bridge/queue/RPC -> journal/file read-back -> reload -> search. Baseline asset-denial and obsolete native sync opener defects were reproduced and fixed in product code; no successful asset fixture was substituted. |
+| T-LEARNING-LIBRARY / T-LEARNING-CONTROLS | Application PASS, focused command includes another failing test | Production popup completes both ack steps after explicit Start/Next without domain mutations. `/workspace/product-tour-a9-guided-final.log`. |
+| T-NOTES-CREATE / T-NOTES-SAVE guided outcome | OPEN: application test failed before first popup | Actual Notes route appears, then status says panel/workspace changed. Root is correcting runtime navigation binding. The direct canonical Notes domain path above passes independently. |
+| macOS / Windows / microphone denial | NOT_RUN, native runner exit 2 on Linux | `test-results/product-tour/native-readiness.json` retains all manual platform gates. Real Electron-only fresh-setup smoke and CI are implemented; neither was executed on these OSes here. |
+| Baseline renderer build | PASS, exit 0 at c9b73303 | `/workspace/rox-workers/A9-baseline-renderer-build.log`; 386 JS files, 26,537,285 raw bytes. |
+| Integrated renderer build and production fixture isolation | PASS, exit 0, 72 seconds | `/workspace/product-tour-a9-candidate-renderer.log`; 389 JS files, 27,051,055 raw bytes; six fixture markers absent. This is a working-tree artifact, not a final immutable candidate claim. |
 
-Actual commands executed from A9 (Bun on PATH):
+The build comparison uses the same Bun `gzipSync` level-9 implementation for both artifacts: baseline JS 6,555,262 gzip bytes; candidate JS 6,686,117; delta +130,855 (+2.00%). Raw JS delta is +513,770. CSS changes from 395,895 raw / 60,636 gzip to 392,853 raw / 60,401 gzip, delta -3,042 / -235. Earlier standalone baseline numbers used Python gzip and differ by compressor implementation; they are not mixed into this comparison. Source maps are excluded. `bundle-report.json` identifies artifact hashes and tracked-worktree dirtiness.
+
+Actual commands (Bun on PATH):
 
 ```sh
-CHROMIUM_EXECUTABLE=/usr/bin/chromium bun x playwright test --config tests/e2e/product-tour/playwright.config.ts --grep 'APP-01|APP-05|DOMAIN-12'
-# exit 1: 2 passed, DOMAIN-12 blocked/failed. No green skip.
-bun x playwright test --config tests/e2e/product-tour/playwright.config.ts --list
-# exit 0: discovery only.
+bun test apps/electron/src/renderer/features/product-tour/__tests__/integration
+# exit 0: 125 pass
+bun test apps/electron/src/renderer/features/product-tour
+# exit 0: 257 pass
+CHROMIUM_EXECUTABLE=/usr/bin/chromium bun x playwright test --config tests/e2e/product-tour/playwright.config.ts
+# exit 1: 9 pass, Learning selector ambiguity; fixed afterward
+CHROMIUM_EXECUTABLE=/usr/bin/chromium bun x playwright test --config tests/e2e/product-tour/playwright.config.ts --project real-app-isolated-native-store --grep 'T-LEARNING|T-NOTES'
+# exit 1: Learning passed; guided Notes runtime scope change failed
+bun scripts/electron-build-renderer.ts
+# exit 0
+bun scripts/product-tour/bundle-report.ts /workspace/rox-workers/A9-baseline/apps/electron/dist/renderer
+# exit 0: fixture isolation and actual delta
 bun scripts/product-tour/run-native.ts
-# exit 2: Linux NOT_RUN, all three platform/manual cases explicitly retained.
-git diff --check
-# exit 0.
+# exit 2: Linux NOT_RUN, not a green skip
 ```
 
-`acceptance-matrix.json` retains all 59 acceptance cases, owner, level, release-blocking status, and current evidence state. `step-matrix.json` maps every one of the 56 atomic IDs to an executable policy check. Pure synthetic signals do not establish native domain outcomes. The first-response integration check composes the production event processor, chat adapter and reducer with synthetic external model replies; it does not establish real App send wiring.
+`acceptance-matrix.json` retains all 59 required cases, including partial and NOT_RUN states. `step-matrix.json` retains all 56 independent policy expectations. A0 approved `sources.result` same-attempt/version 2 and `notes.create` real-dialog handoff/version 2 revisions after actual integration inspection.
 
-Application harness adapters are limited to owned profile bootstrap/enrollment, shell reads, credential-store DI, and in-process IPC delivery. The native authority, native journal, Notes handlers, main replica queue, preload bridge, App, and route providers are production implementations. The harness does not claim packaged/native success, OS credential custody, system-dialog behavior, host asset inventory, live OAuth/model delivery, or all domain outcome paths.
+The application harness mounts the production App, route providers, domain pages, WebSocket transport, native authority/journal, Notes handlers, main replica queue and preload bridge. Adapters provide owned profile bootstrap/enrollment, shell reads, credential-store DI and in-process IPC delivery. It does not establish OS IPC sender identity or credential custody, packaged behavior, system-dialog focus, live OAuth/model delivery, unavailable host inventory, or every domain path.
 
-Open release gates include native macOS/Windows/manual evidence, first response/draft/permissions application paths, multi-window lease and multi-panel runtime application checks, remaining domain outcomes, full restricted WebUI route coverage, candidate build comparison, and root typecheck/rx validation. Owner pure tests are supplementary evidence and cannot silently replace these application/platform requirements.
+Open release gates include the real authorized App first-response/draft/permission paths; other domain operations and restricted routes; application multi-panel/workspace/native-layer/lease behavior; all macOS/Windows/manual microphone cases; and fresh final-SHA build/typecheck/lint/validation after runtime corrections. First-response normal/fast integration tests cannot close the corresponding App send gate. `CORE`, storage and component passes do not silently replace application/platform requirements.
