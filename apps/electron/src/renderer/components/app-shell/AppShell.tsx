@@ -40,6 +40,7 @@ import { TopBar } from "./TopBar"
 import { SurfaceNavigationRail, type PrimarySurfaceId } from './SurfaceNavigationRail'
 import { openAuxiliaryPanelAtom, closePanelAtom, primaryPanelRouteAtom, type AuxiliaryTool } from '@/atoms/panel-stack'
 import { workspaceProjectContextsAtom, activeWorkspaceContextAtom } from '@/atoms/workspace-context'
+import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
 import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { McpIcon } from "../icons/McpIcon"
 import { cn } from "@/lib/utils"
@@ -541,6 +542,7 @@ function AppShellContent({
     : navState.navigator === 'screen' && navState.screen === 'agents' ? 'agents'
     : navState.navigator === 'screen' && ['dossier', 'decisions'].includes(navState.screen) ? 'plan' : 'dialogues'
   const [openingAgent, setOpeningAgent] = useState(false)
+  const toolIntentGeneration = React.useRef(0)
   const contextualSidebarKey = navState.navigator === 'screen' ? `screen:${navState.screen}` : navState.navigator
   const [applicationSectionsOpenFor, setApplicationSectionsOpenFor] = useState<string | null>(null)
   const hasContextualSidebar = isInboxNavigation(navState) || isFeedNavigation(navState) || isNotesNavigation(navState)
@@ -555,6 +557,7 @@ function AppShellContent({
   const store = useStore()
   useEffect(() => { store.set(activeWorkspaceContextAtom, activeWorkspaceId) }, [store, activeWorkspaceId])
   const toggleTool = async (tool: AuxiliaryTool) => {
+    const generation = ++toolIntentGeneration.current
     const existing = store.get(panelStackAtom).find(entry => entry.tool === tool)
     if (existing) { store.set(closePanelAtom, existing.id); return }
     if (!activeWorkspaceId) return
@@ -563,6 +566,8 @@ function AppShellContent({
     let route: import('../../../shared/routes').ViewRoute = tool === 'tasks' ? routes.view.tasks() : tool === 'memory' ? routes.view.memory() : routes.view.automations()
     if (tool === 'agent') {
       if (openingAgent) return
+      const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: selectedProjectId ?? undefined, tool })
+      if (!intent) return
       setOpeningAgent(true)
       try {
         const sessions = Array.from(store.get(sessionMetaMapAtom).values())
@@ -570,9 +575,11 @@ function AppShellContent({
           .sort((a, b) => (b.lastMessageAt ?? b.createdAt ?? 0) - (a.lastMessageAt ?? a.createdAt ?? 0))
         const previous = sessions[0]
         const created = previous ?? await contextValue.onCreateSession(activeWorkspaceId, { projectId: selectedProjectId ?? undefined })
-        if (liveWorkspace.current !== context.workspaceId || store.get(primaryPanelRouteAtom) !== context.route
+        if (generation !== toolIntentGeneration.current || liveWorkspace.current !== context.workspaceId || store.get(primaryPanelRouteAtom) !== context.route
           || (store.get(workspaceProjectContextsAtom)[context.workspaceId] ?? null) !== (context.projectId ?? null)) return
         route = routes.view.allSessions(created.id)
+        openWorkspaceTool(store, intent, route)
+        return
       } catch (error) { toast.error(error instanceof Error ? error.message : t('common.error')); return }
       finally { setOpeningAgent(false) }
     }
@@ -2842,10 +2849,10 @@ function AppShellContent({
         <SurfaceNavigationRail className="w-14 shrink-0 border-r border-foreground/5" compact={isAutoCompact}
           selectedSurface={isSettingsNavigation(navState) ? null : selectedSurface}
           selectedTools={panelStack.flatMap(entry => entry.tool ? [entry.tool] : [])}
-          onSelectSurface={surface => { navigate(surfaceRoutes[surface], { primary: true }) }}
+          onSelectSurface={surface => { toolIntentGeneration.current++; navigate(surfaceRoutes[surface], { primary: true }) }}
           onToggleTool={tool => { void toggleTool(tool) }}
           settingsSelected={isSettingsNavigation(navState)}
-          onSettings={() => navigate(routes.view.settings(), { primary: true })} />
+          onSettings={() => { toolIntentGeneration.current++; navigate(routes.view.settings(), { primary: true }) }} />
         <WorkspaceSurfaceHost operatorCapability={workbenchOperatorCapability} ownsPrimaryNavigation>
           <PanelStackContainer
           sidebarSlot={
