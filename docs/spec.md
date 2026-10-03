@@ -734,6 +734,11 @@ Source: `fix/ui-001-owner3-recovery-e61c84b1` at `20842365c55889d8dec7b3a164ad7d
 
 Acceptance: mounted production NavigationProvider and SkillInfoPage with real React/history/native form controls and explicitly controlled data/transport seams; stale watcher/read/save, rejected write, deletion/recreation, workspace ABA and failed history scenarios. Installed desktop, real source providers and native workspace switching are separate acceptance scopes.
 
+## Persistent git-npm and RPC response admission recovery — 2026-10-03
+
+Owner: PR scout; integration/remote merge: lead. Source PR1448 exact1eb2c8289 supplies substantive git-npm permanent frozen-source isolation, same-version repair, serial test execution, and final shared response admission. Compose onto current managed Git/PATH/Windows receipts and hasInstalledFiles; do not replay old whole manager or navigation. A version is ready only with its contained retained source pin/lock, bounded regular no-follow identity receipt, executable launcher and exact current pointer; validate before flipping current. Frozen local Bun install owns its cwd/manifest/global/bin directories and retains source/dependencies across temporary checkout deletion and reload.
+
+RPC ordinary asynchronous checks are followed by fresh identity admission before serialization. The actual Workspace License read consumer uses final joint session/membership/Resource admission; no later asynchronous transport operation intervenes. Current native grant-generation/caller fences and generic shared-error privacy remain. The repository test entry runs source suites serially in isolated child/profile processes, preserves exact file hashes/runtime/results/failures, refuses missing runners, changed sources and empty green execution. Source native executable harness/resource copying remain independently owned. Custom main --outdir must also place and verify the extension-host worker in the selected output directory.
 
 ### Golden voice append recovery — 2026-10-03
 

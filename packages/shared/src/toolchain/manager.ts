@@ -273,11 +273,69 @@ export function createManager(
     return true;
   }
 
+  /** Inspect only bounded regular receipt files through their opened identity. */
+  function readInstallIdentity(file: string, maxBytes: number): string {
+    const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
+    try {
+      const opened = fs.fstatSync(fd);
+      const current = fs.lstatSync(file);
+      if (!opened.isFile() || !current.isFile() || opened.dev !== current.dev || opened.ino !== current.ino
+        || opened.size > maxBytes) throw new Error('Invalid install identity');
+      const bytes = Buffer.alloc(maxBytes + 1);
+      const length = fs.readSync(fd, bytes, 0, bytes.length, 0);
+      const after = fs.fstatSync(fd);
+      const leaf = fs.lstatSync(file);
+      if (length > maxBytes || after.size !== length || leaf.dev !== opened.dev || leaf.ino !== opened.ino)
+        throw new Error('Install identity changed');
+      return bytes.subarray(0, length).toString('utf8');
+    } finally { fs.closeSync(fd); }
+  }
+
+  /** A frozen git-npm version must retain its source pin and contained launcher. */
+  function hasUsableGitNpm(entry: ToolEntry, installedPath: string, installedVersion: string): boolean {
+    const lock = getGitLock(entry.name, installedVersion);
+    if (!lock || path.resolve(installedPath) !== path.resolve(paths.toolchainDir, entry.name, installedVersion)) return false;
+    const isWithin = (root: string, file: string): boolean => {
+      const relative = path.relative(root, file);
+      return !!relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+    };
+    try {
+      const root = fs.realpathSync(paths.toolchainDir);
+      const versionRoot = fs.realpathSync(installedPath);
+      const sourceDir = path.join(installedPath, 'source');
+      const sourceRoot = fs.realpathSync(sourceDir);
+      if (!isWithin(root, versionRoot) || !isWithin(versionRoot, sourceRoot)) return false;
+      const marker = JSON.parse(readInstallIdentity(path.join(installedPath, TOOLCHAIN_INSTALL_COMPLETE_MARKER), 2048));
+      if (marker?.format !== 'git-npm-local-source-v1' || marker.repo !== lock.repo || marker.commit !== lock.commit) return false;
+      if (readInstallIdentity(path.join(sourceDir, '.git', 'HEAD'), 4096).trim() !== lock.commit) return false;
+      if (!['bun.lock', 'bun.lockb'].some((name) => {
+        try { return fs.lstatSync(path.join(sourceDir, name)).isFile(); } catch { return false; }
+      })) return false;
+      const win = platform === 'win32-x64';
+      return executableCandidates(entry.systemBinary ?? entry.name, win)
+        .filter((name) => !win || /\.(exe|com|cmd|bat)$/i.test(name))
+        .some((name) => {
+          try {
+            const launcher = path.join(installedPath, 'bin', name);
+            const realLauncher = fs.realpathSync(launcher);
+            if (!isWithin(versionRoot, realLauncher) || !fs.statSync(realLauncher).isFile()) return false;
+            fs.accessSync(launcher, win ? fs.constants.F_OK : fs.constants.X_OK);
+            return true;
+          } catch { return false; }
+        });
+    } catch { return false; }
+  }
+
   /** A version directory alone does not prove a runnable installation. */
   function hasInstalledFiles(entry: ToolEntry, artifact: ToolArtifact | undefined, installedPath: string): boolean {
     if (!fs.existsSync(installedPath)) return false;
+    if (entry.kind === 'git-npm' && !hasUsableGitNpm(entry, installedPath, path.basename(installedPath))) return false;
     const currentDir = path.join(paths.toolchainDir, entry.name, 'current');
     if (!fs.existsSync(currentDir)) return false;
+    if (entry.kind === 'git-npm') {
+      try { if (fs.realpathSync(currentDir) !== fs.realpathSync(installedPath)) return false; }
+      catch { return false; }
+    }
     const win = platform === 'win32-x64';
     const filePresent = (binRel: string, executable = false): boolean => {
       try {
@@ -397,6 +455,9 @@ export function createManager(
         const git = await resolver.findExecutable('git');
         if (!git && !opts.gitNpmInstallImpl) throw new Error('git not found: git-npm tools require git (dependsOn git)');
         await (opts.gitNpmInstallImpl ?? defaultGitNpmInstall)({ entry, paths, versionDir, bun, git: git ?? undefined });
+        if (!hasUsableGitNpm(entry, versionDir, entry.version)) {
+          throw new Error(`git-npm installation is incomplete: ${entry.name}@${entry.version}`);
+        }
         await flipCurrent(toolRoot, entry.version, versionDir);
         if (!hasInstalledFiles(entry, artifact, versionDir)) {
           throw new Error(`git-npm install did not produce a usable launcher for ${entry.name}`);
@@ -569,7 +630,9 @@ export function createManager(
 
       if (installed?.installedVersion && (installed.installedVersion === entry.version
         ? hasInstalledFiles(entry, artifact, installed.installedPath)
-        : fs.existsSync(installed.installedPath))) {
+        : entry.kind === 'git-npm'
+          ? hasUsableGitNpm(entry, installed.installedPath, installed.installedVersion)
+          : fs.existsSync(installed.installedPath))) {
         statuses.push(
           installed.installedVersion === entry.version
             ? {
