@@ -57,6 +57,7 @@ import {
   buildMcpServers,
   getPlatformKey,
 } from './build/common';
+import { copyServerBundledAssets } from './build/bundled-assets';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -117,13 +118,8 @@ function assembleResources(config: ServerBuildConfig): void {
   const srcResources = join(electronDir, 'resources');
   const destResources = join(outputDir, 'resources');
 
-  console.log('  Copying docs, themes, permissions, tool-icons...');
-  for (const dir of ['docs', 'themes', 'permissions', 'tool-icons']) {
-    const src = join(srcResources, dir);
-    if (existsSync(src)) {
-      cpSync(src, join(destResources, dir), { recursive: true });
-    }
-  }
+  console.log('  Copying docs, themes, permissions, tool-icons, skills...');
+  copyServerBundledAssets(srcResources, destResources);
 
   // Config defaults
   const configDefaults = join(srcResources, 'config-defaults.json');

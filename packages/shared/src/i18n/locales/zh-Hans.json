@@ -3924,6 +3924,8 @@
   "onboarding.errors.selectAuthMethod": "请先选择一种登录方式。",
   "onboarding.errors.validationFailed": "验证失败",
   "onboarding.errors.workspaceTransitionFailed": "无法打开工作区，请重试。",
+  "onboarding.firstSession.message": "你好！我是 Rox。几个问题能帮助我更好地为你提供帮助：\n\n1. 我该怎么称呼你？\n2. 你想先处理什么任务？\n3. 你对回复风格有什么偏好，或者有什么需要考虑的限制？\n\n你可以回答任何一个问题，也可以直接发送任务。",
+  "onboarding.firstSession.title": "先认识一下",
   "onboarding.gitBash.alreadyInstalled": "已安装 Git?",
   "onboarding.gitBash.browse": "浏览...",
   "onboarding.gitBash.customPath": "如果 Git 安装在非标准位置，可以指定 bash.exe 的路径。",

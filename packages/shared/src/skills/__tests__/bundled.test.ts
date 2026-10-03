@@ -276,6 +276,7 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
       'mattpocock-skills',
       'rox-harness',
       'superpowers',
+      'understand-anything',
       'vercel-agent-skills',
       'vercel-next-skills',
     ]);
@@ -287,7 +288,7 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
 
     // Discovery (the module-level GLOBAL_AGENT_SKILLS_DIR is HOME-bound in the
     // subprocess) finds representative skills from every vendored pack.
-    for (const slug of ['brainstorming', 'test-driven-development', 'tdd', 'next-dev-loop', 'react-best-practices']) {
+    for (const slug of ['brainstorming', 'test-driven-development', 'tdd', 'next-dev-loop', 'react-best-practices', 'understand', 'understand-explain', 'understand-dashboard']) {
       expect(out.slugs).toContain(slug);
     }
     expect(out.slugs.length).toBeGreaterThanOrEqual(60);
@@ -295,6 +296,35 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
     // Discovery ignores the internal state directory.
     expect(out.slugs).not.toContain('.bundled');
     expect(existsSync(join(home, '.agents', 'skills', '.bundled', 'superpowers.json'))).toBe(true);
+    expect(existsSync(join(home, '.agents', 'skills', 'understand', 'plugin', 'pnpm-lock.yaml'))).toBe(true);
+    expect(existsSync(join(home, '.agents', 'skills', 'understand', 'plugin', 'agents', 'file-analyzer.md'))).toBe(true);
+  }, 30_000);
+
+  const pythonRuntime = Bun.which('python3') ?? Bun.which('python');
+  it.skipIf(!pythonRuntime)('runs the installed Understand Anything domain scanner without plugin dependencies', () => {
+    const sourceBundle = join(REPO_ROOT, 'apps/electron/resources/skills');
+    const result = ensureBundledSkills({ bundleRoot: sourceBundle, targetRoot, disabled: [] });
+    const pack = statusFor(result.packs, 'understand-anything');
+    expect(pack.commit).toBe('1d7418b8abfa543744ae029e63a482aee03f9022');
+    expect(pack.installed).toHaveLength(9);
+    expect(pack.error).toBeUndefined();
+    const project = join(tempDir, 'project');
+    mkdirSync(project, { recursive: true });
+    writeFileSync(join(project, 'handler.ts'), 'export function getInvoice(id: string) { return id; }\n');
+    writeFileSync(join(project, 'package.json'), '{"name":"invoice-project"}');
+    const pluginRoot = join(targetRoot, 'understand', 'plugin');
+    const helper = join(pluginRoot, 'skills', 'understand-domain', 'extract-domain-context.py');
+
+    const proc = Bun.spawnSync({ cmd: [pythonRuntime!, helper, project], stdout: 'pipe', stderr: 'pipe' });
+
+    expect(proc.exitCode, proc.stderr.toString()).toBe(0);
+    const context = JSON.parse(readFileSync(join(project, '.ua', 'intermediate', 'domain-context.json'), 'utf8'));
+    expect(context.projectRoot).toBe(project);
+    expect(context.fileCount).toBe(1);
+    expect(context.fileTree).toContain('handler.ts');
+    const state = JSON.parse(readFileSync(join(targetRoot, '.bundled', 'understand-anything.json'), 'utf8'));
+    expect(state.files['understand/plugin/skills/understand-domain/extract-domain-context.py']).toMatch(/^[a-f0-9]{64}$/);
+    expect(existsSync(join(pluginRoot, 'node_modules'))).toBe(false);
   }, 30_000);
 });
 

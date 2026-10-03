@@ -7,10 +7,10 @@
  */
 
 import { basename, join } from 'node:path';
-import type { SessionToolContext } from '../context.ts';
+import type { SessionToolContext, StdioMcpConfig, HttpMcpConfig } from '../context.ts';
 import type { ToolResult, SourceConfig, ConnectionStatus } from '../types.ts';
 import { errorResponse } from '../response.ts';
-import { resolveStdioConfig } from '@craft-agent/shared/utils';
+import { REDACTED_VALUE, redactUrlForLog, resolveStdioConfig } from '@craft-agent/shared/utils';
 import {
   validateJsonFileHasFields,
   validateSourceConfigBasic,
@@ -137,15 +137,16 @@ export async function handleSourceTest(
 
   // 7. Auth status
   lines.push('\n## Authentication');
-  const authResult = await checkAuthStatus(ctx, source, sourceSlug);
+  const authResult = await checkAuthStatus(ctx, source, sourceSlug, connectionResult.managedHttp ? connectionResult.success : undefined);
   lines.push(...authResult.lines);
   if (authResult.hasWarning) hasWarnings = true;
 
   // 8. Auto-enable + metadata update
   // Defaults to true; pass autoEnable: false to keep pure validation behavior.
   // Gate on connectionStatus so a probe that returned 5xx/404 cannot push a
-  // broken source into the live tool list. 401/403 still pass: the probe maps
-  // those to connectionStatus=connected, and checkAuthStatus refreshes tokens.
+  // broken source into the live tool list. Legacy remote probes can still
+  // classify auth-required endpoints as reachable; managed sources require
+  // a successful authenticated handshake before activation.
   const autoEnable = args.autoEnable !== false;
   const shouldAutoEnable = autoEnable && !hasErrors && connectionStatus === 'connected';
   const willFlipEnabled = shouldAutoEnable && source.enabled === false;
@@ -387,11 +388,12 @@ async function testConnection(
   ctx: SessionToolContext,
   source: SourceConfig,
   sourceSlug: string
-): Promise<{ lines: string[]; success: boolean; hasError: boolean; error?: string }> {
+): Promise<{ lines: string[]; success: boolean; hasError: boolean; error?: string; managedHttp?: boolean }> {
   const lines: string[] = [];
   let success = false;
   let hasError = false;
   let error: string | undefined;
+  let managedHttp = false;
 
   if (source.type === 'api') {
     const result = await testApiConnection(ctx, source, sourceSlug);
@@ -405,6 +407,7 @@ async function testConnection(
     success = result.success;
     hasError = result.hasError;
     error = result.error;
+    managedHttp = result.managedHttp ?? false;
   } else if (source.type === 'local') {
     const result = testLocalConnection(ctx, source);
     lines.push(...result.lines);
@@ -416,7 +419,7 @@ async function testConnection(
     success = true;
   }
 
-  return { lines, success, hasError, error };
+  return { lines, success, hasError, error, managedHttp };
 }
 
 async function testApiConnection(
@@ -723,41 +726,76 @@ async function testApiConnectionBasic(
   return { lines, success, hasError, error };
 }
 
+/** Do not persist credentials or an echoed runtime-only endpoint in diagnostics. */
+function redactHttpMcpProbeText(text: string, config: HttpMcpConfig): string {
+  const secrets = new Set<string>();
+  if (config.accessToken) secrets.add(config.accessToken);
+  // Credential headers can use arbitrary service-specific names.
+  for (const value of Object.values(config.headers ?? {})) {
+    if (!value) continue;
+    secrets.add(value);
+    if (/^bearer\s+/i.test(value)) secrets.add(value.replace(/^bearer\s+/i, ''));
+  }
+  try {
+    const url = new URL(config.url);
+    for (const value of [url.username, url.password, url.hash.slice(1), ...url.searchParams.values()]) {
+      if (!value) continue;
+      secrets.add(value);
+      try { secrets.add(decodeURIComponent(value)); } catch { /* Keep the encoded value. */ }
+    }
+  } catch { /* Invalid URLs are still replaced verbatim below. */ }
+  let safe = config.url ? text.split(config.url).join('[MCP endpoint]') : text;
+  for (const secret of [...secrets].sort((a, b) => b.length - a.length)) {
+    safe = safe.split(secret).join(REDACTED_VALUE);
+  }
+  return safe;
+}
+
 async function testMcpConnection(
   ctx: SessionToolContext,
   source: SourceConfig,
   sourceSlug: string
-): Promise<{ lines: string[]; success: boolean; hasError: boolean; error?: string }> {
+): Promise<{ lines: string[]; success: boolean; hasError: boolean; error?: string; managedHttp?: boolean }> {
   const lines: string[] = [];
   let success = false;
   let hasError = false;
   let error: string | undefined;
+  let managedHttp = false;
 
   if (source.mcp?.transport === 'stdio') {
-    // Resolve platform overrides + expand path variables (runtime-only).
-    const resolved = resolveStdioConfig(
-      source.mcp,
-      ctx.workspacePath,
-      getSourcePath(ctx.workspacePath, sourceSlug),
-    );
+    // The host may also need encrypted credentials and managed executable
+    // paths. Keep those runtime values out of the persisted source config.
+    let resolved: StdioMcpConfig | null = null;
+    let resolutionError: string | undefined;
+    if (ctx.resolveStdioMcpSourceConfig) {
+      try {
+        const runtime = await ctx.resolveStdioMcpSourceConfig(source);
+        resolved = runtime.config;
+        resolutionError = runtime.error;
+      } catch {
+        resolutionError = 'Could not resolve MCP runtime configuration. Check source setup and credentials.';
+      }
+    } else {
+      resolved = resolveStdioConfig(source.mcp, ctx.workspacePath, getSourcePath(ctx.workspacePath, sourceSlug));
+    }
     if (!resolved) {
       hasError = true;
-      error = 'No command configured';
-      lines.push('✗ No command configured for stdio MCP source');
+      error = resolutionError || 'No command configured';
+      lines.push(`✗ ${resolutionError || 'No command configured for stdio MCP source'}`);
     } else {
       const expandedCommand = resolved.command;
-      const expandedArgs = resolved.args;
+      const expandedArgs = resolved.args ?? [];
       const expandedEnv = resolved.env;
 
       // Stdio MCP - use validateStdioMcpConnection if available
-      if (ctx.validateStdioMcpConnection && source.mcp.command) {
+      if (ctx.validateStdioMcpConnection && expandedCommand) {
         lines.push(`ℹ Testing stdio MCP: ${expandedCommand}`);
         try {
           const result = await ctx.validateStdioMcpConnection({
             command: expandedCommand,
             args: expandedArgs,
             env: expandedEnv,
-            cwd: getSourcePath(ctx.workspacePath, sourceSlug),
+            cwd: resolved.cwd ?? getSourcePath(ctx.workspacePath, sourceSlug),
           });
           if (result.success) {
             success = true;
@@ -798,13 +836,37 @@ async function testMcpConnection(
     }
   } else if (source.mcp?.url) {
     // HTTP/SSE MCP
+    let probeConfig: HttpMcpConfig = {
+      url: source.mcp.url,
+      transport: source.mcp.transport,
+      authType: source.mcp.authType,
+      headers: source.mcp.headers ? { ...source.mcp.headers } : undefined,
+    };
+    if (ctx.resolveHttpMcpSourceConfig) {
+      try {
+        const runtime = await ctx.resolveHttpMcpSourceConfig(source);
+        if (runtime !== undefined) {
+          managedHttp = true;
+          if (!runtime.config) {
+            error = redactHttpMcpProbeText(runtime.error || 'MCP source setup is incomplete.', probeConfig);
+            lines.push(`✗ ${error}`);
+            return { lines, success: false, hasError: true, error, managedHttp: true };
+          }
+          probeConfig = runtime.config;
+        }
+      } catch {
+        error = 'Could not resolve MCP runtime configuration. Check source setup and credentials.';
+        lines.push(`✗ ${error}`);
+        return { lines, success: false, hasError: true, error, managedHttp: true };
+      }
+    }
     if (ctx.validateMcpConnection) {
-      lines.push(`ℹ Testing MCP server: ${source.mcp.url}`);
+      lines.push(`ℹ Testing MCP server: ${redactUrlForLog(probeConfig.url)}`);
       try {
         // Merge static headers with credential-store headers (if headerNames configured)
-        let headers = source.mcp.headers ? { ...source.mcp.headers } : undefined;
-        let accessToken: string | undefined;
-        if (ctx.credentialManager) {
+        let headers = probeConfig.headers;
+        let accessToken = probeConfig.accessToken;
+        if (!managedHttp && ctx.credentialManager) {
           const workspaceId = basename(ctx.workspacePath) || '';
           const loadedSource = {
             config: source,
@@ -839,13 +901,8 @@ async function testMcpConnection(
             }
           }
         }
-        const result = await ctx.validateMcpConnection({
-          url: source.mcp.url,
-          transport: source.mcp.transport,
-          authType: source.mcp.authType,
-          headers,
-          accessToken,
-        });
+        probeConfig = { ...probeConfig, headers, accessToken };
+        const result = await ctx.validateMcpConnection(probeConfig);
         if (result.success) {
           success = true;
           lines.push(`✓ MCP server connected`);
@@ -853,29 +910,40 @@ async function testMcpConnection(
             lines.push(`  Tools available: ${result.toolCount}`);
           }
           if (result.serverName) {
-            lines.push(`  Server: ${result.serverName} v${result.serverVersion || 'unknown'}`);
+            lines.push(`  Server: ${redactHttpMcpProbeText(result.serverName, probeConfig)} v${redactHttpMcpProbeText(result.serverVersion || 'unknown', probeConfig)}`);
           }
         } else if (result.needsAuth) {
           lines.push(`⚠ MCP server requires authentication`);
-          if (source.mcp.authType === 'oauth') {
+          if (probeConfig.authType === 'oauth') {
             lines.push('  Use source_oauth_trigger to authenticate');
           }
-          success = true; // Server is reachable, just needs auth
+          if (managedHttp) {
+            hasError = true;
+            error = 'MCP source requires authentication. Check source credentials before activation.';
+            if (probeConfig.authType !== 'oauth') lines.push('  Check source credentials before activation');
+          } else {
+            success = true; // Legacy behavior: server is reachable, just needs auth.
+          }
         } else {
           hasError = true;
-          error = result.error || 'MCP connection failed';
+          error = redactHttpMcpProbeText(result.error || 'MCP connection failed', probeConfig);
           lines.push(`✗ ${error}`);
         }
       } catch (e) {
         hasError = true;
-        error = e instanceof Error ? e.message : 'Unknown error';
+        error = redactHttpMcpProbeText(e instanceof Error ? e.message : 'Unknown error', probeConfig);
         lines.push(`✗ Failed to connect to MCP server: ${error}`);
       }
     } else {
       // Basic URL check
-      lines.push(`ℹ MCP source URL: ${source.mcp.url}`);
+      lines.push(`ℹ MCP source URL: ${redactUrlForLog(probeConfig.url)}`);
       lines.push('  Connection test not available in this context — call the source\'s MCP tools directly to verify');
-      success = true; // Config looks ok
+      if (managedHttp) {
+        hasError = true;
+        error = 'MCP connection verification is unavailable in this context.';
+      } else {
+        success = true; // Legacy behavior: config looks ok.
+      }
     }
   } else {
     hasError = true;
@@ -883,7 +951,7 @@ async function testMcpConnection(
     lines.push('✗ No MCP URL or command configured');
   }
 
-  return { lines, success, hasError, error };
+  return { lines, success, hasError, error, managedHttp };
 }
 
 function testLocalConnection(
@@ -924,10 +992,19 @@ function testLocalConnection(
 async function checkAuthStatus(
   ctx: SessionToolContext,
   source: SourceConfig,
-  sourceSlug: string
+  sourceSlug: string,
+  verifiedManagedHttp?: boolean,
 ): Promise<{ lines: string[]; hasWarning: boolean }> {
   const lines: string[] = [];
   let hasWarning = false;
+
+  // Managed remote probes already checked the actual vault/environment auth.
+  // Re-reading only the generic token cache would reject valid env-only keys.
+  if (verifiedManagedHttp !== undefined) {
+    if (verifiedManagedHttp) lines.push('✓ MCP authentication verified by the connection test');
+    else lines.push('⚠ MCP runtime authentication could not be verified');
+    return { lines, hasWarning: !verifiedManagedHttp };
+  }
 
   if (source.isAuthenticated) {
     // In Codex context (no validateMcpConnection), MCP source credentials are delivered

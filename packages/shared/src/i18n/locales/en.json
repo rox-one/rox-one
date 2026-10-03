@@ -3924,6 +3924,8 @@
   "onboarding.errors.selectAuthMethod": "Select an authentication method first.",
   "onboarding.errors.validationFailed": "Validation failed",
   "onboarding.errors.workspaceTransitionFailed": "Could not open the workspace. Please try again.",
+  "onboarding.firstSession.message": "Hi! I’m Rox. A few questions will help me tailor my help to you:\n\n1. What should I call you?\n2. What would you like to work on first?\n3. Do you have any preferences for my replies or constraints I should keep in mind?\n\nYou can answer any question or jump straight into a task.",
+  "onboarding.firstSession.title": "Let’s get acquainted",
   "onboarding.gitBash.alreadyInstalled": "Already have Git installed?",
   "onboarding.gitBash.browse": "Browse...",
   "onboarding.gitBash.customPath": "If Git is installed in a non-standard location, you can specify the path to bash.exe.",

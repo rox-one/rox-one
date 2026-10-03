@@ -279,6 +279,7 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.debug.LOG,
 
   // onboarding — local auth setup flow
+  RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION,
   RPC_CHANNELS.onboarding.GET_AUTH_STATE,
   RPC_CHANNELS.onboarding.VALIDATE_MCP,
   RPC_CHANNELS.onboarding.START_MCP_OAUTH,

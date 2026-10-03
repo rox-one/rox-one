@@ -15,6 +15,7 @@ import { join } from 'node:path';
 import type { FolderSourceConfig, LoadedSource } from './types.ts';
 import { toPortablePath } from '../utils/paths.ts';
 import { estimateTokens } from '../utils/large-response.ts';
+import { BUILTIN_MCP_CATALOG } from './builtin-mcp.ts';
 
 function sourcesDir(workspaceRootPath: string): string {
   return join(workspaceRootPath, 'sources');
@@ -299,7 +300,9 @@ export function getDocsSource(workspaceId: string, workspaceRootPath: string): L
 }
 
 export function isBuiltinSource(slug: string): boolean {
-  return (BUILTIN_SOURCE_SLUGS as readonly string[]).includes(slug) || slug === 'craft-agents-docs';
+  return (BUILTIN_SOURCE_SLUGS as readonly string[]).includes(slug)
+    || BUILTIN_MCP_CATALOG.some(spec => spec.slug === slug)
+    || slug === 'craft-agents-docs';
 }
 
 /** Rough token estimate for a source guide / attached text (chars/4). */
@@ -314,4 +317,3 @@ export function formatTokenEstimate(tokens: number): string {
   if (tokens >= 1000) return `≈${(tokens / 1000).toFixed(tokens >= 10_000 ? 0 : 1)}k`;
   return `≈${tokens}`;
 }
-

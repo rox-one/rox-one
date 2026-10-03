@@ -39,10 +39,11 @@ import type { MidStreamBehavior, LlmProviderType } from '@craft-agent/shared/con
 import { PrivilegedExecutionBroker } from '@craft-agent/server-core/services'
 import { isValidWorkingDirectory } from '../utils/path-validation'
 import { MemoryService } from '../memory/MemoryService'
+import { ensureFirstSessionWelcome } from './first-session-welcome'
 import { readProvenance, writeProvenance, type SessionProvenance } from '../memory/provenance'
 import { appendSkillUsage, extractSkillMentions } from '../memory/skill-usage'
 import { InitGate } from '@craft-agent/server-core/domain'
-import { i18n } from '@craft-agent/shared/i18n'
+import { i18n, setupI18n } from '@craft-agent/shared/i18n'
 import {
   getWorkspaces,
   getWorkspaceByNameOrId,
@@ -105,6 +106,10 @@ import { listTaskSlugs, parseTaskSpec, uniqueTaskSlug } from '@craft-agent/share
 import { createTaskFromSpec, resolveCreateTaskProjectId } from '../tasks'
 import { buildPagesToolCallbacks } from '../pages/tool-callbacks'
 import { buildServersFromSources as buildServersFromSourcesShared } from '../sources/build-servers'
+import { resolveDefaultSessionSources } from '../sources/default-session-sources'
+import { BuiltinMcpStartup } from '../sources/builtin-mcp-startup'
+import { ensureBuiltinMcpSources, getEnabledBuiltinMcpSourceSlugs } from '@craft-agent/shared/sources/builtin-mcp'
+import { collectDefaultEnabledSourceSlugs } from '@craft-agent/shared/sources'
 import { ConfigWatcher, type ConfigWatcherCallbacks } from '@craft-agent/shared/config'
 import { getValidClaudeOAuthToken } from '@craft-agent/shared/auth'
 import { resolveAuthEnvVars } from '@craft-agent/shared/config'
@@ -1295,6 +1300,7 @@ export class SessionManager implements ISessionManager {
   private deltaFlushTimers: Map<string, NodeJS.Timeout> = new Map()
   // Config watchers for live updates (sources, etc.) - one per workspace
   private configWatchers: Map<string, ConfigWatcher> = new Map()
+  private builtinMcpStartup = new BuiltinMcpStartup({ log: message => sessionLog.info(message) })
   // Automation systems for workspace event automations - one per workspace (includes scheduler, diffing, and handlers)
   private automationSystems: Map<string, AutomationSystem> = new Map()
   // Pending credential request resolvers (keyed by requestId)
@@ -1726,10 +1732,36 @@ export class SessionManager implements ISessionManager {
    * Idempotent — returns immediately if already watching.
    * workspaceId must be the global config ID (what the renderer knows).
    */
+  retryBuiltinMcpSources(workspaceId: string): void {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (workspace && !workspace.remoteServer) void this.builtinMcpStartup.retryWorkspace(workspace.rootPath)
+  }
+
   setupConfigWatcher(workspaceRootPath: string, workspaceId: string): void {
     // Check if already watching this workspace
     if (this.configWatchers.has(workspaceRootPath)) {
       return // Already watching this workspace
+    }
+
+    // Remote workspaces install on their server. Local installs seed before
+    // watching, then download/probe in the background without blocking the UI.
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (workspace && !workspace.remoteServer) {
+      const { created } = ensureBuiltinMcpSources(workspaceRootPath)
+      const config = loadWorkspaceConfig(workspaceRootPath)
+      const newDefaults = getEnabledBuiltinMcpSourceSlugs(workspaceRootPath).filter(slug => created.includes(slug))
+      if (config && newDefaults.length > 0) {
+        saveWorkspaceConfig(workspaceRootPath, {
+          ...config,
+          defaults: {
+            ...config.defaults,
+            enabledSourceSlugs: [...new Set([
+              ...(config.defaults?.enabledSourceSlugs ?? collectDefaultEnabledSourceSlugs()), ...newDefaults,
+            ])],
+          },
+        })
+      }
+      void this.builtinMcpStartup.ensureWorkspace(workspaceRootPath)
     }
 
     sessionLog.info(`Setting up ConfigWatcher for workspace: ${workspaceId} (${workspaceRootPath})`)
@@ -1745,6 +1777,9 @@ export class SessionManager implements ISessionManager {
         const sources = loadWorkspaceSources(workspaceRootPath)
         this.broadcastSourcesChanged(workspaceId, sources)
         await this.reloadSourcesForWorkspace(workspaceRootPath)
+        if (workspace && !workspace.remoteServer) {
+          void this.builtinMcpStartup.ensureWorkspace(workspaceRootPath)
+        }
       },
       onSourceGuideChange: (sourceSlug: string) => {
         sessionLog.info(`Source guide changed: ${sourceSlug}`)
@@ -2899,6 +2934,7 @@ export class SessionManager implements ISessionManager {
       // Update source config to mark as authenticated
       const { markSourceAuthenticated } = await import('@craft-agent/shared/sources')
       markSourceAuthenticated(managed.workspace.rootPath, request.sourceSlug)
+      this.retryBuiltinMcpSources(managed.workspace.id)
 
       // Mark source as unseen so fresh guide is injected on next message
       if (managed.agent) {
@@ -3230,6 +3266,25 @@ export class SessionManager implements ISessionManager {
     return readProvenance(managed.workspace.rootPath, sessionId)
   }
 
+  /** Start the first conversation locally; no provider request or credential flow is needed. */
+  async ensureFirstSessionWelcome(workspaceId: string): Promise<Session | null> {
+    await this.waitForInit()
+    if (!getWorkspaceByNameOrId(workspaceId)) throw new Error(`Workspace ${workspaceId} not found`)
+    return ensureFirstSessionWelcome(join(resolveConfigDir(), 'first-session-welcome.v1.json'), {
+      hasExistingSessions: () => this.sessions.size > 0,
+      createWelcome: () => {
+        setupI18n()
+        const options = { lng: getPersistedUiLanguage() }
+        return this.createSession(workspaceId, {
+          name: i18n.t('onboarding.firstSession.title', options),
+        }, {
+          emitCreatedEvent: false,
+          initialAssistantMessage: i18n.t('onboarding.firstSession.message', options),
+        })
+      },
+    })
+  }
+
   async createSession(
     workspaceId: string,
     options?: import('@craft-agent/shared/protocol').CreateSessionOptions,
@@ -3237,7 +3292,7 @@ export class SessionManager implements ISessionManager {
     // announced to the renderer (see notifySessionCreated). Callers that register the session
     // themselves — the `sessions:create` RPC adds it from the return value — pass
     // `{ emitCreatedEvent: false }` to avoid a redundant hydrate.
-    internal?: { emitCreatedEvent?: boolean },
+    internal?: { emitCreatedEvent?: boolean; initialAssistantMessage?: string },
   ): Promise<Session> {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) {
@@ -3266,7 +3321,9 @@ export class SessionManager implements ISessionManager {
     // Get default model from workspace config (used when no session-specific model is set)
     const defaultModel = wsConfig?.defaults?.model
     // Get default enabled sources from workspace config
-    const defaultEnabledSourceSlugs = options?.enabledSourceSlugs ?? wsConfig?.defaults?.enabledSourceSlugs
+    const defaultEnabledSourceSlugs = resolveDefaultSessionSources(
+      workspaceRootPath, options?.enabledSourceSlugs, wsConfig?.defaults?.enabledSourceSlugs,
+    )
 
     // Resolve model tier hints ('fast' / 'default') to actual model IDs.
     // EditPopover uses tier hints instead of hardcoded Anthropic model names
@@ -3796,6 +3853,26 @@ export class SessionManager implements ISessionManager {
       }
     }
 
+    if (internal?.initialAssistantMessage) {
+      const welcome: Message = {
+        id: generateMessageId(),
+        role: 'assistant',
+        content: internal.initialAssistantMessage,
+        timestamp: Date.now(),
+      }
+      managed.messages.push(welcome)
+      managed.lastMessageRole = 'assistant'
+      managed.lastFinalMessageId = welcome.id
+      managed.lastMessageAt = welcome.timestamp
+      managed.messageCount = managed.messages.length
+      // Direct awaited persistence makes the greeting durable before recording completion.
+      await saveStoredSession({
+        ...storedSession,
+        messages: managed.messages.map(messageToStored),
+        tokenUsage: managed.tokenUsage ?? DEFAULT_TOKEN_USAGE,
+      })
+    }
+
     // Announce by default so the renderer hydrates full metadata (name, parentSessionId, …)
     // instead of fabricating a titleless "New Chat" from the first streamed event. Emitted at
     // the very end so a thrown branch-preflight failure above never announces an orphan.
@@ -3803,7 +3880,7 @@ export class SessionManager implements ISessionManager {
       this.notifySessionCreated(workspaceId, storedSession.id)
     }
 
-    return managedToSession(managed, isBranch ? { messages: managed.messages } : undefined)
+    return managedToSession(managed, isBranch || internal?.initialAssistantMessage ? { messages: managed.messages } : undefined)
   }
 
   /**
@@ -4106,6 +4183,12 @@ export class SessionManager implements ISessionManager {
       // ============================================================
 
       const sessionPath = getSessionStoragePath(managed.workspace.rootPath, managed.id)
+      if (managed.enabledSourceSlugs === undefined) {
+        managed.enabledSourceSlugs = resolveDefaultSessionSources(
+          managed.workspace.rootPath, undefined,
+          loadWorkspaceConfig(managed.workspace.rootPath)?.defaults?.enabledSourceSlugs,
+        )
+      }
       const enabledSlugs = managed.enabledSourceSlugs || []
       const allSources = loadAllSources(managed.workspace.rootPath)
       const enabledSources = allSources.filter(s =>
@@ -7071,6 +7154,11 @@ export class SessionManager implements ISessionManager {
     const sendSpan = perf.span('session.sendMessage', { sessionId })
 
     const workspaceRootPath = managed.workspace.rootPath
+    if (managed.enabledSourceSlugs === undefined) {
+      managed.enabledSourceSlugs = resolveDefaultSessionSources(
+        workspaceRootPath, undefined, loadWorkspaceConfig(workspaceRootPath)?.defaults?.enabledSourceSlugs,
+      )
+    }
     const enabledSlugs = managed.enabledSourceSlugs ?? []
     const hasSources = enabledSlugs.length > 0
 
@@ -10563,6 +10651,8 @@ export class SessionManager implements ISessionManager {
    */
   cleanup(): void {
     sessionLog.info('Cleaning up resources...')
+
+    void this.builtinMcpStartup.stop().catch(error => sessionLog.warn('MCP startup cleanup failed:', error))
 
     // Stop all ConfigWatchers (file system watchers)
     for (const [path, watcher] of this.configWatchers) {

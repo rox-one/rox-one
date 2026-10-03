@@ -544,3 +544,17 @@ The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 i
 | Exercise native intent and affected contracts | recent_features | Own frozen dependencies and Bun1.3.14 | Strict DTO/negative cases, real PostgreSQL HTTP/WS, encrypted SIGKILL/restart/replay, Project neighbor, locale/channel parity, consumed package types |
 | Review and deliver the separate recovery PR | recent_features / root | Focused checks and exact remote head readback | Worker publishes PR; root serially reviews/merges and verifies resulting main |
 | Full native Settings and release acceptance | Existing program owners | Actual Electron interaction and native/license/release prerequisites | Original full acceptance remains pending; recovered source tests do not close it |
+
+
+## Cursor Cloud headless server setup (2026-10-03)
+
+Owner: historical-branch integration worker; integration owner: branch audit lead.
+Dependencies: current server entry point and helper build commands at main
+`76228cc33e44518e5fab5e59f5c754f4051d1e8c`.
+
+1. Adapt `.cursor/environment.json`, install and startup scripts to ROX — complete.
+2. Validate JSON and shell syntax, frozen preparation twice and actual helper builds — complete.
+3. Exercise authenticated RPC ping, graceful stop, restart, token permissions and
+   token rotation, plus failed install/entropy negative controls — complete.
+4. Deliver a separate PR preserving the original branch; main integration remains
+   owned by the lead. Hosted Cursor provisioning remains unverified.

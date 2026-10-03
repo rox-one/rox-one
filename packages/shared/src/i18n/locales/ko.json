@@ -3924,6 +3924,8 @@
   "onboarding.errors.selectAuthMethod": "먼저 인증 방법을 선택하세요.",
   "onboarding.errors.validationFailed": "검증에 실패했습니다",
   "onboarding.errors.workspaceTransitionFailed": "워크스페이스를 열 수 없습니다. 다시 시도하세요.",
+  "onboarding.firstSession.message": "안녕하세요! 저는 Rox예요. 더 잘 도와드릴 수 있도록 몇 가지 질문을 드릴게요.\n\n1. 어떻게 불러드리면 될까요?\n2. 먼저 어떤 일을 하고 싶으신가요?\n3. 답변 방식에 대한 선호나 고려해야 할 제약이 있나요?\n\n원하는 질문에 답하시거나 바로 작업을 보내셔도 돼요.",
+  "onboarding.firstSession.title": "먼저 서로 알아가요",
   "onboarding.gitBash.alreadyInstalled": "Git이 이미 설치되어 있나요?",
   "onboarding.gitBash.browse": "찾아보기...",
   "onboarding.gitBash.customPath": "Git이 표준 위치가 아닌 곳에 설치되어 있다면 bash.exe 경로를 지정할 수 있습니다.",

@@ -421,3 +421,14 @@ Branch audit against main `76228cc33e44518e5fab5e59f5c754f4051d1e8c` found the u
 Acceptance for this integration is the existing canonical authority and credential storage, strict workspace/window scope, one discriminated pending intent, explicit retry/cancel, receipt and independent event replay plus live readback before intent deletion, uncertainty after a lost response, rejection of unknown formats and preservation of the Project intent path. Private evidence retracts when authority or workspace changes. All user-facing labels retain locale parity. No installed identity, license, authorization or release configuration is changed by integration.
 
 Original proof artifacts and the Compound handoff remain historical evidence tied to their recorded September revisions. They do not establish current native pixels, legal approval, complete WP48 acceptance or full program DoD. Current verification is recorded in [the recovery receipt](integration-history/compound-d141e962/recovery-verification.json); delivery is tracked separately; actual native Settings product acceptance remains a separate gate.
+
+
+## Cursor Cloud headless server setup (2026-10-03)
+
+Port the useful environment setup from `cursor/cloud-agent-env-setup-2fc0` onto
+current ROX. Preparation must terminate, use Bun 1.3.14 and the frozen lockfile,
+and build the session MCP/server subprocess helpers. The terminal must bind the
+server to loopback, isolate development context by default, persist each new
+bearer token with mode 0600, and never print its value. Installation or entropy
+failure must stop before subsequent work. Hosted Cursor execution and provider
+credentials require their own verification. See `docs/cursor-cloud-server.md`.

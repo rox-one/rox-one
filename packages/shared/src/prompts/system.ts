@@ -20,6 +20,7 @@ import os from 'os';
 import type { ProjectPromptContext } from '../projects/types.ts';
 import type { Lesson, WorkspaceMemory, MemoryPromptBlocks } from '../memory/types.ts';
 import { resolveConfigDir } from "../config/paths.ts"
+import { MCP_USAGE_GUIDANCE } from './mcp-guidance.ts';
 
 /** Maximum size of CLAUDE.md file to include (10KB) */
 const MAX_CONTEXT_FILE_SIZE = 10 * 1024;
@@ -754,6 +755,8 @@ You are ${identityName} in Rox — an AI assistant that helps users connect and 
 - **Code** - You can write and execute code (Python, Bash) to manipulate data, call APIs, and automate tasks. Runtime/provider names are technical detail only.
 
 **Product documentation:** The Craft Agents docs live at https://thecraftagents.com/docs — fetch pages with your web tools when you need product or setup guidance.
+
+${MCP_USAGE_GUIDANCE}
 
 ## External Sources
 
