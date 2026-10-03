@@ -1,4 +1,4 @@
-import type { SshHostConfig } from '@craft-agent/shared/config'
+import type { SshHostConfig } from '@rox/shared/config'
 import type { RemoteTarget, ResolvedArtifact } from './server-artifact.ts'
 
 export type BootstrapPhase =
@@ -26,10 +26,10 @@ export interface BootstrapResult {
 }
 
 /** Directory on the remote host where the managed server is installed. */
-export const REMOTE_INSTALL_DIR = '~/.craft-agent/remote-server'
-export const REMOTE_LOG_PATH = '~/.craft-agent/remote-server/server.log'
+export const REMOTE_INSTALL_DIR = '~/.rox/remote-server'
+export const REMOTE_LOG_PATH = '~/.rox/remote-server/server.log'
 /** Token file on the remote (0600). The token travels over ssh stdin, never argv. */
-export const REMOTE_TOKEN_PATH = '~/.craft-agent/remote-server/.token'
+export const REMOTE_TOKEN_PATH = '~/.rox/remote-server/.token'
 
 export interface RunRemoteOptions {
   /** Timeout for the remote command, ms. */
@@ -87,12 +87,15 @@ export function buildWriteTokenCommand(): string {
 
 /** Build the remote shell command that installs an uploaded archive and starts
  * the server. The token is read from the 0600 file, never argv; detached under nohup. */
-function buildLaunch(remotePort: number): string {
-  // The `$(cat ...)` stays literal in argv, so `ps` never shows the token.
-  // CRAFT_CONFIG_DIR isolates the managed server's state from any user craft instance.
+function buildLaunch(remotePort: number, legacyCompatibility = false): string {
+  // Literal file reads keep token values out of argv. Legacy aliases are only
+  // enabled for a copied legacy artifact, and use the same canonical state.
+  const legacyEnv = legacyCompatibility
+    ? `CRAFT_SERVER_TOKEN="$(cat ${REMOTE_TOKEN_PATH})" CRAFT_RPC_PORT=${remotePort} CRAFT_CONFIG_DIR=${REMOTE_INSTALL_DIR}/config `
+    : ''
   return (
-    `CRAFT_SERVER_TOKEN="$(cat ${REMOTE_TOKEN_PATH})" CRAFT_RPC_PORT=${remotePort} ` +
-    `CRAFT_CONFIG_DIR=${REMOTE_INSTALL_DIR}/config ` +
+    `ROX_SERVER_TOKEN="$(cat ${REMOTE_TOKEN_PATH})" ROX_RPC_PORT=${remotePort} ` +
+    `ROX_CONFIG_DIR=${REMOTE_INSTALL_DIR}/config ` + legacyEnv +
     `nohup ${REMOTE_INSTALL_DIR}/start.sh > ${REMOTE_LOG_PATH} 2>&1 < /dev/null &`
   )
 }
@@ -117,17 +120,42 @@ export function buildStartCommand(archiveRemotePath: string, remotePort: number)
 
 /** Restart an already-installed server without re-uploading the artifact — the
  * path taken when the process died but the install dir is intact. */
-export function buildRestartCommand(remotePort: number): string {
-  return detach(buildLaunch(remotePort))
+export function buildRestartCommand(remotePort: number, legacyCompatibility = false): string {
+  return detach(buildLaunch(remotePort, legacyCompatibility))
 }
 
-/** Shell test used to decide the restart-only path: is a runnable install present? */
-export const CHECK_INSTALLED_COMMAND = `test -x ${REMOTE_INSTALL_DIR}/start.sh && echo INSTALLED || true`
+/** Explicit compatibility source; never used for new installs. */
+export const LEGACY_REMOTE_INSTALL_DIR = '~/.craft-agent/remote-server'
+const LEGACY_MARKER = `${REMOTE_INSTALL_DIR}/.legacy-env-compat`
 
-/** Kill a running app-managed server so it can be relaunched with a new token.
- * The `[.]` bracket keeps the pattern from matching the shell running this command. */
+/** Canonical installation wins; legacy is only imported on requested restart. */
+export const CHECK_INSTALLED_COMMAND =
+  `if test -x ${REMOTE_INSTALL_DIR}/start.sh; then ` +
+  `if test -f ${LEGACY_MARKER}; then echo INSTALLED_LEGACY; else echo INSTALLED; fi; ` +
+  `elif test -x ${LEGACY_REMOTE_INSTALL_DIR}/start.sh; then echo LEGACY_INSTALLED; fi`
+
+/** Copy missing legacy files, preserving canonical conflicts and the source. */
+export const IMPORT_LEGACY_INSTALL_COMMAND =
+  `test -x ${LEGACY_REMOTE_INSTALL_DIR}/start.sh || { echo 'Legacy remote install is missing; reinstall the managed ROX server.' >&2; exit 1; }; ` +
+  `copy_missing() { for source in "$1"/* "$1"/.[!.]* "$1"/..?*; do ` +
+  `test -e "$source" || test -L "$source" || continue; target="$2/\${source##*/}"; ` +
+  `if test -d "$source" && ! test -L "$source"; then ` +
+  `if test -L "$target" || { test -e "$target" && ! test -d "$target"; }; then continue; fi; ` +
+  `mkdir -p "$target" && copy_missing "$source" "$target" || return 1; ` +
+  `elif ! test -e "$target" && ! test -L "$target"; then cp -pP "$source" "$target" || return 1; fi; done; }; ` +
+  `mkdir -p ${REMOTE_INSTALL_DIR} && copy_missing ${LEGACY_REMOTE_INSTALL_DIR} ${REMOTE_INSTALL_DIR} && ` +
+  `touch ${LEGACY_MARKER} && test -x ${REMOTE_INSTALL_DIR}/start.sh`
+
 export const KILL_MANAGED_SERVER_COMMAND =
-  `pkill -f '[.]craft-agent/remote-server' 2>/dev/null || true`
+  `pkill -f '[.](rox|craft-agent)/remote-server' 2>/dev/null || true`
+
+async function prepareRestart(host: SshHostConfig, deps: ServerBootstrapDeps): Promise<{ installed: boolean; legacy: boolean }> {
+  const status = (await deps.runRemote(host, CHECK_INSTALLED_COMMAND)).trim()
+  if (status === 'LEGACY_INSTALLED') {
+    await deps.runRemote(host, IMPORT_LEGACY_INSTALL_COMMAND)
+  }
+  return { installed: ['INSTALLED', 'INSTALLED_LEGACY', 'LEGACY_INSTALLED'].includes(status), legacy: status.includes('LEGACY') }
+}
 
 /** Run the full bootstrap. Assumes the SSH tunnel is already established and the
  * remote server port is forwarded locally (so `probe()` targets it). */
@@ -151,15 +179,15 @@ export async function bootstrapRemoteServer(
   if (alreadyAlive) {
     // A server answers but we hold no token for it. If OUR install dir is present,
     // it's a managed server whose token we lost — restart with a fresh token.
-    const installed = (await deps.runRemote(host, CHECK_INSTALLED_COMMAND)).includes('INSTALLED')
-    if (installed) {
+    const installation = await prepareRestart(host, deps)
+    if (installation.installed) {
       const token = deps.generateToken()
       await deps.storeToken(host.id, token)
       onProgress({ phase: 'starting-server', detail: 'restart' })
       await deps.runRemote(host, buildWriteTokenCommand(), { stdin: token })
       // The old (token-less to us) server still holds the port; kill it first.
       await deps.runRemote(host, KILL_MANAGED_SERVER_COMMAND)
-      await deps.runRemote(host, buildRestartCommand(host.remotePort))
+      await deps.runRemote(host, buildRestartCommand(host.remotePort, installation.legacy))
       onProgress({ phase: 'waiting-for-server' })
       for (let attempt = 0; attempt < probeAttempts; attempt++) {
         if (await deps.probe()) {
@@ -184,13 +212,13 @@ export async function bootstrapRemoteServer(
   // 2. Server not answering but we manage this host and the install is intact
   //    (process died: crash, reboot, OOM kill) — restart it without re-uploading.
   if (stored) {
-    const installed = (await deps.runRemote(host, CHECK_INSTALLED_COMMAND)).includes('INSTALLED')
-    if (installed) {
+    const installation = await prepareRestart(host, deps)
+    if (installation.installed) {
       onProgress({ phase: 'starting-server', detail: 'restart' })
       // Re-write the token file (cheap to refresh) and relaunch; fall through to
       // a full reinstall if the restart doesn't bring the server up.
       await deps.runRemote(host, buildWriteTokenCommand(), { stdin: stored })
-      await deps.runRemote(host, buildRestartCommand(host.remotePort))
+      await deps.runRemote(host, buildRestartCommand(host.remotePort, installation.legacy))
       onProgress({ phase: 'waiting-for-server' })
       for (let attempt = 0; attempt < probeAttempts; attempt++) {
         if (await deps.probe()) {
@@ -213,9 +241,9 @@ export async function bootstrapRemoteServer(
   const artifact = await deps.resolveArtifact(target)
 
   // 5. Upload + extract.
-  const remoteArchive = `~/.craft-agent/${artifact.archiveName}`
+  const remoteArchive = `~/.rox/${artifact.archiveName}`
   onProgress({ phase: 'uploading-server' })
-  await deps.runRemote(host, 'mkdir -p ~/.craft-agent')
+  await deps.runRemote(host, 'mkdir -p ~/.rox')
   await deps.uploadFile(host, artifact.archivePath, remoteArchive)
 
   // 6. Generate + store token, transfer it via stdin (never argv), then
