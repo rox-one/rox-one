@@ -1,3 +1,4 @@
+import { useNavigation } from '@/contexts/NavigationContext'
 import * as React from 'react'
 import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
 import { notesAuxiliaryFits } from './notes/notes-layout'
@@ -299,6 +300,35 @@ export default function NotesPage(props: NotesPageProps) {
   return <NativeNotesPage {...props} />
 }
 
+type SelectedNoteFailure = { workspaceId: string | null; noteId: string; kind: 'missing' | 'unavailable' }
+
+function SelectedNoteRecovery({ failure, address, onRetry }: {
+  failure: SelectedNoteFailure
+  address: string | null
+  onRetry: () => void
+}) {
+  const { t } = useTranslation()
+  const { navigate } = useNavigation()
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      data-testid={`note-surface-${failure.kind}`}
+      data-note-id={failure.noteId}
+      data-note-address={address ?? failure.noteId}
+      className="flex h-full flex-col items-center justify-center gap-3 p-4 text-center text-muted-foreground"
+    >
+      <p className="text-sm" data-testid={failure.kind === 'missing' ? 'route-note-missing' : 'route-note-unavailable'}
+        data-state={failure.kind === 'missing' ? 'not-found' : 'unavailable'}>{t(failure.kind === 'missing' ? 'notes.surface.notFound' : 'common.unavailable')}</p>
+      <p className="max-w-full break-all font-mono text-xs">{address ?? failure.noteId}</p>
+      <button type="button" data-testid="note-surface-retry" onClick={onRetry} className="rounded-md border border-border px-3 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        {t('common.retry')}
+      </button>
+      <Button variant="ghost" onClick={() => navigate(routes.view.notes())}>{t('common.backToList')}</Button>
+    </div>
+  )
+}
+
 function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const shellSidebarTarget = useShellSidebarTarget()
   const { t } = useTranslation()
@@ -351,7 +381,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
   const [indexRebuilding, setIndexRebuilding] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
-  const [noteOpenError, setNoteOpenError] = React.useState<{ workspaceId: string; noteId: string; code: string } | null>(null)
+  const [noteOpenError, setNoteOpenError] = React.useState<{ workspaceId: string | null; noteId: string; code: string } | null>(null)
+  const selectedReadError: SelectedNoteFailure | null = noteOpenError?.workspaceId === activeWorkspaceId
+    && selectedNoteId && parseNoteBlockAddress(selectedNoteId).noteId === noteOpenError.noteId
+    ? { workspaceId: noteOpenError.workspaceId, noteId: noteOpenError.noteId,
+        kind: ['NOT_FOUND', 'not_found', 'ENOENT'].includes(noteOpenError.code) ? 'missing' : 'unavailable' } : null
   const [saving, setSaving] = React.useState(false)
   const [dirty, setDirty] = React.useState(false)
   const [saveError, setSaveError] = React.useState<string | null>(null)
@@ -413,6 +447,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const saveTimerRef = React.useRef<number | null>(null)
   const saveQueueRef = React.useRef<Promise<boolean>>(Promise.resolve(true))
   const openNoteRequestRef = React.useRef(0)
+  const selectedNoteIdRef = React.useRef(selectedNoteId)
+  selectedNoteIdRef.current = selectedNoteId
   const searchRequestRef = React.useRef(0)
   const notesListRequestRef = React.useRef(0)
   const assetsRequestRef = React.useRef(0)
@@ -441,6 +477,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       ++assetsRequestRef.current
     }
   }, [activeWorkspaceId])
+  React.useLayoutEffect(() => {
+    // Selection/workspace commits retire old reads even across A → B → A.
+    ++openNoteRequestRef.current
+    return () => { ++openNoteRequestRef.current }
+  }, [activeWorkspaceId, selectedNoteId])
   const taskRequestRef = React.useRef(0)
   const taskCacheWorkspaceRef = React.useRef<string | null>(activeWorkspaceId ?? null)
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
@@ -724,22 +765,29 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const openNote = React.useCallback(async (noteId: string) => {
     if (!readsMountedRef.current || readWorkspaceRef.current !== activeWorkspaceId) return
     const request = ++openNoteRequestRef.current
-    const isCurrent = () => readsMountedRef.current && request === openNoteRequestRef.current
-      && workspaceIdRef.current === activeWorkspaceId && readWorkspaceRef.current === activeWorkspaceId
-    setNoteOpenError(null)
-    if (!activeWorkspaceId) {
+    const isCurrent = () => readsMountedRef.current && readWorkspaceRef.current === activeWorkspaceId
+      && request === openNoteRequestRef.current && workspaceIdRef.current === activeWorkspaceId
+    if (!isCurrent()) return
+    const clearNote = () => {
+      activeNoteIdRef.current = null
       setActiveNote(null)
       contentRef.current = ''
       dirtyRef.current = false
       setContent('')
       setDirty(false)
+      setSaving(false)
+    }
+    setNoteOpenError(null)
+    if (!activeWorkspaceId) {
+      clearNote()
+      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code: 'CAPABILITY_UNAVAILABLE' })
       setLoading(false)
       return
     }
     const read = soupDocumentReadResult({ source: 'native', nativeId: noteId })
     if (!isClaimableLive(read.result)) {
+      clearNote()
       setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code: 'CAPABILITY_UNAVAILABLE' })
-      setActiveNote(null)
       setLoading(false)
       return
     }
@@ -780,15 +828,13 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setTagDraft(note.tags.join(', '))
     } catch (error) {
       if (!isCurrent()) return
-      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code: capabilityErrorCode(error) })
+      const code = capabilityErrorCode(error)
+      setNoteOpenError({
+        workspaceId: activeWorkspaceId, noteId,
+        code,
+      })
       toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
-      activeNoteIdRef.current = null
-      setActiveNote(null)
-      contentRef.current = ''
-      dirtyRef.current = false
-      setContent('')
-      setDirty(false)
-      setSaving(false)
+      clearNote()
     } finally {
       if (isCurrent()) setLoading(false)
     }
@@ -884,7 +930,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       refreshAssets()
       void refreshIndexHealth()
 
-      if (payload.noteId && payload.noteId === activeNoteIdRef.current) {
+      const selectedId = selectedNoteIdRef.current ? parseNoteBlockAddress(selectedNoteIdRef.current).noteId : null
+      if (payload.noteId && (payload.noteId === activeNoteIdRef.current || payload.noteId === selectedId)) {
         if (dirtyRef.current) {
           setExternalChange(payload)
         } else {
@@ -2406,14 +2453,8 @@ h1,h2,h3{margin-top:1.5em}
             <div className="h-full grid place-items-center">
               {loading ? (
                 <div className="text-sm text-muted-foreground">{t('notes.empty.loading')}</div>
-              ) : noteOpenError?.workspaceId === activeWorkspaceId && noteOpenError.noteId === (selectedNoteId ? parseNoteBlockAddress(selectedNoteId).noteId : null) ? (
-                <div className="flex max-w-md flex-col items-center gap-3 p-6 text-center text-sm text-muted-foreground"
-                  role="status" data-testid={noteOpenError.code === 'NOT_FOUND' ? 'route-note-missing' : 'route-note-unavailable'} data-error-code={noteOpenError.code}
-                  data-state={noteOpenError.code === 'NOT_FOUND' ? 'not-found' : 'unavailable'}>
-                  <p>{t(noteOpenError.code === 'NOT_FOUND' ? 'notes.route.notFound' : 'notes.route.unavailable')}</p>
-                  <Button variant="outline" onClick={() => void openNote(noteOpenError.noteId)}>{t('common.retry')}</Button>
-                  <Button variant="ghost" onClick={() => navigate(routes.view.notes())}>{t('common.backToList')}</Button>
-                </div>
+              ) : selectedReadError ? (
+                <SelectedNoteRecovery failure={selectedReadError} address={selectedNoteId} onRetry={() => void openNote(selectedReadError.noteId)} />
               ) : (
                 <div className="w-[420px] max-w-[calc(100%-48px)] p-4 text-center" data-notes-empty="">
                   <div className="text-sm font-medium">{t('notes.empty.noNote')}</div>

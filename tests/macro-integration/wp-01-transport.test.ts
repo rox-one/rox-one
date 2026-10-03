@@ -332,6 +332,46 @@ describe('WP-01 real shared WebSocket authority boundary', () => {
     await expect(raw(server, { token: f.ownerToken, workspaceId: f.workspaceId, reconnectClientId: id, lastSeq: 0 })).rejects.toThrow('AUTH_FAILED')
   })
 
+  test('hidden channels stay indistinguishable while live, revoked and expired; denied requests never call the handler', async () => {
+    const f = await fixture()
+    const server = await shared()
+    let invoked = 0
+    server.handle('test:counted', () => { invoked++; return 'visible result' }, { access: 'authenticatedWorkspace' })
+    server.handle('private:hidden', () => { invoked++; return 'PRIVATE_HIDDEN_RESULT' })
+    const hidden = async (socket: WebSocket) => {
+      for (const channel of ['unsafe:legacy', 'native:proof', 'private:hidden', 'never:registered']) {
+        const response = await request(socket, channel)
+        expect(response.result).toBeUndefined()
+        expect(response.error).toEqual({ code: 'CHANNEL_NOT_FOUND', message: `No handler for: ${channel}` })
+        expect(JSON.stringify(response)).not.toContain('PRIVATE_HIDDEN_RESULT')
+        expect(JSON.stringify(response)).not.toContain(owner.principalId)
+      }
+    }
+    const live = await raw(server, { token: f.ownerToken, workspaceId: f.workspaceId })
+    for (const channel of ['unsafe:legacy', 'native:proof', 'private:hidden', 'never:registered']) {
+      expect(live.ack.registeredChannels).not.toContain(channel)
+    }
+    await hidden(live.socket)
+    expect((await request(live.socket, 'test:counted')).result).toBe('visible result')
+    expect(invoked).toBe(1)
+    await auth.revokeSession(string(decodeJwt(f.ownerToken).sid))
+    expect((await request(live.socket, 'test:counted')).error).toEqual({ code: 'AUTH_FAILED', message: 'Request failed' })
+    await hidden(live.socket)
+    expect(invoked).toBe(1)
+
+    const short = await createLocalIssuer({ mode: 'local-bootstrap', issuer, audience, tokenLifetimeSeconds: 2,
+      stateDirectory: keyState, checkoutDirectory: process.cwd() }, auth)
+    const token = await short.authenticate(owner.login, password)
+    const expiring = await raw(server, { token: token.token, workspaceId: f.workspaceId })
+    await delay(Math.max(0, token.expiresAt - Date.now() + 20))
+    expect((await request(expiring.socket, 'test:counted')).error).toEqual({ code: 'AUTH_FAILED', message: 'Request failed' })
+    await hidden(expiring.socket)
+    expect(invoked).toBe(1)
+    const outsiderToken = (await localIssuer.authenticate(outsider.login, password)).token
+    await expect(raw(server, { token: outsiderToken, workspaceId: f.workspaceId })).rejects.toThrow('AUTH_FAILED')
+    expect(invoked).toBe(1)
+  }, 20_000)
+
   test('authenticatedWorkspace access stays closed in standalone mode; Electron proof and synchronous push/replay preserve standalone behavior', async () => {
     const legacyToken = 'synthetic-standalone-token'
     const server = new WsRpcServer({ host: '127.0.0.1', port: 0, requireAuth: true, validateToken: async token => token === legacyToken,
@@ -340,11 +380,13 @@ describe('WP-01 real shared WebSocket authority boundary', () => {
     servers.push(server)
     server.handle('native:proof', ctx => ({ workspaceId: ctx.workspaceId, webContentsId: ctx.webContentsId, hasActor: ctx.actor !== undefined }), { access: 'localElectron' })
     server.handle('domain:shared', () => 'must-not-run', { access: 'authenticatedWorkspace' })
+    server.handle('public:echo', (_ctx, value: string) => value)
     await server.listen()
     const forged = await raw(server, { token: legacyToken, workspaceId: 'forged', webContentsId: 44, localClientProof: 'forged' })
     expect(forged.ack.registeredChannels).not.toContain('native:proof')
     expect((await request(forged.socket, 'native:proof')).error?.code).toBe('CHANNEL_NOT_FOUND')
     expect((await request(forged.socket, 'domain:shared')).error?.code).toBe('CHANNEL_NOT_FOUND')
+    expect((await request(forged.socket, 'public:echo', ['public standalone result'])).result).toBe('public standalone result')
     const proof = { token: legacyToken, workspaceId: 'forged', webContentsId: 44, localClientProof: 'main-issued-proof' }
     const local = await raw(server, proof)
     expect((await request(local.socket, 'native:proof')).result).toEqual({ workspaceId: 'authoritative-local-workspace', webContentsId: 44, hasActor: false })

@@ -56,6 +56,10 @@ function spawnServer(env: Record<string, string>): Subprocess {
       ...process.env,
       BROWSE_STATE_FILE: stateFile,
       BROWSE_PORT: '0', // Use the existing available-port allocator; fixed ports can collide across shards.
+      // Exercise the real server/watchdog without requiring Chromium startup.
+      BROWSE_HEADLESS_SKIP: '1',
+      GSTACK_HOME: tmpDir,
+      CHROMIUM_PROFILE: path.join(tmpDir, 'chromium-profile'),
       ...env,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -304,8 +308,9 @@ describe('suppressed watchdog still reaps tunnel orphans (behavioral)', () => {
     const originalExit = process.exit;
     (process as any).exit = exitMock;
     try {
-      buildFetchHandler(makeMinimalConfig('headed', scratch));
-      __testInternals__.suppressHeadedParentShutdown(); // what handoff promotion triggers
+      const config = makeMinimalConfig('headed', scratch);
+      buildFetchHandler(config);
+      __testInternals__.suppressHeadedParentShutdown(config.config, config.browserManager); // what handoff promotion triggers
       __testInternals__.parentWatchdogTick(DEAD_PID);
       await drainShutdown();
       expect(exitMock).not.toHaveBeenCalled();
@@ -325,8 +330,9 @@ describe('suppressed watchdog still reaps tunnel orphans (behavioral)', () => {
     const originalExit = process.exit;
     (process as any).exit = exitMock;
     try {
-      buildFetchHandler(makeMinimalConfig('headed', scratch));
-      __testInternals__.suppressHeadedParentShutdown();
+      const config = makeMinimalConfig('headed', scratch);
+      buildFetchHandler(config);
+      __testInternals__.suppressHeadedParentShutdown(config.config, config.browserManager);
       __testInternals__.setTunnelActive(true); // handoff → resume → /pair-agent tunnel
       __testInternals__.parentWatchdogTick(DEAD_PID);
       await exited;

@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { SessionToolContext } from '../context.ts';
 import { handleHostBash } from './host-bash.ts';
-import { setHostBashPort } from '../runtime/host-bash-port.ts';
+import { type HostBashObservation, setHostBashPort } from '../runtime/host-bash-port.ts';
 
 describe('host-tool bash', () => {
   let rootDir: string;
@@ -85,6 +85,59 @@ describe('host-tool bash', () => {
     expect(text).toContain('host-bash-ok');
   });
 
+  it('publishes real stdout, stderr, exit code, cwd and monotonic executor evidence', async () => {
+    const observations: HostBashObservation[] = [];
+    const command = "printf 'actual-out'; printf 'actual-err' >&2; exit 7";
+    const result = await handleHostBash(ctx({ hostBashObserver: observation => observations.push(observation) }), { command });
+    expect(result.isError).toBe(true);
+    expect(observations[0]).toMatchObject({ phase: 'started', execution: 'local', command, cwd: realpathSync(workspaceDir) });
+    expect(observations.filter(observation => observation.phase === 'output').map(observation => observation.stdout ?? '').join('')).toBe('actual-out');
+    expect(observations.filter(observation => observation.phase === 'output').map(observation => observation.stderr ?? '').join('')).toBe('actual-err');
+    const completed = observations.at(-1)!;
+    expect(completed).toMatchObject({ phase: 'completed', execution: 'local', result: { stdout: 'actual-out', stderr: 'actual-err', exitCode: 7, timedOut: false, cwd: realpathSync(workspaceDir) } });
+    expect(completed.monotonicMs).toBeGreaterThanOrEqual(observations[0]!.monotonicMs);
+    expect(completed.result!.durationMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('observer failures cannot rerun a successful sidecar command through fallback', async () => {
+    let calls = 0;
+    setHostBashPort(async req => {
+      calls++;
+      return { stdout: 'sidecar-executed-once', stderr: '', exitCode: 0, timedOut: false, durationMs: 4, cwd: req.cwd };
+    });
+    const result = await handleHostBash(ctx({ hostBashObserver: () => { throw new Error('trace unavailable'); } }), { command: 'printf should-never-run-locally' });
+    expect(calls).toBe(1);
+    expect(result.isError).toBe(false);
+    expect(result.content[0]!.text).toContain('sidecar-executed-once');
+    expect(result.content[0]!.text).not.toContain('stdout:\nshould-never-run-locally');
+  });
+
+  it('passive observers cannot rewrite the actual sidecar result returned to the caller', async () => {
+    let calls = 0;
+    setHostBashPort(async req => {
+      calls++;
+      return { stdout: 'actual-result', stderr: '', exitCode: 0, timedOut: false, durationMs: 4, cwd: req.cwd };
+    });
+    const result = await handleHostBash(ctx({ hostBashObserver: observation => {
+      if (observation.result) { observation.result.stdout = 'rewritten-observation'; observation.result.exitCode = 17; }
+    } }), { command: 'printf should-not-run' });
+    expect(calls).toBe(1);
+    expect(result.isError).toBe(false);
+    expect(result.content[0]!.text).toContain('actual-result');
+    expect(result.content[0]!.text).not.toContain('rewritten-observation');
+  });
+
+  it('reports an actual sidecar failure separately from the following local execution', async () => {
+    const observations: HostBashObservation[] = [];
+    setHostBashPort(async () => { throw new Error('sidecar down'); });
+    const result = await handleHostBash(ctx({ hostBashObserver: observation => observations.push(observation) }), { command: 'printf fallback-output' });
+    expect(result.isError).toBe(false);
+    expect(observations[0]).toMatchObject({ phase: 'started', execution: 'sidecar' });
+    expect(observations[1]).toMatchObject({ phase: 'failed', execution: 'sidecar', error: 'sidecar down' });
+    expect(observations[2]).toMatchObject({ phase: 'started', execution: 'local' });
+    expect(observations.at(-1)).toMatchObject({ phase: 'completed', execution: 'local', result: { stdout: 'fallback-output', exitCode: 0 } });
+  });
+
   it('strips blocked credential env vars from the child', async () => {
     const previous = process.env.AWS_SECRET_ACCESS_KEY;
     process.env.AWS_SECRET_ACCESS_KEY = 'secret-should-not-leak';
@@ -115,6 +168,24 @@ describe('host-tool bash', () => {
     const text = result.content[0]?.text ?? '';
     expect(text).toContain('truncated');
     expect(text.length).toBeLessThan(30_000);
+  });
+
+  it('caps both passive executor capture and displayed output when capture already reports truncation', async () => {
+    const observations: HostBashObservation[] = [];
+    const result = await handleHostBash(ctx({ hostBashObserver: observation => observations.push(observation) }), {
+      command: "node -e \"process.stdout.write('x'.repeat(150000)); process.stderr.write('y'.repeat(150000))\"", timeoutMs: 5000,
+    });
+    expect(result.isError, result.content[0]?.text).toBe(false);
+    const completed = observations.at(-1)!;
+    expect(completed.phase).toBe('completed');
+    expect(completed.result!.stdout).toHaveLength(40000);
+    expect(completed.result!.stderr).toHaveLength(40000);
+    expect(completed.result!.stdoutTruncated).toBe(true);
+    expect(completed.result!.stderrTruncated).toBe(true);
+    expect(observations.filter(observation => observation.phase === 'output').reduce((size, observation) => size + (observation.stdout?.length ?? 0), 0)).toBe(40000);
+    expect(result.content[0]!.text.length).toBeLessThan(41000);
+    expect(result.content[0]!.text).toContain('[stdout truncated to 20000 characters]');
+    expect(result.content[0]!.text).toContain('[stderr truncated to 20000 characters]');
   });
 
   it('refreshes the real context provider on every registry call without parent mutation', async () => {

@@ -1,0 +1,106 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "baselineRevision": "42034d8deb617630f923be8f61b33c72c05ed782",
+  "verifiedNavigationRevision": "2589834a0e2e5a6ce087e7a5bde8ac745ef7201a",
+  "candidateSourceRevision": "817e477091ff326fa06e4de6de13eb75eb60e996",
+  "integrationBase": "5211746270f5005d551ddc103970714520b25b67",
+  "implementedClauses": [
+    "Failed cross-workspace history releases its own suppression after focus or remote-only changes",
+    "Every popstate immediately supersedes previous history failures and frames, even before metadata readiness",
+    "Local workspace transitions and layout disposal fence stale history continuations; action owner guards retained"
+  ],
+  "verification": {
+    "actualCallbacks": {
+      "passed": 8,
+      "failed": 0,
+      "assertions": 43,
+      "qualifiedBun": "1.3.14",
+      "processExitCode": 0,
+      "boundSourceSha256": "d56bba4811c904d4fbe4c4bc662a32e6a01c700074cde88bc78e6885f7f46207"
+    },
+    "mounted258": {
+      "passed": 35,
+      "failed": 0,
+      "assertions": 106,
+      "inputs": 169,
+      "node": "24.21.0",
+      "beforeBuildAfterIdentical": true,
+      "fixtureLimits": "backend/IPC fixtures, headless Chromium; not native or hosted acceptance"
+    },
+    "electronTypecheck258": {
+      "exitCode": 0,
+      "node": "24.21.0",
+      "bun": "1.3.14",
+      "nodeOptions": "--max-old-space-size=4096"
+    },
+    "integratedCandidateProof": "Pending fresh replay on candidate; two mounted input dependencies changed upstream",
+    "remoteCI": "Pending before authorized merge"
+  },
+  "sourceManifestRefresh": {
+    "paths": 24,
+    "previousManifestSha256": "0ca0470db0447835a73d4e3c34ac1db1596b82c688d28020ae93a9237981f1cf",
+    "changed": {
+      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": {
+        "previousSha256": "587281b0676cd7135e842a7440c0820bd475b93ed96b6a5b99c7303d34100231",
+        "candidateSha256": "7eeb3b03a8079cf51f1481e6e3ea0b989f3b9d3e925b3509e67dadab2a98eb03"
+      },
+      "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
+        "previousSha256": "3205051ae7f946f33e4fde1a54c091a62aff5f522607ccaccbbae71a80c9c2e9",
+        "candidateSha256": "64b5c35cfa8feb03b6e6ba9eb6ee1f6641e3342ef13d3ee6c80a946e5d25f4f4"
+      },
+      "apps/electron/src/renderer/contexts/NavigationContext.tsx": {
+        "previousSha256": "b410e4facccbb9f0d8f20002384322dca3037ccdee9c87a6450401ddc997960d",
+        "candidateSha256": "d56bba4811c904d4fbe4c4bc662a32e6a01c700074cde88bc78e6885f7f46207"
+      },
+      "apps/electron/src/renderer/App.tsx": {
+        "previousSha256": "d94f61493a507398c98d342f124be6f57bc4e4c49401b0e8d9872a92d14f60ee",
+        "candidateSha256": "3e289d656d2b62afcb7fccfd321f5d329d6a6fc4464f04615a337ebeacffdb5a"
+      },
+      "apps/electron/src/renderer/lib/local-storage.ts": {
+        "previousSha256": "2867f04095afa1f97b467a902b2b8f32b55624b0af0cfc09c1d5f772635ce49d",
+        "candidateSha256": "0686d0e67d1cf5c29bfc424d7c9d6b6dbbd7034b5ed8d18dff862bb355244230"
+      }
+    },
+    "gate": "Existing strict candidate-hash and before/after CI assertions retained"
+  },
+  "failureHistory": "Original v1/v2 callback red and full35 mounted29pass6fail94assert baseline preserved; source-manifest before-image preserved",
+  "operationalHistory": [
+    {
+      "commit": "99982a161ba2d3c0c92217782b654f4eeddeaea5",
+      "phase": "Evidence preparation",
+      "failure": "Relative project path caused StopIteration before copying proof; manifest-only partial commit retained",
+      "recovery": "Absolute resolved repository/project paths; evidence copying completed in following commit; no product source changed"
+    }
+  ],
+  "logs": [
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history-switch-followup/expanded-history-switch-lease-red.log.gz",
+      "rawSha256": "d03a259415976c6b0c92825fd6836a5f30551042621f2e401b41900e8c93f719",
+      "gzipSha256": "508a20b658c5d600be111c33eb21786570c0ad7344575685045b3a3c6055aba2"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history-switch-followup/expanded-history-switch-lease-red-v2.log.gz",
+      "rawSha256": "dd0fd19d47b7de8ab954df8575433a9618cb56495fdf73241480b14542349b59",
+      "gzipSha256": "805f2b7aadbd76e285e58462bd3a213cb0d64449018e200363b6f2664aad565f"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history-switch-followup/expanded-history-switch-lease-green.log.gz",
+      "rawSha256": "88b8c2d62a9e1b7fea25c882894628c8ffe6492eda8d85df8a30ab16e12384a7",
+      "gzipSha256": "b837e9ad7293375ac9122bfac460da6aceba2f623dddc3169a85644eeb736bcf"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history-switch-followup/expanded-history-electron-typecheck-2589834.log.gz",
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzipSha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    }
+  ],
+  "externalPrerequisites": [
+    "Installed Windows10/11 OS dispatch and DPI/startup matrix",
+    "Packaged/signed macOS and native overlay/Retina matrix",
+    "Hosted web and real service/provider acceptance; no provider/deploy/signing performed"
+  ],
+  "fullDoDClosed": false
+}

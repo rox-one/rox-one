@@ -26,7 +26,7 @@ const nativeNode = process.env.HOST_BASH_TEST_NODE ?? Bun.which('node') ?? 'node
   afterAll(() => { if (root) rmSync(root, { recursive: true, force: true }); });
 
   async function probe(runtime: string, withoutProvider = false) {
-    return await new Promise<{ runtime: { name: string; bun: string | null }; result: { isError: boolean; content: { text: string }[] }; portCalled: boolean; parentPathUnchanged: boolean }>((resolve, reject) => {
+    return await new Promise<{ runtime: { name: string; bun: string | null }; phases: string[]; result: { isError: boolean; content: { text: string }[] }; portCalled: boolean; parentPathUnchanged: boolean }>((resolve, reject) => {
       const env = { ...process.env, ROX_CONFIG_DIR: root, CRAFT_CONFIG_DIR: root, HOME: root,
         HOST_BASH_REGISTRY_FIXTURE: root, PATH: '/usr/bin:/bin',
         AWS_SECRET_ACCESS_KEY: 'registry-private-canary', ROX_SECRET_FIXTURE: 'registry-private-canary',
@@ -50,6 +50,8 @@ const nativeNode = process.env.HOST_BASH_TEST_NODE ?? Bun.which('node') ?? 'node
       expect(result.result.content[0]!.text).toContain('managed-pandoc-canary|credentials:::');
       expect(JSON.stringify(result)).not.toContain('registry-private-canary');
       expect(result.portCalled).toBe(false);
+      expect(result.phases[0]).toBe('started');
+      expect(result.phases.at(-1)).toBe('completed');
       expect(result.parentPathUnchanged).toBe(true);
     }, 20000);
   }

@@ -17,6 +17,9 @@ function listener(channel: string) {
 }
 
 export const CHANNEL_MAP = {
+  getRuntimeTraceSnapshot: invoke(RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT),
+  readRuntimeTraceEvents: invoke(RPC_CHANNELS.runtimeTrace.READ_EVENTS),
+  readRuntimeTracePayload: invoke(RPC_CHANNELS.runtimeTrace.READ_PAYLOAD),
   // Cloud Runs (PRD docs/cloud-runs-prd.md, phase G3)
   getCloudRunsConfig: invoke(RPC_CHANNELS.cloudRuns.GET_CONFIG),
   setCloudRunsConfig: invoke(RPC_CHANNELS.cloudRuns.SET_CONFIG),

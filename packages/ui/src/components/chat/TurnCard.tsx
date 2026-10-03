@@ -24,6 +24,7 @@ import {
   Pencil,
   FilePenLine,
   GitBranch,
+  Network,
   Volume2,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
@@ -373,6 +374,7 @@ export interface TurnCardProps {
   compactMode?: boolean
   /** Callback to branch the session from a specific message */
   onBranch?: (messageId: string, options?: { newPanel?: boolean }) => void
+  onShowRuntimeMap?: (messageId: string) => void
   onQuote?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
   onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
@@ -1480,6 +1482,7 @@ export interface ResponseCardProps {
   compactMode?: boolean
   /** Callback to branch the session from this response */
   onBranch?: (options?: { newPanel?: boolean }) => void
+  onShowRuntimeMap?: () => void
   onQuote?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
   onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
@@ -1691,6 +1694,7 @@ export function ResponseCard({
   showAcceptPlan = true,
   compactMode = false,
   onBranch,
+  onShowRuntimeMap,
   onQuote,
   onLearnFromMessage,
   onPickSideThread,
@@ -2489,6 +2493,7 @@ export function ResponseCard({
   if (isCompleted || variant === 'plan') {
     const isPlan = variant === 'plan'
     const overflowActions: MessageDockExtraAction[] = []
+    if (onShowRuntimeMap) overflowActions.push({ id: 'runtime-map', label: t('runtimeMap.showOnMap'), icon: <Network />, onSelect: onShowRuntimeMap })
     if (onPopOut) {
       overflowActions.push({ id: 'markdown', label: 'Markdown', icon: <FileText />, onSelect: onPopOut })
     }
@@ -2840,6 +2845,7 @@ export const TurnCard = React.memo(function TurnCard({
   animateResponse = false,
   compactMode = false,
   onBranch,
+  onShowRuntimeMap,
   onQuote,
   onLearnFromMessage,
   onPickSideThread,
@@ -3217,6 +3223,7 @@ export const TurnCard = React.memo(function TurnCard({
             onAcceptWithCompact={onAcceptPlanWithCompact}
             isLastResponse={isLastResponse && index === planActivities.length - 1}
             compactMode={compactMode}
+            onShowRuntimeMap={onShowRuntimeMap ? () => onShowRuntimeMap(planActivity.messageId ?? planActivity.id) : undefined}
             onBranch={onBranch ? (options?: { newPanel?: boolean }) => onBranch(planActivity.messageId ?? planActivity.id, options) : undefined}
             sendMessageKey={sendMessageKey}
             onQuote={onQuote}
@@ -3268,6 +3275,7 @@ export const TurnCard = React.memo(function TurnCard({
                 onAcceptWithCompact={onAcceptPlanWithCompact}
                 isLastResponse={isLastResponse}
                 compactMode={compactMode}
+                onShowRuntimeMap={onShowRuntimeMap && response.messageId ? () => onShowRuntimeMap(response.messageId!) : undefined}
                 onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
                 sendMessageKey={sendMessageKey}
                 onQuote={onQuote}
@@ -3305,6 +3313,7 @@ export const TurnCard = React.memo(function TurnCard({
             onAcceptWithCompact={onAcceptPlanWithCompact}
             isLastResponse={isLastResponse}
             compactMode={compactMode}
+            onShowRuntimeMap={onShowRuntimeMap && response.messageId ? () => onShowRuntimeMap(response.messageId!) : undefined}
             onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
             sendMessageKey={sendMessageKey}
             onQuote={onQuote}
@@ -3339,6 +3348,7 @@ export const TurnCard = React.memo(function TurnCard({
 
   // Playback state changes the Listen/Stop action and its current callback.
   if (prev.isListening !== next.isListening) return false
+  if (prev.onShowRuntimeMap !== next.onShowRuntimeMap) return false
 
   // Re-render if displayMode changed
   if (prev.displayMode !== next.displayMode) return false

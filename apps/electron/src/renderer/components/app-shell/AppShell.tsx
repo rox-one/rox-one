@@ -1748,6 +1748,7 @@ function AppShellContent({
     enabledSources: sources,
     skills,
     activeSessionWorkingDirectory,
+    localMcpEnabled,
     labels: displayLabelConfigs,
     onSessionLabelsChange: handleSessionLabelsChange,
     projects: projectMenuOptions,
@@ -1771,7 +1772,7 @@ function AppShellContent({
     automationTestResults,
     getAutomationHistory,
     onReplayAutomation: handleReplayAutomation,
-  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
+  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, localMcpEnabled, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
   // Persist expanded folders to localStorage (workspace-scoped)
   React.useEffect(() => {
     if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
@@ -1831,10 +1832,11 @@ function AppShellContent({
 
   const focusServicePanel = useSetAtom(focusServicePanelAtom)
   const handleServiceClick = useCallback((serviceId: AppNavDestinationId) => {
-    if (focusServicePanel(serviceId)) return
+    // An explicit service selection must recover a stale workspace URL through navigate.
+    if (navState.navigator !== 'unavailable' && focusServicePanel(serviceId)) return
     const route = APP_NAV_DESTINATIONS_BY_ID[serviceId].route?.()
     if (route) navigate(route)
-  }, [focusServicePanel, navigate])
+  }, [focusServicePanel, navigate, navState.navigator])
 
   const handleAllSessionsClick = useCallback(() => {
     handleServiceClick('sessions')

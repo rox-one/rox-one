@@ -756,6 +756,9 @@ Owner: recent_features; dependency: current native Voice capture and Product Lea
 Owner: root integration. Recover #1448 at `1eb2c8289b68e9103880c3f2aee2c57e70c3409a`: packaged resources exclude development caches only under skills, retain required subprocess resources and reject ordinary vendored symlinks. Stale generated skill symlinks are removed without deleting their external target. A qualified native Electron path must exist, be absolute and be executable before a disposable meeting profile starts. Explicit developer protocol verification can avoid OS association changes; default and packaged aliases and the existing test-only gate remain intact. Windows startup/bootstrap/path resolution and thin-client native Notes custody remain authoritative.
 
 
+## Current UI-001 route/read recovery —2026-10-03
+Preserve actual107-path source program across separate infrastructure/native/UI PRs. Strict public routes retain unknown workspace URLs, current ProductTour/native authority and query bytes. Actual mounted workspace/history leases gate switch failures, focus changes, stale queued navigation and leaf readers. Root owns UI93 paths; historical_sweep owns narrow1457 history lease. Native release/full200-card acceptance remains separate.
+
 Confirmed Tasks import also drains native background work dispatched before the import lifetime. Its registered import barrier invalidates old sync/refresh continuations before a subsequent transport or publication; fresh canonical CAS starts after those existing acknowledgements settle. Two actual native negative controls reproduce the prior overlapping read/write race, and ten isolated native controls pass with the barrier. Current actor/workspace fences and queued local edits remain intact.
 
 ### Native overlay recording custody recovery (2026-10-03)
@@ -771,6 +774,10 @@ Each existing bounded connection attempt shares its 30-second budget across HTTP
 
 ## Workspace shortcut popover integration —2026-10-03
 Move the existing per-workspace shortcut editor to an accessible bounded Radix portal; preserve native storage, draft cancellation, keyboard submit and current TourTarget. Acceptance: real desktop/narrow320px DOM, all three kinds, reload/workspace isolation, validation, nested Escape and no-write cancellation; full installed native release remains open.
+
+## Passive Runtime Map recovery — 2026-10-03
+
+Owner: historical_sweep; integration lead owns merge. Recover the complete 127-path source program from preserved PR #1444 at `28d1d7433a00743194d3a138dd2d0573c4872595`, adapted to current native, Product Learning, Tasks and Voice authorities. RuntimeTraceService, native observation and retained ChatPage runtime dock expose scoped, read-only journal/blob data. Observability never grants execution or credentials and cannot convert a successful durable operation into a failure. Native principals cannot read host payloads; revocation and workspace scope are checked around asynchronous reads. Privacy projections inspect own data descriptors without executing getters or accepting prototype pollution. A delayed native child must bind to its actual parent dispatch reservation or explicit native receipt; ambiguous provenance fails closed and reports partial coverage. Current route, chat draft, permissions and native recording ownership remain intact. Full installed desktop, live provider and R01–R30 acceptance remain outside this bounded verification. Exact source dispositions, failures, 121 focused controls, 43 protocol controls, 278 locale controls, actual Runtime Map Chromium cases, 63 native SDK observations and current build receipts are archived in `docs/integration-history/runtime-map-current-20261003`.
 
 ## Local folder source and obsolete native default recovery (2026-10-03)
 
