@@ -1,15 +1,15 @@
 {
-  "integrationBase": "4fec686d766c1d2513f4db0b685e6d3924e14a9d",
+  "integrationBase": "79fa5274315941f66ea26975551c66580e6036cd",
   "sourceSha256": {
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "587281b0676cd7135e842a7440c0820bd475b93ed96b6a5b99c7303d34100231",
-    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "58b85510a98cfa268e03b89f0925a2e8c7e1e9837d2015d9d7c655e56a35d2c3",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "a29699db1fdeda3205113d7256c174e7ebf29e3a1d7e96e3cdac15bb53ab8959",
     "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
-    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "82f17df12cb3d544c35ff8c993b1d62643686144c4304aa1ceb428efb1bb4053",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "814b705341388ce18911f1009aeccf188b1186c6827fe56434b0f88b1c377f01",
     "apps/electron/src/shared/route-parser.ts": "613068e6cc643848b45f9ee3a4fb8a991cbb80873bd31bbf1f40d48f2bfe8ad5",
     "apps/electron/src/shared/types.ts": "899852aae94cdd8d729ff616021bc7605158bc59c5db058ad78bd8a3cbf86c40",
     "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
     "apps/electron/src/renderer/lib/nav-helpers.ts": "7b94fc00f694ee2c83a682725ca9460d88a138b4a421fa452d1a77d034df5e2f",
-    "apps/electron/src/renderer/atoms/panel-stack.ts": "329cde215256c531e259d034382f45a246117739ad75f9dfb25f263997317024",
+    "apps/electron/src/renderer/atoms/panel-stack.ts": "b669a999d338e69c5d6975e322aaab1170638141351696d05d219d786239259c",
     "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff",
     "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
     "apps/electron/src/renderer/App.tsx": "d94f61493a507398c98d342f124be6f57bc4e4c49401b0e8d9872a92d14f60ee",
@@ -23,7 +23,7 @@
     "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "c70de20413482f2873923d92a7582336b6ff29bb7e77038b6b37eff5867decfd",
     "apps/electron/src/renderer/components/app-shell/nav-destinations.ts": "bb6617b42816f5302c90601290ab440cbc7efed22cdd7df168b5bc7f4f4ea6a2",
     "apps/electron/src/renderer/lib/panel-url.ts": "739481afb14184d51e6f8922601a52184bd7d7ec53013b3112e61048a41bfea3",
-    "apps/electron/src/renderer/lib/route-recovery.tsx": "9f3a29dc956e4be7ea8437482c345794434bff3bdb741ca35b18296d929c0ea5",
-    "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "e881a85c503f492fe47186b9dd9241a6884855dda46072bdcfbbfcc932fd0e2b"
+    "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+    "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011"
   }
 }

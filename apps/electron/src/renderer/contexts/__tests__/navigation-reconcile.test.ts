@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { normalizePanelRouteForReconcile } from '../navigation-reconcile'
 import type { NavigationState } from '../../../shared/types'
+import type { ViewRoute } from '../../../shared/routes'
 
 describe('normalizePanelRouteForReconcile', () => {
   it('auto-selects session details for filter-only session routes', () => {
@@ -104,4 +105,11 @@ describe('normalizePanelRouteForReconcile', () => {
 
     expect(normalized).toEqual(['allSessions/session/left', 'allSessions/session/right'])
   })
+})
+
+// PR1412 also preserves query spelling for auto-selected collection roots.
+it('auto-selected collection retains opaque view parameters', () => {
+  const route = 'allSessions?keep=a%2Fb&next=%3F' as ViewRoute
+  const resolved = normalizePanelRouteForReconcile(route, state => ({ ...state, details: { type: 'session', sessionId: 'chosen' } }) as NavigationState)
+  expect(resolved).toBe('allSessions/session/chosen?keep=a%2Fb&next=%3F')
 })

@@ -54,7 +54,7 @@ import {
 import { routes, type Route, type ViewRoute } from '../../shared/routes'
 import { parsePermissionMode } from '@rox/shared/agent/mode-types'
 import { NAVIGATE_EVENT, type NavigateOptions } from '../lib/navigate'
-import { normalizePanelRouteForReconcile } from './navigation-reconcile'
+import { preserveRouteQuery, normalizePanelRouteForReconcile } from './navigation-reconcile'
 import { encodePanelEntries, decodePanelEntries } from '@/lib/panel-url'
 import { buildSemanticHistoryKey, canRunInitialRestore } from './navigation-history'
 import * as storage from '@/lib/local-storage'
@@ -965,7 +965,7 @@ export function NavigationProvider({
       if (newNavState) {
         // Resolve auto-selection (pure — no side effects)
         const resolvedState = resolveAutoSelection(newNavState, options)
-        const finalRoute = buildRouteFromNavigationState(resolvedState) as ViewRoute
+        const finalRoute = preserveRouteQuery(route, buildRouteFromNavigationState(resolvedState))
 
         // Persist last selected session for auto-select on next visit
         if (isSessionsNavigation(resolvedState) && resolvedState.details && workspaceId) {
@@ -1323,7 +1323,7 @@ export function NavigationProvider({
 
     const resolved = resolveAutoSelection(currentState)
     if (isSessionsNavigation(resolved) && resolved.details) {
-      void navigate(buildRouteFromNavigationState(resolved) as ViewRoute)
+      void navigate(preserveRouteQuery(currentRoute, buildRouteFromNavigationState(resolved)))
     }
   }, [
     isReady,

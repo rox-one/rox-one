@@ -40,4 +40,3 @@ export class RouteErrorBoundary extends React.Component<{
     )
   }
 }
-

@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "owner": "OWNER-UI-001",
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "observedAtUtc": "2026-10-03T17:39:11.637297+00:00",
+  "independentReadbackCount": 1,
+  "pr": {
+    "number": 1420,
+    "headRevision": "c28a8a7be72c621e3c8a65998cc76d9450a3c0ca",
+    "mergedRevision": "5c242cf044d6fcbacf60efa9efa08cfc1977d39f"
+  },
+  "githubJob": {
+    "id": 111246233125,
+    "runId": 37137951896,
+    "name": "validate (ubuntu-24.04)",
+    "headSha": "c28a8a7be72c621e3c8a65998cc76d9450a3c0ca",
+    "status": "completed",
+    "conclusion": "success",
+    "startedAt": "2026-10-03T16:45:22Z",
+    "completedAt": "2026-10-03T16:49:06Z",
+    "url": "https://github.com/rox-one/rox-one/actions/runs/37137951896/job/111246233125",
+    "apiVerification": "Actual current jobs API response independently observed completed/success at the expected PR head; no queued check treated as passed."
+  },
+  "validation": {
+    "command": "bun run validate:ci",
+    "stepNumber": 8,
+    "stepStatus": "completed",
+    "stepConclusion": "success",
+    "stepStartedAt": "2026-10-03T16:46:06Z",
+    "stepCompletedAt": "2026-10-03T16:48:17Z",
+    "scriptExitCode": 0,
+    "exitCodeBasis": "Actual GitHub successful bash -e validation step is the process exit receipt. Log shows full existing validate:ci/validate:dev/typecheck/shared/config/document/i18n chain. No literal exit line is fabricated.",
+    "runtime": {
+      "bun": "1.3.14",
+      "revision": "0d9b296af",
+      "environment": "GitHub Actions Ubuntu24.04"
+    },
+    "bounds": {
+      "commandUsesExistingValidateScript": true,
+      "testTimeoutOverrideLinesObserved": [],
+      "readbackDeadlineSeconds": 180,
+      "queuedJobsNotWaited": true
+    },
+    "pythonDocumentTests": {
+      "pass": 19,
+      "fail": 0
+    },
+    "i18nParity": {
+      "status": "passed",
+      "localesCheckedByExistingScript": 11,
+      "keysPerLocale": 7876
+    },
+    "i18nCoverage": {
+      "status": "passed",
+      "literalReferences": 7609,
+      "uniqueKeys": 5483,
+      "englishKeys": 7876
+    }
+  },
+  "exactTreeQualification": {
+    "testedCheckoutRevision": "b72754f037237523b7c1a52e38494dfd2cf760df",
+    "testedCheckoutTree": "e2287eb71a63a83521be6cb7d2e09e65d0a4763e",
+    "actualMergeRevision": "5c242cf044d6fcbacf60efa9efa08cfc1977d39f",
+    "actualMergeTree": "e2287eb71a63a83521be6cb7d2e09e65d0a4763e",
+    "entireGitTreesEqual": true,
+    "verificationMethod": "Independent local git rev-parse of both exact fetched commit tree objects; complete tree hashes equal, not merely the45 authored file subset.",
+    "conclusion": "Full UbuntuCI pass applies to the exact5c merged source tree; commit identities differ but their complete Git trees are identical."
+  },
+  "rawJobLog": {
+    "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-ci-c28-job.log",
+    "sha256": "0517194e09ccac157fd696ed3bff26dec9b8b84d52b25dc69951a6d52b70427e",
+    "bytes": 343518,
+    "selectedActualLines": [
+      {
+        "line": 93,
+        "text": "2026-10-03T16:45:26.2259552Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +b72754f037237523b7c1a52e38494dfd2cf760df:refs/remotes/pull/1420/merge"
+      },
+      {
+        "line": 95,
+        "text": "2026-10-03T16:45:41.9818733Z  * [new ref]         b72754f037237523b7c1a52e38494dfd2cf760df -> pull/1420/merge"
+      },
+      {
+        "line": 155,
+        "text": "2026-10-03T16:45:43.9577298Z HEAD is now at b72754f Merge c28a8a7be72c621e3c8a65998cc76d9450a3c0ca into e28bf0c6a7155fd746ad12f3f9ea8116e8e8f8af"
+      },
+      {
+        "line": 158,
+        "text": "2026-10-03T16:45:43.9694075Z b72754f037237523b7c1a52e38494dfd2cf760df"
+      },
+      {
+        "line": 188,
+        "text": "2026-10-03T16:45:46.3778234Z Using a cached version of Bun: 1.3.14+0d9b296af"
+      },
+      {
+        "line": 1797,
+        "text": "2026-10-03T16:46:06.5845665Z ##[group]Run bun run validate:ci"
+      },
+      {
+        "line": 1804,
+        "text": "2026-10-03T16:46:06.6037540Z $ bun run validate:dev && bun run lint:i18n:parity && bun run lint:i18n:sorted && bun run lint:i18n:coverage"
+      },
+      {
+        "line": 1805,
+        "text": "2026-10-03T16:46:06.6064523Z $ bun run typecheck:all && bun run test:shared:all && bun run test:connection-fabric && bun run test:config-isolation && bun run test:doc-tools"
+      },
+      {
+        "line": 1806,
+        "text": "2026-10-03T16:46:06.6094788Z $ cd packages/core && bun run tsc --noEmit && cd ../shared && bun run tsc --noEmit && cd ../server-core && bun run tsc --noEmit && cd ../server && bun run tsc --noEmit && cd ../session-tools-core && bun run tsc --noEmit && cd ../pi-agent-server && bun run typecheck && cd ../../apps/electron && bun run typecheck && cd ../../packages/ui && bun run tsc --noEmit && cd ../.. && bun run typecheck:pages-worker && bun run workspace-service:typecheck"
+      },
+      {
+        "line": 1809,
+        "text": "2026-10-03T16:47:44.5026958Z $ if [ -d workers/pages ]; then cd workers/pages && bun run typecheck; else echo 'workers/pages not present (OSS export) - skipping'; fi"
+      },
+      {
+        "line": 1810,
+        "text": "2026-10-03T16:47:44.5059492Z workers/pages not present (OSS export) - skipping"
+      },
+      {
+        "line": 2323,
+        "text": "2026-10-03T16:48:13.1670068Z Ran 19 tests in 7.394s"
+      },
+      {
+        "line": 2327,
+        "text": "2026-10-03T16:48:13.2621592Z i18n parity OK (11 locales, 7876 keys each)"
+      },
+      {
+        "line": 2330,
+        "text": "2026-10-03T16:48:17.5368441Z i18n coverage OK (7609 literal references, 5483 unique keys, 7876 English keys)"
+      }
+    ]
+  },
+  "sourceProofLimits": {
+    "nativeProvedRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+    "native5cClaimed": false,
+    "laterMainRevision": "4fec686d766c1d2513f4db0b685e6d3924e14a9d",
+    "laterMainCIClaimed": false,
+    "original45AuthoredHashReadbackAt5c": {
+      "same": 30,
+      "changedByReviewedUpstreamIntegration": 15
+    },
+    "qualifications": [
+      "Exact merged5c whole-tree CI success is separate from bare8e native acceptance.",
+      "No installed Windows/macOS, hosted-web, real-provider or later-main acceptance is inferred.",
+      "macOS/Swift queued jobs are not included in this successful UbuntuCI receipt."
+    ]
+  },
+  "fullDoDClosed": false
+}

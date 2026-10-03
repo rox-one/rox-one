@@ -168,10 +168,10 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
     base = 'http://127.0.0.1:'+ (server.address() as any).port
     browser = process.env.ROX_UI001_CHROMIUM_CDP_URL
       ? await chromium.connectOverCDP(process.env.ROX_UI001_CHROMIUM_CDP_URL)
-      : await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE, channel: process.env.ROX_UI001_CHROMIUM_EXECUTABLE ? undefined : process.env.ROX_UI001_BROWSER_CHANNEL ?? 'chrome', headless:true })
+      : await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE, channel: process.env.ROX_UI001_CHROMIUM_EXECUTABLE ? undefined : process.env.ROX_UI001_BROWSER_CHANNEL ?? 'chrome', headless:true, args:['--disable-gpu'] })
     mkdirSync(evidence,{recursive:true})
   }, 30_000)
-  beforeEach(async () => { context=await browser.newContext(); page=await context.newPage(); page.setDefaultTimeout(2000); await page.goto(base); await page.waitForFunction(()=>!!(window as any).ui001) })
+  beforeEach(async () => { context=await browser.newContext(); page=await context.newPage(); page.setDefaultTimeout(2000); page.setDefaultNavigationTimeout(30_000); await page.goto(base, {waitUntil:'domcontentloaded'}); await page.waitForFunction(()=>!!(window as any).ui001) }, 30_000)
   afterEach(async () => { await context?.close() }, 30_000)
   afterAll(async () => {
     try { await browser?.close() } finally {
@@ -295,7 +295,7 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
   })
 
   browserTest('actual localStorage persists valid sizes across reload and other windows', async () => {
-    const other=await page.context().newPage(); await other.goto(base); await other.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
+    const other=await page.context().newPage(); await other.goto(base, {waitUntil:'domcontentloaded',timeout:30_000}); await other.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
     try {
       await page.bringToFront()
       await page.evaluate(()=>(window as any).ui001.setSize(10_000,119.6))
@@ -305,13 +305,13 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
       // External headless CDP hosts can pause animation-frame polling in an
       // inactive tab. Restore its viewport before reload and poll data by time.
       await page.bringToFront()
-      await page.reload(); await page.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
+      await page.reload({waitUntil:'domcontentloaded'}); await page.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
       expect(await page.evaluate(()=>(window as any).ui001.sizes())).toEqual([1400,120])
       await page.evaluate(()=>localStorage.setItem('craft-bottom-dock-height','1e999'))
       await other.bringToFront()
       await other.waitForFunction(()=>(window as any).ui001.sizes()[1]===104,undefined,{polling:100})
       await page.bringToFront()
-      await page.reload(); await page.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
+      await page.reload({waitUntil:'domcontentloaded'}); await page.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
       expect(await page.evaluate(()=>(window as any).ui001.sizes())).toEqual([1400,104])
     } finally { await other.close() }
   })

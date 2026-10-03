@@ -1,6 +1,14 @@
+## Windows dependency/bootstrap selective recovery plan — 2026-10-03
+
+1. Freeze source1436, enumerate137 actual diff paths and CodeQL annotations; compare current OMP/native/MCP consumers before selecting dependencies. Preserve all original branches and dirty user checkout.
+2. Recover coherent dependency/bootstrap/packaging/toolchain slice; adapt only current Electron startup and config. Preserve current upgrade identity/CJS flags/pinned OMP/native policy and current shell consumers. Remaining MCP/local-source/host Bash/perf scopes remain owned follow-ups.
+3. Fix receipt descriptor/size/replacement race with actual adversarial filesystem checks; qualify explicit modes, real private/system exclusions, companion removal, re-probes, damaged generated launcher repair/rollback, pinned payload corruption and production OEM refusal. Run inherited relevant tests/types/current builds, retaining source mismatch history and native Windows skips.
+4. Reconcile latest main, freeze revision/proof hashes, commit/push a separate attached PR. Root reviews/merges. Actual installed Windows execution, NSIS provisioning and OEM release payload remain external platform/release gates, distinct from bounded source acceptance.
+
 ## Inspector resize recovery task graph — 2026-10-03
 
 Owner: branch audit lead; depends on merged Golden Gate controller/native/panels and Connections consumers. Source audit → adapt sash into current InspectorHost with transient preview/current bounds → exercise actual host pointer/keyboard/cancel/unmount/reload and old-consumer negative → package type/build/locale gates → separate reviewed PR, exact merge/readback. Shared files: currentInspectorHost and12locale keys only; original source branches remain intact. No old layout widths or section ownership are restored.
+
 ## Golden Gate chat output recovery plan — 2026-10-03
 
 1. Freeze source helper/current auto-scroll sites and coordinate ChatDisplay regions with Product Learning worker. pr_scout owns output scroll only; root owns merge and Inspector/credential integration.
@@ -852,3 +860,7 @@ Voice archive follow-up: open the leaf with NOFOLLOW/NONBLOCK before validating 
 Owner: voice feature worker; integration/remote merge: lead. Recover the source overlay's genuine owner/event-producer gap via current authenticated VoiceHost, rather than legacy raw SET_OVERLAY. Build the child-only preload in development, package aliases and Windows/native desktop routes; verify snapshot/subscription lifetime and rendered recording identity. Exercise foreign sender/recording, remote/background actor, revoke/disconnect/close, repeated stop, owner blur/focus and command denial; retain current consent and composer finalization. Deliver as a separate PR with revision-bound native-port, actual Chromium, WS, types and build receipts. Full OS focus/microphone/native acceptance is not established by mocks or browser fixtures.
 
 Overlay qualification: archive dependency PR1430 is merged into main d4846751fe993f076d9fce329bdc7e1f6f342899. The recovered overlay passes 110 focused tests / 381 assertions, three actual Chromium cases / seven assertions, and a real authenticated WebSocket owner/revocation control. Shared, server-core and Electron TypeScript checks and main, all three preloads and renderer builds pass. The earlier comprehensive native fixture remains unqualified on this candidate because its existing 500ms handshake gate timed out under concurrent host load before the added overlay assertions; its deadlines remain unchanged, and the new narrow actual WS control uses production client defaults. Full OS focus/microphone/provider acceptance remains separate.
+
+## Route recovery integration graph —2026-10-03
+
+Integration lead owns current isolatedmain plus source1420 merge, comparative1412/1417 semantic review, meaningful raw-query delta and current route/native resource consumers. Review source → execute canonical entity/source callback adverse controls → real mounted NavigationProvider/history/readiness/ABA Chromium → native query isolated callbacks → type/build/12locale gates → immutable source/qualification receipt → separate PR/merge/readback. Source execution archives remain on preserved original branches. Source1417 distinct SkillInfo watch/draft repair is delivered separately after this source owner is stable. Workers independently own ChatScroll, ProductLearning and Windows runtime.
