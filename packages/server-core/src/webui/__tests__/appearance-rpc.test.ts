@@ -6,6 +6,7 @@ import { once } from 'node:events'
 import WebSocket from 'ws'
 import { RPC_CHANNELS, PROTOCOL_VERSION, type MessageEnvelope } from '@rox/shared/protocol'
 import { deserializeEnvelope } from '../../transport/codec'
+import type { HandlerFn, RpcHandlerOptions, RpcServer } from '../../transport/types'
 import { isWebThemeId, validWebThemePreferences } from '../appearance-rpc'
 
 const profile = mkdtempSync(join(tmpdir(), 'rox-web-appearance-rpc-'))
@@ -23,6 +24,31 @@ let workspaceId: string
 let foreignId: string
 let server: InstanceType<typeof WsRpcServer>
 const sockets: WebSocket[] = []
+const pushes: Parameters<RpcServer['push']>[] = []
+let pendingHandlerPause: { channel: string; entered: () => void; resume: Promise<void> } | null = null
+
+function pauseNextHandler(channel: string) {
+  if (pendingHandlerPause) throw new Error('Another appearance handler is already paused')
+  let release!: () => void
+  let entered!: () => void
+  const arrived = new Promise<void>(resolveArrival => { entered = resolveArrival })
+  const resume = new Promise<void>(resolveResume => { release = resolveResume })
+  pendingHandlerPause = { channel, entered, resume }
+  return { arrived, release }
+}
+
+const mutatingAppearanceCases: [string, string, () => unknown[]][] = [
+  ['global selection', RPC_CHANNELS.theme.SET_COLOR_THEME, () => ['siri-light']],
+  ['workspace selection', RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME, () => [workspaceId, 'siri-light']],
+  ['preference broadcast', RPC_CHANNELS.theme.BROADCAST_PREFERENCES,
+    () => [{ mode: 'light', font: 'rox', colorTheme: 'siri-light', contrast: 'normal' }]],
+  ['workspace broadcast', RPC_CHANNELS.theme.BROADCAST_WORKSPACE_THEME, () => [workspaceId, 'siri-light']],
+]
+const readingAppearanceCases: [string, string, () => unknown[]][] = [
+  ['global selection read', RPC_CHANNELS.theme.GET_COLOR_THEME, () => []],
+  ['workspace selection read', RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME, () => [workspaceId]],
+  ['workspace selections read', RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES, () => []],
+]
 
 function message(socket: WebSocket, id: string): Promise<MessageEnvelope> {
   return new Promise((resolveMessage, reject) => {
@@ -69,7 +95,31 @@ beforeAll(async () => {
     validateSessionCookie: async header => (await validateSession(header, secret)) !== null,
     webUiAppearanceWorkspaceId: () => readWebDefaultWorkspace()?.id ?? null,
   })
-  registerWorkspaceCoreHandlers(server, { windowManager: {} } as never)
+  // Use the real handlers and transport, with a deterministic pending-work seam
+  // after request admission. Recording push calls also catches an unauthorized
+  // broadcast even when the transport subsequently rejects the response.
+  const handlerServer = new Proxy(server, {
+    get(target, property) {
+      if (property === 'handle') return (channel: string, handler: HandlerFn, options?: RpcHandlerOptions) => {
+        target.handle(channel, async (ctx, ...args) => {
+          const pause = pendingHandlerPause
+          if (pause?.channel === channel) {
+            pendingHandlerPause = null
+            pause.entered()
+            await pause.resume
+          }
+          return handler(ctx, ...args)
+        }, options)
+      }
+      if (property === 'push') return (...args: Parameters<RpcServer['push']>) => {
+        pushes.push(args)
+        target.push(...args)
+      }
+      const value = Reflect.get(target, property)
+      return typeof value === 'function' ? value.bind(target) : value
+    },
+  })
+  registerWorkspaceCoreHandlers(handlerServer, { windowManager: {} } as never)
   await server.listen()
 })
 afterAll(async () => {
@@ -206,5 +256,50 @@ describe('cookie-authenticated existing appearance RPCs', () => {
     expect((await request(socket, RPC_CHANNELS.theme.GET_COLOR_THEME)).error?.code).toBe('LOCAL_ONLY_DENIED')
     storage.setActiveWorkspace(workspaceId)
     expect((await request(socket, RPC_CHANNELS.theme.GET_COLOR_THEME)).error).toBeUndefined()
+  })
+
+  test.each([...mutatingAppearanceCases, ...readingAppearanceCases])('withdrawal during pending %s causes no write or broadcast', async (_label, channel, args) => {
+    storage.setColorTheme('nordfox-opaque')
+    const { socket } = await connect({ cookie, workspaceId })
+    const workspaceConfig = join(storage.getWorkspaces().find(workspace => workspace.id === workspaceId)!.rootPath, 'config.json')
+    const pause = pauseNextHandler(channel)
+    const response = request(socket, channel, ...args())
+    try {
+      await pause.arrived
+      storage.setActiveWorkspace(foreignId)
+      const withdrawnGlobalBytes = readFileSync(storage.getConfigPath(), 'utf8')
+      const withdrawnWorkspaceBytes = readFileSync(workspaceConfig, 'utf8')
+      const pushCount = pushes.length
+      pause.release()
+      expect((await response).error?.code).toBe('AUTH_FAILED')
+      expect(readFileSync(storage.getConfigPath(), 'utf8')).toBe(withdrawnGlobalBytes)
+      expect(readFileSync(workspaceConfig, 'utf8')).toBe(withdrawnWorkspaceBytes)
+      expect(pushes).toHaveLength(pushCount)
+    } finally {
+      pause.release()
+      storage.setActiveWorkspace(workspaceId)
+    }
+  })
+
+  test('unchanged workspace grant permits all pending mutations and scoped broadcasts', async () => {
+    const { socket } = await connect({ cookie, workspaceId })
+    const pushCount = pushes.length
+    for (const [, channel, args] of mutatingAppearanceCases) {
+      const pause = pauseNextHandler(channel)
+      const response = request(socket, channel, ...args())
+      try {
+        await pause.arrived
+        pause.release()
+        expect((await response).error).toBeUndefined()
+      } finally {
+        pause.release()
+      }
+    }
+    expect(storage.loadStoredConfig()?.colorTheme).toBe('siri-light')
+    expect((await request(socket, RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME, workspaceId)).result).toBe('siri-light')
+    expect(pushes.slice(pushCount).map(([channel, target]) => ({ channel, target }))).toEqual([
+      { channel: RPC_CHANNELS.theme.PREFERENCES_CHANGED, target: { to: 'workspace', workspaceId } },
+      { channel: RPC_CHANNELS.theme.WORKSPACE_THEME_CHANGED, target: { to: 'workspace', workspaceId } },
+    ])
   })
 })

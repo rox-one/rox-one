@@ -32,7 +32,7 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 1050
 const page = await context.newPage()
 const pageErrors: string[] = []
 const report: any = { kind: 'production-authenticated-web', baseUrl, screenshots: [], matrix: [], persistence: {}, workspacePriority: {}, material: {}, responsive: [], pageErrors,
-  limitations: [], buildIndexSha256: createHash('sha256').update(await readFile(resolve('apps/webui/dist/index.html'))).digest('hex') }
+  responsiveControls: [], limitations: [], buildIndexSha256: createHash('sha256').update(await readFile(resolve('apps/webui/dist/index.html'))).digest('hex') }
 page.on('pageerror', error => pageErrors.push(error.message))
 async function authenticate(p: Page) {
   await p.goto(baseUrl)
@@ -105,6 +105,75 @@ async function snapshot(p: Page) {
       backgroundImage: style.getPropertyValue('--background-image').trim(),
       themeWarning: document.body.innerText.includes('Предупреждение темы:') }
   })
+}
+async function appearanceFormBounds(p: Page) {
+  return p.evaluate(() => [...document.querySelectorAll<HTMLElement>('.appearance-settings-page [data-layout="settings-row"]')]
+    .map(row => {
+      const pane = row.closest<HTMLElement>('[data-panel-role="content"]')
+        ?? row.closest<HTMLElement>('.appearance-settings-page')!
+      const rowRect = row.getBoundingClientRect()
+      const paneRect = pane.getBoundingClientRect()
+      const left = Math.max(0, rowRect.left, paneRect.left)
+      const right = Math.min(innerWidth, rowRect.right, paneRect.right)
+      return { label: row.firstElementChild?.textContent ?? '', left, right,
+        controls: [...row.querySelectorAll<HTMLElement>('button,input,select')].map(control => {
+          const rect = control.getBoundingClientRect()
+          return { role: control.getAttribute('role') ?? control.tagName.toLowerCase(),
+            label: control.getAttribute('aria-label') ?? control.textContent ?? '',
+            left: rect.left, right: rect.right, width: rect.width,
+            disabled: control.hasAttribute('disabled'), clipped: rect.left < left - 1 || rect.right > right + 1 }
+        }) }
+    }))
+}
+function assertAppearanceForm(rows: Awaited<ReturnType<typeof appearanceFormBounds>>) {
+  for (const label of ['Режим', 'Контраст', 'Цветовая тема', 'Интерфейс', 'Чат агента', 'Терминал', 'Материал окна']) {
+    assert.ok(rows.some(row => row.label.startsWith(label) && row.controls.length), `mounted Appearance controls: ${label}`)
+  }
+  for (const row of rows) for (const control of row.controls) {
+    assert.ok(control.width > 0, `nonzero form control: ${row.label} / ${control.label}`)
+    assert.equal(control.clipped, false, `form control fits its row and visible content pane: ${row.label} / ${control.label}`)
+  }
+}
+async function narrowMenus(width: number, zoom: number) {
+  const themeRow = page.locator('[data-layout="settings-row"]').filter({ has: page.getByText('Цветовая тема', { exact: true }) })
+  const materialRow = page.locator('[data-layout="settings-row"]').filter({ has: page.getByText('Материал окна', { exact: true }) })
+  for (const [name, row] of [['theme', themeRow], ['material', materialRow]] as const) {
+    const trigger = row.getByRole('button').last()
+    await trigger.scrollIntoViewIfNeeded()
+    await trigger.focus()
+    await trigger.press('Space')
+    const popover = page.locator('[data-slot="popover-content"]')
+    await popover.waitFor({ state: 'visible' })
+    await page.waitForTimeout(100)
+    const bounds = await popover.evaluate(element => {
+      const rect = element.getBoundingClientRect()
+      return { left: rect.left, right: rect.right, width: rect.width, viewportWidth: innerWidth }
+    })
+    assert.ok(bounds.left >= 7 && bounds.right <= bounds.viewportWidth - 7, `narrow ${name} menu fits viewport collision padding`)
+    if (name === 'theme') {
+      await popover.locator('input').fill('Nordfox - opaque')
+      await popover.getByRole('button', { name: 'Nordfox - opaque', exact: true }).click()
+      assert.equal(await page.evaluate(() => (window as any).electronAPI.getColorTheme()), 'nordfox-opaque', 'narrow theme choice persists through existing API')
+    } else {
+      await popover.getByRole('button', { name: 'Непрозрачный', exact: true }).click()
+      await page.waitForFunction(() => document.documentElement.dataset.shellCssMaterial === 'solid')
+      assertSurface(await snapshot(page), cases[0], false)
+      await selectMenu(row, 'Система')
+      await page.waitForFunction(() => document.documentElement.dataset.shellCssMaterial === 'glass')
+      assertSurface(await snapshot(page), cases[0])
+    }
+    // Keyboard activation and Escape restore focus to the accessible trigger.
+    await trigger.focus()
+    await trigger.press('Space')
+    await popover.waitFor({ state: 'visible' })
+    await page.waitForTimeout(100)
+    await page.keyboard.press('Escape')
+    await popover.waitFor({ state: 'hidden' })
+    await page.waitForTimeout(100)
+    assert.equal(await trigger.evaluate(element => document.activeElement === element), true, 'menu Escape returns focus')
+    report.responsiveControls.push({ physicalWidth: width, zoomPercent: zoom * 100, menu: name, bounds, keyboard: 'Space/open; Escape/focus', selected: name === 'theme' ? 'nordfox-opaque' : 'system' })
+  }
+  await page.getByRole('radio', { name: 'Системная', exact: true }).scrollIntoViewIfNeeded()
 }
 function assertSurface(snapshot_: any, testCase: typeof cases[number], glass = true) {
   assert.equal(snapshot_.theme, testCase.id)
@@ -265,11 +334,15 @@ try {
       await page.goto(url.toString())
       await page.waitForFunction(() => Boolean(document.querySelector('.chrome-topbar')))
       await page.waitForTimeout(100)
+      if (routeCase.id === 'settings/appearance') await page.getByText('Цветовая тема', { exact: true }).waitFor()
       const current = await snapshot(page)
       report.lastSnapshot = current
       assertSurface(current, cases[0])
       assert.equal(current.viewport.horizontalOverflow, false, 'no root horizontal overflow')
-      report.responsive.push({ physicalWidth: width, zoomPercent: zoom * 100, ...current })
+      const form = routeCase.id === 'settings/appearance' ? await appearanceFormBounds(page) : undefined
+      if (form) assertAppearanceForm(form)
+      report.responsive.push({ physicalWidth: width, zoomPercent: zoom * 100, ...current, appearanceForm: form })
+      if (width === 375 && form) await narrowMenus(width, zoom)
       if (routeCase.id === 'home' || routeCase.id === 'settings/appearance') await screenshot(`responsive-${width}-${zoom * 100}-${routeCase.id.replace('/', '-')}`)
     }
   }

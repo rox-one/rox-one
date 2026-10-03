@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import './AppearanceSettingsPage.css'
 import { useTranslation } from 'react-i18next'
 import { LANGUAGES, type LanguageCode } from '@rox/shared/i18n'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -488,14 +489,14 @@ export default function AppearanceSettingsPage() {
   }, [colorTheme, presetThemes])
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="appearance-settings-page flex h-full min-h-0 min-w-0 flex-col">
       <PanelHeader
         title={t("settings.appearance.title")}
         actions={<HeaderMenu route={routes.view.settings('appearance')} helpFeature="themes" />}
       />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
-          <div className="px-5 py-7 max-w-3xl mx-auto">
+          <div className="appearance-settings-content px-5 py-7 max-w-3xl mx-auto">
             <div className="space-y-8">
 
               {/* Default Theme */}

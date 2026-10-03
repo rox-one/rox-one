@@ -69,7 +69,21 @@ export function SettingsMenuSelect({
   const effectiveSearchPlaceholder = searchPlaceholder ?? t("common.search")
   const [isOpen, setIsOpen] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
+  const [viewportZoom, setViewportZoom] = React.useState(1)
   const searchInputRef = React.useRef<HTMLInputElement>(null)
+
+  React.useEffect(() => {
+    if (!isOpen) return
+    // Narrow web applies root CSS zoom. Viewport units and Radix's available
+    // width are still unscaled, so normalize the cap before collision sizing.
+    const updateZoom = () => {
+      const zoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom)
+      setViewportZoom(Number.isFinite(zoom) && zoom > 0 ? zoom : 1)
+    }
+    updateZoom()
+    window.addEventListener('resize', updateZoom)
+    return () => window.removeEventListener('resize', updateZoom)
+  }, [isOpen])
 
   const selectedOption = options.find((o) => o.value === value)
 
@@ -131,7 +145,7 @@ export function SettingsMenuSelect({
         sideOffset={4}
         collisionPadding={8}
         className="p-1.5"
-        style={{ width: menuWidth }}
+        style={{ width: menuWidth, maxWidth: `calc(100vw / ${viewportZoom} - 16px)` }}
         onMouseLeave={() => onHover?.(null)}
       >
         {showSearch && (
