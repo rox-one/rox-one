@@ -412,3 +412,13 @@ The [original spec](integration-history/pr1321/spec.md) remains preserved. Curre
 ## Parallel release integration — 2026-10-03
 
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [spec](integration-history/remote-main-3dd1f98b7/spec.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
+
+## Cursor Cloud headless server setup (2026-10-03)
+
+Port the useful environment setup from `cursor/cloud-agent-env-setup-2fc0` onto
+current ROX. Preparation must terminate, use Bun 1.3.14 and the frozen lockfile,
+and build the session MCP/server subprocess helpers. The terminal must bind the
+server to loopback, isolate development context by default, persist each new
+bearer token with mode 0600, and never print its value. Installation or entropy
+failure must stop before subsequent work. Hosted Cursor execution and provider
+credentials require their own verification. See `docs/cursor-cloud-server.md`.
