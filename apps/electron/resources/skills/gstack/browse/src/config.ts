@@ -14,8 +14,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { mkdirSecure, writeSecureFile } from './file-permissions';
 import { safeUnlinkQuiet } from './error-handling';
-import { readConfigKey, resolveStateRoot } from '../../lib/state-root';
-import { remoteSlug } from '../../lib/remote-identity';
+import { readConfigKey, resolveStateRoot } from '../../gstack/lib/state-root';
+import { remoteSlug } from '../../gstack/lib/remote-identity';
 
 export interface BrowseConfig {
   projectDir: string;

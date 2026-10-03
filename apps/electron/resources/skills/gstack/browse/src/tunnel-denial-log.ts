@@ -18,7 +18,7 @@
 import { promises as fsp } from 'fs';
 import * as path from 'path';
 import { mkdirSecure } from './file-permissions';
-import { resolveStateRoot } from '../../lib/state-root';
+import { resolveStateRoot } from '../../gstack/lib/state-root';
 
 const LOG_DIR = path.join(resolveStateRoot(), 'security');
 const LOG_PATH = path.join(LOG_DIR, 'attempts.jsonl');

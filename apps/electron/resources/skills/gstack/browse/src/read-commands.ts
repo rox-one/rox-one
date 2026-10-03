@@ -1,3 +1,5 @@
+import { readBoundedStable } from '../../gstack/lib/cso/bounded-file';
+import { writeSecureFile } from './file-permissions';
 /**
  * Read commands — extract data from pages without side effects
  *
@@ -235,14 +237,14 @@ export function writeEvalResult(outPath: string, str: string, opts: { raw: boole
           throw new Error('--out: malformed base64 in data URL (decode would corrupt output)');
         }
         const buf = Buffer.from(payload, 'base64');
-        fs.writeFileSync(outPath, buf);
+        writeSecureFile(outPath, buf);
         return buf.length;
       }
     }
   }
 
   const buf = Buffer.from(stripLoneSurrogates(str), 'utf-8');
-  fs.writeFileSync(outPath, buf);
+  writeSecureFile(outPath, buf);
   return buf.length;
 }
 
@@ -400,7 +402,7 @@ export async function handleReadCommand(
       assertJsOriginAllowed(bm, page.url());
       validateReadPath(filePath);
       if (!fs.existsSync(filePath)) throw new Error(`File not found: ${filePath}`);
-      const code = fs.readFileSync(filePath, 'utf-8');
+      const code = readBoundedStable(filePath, 64 * 1024 * 1024, 'Browser eval input').toString('utf8');
       const wrapped = wrapForEvaluate(code);
       const result = await target.evaluate(wrapped);
       const str = resultToString(result);

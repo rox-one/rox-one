@@ -6,7 +6,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { resolveStateRoot } from '../../../lib/state-root';
+import { resolveStateRoot } from '../../../gstack/lib/state-root';
 import { json, type RouteEntry } from './table';
 import { handleCookiePickerRoute } from '../cookie-picker-routes';
 import { sanitizeReplacer } from '../sanitize';

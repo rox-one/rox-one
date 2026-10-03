@@ -21,7 +21,7 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { readGstackConfigYamlKey } from './config';
-import { resolveStateRoot } from '../../lib/state-root';
+import { resolveStateRoot } from '../../gstack/lib/state-root';
 
 function gstackHome(): string {
   return resolveStateRoot();

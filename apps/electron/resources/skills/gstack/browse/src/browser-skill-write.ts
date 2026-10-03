@@ -22,7 +22,7 @@ import { mkdirSecure } from './file-permissions';
 import { isPathWithin } from './platform';
 import type { TierPaths } from './browser-skills';
 import { defaultTierPaths } from './browser-skills';
-import { resolveStateRoot } from '../../lib/state-root';
+import { resolveStateRoot } from '../../gstack/lib/state-root';
 
 // ─── Naming validation ──────────────────────────────────────────
 

@@ -15,12 +15,13 @@
  * from the old generation.
  */
 import * as fs from 'fs';
+import { readBoundedStable } from '../../gstack/lib/cso/bounded-file';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { spawnSync } from 'child_process';
 import { safeUnlink, isProcessAlive } from './error-handling';
 import { restrictFilePermissions, mkdirSecure } from './file-permissions';
-import { atomicWriteSync } from '../../lib/fs-atomic';
+import { atomicWriteSync } from '../../gstack/lib/fs-atomic';
 import { readPidCmdline, readPidStartTime } from './xvfb';
 
 function agentProcessInfo(pid: number): { startTime: string; commandLine: string } {
@@ -45,7 +46,7 @@ function reclaimPublicationLock(stateDir: string, lockPath: string): boolean {
   try {
     const inode = fs.lstatSync(lockPath, { bigint: true });
     if (!inode.isFile() || inode.size === 0n || inode.size > 4096n) return false;
-    const contents = fs.readFileSync(lockPath, 'utf8');
+    const contents = readBoundedStable(lockPath, 4096, 'agent publication lock').toString('utf8');
     const lock = JSON.parse(contents);
     const record = readAgentRecord(stateDir);
     if (lock?.kind !== 'agent-publication-v1' || !record
@@ -76,7 +77,7 @@ function reclaimPublicationLock(stateDir: string, lockPath: string): boolean {
     const currentRecord = readAgentRecord(stateDir);
     if (!currentRecord || fields.some(field => currentRecord[field] !== record[field])) return false;
     if (present && readAgentStartTime(record.pid) !== record.startTime) return false;
-    if (fs.readFileSync(lockPath, 'utf8') !== contents) return false;
+    if (readBoundedStable(lockPath, 4096, 'agent publication lock').toString('utf8') !== contents) return false;
     const current = fs.lstatSync(lockPath, { bigint: true });
     if (!current.isFile() || current.dev !== inode.dev || current.ino !== inode.ino) return false;
     fs.unlinkSync(lockPath);

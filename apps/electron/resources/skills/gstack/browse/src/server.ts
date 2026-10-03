@@ -49,7 +49,7 @@ import { isProcessAlive } from './error-handling';
 import { sanitizeBody, stripLoneSurrogates } from './sanitize';
 import { startSocksBridge, testUpstream, type BridgeHandle } from './socks-bridge';
 import { parseProxyConfig, toUpstreamConfig, ProxyConfigError } from './proxy-config';
-import { writeReceipt } from '../../lib/egress-receipt';
+import { writeReceipt } from '../../gstack/lib/egress-receipt';
 import { redactProxyUrl } from './proxy-redact';
 import { type XvfbHandle } from './xvfb';
 import { logTunnelDenial } from './tunnel-denial-log';

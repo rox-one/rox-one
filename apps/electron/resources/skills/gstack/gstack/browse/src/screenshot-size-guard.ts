@@ -18,7 +18,8 @@
  * Closes #1214.
  */
 
-import { writeFileSync, readFileSync } from "fs";
+import { readBoundedStable } from '../../lib/cso/bounded-file';
+import { writeSecureFile } from './file-permissions';
 
 const MAX_DIMENSION_PX = 2000;
 
@@ -95,10 +96,10 @@ export async function guardScreenshotBuffer(input: Buffer): Promise<{ buffer: Bu
  * diagnostic shape. Use this after `await page.screenshot({ path, ... })`.
  */
 export async function guardScreenshotPath(filePath: string): Promise<SizeGuardResult> {
-  const input = readFileSync(filePath);
+  const input = readBoundedStable(filePath, 200 * 1024 * 1024, 'Screenshot');
   const { buffer, result } = await guardScreenshotBuffer(input);
   if (result.resized) {
-    writeFileSync(filePath, buffer);
+    writeSecureFile(filePath, buffer);
   }
   return result;
 }

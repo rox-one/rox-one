@@ -23,7 +23,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as cp from 'child_process';
-import { resolveStateRoot } from '../../lib/state-root';
+import { resolveStateRoot } from '../../gstack/lib/state-root';
 
 // ─── Types ──────────────────────────────────────────────────────
 

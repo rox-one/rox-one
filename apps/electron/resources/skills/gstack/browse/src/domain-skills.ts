@@ -37,7 +37,7 @@ import { open as fsOpen, constants as fsConstants } from 'fs';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import type { Page } from 'playwright';
-import { resolveStateRoot } from '../../lib/state-root';
+import { resolveStateRoot } from '../../gstack/lib/state-root';
 
 export type SkillState = 'quarantined' | 'active' | 'global';
 export type SkillScope = 'project' | 'global';

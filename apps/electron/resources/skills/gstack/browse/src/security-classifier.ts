@@ -26,7 +26,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { mkdirSecure } from './file-permissions';
 import { type LayerSignal } from './security';
-import { resolveStateRoot } from '../../lib/state-root';
+import { resolveStateRoot } from '../../gstack/lib/state-root';
 
 // ─── Model location + packaging ──────────────────────────────
 

@@ -1,3 +1,5 @@
+import { readBoundedStable } from '../../gstack/lib/cso/bounded-file';
+import { writeSecureFile, mkdirSecure } from './file-permissions';
 /**
  * Write commands — navigate and interact with pages (side effects)
  *
@@ -205,7 +207,7 @@ export async function handleWriteCommand(
               `load-html: --from-file ${payloadPath} must be under ${SAFE_DIRECTORIES.join(' or ')} (security policy). Copy the payload into the project tree or /tmp first.`
             );
           }
-          const raw = fs.readFileSync(payloadPath, 'utf8');
+          const raw = readBoundedStable(payloadPath, 64 * 1024 * 1024, 'HTML payload').toString('utf8');
           let json: any;
           try { json = JSON.parse(raw); }
           catch (e: any) { throw new Error(`load-html: --from-file JSON parse failed: ${e.message}`); }
@@ -298,7 +300,7 @@ export async function handleWriteCommand(
       }
 
       // Single read: Buffer → magic-byte peek → utf-8 string
-      const buf = await fs.promises.readFile(absolutePath);
+      const buf = readBoundedStable(absolutePath, MAX_BYTES, 'HTML input');
 
       // Magic-byte check: strip UTF-8 BOM + leading whitespace, then verify the first
       // non-whitespace byte starts a markup construct. Accepts any <tag, <!doctype,
@@ -652,7 +654,7 @@ export async function handleWriteCommand(
         throw new Error(`Path must be within: ${SAFE_DIRECTORIES.join(', ')}`);
       }
       if (!fs.existsSync(filePath)) throw new Error(`File not found: ${filePath}`);
-      const raw = fs.readFileSync(filePath, 'utf-8');
+      const raw = readBoundedStable(filePath, 64 * 1024 * 1024, 'Browser command input').toString('utf8');
       let cookies: any[];
       try { cookies = JSON.parse(raw); } catch (err: any) { throw new Error(`Invalid JSON in ${filePath}: ${err?.message || err}`); }
       if (!Array.isArray(cookies)) throw new Error('Cookie file must contain a JSON array');
@@ -993,8 +995,7 @@ export async function handleWriteCommand(
 
       // Default output path
       if (!outputPath) {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-        outputPath = `${TEMP_DIR}/browse-pretty-${timestamp}.png`;
+        outputPath = path.join(fs.mkdtempSync(path.join(TEMP_DIR, 'browse-pretty-')), 'screenshot.png');
       }
       validateOutputPath(outputPath);
 
@@ -1091,7 +1092,7 @@ export async function handleWriteCommand(
       }
 
       // Take screenshot
-      await page.screenshot({ path: outputPath, fullPage: !scrollTo });
+      writeSecureFile(outputPath, await page.screenshot({ type: /\.jpe?g$/i.test(outputPath) ? 'jpeg' : 'png', fullPage: !scrollTo }));
       // Guard against Anthropic vision API >2000px brick (#1214). Only
       // applies to fullPage captures; scrollTo viewport-bound shots are
       // already capped by the viewport size.
@@ -1193,40 +1194,47 @@ export async function handleWriteCommand(
           throw new Error(`Download failed: ${failure}`);
         }
         // Save to temp location first, then read into buffer
-        const tempPath = path.join(TEMP_DIR, `browse-nav-download-${Date.now()}`);
-        await download.saveAs(tempPath);
-        buffer = fs.readFileSync(tempPath);
-        // Try to infer content type from suggested filename
-        const suggested = download.suggestedFilename();
-        if (suggested) {
-          const extMatch = suggested.match(/\.([a-z0-9]+)$/i);
-          if (extMatch) {
-            const extLower = extMatch[1].toLowerCase();
-            const mimeMap: Record<string, string> = {
-              epub: 'application/epub+zip', pdf: 'application/pdf',
-              zip: 'application/zip', gz: 'application/gzip',
-              mp3: 'audio/mpeg', mp4: 'video/mp4',
-              jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-              txt: 'text/plain', html: 'text/html', json: 'application/json',
-            };
-            contentType = mimeMap[extLower] || 'application/octet-stream';
+        const tempDir = fs.mkdtempSync(path.join(TEMP_DIR, 'browse-nav-download-'));
+        const tempPath = path.join(tempDir, 'download');
+        let retainTemp = false;
+        try {
+          await download.saveAs(tempPath);
+          buffer = readBoundedStable(tempPath, 200 * 1024 * 1024, 'Downloaded file');
+          // Try to infer content type from suggested filename
+          const suggested = download.suggestedFilename();
+          if (suggested) {
+            const extMatch = suggested.match(/\.([a-z0-9]+)$/i);
+            if (extMatch) {
+              const extLower = extMatch[1].toLowerCase();
+              const mimeMap: Record<string, string> = {
+                epub: 'application/epub+zip', pdf: 'application/pdf',
+                zip: 'application/zip', gz: 'application/gzip',
+                mp3: 'audio/mpeg', mp4: 'video/mp4',
+                jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+                txt: 'text/plain', html: 'text/html', json: 'application/json',
+              };
+              contentType = mimeMap[extLower] || 'application/octet-stream';
+            }
           }
-        }
-        // Clean up temp file if we're going to write elsewhere
-        if (outputPath || isBase64) {
-          try { fs.unlinkSync(tempPath); } catch { /* ignore */ }
-        } else {
-          // No explicit output path — rename temp file with inferred extension.
-          const ext = contentType.split(';')[0].includes('/')
-            ? mimeToExt(contentType.split(';')[0].trim())
-            : '.bin';
-          const finalPath = path.join(TEMP_DIR, `browse-download-${Date.now()}${ext}`);
-          fs.renameSync(tempPath, finalPath);
-          const sizeKB = Math.round(buffer.length / 1024);
-          return `Downloaded: ${finalPath} (${sizeKB}KB, ${contentType.split(';')[0].trim()})${suggested ? ` [${suggested}]` : ''}`;
-        }
-        if (buffer.length > 200 * 1024 * 1024) {
-          throw new Error('File too large (>200MB).');
+          // Clean up temp file if we're going to write elsewhere
+          if (outputPath || isBase64) {
+            try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch { /* ignore */ }
+          } else {
+            // No explicit output path — rename temp file with inferred extension.
+            const ext = contentType.split(';')[0].includes('/')
+              ? mimeToExt(contentType.split(';')[0].trim())
+              : '.bin';
+            const finalPath = path.join(tempDir, `download${ext}`);
+            fs.renameSync(tempPath, finalPath);
+            retainTemp = true;
+            const sizeKB = Math.round(buffer.length / 1024);
+            return `Downloaded: ${finalPath} (${sizeKB}KB, ${contentType.split(';')[0].trim()})${suggested ? ` [${suggested}]` : ''}`;
+          }
+          if (buffer.length > 200 * 1024 * 1024) {
+            throw new Error('File too large (>200MB).');
+          }
+        } finally {
+          if (!retainTemp) fs.rmSync(tempDir, { recursive: true, force: true });
         }
       } else {
         // Strategy 1: Direct URL via page.request.fetch().
@@ -1264,9 +1272,9 @@ export async function handleWriteCommand(
       const ext = contentType.split(';')[0].includes('/')
         ? mimeToExt(contentType.split(';')[0].trim())
         : '.bin';
-      const destPath = outputPath || path.join(TEMP_DIR, `browse-download-${Date.now()}${ext}`);
+      const destPath = outputPath || path.join(fs.mkdtempSync(path.join(TEMP_DIR, 'browse-download-')), `download${ext}`);
       validateOutputPath(destPath);
-      fs.writeFileSync(destPath, buffer);
+      writeSecureFile(destPath, buffer);
       const sizeKB = Math.round(buffer.length / 1024);
       return `Downloaded: ${destPath} (${sizeKB}KB, ${contentType.split(';')[0].trim()})`;
     }
@@ -1282,12 +1290,12 @@ export async function handleWriteCommand(
       const selectorIdx = args.indexOf('--selector');
       const selector = selectorIdx >= 0 ? args[selectorIdx + 1] : undefined;
       const dirIdx = args.indexOf('--dir');
-      const dir = dirIdx >= 0 ? args[dirIdx + 1] : path.join(TEMP_DIR, `browse-scrape-${Date.now()}`);
+      const dir = dirIdx >= 0 ? args[dirIdx + 1] : fs.mkdtempSync(path.join(TEMP_DIR, 'browse-scrape-'));
       const limitIdx = args.indexOf('--limit');
       const limit = Math.min(limitIdx >= 0 ? parseInt(args[limitIdx + 1], 10) || 50 : 50, 200);
 
       validateOutputPath(dir);
-      fs.mkdirSync(dir, { recursive: true });
+      mkdirSecure(dir);
 
       const { extractMedia } = await import('./media-extract');
       const target = bm.getActiveFrameOrPage();
@@ -1348,7 +1356,7 @@ export async function handleWriteCommand(
           const filePath = path.join(dir, filename);
           const body = Buffer.from(await response.body());
           try {
-            fs.writeFileSync(filePath, body);
+            writeSecureFile(filePath, body);
           } catch (writeErr: any) {
             throw new Error(`Disk write failed: ${writeErr.message}`);
           }
@@ -1366,14 +1374,14 @@ export async function handleWriteCommand(
       }
 
       // Write manifest
-      fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+      writeSecureFile(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
       return `Scraped ${toDownload.length} items to ${dir}/\n${lines.join('\n')}\n\nSummary: ${manifest.succeeded} succeeded, ${manifest.failed} failed, ${Math.round(manifest.total_size / 1024)}KB total`;
     }
 
     case 'archive': {
       const page = bm.getPage();
-      const outputPath = args[0] || path.join(TEMP_DIR, `browse-archive-${Date.now()}.mhtml`);
+      const outputPath = args[0] || path.join(fs.mkdtempSync(path.join(TEMP_DIR, 'browse-archive-')), 'archive.mhtml');
       validateOutputPath(outputPath);
 
       try {
@@ -1381,7 +1389,7 @@ export async function handleWriteCommand(
           const result = await cdp.send('Page.captureSnapshot', { format: 'mhtml' });
           return (result as { data: string }).data;
         });
-        fs.writeFileSync(outputPath, data);
+        writeSecureFile(outputPath, data);
         return `Archive saved: ${outputPath} (${Math.round(data.length / 1024)}KB, MHTML)`;
       } catch (err: any) {
         throw new Error(`MHTML archive requires Chromium CDP. Use 'text' or 'html' for raw page content. (${err.message})`);
