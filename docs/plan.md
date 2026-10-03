@@ -487,3 +487,15 @@ The original recovery plan is preserved in [this historical receipt](integration
 ## PR1320 session recovery historical evidence
 
 Preserved [the original recovery plan](integration-history/pr1320/plan.md) alongside the current integrated contracts. Historical execution claims remain bound to their recorded source.
+
+
+## Bounded legacy migration fence plan (2026-09-30)
+
+Owner: compound integration reviewer; lead retains integration and publication. Base: `b9b8aa7197f5d25304ec377a049a8f375eccf3e5`. Scope: one read-only inventory module, its filesystem tests, and these scoped notes. No legacy writer, canonical custody, renderer, dependency, or existing worker checkpoint changes.
+
+1. Import only the reviewed fence module and tests into an isolated branch at the exact base.
+2. Run `bun test tests/lark-suite-extension/legacy-markdown-migration-fence.test.ts` using Bun built-ins; check the public diff and artifact hashes.
+3. Lead reviews and publishes a draft stacked against `feat/rox-compound-workspace-20260930`.
+4. Existing compound integrator separately decides recovery disposition and serial canonical pipeline integration. The inventory stays unwired until an actual preparation path and its authority prerequisites are reviewed.
+
+Verification covers unchanged real fixture bytes, interrupted WAL refusal, unreadable/malformed/symlink state, and deterministic file/parent replacement races. It does not claim complete migration, native UI acceptance, adoption of existing files, or closure of the full compound program.
