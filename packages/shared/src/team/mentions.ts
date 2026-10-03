@@ -13,9 +13,16 @@ const MENTION_RE = /(^|[^\p{L}\p{N}_.@])@([\p{L}\p{N}][\p{L}\p{N}._-]*)/gu
 /** Raw @handles in text, lowercased, trailing dots trimmed. */
 export function extractMentionHandles(text: string): string[] {
   const out: string[] = []
+  const seen = new Set<string>()
   for (const m of text.matchAll(MENTION_RE)) {
-    const h = m[2]!.replace(/[.]+$/, '').toLowerCase()
-    if (h && !out.includes(h)) out.push(h)
+    const handle = m[2]!
+    let end = handle.length
+    while (end > 0 && handle[end - 1] === '.') end--
+    const h = handle.slice(0, end).toLowerCase()
+    if (h && !seen.has(h)) {
+      seen.add(h)
+      out.push(h)
+    }
   }
   return out
 }

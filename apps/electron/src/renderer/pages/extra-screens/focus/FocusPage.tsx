@@ -95,7 +95,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
 
   const today = localDay(now)
   const stats = focusMinutesOn(focus, today, now)
-  const queueToday = focus.queue
+  const queueToday = workspaceId ? focus.queue.filter((q) => q.workspaceId === workspaceId) : []
   const time = (ts: number) => new Date(ts).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })
 
   const preview = async () => {
@@ -202,10 +202,10 @@ export default function FocusPage(_props: { itemId: string | null }) {
                 <div className="flex items-center gap-2">
                   <SectionLabel>{t('extraScreens.focus.deferred', { n: queueToday.reduce((sum, q) => sum + q.count, 0) })}</SectionLabel>
                   <span className="flex-1" />
-                  <ScreenButton variant="ghost" onClick={() => update({ ...focus, queue: [] })}>{t('extraScreens.focus.clearQueue')}</ScreenButton>
+                  <ScreenButton variant="ghost" onClick={() => update({ ...focus, queue: focus.queue.filter((q) => q.workspaceId !== workspaceId) })}>{t('extraScreens.focus.clearQueue')}</ScreenButton>
                 </div>
                 {queueToday.map((q) => (
-                  <button key={q.sessionId} type="button" onClick={() => { update({ ...focus, queue: focus.queue.filter((x) => x.sessionId !== q.sessionId) }); navigate(routes.view.allSessions(q.sessionId)) }} className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1 text-left hover:bg-foreground/5">
+                  <button key={JSON.stringify([q.workspaceId, q.sessionId])} type="button" onClick={() => { update({ ...focus, queue: focus.queue.filter((x) => x.workspaceId !== q.workspaceId || x.sessionId !== q.sessionId) }); navigate(routes.view.allSessions(q.sessionId)) }} className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1 text-left hover:bg-foreground/5">
                     <span className="min-w-0 flex-1 truncate">{q.title}{q.count > 1 ? ` ×${q.count}` : ''}</span>
                     <span className="max-w-[40%] truncate text-[12px] text-muted-foreground">{q.body}</span>
                     <span className="text-[12px] text-muted-foreground">{time(q.at)}</span>

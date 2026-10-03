@@ -6232,54 +6232,78 @@ export class SessionManager implements ISessionManager {
     const miniModel = getMiniModel(connection) ?? connection.defaultModel ?? getDefaultSummarizationModel()
     const model: string | undefined = wsConfig?.defaults?.model || backendContext.resolvedModel || connection.defaultModel
 
-    const agent = createBackendFromResolvedContext({
-      context: backendContext,
-      hostRuntime: buildBackendHostRuntimeContext(),
-      coreConfig: {
-        workspace: workspace as Workspace,
-        session: {
-          id: `workspace-oneshot-${Date.now().toString(36)}`,
-          workspaceRootPath,
-          createdAt: Date.now(),
-          lastUsedAt: Date.now(),
-          workingDirectory: workspaceRootPath,
-          model,
-          permissionMode: 'safe',
-        },
-        miniModel,
-        envOverrides: {
-          CRAFT_WORKSPACE_PATH: workspaceRootPath,
-          ...(miniModel ? { ANTHROPIC_DEFAULT_HAIKU_MODEL: miniModel } : {}),
-        },
-        isHeadless: true,
-      },
-      providerOptions: { piAuthProvider: connection.piAuthProvider },
-    }) as AgentInstance
-
-    const timeoutMs = options.timeoutMs ?? 180_000
-    try {
-      const init = await agent.postInit()
-      if (init && init.authInjected === false && init.authWarningLevel === 'error') {
-        throw new Error(init.authWarning || `Connection "${connection.name ?? connection.slug}" is not signed in`)
+    const budgetLimit = wsConfig?.defaults?.dailyAgentBudgetUsd ?? null
+    let budgetRunId: string | undefined
+    let dispatched = false
+    if (budgetLimit !== null) {
+      const budget = this.getAgentBudget(workspace.id)
+      if (budget.unresolvedUsd > 0 || budget.remainingUsd === null || budget.remainingUsd <= 0) {
+        throw new Error(i18n.t(budget.unresolvedUsd > 0 ? 'extraScreens.agents.budgetUnknown' : 'extraScreens.agents.budgetExhausted'))
       }
-      let timer: ReturnType<typeof setTimeout> | undefined
-      const timeout = new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`The model did not answer in time (${Math.round(timeoutMs / 1000)} s)`)), timeoutMs)
-      })
+      const runId = randomUUID()
+      if (!this.getAgentBudgetLedger().reserve(workspace.id, runId, budgetLimit, budget.remainingUsd)) {
+        throw new Error(i18n.t('extraScreens.agents.budgetExhausted'))
+      }
+      budgetRunId = runId
+    }
+    try {
+      const agent = createBackendFromResolvedContext({
+        context: backendContext,
+        hostRuntime: buildBackendHostRuntimeContext(),
+        coreConfig: {
+          workspace: workspace as Workspace,
+          session: {
+            id: `workspace-oneshot-${Date.now().toString(36)}`,
+            workspaceRootPath,
+            createdAt: Date.now(),
+            lastUsedAt: Date.now(),
+            workingDirectory: workspaceRootPath,
+            model,
+            permissionMode: 'safe',
+          },
+          miniModel,
+          envOverrides: {
+            CRAFT_WORKSPACE_PATH: workspaceRootPath,
+            ...(miniModel ? { ANTHROPIC_DEFAULT_HAIKU_MODEL: miniModel } : {}),
+          },
+          isHeadless: true,
+        },
+        providerOptions: { piAuthProvider: connection.piAuthProvider },
+      }) as AgentInstance
+
+      const timeoutMs = options.timeoutMs ?? 180_000
       try {
-        const queryable = agent as AgentInstance & {
-          queryLlm?: (req: SessionLlmQueryRequest & { model?: string }) => Promise<{ text: string; model?: string; warning?: string }>
+        const init = await agent.postInit()
+        if (init && init.authInjected === false && init.authWarningLevel === 'error') {
+          throw new Error(init.authWarning || `Connection "${connection.name ?? connection.slug}" is not signed in`)
         }
-        if (typeof queryable.queryLlm !== 'function') {
-          throw new Error('This connection does not support one-shot LLM queries')
+        let timer: ReturnType<typeof setTimeout> | undefined
+        const timeout = new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error(`The model did not answer in time (${Math.round(timeoutMs / 1000)} s)`)), timeoutMs)
+        })
+        try {
+          const queryable = agent as AgentInstance & {
+            queryLlm?: (req: SessionLlmQueryRequest & { model?: string }) => Promise<{ text: string; model?: string; warning?: string }>
+          }
+          if (typeof queryable.queryLlm !== 'function') {
+            throw new Error('This connection does not support one-shot LLM queries')
+          }
+          dispatched = true
+          const result = await Promise.race([queryable.queryLlm({ ...request, model }), timeout])
+          return { text: result.text ?? '', requestedModel: model, effectiveModel: result.model ?? null, model: result.model, warning: [result.warning, ...(budgetRunId ? [i18n.t('extraScreens.agents.budgetUnknown')] : [])].filter(Boolean).join('\n') || undefined }
+        } finally {
+          if (timer) clearTimeout(timer)
         }
-        const result = await Promise.race([queryable.queryLlm({ ...request, model }), timeout])
-        return { text: result.text ?? '', model: result.model ?? model, warning: result.warning }
       } finally {
-        if (timer) clearTimeout(timer)
+        agent.destroy()
       }
     } finally {
-      agent.destroy()
+      if (budgetRunId) {
+        // One-shot backends do not return a measured cost receipt. A dispatched
+        // success is therefore unknown usage, not a zero-cost release.
+        if (dispatched) this.getAgentBudgetLedger().markUnresolved(workspace.id, budgetRunId)
+        else this.getAgentBudgetLedger().releaseBeforeDispatch(workspace.id, budgetRunId)
+      }
     }
   }
 
@@ -10590,6 +10614,8 @@ export interface SessionLlmQueryRequest {
 }
 
 export interface SessionLlmQueryResult {
+  requestedModel?: string
+  effectiveModel?: string | null
   text: string
   model?: string
   warning?: string

@@ -1,0 +1,360 @@
+{
+  "schemaVersion": 1,
+  "id": "PORTABLE-ELECTRON-BRIDGE-20260930",
+  "observedAt": "2026-09-30T17:37:07.007Z",
+  "publication": {
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+    "revision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+    "pullRequestHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+    "observedAt": "2026-09-30T17:39:30.972Z",
+    "sourceCount": 4873,
+    "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+    "committedSourceMatchesTestedManifest": true,
+    "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+    "previous4870SourcesUnchanged": true,
+    "addedDeveloperScripts": 3,
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0,
+    "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head."
+  },
+  "sourceBinding": {
+    "sourceCount": 4873,
+    "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+    "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+    "excluded": [
+      "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+      "apps/electron/.impeccable/hook.cache.json"
+    ],
+    "beforeAfterIdentical": true,
+    "committedSourceMatchesTestedManifest": true,
+    "existing4870SourcesUnchanged": true,
+    "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+    "wholeRepositoryGateSourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+    "addedDeveloperScripts": 3,
+    "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e"
+  },
+  "sources": [
+    {
+      "path": "scripts/tests/electron-native-bridge/run.ts",
+      "sha256": "2d2bba6633cecfdbf7da11cc72b6093831fc653a0f05b420fe657ab862609f5f"
+    },
+    {
+      "path": "scripts/tests/electron-native-bridge/fixture.ts",
+      "sha256": "b21ba3d3ba7204d71d03f1d4844f5b87ee334e5a157fc72e983969183cc450e1"
+    },
+    {
+      "path": "scripts/tests/electron-native-bridge/tsconfig.json",
+      "sha256": "2ab9c623163a122795aa25c4658a6f5518c94adc578ba164e5f1995efeb4edcd"
+    }
+  ],
+  "owners": {
+    "producer": "/root/native_boundary",
+    "independentCandidateReview": "/root/recovery_scout",
+    "currentIntegratedRuntime": "/root/september_gates",
+    "serialIntegrationAndDelivery": "/root"
+  },
+  "behavior": "Portable Bun/Node entry command dynamically resolves current repository dependencies and compiles production services; real Electron production preload/private IPC/authenticated WS/Authority/Journal/encrypted outbox perform create and exact observed ACK, graceful stable pending-operation replay, complete forged receipt denial, grant revocation with unchanged bytes/receipts and foreign managed window denial. Inputs are generated in an owned private fixture root, child environment is whitelisted, profiles are removed and source/preload/SDK bytes are bound.",
+  "runtime": [
+    {
+      "entryRuntime": "bun",
+      "runnerRuntime": {
+        "node": "v26.3.0",
+        "bun": "1.4.2",
+        "platform": "darwin",
+        "arch": "arm64"
+      },
+      "actualElectron": "39.2.7",
+      "embeddedNode": "22.21.1",
+      "stages": [
+        {
+          "phase": "single",
+          "pid": 89102,
+          "exit": 0,
+          "signal": null,
+          "timedOut": false,
+          "pidExited": true
+        },
+        {
+          "phase": "prepare",
+          "pid": 89125,
+          "exit": 0,
+          "signal": null,
+          "timedOut": false,
+          "pidExited": true
+        },
+        {
+          "phase": "replay",
+          "pid": 89146,
+          "exit": 0,
+          "signal": null,
+          "timedOut": false,
+          "pidExited": true
+        }
+      ],
+      "sourceBindingCount": 361,
+      "preloadSha256": "3dc1d9dbb02d99184f5981d7c66aaffc0ac35e85e73e84b17a54f2daafcd7b3a",
+      "externalSdkSha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a",
+      "currentSqliteAdapterSha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab",
+      "ownedFixtureRemoved": true,
+      "receipt": {
+        "id": "portable-electron-harness-20260930/integrated-bun/receipt.json",
+        "sha256": "cee3959459f7d9dfc90432dbaea19467a48c16cd46990be75199bdb31455d1ee"
+      }
+    },
+    {
+      "entryRuntime": "node",
+      "runnerRuntime": {
+        "node": "v26.8.2",
+        "bun": null,
+        "platform": "darwin",
+        "arch": "arm64"
+      },
+      "actualElectron": "39.2.7",
+      "embeddedNode": "22.21.1",
+      "stages": [
+        {
+          "phase": "single",
+          "pid": 89562,
+          "exit": 0,
+          "signal": null,
+          "timedOut": false,
+          "pidExited": true
+        },
+        {
+          "phase": "prepare",
+          "pid": 89602,
+          "exit": 0,
+          "signal": null,
+          "timedOut": false,
+          "pidExited": true
+        },
+        {
+          "phase": "replay",
+          "pid": 89618,
+          "exit": 0,
+          "signal": null,
+          "timedOut": false,
+          "pidExited": true
+        }
+      ],
+      "sourceBindingCount": 361,
+      "preloadSha256": "3dc1d9dbb02d99184f5981d7c66aaffc0ac35e85e73e84b17a54f2daafcd7b3a",
+      "externalSdkSha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a",
+      "currentSqliteAdapterSha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab",
+      "ownedFixtureRemoved": true,
+      "receipt": {
+        "id": "portable-electron-harness-20260930/integrated-node/receipt.json",
+        "sha256": "4deea6d70354ae3edfff9f8b66f2bf4fa13fb3cb43706424256a159f541dbfef"
+      }
+    }
+  ],
+  "integratedGates": {
+    "status": "PASS_BOUNDED_INTEGRATED_ELECTRON_BRIDGE",
+    "sourceCount": 4873,
+    "sourceBeforeHash": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+    "sourceAfterHash": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+    "productionSubsetCount": 4870,
+    "productionSubsetHash": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+    "productionMismatch": [],
+    "lanes": [
+      {
+        "runtime": "bun",
+        "exit": 0,
+        "receipt": "portable-electron-harness-20260930/integrated-bun/receipt.json",
+        "receiptSha256": "cee3959459f7d9dfc90432dbaea19467a48c16cd46990be75199bdb31455d1ee",
+        "log": "portable-electron-harness-20260930/integrated-bun.log",
+        "logSha256": "22ba0a2ead5ef243582b428ef2f1b39117626527eaccd514c4c936571b8e225b",
+        "stages": [
+          {
+            "phase": "single",
+            "pid": 89102,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "prepare",
+            "pid": 89125,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "replay",
+            "pid": 89146,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          }
+        ],
+        "ownedFixtureRemoved": true,
+        "preloadSha256": "3dc1d9dbb02d99184f5981d7c66aaffc0ac35e85e73e84b17a54f2daafcd7b3a",
+        "sqlite": {
+          "path": "packages/shared/src/utils/sqlite-runtime.ts",
+          "sha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab"
+        },
+        "externalSdk": {
+          "path": "/Users/t/Projects/rox-one-september-implementation/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs",
+          "sha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a"
+        },
+        "controls": {
+          "createRevision": 1,
+          "pendingAfterExactACK": 0,
+          "preparedPending": 1,
+          "preparedCanonicalRevision": 1,
+          "replayRevision": 2,
+          "replayOperationHashMatches": true,
+          "forgedACKRejected": true,
+          "pendingRetained": 1,
+          "revoked": true,
+          "canonicalBytesUnchangedAfterRevoke": true,
+          "receiptsUnchangedAfterRevoke": true,
+          "wrongWindowDenied": true,
+          "destroyedOwnerHandleRejected": true
+        }
+      },
+      {
+        "runtime": "node",
+        "exit": 0,
+        "receipt": "portable-electron-harness-20260930/integrated-node/receipt.json",
+        "receiptSha256": "4deea6d70354ae3edfff9f8b66f2bf4fa13fb3cb43706424256a159f541dbfef",
+        "log": "portable-electron-harness-20260930/integrated-node.log",
+        "logSha256": "a462cd4e8500764fdc4c4c27337ca674106f1ad3c0168e2d372e654fcee0d9d7",
+        "stages": [
+          {
+            "phase": "single",
+            "pid": 89562,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "prepare",
+            "pid": 89602,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "replay",
+            "pid": 89618,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          }
+        ],
+        "ownedFixtureRemoved": true,
+        "preloadSha256": "3dc1d9dbb02d99184f5981d7c66aaffc0ac35e85e73e84b17a54f2daafcd7b3a",
+        "sqlite": {
+          "path": "packages/shared/src/utils/sqlite-runtime.ts",
+          "sha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab"
+        },
+        "externalSdk": {
+          "path": "/Users/t/Projects/rox-one-september-implementation/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs",
+          "sha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a"
+        },
+        "controls": {
+          "createRevision": 1,
+          "pendingAfterExactACK": 0,
+          "preparedPending": 1,
+          "preparedCanonicalRevision": 1,
+          "replayRevision": 2,
+          "replayOperationHashMatches": true,
+          "forgedACKRejected": true,
+          "pendingRetained": 1,
+          "revoked": true,
+          "canonicalBytesUnchangedAfterRevoke": true,
+          "receiptsUnchangedAfterRevoke": true,
+          "wrongWindowDenied": true,
+          "destroyedOwnerHandleRejected": true
+        }
+      }
+    ],
+    "scopedTypecheck": {
+      "command": "bun run tsc --noEmit -p scripts/tests/electron-native-bridge/tsconfig.json",
+      "exit": 0,
+      "log": "portable-electron-harness-20260930/integrated-typecheck.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "diffCheck": {
+      "exit": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "existingOutputNegative": {
+      "exit": 1,
+      "before": "cee3959459f7d9dfc90432dbaea19467a48c16cd46990be75199bdb31455d1ee",
+      "after": "cee3959459f7d9dfc90432dbaea19467a48c16cd46990be75199bdb31455d1ee",
+      "preserved": true
+    },
+    "limits": [
+      "Real production preload/IPC/WS/Authority/Journal/outbox composition using task synthetic credential DI, not product main/OS custody or visible UI E3",
+      "Graceful restart, not SIGKILL/response loss/power loss",
+      "Hidden muted Electron sandbox:false compatibility, no provider calls/signing/platform acceptance",
+      "No full gate rerun: previous 4870-source production subset identical"
+    ]
+  },
+  "artifacts": [
+    {
+      "id": "electron-native-bridge-harness-20260930/final-source-manifest.json",
+      "sha256": "45f7ea3754b702e5f3b965ee7adfddba2b36410f9179333fab9294810ae1342f",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+    },
+    {
+      "id": "electron-native-bridge-harness-20260930/final-report.md",
+      "sha256": "f54a313e93cb1a2e003fbbe5fd9636ddd5785fede8f0c5a034a4371485790c64",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+    },
+    {
+      "id": "portable-electron-harness-20260930/independent-review.md",
+      "sha256": "31fb24d807b2623c11428bd1bed57d7d17ef9df62dc5c74c2d40b1b30c026ebe",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+    },
+    {
+      "id": "portable-electron-harness-20260930/independent-review.json",
+      "sha256": "e04631ea08df63a8144f1e828f94bac6088ae1805f1ff4718a7d9bd62b43bfaa",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+    },
+    {
+      "id": "portable-electron-harness-20260930/root-transfer.json",
+      "sha256": "ebd87cc094a29194a3b6a48043c38b0462cd69c2b57407830924e3c4bc6a2f7a",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+    },
+    {
+      "id": "portable-electron-harness-20260930/integrated-gates.json",
+      "sha256": "c1bab1e8531e2f987a07e0bd7b744fd4a2175406b506f4b6d47b35acf18aecea",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+    },
+    {
+      "id": "portable-electron-harness-20260930/integrated-bun/receipt.json",
+      "sha256": "cee3959459f7d9dfc90432dbaea19467a48c16cd46990be75199bdb31455d1ee",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+    },
+    {
+      "id": "portable-electron-harness-20260930/integrated-node/receipt.json",
+      "sha256": "4deea6d70354ae3edfff9f8b66f2bf4fa13fb3cb43706424256a159f541dbfef",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+    }
+  ],
+  "limits": [
+    "Both Bun and Node commands are entry runners. All storage/service child processes are actual Electron39/embeddedNode22, not proof of Bun execution of the Electron main module.",
+    "Synthetic task-only administrator/enrollment bootstrap, minimal main bootstrap channels and generated persistent credential/key DI are explicit; full product main and OS secure-store custody remain pending.",
+    "Hidden muted BrowserWindows use production contextIsolation=true/nodeIntegration=false/sandbox=false. No foreground UI, provider/model query or media operation is performed.",
+    "Recovery is normal child termination and fresh process, not SIGKILL, lost response, power loss or a timeout recovery acceptance. Timeout cleanup is source-reviewed, not separately injected.",
+    "The post-owner-destruction caller was already foreign. Its denial does not isolate destruction cleanup causality or webContents ID reuse.",
+    "Negative expectation inversions prove harness assertion propagation; they do not establish detection of deliberately disabled production guards.",
+    "Three new developer scripts and additive docs have scoped typing and actual commands on this revision. Existing4870 sources exactly retain whole union/CI/build proof at b512d93d; no new whole-repository gate run is implied.",
+    "Full product UI E3/#385/#1150, private native creation/custody, providers/recipients, Windows/Linux desktop/cloud, genuine Conation iOS, packaging/signing and trusted remote CI remain pending. Zero complete original tasks are accepted."
+  ],
+  "fullOriginalTasksAccepted": 0
+}

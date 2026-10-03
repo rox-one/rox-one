@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "asOf": "2026-09-30T16:17:33.654Z",
+  "asOf": "2026-10-02T19:18:18.682Z",
   "purpose": "Sanitized bounded implementation/verification reconciliation; no complete task, requirement, contract freeze or code delivery accepted.",
   "sourceState": {
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
@@ -9,19 +9,20 @@
     "deliveredRevision": null,
     "codeCurrent": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
-      "observedAt": "2026-09-30T16:18:32.688Z",
-      "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
-      "sourceCount": 4851,
+      "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "observedAt": "2026-10-02T19:20:31.005Z",
+      "sourceCount": 4879,
+      "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
       "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
       "excluded": [
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
         "apps/electron/.impeccable/hook.cache.json"
       ],
-      "committedSourceMatchesTestedManifest": true
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284"
     },
-    "publishedRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-    "latestPublishedSourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+    "publishedRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+    "latestPublishedSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
     "historicalNamedCandidateSnapshot": {
       "status": "UNCOMMITTED_WORKING_UNION",
       "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
@@ -411,7 +412,8 @@
         }
       ],
       "doesNotBindPriorGateInvocations": true
-    }
+    },
+    "historicalFirstPublishedRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0"
   },
   "environment": {
     "os": "macOS 27.0",
@@ -440,7 +442,13 @@
     "finalFullGateRefresh": "RUNTIME_SHARED_SERVER_UNIONS_PASSING_AT_C1C81E66; ELECTRON_IDENTICAL_TO_VERIFIED_47F4E336; SUBSEQUENT_RENDERER_PENDING",
     "shutdownTimerDefect": "NOT_REPRODUCED; PRIOR_CAUSAL_ATTRIBUTION_WITHDRAWN",
     "durableOutboxAcknowledgementAudit": "BOUNDED_UI_EDIT_ACK_OUTBOX_AUDITED; EXACT_ENCRYPTED_RECEIPT_BODY_NOT_DECRYPTED",
-    "nativeCreation": "BOUNDED_ACTUAL_WS_SQLITE_VERIFIED; NEW_UI_PENDING_SKY_UNRESPONSIVE"
+    "nativeCreation": "BOUNDED_ACTUAL_WS_SQLITE_VERIFIED; NEW_UI_PENDING_SKY_UNRESPONSIVE",
+    "nativeUiCurrent": {
+      "status": "BOUNDED_NOTE_PRODUCT_RUNTIME_VERIFIED; TASK_STORAGE_UNAVAILABLE; FULL_NATIVE_MATRIX_PENDING",
+      "evidence": "NATIVE-PRODUCT-NOTE-20261002",
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "fullOriginalAccepted": 0
+    }
   },
   "integrity": {
     "tasks": 109,
@@ -2094,6 +2102,824 @@
           "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
         }
       ]
+    },
+    {
+      "id": "ROADMAP-SQLITE-JOINT-20260930",
+      "basis": "Independent actual WS/native/method/SQLite/CJS review and unchanged whole-repository union/CI/build gates",
+      "result": {
+        "status": "PASSED_BOUNDED_RUNTIME",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+          "sha256": "8c1a989852c05ff321f389a37016977c7e928ee0c903a37ce74390028cf05715"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/ProjectRoadmapPage.tsx",
+          "sha256": "2014b2883d772adf509e348148405d5ce2543d6fa29f71951ce26b95852c212c"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/ProjectAiPanel.tsx",
+          "sha256": "1711f5ee0c6a128388a5f04f5cacfab6af6ce1ac8ede3d0778d522e702cdd7c1"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/ProjectInputs.tsx",
+          "sha256": "7faeda6e08b7fae4f02dee5794d172085d8047cf44bb986fc87dbbfc22e141b4"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/ProjectRequirements.tsx",
+          "sha256": "04901ce0824911acc6bff845ad11b6ac74a4fb52de399f6b30c1a72e95b654d6"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/ProjectTimeline.tsx",
+          "sha256": "3f06a8427adedc271ba468db83b5f8eee1fa528db0b098be1a8c30eca7da0f1e"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/RoadmapModelResult.tsx",
+          "sha256": "fa21426e1218819c2002a467581e3f13ce08ad098cb112ec6fc2217fe4d97e9d"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/__tests__/roadmap-model-result.test.tsx",
+          "sha256": "77d4f30404a3a1fd51bdc34b2784ad9f68f503c3749dadb46f49d86f1394c11f"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/roadmap-ui.tsx",
+          "sha256": "bceecb200dda178c4e3c18d9122f93ae0b9e3f1da1dbb08044927da3ac68fd7e"
+        },
+        {
+          "path": "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+          "sha256": "00dfaba79eafd01eb7389c9b5cf172f3869f7f725ae20caf5f6bad0870e3269e"
+        },
+        {
+          "path": "apps/electron/src/shared/types.ts",
+          "sha256": "54e41efcad47209813c77b710cfe02188a36c5e22c30d02d5be82cfb17232485"
+        },
+        {
+          "path": "apps/electron/src/transport/channel-map.ts",
+          "sha256": "9f51506f65cf275f5d6f9fc11ead4fb478b12d9e542d956badd6fea24251b752"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/__tests__/roadmap-boundary-runtime.test.ts",
+          "sha256": "42dc3f259d51ce302d10985f4c07ea51856ff820d963a0d1c73476a9374a00e6"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/__tests__/roadmap-model-provenance.test.ts",
+          "sha256": "3410ff5e97a9846f8ea81df7424ba38cfd52bdaa280d729bea5efa6beff65a64"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/projects.ts",
+          "sha256": "a9eaeb0f4b3f1ec98bd8301885784c08b7f891870359424358a97c64943d7849"
+        },
+        {
+          "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+          "sha256": "753ad2ebfce2c1ed4e7821aa4487099367ffdc6b35365655eeda74391e8cf925"
+        },
+        {
+          "path": "packages/server-core/src/sessions/SessionManager.ts",
+          "sha256": "e306a725ac4099709ed86420deb8026fc0216ca4313d1eef336f941220fdc76d"
+        },
+        {
+          "path": "packages/shared/package.json",
+          "sha256": "1bc44bc1c9e6fdc348c000ff53fb4bdf884393f39e25b035e576a59a32c45e67"
+        },
+        {
+          "path": "packages/shared/src/agent/claude-agent.ts",
+          "sha256": "4f55936cd90345136f746ee6e7909b10dc34a98c2cc085b745a6e1788b02aba6"
+        },
+        {
+          "path": "packages/shared/src/agent/omp-agent.ts",
+          "sha256": "0735a7b92cc25237c3daa94891655023e00d49c6ff01b7ddd664e6e6e2017ca6"
+        },
+        {
+          "path": "packages/shared/src/agent/pi-agent.ts",
+          "sha256": "322f7c35ed63e174aaef6ba543710d3278965d47293e609f469d9f02b9a4c707"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/ar.json",
+          "sha256": "82ea5eb28511b28c802643169a6d92e71cfedf7b958e5073ac3b745def17d464"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/de.json",
+          "sha256": "8f529edb7fc3fa3ad354f5665a3e930e3a789a10d1e9e378b4350878fc7aeae8"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/en.json",
+          "sha256": "a50831c12c60252b26cfc723914966746dbfb19bf8ebdf5692644f88f614a26d"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/es.json",
+          "sha256": "403cb420571ed3f64a1ae194271d472520202f24f57435164b1dbd33c0df75a6"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/fr.json",
+          "sha256": "12cd7fd891f1fdec9d6da5824c8004b08d97e7d4ab01157a79449a88813b092c"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/hu.json",
+          "sha256": "adb6163915b43a8f927a33eac3dee5a56a1f1801682b99e637593059eb94e847"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/ja.json",
+          "sha256": "2ed4ae4dcbb6bd0483f0d523ef2b48e32ea16f4341121f130b740613e8c3e5bb"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/ko.json",
+          "sha256": "5e938150ac3121b9ebeaf7e5f0f3484d0740e9b594bde2b5aa699d2e9842e0ff"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/pl.json",
+          "sha256": "1fbf4cfe7a80f4adf63565d31d9a3059bddd9421a20102410c4f8d57c922b898"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/ru.json",
+          "sha256": "c9b9f4215cd7a15d60048baeff4ca51e06698e07ae10045bfc1ed7c90ea2cb38"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+          "sha256": "f67c0097e54a6bf7867af7933cc17496123dc9b91448ded8953fdd65a07ac9a0"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+          "sha256": "cb233d96bf75dc18d50e644dce6177d05c1830bc8ee3f496368db98ed36f3270"
+        },
+        {
+          "path": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+          "sha256": "8031cccab1c5b3ef7d66d8ee13b619841fe791820a7926430285030d145b67d1"
+        },
+        {
+          "path": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+          "sha256": "b3370522dabdac5bf62c8a08368719343e31bb2d98e57eddcb65563830403f61"
+        },
+        {
+          "path": "packages/shared/src/projects/__tests__/roadmap.test.ts",
+          "sha256": "db7adafe9d8346a09d3b37dd239f92d3f95bcfa681c9bc595cdbf32ee5bb8d1f"
+        },
+        {
+          "path": "packages/shared/src/projects/index.ts",
+          "sha256": "92e65add7579aa2b8a086aea15d79dbf86e63cbe630e50cebbd415d99a8daffd"
+        },
+        {
+          "path": "packages/shared/src/projects/roadmap-ai.ts",
+          "sha256": "293f5bf0fe18eda7af4928c2e89f8dfd260969aa4a877d2ca6e7588b252c0352"
+        },
+        {
+          "path": "packages/shared/src/projects/roadmap-storage.ts",
+          "sha256": "64f2efb5ea594942ed1fe3c45dbd02afea7f7b294c1e73e192d19f3f83f91b2c"
+        },
+        {
+          "path": "packages/shared/src/projects/roadmap.ts",
+          "sha256": "5f5600df01c60d4198b77fb755cd19942e1521dec71f7d2bfe9215caaf25e59a"
+        },
+        {
+          "path": "packages/shared/src/projects/types.ts",
+          "sha256": "45e6b15b90b60d52447d0d966ece6d1a0be9d64b50f5fa6d12a24b6a3e10188e"
+        },
+        {
+          "path": "packages/shared/src/prompts/system.ts",
+          "sha256": "db32086d243aca882764e331d93d9e35a680ff222b8eaf7dc5d1f16177da0660"
+        },
+        {
+          "path": "packages/shared/src/protocol/channels.ts",
+          "sha256": "c85ca7a093b73a8eb55646ed9dc560f72f06b890e644ce370475a7095e6bdd1e"
+        },
+        {
+          "path": "packages/shared/src/protocol/routing.ts",
+          "sha256": "cac503e3142ef269299e8b8451e6c1707506467d7d4aa446370885c37c054c3b"
+        },
+        {
+          "path": "packages/server-core/src/authority/__tests__/native-authority.test.ts",
+          "sha256": "4ffaa60ffdceca9f47ae8fffebaa49a425bca840d80e72a7356212414a584e6d"
+        },
+        {
+          "path": "packages/server-core/src/authority/__tests__/native-journal.test.ts",
+          "sha256": "b2c14eff6253b6ff8adddeefc0d9442d2e8763cb022b5aee6bf0158b2f70f36b"
+        },
+        {
+          "path": "packages/server-core/src/authority/native-authority.ts",
+          "sha256": "fbba32295c512debc2aa791bccbf5cacbcd2eff72924f22ad3ac6d1291d2a806"
+        },
+        {
+          "path": "packages/server-core/src/authority/native-journal.ts",
+          "sha256": "4371389616fbdf0f9ee498bc74f6f5681445d46fffe2130df7e2628e77412d52"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/browser-profile-import.ts",
+          "sha256": "3131144c297f0c1ecd6f1ddb7251bfd6d0e3ca2d44e612f2385635cf93604feb"
+        },
+        {
+          "path": "packages/shared/src/account-replica/__tests__/account-replica.test.ts",
+          "sha256": "bd6c807d3c8ed310478ed409085a08a4f88e79c52a24afe43635c4d0d4539608"
+        },
+        {
+          "path": "packages/shared/src/account-replica/outbox.ts",
+          "sha256": "adab9de3803d365ac40819cb74d5b89cf46893189d93afbcd52e3976061f129e"
+        },
+        {
+          "path": "packages/shared/src/agent/core/agent-budget.ts",
+          "sha256": "b5744fcb7adc758f5e5474c0cfa58c5048f8ba67be4692ebd37e2e8513f3ac25"
+        },
+        {
+          "path": "packages/shared/src/automations/occurrence-ledger.ts",
+          "sha256": "24e09244699e41442971b5a6e20fb9e72bf5811ff1bcd3333d3594e6ab3114ec"
+        },
+        {
+          "path": "packages/shared/src/utils/__tests__/sqlite-runtime.fixture.ts",
+          "sha256": "de751a01d860050a26d4c1a3d07f72204caec24930753679f7079e49eff5af37"
+        },
+        {
+          "path": "packages/shared/src/utils/__tests__/sqlite-runtime.test.ts",
+          "sha256": "91e43dde056419aca1ad0975fdf5d40ed79f8d32ebb8155fe26c7dbdc8bc0b2f"
+        },
+        {
+          "path": "packages/shared/src/utils/sqlite-runtime.ts",
+          "sha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab"
+        }
+      ],
+      "limits": [
+        "All original 109 tasks, 489 requirements, 464 edges and original 297-row scope remain. Zero complete original tasks are accepted by this wave.",
+        "Roadmap local filesystem CAS is not NativeJournal/team/multi-device acceptance. Derived Markdown and JSON are not one transaction; crashed locks, external writers/symlink races, legacy unversioned input and power loss retain their limits.",
+        "Controlled query backend and settlement costs are synthetic. Real provider cost/cancellation/cap enforcement, complete lifecycle and full AI roadmap acceptance remain pending; timeout starts after backend postInit.",
+        "Node CommonJS is mandatory. Electron binary absence is an explicit skip for an installed package whose download is omitted, not a runtime pass or a claim that an absent declared dependency works.",
+        "Prepared task-private UV cache proves exact local CI on this host; required remote CI, fresh network dependency transfer and trusted toolchain runner remain separate.",
+        "Standard build output inventory may include retained earlier files; packaging, signing, actual application UI/private OS custody, Windows, genuine Conation iOS and full provider/recipient acceptance remain pending.",
+        "Portable Electron bridge harness is a separate candidate and is not part of this source freeze or acceptance."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "roadmap-september-integration-20260930/independent-review.md",
+          "sha256": "a5a8401b03bda7c84a60b92b3daa83ff057e4d3704a9237cad2def7df55107f5",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-september-integration-20260930/source-manifest.json",
+          "sha256": "f0f2718c6caec04418d08f8c0ee12ed25587db1d06fff1768a9247d4879f8a9a",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-september-integration-20260930/root-transfer.json",
+          "sha256": "238b72ed21b0bac4439c7dab37f079570e911f41323c36a0dfa842674c052b6a",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/headless-final-independent-review.md",
+          "sha256": "b01718255e10f8f522503ece4fc63b484f607c912e8d7e21d875bd6689c38425",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/headless-final-independent-review.json",
+          "sha256": "10b08196e96581abb323e6e528426fa58bf5c8b47874c994e0bc3fb656f77144",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/headless-fixed-candidate-frozen.json",
+          "sha256": "27dc09549e2231ee449b9b1bc0b097a6892508f9a4b16826ddb3134cb476c5b5",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/cjs-final-independent-review.md",
+          "sha256": "de7b20b46697484d0453dc9168a9b49133ce4c3282677fbb7663824b23312e8c",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/headless-portability-review.md",
+          "sha256": "744d22d1927d30881b27c27aa167529c48c84597e2c71c5f7bfb08eebc00aa2f",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/root-transfer.json",
+          "sha256": "5ff1298a6b11a18c103a68483a7d317c07f6ab8c4bc82c07be968a6ffb47dccb",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/shared.txt",
+          "sha256": "d6e3c10bff3115f0b5a49763fa3e7027676430ea0a3e7e9eb87d7d948509cdfd",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/shared.json",
+          "sha256": "033cf6258af096370326147711afe088542cf5dd54091e41436395a164033295",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/locale-order-repair.json",
+          "sha256": "54cac1b493605680fa3ba84db1f1e281019a72c5b778d74078a63a2b96f2e219",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/gates.json",
+          "sha256": "4c5f202809075bbb7540ecb6e1a702808180fbbfb465b7ae41ea655d90e5b88d",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/dist-manifest.json",
+          "sha256": "66e634a55c29252118c3a7d38feab02ca988a42e66aeabc31cf335abe4068945",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/shared.txt",
+          "sha256": "6351d8b8a4ff000cd8f2a67f0fa7b4af63bac47666c7a97f39487ae18a245674",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/server.txt",
+          "sha256": "8c6b81a251378ae0b465f16e0ed5aa3a3e9d219bf7224ca122fbd4050a409e27",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/electron-ui-core.txt",
+          "sha256": "3180f914fdf7b47f8d3a8a8bd2e8833098745a9b63204823e94521d3495f716c",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/validate.txt",
+          "sha256": "c2767a458fd60ff5d9319b7f676895737984eab66d2e1d5689834a97b2cc65bd",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/build.txt",
+          "sha256": "4d2dffffdfa16295e6f19359b0c309e32a47a84e7bf044cea85ccee042dc5203",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        }
+      ]
+    },
+    {
+      "id": "PORTABLE-ELECTRON-BRIDGE-20260930",
+      "basis": "Portable actual Electron bridge commands with explicit task adapters; independently reviewed and rerun on current SQLite/production preload",
+      "result": {
+        "status": "PASSED_BOUNDED_RUNTIME",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "scripts/tests/electron-native-bridge/run.ts",
+          "sha256": "2d2bba6633cecfdbf7da11cc72b6093831fc653a0f05b420fe657ab862609f5f"
+        },
+        {
+          "path": "scripts/tests/electron-native-bridge/fixture.ts",
+          "sha256": "b21ba3d3ba7204d71d03f1d4844f5b87ee334e5a157fc72e983969183cc450e1"
+        },
+        {
+          "path": "scripts/tests/electron-native-bridge/tsconfig.json",
+          "sha256": "2ab9c623163a122795aa25c4658a6f5518c94adc578ba164e5f1995efeb4edcd"
+        }
+      ],
+      "limits": [
+        "Both Bun and Node commands are entry runners. All storage/service child processes are actual Electron39/embeddedNode22, not proof of Bun execution of the Electron main module.",
+        "Synthetic task-only administrator/enrollment bootstrap, minimal main bootstrap channels and generated persistent credential/key DI are explicit; full product main and OS secure-store custody remain pending.",
+        "Hidden muted BrowserWindows use production contextIsolation=true/nodeIntegration=false/sandbox=false. No foreground UI, provider/model query or media operation is performed.",
+        "Recovery is normal child termination and fresh process, not SIGKILL, lost response, power loss or a timeout recovery acceptance. Timeout cleanup is source-reviewed, not separately injected.",
+        "The post-owner-destruction caller was already foreign. Its denial does not isolate destruction cleanup causality or webContents ID reuse.",
+        "Negative expectation inversions prove harness assertion propagation; they do not establish detection of deliberately disabled production guards.",
+        "Three new developer scripts and additive docs have scoped typing and actual commands on this revision. Existing4870 sources exactly retain whole union/CI/build proof at b512d93d; no new whole-repository gate run is implied.",
+        "Full product UI E3/#385/#1150, private native creation/custody, providers/recipients, Windows/Linux desktop/cloud, genuine Conation iOS, packaging/signing and trusted remote CI remain pending. Zero complete original tasks are accepted."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "electron-native-bridge-harness-20260930/final-source-manifest.json",
+          "sha256": "45f7ea3754b702e5f3b965ee7adfddba2b36410f9179333fab9294810ae1342f",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+        },
+        {
+          "id": "electron-native-bridge-harness-20260930/final-report.md",
+          "sha256": "f54a313e93cb1a2e003fbbe5fd9636ddd5785fede8f0c5a034a4371485790c64",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+        },
+        {
+          "id": "portable-electron-harness-20260930/independent-review.md",
+          "sha256": "31fb24d807b2623c11428bd1bed57d7d17ef9df62dc5c74c2d40b1b30c026ebe",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+        },
+        {
+          "id": "portable-electron-harness-20260930/independent-review.json",
+          "sha256": "e04631ea08df63a8144f1e828f94bac6088ae1805f1ff4718a7d9bd62b43bfaa",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+        },
+        {
+          "id": "portable-electron-harness-20260930/root-transfer.json",
+          "sha256": "ebd87cc094a29194a3b6a48043c38b0462cd69c2b57407830924e3c4bc6a2f7a",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+        },
+        {
+          "id": "portable-electron-harness-20260930/integrated-gates.json",
+          "sha256": "c1bab1e8531e2f987a07e0bd7b744fd4a2175406b506f4b6d47b35acf18aecea",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+        },
+        {
+          "id": "portable-electron-harness-20260930/integrated-bun/receipt.json",
+          "sha256": "cee3959459f7d9dfc90432dbaea19467a48c16cd46990be75199bdb31455d1ee",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+        },
+        {
+          "id": "portable-electron-harness-20260930/integrated-node/receipt.json",
+          "sha256": "4deea6d70354ae3edfff9f8b66f2bf4fa13fb3cb43706424256a159f541dbfef",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+        }
+      ]
+    },
+    {
+      "id": "L10N-LINEAR-PARSING-20261002",
+      "basis": "Reviewed production locale resources and grammar-preserving parsers; five combined standard gates and fresh actual Electron bridge commands",
+      "result": {
+        "status": "PASSED_BOUNDED_RUNTIME_AND_LOCAL_GATES",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "packages/shared/src/i18n/locales/ar.json",
+          "sha256": "ecfb97c2845d7ba266c840f5ec2be0ba6755e3753c1b327e80a1a5cd64e1ebc8"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/de.json",
+          "sha256": "d8591cf7041b647c35449586c02d46cec7854b3d59c1f421c885eeeef17f81f1"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/es.json",
+          "sha256": "764697afe0e2cffc7ed60a00d3df63517a7c09fe6ccb423ba60130d30d591185"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/fr.json",
+          "sha256": "79000f8207d4dcde2c4251ff7567fe145a9b4ca8b575b5ef46dd929290d30201"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/hu.json",
+          "sha256": "3e377460f8a79f55e67f34d7935e77bf498bc8062eec25b57e7461ef526736b3"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/ja.json",
+          "sha256": "16012cdec375a6943f1fc999f3a26b75954f58e78958d7b71efe14bb6aa263e2"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/ko.json",
+          "sha256": "e9fd9d62ba11f0f1c82da03b94257e9f9137b5932fd6861ad2610882d3591880"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/pl.json",
+          "sha256": "66d39b8b128df9457b79377b7f0f4a3737497e60e0fd8438f1d5d6f28f073c2b"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+          "sha256": "4b94c2f446f42cbb06e1726c3783543979ce98863e6d0460a225bf7145ef7e1d"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+          "sha256": "9523b1244625ccb40e80985485042adc254c85dc2d1afc963849cbee2a7c4ee5"
+        },
+        {
+          "path": "packages/shared/src/team/mentions.ts",
+          "sha256": "b5a0ec80007b597790a77d97e80cc09db4695c9045c305f945aece4e3335d8e0"
+        },
+        {
+          "path": "packages/shared/src/mentions/index.ts",
+          "sha256": "d1bb62a2bc322c9962241e05027cb5dd82eb1acf57a11befa84b93270562a93c"
+        },
+        {
+          "path": "packages/server-core/src/domain/title-sanitizer.ts",
+          "sha256": "d7c9a0ca01dc1c6f4ea054811313128b5de53cc05e5d6e257635af9c3dfdc61a"
+        },
+        {
+          "path": "packages/shared/src/team/__tests__/mentions-linear.test.ts",
+          "sha256": "0fce76d9af815fb241b1af2ff126f31a8b9b71508c4430c3c3f200f391475b02"
+        },
+        {
+          "path": "packages/shared/src/mentions/__tests__/path-mentions-linear.test.ts",
+          "sha256": "a84d3dfe970e248540dba25fd29e91efd6a4188ba68468b6b093ede1f3598652"
+        },
+        {
+          "path": "packages/server-core/src/domain/title-sanitizer-linear.test.ts",
+          "sha256": "9b1dcf21e44f4f7f2756b3efd35a57876b94bad5e1de2c004b7c771dcd57865f"
+        }
+      ],
+      "limits": [
+        "Translation acceptance covers production resource/plural resolution and actual React server rendering. Mounted UI, RTL/bidi layout, native-speaker review, accessibility and the full L10N-01 criteria remain pending.",
+        "The parser repair covers only identified delimiter/dot paths. Other regex families and whole-module complexity remain outside this evidence; no universal performance or complete security acceptance is claimed.",
+        "The independent hosted alert review remains unfinished after the reviewing agent was stopped by the platform risk restriction. Original check evidence is retained; ordinary parser/test acceptance does not close alerts or accept the hosted check.",
+        "Both portable bridge entry runners execute real Electron children with production preload/services, synthetic fixture enrollment/key injection and hidden sandbox=false production-compatible windows. Normal restart/replay is not SIGKILL, power loss, full product UI E3 or OS secure-store custody.",
+        "Fresh GitHub metadata observes zero registered repository/organization runners and no required macos-toolchain/linux-toolchain labels. Local gates do not replace required trusted remote CI.",
+        "All109 task contracts,489 original requirement rows,464 dependencies and297 original backlog rows remain intact. Native product/provider/recipient/platform, packaging/signing, compound integration and all complete original acceptance remain pending."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "roadmap-l10n-20260930/root-transfer.json",
+          "sha256": "7a0b3a5600cde916c462f1e4df5383e28aac78ecd4c6a4ee0facc14022fc2d3a",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        },
+        {
+          "id": "roadmap-l10n-20260930/runtime-language-review.md",
+          "sha256": "01eeddbc4e9577c703869255863965f76bc080bd769b6a2645b7b5ed4ff99094",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        },
+        {
+          "id": "roadmap-l10n-20260930/runtime-language-review.json",
+          "sha256": "9a6481666100aa582aa4ec0b346a346a71c43166fd6447a86f8b54dd64b5ebb2",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        },
+        {
+          "id": "roadmap-l10n-20260930/ar-plural-extension.json",
+          "sha256": "4bc38881b70196f0f13737abc86e2fbff524e0f7eb9abeaf6abcdf375316080e",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        },
+        {
+          "id": "linear-parsing-20260930/frozen-manifest.json",
+          "sha256": "3d955ca144061b4a1c38f3e298b180fe811b062a50b48286cb277771a22ccb7b",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        },
+        {
+          "id": "linear-parsing-20260930/independent-review.md",
+          "sha256": "011331b58edd09e3663f6cb59a144ae57f0da4cb05bbbfadc89b783b6eb70b42",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        },
+        {
+          "id": "linear-parsing-20260930/independent-review.json",
+          "sha256": "1611f7a8ee9afb9d3c2a58be3517c22281eb20dccc239d33a7c1b045bc5897c3",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        },
+        {
+          "id": "linear-parsing-20260930/root-transfer.json",
+          "sha256": "e4bb3932f95b60021b649caca077612c3a6f6e7073d32139cdb67cd14396d3e3",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        },
+        {
+          "id": "l10n-linear-parsing-20261002/gates.json",
+          "sha256": "c622bb1f425686e2cfc2c23d56e945a78bbbbcd742f214fba570e6319d8e4ccf",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        },
+        {
+          "id": "delivery-freshness-20261002.json",
+          "sha256": "dfeaabd0aa3144742f1fe676794d93ee437c254998ea73723b9ebda903ac026e",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        },
+        {
+          "id": "l10n-linear-parsing-20261002/combined-bun/receipt.json",
+          "sha256": "70fb7f98b7503db817efe8658808c7d9f7d0e866432b3264cccfe64e7a58412e",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        },
+        {
+          "id": "l10n-linear-parsing-20261002/combined-node/receipt.json",
+          "sha256": "425851d8a63d34ff206b49795dc4011a43a9d8d283713794bd294670092abede",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+        }
+      ]
+    },
+    {
+      "id": "NATIVE-PRODUCT-NOTE-20261002",
+      "basis": "Actual standard product Electron UI plus independent task-only canonical/journal/replica read-only witness after normal restart",
+      "result": {
+        "status": "PASSED_BOUNDED_NATIVE_NOTE_RUNTIME",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "apps/electron/src/main/native-replica.ts",
+          "sha256": "cf2ff9d073d2c23ad6c85bd079f2c27fbe368b201981d822299e135920221cc5"
+        },
+        {
+          "path": "apps/electron/src/preload/native-replica.ts",
+          "sha256": "8a83168294c2985393e0427907edb714f4964e5db641844d151e21073af99f95"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/notes.ts",
+          "sha256": "376745d47b2e596638b99a689b2f5e192a6e7985e071feaa984ad6d8078879df"
+        },
+        {
+          "path": "packages/server-core/src/authority/native-journal.ts",
+          "sha256": "4371389616fbdf0f9ee498bc74f6f5681445d46fffe2130df7e2628e77412d52"
+        },
+        {
+          "path": "packages/shared/src/account-replica/outbox.ts",
+          "sha256": "adab9de3803d365ac40819cb74d5b89cf46893189d93afbcd52e3976061f129e"
+        },
+        {
+          "path": "packages/shared/src/utils/sqlite-runtime.ts",
+          "sha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab"
+        },
+        {
+          "path": "apps/electron/dist/bootstrap-preload.cjs",
+          "sha256": "a89c1fc7e0f67fbcbc1b133dee5c5cce0975c97d5a121c2c5a7f457644e546f7"
+        }
+      ],
+      "limits": [
+        "No key/credential/encrypted envelope reads",
+        "Receipt envelope existence only; no independent cryptographic validation or OS custody claim",
+        "Normal reload/restart supplied by UI producer; no SIGKILL/offline/powerloss claim",
+        "Tasks storage unavailable/local cache: native Task-to-Note acceptance pending",
+        "No unrelated notes/profile contents inspected",
+        "Observed ACK metadata matches sequence/revision and one encrypted receipt row exists per operation. No independent decryption, cryptographic validation of encrypted receipt contents or OS secure-store custody audit is claimed.",
+        "Task-private enrollment/profile is reused. Existing user entities and permission grants were not changed; no provider/account/network operation is accepted.",
+        "Ordinary product reload/menu quit/restart is not SIGKILL, power loss, offline/revoke/conflict UI, two-product-consumer DATA acceptance or a complete device/platform matrix.",
+        "The source manifest and previously passed full4876 gates remain unchanged; this is documentation/runtime evidence only, with zero new production source edits and zero complete original tasks accepted."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "native-product-acceptance-20261002/ui-observation.json",
+          "sha256": "35427de3abca1875347e4a16bc6ea2bdaa5fcd82069a691af7a581181ea291f5",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "native-product-acceptance-20261002/report.md",
+          "sha256": "fa5bab2400aeaa5edb191a5603f654e107dd409118d4f86ed89483ecd63fdba5",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "native-product-acceptance-20261002/readback-summary.json",
+          "sha256": "bfe6df3b96324ee48aea0981e22ed093d323474521794424056784728b091f61",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "native-product-acceptance-20261002/readback-review.md",
+          "sha256": "581d971464562be82ff6f6f725e89143bfb9147b7098cd7106d8720db54252b5",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "native-product-acceptance-20261002/reopened.png",
+          "sha256": "313c2767bd5dc66334bcb16cfbb79c9f7b695afb80c21c5747e6459f764c87c6",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "native-product-acceptance-20261002/edit.ax.txt",
+          "sha256": "83440b408a30fc7f51f79cbd79c903d1b4fdfb4a3dfaf755ed9691db6332df59",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "native-product-acceptance-20261002/task-unavailable.ax.txt",
+          "sha256": "6176dba7113075684cbeec2d67b057b6c9b261f7143b15eb93116b3082cf29dc",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "native-product-acceptance-20261002/task-route.ax.txt",
+          "sha256": "b2c1b9f45efa63f00645c9ee168a96de3e4df38a652a0f5ac98de049b4b4497d",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "native-product-acceptance-20261002/reload.ax.txt",
+          "sha256": "003ba41198b39a0eae58fddae3f4a0f20a09754529fbb9080f6fe6fdcd2267f1",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "native-product-acceptance-20261002/restart.ax.txt",
+          "sha256": "b2c1b9f45efa63f00645c9ee168a96de3e4df38a652a0f5ac98de049b4b4497d",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "native-product-acceptance-20261002/reopened.ax.txt",
+          "sha256": "56300f6b0407fded42c38b739a98c4895ffc4e574009f15574e04e68a6aa9ceb",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        }
+      ]
+    },
+    {
+      "id": "PROJECTS-GENERATION-20261002",
+      "basis": "Exact reviewed Projects hook plus old-hook negative controls, independent phased lifecycle and complete integrated standard gates",
+      "result": {
+        "status": "PASSED_BOUNDED_RENDERER_AND_LOCAL_GATES",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "apps/electron/src/renderer/hooks/useProjects.ts",
+          "sha256": "2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac"
+        },
+        {
+          "path": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+          "sha256": "bf3e47fc9d5bede727681bc051385f77020b6cc2d600d2c6f0a392c9bba4d381"
+        }
+      ],
+      "limits": [
+        "Full Projects provenance/ACL/AI preview/create/apply, linked Tasks persistence, collaboration and the original acceptance criteria remain pending.",
+        "Controlled hook tests are not native workspace switching. Any independent browser mount uses synthetic IPC and remains separate from real Electron product RPC/storage acceptance.",
+        "Prior native Note reload/restart/ACK metadata evidence remains bound to production source db8413; this patch does not repeat or expand its acceptance.",
+        "No catalog wrapper, shared schema, native grant, store, provider or dependency changes. Cloud/R15 and PR1323 are not automatically merged.",
+        "Local complete gates do not replace required remote CI, independent hosted-alert review or macOS/Windows/Linux/cloud/iOS release matrix.",
+        "Original109 tasks,489 requirements,464 dependency edges and297 backlog rows remain intact; zero full original tasks accepted."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "projects-generation-20261002/root-transfer.json",
+          "sha256": "1ef2e64815bf6861bb40e741ffe0e745a23d08890bcf6eb73e8cff2a6f8d88b0",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+        },
+        {
+          "id": "projects-generation-20261002/frozen-manifest.json",
+          "sha256": "41a62b57d4e15c7a0b73202a7a219145137072df98647469ce5ebd3721a3a21e",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+        },
+        {
+          "id": "projects-generation-20261002/independent-receipt.json",
+          "sha256": "24cb0c2b8e37fd1b1541d8796ffac4688f7dfc323f5c42deaa5d18aede9fa8c6",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+        },
+        {
+          "id": "projects-generation-20261002/independent-review.md",
+          "sha256": "83ddb805a0e20c272d596941baf0729db30a22c0870328371c3366b35b0f03cf",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+        },
+        {
+          "id": "projects-generation-20261002/independent-lifecycle-results.json",
+          "sha256": "7f6d48c5156de91fcccf1eb2ef2ba8b5419d0820e04ba83836bc406901cb4e5f",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+        },
+        {
+          "id": "projects-generation-20261002/joint-gates/gates.json",
+          "sha256": "f1b19ff548044e12b8d5697b48663c4ae1e46c953e2d7f337cf51aa09474be25",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+        },
+        {
+          "id": "projects-generation-20261002/mounted-dom-receipt.json",
+          "sha256": "a1f2ac49e8ce27d220fe71e34bb6d5187f5c46f561c338a1cb09a650b3bd68b7",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+        },
+        {
+          "id": "projects-generation-20261002/mounted-dom-review.md",
+          "sha256": "a5a0f84fa77e5b868bffbb319d1d96b844a002b1c75b142f0ea246707cf24f3f",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+        },
+        {
+          "id": "projects-generation-20261002/mounted-dom-results.json",
+          "sha256": "64c3aaee319302f7aaee569dcb35aa9b013d32f27ab3b8794ea84c3f9476bc7e",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+        }
+      ]
+    },
+    {
+      "id": "FOCUS-NOTIFICATION-SCOPE-20261002",
+      "basis": "Actual existing hook/storage behavior plus independently mounted FocusPage DOM actions and exact old-source controls; five complete integrated standard gates",
+      "result": {
+        "status": "PASSED_BOUNDED_FOCUS_NOTIFICATION_SCOPE",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "apps/electron/src/renderer/lib/focus-session.ts",
+          "sha256": "51755fed0b4e5e20099fc343b4505242b5ed7c0681c00cb866281209ebf1ebf9"
+        },
+        {
+          "path": "apps/electron/src/renderer/hooks/useNotifications.ts",
+          "sha256": "8affc88f11ab0bbc48b094e53e6688d4aab42230f4ea4b0b5cc967d4a8e324d4"
+        },
+        {
+          "path": "apps/electron/src/renderer/hooks/__tests__/focus-notification-scope.test.ts",
+          "sha256": "5a5afc8af1aab61831417c6423999e0063db7a520293248176de6aa55a504944"
+        },
+        {
+          "path": "apps/electron/src/renderer/hooks/__tests__/fixtures/focus-notification-runner.ts",
+          "sha256": "cd5ee92c40e76834481faade48645ef08acfe84af669620aefcc34a6c88a7292"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/focus/FocusPage.tsx",
+          "sha256": "3c1672d9307e985646f40ce99dfaaa19069a9009a958e0be049e4d4aefb10503"
+        }
+      ],
+      "limits": [
+        "This patch repairs existing renderer queue identity, notification-setting ordering and current-workspace component actions. It does not establish authenticated actor custody or workspace authorization.",
+        "Mounted ReactDOM uses actual FocusPage, UI and Focus/storage functions with synthetic workspace/data/inbox/i18n/navigation/summary adapters and task-only browser storage. Native OS notification, Electron pointer/keyboard and full product acceptance are pending.",
+        "Worker question/answer lifecycle, waiting_focus, automatic expiry/drain/delivery acknowledgment, persisted timer/queue crash recovery, cancellation and critical exceptions remain unaccepted.",
+        "Global localStorage timer/history and existing read-modify-write persistence remain unchanged; no durable multi-user queue, second store or speculative question API was introduced.",
+        "Prior native Notes and Projects runtime evidence retain original source revisions; no rerun or acceptance expansion is claimed.",
+        "Required remote CI, hosted-alert review, real providers/recipients and complete macOS/Windows/Linux/cloud/Conation iOS release matrix remain pending.",
+        "All109 original tasks,489 requirements,464 dependencies and297 backlog rows remain intact; zero complete original tasks accepted."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "focus-notification-scope-20261002/frozen-manifest.json",
+          "sha256": "7436047ab7a42cbdd065cfe7810d23ce6ecece5368fd1180d2095bb00d59994f",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "focus-notification-scope-20261002/report.md",
+          "sha256": "86e76527a7ab5a29e4f0bdb1f7fcf1bb73f20f1308a21c40f7679d89b771a430",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "focus-notification-scope-20261002/independent-review.json",
+          "sha256": "891428cd736220d9c6d0eed009ff291b03ec9183fce892e04df43fd86b7dcd84",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "focus-notification-scope-20261002/independent-review.md",
+          "sha256": "e57d1b10c3f8a8d30f845c5f8972a3e5d53cba97638e16673687fde71dc8621e",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "focus-notification-scope-20261002/root-transfer.json",
+          "sha256": "ce61f52fc1d605733a3d6ab09ab7b35ebcdf4dad3ab1fc5457ec835bf9eb70fb",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "focus-notification-scope-20261002/joint-gates/gates.json",
+          "sha256": "65043fa90bfbd12eaa2fb83f345fee94d147f49e9a817eb51e005328ea321687",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "focus-notification-scope-20261002/independent-dom/candidate-final.log",
+          "sha256": "edacc3b18dbbb4e9db6dd49db6e76017a48783fe0dfd35f04e0cfac3529688c6",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        },
+        {
+          "id": "focus-notification-scope-20261002/independent-dom/old-final.log",
+          "sha256": "9ae7cae175e3f0641e06f87ff1728cb81a42a6069fd0503b856c484424dada6c",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+        }
+      ]
     }
   ],
   "taskEvidence": [
@@ -2363,360 +3189,21 @@
   ],
   "gitPublication": {
     "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-    "revision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-    "gitTree": "2e887bd16058863272abb29ac847d973784a9858",
+    "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+    "revision": "d917e429615e1b8053156a60fa3051b96fdb9284",
     "branch": "feat/september-program-20260930",
     "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
     "isDraft": true,
-    "remoteHeadReadback": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-    "observedAt": "2026-09-30T11:46:48.859Z",
-    "originalCandidateSourceManifestSha256": "9f2f2c953155aa7350454a561f88c1564f465a69ef61165f668141a7b6ee28c0",
-    "originalNamedSourcesExactMatchCount": 75,
-    "namedSourceCount": 76,
-    "explainedWhitespaceChanges": [
-      {
-        "path": "packages/server-core/src/handlers/rpc/native-data.test.ts",
-        "candidateSha256": "1731037ccfd643ff1ac2fbb4ae345f0de99dc974dcedc7e5c5f9f17020f3e91d",
-        "committedSha256": "2857fd57340e3778ce18ffbe1fb6e1e451632905e5539310ea8667b77adb1696",
-        "reason": "One extra final newline removed during staged diff --check; no other bytes changed."
-      }
-    ],
-    "committedNamedSourceManifest": [
-      {
-        "path": "apps/electron/src/__tests__/transport-resolve-target.test.ts",
-        "sha256": "ac107dd204516a2aa15303a9113affb17df7a2f686598d7637b4fc30fb3ece59"
-      },
-      {
-        "path": "apps/electron/src/__tests__/transport.test.ts",
-        "sha256": "34cff30e362dca648ee52bfcc52b1b18e8c320327203a29a9908dc743ee6cc03"
-      },
-      {
-        "path": "apps/electron/src/main/__tests__/browser-cookie-consent.test.ts",
-        "sha256": "4ccee767a2ee07d545e4efc313a9c3e1218312667d2956110d7ad42e653f1427"
-      },
-      {
-        "path": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
-        "sha256": "2e17e5d5588695bc2c6fc9cbf3b8e880d72fb66615e687cb3bba977afc21288c"
-      },
-      {
-        "path": "apps/electron/src/main/__tests__/native-replica.test.ts",
-        "sha256": "aa59b78e8c3303ca7084673c3eb5c3615c18c24c2508a91345b3f8758fbfef6c"
-      },
-      {
-        "path": "apps/electron/src/main/__tests__/native-transport-credential.test.ts",
-        "sha256": "8ba9abcd91c09d22834fc0276b248ed88460ea77596446e3502d25b2f3832f9a"
-      },
-      {
-        "path": "apps/electron/src/main/browser-cookie-auto-import.ts",
-        "sha256": "1b3e64f8204bfc133286b72789385df71be960ecec2472c0cba916738d56d142"
-      },
-      {
-        "path": "apps/electron/src/main/index.ts",
-        "sha256": "715b2c0ab4fed46bc9709be1e567926c2ffbd80ce631dc5f6818be3654f9e740"
-      },
-      {
-        "path": "apps/electron/src/main/local-client-binding.ts",
-        "sha256": "6e9db6254eb89c8f72d63fbe15268e9a27bbda879972f588effec08f39ddfe91"
-      },
-      {
-        "path": "apps/electron/src/main/native-replica.ts",
-        "sha256": "cc7772f69a0c942ac1331f2892f88b936a6a3c85e3a908db292f37ea5473f2b7"
-      },
-      {
-        "path": "apps/electron/src/main/native-transport-credential.ts",
-        "sha256": "f8c39342c41bce0c4d6b04a31b618062a34d8523c45d8fd1b4e61352d432d6cd"
-      },
-      {
-        "path": "apps/electron/src/preload/bootstrap.ts",
-        "sha256": "430f176d64563ed99d5d662563b36f8d595a02a38f072c26cc8062dd8f1407e0"
-      },
-      {
-        "path": "apps/electron/src/preload/native-replica.ts",
-        "sha256": "85876b733efd60d997552909c966687881d57837f34c56b3420d26c09841130c"
-      },
-      {
-        "path": "apps/electron/src/renderer/App.tsx",
-        "sha256": "4f4bce09432a7df46ab568bcf3fdb120a4d538248b27b4ae181644dc73799d68"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/automations/types.ts",
-        "sha256": "3869be1cb2f46c8de8917d0e438613aa77593f808f67319165a19a9a31405b07"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/onboarding/WelcomeStep.tsx",
-        "sha256": "e552d5af2643a1e8196da9fe8a2b6be92e4e05510e8da8df01122be03a373e02"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/onboarding/__tests__/onboarding-username.test.ts",
-        "sha256": "894c79a7717da55ad0ccdf617b089862ddff8ace7abc74a3df709792ced94ed5"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/onboarding/__tests__/rox-runtime-default.test.ts",
-        "sha256": "cca022c4d1a6223a872f001cf28b4e63373947e1220532d6d447988f5056ab8c"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/onboarding/onboarding-username.ts",
-        "sha256": "745d6dd3a004e20433642913bfd6f9c83f183ca9aa8b09d94065431df701d760"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/onboarding/rox-runtime-default.ts",
-        "sha256": "a0d2ed6ece99a3085538f12c3d3fa499e6a89745e6a2b196f91f04595bd3a260"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/team/team-store.ts",
-        "sha256": "b0e65c86e20509b2eb11c6bb6b725bda6e0e8e0541a11d64f1b9f5fd3079a50f"
-      },
-      {
-        "path": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
-        "sha256": "c8c993f307657a84b6f0d0e1b4bf3dcd10d1b7c37ac40d66f5d756ef2cc385cc"
-      },
-      {
-        "path": "apps/electron/src/renderer/lib/message-tts.ts",
-        "sha256": "7216e6fbd9ce2fca10f4ba270fdb3693314cd1c2257ce3345bf3f6e8d61be24b"
-      },
-      {
-        "path": "apps/electron/src/renderer/lib/native-notes-sync.ts",
-        "sha256": "212d6cb14b9f573ac82e420ed42de5ec11db7fb3829f901095332dddc3d06cbd"
-      },
-      {
-        "path": "apps/electron/src/shared/types.ts",
-        "sha256": "31b7b89dfbe3cdf5f9ec54315a0484dd9fb407e9e1469e5a45e64038fcab0506"
-      },
-      {
-        "path": "packages/server-core/src/authority/native-authority.ts",
-        "sha256": "5672dd82decf337699e69a243aed10ac44c0e6585dcab7282a8670a80ef905b2"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/__tests__/browser-profile-import.test.ts",
-        "sha256": "82d8a39afbbfd7cd181d6ff49070ca2493ce7bb48bd037c348fe58d18ec81a8c"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/__tests__/native-self-profile.test.ts",
-        "sha256": "44fafc1fa6216141fd44f9bb593ce76607a3a07ed91cfff50d7c6f041cfd41a9"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/__tests__/native-startup-runtime.test.ts",
-        "sha256": "9e0f2d596caea5b5d56b3a597a04dc74dbd51f3a48c5d9988b5ca33eb85212e4"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/__tests__/native-workspace-startup.test.ts",
-        "sha256": "b4885a43143a42b52b8bf321b9a18b033d1c2dfa877605955b675c857ac6d4f5"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/__tests__/orgs.test.ts",
-        "sha256": "89ab1466ad5b3a6b89a99fbe79625960dcfa33a30e2152ea6515f84e4338734e"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/browser-profile-import.ts",
-        "sha256": "8393f33506979754c9f92242e3684a6e81afca648559d1f1c4a751459669eed1"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/llm-connections.ts",
-        "sha256": "d75ae41f1924f29720745e9a6066ce41e71b2f21af14cd4d7ca2116db2c35582"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/native-data.test.ts",
-        "sha256": "2857fd57340e3778ce18ffbe1fb6e1e451632905e5539310ea8667b77adb1696"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/notes.ts",
-        "sha256": "0c4535bbc1c5a6b56f434814087014c9dcd262d433491010517e54e9d48a90cf"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/orgs.ts",
-        "sha256": "cc97990aa4c52a9cdec2f5b514788b72af15339c3429c285a9ad7e874c0adc4f"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/workspace.ts",
-        "sha256": "55fc1ccc3b8aada91dc1383e59c47274d304733c982cdedac5d43ac6f57087ac"
-      },
-      {
-        "path": "packages/server-core/src/meetings/__tests__/budgets.test.ts",
-        "sha256": "45a8d574ad60402e4354dfbfc077ea569d5f619e54f1a4e1376d0f36907475de"
-      },
-      {
-        "path": "packages/server-core/src/meetings/__tests__/followup.test.ts",
-        "sha256": "cb6a396426a5e5923ab5f85b24a663157c0152cded5607d8b4772ad94ed368ab"
-      },
-      {
-        "path": "packages/server-core/src/meetings/conation/native-shells.ts",
-        "sha256": "9dd8e2562745b2c9d9b70fdd35109fa7e88b51c4ab08a8125bbc85549992671c"
-      },
-      {
-        "path": "packages/server-core/src/meetings/manual.ts",
-        "sha256": "51572a04bb6982df80b7d3779030514a8c1d31cdfa8c8f0302f9bace9b1608d3"
-      },
-      {
-        "path": "packages/server-core/src/meetings/tracker-actions.ts",
-        "sha256": "38e40828c6ac1a8977b9c8f0ab0e32de5b4887dd98337dbf48d162f895c1637c"
-      },
-      {
-        "path": "packages/server-core/src/meetings/types.ts",
-        "sha256": "f4297356c7ccf7dbe6af59a017e6192e3b9f0593f2138e02105479ef73091b81"
-      },
-      {
-        "path": "packages/server-core/src/sessions/SessionManager.ts",
-        "sha256": "5c40bf4e6940b2ee47728a53d4671b6083fc2ceabd78fb6305a8359acdcc0994"
-      },
-      {
-        "path": "packages/server-core/src/transport/__tests__/server-lifecycle.test.ts",
-        "sha256": "e84519a0bbdb763d792b20aa5f07bdaf718a9be6ed231691dedcf8781615d4b0"
-      },
-      {
-        "path": "packages/server-core/src/transport/server.ts",
-        "sha256": "b5487b1e7ece70969c81334ced984a06d8789bd3b9e28a1b1acf1f1eabf62644"
-      },
-      {
-        "path": "packages/shared/src/account-replica/__tests__/account-replica.test.ts",
-        "sha256": "1ccfd0694d96ad59f8cd1ce23dea820da5f1d6ce87dc216cc971418fc5eba324"
-      },
-      {
-        "path": "packages/shared/src/account-replica/outbox.ts",
-        "sha256": "b6b7da4943e0511c58a47d0f78ebe644fb9367ec7a0327b3cdbb26a39d871d79"
-      },
-      {
-        "path": "packages/shared/src/account-replica/replica.ts",
-        "sha256": "08e6059f1d60b19969a212eaa317a0f1743b83f39c8d2de0c8261690cc99e9c2"
-      },
-      {
-        "path": "packages/shared/src/agent/__tests__/omp-first-run.test.ts",
-        "sha256": "30d01df83017dc5134d0d089398297d1181bf15be26f93b3640b4b8f0d6cb358"
-      },
-      {
-        "path": "packages/shared/src/agent/__tests__/omp-public-runtime.test.ts",
-        "sha256": "7c3ba5ac8973c20e0a249148586ab7144d313486dfc4c6eef7fc1724200e6edb"
-      },
-      {
-        "path": "packages/shared/src/agent/core/agent-budget.ts",
-        "sha256": "a40f940fd07d236e47ca1f9c209e76c6c694e57cb330f438a4acd6a286ff3b96"
-      },
-      {
-        "path": "packages/shared/src/agent/omp-agent.ts",
-        "sha256": "933a8595da18e025a0c6843960709c4e16deb47694674ab4f0f5710e1e208ace"
-      },
-      {
-        "path": "packages/shared/src/agent/omp-first-run.ts",
-        "sha256": "64e0558d959e15eaaf762a0fe0189491f9367261b5e0636a4b9cf3c574d6893e"
-      },
-      {
-        "path": "packages/shared/src/automations/handlers/prompt-handler.ts",
-        "sha256": "3b689e450604c955d53ea7f4fa88c496ff823c3cb2ac1be6a9280fed2138cefb"
-      },
-      {
-        "path": "packages/shared/src/automations/occurrence-ledger.ts",
-        "sha256": "ca23b4299c25a9fb17fd03f89a75f4177db2be6ca61a092dab2bcb14ab948f4f"
-      },
-      {
-        "path": "packages/shared/src/browser/__tests__/profile-import.test.ts",
-        "sha256": "b45a3af0be94c9880484676bf9be51fe6b4a10a6979016fc9c962b8cdaae9dc2"
-      },
-      {
-        "path": "packages/shared/src/browser/profile-import.ts",
-        "sha256": "9ed4c6e5f10aac6a5c3771eff9764d02c627e93ef9184af20f8ab613434da96e"
-      },
-      {
-        "path": "packages/shared/src/credentials/backends/secure-storage.ts",
-        "sha256": "9d9a1536e2bfaafd305b720567a298e96903c547d77242f5b8ee79f3043d6017"
-      },
-      {
-        "path": "packages/shared/src/credentials/manager.ts",
-        "sha256": "4ff7351264b6c6bcceabdfbe353dd174b9aba3e24ad09baabfc35a3095311fc9"
-      },
-      {
-        "path": "packages/shared/src/credentials/types.ts",
-        "sha256": "e13367e3e04e051eba3e164b5e5e2a2a466fe1a05369492420148a4c539fd782"
-      },
-      {
-        "path": "packages/shared/src/gamification/storage.ts",
-        "sha256": "d09276e7ab98a2e175e6eff0e6b7a7583e2a74db4a744e622dce4a0cc5e967d2"
-      },
-      {
-        "path": "packages/shared/src/orgs/types.ts",
-        "sha256": "6e4fa9e1220b884f60cb8222af17089b15d6f7a8717b853b7473703ef579b64d"
-      },
-      {
-        "path": "packages/shared/src/pages/data-store.ts",
-        "sha256": "ce13453d850735e44c6e7c32ea9cb13b5a8d7e750bcb91f3a771cb1b97ea95ce"
-      },
-      {
-        "path": "packages/shared/src/privacy/__tests__/privacy.test.ts",
-        "sha256": "0802dc63f856e8629c57f9df43a436e029361d371d007d39d249a83e2be87110"
-      },
-      {
-        "path": "packages/shared/src/privacy/policy.ts",
-        "sha256": "bed089d6fec868372581ee96a6a33861990f9f0d3026f4dff8949be1b172a4c2"
-      },
-      {
-        "path": "packages/shared/src/privacy/replica-consent.ts",
-        "sha256": "4a8d0119bef1db03457736cbd60e5ee3915370da0d7878391e1035a1a87164aa"
-      },
-      {
-        "path": "packages/shared/src/privacy/store.ts",
-        "sha256": "e872f2c32ac90c76fcf8b4128491b3cead80f8b92151e581bd4633344308d6d3"
-      },
-      {
-        "path": "packages/shared/src/protocol/__tests__/native-replica.test.ts",
-        "sha256": "affee0a3fcd68877dc4b4b43d09af4511dafffd3d50ca4bb006d65d2226b71ec"
-      },
-      {
-        "path": "packages/shared/src/protocol/channels.ts",
-        "sha256": "2533bd9f346a4cd39b4246e2b9a6195c5d36bbe36418f4bf14016a8800e1f2e0"
-      },
-      {
-        "path": "packages/shared/src/protocol/dto.ts",
-        "sha256": "126ad7a9a4268211dba31b19c9a2f40dfd957b94ec73d404e84f24e71c060f1c"
-      },
-      {
-        "path": "packages/shared/src/protocol/native-replica.ts",
-        "sha256": "51d9139ad195130dd0c2b33e2d3643154319242f00212db65ab49dbaac566eee"
-      },
-      {
-        "path": "packages/shared/src/voice/policy.ts",
-        "sha256": "7e9ebf6d4352dddb59be455b7edd28794057cbc9023a24f93870ee91561ce4a5"
-      },
-      {
-        "path": "packages/shared/src/voice/runtime.ts",
-        "sha256": "80365f6b83f8ba0b4de8c78482d30a7bf9c6c0458fa84b7bab5216776a0cd697"
-      },
-      {
-        "path": "packages/shared/src/voice/transcribe.ts",
-        "sha256": "d31a9ae09cc0f238ea673ab2452b22c11ee3c90817467d3d83ca054db15ba6a5"
-      },
-      {
-        "path": "packages/ui/src/components/overlay/pdf-search.ts",
-        "sha256": "0c7cf57fde6d89db6b4c767bac18012f1246c9b93b2c96d8948561c17928d6d0"
-      }
-    ],
-    "sourceScope": "Named hashes plus immutable Git tree; source publication does not accept original product criteria.",
-    "retainedLocalValidation": [
-      {
-        "artifact": "shared.union.delivery-green.txt",
-        "sha256": "0ed09b68f0929da43ef7fb2dc3e65280ef35f3552a87fc9e60f442e44c89582f",
-        "result": "4902 pass / 12 skip / 0 fail; 21420 assertions; 468 files"
-      },
-      {
-        "artifact": "server.union.delivery-green.txt",
-        "sha256": "8f5c123e660b64741f449cd732d1c92381d01267a478b42beea1c5f10fd6af24",
-        "result": "1496 pass / 8 skip / 0 fail; 6080 assertions; 233 files"
-      },
-      {
-        "artifact": "electron.union.native-entry-final.txt",
-        "sha256": "f1bad5b14dbcd0aad6d1f4a84ddeb1f66f882b8778da3b6535530fb7f66353cd",
-        "result": "4186 pass / 0 fail; 19904 assertions; 607 files"
-      }
-    ],
-    "validationLimit": "Retained pre-commit candidate invocations; named-source comparison is a later readback, not an invocation at this Git revision. One explained final-newline change is recorded. Follow-up source changes require new applicable checks.",
+    "remoteHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+    "pullRequestHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+    "observedAt": "2026-10-02T19:20:31.005Z",
+    "sourceCount": 4879,
+    "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
+    "committedSourceMatchesTestedManifest": true,
+    "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
     "fullProductDelivery": "PENDING",
-    "mergeAcceptance": "PENDING",
     "originalCriteriaAcceptedByPublication": 0,
-    "ci": {
-      "status": "QUEUED_NO_MATCHING_TOOLCHAIN_RUNNER",
-      "requiredLabels": [
-        "self-hosted",
-        "macos-toolchain"
-      ],
-      "executedSteps": 0
-    }
+    "bindingLimit": "All4879 committed source blobs match the source used by five complete serial local gates. Bounded Focus hook/storage and mounted ReactDOM component proof use fixture dependencies and do not accept native OS notification, actor, worker question, delivery/drain, timer/recovery or full original Focus criteria. Historical native Notes/bridge remains db841; Projects browser proof remains1c. Required remote CI, hosted-alert review, providers and complete platform/product acceptance remain pending."
   },
   "nativeCreationFollowup": {
     "schemaVersion": 1,
@@ -3757,6 +4244,2489 @@
       "Current TTS uses native/WebSpeech and is not accepted by this media CSP change.",
       "Full package/CI gates bind to earlier owner/status source; new complete CI was not rerun for one HTML directive. New affected Electron/UI/core and renderer gates bind separately.",
       "Packaging, signing, upgrade, Windows, genuine Conation iOS and remote required runners remain pending."
+    ],
+    "fullOriginalTasksAccepted": 0
+  },
+  "roadmapSqliteFollowup": {
+    "schemaVersion": 1,
+    "id": "ROADMAP-SQLITE-JOINT-20260930",
+    "observedAt": "2026-09-30T17:26:06.713Z",
+    "inputSourceRevision": "bac082301aed341fe078cb5bd539c4ba074560eb",
+    "publication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "revision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "pullRequestHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "observedAt": "2026-09-30T17:27:29.813Z",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceCount": 4870,
+      "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "committedSourceMatchesTestedManifest": true,
+      "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact prepared-host validate:ci and standard Electron build bind to every frozen source blob. Actual Node/Electron built-in SQLite fixture is separate bounded runtime proof. Packaged native UI/private custody, provider cost/cancellation, Windows, genuine Conation iOS, compound integration and required remote CI remain pending. Later docs-only commits have a different head."
+    },
+    "sourceBinding": {
+      "sourceCount": 4870,
+      "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "beforeAfterIdentical": true,
+      "committedSourceMatchesTestedManifest": true,
+      "sourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75"
+    },
+    "lineage": {
+      "roadmap": {
+        "pullRequest": "https://github.com/rox-one/rox-one/pull/1313",
+        "head": "5a9bf9cafd7df367f6ac32102b80e777377da162",
+        "integrationBase": "f3987fd7ffcb7f3d582f09d9a8d8a04669877d13"
+      },
+      "sqlite": {
+        "pullRequest": "https://github.com/rox-one/rox-one/pull/1319",
+        "head": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed",
+        "integrationBase": "bac082301aed341fe078cb5bd539c4ba074560eb",
+        "importOnlyCurrentBodies": 9
+      }
+    },
+    "sources": [
+      {
+        "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "sha256": "8c1a989852c05ff321f389a37016977c7e928ee0c903a37ce74390028cf05715"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/ProjectRoadmapPage.tsx",
+        "sha256": "2014b2883d772adf509e348148405d5ce2543d6fa29f71951ce26b95852c212c"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/ProjectAiPanel.tsx",
+        "sha256": "1711f5ee0c6a128388a5f04f5cacfab6af6ce1ac8ede3d0778d522e702cdd7c1"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/ProjectInputs.tsx",
+        "sha256": "7faeda6e08b7fae4f02dee5794d172085d8047cf44bb986fc87dbbfc22e141b4"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/ProjectRequirements.tsx",
+        "sha256": "04901ce0824911acc6bff845ad11b6ac74a4fb52de399f6b30c1a72e95b654d6"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/ProjectTimeline.tsx",
+        "sha256": "3f06a8427adedc271ba468db83b5f8eee1fa528db0b098be1a8c30eca7da0f1e"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/RoadmapModelResult.tsx",
+        "sha256": "fa21426e1218819c2002a467581e3f13ce08ad098cb112ec6fc2217fe4d97e9d"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/__tests__/roadmap-model-result.test.tsx",
+        "sha256": "77d4f30404a3a1fd51bdc34b2784ad9f68f503c3749dadb46f49d86f1394c11f"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/roadmap-ui.tsx",
+        "sha256": "bceecb200dda178c4e3c18d9122f93ae0b9e3f1da1dbb08044927da3ac68fd7e"
+      },
+      {
+        "path": "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+        "sha256": "00dfaba79eafd01eb7389c9b5cf172f3869f7f725ae20caf5f6bad0870e3269e"
+      },
+      {
+        "path": "apps/electron/src/shared/types.ts",
+        "sha256": "54e41efcad47209813c77b710cfe02188a36c5e22c30d02d5be82cfb17232485"
+      },
+      {
+        "path": "apps/electron/src/transport/channel-map.ts",
+        "sha256": "9f51506f65cf275f5d6f9fc11ead4fb478b12d9e542d956badd6fea24251b752"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/roadmap-boundary-runtime.test.ts",
+        "sha256": "42dc3f259d51ce302d10985f4c07ea51856ff820d963a0d1c73476a9374a00e6"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/roadmap-model-provenance.test.ts",
+        "sha256": "3410ff5e97a9846f8ea81df7424ba38cfd52bdaa280d729bea5efa6beff65a64"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/projects.ts",
+        "sha256": "a9eaeb0f4b3f1ec98bd8301885784c08b7f891870359424358a97c64943d7849"
+      },
+      {
+        "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+        "sha256": "753ad2ebfce2c1ed4e7821aa4487099367ffdc6b35365655eeda74391e8cf925"
+      },
+      {
+        "path": "packages/server-core/src/sessions/SessionManager.ts",
+        "sha256": "e306a725ac4099709ed86420deb8026fc0216ca4313d1eef336f941220fdc76d"
+      },
+      {
+        "path": "packages/shared/package.json",
+        "sha256": "1bc44bc1c9e6fdc348c000ff53fb4bdf884393f39e25b035e576a59a32c45e67"
+      },
+      {
+        "path": "packages/shared/src/agent/claude-agent.ts",
+        "sha256": "4f55936cd90345136f746ee6e7909b10dc34a98c2cc085b745a6e1788b02aba6"
+      },
+      {
+        "path": "packages/shared/src/agent/omp-agent.ts",
+        "sha256": "0735a7b92cc25237c3daa94891655023e00d49c6ff01b7ddd664e6e6e2017ca6"
+      },
+      {
+        "path": "packages/shared/src/agent/pi-agent.ts",
+        "sha256": "322f7c35ed63e174aaef6ba543710d3278965d47293e609f469d9f02b9a4c707"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ar.json",
+        "sha256": "82ea5eb28511b28c802643169a6d92e71cfedf7b958e5073ac3b745def17d464"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/de.json",
+        "sha256": "8f529edb7fc3fa3ad354f5665a3e930e3a789a10d1e9e378b4350878fc7aeae8"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/en.json",
+        "sha256": "a50831c12c60252b26cfc723914966746dbfb19bf8ebdf5692644f88f614a26d"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/es.json",
+        "sha256": "403cb420571ed3f64a1ae194271d472520202f24f57435164b1dbd33c0df75a6"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/fr.json",
+        "sha256": "12cd7fd891f1fdec9d6da5824c8004b08d97e7d4ab01157a79449a88813b092c"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/hu.json",
+        "sha256": "adb6163915b43a8f927a33eac3dee5a56a1f1801682b99e637593059eb94e847"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ja.json",
+        "sha256": "2ed4ae4dcbb6bd0483f0d523ef2b48e32ea16f4341121f130b740613e8c3e5bb"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ko.json",
+        "sha256": "5e938150ac3121b9ebeaf7e5f0f3484d0740e9b594bde2b5aa699d2e9842e0ff"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/pl.json",
+        "sha256": "1fbf4cfe7a80f4adf63565d31d9a3059bddd9421a20102410c4f8d57c922b898"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ru.json",
+        "sha256": "c9b9f4215cd7a15d60048baeff4ca51e06698e07ae10045bfc1ed7c90ea2cb38"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+        "sha256": "f67c0097e54a6bf7867af7933cc17496123dc9b91448ded8953fdd65a07ac9a0"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+        "sha256": "cb233d96bf75dc18d50e644dce6177d05c1830bc8ee3f496368db98ed36f3270"
+      },
+      {
+        "path": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+        "sha256": "8031cccab1c5b3ef7d66d8ee13b619841fe791820a7926430285030d145b67d1"
+      },
+      {
+        "path": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+        "sha256": "b3370522dabdac5bf62c8a08368719343e31bb2d98e57eddcb65563830403f61"
+      },
+      {
+        "path": "packages/shared/src/projects/__tests__/roadmap.test.ts",
+        "sha256": "db7adafe9d8346a09d3b37dd239f92d3f95bcfa681c9bc595cdbf32ee5bb8d1f"
+      },
+      {
+        "path": "packages/shared/src/projects/index.ts",
+        "sha256": "92e65add7579aa2b8a086aea15d79dbf86e63cbe630e50cebbd415d99a8daffd"
+      },
+      {
+        "path": "packages/shared/src/projects/roadmap-ai.ts",
+        "sha256": "293f5bf0fe18eda7af4928c2e89f8dfd260969aa4a877d2ca6e7588b252c0352"
+      },
+      {
+        "path": "packages/shared/src/projects/roadmap-storage.ts",
+        "sha256": "64f2efb5ea594942ed1fe3c45dbd02afea7f7b294c1e73e192d19f3f83f91b2c"
+      },
+      {
+        "path": "packages/shared/src/projects/roadmap.ts",
+        "sha256": "5f5600df01c60d4198b77fb755cd19942e1521dec71f7d2bfe9215caaf25e59a"
+      },
+      {
+        "path": "packages/shared/src/projects/types.ts",
+        "sha256": "45e6b15b90b60d52447d0d966ece6d1a0be9d64b50f5fa6d12a24b6a3e10188e"
+      },
+      {
+        "path": "packages/shared/src/prompts/system.ts",
+        "sha256": "db32086d243aca882764e331d93d9e35a680ff222b8eaf7dc5d1f16177da0660"
+      },
+      {
+        "path": "packages/shared/src/protocol/channels.ts",
+        "sha256": "c85ca7a093b73a8eb55646ed9dc560f72f06b890e644ce370475a7095e6bdd1e"
+      },
+      {
+        "path": "packages/shared/src/protocol/routing.ts",
+        "sha256": "cac503e3142ef269299e8b8451e6c1707506467d7d4aa446370885c37c054c3b"
+      },
+      {
+        "path": "packages/server-core/src/authority/__tests__/native-authority.test.ts",
+        "sha256": "4ffaa60ffdceca9f47ae8fffebaa49a425bca840d80e72a7356212414a584e6d"
+      },
+      {
+        "path": "packages/server-core/src/authority/__tests__/native-journal.test.ts",
+        "sha256": "b2c14eff6253b6ff8adddeefc0d9442d2e8763cb022b5aee6bf0158b2f70f36b"
+      },
+      {
+        "path": "packages/server-core/src/authority/native-authority.ts",
+        "sha256": "fbba32295c512debc2aa791bccbf5cacbcd2eff72924f22ad3ac6d1291d2a806"
+      },
+      {
+        "path": "packages/server-core/src/authority/native-journal.ts",
+        "sha256": "4371389616fbdf0f9ee498bc74f6f5681445d46fffe2130df7e2628e77412d52"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/browser-profile-import.ts",
+        "sha256": "3131144c297f0c1ecd6f1ddb7251bfd6d0e3ca2d44e612f2385635cf93604feb"
+      },
+      {
+        "path": "packages/shared/src/account-replica/__tests__/account-replica.test.ts",
+        "sha256": "bd6c807d3c8ed310478ed409085a08a4f88e79c52a24afe43635c4d0d4539608"
+      },
+      {
+        "path": "packages/shared/src/account-replica/outbox.ts",
+        "sha256": "adab9de3803d365ac40819cb74d5b89cf46893189d93afbcd52e3976061f129e"
+      },
+      {
+        "path": "packages/shared/src/agent/core/agent-budget.ts",
+        "sha256": "b5744fcb7adc758f5e5474c0cfa58c5048f8ba67be4692ebd37e2e8513f3ac25"
+      },
+      {
+        "path": "packages/shared/src/automations/occurrence-ledger.ts",
+        "sha256": "24e09244699e41442971b5a6e20fb9e72bf5811ff1bcd3333d3594e6ab3114ec"
+      },
+      {
+        "path": "packages/shared/src/utils/__tests__/sqlite-runtime.fixture.ts",
+        "sha256": "de751a01d860050a26d4c1a3d07f72204caec24930753679f7079e49eff5af37"
+      },
+      {
+        "path": "packages/shared/src/utils/__tests__/sqlite-runtime.test.ts",
+        "sha256": "91e43dde056419aca1ad0975fdf5d40ed79f8d32ebb8155fe26c7dbdc8bc0b2f"
+      },
+      {
+        "path": "packages/shared/src/utils/sqlite-runtime.ts",
+        "sha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab"
+      }
+    ],
+    "owners": {
+      "roadmap": "/root/native_boundary isolated additive port",
+      "sqlite": "/root/recovery_scout isolated import-only adaptation",
+      "reviewAndGates": "/root/september_gates",
+      "integrationAndDelivery": "/root"
+    },
+    "behavior": {
+      "roadmap": "Add a separate Roadmap tab while preserving OKR. Persist canonical storage/CAS/read receipts and ordered saves. Four actual local-Electron RPCs bind caller workspace and reject native/foreign/stale/unbound callers. Requested model is separate from nullable backend-effective provenance; warnings and late-response scope fences remain visible.",
+      "budget": "Existing selected daily budget reserves the full remaining allowance before backend creation; only predispatch failure releases it. Every dispatched success/error/timeout retains unknown-cost unresolved quota until the existing exact trusted receipt reconciles it. Current per-instance owner fencing remains intact.",
+      "sqlite": "Use runtime built-in Bun or Node SQLite through a bounded synchronous interface. Bun operations finalize statements in finally; readonly, closed-statement and integer-range controls remain. Real Node/Electron ESM and CommonJS operations run; the original CommonJS createRequire(undefined) failure is retained and fixed by actual filename/module-URL resolution."
+    },
+    "reviews": {
+      "roadmap": {
+        "focusedPass": 136,
+        "fail": 0,
+        "assertions": 1339,
+        "files": 14,
+        "actualWsNativeStrictChildChecks": 27,
+        "actualMethodBudgetStrictChildChecks": 22
+      },
+      "sqlite": {
+        "finalProducerFocusedPass": 63,
+        "fail": 0,
+        "assertions": 611,
+        "files": 8,
+        "independentInstalled": {
+          "pass": 4,
+          "fail": 0,
+          "assertions": 19
+        },
+        "independentBinaryAbsent": {
+          "pass": 3,
+          "skip": 1,
+          "fail": 0,
+          "assertions": 15
+        },
+        "commonJsProductionConsumers": "Freshly bundled Authority enrollment/authentication, Journal mutation/replay and exact canonical bytes, Budget foreign-owner denial on native Node22 and Electron39 embedded Node22."
+      },
+      "resource": "Exact adapter, 20 constructor faults: Bun1.4.2, Node22 and Electron39 plateau at one additional descriptor while the seed connection stays open; zero immediately after seed closure. 100 throwing/retained statement controls release on DB close. This supersedes the earlier linear Bun node:sqlite-shim growth for these exact consumers; no immediate-flat-live-seed or universal allocator claim."
+    },
+    "gates": {
+      "HEAD": "bac082301aed341fe078cb5bd539c4ba074560eb",
+      "sourceCount": 4870,
+      "sourceBeforeHash": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "sourceAfterHash": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "stages": [
+        {
+          "stage": "shared",
+          "command": [
+            "bun",
+            "test",
+            "./packages/shared"
+          ],
+          "pid": 61004,
+          "exit": 0,
+          "seconds": 108.889457208,
+          "timeoutSeconds": 300,
+          "interrupted": false,
+          "log": "roadmap-sqlite-20260930/corrected/shared.txt",
+          "logSha256": "6351d8b8a4ff000cd8f2a67f0fa7b4af63bac47666c7a97f39487ae18a245674"
+        },
+        {
+          "stage": "server",
+          "command": [
+            "bun",
+            "test",
+            "./packages/server-core"
+          ],
+          "pid": 62952,
+          "exit": 0,
+          "seconds": 38.199777083,
+          "timeoutSeconds": 300,
+          "interrupted": false,
+          "log": "roadmap-sqlite-20260930/corrected/server.txt",
+          "logSha256": "8c6b81a251378ae0b465f16e0ed5aa3a3e9d219bf7224ca122fbd4050a409e27"
+        },
+        {
+          "stage": "electron-ui-core",
+          "command": [
+            "bun",
+            "test",
+            "./apps/electron/src",
+            "./packages/ui",
+            "./packages/core"
+          ],
+          "pid": 63710,
+          "exit": 0,
+          "seconds": 32.479285250000004,
+          "timeoutSeconds": 300,
+          "interrupted": false,
+          "log": "roadmap-sqlite-20260930/corrected/electron-ui-core.txt",
+          "logSha256": "3180f914fdf7b47f8d3a8a8bd2e8833098745a9b63204823e94521d3495f716c"
+        },
+        {
+          "stage": "validate",
+          "command": [
+            "bun",
+            "run",
+            "validate:ci"
+          ],
+          "pid": 66255,
+          "exit": 0,
+          "seconds": 140.574401792,
+          "timeoutSeconds": 480,
+          "interrupted": false,
+          "log": "roadmap-sqlite-20260930/corrected/validate.txt",
+          "logSha256": "c2767a458fd60ff5d9319b7f676895737984eab66d2e1d5689834a97b2cc65bd"
+        },
+        {
+          "stage": "build",
+          "command": [
+            "bun",
+            "run",
+            "electron:build"
+          ],
+          "pid": 69143,
+          "exit": 0,
+          "seconds": 59.849788167,
+          "timeoutSeconds": 600,
+          "interrupted": false,
+          "log": "roadmap-sqlite-20260930/corrected/build.txt",
+          "logSha256": "4d2dffffdfa16295e6f19359b0c309e32a47a84e7bf044cea85ccee042dc5203"
+        }
+      ],
+      "counts": {
+        "shared": {
+          "pass": 4944,
+          "skip": 12,
+          "fail": 0,
+          "assertions": 21730,
+          "files": 476
+        },
+        "server": {
+          "pass": 1508,
+          "skip": 8,
+          "fail": 0,
+          "assertions": 6149,
+          "files": 239
+        },
+        "electronUiCore": {
+          "pass": 4205,
+          "fail": 0,
+          "assertions": 20047,
+          "files": 610
+        },
+        "validate": {
+          "typechecks": "allpassed",
+          "selectedBunPass": 242,
+          "selectedBunAssertions": 687,
+          "documentsPass": 19,
+          "i18n": "parity/sorted/coveragepassed"
+        }
+      },
+      "dist": {
+        "manifest": "roadmap-sqlite-20260930/corrected/dist-manifest.json",
+        "manifestSha256": "66e634a55c29252118c3a7d38feab02ca988a42e66aeabc31cf335abe4068945",
+        "fileCount": 1614,
+        "totalBytes": 202477837,
+        "resourceCount": 715,
+        "versions": {
+          "electron": "39.2.7",
+          "electron-builder": "26.4.0",
+          "vite": "6.4.1",
+          "typescript": "5.9.3",
+          "esbuild": "0.25.12"
+        },
+        "lock": {
+          "path": "bun.lock",
+          "bytes": 605640,
+          "sha256": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b"
+        }
+      },
+      "limitations": [
+        "Initial shared failure retained separately; locale-only order correction canonical keys/values unchanged",
+        "Frozen working source overlay; root binds publication",
+        "No release packaging/signing/native UI/full task matrix acceptance",
+        "Actual artifact byte inventory, not release byte budget acceptance",
+        "Verified task-private offline UV cache, not fresh network CI runner"
+      ]
+    },
+    "artifacts": [
+      {
+        "id": "roadmap-september-integration-20260930/independent-review.md",
+        "sha256": "a5a8401b03bda7c84a60b92b3daa83ff057e4d3704a9237cad2def7df55107f5",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-september-integration-20260930/source-manifest.json",
+        "sha256": "f0f2718c6caec04418d08f8c0ee12ed25587db1d06fff1768a9247d4879f8a9a",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-september-integration-20260930/root-transfer.json",
+        "sha256": "238b72ed21b0bac4439c7dab37f079570e911f41323c36a0dfa842674c052b6a",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/headless-final-independent-review.md",
+        "sha256": "b01718255e10f8f522503ece4fc63b484f607c912e8d7e21d875bd6689c38425",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/headless-final-independent-review.json",
+        "sha256": "10b08196e96581abb323e6e528426fa58bf5c8b47874c994e0bc3fb656f77144",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/headless-fixed-candidate-frozen.json",
+        "sha256": "27dc09549e2231ee449b9b1bc0b097a6892508f9a4b16826ddb3134cb476c5b5",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/cjs-final-independent-review.md",
+        "sha256": "de7b20b46697484d0453dc9168a9b49133ce4c3282677fbb7663824b23312e8c",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/headless-portability-review.md",
+        "sha256": "744d22d1927d30881b27c27aa167529c48c84597e2c71c5f7bfb08eebc00aa2f",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/root-transfer.json",
+        "sha256": "5ff1298a6b11a18c103a68483a7d317c07f6ab8c4bc82c07be968a6ffb47dccb",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/shared.txt",
+        "sha256": "d6e3c10bff3115f0b5a49763fa3e7027676430ea0a3e7e9eb87d7d948509cdfd",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/shared.json",
+        "sha256": "033cf6258af096370326147711afe088542cf5dd54091e41436395a164033295",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/locale-order-repair.json",
+        "sha256": "54cac1b493605680fa3ba84db1f1e281019a72c5b778d74078a63a2b96f2e219",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/gates.json",
+        "sha256": "4c5f202809075bbb7540ecb6e1a702808180fbbfb465b7ae41ea655d90e5b88d",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/dist-manifest.json",
+        "sha256": "66e634a55c29252118c3a7d38feab02ca988a42e66aeabc31cf335abe4068945",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/shared.txt",
+        "sha256": "6351d8b8a4ff000cd8f2a67f0fa7b4af63bac47666c7a97f39487ae18a245674",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/server.txt",
+        "sha256": "8c6b81a251378ae0b465f16e0ed5aa3a3e9d219bf7224ca122fbd4050a409e27",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/electron-ui-core.txt",
+        "sha256": "3180f914fdf7b47f8d3a8a8bd2e8833098745a9b63204823e94521d3495f716c",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/validate.txt",
+        "sha256": "c2767a458fd60ff5d9319b7f676895737984eab66d2e1d5689834a97b2cc65bd",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/build.txt",
+        "sha256": "4d2dffffdfa16295e6f19359b0c309e32a47a84e7bf044cea85ccee042dc5203",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      }
+    ],
+    "retainedFailureHistory": "Initial unchanged source Shared run: 4931 passed, 12 skipped, 13 failed, all failures locale sort assertions. Existing repository sorter changed only key order in twelve locales; exact keys and values unchanged. Corrected full chain uses a new source digest and retains the failed attempt.",
+    "limits": [
+      "All original 109 tasks, 489 requirements, 464 edges and original 297-row scope remain. Zero complete original tasks are accepted by this wave.",
+      "Roadmap local filesystem CAS is not NativeJournal/team/multi-device acceptance. Derived Markdown and JSON are not one transaction; crashed locks, external writers/symlink races, legacy unversioned input and power loss retain their limits.",
+      "Controlled query backend and settlement costs are synthetic. Real provider cost/cancellation/cap enforcement, complete lifecycle and full AI roadmap acceptance remain pending; timeout starts after backend postInit.",
+      "Node CommonJS is mandatory. Electron binary absence is an explicit skip for an installed package whose download is omitted, not a runtime pass or a claim that an absent declared dependency works.",
+      "Prepared task-private UV cache proves exact local CI on this host; required remote CI, fresh network dependency transfer and trusted toolchain runner remain separate.",
+      "Standard build output inventory may include retained earlier files; packaging, signing, actual application UI/private OS custody, Windows, genuine Conation iOS and full provider/recipient acceptance remain pending.",
+      "Portable Electron bridge harness is a separate candidate and is not part of this source freeze or acceptance."
+    ],
+    "fullOriginalTasksAccepted": 0
+  },
+  "portableElectronBridge": {
+    "schemaVersion": 1,
+    "id": "PORTABLE-ELECTRON-BRIDGE-20260930",
+    "observedAt": "2026-09-30T17:37:07.007Z",
+    "publication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "revision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "pullRequestHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "observedAt": "2026-09-30T17:39:30.972Z",
+      "sourceCount": 4873,
+      "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "previous4870SourcesUnchanged": true,
+      "addedDeveloperScripts": 3,
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head."
+    },
+    "sourceBinding": {
+      "sourceCount": 4873,
+      "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "beforeAfterIdentical": true,
+      "committedSourceMatchesTestedManifest": true,
+      "existing4870SourcesUnchanged": true,
+      "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "wholeRepositoryGateSourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "addedDeveloperScripts": 3,
+      "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e"
+    },
+    "sources": [
+      {
+        "path": "scripts/tests/electron-native-bridge/run.ts",
+        "sha256": "2d2bba6633cecfdbf7da11cc72b6093831fc653a0f05b420fe657ab862609f5f"
+      },
+      {
+        "path": "scripts/tests/electron-native-bridge/fixture.ts",
+        "sha256": "b21ba3d3ba7204d71d03f1d4844f5b87ee334e5a157fc72e983969183cc450e1"
+      },
+      {
+        "path": "scripts/tests/electron-native-bridge/tsconfig.json",
+        "sha256": "2ab9c623163a122795aa25c4658a6f5518c94adc578ba164e5f1995efeb4edcd"
+      }
+    ],
+    "owners": {
+      "producer": "/root/native_boundary",
+      "independentCandidateReview": "/root/recovery_scout",
+      "currentIntegratedRuntime": "/root/september_gates",
+      "serialIntegrationAndDelivery": "/root"
+    },
+    "behavior": "Portable Bun/Node entry command dynamically resolves current repository dependencies and compiles production services; real Electron production preload/private IPC/authenticated WS/Authority/Journal/encrypted outbox perform create and exact observed ACK, graceful stable pending-operation replay, complete forged receipt denial, grant revocation with unchanged bytes/receipts and foreign managed window denial. Inputs are generated in an owned private fixture root, child environment is whitelisted, profiles are removed and source/preload/SDK bytes are bound.",
+    "runtime": [
+      {
+        "entryRuntime": "bun",
+        "runnerRuntime": {
+          "node": "v26.3.0",
+          "bun": "1.4.2",
+          "platform": "darwin",
+          "arch": "arm64"
+        },
+        "actualElectron": "39.2.7",
+        "embeddedNode": "22.21.1",
+        "stages": [
+          {
+            "phase": "single",
+            "pid": 89102,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "prepare",
+            "pid": 89125,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "replay",
+            "pid": 89146,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          }
+        ],
+        "sourceBindingCount": 361,
+        "preloadSha256": "3dc1d9dbb02d99184f5981d7c66aaffc0ac35e85e73e84b17a54f2daafcd7b3a",
+        "externalSdkSha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a",
+        "currentSqliteAdapterSha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab",
+        "ownedFixtureRemoved": true,
+        "receipt": {
+          "id": "portable-electron-harness-20260930/integrated-bun/receipt.json",
+          "sha256": "cee3959459f7d9dfc90432dbaea19467a48c16cd46990be75199bdb31455d1ee"
+        }
+      },
+      {
+        "entryRuntime": "node",
+        "runnerRuntime": {
+          "node": "v26.8.2",
+          "bun": null,
+          "platform": "darwin",
+          "arch": "arm64"
+        },
+        "actualElectron": "39.2.7",
+        "embeddedNode": "22.21.1",
+        "stages": [
+          {
+            "phase": "single",
+            "pid": 89562,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "prepare",
+            "pid": 89602,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "replay",
+            "pid": 89618,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          }
+        ],
+        "sourceBindingCount": 361,
+        "preloadSha256": "3dc1d9dbb02d99184f5981d7c66aaffc0ac35e85e73e84b17a54f2daafcd7b3a",
+        "externalSdkSha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a",
+        "currentSqliteAdapterSha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab",
+        "ownedFixtureRemoved": true,
+        "receipt": {
+          "id": "portable-electron-harness-20260930/integrated-node/receipt.json",
+          "sha256": "4deea6d70354ae3edfff9f8b66f2bf4fa13fb3cb43706424256a159f541dbfef"
+        }
+      }
+    ],
+    "integratedGates": {
+      "status": "PASS_BOUNDED_INTEGRATED_ELECTRON_BRIDGE",
+      "sourceCount": 4873,
+      "sourceBeforeHash": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+      "sourceAfterHash": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+      "productionSubsetCount": 4870,
+      "productionSubsetHash": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "productionMismatch": [],
+      "lanes": [
+        {
+          "runtime": "bun",
+          "exit": 0,
+          "receipt": "portable-electron-harness-20260930/integrated-bun/receipt.json",
+          "receiptSha256": "cee3959459f7d9dfc90432dbaea19467a48c16cd46990be75199bdb31455d1ee",
+          "log": "portable-electron-harness-20260930/integrated-bun.log",
+          "logSha256": "22ba0a2ead5ef243582b428ef2f1b39117626527eaccd514c4c936571b8e225b",
+          "stages": [
+            {
+              "phase": "single",
+              "pid": 89102,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            },
+            {
+              "phase": "prepare",
+              "pid": 89125,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            },
+            {
+              "phase": "replay",
+              "pid": 89146,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            }
+          ],
+          "ownedFixtureRemoved": true,
+          "preloadSha256": "3dc1d9dbb02d99184f5981d7c66aaffc0ac35e85e73e84b17a54f2daafcd7b3a",
+          "sqlite": {
+            "path": "packages/shared/src/utils/sqlite-runtime.ts",
+            "sha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab"
+          },
+          "externalSdk": {
+            "path": "/Users/t/Projects/rox-one-september-implementation/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs",
+            "sha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a"
+          },
+          "controls": {
+            "createRevision": 1,
+            "pendingAfterExactACK": 0,
+            "preparedPending": 1,
+            "preparedCanonicalRevision": 1,
+            "replayRevision": 2,
+            "replayOperationHashMatches": true,
+            "forgedACKRejected": true,
+            "pendingRetained": 1,
+            "revoked": true,
+            "canonicalBytesUnchangedAfterRevoke": true,
+            "receiptsUnchangedAfterRevoke": true,
+            "wrongWindowDenied": true,
+            "destroyedOwnerHandleRejected": true
+          }
+        },
+        {
+          "runtime": "node",
+          "exit": 0,
+          "receipt": "portable-electron-harness-20260930/integrated-node/receipt.json",
+          "receiptSha256": "4deea6d70354ae3edfff9f8b66f2bf4fa13fb3cb43706424256a159f541dbfef",
+          "log": "portable-electron-harness-20260930/integrated-node.log",
+          "logSha256": "a462cd4e8500764fdc4c4c27337ca674106f1ad3c0168e2d372e654fcee0d9d7",
+          "stages": [
+            {
+              "phase": "single",
+              "pid": 89562,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            },
+            {
+              "phase": "prepare",
+              "pid": 89602,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            },
+            {
+              "phase": "replay",
+              "pid": 89618,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            }
+          ],
+          "ownedFixtureRemoved": true,
+          "preloadSha256": "3dc1d9dbb02d99184f5981d7c66aaffc0ac35e85e73e84b17a54f2daafcd7b3a",
+          "sqlite": {
+            "path": "packages/shared/src/utils/sqlite-runtime.ts",
+            "sha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab"
+          },
+          "externalSdk": {
+            "path": "/Users/t/Projects/rox-one-september-implementation/node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs",
+            "sha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a"
+          },
+          "controls": {
+            "createRevision": 1,
+            "pendingAfterExactACK": 0,
+            "preparedPending": 1,
+            "preparedCanonicalRevision": 1,
+            "replayRevision": 2,
+            "replayOperationHashMatches": true,
+            "forgedACKRejected": true,
+            "pendingRetained": 1,
+            "revoked": true,
+            "canonicalBytesUnchangedAfterRevoke": true,
+            "receiptsUnchangedAfterRevoke": true,
+            "wrongWindowDenied": true,
+            "destroyedOwnerHandleRejected": true
+          }
+        }
+      ],
+      "scopedTypecheck": {
+        "command": "bun run tsc --noEmit -p scripts/tests/electron-native-bridge/tsconfig.json",
+        "exit": 0,
+        "log": "portable-electron-harness-20260930/integrated-typecheck.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "diffCheck": {
+        "exit": 0,
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "existingOutputNegative": {
+        "exit": 1,
+        "before": "cee3959459f7d9dfc90432dbaea19467a48c16cd46990be75199bdb31455d1ee",
+        "after": "cee3959459f7d9dfc90432dbaea19467a48c16cd46990be75199bdb31455d1ee",
+        "preserved": true
+      },
+      "limits": [
+        "Real production preload/IPC/WS/Authority/Journal/outbox composition using task synthetic credential DI, not product main/OS custody or visible UI E3",
+        "Graceful restart, not SIGKILL/response loss/power loss",
+        "Hidden muted Electron sandbox:false compatibility, no provider calls/signing/platform acceptance",
+        "No full gate rerun: previous 4870-source production subset identical"
+      ]
+    },
+    "artifacts": [
+      {
+        "id": "electron-native-bridge-harness-20260930/final-source-manifest.json",
+        "sha256": "45f7ea3754b702e5f3b965ee7adfddba2b36410f9179333fab9294810ae1342f",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+      },
+      {
+        "id": "electron-native-bridge-harness-20260930/final-report.md",
+        "sha256": "f54a313e93cb1a2e003fbbe5fd9636ddd5785fede8f0c5a034a4371485790c64",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+      },
+      {
+        "id": "portable-electron-harness-20260930/independent-review.md",
+        "sha256": "31fb24d807b2623c11428bd1bed57d7d17ef9df62dc5c74c2d40b1b30c026ebe",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+      },
+      {
+        "id": "portable-electron-harness-20260930/independent-review.json",
+        "sha256": "e04631ea08df63a8144f1e828f94bac6088ae1805f1ff4718a7d9bd62b43bfaa",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+      },
+      {
+        "id": "portable-electron-harness-20260930/root-transfer.json",
+        "sha256": "ebd87cc094a29194a3b6a48043c38b0462cd69c2b57407830924e3c4bc6a2f7a",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+      },
+      {
+        "id": "portable-electron-harness-20260930/integrated-gates.json",
+        "sha256": "c1bab1e8531e2f987a07e0bd7b744fd4a2175406b506f4b6d47b35acf18aecea",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+      },
+      {
+        "id": "portable-electron-harness-20260930/integrated-bun/receipt.json",
+        "sha256": "cee3959459f7d9dfc90432dbaea19467a48c16cd46990be75199bdb31455d1ee",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+      },
+      {
+        "id": "portable-electron-harness-20260930/integrated-node/receipt.json",
+        "sha256": "4deea6d70354ae3edfff9f8b66f2bf4fa13fb3cb43706424256a159f541dbfef",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence projection only in public packet"
+      }
+    ],
+    "limits": [
+      "Both Bun and Node commands are entry runners. All storage/service child processes are actual Electron39/embeddedNode22, not proof of Bun execution of the Electron main module.",
+      "Synthetic task-only administrator/enrollment bootstrap, minimal main bootstrap channels and generated persistent credential/key DI are explicit; full product main and OS secure-store custody remain pending.",
+      "Hidden muted BrowserWindows use production contextIsolation=true/nodeIntegration=false/sandbox=false. No foreground UI, provider/model query or media operation is performed.",
+      "Recovery is normal child termination and fresh process, not SIGKILL, lost response, power loss or a timeout recovery acceptance. Timeout cleanup is source-reviewed, not separately injected.",
+      "The post-owner-destruction caller was already foreign. Its denial does not isolate destruction cleanup causality or webContents ID reuse.",
+      "Negative expectation inversions prove harness assertion propagation; they do not establish detection of deliberately disabled production guards.",
+      "Three new developer scripts and additive docs have scoped typing and actual commands on this revision. Existing4870 sources exactly retain whole union/CI/build proof at b512d93d; no new whole-repository gate run is implied.",
+      "Full product UI E3/#385/#1150, private native creation/custody, providers/recipients, Windows/Linux desktop/cloud, genuine Conation iOS, packaging/signing and trusted remote CI remain pending. Zero complete original tasks are accepted."
+    ],
+    "fullOriginalTasksAccepted": 0
+  },
+  "l10nLinearFollowup": {
+    "schemaVersion": 1,
+    "id": "L10N-LINEAR-PARSING-20261002",
+    "observedAt": "2026-10-02T16:55:35.905Z",
+    "publication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "revision": "db8413d0b25c6795297480e994fc872991414f74",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+      "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+      "observedAt": "2026-10-02T16:59:30.702Z",
+      "sourceCount": 4876,
+      "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending."
+    },
+    "sourceBinding": {
+      "sourceCount": 4876,
+      "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "beforeAfterIdentical": true,
+      "committedSourceMatchesTestedManifest": true,
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74"
+    },
+    "sources": [
+      {
+        "path": "packages/shared/src/i18n/locales/ar.json",
+        "sha256": "ecfb97c2845d7ba266c840f5ec2be0ba6755e3753c1b327e80a1a5cd64e1ebc8"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/de.json",
+        "sha256": "d8591cf7041b647c35449586c02d46cec7854b3d59c1f421c885eeeef17f81f1"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/es.json",
+        "sha256": "764697afe0e2cffc7ed60a00d3df63517a7c09fe6ccb423ba60130d30d591185"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/fr.json",
+        "sha256": "79000f8207d4dcde2c4251ff7567fe145a9b4ca8b575b5ef46dd929290d30201"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/hu.json",
+        "sha256": "3e377460f8a79f55e67f34d7935e77bf498bc8062eec25b57e7461ef526736b3"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ja.json",
+        "sha256": "16012cdec375a6943f1fc999f3a26b75954f58e78958d7b71efe14bb6aa263e2"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ko.json",
+        "sha256": "e9fd9d62ba11f0f1c82da03b94257e9f9137b5932fd6861ad2610882d3591880"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/pl.json",
+        "sha256": "66d39b8b128df9457b79377b7f0f4a3737497e60e0fd8438f1d5d6f28f073c2b"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+        "sha256": "4b94c2f446f42cbb06e1726c3783543979ce98863e6d0460a225bf7145ef7e1d"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+        "sha256": "9523b1244625ccb40e80985485042adc254c85dc2d1afc963849cbee2a7c4ee5"
+      },
+      {
+        "path": "packages/shared/src/team/mentions.ts",
+        "sha256": "b5a0ec80007b597790a77d97e80cc09db4695c9045c305f945aece4e3335d8e0"
+      },
+      {
+        "path": "packages/shared/src/mentions/index.ts",
+        "sha256": "d1bb62a2bc322c9962241e05027cb5dd82eb1acf57a11befa84b93270562a93c"
+      },
+      {
+        "path": "packages/server-core/src/domain/title-sanitizer.ts",
+        "sha256": "d7c9a0ca01dc1c6f4ea054811313128b5de53cc05e5d6e257635af9c3dfdc61a"
+      },
+      {
+        "path": "packages/shared/src/team/__tests__/mentions-linear.test.ts",
+        "sha256": "0fce76d9af815fb241b1af2ff126f31a8b9b71508c4430c3c3f200f391475b02"
+      },
+      {
+        "path": "packages/shared/src/mentions/__tests__/path-mentions-linear.test.ts",
+        "sha256": "a84d3dfe970e248540dba25fd29e91efd6a4188ba68468b6b093ede1f3598652"
+      },
+      {
+        "path": "packages/server-core/src/domain/title-sanitizer-linear.test.ts",
+        "sha256": "9b1dcf21e44f4f7f2756b3efd35a57876b94bad5e1de2c004b7c771dcd57865f"
+      }
+    ],
+    "owners": {
+      "localeFragmentProducers": [
+        "/root/native_boundary",
+        "/root/recovery_scout",
+        "/root/september_gates"
+      ],
+      "localeIndependentCrossReviews": [
+        "/root/native_boundary",
+        "/root/recovery_scout"
+      ],
+      "parserProducer": "/root/native_boundary",
+      "parserIndependentReview": "/root/recovery_scout",
+      "combinedGateRuntime": "/root/recovery_scout",
+      "serialSourceWriterAndDelivery": "/root"
+    },
+    "localization": {
+      "localeCodes": [
+        "ar",
+        "de",
+        "es",
+        "fr",
+        "hu",
+        "ja",
+        "ko",
+        "pl",
+        "zh-Hans",
+        "zh-Hant"
+      ],
+      "originalEnglishRoadmapKeys": 158,
+      "translatedOriginalValues": 1580,
+      "additionalArabicZeroAndDualKeys": 4,
+      "unrelatedValuesPreserved": true,
+      "englishAndRussianChanged": false,
+      "runtimeChecks": {
+        "exactSelectedLocaleResources": 1580,
+        "exactPluralResolution": 120,
+        "actualRoadmapModelResultReactSSR": 70
+      },
+      "focusedTests": {
+        "pass": 280,
+        "fail": 0,
+        "assertions": 6013,
+        "files": 88
+      },
+      "description": "All ten selected production catalogs resolve Roadmap resources with exact placeholders. Four Arabic zero/dual variants prevent observed English fallbacks for existing plural families. Actual component rendering distinguishes requested/effective/unknown model provenance and escapes model/warning content."
+    },
+    "parsing": {
+      "productionModules": 3,
+      "newBehavioralTests": 3,
+      "focusedTests": {
+        "pass": 142,
+        "fail": 0,
+        "assertions": 269,
+        "files": 8
+      },
+      "strictTypecheckExit": 0,
+      "actualBaselineComparisons": 18048,
+      "freshUnicodeAndMalformedCases": 12,
+      "description": "Backward trailing-dot cleanup and forward first-closing-delimiter scans preserve historical Unicode, nonempty token grammar, encounter order, file-before-folder replacement and non-nesting edit-request stripping. Actual old/new functions are compared, with separate observed scaling measurements and no length cap or timing assertion."
+    },
+    "currentValidation": {
+      "gates": [
+        {
+          "name": "shared",
+          "command": [
+            "bun",
+            "test",
+            "./packages/shared"
+          ],
+          "exitCode": 0,
+          "seconds": 86.462,
+          "tests": {
+            "pass": 4951,
+            "skip": 12,
+            "fail": 0,
+            "assertions": 21752,
+            "files": 478
+          },
+          "logSha256": "8f4c5df4dc80a3372dd1d6fb7197bc3d89c81a6977fd53ec32e45152ba31a419"
+        },
+        {
+          "name": "server",
+          "command": [
+            "bun",
+            "test",
+            "./packages/server-core"
+          ],
+          "exitCode": 0,
+          "seconds": 24.358,
+          "tests": {
+            "pass": 1511,
+            "skip": 8,
+            "fail": 0,
+            "assertions": 6155,
+            "files": 240
+          },
+          "logSha256": "a7e69f1d9ace8c3aec37e5d1a9c9a1e47a01af1368cbe12cea0cc33fb1bb5670"
+        },
+        {
+          "name": "electron-ui-core",
+          "command": [
+            "bun",
+            "test",
+            "./apps/electron/src",
+            "./packages/ui",
+            "./packages/core"
+          ],
+          "exitCode": 0,
+          "seconds": 24.716,
+          "tests": {
+            "pass": 4205,
+            "skip": 0,
+            "fail": 0,
+            "assertions": 20047,
+            "files": 610
+          },
+          "logSha256": "988aab3c5123aae510798cd1b612e70b4558f8532abee170f9997f110eb7d4e6"
+        },
+        {
+          "name": "validate",
+          "command": [
+            "bun",
+            "run",
+            "validate:ci"
+          ],
+          "exitCode": 0,
+          "seconds": 89.118,
+          "tests": null,
+          "logSha256": "55b649cbe97d5c0944c865fec6ca6644a2d71af9da857bd7a699e3a62df534a1"
+        },
+        {
+          "name": "build",
+          "command": [
+            "bun",
+            "run",
+            "electron:build"
+          ],
+          "exitCode": 0,
+          "seconds": 49.849,
+          "tests": null,
+          "logSha256": "5271003228e0ae60c3c3ede77d2cacc49cc4125a93f7978e1b9629b5c1038173"
+        }
+      ],
+      "sourceBeforeAfterIdentical": true,
+      "bridgeRuns": [
+        {
+          "entryRuntime": "bun",
+          "actualChildRuntime": "Electron39.2.7/embeddedNode22.21.1",
+          "stages": [
+            {
+              "phase": "single",
+              "pid": 79084,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            },
+            {
+              "phase": "prepare",
+              "pid": 79116,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            },
+            {
+              "phase": "replay",
+              "pid": 79130,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            }
+          ],
+          "sourceBindingCount": 361,
+          "preloadSha256": "a89c1fc7e0f67fbcbc1b133dee5c5cce0975c97d5a121c2c5a7f457644e546f7",
+          "externalSdkSha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a",
+          "ownedFixtureRemoved": true,
+          "receipt": {
+            "id": "l10n-linear-parsing-20261002/combined-bun/receipt.json",
+            "sha256": "70fb7f98b7503db817efe8658808c7d9f7d0e866432b3264cccfe64e7a58412e"
+          }
+        },
+        {
+          "entryRuntime": "node",
+          "actualChildRuntime": "Electron39.2.7/embeddedNode22.21.1",
+          "stages": [
+            {
+              "phase": "single",
+              "pid": 79223,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            },
+            {
+              "phase": "prepare",
+              "pid": 79249,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            },
+            {
+              "phase": "replay",
+              "pid": 79255,
+              "exit": 0,
+              "signal": null,
+              "timedOut": false,
+              "pidExited": true
+            }
+          ],
+          "sourceBindingCount": 361,
+          "preloadSha256": "a89c1fc7e0f67fbcbc1b133dee5c5cce0975c97d5a121c2c5a7f457644e546f7",
+          "externalSdkSha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a",
+          "ownedFixtureRemoved": true,
+          "receipt": {
+            "id": "l10n-linear-parsing-20261002/combined-node/receipt.json",
+            "sha256": "425851d8a63d34ff206b49795dc4011a43a9d8d283713794bd294670092abede"
+          }
+        }
+      ]
+    },
+    "artifacts": [
+      {
+        "id": "roadmap-l10n-20260930/root-transfer.json",
+        "sha256": "7a0b3a5600cde916c462f1e4df5383e28aac78ecd4c6a4ee0facc14022fc2d3a",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      },
+      {
+        "id": "roadmap-l10n-20260930/runtime-language-review.md",
+        "sha256": "01eeddbc4e9577c703869255863965f76bc080bd769b6a2645b7b5ed4ff99094",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      },
+      {
+        "id": "roadmap-l10n-20260930/runtime-language-review.json",
+        "sha256": "9a6481666100aa582aa4ec0b346a346a71c43166fd6447a86f8b54dd64b5ebb2",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      },
+      {
+        "id": "roadmap-l10n-20260930/ar-plural-extension.json",
+        "sha256": "4bc38881b70196f0f13737abc86e2fbff524e0f7eb9abeaf6abcdf375316080e",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      },
+      {
+        "id": "linear-parsing-20260930/frozen-manifest.json",
+        "sha256": "3d955ca144061b4a1c38f3e298b180fe811b062a50b48286cb277771a22ccb7b",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      },
+      {
+        "id": "linear-parsing-20260930/independent-review.md",
+        "sha256": "011331b58edd09e3663f6cb59a144ae57f0da4cb05bbbfadc89b783b6eb70b42",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      },
+      {
+        "id": "linear-parsing-20260930/independent-review.json",
+        "sha256": "1611f7a8ee9afb9d3c2a58be3517c22281eb20dccc239d33a7c1b045bc5897c3",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      },
+      {
+        "id": "linear-parsing-20260930/root-transfer.json",
+        "sha256": "e4bb3932f95b60021b649caca077612c3a6f6e7073d32139cdb67cd14396d3e3",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      },
+      {
+        "id": "l10n-linear-parsing-20261002/gates.json",
+        "sha256": "c622bb1f425686e2cfc2c23d56e945a78bbbbcd742f214fba570e6319d8e4ccf",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      },
+      {
+        "id": "delivery-freshness-20261002.json",
+        "sha256": "dfeaabd0aa3144742f1fe676794d93ee437c254998ea73723b9ebda903ac026e",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      },
+      {
+        "id": "l10n-linear-parsing-20261002/combined-bun/receipt.json",
+        "sha256": "70fb7f98b7503db817efe8658808c7d9f7d0e866432b3264cccfe64e7a58412e",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      },
+      {
+        "id": "l10n-linear-parsing-20261002/combined-node/receipt.json",
+        "sha256": "425851d8a63d34ff206b49795dc4011a43a9d8d283713794bd294670092abede",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+      }
+    ],
+    "limits": [
+      "Translation acceptance covers production resource/plural resolution and actual React server rendering. Mounted UI, RTL/bidi layout, native-speaker review, accessibility and the full L10N-01 criteria remain pending.",
+      "The parser repair covers only identified delimiter/dot paths. Other regex families and whole-module complexity remain outside this evidence; no universal performance or complete security acceptance is claimed.",
+      "The independent hosted alert review remains unfinished after the reviewing agent was stopped by the platform risk restriction. Original check evidence is retained; ordinary parser/test acceptance does not close alerts or accept the hosted check.",
+      "Both portable bridge entry runners execute real Electron children with production preload/services, synthetic fixture enrollment/key injection and hidden sandbox=false production-compatible windows. Normal restart/replay is not SIGKILL, power loss, full product UI E3 or OS secure-store custody.",
+      "Fresh GitHub metadata observes zero registered repository/organization runners and no required macos-toolchain/linux-toolchain labels. Local gates do not replace required trusted remote CI.",
+      "All109 task contracts,489 original requirement rows,464 dependencies and297 original backlog rows remain intact. Native product/provider/recipient/platform, packaging/signing, compound integration and all complete original acceptance remain pending."
+    ],
+    "fullOriginalTasksAccepted": 0
+  },
+  "currentValidation": {
+    "gates": [
+      {
+        "name": "shared",
+        "command": [
+          "bun",
+          "test",
+          "./packages/shared"
+        ],
+        "exitCode": 0,
+        "seconds": 88.171,
+        "tests": {
+          "pass": 4951,
+          "skip": 12,
+          "fail": 0,
+          "assertions": 21752,
+          "files": 478
+        },
+        "logSha256": "a0a1651409e7f56ec0a119e6c484d96c915dc61f5d1032b3fe92b8d0008eb7c2"
+      },
+      {
+        "name": "server",
+        "command": [
+          "bun",
+          "test",
+          "./packages/server-core"
+        ],
+        "exitCode": 0,
+        "seconds": 24.846,
+        "tests": {
+          "pass": 1511,
+          "skip": 8,
+          "fail": 0,
+          "assertions": 6155,
+          "files": 240
+        },
+        "logSha256": "d7e6d00fa6d7598351af4f17029e5a37aeb7401bb1afa1d5a87f712ddbb16e40"
+      },
+      {
+        "name": "electron-ui-core",
+        "command": [
+          "bun",
+          "test",
+          "./apps/electron/src",
+          "./packages/ui",
+          "./packages/core"
+        ],
+        "exitCode": 0,
+        "seconds": 27.018,
+        "tests": {
+          "pass": 4222,
+          "skip": 0,
+          "fail": 0,
+          "assertions": 20087,
+          "files": 612
+        },
+        "logSha256": "cba62eaf458c2b6b68fa5634fe8d319bde70d126c4ea981751b8e4c3c0dec143"
+      },
+      {
+        "name": "validate",
+        "command": [
+          "bun",
+          "run",
+          "validate:ci"
+        ],
+        "exitCode": 0,
+        "seconds": 92.243,
+        "tests": {
+          "pass": 242,
+          "skip": 0,
+          "fail": 0,
+          "assertions": 687,
+          "files": 17,
+          "scope": "AGGREGATED_SELECTED_BUN_INVOCATIONS_WITHIN_VALIDATE; filesCountedAcrossInvocations"
+        },
+        "logSha256": "3c8f7ce6d0b3b6bdf3b0d3984633b8c32df2313567a08f0ddd208251710b3f5d"
+      },
+      {
+        "name": "build",
+        "command": [
+          "bun",
+          "run",
+          "electron:build"
+        ],
+        "exitCode": 0,
+        "seconds": 55.258,
+        "tests": null,
+        "logSha256": "75dbd7e25390b410a5b2fb8cd6b0f5a5f7f7e9a2719498cb2863785d3504b742"
+      }
+    ],
+    "sourceBeforeAfterIdentical": true,
+    "sourceCount": 4879,
+    "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923"
+  },
+  "historicalGatesScope": "Older packets retain their revision-bound history; currentValidation and focusNotificationScopeFollowup describe complete4879 local gate proof. Previous native Notes/bridge and Projects browser proofs were not rerun by this wave.",
+  "historicalGitPublication": {
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "revision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
+    "gitTree": "2e887bd16058863272abb29ac847d973784a9858",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
+    "observedAt": "2026-09-30T11:46:48.859Z",
+    "originalCandidateSourceManifestSha256": "9f2f2c953155aa7350454a561f88c1564f465a69ef61165f668141a7b6ee28c0",
+    "originalNamedSourcesExactMatchCount": 75,
+    "namedSourceCount": 76,
+    "explainedWhitespaceChanges": [
+      {
+        "path": "packages/server-core/src/handlers/rpc/native-data.test.ts",
+        "candidateSha256": "1731037ccfd643ff1ac2fbb4ae345f0de99dc974dcedc7e5c5f9f17020f3e91d",
+        "committedSha256": "2857fd57340e3778ce18ffbe1fb6e1e451632905e5539310ea8667b77adb1696",
+        "reason": "One extra final newline removed during staged diff --check; no other bytes changed."
+      }
+    ],
+    "committedNamedSourceManifest": [
+      {
+        "path": "apps/electron/src/__tests__/transport-resolve-target.test.ts",
+        "sha256": "ac107dd204516a2aa15303a9113affb17df7a2f686598d7637b4fc30fb3ece59"
+      },
+      {
+        "path": "apps/electron/src/__tests__/transport.test.ts",
+        "sha256": "34cff30e362dca648ee52bfcc52b1b18e8c320327203a29a9908dc743ee6cc03"
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/browser-cookie-consent.test.ts",
+        "sha256": "4ccee767a2ee07d545e4efc313a9c3e1218312667d2956110d7ad42e653f1427"
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+        "sha256": "2e17e5d5588695bc2c6fc9cbf3b8e880d72fb66615e687cb3bba977afc21288c"
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/native-replica.test.ts",
+        "sha256": "aa59b78e8c3303ca7084673c3eb5c3615c18c24c2508a91345b3f8758fbfef6c"
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/native-transport-credential.test.ts",
+        "sha256": "8ba9abcd91c09d22834fc0276b248ed88460ea77596446e3502d25b2f3832f9a"
+      },
+      {
+        "path": "apps/electron/src/main/browser-cookie-auto-import.ts",
+        "sha256": "1b3e64f8204bfc133286b72789385df71be960ecec2472c0cba916738d56d142"
+      },
+      {
+        "path": "apps/electron/src/main/index.ts",
+        "sha256": "715b2c0ab4fed46bc9709be1e567926c2ffbd80ce631dc5f6818be3654f9e740"
+      },
+      {
+        "path": "apps/electron/src/main/local-client-binding.ts",
+        "sha256": "6e9db6254eb89c8f72d63fbe15268e9a27bbda879972f588effec08f39ddfe91"
+      },
+      {
+        "path": "apps/electron/src/main/native-replica.ts",
+        "sha256": "cc7772f69a0c942ac1331f2892f88b936a6a3c85e3a908db292f37ea5473f2b7"
+      },
+      {
+        "path": "apps/electron/src/main/native-transport-credential.ts",
+        "sha256": "f8c39342c41bce0c4d6b04a31b618062a34d8523c45d8fd1b4e61352d432d6cd"
+      },
+      {
+        "path": "apps/electron/src/preload/bootstrap.ts",
+        "sha256": "430f176d64563ed99d5d662563b36f8d595a02a38f072c26cc8062dd8f1407e0"
+      },
+      {
+        "path": "apps/electron/src/preload/native-replica.ts",
+        "sha256": "85876b733efd60d997552909c966687881d57837f34c56b3420d26c09841130c"
+      },
+      {
+        "path": "apps/electron/src/renderer/App.tsx",
+        "sha256": "4f4bce09432a7df46ab568bcf3fdb120a4d538248b27b4ae181644dc73799d68"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/automations/types.ts",
+        "sha256": "3869be1cb2f46c8de8917d0e438613aa77593f808f67319165a19a9a31405b07"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/onboarding/WelcomeStep.tsx",
+        "sha256": "e552d5af2643a1e8196da9fe8a2b6be92e4e05510e8da8df01122be03a373e02"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/onboarding/__tests__/onboarding-username.test.ts",
+        "sha256": "894c79a7717da55ad0ccdf617b089862ddff8ace7abc74a3df709792ced94ed5"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/onboarding/__tests__/rox-runtime-default.test.ts",
+        "sha256": "cca022c4d1a6223a872f001cf28b4e63373947e1220532d6d447988f5056ab8c"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/onboarding/onboarding-username.ts",
+        "sha256": "745d6dd3a004e20433642913bfd6f9c83f183ca9aa8b09d94065431df701d760"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/onboarding/rox-runtime-default.ts",
+        "sha256": "a0d2ed6ece99a3085538f12c3d3fa499e6a89745e6a2b196f91f04595bd3a260"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/team/team-store.ts",
+        "sha256": "b0e65c86e20509b2eb11c6bb6b725bda6e0e8e0541a11d64f1b9f5fd3079a50f"
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+        "sha256": "c8c993f307657a84b6f0d0e1b4bf3dcd10d1b7c37ac40d66f5d756ef2cc385cc"
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/message-tts.ts",
+        "sha256": "7216e6fbd9ce2fca10f4ba270fdb3693314cd1c2257ce3345bf3f6e8d61be24b"
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/native-notes-sync.ts",
+        "sha256": "212d6cb14b9f573ac82e420ed42de5ec11db7fb3829f901095332dddc3d06cbd"
+      },
+      {
+        "path": "apps/electron/src/shared/types.ts",
+        "sha256": "31b7b89dfbe3cdf5f9ec54315a0484dd9fb407e9e1469e5a45e64038fcab0506"
+      },
+      {
+        "path": "packages/server-core/src/authority/native-authority.ts",
+        "sha256": "5672dd82decf337699e69a243aed10ac44c0e6585dcab7282a8670a80ef905b2"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/browser-profile-import.test.ts",
+        "sha256": "82d8a39afbbfd7cd181d6ff49070ca2493ce7bb48bd037c348fe58d18ec81a8c"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/native-self-profile.test.ts",
+        "sha256": "44fafc1fa6216141fd44f9bb593ce76607a3a07ed91cfff50d7c6f041cfd41a9"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/native-startup-runtime.test.ts",
+        "sha256": "9e0f2d596caea5b5d56b3a597a04dc74dbd51f3a48c5d9988b5ca33eb85212e4"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/native-workspace-startup.test.ts",
+        "sha256": "b4885a43143a42b52b8bf321b9a18b033d1c2dfa877605955b675c857ac6d4f5"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/orgs.test.ts",
+        "sha256": "89ab1466ad5b3a6b89a99fbe79625960dcfa33a30e2152ea6515f84e4338734e"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/browser-profile-import.ts",
+        "sha256": "8393f33506979754c9f92242e3684a6e81afca648559d1f1c4a751459669eed1"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/llm-connections.ts",
+        "sha256": "d75ae41f1924f29720745e9a6066ce41e71b2f21af14cd4d7ca2116db2c35582"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/native-data.test.ts",
+        "sha256": "2857fd57340e3778ce18ffbe1fb6e1e451632905e5539310ea8667b77adb1696"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/notes.ts",
+        "sha256": "0c4535bbc1c5a6b56f434814087014c9dcd262d433491010517e54e9d48a90cf"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/orgs.ts",
+        "sha256": "cc97990aa4c52a9cdec2f5b514788b72af15339c3429c285a9ad7e874c0adc4f"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/workspace.ts",
+        "sha256": "55fc1ccc3b8aada91dc1383e59c47274d304733c982cdedac5d43ac6f57087ac"
+      },
+      {
+        "path": "packages/server-core/src/meetings/__tests__/budgets.test.ts",
+        "sha256": "45a8d574ad60402e4354dfbfc077ea569d5f619e54f1a4e1376d0f36907475de"
+      },
+      {
+        "path": "packages/server-core/src/meetings/__tests__/followup.test.ts",
+        "sha256": "cb6a396426a5e5923ab5f85b24a663157c0152cded5607d8b4772ad94ed368ab"
+      },
+      {
+        "path": "packages/server-core/src/meetings/conation/native-shells.ts",
+        "sha256": "9dd8e2562745b2c9d9b70fdd35109fa7e88b51c4ab08a8125bbc85549992671c"
+      },
+      {
+        "path": "packages/server-core/src/meetings/manual.ts",
+        "sha256": "51572a04bb6982df80b7d3779030514a8c1d31cdfa8c8f0302f9bace9b1608d3"
+      },
+      {
+        "path": "packages/server-core/src/meetings/tracker-actions.ts",
+        "sha256": "38e40828c6ac1a8977b9c8f0ab0e32de5b4887dd98337dbf48d162f895c1637c"
+      },
+      {
+        "path": "packages/server-core/src/meetings/types.ts",
+        "sha256": "f4297356c7ccf7dbe6af59a017e6192e3b9f0593f2138e02105479ef73091b81"
+      },
+      {
+        "path": "packages/server-core/src/sessions/SessionManager.ts",
+        "sha256": "5c40bf4e6940b2ee47728a53d4671b6083fc2ceabd78fb6305a8359acdcc0994"
+      },
+      {
+        "path": "packages/server-core/src/transport/__tests__/server-lifecycle.test.ts",
+        "sha256": "e84519a0bbdb763d792b20aa5f07bdaf718a9be6ed231691dedcf8781615d4b0"
+      },
+      {
+        "path": "packages/server-core/src/transport/server.ts",
+        "sha256": "b5487b1e7ece70969c81334ced984a06d8789bd3b9e28a1b1acf1f1eabf62644"
+      },
+      {
+        "path": "packages/shared/src/account-replica/__tests__/account-replica.test.ts",
+        "sha256": "1ccfd0694d96ad59f8cd1ce23dea820da5f1d6ce87dc216cc971418fc5eba324"
+      },
+      {
+        "path": "packages/shared/src/account-replica/outbox.ts",
+        "sha256": "b6b7da4943e0511c58a47d0f78ebe644fb9367ec7a0327b3cdbb26a39d871d79"
+      },
+      {
+        "path": "packages/shared/src/account-replica/replica.ts",
+        "sha256": "08e6059f1d60b19969a212eaa317a0f1743b83f39c8d2de0c8261690cc99e9c2"
+      },
+      {
+        "path": "packages/shared/src/agent/__tests__/omp-first-run.test.ts",
+        "sha256": "30d01df83017dc5134d0d089398297d1181bf15be26f93b3640b4b8f0d6cb358"
+      },
+      {
+        "path": "packages/shared/src/agent/__tests__/omp-public-runtime.test.ts",
+        "sha256": "7c3ba5ac8973c20e0a249148586ab7144d313486dfc4c6eef7fc1724200e6edb"
+      },
+      {
+        "path": "packages/shared/src/agent/core/agent-budget.ts",
+        "sha256": "a40f940fd07d236e47ca1f9c209e76c6c694e57cb330f438a4acd6a286ff3b96"
+      },
+      {
+        "path": "packages/shared/src/agent/omp-agent.ts",
+        "sha256": "933a8595da18e025a0c6843960709c4e16deb47694674ab4f0f5710e1e208ace"
+      },
+      {
+        "path": "packages/shared/src/agent/omp-first-run.ts",
+        "sha256": "64e0558d959e15eaaf762a0fe0189491f9367261b5e0636a4b9cf3c574d6893e"
+      },
+      {
+        "path": "packages/shared/src/automations/handlers/prompt-handler.ts",
+        "sha256": "3b689e450604c955d53ea7f4fa88c496ff823c3cb2ac1be6a9280fed2138cefb"
+      },
+      {
+        "path": "packages/shared/src/automations/occurrence-ledger.ts",
+        "sha256": "ca23b4299c25a9fb17fd03f89a75f4177db2be6ca61a092dab2bcb14ab948f4f"
+      },
+      {
+        "path": "packages/shared/src/browser/__tests__/profile-import.test.ts",
+        "sha256": "b45a3af0be94c9880484676bf9be51fe6b4a10a6979016fc9c962b8cdaae9dc2"
+      },
+      {
+        "path": "packages/shared/src/browser/profile-import.ts",
+        "sha256": "9ed4c6e5f10aac6a5c3771eff9764d02c627e93ef9184af20f8ab613434da96e"
+      },
+      {
+        "path": "packages/shared/src/credentials/backends/secure-storage.ts",
+        "sha256": "9d9a1536e2bfaafd305b720567a298e96903c547d77242f5b8ee79f3043d6017"
+      },
+      {
+        "path": "packages/shared/src/credentials/manager.ts",
+        "sha256": "4ff7351264b6c6bcceabdfbe353dd174b9aba3e24ad09baabfc35a3095311fc9"
+      },
+      {
+        "path": "packages/shared/src/credentials/types.ts",
+        "sha256": "e13367e3e04e051eba3e164b5e5e2a2a466fe1a05369492420148a4c539fd782"
+      },
+      {
+        "path": "packages/shared/src/gamification/storage.ts",
+        "sha256": "d09276e7ab98a2e175e6eff0e6b7a7583e2a74db4a744e622dce4a0cc5e967d2"
+      },
+      {
+        "path": "packages/shared/src/orgs/types.ts",
+        "sha256": "6e4fa9e1220b884f60cb8222af17089b15d6f7a8717b853b7473703ef579b64d"
+      },
+      {
+        "path": "packages/shared/src/pages/data-store.ts",
+        "sha256": "ce13453d850735e44c6e7c32ea9cb13b5a8d7e750bcb91f3a771cb1b97ea95ce"
+      },
+      {
+        "path": "packages/shared/src/privacy/__tests__/privacy.test.ts",
+        "sha256": "0802dc63f856e8629c57f9df43a436e029361d371d007d39d249a83e2be87110"
+      },
+      {
+        "path": "packages/shared/src/privacy/policy.ts",
+        "sha256": "bed089d6fec868372581ee96a6a33861990f9f0d3026f4dff8949be1b172a4c2"
+      },
+      {
+        "path": "packages/shared/src/privacy/replica-consent.ts",
+        "sha256": "4a8d0119bef1db03457736cbd60e5ee3915370da0d7878391e1035a1a87164aa"
+      },
+      {
+        "path": "packages/shared/src/privacy/store.ts",
+        "sha256": "e872f2c32ac90c76fcf8b4128491b3cead80f8b92151e581bd4633344308d6d3"
+      },
+      {
+        "path": "packages/shared/src/protocol/__tests__/native-replica.test.ts",
+        "sha256": "affee0a3fcd68877dc4b4b43d09af4511dafffd3d50ca4bb006d65d2226b71ec"
+      },
+      {
+        "path": "packages/shared/src/protocol/channels.ts",
+        "sha256": "2533bd9f346a4cd39b4246e2b9a6195c5d36bbe36418f4bf14016a8800e1f2e0"
+      },
+      {
+        "path": "packages/shared/src/protocol/dto.ts",
+        "sha256": "126ad7a9a4268211dba31b19c9a2f40dfd957b94ec73d404e84f24e71c060f1c"
+      },
+      {
+        "path": "packages/shared/src/protocol/native-replica.ts",
+        "sha256": "51d9139ad195130dd0c2b33e2d3643154319242f00212db65ab49dbaac566eee"
+      },
+      {
+        "path": "packages/shared/src/voice/policy.ts",
+        "sha256": "7e9ebf6d4352dddb59be455b7edd28794057cbc9023a24f93870ee91561ce4a5"
+      },
+      {
+        "path": "packages/shared/src/voice/runtime.ts",
+        "sha256": "80365f6b83f8ba0b4de8c78482d30a7bf9c6c0458fa84b7bab5216776a0cd697"
+      },
+      {
+        "path": "packages/shared/src/voice/transcribe.ts",
+        "sha256": "d31a9ae09cc0f238ea673ab2452b22c11ee3c90817467d3d83ca054db15ba6a5"
+      },
+      {
+        "path": "packages/ui/src/components/overlay/pdf-search.ts",
+        "sha256": "0c7cf57fde6d89db6b4c767bac18012f1246c9b93b2c96d8948561c17928d6d0"
+      }
+    ],
+    "sourceScope": "Named hashes plus immutable Git tree; source publication does not accept original product criteria.",
+    "retainedLocalValidation": [
+      {
+        "artifact": "shared.union.delivery-green.txt",
+        "sha256": "0ed09b68f0929da43ef7fb2dc3e65280ef35f3552a87fc9e60f442e44c89582f",
+        "result": "4902 pass / 12 skip / 0 fail; 21420 assertions; 468 files"
+      },
+      {
+        "artifact": "server.union.delivery-green.txt",
+        "sha256": "8f5c123e660b64741f449cd732d1c92381d01267a478b42beea1c5f10fd6af24",
+        "result": "1496 pass / 8 skip / 0 fail; 6080 assertions; 233 files"
+      },
+      {
+        "artifact": "electron.union.native-entry-final.txt",
+        "sha256": "f1bad5b14dbcd0aad6d1f4a84ddeb1f66f882b8778da3b6535530fb7f66353cd",
+        "result": "4186 pass / 0 fail; 19904 assertions; 607 files"
+      }
+    ],
+    "validationLimit": "Retained pre-commit candidate invocations; named-source comparison is a later readback, not an invocation at this Git revision. One explained final-newline change is recorded. Follow-up source changes require new applicable checks.",
+    "fullProductDelivery": "PENDING",
+    "mergeAcceptance": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0,
+    "ci": {
+      "status": "QUEUED_NO_MATCHING_TOOLCHAIN_RUNNER",
+      "requiredLabels": [
+        "self-hosted",
+        "macos-toolchain"
+      ],
+      "executedSteps": 0
+    }
+  },
+  "nativeProductFollowup": {
+    "schemaVersion": 1,
+    "id": "NATIVE-PRODUCT-NOTE-20261002",
+    "observedAt": "2026-10-02T18:22:29.665Z",
+    "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+    "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+    "sourceCount": 4876,
+    "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+    "priorGatedSourcesUnchanged": true,
+    "publication": {
+      "status": "EVIDENCE_PUBLISHED_FOR_REVIEW",
+      "evidenceRevision": "050230079351d81d2fe6a3d51f3ba0214934826c",
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "remoteHeadReadback": "050230079351d81d2fe6a3d51f3ba0214934826c",
+      "pullRequestHeadReadback": "050230079351d81d2fe6a3d51f3ba0214934826c",
+      "isDraft": true,
+      "observedAt": "2026-10-02T18:27:58.010Z",
+      "sourceCount": 4876,
+      "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+      "allCommittedSourceBlobsMatchGatedManifest": true,
+      "newProductionSources": 0,
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "fullTaskAccepted": false,
+      "limits": "Visible Note create/edit/reload/normal restart plus independent canonical/journal/ACK metadata only; receipt bodies/OS custody, Tasks persistence/click, crash/offline/platform/full original tasks remain pending. Later evidence-binding commit has a different head."
+    },
+    "owners": {
+      "visibleProductUI": "/root/native_boundary",
+      "independentTaskScopedReadback": "/root/recovery_scout",
+      "sourceBindingRegistryAndDelivery": "/root"
+    },
+    "productRuntime": {
+      "launch": "Actual standard built Electron production main with preserved task-private enrolled profile/workspace; full product renderer and native menus, no minimal harness main.",
+      "firstPid": 2566,
+      "normalMenuQuitExitCode": 0,
+      "firstPidAbsent": true,
+      "restartedPid": 12111,
+      "currentlyLeftOnNewTaskNote": true,
+      "foregroundLeaseReleased": true,
+      "buildHashes": {
+        "dist/main.cjs": "4704a537350f17201a1745442539f68ce50665af967725823764918518aae470",
+        "dist/renderer/index.html": "e3c245fd8f1e25280e9d95915e8e57d338ddd956b85b0fef716590751573d28d"
+      },
+      "preloadSha256": "a89c1fc7e0f67fbcbc1b133dee5c5cce0975c97d5a121c2c5a7f457644e546f7"
+    },
+    "visibleBehavior": {
+      "createdViaDialog": true,
+      "editedViaUI": true,
+      "savedStatus": true,
+      "viewMenuReloadRestoredRouteAndText": true,
+      "normalMenuQuitAndFreshMainRestoredRouteAndText": true,
+      "reopenedFromNoteList": true,
+      "taskRouteVisible": true,
+      "taskFooterStorageUnavailableLocalCache": true,
+      "taskCreated": false,
+      "taskToNoteClickReopenAccepted": false
+    },
+    "persistence": {
+      "canonicalRelativePath": "notes/Native product acceptance 20261002.md",
+      "canonicalBytes": 193,
+      "canonicalSha256": "cdf52d26bb98cc2d681ae50118ba4e7de6df347d8441a829623fac64c6bc752e",
+      "unchangedAcrossRestart": true,
+      "journalEntityRevision": 2,
+      "journalReceiptsUnchanged": true,
+      "operations": [
+        {
+          "kind": "create",
+          "operationId": "cb7fab13-b933-4799-9d68-d09cd0c951ae",
+          "journalSequence": 3,
+          "journalRevision": 1,
+          "matchingAcknowledgementSequenceAndRevision": true,
+          "pendingRows": 0,
+          "storedEncryptedReceiptCount": 1,
+          "encryptedReceiptBodyIndependentlyValidated": false
+        },
+        {
+          "kind": "edit",
+          "operationId": "72d8775b-f282-42dc-95b0-5314c590b07a",
+          "journalSequence": 4,
+          "journalRevision": 2,
+          "matchingAcknowledgementSequenceAndRevision": true,
+          "pendingRows": 0,
+          "storedEncryptedReceiptCount": 1,
+          "encryptedReceiptBodyIndependentlyValidated": false
+        }
+      ],
+      "readerRuntime": "Node22.23.3 via production sqlite-runtime.ts readOnly:true",
+      "selectedBindings": {
+        "apps/electron/src/main/native-replica.ts": "cf2ff9d073d2c23ad6c85bd079f2c27fbe368b201981d822299e135920221cc5",
+        "apps/electron/src/preload/native-replica.ts": "8a83168294c2985393e0427907edb714f4964e5db641844d151e21073af99f95",
+        "packages/server-core/src/handlers/rpc/notes.ts": "376745d47b2e596638b99a689b2f5e192a6e7985e071feaa984ad6d8078879df",
+        "packages/server-core/src/authority/native-journal.ts": "4371389616fbdf0f9ee498bc74f6f5681445d46fffe2130df7e2628e77412d52",
+        "packages/shared/src/account-replica/outbox.ts": "adab9de3803d365ac40819cb74d5b89cf46893189d93afbcd52e3976061f129e",
+        "packages/shared/src/utils/sqlite-runtime.ts": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab",
+        "apps/electron/dist/bootstrap-preload.cjs": "a89c1fc7e0f67fbcbc1b133dee5c5cce0975c97d5a121c2c5a7f457644e546f7"
+      },
+      "receiptContentHashesAreNotCanonicalFileHashes": true
+    },
+    "taskToNote": {
+      "status": "NOT_ACCEPTED",
+      "observedCause": "Actual Tasks route reports storage unavailable and local-cache changes.",
+      "taskCreated": false,
+      "grantsExpanded": false,
+      "nextRequiredAction": "Identify and repair or initialize the real permitted Task persistence path, then exercise native Task-to-Note click/reopen; cache success cannot replace durable readback."
+    },
+    "artifacts": [
+      {
+        "id": "native-product-acceptance-20261002/ui-observation.json",
+        "sha256": "35427de3abca1875347e4a16bc6ea2bdaa5fcd82069a691af7a581181ea291f5",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "native-product-acceptance-20261002/report.md",
+        "sha256": "fa5bab2400aeaa5edb191a5603f654e107dd409118d4f86ed89483ecd63fdba5",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "native-product-acceptance-20261002/readback-summary.json",
+        "sha256": "bfe6df3b96324ee48aea0981e22ed093d323474521794424056784728b091f61",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "native-product-acceptance-20261002/readback-review.md",
+        "sha256": "581d971464562be82ff6f6f725e89143bfb9147b7098cd7106d8720db54252b5",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "native-product-acceptance-20261002/reopened.png",
+        "sha256": "313c2767bd5dc66334bcb16cfbb79c9f7b695afb80c21c5747e6459f764c87c6",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "native-product-acceptance-20261002/edit.ax.txt",
+        "sha256": "83440b408a30fc7f51f79cbd79c903d1b4fdfb4a3dfaf755ed9691db6332df59",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "native-product-acceptance-20261002/task-unavailable.ax.txt",
+        "sha256": "6176dba7113075684cbeec2d67b057b6c9b261f7143b15eb93116b3082cf29dc",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "native-product-acceptance-20261002/task-route.ax.txt",
+        "sha256": "b2c1b9f45efa63f00645c9ee168a96de3e4df38a652a0f5ac98de049b4b4497d",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "native-product-acceptance-20261002/reload.ax.txt",
+        "sha256": "003ba41198b39a0eae58fddae3f4a0f20a09754529fbb9080f6fe6fdcd2267f1",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "native-product-acceptance-20261002/restart.ax.txt",
+        "sha256": "b2c1b9f45efa63f00645c9ee168a96de3e4df38a652a0f5ac98de049b4b4497d",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "native-product-acceptance-20261002/reopened.ax.txt",
+        "sha256": "56300f6b0407fded42c38b739a98c4895ffc4e574009f15574e04e68a6aa9ceb",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      }
+    ],
+    "limits": [
+      "No key/credential/encrypted envelope reads",
+      "Receipt envelope existence only; no independent cryptographic validation or OS custody claim",
+      "Normal reload/restart supplied by UI producer; no SIGKILL/offline/powerloss claim",
+      "Tasks storage unavailable/local cache: native Task-to-Note acceptance pending",
+      "No unrelated notes/profile contents inspected",
+      "Observed ACK metadata matches sequence/revision and one encrypted receipt row exists per operation. No independent decryption, cryptographic validation of encrypted receipt contents or OS secure-store custody audit is claimed.",
+      "Task-private enrollment/profile is reused. Existing user entities and permission grants were not changed; no provider/account/network operation is accepted.",
+      "Ordinary product reload/menu quit/restart is not SIGKILL, power loss, offline/revoke/conflict UI, two-product-consumer DATA acceptance or a complete device/platform matrix.",
+      "The source manifest and previously passed full4876 gates remain unchanged; this is documentation/runtime evidence only, with zero new production source edits and zero complete original tasks accepted."
+    ],
+    "fullOriginalTasksAccepted": 0
+  },
+  "projectsGenerationFollowup": {
+    "schemaVersion": 1,
+    "id": "PROJECTS-GENERATION-20261002",
+    "observedAt": "2026-10-02T18:52:45.935Z",
+    "publication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "revision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "pullRequestHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "observedAt": "2026-10-02T18:54:22.566Z",
+      "sourceCount": 4877,
+      "sourceManifestSha256": "1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4877 committed source blobs match the frozen source used by five complete serial local gates. Independent mounted ReactDOM Chromium tests pass with synthetic IPC; actual native workspace-switch/RPC/storage acceptance remains pending. Prior native Note and bridge proofs retain their original db841 binding; no rerun is claimed. Remote CI, unfinished hosted-alert review, provider and full platform/acceptance matrices remain pending."
+    },
+    "sourceBinding": {
+      "sourceCount": 4877,
+      "sourceManifestSha256": "1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "beforeAfterIdentical": true,
+      "committedSourceMatchesTestedManifest": true,
+      "sourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "wholeRepositoryGateSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903"
+    },
+    "sources": [
+      {
+        "path": "apps/electron/src/renderer/hooks/useProjects.ts",
+        "sha256": "2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac"
+      },
+      {
+        "path": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+        "sha256": "bf3e47fc9d5bede727681bc051385f77020b6cc2d600d2c6f0a392c9bba4d381"
+      }
+    ],
+    "owners": {
+      "producer": "/root/native_boundary",
+      "independentLifecycleReview": "/root/focus_recon",
+      "completeJointGates": "/root/native_boundary",
+      "serialIntegrationAndDelivery": "/root"
+    },
+    "lineage": {
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1323",
+      "head": "3cc2483d61e587fa3e3b54331b1bf623206f16b1",
+      "exactHookCopied": true,
+      "originalHookSha256": "13543daf34873c044fb089504e6d6146878cdb327b6e94d6a43f776ecd243d31",
+      "candidateHookSha256": "2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac",
+      "broaderCloudR15Merged": false
+    },
+    "behavior": {
+      "committedWorkspaceLease": true,
+      "lateLoadSuccessAndFailureFenced": true,
+      "newestSameWorkspaceQueryOrBroadcastWins": true,
+      "disposedAndUnmountedCallbacksFenced": true,
+      "returningWorkspaceCreatesNewLease": true,
+      "oldViewExcludedDuringRender": true,
+      "atomClearedAtLayoutBeforePaint": true,
+      "completeValidDtoPreserved": true,
+      "atomSha256": "b3ba7e579ea30cbf2d9da437b828e7e12401671efb2c7e303030654be2cd9d2e",
+      "sharedCatalogWrapper": "N/A; absent in current September base; no wrapper or schema imported",
+      "producerTests": {
+        "pass": 14,
+        "fail": 0,
+        "assertions": 32
+      },
+      "independentPhasedTests": {
+        "candidatePass": 14,
+        "candidateFail": 0,
+        "beforePass": 2,
+        "beforeFail": 12
+      },
+      "controlledSchedulerLimit": "Actual hook closures and real Jotai atom/store; React render/layout/passive scheduling and IPC are controlled."
+    },
+    "failureHistory": {
+      "producerInitialTypecheckExit": 2,
+      "producerInitialDiagnostic": "TS2688 implicit uuid ambient type; shell follow-up masked exit",
+      "retained": "projects-generation-20261002/typecheck.initial-failure.log",
+      "correction": "Archive-only ambient discovery types:[react] and export{} global augmentation module marker",
+      "correctedStandaloneTypecheckExit": 0,
+      "productionSourcesChangedForTyping": false
+    },
+    "currentValidation": {
+      "gates": [
+        {
+          "name": "shared",
+          "command": [
+            "bun",
+            "test",
+            "./packages/shared"
+          ],
+          "exitCode": 0,
+          "seconds": 90.636,
+          "tests": {
+            "pass": 4951,
+            "skip": 12,
+            "fail": 0,
+            "assertions": 21752,
+            "files": 478
+          },
+          "logSha256": "d54bcb66a36993c797c5f5a8fcbbcd06813511bde57db742201625e77e8f7648"
+        },
+        {
+          "name": "server",
+          "command": [
+            "bun",
+            "test",
+            "./packages/server-core"
+          ],
+          "exitCode": 0,
+          "seconds": 24.626,
+          "tests": {
+            "pass": 1511,
+            "skip": 8,
+            "fail": 0,
+            "assertions": 6155,
+            "files": 240
+          },
+          "logSha256": "7f91f30d012a9b649e7ab98e963f8c42e7beddb8dd931167190e67d06fcb0809"
+        },
+        {
+          "name": "electron-ui-core",
+          "command": [
+            "bun",
+            "test",
+            "./apps/electron/src",
+            "./packages/ui",
+            "./packages/core"
+          ],
+          "exitCode": 0,
+          "seconds": 24.311,
+          "tests": {
+            "pass": 4219,
+            "skip": 0,
+            "fail": 0,
+            "assertions": 20079,
+            "files": 611
+          },
+          "logSha256": "0da0bd27f2ce5648d1314d3dbce91f2bb57700398911d7a5403886f5362af8fc"
+        },
+        {
+          "name": "validate",
+          "command": [
+            "bun",
+            "run",
+            "validate:ci"
+          ],
+          "exitCode": 0,
+          "seconds": 91.666,
+          "tests": null,
+          "logSha256": "5370f42747dc3681abbd6432612438b90dbedb80af5bb516f85d4af35b44b877"
+        },
+        {
+          "name": "build",
+          "command": [
+            "bun",
+            "run",
+            "electron:build"
+          ],
+          "exitCode": 0,
+          "seconds": 44.333,
+          "tests": null,
+          "logSha256": "8c75da96549c85bd0f7d5a6017b04941a8445ad35f6c7516c699bc1d91ebe52d"
+        }
+      ],
+      "sourceBeforeAfterIdentical": true
+    },
+    "browserDom": {
+      "status": "PASS_BOUNDED_REACTDOM_SYNTHETIC_IPC",
+      "candidate": {
+        "pass": 10,
+        "fail": 0
+      },
+      "exactOldHookNegativeControl": {
+        "pass": 1,
+        "fail": 9,
+        "expectedNegativeControlFailures": true
+      },
+      "browser": {
+        "chromiumVersion": "153.0.8010.52",
+        "ReactVersion": "18.3.1",
+        "agentBrowserVersion": "0.26.0",
+        "headless": true,
+        "isolated": true
+      },
+      "realStrictModeEffectReplay": true,
+      "coverage": [
+        "null-workspace",
+        "A-B-before-next-frame",
+        "A-B-A-stale-success-broadcast",
+        "late-error-old-workspace",
+        "broadcast-supersedes-pending-success",
+        "broadcast-supersedes-pending-error",
+        "same-workspace-overlap-dto-retention",
+        "unmount-late-success-callback",
+        "null-transition-stale-query",
+        "actual-StrictMode-effect-replay"
+      ],
+      "allOwnedProcessesExited": true,
+      "actualNativeRpc": false,
+      "scope": "Actual ReactDOM createRoot and unchanged Jotai atom; deferred synthetic IPC only"
+    },
+    "artifacts": [
+      {
+        "id": "projects-generation-20261002/root-transfer.json",
+        "sha256": "1ef2e64815bf6861bb40e741ffe0e745a23d08890bcf6eb73e8cff2a6f8d88b0",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+      },
+      {
+        "id": "projects-generation-20261002/frozen-manifest.json",
+        "sha256": "41a62b57d4e15c7a0b73202a7a219145137072df98647469ce5ebd3721a3a21e",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+      },
+      {
+        "id": "projects-generation-20261002/independent-receipt.json",
+        "sha256": "24cb0c2b8e37fd1b1541d8796ffac4688f7dfc323f5c42deaa5d18aede9fa8c6",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+      },
+      {
+        "id": "projects-generation-20261002/independent-review.md",
+        "sha256": "83ddb805a0e20c272d596941baf0729db30a22c0870328371c3366b35b0f03cf",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+      },
+      {
+        "id": "projects-generation-20261002/independent-lifecycle-results.json",
+        "sha256": "7f6d48c5156de91fcccf1eb2ef2ba8b5419d0820e04ba83836bc406901cb4e5f",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+      },
+      {
+        "id": "projects-generation-20261002/joint-gates/gates.json",
+        "sha256": "f1b19ff548044e12b8d5697b48663c4ae1e46c953e2d7f337cf51aa09474be25",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+      },
+      {
+        "id": "projects-generation-20261002/mounted-dom-receipt.json",
+        "sha256": "a1f2ac49e8ce27d220fe71e34bb6d5187f5c46f561c338a1cb09a650b3bd68b7",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+      },
+      {
+        "id": "projects-generation-20261002/mounted-dom-review.md",
+        "sha256": "a5a0f84fa77e5b868bffbb319d1d96b844a002b1c75b142f0ea246707cf24f3f",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+      },
+      {
+        "id": "projects-generation-20261002/mounted-dom-results.json",
+        "sha256": "64c3aaee319302f7aaee569dcb35aa9b013d32f27ab3b8794ea84c3f9476bc7e",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+      }
+    ],
+    "limits": [
+      "Full Projects provenance/ACL/AI preview/create/apply, linked Tasks persistence, collaboration and the original acceptance criteria remain pending.",
+      "Controlled hook tests are not native workspace switching. Any independent browser mount uses synthetic IPC and remains separate from real Electron product RPC/storage acceptance.",
+      "Prior native Note reload/restart/ACK metadata evidence remains bound to production source db8413; this patch does not repeat or expand its acceptance.",
+      "No catalog wrapper, shared schema, native grant, store, provider or dependency changes. Cloud/R15 and PR1323 are not automatically merged.",
+      "Local complete gates do not replace required remote CI, independent hosted-alert review or macOS/Windows/Linux/cloud/iOS release matrix.",
+      "Original109 tasks,489 requirements,464 dependency edges and297 backlog rows remain intact; zero full original tasks accepted."
+    ],
+    "fullOriginalTasksAccepted": 0
+  },
+  "focusNotificationScopeFollowup": {
+    "schemaVersion": 1,
+    "id": "FOCUS-NOTIFICATION-SCOPE-20261002",
+    "observedAt": "2026-10-02T19:18:18.682Z",
+    "publication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "revision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "pullRequestHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "observedAt": "2026-10-02T19:20:31.005Z",
+      "sourceCount": 4879,
+      "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4879 committed source blobs match the source used by five complete serial local gates. Bounded Focus hook/storage and mounted ReactDOM component proof use fixture dependencies and do not accept native OS notification, actor, worker question, delivery/drain, timer/recovery or full original Focus criteria. Historical native Notes/bridge remains db841; Projects browser proof remains1c. Required remote CI, hosted-alert review, providers and complete platform/product acceptance remain pending."
+    },
+    "sourceBinding": {
+      "sourceCount": 4879,
+      "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "beforeAfterIdentical": true,
+      "committedSourceMatchesTestedManifest": true,
+      "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284"
+    },
+    "sources": [
+      {
+        "path": "apps/electron/src/renderer/lib/focus-session.ts",
+        "sha256": "51755fed0b4e5e20099fc343b4505242b5ed7c0681c00cb866281209ebf1ebf9"
+      },
+      {
+        "path": "apps/electron/src/renderer/hooks/useNotifications.ts",
+        "sha256": "8affc88f11ab0bbc48b094e53e6688d4aab42230f4ea4b0b5cc967d4a8e324d4"
+      },
+      {
+        "path": "apps/electron/src/renderer/hooks/__tests__/focus-notification-scope.test.ts",
+        "sha256": "5a5afc8af1aab61831417c6423999e0063db7a520293248176de6aa55a504944"
+      },
+      {
+        "path": "apps/electron/src/renderer/hooks/__tests__/fixtures/focus-notification-runner.ts",
+        "sha256": "cd5ee92c40e76834481faade48645ef08acfe84af669620aefcc34a6c88a7292"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/extra-screens/focus/FocusPage.tsx",
+        "sha256": "3c1672d9307e985646f40ce99dfaaa19069a9009a958e0be049e4d4aefb10503"
+      }
+    ],
+    "owners": {
+      "producer": "/root/recovery_scout",
+      "independentReviewAndMountedComponent": "/root/native_boundary",
+      "completeSerialGates": "/root/focus_recon",
+      "serialIntegrationAndDelivery": "/root"
+    },
+    "behavior": {
+      "coalescingKey": [
+        "workspaceId",
+        "sessionId"
+      ],
+      "samePairCountAndFirstPositionPreserved": true,
+      "newest100DistinctEntriesRetained": true,
+      "disabledNotificationsReturnBeforeFocusQueueReadOrWrite": true,
+      "otherEnabledFocusedHeadlessNoWorkspaceBehaviorPreserved": true,
+      "page": {
+        "currentWorkspaceProjection": true,
+        "nullWorkspaceEmpty": true,
+        "rowIdentity": "JSON-encoded workspace/session pair",
+        "dismissal": "Only clicked pair",
+        "clear": "Only current workspace; foreign records retained",
+        "navigation": "Existing current-workspace session route; no new cross-workspace route"
+      }
+    },
+    "focusedSuite": {
+      "pass": 11,
+      "fail": 0,
+      "assertions": 40,
+      "files": 2,
+      "exit": 0
+    },
+    "independentHookAndProductionStorage": {
+      "candidatePass": 11,
+      "candidateFail": 0,
+      "oldPass": 6,
+      "oldFail": 5
+    },
+    "mountedComponent": {
+      "candidatePass": 12,
+      "candidateFail": 0,
+      "oldPass": 3,
+      "oldFail": 9,
+      "browserRuntime": "\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36\"",
+      "actualComponents": "ReactDOM + unchanged UI primitives + frozen FocusPage + real Focus/storage helpers",
+      "fixtureDI": "Synthetic workspace/datahooks/inbox/i18n/navigation/summary; actual DOM click handlers and task-only browser localStorage",
+      "session": "rox-focus-dom-20261002 headless; no userprofile/autoconnect",
+      "cleanup": "Owned agent-browser session close success logged in close-final.log; both task-owned HTTP server exec sessions81955 and60589 returned exit0 afterCtrl-C. Browser/server OS PIDs and absent-process readback were not captured, so no PID-level cleanup claim.",
+      "initialCachedOldControl": "Retained old.initial-cached.log; not counted; separate bundleURLs fixed cached source reuse",
+      "actualNativeNotifications": false,
+      "pointerOrKeyboardAcceptance": false,
+      "browserClickMethod": "Actual DOM button.click handlers in mounted component fixture",
+      "osPidAbsenceClaimed": false
+    },
+    "failureHistory": [
+      "Exact original production red tests and initial fixture path failure retained.",
+      "Partial pair fix changed lookup before update; tests rejected it; final source fixes both.",
+      "Extra outside-checkout Bun alias baseline probe hung and its owned child was terminated; not a product failure or counted negative control.",
+      "Initial browser old control reused cached bundle and is retained but not counted; separate bundle URLs produced actual old component3/9 vs candidate12/0.",
+      "Initial two-production candidate was rejected for missing FocusPage consumer correction; expanded exact page bytes resolve that finding.",
+      "Independent receipt self-reference hashes corrected; prior receipt retained, all26 remaining artifacts rehashed. Cleanup limited to session/server exit receipts; OS PID absence was not captured."
+    ],
+    "currentValidation": {
+      "gates": [
+        {
+          "name": "shared",
+          "command": [
+            "bun",
+            "test",
+            "./packages/shared"
+          ],
+          "exitCode": 0,
+          "seconds": 88.171,
+          "tests": {
+            "pass": 4951,
+            "skip": 12,
+            "fail": 0,
+            "assertions": 21752,
+            "files": 478
+          },
+          "logSha256": "a0a1651409e7f56ec0a119e6c484d96c915dc61f5d1032b3fe92b8d0008eb7c2"
+        },
+        {
+          "name": "server",
+          "command": [
+            "bun",
+            "test",
+            "./packages/server-core"
+          ],
+          "exitCode": 0,
+          "seconds": 24.846,
+          "tests": {
+            "pass": 1511,
+            "skip": 8,
+            "fail": 0,
+            "assertions": 6155,
+            "files": 240
+          },
+          "logSha256": "d7e6d00fa6d7598351af4f17029e5a37aeb7401bb1afa1d5a87f712ddbb16e40"
+        },
+        {
+          "name": "electron-ui-core",
+          "command": [
+            "bun",
+            "test",
+            "./apps/electron/src",
+            "./packages/ui",
+            "./packages/core"
+          ],
+          "exitCode": 0,
+          "seconds": 27.018,
+          "tests": {
+            "pass": 4222,
+            "skip": 0,
+            "fail": 0,
+            "assertions": 20087,
+            "files": 612
+          },
+          "logSha256": "cba62eaf458c2b6b68fa5634fe8d319bde70d126c4ea981751b8e4c3c0dec143"
+        },
+        {
+          "name": "validate",
+          "command": [
+            "bun",
+            "run",
+            "validate:ci"
+          ],
+          "exitCode": 0,
+          "seconds": 92.243,
+          "tests": {
+            "pass": 242,
+            "skip": 0,
+            "fail": 0,
+            "assertions": 687,
+            "files": 17,
+            "scope": "AGGREGATED_SELECTED_BUN_INVOCATIONS_WITHIN_VALIDATE; filesCountedAcrossInvocations"
+          },
+          "logSha256": "3c8f7ce6d0b3b6bdf3b0d3984633b8c32df2313567a08f0ddd208251710b3f5d"
+        },
+        {
+          "name": "build",
+          "command": [
+            "bun",
+            "run",
+            "electron:build"
+          ],
+          "exitCode": 0,
+          "seconds": 55.258,
+          "tests": null,
+          "logSha256": "75dbd7e25390b410a5b2fb8cd6b0f5a5f7f7e9a2719498cb2863785d3504b742"
+        }
+      ],
+      "sourceBeforeAfterIdentical": true
+    },
+    "historicalEvidence": {
+      "nativeNoteAndBridgeSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "projectsGenerationSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "priorRuntimeProofRerunByThisWave": false
+    },
+    "artifacts": [
+      {
+        "id": "focus-notification-scope-20261002/frozen-manifest.json",
+        "sha256": "7436047ab7a42cbdd065cfe7810d23ce6ecece5368fd1180d2095bb00d59994f",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "focus-notification-scope-20261002/report.md",
+        "sha256": "86e76527a7ab5a29e4f0bdb1f7fcf1bb73f20f1308a21c40f7679d89b771a430",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "focus-notification-scope-20261002/independent-review.json",
+        "sha256": "891428cd736220d9c6d0eed009ff291b03ec9183fce892e04df43fd86b7dcd84",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "focus-notification-scope-20261002/independent-review.md",
+        "sha256": "e57d1b10c3f8a8d30f845c5f8972a3e5d53cba97638e16673687fde71dc8621e",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "focus-notification-scope-20261002/root-transfer.json",
+        "sha256": "ce61f52fc1d605733a3d6ab09ab7b35ebcdf4dad3ab1fc5457ec835bf9eb70fb",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "focus-notification-scope-20261002/joint-gates/gates.json",
+        "sha256": "65043fa90bfbd12eaa2fb83f345fee94d147f49e9a817eb51e005328ea321687",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "focus-notification-scope-20261002/independent-dom/candidate-final.log",
+        "sha256": "edacc3b18dbbb4e9db6dd49db6e76017a48783fe0dfd35f04e0cfac3529688c6",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      },
+      {
+        "id": "focus-notification-scope-20261002/independent-dom/old-final.log",
+        "sha256": "9ae7cae175e3f0641e06f87ff1728cb81a42a6069fd0503b856c484424dada6c",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+      }
+    ],
+    "limits": [
+      "This patch repairs existing renderer queue identity, notification-setting ordering and current-workspace component actions. It does not establish authenticated actor custody or workspace authorization.",
+      "Mounted ReactDOM uses actual FocusPage, UI and Focus/storage functions with synthetic workspace/data/inbox/i18n/navigation/summary adapters and task-only browser storage. Native OS notification, Electron pointer/keyboard and full product acceptance are pending.",
+      "Worker question/answer lifecycle, waiting_focus, automatic expiry/drain/delivery acknowledgment, persisted timer/queue crash recovery, cancellation and critical exceptions remain unaccepted.",
+      "Global localStorage timer/history and existing read-modify-write persistence remain unchanged; no durable multi-user queue, second store or speculative question API was introduced.",
+      "Prior native Notes and Projects runtime evidence retain original source revisions; no rerun or acceptance expansion is claimed.",
+      "Required remote CI, hosted-alert review, real providers/recipients and complete macOS/Windows/Linux/cloud/Conation iOS release matrix remain pending.",
+      "All109 original tasks,489 requirements,464 dependencies and297 backlog rows remain intact; zero complete original tasks accepted."
     ],
     "fullOriginalTasksAccepted": 0
   }
