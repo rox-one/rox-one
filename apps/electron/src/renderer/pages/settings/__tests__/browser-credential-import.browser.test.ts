@@ -180,6 +180,46 @@ describe.skipIf(!existsSync(executablePath))('browser credential import renderer
     await proof('workspace-switch')
   }, browserCaseTimeout)
 
+  it('does not restore an old sync grant after switching away and back to its workspace', async () => {
+    await load()
+    await choose()
+    const sync = page.getByRole('switch', { name: /^Keep history and bookmarks updated/ })
+    await expectDOM(sync).toBeEnabled()
+    await page.evaluate(() => (window as any).__credentialFixture.deferData('set'))
+    await sync.click()
+    await page.evaluate(() => (window as any).__credentialFixture.setWorkspace('workspace-b'))
+    await expectDOM(sync).not.toBeChecked()
+    await page.evaluate(() => (window as any).__credentialFixture.setWorkspace('workspace-a'))
+    await expectDOM(page.getByTestId('browser-profile-os-access')).toContainText('Choose a browser profile')
+    await page.evaluate(() => (window as any).__credentialFixture.resolveData({
+      workspaceId: 'workspace-a', enabled: true, profileId: 'chromium:synthetic', state: 'idle',
+      imported: { history: 7, bookmarks: 3 }, lastRunAt: null,
+    }))
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    await expectDOM(sync).not.toBeChecked()
+    await expectDOM(page.getByTestId('browser-profile-os-access')).toContainText('Choose a browser profile')
+  }, browserCaseTimeout)
+
+  it.each(['rollback', 'delete'])('ignores an old %s result after a new import in the same workspace', async (action) => {
+    await load('categories=credentials')
+    await choose()
+    await page.getByRole('button', { name: 'Import', exact: true }).click()
+    await expectDOM(page.getByRole('button', { name: 'Rollback last import', exact: true })).toBeEnabled()
+    await page.evaluate((value) => (window as any).__credentialFixture.deferMutation(value), action)
+    await page.getByRole('button', { name: action === 'rollback' ? 'Rollback last import' : 'Delete imported data', exact: true }).click()
+    await page.evaluate(() => (window as any).__credentialFixture.setWorkspace('workspace-b'))
+    await expectDOM(page.getByTestId('browser-profile-os-access')).toContainText('Choose a browser profile')
+    await page.evaluate(() => (window as any).__credentialFixture.setWorkspace('workspace-a'))
+    await page.getByRole('radio').first().check()
+    await page.getByRole('button', { name: 'Import', exact: true }).click()
+    await expectDOM(page.getByRole('button', { name: 'Rollback last import', exact: true })).toBeEnabled()
+    await page.evaluate((value) => (window as any).__credentialFixture.resolveMutation(value === 'rollback' ? { ok: true } : { deletionReceipt: null }), action)
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    await expectDOM(page.getByRole('button', { name: 'Rollback last import', exact: true })).toBeEnabled()
+    const passwords = page.getByTestId('browser-profile-import-summary').locator('div').filter({ has: page.locator('span', { hasText: /^Password files$/ }) })
+    await expectDOM(passwords.locator('span').first()).toHaveText('2')
+  }, browserCaseTimeout)
+
   it('ignores a delayed capability from an old workspace and selected profile', async () => {
     await load('categories=credentials&capability=deferred')
     await choose()

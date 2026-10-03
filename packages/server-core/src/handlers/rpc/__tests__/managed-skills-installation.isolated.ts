@@ -1,15 +1,18 @@
 import { beforeEach, expect, test } from 'bun:test';
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { ensureBundledSkills, listBundledSkillPacks } from '../bundled.ts';
-import { APP_MANAGED_SKILLS_DIR, GLOBAL_AGENT_SKILLS_DIR, invalidateSkillsCache, loadAllSkills, loadSkillBySlug } from '../storage.ts';
-import { invalidateOmpSkillsCache } from '../omp-discovery.ts';
-import { isSkillLinkTo, linkManagedSkill, pathEntryExists } from '../managed.ts';
-import { installEntry, removeEntry, sha256Directory, type ExecFileFn } from '../../marketplace/installer.ts';
-import { marketplacePaths, type MarketplaceEntry } from '../../marketplace/catalog.ts';
-import { readLock } from '../../marketplace/lock.ts';
-import { BaseAgent } from '../../agent/base-agent.ts';
+import { ensureBundledSkills, listBundledSkillPacks } from '../../../../../shared/src/skills/bundled.ts';
+import { APP_MANAGED_SKILLS_DIR, GLOBAL_AGENT_SKILLS_DIR, invalidateSkillsCache, loadAllSkills, loadSkillBySlug } from '../../../../../shared/src/skills/storage.ts';
+import { invalidateOmpSkillsCache } from '../../../../../shared/src/skills/omp-discovery.ts';
+import { isSkillLinkTo, linkManagedSkill, pathEntryExists } from '../../../../../shared/src/skills/managed.ts';
+import { installEntry, removeEntry, sha256Directory, type ExecFileFn } from '../../../../../shared/src/marketplace/installer.ts';
+import { marketplacePaths, type MarketplaceEntry } from '../../../../../shared/src/marketplace/catalog.ts';
+import { readInstallMarker, readLock, removeInstallMarker } from '../../../../../shared/src/marketplace/lock.ts';
+import { BaseAgent } from '../../../../../shared/src/agent/base-agent.ts';
+import { RPC_CHANNELS } from '../../../../../shared/src/protocol/index.ts';
+import { registerSkillsHandlers } from '../skills.ts';
+import type { HandlerFn, RpcServer } from '@rox/server-core/transport';
 
 const config = dirname(APP_MANAGED_SKILLS_DIR);
 const bundle = join(homedir(), 'bundle');
@@ -32,7 +35,7 @@ beforeEach(() => {
   invalidateSkillsCache(); invalidateOmpSkillsCache();
 });
 
-test('duplicate bundled packs and a user skill coexist; actual agent mentions resolve each app path', () => {
+test('duplicate bundled packs and a user skill coexist; agent mentions and native file actions resolve each app path', async () => {
   put(join(GLOBAL_AGENT_SKILLS_DIR, 'review', 'SKILL.md'), md('USER'));
   put(join(bundle, 'pack-a', 'review', 'SKILL.md'), md('A'));
   put(join(bundle, 'pack-b', 'review', 'SKILL.md'), md('B'));
@@ -47,6 +50,18 @@ test('duplicate bundled packs and a user skill coexist; actual agent mentions re
   expect(activation.missingSkills).toEqual([]);
   expect([...activation.skillPaths.values()].sort()).toEqual(['pack-a--review', 'pack-b--review'].map(slug => join(APP_MANAGED_SKILLS_DIR, slug, 'SKILL.md')));
   expect(readFileSync(join(GLOBAL_AGENT_SKILLS_DIR, 'review', 'SKILL.md'), 'utf8')).toBe(md('USER'));
+  put(join(config, 'config.json'), JSON.stringify({ workspaces: [{ id: 'fixture', name: 'Fixture', rootPath: workspace, createdAt: 1 }] }));
+  const handlers = new Map<string, HandlerFn>();
+  const opened: string[] = [];
+  registerSkillsHandlers({ handle(channel: string, handler: HandlerFn) { handlers.set(channel, handler); } } as unknown as RpcServer, {
+    platform: { openPath: async (path: string) => { opened.push(path); } },
+  } as never);
+  const ctx = { clientId: 'fixture', webContentsId: null, workspaceId: 'fixture' };
+  const files = await handlers.get(RPC_CHANNELS.skills.GET_FILES)!(ctx, 'fixture', 'pack-a--review');
+  expect(files).toContainEqual({ name: 'SKILL.md', type: 'file', size: Buffer.byteLength(md('A')) });
+  await handlers.get(RPC_CHANNELS.skills.OPEN_EDITOR)!(ctx, 'fixture', 'pack-a--review');
+  expect(opened).toEqual([join(APP_MANAGED_SKILLS_DIR, 'pack-a--review', 'SKILL.md')]);
+  expect(await handlers.get(RPC_CHANNELS.skills.GET_FILES)!(ctx, 'fixture', '../external')).toEqual([]);
 });
 
 test('qualified aliases remain stable across restart, upgrades, owner removal and local edits', () => {
@@ -162,3 +177,83 @@ test('uninstall preserves a replaced target symlink and the foreign directory it
   expect(readFileSync(join(homedir(), 'external', 'SKILL.md'), 'utf8')).toBe(md('EXTERNAL'));
   expect(pathEntryExists(join(GLOBAL_AGENT_SKILLS_DIR, 'review'))).toBe(false);
 });
+
+test('directory-mode packs expose every nested skill with stable qualified identities even without links', async () => {
+  put(join(GLOBAL_AGENT_SKILLS_DIR, 'review', 'SKILL.md'), md('USER'));
+  const pack = { ...entry('directory-pack'), installMode: 'directory' as const };
+  const result = await installEntry(pack, { linksRoot: null, execFileFn: git({ 'flows/review': 'FLOW', 'roles/review': 'ROLE', 'roles/ship': 'SHIP' }) });
+  expect(result.kind === 'skillpack' && result.skills).toEqual(['directory-pack--review', 'directory-pack--review-2', 'directory-pack--ship']);
+  expect(existsSync(join(APP_MANAGED_SKILLS_DIR, 'directory-pack', 'SKILL.md'))).toBe(false);
+  expect(loadAllSkills(workspace).map(skill => skill.slug).sort()).toEqual(['directory-pack--review', 'directory-pack--review-2', 'directory-pack--ship', 'review']);
+  expect(loadSkillBySlug(workspace, 'directory-pack--review')?.path).toBe(join(APP_MANAGED_SKILLS_DIR, 'directory-pack', 'flows', 'review'));
+  expect(loadSkillBySlug(workspace, 'directory-pack--review-2')?.content).toContain('ROLE');
+  expect(loadSkillBySlug(workspace, 'directory-pack--ship')?.content).toContain('SHIP');
+  await installEntry(pack, { linksRoot: null, execFileFn: git({ 'roles/review': 'ROLE2' }) });
+  expect(loadAllSkills(workspace).map(skill => skill.slug).sort()).toEqual(['directory-pack--review-2', 'review']);
+  expect(loadSkillBySlug(workspace, 'directory-pack--review-2')?.content).toContain('ROLE2');
+  expect(removeEntry('directory-pack').status).toBe('removed');
+  expect(loadAllSkills(workspace).map(skill => skill.slug)).toEqual(['review']);
+});
+
+for (const variant of ['swapped', 'locally-modified', 'unmarked-legacy'] as const) {
+test(`failed ${variant} directory-pack update restores exact provenance, aliases, content and links when lock commit fails`, async () => {
+  const pack = { ...entry('directory-pack'), installMode: 'directory' as const };
+  await installEntry(pack, { execFileFn: git({ 'flows/review': 'OLD' }) });
+  const target = join(APP_MANAGED_SKILLS_DIR, pack.id);
+  const alias = 'directory-pack--review';
+  const skill = join(target, 'flows', 'review');
+  if (variant !== 'swapped') put(join(skill, 'personal.md'), 'USER EDIT');
+  if (variant === 'unmarked-legacy') removeInstallMarker(target);
+  const lockPath = marketplacePaths(config).lockFile;
+  const oldLockBytes = readFileSync(lockPath, 'utf8');
+  const oldMarker = readInstallMarker(target);
+  if (variant === 'unmarked-legacy') expect(oldMarker).toBeNull();
+  else {
+    expect(oldMarker?.ref).toBe(ref);
+    expect(oldMarker?.skillViews).toEqual({ [alias]: 'flows/review' });
+  }
+  invalidateSkillsCache(); invalidateOmpSkillsCache();
+  const oldVisibleAliases = loadAllSkills(workspace).map(skill => skill.slug);
+  const link = join(GLOBAL_AGENT_SKILLS_DIR, alias);
+  expect(isSkillLinkTo(link, skill)).toBe(true);
+  const newRef = 'b'.repeat(40);
+  const updatedGit: ExecFileFn = async (_file, args, options) => {
+    if (args.includes('checkout')) put(join(options.cwd!, 'flows', 'review', 'SKILL.md'), md('NEW'));
+    return { stdout: args[0] === 'rev-parse' ? newRef : '', stderr: '' };
+  };
+  const backup = `${lockPath}.fixture-backup`;
+  let blocked = false;
+  try {
+    await expect(installEntry({ ...pack, source: { ...pack.source, ref: newRef } }, {
+      execFileFn: updatedGit,
+      onProgress(phase) {
+        if (phase === 'install' && !blocked) {
+          renameSync(lockPath, backup);
+          mkdirSync(lockPath);
+          blocked = true;
+        }
+      },
+    })).rejects.toThrow(/EISDIR|ENOTEMPTY|EPERM/);
+  } finally {
+    if (blocked) {
+      rmSync(lockPath, { recursive: true, force: true });
+      renameSync(backup, lockPath);
+    }
+  }
+  expect(blocked).toBe(true);
+  expect(readFileSync(lockPath, 'utf8')).toBe(oldLockBytes);
+  expect(readFileSync(join(skill, 'SKILL.md'), 'utf8')).toBe(md('OLD'));
+  if (variant !== 'swapped') expect(readFileSync(join(skill, 'personal.md'), 'utf8')).toBe('USER EDIT');
+  expect(readInstallMarker(target)).toEqual(oldMarker);
+  expect(isSkillLinkTo(link, skill)).toBe(true);
+  invalidateSkillsCache(); invalidateOmpSkillsCache();
+  expect(loadAllSkills(workspace).map(skill => skill.slug)).toEqual(oldVisibleAliases);
+  if (variant === 'unmarked-legacy') expect(loadSkillBySlug(workspace, alias)).toBeNull();
+  else {
+    expect(loadSkillBySlug(workspace, alias)?.content).toContain('OLD');
+    expect(loadSkillBySlug(workspace, alias)?.path).toBe(skill);
+  }
+  expect(readdirSync(marketplacePaths(config).tmpDir)).toEqual([]);
+  expect(readdirSync(APP_MANAGED_SKILLS_DIR).some(name => name.includes('.craft-bak-'))).toBe(false);
+});
+}

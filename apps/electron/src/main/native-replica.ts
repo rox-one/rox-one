@@ -1,7 +1,7 @@
 import { chmodSync, mkdirSync, realpathSync } from 'node:fs'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { join, resolve } from 'node:path'
-import type { IpcMain, IpcMainInvokeEvent } from 'electron'
+import type { IpcMain, IpcMainInvokeEvent, WebContents } from 'electron'
 import { AccountReplica, SqliteReplicaOutbox } from '@rox/shared/account-replica'
 import type { NativeDataContext, NativeDataReceipt } from '@rox/shared/protocol/dto'
 import {
@@ -31,6 +31,10 @@ export interface NativeReplicaIpcDependencies {
   credentials: NativeReplicaCredentialStore
   /** WindowManager returns a workspace only for managed app-host BrowserWindows. */
   getWorkspaceForWindow(webContentsId: number): string | null
+  /** Production desktop entry validates the current owner and main frame. */
+  getWorkspaceForRenderer?(event: IpcMainInvokeEvent): string | null
+  /** Rejects stale custody after A→B→A or a renderer reload/replacement. */
+  getWorkspaceGenerationForWindow?(webContentsId: number): number | null
 }
 
 interface KeyMaterial {
@@ -45,6 +49,8 @@ interface KeyMaterial {
 
 interface ReplicaSession {
   ownerWebContentsId: number
+  ownerWebContents: WebContents
+  bindingGeneration: number | null
   context: NativeDataContext
   accountHash: string
   deviceId: string
@@ -66,8 +72,11 @@ export function registerNativeReplicaIpc(
   chmodSync(root, 0o700)
   if (realpathSync(root) !== root) throw new Error('native replica directory must be a canonical real directory')
 
+  const boundWorkspace = (event: IpcMainInvokeEvent): string | null => dependencies.getWorkspaceForRenderer
+    ? dependencies.getWorkspaceForRenderer(event) : dependencies.getWorkspaceForWindow(event.sender.id)
+  const bindingGeneration = (id: number) => dependencies.getWorkspaceGenerationForWindow?.(id) ?? null
   const assertWindow = (event: IpcMainInvokeEvent, context: NativeDataContext): void => {
-    if (!isNativeDataContext(context) || dependencies.getWorkspaceForWindow(event.sender.id) !== context.workspaceId) {
+    if (event.sender.isDestroyed() || !isNativeDataContext(context) || boundWorkspace(event) !== context.workspaceId) {
       throw new Error('native replica IPC requires its authenticated managed workspace window')
     }
   }
@@ -80,13 +89,13 @@ export function registerNativeReplicaIpc(
   }
 
   const requireSession = (event: IpcMainInvokeEvent, input: NativeReplicaSessionIpcInput): ReplicaSession => {
-    const workspaceId = dependencies.getWorkspaceForWindow(event.sender.id)
+    const workspaceId = boundWorkspace(event)
     if (!workspaceId) throw new Error('native replica IPC requires a managed app-host window')
     const session = sessions.get(input?.handle)
-    if (!session || session.ownerWebContentsId !== event.sender.id) {
+    if (!session || session.ownerWebContentsId !== event.sender.id || session.ownerWebContents !== event.sender) {
       throw new Error('native replica session is not owned by this window')
     }
-    if (workspaceId !== session.context.workspaceId) {
+    if (workspaceId !== session.context.workspaceId || bindingGeneration(event.sender.id) !== session.bindingGeneration) {
       closeSession(input.handle, session)
       throw new Error('native replica workspace changed; session was closed')
     }
@@ -98,6 +107,7 @@ export function registerNativeReplicaIpc(
     if (disposed) throw new Error('native replica IPC has been disposed')
     const context = input?.context
     assertWindow(event, context)
+    const openingGeneration = bindingGeneration(event.sender.id)
     const accountHash = createHash('sha256').update(JSON.stringify([context.issuer, context.subject])).digest('hex')
     const credentialId: CredentialId = {
       type: 'account_replica_key',
@@ -120,6 +130,7 @@ export function registerNativeReplicaIpc(
     if (disposed) throw new Error('native replica IPC was disposed while opening')
     if (event.sender.isDestroyed()) throw new Error('native replica window was destroyed while opening')
     assertWindow(event, context)
+    if (bindingGeneration(event.sender.id) !== openingGeneration) throw new Error('native replica window binding changed while opening')
     const accountId = accountHash
     const accountKey = decodeKey(material.accountKey, 'account')
     const outboxKey = decodeKey(material.outboxKey, 'outbox')
@@ -149,7 +160,8 @@ export function registerNativeReplicaIpc(
     replica.bindWorkspace(context.workspaceId)
     replica.enrollDevice(material.deviceId, material.deviceSecret)
     const handle = randomUUID()
-    const session: ReplicaSession = { ownerWebContentsId: event.sender.id, context: { ...context }, accountHash, deviceId: material.deviceId, replica, outbox }
+    const session: ReplicaSession = { ownerWebContentsId: event.sender.id, ownerWebContents: event.sender, bindingGeneration: openingGeneration,
+      context: { ...context }, accountHash, deviceId: material.deviceId, replica, outbox }
     sessions.set(handle, session)
     const cleanupSession = () => {
       const session = sessions.get(handle)
@@ -180,13 +192,19 @@ export function registerNativeReplicaIpc(
       throw new Error('native Notes creation requires its current canonical server plan')
     }
     const scope = { accountId: session.accountHash, workspaceId: session.context.workspaceId, permissionFence: session.context.permissionFence }
+    const write = { ...mutation, deviceId: session.deviceId, workspaceId: session.context.workspaceId, category: 'notes' as const }
+    const attempt = input.callerAttemptId === undefined ? undefined : {
+      callerAttemptId: input.callerAttemptId, permissionFence: session.context.permissionFence, writePermissionFence: plan.writePermissionFence,
+    }
+    if (attempt) {
+      const existing = session.outbox.creationAttempt(scope.accountId, scope.workspaceId, attempt, write)
+      if (existing) return queuedMutationFromOperation(existing)
+    }
     if (session.outbox.readSnapshot(scope, mutation.nativeId) || session.replica.pendingOffline(session.context.workspaceId).some(operation =>
         operation.nativeId === mutation.nativeId || operation.changes.some(item => item.path === change.path))) {
       throw new Error('native Notes creation conflicts with an existing source or pending operation')
     }
-    return queuedMutationFromOperation(session.replica.enqueueOffline({
-      ...mutation, deviceId: session.deviceId, workspaceId: session.context.workspaceId, category: 'notes',
-    }))
+    return queuedMutationFromOperation(session.replica.enqueueOffline(write, attempt))
   })
 
   ipc.handle(NATIVE_REPLICA_IPC.ENQUEUE, (event, input: NativeReplicaEnqueueIpcInput) => {

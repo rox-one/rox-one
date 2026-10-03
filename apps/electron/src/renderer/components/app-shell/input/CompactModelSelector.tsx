@@ -44,6 +44,7 @@ import { derivePickerMode } from './picker-mode'
 import {
   formatTokenCount,
   getConnectionModelsForPicker,
+  getRuntimeModelsForPicker,
   getConnectionPickerMeta,
   groupConnectionsByProvider,
   stripPiPrefixForDisplay,
@@ -108,15 +109,17 @@ export function CompactModelSelector({
 
   const appShellCtx = useOptionalAppShellContext()
   const llmConnections = appShellCtx?.llmConnections ?? []
+  const runtimeSummary = appShellCtx?.sessionModelCatalog === undefined ? appShellCtx?.runtimeSummary : appShellCtx.sessionModelCatalog
+  const hasPublicRuntime = !!appShellCtx?.runtimeSummary || appShellCtx?.sessionModelCatalog !== undefined
   const workspaceDefaultConnection = appShellCtx?.workspaceDefaultLlmConnection
 
   const toggleVision = useModelVisionToggle()
 
-  const effectiveConnection = resolveEffectiveConnectionSlug(
+  const effectiveConnection = appShellCtx?.sessionModelCatalog?.slug ?? resolveEffectiveConnectionSlug(
     currentConnection,
     workspaceDefaultConnection,
     llmConnections,
-  )
+  ) ?? runtimeSummary?.slug
 
   const effectiveConnectionDetails = React.useMemo(() => {
     if (!effectiveConnection) return null
@@ -140,9 +143,9 @@ export function CompactModelSelector({
 
   const availableModels = React.useMemo(() => {
     if (connectionUnavailable) return []
-    if (!effectiveConnectionDetails) return ANTHROPIC_MODELS
+    if (!effectiveConnectionDetails) return runtimeSummary ? getRuntimeModelsForPicker(runtimeSummary, currentConnection) : hasPublicRuntime ? [] : ANTHROPIC_MODELS
     return getConnectionModelsForPicker(effectiveConnectionDetails)
-  }, [effectiveConnectionDetails, connectionUnavailable])
+  }, [effectiveConnectionDetails, runtimeSummary, hasPublicRuntime, currentConnection, connectionUnavailable])
 
   const currentModelDisplayName = React.useMemo(() => {
     const modelToDisplay = connectionDefaultModel ?? currentModel

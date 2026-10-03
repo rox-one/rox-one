@@ -6,6 +6,7 @@ import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { assertNativeMetadataRead, readNativeProjects } from './native-sidebar-metadata'
 import type { RequestContext } from '../../transport/types'
 import type { LoadedProject } from '@rox/shared/projects'
 import {
@@ -115,7 +116,9 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
   }
 
   // List all projects for a workspace
-  server.handle(RPC_CHANNELS.projects.GET, async (_ctx, workspaceId: string) => {
+  server.handle(RPC_CHANNELS.projects.GET, async (ctx, workspaceId: string) => {
+    const nativeWorkspace = assertNativeMetadataRead(ctx, deps, server, workspaceId)
+    if (nativeWorkspace) return readNativeProjects(nativeWorkspace.rootPath, nativeWorkspace.id)
     const listed = rpcProjectsListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -125,8 +128,9 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     }
     const { id, rootPath } = workspace
     const { loadWorkspaceProjects } = await import('@rox/shared/projects')
+    assertNativeMetadataRead(ctx, deps, server, workspaceId, rootPath)
     return projectWorkspaceProjection(loadWorkspaceProjects(rootPath), id, rootPath)
-  })
+  }, { nativeAction: 'read' })
 
   // Get one project (by id or slug)
   server.handle(RPC_CHANNELS.projects.GET_ONE, async (_ctx, workspaceId: string, projectIdOrSlug: string) => {

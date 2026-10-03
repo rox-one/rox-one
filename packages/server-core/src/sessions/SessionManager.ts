@@ -40,7 +40,7 @@ import { getLlmConnection, getLlmConnections, getDefaultLlmConnection, getDefaul
 import type { MidStreamBehavior, LlmProviderType } from '@rox/shared/config'
 import { PrivilegedExecutionBroker } from '@rox/server-core/services'
 import { isValidWorkingDirectory } from '../utils/path-validation'
-import { MemoryService } from '../memory/MemoryService'
+import { MemoryService, type NativeMemoryContext } from '../memory/MemoryService'
 import { ensureFirstSessionWelcome } from './first-session-welcome'
 import { readProvenance, writeProvenance, type SessionProvenance } from '../memory/provenance'
 import { appendSkillUsage, extractSkillMentions } from '../memory/skill-usage'
@@ -1001,6 +1001,7 @@ interface ManagedSession {
     options?: SendMessageOptions
     messageId?: string  // Pre-generated ID for matching with UI
     optimisticMessageId?: string  // Frontend's ID for reliable event matching
+    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext }
   }>
   // Map of shellId -> command for killing background shells
   backgroundShellCommands: Map<string, string>
@@ -2306,6 +2307,24 @@ export class SessionManager implements ISessionManager {
 
   // Self-learning memory services, one per workspace, created lazily.
   private memoryServices = new Map<string, MemoryService>()
+  private nativeMemoryContexts = new Map<string, NativeMemoryContext>()
+  private nativeMemoryStarts = new Map<string, NativeMemoryContext>()
+  private nativeMemoryContextRequired?: (workspaceId: string) => boolean
+
+  setNativeMemoryContextPolicy(required: (workspaceId: string) => boolean): void {
+    this.nativeMemoryContextRequired = required
+  }
+
+  private nativeMemoryContextFor(sessionId: string, workspaceId: string): NativeMemoryContext | undefined {
+    const context = this.nativeMemoryContexts.get(sessionId)
+    if (context) return { owner: { ...context.owner }, assertAuthorized: () => {
+      context.assertAuthorized()
+      if (this.sessions.get(sessionId)?.workspace.id !== workspaceId) throw new Error('Native memory session changed')
+    } }
+    let required = false
+    try { required = this.nativeMemoryContextRequired?.(workspaceId) ?? false } catch { required = true }
+    if (required) return { owner: { issuer: '', subject: '' }, assertAuthorized: () => { throw new Error('Native memory requires an authorized turn') } }
+  }
 
   /**
    * Lazily build the workspace's MemoryService (distill triggers, prompt
@@ -2340,6 +2359,7 @@ export class SessionManager implements ISessionManager {
         // all memory writes (distill/branch/idle triggers). Unknown sessions default
         // to 'persistent' so a session being torn down never loses lessons it earned.
         getSessionMode: (sessionId) => this.sessions.get(sessionId)?.memoryMode ?? 'persistent',
+        getNativeContext: (sessionId) => this.nativeMemoryContextFor(sessionId, workspace.id),
         // L1: session provenance (F4) for the feedback loop — which lessons the
         // session saw, so a bad ending can attribute conflicts per scope.
         readSessionProvenance: (sessionId) => readProvenance(workspace.rootPath, sessionId)?.lessons ?? [],
@@ -3301,8 +3321,9 @@ export class SessionManager implements ISessionManager {
     // announced to the renderer (see notifySessionCreated). Callers that register the session
     // themselves — the `sessions:create` RPC adds it from the return value — pass
     // `{ emitCreatedEvent: false }` to avoid a redundant hydrate.
-    internal?: { emitCreatedEvent?: boolean; initialAssistantMessage?: string },
+    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; initialAssistantMessage?: string },
   ): Promise<Session> {
+    internal?.nativeMemoryContext?.assertAuthorized()
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) {
       throw new Error(`Workspace ${workspaceId} not found`)
@@ -3799,6 +3820,10 @@ export class SessionManager implements ISessionManager {
       hydratePreviousPermissionMode(storedSession.id, managed.previousPermissionMode)
     }
     this.sessions.set(storedSession.id, managed)
+    if (internal?.nativeMemoryContext) {
+      this.nativeMemoryContexts.set(storedSession.id, internal.nativeMemoryContext)
+      internal.nativeMemoryContext.assertAuthorized()
+    }
 
     // Eagerly load messages for branched sessions so the renderer gets the full
     // conversation immediately (needed for scroll-to-bottom on panel open)
@@ -4378,7 +4403,8 @@ export class SessionManager implements ISessionManager {
         .trim()
       let memoryBlocks = managed.memoryMode === 'temporary'
         ? undefined
-        : await this.memoryServiceFor(managed.workspace)?.buildMemoryBlocks(memoryQuery ? { query: memoryQuery } : undefined)
+        : await this.memoryServiceFor(managed.workspace)?.buildMemoryBlocks({ query: memoryQuery,
+          nativeContext: this.nativeMemoryContextFor(managed.id, managed.workspace.id) })
       // P2.7: FTS-retrieve local source docs into the same memoryBlocks payload
       // (sourcesBlock). Same memoryQuery as lessons; fail-soft on missing index.
       if (memoryQuery && managed.workspace?.rootPath) {
@@ -6843,7 +6869,19 @@ export class SessionManager implements ISessionManager {
     sessionLog.info(`Deleted session ${sessionId}`)
   }
 
-  async sendMessage(
+  async sendMessage(...args: Parameters<ISessionManager['sendMessage']>): Promise<void> {
+    const sessionId = args[0], managed = this.sessions.get(sessionId)
+    const supplied = args[8]?.nativeMemoryContext
+    const context = supplied ? { ...supplied, owner: { ...supplied.owner } } : undefined
+    context?.assertAuthorized()
+    if (context) args[8] = { ...args[8], nativeMemoryContext: context }
+    const ownsStart = !!context && !!managed && !managed.isProcessing && !this.nativeMemoryStarts.has(sessionId)
+    if (ownsStart) this.nativeMemoryStarts.set(sessionId, context!)
+    try { await this.sendMessageWithContext(...args) }
+    finally { if (ownsStart && this.nativeMemoryStarts.get(sessionId) === context) this.nativeMemoryStarts.delete(sessionId) }
+  }
+
+  private async sendMessageWithContext(
     sessionId: string,
     message: string,
     attachments?: FileAttachment[],
@@ -6865,7 +6903,7 @@ export class SessionManager implements ISessionManager {
      * that should host this session's browser tools. Pass undefined when calling
      * directly (tests, intra-server flows) to leave the existing pin in place.
      */
-    rpcContext?: { callerClientId?: string },
+    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext },
     /**
      * Internal retry mode. Kept as the trailing argument so public/RPC call sites
      * don't need to know about retry bookkeeping.
@@ -6875,6 +6913,9 @@ export class SessionManager implements ISessionManager {
     const managed = this.sessions.get(sessionId)
     if (!managed) {
       throw new Error(`Session ${sessionId} not found`)
+    }
+    if (rpcContext?.nativeMemoryContext) {
+      rpcContext.nativeMemoryContext.assertAuthorized()
     }
     this.setLastMessageClientId(sessionId, rpcContext?.callerClientId)
 
@@ -6895,6 +6936,7 @@ export class SessionManager implements ISessionManager {
 
     // Ensure messages are loaded before we try to add new ones
     await this.ensureMessagesLoaded(managed)
+    rpcContext?.nativeMemoryContext?.assertAuthorized()
 
     // If currently processing, behavior depends on the connection's
     // `midStreamBehavior` (resolved via {@link resolveMidStreamBehavior},
@@ -6907,11 +6949,12 @@ export class SessionManager implements ISessionManager {
     // - 'queue': hold the message untouched; the current turn keeps running
     //   to natural completion; replay as a new turn afterwards. NO call to
     //   `agent.redirect()`, NO forceAbort, NO interruption.
-    if (managed.isProcessing) {
+    if (managed.isProcessing || this.nativeMemoryStarts.has(sessionId)
+      && this.nativeMemoryStarts.get(sessionId) !== rpcContext?.nativeMemoryContext) {
       const connection = resolveSessionConnection(managed.llmConnection, undefined)
       // Fallback to 'steer' when no connection is resolvable — preserves
       // today's exact behavior (call redirect, take whatever it returns).
-      const behavior = connection ? resolveMidStreamBehavior(connection) : 'steer'
+      const behavior = !managed.isProcessing ? 'queue' : connection ? resolveMidStreamBehavior(connection) : 'steer'
 
       const agent = managed.agent
       let steered = false
@@ -6960,7 +7003,7 @@ export class SessionManager implements ISessionManager {
         // for both queue-direct (current turn still running) and
         // queue-after-abort (backend already aborted) — the replay path in
         // processNextQueuedMessage is identical.
-        managed.messageQueue.push({ message, attachments, storedAttachments, options, messageId: userMessage.id, optimisticMessageId: options?.optimisticMessageId })
+        managed.messageQueue.push({ message, attachments, storedAttachments, options, messageId: userMessage.id, optimisticMessageId: options?.optimisticMessageId, rpcContext })
         // Only claim interruption when a steer attempt actually aborted the
         // in-flight turn. In 'queue' mode the current turn runs to natural
         // completion, so the replayed turn must NOT inject the "previous response
@@ -6976,6 +7019,18 @@ export class SessionManager implements ISessionManager {
       await this.flushSession(managed.id)
       onAck?.(userMessage.id)
       return
+    }
+
+    // A queued sender cannot replace the active turn's memory custody. Carry
+    // provenance through the queue and bind it only when that turn starts.
+    if (rpcContext?.nativeMemoryContext) {
+      const previous = this.nativeMemoryContexts.get(sessionId)
+      if (managed.agent && (previous?.owner.issuer !== rpcContext.nativeMemoryContext.owner.issuer
+        || previous.owner.subject !== rpcContext.nativeMemoryContext.owner.subject)) {
+        await this.disposeManagedAgentRuntime(managed, 'native memory owner changed')
+        rpcContext.nativeMemoryContext.assertAuthorized()
+      }
+      this.nativeMemoryContexts.set(sessionId, rpcContext.nativeMemoryContext)
     }
 
     // Add user message with stored attachments for persistence
@@ -7089,6 +7144,7 @@ export class SessionManager implements ISessionManager {
     managed.lastMessageAt = Date.now()
     managed.activeUserMessageId = userMessage.id
     this.setProcessing(managed, true)
+    this.nativeMemoryStarts.delete(sessionId)
     managed.streamingText = ''
     managed.streamingTurnId = undefined
     managed.processingGeneration++
@@ -8063,7 +8119,14 @@ export class SessionManager implements ISessionManager {
     const managed = this.sessions.get(sessionId)
     if (!managed || managed.messageQueue.length === 0) return
 
-    const next = managed.messageQueue.shift()!
+    const next = managed.messageQueue[0]!
+    try { next.rpcContext?.nativeMemoryContext?.assertAuthorized() }
+    catch {
+      managed.messageQueue.shift()
+      if (managed.messageQueue.length) this.processNextQueuedMessage(sessionId)
+      return
+    }
+    managed.messageQueue.shift()
     sessionLog.info('replay queued', {
       sessionId,
       messageId: next.messageId,
@@ -8101,7 +8164,8 @@ export class SessionManager implements ISessionManager {
         next.attachments,
         next.storedAttachments,
         next.options,
-        next.messageId
+        next.messageId,
+        undefined, undefined, next.rpcContext,
       ).catch(err => {
         sessionLog.error('replay failed', {
           sessionId,

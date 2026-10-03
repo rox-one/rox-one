@@ -1123,10 +1123,20 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Diff viewer settings - loaded from user preferences on mount, persisted on change
   // These settings are stored in ~/.craft-agent/preferences.json (not localStorage)
   const [diffViewerSettings, setDiffViewerSettings] = useState<Partial<DiffViewerSettings>>({})
+  const preferencesScope = React.useMemo(() => ({}), [workspaceId, session?.id, appShellContext.runtimeSummary])
+  const preferencesScopeRef = React.useRef<object | undefined>(preferencesScope)
+  preferencesScopeRef.current = preferencesScope
+  const preferencesRevisionRef = React.useRef(0)
 
   // Load diff viewer settings from preferences on mount
   useEffect(() => {
-    window.electronAPI.readPreferences().then(({ content }) => {
+    const scope = preferencesScope
+    preferencesScopeRef.current = scope
+    const revision = ++preferencesRevisionRef.current
+    let current = true
+    setDiffViewerSettings({})
+    void window.electronAPI.readPreferences().then(({ content }) => {
+      if (!current || preferencesScopeRef.current !== scope || preferencesRevisionRef.current !== revision) return
       try {
         const prefs = JSON.parse(content)
         if (prefs.diffViewer) {
@@ -1135,25 +1145,30 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       } catch {
         // Ignore parse errors, use defaults
       }
-    })
-  }, [])
+    }).catch(() => { /* Host preferences may be unavailable to a scoped native caller. */ })
+    return () => { current = false; if (preferencesScopeRef.current === scope) preferencesScopeRef.current = undefined }
+  }, [preferencesScope])
 
   // Persist diff viewer settings to preferences when changed
   const handleDiffViewerSettingsChange = useCallback((settings: DiffViewerSettings) => {
     setDiffViewerSettings(settings)
-    // Read current preferences, merge in new settings, write back
-    window.electronAPI.readPreferences().then(({ content }) => {
+    const scope = preferencesScope
+    const revision = ++preferencesRevisionRef.current
+    // Read current preferences, merge in new settings, write back while this view remains current.
+    void window.electronAPI.readPreferences().then(async ({ content }) => {
+      if (preferencesScopeRef.current !== scope || preferencesRevisionRef.current !== revision) return
+      let prefs: Record<string, unknown>
       try {
-        const prefs = JSON.parse(content)
-        prefs.diffViewer = settings
-        prefs.updatedAt = Date.now()
-        window.electronAPI.writePreferences(JSON.stringify(prefs, null, 2))
+        const parsed = JSON.parse(content)
+        prefs = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
       } catch {
-        // If preferences malformed, create fresh with just diffViewer
-        window.electronAPI.writePreferences(JSON.stringify({ diffViewer: settings, updatedAt: Date.now() }, null, 2))
+        prefs = {}
       }
-    })
-  }, [])
+      prefs.diffViewer = settings
+      prefs.updatedAt = Date.now()
+      if (preferencesScopeRef.current === scope && preferencesRevisionRef.current === revision) await window.electronAPI.writePreferences(JSON.stringify(prefs, null, 2))
+    }).catch(() => { /* Preserve this view's setting when host persistence is unavailable. */ })
+  }, [preferencesScope])
 
   // Close overlay handler
   const handleCloseOverlay = useCallback(() => {
@@ -2585,7 +2600,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
         <div className="text-xs text-destructive/50 mb-0.5 font-semibold">
           {message.errorTitle || t('common.error')}
         </div>
-        <p className="text-sm text-destructive">{message.content}</p>
+        <p className="text-sm text-destructive">{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</p>
 
         {/* Action buttons */}
         {actions && actions.length > 0 && (
@@ -2758,7 +2773,7 @@ function MessageBubble({
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
           <Spinner className="text-[10px]" />
         </div>
-        <span>{message.content}</span>
+        <span>{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</span>
       </div>
     )
   }
@@ -2793,7 +2808,7 @@ function MessageBubble({
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
           <Icon className="w-3 h-3" />
         </div>
-        <span>{message.content}</span>
+        <span>{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</span>
       </div>
     )
   }
@@ -2806,7 +2821,7 @@ function MessageBubble({
           <div className="text-xs text-info/50 mb-0.5 font-semibold">
             Warning
           </div>
-          <p className="text-sm text-info">{message.content}</p>
+          <p className="text-sm text-info">{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</p>
         </div>
       </div>
     )
