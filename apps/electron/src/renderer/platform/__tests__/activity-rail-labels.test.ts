@@ -28,9 +28,9 @@ describe('activity rail: expanded with labels by default', () => {
     expect(atoms).toMatch(/activityRailCollapsedAtom = atomWithStorage<boolean>\(\s*getKeyString\(KEYS\.activityRailCollapsed\),\s*false,/)
   })
 
-  it('rows are 28px, radius 6, label visible when expanded, tooltip when collapsed', () => {
+  it('rows keep their 28px density and use the shared control radius', () => {
     expect(row).toContain('h-[28px]')
-    expect(row).toContain('rounded-[6px]')
+    expect(row).toContain('rounded-[var(--radius-control)]')
     expect(row).toContain('{!collapsed && <span')
     expect(row).toContain('<TooltipContent side="right"')
     expect(row).not.toMatch(/\bborder\b/)

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import {
   resolveTheme,
+  mergeThemeOverrides,
   DEFAULT_THEME,
   type ThemeOverrides,
   type ThemeFile,
@@ -54,7 +55,7 @@ export function useTheme({ appTheme }: UseThemeOptions = {}): UseThemeResult {
   const theme = useMemo(() => {
     if (appTheme && context.presetTheme) {
       // Merge: preset + appTheme
-      return resolveTheme({ ...context.presetTheme, ...appTheme })
+      return resolveTheme(mergeThemeOverrides(context.presetTheme, appTheme))
     }
     if (appTheme) {
       // No preset, just appTheme

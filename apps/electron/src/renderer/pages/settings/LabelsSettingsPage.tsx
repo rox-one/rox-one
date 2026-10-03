@@ -100,7 +100,7 @@ function AskAiButton({
       type="button"
       variant="ghost"
       size="sm"
-      className="h-8 px-3 rounded-[6px] bg-background/60 shadow-minimal text-foreground/60 hover:text-foreground"
+      className="h-8 px-3 rounded-[var(--radius-control)] bg-background/60 shadow-minimal text-foreground/60 hover:text-foreground"
       {...props}
     >
       {label}
@@ -334,7 +334,7 @@ export default function LabelsSettingsPage() {
                         <Button
                           type="button"
                           size="sm"
-                          className="h-8 px-3 rounded-[6px]"
+                          className="h-8 px-3 rounded-[var(--radius-card)]"
                           onClick={() => openAddForm(null)}
                         >
                           <Plus className="w-3.5 h-3.5 mr-1" />

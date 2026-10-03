@@ -38,7 +38,7 @@ export function VaultIndexHealthPanel({
         <Activity className="h-3.5 w-3.5" />
         {t('notes.inspector.indexHealth')}
       </div>
-      <div className="space-y-1 rounded-[6px] border border-border/60 px-2 py-1.5">
+      <div className="space-y-1 rounded-[var(--radius-card)] border border-border/60 px-2 py-1.5">
         <div className="text-xs font-medium">
           {health.ok ? t('notes.inspector.indexOk') : t('notes.inspector.indexUnavailable')}
         </div>
@@ -66,7 +66,7 @@ export function VaultIndexHealthPanel({
         ) : null}
         <button
           type="button"
-          className="mt-1 inline-flex h-6 items-center gap-1 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]"
+          className="mt-1 inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] px-2 text-[11px] hover:bg-foreground/[0.06]"
           onClick={onRebuild}
           disabled={rebuilding}
         >

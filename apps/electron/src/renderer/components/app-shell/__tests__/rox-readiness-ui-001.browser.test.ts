@@ -45,6 +45,7 @@ async function fixtureBundle() {
     import { useCallback, useEffect, useMemo, useState } from 'react';
     import { createRoot } from 'react-dom/client';
     import { flushSync } from 'react-dom';
+    import { useNavigation as useFixtureNavigation } from '@/contexts/NavigationContext';
     import { usePanelResize } from './apps/electron/src/renderer/hooks/usePanelResize';
     import * as storage from './apps/electron/src/renderer/lib/local-storage';
     import { loadShellLayout, commitShellLayout } from './apps/electron/src/renderer/lib/shell-layout-preferences';
@@ -77,7 +78,7 @@ async function fixtureBundle() {
       }))}), getCloudRunStatus: async () => null,
     };
     const useNavigationState = () => nav;
-    const useNavigation = () => ({isSessionsReady:sessionsReady});
+    const useNavigation = () => ({...useFixtureNavigation(),isSessionsReady:sessionsReady});
     const useAppShellContext = () => ({activeWorkspaceId:workspace,workspaces:[{id:workspace,remoteServer:remoteWorkspaceId?{remoteWorkspaceId}:undefined}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]});
     const useTranslation = () => ({ t: key => key });
     const useAtomValue = atom => atom === sessionMetaMapAtom ? sessionMetas : [];
@@ -91,7 +92,7 @@ async function fixtureBundle() {
     const SkillInfoPage = () => null, MemoryScreen = () => null, ProjectsHomeInMain = () => null,
       MultiSelectPanel = () => null, CollectionBulkBar = () => null, HomeFrontPage = () => null,
       SettingsOverviewPage = () => null, PageView = () => null, SessionHeatmapHost = () => null, SearchPage = () => null,
-      NotesPage = () => null, ConnectionsPage = () => null, ExtraScreenHost = () => null, TasksPage = () => null,
+      NotesPage = () => null, ConnectionsPage = () => null, SkillsCatalogPage = () => null, IntegrationsCatalogPage = () => null, ExtraScreenHost = () => null, TasksPage = () => null,
       MeetingsPage = () => null, InboxPage = () => null, FeedPage = () => null, KnowledgeEntityPage = () => null,
       ProjectInfoPage = () => null, BrowserPanelPage = () => null,
       PagesHome = () => null, KanbanBoardContainer = () => null,
@@ -245,6 +246,18 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
   })
 
   browserTest('deletion and foreign-workspace session metadata cannot mount another chat', async () => {
+    await page.evaluate(()=>{(window as any).ui001.sessions([{id:'a',workspaceId:'ws-a'},{id:'foreign',workspaceId:'ws-b'}]);(window as any).ui001.navigate('allSessions/session/a')})
+    await page.locator('[data-fixture-chat="a"]').waitFor()
+    await page.evaluate(()=>(window as any).ui001.sessions([{id:'foreign',workspaceId:'ws-b'}]))
+    await page.locator('[data-testid="route-session-missing"][data-route-entity="a"]').waitFor()
+    expect(await page.locator('[data-fixture-chat]').count()).toBe(0)
+    await page.evaluate(()=>(window as any).ui001.navigate('allSessions/session/foreign'))
+    await page.locator('[data-testid="route-unavailable"]').waitFor()
+    expect((await page.evaluate(()=>(window as any).ui001.address())).nav.details.sessionId).toBe('foreign')
+    expect(await page.locator('[data-fixture-chat]').count()).toBe(0)
+  })
+
+  browserTest('prior candidate marker: deletion and foreign-workspace session metadata cannot mount another chat', async () => {
     await page.evaluate(()=>{(window as any).ui001.sessions([{id:'a',workspaceId:'ws-a'},{id:'foreign',workspaceId:'ws-b'}]);(window as any).ui001.navigate('allSessions/session/a')})
     await page.locator('[data-fixture-chat="a"]').waitFor()
     await page.evaluate(()=>(window as any).ui001.sessions([{id:'foreign',workspaceId:'ws-b'}]))

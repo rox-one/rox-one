@@ -174,6 +174,8 @@ export {
   getLanguageFromPath,
   formatFilePath,
   truncateFilePath,
+  resolveShikiTheme,
+  ZED_SHIKI_THEMES,
   type ShikiCodeViewerProps,
   type ShikiDiffViewerProps,
   type UnifiedDiffViewerProps,
@@ -191,6 +193,7 @@ export {
   type TerminalOutputProps,
   type ToolType,
   type AnsiSpan,
+  type AnsiParseOptions,
   type GrepLine,
 } from './components/terminal'
 

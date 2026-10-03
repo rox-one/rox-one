@@ -55,7 +55,7 @@ export function ItemNavigator({ items, activeIndex, onSelect, size = 'sm' }: Ite
           'bg-background shadow-minimal cursor-pointer',
           'text-foreground/50 hover:text-foreground transition-colors',
           'disabled:opacity-30 disabled:cursor-not-allowed',
-          size === 'md' ? 'p-1.5 rounded-[8px]' : 'p-1 rounded-[6px]'
+          size === 'md' ? 'p-1.5 rounded-[var(--radius-card)]' : 'p-1 rounded-[var(--radius-card)]'
         )}
         title={t('overlay.previousItem')}
       >
@@ -69,7 +69,7 @@ export function ItemNavigator({ items, activeIndex, onSelect, size = 'sm' }: Ite
               'flex items-center text-muted-foreground font-medium',
               'bg-background shadow-minimal cursor-pointer',
               'hover:opacity-80 transition-opacity',
-              size === 'md' ? 'text-[13px] px-3 h-[28px] w-[144px] justify-center rounded-[8px]' : 'text-[12px] px-2.5 h-[22px] w-[112px] justify-center rounded-[6px]'
+              size === 'md' ? 'text-[13px] px-3 h-[28px] w-[144px] justify-center rounded-[var(--radius-card)]' : 'text-[12px] px-2.5 h-[22px] w-[112px] justify-center rounded-[var(--radius-card)]'
             )}
             title={t('overlay.selectItem')}
           >
@@ -98,7 +98,7 @@ export function ItemNavigator({ items, activeIndex, onSelect, size = 'sm' }: Ite
           'bg-background shadow-minimal cursor-pointer',
           'text-foreground/50 hover:text-foreground transition-colors',
           'disabled:opacity-30 disabled:cursor-not-allowed',
-          size === 'md' ? 'p-1.5 rounded-[8px]' : 'p-1 rounded-[6px]'
+          size === 'md' ? 'p-1.5 rounded-[var(--radius-card)]' : 'p-1 rounded-[var(--radius-card)]'
         )}
         title={t('overlay.nextItem')}
       >

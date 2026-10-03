@@ -1,0 +1,55 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts:
+(pass) normalizePanelRouteForReconcile > auto-selects session details for filter-only session routes [1.16ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit session details unchanged [0.23ms]
+(pass) normalizePanelRouteForReconcile > normalizes each session panel route independently [0.29ms]
+(pass) normalizePanelRouteForReconcile > keeps route unchanged when resolver leaves state without details [0.70ms]
+58 |     expect(normalized).toBe('allSessions')
+59 |   })
+60 |
+61 |   it('preserves every query parameter when reconciling a list or search route', () => {
+62 |     const identity = (state: NavigationState) => state
+63 |     expect(normalizePanelRouteForReconcile('tasks?view=calendar' as any, identity)).toBe('tasks?view=calendar')
+                                                                                         ^
+error: expect(received).toBe(expected)
+
+Expected: "tasks?view=calendar"
+Received: "tasks"
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts:63:85)
+(fail) normalizePanelRouteForReconcile > preserves every query parameter when reconciling a list or search route [17.49ms]
+(pass) normalizePanelRouteForReconcile > keeps non-session routes unchanged with session-only resolver [4.54ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail route even if resolver tries to rewrite it [0.15ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail routes distinct across multiple panels [0.12ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/compact-workspace-navigation.test.ts:
+10 |   it('does not match an unavailable retained route to the sessions service', () => {
+11 |     const store = createStore()
+12 |     store.set(pushPanelAtom, { route: 'knowledge/unknown/doc' as any })
+13 |     const panels = store.get(panelStackAtom)
+14 |     expect(resolveCompactWorkspaceSelection(panels, panels[0].id, { kind: 'service', serviceId: 'sessions' }))
+15 |       .toEqual({ kind: 'navigate', route: routes.view.allSessions() })
+            ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "kind": "navigate",
+-   "route": "allSessions",
++   "kind": "focus",
++   "panelId": "panel-1-1791036949250",
+  }
+
+- Expected  - 2
++ Received  + 2
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/compact-workspace-navigation.test.ts:15:8)
+(fail) compact workspace navigation > does not match an unavailable retained route to the sessions service [5.14ms]
+(pass) compact workspace navigation > keeps every registered service reachable without a desktop rail or sidebar [4.12ms]
+(pass) compact workspace navigation > selects any open panel and preserves its identity, route, filter and sizing [1.09ms]
+(pass) compact workspace navigation > reuses an open service before calling its normal opener [0.19ms]
+
+ 10 pass
+ 2 fail
+ 45 expect() calls
+Ran 12 tests across 2 files. [4.06s]

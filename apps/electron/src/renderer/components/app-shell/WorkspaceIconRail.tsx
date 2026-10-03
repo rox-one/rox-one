@@ -373,7 +373,7 @@ export function WorkspaceIconRail({
 										}}
 										onClick={(event) => handleWorkspaceClick(workspace, event)}
 										className={cn(
-											"group relative flex h-11 w-11 items-center justify-center rounded-[12px] transition-colors duration-150",
+											"group relative flex h-11 w-11 items-center justify-center rounded-[var(--radius-control)] transition-colors duration-150",
 											"focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 											// No filled tile behind the (transparent) avatar: selection is the accent bar + ring.
 											!selected && "hover:bg-foreground/7",
@@ -442,7 +442,7 @@ export function WorkspaceIconRail({
 												type="button"
 												aria-label={link.label}
 												onClick={() => handleRailLinkClick(link)}
-												className="flex h-10 w-10 items-center justify-center rounded-[12px] text-muted-foreground transition-colors duration-150 hover:bg-foreground/7 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+												className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground transition-colors duration-150 hover:bg-foreground/7 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 											>
 												<Icon className="h-4.5 w-4.5 h-[18px] w-[18px]" />
 											</button>
@@ -473,7 +473,7 @@ export function WorkspaceIconRail({
 										<button
 											type="button"
 											aria-label={t("workspaceRail.addLink")}
-											className="flex h-10 w-10 items-center justify-center rounded-[12px] text-muted-foreground transition-colors duration-150 hover:bg-foreground/7 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+											className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground transition-colors duration-150 hover:bg-foreground/7 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 										>
 											<Plus className="h-4 w-4" />
 										</button>
@@ -488,7 +488,7 @@ export function WorkspaceIconRail({
 								align="start"
 								sideOffset={8}
 								aria-labelledby={addLinkTitleId}
-								className="w-80 max-w-[min(calc(100vw-40px),var(--radix-popover-content-available-width))] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-3"
+								className="w-80 max-w-[min(calc(100vw-40px),var(--radix-popover-content-available-width))] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto rounded-[var(--radius-overlay)] p-3"
 								onOpenAutoFocus={(event) => {
 									event.preventDefault();
 									draftLabelRef.current?.focus();
@@ -517,7 +517,7 @@ export function WorkspaceIconRail({
 										value={draftLabel}
 										onChange={(e) => setDraftLabel(e.target.value)}
 										placeholder={t("workspaceRail.linkLabelPlaceholder")}
-										className="mb-1.5 w-full rounded-md border border-border/50 bg-background px-1.5 py-1 text-[11px] outline-none focus:border-accent/50"
+										className="mb-1.5 w-full rounded-[var(--radius-control)] border border-border/50 bg-background px-1.5 py-1 text-[11px] outline-none focus:border-accent/50"
 									/>
 									<Select value={draftKind} onValueChange={(value) => setDraftKind(value as RailLinkKind)}>
 										<SelectTrigger aria-label={t("workspaceRail.addLink")} className="mb-1.5 h-7 text-[11px]">
@@ -543,12 +543,12 @@ export function WorkspaceIconRail({
 													? t("workspaceRail.linkUrlPlaceholder")
 													: t("workspaceRail.notesPathPlaceholder")
 											}
-											className="mb-1.5 w-full rounded-md border border-border/50 bg-background px-1.5 py-1 text-[11px] outline-none focus:border-accent/50"
+											className="mb-1.5 w-full rounded-[var(--radius-control)] border border-border/50 bg-background px-1.5 py-1 text-[11px] outline-none focus:border-accent/50"
 										/>
 									)}
 									<button
 										type="submit"
-										className="flex w-full items-center justify-center gap-1 rounded-md bg-accent/15 px-1.5 py-1 text-[11px] font-medium text-accent hover:bg-accent/25"
+										className="flex w-full items-center justify-center gap-1 rounded-[var(--radius-control)] bg-accent/15 px-1.5 py-1 text-[11px] font-medium text-accent hover:bg-accent/25"
 									>
 										<Link2 className="h-3 w-3" />
 										{t("common.save")}
@@ -567,7 +567,7 @@ export function WorkspaceIconRail({
 							type="button"
 							aria-label={t("workspace.addWorkspace")}
 							onClick={handleNewWorkspace}
-							className="flex h-11 w-11 items-center justify-center rounded-[12px] text-muted-foreground transition-colors duration-150 hover:bg-foreground/7 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+							className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground transition-colors duration-150 hover:bg-foreground/7 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 						>
 							<FolderPlus className="h-5 w-5" />
 						</button>

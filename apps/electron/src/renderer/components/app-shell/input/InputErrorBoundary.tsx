@@ -79,7 +79,7 @@ function InputErrorFallback({
   const { t } = useTranslation()
 
   return (
-    <div className="rounded-[12px] border border-destructive/20 bg-background px-4 py-4 shadow-minimal">
+    <div className="rounded-[var(--radius-card)] border border-destructive/20 bg-background px-4 py-4 shadow-minimal">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 rounded-full bg-destructive/10 p-2 text-destructive">
           <AlertCircle className="h-4 w-4" />

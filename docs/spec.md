@@ -588,6 +588,11 @@ The default legacy Markdown engine and official engine must preserve content acr
 
 The user authorized complete source repair and GitHub merge into main. See [continuation specification](final-readiness/execution/cloud/OWNER-UI-001/continuation-spec.md) for exact address preservation, workspace safety, executor isolation and owned worker dependencies. All original UI-001 requirements and platform acceptance remain unchanged.
 
+## UI-001: внешние ссылки и интеграция в main — 2026-10-03
+
+Владелец: `fix/ui-001-main-integration-20261003-7`. [UI-001 спецификация](final-readiness/execution/cloud/OWNER-UI-001/main-integration/spec.md) сохраняет исходную матрицу UI-001.1/UI-001.2 и явное разрешение пользователя на GitHub/merge. Другие разделы и рабочие копии сохраняются.
+
+
 # Credential locator boundary validation — 2026-10-03
 
 Owner: locator boundary-validation lead; independent reviewer: integration-status worker. User authorization includes source repair, GitHub delivery and merge into main. Initial reproduction base: `635fc495d02c3fe1380740444cb90cf4fbdb58d9`. PR #1407 independently delivered the same executable own-descriptor correction during this validation. PR #1408 preserves that production source and its 54 regressions, and adds 64 cases covering attachment, disk reload, persisted nonmutation, frozen records for all variants and ordinary Proxy get traps.
@@ -813,10 +818,16 @@ Owner: branch integration historical worker. Dependency: current native collecti
 Recover the strict local calendar-day check from preserved Golden source5def9ffd into the current Tasks schedule form, through its existing parseDateExpression port. ISO dates must round-trip the exact year/month/day; impossible dates return no schedule change or native write. Valid leap days retain local midnight. Current native task actor/workspace custody, CAS/ACK/readback, import/background barriers and Product Learning producers remain canonical. Owner: recent_features; dependency: current Tasks1456 and runtime main; no legacy CatalogPanel or alternate store.
 
 
+## Zed appearance reconciliation —2026-10-04
+
+Recover geometry0/4/6, chrome-only material, opaque reading surfaces and three licensed UI/code/terminal themes from PR1469 on current main. Preserve current navigation, native authority, task conversion, Product Learning refs, keyboard access, resize and workspace source errors. Existing saved themes survive; only a physically missing config seeds Nordfox. Cookie theme grants remain scoped to the authenticated current workspace with post-await withdrawal checks. Historical source native/WebUI receipts are not acceptance of this combined revision.
+
 ### Golden per-task form draft recovery — 2026-10-04
 
 Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
 
+
+Zed source addendum frozen at7379efcda6f5806b66672e236a1cc61bdffb4e00 includes compact fixed-content Home widgets, a flat mode switch and inspector tint matching the side panel. Adapt Home grid sizing while preserving current per-widget appearance and saved S/M/L layout ownership. Source release29e86 and installed/native reports remain historical.
 
 ### Knowledge availability recovery — 2026-10-03
 
@@ -857,3 +868,8 @@ Restore the requested workspace/entity/address through restart, malformed or mis
 Qualification also repairs concrete prerequisites discovered by complete source-test execution: real Linux unreaped-run reconciliation, own transport-property validation, bounded secure-storage CLI calls, complete immutable test inventory and real Node process-tree capture, dedicated native test configuration and native startup diagnostics. A Windows state-owner check must use the actual Windows identity rather than a missing POSIX UID, retain foreign-owner refusal, and leave the original firstWindow deadline unchanged.
 
 The authoritative result is `result.json`, with immutable source hashes in `source-manifest-v3.json` and curated safe receipts in `verification/final-integration-20261004/`. Actual original full execution remains 1881 files /1775 passed /70 failed /36 blocked; each original log hash is verified and private raw logs are preserved. Separate qualified replays are not substituted into that completed result. Installed Windows10/11, macOS Retina/native overlay and actual hosted application acceptance remain explicit prerequisites, so `fullDoDClosed` remains false.
+
+
+### Selected skill instructions custody recovery — 2026-10-04
+
+Owner recent_features; dependency: externally merged selected-detail1467 at89cb22c and current native request authority. Craft/OMP selected bodies and discovery metadata use one bounded opened-descriptor reader. File links stay inside the selected canonical directory; directory links retain their supported identity. Compare BigInt descriptor/leaf identity and every canonical ancestor before bytes and return. Refuse invalid selected reads and late revoked requests; preserve current SkillInfo ownership/read-only controls, managed tiers and metadata-only OMP lists.

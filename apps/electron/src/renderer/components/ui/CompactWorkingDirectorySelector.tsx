@@ -128,7 +128,7 @@ export function CompactWorkingDirectorySelector({
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                   placeholder={t('chat.filterFolders')}
-                  className="w-full h-11 pl-10 pr-3 rounded-[10px] bg-foreground/5 text-base outline-none focus:bg-foreground/[0.07] transition-colors"
+                  className="w-full h-11 pl-10 pr-3 rounded-[var(--radius-card)] bg-foreground/5 text-base outline-none focus:bg-foreground/[0.07] transition-colors"
                 />
               </div>
             </div>
@@ -137,7 +137,7 @@ export function CompactWorkingDirectorySelector({
           <div className="px-2 pb-2 flex flex-col gap-0.5 max-h-[50vh] overflow-y-auto">
             {/* Current folder — pinned at top, non-interactive */}
             {hasFolder && (
-              <div className="flex items-center gap-3 px-3 py-3 rounded-[10px] bg-foreground/5">
+              <div className="flex items-center gap-3 px-3 py-3 rounded-[var(--radius-control)] bg-foreground/5">
                 <Icon_Folder className="h-5 w-5 shrink-0 text-foreground/60" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{displayFolderName}</div>
@@ -168,7 +168,7 @@ export function CompactWorkingDirectorySelector({
                       type="button"
                       onClick={() => handleSelectRecent(path)}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-3 rounded-[10px] text-left transition-colors hover:bg-foreground/5 group/row',
+                        'flex items-center gap-3 px-3 py-3 rounded-[var(--radius-control)] text-left transition-colors hover:bg-foreground/5 group/row',
                       )}
                     >
                       <Icon_Folder className="h-5 w-5 shrink-0 text-foreground/60" />
@@ -182,7 +182,7 @@ export function CompactWorkingDirectorySelector({
                         type="button"
                         aria-label={t('common.remove')}
                         onClick={(e) => handleRemoveRecent(e, path)}
-                        className="shrink-0 h-7 w-7 rounded-[6px] flex items-center justify-center text-foreground/30 hover:text-foreground/70 hover:bg-foreground/5 transition-colors"
+                        className="shrink-0 h-7 w-7 rounded-[var(--radius-control)] flex items-center justify-center text-foreground/30 hover:text-foreground/70 hover:bg-foreground/5 transition-colors"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -198,7 +198,7 @@ export function CompactWorkingDirectorySelector({
             <button
               type="button"
               onClick={handleChooseFolder}
-              className="w-full h-12 px-3 rounded-[10px] flex items-center gap-3 text-sm font-medium hover:bg-foreground/5 transition-colors"
+              className="w-full h-12 px-3 rounded-[var(--radius-control)] flex items-center gap-3 text-sm font-medium hover:bg-foreground/5 transition-colors"
             >
               <Icon_Folder className="h-5 w-5 shrink-0 text-foreground/60" />
               <span>{t('chat.chooseFolder')}</span>
@@ -207,7 +207,7 @@ export function CompactWorkingDirectorySelector({
               <button
                 type="button"
                 onClick={handleReset}
-                className="w-full h-12 px-3 rounded-[10px] flex items-center gap-3 text-sm font-medium text-foreground/70 hover:bg-foreground/5 transition-colors"
+                className="w-full h-12 px-3 rounded-[var(--radius-control)] flex items-center gap-3 text-sm font-medium text-foreground/70 hover:bg-foreground/5 transition-colors"
               >
                 <Icon_Home className="h-5 w-5 shrink-0 text-foreground/60" />
                 <span>{t('common.reset')}</span>

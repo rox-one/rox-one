@@ -34,7 +34,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import { version as packageVersion } from '../package.json'
 import { enableDebug } from '@rox/shared/utils/debug'
 import { bootstrapServer, startHealthHttpServer, generateServerToken, maskTokenForDisplay } from '@rox/server-core/bootstrap'
-import { validateSession, createWebuiHandler, nodeHttpAdapter } from '@rox/server-core/webui'
+import { validateSession, createWebuiHandler, nodeHttpAdapter, readWebDefaultWorkspace } from '@rox/server-core/webui'
 import type { WebuiHandler } from '@rox/server-core/webui'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { getWorkspaces } from '@rox/shared/config'
@@ -184,6 +184,9 @@ const instance = await (async () => {
             const session = await validateSession(cookieHeader, serverToken)
             return session !== null
           }
+        : undefined,
+      webUiAppearanceWorkspaceId: webuiEnabled && serverToken
+        ? () => readWebDefaultWorkspace()?.id ?? null
         : undefined,
       // Embed the WebUI HTTP handler on the WS server's port
       httpHandler: webuiNodeHandler,

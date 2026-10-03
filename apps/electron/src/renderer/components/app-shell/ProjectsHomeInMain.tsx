@@ -73,7 +73,7 @@ export function ProjectsHomeInMain({
           type="button"
           onClick={openAdd}
           disabled={!workspaceId}
-          className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-foreground/[0.06] px-2.5 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
+          className="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-control)] bg-foreground/[0.06] px-2.5 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
         >
           {t('projectsList.addProject')}
         </button>}

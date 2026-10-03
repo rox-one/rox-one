@@ -59,7 +59,7 @@ export function TaskChatPreview({
         <div className="mx-auto flex max-w-2xl flex-col gap-4">
           {/* User message */}
           <div className="flex justify-end">
-            <div className="max-w-[80%] rounded-2xl bg-foreground/[0.06] px-3.5 py-2 text-sm text-foreground">
+            <div className="max-w-[80%] rounded-[var(--radius-card)] bg-foreground/[0.06] px-3.5 py-2 text-sm text-foreground">
               {userMessage}
             </div>
           </div>
@@ -97,7 +97,7 @@ export function TaskChatPreview({
 
       {/* Input bar (presentational) */}
       <div className="border-t border-border/50 px-4 py-3">
-        <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-xl border border-border/60 bg-card px-3 py-2">
+        <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-[var(--radius-control)] border border-border/60 bg-card px-3 py-2">
           <ModelChip model={model} className="shrink-0" />
           <span className="flex-1 truncate text-sm text-foreground/40">Reply to this task…</span>
           <span

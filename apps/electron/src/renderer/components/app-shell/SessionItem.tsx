@@ -166,6 +166,9 @@ export function SessionItem({
         ...itemProps,
         className: cn(
           !isComfortable && "py-1.5",
+          isSelected || isInMultiSelect
+            ? "bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))]"
+            : "hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
           (itemProps as { className?: string }).className,
         ),
         onKeyDown: (e: React.KeyboardEvent) => {
@@ -227,7 +230,7 @@ export function SessionItem({
             aria-label={title}
             className={cn(
               "grid h-3.5 shrink-0 place-items-center appearance-none border-0 bg-transparent p-0 text-foreground transition-all duration-150",
-              "hover:bg-foreground/8",
+              "hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
               ctx.isMultiSelectActive || isInMultiSelect
                 ? "w-3.5 opacity-100"
                 : "w-0 overflow-hidden opacity-0 group-hover:w-3.5 group-hover:opacity-100",
@@ -283,14 +286,13 @@ export function SessionItem({
       }
       title={ctx.searchQuery ? highlightMatch(title, ctx.searchQuery) : title}
       titleClassName={cn("text-[13px]", item.isAsyncOperationOngoing && "animate-shimmer-text")}
-      subtitle={previewText}
+      subtitle={previewText ? <span className="text-text-secondary">{previewText}</span> : undefined}
       titleSuffix={
         (projectName || hasMessagingBinding) ? (
           <div className="flex items-center gap-1">
             {projectName && (
               <span
-                className="text-[11px] text-foreground/40 whitespace-nowrap truncate max-w-[120px] opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                style={projectColor ? { color: projectColor } : undefined}
+                className="text-[11px] text-text-secondary whitespace-nowrap truncate max-w-[120px] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-150"
                 title={projectName}
               >
                 {projectName}
@@ -319,7 +321,7 @@ export function SessionItem({
             <button
               type="button"
               aria-label={t("sessionMenu.markAsUnread")}
-              className="p-1 rounded-[6px] hover:bg-foreground/10"
+              className="p-1 rounded-[var(--radius-control)] hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]"
               onClick={(e) => {
                 e.stopPropagation()
                 ctx.onMarkUnread(item.id)
@@ -333,7 +335,7 @@ export function SessionItem({
             type="button"
             aria-pressed={item.isFlagged}
             aria-label={item.isFlagged ? t("sessionMenu.unflag") : t("sessionMenu.flag")}
-            className="p-1 rounded-[6px] hover:bg-foreground/10"
+            className="p-1 rounded-[var(--radius-control)] hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]"
             onClick={(e) => {
               e.stopPropagation()
               if (item.isFlagged) ctx.onUnflag?.(item.id)
@@ -346,7 +348,7 @@ export function SessionItem({
           <button
             type="button"
             aria-label={item.isArchived ? t("sessionMenu.unarchive") : t("sessionMenu.archive")}
-            className="p-1 rounded-[6px] hover:bg-foreground/10"
+            className="p-1 rounded-[var(--radius-control)] hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]"
             onClick={(e) => {
               e.stopPropagation()
               if (item.isArchived) ctx.onUnarchive?.(item.id)
@@ -365,14 +367,11 @@ export function SessionItem({
       titleTrailing={hasMatch ? (
         <span
           className={cn(
-            "inline-flex items-center justify-center min-w-[24px] px-1 py-0.5 rounded-[6px] text-[10px] font-medium tabular-nums leading-tight whitespace-nowrap shadow-tinted",
+            "inline-flex items-center justify-center min-w-[24px] px-1 py-0.5 rounded-[var(--radius-control)] text-[10px] font-medium tabular-nums leading-tight whitespace-nowrap border bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))] text-foreground",
             isSelected
-              ? "bg-yellow-300/50 border border-yellow-500 text-yellow-900"
-              : "bg-yellow-300/10 border border-yellow-600/20 text-yellow-800"
+              ? "border-info"
+              : "border-info/40"
           )}
-          style={{
-            '--shadow-color': isSelected ? '234, 179, 8' : '133, 77, 14',
-          } as React.CSSProperties}
           title={t('sessionItem.matchesFound', { next: nextHotkey, prev: prevHotkey })}
         >
           {chatMatchCount}
@@ -382,7 +381,7 @@ export function SessionItem({
           <Flag className="h-3.5 w-3.5 text-info" />
         </div>
       ) : showLastActivityInTrailing ? (
-        <span className="text-[11px] text-foreground/40 whitespace-nowrap">
+        <span className="text-[11px] text-text-secondary whitespace-nowrap">
           {lastActivityText}
         </span>
       ) : undefined}

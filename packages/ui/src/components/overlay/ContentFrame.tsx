@@ -25,7 +25,7 @@
  *   flex, px-6, min-h-full
  *     └── relative wrapper (max-w constrained, m-auto centered, grows to content)
  *          ├── leftSidebar?  (absolute, right-full — hangs left of card)
- *          ├── Card (rounded-2xl, bg-background, shadow-strong, grows to content)
+ *          ├── Card (rounded-[var(--radius-overlay)], bg-background, shadow-strong, grows to content)
  *          │    ├── Title bar (centered title label)
  *          │    └── children (grows naturally)
  *          └── rightSidebar? (absolute, left-full — hangs right of card)
@@ -89,7 +89,7 @@ export function ContentFrame({
         )}
 
         {/* Main card — grows to fit content, no internal scrolling */}
-        <div className="flex flex-col rounded-2xl overflow-hidden backdrop-blur-sm shadow-strong bg-background min-h-[320px]">
+        <div className="flex flex-col rounded-[var(--radius-overlay)] overflow-hidden backdrop-blur-sm shadow-strong bg-background min-h-[320px]">
           {/* Title bar */}
           <div className="flex justify-center items-center px-4 py-3 border-b border-foreground/7 select-none shrink-0">
             <div className="text-xs font-semibold tracking-wider text-foreground/30">

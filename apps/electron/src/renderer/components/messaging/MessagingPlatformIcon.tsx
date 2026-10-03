@@ -55,7 +55,7 @@ export function MessagingPlatformIcon({
         alt=""
         width={size}
         height={size}
-        className={`rounded-[4px] flex-shrink-0 ${className}`}
+        className={`rounded-[var(--radius-control)] flex-shrink-0 ${className}`}
         style={{ width: size, height: size }}
       />
     )
@@ -64,7 +64,7 @@ export function MessagingPlatformIcon({
   const { bg, initial } = platformFallback[platform]
   return (
     <div
-      className={`rounded-[4px] flex items-center justify-center flex-shrink-0 text-white font-semibold ${className}`}
+      className={`rounded-[var(--radius-control)] flex items-center justify-center flex-shrink-0 text-white font-semibold ${className}`}
       style={{ width: size, height: size, backgroundColor: bg, fontSize: Math.round(size * 0.6) }}
     >
       {initial}
