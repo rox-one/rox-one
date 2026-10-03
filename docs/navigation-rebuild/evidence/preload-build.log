@@ -1,9 +1,5 @@
-$ esbuild src/preload/voice-overlay.ts --bundle --platform=node --format=cjs --outfile=dist/voice-overlay-preload.cjs --external:electron && esbuild src/preload/bootstrap.ts --bundle --platform=node --format=cjs --outfile=dist/bootstrap-preload.cjs --external:electron --alias:@anthropic-ai/claude-agent-sdk=./src/renderer/shims/claude-agent-sdk-stub.ts
-
-  dist/voice-overlay-preload.cjs  1014b
-
-⚡ Done in 2ms
-
-  dist/bootstrap-preload.cjs  14.0mb ⚠️
-
-⚡ Done in 530ms
+$ bun run scripts/electron-build-preload.ts
+🔨 Building preload entries...
+⏳ Waiting for preload outputs to stabilize...
+🔍 Verifying preload outputs...
+✅ Preload builds complete and verified

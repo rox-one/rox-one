@@ -2,7 +2,7 @@
 
 Дата записи: 2026-10-04. Рабочая область: `/Users/t/Projects/rox-navigation-rebuild-20261003`. Область этой записи — каркас навигации, канонические задачи/профили/блоки, память, типизированные автоматизации и интеграция с основной веткой. Требования и этапы: [spec.md](spec.md); владельцы и зависимости: [plan.md](plan.md).
 
-Результаты ниже подтверждают ограниченные проверки исходного кода и настоящего локального WebSocket RPC. Они не являются заявлением о production, установленной версии приложения, визуальной приёмке или внешних провайдерах. Интегрированная реализация: `f5daf80dc23492c5f988902274ace0a18fd9ef91`; родители `1eb9ffd5731003e2e3825f0a290909f9287f2aeb` и `47b5fcd270ff7abff163533b60f4d9fa5d5f8f27`. Окончательная доставка дополняется после push/readback. Пересекающиеся наборы тестов не суммируются в общий уникальный счётчик.
+Результаты ниже подтверждают ограниченные проверки исходного кода и настоящего локального WebSocket RPC. Они не являются заявлением о production, установленной версии приложения, визуальной приёмке или внешних провайдерах. Окончательная интегрированная реализация: `12dafec990df9851aa5764511ba0eaee81d25065`, включает main `439b9d4f141fe8d484f57f0fa55681de7b7af966`. Предыдущая интеграция `f5daf80dc...` включала main `47b5fcd...`. Окончательная доставка дополняется после push/readback. Пересекающиеся наборы тестов не суммируются в общий уникальный счётчик.
 
 ## Подтверждённые результаты после объединения с main
 
@@ -75,14 +75,14 @@ e1f425698667c139ce9fc817699dcd96867e0b37f5756fb413b83ca80b568310  post-merge-nat
 
 | Проверка после merge | Результат | Сохранённое доказательство |
 | --- | --- | --- |
-| Типы shared/server-core/Electron | Все три exit 0; Node 22.23.3, завершены 2026-10-03 22:26 UTC | [types.json](evidence/types.json) |
+| Типы shared/server-core/Electron | Все три exit 0; Node 22.23.3, повтор после refresh main завершён 2026-10-03 22:38 UTC | [types.json](evidence/types.json) |
 | Каноническое хранилище, native RPC, профильное наследование, exact registry | 17 pass / 0 fail / 71 assertion | [backend17.log](evidence/backend17.log) |
-| Основная/дополнительные панели, receiver навигационных событий, долговечные черновики, URL/history | 22 pass / 0 fail / 45 assertions | [shell22.log](evidence/shell22.log) |
+| Основная/дополнительные панели, receiver навигационных событий, долговечные черновики, URL/history | 30 pass / 0 fail / 78 assertions | [shell30.log](evidence/shell30.log) |
 | UI contracts: keyboard/focus/layout, captured project, notes/page context, meeting-task bridge | 60 pass / 0 fail / 289 assertions | [ui60.log](evidence/ui60.log) |
-| Локализация | Parity 8715 keys × 12 locales, sorted и literal coverage pass | [parity](evidence/i18n-parity.log), [coverage](evidence/i18n-coverage.log) |
+| Локализация | Parity 8716 keys × 12 locales, sorted и literal coverage pass | [parity](evidence/i18n-parity.log), [coverage](evidence/i18n-coverage.log) |
 | Сборки main/preload/renderer/resources/assets | Exit 0 | [renderer](evidence/renderer-build.log), [main](evidence/main-build.log), [preload](evidence/preload-build.log) |
 | Scoped ESLint изменённых renderer TS/TSX | 0 errors, 66 warnings | [renderer-lint.log](evidence/renderer-lint.log) |
-| Изменения относительно фиксированного integration target | `git diff --check 47b5fcd...` exit 0 | Сравнение выполнено до merge commit |
+| Изменения относительно фиксированного integration target | `git diff --check 439b9d4f...` exit 0 | Сравнение выполнено до merge commit |
 
 SHA-256 сохранённых логов и среда перечислены в [manifest.json](evidence/manifest.json). ANSI и хвостовые пробелы удалены только из копий логов; manifest содержит хеши оригиналов. Это не полный `validate:ci`, не проверки всех пакетов и не qualification всех внешних провайдеров. Новые тексты переведены на русский и английский; в остальных десяти языках новые ключи имеют английский fallback. Проверки parity не означают завершённый перевод на все языки.
 
@@ -112,3 +112,20 @@ SHA-256 сохранённых логов и среда перечислены �
 - Final build перезапущен 22:26 UTC. URL восстанавливает primary `agents`, tasks/agent roles и captured contexts. После этого Mac заблокирован; инструмент сообщил, что штатное unlock недоступно. Пользователю отправлена одна просьба разблокировать Mac. Визуальная приёмка итогового relaunch, профилей, меню workspace, остальных инструментов и узкого окна **ожидает разблокировки**. Эти пункты не закрываются сборкой, backend tests или прежними screenshot.
 
 Ограничения: не проверен отправленный запрос внешнему LLM, внешняя календарная авторизация или remote messenger. Автоматическая установка необязательного Qdrant MCP в тестовом окружении отложилась из-за Python 3.14 / pydantic-core; навигационные и canonical workspace-work операции выполнялись без него. Не установлена release-версия в пользовательский профиль и не выполнен merge/release основной ветки.
+
+
+## Последняя проверка и доставка
+
+После создания draft PR основной main обновился на 42 commits. Выполнено ещё одно фиксированное объединение с `439b9d4f141fe8d484f57f0fa55681de7b7af966`. Единственный конфликт `TasksPage` разрешён с сохранением адаптивного footer и новых платформенных подписей hotkeys. Языковые ключи main сохранены; сортировка и parity повторены.
+
+Независимый renderer review выявил и исправил три P2:
+
+- Открытие задачи из календаря теперь обновляет маршрут **и** captured project контекст существующей Tasks pane, сохраняя её ID и основной календарь. Исполняемый component harness проверяет A→B→All.
+- Маршрут общей/личной задачи переключает область в обе стороны; bare route сохраняет ручной выбор. Исполняемый hook harness проверяет workspace→personal→workspace.
+- Rail Agent использует общий capture/open intent guard. Новое действие с инструментом или поверхностью отменяет доставку позднего результата; origin panel/focus также проверяются. Шесть тестов utility intent с настоящими Jotai atoms проходят.
+
+Финальные повторные наборы: backend17/0, memory+automation107/0, nativeWS14/0, shell+transitions30/0, UI60/0. Исходники runtime не изменялись во время запусков; commit `12dafec99` зафиксировал уже готовое рабочее дерево. Общие types и main/preload/renderer повторены после этих исправлений. [Manifest](evidence/manifest.json) указывает эту implementation revision; документационный commit может быть позже без изменения runtime.
+
+[Draft PR #1486](https://github.com/rox-one/rox-one/pull/1486) прикреплён к текущему чату. Remote head/readback фиксируются отдельно после последнего push. CI на предыдущем PR head ещё ожидал runners; Vercel status сообщает **Account is blocked**. Это внешний запрет deployment, не результат локальной сборки. Публичный deployment не выполнен.
+
+Сохранён [канонический readback синтетических данных](evidence/native-data-readback.json): задача, work block, черновик. Он подтверждает ранее выполненные операции в изолированном окне и не подменяет ожидающую нативную проверку final refresh build. Mac всё ещё требует ручной разблокировки; просьба отправлена один раз.

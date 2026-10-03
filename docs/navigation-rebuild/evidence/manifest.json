@@ -1,73 +1,13 @@
 {
-  "implementation_revision": "f5daf80dc23492c5f988902274ace0a18fd9ef91",
-  "target_main": "47b5fcd270ff7abff163533b60f4d9fa5d5f8f27",
+  "implementation_revision": "12dafec990df9851aa5764511ba0eaee81d25065",
+  "target_main": "439b9d4f141fe8d484f57f0fa55681de7b7af966",
   "environment": "local macOS arm64; Bun 1.4.2; Node 22.23.3; Electron 39.2.7",
   "artifacts": [
-    {
-      "path": "backend17.log",
-      "sha256": "ca965b3ec4e1221dcfbb14b5de99dae8e9f928a835030884701728c7ac5cee1b",
-      "original_path": "/tmp/rox-nav-context-checks.cp3QSs/post-merge-backend17-final.log",
-      "original_sha256": "ca965b3ec4e1221dcfbb14b5de99dae8e9f928a835030884701728c7ac5cee1b"
-    },
-    {
-      "path": "memory-automation107.log",
-      "sha256": "11011e8a4a101ada17f79a73a7cd1cbe14bd99f41d874a85e2be65510260e95e",
-      "original_path": "/tmp/rox-nav-context-checks.cp3QSs/post-merge-focused-tests-corrected.log",
-      "original_sha256": "11011e8a4a101ada17f79a73a7cd1cbe14bd99f41d874a85e2be65510260e95e"
-    },
-    {
-      "path": "native-ws14.log",
-      "sha256": "e1f425698667c139ce9fc817699dcd96867e0b37f5756fb413b83ca80b568310",
-      "original_path": "/tmp/rox-nav-context-checks.cp3QSs/post-merge-native-memory-tests-corrected.log",
-      "original_sha256": "e1f425698667c139ce9fc817699dcd96867e0b37f5756fb413b83ca80b568310"
-    },
     {
       "path": "shell22.log",
       "sha256": "dd0a9d513a20d19413205de7ae358e11f6b0b765548be712a23e3b47ac3610c6",
       "original_path": "/tmp/rox-navigation-merged-shell-tests.log",
       "original_sha256": "dd0a9d513a20d19413205de7ae358e11f6b0b765548be712a23e3b47ac3610c6"
-    },
-    {
-      "path": "ui60.log",
-      "sha256": "a6b9faffd1cde2988ca716b6c2a0a36e8c6b58d023b5cc2f5c7b4826a1d42b11",
-      "original_path": "/tmp/rox-navigation-final-ui-tests.log",
-      "original_sha256": "a6b9faffd1cde2988ca716b6c2a0a36e8c6b58d023b5cc2f5c7b4826a1d42b11"
-    },
-    {
-      "path": "i18n-parity.log",
-      "sha256": "90424d9c8e3574ee5ed101ea38927cf6a1a513a6e22c3ecba8c14f009e60290a",
-      "original_path": "/tmp/rox-navigation-final-i18n-parity.log",
-      "original_sha256": "90424d9c8e3574ee5ed101ea38927cf6a1a513a6e22c3ecba8c14f009e60290a"
-    },
-    {
-      "path": "i18n-sorted.log",
-      "sha256": "35307907932afb3300304ba0997d98688778e3aa2388c947e5aad314d669a640",
-      "original_path": "/tmp/rox-navigation-final-i18n-sorted.log",
-      "original_sha256": "35307907932afb3300304ba0997d98688778e3aa2388c947e5aad314d669a640"
-    },
-    {
-      "path": "i18n-coverage.log",
-      "sha256": "2cde6380e08219833ffa95f6ef733901271880e6079cf913c27893b6a4c3cac9",
-      "original_path": "/tmp/rox-navigation-final-i18n-coverage.log",
-      "original_sha256": "2cde6380e08219833ffa95f6ef733901271880e6079cf913c27893b6a4c3cac9"
-    },
-    {
-      "path": "renderer-build.log",
-      "sha256": "66f8be279f352c0cf1275d6344ca97290db2aaa98a00aeb4de263975e0c201c0",
-      "original_path": "/tmp/rox-navigation-final-renderer-build.log",
-      "original_sha256": "e2c8f3e9983e1c47393c25ab2d693d02171c42b980698e4198701a63c79c5dc4"
-    },
-    {
-      "path": "main-build.log",
-      "sha256": "63a811498cf7d358b845d62fcc33ed372adb4bc814ec86cf352ec47922eecabf",
-      "original_path": "/tmp/rox-navigation-merged-main-build.log",
-      "original_sha256": "63a811498cf7d358b845d62fcc33ed372adb4bc814ec86cf352ec47922eecabf"
-    },
-    {
-      "path": "preload-build.log",
-      "sha256": "5e0bc031ba9e1d30b70e6a6e3176e46f940516cc3f83e4c73f6edd2abddbcc6d",
-      "original_path": "/tmp/rox-navigation-merged-preload-build.log",
-      "original_sha256": "c7cfce8ce247a9e92ff221e9c6ac675d4c6a179f9ff53f88188896717ece703b"
     },
     {
       "path": "resources-build.log",
@@ -97,6 +37,81 @@
       "path": "renderer-lint.log",
       "sha256": "af94a0deff391bd6194673a44e8f66c6393e2c1d4d900c7080ddfe6235052229",
       "original_path": "/tmp/rox-navigation-final-renderer-lint.log"
+    },
+    {
+      "path": "backend17.log",
+      "sha256": "26df506496b1e476d97e5539e461a9957c4870480df50707984b83031abfcd06",
+      "original_path": "/tmp/rox-nav-context-checks.cp3QSs/refresh-backend17.log",
+      "original_sha256": "26df506496b1e476d97e5539e461a9957c4870480df50707984b83031abfcd06"
+    },
+    {
+      "path": "memory-automation107.log",
+      "sha256": "d260bf9573fa79bfb8d3dd0a258f6b4a2798fbb856031f044afd98b8e2b11480",
+      "original_path": "/tmp/rox-nav-context-checks.cp3QSs/refresh-439b9d4f-focused-tests.log",
+      "original_sha256": "d260bf9573fa79bfb8d3dd0a258f6b4a2798fbb856031f044afd98b8e2b11480"
+    },
+    {
+      "path": "native-ws14.log",
+      "sha256": "d5835c224f365d0d0d231e3636a40226495d174d551249592dc6fc10c4344ebc",
+      "original_path": "/tmp/rox-nav-context-checks.cp3QSs/refresh-439b9d4f-native-memory-tests.log",
+      "original_sha256": "d5835c224f365d0d0d231e3636a40226495d174d551249592dc6fc10c4344ebc"
+    },
+    {
+      "path": "shell30.log",
+      "sha256": "0a99b0d6c5caa9ecb032074b64f08d056eb8c1caabbc37e981da3cb3180511b7",
+      "original_path": "/tmp/rox-navigation-refresh-shell-complete.log",
+      "original_sha256": "0a99b0d6c5caa9ecb032074b64f08d056eb8c1caabbc37e981da3cb3180511b7"
+    },
+    {
+      "path": "ui60.log",
+      "sha256": "35a44cb59d04fb61a07e8dfba56f17104fc18525382f2004eebfc47124df40d0",
+      "original_path": "/tmp/rox-navigation-refresh-ui60.log",
+      "original_sha256": "35a44cb59d04fb61a07e8dfba56f17104fc18525382f2004eebfc47124df40d0"
+    },
+    {
+      "path": "i18n-parity.log",
+      "sha256": "ef9bdb336e590cccdd2698ee050dd9cac5bb35c33b3bb185b289455ef3164a17",
+      "original_path": "/tmp/rox-navigation-refresh-i18n-parity.log",
+      "original_sha256": "ef9bdb336e590cccdd2698ee050dd9cac5bb35c33b3bb185b289455ef3164a17"
+    },
+    {
+      "path": "i18n-sorted.log",
+      "sha256": "35307907932afb3300304ba0997d98688778e3aa2388c947e5aad314d669a640",
+      "original_path": "/tmp/rox-navigation-refresh-i18n-sorted.log",
+      "original_sha256": "35307907932afb3300304ba0997d98688778e3aa2388c947e5aad314d669a640"
+    },
+    {
+      "path": "i18n-coverage.log",
+      "sha256": "af18be53075e7e9e52d7ef8b3679af0cea6fcfcd41ea9b102ad5f697c19bac49",
+      "original_path": "/tmp/rox-navigation-refresh-i18n-coverage.log",
+      "original_sha256": "af18be53075e7e9e52d7ef8b3679af0cea6fcfcd41ea9b102ad5f697c19bac49"
+    },
+    {
+      "path": "renderer-build.log",
+      "sha256": "9167508a47f89f007067666e4a93aa9bfe46a926325fac824d903bdaa49e3aad",
+      "original_path": "/tmp/rox-navigation-refresh-renderer-build.log",
+      "original_sha256": "5d53b56ede3d91733641d8791e76592cf78e9c2247fdd72bf9418f3a6c85bbef"
+    },
+    {
+      "path": "main-build.log",
+      "sha256": "0ae96a6d76c158bf343a326cd0f018d0505d5870e813518f12b8a3b71637aee9",
+      "original_path": "/tmp/rox-navigation-refresh-main-build.log",
+      "original_sha256": "0ae96a6d76c158bf343a326cd0f018d0505d5870e813518f12b8a3b71637aee9"
+    },
+    {
+      "path": "preload-build.log",
+      "sha256": "5f2b572850839749bdb24be6b069d694b7bab19297e8ea3aa797a1e34e5a2618",
+      "original_path": "/tmp/rox-navigation-refresh-preload-build.log",
+      "original_sha256": "5f2b572850839749bdb24be6b069d694b7bab19297e8ea3aa797a1e34e5a2618"
+    },
+    {
+      "path": "types.json",
+      "sha256": "cbdc1c941f2f481729116bcd3d1db353a797955b6084254c3ff88211790c44f4"
+    },
+    {
+      "path": "native-data-readback.json",
+      "sha256": "df59ba7bc7ec79feb6c2846d80cba1704a90a92bea3a00a3bad7b2ba11d3a947"
     }
-  ]
+  ],
+  "previous_integration_revision": "f5daf80dc23492c5f988902274ace0a18fd9ef91"
 }
