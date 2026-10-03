@@ -229,10 +229,18 @@ try {
   assert.equal(note.nativeId, queuedCreation.nativeId)
   assert.equal(note.nativeRevision, 1)
   assert.equal(readFileSync(join(root, queuedCreation.changes[0]!.path), 'utf8'), note.content)
-  assert.equal((await within(creationChanged.promise)).noteId, note.id,
-    'The real canonical creation must trigger its native source watcher after WATCH returns')
-  assert.equal((await within(readOnlyCreation.promise)).noteId, note.id,
-    'An existing read-only subscriber must observe the first authorized canonical note creation')
+  // Creating the first Notes directory can yield a workspace-wide external
+  // invalidation. Its optional identity must match when present; canonical
+  // creation and read-back remain separately verified below.
+  for (const [subscriber, event] of [
+    ['writer', await within(creationChanged.promise)],
+    ['read-only', await within(readOnlyCreation.promise)],
+  ] as const) {
+    assert.equal(event.workspaceId, workspaceId, `${subscriber} creation invalidation must belong to its subscribed workspace`)
+    assert.equal(event.reason, 'external', `${subscriber} creation must trigger its native source watcher after WATCH returns`)
+    if (event.noteId !== undefined) assert.equal(event.noteId, note.id,
+      `${subscriber} creation invalidation must identify the canonical note when its identity is present`)
+  }
   await readOnly.invoke(RPC_CHANNELS.notes.UNWATCH, workspaceId)
   unsubscribeReadOnly()
   writeFileSync('/tmp/rox-native-notes-readonly-watch-fixed-proof.json', JSON.stringify({
@@ -277,13 +285,30 @@ try {
   await denied.invoke(RPC_CHANNELS.notes.WATCH, workspaceId)
   authority.revokeWorkspaceGrant(admin.credential, foreignActor.principal.subject, workspaceId)
   const afterSave = watchedEvents.length
+  const externalContent = '# Canonical source changed after foreign revocation\n'
   const receipt = await api.nativeData.mutate({ workspaceId, kind: 'notes', nativeId: note.nativeId!,
     operationId: 'thin-canonical-change-after-revocation', expectedRevision: 2, schemaVersion: 1,
-    changes: [{ path: snapshot.files[0]!.path, content: '# Canonical source changed after foreign revocation\n' }] })
+    changes: [{ path: snapshot.files[0]!.path, content: externalContent }] })
   assert.equal(receipt.revision, 3)
+  const committed = await api.readNote(workspaceId, note.id)
+  assert.equal(committed.nativeRevision, 3)
+  assert.equal(committed.content, externalContent)
+  const canonicalPath = join(root, snapshot.files[0]!.path)
+  assert.equal(readFileSync(canonicalPath, 'utf8'), externalContent)
+  const sourceWriter = authority.authenticate(actor.credential)
+  assert(sourceWriter && authority.authorize(sourceWriter, workspaceId, 'write', root))
+  // Bun's recursive watcher reports only the temporary journal filename for
+  // atomic rename; Node reports the final Markdown path. Exercise subscription
+  // delivery with a separate real external write of the exact committed bytes.
+  writeFileSync(canonicalPath, externalContent)
   await new Promise(resolve => setTimeout(resolve, 350))
-  assert(watchedEvents.slice(afterSave).some(payload => payload.reason === 'external' && payload.noteId === note.id),
+  const ownerInvalidations = watchedEvents.slice(afterSave).filter(payload => payload.workspaceId === workspaceId && payload.reason === 'external')
+  assert(ownerInvalidations.length > 0,
     'Authorized owner must still receive the real canonical source mutation')
+  for (const event of ownerInvalidations) {
+    if (event.noteId !== undefined) assert.equal(event.noteId, note.id,
+      'An identified external source invalidation must name the canonical note')
+  }
   assert.deepEqual(revokedEvents, [], 'Revoked native subscription must receive no canonical invalidation')
   assert.equal(projectNativeNotesChanged(authority, [{ workspaceId, reason: 'external', noteId: note.id }], workspaceId,
     authority.authenticate(foreignActor.credential)!), null)
