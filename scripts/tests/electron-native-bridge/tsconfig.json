@@ -1,0 +1,5 @@
+{
+  "extends": "../../../apps/electron/tsconfig.json",
+  "include": ["./*.ts"],
+  "exclude": []
+}

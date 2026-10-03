@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "id": "NATIVE-PRODUCT-NOTE-20261002",
+  "observedAt": "2026-10-02T18:22:29.665Z",
+  "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+  "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+  "sourceCount": 4876,
+  "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+  "priorGatedSourcesUnchanged": true,
+  "publication": {
+    "status": "EVIDENCE_PUBLISHED_FOR_REVIEW",
+    "evidenceRevision": "050230079351d81d2fe6a3d51f3ba0214934826c",
+    "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+    "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "remoteHeadReadback": "050230079351d81d2fe6a3d51f3ba0214934826c",
+    "pullRequestHeadReadback": "050230079351d81d2fe6a3d51f3ba0214934826c",
+    "isDraft": true,
+    "observedAt": "2026-10-02T18:27:58.010Z",
+    "sourceCount": 4876,
+    "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+    "allCommittedSourceBlobsMatchGatedManifest": true,
+    "newProductionSources": 0,
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0,
+    "fullTaskAccepted": false,
+    "limits": "Visible Note create/edit/reload/normal restart plus independent canonical/journal/ACK metadata only; receipt bodies/OS custody, Tasks persistence/click, crash/offline/platform/full original tasks remain pending. Later evidence-binding commit has a different head."
+  },
+  "owners": {
+    "visibleProductUI": "/root/native_boundary",
+    "independentTaskScopedReadback": "/root/recovery_scout",
+    "sourceBindingRegistryAndDelivery": "/root"
+  },
+  "productRuntime": {
+    "launch": "Actual standard built Electron production main with preserved task-private enrolled profile/workspace; full product renderer and native menus, no minimal harness main.",
+    "firstPid": 2566,
+    "normalMenuQuitExitCode": 0,
+    "firstPidAbsent": true,
+    "restartedPid": 12111,
+    "currentlyLeftOnNewTaskNote": true,
+    "foregroundLeaseReleased": true,
+    "buildHashes": {
+      "dist/main.cjs": "4704a537350f17201a1745442539f68ce50665af967725823764918518aae470",
+      "dist/renderer/index.html": "e3c245fd8f1e25280e9d95915e8e57d338ddd956b85b0fef716590751573d28d"
+    },
+    "preloadSha256": "a89c1fc7e0f67fbcbc1b133dee5c5cce0975c97d5a121c2c5a7f457644e546f7"
+  },
+  "visibleBehavior": {
+    "createdViaDialog": true,
+    "editedViaUI": true,
+    "savedStatus": true,
+    "viewMenuReloadRestoredRouteAndText": true,
+    "normalMenuQuitAndFreshMainRestoredRouteAndText": true,
+    "reopenedFromNoteList": true,
+    "taskRouteVisible": true,
+    "taskFooterStorageUnavailableLocalCache": true,
+    "taskCreated": false,
+    "taskToNoteClickReopenAccepted": false
+  },
+  "persistence": {
+    "canonicalRelativePath": "notes/Native product acceptance 20261002.md",
+    "canonicalBytes": 193,
+    "canonicalSha256": "cdf52d26bb98cc2d681ae50118ba4e7de6df347d8441a829623fac64c6bc752e",
+    "unchangedAcrossRestart": true,
+    "journalEntityRevision": 2,
+    "journalReceiptsUnchanged": true,
+    "operations": [
+      {
+        "kind": "create",
+        "operationId": "cb7fab13-b933-4799-9d68-d09cd0c951ae",
+        "journalSequence": 3,
+        "journalRevision": 1,
+        "matchingAcknowledgementSequenceAndRevision": true,
+        "pendingRows": 0,
+        "storedEncryptedReceiptCount": 1,
+        "encryptedReceiptBodyIndependentlyValidated": false
+      },
+      {
+        "kind": "edit",
+        "operationId": "72d8775b-f282-42dc-95b0-5314c590b07a",
+        "journalSequence": 4,
+        "journalRevision": 2,
+        "matchingAcknowledgementSequenceAndRevision": true,
+        "pendingRows": 0,
+        "storedEncryptedReceiptCount": 1,
+        "encryptedReceiptBodyIndependentlyValidated": false
+      }
+    ],
+    "readerRuntime": "Node22.23.3 via production sqlite-runtime.ts readOnly:true",
+    "selectedBindings": {
+      "apps/electron/src/main/native-replica.ts": "cf2ff9d073d2c23ad6c85bd079f2c27fbe368b201981d822299e135920221cc5",
+      "apps/electron/src/preload/native-replica.ts": "8a83168294c2985393e0427907edb714f4964e5db641844d151e21073af99f95",
+      "packages/server-core/src/handlers/rpc/notes.ts": "376745d47b2e596638b99a689b2f5e192a6e7985e071feaa984ad6d8078879df",
+      "packages/server-core/src/authority/native-journal.ts": "4371389616fbdf0f9ee498bc74f6f5681445d46fffe2130df7e2628e77412d52",
+      "packages/shared/src/account-replica/outbox.ts": "adab9de3803d365ac40819cb74d5b89cf46893189d93afbcd52e3976061f129e",
+      "packages/shared/src/utils/sqlite-runtime.ts": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab",
+      "apps/electron/dist/bootstrap-preload.cjs": "a89c1fc7e0f67fbcbc1b133dee5c5cce0975c97d5a121c2c5a7f457644e546f7"
+    },
+    "receiptContentHashesAreNotCanonicalFileHashes": true
+  },
+  "taskToNote": {
+    "status": "NOT_ACCEPTED",
+    "observedCause": "Actual Tasks route reports storage unavailable and local-cache changes.",
+    "taskCreated": false,
+    "grantsExpanded": false,
+    "nextRequiredAction": "Identify and repair or initialize the real permitted Task persistence path, then exercise native Task-to-Note click/reopen; cache success cannot replace durable readback."
+  },
+  "artifacts": [
+    {
+      "id": "native-product-acceptance-20261002/ui-observation.json",
+      "sha256": "35427de3abca1875347e4a16bc6ea2bdaa5fcd82069a691af7a581181ea291f5",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "native-product-acceptance-20261002/report.md",
+      "sha256": "fa5bab2400aeaa5edb191a5603f654e107dd409118d4f86ed89483ecd63fdba5",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "native-product-acceptance-20261002/readback-summary.json",
+      "sha256": "bfe6df3b96324ee48aea0981e22ed093d323474521794424056784728b091f61",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "native-product-acceptance-20261002/readback-review.md",
+      "sha256": "581d971464562be82ff6f6f725e89143bfb9147b7098cd7106d8720db54252b5",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "native-product-acceptance-20261002/reopened.png",
+      "sha256": "313c2767bd5dc66334bcb16cfbb79c9f7b695afb80c21c5747e6459f764c87c6",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "native-product-acceptance-20261002/edit.ax.txt",
+      "sha256": "83440b408a30fc7f51f79cbd79c903d1b4fdfb4a3dfaf755ed9691db6332df59",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "native-product-acceptance-20261002/task-unavailable.ax.txt",
+      "sha256": "6176dba7113075684cbeec2d67b057b6c9b261f7143b15eb93116b3082cf29dc",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "native-product-acceptance-20261002/task-route.ax.txt",
+      "sha256": "b2c1b9f45efa63f00645c9ee168a96de3e4df38a652a0f5ac98de049b4b4497d",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "native-product-acceptance-20261002/reload.ax.txt",
+      "sha256": "003ba41198b39a0eae58fddae3f4a0f20a09754529fbb9080f6fe6fdcd2267f1",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "native-product-acceptance-20261002/restart.ax.txt",
+      "sha256": "b2c1b9f45efa63f00645c9ee168a96de3e4df38a652a0f5ac98de049b4b4497d",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "native-product-acceptance-20261002/reopened.ax.txt",
+      "sha256": "56300f6b0407fded42c38b739a98c4895ffc4e574009f15574e04e68a6aa9ceb",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    }
+  ],
+  "limits": [
+    "No key/credential/encrypted envelope reads",
+    "Receipt envelope existence only; no independent cryptographic validation or OS custody claim",
+    "Normal reload/restart supplied by UI producer; no SIGKILL/offline/powerloss claim",
+    "Tasks storage unavailable/local cache: native Task-to-Note acceptance pending",
+    "No unrelated notes/profile contents inspected",
+    "Observed ACK metadata matches sequence/revision and one encrypted receipt row exists per operation. No independent decryption, cryptographic validation of encrypted receipt contents or OS secure-store custody audit is claimed.",
+    "Task-private enrollment/profile is reused. Existing user entities and permission grants were not changed; no provider/account/network operation is accepted.",
+    "Ordinary product reload/menu quit/restart is not SIGKILL, power loss, offline/revoke/conflict UI, two-product-consumer DATA acceptance or a complete device/platform matrix.",
+    "The source manifest and previously passed full4876 gates remain unchanged; this is documentation/runtime evidence only, with zero new production source edits and zero complete original tasks accepted."
+  ],
+  "fullOriginalTasksAccepted": 0
+}

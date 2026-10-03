@@ -308,3 +308,54 @@ OMP acceptance must count actual parent spawn results and establish child readin
 ## Local meeting Blob media policy (2026-09-30)
 
 Permit the existing local recording Blob audio consumer through an explicit media-src self/blob directive. Keep all other CSP directives and recording/provider/consent behavior unchanged. Data and disallowed external-origin media stay denied before network. Hidden load-only media controls and renderer build do not accept visible meeting UI, capture or provider delivery.
+
+## PR1313 roadmap integration boundary (2026-09-30)
+
+This additive integration preserves [PR1313](https://github.com/rox-one/rox-one/pull/1313), exact recovered head `5a9bf9cafd7df367f6ac32102b80e777377da162`, as the existing PROJECTS-01/#1194 lineage. The September integration base is `f3987fd7ffcb7f3d582f09d9a8d8a04669877d13`. It ports the roadmap domain, canonical storage/read receipts, ordered renderer save queue, proposal UI and four channels without replacing the current native protocol or authority. Existing Project tabs and OKR remain; Roadmap is an additional tab and separate component. Inspector behavior remains the September behavior.
+
+Each new RPC requires a bound local Electron caller and an exact resolved caller workspace. Native actions remain absent, so this feature adds no native grant. Requested model is configuration intent; effective model is explicitly nullable backend provenance, never inferred from the request. RPC warnings survive success and parse failures, and the UI renders unknown effective provenance plus the backend warning. Configuration metadata is labeled requested separately.
+
+A selected workspace `dailyAgentBudgetUsd` uses the existing durable AgentBudgetLedger before backend creation. Reserve the remaining allowance; release only when query dispatch did not occur. The existing one-shot result has no measured monetary receipt, so every dispatched result/error/timeout retains unresolved quota. A later request cannot create another backend until existing trusted receipt reconciliation resolves that quota. A null/unselected budget does not gain a new mandatory policy. This is conservative admission, not proof that a real provider obeys a dollar execution cap or that cancellation stops remote work.
+
+Acceptance for this wave is bounded local storage, caller isolation, actual method/backend-seam behavior and render output. Full AI roadmap, real paid-provider E3, cancellation, effective fallback verification on a provider, native UI/mobile/platform acceptance and recovery UX remain pending. Canonical JSON and derived Markdown are not one transaction; external writers/symlink replacement races, power loss, crashed writer locks and response-loss reload/compare retain the original documented limits. Legacy unversioned storage inputs remain compatible.
+
+## Built-in SQLite runtime compatibility (2026-09-30)
+
+The current NativeAuthority, NativeJournal, encrypted replica outbox, browser-profile importer, occurrence ledger and owner-fenced AgentBudgetLedger must use the same small synchronous SQLite interface on Bun and native Node/Electron. Resolve only the runtime's built-in provider; do not add a native dependency or alter identity, receipt, encryption, grant, reservation-owner or recovery semantics. Preserve all nine existing consumer/test bodies except their provider imports. This work retains PR1319's adapter lineage while using the current September bodies, including the later budget ownership safeguards.
+
+Both native ESM and the production esbuild CommonJS format must load and execute database operations. CommonJS resolves from its actual filename; ESM resolves from its actual module URL. Bun operations finalize their prepared statement on success and failure, validate SQL eagerly, reject integer overflow and preserve readonly behavior. Closed database/statement operations fail. This is the complete synchronous subset used by these consumers, not general parity between every Bun and Node SQLite API or missing-binding behavior.
+
+The Node CommonJS execution regression is mandatory. The separate Electron regression executes when its installed binary is available and skips explicitly when a frozen-lock headless installation has the Electron package but deliberately omits its binary download. A present runtime's load/execution error fails. The controlled missing-binary fixture copies only public loader/package metadata into its own temporary directory; it changes no installed binary or global environment. An entirely missing declared dependency is outside that fixture's acceptance.
+
+## Roadmap locale completion boundary (2026-09-30)
+
+Replace only the 158 newly introduced Roadmap values in each of Arabic, German, Spanish, French, Hungarian, Japanese, Korean, Polish, Simplified Chinese and Traditional Chinese. Preserve every existing key/value outside that feature and the English/Russian catalogs. Keep exact interpolation multisets, file names, URL prefix, keyboard shortcuts and the 50 MB limit. Consent must still mean transmission on click only; requested, actual and unknown model provenance remain distinct in every language. Preserve all original task/requirement criteria.
+
+Locale-specific zero/two forms are allowed by the existing plural-family contract when English defines one/other. Arabic requires four additional variants for the day and pending-review families: the 158-key fragment alone falls back to English at count0/2 in the actual engine. Preserve that failed observation and exercise the corrected production resources at0/1/2/3/11/1.5. These four derived variants do not add a new domain field or change the English schema. Independently reviewed terminology corrections distinguish Chinese qualitative/quantitative labels and Hungarian page sections from roadmap stages.
+
+Acceptance distinguishes mechanical schema/parity/coverage, independent model language judgment, actual production i18next resource/plural resolution and React rendering from native-speaker review, mounted layout, Arabic RTL/bidi, keyboard accessibility, persistence and the full L10N-01/Golden Gate platform criteria. No complete locale task is accepted by the isolated translation packet.
+
+Resource acceptance uses real constructor faults and throwing operations with the exact adapter on Bun, Node and Electron. Preserve both the original CommonJS import failure and earlier Bun descriptor growth evidence. A plateau while a second fixture connection remains open is distinct from immediate cleanup after that connection closes. No production garbage collection, real-provider receipt, application UI, power-loss or platform acceptance follows from this compatibility fixture.
+
+## Portable native Electron bridge harness (2026-09-30)
+
+Provide a reusable developer probe from the independently accepted revision-2 bridge fixture without embedding host paths, precompiled private bundles, keys or receipt logs. Resolve the checkout and installed Electron dynamically; compile service dependencies from that checkout, load the standard built production preload and bind its checksum plus production source hashes. Preserve actual IPC/window proof/authenticated WS/authority/journal/encrypted queue, exact observed ACK, complete unobserved receipt denial, revocation, foreign-window denial and normal child restart controls.
+
+Only runner-generated synthetic profiles and credentials are permitted. Whitelist child environment and supported ROX/CRAFT configuration directories; never repurpose HOME or use host credential custody. Match production BrowserWindow isolation preferences and keep windows hidden/muted. Record actual main PIDs/exits/cleanup and retain readiness failures. This establishes bounded bridge composition, not full product main/OS custody/UI E3/provider/platform acceptance; no implicit CJS/source SQLite adapter transplant or global dependency installation.
+
+## Bounded linear delimiter parsing (2026-09-30)
+
+The stable team-handle trailing-dot cleanup, bracket file/folder token parsing/resolution and title XML/edit-request stripping must not repeatedly rescan unmatched suffixes. Use forward delimiter scans or backward trailing-dot trim; retain complete input/output, Unicode, encounter order, nonempty path/tag grammar, first closing delimiter, legacy non-nesting behavior and existing sequential replacement order. Do not introduce truncation, new token grammar, identity/storage or authorization changes.
+
+Acceptance is actual existing/adversarial behavior, seeded differential comparison against exact baseline functions and separate bounded timing observations. This narrow repair does not attest linearity of every mention family or eliminate all CodeQL alerts. Timing observations are not brittle unit thresholds or a security-clean claim.
+
+
+## Projects generation follow-up — 2026-10-02
+
+Owner: isolated Projects producer; September integration, independent review and product rollout remain root-owned. Dependency: current primitive projectsAtom and existing getProjects/onProjectsChanged contracts; exact PR1323 lineage 3cc2483d61e587fa3e3b54331b1bf623206f16b1. Scope is only useProjects lifecycle fencing. Workspace commit clears stale local project entries before paint; obsolete load success/error, callbacks and broadcasts cannot overwrite current scope. Latest same-workspace load/broadcast wins, including effect replay and unmount. Incoming DTOs are restricted to their current workspace while preserving complete metadata. No catalog/schema/store/grant/native authority changes. Controlled hook closure/Jotai evidence does not accept DOM/native/full PROJECTS-01/TEAMS-03/SHARED-01 criteria.
+
+## Focus notification isolation slice (2026-10-02)
+
+Deferred session notifications are identified by workspaceId and sessionId together. Repeated notifications within that pair retain their first queue position, update preview/time and increment count; other workspace entries remain independent. The latest 100 distinct entries remain retained. Disabled session notifications exit before reading/writing the Focus queue, preventing private title/body retention even during active Focus. Existing enabled Focus and normal supported native-notification behavior is preserved. Full Focus navigation, draining, actor scope, timer persistence and product/platform acceptance remain outside this slice.
+
+The Focus page projects deferred notifications only for its current workspace; absent workspace shows no entries. Row identity is the JSON-encoded workspace/session pair. Clicking a displayed row removes only that pair and uses the existing current-workspace session route. Clear Queue removes only current-workspace entries, preserving foreign-workspace records. Global Focus timer/history, other page behavior and actor storage remain unchanged; no cross-workspace navigation or automatic delivery is introduced.

@@ -20,6 +20,7 @@ import {
 } from '@craft-agent/shared/projects/roadmap-ai'
 import type { ProjectRoadmap } from '@craft-agent/shared/projects/roadmap'
 import { TextButton } from './roadmap-ui'
+import { RoadmapModelResult } from './RoadmapModelResult'
 
 export interface AiStatus {
   available: boolean
@@ -126,6 +127,7 @@ export function ProjectAiPanel({
   roadmap,
   status,
   runAi,
+  result,
   onAccept,
   improve,
   onImproveDone,
@@ -134,6 +136,7 @@ export function ProjectAiPanel({
   projectId: string
   roadmap: ProjectRoadmap
   status: AiStatus | null
+  result?: RoadmapAiResponse | null
   runAi: (request: { mode: 'clarify' | 'spec' | 'improve'; text: string; answers?: RoadmapAiAnswer[] }) => Promise<RoadmapAiResponse>
   onAccept: (proposal: RoadmapProposal, keys: ProposalItemKey[], expectedRevision?: string) => Promise<string>
   /** Improve request coming from a field (goal / expected result). */
@@ -220,7 +223,7 @@ export function ProjectAiPanel({
           {status === null
             ? t('projectRoadmap.ai.checking')
             : available
-              ? t('projectRoadmap.ai.modelLine', { model: status.model ?? '—', connection: status.connectionName ?? '' })
+              ? t('projectRoadmap.ai.requestedConnection', { model: status.model ?? '—', connection: status.connectionName ?? '' })
               : t('projectRoadmap.ai.unavailable')}
         </span>
       </div>
@@ -257,6 +260,7 @@ export function ProjectAiPanel({
         </TextButton>
       </div>
       {available ? <p className="mt-1 px-1 text-[11px] leading-4 text-muted-foreground/80">{t('projectRoadmap.ai.consent', { model: status?.model ?? '—' })}</p> : null}
+      <RoadmapModelResult result={result ?? null} t={t} />
       {error ? <p className="mt-1 px-1 text-[12px] text-destructive" role="alert">{error}</p> : null}
 
       {briefImprove !== null ? (
@@ -434,7 +438,7 @@ export function ProjectAiPanel({
             decide={decide}
             sectionTitle={sectionTitle}
           />
-          {state.model ? <p className="mt-2 px-1 text-[11px] text-muted-foreground/70">{t('projectRoadmap.ai.generatedBy', { model: state.model })}</p> : null}
+
         </div>
       ) : null}
     </div>

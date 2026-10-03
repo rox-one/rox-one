@@ -226,6 +226,8 @@ export function useNotifications({
 
   // Show notification for a session
   const showSessionNotification = useCallback((session: Session, messagePreview?: string) => {
+    // Disabled notifications must not persist private previews in the Focus queue.
+    if (!enabled) return
     // «Фокус»: while a deep-work timer runs, queue instead of notifying.
     if (workspaceId && deferIfDeepWork({
       sessionId: session.id,
@@ -234,8 +236,6 @@ export function useNotifications({
       body: messagePreview?.slice(0, 140),
       at: Date.now(),
     })) return
-    // Don't show notification if disabled in settings
-    if (!enabled) return
     // Don't show notification if window is focused
     if (isWindowFocused) return
     // Don't show if no workspace

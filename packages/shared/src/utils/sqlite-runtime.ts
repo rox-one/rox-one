@@ -24,7 +24,9 @@ interface BunDatabase extends RawDatabase {
   prepare(sql: string): BunStatement
 }
 
-const requireBuiltin = createRequire(import.meta.url)
+// esbuild's production CJS bundle has __filename but no import.meta.url.
+// Native ESM uses its actual module URL; both resolve only built-in providers.
+const requireBuiltin = createRequire(typeof __filename === 'string' ? __filename : import.meta.url)
 
 /** The synchronous SQLite subset used by server-side durable stores. */
 export class DatabaseSync {

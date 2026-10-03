@@ -532,9 +532,12 @@
             "NATURAL-SHUTDOWN-RECONNECT-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-CREATE-20260930",
-            "NATIVE-CALLER-INVENTORY-20260930"
+            "NATIVE-CALLER-INVENTORY-20260930",
+            "L10N-LINEAR-PARSING-20261002",
+            "PROJECTS-GENERATION-20261002",
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
           ],
-          "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
+          "summary": "Reviewed shared mention/path parsing and locale catalog changes integrated under one source writer, preserving contracts/outputs. Complete shared entity identity and two-consumer runtime acceptance remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -551,7 +554,10 @@
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
             "NATIVE-NOTES-CREATE-20260930",
-            "NATIVE-CALLER-INVENTORY-20260930"
+            "NATIVE-CALLER-INVENTORY-20260930",
+            "L10N-LINEAR-PARSING-20261002",
+            "PROJECTS-GENERATION-20261002",
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -563,7 +569,35 @@
           "evidenceRefs": [],
           "remaining": "Baseline source published in draft PR #1293; follow-up source publication, serial integration and required original product/platform acceptance remain distinct."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "revision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "pullRequestHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "observedAt": "2026-10-02T19:20:31.005Z",
+          "sourceCount": 4879,
+          "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4879 committed source blobs match the source used by five complete serial local gates. Bounded Focus hook/storage and mounted ReactDOM component proof use fixture dependencies and do not accept native OS notification, actor, worker question, delivery/drain, timer/recovery or full original Focus criteria. Historical native Notes/bridge remains db841; Projects browser proof remains1c. Required remote CI, hosted-alert review, providers and complete platform/product acceptance remain pending.",
+          "fullTaskAccepted": false
+        },
+        "projectsGeneration": {
+          "evidenceRef": "PROJECTS-GENERATION-20261002",
+          "status": "BOUNDED_RENDERER_GENERATION_REPAIR_VERIFIED",
+          "fullOriginalCriteriaAccepted": false
+        },
+        "focusNotificationScope": {
+          "evidenceRef": "FOCUS-NOTIFICATION-SCOPE-20261002",
+          "fullOriginalCriteriaAccepted": false
+        }
       }
     },
     {
@@ -1253,9 +1287,10 @@
           "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
           "evidenceRefs": [
             "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
-            "NATIVE-SELF-PROFILE-20260930"
+            "NATIVE-SELF-PROFILE-20260930",
+            "L10N-LINEAR-PARSING-20261002"
           ],
-          "summary": "Viewer-scoped collaboration and revision-bound queued changes survive local cold-cache reload. Server-delivered comments, consent and observed recipient Inbox remain unaccepted."
+          "summary": "Existing handle extraction retains Unicode and encounter-order results through backward trailing-dot trimming; targeted grammar/performance checked against actual baseline. Recipient identity, consent, delivery and complete mention workflow remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -1263,7 +1298,8 @@
           "acceptanceStatus": "NOT_ACCEPTED",
           "evidenceRefs": [
             "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
-            "NATIVE-SELF-PROFILE-20260930"
+            "NATIVE-SELF-PROFILE-20260930",
+            "L10N-LINEAR-PARSING-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -1275,7 +1311,26 @@
           "evidenceRefs": [],
           "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "revision": "db8413d0b25c6795297480e994fc872991414f74",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "observedAt": "2026-10-02T16:59:30.702Z",
+          "sourceCount": 4876,
+          "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
+          "fullTaskAccepted": false
+        }
       }
     },
     {
@@ -2770,7 +2825,7 @@
       "title": "[Sep-localization] Точная остаточная локализация и паритет всех локалей",
       "area": "localization",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerLocalization",
       "dependsOn": [
         "AUDIT-01",
@@ -2846,16 +2901,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "L10N-LINEAR-PARSING-20261002"
+          ],
+          "summary": "Roadmap158 keys translated in ten production catalogs plus four Arabic zero/dual forms; exact production i18next/plural checks and actual model-result React SSR verified. Mounted UI/RTL/accessibility/native-speaker/full residual localization remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "L10N-LINEAR-PARSING-20261002"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -2866,7 +2925,26 @@
           "evidenceRefs": [],
           "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "revision": "db8413d0b25c6795297480e994fc872991414f74",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "observedAt": "2026-10-02T16:59:30.702Z",
+          "sourceCount": 4876,
+          "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
+          "fullTaskAccepted": false
+        }
       }
     },
     {
@@ -3484,7 +3562,7 @@
       "title": "[Sep-rma] Настоящий E3 harness Electron→RPC→storage для RMA (#385)",
       "area": "rma",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerRma",
       "dependsOn": [
         "RECON-01",
@@ -3544,16 +3622,22 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "NATIVE-PRODUCT-NOTE-20261002"
+          ],
+          "summary": "Reusable actual Electron bridge harness implemented and independently run through production preload/IPC/WS/SQLite with synthetic task adapters. Full product UI E3, OS custody and platform gates remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "NATIVE-PRODUCT-NOTE-20261002"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -3564,7 +3648,36 @@
           "evidenceRefs": [],
           "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "revision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "pullRequestHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "observedAt": "2026-09-30T17:39:30.972Z",
+          "sourceCount": 4873,
+          "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+          "previous4870SourcesUnchanged": true,
+          "addedDeveloperScripts": 3,
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head.",
+          "fullTaskAccepted": false
+        },
+        "nativeProductObservation": {
+          "evidenceRef": "NATIVE-PRODUCT-NOTE-20261002",
+          "status": "BOUNDED_NATIVE_NOTE_CREATE_EDIT_RELOAD_NORMAL_RESTART_AND_ACK_METADATA_VERIFIED",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+          "fullOriginalCriteriaAccepted": false,
+          "taskToNoteAccepted": false
+        }
       }
     },
     {
@@ -4273,9 +4386,11 @@
             "REVIEW-NATIVE-20260930",
             "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
-            "NATIVE-NOTES-CREATE-20260930"
+            "NATIVE-NOTES-CREATE-20260930",
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "NATIVE-PRODUCT-NOTE-20261002"
           ],
-          "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
+          "summary": "Existing native create/edit mechanism retained; portable actual Electron bridge adds exact observed ACK, pending restart/replay, forged-receipt and revoked/foreign-window runtime controls. Full Notes conversion/views, private OS custody and native UI acceptance remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -4287,7 +4402,9 @@
             "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
-            "NATIVE-NOTES-CREATE-20260930"
+            "NATIVE-NOTES-CREATE-20260930",
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "NATIVE-PRODUCT-NOTE-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -4299,7 +4416,36 @@
           "evidenceRefs": [],
           "remaining": "Baseline source published in draft PR #1293; follow-up source publication, serial integration and required original product/platform acceptance remain distinct."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "revision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "pullRequestHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "observedAt": "2026-09-30T17:39:30.972Z",
+          "sourceCount": 4873,
+          "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+          "previous4870SourcesUnchanged": true,
+          "addedDeveloperScripts": 3,
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head.",
+          "fullTaskAccepted": false
+        },
+        "nativeProductObservation": {
+          "evidenceRef": "NATIVE-PRODUCT-NOTE-20261002",
+          "status": "BOUNDED_NATIVE_NOTE_CREATE_EDIT_RELOAD_NORMAL_RESTART_AND_ACK_METADATA_VERIFIED",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+          "fullOriginalCriteriaAccepted": false,
+          "taskToNoteAccepted": false
+        }
       }
     },
     {
@@ -6532,7 +6678,7 @@
       "title": "[Sep-projects] Довести проекты и встроенную AI-roadmap до проверяемого источника работы",
       "area": "projects",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerProjects",
       "dependsOn": [
         "RECON-01",
@@ -6603,16 +6749,24 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "ROADMAP-SQLITE-JOINT-20260930",
+            "L10N-LINEAR-PARSING-20261002",
+            "PROJECTS-GENERATION-20261002"
+          ],
+          "summary": "Existing Roadmap model provenance now resolves translated production catalog resources in ten locales; requested/effective/unknown remain distinct under actual server rendering. Complete product/project/provider acceptance remains pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "ROADMAP-SQLITE-JOINT-20260930",
+            "L10N-LINEAR-PARSING-20261002",
+            "PROJECTS-GENERATION-20261002"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -6623,7 +6777,31 @@
           "evidenceRefs": [],
           "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "revision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "pullRequestHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "observedAt": "2026-10-02T19:20:31.005Z",
+          "sourceCount": 4879,
+          "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4879 committed source blobs match the source used by five complete serial local gates. Bounded Focus hook/storage and mounted ReactDOM component proof use fixture dependencies and do not accept native OS notification, actor, worker question, delivery/drain, timer/recovery or full original Focus criteria. Historical native Notes/bridge remains db841; Projects browser proof remains1c. Required remote CI, hosted-alert review, providers and complete platform/product acceptance remain pending.",
+          "fullTaskAccepted": false
+        },
+        "projectsGeneration": {
+          "evidenceRef": "PROJECTS-GENERATION-20261002",
+          "status": "BOUNDED_RENDERER_GENERATION_REPAIR_VERIFIED",
+          "fullOriginalCriteriaAccepted": false
+        }
       }
     },
     {
@@ -8117,9 +8295,10 @@
           "evidenceRefs": [
             "RUNTIME-LOCAL-MECHANISMS-20260930",
             "RUNTIME-ACCEPTANCE-WAVE-20260930",
-            "BUDGET-OWNER-SOURCE-STATUS-20260930"
+            "BUDGET-OWNER-SOURCE-STATUS-20260930",
+            "ROADMAP-SQLITE-JOINT-20260930"
           ],
-          "summary": "Local ledger owner isolation, contention, actual process-loss recovery and native Electron/Node constructor cleanup verified; paid-provider/background and full platform acceptance remain pending."
+          "summary": "Current owner-fenced ledger retained. Workspace query reserves before backend auth and holds unknown dispatched usage; real process/storage controls plus built-in runtime cleanup pass. Paid provider/cancellation/full platform acceptance remains pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -8128,7 +8307,8 @@
           "evidenceRefs": [
             "RUNTIME-LOCAL-MECHANISMS-20260930",
             "RUNTIME-ACCEPTANCE-WAVE-20260930",
-            "BUDGET-OWNER-SOURCE-STATUS-20260930"
+            "BUDGET-OWNER-SOURCE-STATUS-20260930",
+            "ROADMAP-SQLITE-JOINT-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -8143,20 +8323,20 @@
         "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
         "sourcePublication": {
           "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-          "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
-          "revision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "sourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+          "revision": "b512d93d23ad842fa0a233f0708a5194314fce75",
           "branch": "feat/september-program-20260930",
           "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
           "isDraft": true,
-          "remoteHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
-          "pullRequestHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
-          "observedAt": "2026-09-30T16:05:17.838Z",
+          "remoteHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
+          "pullRequestHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
+          "observedAt": "2026-09-30T17:27:29.813Z",
           "fullProductDelivery": "PENDING",
           "originalCriteriaAcceptedByPublication": 0,
-          "sourceCount": 4851,
-          "sourceManifestSha256": "0264916bf956c3ce3f886091d39296a7f34abe88fc39a5f2f2e4af60ef3030d5",
+          "sourceCount": 4870,
+          "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
           "committedSourceMatchesTestedManifest": true,
-          "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact local validate:ci and standard root Electron build bind to these exact source blobs. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head.",
+          "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact prepared-host validate:ci and standard Electron build bind to every frozen source blob. Actual Node/Electron built-in SQLite fixture is separate bounded runtime proof. Packaged native UI/private custody, provider cost/cancellation, Windows, genuine Conation iOS, compound integration and required remote CI remain pending. Later docs-only commits have a different head.",
           "fullTaskAccepted": false
         }
       }
@@ -8166,7 +8346,7 @@
       "title": "[Sep-focus] Откладывать вопросы и уведомления workers в Focus",
       "area": "focus",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerFocus",
       "dependsOn": [
         "DATA-01",
@@ -8219,16 +8399,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
+          ],
+          "summary": "Existing deferred notifications use workspace/session identity; disabled notifications do not enqueue private previews. FocusPage projects and clears current-workspace records and dismisses only the selected pair. Worker questions, actor custody, delivery/drain, timer recovery and full Focus criteria remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -8239,7 +8423,30 @@
           "evidenceRefs": [],
           "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "focusNotificationScope": {
+          "evidenceRef": "FOCUS-NOTIFICATION-SCOPE-20261002",
+          "fullOriginalCriteriaAccepted": false
+        },
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "revision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "pullRequestHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "observedAt": "2026-10-02T19:20:31.005Z",
+          "sourceCount": 4879,
+          "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4879 committed source blobs match the source used by five complete serial local gates. Bounded Focus hook/storage and mounted ReactDOM component proof use fixture dependencies and do not accept native OS notification, actor, worker question, delivery/drain, timer/recovery or full original Focus criteria. Historical native Notes/bridge remains db841; Projects browser proof remains1c. Required remote CI, hosted-alert review, providers and complete platform/product acceptance remain pending.",
+          "fullTaskAccepted": false
+        }
       }
     },
     {
@@ -9936,9 +10143,15 @@
             "NATIVE-CALLER-INVENTORY-20260930",
             "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
             "BUDGET-OWNER-SOURCE-STATUS-20260930",
-            "LOCAL-MEETING-BLOB-MEDIA-20260930"
+            "LOCAL-MEETING-BLOB-MEDIA-20260930",
+            "ROADMAP-SQLITE-JOINT-20260930",
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "L10N-LINEAR-PARSING-20261002",
+            "NATIVE-PRODUCT-NOTE-20261002",
+            "PROJECTS-GENERATION-20261002",
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
           ],
-          "summary": "Root serially integrated four reviewed production/test paths and one scheduler comment correction; complete package unions, exact local CI and standard Electron build pass on an unchanged manifest. Full program integration and product acceptance remain pending."
+          "summary": "All4876 combined source entries have complete Shared/server/Electron unions, exact local CI, standard build and fresh portable bridge evidence. Original DAG predecessors, private native UI/custody, remote CI and platform integration remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -9973,7 +10186,13 @@
             "NATIVE-CALLER-INVENTORY-20260930",
             "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
             "BUDGET-OWNER-SOURCE-STATUS-20260930",
-            "LOCAL-MEETING-BLOB-MEDIA-20260930"
+            "LOCAL-MEETING-BLOB-MEDIA-20260930",
+            "ROADMAP-SQLITE-JOINT-20260930",
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "L10N-LINEAR-PARSING-20261002",
+            "NATIVE-PRODUCT-NOTE-20261002",
+            "PROJECTS-GENERATION-20261002",
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -9988,21 +10207,39 @@
         "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
         "sourcePublication": {
           "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-          "sourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
-          "revision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+          "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "revision": "d917e429615e1b8053156a60fa3051b96fdb9284",
           "branch": "feat/september-program-20260930",
           "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
           "isDraft": true,
-          "remoteHeadReadback": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
-          "pullRequestHeadReadback": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
-          "observedAt": "2026-09-30T16:18:32.688Z",
+          "remoteHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "pullRequestHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+          "observedAt": "2026-10-02T19:20:31.005Z",
+          "sourceCount": 4879,
+          "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
           "fullProductDelivery": "PENDING",
           "originalCriteriaAcceptedByPublication": 0,
-          "sourceCount": 4851,
-          "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
-          "committedSourceMatchesTestedManifest": true,
-          "bindingLimit": "Affected Electron/UI/core union, production renderer build and actual hidden media runtime bind to these source blobs. Earlier complete Shared/server/exact local CI/main/preload proof remains at121ebea with only renderer index changed, and is not a new complete CI run. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head.",
+          "bindingLimit": "All4879 committed source blobs match the source used by five complete serial local gates. Bounded Focus hook/storage and mounted ReactDOM component proof use fixture dependencies and do not accept native OS notification, actor, worker question, delivery/drain, timer/recovery or full original Focus criteria. Historical native Notes/bridge remains db841; Projects browser proof remains1c. Required remote CI, hosted-alert review, providers and complete platform/product acceptance remain pending.",
           "fullTaskAccepted": false
+        },
+        "nativeProductObservation": {
+          "evidenceRef": "NATIVE-PRODUCT-NOTE-20261002",
+          "status": "BOUNDED_NATIVE_NOTE_CREATE_EDIT_RELOAD_NORMAL_RESTART_AND_ACK_METADATA_VERIFIED",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+          "fullOriginalCriteriaAccepted": false,
+          "taskToNoteAccepted": false
+        },
+        "projectsGeneration": {
+          "evidenceRef": "PROJECTS-GENERATION-20261002",
+          "status": "BOUNDED_RENDERER_GENERATION_REPAIR_VERIFIED",
+          "fullOriginalCriteriaAccepted": false
+        },
+        "focusNotificationScope": {
+          "evidenceRef": "FOCUS-NOTIFICATION-SCOPE-20261002",
+          "fullOriginalCriteriaAccepted": false
         }
       }
     },
@@ -10163,7 +10400,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-09-30T16:17:33.654Z",
+    "asOf": "2026-10-02T19:20:31.005Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10189,40 +10426,42 @@
     "fullTaskAcceptance": "NOT_ACCEPTED",
     "dataContractFreeze": "NOT_ACCEPTED",
     "sharedContractFreeze": "NOT_ACCEPTED",
-    "build": "STANDARD_ROOT_ELECTRON_BUILD_PASSED_ON_FROZEN_4851_SOURCE_OWNER_STATUS_CANDIDATE; PACKAGING_SIGNING_NATIVE_UI_PENDING",
+    "build": "STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_4879_SOURCE; NATIVE_PLATFORM_AND_PACKAGING_PENDING",
     "fullPlatformMatrix": "PENDING",
     "issuePublication": "Existing PUBLISHED_VERIFIED packet/publication fields describe authored issues and dependency links only; they do not prove code delivery.",
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
     "codeCurrent": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
-      "observedAt": "2026-09-30T16:18:32.688Z",
-      "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
-      "sourceCount": 4851,
+      "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "observedAt": "2026-10-02T19:20:31.005Z",
+      "sourceCount": 4879,
+      "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
       "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
       "excluded": [
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
         "apps/electron/.impeccable/hook.cache.json"
       ],
-      "committedSourceMatchesTestedManifest": true
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284"
     },
-    "finalFullGateRefresh": "FULL_SHARED_SERVER_ELECTRON_UNIONS_EXACT_LOCAL_VALIDATE_CI_AND_STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_OWNER_STATUS_CANDIDATE; REMOTE_PLATFORM_PRODUCT_GATES_PENDING",
+    "finalFullGateRefresh": "FIVE_COMPLETE_SERIAL_LOCAL_GATES_PASS_ON_FROZEN_4879_SOURCE; REMOTE_PRODUCT_PLATFORM_PENDING",
     "gitPublication": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
-      "revision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "revision": "d917e429615e1b8053156a60fa3051b96fdb9284",
       "branch": "feat/september-program-20260930",
       "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
       "isDraft": true,
-      "remoteHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
-      "pullRequestHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
-      "observedAt": "2026-09-30T14:08:40.065Z",
+      "remoteHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "pullRequestHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "observedAt": "2026-10-02T19:20:31.005Z",
+      "sourceCount": 4879,
+      "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
       "fullProductDelivery": "PENDING",
       "originalCriteriaAcceptedByPublication": 0,
-      "sourceManifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
-      "sourceCount": 4846,
-      "committedSourceMatchesTestedManifest": true,
-      "bindingLimit": "Runtime shared/server unions and independent reviews bind to this source revision. Electron full union/main/preload remain at 47f4e336 with identical Electron source. The subsequent renderer candidate is excluded. Documentation-only commits have a different head."
+      "bindingLimit": "All4879 committed source blobs match the source used by five complete serial local gates. Bounded Focus hook/storage and mounted ReactDOM component proof use fixture dependencies and do not accept native OS notification, actor, worker question, delivery/drain, timer/recovery or full original Focus criteria. Historical native Notes/bridge remains db841; Projects browser proof remains1c. Required remote CI, hosted-alert review, providers and complete platform/product acceptance remain pending."
     },
     "nativeCreationEvidence": "native-create-20260930.json",
     "historicalNamedCandidateSnapshot": {
@@ -10242,12 +10481,12 @@
     },
     "facetCounts": {
       "implementation": {
-        "IN_PROGRESS": 27,
-        "NOT_RUN": 82
+        "IN_PROGRESS": 31,
+        "NOT_RUN": 78
       },
       "verification": {
-        "IN_PROGRESS": 25,
-        "NOT_RUN": 84
+        "IN_PROGRESS": 29,
+        "NOT_RUN": 80
       },
       "fullAccepted": 0
     },
@@ -10269,7 +10508,7 @@
       "committedSourceMatchesTestedManifest": true,
       "bindingLimit": "Explicit Electron/UI/core/shared-src/server-core-src package gate scope. Subsequent scheduler terminal recovery and OMP fixture are excluded. Runtime shared/server gates bind separately to c1c81e66; complete desktop/platform acceptance pending."
     },
-    "latestPublishedSourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+    "latestPublishedSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
     "schedulerTerminalEvidence": "scheduler-terminal-20260930.json",
     "schedulerTerminalCandidate": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
@@ -10398,6 +10637,139 @@
       "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
       "committedSourceMatchesTestedManifest": true,
       "bindingLimit": "Affected Electron/UI/core union, production renderer build and actual hidden media runtime bind to these source blobs. Earlier complete Shared/server/exact local CI/main/preload proof remains at121ebea with only renderer index changed, and is not a new complete CI run. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head."
+    },
+    "roadmapSqliteEvidence": "roadmap-sqlite-20260930.json",
+    "roadmapSqliteCandidate": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "revision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "pullRequestHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "observedAt": "2026-09-30T17:27:29.813Z",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceCount": 4870,
+      "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "committedSourceMatchesTestedManifest": true,
+      "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact prepared-host validate:ci and standard Electron build bind to every frozen source blob. Actual Node/Electron built-in SQLite fixture is separate bounded runtime proof. Packaged native UI/private custody, provider cost/cancellation, Windows, genuine Conation iOS, compound integration and required remote CI remain pending. Later docs-only commits have a different head."
+    },
+    "portableElectronBridgeEvidence": "portable-electron-bridge-20260930.json",
+    "portableElectronBridgeCandidate": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "revision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "pullRequestHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "observedAt": "2026-09-30T17:39:30.972Z",
+      "sourceCount": 4873,
+      "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "previous4870SourcesUnchanged": true,
+      "addedDeveloperScripts": 3,
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head."
+    },
+    "l10nLinearEvidence": "l10n-linear-parsing-20261002.json",
+    "l10nLinearCandidate": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "revision": "db8413d0b25c6795297480e994fc872991414f74",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+      "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+      "observedAt": "2026-10-02T16:59:30.702Z",
+      "sourceCount": 4876,
+      "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending."
+    },
+    "historicalGitPublication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "revision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "pullRequestHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "observedAt": "2026-09-30T14:08:40.065Z",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceManifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
+      "sourceCount": 4846,
+      "committedSourceMatchesTestedManifest": true,
+      "bindingLimit": "Runtime shared/server unions and independent reviews bind to this source revision. Electron full union/main/preload remain at 47f4e336 with identical Electron source. The subsequent renderer candidate is excluded. Documentation-only commits have a different head."
+    },
+    "nativeProductEvidence": "native-product-acceptance-20261002.json",
+    "nativeProductCandidate": {
+      "status": "EVIDENCE_PUBLISHED_FOR_REVIEW",
+      "evidenceRevision": "050230079351d81d2fe6a3d51f3ba0214934826c",
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "remoteHeadReadback": "050230079351d81d2fe6a3d51f3ba0214934826c",
+      "pullRequestHeadReadback": "050230079351d81d2fe6a3d51f3ba0214934826c",
+      "isDraft": true,
+      "observedAt": "2026-10-02T18:27:58.010Z",
+      "sourceCount": 4876,
+      "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+      "allCommittedSourceBlobsMatchGatedManifest": true,
+      "newProductionSources": 0,
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "fullTaskAccepted": false,
+      "limits": "Visible Note create/edit/reload/normal restart plus independent canonical/journal/ACK metadata only; receipt bodies/OS custody, Tasks persistence/click, crash/offline/platform/full original tasks remain pending. Later evidence-binding commit has a different head."
+    },
+    "projectsGenerationEvidence": "projects-generation-20261002.json",
+    "projectsGenerationCandidate": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "revision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "pullRequestHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "observedAt": "2026-10-02T18:54:22.566Z",
+      "sourceCount": 4877,
+      "sourceManifestSha256": "1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4877 committed source blobs match the frozen source used by five complete serial local gates. Independent mounted ReactDOM Chromium tests pass with synthetic IPC; actual native workspace-switch/RPC/storage acceptance remains pending. Prior native Note and bridge proofs retain their original db841 binding; no rerun is claimed. Remote CI, unfinished hosted-alert review, provider and full platform/acceptance matrices remain pending."
+    },
+    "focusNotificationScopeEvidence": "focus-notification-scope-20261002.json",
+    "focusNotificationScopeCandidate": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "revision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "pullRequestHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "observedAt": "2026-10-02T19:20:31.005Z",
+      "sourceCount": 4879,
+      "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4879 committed source blobs match the source used by five complete serial local gates. Bounded Focus hook/storage and mounted ReactDOM component proof use fixture dependencies and do not accept native OS notification, actor, worker question, delivery/drain, timer/recovery or full original Focus criteria. Historical native Notes/bridge remains db841; Projects browser proof remains1c. Required remote CI, hosted-alert review, providers and complete platform/product acceptance remain pending."
     }
   }
 }
