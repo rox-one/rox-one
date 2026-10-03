@@ -151,7 +151,7 @@ const OMP_ROX_CONTEXT_PROMPT = [
   'You are running inside the ROX desktop app as an embedded agent backend.',
   `Public model IDs are ${ROX_PUBLIC_MODEL_IDS.join(', ')}.`,
   'Do not request raw provider or internal model names.',
-  'In addition to your built-in tools, Craft exposes host tools (mcp__session__*):',
+  'In addition to your built-in tools, ROX exposes host tools (mcp__session__*):',
   '- mcp__session__spawn_session — create independent child sessions that run in parallel,',
   '  optionally with their own model, connection, sources and an initial prompt.',
   '  Use it to delegate subtasks instead of doing everything yourself.',
@@ -161,11 +161,11 @@ const OMP_ROX_CONTEXT_PROMPT = [
   '  model is preconfigured; omit the model parameter to use it).',
   '- mcp__session__browser_tool — control browser panes of the desktop app',
   '  (open windows, navigate, click, evaluate, screenshots).',
-  'Session state (tags, statuses, user preferences) is managed by Craft — use the',
+  'Session state (tags, statuses, user preferences) is managed by ROX — use the',
   'mcp__session__* session tools for it instead of editing files directly.',
-  'Your transcript is mirrored by both Craft and OMP (OMP writes its session file',
-  'inside the Craft session folder); never edit or delete session files.',
-  'When Craft is in "Выполнение" (Execute / allow-all) mode, tools run without',
+  'Your transcript is mirrored by both ROX and OMP (OMP writes its session file',
+  'inside the ROX session folder); never edit or delete session files.',
+  'When ROX is in "Выполнение" (Execute / allow-all) mode, tools run without',
   'prompts; otherwise the user confirms sensitive calls via a dialog and a denial',
   'is final for that call.',
   'Safe http/https links belong in the host browser pane via mcp__session__browser_tool.',
@@ -175,7 +175,7 @@ const OMP_ROX_CONTEXT_PROMPT = [
 
 /**
  * Compose the `--append-system-prompt` payload for OMP spawn.
- * Ordering mirrors getSystemPrompt: craft briefing → preferences → project →
+ * Ordering mirrors getSystemPrompt: ROX briefing → preferences → project →
  * context docs (rules/soul) → memory blocks → retrieved sources.
  */
 export function composeOmpAppendSystemPrompt(input: {
