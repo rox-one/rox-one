@@ -876,3 +876,7 @@ Integration lead owns current isolatedmain plus source1420 merge, comparative141
 ## Skill and history recovery integration (2026-10-03)
 
 Owner: root branch integration. Dependency: route recovery #1446, current Windows bootstrap #1443 and fixture repair #1445. Adapt the remaining #1417 skill catalog/draft behavior and history switch failure signal onto current owner/revision guards; preserve newer main. Verify actual mounted callbacks and real native inputs with controlled backends, restore old source in isolated fixture bundles as negative controls, then run Electron types and renderer build. Browser fixtures compile with Node before launch. The Skill lane uses Node's test runner because the Bun host repeatedly stalled while closing Chromium; all behavior assertions and failure history are retained. Commit and merge a separate PR while retaining both source and integration branches.
+
+## Portable resources follow-up (2026-10-03)
+
+Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.
