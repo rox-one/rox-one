@@ -3,12 +3,10 @@ import { expect, test } from 'bun:test'
 import type { Message, Session, SessionEvent } from '../../../../../shared/types'
 import type { RuntimeState, TourBinding, TourSignal, TourStep } from '../../contracts'
 import { initialRuntimeState, transition } from '../../core'
-import * as catalogueExports from '../../catalogue'
+import { productTourCatalogue as tours } from '../../catalogue'
 import { correlateUserTurn, deriveChatSignals } from '../../adapters/chat'
 import { processEvent } from '../../../../event-processor/processor'
 
-const exports = catalogueExports as unknown as Record<string, unknown>
-const tours = (exports.tourCatalogue ?? exports.tours ?? exports.PRODUCT_TOURS ?? exports.TOUR_CATALOGUE) as readonly import('../../contracts').TourDefinition[]
 const tour = tours.find(tour => tour.id === 'OBT-01')!
 const binding: TourBinding = { workspaceId: 'workspace-a', panelId: 'panel-a', sessionId: 'session-a', clientProfileId: 'profile-a', runToken: 'run-a' }
 const before: Session = { id: 'session-a', workspaceId: 'workspace-a', workspaceName: 'Test workspace', messages: [{ id: 'welcome', role: 'assistant', content: 'Existing welcome', timestamp: 1 }], isProcessing: false, lastMessageAt: 1 }

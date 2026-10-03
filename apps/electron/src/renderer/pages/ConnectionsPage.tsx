@@ -73,6 +73,8 @@ export default function ConnectionsPage() {
   const servicesTarget = useTourTarget('connections.services', { workspaceId: workspace?.id })
   const auditTarget = useTourTarget('connections.audit', { workspaceId: workspace?.id })
   const tour = useTourSignals({ workspaceId: workspace?.id })
+  const captureTour = useRef(tour.capture)
+  captureTour.current = tour.capture
   const auditObservation = useRef<TourObservation | null>(null)
   const auditViewReady = useRef(false)
   const [auditSurface, setAuditSurface] = useState<SurfaceState | 'loading'>('loading')
@@ -152,7 +154,7 @@ export default function ConnectionsPage() {
       return
     }
     let stale = false
-    auditObservation.current = tour.capture()
+    auditObservation.current = captureTour.current()
     listConnectionAudit({ workspaceId })
       .then((raw) => {
         if (stale) return

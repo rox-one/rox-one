@@ -1,4 +1,7 @@
 import { useAtomValue } from 'jotai'
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
+import { createSearchFence, openCurrentSearchResult } from '@/features/product-tour/adapters/knowledge'
 import { Search } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -7,7 +10,7 @@ import { windowWorkspaceIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { Input } from '@/components/ui/input'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
-import { resolveKnowledgeApi, searchHitRoute, searchKnowledge } from '../knowledge/KnowledgeHome'
+import { resolveKnowledgeApi, resolveSearchHitNoteId, searchHitRoute, searchKnowledge } from '../knowledge/KnowledgeHome'
 
 type NoteResult = Awaited<ReturnType<Window['electronAPI']['searchNotes']>>[number]
 type SessionResult = Awaited<ReturnType<Window['electronAPI']['searchSessionContent']>>[number]
@@ -22,6 +25,17 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
   const { navigate: navigateInPanel } = useNavigation()
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
   const sessionMeta = useAtomValue(sessionMetaMapAtom)
+  const knowledgeSignals = useKnowledgeSignals({ workspaceId: workspaceId ?? undefined })
+  const searchInputTarget = useTourTarget('search.input', { workspaceId: workspaceId ?? undefined })
+  const searchResultsTarget = useTourTarget('search.results', { workspaceId: workspaceId ?? undefined })
+  const signalsRef = useRef(knowledgeSignals)
+  signalsRef.current = knowledgeSignals
+  const [searchFence] = useState(createSearchFence)
+  const notesAvailable = typeof window.electronAPI.searchNotes === 'function'
+  const sessionsAvailable = typeof window.electronAPI.searchSessionContent === 'function'
+  const [sourceReadFailed, setSourceReadFailed] = useState(false)
+  const searchAvailable = !sourceReadFailed && !!workspaceId && (notesAvailable || sessionsAvailable || !!resolveKnowledgeApi())
+  useEffect(() => knowledgeSignals.capability('search.available', searchAvailable ? { state: 'ready' } : { state: 'unavailable', reason: 'api-unavailable' }), [knowledgeSignals, searchAvailable])
   const [query, setQuery] = useState(initialQuery)
   const [notes, setNotes] = useState<SourceState<NoteResult>>({ status: 'idle', items: [] })
   const [sessions, setSessions] = useState<SourceState<SessionResult>>({ status: 'idle', items: [] })
@@ -29,6 +43,10 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
   const requestVersion = useRef(0)
   const currentQuery = useRef(query.trim())
   const currentWorkspaceId = useRef(workspaceId)
+  if (currentQuery.current !== query.trim() || currentWorkspaceId.current !== workspaceId) {
+    searchFence.invalidate()
+    ++requestVersion.current
+  }
   currentQuery.current = query.trim()
   currentWorkspaceId.current = workspaceId
 
@@ -39,6 +57,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
   useEffect(() => {
     const request = ++requestVersion.current
     const q = query.trim()
+    setSourceReadFailed(false)
     setNotes({ status: q ? 'loading' : 'idle', items: [] })
     setSessions({ status: q ? 'loading' : 'idle', items: [] })
     setKnowledge({ status: q ? 'loading' : 'idle', items: [] })
@@ -51,18 +70,22 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
       return
     }
 
-    const isCurrent = () => request === requestVersion.current
+    const ticket = searchFence.begin(workspaceId, q)
+    const isCurrent = () => request === requestVersion.current && searchFence.current(ticket) && currentQuery.current === q && currentWorkspaceId.current === workspaceId
     const timer = window.setTimeout(() => {
-      void window.electronAPI.searchNotes(workspaceId, q).then(
-        (items) => { if (isCurrent()) setNotes({ status: 'done', items }) },
+      const observation = signalsRef.current.capture()
+      let successfulSources = 0
+      const noteRequest = Promise.resolve().then(() => { if (!notesAvailable) throw new Error('Unavailable'); return window.electronAPI.searchNotes(workspaceId, q) }).then(
+        (items) => { successfulSources++; if (isCurrent()) setNotes({ status: 'done', items }) },
         () => { if (isCurrent()) setNotes({ status: 'unavailable', items: [] }) },
       )
-      void window.electronAPI.searchSessionContent(workspaceId, q).then(
-        (items) => { if (isCurrent()) setSessions({ status: 'done', items }) },
+      const sessionRequest = Promise.resolve().then(() => { if (!sessionsAvailable) throw new Error('Unavailable'); return window.electronAPI.searchSessionContent(workspaceId, q) }).then(
+        (items) => { successfulSources++; if (isCurrent()) setSessions({ status: 'done', items }) },
         () => { if (isCurrent()) setSessions({ status: 'unavailable', items: [] }) },
       )
-      void searchKnowledge(resolveKnowledgeApi(), workspaceId, q).then(
+      const knowledgeRequest = searchKnowledge(resolveKnowledgeApi(), workspaceId, q).then(
         (items) => {
+          if (items !== null) successfulSources++
           if (!isCurrent()) return
           setKnowledge(items === null
             ? { status: 'unavailable', items: [] }
@@ -70,13 +93,18 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
         },
         () => { if (isCurrent()) setKnowledge({ status: 'unavailable', items: [] }) },
       )
+      void Promise.all([noteRequest, sessionRequest, knowledgeRequest]).then(() => {
+        signalsRef.current.publish(observation, { kind: 'search-finished', workspaceId, current: isCurrent(), succeeded: successfulSources > 0 })
+        if (isCurrent()) setSourceReadFailed(successfulSources === 0)
+      })
     }, 180)
 
     return () => {
       window.clearTimeout(timer)
       requestVersion.current++
+      searchFence.invalidate()
     }
-  }, [query, workspaceId])
+  }, [query, workspaceId, searchFence, notesAvailable, sessionsAvailable])
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -85,40 +113,41 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
     navigateInPanel(routes.view.search(nextQuery))
   }
 
+  const currentOpening = () => {
+    if (!workspaceId || !query.trim()) return null
+    const q = query.trim()
+    const request = requestVersion.current
+    const observation = knowledgeSignals.capture()
+    return { q, observation, current: () => request === requestVersion.current && currentQuery.current === q && currentWorkspaceId.current === workspaceId }
+  }
   const openNote = async (note: NoteResult) => {
-    if (!workspaceId || !query.trim()) return
-    try {
-      const current = await window.electronAPI.searchNotes(workspaceId, query.trim())
-      if (currentQuery.current !== query.trim() || currentWorkspaceId.current !== workspaceId) return
-      if (!current.some((candidate) => candidate.id === note.id)) return
-      navigateInPanel(routes.view.notes(note.id))
-    } catch {
-      // A failed freshness check must never open a stale search result.
-    }
+    const opening = currentOpening()
+    if (!workspaceId || !opening) return
+    const opened = await openCurrentSearchResult({
+      read: () => window.electronAPI.searchNotes(workspaceId, opening.q), current: opening.current,
+      matches: (item) => item.id === note.id, open: (item) => navigateInPanel(routes.view.notes(item.id)),
+    })
+    knowledgeSignals.publish(opening.observation, { kind: 'search-result-opened', workspaceId, current: opened, succeeded: opened })
   }
-
   const openSession = async (session: SessionResult) => {
-    if (!workspaceId || !query.trim()) return
-    try {
-      const current = await window.electronAPI.searchSessionContent(workspaceId, query.trim())
-      if (currentQuery.current !== query.trim() || currentWorkspaceId.current !== workspaceId) return
-      if (!current.some((candidate) => candidate.sessionId === session.sessionId)) return
-      navigateInPanel(routes.view.allSessions(session.sessionId))
-    } catch {
-      // A failed freshness check must never open a stale search result.
-    }
+    const opening = currentOpening()
+    if (!workspaceId || !opening) return
+    const opened = await openCurrentSearchResult({
+      read: () => window.electronAPI.searchSessionContent(workspaceId, opening.q), current: opening.current,
+      matches: (item) => item.sessionId === session.sessionId, open: (item) => navigateInPanel(routes.view.allSessions(item.sessionId)),
+    })
+    knowledgeSignals.publish(opening.observation, { kind: 'search-result-opened', workspaceId, current: opened, succeeded: opened })
   }
-
   const openKnowledge = async (hit: SearchHit) => {
-    if (!workspaceId || !query.trim()) return
-    try {
-      const current = await searchKnowledge(resolveKnowledgeApi(), workspaceId, query.trim())
-      if (currentQuery.current !== query.trim() || currentWorkspaceId.current !== workspaceId) return
-      if (!current?.some((candidate) => candidate.ref.kind === hit.ref.kind && candidate.ref.id === hit.ref.id)) return
-      navigateInPanel(searchHitRoute(hit))
-    } catch {
-      // A failed freshness check must never open a stale search result.
-    }
+    const opening = currentOpening()
+    if (!workspaceId || !opening) return
+    let routedEntity = false
+    const opened = await openCurrentSearchResult({
+      read: () => searchKnowledge(resolveKnowledgeApi(), workspaceId, opening.q), current: opening.current,
+      matches: (item) => item.ref.kind === hit.ref.kind && item.ref.id === hit.ref.id,
+      open: (item) => { routedEntity = !!resolveSearchHitNoteId(item); return navigateInPanel(searchHitRoute(item)) },
+    })
+    knowledgeSignals.publish(opening.observation, { kind: 'search-result-opened', workspaceId, current: opened, succeeded: opened && routedEntity })
   }
 
   const sourceHeading = (title: string, source: SourceState<unknown>) => (
@@ -140,6 +169,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
           <div className="relative flex-1">
             <Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              ref={searchInputTarget}
               aria-label={t('searchPage.placeholder')}
               className="pl-9"
               onChange={(event) => setQuery(event.target.value)}
@@ -152,7 +182,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
           </button>
         </form>
       </div>
-      <div aria-live="polite" className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+      <div ref={searchResultsTarget} aria-live="polite" className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
         {!query.trim() ? (
           <p className="text-sm text-muted-foreground">{t('searchPage.empty')}</p>
         ) : (

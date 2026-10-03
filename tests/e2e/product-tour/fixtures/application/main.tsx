@@ -45,7 +45,10 @@ Object.assign(api, {
 })
 window.electronAPI = api
 ;(window as any).__productTourApplication = { marker: setup.marker, client, api, restricted, workspaceId: setup.workspaceId }
-const { default: App } = await import('../../../../../apps/electron/src/renderer/App')
+const { default: App } = await import('../../../../../apps/electron/src/renderer/App').catch(error => {
+  ;(window as any).__productTourApplicationImportError = String(error)
+  throw error
+})
 function HarnessRoot() {
   return <Provider><ThemeProvider activeWorkspaceId={setup.workspaceId}><App {...(restricted ? { webTransportBootstrap: { kind: 'authenticated-web-transport' as const, workspaceId: setup.workspaceId } } : {})} /><Toaster /></ThemeProvider></Provider>
 }

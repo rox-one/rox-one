@@ -86,3 +86,32 @@ test('UI-11: production geometry observers disconnect after the tour closes', as
   await expect(page.locator('[data-product-tour-popover]')).toHaveCount(0)
   await expect.poll(() => page.evaluate(() => (window as any).__activeTourObservers())).toBe(baseline)
 })
+
+
+test('UI-02/UI-04/UI-10: visible variant selection rejects hidden, clipped and iframe-document registrations', async ({ page }) => {
+  await open(page)
+  const result = await page.evaluate(async () => {
+    const api = (window as any).__productTourComponent
+    const first = document.querySelector('textarea[aria-label="First panel draft"]') as HTMLElement
+    const second = document.querySelector('textarea[aria-label="Second panel draft"]') as HTMLElement
+    const context = { workspaceId: 'workspace-a', panelId: 'panel-a' }
+    const compact = api.registry.register({ id: 'composer.input', scope: 'bound-panel', variant: 'compact', context, registrationToken: 'compact', element: second })
+    api.setVariant('compact')
+    const preferred = api.resolve('panel-a').target?.element.getAttribute('aria-label')
+    second.style.display = 'none'
+    const fallback = api.resolve('panel-a').target?.element.getAttribute('aria-label')
+    compact(); first.style.display = 'none'
+    const hidden = api.resolve('panel-a').status
+    first.style.display = ''; first.style.transform = 'translate(-2000px, -2000px)'
+    const clipped = api.resolve('panel-a').status
+    first.style.transform = ''
+    const frame = document.createElement('iframe'); frame.srcdoc = '<textarea aria-label="Untrusted frame draft"></textarea>'
+    await new Promise<void>(done => { frame.onload = () => done(); document.body.append(frame) })
+    const inside = frame.contentDocument!.querySelector('textarea')!
+    api.registry.register({ id: 'composer.input', scope: 'bound-panel', variant: 'regular', context: { ...context, panelId: 'iframe-panel' }, registrationToken: 'iframe', element: inside })
+    const iframe = api.resolve('iframe-panel').status
+    frame.remove()
+    return { preferred, fallback, hidden, clipped, iframe }
+  })
+  expect(result).toEqual({ preferred: 'Second panel draft', fallback: 'First panel draft', hidden: 'blocked', clipped: 'blocked', iframe: 'blocked' })
+})
