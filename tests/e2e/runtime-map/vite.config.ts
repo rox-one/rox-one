@@ -31,6 +31,6 @@ export default defineConfig({
     react: resolve(root, 'node_modules/react'), 'react-dom': resolve(root, 'node_modules/react-dom') }, dedupe: ['react', 'react-dom'] },
   server: { host: '127.0.0.1', port: 4176, strictPort: true, fs: { allow: [root, dirname(realpathSync(resolve(root, 'node_modules')))] } },
   define: { global: 'globalThis' },
-  build: { outDir: resolve(root, 'node_modules/.cache/runtime-map-e2e-build'), emptyOutDir: true },
+  build: { outDir: resolve(root, 'node_modules/.cache/runtime-map-e2e-build'), emptyOutDir: true, sourcemap: process.env.ROX_RUNTIME_PROFILE === '1' },
   optimizeDeps: rendererConfig.optimizeDeps,
 })

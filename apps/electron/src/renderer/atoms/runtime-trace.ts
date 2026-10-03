@@ -20,6 +20,9 @@ export function createRuntimeTraceSessionState(): RuntimeTraceSessionState {
   return { projections: {}, runs: [], coverage: { state: 'complete', source: 'runtime', missing: [] }, loading: false, loaded: false, generation: 0 }
 }
 export const runtimeTraceSessionAtomFamily = atomFamily((key: string) => atom<RuntimeTraceSessionState>(createRuntimeTraceSessionState()))
+/** Navigation intent only; it cannot create or alter runtime events. */
+export interface RuntimeMapOpenRequest { rootRunId: string; eventId: string; requestId: number }
+export const runtimeMapOpenRequestAtomFamily = atomFamily((key: string) => atom<RuntimeMapOpenRequest | undefined>(undefined))
 /** Card consumers can subscribe to one normalized entity, independent of neighboring text deltas. */
 export const runtimeTraceNodeAtomFamily = atomFamily((key: string) => atom((get): RuntimeNode | undefined => {
   const [workspaceId, sessionId, rootRunId, nodeId] = JSON.parse(key) as [string, string, string, string]

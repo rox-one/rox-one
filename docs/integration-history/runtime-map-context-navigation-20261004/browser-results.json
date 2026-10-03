@@ -1,0 +1,844 @@
+{
+  "config": {
+    "configFile": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/tests/e2e/runtime-map/playwright.config.ts",
+    "rootDir": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/tests/e2e/runtime-map",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 15000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "",
+        "name": "",
+        "testDir": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/tests/e2e/runtime-map",
+        "testIgnore": [],
+        "testMatch": [
+          "*.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "version": "1.49.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "browser-zoom.spec.ts",
+      "file": "browser-zoom.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "actual Chromium browser 200 percent zoom preserves the mounted chat and dock",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 6769,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:06.585Z",
+                  "attachments": [
+                    {
+                      "name": "actual-browser-zoom.json",
+                      "contentType": "application/json",
+                      "body": "ewogICJhY3R1YWxab29tIjogMiwKICAibWVjaGFuaXNtIjogIkNocm9tZSBuYXRpdmUgdGFicy5zZXRab29tL2dldFpvb207IGlzb2xhdGVkIGxvY2FsIGV4dGVuc2lvbiIsCiAgIm1ldHJpY3MiOiB7CiAgICAiZGV2aWNlUGl4ZWxSYXRpbyI6IDIsCiAgICAiY3NzVmlld3BvcnRXaWR0aCI6IDcyMCwKICAgICJjc3NWaWV3cG9ydEhlaWdodCI6IDM4MCwKICAgICJ2aXN1YWxWaWV3cG9ydFNjYWxlIjogMQogIH0sCiAgImVycm9ycyI6IFtdCn0="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7b31f4c216d392dea10a-6bbafca14e1c64f8086e",
+          "file": "browser-zoom.spec.ts",
+          "line": 7,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "catalog.spec.ts",
+      "file": "catalog.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "production catalogs light 1280: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1523,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:13.384Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/catalog-production-catalog-edd6c-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-1848f20929e5d4fcf3c2",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        },
+        {
+          "title": "production catalogs light 1440: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1337,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:15.271Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/catalog-production-catalog-1d9df-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-031e164bb76c025363d3",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        },
+        {
+          "title": "production catalogs light 1920: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1326,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:16.611Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/catalog-production-catalog-c5396-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-949fae91886441d04360",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        },
+        {
+          "title": "production catalogs dark 1280: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1191,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:17.940Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/catalog-production-catalog-68b35-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-d945e6207441fded7c8e",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        },
+        {
+          "title": "production catalogs dark 1440: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1233,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:19.134Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/catalog-production-catalog-752d8-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-e88d5840593139ed14df",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        },
+        {
+          "title": "production catalogs dark 1920: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1269,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:20.371Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/catalog-production-catalog-e397c-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-cbd508fb4e405245880a",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        },
+        {
+          "title": "skills: keyboard search/category/scope, dependencies, navigation and real selection atoms",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1129,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:21.643Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/catalog-skills-keyboard-se-7f10e-on-and-real-selection-atoms/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-a8118ecaf09dee0e8ffb",
+          "file": "catalog.spec.ts",
+          "line": 92,
+          "column": 1
+        },
+        {
+          "title": "integrations: intersected category/type/search filters preserve unknown providers and recorded states",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1095,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:22.776Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/catalog-integrations-inter-210d3-oviders-and-recorded-states/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-f7ebcd6a483cae180b9b",
+          "file": "catalog.spec.ts",
+          "line": 134,
+          "column": 1
+        },
+        {
+          "title": "source navigator: existing modifier selection, Escape and arrow navigation remain functional",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1196,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:23.875Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/catalog-source-navigator-e-1ad04-avigation-remain-functional/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-5cb332f67c5327e83ca3",
+          "file": "catalog.spec.ts",
+          "line": 169,
+          "column": 1
+        },
+        {
+          "title": "pack toggle persists through the real installer and readback, retaining the other pack",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1217,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:25.074Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/catalog-pack-toggle-persis-cd280-ck-retaining-the-other-pack/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-80c802c61ab44cc8cbd4",
+          "file": "catalog.spec.ts",
+          "line": 188,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "context.spec.ts",
+      "file": "context.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "grouped context is read-only and preserves root/child provenance in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2245,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:26.298Z",
+                  "attachments": [
+                    {
+                      "name": "context-provenance.json",
+                      "contentType": "application/json",
+                      "body": "ewogICJ0aGVtZSI6ICJsaWdodCIsCiAgImZpeHR1cmUiOiB7CiAgICAicm9vdFNuYXBzaG90SWQiOiAiZml4dHVyZS1yb290LWNvbnRleHQtdjEiLAogICAgImNoaWxkU25hcHNob3RJZCI6ICJmaXh0dXJlLWNoaWxkLWNvbnRleHQtdjEiLAogICAgImFnZW50cyI6IHsKICAgICAgInJvb3QiOiAic2Vzc2lvbjpmaXh0dXJlLXNlc3Npb24iLAogICAgICAiY2hpbGQiOiAic2Vzc2lvbjpmaXh0dXJlLXNlc3Npb246bmF0aXZlOmNvbnRleHQtY2hpbGQiLAogICAgICAibWlzc2luZyI6ICJzZXNzaW9uOmZpeHR1cmUtc2Vzc2lvbjpuYXRpdmU6Y29udGV4dC1uby1zbmFwc2hvdCIKICAgIH0KICB9LAogICJzb3VyY2VJZHMiOiBbCiAgICAiMTU3ZDMzMjYtNTdmOC00ZjllLTk1YzUtMGQ5YjhkMWM5N2EyIiwKICAgICIxNTdkMzMyNi01N2Y4LTRmOWUtOTVjNS0wZDliOGQxYzk3YTIiLAogICAgIjE1N2QzMzI2LTU3ZjgtNGY5ZS05NWM1LTBkOWI4ZDFjOTdhMiIsCiAgICAiMTU3ZDMzMjYtNTdmOC00ZjllLTk1YzUtMGQ5YjhkMWM5N2EyIiwKICAgICIxNTdkMzMyNi01N2Y4LTRmOWUtOTVjNS0wZDliOGQxYzk3YTIiLAogICAgIjE1N2QzMzI2LTU3ZjgtNGY5ZS05NWM1LTBkOWI4ZDFjOTdhMiIKICBdLAogICJiZWZvcmUiOiB7CiAgICAicnVudGltZVN0YXJ0cyI6IDEsCiAgICAidGVybWluYWxFeGVjdXRpb25zIjogMCwKICAgICJwcm92aWRlclJlcXVlc3RzIjogMCwKICAgICJldmVudENvdW50IjogNiwKICAgICJzdGVwIjogMiwKICAgICJzdGVwcyI6IDE2LAogICAgInNvdXJjZUNvbm5lY3Rpb25zIjogMSwKICAgICJyb290UnVuSWQiOiAicnVuLWIwZTUwMzUwLWM4MzItNDg4MC04NDYyLThkYzAwZTI0YjA2ZSIKICB9LAogICJhZnRlciI6IHsKICAgICJydW50aW1lU3RhcnRzIjogMSwKICAgICJ0ZXJtaW5hbEV4ZWN1dGlvbnMiOiAwLAogICAgInByb3ZpZGVyUmVxdWVzdHMiOiAwLAogICAgImV2ZW50Q291bnQiOiA2LAogICAgInN0ZXAiOiAyLAogICAgInN0ZXBzIjogMTYsCiAgICAic291cmNlQ29ubmVjdGlvbnMiOiAxLAogICAgInJvb3RSdW5JZCI6ICJydW4tYjBlNTAzNTAtYzgzMi00ODgwLTg0NjItOGRjMDBlMjRiMDZlIgogIH0sCiAgImVycm9ycyI6IFtdCn0="
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/context-grouped-context-is-22a30-t-child-provenance-in-light/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "124b10fb0a2fec141b6d-189d89b73869a8761583",
+          "file": "context.spec.ts",
+          "line": 5,
+          "column": 49
+        },
+        {
+          "title": "grouped context is read-only and preserves root/child provenance in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2115,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:28.546Z",
+                  "attachments": [
+                    {
+                      "name": "context-provenance.json",
+                      "contentType": "application/json",
+                      "body": "ewogICJ0aGVtZSI6ICJkYXJrIiwKICAiZml4dHVyZSI6IHsKICAgICJyb290U25hcHNob3RJZCI6ICJmaXh0dXJlLXJvb3QtY29udGV4dC12MSIsCiAgICAiY2hpbGRTbmFwc2hvdElkIjogImZpeHR1cmUtY2hpbGQtY29udGV4dC12MSIsCiAgICAiYWdlbnRzIjogewogICAgICAicm9vdCI6ICJzZXNzaW9uOmZpeHR1cmUtc2Vzc2lvbiIsCiAgICAgICJjaGlsZCI6ICJzZXNzaW9uOmZpeHR1cmUtc2Vzc2lvbjpuYXRpdmU6Y29udGV4dC1jaGlsZCIsCiAgICAgICJtaXNzaW5nIjogInNlc3Npb246Zml4dHVyZS1zZXNzaW9uOm5hdGl2ZTpjb250ZXh0LW5vLXNuYXBzaG90IgogICAgfQogIH0sCiAgInNvdXJjZUlkcyI6IFsKICAgICI0ZmUyMjM0OS05MDU2LTQwYmItODFjNi1hYzZlMmFjM2E1NjQiLAogICAgIjRmZTIyMzQ5LTkwNTYtNDBiYi04MWM2LWFjNmUyYWMzYTU2NCIsCiAgICAiNGZlMjIzNDktOTA1Ni00MGJiLTgxYzYtYWM2ZTJhYzNhNTY0IiwKICAgICI0ZmUyMjM0OS05MDU2LTQwYmItODFjNi1hYzZlMmFjM2E1NjQiLAogICAgIjRmZTIyMzQ5LTkwNTYtNDBiYi04MWM2LWFjNmUyYWMzYTU2NCIsCiAgICAiNGZlMjIzNDktOTA1Ni00MGJiLTgxYzYtYWM2ZTJhYzNhNTY0IgogIF0sCiAgImJlZm9yZSI6IHsKICAgICJydW50aW1lU3RhcnRzIjogMSwKICAgICJ0ZXJtaW5hbEV4ZWN1dGlvbnMiOiAwLAogICAgInByb3ZpZGVyUmVxdWVzdHMiOiAwLAogICAgImV2ZW50Q291bnQiOiA2LAogICAgInN0ZXAiOiAyLAogICAgInN0ZXBzIjogMTYsCiAgICAic291cmNlQ29ubmVjdGlvbnMiOiAxLAogICAgInJvb3RSdW5JZCI6ICJydW4tNTU4ZDdlNmUtYmY4OS00M2UyLWIwNDEtNGJhMzhkODM4MGU0IgogIH0sCiAgImFmdGVyIjogewogICAgInJ1bnRpbWVTdGFydHMiOiAxLAogICAgInRlcm1pbmFsRXhlY3V0aW9ucyI6IDAsCiAgICAicHJvdmlkZXJSZXF1ZXN0cyI6IDAsCiAgICAiZXZlbnRDb3VudCI6IDYsCiAgICAic3RlcCI6IDIsCiAgICAic3RlcHMiOiAxNiwKICAgICJzb3VyY2VDb25uZWN0aW9ucyI6IDEsCiAgICAicm9vdFJ1bklkIjogInJ1bi01NThkN2U2ZS1iZjg5LTQzZTItYjA0MS00YmEzOGQ4MzgwZTQiCiAgfSwKICAiZXJyb3JzIjogW10KfQ=="
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "124b10fb0a2fec141b6d-23fbda9f3c32c6bc8c1c",
+          "file": "context.spec.ts",
+          "line": 5,
+          "column": 49
+        }
+      ]
+    },
+    {
+      "title": "continuity.spec.ts",
+      "file": "continuity.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "historical scroll and an actual map-to-chat message anchor retain the dock",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2513,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:30.669Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/continuity-historical-scro-4b667-sage-anchor-retain-the-dock/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-30c4e5f8978c8782dd4b",
+          "file": "continuity.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "pending credential input and existing draft survive map toggles without a response",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1072,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:33.184Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/continuity-pending-credent-ba481--toggles-without-a-response/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-fc368c5901d81d55eb5d",
+          "file": "continuity.spec.ts",
+          "line": 30,
+          "column": 1
+        },
+        {
+          "title": "the retained production editor restores pins, branch ports and saved versions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1733,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:34.260Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/continuity-the-retained-pr-90cae-ch-ports-and-saved-versions/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-9e68473ca2e03e01dad0",
+          "file": "continuity.spec.ts",
+          "line": 44,
+          "column": 1
+        },
+        {
+          "title": "ROX welcome and the lower composer work at 1920 in dark reduced-motion mode",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 946,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:35.997Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/continuity-ROX-welcome-and-be596-in-dark-reduced-motion-mode/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-10a700e9f30337b3fa64",
+          "file": "continuity.spec.ts",
+          "line": 77,
+          "column": 1
+        },
+        {
+          "title": "a historical event requested before snapshot load resolves read-only in its original run",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1200,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:36.946Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/continuity-a-historical-ev-c1f83-ad-only-in-its-original-run/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-66f4f3a3862be9a1d88e",
+          "file": "continuity.spec.ts",
+          "line": 87,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "overview.spec.ts",
+      "file": "overview.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "actual Fit overview shows the 200-card runtime window before panning",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 1646,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:56:38.151Z",
+                  "attachments": [
+                    {
+                      "name": "runtime-overview.json",
+                      "contentType": "application/json",
+                      "body": "ewogICJjbGFzc2lmaWNhdGlvbiI6ICJwcm9kdWN0aW9uIHJlbmRlcmVyIHdpdGggZXhwbGljaXRseSBzeW50aGV0aWMgdHlwZWQgZml4dHVyZTsgb3ZlcnZpZXcgcHJvb2YsIG5vIG5ldyBsYXRlbmN5IGNsYWltIiwKICAiZml4dHVyZSI6IHsKICAgICJmaXh0dXJlRXZlbnRzIjogMTAwMDAsCiAgICAicHJvamVjdGVkTm9kZXMiOiAyMjEsCiAgICAiYWdlbnRzIjogMjAsCiAgICAiaW5ncmVzc01zIjogMzE2LAogICAgIm1vdW50ZWRDYXJkcyI6IDAKICB9LAogICJ2aXNpYmlsaXR5IjogewogICAgIm1vdW50ZWQiOiAyMDAsCiAgICAidmlzaWJsZSI6IDIwMCwKICAgICJ2aWV3cG9ydCI6IHsKICAgICAgIndpZHRoIjogODM0LjIwMzEyNSwKICAgICAgImhlaWdodCI6IDYyNgogICAgfQogIH0sCiAgImNhcHR1cmVkQmVmb3JlUGFuIjogdHJ1ZSwKICAiY2FtZXJhIjoge30KfQ=="
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/t/.codex/worktrees/recover-runtime-map-view/rox-release-20261003/docs/evidence/runtime-map/browser-artifacts/origin-view-final-current/overview-actual-Fit-overvi-495cb-ntime-window-before-panning/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-1ba3d495e3670c5ed6ba",
+          "file": "overview.spec.ts",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-03T22:55:39.269Z",
+    "duration": 60937.536,
+    "expected": 19,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

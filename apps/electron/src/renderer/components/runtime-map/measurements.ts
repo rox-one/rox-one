@@ -11,6 +11,13 @@ export function durationText(measurement: Measurement<number> | undefined): stri
   return measurementText(measurement, ms => ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`)
 }
 
+/** UTC is explicit; invalid or absent producer timestamps never become an exact date. */
+export function timestampText(measurement: Measurement<number> | undefined): string | undefined {
+  if (measurement?.state !== 'known' || !Number.isFinite(measurement.value)) return undefined
+  const date = new Date(measurement.value)
+  return Number.isFinite(date.getTime()) ? measurementText(measurement, () => date.toISOString()) : undefined
+}
+
 /** Executor observations remain valid even when event clock domains differ. */
 export function runtimeNodeDuration(node: Pick<RuntimeNode, 'durationMs' | 'terminal'>): Measurement<number> {
   return node.terminal?.durationMs?.state === 'known' ? node.terminal.durationMs : node.durationMs
