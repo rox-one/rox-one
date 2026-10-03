@@ -69,7 +69,7 @@ function fixture() {
         else if (fn.toString().includes('api.list')) catalog = fn
         else search = fn
       },
-      setMeetings: set('meetings'), setLoadState: set('load'), setEngine: set('engine'), setTranscriptText: set('transcripts'), setLocalSelectedId: set('selected'),
+      setLoadedWorkspaceId: () => {}, setMeetings: set('meetings'), setLoadState: set('load'), setEngine: set('engine'), setTranscriptText: set('transcripts'), setLocalSelectedId: set('selected'),
       setBanner: set('banner'), setPlanning: set('planning'), setPlanTitle: set('title'), setPlanAt: set('at'),
       setPlanningPending: set('planningPending'), setImportRequestId: set('importId'), setCancelingImport: set('canceling'),
       setTab: set('tab'), selectMeeting: set('selected'), newLocalId: () => 'import-' + ++serial,
