@@ -175,6 +175,9 @@ export interface AttemptStepEvidence {
   readonly at?: number;
 }
 export interface RuntimeState {
+  readonly snapshot?: EngineSnapshot;
+  readonly stepActivatedAt?: number;
+  readonly seenEventTokens?: readonly string[];
   readonly attemptEvidence: Readonly<Partial<Record<StepId, AttemptStepEvidence>>>;
   readonly definition: TourDefinition | null;
   readonly phase: Phase;
