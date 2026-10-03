@@ -560,3 +560,10 @@ Keychain selected-target lookup retains the exact discovered service/account, in
 ### Calendar synchronization ownership recovery (2026-10-03)
 
 Restore the per-account stale-response fence present in `feat/voice-v2-p0` and the cumulative Meetings branches, adapting it to the current `CalendarStore`. Only the most recently started connected-account sync may commit events, conflict snapshots, cursor and sync timestamps; a later failed request still supersedes an older response. Revocation invalidates outstanding ownership, and different accounts retain independent syncs. Request ownership is process-local and must not be serialized as credential or provider evidence. Current tuple identity, local-draft conflict review and unavailable production adapters remain authoritative. This bounded recovery does not establish live calendar-provider access.
+
+
+## Scoped Notes comment drafts — 2026-10-03
+
+Owner: historical worker; integration owner: audit lead. Source `codex/golden-gate-workspace@5def9ffd36dc160fdc7c908784e0ef97ba6a732e` supplies a missing workspace/document-keyed quote/body draft map for the actual NativeNotesPage floating comment composer. Switching document or vault cannot retarget an unsent selection/comment; returning to the original document restores its draft. Captured edit/clear callbacks update their original key, and no bound workspace/document means no draft acquisition. Scope keys use JSON tuple encoding and empty entries are removed.
+
+Recover only this source helper and current page wiring, retaining today's native Notes write authority, mutation revision checks, editor/chrome/layout/focus and comment persistence. Drafts live in the mounted page state and are not durable storage or server write receipts. Verify by executing delivered NativeNotesPage state/setter declarations across route changes, stale edit and clear callbacks, unbound scope and delimiter collisions, with an exact current-main negative control. Native installed UI and relaunch persistence are outside this bounded recovery.
