@@ -1002,6 +1002,8 @@ interface ManagedSession {
     options?: SendMessageOptions
     messageId?: string  // Pre-generated ID for matching with UI
     optimisticMessageId?: string  // Frontend's ID for reliable event matching
+    roxExecutionContext?: RoxExecutionContext // Captured host owner, retained through deferred replay.
+    roxOwnerResource?: string // Sealed exact-generation owner for crash/restart recovery.
   }>
   // Map of shellId -> command for killing background shells
   backgroundShellCommands: Map<string, string>
@@ -1302,12 +1304,92 @@ export function resolveMidStreamDeliveryOutcome(
 
 export class SessionManager implements ISessionManager {
   private roxExecutions = new Map<string, RoxExecutionContext>()
+  private roxResourceLeases = new Map<string, { context?: RoxExecutionContext; count: number }>()
+  private sameRoxExecution(a?: RoxExecutionContext, b?: RoxExecutionContext): boolean {
+    return a === b || !!(a && b && a.caller.issuer === b.caller.issuer && a.caller.subject === b.caller.subject && a.cloudAccountId === b.cloudAccountId && a.authGeneration === b.authGeneration)
+  }
+  private assertRoxSessionExecution(sessionId: string, context?: RoxExecutionContext): void {
+    if (!context) {
+      if (this.roxExecutions.has(sessionId)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+      return
+    }
+    getRoxAccountAuthority().assertCurrent(context)
+    if (!this.sameRoxExecution(this.roxExecutions.get(sessionId), context)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+  }
+  private selectRoxSessionExecution(sessionId: string, context: RoxExecutionContext, publish = true): void {
+    getRoxAccountAuthority().assertCurrent(context)
+    const previous = this.roxExecutions.get(sessionId)
+    if (previous && !this.sameRoxExecution(previous, context)) {
+      // Sessions are caller resources. Switching the same local caller's cloud
+      // account requires invalidation first; another live caller cannot adopt it.
+      if (previous.caller.issuer !== context.caller.issuer || previous.caller.subject !== context.caller.subject) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+      let oldCurrent = true
+      try { getRoxAccountAuthority().assertCurrent(previous) } catch { oldCurrent = false }
+      if (oldCurrent) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+      if (publish) {
+        const managed = this.sessions.get(sessionId)
+        managed?.agent?.destroy()
+        if (managed) managed.agent = null
+      }
+    }
+    if (!publish) return
+    this.roxExecutions.set(sessionId, Object.freeze({ ...context, caller: Object.freeze({ ...context.caller }) }))
+  }
+  private acquireRoxSessionLease(sessionId: string, requested?: RoxExecutionContext): () => void {
+    const context = requested ?? this.roxExecutions.get(sessionId)
+    const held = this.roxResourceLeases.get(sessionId)
+    if (held && !this.sameRoxExecution(held.context, context)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+    if (context) this.selectRoxSessionExecution(sessionId, context, false)
+    const lease = held ?? { context, count: 0 }
+    lease.count++
+    this.roxResourceLeases.set(sessionId, lease)
+    return () => { if (--lease.count === 0) this.roxResourceLeases.delete(sessionId) }
+  }
+  private fenceRoxSessionCallback<T extends (...args: any[]) => any>(sessionId: string, context: RoxExecutionContext | undefined, callback: T, ignoreStale = false): T {
+    return ((...args: Parameters<T>) => {
+      let release: () => void
+      try {
+        this.assertRoxSessionExecution(sessionId, context)
+        release = this.acquireRoxSessionLease(sessionId, context)
+      }
+      catch (error) { if (ignoreStale) return; throw error }
+      let asynchronous = false
+      try {
+        this.assertRoxSessionExecution(sessionId, context)
+        const result = callback(...args)
+        if (result && typeof result.then === 'function') {
+          asynchronous = true
+          return Promise.resolve(result).then(value => { this.assertRoxSessionExecution(sessionId, context); return value }).finally(release)
+        }
+        this.assertRoxSessionExecution(sessionId, context)
+        return result
+      } finally { if (!asynchronous) release() }
+    }) as T
+  }
+  private fenceRoxSessionCallbacks<T extends object>(sessionId: string, context: RoxExecutionContext | undefined, callbacks: T): T {
+    return Object.fromEntries(Object.entries(callbacks).map(([key, value]) => [key,
+      typeof value === 'function' ? this.fenceRoxSessionCallback(sessionId, context, value as (...args: any[]) => any,
+        ['onSdkSessionIdUpdate', 'onSdkSessionIdCleared', 'onBranchForkInvalidated', 'markBranchSeedApplied', 'markTransferredSessionSummaryApplied'].includes(key))
+        : key === 'browserPaneFns' && value && typeof value === 'object'
+          ? this.fenceRoxSessionCallbacks(sessionId, context, value) : value,
+    ])) as T
+  }
+  private mergeRoxSessionToolCallbacks(sessionId: string, context: RoxExecutionContext | undefined, callbacks: Parameters<typeof mergeSessionScopedToolCallbacks>[1]): void {
+    mergeSessionScopedToolCallbacks(sessionId, this.fenceRoxSessionCallbacks(sessionId, context, callbacks))
+  }
   private async roxExecutionForSession(managed: ManagedSession): Promise<RoxExecutionContext | undefined> {
     const existing = this.roxExecutions.get(managed.id)
     if (existing) { getRoxAccountAuthority().assertCurrent(existing); return existing }
     const restored = await peekRoxAccountAuthority()?.bound(`session:${managed.workspace.id}:${managed.id}`)
-    if (restored) this.roxExecutions.set(managed.id, restored)
-    return restored
+    const selected = this.roxExecutions.get(managed.id)
+    if (selected && !this.sameRoxExecution(selected, restored)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+    const lease = this.roxResourceLeases.get(managed.id)
+    if (lease?.context && !this.sameRoxExecution(lease.context, restored)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+    if (restored) {
+      if (lease && !lease.context) lease.context = restored
+      this.selectRoxSessionExecution(managed.id, restored)
+    }
+    return selected ?? restored
   }
   private sessions: Map<string, ManagedSession> = new Map()
   private budgetLedger: AgentBudgetLedger | null = null
@@ -2716,6 +2798,7 @@ export class SessionManager implements ISessionManager {
           managed.messageQueue.push({
             message: msg.content,
             messageId: msg.id,
+            roxOwnerResource: `queued-message:${managed.workspace.id}:${managed.id}:${msg.id}`,
             attachments: undefined,
             storedAttachments: msg.attachments,
             options: undefined,
@@ -3251,6 +3334,7 @@ export class SessionManager implements ISessionManager {
           managed.messageQueue.push({
             message: msg.content,
             messageId: msg.id,
+            roxOwnerResource: `queued-message:${managed.workspace.id}:${managed.id}:${msg.id}`,
             attachments: undefined,  // Attachments already stored on disk
             storedAttachments: msg.attachments,
             options: undefined,
@@ -4154,6 +4238,9 @@ export class SessionManager implements ISessionManager {
    * 4. fallback: no connection configured
    */
   private async getOrCreateAgent(managed: ManagedSession): Promise<AgentInstance> {
+    const execution = await this.roxExecutionForSession(managed)
+    const assertOwner = () => this.assertRoxSessionExecution(managed.id, execution)
+    assertOwner()
     // Refresh runtime config in-place when the connection has drifted since
     // the agent was created. May null out `managed.agent` if the in-place
     // refresh fails, in which case the create branch below rebuilds it.
@@ -4283,6 +4370,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const onSdkSessionIdUpdate = (sdkSessionId: string) => {
+        assertOwner()
         managed.sdkSessionId = sdkSessionId
         // Retire branch-only fork metadata now that child session is established
         if (managed.branchFromSdkSessionId) {
@@ -4298,6 +4386,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const onSdkSessionIdCleared = () => {
+        assertOwner()
         managed.sdkSessionId = undefined
         sessionLog.info(`SDK session ID cleared for ${managed.id} (resume recovery)`)
         this.persistSession(managed)
@@ -4305,6 +4394,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const onBranchForkInvalidated = () => {
+        assertOwner()
         managed.sdkSessionId = undefined
         managed.branchFromSdkSessionId = undefined
         managed.branchFromSdkCwd = undefined
@@ -4315,6 +4405,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const getRecoveryMessages = () => {
+        assertOwner()
         const relevantMessages = managed.messages
           .filter(m => m.role === 'user' || m.role === 'assistant')
           .filter(m => !m.isIntermediate)
@@ -4326,6 +4417,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const getBranchFallbackMessages = () => {
+        assertOwner()
         if (!managed.branchFromMessageId) return []
         return managed.messages
           .filter(m => m.role === 'user' || m.role === 'assistant')
@@ -4337,6 +4429,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const getBranchSeedMessages = () => {
+        assertOwner()
         if (managed.branchContextStrategy !== 'seeded-fresh-session') return []
         if (managed.branchSeedApplied) return []
 
@@ -4351,6 +4444,7 @@ export class SessionManager implements ISessionManager {
       }
 
       const markBranchSeedApplied = () => {
+        assertOwner()
         if (managed.branchContextStrategy !== 'seeded-fresh-session') return
         if (managed.branchSeedApplied) return
         managed.branchSeedApplied = true
@@ -4361,12 +4455,14 @@ export class SessionManager implements ISessionManager {
       }
 
       const getTransferredSessionSummary = () => {
+        assertOwner()
         const summary = managed.transferredSessionSummaryApplied ? null : (managed.transferredSessionSummary ?? null)
         sessionLog.info(`[transfer-context] getTransferredSessionSummary for ${managed.id}: applied=${managed.transferredSessionSummaryApplied}, has_summary=${!!managed.transferredSessionSummary}, returning=${summary ? `${summary.length} chars` : 'null'}`)
         return summary
       }
 
       const markTransferredSessionSummaryApplied = () => {
+        assertOwner()
         if (managed.transferredSessionSummaryApplied || !managed.transferredSessionSummary) return
         managed.transferredSessionSummaryApplied = true
         this.persistSession(managed)
@@ -4423,11 +4519,14 @@ export class SessionManager implements ISessionManager {
         }
       }
 
+      const { getEnable1MContext } = await import('@rox/shared/config/storage')
+      const enable1MContext = getEnable1MContext()
+      assertOwner()
       managed.agent = createBackendFromResolvedContext({
         context: backendContext,
         hostRuntime: buildBackendHostRuntimeContext(),
-        coreConfig: {
-        roxExecutionContext: await this.roxExecutionForSession(managed),
+        coreConfig: this.fenceRoxSessionCallbacks(managed.id, execution, {
+        roxExecutionContext: execution,
         workspace: managed.workspace,
         memoryBlocks,
         miniModel,
@@ -4454,7 +4553,7 @@ export class SessionManager implements ISessionManager {
         automationSystem: this.automationSystems.get(managed.workspace.rootPath),
         systemPromptPreset: managed.systemPromptPreset,
         debugMode: _platform?.isDebugMode ? { enabled: true, logFilePath: _platform.getLogFilePath?.() } : undefined,
-        enable1MContext: await (async () => { const { getEnable1MContext } = await import('@rox/shared/config/storage'); return getEnable1MContext(); })(),
+        enable1MContext,
         // Image resize callback — prevents oversized images from entering conversation history
         onImageResize: async (filePath: string, maxSizeBytes: number): Promise<string | null> => {
           try {
@@ -4467,7 +4566,9 @@ export class SessionManager implements ISessionManager {
             await mkdir(sessionTmpDir, { recursive: true })
             const ext = result.format === 'jpeg' ? 'jpg' : 'png'
             const outPath = join(sessionTmpDir, `resized-${randomUUID()}.${ext}`)
+            assertOwner()
             await writeFile(outPath, result.buffer)
+            assertOwner()
 
             sessionLog.info(`Image resized for Read: ${(buffer.length / 1024 / 1024).toFixed(1)}MB → ${(result.buffer.length / 1024 / 1024).toFixed(1)}MB (→ ${result.width}×${result.height})`)
             return outPath
@@ -4483,7 +4584,7 @@ export class SessionManager implements ISessionManager {
           apiServers,
           enabledSlugs,
         },
-        },
+        }),
       }) as AgentInstance
 
       sessionLog.info(`Created ${provider} agent for session ${managed.id} (model: ${backendContext.resolvedModel})${managed.sdkSessionId ? ' (resuming)' : ''}`)
@@ -4519,6 +4620,7 @@ export class SessionManager implements ISessionManager {
 
       // Unified auth callback — replaces per-backend onChatGptAuthRequired/onGithubAuthRequired
       managed.agent.onBackendAuthRequired = (reason: string) => {
+        assertOwner()
         sessionLog.warn(`Backend auth required for session ${managed.id}: ${reason}`)
         this.sendEvent({
           type: 'info',
@@ -4530,6 +4632,7 @@ export class SessionManager implements ISessionManager {
 
       // Run post-init (auth injection) — each backend handles its own
       const postInitResult = await managed.agent.postInit()
+      assertOwner()
       if (postInitResult.authWarning) {
         sessionLog.warn(`Auth warning for session ${managed.id}: ${postInitResult.authWarning}`)
         this.sendEvent({
@@ -4627,7 +4730,7 @@ export class SessionManager implements ISessionManager {
         }
 
         sessionLog.info('[browser-pane] BPF registering browserPaneFns', { sessionId: sid })
-        mergeSessionScopedToolCallbacks(sid, {
+        this.mergeRoxSessionToolCallbacks(sid, execution, {
           browserPaneFns: {
             openPanel: async (options) => {
               const instanceId = options?.background
@@ -4949,6 +5052,7 @@ export class SessionManager implements ISessionManager {
 
       // Set up mode change handlers
       managed.agent.onPermissionModeChange = (mode) => {
+        assertOwner()
         if (managed.permissionMode === mode) {
           return
         }
@@ -4977,10 +5081,12 @@ export class SessionManager implements ISessionManager {
 
       // Wire up onPlanSubmitted to add plan message to conversation
       managed.agent.onPlanSubmitted = async (planPath) => {
+        assertOwner()
         sessionLog.info(`Plan submitted for session ${managed.id}:`, planPath)
         try {
           // Read the plan file content
           const planContent = await readFile(planPath, 'utf-8')
+          assertOwner()
 
           // Mark the SubmitPlan tool message as completed (it won't get a tool_result due to forceAbort)
           const submitPlanMsg = managed.messages.find(
@@ -5045,6 +5151,7 @@ export class SessionManager implements ISessionManager {
 
       // Wire up onAuthRequest to add auth message to conversation and pause execution
       managed.agent.onAuthRequest = (request) => {
+        assertOwner()
         sessionLog.info(`Auth request for session ${managed.id}:`, request.type, request.sourceSlug)
 
         // Create auth-request message
@@ -5115,6 +5222,7 @@ export class SessionManager implements ISessionManager {
 
       // Wire up onSpawnSession to create independent sessions from agent tool calls
       managed.agent.onSpawnSession = async (request) => {
+        assertOwner()
         sessionLog.info(`Spawn session request from session ${managed.id}:`, request.name || '(unnamed)')
 
         const session = await this.createSession(managed.workspace.id, {
@@ -5163,9 +5271,10 @@ export class SessionManager implements ISessionManager {
         // (session_created is emitted by createSession above.)
 
         // Fire and forget — send the message but don't await completion
-        const inheritedExecution = this.roxExecutions.get(managed.id)
+        assertOwner()
+        const inheritedExecution = execution
         if (inheritedExecution) { getRoxAccountAuthority().assertCurrent(inheritedExecution); this.roxExecutions.set(session.id, inheritedExecution); await getRoxAccountAuthority().bind(`session:${managed.workspace.id}:${session.id}`, inheritedExecution) }
-        this.sendMessage(session.id, request.prompt, fileAttachments).catch(err => {
+        this.sendMessage(session.id, request.prompt, fileAttachments, undefined, undefined, undefined, undefined, undefined, { roxExecutionContext: inheritedExecution }).catch(err => {
           sessionLog.error(`Failed to send message to spawned session ${session.id}:`, err)
         })
 
@@ -5179,7 +5288,7 @@ export class SessionManager implements ISessionManager {
       }
 
       // Wire up session self-management tools (set_session_labels, set_session_status, etc.)
-      mergeSessionScopedToolCallbacks(managed.id, {
+      this.mergeRoxSessionToolCallbacks(managed.id, execution, {
         setSessionLabelsFn: async (sessionId: string | undefined, labels: string[]) => {
           await this.setSessionLabels(sessionId ?? managed.id, labels)
         },
@@ -5405,7 +5514,8 @@ export class SessionManager implements ISessionManager {
           // target starts processing immediately. sendMessage throws for an
           // unknown session — that rejection propagates to the handler's catch.
           const targetBusy = this.sessions.get(sessionId)?.isProcessing === true
-          await this.sendMessage(sessionId, message, fileAttachments)
+          assertOwner()
+          await this.sendMessage(sessionId, message, fileAttachments, undefined, undefined, undefined, undefined, undefined, { roxExecutionContext: execution })
           return {
             delivery: targetBusy ? ('queued' as const) : ('delivered' as const),
             targetBusy,
@@ -5445,8 +5555,11 @@ export class SessionManager implements ISessionManager {
       // it lands while the session is idle. During a turn these events flow through
       // the chat() generator as usual; this only covers the idle gap. No-op unless
       // the backend supports a persistent cross-turn query (Claude keep-alive).
+      const backgroundEventSink = this.fenceRoxSessionCallback(managed.id, execution, async (event: AgentEvent) => {
+        await this.processEvent(managed, event)
+      })
       managed.agent.setBackgroundEventSink?.((event: AgentEvent) => {
-        void this.processEvent(managed, event)
+        try { void backgroundEventSink(event).catch(() => {}) } catch { /* Late invalidated owner. */ }
       })
 
       // Wire up onSourceActivationRequest to auto-enable sources when agent tries to use them
@@ -5553,10 +5666,18 @@ export class SessionManager implements ISessionManager {
           changedAt: diagnostics.lastChangedAt,
         })
       }
+      // These closures can outlive the send promise. Their original owner is
+      // checked before entry and after asynchronous completion, never reread.
+      for (const key of ['onPermissionRequest', 'onPermissionModeChange', 'onPlanSubmitted', 'onAuthRequest', 'onSpawnSession', 'onBackendAuthRequired', 'onSourceActivationRequest'] as const) {
+        const callback = managed.agent[key]
+        if (callback) (managed.agent as any)[key] = this.fenceRoxSessionCallback(managed.id, execution, callback as (...args: any[]) => any,
+          ['onPermissionRequest', 'onPermissionModeChange', 'onAuthRequest', 'onBackendAuthRequired'].includes(key))
+      }
       managed.backendRuntimeSignature = runtimeSignature
       managed.backendRestartSignature = restartSignature
       end()
     }
+    assertOwner()
     return managed.agent
   }
 
@@ -6100,19 +6221,25 @@ export class SessionManager implements ISessionManager {
    * Automatically uses the same provider as the session (Claude or OpenAI).
    */
   async refreshTitle(sessionId: string, roxExecutionContext?: RoxExecutionContext): Promise<{ success: boolean; title?: string; error?: string }> {
+    const release = this.acquireRoxSessionLease(sessionId, roxExecutionContext)
+    try { return await this.refreshTitleWithOwner(sessionId, roxExecutionContext) } finally { release() }
+  }
+
+  private async refreshTitleWithOwner(sessionId: string, roxExecutionContext?: RoxExecutionContext): Promise<{ success: boolean; title?: string; error?: string }> {
     sessionLog.info(`refreshTitle called for session ${sessionId}`)
     const managed = this.sessions.get(sessionId)
     if (managed && roxExecutionContext) {
       getRoxAccountAuthority().assertCurrent(roxExecutionContext)
-      const previous = this.roxExecutions.get(sessionId)
-      if (previous?.authGeneration !== roxExecutionContext.authGeneration) { managed.agent?.destroy(); managed.agent = null }
-      this.roxExecutions.set(sessionId, roxExecutionContext)
       await getRoxAccountAuthority().bind(`session:${managed.workspace.id}:${sessionId}`, roxExecutionContext)
+      this.selectRoxSessionExecution(sessionId, roxExecutionContext)
     }
     if (!managed) {
       sessionLog.warn(`refreshTitle: Session ${sessionId} not found`)
       return { success: false, error: 'Session not found' }
     }
+
+    const execution = await this.roxExecutionForSession(managed)
+    this.assertRoxSessionExecution(managed.id, execution)
 
     // Ensure messages are loaded from disk (lazy loading support)
     await this.ensureMessagesLoaded(managed)
@@ -6158,7 +6285,7 @@ export class SessionManager implements ISessionManager {
         const resolvedMiniModel = connection ? (getMiniModel(connection) ?? connection.defaultModel) : undefined
 
         agent = createBackendFromConnection(managed.llmConnection, {
-          roxExecutionContext: await this.roxExecutionForSession(managed),
+          roxExecutionContext: execution,
           workspace: managed.workspace,
           miniModel: resolvedMiniModel,
           session: {
@@ -6194,9 +6321,9 @@ export class SessionManager implements ISessionManager {
     this.sendEvent({ type: 'title_regenerating', sessionId, isRegenerating: true }, managed.workspace.id)
 
     try {
-      const execution = await this.roxExecutionForSession(managed)
+      this.assertRoxSessionExecution(sessionId, execution)
       const title = await agent.regenerateTitle(userMessages, assistantResponse, titleOptions)
-      if (execution) getRoxAccountAuthority().assertCurrent(execution)
+      this.assertRoxSessionExecution(sessionId, execution)
       sessionLog.info(`refreshTitle: regenerateTitle returned: ${title ? `"${title}"` : 'null'}`)
       if (title) {
         managed.name = title
@@ -6879,7 +7006,12 @@ export class SessionManager implements ISessionManager {
     sessionLog.info(`Deleted session ${sessionId}`)
   }
 
-  async sendMessage(
+  async sendMessage(...args: Parameters<SessionManager['sendMessageWithOwner']>): Promise<void> {
+    const release = this.acquireRoxSessionLease(args[0], args[8]?.roxExecutionContext)
+    try { await this.sendMessageWithOwner(...args) } finally { release() }
+  }
+
+  private async sendMessageWithOwner(
     sessionId: string,
     message: string,
     attachments?: FileAttachment[],
@@ -6914,17 +7046,14 @@ export class SessionManager implements ISessionManager {
     }
     if (rpcContext?.roxExecutionContext) {
       getRoxAccountAuthority().assertCurrent(rpcContext.roxExecutionContext)
-      const previous = this.roxExecutions.get(sessionId)
-      if (previous && (previous.cloudAccountId !== rpcContext.roxExecutionContext.cloudAccountId || previous.authGeneration !== rpcContext.roxExecutionContext.authGeneration)) {
-        managed.agent?.destroy()
-        managed.agent = null
-      }
-      this.roxExecutions.set(sessionId, rpcContext.roxExecutionContext)
       await getRoxAccountAuthority().bind(`session:${managed.workspace.id}:${sessionId}`, rpcContext.roxExecutionContext)
+      this.selectRoxSessionExecution(sessionId, rpcContext.roxExecutionContext)
     } else {
       const inherited = this.roxExecutions.get(sessionId)
       if (inherited) getRoxAccountAuthority().assertCurrent(inherited)
     }
+    const execution = await this.roxExecutionForSession(managed)
+    this.assertRoxSessionExecution(sessionId, execution)
     this.setLastMessageClientId(sessionId, rpcContext?.callerClientId)
 
     // Source-activation auto-retry dedup (craft-agents-oss#804). When the server
@@ -7009,7 +7138,10 @@ export class SessionManager implements ISessionManager {
         // for both queue-direct (current turn still running) and
         // queue-after-abort (backend already aborted) — the replay path in
         // processNextQueuedMessage is identical.
-        managed.messageQueue.push({ message, attachments, storedAttachments, options, messageId: userMessage.id, optimisticMessageId: options?.optimisticMessageId })
+        const roxOwnerResource = `queued-message:${managed.workspace.id}:${sessionId}:${userMessage.id}`
+        if (execution) await getRoxAccountAuthority().bind(roxOwnerResource, execution)
+        this.assertRoxSessionExecution(sessionId, execution)
+        managed.messageQueue.push({ message, attachments, storedAttachments, options, messageId: userMessage.id, optimisticMessageId: options?.optimisticMessageId, roxExecutionContext: execution, ...(execution ? { roxOwnerResource } : {}) })
         // Only claim interruption when a steer attempt actually aborted the
         // in-flight turn. In 'queue' mode the current turn runs to natural
         // completion, so the replayed turn must NOT inject the "previous response
@@ -7381,12 +7513,13 @@ export class SessionManager implements ISessionManager {
 
 
       sendSpan.mark('chat.starting')
+      this.assertRoxSessionExecution(sessionId, execution)
       const chatIterator = agent.chat(effectiveMessage, modelInputAttachments.attachments)
       sessionLog.info('Got chat iterator, starting iteration...')
 
-      const execution = await this.roxExecutionForSession(managed)
+      this.assertRoxSessionExecution(sessionId, execution)
       for await (const event of chatIterator) {
-        if (execution) getRoxAccountAuthority().assertCurrent(execution)
+        this.assertRoxSessionExecution(sessionId, execution)
         // Log events (skip noisy text_delta / thinking_delta)
         if (event.type !== 'text_delta' && event.type !== 'thinking_delta') {
           if (event.type === 'tool_start') {
@@ -8115,6 +8248,8 @@ export class SessionManager implements ISessionManager {
     if (!managed || managed.messageQueue.length === 0) return
 
     const next = managed.messageQueue.shift()!
+    const replayExecution = next.roxExecutionContext ?? (next.roxOwnerResource ? undefined : this.roxExecutions.get(sessionId))
+    next.roxExecutionContext = replayExecution
     sessionLog.info('replay queued', {
       sessionId,
       messageId: next.messageId,
@@ -8146,14 +8281,23 @@ export class SessionManager implements ISessionManager {
 
     // Process message (use setImmediate to allow current stack to clear)
     setImmediate(() => {
-      this.sendMessage(
+      const replay = async () => {
+        const authority = peekRoxAccountAuthority()
+        const execution = next.roxExecutionContext ?? (next.roxOwnerResource ? await authority?.bound(next.roxOwnerResource, true) : undefined)
+        if (next.roxOwnerResource && authority && !execution) throw new Error('ROX_TRUSTED_ACCOUNT_REQUIRED')
+        return this.sendMessage(
         sessionId,
         next.message,
         next.attachments,
         next.storedAttachments,
         next.options,
-        next.messageId
-      ).catch(err => {
+        next.messageId,
+        undefined,
+        undefined,
+        { roxExecutionContext: execution }
+        )
+      }
+      replay().catch(err => {
         sessionLog.error('replay failed', {
           sessionId,
           messageId: next.messageId,
@@ -9207,6 +9351,13 @@ export class SessionManager implements ISessionManager {
    * If no agent exists, creates a temporary one using the session's connection.
    */
   private async generateTitle(managed: ManagedSession, userMessage: string): Promise<void> {
+    const release = this.acquireRoxSessionLease(managed.id)
+    try { await this.generateTitleWithOwner(managed, userMessage) } finally { release() }
+  }
+
+  private async generateTitleWithOwner(managed: ManagedSession, userMessage: string): Promise<void> {
+    const execution = await this.roxExecutionForSession(managed)
+    this.assertRoxSessionExecution(managed.id, execution)
     sessionLog.info(`[generateTitle] Starting for session ${managed.id}`)
 
     // Use existing agent or create temporary one
@@ -9229,7 +9380,7 @@ export class SessionManager implements ISessionManager {
         const connection = getLlmConnection(managed.llmConnection)
 
         agent = createBackendFromConnection(managed.llmConnection, {
-          roxExecutionContext: await this.roxExecutionForSession(managed),
+          roxExecutionContext: execution,
           workspace: managed.workspace,
           miniModel: connection ? (getMiniModel(connection) ?? connection.defaultModel) : undefined,
           session: {
@@ -9264,9 +9415,9 @@ export class SessionManager implements ISessionManager {
         resolvedLanguage: i18n.resolvedLanguage ?? null,
         titleLanguage: titleLanguage ?? null,
       })
-      const execution = await this.roxExecutionForSession(managed)
+      this.assertRoxSessionExecution(managed.id, execution)
       const title = await agent.generateTitle(userMessage, { language: titleLanguage })
-      if (execution) getRoxAccountAuthority().assertCurrent(execution)
+      this.assertRoxSessionExecution(managed.id, execution)
       if (title) {
         managed.name = title
         this.persistSession(managed)
@@ -10165,7 +10316,7 @@ export class SessionManager implements ISessionManager {
         // Steer message was not delivered (no PreToolUse fired before turn ended).
         // Re-queue it so it's sent as a normal message on the next turn.
         sessionLog.info(`Steer message undelivered, re-queuing for session ${sessionId}`)
-        managed.messageQueue.push({ message: event.message })
+        managed.messageQueue.push({ message: event.message, roxExecutionContext: this.roxExecutions.get(managed.id) })
         managed.wasInterrupted = true
         break
 

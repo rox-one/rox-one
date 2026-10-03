@@ -12,7 +12,7 @@ export interface PocketAccountRecord {
   accountId: string; authGeneration: string; accessToken: string; refreshToken: string; expiresAt: number
   refreshId?: string; snapshot?: RoxAccountSnapshot; credential?: RoxInferenceCredential
 }
-export interface PocketBinding { caller: RoxCloudOwner; accountId: string }
+export interface PocketBinding { caller: RoxCloudOwner; accountId: string; authGeneration?: string }
 export type PocketLogoutRecord = Pick<PocketAccountRecord, 'accountId' | 'accessToken' | 'refreshToken' | 'refreshId'>
 export interface PocketAccountStore {
   readLogout(caller: RoxCloudOwner): Promise<PocketLogoutRecord | null>
@@ -37,6 +37,7 @@ export class RoxAccountAuthority {
   private flows = new Map<string, RoxConnectFlow>()
   private generations = new Map<string, string>()
   private operations = new Map<string, Promise<unknown>>()
+  private bindingOperations = new Map<string, Promise<void>>()
   private listeners = new Set<(caller: RoxCloudOwner) => void>()
   constructor(private store: PocketAccountStore, private client: PocketClient = defaultClient) {}
   onInvalidated(listener: (caller: RoxCloudOwner) => void): () => void { this.listeners.add(listener); return () => this.listeners.delete(listener) }
@@ -47,7 +48,15 @@ export class RoxAccountAuthority {
   private async record(caller: RoxCloudOwner): Promise<PocketAccountRecord | null> {
     const key = callerKey(caller)
     if (this.records.has(key)) return this.records.get(key)!
-    if (!this.loads.has(key)) this.loads.set(key, this.store.read(caller).then(record => {
+    if (!this.loads.has(key)) this.loads.set(key, (async () => {
+      // Revocation intent is the durable fence, even if a crash left the
+      // separately sealed active record behind. Never load it for execution.
+      if (await this.store.readLogout(caller)) {
+        this.invalidate(caller)
+        return null
+      }
+      return this.store.read(caller)
+    })().then(record => {
       if (record) registerSecretValues([record.accessToken, record.refreshToken, record.credential?.apiKey ?? ''])
       this.records.set(key, record)
       if (!this.generations.has(key)) this.generations.set(key, record?.authGeneration ?? randomUUID())
@@ -98,12 +107,20 @@ export class RoxAccountAuthority {
   async logout(caller: RoxCloudOwner): Promise<void> {
     const old = await this.record(caller)
     this.invalidate(caller)
+    this.records.set(callerKey(caller), null)
     // Retain a sealed revocation receipt until the broker acknowledges it.
     // A network outage must not make a cleared device impossible to revoke.
     if (old) await this.store.writeLogout(caller, old)
     await this.flow(caller).clear()
+    await this.drainLogout(caller)
+  }
+  private async drainLogout(caller: RoxCloudOwner): Promise<void> {
     const pending = await this.store.readLogout(caller)
     if (pending) {
+      this.records.set(callerKey(caller), null)
+      // Clear the obsolete active record before releasing the durable fence.
+      // If either local storage or the broker is unavailable, retain receipt.
+      await this.store.clear(caller)
       // The broker's logout-only ancestry accepts this exact device's prior
       // access proof after refresh rotation; it grants no account/read access.
       // Revocation must not depend on the 60-second refresh replay cache.
@@ -150,7 +167,11 @@ export class RoxAccountAuthority {
     return this.serial(caller, async () => {
       let record = await this.record(caller)
       let error: string | null = null
-      try { if (record) record = await this.update(caller, record, !record.snapshot || record.snapshot.state !== 'ready') }
+      try {
+        await this.drainLogout(caller)
+        record = await this.record(caller)
+        if (record) record = await this.update(caller, record, !record.snapshot || record.snapshot.state !== 'ready')
+      }
       catch (reason) { error = reason instanceof Error ? reason.message : 'ROX_AUTH_REQUEST_FAILED' }
       return { required: isRoxCloudRequired(), connected: !error && record?.snapshot?.state === 'ready' && !!record.credential, authBaseUrl: getRoxAuthBaseUrl(),
         user: record?.snapshot ? { id: record.accountId, email: record.snapshot.user.email, name: record.snapshot.user.name ?? '' } : null,
@@ -160,14 +181,24 @@ export class RoxAccountAuthority {
   async bind(resource: string, context: RoxExecutionContext): Promise<void> {
     this.assertCurrent(context)
     if (!this.store.writeBinding) throw new Error('ROX_SECURE_BINDING_UNAVAILABLE')
-    await this.store.writeBinding(resource, { caller: { ...context.caller }, accountId: context.cloudAccountId })
-    this.assertCurrent(context)
+    const next = (this.bindingOperations.get(resource) ?? Promise.resolve()).catch(() => {}).then(async () => {
+      this.assertCurrent(context)
+      const exclusiveSession = resource.startsWith('session:') || resource.startsWith('queued-message:')
+      const previous = exclusiveSession ? await this.store.readBinding?.(resource) : undefined
+      if (previous && callerKey(previous.caller) !== callerKey(context.caller)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
+      if (previous && resource.startsWith('queued-message:') && (previous.accountId !== context.cloudAccountId || previous.authGeneration !== context.authGeneration)) throw new Error('ROX_ACCOUNT_CHANGED')
+      this.assertCurrent(context)
+      await this.store.writeBinding!(resource, { caller: { ...context.caller }, accountId: context.cloudAccountId, authGeneration: context.authGeneration })
+      this.assertCurrent(context)
+    })
+    this.bindingOperations.set(resource, next)
+    try { await next } finally { if (this.bindingOperations.get(resource) === next) this.bindingOperations.delete(resource) }
   }
-  async bound(resource: string): Promise<RoxExecutionContext | undefined> {
+  async bound(resource: string, exactGeneration = false): Promise<RoxExecutionContext | undefined> {
     const binding = await this.store.readBinding?.(resource)
     if (!binding) return undefined
     const context = await this.capture(binding.caller)
-    if (context.cloudAccountId !== binding.accountId) throw new Error('ROX_ACCOUNT_CHANGED')
+    if (context.cloudAccountId !== binding.accountId || (exactGeneration && context.authGeneration !== binding.authGeneration)) throw new Error('ROX_ACCOUNT_CHANGED')
     return context
   }
   async capture(caller: RoxCloudOwner): Promise<RoxExecutionContext> {

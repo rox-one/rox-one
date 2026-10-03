@@ -144,4 +144,72 @@ describe('Pocket host account authority', () => {
   expect(f.pendingLogouts.size).toBe(0)
  })
 
+ it('fences crash-window active records and drains logout on ordinary restart state reads', async () => {
+  const f = createPocketFixture(); await connect(f)
+  const oldContext = await f.authority.capture(LOCAL_ROX_CALLER)
+  await f.store.writeLogout(LOCAL_ROX_CALLER, f.records.get(JSON.stringify(LOCAL_ROX_CALLER))!)
+  let accountReads = 0; f.client.account = async () => { accountReads++; return pocketSnapshot() }
+  const restarted = new RoxAccountAuthority(f.store, f.client)
+  expect((await restarted.state(LOCAL_ROX_CALLER)).connected).toBe(false)
+  await expect(restarted.capture(LOCAL_ROX_CALLER)).rejects.toThrow('ROX_ACCOUNT_NOT_READY')
+  await expect(restarted.inference(oldContext)).rejects.toThrow('ROX_ACCOUNT_CHANGED')
+  expect(accountReads).toBe(0)
+  expect(f.records.size).toBe(0)
+  expect(f.pendingLogouts.size).toBe(0)
+  expect(f.logouts).toBe(1)
+ })
+ it('keeps a pending logout fail-closed across clear failure and broker outage restarts', async () => {
+  const f = createPocketFixture(); await connect(f)
+  const oldContext = await f.authority.capture(LOCAL_ROX_CALLER)
+  const clear = f.store.clear
+  f.store.clear = async () => { throw new Error('clear unavailable') }
+  await expect(f.authority.logout(LOCAL_ROX_CALLER)).rejects.toThrow('clear unavailable')
+  expect(f.records.size).toBe(1)
+  expect(f.pendingLogouts.size).toBe(1)
+  const restarted = new RoxAccountAuthority(f.store, f.client)
+  expect((await restarted.state(LOCAL_ROX_CALLER)).connected).toBe(false)
+  await expect(restarted.capture(LOCAL_ROX_CALLER)).rejects.toThrow('ROX_ACCOUNT_NOT_READY')
+  await expect(restarted.inference(oldContext)).rejects.toThrow('ROX_ACCOUNT_CHANGED')
+  expect(f.pendingLogouts.size).toBe(1)
+  f.store.clear = clear
+  f.client.logout = async () => { throw new Error('broker offline') }
+  const offline = new RoxAccountAuthority(f.store, f.client)
+  expect((await offline.state(LOCAL_ROX_CALLER)).connected).toBe(false)
+  expect(f.records.size).toBe(0)
+  expect(f.pendingLogouts.size).toBe(1)
+  f.client.logout = async () => {}
+  expect((await offline.state(LOCAL_ROX_CALLER)).connected).toBe(false)
+  expect(f.pendingLogouts.size).toBe(0)
+ })
+
+ it('serializes first session owner claims and preserves caller binding across restart', async () => {
+  const f = createPocketFixture(); await connect(f); await connect(f, native)
+  const local = await f.authority.capture(LOCAL_ROX_CALLER)
+  const remote = await f.authority.capture(native)
+  const claims = await Promise.allSettled([f.authority.bind('session:w:shared', local), f.authority.bind('session:w:shared', remote)])
+  expect(claims[0].status).toBe('fulfilled')
+  expect(claims[1].status).toBe('rejected')
+  expect((claims[1] as PromiseRejectedResult).reason.message).toBe('ROX_SESSION_OWNER_CONFLICT')
+  expect(await f.store.readBinding('session:w:shared')).toMatchObject({ caller: LOCAL_ROX_CALLER, accountId: 'account-a' })
+  const restarted = new RoxAccountAuthority(f.store, f.client)
+  const remoteAfterRestart = await restarted.capture(native)
+  await expect(restarted.bind('session:w:shared', remoteAfterRestart)).rejects.toThrow('ROX_SESSION_OWNER_CONFLICT')
+  f.authority.assertCurrent(local); f.authority.assertCurrent(remote)
+ })
+
+ it('restores sealed queued-message owners only for their exact execution generation', async () => {
+  const f = createPocketFixture(); await connect(f)
+  const old = await f.authority.capture(LOCAL_ROX_CALLER)
+  await f.authority.bind('queued-message:w:s:message-a', old)
+  await f.authority.bind('session:w:s', old)
+  const restarted = new RoxAccountAuthority(f.store, f.client)
+  expect((await restarted.bound('queued-message:w:s:message-a', true))?.authGeneration).toBe(old.authGeneration)
+  await f.authority.logout(LOCAL_ROX_CALLER); await connect(f)
+  const next = await f.authority.capture(LOCAL_ROX_CALLER)
+  expect(next.authGeneration).not.toBe(old.authGeneration)
+  await expect(f.authority.bound('queued-message:w:s:message-a', true)).rejects.toThrow('ROX_ACCOUNT_CHANGED')
+  await expect(f.authority.bind('queued-message:w:s:message-a', next)).rejects.toThrow('ROX_ACCOUNT_CHANGED')
+  expect((await f.authority.bound('session:w:s'))?.authGeneration).toBe(next.authGeneration)
+ })
+
 })
