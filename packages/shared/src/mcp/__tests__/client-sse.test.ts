@@ -36,7 +36,9 @@ interface SeenRequest {
 
 let httpServer: HttpServer
 let sseUrl: string
+let authenticatedSseUrl: string
 const seen: SeenRequest[] = []
+const fixtureAuthorization = 'Bearer sse-token-123'
 
 function buildMcpServerStub(): Server {
   const server = new Server(
@@ -71,6 +73,7 @@ function buildMcpServerStub(): Server {
 
 beforeAll(async () => {
   const transports = new Map<string, SSEServerTransport>()
+  const authenticatedTransports = new Map<string, SSEServerTransport>()
 
   httpServer = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1')
@@ -80,20 +83,27 @@ beforeAll(async () => {
       authorization: req.headers['authorization'],
     })
 
-    if (req.method === 'GET' && url.pathname === '/sse') {
-      const transport = new SSEServerTransport('/messages', res)
-      transports.set(transport.sessionId, transport)
+    const authenticated = url.pathname === '/authenticated-sse' || url.pathname === '/authenticated-messages'
+    if (authenticated && req.headers['authorization'] !== fixtureAuthorization) {
+      res.writeHead(401).end('Unauthorized')
+      return
+    }
+
+    if (req.method === 'GET' && (url.pathname === '/sse' || url.pathname === '/authenticated-sse')) {
+      const sessions = authenticated ? authenticatedTransports : transports
+      const transport = new SSEServerTransport(authenticated ? '/authenticated-messages' : '/messages', res)
+      sessions.set(transport.sessionId, transport)
       res.on('close', () => {
-        transports.delete(transport.sessionId)
+        sessions.delete(transport.sessionId)
       })
       const mcp = buildMcpServerStub()
       mcp.connect(transport).catch(() => {})
       return
     }
 
-    if (req.method === 'POST' && url.pathname === '/messages') {
+    if (req.method === 'POST' && (url.pathname === '/messages' || url.pathname === '/authenticated-messages')) {
       const sessionId = url.searchParams.get('sessionId') ?? ''
-      const transport = transports.get(sessionId)
+      const transport = (authenticated ? authenticatedTransports : transports).get(sessionId)
       if (!transport) {
         res.writeHead(404).end('unknown session')
         return
@@ -115,6 +125,7 @@ beforeAll(async () => {
   })
   const { port } = httpServer.address() as AddressInfo
   sseUrl = `http://127.0.0.1:${port}/sse`
+  authenticatedSseUrl = `http://127.0.0.1:${port}/authenticated-sse`
 })
 
 afterAll(async () => {
@@ -151,9 +162,13 @@ describe('CraftMcpClient — SSE transport', () => {
 
   it('sends configured headers on the SSE handshake and the POST channel', async () => {
     const before = seen.length
+    // Late traffic from an anonymous client belongs to the ordinary channel.
+    const unrelated = await fetch(new URL('/messages?sessionId=unrelated', sseUrl), { method: 'POST' })
+    await unrelated.text()
+    expect(unrelated.status).toBe(404)
     const client = new CraftMcpClient({
       transport: 'sse',
-      url: sseUrl,
+      url: authenticatedSseUrl,
       headers: { Authorization: 'Bearer sse-token-123' },
     })
     try {
@@ -162,12 +177,24 @@ describe('CraftMcpClient — SSE transport', () => {
       await client.close()
     }
     const related = seen.slice(before)
-    const handshake = related.find((r) => r.method === 'GET' && r.path === '/sse')
-    const posts = related.filter((r) => r.method === 'POST' && r.path === '/messages')
+    const handshake = related.find((r) => r.method === 'GET' && r.path === '/authenticated-sse')
+    const posts = related.filter((r) => r.method === 'POST' && r.path === '/authenticated-messages')
     expect(handshake?.authorization).toBe('Bearer sse-token-123')
     expect(posts.length).toBeGreaterThan(0)
     for (const post of posts) {
       expect(post.authorization).toBe('Bearer sse-token-123')
+    }
+  })
+
+  it('rejects missing authorization on both protected SSE endpoints', async () => {
+    const post = await fetch(new URL('/authenticated-messages?sessionId=unauthorized', authenticatedSseUrl), { method: 'POST' })
+    await post.text()
+    expect(post.status).toBe(401)
+    const client = new CraftMcpClient({ transport: 'sse', url: authenticatedSseUrl })
+    try {
+      await expect(client.listTools()).rejects.toThrow()
+    } finally {
+      await client.close()
     }
   })
 

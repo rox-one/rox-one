@@ -1,6 +1,6 @@
 {
   "source_sha": "86154e8c812746261282bb4c517b16ad7becc0ec",
-  "source_pr": 868,
+  "source_pr": 54,
   "source_paths": [
     {
       "path": "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
@@ -19,7 +19,7 @@
       "sha256": "4ddbc55b8dbfc3c376a8cfc74970941399dae2bc4bccba2ca76ca458c8aff0fd"
     }
   ],
-  "integration_main": "b1526a85f6db5a6cdf668438e484f62ce15e6f29",
+  "integration_main": "2ccafa7211d6da4b10250c5a33b63e3c7eee5a4a",
   "backend_dependency_pr": 1414,
   "consumed_intents": [
     "live inspect health/expiry/provenance/fingerprint/kind/version",
@@ -42,5 +42,6 @@
     "LocalMeetingDetail/Notes authority and native single-writer contracts",
     "original source branches"
   ],
-  "acceptance_limit": "Executed production page/connection inspector components with substituted unrelated overview/project/context and metadata-only backend fixture; actual provider sign-in/backend migration/native app acceptance separate"
+  "acceptance_limit": "Executed production page/connection inspector components with substituted unrelated overview/project/context and metadata-only backend fixture; actual provider sign-in/backend migration/native app acceptance separate",
+  "source_branch": "checkpoint/session-audit-20260821-craft-agents"
 }
