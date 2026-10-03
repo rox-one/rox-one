@@ -10,7 +10,7 @@ const baseline = process.argv[2]
 if (!baseline) throw new Error('Usage: bun scripts/product-tour/bundle-report.ts BASELINE_RENDERER_DIST [CANDIDATE_RENDERER_DIST]')
 const candidate = process.argv[3] ?? join(repository, 'apps/electron/dist/renderer')
 function files(directory: string): string[] { return readdirSync(directory).flatMap(name => { const path = join(directory, name); return statSync(path).isDirectory() ? files(path) : [path] }) }
-const forbidden = ['rox-product-tour-application-test-only', 'rox-product-tour-component-test-only', '__productTourApplication', '__productTourComponent', 'owned-product-tour-bootstrap', 'product-tour-owned-workspace', 'rox-learning-results-fixture', '__learningResults']
+const forbidden = ['rox-product-tour-application-test-only', 'rox-product-tour-component-test-only', '__productTourApplication', '__productTourComponent', 'owned-product-tour-bootstrap', 'product-tour-owned-workspace', 'rox-learning-results-fixture', '__learningResults', 'nativeFileDialog', 'ROX_PRODUCT_TOUR_FILE_DIALOG_CASE', 'projectCollectionTest', 'ROX_PRODUCT_TOUR_PROJECT_COLLECTION_CASE', 'ROX_PROJECT_COLLECTION_BASELINE_BUNDLE', 'ROX_PROJECT_COLLECTION_SAVE_BUNDLE']
 function inspect(directory: string) {
   const paths = files(resolve(directory))
   const measure = (suffix: string) => paths.filter(path => path.endsWith(suffix)).reduce((sum, path) => { const content = readFileSync(path); return { files: sum.files + 1, rawBytes: sum.rawBytes + content.length, gzipBytes: sum.gzipBytes + gzipSync(content, { level: 9, mtime: 0 } as any).length } }, { files: 0, rawBytes: 0, gzipBytes: 0 })
