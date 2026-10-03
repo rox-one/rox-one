@@ -116,7 +116,7 @@ describe('OMP source-proxy chain', () => {
       }),
     )
 
-    const events: Array<{ type: string }> = []
+    const events: Array<{ type: string; message?: string }> = []
     try {
       for await (const event of agent.chat('please call the echo tool')) {
         events.push(event)
@@ -127,7 +127,7 @@ describe('OMP source-proxy chain', () => {
 
     // Turn completed without an error event.
     expect(events.some((e) => e.type === 'complete')).toBe(true)
-    expect(events.some((e) => e.type === 'error')).toBe(false)
+    expect(events.filter((e) => e.type === 'error')).toEqual([])
 
     const journal = readJournal(journalPath)
 
