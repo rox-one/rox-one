@@ -72,6 +72,8 @@ const KEY_FILE_NAME = 'credentials.key';
 const KEYCHAIN_SERVICE = ROX_CREDENTIAL_KEYCHAIN_SERVICE;
 const KEYCHAIN_ACCOUNT = 'master';
 const MASTER_KEY_HEX = /^[0-9a-f]{64}$/i;
+// A locked or unavailable OS provider must not block encrypted-store recovery.
+const KEYCHAIN_TIMEOUT_MS = 3000;
 
 export type CredentialStoreErrorCode =
   | 'WRITE_BLOCKED'
@@ -141,7 +143,7 @@ function keychainReadHex(service: string): string | null {
       const res = spawnSync(
         'security',
         ['find-generic-password', '-s', service, '-a', KEYCHAIN_ACCOUNT, '-w'],
-        { encoding: 'utf8' },
+        { encoding: 'utf8', timeout: KEYCHAIN_TIMEOUT_MS, killSignal: 'SIGKILL' },
       );
       const value = res.status === 0 ? (res.stdout ?? '').trim() : '';
       return MASTER_KEY_HEX.test(value) ? value.toLowerCase() : null;
@@ -150,7 +152,7 @@ function keychainReadHex(service: string): string | null {
       const res = spawnSync(
         'secret-tool',
         ['lookup', 'service', service, 'account', KEYCHAIN_ACCOUNT],
-        { encoding: 'utf8' },
+        { encoding: 'utf8', timeout: KEYCHAIN_TIMEOUT_MS, killSignal: 'SIGKILL' },
       );
       const value = res.status === 0 ? (res.stdout ?? '').trim() : '';
       return MASTER_KEY_HEX.test(value) ? value.toLowerCase() : null;
@@ -167,7 +169,7 @@ function keychainWriteHex(hex: string, service: string = KEYCHAIN_SERVICE): bool
       const res = spawnSync(
         'security',
         ['add-generic-password', '-U', '-s', service, '-a', KEYCHAIN_ACCOUNT, '-w', hex],
-        { encoding: 'utf8' },
+        { encoding: 'utf8', timeout: KEYCHAIN_TIMEOUT_MS, killSignal: 'SIGKILL' },
       );
       return res.status === 0;
     }
@@ -175,7 +177,7 @@ function keychainWriteHex(hex: string, service: string = KEYCHAIN_SERVICE): bool
       const res = spawnSync(
         'secret-tool',
         ['store', 'service', service, 'account', KEYCHAIN_ACCOUNT],
-        { input: hex },
+        { input: hex, timeout: KEYCHAIN_TIMEOUT_MS, killSignal: 'SIGKILL' },
       );
       return res.status === 0;
     }

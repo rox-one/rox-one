@@ -389,7 +389,7 @@ export function InspectorHost() {
                   type="button"
                   aria-label={t('inspector.hide')}
                   onClick={collapseChrome}
-                  className="flex h-6 w-6 items-center justify-center rounded-[6px] text-muted-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
+                  className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
                 >
                   <ChevronsRight className="h-3.5 w-3.5" />
                 </button>
@@ -441,7 +441,7 @@ export function InspectorHost() {
                   aria-pressed={active}
                   onClick={() => handleSectionClick(sectionId)}
                   className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-[6px] transition-colors',
+                    'flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] transition-colors',
                     active
                       ? 'bg-accent/10 text-accent'
                       : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
@@ -461,7 +461,7 @@ export function InspectorHost() {
                 type="button"
                 aria-label={t('inspector.hide')}
                 onClick={collapseChrome}
-                className="flex h-8 w-8 items-center justify-center rounded-[6px] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
+                className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
               >
                 <ChevronsRight className="h-4 w-4" />
               </button>

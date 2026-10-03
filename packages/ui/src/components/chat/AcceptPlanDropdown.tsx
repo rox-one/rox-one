@@ -53,7 +53,7 @@ export function AcceptPlanDropdown({
         <button
           type="button"
           className={cn(
-            'group/accept h-[28px] pl-2.5 pr-2 text-xs font-medium rounded-[6px] flex items-center gap-1.5 transition-all',
+            'group/accept h-[28px] pl-2.5 pr-2 text-xs font-medium rounded-[var(--radius-control)] flex items-center gap-1.5 transition-all',
             'bg-success/5 text-success hover:bg-success/10 shadow-tinted',
             'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             className,

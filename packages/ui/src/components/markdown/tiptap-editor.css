@@ -131,7 +131,7 @@
 /* Code blocks */
 .tiptap-editor .tiptap-prose pre {
   margin: 0.5rem 0;
-  border-radius: 8px;
+  border-radius: var(--radius-control, 4px);
   background: color-mix(in oklch, var(--foreground) 3%, transparent);
   padding: 0.75rem;
   overflow-x: auto;
@@ -176,11 +176,11 @@
   align-items: center;
   gap: 0.25rem;
   min-height: 24px;
-  border-radius: 6px;
+  border-radius: var(--radius-control, 4px);
   border: none;
   background: var(--background);
   box-shadow: var(--shadow-minimal);
-  color: color-mix(in oklch, var(--foreground) 65%, transparent);
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0.25rem 0.4rem;
   transition: background-color 0.1s, color 0.1s;
@@ -239,7 +239,7 @@
   max-width: 100%;
   height: auto;
   margin: 0.75rem 0;
-  border-radius: 8px;
+  border-radius: var(--radius-control, 4px);
 }
 
 /* Official TipTap image loading placeholder (no custom node-view) */
@@ -290,7 +290,7 @@
    under rounded code blocks. Keep wrapper transparent and clip to rounded corners. */
 .tiptap-editor .tiptap-prose .node-codeBlock.shiki {
   background: transparent !important;
-  border-radius: 8px;
+  border-radius: var(--radius-control, 4px);
   overflow: hidden;
 }
 
@@ -306,7 +306,7 @@
 
 .tiptap-editor .tiptap-mermaid-block {
   margin: 0.5rem 0;
-  border-radius: 8px;
+  border-radius: var(--radius-control, 4px);
   overflow: hidden;
 }
 
@@ -314,7 +314,7 @@
 .tiptap-editor .tiptap-latex-block {
   margin: 0.5rem 0;
   padding: 0.5rem 0;
-  border-radius: 8px;
+  border-radius: var(--radius-control, 4px);
 }
 
 /* ── Bubble menu toolbar ── */
@@ -323,7 +323,7 @@
   align-items: center;
   gap: 2px;
   padding: 4px;
-  border-radius: 6px;
+  border-radius: var(--radius-overlay, 6px);
   background: var(--background);
   border: none;
   box-shadow: var(--shadow-modal-small);
@@ -336,7 +336,7 @@
   min-width: 320px;
   max-width: 480px;
   padding: 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-overlay, 6px);
 }
 
 .tiptap-bubble-btn {
@@ -345,11 +345,11 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-control, 4px);
   border: none;
   cursor: pointer;
   background: transparent;
-  color: color-mix(in oklch, var(--foreground) 70%, transparent);
+  color: var(--text-secondary);
   transition: background-color 0.1s, color 0.1s;
 }
 
@@ -390,7 +390,7 @@
 .tiptap-bubble-done-btn {
   font-size: 12px;
   font-weight: 500;
-  color: color-mix(in oklch, var(--foreground) 70%, transparent);
+  color: var(--text-secondary);
   background: var(--background);
   border: none;
   cursor: pointer;
@@ -406,7 +406,7 @@
 }
 
 .tiptap-bubble-textarea-shell {
-  border-radius: 6px;
+  border-radius: var(--radius-control, 4px);
   background: var(--foreground-2);
   box-shadow: var(--shadow-minimal);
   transition: background-color 0.1s;
@@ -423,7 +423,7 @@
   color: var(--foreground);
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-control, 4px);
   padding: 8px;
   resize: vertical;
   min-height: 80px;
@@ -503,7 +503,7 @@
 .is-selected .tiptap-latex-block {
   outline: var(--tiptap-image-selection-width) solid var(--tiptap-image-selection-color);
   outline-offset: 2px;
-  border-radius: 8px;
+  border-radius: var(--radius-control, 4px);
   background: color-mix(in oklch, var(--accent) 5%, transparent);
 }
 
@@ -513,7 +513,7 @@
 .tiptap-editor .tiptap-prose .is-selected img {
   outline: var(--tiptap-image-selection-width) solid var(--tiptap-image-selection-color);
   outline-offset: 2px;
-  border-radius: 8px;
+  border-radius: var(--radius-control, 4px);
 }
 
 .tiptap-mathematics-render--editable.is-selected,
@@ -570,7 +570,7 @@
   max-width: min(300px, calc(100vw - 32px));
   max-height: 320px;
   overflow: auto;
-  border-radius: 8px;
+  border-radius: var(--radius-control, 4px);
   padding: 4px;
   font-family: var(--font-sans);
 }
@@ -625,7 +625,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: color-mix(in oklch, var(--foreground) 70%, transparent);
+  color: var(--text-secondary);
 }
 
 .tiptap-slash-item-icon svg {

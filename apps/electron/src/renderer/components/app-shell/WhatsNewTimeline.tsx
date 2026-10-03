@@ -151,7 +151,7 @@ export function WhatsNewTimeline({
     >
       <div className="mx-auto w-full max-w-2xl px-4 pb-16 pt-2">
         {notes.length === 0 ? (
-          <div className="rounded-2xl border border-border/50 bg-background/80 px-6 py-12 text-center text-sm text-muted-foreground shadow-minimal">
+          <div className="rounded-[var(--radius-card)] border border-border/50 bg-background/80 px-6 py-12 text-center text-sm text-muted-foreground shadow-minimal">
             {t('whatsNew.empty')}
           </div>
         ) : (
@@ -174,7 +174,7 @@ export function WhatsNewTimeline({
                   />
                   <article
                     className={cn(
-                      'rounded-2xl border bg-background/90 shadow-minimal overflow-hidden',
+                      'rounded-[var(--radius-card)] border bg-background/90 shadow-minimal overflow-hidden',
                       isSeen ? 'border-border/50' : 'border-accent/35 ring-1 ring-accent/15',
                     )}
                   >

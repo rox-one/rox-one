@@ -22,9 +22,9 @@ interface ProviderOption {
 }
 
 const PROVIDER_ICONS: Record<ProviderChoice, React.ReactNode> = {
-  claude: <img src={claudeIcon} alt="" className="size-5 rounded-[4px]" />,
-  chatgpt: <img src={openaiIcon} alt="" className="size-5 rounded-[4px]" />,
-  copilot: <img src={copilotIcon} alt="" className="size-5 rounded-[4px]" />,
+  claude: <img src={claudeIcon} alt="" className="size-5 rounded-[var(--radius-control)]" />,
+  chatgpt: <img src={openaiIcon} alt="" className="size-5 rounded-[var(--radius-control)]" />,
+  copilot: <img src={copilotIcon} alt="" className="size-5 rounded-[var(--radius-control)]" />,
   api_key: <Key className="size-5" />,
   omp: <Cpu className="size-5" />,
   local: <Monitor className="size-5" />,
@@ -120,7 +120,7 @@ export function ProviderSelectStep({ onSelect }: ProviderSelectStepProps) {
             key={option.id}
             onClick={() => onSelect(option.id)}
             className={cn(
-              "flex w-full items-center gap-3 rounded-xl bg-foreground-2 p-3 text-left transition-all",
+              "flex w-full items-center gap-3 rounded-[var(--radius-control)] bg-foreground-2 p-3 text-left transition-all",
               "sm:items-start sm:gap-4 sm:p-4",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               "hover:bg-foreground/[0.02] shadow-minimal",

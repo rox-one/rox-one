@@ -15,9 +15,9 @@ const mocks={
 'react-i18next':`const t=key=>key;export const useTranslation=()=>({t});`,
 'sonner':`export const toast={success:(...args)=>window.skillInfo.toasts.push(['success',...args]),error:(...args)=>window.skillInfo.toasts.push(['error',...args])};`,
 '@/context/AppShellContext':`export const useActiveWorkspace=()=>({id:window.skillInfo.props.workspaceId});`,
-'@/components/ui/EditPopover':`export const EditPopover=()=>null;export const getEditConfig=()=>({});`,
+'@/components/ui/EditPopover':`import React from 'react';export const EditPopover=()=>React.createElement('button',null,'fixture AI edit');export const getEditConfig=()=>({});`,
 '@/components/ui/skill-avatar':`export const SkillAvatar=()=>null;`,
-'@/components/app-shell/SkillMenu':`import React from 'react';export const SkillMenu=props=>props.canDelete?React.createElement('button',{onClick:props.onDelete},'delete'):null;`,
+'@/components/app-shell/SkillMenu':`import React from 'react';export const SkillMenu=props=>React.createElement('div',null,props.canDelete&&React.createElement('button',{onClick:props.onDelete},'delete'),props.canShowInFinder&&React.createElement('button',{onClick:props.onShowInFinder},'finder'));`,
 '@/lib/navigate':`export {routes} from ${JSON.stringify(root+'/apps/electron/src/shared/routes.ts')};export const navigate=route=>window.skillInfo.navigations.push(route);`,
 '@/components/info':`import React from 'react';
  export const Info_Page=props=>props.loading?React.createElement('output',null,'loading'):props.error?React.createElement('p',{role:'alert'},props.error):React.createElement('main',null,props.children);

@@ -278,7 +278,7 @@ export function CollectionFilterChips({
           type="button"
           onClick={clearAll}
           className={cn(
-            'inline-flex items-center gap-1 rounded-[4px] text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground',
+            'inline-flex items-center gap-1 rounded-[var(--radius-control)] text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground',
             stacked ? 'mx-1 h-7 px-2' : 'h-6 px-1.5',
           )}
         >

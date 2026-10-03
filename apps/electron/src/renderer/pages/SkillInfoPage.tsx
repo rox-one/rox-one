@@ -204,7 +204,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
       type="button"
       variant="ghost"
       size="sm"
-      className="h-8 px-3 rounded-[6px] bg-background/60 shadow-minimal text-foreground/60 hover:text-foreground"
+      className="h-8 px-3 rounded-[var(--radius-control)] bg-background/60 shadow-minimal text-foreground/60 hover:text-foreground"
     >
       {t('common.askAi')}
     </Button>
@@ -249,7 +249,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                   <Button
                     type="button"
                     size="sm"
-                    className="h-8 px-3 rounded-[6px]"
+                    className="h-8 px-3 rounded-[var(--radius-card)]"
                     disabled={saving}
                     onClick={() => void handleSave()}
                   >
@@ -358,7 +358,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                 <p className="text-xs text-muted-foreground mb-3">
                   {t('skillInfo.permissionModesDesc')}
                 </p>
-                <div className="rounded-[8px] border border-border/50 overflow-hidden">
+                <div className="rounded-[var(--radius-card)] border border-border/50 overflow-hidden">
                   <table className="w-full text-sm">
                     <tbody>
                       <tr className="border-b border-border/30">
@@ -398,7 +398,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                   <Button
                     type="button"
                     size="sm"
-                    className="h-8 px-3 rounded-[6px]"
+                    className="h-8 px-3 rounded-[var(--radius-card)]"
                     disabled={saving}
                     onClick={() => void handleSave()}
                   >

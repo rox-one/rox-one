@@ -1,0 +1,21 @@
+{
+  "source_dependency_pr": 1412,
+  "source_merge": "f058d638e227e57f4aa046e1caedd281ff31ea9c",
+  "test_base": "f51d610b689840427139c29621ffa1bb778df619",
+  "owned_production_sha256": "972de4c6126e381bc6728cdd4c8c0eaf6e472b1baeeb12dd8588968b4593818e",
+  "before": {
+    "pass": 1,
+    "fail": 8
+  },
+  "after": {
+    "pass": 517,
+    "fail": 0,
+    "assertions": 2423,
+    "files": 30
+  },
+  "full_strict_electron_exit": 0,
+  "main_union": "485673240415d781dc34f4a3797c8355e43cf990",
+  "notes_filesystem_alias_preserved": true,
+  "view_restore_action_execution": false,
+  "branches_deleted": false
+}

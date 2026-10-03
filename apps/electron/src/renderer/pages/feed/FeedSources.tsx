@@ -54,7 +54,7 @@ function intervalOptions(value: number): readonly number[] {
 
 const SPARK_DAYS = 30
 
-const INPUT = 'h-7 min-w-0 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
+const INPUT = 'h-7 min-w-0 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
 function previewErrorText(code: string, t: T): string {
   if (code === 'invalid-url') return t('feed.sources.addError.invalid-url')
@@ -170,7 +170,7 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
   })()
 
   return (
-    <div className="mx-3 rounded-[10px] bg-foreground/[0.04] p-4" data-testid="feed-add">
+    <div className="mx-3 rounded-[var(--radius-card)] bg-foreground/[0.04] p-4" data-testid="feed-add">
       <div className="flex items-baseline gap-2">
         <h3 className="shrink-0 whitespace-nowrap text-[14px] font-semibold">{t('feed.add.title')}</h3>
         <span className="truncate text-[12px] text-text-muted">{t('feed.add.subtitle')}</span>
@@ -201,7 +201,7 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
               data-testid={`feed-preset-${p.id}`}
               onClick={() => applyPreset(p)}
               title={p.url}
-              className="inline-flex h-6 items-center gap-1 rounded-[6px] bg-foreground/[0.06] px-2 text-[12px] text-text-secondary outline-none hover:bg-foreground/[0.1] hover:text-foreground"
+              className="inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] bg-foreground/[0.06] px-2 text-[12px] text-text-secondary outline-none hover:bg-foreground/[0.1] hover:text-foreground"
             >
               <SourceIcon source={{ url: p.url, kind: detectFeedSource(p.url)?.kind ?? 'unknown' }} size={16} />
               {t(`feed.presets.${p.id}`)}
@@ -212,7 +212,7 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
       ) : null}
 
       {preview?.ok && preview.items.length ? (
-        <div className="mt-2 rounded-[8px] bg-background/60 p-2" data-testid="feed-add-preview">
+        <div className="mt-2 rounded-[var(--radius-card)] bg-background/60 p-2" data-testid="feed-add-preview">
           <div className="flex items-center gap-2 px-1 pb-1">
             <SourceIcon source={{ url: preview.url, kind: preview.kind }} size={20} />
             <span className="min-w-0 flex-1 truncate font-semibold">{preview.title ?? preview.url}</span>
@@ -220,7 +220,7 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
           </div>
           <ol className="flex flex-col">
             {preview.items.map((it, i) => (
-              <li key={i} className="flex items-baseline gap-2 rounded-[4px] px-1 py-1 text-[12px]">
+              <li key={i} className="flex items-baseline gap-2 rounded-[var(--radius-control)] px-1 py-1 text-[12px]">
                 <span className="min-w-0 flex-1 truncate">{it.title}</span>
                 {it.at ? <span className="shrink-0 tabular-nums text-text-muted">{fmt(it.at)}</span> : null}
               </li>
@@ -278,7 +278,7 @@ function SourceCard({ source, items, now, selected, onSelect, onCheck, onToggleP
       onClick={onSelect}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect() } }}
       className={cn(
-        'group flex min-w-0 flex-col gap-2 rounded-[10px] p-3 outline-none',
+        'group flex min-w-0 flex-col gap-2 rounded-[var(--radius-control)] p-3 outline-none',
         selected ? 'bg-accent/10 ring-2 ring-inset ring-accent' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
         source.paused && 'opacity-70',
       )}
@@ -311,7 +311,7 @@ function SourceCard({ source, items, now, selected, onSelect, onCheck, onToggleP
       ) : null}
       {source.tags?.length ? (
         <div className="flex min-w-0 flex-wrap gap-1">
-          {source.tags.slice(0, 4).map((tag) => <span key={tag} className="rounded-[4px] bg-foreground/[0.06] px-1 text-[11px] text-text-secondary">#{tag}</span>)}
+          {source.tags.slice(0, 4).map((tag) => <span key={tag} className="rounded-[var(--radius-control)] bg-foreground/[0.06] px-1 text-[11px] text-text-secondary">#{tag}</span>)}
         </div>
       ) : null}
       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -385,7 +385,7 @@ export function SourcesView({ api, sources, items, now, x, suggestions, selected
           </div>
         ) : (
           <div className="px-3 pt-4" data-testid="feed-sources-empty">
-            <div className="rounded-[10px] bg-foreground/[0.025] p-4">
+            <div className="rounded-[var(--radius-card)] bg-foreground/[0.025] p-4">
               <h3 className="text-[14px] font-semibold">{t('feed.sources.emptyTitle')}</h3>
               <ol className="flex flex-col gap-2 pt-3 text-[12px] text-text-secondary">
                 {[1, 2, 3].map((n) => (
@@ -459,7 +459,7 @@ export function SourceEditor({ api, source, suggestions, reload, onShowItems, on
             aria-label={t('feed.sources.rename')}
             title={t('feed.sources.rename')}
             data-testid="feed-source-name"
-            className="h-7 w-full rounded-[6px] bg-transparent px-1 text-[15px] font-semibold outline-none hover:bg-foreground/[0.05] focus:bg-foreground/[0.08]"
+            className="h-7 w-full rounded-[var(--radius-control)] bg-transparent px-1 text-[15px] font-semibold outline-none hover:bg-foreground/[0.05] focus:bg-foreground/[0.08]"
           />
           <p className="truncate px-1 text-[11px] text-text-muted" title={source.url}>{source.url}</p>
         </div>

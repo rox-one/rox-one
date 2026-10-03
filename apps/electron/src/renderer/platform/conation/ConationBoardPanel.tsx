@@ -2,7 +2,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { ExternalLink } from 'lucide-react'
-import { RADIUS_INNER } from '@/components/app-shell/panel-constants'
 import { CONATION_BOARD_DEEP_LINK } from './conation-board-panels'
 
 type Props = {
@@ -21,8 +20,7 @@ export function ConationBoardPanel({ enabled = true }: Props) {
     return (
       <div
         data-conation-board="off"
-        className="m-0.5 flex min-h-0 flex-1 flex-col items-center justify-center border border-border/50 bg-background p-6 text-sm text-muted-foreground shadow-middle"
-        style={{ borderRadius: RADIUS_INNER }}
+        className="rox-shell-pane flex min-h-0 flex-1 flex-col items-center justify-center bg-background p-6 text-sm text-muted-foreground"
       >
         {t('conation.board.off')}
       </div>
@@ -43,8 +41,7 @@ export function ConationBoardPanel({ enabled = true }: Props) {
   return (
     <div
       data-conation-board="deeplink"
-      className="m-0.5 flex min-h-0 flex-1 flex-col overflow-hidden border border-border/50 bg-background shadow-middle"
-      style={{ borderRadius: RADIUS_INNER }}
+      className="rox-shell-pane flex min-h-0 flex-1 flex-col overflow-hidden bg-background"
     >
       <div className="flex h-8 shrink-0 items-center border-b border-border/40 px-3">
         <span className="chrome-label truncate text-xs font-medium tracking-tight text-foreground/80">
