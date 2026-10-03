@@ -58,6 +58,7 @@ import {
   type NoteSource,
 } from './dossier-model'
 import { getSessionTitle } from '@/utils/session'
+import { ExtraScreenItemUnavailable } from '../ExtraScreenItemUnavailable'
 
 const NS = 'dossier'
 const AVATAR_TONES = ['bg-accent/25', 'bg-info/25', 'bg-success/25', 'bg-warning/25', 'bg-foreground/15']
@@ -288,7 +289,9 @@ export default function DossierPage({ itemId }: { itemId: string | null }) {
         </div>
       </ScreenColumn>
       <ScreenDetail>
-        {data.entities.length === 0 ? (
+        {itemId && !selected ? (
+          <ExtraScreenItemUnavailable screen="dossier" itemId={itemId} />
+        ) : data.entities.length === 0 ? (
           <EmptyState
             title={t('extraScreens.dossier.emptyTitle')}
             body={t('extraScreens.dossier.emptyBody')}

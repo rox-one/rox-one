@@ -1,0 +1,16 @@
+Actual test callbacks via task-local Node adapter; Node v26.8.2; external Chromium; no Bun pass claim
+TRACE before create other
+TRACE other created
+TRACE before other goto
+TRACE after other goto {
+  ready: true,
+  html: '<div id="root"><section><section></section></section></div><script src="/fixture.js"></script>',
+  url: 'http://127.0.0.1:50897/'
+}
+TRACE other ui ready [ 320, 104 ]
+[FAIL] actual localStorage persists valid sizes across reload and other windows
+Error: Hook/case timeout 30000ms
+    at Timeout.<anonymous> (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-main-storage-trace.mjs:63:39)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+{"runtime":"Node actual source callbacks adapter","pass":0,"fail":1,"assertions":0,"cases":11,"elapsedMs":32304}

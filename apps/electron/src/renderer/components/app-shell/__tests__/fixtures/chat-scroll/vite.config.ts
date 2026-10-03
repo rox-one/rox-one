@@ -1,0 +1,7 @@
+import {defineConfig} from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import {resolve} from 'node:path'
+const root=import.meta.dirname,repository=resolve(root,'../../../../../../../../..'),shim=resolve(root,'context.tsx')
+const scoped=new Set(['./input','./MemoryProposalCard','./MemoryProvenanceStrip','@/hooks/useMessageReactionActor','@/hooks/keyboard','@/hooks/useBackgroundTasks','@/hooks/useContextualSuggestions','@/contexts/NavigationContext','@/context/AppShellContext','@/hooks/useTheme'])
+export default defineConfig({root,plugins:[{name:'chat-scroll-scoped-fixture',enforce:'pre',resolveId(id,importer){if(importer?.endsWith('/ChatDisplay.tsx')&&scoped.has(id))return shim}},react(),tailwindcss()],resolve:{alias:[...Array.from(scoped).filter(id=>id.startsWith('@/')).map(find=>({find,replacement:shim})),{find:'@config',replacement:resolve(repository,'packages/shared/src/config')},{find:'@',replacement:resolve(repository,'apps/electron/src/renderer')},{find:'react',replacement:resolve(repository,'node_modules/react')},{find:'react-dom',replacement:resolve(repository,'node_modules/react-dom')}],dedupe:['react','react-dom']},server:{host:'127.0.0.1',strictPort:true,hmr:false,watch:null,fs:{allow:[repository]}}})

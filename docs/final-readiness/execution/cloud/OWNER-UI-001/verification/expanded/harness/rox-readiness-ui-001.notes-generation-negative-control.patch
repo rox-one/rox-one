@@ -1,0 +1,21 @@
+--- a/apps/electron/src/renderer/pages/NotesPage.tsx
++++ b/apps/electron/src/renderer/pages/NotesPage.tsx
+@@ -803,8 +803,7 @@
+     if (!activeWorkspaceId) return
+     const workspaceGeneration = readWorkspaceGenerationRef.current
+     let subscribed = true
+-    const isCurrentSubscription = () => subscribed && readsMountedRef.current
+-      && readWorkspaceGenerationRef.current === workspaceGeneration
++    const isCurrentSubscription = () => readsMountedRef.current
+       && readWorkspaceRef.current === activeWorkspaceId
+     void nativeNotesSync.start(activeWorkspaceId)
+       .then(() => nativeNotesSync.flush())
+@@ -851,7 +850,7 @@
+           setContentResolution(resolution)
+           if (resolution.status !== 'ok' || !resolution.capabilities.write) setSaveNeedsReload(true)
+         }).catch(() => {
+-          if (isCurrentSubscription() && workspaceIdRef.current === activeWorkspaceId && activeNoteIdRef.current === noteId && openNoteRequestRef.current === opening) {
++          if (isCurrentSubscription() && workspaceIdRef.current === activeWorkspaceId && activeNoteIdRef.current === noteId) {
+             setContentResolution({ status: 'error', code: 'denied' })
+             setSaveNeedsReload(true)
+           }

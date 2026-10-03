@@ -1,0 +1,19 @@
+Actual test callbacks via task-local Node adapter; Node v26.8.2; external Chromium; no Bun pass claim
+[PASS] initial missing entity never auto-selects an existing chat and survives reload 14887ms
+[PASS] unknown and malformed routes preserve raw addresses on initial load/reload/deep link 20405ms
+[PASS] legacy known-root incomplete shapes remain unavailable through auto-selection effects 10805ms
+[PASS] raw commas, colon suffixes and malformed escapes round-trip within a multi-panel URL 10810ms
+[PASS] queued nested/encoded raw view and new-panel option are replayed after readiness 8010ms
+[PASS] queued malformed view survives a session-readiness-only race 6545ms
+[PASS] actual back/forward, deletion and workspace restoration preserve explicit selection 8177ms
+[PASS] canonical page broadcasts beat stale list replies and former workspace replies are ignored 10435ms
+[PASS] popstate received before metadata readiness is reconciled when readiness returns 10598ms
+[PASS] queued page broadcast from the former A owner cannot publish after A to B to A 9725ms
+[PASS] blocked popstate retains its exact target through an actual panel resize 8202ms
+[PASS] workspace restoration waits for full readiness and resize cannot overwrite stored selection 11160ms
+[PASS] late create replies from former A ownership cannot navigate, prefill or send after A to B to A 11339ms
+[PASS] already scheduled input and send callbacks retain the original committed owner 9432ms
+[PASS] new navigation in the same workspace cancels an older deferred create response 6779ms
+[PASS] actual same-workspace Back cancels an older deferred create response 5040ms
+[PASS] focusing another existing panel cancels the former panel deferred create response 8902ms
+[PASS] focus away and back cannot regain an old deferred-create continuation 10053ms

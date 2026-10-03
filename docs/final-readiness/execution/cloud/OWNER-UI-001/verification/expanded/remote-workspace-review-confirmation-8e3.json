@@ -1,0 +1,34 @@
+{
+  "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "readbackAtUtc": "2026-10-03T16:26:44.583973+00:00",
+  "readbackMethod": "Direct authenticated GitHub review-comment API on the two specific comments; normalized bodies avoid reproducing suggestion code.",
+  "comments": [
+    {
+      "id": 4173886115,
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "line": 1130,
+      "url": "https://github.com/rox-one/rox-one/pull/1420#discussion_r4173886115",
+      "inReplyTo": 4173757207,
+      "createdAt": "2026-10-03T16:15:59Z",
+      "updatedAt": "2026-10-03T16:15:59Z",
+      "bodySha256": "8edbe44eb5214abec39f44e3793e6170022c091691e4a499efd0184a21182e25",
+      "outcomeMarker": null,
+      "normalizedBody": "Confirms the dependency-based repair is valid: the subscription includes remoteWorkspaceId, re-registers on remote-only changes and captures the owner after its layout-effect rotation."
+    },
+    {
+      "id": 4173757207,
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "line": 1130,
+      "url": "https://github.com/rox-one/rox-one/pull/1420#discussion_r4173757207",
+      "inReplyTo": null,
+      "createdAt": "2026-10-03T15:36:54Z",
+      "updatedAt": "2026-10-03T16:15:57Z",
+      "bodySha256": "c4462a973f8709dcc5f726f6c428416eaae4f1482e5361312ee6b2cce3fdc88d",
+      "outcomeMarker": "ISSUE_RESOLVED",
+      "normalizedBody": "The earlier captured-owner defect report is annotated as resolved on the current8e revision. Its original alternative suggestion is preserved remotely and was not applied."
+    }
+  ],
+  "fullDoDClosed": false
+}

@@ -1,0 +1,10 @@
+{
+  "sourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "integrationBaseRevision": "ae19683e69f079893cd09065487cfa7653d01154",
+  "command": "PATH=<qualified Bun1.3.14> NODE_OPTIONS=--max-old-space-size=4096 bun run --bun validate:ci",
+  "observedExitCode": 0,
+  "logSha256": "7c273f3f781f45a76ff831f6ec5425fcc62d6fc96c4170bad8339a91dc7da509",
+  "timeoutsChanged": false,
+  "testAndProductFilesChangedDuringRun": false,
+  "fullDoDClosed": false
+}

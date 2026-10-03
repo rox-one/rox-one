@@ -1,6 +1,6 @@
 import { atom } from 'jotai'
 import { focusedPanelIdAtom, panelStackAtom, type PanelStackEntry } from '@/atoms/panel-stack'
-import { parseRouteToNavigationState } from '../../../shared/route-parser'
+import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { APP_NAV_DESTINATIONS_BY_ID, type AppNavDestinationId } from './nav-destinations'
 
 /** Prefer the current panel when multiple panels of the same service are open. */
@@ -11,8 +11,7 @@ export function findServicePanel(
 ): PanelStackEntry | undefined {
   const destination = APP_NAV_DESTINATIONS_BY_ID[serviceId]
   const matches = (panel: PanelStackEntry) => {
-    const navState = parseRouteToNavigationState(panel.route)
-    return navState !== null && destination.isActive(navState)
+    return destination.isActive(parseRouteToNavigationStateOrUnavailable(panel.route))
   }
   const focusedPanel = panels.find((panel) => panel.id === focusedPanelId)
   if (focusedPanel && matches(focusedPanel)) return focusedPanel

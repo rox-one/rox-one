@@ -5,6 +5,7 @@
  * an item into a personal task or a reply DRAFT (a pre-filled, unsent chat).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ExtraScreenItemUnavailable } from '../ExtraScreenItemUnavailable'
 import { Radar, Search, Globe2, Clock3, Plus, RefreshCw, AlertCircle, Loader2, ChevronRight, Sparkles } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useActiveWorkspace } from '@/context/AppShellContext'
@@ -20,6 +21,7 @@ import {
   GroupLabel,
   ListRow,
   ScreenButton,
+  ScreenDetail,
   ScreenRoot,
   SectionLabel,
   TextField,
@@ -64,6 +66,7 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notes, setNotes] = useState<{ id: string; title: string; updatedAt?: number }[]>([])
+  const [notesLoadedWorkspace, setNotesLoadedWorkspace] = useState<string | null | undefined>(undefined)
   const [sources, setSources] = useState<{ slug: string; name: string; available: boolean }[]>([])
   const context = useRef({ workspaceId, generation: 0 })
   if (context.current.workspaceId !== workspaceId) context.current = { workspaceId, generation: context.current.generation + 1 }
@@ -81,20 +84,24 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
   }, [workspaceId, setData])
 
   const sessions = useWorkspaceSessions(workspaceId)
-  const { meetings } = useMeetings(workspaceId)
+  const { meetings, loaded: meetingsLoaded } = useMeetings(workspaceId)
   const feed = useFeedItems(workspaceId)
   useEffect(() => {
     let cancelled = false
-    setNotes([]); setSources([])
+    const generation = context.current.generation
+    const current = () => !cancelled && context.current.generation === generation && context.current.workspaceId === workspaceId
+    setNotes([]); setSources([]); setNotesLoadedWorkspace(undefined)
     const api = window.electronAPI
-    if (!workspaceId) return
+    if (!workspaceId) { setNotesLoadedWorkspace(workspaceId); return }
     if (typeof api?.listNotes === 'function') void api.listNotes(workspaceId)
-      .then((list) => { if (!cancelled) setNotes(list.map((n) => ({ id: n.id, title: n.title, updatedAt: n.updatedAt }))) })
-      .catch(() => { if (!cancelled) setNotes([]) })
-    if (typeof api.getSources === 'function') void api.getSources(workspaceId).then(list => {
-      if (!cancelled) setSources(list.map(source => ({ slug: source.config.slug, name: source.config.name,
+      .then((list) => { if (current()) setNotes(list.map((n) => ({ id: n.id, title: n.title, updatedAt: n.updatedAt }))) })
+      .catch(() => { if (current()) setNotes([]) })
+      .finally(() => { if (current()) setNotesLoadedWorkspace(workspaceId) })
+    else setNotesLoadedWorkspace(workspaceId)
+    if (typeof api?.getSources === 'function') void api.getSources(workspaceId).then(list => {
+      if (current()) setSources(list.map(source => ({ slug: source.config.slug, name: source.config.name,
         available: source.config.enabled && !['needs_auth', 'failed', 'local_disabled'].includes(source.config.connectionStatus ?? '') })))
-    }, () => { if (!cancelled) setSources([]) })
+    }, () => { if (current()) setSources([]) })
     return () => { cancelled = true }
   }, [workspaceId])
 
@@ -175,6 +182,37 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
 
   const busy = starting || !!latest && !latest.parsedAt && latest.status !== 'failed' && latest.status !== 'missing'
   const availableSources = sources.filter(source => source.available)
+
+  // An explicit address owns the full pane; the overview stays on the root route.
+  if (itemId) {
+    const pendingSource = selectedTopicId === null && !selectedItem && (
+      (itemId.startsWith('feed-') && !feed.loaded)
+      || (itemId.startsWith('loc-note-') && notesLoadedWorkspace !== workspaceId)
+      || (itemId.startsWith('loc-meeting-') && !meetingsLoaded)
+      || (itemId.startsWith('rad-') && !!sweep && !sweep.parsedAt && (syncState === null || syncState === 'running'))
+    )
+    return (
+      <ScreenRoot>
+        <ScreenDetail>
+          {selectedTopic ? (
+            <TopicEditor
+              key={selectedTopic.id}
+              topic={selectedTopic}
+              sources={sources}
+              onUpdate={(patch) => updateTopic(selectedTopic.id, patch)}
+              onDelete={() => { save({ ...data, topics: data.topics.filter((topic) => topic.id !== selectedTopic.id) }); select(null) }}
+            />
+          ) : selectedItem ? (
+            <ItemDetail key={`${workspaceId}:${selectedItem.id}`} workspaceId={workspaceId} item={selectedItem} language={language} onDismiss={() => dismiss(selectedItem.id)} />
+          ) : pendingSource ? (
+            <div role="status" data-testid="radar-item-loading" data-item-id={itemId}>{t('common.loading')}</div>
+          ) : (
+            <ExtraScreenItemUnavailable screen="radar" itemId={itemId} />
+          )}
+        </ScreenDetail>
+      </ScreenRoot>
+    )
+  }
   return (
     <ScreenRoot className="flex-col overflow-y-auto p-3 sm:p-5" >
       <header className="flex flex-wrap items-center gap-3 pb-4">

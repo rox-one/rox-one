@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-03T16:36:22.963140+00:00",
+  "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "checks": [
+    {
+      "id": 111241639000,
+      "name": "[code]smith",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-03T16:18:40Z",
+      "completed_at": "2026-10-03T16:18:40Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/runs/111241639000"
+    },
+    {
+      "id": 111241196623,
+      "name": "review",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-10-03T16:16:11Z",
+      "completed_at": "2026-10-03T16:16:11Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37136218306/job/111241196623",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37136218306/job/111241196623"
+    },
+    {
+      "id": 111241167458,
+      "name": "authorize",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T16:16:06Z",
+      "completed_at": "2026-10-03T16:16:11Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37136218306/job/111241167458",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37136218306/job/111241167458"
+    },
+    {
+      "id": 111240875054,
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "neutral",
+      "started_at": "2026-10-03T16:14:25Z",
+      "completed_at": "2026-10-03T16:14:29Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/runs/111240875054",
+      "detailsUrl": "https://github.com/rox-one/rox-one/runs/111240875054"
+    },
+    {
+      "id": 111240779093,
+      "name": "Vercel Agent Review",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T16:13:52Z",
+      "completed_at": "2026-10-03T16:16:00Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/runs/111240779093",
+      "detailsUrl": "https://vercel.com/github"
+    },
+    {
+      "id": 111240757468,
+      "name": "validate (ubuntu-24.04)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T16:13:47Z",
+      "completed_at": "2026-10-03T16:18:00Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37136075137/job/111240757468",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37136075137/job/111240757468"
+    },
+    {
+      "id": 111240757295,
+      "name": "validate (macos-15)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-10-03T16:13:44Z",
+      "completed_at": null,
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37136075137/job/111240757295",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37136075137/job/111240757295"
+    },
+    {
+      "id": 111240751686,
+      "name": "Analyze (javascript-typescript)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T16:13:45Z",
+      "completed_at": "2026-10-03T16:20:10Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37136072811/job/111240751686",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37136072811/job/111240751686"
+    },
+    {
+      "id": 111240751552,
+      "name": "Analyze (python)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T16:13:45Z",
+      "completed_at": "2026-10-03T16:15:10Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37136072811/job/111240751552",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37136072811/job/111240751552"
+    },
+    {
+      "id": 111240751382,
+      "name": "Analyze (javascript-typescript)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T16:13:47Z",
+      "completed_at": "2026-10-03T16:24:45Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37136072602/job/111240751382",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37136072602/job/111240751382"
+    },
+    {
+      "id": 111240751378,
+      "name": "Analyze (python)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T16:13:45Z",
+      "completed_at": "2026-10-03T16:15:25Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37136072602/job/111240751378",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37136072602/job/111240751378"
+    },
+    {
+      "id": 111240751331,
+      "name": "Analyze (rust)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T16:13:44Z",
+      "completed_at": "2026-10-03T16:17:03Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37136072602/job/111240751331",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37136072602/job/111240751331"
+    },
+    {
+      "id": 111240751325,
+      "name": "Analyze (swift)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-10-03T16:13:42Z",
+      "completed_at": null,
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37136072602/job/111240751325",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37136072602/job/111240751325"
+    },
+    {
+      "id": 111240751200,
+      "name": "Analyze (actions)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T16:13:44Z",
+      "completed_at": "2026-10-03T16:14:34Z",
+      "head_sha": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37136072602/job/111240751200",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37136072602/job/111240751200"
+    }
+  ],
+  "statuses": [
+    {
+      "context": "Vercel",
+      "state": "failure",
+      "description": "Account is blocked.",
+      "targetUrl": "https://vercel.com/knowledge/why-is-my-account-deployment-blocked",
+      "updatedAt": "2026-10-03T16:13:40Z"
+    }
+  ],
+  "codeqlAggregate": {
+    "checkId": 111240875054,
+    "conclusion": "neutral",
+    "annotationCount": 0,
+    "annotations": []
+  },
+  "qualifications": [
+    "Queued macOS validation and Swift analysis are not counted as passes.",
+    "Vercel account deployment failure is retained; no deployment action was performed.",
+    "Historical CodeQL463 issue is not relabeled as a current8e annotation."
+  ],
+  "fullDoDClosed": false
+}
