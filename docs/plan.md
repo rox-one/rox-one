@@ -1,3 +1,7 @@
+# Golden Gate surface tab recovery — 2026-10-03
+
+Owner: root. Source5def9ffd36dc160fdc7c908784e0ef97ba6a732e → current-consumer comparison → title loader/navigation helpers → unit failure/cache/workspace controls and actual Chromium SurfaceTabs interactions → renderer strict types/build → separate PR/exact merge readback. Depends on current unified-shell atoms and pending panel focus repair1415; preserve its aria-controls contract when integrating.
+
 ## Connections consumer recovery plan — 2026-10-03
 
 1. Freeze source intent and current UI gap; backend1414 is the dependency. pr_scout owns page/lifecycle/device/connection-info consumers only; root owns main integration and SurfaceTabs/remaining Golden semantics.
@@ -769,3 +773,10 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 2. Wire sheets for hidden Contents/Comments, using current auto-hide computation rather than source360px all-rail policy. Scope-close to workspace/document/view; keep existing editor mounted and native authority unchanged.
 3. Recover Notes sash keyboard/leased pointer callbacks with current width bounds, foreign-pointer isolation and Escape/blur/cancel/unmount cleanup.
 4. Run actual component/NativeNotesPage callback, observer, hidden/inert/visibility/focus and pointer cancellation tests; substitute original page/sash as before-source negative controls then restore exact candidate. Run relevant existing Notes document/view/comment controls and Electron types, reconcile latestmain, push/attach separate PR. Native visual and other Golden sources remain independently gated.
+
+## Golden service navigation and guidance recovery — 2026-10-03
+
+1. Historical integration owns selective `findServicePanel`/focus atom recovery onto the current registry and routes; compose it only into current AppShell root callbacks. Depend on the existing panel stack and its NavigationContext history subscriber. Keep explicit subroutes and compact Settings drill-in.
+2. Recover the source's workspace-scoped dismissal key/helper; compose it into today's flat SidebarChrome/PromoSlot using the existing all-locale `common.dismiss` key. Fence focus by captured workspace and connected/visible profile owner. Keep reminders independent.
+3. Execute actual component callbacks with real panel atoms and controlled local storage: mounted-route/draft preservation, preferred match, missing-service fallback, explicit subroutes, compact mode, durable workspace isolation and stale-callback focus. Verify current DOM keyboard/disclosure, panel lanes, promo policy and Electron types. Run before-source negative controls, restore exact files, reconcile live main without replacing later docs, publish a separate PR and retain all source branches.
+4. Acceptance is bounded source and renderer integration; do not claim installed native UI, old sidebar layout recovery, full Golden source-family completion or production acceptance.
