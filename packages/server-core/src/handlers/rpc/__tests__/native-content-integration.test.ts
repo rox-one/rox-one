@@ -197,9 +197,11 @@ test('native SAVE positional wire rejects source-store string in argument five a
   const f = await fixture()
   const client = f.connect()
   const note = await create(f, client)
+  // Native RPC errors keep the generic privacy envelope. Wrong-position
+  // metadata must still fail before any canonical or legacy mutation.
   const operation = { operationId: 'wrong-position', expectedRevision: note.nativeRevision!, schemaVersion: 1 }
-  await expect(client.invoke(RPC_CHANNELS.notes.SAVE, workspaceId, note.id, 'wrong string writer', note.revision, note.sourceStoreId)).rejects.toThrow('native notes operation metadata is required')
-  await expect(client.invoke(RPC_CHANNELS.notes.SAVE, workspaceId, note.id, 'shifted writer', operation)).rejects.toThrow('native notes operation metadata is required')
+  await expect(client.invoke(RPC_CHANNELS.notes.SAVE, workspaceId, note.id, 'wrong string writer', note.revision, note.sourceStoreId)).rejects.toMatchObject({ code: 'HANDLER_ERROR', message: 'Request failed' })
+  await expect(client.invoke(RPC_CHANNELS.notes.SAVE, workspaceId, note.id, 'shifted writer', operation)).rejects.toMatchObject({ code: 'HANDLER_ERROR', message: 'Request failed' })
   const unchanged = await client.invoke(RPC_CHANNELS.notes.READ, workspaceId, note.id) as NoteDocument
   expect(unchanged.nativeId).toBe(note.nativeId)
   expect(unchanged.nativeRevision).toBe(note.nativeRevision)
