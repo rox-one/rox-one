@@ -1,3 +1,7 @@
+# Golden Gate meeting request ownership recovery (2026-10-03)
+
+Recover the proven missing request-ownership semantics in the current routed local MeetingsPage: committed workspace generations, latest per-meeting reads, coalesced writes, no stale navigation/errors, and preservation of text edited during submission. Catalogue snapshots retain newer pushed changes. Notes already owns equivalent read/save generations; no unused Notes helper is imported. Source PR584 and adapted-export hashes are in docs/golden-meeting-request-source.json. Microphone/provider/native authorization acceptance remains outside this bounded UI callback proof.
+
 ## Golden Gate device diagnostics recovery — 2026-10-03
 
 Owner: integration worker in isolated `codex/recover-golden-diagnostics-20261003`. Recover the genuinely absent native diagnostics slice from preserved branch `codex/golden-gate-workspace`, exact revision `5def9ffd36dc160fdc7c908784e0ef97ba6a732e` (closed unmerged PR #584). Source file hashes and the 90 recovered locale keys are recorded in `docs/golden-diagnostics-source.json`.

@@ -1,3 +1,7 @@
+# Golden Gate meeting request ownership integration (2026-10-03)
+
+Owner: pr_scout; merge owner: root. Depends on main UI/native/profile contracts; preserve LocalMeetingDetail profile and analysis work owned by historical_sweep. Graph: source/consumer comparison → committed request tracker + current callbacks → executed production-callback adverse timing tests and current Notes equivalence controls → renderer typecheck/build/localization → exact source readback and separate PR. Original branches are retained. Tests cover duplicate submission, edited draft, rejection/retry, A→B→A, disposal, latest record/deletion, stale subscriber, pending catalogue overlay and transcript success/refusal.
+
 ## Golden Gate device diagnostics recovery plan — 2026-10-03
 
 1. Historical scout identified exact source revision and runtime files absent from main; integration worker audited the diagnostic dependency closure and recorded source hashes.
