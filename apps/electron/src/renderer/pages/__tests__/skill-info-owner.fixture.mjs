@@ -3,7 +3,7 @@ import {fileURLToPath} from 'node:url';
 import {resolve,dirname} from 'node:path';
 const root=resolve(dirname(fileURLToPath(import.meta.url)), '../../../../../../');
 const ts=(await import(root+'/node_modules/typescript/lib/typescript.js')).default;
-const source=readFileSync(new URL('./skill-info-owner.browser.test.ts',import.meta.url),'utf8');
+const source=readFileSync(new URL('./skill-info-owner.browser.node.ts',import.meta.url),'utf8');
 const tree=ts.createSourceFile('fixture.ts',source,ts.ScriptTarget.Latest,true);
 let contents;
 const visit=node=>{if(ts.isVariableDeclaration(node)&&node.name.getText(tree)==='fixtureSource'&&node.initializer&&ts.isNoSubstitutionTemplateLiteral(node.initializer))contents=node.initializer.text;ts.forEachChild(node,visit)};visit(tree);
@@ -28,6 +28,6 @@ const mocks={
  export const Info_Table=props=>React.createElement('div',null,props.children);
  Info_Table.Row=props=>React.createElement('div',null,props.label,props.value,props.children);`
 };
-const result=await build({stdin:{contents,loader:'tsx',resolveDir:root},bundle:true,write:false,format:'iife',platform:'browser',tsconfig:root+'/apps/electron/tsconfig.json',plugins:[{name:'explicit-unchanged-fixture-leaves',setup(builder){builder.onResolve({filter:/.*/},args=>mocks[args.path]?{path:args.path,namespace:'fixture'}:componentOverride&&args.path==='./apps/electron/src/renderer/pages/SkillInfoPage'?{path:resolve(componentOverride)}:null);builder.onLoad({filter:/.*/,namespace:'fixture'},args=>({contents:mocks[args.path],loader:'js',resolveDir:root}));}}]});
+const result=await build({stdin:{contents,loader:'tsx',resolveDir:root},bundle:true,write:false,format:'iife',platform:'browser',tsconfig:root+'/apps/electron/tsconfig.json',plugins:[{name:'explicit-unchanged-fixture-leaves',setup(builder){builder.onResolve({filter:/.*/},args=>mocks[args.path]?{path:args.path,namespace:'fixture'}:null);if(componentOverride)builder.onLoad({filter:/SkillInfoPage\.tsx$/},args=>({contents:readFileSync(resolve(componentOverride),'utf8'),loader:'tsx',resolveDir:dirname(args.path)}));builder.onLoad({filter:/.*/,namespace:'fixture'},args=>({contents:mocks[args.path],loader:'js',resolveDir:root}));}}]});
 writeFileSync(output,result.outputFiles[0].text);
 

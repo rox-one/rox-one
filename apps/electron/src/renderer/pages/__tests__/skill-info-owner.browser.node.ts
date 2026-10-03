@@ -1,12 +1,18 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
+import { after, afterEach as nodeAfterEach, before, beforeEach as nodeBeforeEach, describe, it } from 'node:test'
+import assert from 'node:assert/strict'
+const beforeAll = (run: () => Promise<void>, timeout: number) => before(run, { timeout })
+const afterAll = (run: () => Promise<void>, timeout: number) => after(run, { timeout })
+const beforeEach = (run: () => Promise<void>, timeout: number) => nodeBeforeEach(run, { timeout })
+const afterEach = (run: () => Promise<void>, timeout: number) => nodeAfterEach(run, { timeout })
+const expect = (actual: unknown) => ({ toBe(expected: unknown) { assert.equal(actual, expected) } })
 import { createServer, type Server } from 'node:http'
 import { readFileSync } from 'node:fs'
-import { chromium, type Browser, type BrowserServer, type BrowserContext, type Page } from '@playwright/test'
+import { chromium, type Browser, type BrowserContext, type Page } from '@playwright/test'
 
 // Production SkillInfoPage and native form primitives. Context, backend, toast
 // and unchanged presentation/menu leaves are explicit fixture seams.
 const enabled = process.env.ROX_SKILL_INFO_BROWSER_TEST === '1'
-let browserServer: BrowserServer, browser: Browser, context: BrowserContext, page: Page, server: Server, base: string
+let browser: Browser, context: BrowserContext, page: Page, server: Server, base: string
 export const fixtureSource = `
 import React from 'react';
 import {createRoot} from 'react-dom/client';
@@ -38,7 +44,7 @@ Object.assign(window.skillInfo,{
 render();
 `
 
-const browserTest = (name: string, run: () => Promise<void>) => it(name, run, 30_000)
+const browserTest = (name: string, run: () => Promise<void>) => it(name, { timeout: 30_000 }, run)
 async function waitReads(count: number) { await page.waitForFunction(count => (window as any).skillInfo.reads.length === count, count) }
 async function loadItem(name = 'Canonical') {
   await waitReads(1)
@@ -46,7 +52,7 @@ async function loadItem(name = 'Canonical') {
   await page.locator('input:not([disabled])').waitFor()
 }
 
-describe.skipIf(!enabled)('current SkillInfoPage catalog/draft/save ownership', () => {
+describe('current SkillInfoPage catalog/draft/save ownership', { skip: !enabled }, () => {
   beforeAll(async () => {
     const bundle = process.env.ROX_SKILL_INFO_FIXTURE_BUNDLE
     if (!bundle) throw new Error('Prebundle this exact fixture with pinned Node before launching Chromium')
@@ -57,8 +63,7 @@ describe.skipIf(!enabled)('current SkillInfoPage catalog/draft/save ownership', 
     })
     await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
     base = 'http://127.0.0.1:' + (server.address() as any).port
-    browserServer = await chromium.launchServer({host:'127.0.0.1',executablePath:process.env.ROX_UI001_CHROMIUM_EXECUTABLE,headless:true,args:['--disable-gpu']})
-    browser = await chromium.connect(browserServer.wsEndpoint())
+    browser = await chromium.launch({executablePath:process.env.ROX_UI001_CHROMIUM_EXECUTABLE,headless:true,args:['--disable-gpu']})
   }, 30_000)
   beforeEach(async () => {
     context = await browser.newContext(); page = await context.newPage()
@@ -69,7 +74,7 @@ describe.skipIf(!enabled)('current SkillInfoPage catalog/draft/save ownership', 
   afterAll(async () => {
     server?.closeAllConnections()
     const closed = server ? new Promise<void>(resolve => server.close(() => resolve())) : Promise.resolve()
-    try { await browser?.close(); await browserServer?.close() } finally { await closed }
+    try { await browser?.close() } finally { await closed }
   },30_000)
 
   browserTest('watcher reads the complete same-directory catalog and preserves edited fields', async () => {
@@ -144,7 +149,7 @@ describe.skipIf(!enabled)('current SkillInfoPage catalog/draft/save ownership', 
     await page.evaluate(() => (window as any).skillInfo.saveAck(1,(window as any).skillInfo.item('Old directory')))
     await page.waitForTimeout(50)
     expect(await page.locator('input:not([disabled])').inputValue()).toBe('Project B')
-    expect(await page.evaluate(() => (window as any).skillInfo.toasts.filter(entry=>entry[0]==='success').length)).toBe(0)
+    expect(await page.evaluate(() => (window as any).skillInfo.toasts.filter((entry: unknown[])=>entry[0]==='success').length)).toBe(0)
   })
 
   browserTest('project skill stays read-only after workspace-only watch payload', async () => {
