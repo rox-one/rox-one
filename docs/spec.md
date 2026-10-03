@@ -388,3 +388,8 @@ The [original spec.md](integration-history/pr1315/spec.md) and its September tas
 ## PR1292 baseline recovery evidence
 
 The [original spec](integration-history/pr1292/spec.md) remains a source-bound historical record. Its descriptor/explicit-clock fixes are preserved in current implementation.
+
+
+## PR1313 roadmap recovery evidence
+
+The [original spec](integration-history/pr1313/spec.md) is retained as historical scope/evidence. Current merged native authorization, revision/CAS and September model/request safeguards remain authoritative.
