@@ -52,10 +52,91 @@ export interface AnsiSpan {
   bold?: boolean
 }
 
+export interface AnsiParseOptions {
+  /** Use theme CSS variables so existing output recolors without re-parsing. */
+  themeAware?: boolean
+}
+
+const ANSI_NAMES = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'] as const
+
+function paletteColor(index: number, bright: boolean, dim = false): string {
+  const fallback = ANSI_COLORS[(bright ? 90 : 30) + index]
+  return `var(--terminal-ansi-${dim ? 'dim-' : bright ? 'bright-' : ''}${ANSI_NAMES[index]}, ${fallback})`
+}
+
+function indexedColor(index: number): string | undefined {
+  if (index < 0 || index > 255) return undefined
+  if (index < 16) return paletteColor(index % 8, index >= 8)
+  if (index >= 232) {
+    const gray = 8 + (index - 232) * 10
+    return `rgb(${gray}, ${gray}, ${gray})`
+  }
+  const cube = index - 16
+  const level = (value: number) => value === 0 ? 0 : 55 + value * 40
+  return `rgb(${level(Math.floor(cube / 36))}, ${level(Math.floor(cube / 6) % 6)}, ${level(cube % 6)})`
+}
+
+/** Theme-aware SGR parsing; fixed-color mode below remains backward compatible. */
+function parseThemedAnsi(input: string): AnsiSpan[] {
+  const spans: AnsiSpan[] = []
+  const pattern = /\x1b\[([0-9;]*)m/g
+  let fg: number | string | undefined
+  let bg: string | undefined
+  let bold = false
+  let dim = false
+  let lastIndex = 0
+
+  const append = (text: string) => {
+    if (!text) return
+    let color: string | undefined
+    if (typeof fg === 'number') color = paletteColor(fg % 10, fg >= 90 || bold, dim)
+    else if (fg) color = fg
+    else if (dim) color = 'var(--terminal-dim-foreground, var(--terminal-foreground))'
+    else if (bold) color = 'var(--terminal-bright-foreground, var(--terminal-foreground))'
+    spans.push({ text, fg: color, bg, bold })
+  }
+
+  let match: RegExpExecArray | null
+  while ((match = pattern.exec(input)) !== null) {
+    append(input.slice(lastIndex, match.index))
+    const codes = (match[1] || '').split(';').map(value => Number(value) || 0)
+    for (let i = 0; i < codes.length; i++) {
+      const code = codes[i]!
+      if (code === 0) { fg = undefined; bg = undefined; bold = false; dim = false }
+      else if (code === 1) { bold = true; dim = false }
+      else if (code === 2) { dim = true; bold = false }
+      else if (code === 22) { bold = false; dim = false }
+      else if (code === 39) fg = undefined
+      else if (code === 49) bg = undefined
+      else if ((code >= 30 && code <= 37) || (code >= 90 && code <= 97)) fg = code
+      else if ((code >= 40 && code <= 47) || (code >= 100 && code <= 107)) {
+        bg = paletteColor(code % 10, code >= 100)
+      } else if (code === 38 || code === 48) {
+        // Consume extended colors atomically: their RGB components are not SGRs.
+        const mode = codes[++i]
+        let color: string | undefined
+        if (mode === 5) color = indexedColor(codes[++i] ?? -1)
+        else if (mode === 2) {
+          const rgb = codes.slice(i + 1, i + 4)
+          i += 3
+          if (rgb.length === 3 && rgb.every(value => value >= 0 && value <= 255)) {
+            color = `rgb(${rgb.join(', ')})`
+          }
+        }
+        if (color) { if (code === 38) fg = color; else bg = color }
+      }
+    }
+    lastIndex = match.index + match[0].length
+  }
+  append(input.slice(lastIndex))
+  return spans
+}
+
 /**
  * Parse ANSI escape codes and convert to styled spans
  */
-export function parseAnsi(input: string): AnsiSpan[] {
+export function parseAnsi(input: string, options: AnsiParseOptions = {}): AnsiSpan[] {
+  if (options.themeAware) return parseThemedAnsi(input)
   const result: AnsiSpan[] = []
   // Match ANSI escape sequences: ESC[...m
   const regex = /\x1b\[([0-9;]*)m/g

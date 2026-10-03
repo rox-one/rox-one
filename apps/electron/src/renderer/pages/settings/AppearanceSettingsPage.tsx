@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import './AppearanceSettingsPage.css'
 import { useTranslation } from 'react-i18next'
 import { LANGUAGES, type LanguageCode } from '@rox/shared/i18n'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -435,16 +436,16 @@ export default function AppearanceSettingsPage() {
   }, [])
 
   // Handler for workspace theme change
-  // Uses ThemeContext for the active workspace (immediate visual update) and IPC for other workspaces
+  // Uses ThemeContext for the active workspace (update after successful persistence) and IPC for other workspaces
   const handleWorkspaceThemeChange = useCallback(
     async (workspaceId: string, value: string) => {
       if (!appearancePrefLive()) return
       // 'default' means inherit from app default (null in storage)
       const themeId = value === 'default' ? null : value
 
-      // If changing the current workspace, use context for immediate update
+      // If changing the current workspace, use context and await the config acknowledgement
       if (workspaceId === activeWorkspaceId) {
-        setWorkspaceColorTheme(themeId)
+        if (!await setWorkspaceColorTheme(themeId)) return
       } else {
         // For other workspaces, just persist via IPC
         await window.electronAPI?.setWorkspaceColorTheme?.(workspaceId, themeId)
@@ -488,14 +489,14 @@ export default function AppearanceSettingsPage() {
   }, [colorTheme, presetThemes])
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="appearance-settings-page flex h-full min-h-0 min-w-0 flex-col">
       <PanelHeader
         title={t("settings.appearance.title")}
         actions={<HeaderMenu route={routes.view.settings('appearance')} helpFeature="themes" />}
       />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
-          <div className="px-5 py-7 max-w-3xl mx-auto">
+          <div className="appearance-settings-content px-5 py-7 max-w-3xl mx-auto">
             <div className="space-y-8">
 
               {/* Default Theme */}
@@ -619,7 +620,7 @@ export default function AppearanceSettingsPage() {
                 </SettingsCard>
                 {themeLoadError && (
                   <p className="mt-2 text-xs text-info">
-                    {t("settings.appearance.themeWarning")} {themeLoadError} ({themeResolvedFrom === 'fallback' ? t("settings.appearance.usingBundledFallback") : t("settings.appearance.usingDefaultTheme")})
+                    {themeLoadError === 'THEME_SAVE_FAILED' ? t("settings.appearance.themeSaveFailed") : <>{t("settings.appearance.themeWarning")} {themeLoadError} ({themeResolvedFrom === 'fallback' ? t("settings.appearance.usingBundledFallback") : t("settings.appearance.usingDefaultTheme")})</>}
                   </p>
                 )}
               </SettingsSection>

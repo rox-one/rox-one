@@ -40,7 +40,7 @@ export function ElementInspectConfirm({
           aria-label={inspectMode ? t('browser.inspect.modeOff') : t('browser.inspect.modeOn')}
           onClick={onToggleInspect}
           className={cn(
-            'h-7 w-7 flex items-center justify-center rounded-[6px]',
+            'h-7 w-7 flex items-center justify-center rounded-[var(--radius-control)]',
             inspectMode ? 'bg-foreground/10' : 'hover:bg-foreground/5',
           )}
         >

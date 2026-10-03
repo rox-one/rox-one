@@ -1,0 +1,3 @@
+# Zed appearance current reconciliation
+
+Source PR1469 at c11edce45b553f240e2601ea88a6a73934805f67 from release29e86 contains320 actual Git paths; first100 GitHub file results are incomplete. This is a current-main selective integration.23 overlaps keep current accessible/ref/route/error/task/native behavior while applying geometry; source spec/plan/context are retained here as history rather than replacing current docs. Current122 focused tests pass; remaining combined browser/types/build qualification is pending. Source native screenshots/Windows claims are historical, not this checkout acceptance.

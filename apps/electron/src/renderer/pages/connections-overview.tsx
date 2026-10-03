@@ -126,7 +126,7 @@ export function OverviewGroup({
         </h3>
         {action}
       </div>
-      <ul className="overflow-hidden rounded-[10px] bg-foreground/[0.02] py-1">{children}</ul>
+      <ul className="overflow-hidden rounded-[var(--radius-card)] bg-foreground/[0.02] py-1">{children}</ul>
     </section>
   )
 }
@@ -388,7 +388,7 @@ export function ConnectionsOverview({ workspaceId, reloadKey }: { workspaceId: s
             return (
               <OverviewRow
                 key={connection.id}
-                icon={<span className="h-5 w-5 rounded-[6px] bg-foreground/10 text-center text-[11px] font-semibold leading-5 text-foreground/70">{label.slice(0, 1).toUpperCase()}</span>}
+                icon={<span className="h-5 w-5 rounded-[var(--radius-card)] bg-foreground/10 text-center text-[11px] font-semibold leading-5 text-foreground/70">{label.slice(0, 1).toUpperCase()}</span>}
                 title={label}
                 subtitle={connection.accountLabel}
                 status={status}

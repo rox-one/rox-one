@@ -973,3 +973,8 @@ Owner root. Depends on existing rail-links/Popover/Select and current product-to
 ### Golden task date validation recovery — 2026-10-03
 
 Owner recent_features: restore exact ISO calendar-day validation in the current parser; verify impossible-date refusal and valid leap-day persistence through the actual TaskDetail form. Keep before-fix unit/browser failures, full personal-task regression checks and both timezone offsets; qualify current core types and production component/CSS bundle. Parent owns ordered PR merge; source branches stay preserved. Broader Golden/native release acceptance remains separate.
+
+
+## Zed appearance reconciliation —2026-10-04
+
+Owner: root; dependency: current main recoveries. Apply only the source delta from release29e86 to PR1469c11ed and preserve current behavior through every overlap. Verify current theme/storage/cookie/geometry tests, unchanged browser assertion bodies through supported Node lifecycle, full types and production clients. Keep source history, fingerprints, failure attempts and remaining native Mac/Windows gates. Publish a separate PR to main with original branches retained.

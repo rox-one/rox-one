@@ -159,7 +159,7 @@ export function FilterableSelectPopover<T>({
       />
 
       <div
-        className="fixed z-floating-menu overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small"
+        className="fixed z-floating-menu overflow-hidden rounded-[var(--radius-overlay)] bg-background text-foreground shadow-modal-small"
         style={{
           top: position.top - 8,
           left: position.left,
@@ -203,7 +203,7 @@ export function FilterableSelectPopover<T>({
                       onClick={() => handleToggle(item)}
                       className={cn(
                         'w-full text-left outline-none',
-                        !renderItem && 'flex cursor-pointer select-none items-center gap-3 rounded-[6px] px-3 py-2 text-[13px]',
+                        !renderItem && 'flex cursor-pointer select-none items-center gap-3 rounded-[var(--radius-control)] px-3 py-2 text-[13px]',
                         highlighted && 'bg-foreground/5',
                         selected && 'bg-foreground/3',
                       )}

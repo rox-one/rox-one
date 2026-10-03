@@ -8,10 +8,10 @@ const panelStack = readFileSync(join(import.meta.dir, '../PanelStackContainer.ts
 
 describe('sash terminal clearance', () => {
   it('stops resize sashes from drawing through the top bar gap and bottom terminal', () => {
-    // Rounded shell: stack and resize sashes share the same 4px top inset.
+    // Rounded shell: stack and resize sashes share the same zero top inset.
     expect(PANEL_STACK_TOP_INSET).toBe(PANEL_GAP)
-    expect(PANEL_STACK_TOP_INSET).toBe(4)
-    expect(PANEL_EDGE_INSET).toBe(4)
+    expect(PANEL_STACK_TOP_INSET).toBe(0)
+    expect(PANEL_EDGE_INSET).toBe(0)
     expect(PANEL_STACK_VERTICAL_OVERFLOW).toBe(0)
 
     expect(appShell).toContain('bottomTerminalOpenAtom')

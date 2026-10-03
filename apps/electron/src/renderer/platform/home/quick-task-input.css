@@ -117,7 +117,7 @@ html[data-contrast="high"] .rox-home-quick-task .rox-home-quick-task-add:focus-v
   width: max-content;
   max-width: min(280px, 70vw);
   padding: 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-overlay);
   background: var(--popover);
   color: var(--popover-foreground);
   border: 1px solid var(--border);

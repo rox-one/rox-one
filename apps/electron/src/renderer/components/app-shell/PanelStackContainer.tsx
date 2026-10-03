@@ -29,7 +29,7 @@ import {
 const SPATIAL_DIRECTION_BY_KEY: Record<string, PanelSpatialDirection> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' }
 
 const PANEL_TRANSITION = { type: 'tween' as const, duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as [number, number, number, number] }
-const COMPACT_PANEL_TOP_GAP = 4
+const COMPACT_PANEL_TOP_GAP = 0
 
 interface PanelStackContainerProps {
   sidebarSlot: React.ReactNode

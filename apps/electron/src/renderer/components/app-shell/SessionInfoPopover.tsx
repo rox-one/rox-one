@@ -22,13 +22,13 @@ interface SessionInfoPopoverProps {
   presentation?: 'popover' | 'drawer'
 }
 
-const DEFAULT_POPOVER_CONTENT_CLASS = 'w-[360px] h-[460px] min-w-[200px] max-w-[420px] overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small p-0'
+const DEFAULT_POPOVER_CONTENT_CLASS = 'w-[360px] h-[460px] min-w-[200px] max-w-[420px] overflow-hidden rounded-[var(--radius-overlay)] bg-background text-foreground shadow-modal-small p-0'
 const DEFAULT_DRAWER_CONTENT_CLASS = [
   'data-[vaul-drawer-direction=bottom]:inset-x-2',
   'data-[vaul-drawer-direction=bottom]:bottom-2',
   'data-[vaul-drawer-direction=bottom]:mt-0',
   'data-[vaul-drawer-direction=bottom]:max-h-[min(82vh,42rem)]',
-  'overflow-hidden rounded-[12px] border border-border/60 bg-background shadow-modal-small',
+  'overflow-hidden rounded-[var(--radius-overlay)] border border-border/60 bg-background shadow-modal-small',
 ].join(' ')
 
 export function SessionInfoPopover({

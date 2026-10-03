@@ -190,8 +190,6 @@ import {
   PANEL_MIN_WIDTH,
   PANEL_STACK_TOP_INSET,
   CENTER_MIN_WIDTH,
-  RADIUS_EDGE,
-  RADIUS_INNER,
 } from "./panel-constants"
 import { ResizeHandle, sashHitWidthPx } from "./ResizeHandle"
 import { hasOpenOverlay } from "@/lib/overlay-detection"
@@ -2734,7 +2732,7 @@ function AppShellContent({
         links={sidebarLinks}
       />
       {experimentalLinks.length > 0 && (
-        <section className="mx-1 mt-5 rounded-xl bg-foreground/[0.025] py-2" aria-label={t('sidebar.experimentalFeatures')}>
+        <section className="mx-1 mt-5 rounded-[var(--radius-card)] bg-foreground/[0.025] py-2" aria-label={t('sidebar.experimentalFeatures')}>
           {!isSidebarCollapsed && <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/40">{t('sidebar.experimentalFeatures')}</div>}
           <LeftSidebar isCollapsed={isSidebarCollapsed} onExpand={handleExpandNavigation} links={experimentalLinks} />
         </section>
@@ -2782,7 +2780,7 @@ function AppShellContent({
         {isWebUI && <WebBrowserPanel open={webBrowserOpen} onClose={() => setWebBrowserOpen(false)} />}
 
       {isAutoCompact && !isSidebarAndNavigatorHidden && (
-        <div data-compact-profile className="chrome-rail fixed bottom-1 left-1 z-panel flex h-11 items-center gap-1 rounded-xl px-1" data-shell-role="chrome">
+        <div data-compact-profile className="chrome-rail fixed bottom-0 left-0 z-panel flex h-11 items-center gap-1 rounded-[var(--radius-control)] px-1" data-shell-role="chrome">
           <ProfileStrip data={profileStripWithSpend} compact onClick={() => handleSettingsClick('account')} className="w-10 p-0.5" />
           <button type="button" onClick={() => handleSettingsClick()} aria-label={t('sidebar.settings')} title={t('sidebar.settings')} className="grid size-9 place-items-center rounded-lg text-foreground/60 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
             <Settings className="size-4" aria-hidden />
@@ -2828,10 +2826,10 @@ function AppShellContent({
                   )}
                 </div>
                 {hasContextualSidebar && !isSidebarCollapsed ? (
-                  <details className="group/application-sections mx-1 mt-2 rounded-xl bg-foreground/[0.025]" data-application-sections
+                  <details className="group/application-sections mx-1 mt-2 rounded-[var(--radius-card)] bg-foreground/[0.025]" data-application-sections
                     open={applicationSectionsOpenFor === contextualSidebarKey}
                     onToggle={event => setApplicationSectionsOpenFor(event.currentTarget.open ? contextualSidebarKey : null)}>
-                    <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-2.5 text-[11px] font-semibold text-foreground/50 outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                    <summary className="flex cursor-pointer list-none items-center gap-2 rounded-[var(--radius-control)] px-3 py-2.5 text-[11px] font-semibold text-foreground/50 outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
                       <Layers className="size-3.5 text-accent" aria-hidden />
                       <span className="min-w-0 flex-1 truncate">{t('sidebar.applicationSections')}</span>
                       <ChevronRight className="size-3.5 transition-transform group-open/application-sections:rotate-90 motion-reduce:transition-none" aria-hidden />

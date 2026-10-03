@@ -789,3 +789,8 @@ Native default paths use OS-specific locations without creating app-data folders
 ### Golden task date validation recovery — 2026-10-03
 
 Recover the strict local calendar-day check from preserved Golden source5def9ffd into the current Tasks schedule form, through its existing parseDateExpression port. ISO dates must round-trip the exact year/month/day; impossible dates return no schedule change or native write. Valid leap days retain local midnight. Current native task actor/workspace custody, CAS/ACK/readback, import/background barriers and Product Learning producers remain canonical. Owner: recent_features; dependency: current Tasks1456 and runtime main; no legacy CatalogPanel or alternate store.
+
+
+## Zed appearance reconciliation —2026-10-04
+
+Recover geometry0/4/6, chrome-only material, opaque reading surfaces and three licensed UI/code/terminal themes from PR1469 on current main. Preserve current navigation, native authority, task conversion, Product Learning refs, keyboard access, resize and workspace source errors. Existing saved themes survive; only a physically missing config seeds Nordfox. Cookie theme grants remain scoped to the authenticated current workspace with post-await withdrawal checks. Historical source native/WebUI receipts are not acceptance of this combined revision.

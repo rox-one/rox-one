@@ -160,11 +160,11 @@ export function QuickEntry({
           placeholder={t('tasks.quickEntry.checklistItems')}
           aria-label={t('tasks.quickEntry.checklistItems')}
           rows={2}
-          className="resize-none rounded-[6px] bg-foreground/[0.03] px-2 py-1 text-[12px] leading-5 outline-none placeholder:text-text-muted"
+          className="resize-none rounded-[var(--radius-card)] bg-foreground/[0.03] px-2 py-1 text-[12px] leading-5 outline-none placeholder:text-text-muted"
         />
         <div className="flex min-h-6 flex-wrap items-center gap-1" aria-live="polite" data-testid="tasks-quick-entry-preview">
           {chips.length ? chips.map((chip) => (
-            <span key={chip.key} className="inline-flex h-[20px] items-center rounded-[4px] bg-accent/15 px-1.5 text-[11px] font-medium text-foreground">{chip.label}</span>
+            <span key={chip.key} className="inline-flex h-[20px] items-center rounded-[var(--radius-control)] bg-accent/15 px-1.5 text-[11px] font-medium text-foreground">{chip.label}</span>
           )) : <span className="text-[11px] text-text-muted">{t('tasks.quickEntry.hint')}</span>}
         </div>
         <div className="mt-2 flex items-center gap-2 text-[11px] text-text-muted">
@@ -174,7 +174,7 @@ export function QuickEntry({
             type="submit"
             disabled={!parsed.title.trim()}
             data-testid="tasks-quick-entry-save"
-            className="h-7 shrink-0 rounded-[6px] bg-accent px-3 text-[12px] font-semibold text-[var(--accent-foreground,white)] disabled:opacity-50"
+            className="h-7 shrink-0 rounded-[var(--radius-card)] bg-accent px-3 text-[12px] font-semibold text-[var(--accent-foreground,white)] disabled:opacity-50"
           >
             {t('tasks.quickEntry.save')}
           </button>

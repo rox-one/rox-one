@@ -547,7 +547,7 @@ export function MindMapHost({
           className,
         )}
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-foreground/5 text-muted-foreground">
+        <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground">
           <Network className="h-6 w-6" strokeWidth={1.5} />
         </div>
         <p className="text-sm text-muted-foreground">{t('mindmap.empty')}</p>
@@ -621,7 +621,7 @@ export function MindMapHost({
             <>
               <button
                 type="button"
-                className="h-7 w-7 grid place-items-center rounded-[6px] hover:bg-foreground/5 text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 grid place-items-center rounded-[var(--radius-control)] hover:bg-foreground/5 text-muted-foreground hover:text-foreground"
                 title={t('mindmap.fit')}
                 aria-label={t('mindmap.fit')}
                 onClick={() => {
@@ -633,7 +633,7 @@ export function MindMapHost({
               </button>
               <button
                 type="button"
-                className="h-7 w-7 grid place-items-center rounded-[6px] hover:bg-foreground/5 text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 grid place-items-center rounded-[var(--radius-control)] hover:bg-foreground/5 text-muted-foreground hover:text-foreground"
                 title={t('menu.zoomIn')}
                 aria-label={t('menu.zoomIn')}
                 onClick={() => engineRef.current?.zoomBy(1.1)}
@@ -642,7 +642,7 @@ export function MindMapHost({
               </button>
               <button
                 type="button"
-                className="h-7 w-7 grid place-items-center rounded-[6px] hover:bg-foreground/5 text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 grid place-items-center rounded-[var(--radius-control)] hover:bg-foreground/5 text-muted-foreground hover:text-foreground"
                 title={t('menu.zoomOut')}
                 aria-label={t('menu.zoomOut')}
                 onClick={() => engineRef.current?.zoomBy(1 / 1.1)}
@@ -652,7 +652,7 @@ export function MindMapHost({
               <button
                 type="button"
                 className={cn(
-                  'h-7 w-7 grid place-items-center rounded-[6px] hover:bg-foreground/5',
+                  'h-7 w-7 grid place-items-center rounded-[var(--radius-control)] hover:bg-foreground/5',
                   split
                     ? 'text-foreground bg-foreground/5'
                     : 'text-muted-foreground hover:text-foreground',
@@ -670,7 +670,7 @@ export function MindMapHost({
           <button
             type="button"
             className={cn(
-              'h-7 inline-flex items-center gap-1 rounded-[6px] px-1.5 hover:bg-foreground/5',
+              'h-7 inline-flex items-center gap-1 rounded-[var(--radius-control)] px-1.5 hover:bg-foreground/5',
               showPinnedStructure
                 ? 'text-foreground bg-foreground/5'
                 : 'text-muted-foreground hover:text-foreground',
@@ -689,7 +689,7 @@ export function MindMapHost({
           <button
             type="button"
             className={cn(
-              'h-7 inline-flex items-center gap-1 rounded-[6px] px-1.5 hover:bg-foreground/5',
+              'h-7 inline-flex items-center gap-1 rounded-[var(--radius-control)] px-1.5 hover:bg-foreground/5',
               zen
                 ? 'text-foreground bg-foreground/5'
                 : 'text-muted-foreground hover:text-foreground',
@@ -712,7 +712,7 @@ export function MindMapHost({
           <button
             type="button"
             className={cn(
-              'h-7 inline-flex items-center gap-1 rounded-[6px] px-1.5 hover:bg-foreground/5 text-muted-foreground hover:text-foreground',
+              'h-7 inline-flex items-center gap-1 rounded-[var(--radius-control)] px-1.5 hover:bg-foreground/5 text-muted-foreground hover:text-foreground',
               materializing && 'opacity-60',
             )}
             title={t('mindmap.materialize')}
@@ -729,7 +729,7 @@ export function MindMapHost({
           <button
             type="button"
             className={cn(
-              'h-7 inline-flex items-center gap-1 rounded-[6px] px-1.5 hover:bg-foreground/5',
+              'h-7 inline-flex items-center gap-1 rounded-[var(--radius-control)] px-1.5 hover:bg-foreground/5',
               enrichDraft
                 ? 'text-foreground bg-foreground/5'
                 : 'text-muted-foreground hover:text-foreground',
@@ -749,7 +749,7 @@ export function MindMapHost({
           <button
             type="button"
             className={cn(
-              'h-7 w-7 grid place-items-center rounded-[6px] hover:bg-foreground/5',
+              'h-7 w-7 grid place-items-center rounded-[var(--radius-control)] hover:bg-foreground/5',
               searchOpen
                 ? 'text-foreground bg-foreground/5'
                 : 'text-muted-foreground hover:text-foreground',
@@ -769,14 +769,14 @@ export function MindMapHost({
           <span className="flex-1 truncate">{t('mindmap.enrichDraftBanner')}</span>
           <button
             type="button"
-            className="h-6 rounded-[6px] px-2 font-medium hover:bg-foreground/5"
+            className="h-6 rounded-[var(--radius-control)] px-2 font-medium hover:bg-foreground/5"
             onClick={handleDiscardEnrich}
           >
             {t('mindmap.enrichDiscard')}
           </button>
           <button
             type="button"
-            className="h-6 rounded-[6px] bg-foreground/90 px-2 font-medium text-background hover:bg-foreground"
+            className="h-6 rounded-[var(--radius-control)] bg-foreground/90 px-2 font-medium text-background hover:bg-foreground"
             onClick={handleAcceptEnrich}
           >
             {t('mindmap.enrichAccept')}
@@ -789,14 +789,14 @@ export function MindMapHost({
           <span className="flex-1 truncate">{t('mindmap.staleBanner')}</span>
           <button
             type="button"
-            className="h-6 rounded-[6px] px-2 font-medium hover:bg-foreground/5"
+            className="h-6 rounded-[var(--radius-control)] px-2 font-medium hover:bg-foreground/5"
             onClick={handleKeepStale}
           >
             {t('mindmap.keepPin')}
           </button>
           <button
             type="button"
-            className="h-6 rounded-[6px] bg-foreground/90 px-2 font-medium text-background hover:bg-foreground"
+            className="h-6 rounded-[var(--radius-control)] bg-foreground/90 px-2 font-medium text-background hover:bg-foreground"
             onClick={handleRebuildPin}
           >
             {t('mindmap.rebuildPin')}
@@ -811,7 +811,7 @@ export function MindMapHost({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('common.search')}
-            className="w-full h-8 rounded-[8px] border border-border/50 bg-background px-2.5 text-sm text-foreground outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 placeholder:text-muted-foreground"
+            className="w-full h-8 rounded-[var(--radius-card)] border border-border/50 bg-background px-2.5 text-sm text-foreground outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 placeholder:text-muted-foreground"
           />
         </div>
       ) : null}
@@ -922,7 +922,7 @@ export function MindMapHost({
           <div className="ml-auto">
             <button
               type="button"
-              className="h-7 inline-flex items-center gap-1 rounded-[6px] px-2 text-[11px] font-medium text-foreground hover:bg-foreground/5"
+              className="h-7 inline-flex items-center gap-1 rounded-[var(--radius-control)] px-2 text-[11px] font-medium text-foreground hover:bg-foreground/5"
               aria-label={t('common.close')}
               onClick={() => {
                 setZen(false)

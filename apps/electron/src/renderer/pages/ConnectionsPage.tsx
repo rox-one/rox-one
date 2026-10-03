@@ -716,7 +716,7 @@ export default function ConnectionsPage() {
             </ImportPanel>
             <ul className="space-y-2">
               {visiblePreviews.map((row) => (
-                <li key={`${row.source}:${row.candidateId}`} className="flex items-center justify-between rounded-[10px] bg-foreground/[0.02] px-3 py-2">
+                <li key={`${row.source}:${row.candidateId}`} className="flex items-center justify-between rounded-[var(--radius-control)] bg-foreground/[0.02] px-3 py-2">
                   <div>
                     <div className="font-medium">{row.label}</div>
                     <div className="font-mono text-xs text-muted-foreground">{row.maskedSummary}</div>
@@ -778,7 +778,7 @@ export default function ConnectionsPage() {
                   <OverviewRow
                     key={row.id}
                     testId="connections-credential-row"
-                    icon={<span className="h-5 w-5 rounded-[6px] bg-foreground/10 text-center text-[11px] font-semibold leading-5 text-foreground/70">{row.integrationId.slice(0, 1).toUpperCase()}</span>}
+                    icon={<span className="h-5 w-5 rounded-[var(--radius-card)] bg-foreground/10 text-center text-[11px] font-semibold leading-5 text-foreground/70">{row.integrationId.slice(0, 1).toUpperCase()}</span>}
                     title={row.integrationId}
                     subtitle={[row.credentialRefId, row.storageMode, rowNote[row.id]].filter(Boolean).join(' · ')}
                     status={rowStatus[row.id] ?? 'pending'}
@@ -810,7 +810,7 @@ export default function ConnectionsPage() {
             </OverviewGroup>
             {selected && workspace?.id && selected.workspaceId === workspace.id && <ConnectionLifecyclePanel connection={selected} workspaceId={workspace.id} />}
             {showCreate ? (
-              <div data-testid="connections-create-form" className="grid gap-3 rounded-[10px] bg-foreground/[0.02] p-4 sm:grid-cols-3">
+              <div data-testid="connections-create-form" className="grid gap-3 rounded-[var(--radius-card)] bg-foreground/[0.02] p-4 sm:grid-cols-3">
                 <label className="block">
                   <span className="text-xs text-muted-foreground">{t('connections.createIntegration')}</span>
                   <input
@@ -851,7 +851,7 @@ export default function ConnectionsPage() {
         ) : tab === 'credentials' && credentialRows.length > 0 ? (
           <ul className="space-y-2 text-sm text-foreground">
             {credentialRows.map((row) => (
-              <li key={row.id} className="flex items-center gap-2 rounded-[10px] bg-foreground/[0.02] px-3 py-2">
+              <li key={row.id} className="flex items-center gap-2 rounded-[var(--radius-control)] bg-foreground/[0.02] px-3 py-2">
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">{row.integrationId}</div>
                   <div className="font-mono text-xs">{row.credentialRefId}</div>
@@ -881,7 +881,7 @@ export default function ConnectionsPage() {
           </ul>
         ) : tab === 'policies' ? (
           <div className="space-y-4 text-sm text-foreground">
-            <div data-testid="connections-grant-form" className="space-y-2 rounded-[10px] bg-foreground/[0.02] p-4">
+            <div data-testid="connections-grant-form" className="space-y-2 rounded-[var(--radius-card)] bg-foreground/[0.02] p-4">
               <label className="block">
                 <span className="text-muted-foreground">{t('connections.grantConsumer')}</span>
                 <input
@@ -938,7 +938,7 @@ export default function ConnectionsPage() {
             {policyRows.length > 0 ? (
               <ul className="space-y-2">
                 {policyRows.map((row) => (
-                  <li key={row.id} className="rounded-[10px] bg-foreground/[0.02] px-3 py-2">
+                  <li key={row.id} className="rounded-[var(--radius-card)] bg-foreground/[0.02] px-3 py-2">
                     <div className="font-medium">{row.integrationId}</div>
                     <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
                   </li>
@@ -948,7 +948,7 @@ export default function ConnectionsPage() {
             {bindingRows.length > 0 ? (
               <ul className="space-y-2">
                 {bindingRows.map((row) => (
-                  <li key={row.id} className="flex items-center gap-2 rounded-[10px] bg-foreground/[0.02] px-3 py-2">
+                  <li key={row.id} className="flex items-center gap-2 rounded-[var(--radius-control)] bg-foreground/[0.02] px-3 py-2">
                     <div className="min-w-0 flex-1">
                       <div className="font-medium">{row.consumerId}</div>
                       <div className="text-muted-foreground">{row.purpose}</div>
@@ -976,7 +976,7 @@ export default function ConnectionsPage() {
         ) : tab === 'audit' && auditRows.length > 0 ? (
           <ul className="space-y-2 text-sm text-foreground">
             {auditRows.map((row) => (
-              <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`} className="rounded-[10px] bg-foreground/[0.02] px-3 py-2">
+              <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`} className="rounded-[var(--radius-card)] bg-foreground/[0.02] px-3 py-2">
                 <div className="font-medium">{row.eventType}</div>
                 <div className="text-muted-foreground">{row.outcome}</div>
                 <div className="font-mono text-xs">{row.connectionId}</div>

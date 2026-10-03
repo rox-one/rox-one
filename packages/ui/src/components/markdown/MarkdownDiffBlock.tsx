@@ -21,6 +21,8 @@ import { cn } from '../../lib/utils'
 import { CodeBlock } from './CodeBlock'
 import { ensureUnifiedDiffFormat } from './diff-normalize'
 import { registerCraftShikiThemes } from '../code-viewer/registerShikiThemes'
+import { useShikiTheme } from '../../context/ShikiThemeContext'
+import { getShikiThemeType } from '../code-viewer/zedShikiThemes'
 
 // ── Custom element + theme registration (same as ShikiDiffViewer) ──────────
 // Idempotent: safe to run even if ShikiDiffViewer already registered these.
@@ -89,8 +91,10 @@ export interface MarkdownDiffBlockProps {
 }
 
 export function MarkdownDiffBlock({ code, className }: MarkdownDiffBlockProps) {
-  const dark = isDarkMode()
-  const themeName = dark ? 'craft-dark' : 'craft-light'
+  const contextShikiTheme = useShikiTheme()
+  const themeType = contextShikiTheme ? getShikiThemeType(contextShikiTheme) : undefined
+  const dark = themeType ? themeType === 'dark' : isDarkMode()
+  const themeName = contextShikiTheme || (dark ? 'craft-dark' : 'craft-light')
 
   // Build the same options used in ShikiDiffViewer for visual consistency
   const options: PatchDiffProps<undefined>['options'] = React.useMemo(() => ({
@@ -112,7 +116,7 @@ export function MarkdownDiffBlock({ code, className }: MarkdownDiffBlockProps) {
     <DiffErrorBoundary fallback={fallback}>
       <div
         className={cn(
-          'relative rounded-[8px] overflow-hidden border bg-muted/30',
+          'relative rounded-[var(--radius-card,4px)] overflow-hidden border bg-background',
           className,
         )}
         style={{

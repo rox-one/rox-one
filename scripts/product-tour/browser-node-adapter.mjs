@@ -1,6 +1,6 @@
 // Test-only Node adapter. The bundled test file retains its original assertions,
 // production imports, explicit case timeouts, and controlled renderer fixture.
-import { test as nodeTest, describe as nodeDescribe, before, after } from 'node:test'
+import { test as nodeTest, describe as nodeDescribe, before, after, beforeEach as nodeBeforeEach, afterEach as nodeAfterEach } from 'node:test'
 import { expect } from '@playwright/test'
 import { createServer } from 'node:http'
 import { readFile, readdirSync } from 'node:fs'
@@ -14,10 +14,13 @@ export const test = (name, run, timeout = 30_000) => nodeTest(name, { timeout },
 export const it = test
 export const beforeAll = (run, timeout = 30_000) => before(run, { timeout })
 export const afterAll = (run, timeout = 30_000) => after(run, { timeout })
+export const beforeEach = (run, timeout = 30_000) => nodeBeforeEach(run, { timeout })
+export const afterEach = (run, timeout = 30_000) => nodeAfterEach(run, { timeout })
 export const describe = (name, run) => nodeDescribe(name, run)
 describe.skipIf = skip => (name, run) => nodeDescribe(name, { skip }, run)
 
 globalThis.Bun = {
+  version: `node-lifecycle-adapter/${process.version}`,
   sleep: milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
   file: path => ({ text: () => read(path, 'utf8'), json: async () => JSON.parse(await read(path, 'utf8')) }),
   Glob: class {
@@ -50,7 +53,7 @@ globalThis.Bun = {
     // Node's parent test IPC context is private to that runner. Inheriting it can
     // make a nested runner exit successfully without executing its selected case.
     delete env.NODE_TEST_CONTEXT
-    const child = spawn(command[0], args, { env, stdio: ['ignore', 'pipe', 'pipe'] })
+    const child = spawn(command[0], args, { env, cwd: options.cwd, stdio: ['ignore', 'pipe', 'pipe'] })
     let report = ''
     child.stdout.on('data', chunk => { report = (report + chunk).slice(-65_536) })
     const exited = new Promise((resolve, reject) => {
@@ -61,7 +64,7 @@ globalThis.Bun = {
         } else resolve(code ?? (signal === 'SIGTERM' ? 143 : 137))
       }))
     })
-    return { stdout: Readable.toWeb(child.stdout), stderr: Readable.toWeb(child.stderr), exited,
+    return { get exitCode() { return child.exitCode }, pid: child.pid, stdout: Readable.toWeb(child.stdout), stderr: Readable.toWeb(child.stderr), exited,
       kill: signal => child.kill(signal ?? 'SIGTERM') }
   },
 }

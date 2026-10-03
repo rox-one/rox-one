@@ -9,11 +9,15 @@
  */
 
 import React, { useState, useEffect, lazy, Suspense } from 'react'
+import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { createWebApi } from './adapter/web-api'
 import type { AuthenticatedWebTransportBootstrap } from '../../electron/src/renderer/lib/authenticated-web-bootstrap'
 import { initializeAuthenticatedWebTransport } from './adapter/transport-bootstrap'
 import { WEBUI_REQUIRES_CONATION_FLAG } from './rox2-webui-surface'
+import { ThemeProvider } from '@/context/ThemeContext'
+import { windowWorkspaceIdAtom } from '@/atoms/sessions'
+import { Toaster } from '@/components/ui/sonner'
 
 export { WEBUI_REQUIRES_CONATION_FLAG, WEBUI_SURFACE_ID, webuiSurfaceResult } from './rox2-webui-surface'
 
@@ -21,6 +25,20 @@ export { WEBUI_REQUIRES_CONATION_FLAG, WEBUI_SURFACE_ID, webuiSurfaceResult } fr
 // This prevents any Electron component from accessing window.electronAPI
 // before the web adapter is ready.
 const ElectronApp = lazy(() => import('@/App'))
+
+// ThemeProvider reads the API once on mount. Mount it only after authenticated
+// transport is ready, so initial preset and preference reads use the real API.
+function ReadyRenderer({ bootstrap }: { bootstrap: AuthenticatedWebTransportBootstrap }) {
+  const workspaceId = useAtomValue(windowWorkspaceIdAtom)
+  return (
+    <ThemeProvider activeWorkspaceId={workspaceId ?? bootstrap.workspaceId}>
+      <Suspense fallback={<LoadingScreen />}>
+        <ElectronApp webTransportBootstrap={bootstrap} />
+      </Suspense>
+      <Toaster />
+    </ThemeProvider>
+  )
+}
 
 type Phase = 'loading' | 'error' | 'ready'
 
@@ -124,9 +142,5 @@ export default function App() {
   if (phase === 'error') return <ErrorScreen message={error} onRetry={() => setAttempt(value => value + 1)} />
   if (!bootstrap) return <LoadingScreen />
 
-  return (
-    <Suspense fallback={<LoadingScreen />}>
-      <ElectronApp webTransportBootstrap={bootstrap} />
-    </Suspense>
-  )
+  return <ReadyRenderer bootstrap={bootstrap} />
 }

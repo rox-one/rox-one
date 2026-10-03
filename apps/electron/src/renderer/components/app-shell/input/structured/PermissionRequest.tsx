@@ -56,7 +56,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false, tourV
         'overflow-hidden h-full flex flex-col bg-info/5',
         unstyled
           ? 'border-0'
-          : 'border border-info/30 rounded-[8px] shadow-middle'
+          : 'border border-info/30 rounded-[var(--radius-card)] shadow-middle'
       )}
       data-tutorial="permission-banner"
     >
