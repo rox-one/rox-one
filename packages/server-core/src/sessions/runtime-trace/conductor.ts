@@ -1,8 +1,8 @@
-import type { TaskSpec, RunLogEntry } from '@rox/shared/tasks'
+import type { TaskSpec, RunLogEntry, NodeOutput } from '@rox/shared/tasks'
 import { materializeDeps, nodeTitle } from '@rox/shared/tasks'
 import type { RuntimeTask, RuntimeStatus } from '@rox/core/runtime-trace'
 
-export interface TaskRuntimeObservation { spec: TaskSpec; slug: string; taskRunId: string; orchestratorSessionId?: string; entry: RunLogEntry }
+export interface TaskRuntimeObservation { spec: TaskSpec; slug: string; taskRunId: string; orchestratorSessionId?: string; entry: RunLogEntry; output?: NodeOutput; outputRef?: string; messageId?: string }
 
 export function conductorTask(spec: TaskSpec, taskRunId: string, nodeId: string, status: RuntimeStatus, sessionId?: string): RuntimeTask {
   const node = spec.nodes.find(node => node.id === nodeId)

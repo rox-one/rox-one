@@ -39,6 +39,19 @@ describe('runtime projection',()=>{
     expect(graph.nodes.filter(node=>node.kind==='tool')).toHaveLength(1)
     expect(graph.nodes.filter(node=>node.kind==='terminal')).toHaveLength(1)
   })
+  test('links explicit artifact evidence and answer artifact IDs without guessing from text or paths',()=>{
+    const output=Array.from({length:200},(_,index)=>event(index+1,'tool.output',{name:'read',result:{text:'actual input'}},{spanId:'input-stream'}))
+    const artifact=event(201,'artifact.created',{artifact:{id:'saved-report',label:'Report',uri:'task://actual/run/nodes/report',evidenceEventIds:['test:1','absent']}})
+    const answer=event(202,'result.published',{content:{text:'Answer refers to task://other/path'},artifactIds:['saved-report','absent']})
+    const graph=buildRuntimeGraph(projectRuntimeEvents([...output,artifact,answer]))
+    const inputNode=graph.nodes.find(node=>node.kind==='tool')!
+    const artifactNode=graph.nodes.find(node=>node.kind==='artifact')!
+    const answerNode=graph.nodes.find(node=>node.kind==='result')!
+    expect(graph.edges).toHaveLength(2)
+    expect(graph.edges).toContainEqual(expect.objectContaining({source:inputNode.id,target:artifactNode.id,kind:'data-dependency'}))
+    expect(graph.edges).toContainEqual(expect.objectContaining({source:artifactNode.id,target:answerNode.id,kind:'data-dependency'}))
+    expect(buildRuntimeGraph(projectRuntimeEvents([event(1,'artifact.created',{artifact:{id:'unrelated',label:'Report',uri:'task://other/path'}}),event(2,'result.published',{content:{text:'task://other/path'}})])).edges).toHaveLength(0)
+  })
   test('terminal cancellation sticks after late output; retry keeps previous attempt',()=>{
     const trace=[event(1,'terminal.started',{command:'sleep',status:'running'},{spanId:'shell',attemptId:'one'}),event(2,'terminal.completed',{command:'sleep',status:'cancelled'},{spanId:'shell',attemptId:'one'}),event(3,'terminal.output',{command:'sleep',stdout:{text:'late'},status:'running'},{spanId:'shell',attemptId:'one'}),event(4,'terminal.started',{command:'sleep',status:'running'},{spanId:'shell',attemptId:'two'})]
     const nodes=buildRuntimeGraph(projectRuntimeEvents(trace)).nodes

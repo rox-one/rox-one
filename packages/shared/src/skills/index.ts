@@ -11,6 +11,7 @@ export {
   PROJECT_AGENT_SKILLS_DIR,
   loadSkill,
   loadAllSkills,
+  loadSkillDetails,
   invalidateSkillsCache,
   getDisabledBundledSkillSlugsFromDisk,
   loadSkillBySlug,

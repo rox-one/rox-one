@@ -58,6 +58,7 @@ export function SkillsListPanel({
   className,
 }: SkillsListPanelProps) {
   const { t } = useTranslation()
+  const { reset: resetCraftSelection } = skillSelection.useSelection()
   const activeWorkspace = useActiveWorkspace()
   const canRevealLocally = !activeWorkspace?.remoteServer
   const { workspaces, activeWorkspaceId } = useAppShellContext()
@@ -622,21 +623,29 @@ export function SkillsListPanel({
             <li
               key={skill.slug}
               title={skill.shadowedByCraft ? t('skillsList.ompShadowed') : skill.metadata.description}
-              className={`group flex min-w-0 items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)] hover:bg-foreground/[0.03] ${skill.shadowedByCraft ? 'opacity-50' : ''}`}
+              className={`group flex min-w-0 items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)] ${!skill.shadowedByCraft && selectedSkillSlug === skill.slug ? 'bg-foreground/5' : 'hover:bg-foreground/[0.03]'} ${skill.shadowedByCraft ? 'opacity-50' : ''}`}
               style={SKILL_ROW_STYLE}
             >
-              <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5 min-w-0">
-                  <span className="truncate text-sm">{skill.metadata.name}</span>
-                  <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
-                    {t('skillsList.ompBadge')}
+              <button
+                type="button"
+                disabled={skill.shadowedByCraft}
+                aria-pressed={!skill.shadowedByCraft && selectedSkillSlug === skill.slug}
+                onClick={() => { resetCraftSelection(); onSkillClick(skill) }}
+                className="flex min-w-0 flex-1 items-center gap-2 text-left rounded-[var(--radius-control)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring disabled:cursor-default"
+              >
+                <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <span className="truncate text-sm">{skill.metadata.name}</span>
+                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
+                      {t('skillsList.ompBadge')}
+                    </span>
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {skill.shadowedByCraft ? t('skillsList.ompShadowed') : skill.metadata.description}
                   </span>
                 </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {skill.shadowedByCraft ? t('skillsList.ompShadowed') : skill.metadata.description}
-                </span>
-              </span>
+              </button>
               {/* Export lives in a hover «…» menu so the name keeps the row. */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

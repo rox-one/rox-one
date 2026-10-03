@@ -15,6 +15,9 @@ export interface RuntimeTraceRun {
   rootRunId: string; rootSessionId: string; runId: string; agentId: string; parentAgentId?: string
   sessionId: string; workspaceId: string; attemptId: string; startedAt: number
 }
+interface RuntimeToolState {
+  run: RuntimeTraceRun; startedAt: number; name: string; command?: string; shell?: string; cwd?: string; structuredTerminal?: boolean
+}
 const ID = /^[a-zA-Z0-9_-]{1,200}$/
 const DEFAULT_COVERAGE: TraceCoverage = { state: 'partial', source: 'runtime', missing: ['executor-unpublished-context', 'unpublished-decision-explanations'] }
 const UNAVAILABLE: TraceCoverage = { state: 'unavailable', source: 'runtime', missing: ['runtime-events'], reason: 'This session predates runtime observation recording.' }
@@ -30,11 +33,11 @@ export class RuntimeTraceService {
   private sourceSeq = new Map<string, number>()
   private sourceRoots = new Map<string, string>()
   private seen = new Set<string>()
-  private tools = new Map<string, { run: RuntimeTraceRun; startedAt: number; name: string; command?: string; shell?: string; cwd?: string; structuredTerminal?: boolean }>()
-  private providerTurns = new Map<string, RuntimeTraceRun>()
+  private tools = new Map<string, Map<string, RuntimeToolState>>()
+  private providerTurns = new Map<string, Map<string, RuntimeTraceRun>>()
   private terminalRuns = new Set<string>()
-  private nativeRuns = new Map<string, RuntimeTraceRun>()
-  private backgroundAliases = new Map<string, string>()
+  private nativeRuns = new Map<string, Map<string, RuntimeTraceRun>>()
+  private backgroundAliases = new Map<string, Map<string, { run: RuntimeTraceRun; toolUseId: string }>>()
   private conductorRuns = new Map<string, RuntimeTraceRun>()
   private recordingFailures = new Map<string, TraceCoverage>()
   private preciseTerminals = new Set<string>()
@@ -47,6 +50,26 @@ export class RuntimeTraceService {
     try { this.emitHealth?.({ workspaceId: run.workspaceId, sessionId: run.rootSessionId, rootRunId: run.rootRunId, coverage }) } catch { /* A failed diagnostic delivery never changes execution. */ }
   }
 
+  private unique<T>(origins: Map<string, T> | undefined): T | undefined {
+    return origins?.size === 1 ? origins.values().next().value : undefined
+  }
+
+  private remember<T>(registry: Map<string, Map<string, T>>, key: string, runId: string, value: T): void {
+    let origins = registry.get(key)
+    if (!origins) { origins = new Map(); registry.set(key, origins) }
+    origins.set(runId, value)
+  }
+
+  /** An idle callback without a unique execution origin cannot enlarge the successor's trace. */
+  private ambiguousOrigin(runs: Iterable<RuntimeTraceRun>): void {
+    for (const run of runs) {
+      const previous = this.recordingFailures.get(run.rootRunId) ?? DEFAULT_COVERAGE
+      const coverage: TraceCoverage = { ...previous, state: 'partial', missing: [...new Set([...previous.missing, 'ambiguous-execution-origin'])] }
+      this.recordingFailures.set(run.rootRunId, coverage)
+      try { this.emitHealth?.({ workspaceId: run.workspaceId, sessionId: run.rootSessionId, rootRunId: run.rootRunId, coverage }) } catch { /* Passive diagnostics never change execution. */ }
+    }
+  }
+
   private coverage(rootRunId: string, rows: RuntimeEvent[], integrity: 'complete' | 'partial'): TraceCoverage {
     const recorded = this.recordingFailures.get(rootRunId) ?? DEFAULT_COVERAGE
     const missing = new Set(recorded.missing)
@@ -54,6 +77,7 @@ export class RuntimeTraceService {
     const sourceSequences = new Map<string, number>()
     for (const row of rows) {
       if (!isRuntimeEvent(row)) continue
+      if (row.kind === 'trace.coverage') for (const gap of row.payload.coverage.missing) missing.add(gap)
       const previous = sourceSequences.get(row.sourceId)
       if (previous !== undefined && row.sourceSeq > previous + 1) missing.add('recording-failure')
       sourceSequences.set(row.sourceId, Math.max(previous ?? 0, row.sourceSeq))
@@ -65,6 +89,19 @@ export class RuntimeTraceService {
     const session = this.resolveSession(id)
     if (!session || (workspaceId && session.workspaceId !== workspaceId)) throw new Error('Runtime trace session access denied')
     return session
+  }
+  private scopedEvent(event: unknown, workspaceId: string, rootSessionId: string, rootRunId: string): event is RuntimeEvent {
+    if (!isRuntimeEvent(event) || event.workspaceId !== workspaceId || event.rootSessionId !== rootSessionId || event.rootRunId !== rootRunId) return false
+    // A recovered row cannot enlarge the query's authority. Deleted child sessions retain their
+    // historical observations; existing sessions must still have the same authorized lineage.
+    let session = this.resolveSession(event.sessionId ?? rootSessionId)
+    if (!session) return true
+    for (let index = 0; session && index < 100; index++) {
+      if (session.workspaceId !== workspaceId) return false
+      if (session.id === rootSessionId) return true
+      session = session.parentSessionId ? this.resolveSession(session.parentSessionId) : undefined
+    }
+    return false
   }
   private directory(session: RuntimeTraceSession, rootRunId: string): string {
     if (!ID.test(rootRunId)) throw new Error('Invalid runtime run id')
@@ -97,7 +134,27 @@ export class RuntimeTraceService {
       this.journalAccess.delete(directory)
       const rootRunId = directory.split(/[\\/]/).at(-1)!
       for (const [sourceId, root] of this.sourceRoots) if (root === rootRunId) { this.sourceSeq.delete(sourceId); this.sourceRoots.delete(sourceId) }
+      this.trimRunCorrelations(rootRunId)
     }
+  }
+
+  private trimRunCorrelations(rootRunId: string): void {
+    const runIds = new Set<string>()
+    const trim = <T>(registry: Map<string, Map<string, T>>, runFor: (value: T) => RuntimeTraceRun) => {
+      for (const [key, origins] of registry) {
+        for (const [origin, value] of origins) if (runFor(value).rootRunId === rootRunId) { runIds.add(runFor(value).runId); origins.delete(origin) }
+        if (!origins.size) registry.delete(key)
+      }
+    }
+    trim(this.tools, tool => tool.run)
+    trim(this.providerTurns, run => run)
+    trim(this.nativeRuns, run => run)
+    trim(this.backgroundAliases, alias => alias.run)
+    for (const key of this.seen) if (key.startsWith(`${rootRunId}:`)) this.seen.delete(key)
+    for (const key of this.preciseTerminals) if ([...runIds].some(runId => key.startsWith(`${runId}:`))) this.preciseTerminals.delete(key)
+    for (const [key, run] of this.conductorRuns) if (run.rootRunId === rootRunId && this.terminalRuns.has(run.runId)) this.conductorRuns.delete(key)
+    const referencedRuns = new Set([...this.active.values(), ...this.conductorRuns.values()].map(run => run.runId))
+    for (const runId of runIds) if (!referencedRuns.has(runId)) this.terminalRuns.delete(runId)
   }
 
   private async nextSourceSequence(run: RuntimeTraceRun, sourceId: string): Promise<number> {
@@ -159,8 +216,9 @@ export class RuntimeTraceService {
       // Only producer/correlation metadata is admitted from an executor; scope and sequence belong to this collector.
       const metadata = Object.fromEntries(['eventId', 'sourceEventId', 'sourceId', 'sourceSeq', 'spanId', 'parentSpanId', 'providerTurnId', 'providerCallId', 'messageId', 'toolUseId', 'causationEventId', 'occurredAt', 'clockDomain', 'elapsedMs', 'origin'].map(key => [key, ownMetadata(key)]).filter(([, value]) => value !== undefined))
       const suppliedAttempt = ownMetadata('attemptId')
-      // Project without executing accessors, then validate before creating any
-      // content blob. Invalid observations must have no durable side effects.
+      if (JSON.stringify(sanitizeRuntimeTrace(metadata)) !== JSON.stringify(metadata)) throw new Error('Sensitive producer metadata withheld before runtime recording')
+      if (typeof suppliedAttempt === 'string' && sanitizeRuntimeTrace(suppliedAttempt) !== suppliedAttempt) throw new Error('Sensitive producer metadata withheld before runtime recording')
+      // Project without executing accessors, then validate before creating any content blob.
       const projected = sanitizeRuntimeTrace(payload)
       const observation = { schemaVersion: 1, eventId, sourceEventId: eventId, sourceId, sourceSeq,
         occurredAt: known(now, 'server-observation-receipt'), clockDomain: 'server-wall', origin: 'observed', ...metadata,
@@ -214,23 +272,32 @@ export class RuntimeTraceService {
     await this.record(parent, 'agent.assigned', { assignment: { ...assignment, agentId: `session:${childSessionId}`, parentAgentId: parent.agentId } })
   }
 
-  async capture(sessionId: string, snapshot: RuntimeContextSnapshot, messageId?: string): Promise<void> {
-    const run = this.active.get(sessionId)
+  async capture(sessionId: string, snapshot: RuntimeContextSnapshot, messageId?: string, originRun?: RuntimeTraceRun | null): Promise<void> {
+    const run = originRun === undefined ? this.active.get(sessionId) : originRun
     if (run) await this.record(run, 'context.captured', { snapshot }, { messageId })
   }
 
-  async observe(sessionId: string, observation: RuntimeAgentObservation): Promise<void> {
+  async observe(sessionId: string, observation: RuntimeAgentObservation, originRun?: RuntimeTraceRun | null): Promise<void> {
     if (!isRuntimeAgentObservation(observation)) throw new Error('Invalid native runtime observation')
-    const current = this.active.get(sessionId)
+    if (originRun === null) return
+    const nativeKey = `${sessionId}:${observation.sourceId}:${observation.agentId}`
+    const nativeOrigins = this.nativeRuns.get(nativeKey)
+    if (!originRun && nativeOrigins && nativeOrigins.size > 1) { this.ambiguousOrigin(nativeOrigins.values()); return }
+    const pinnedNative = originRun ? nativeOrigins?.get(originRun.runId) : this.unique(nativeOrigins)
+    let current = originRun ?? pinnedNative ?? this.active.get(sessionId)
     if (!current) return
+    const terminalTool = observation.agentId === 'root' && observation.kind.startsWith('terminal.') && observation.toolUseId
+    const toolEvidence = terminalTool || (observation.agentId === 'root' && observation.kind === 'trace.coverage' && observation.toolUseId)
+    const toolOrigins = toolEvidence ? this.tools.get(`${sessionId}:${observation.toolUseId}`) : undefined
+    if (!originRun && !pinnedNative && toolOrigins && toolOrigins.size > 1) { this.ambiguousOrigin([...toolOrigins.values()].map(tool => tool.run)); return }
+    if (toolEvidence && !originRun && !pinnedNative && !toolOrigins) { this.ambiguousOrigin([current]); return }
+    const toolRun = toolEvidence ? (originRun || pinnedNative ? toolOrigins?.get(current.runId) : this.unique(toolOrigins))?.run : undefined
+    if (toolRun) current = toolRun
     const parentId = observation.parentAgentId === 'root' ? current.agentId : observation.parentAgentId ? `${current.agentId}:native:${observation.parentAgentId}` : current.parentAgentId
     const agentId = observation.agentId === 'root' ? current.agentId : `${current.agentId}:native:${observation.agentId}`
-    const nativeKey = `${sessionId}:${observation.sourceId}:${observation.agentId}`
     const run = observation.agentId === 'root' ? { ...current, agentId, parentAgentId: parentId }
-      : this.nativeRuns.get(nativeKey) ?? { ...current, runId: `${current.runId}:native:${observation.agentId}`, agentId, parentAgentId: parentId }
-    if (observation.agentId !== 'root') this.nativeRuns.set(nativeKey, run)
-    const terminalTool = observation.agentId === 'root' && observation.kind.startsWith('terminal.') && observation.toolUseId
-    const toolRun = terminalTool ? this.tools.get(`${sessionId}:${observation.toolUseId}`)?.run : undefined
+      : { ...current, runId: `${current.runId}:native:${observation.agentId}`, agentId, parentAgentId: parentId }
+    this.remember(this.nativeRuns, nativeKey, current.runId, { ...current })
     const correlatedRun = toolRun ?? run
     const sourceKey = `${correlatedRun.rootRunId}:${observation.sourceId}:${observation.sourceEventId}`
     if (this.seen.has(sourceKey)) return
@@ -241,14 +308,16 @@ export class RuntimeTraceService {
       assignment.agentId = assignment.agentId === 'root' ? current.agentId : `${current.agentId}:native:${assignment.agentId}`
       if (assignment.parentAgentId) assignment.parentAgentId = assignment.parentAgentId === 'root' ? current.agentId : `${current.agentId}:native:${assignment.parentAgentId}`
     }
-    if (terminalTool) this.preciseTerminals.add(`${sessionId}:${observation.toolUseId}`)
+    const parentToolRun = observation.parentAgentId === 'root' && observation.parentSpanId?.startsWith('tool:')
+      ? this.tools.get(`${sessionId}:${observation.parentSpanId.slice(5)}`)?.get(current.runId)?.run : undefined
+    if (terminalTool) this.preciseTerminals.add(`${correlatedRun.runId}:${observation.attemptId ?? correlatedRun.attemptId}:${observation.toolUseId}`)
     try {
-      await this.record(correlatedRun, observation.kind, payload as never, { ...observation, ...(terminalTool ? { spanId: `${correlatedRun.runId}:tool:${observation.toolUseId}` } : {}), agentId, parentAgentId: parentId, eventId: `${correlatedRun.rootRunId}:${observation.sourceId}:${observation.sourceEventId}` } as Partial<RuntimeEvent>)
+      await this.record(correlatedRun, observation.kind, payload as never, { ...observation, ...(parentToolRun ? { parentSpanId: `${parentToolRun.runId}:${observation.parentSpanId}` } : {}), ...(toolEvidence ? { spanId: `${correlatedRun.runId}:tool:${observation.toolUseId}` } : {}), agentId: toolRun?.agentId ?? agentId, parentAgentId: toolRun ? toolRun.parentAgentId : parentId, eventId: `${correlatedRun.rootRunId}:${observation.sourceId}:${observation.sourceEventId}` } as Partial<RuntimeEvent>)
     } catch (error) { this.seen.delete(sourceKey); throw error }
   }
 
-  async finish(sessionId: string, reason: 'complete' | 'interrupted' | 'error' | 'timeout'): Promise<void> {
-    const run = this.active.get(sessionId)
+  async finish(sessionId: string, reason: 'complete' | 'interrupted' | 'error' | 'timeout', originRun?: RuntimeTraceRun | null): Promise<void> {
+    const run = originRun === undefined ? this.active.get(sessionId) : originRun
     if (!run || this.terminalRuns.has(run.runId)) return
     this.terminalRuns.add(run.runId)
     const status = reason === 'complete' ? 'succeeded' : reason === 'error' || reason === 'timeout' ? 'failed' : 'interrupted'
@@ -257,38 +326,64 @@ export class RuntimeTraceService {
   }
 
   /** Correlates late tool/background output with the run which actually launched it. */
-  async agentEvent(sessionId: string, event: { type: string; [key: string]: unknown }, options: { structuredHostTerminals?: boolean } = {}): Promise<void> {
-    const current = this.active.get(sessionId)
+  async agentEvent(sessionId: string, event: { type: string; [key: string]: unknown }, options: { structuredHostTerminals?: boolean; originRun?: RuntimeTraceRun | null } = {}): Promise<void> {
+    if (options.originRun === null) return
+    const current = options.originRun ?? this.active.get(sessionId)
     if (!current) return
-    if (event.type === 'runtime_observation') return await this.observe(sessionId, event.observation as RuntimeAgentObservation)
+    if (event.type === 'runtime_observation') return await this.observe(sessionId, event.observation as RuntimeAgentObservation, options.originRun)
     const backgroundId = typeof event.taskId === 'string' ? event.taskId : typeof event.shellId === 'string' ? event.shellId : undefined
-    const toolUseId = typeof event.toolUseId === 'string' ? event.toolUseId : backgroundId ? this.backgroundAliases.get(`${sessionId}:${backgroundId}`) : undefined
-    const toolKey = toolUseId ? `${sessionId}:${toolUseId}` : undefined
-    const prior = toolKey ? this.tools.get(toolKey) : undefined
-    const providerTurnId = typeof event.turnId === 'string' ? event.turnId : undefined
+    const backgroundOutcome = event.type === 'task_completed' || event.type === 'task_progress' || event.type === 'shell_killed'
+    // A background notification's delivery turn is not proof of the task's launch turn.
+    const providerTurnId = !backgroundOutcome && typeof event.turnId === 'string' ? event.turnId : undefined
     const turnKey = providerTurnId ? `${sessionId}:${providerTurnId}` : undefined
-    const run = prior?.run ?? (turnKey ? this.providerTurns.get(turnKey) : undefined) ?? current
-    if (turnKey && !this.providerTurns.has(turnKey)) this.providerTurns.set(turnKey, run)
+    const turnOrigins = turnKey ? this.providerTurns.get(turnKey) : undefined
+    if (!options.originRun && turnOrigins && turnOrigins.size > 1) { this.ambiguousOrigin(turnOrigins.values()); return }
+    const turnRun = options.originRun ?? this.unique(turnOrigins)
+    const aliases = backgroundId ? this.backgroundAliases.get(`${sessionId}:${backgroundId}`) : undefined
+    if ((backgroundOutcome || !turnRun) && aliases && aliases.size > 1) { this.ambiguousOrigin([...aliases.values()].map(alias => alias.run)); return }
+    const alias = backgroundOutcome ? this.unique(aliases) : turnRun ? aliases?.get(turnRun.runId) : this.unique(aliases)
+    const toolUseId = typeof event.toolUseId === 'string' ? event.toolUseId : alias?.toolUseId
+    const toolKey = toolUseId ? `${sessionId}:${toolUseId}` : undefined
+    const toolOrigins = toolKey ? this.tools.get(toolKey) : undefined
+    let run: RuntimeTraceRun
+    if (event.type === 'tool_start') {
+      // A genuine new start never inherits a previous invocation solely because the provider reused its ID.
+      if (!options.originRun && turnRun && turnRun.runId !== current.runId) { this.ambiguousOrigin([turnRun, current]); return }
+      run = options.originRun ?? current
+    } else {
+      if (!turnRun && !alias && toolOrigins && toolOrigins.size > 1) { this.ambiguousOrigin([...toolOrigins.values()].map(tool => tool.run)); return }
+      if (backgroundOutcome && backgroundId && !alias) { this.ambiguousOrigin([current]); return }
+      if (event.type === 'tool_result' && toolUseId && !turnRun && !alias && !toolOrigins) { this.ambiguousOrigin([current]); return }
+      run = backgroundOutcome && alias ? alias.run : turnRun ?? alias?.run ?? this.unique(toolOrigins)?.run ?? current
+    }
+    const prior = toolOrigins?.get(run.runId)
+    if (event.type !== 'tool_start' && prior) run = prior.run
+    const preciseKey = toolUseId ? `${run.runId}:${run.attemptId}:${toolUseId}` : undefined
+    if (turnKey) this.remember(this.providerTurns, turnKey, run.runId, { ...run })
     const extra = { toolUseId, providerTurnId, spanId: toolUseId ? `${run.runId}:tool:${toolUseId}` : undefined,
       parentSpanId: typeof event.parentToolUseId === 'string' ? `${run.runId}:tool:${event.parentToolUseId}` : undefined }
-    const content = async (value: unknown) => await this.content(run, typeof value === 'string' ? value : JSON.stringify(value ?? {}))
+    const content = async (value: unknown) => await this.content(run, typeof value === 'string' ? value : JSON.stringify(sanitizeRuntimeTrace(value ?? {})))
     if (event.type === 'tool_start' && toolKey) {
       const input = (event.input ?? {}) as Record<string, unknown>
       const name = String(event.toolName)
       const terminal = /^(?:bash|shell|terminal|mcp__session__bash)$/i.test(name)
-      this.tools.set(toolKey, { run, startedAt: Date.now(), name, structuredTerminal: terminal && options.structuredHostTerminals, command: terminal ? String(input.command ?? input.cmd ?? '') : undefined, shell: typeof input.shell === 'string' ? input.shell : undefined, cwd: typeof input.cwd === 'string' ? input.cwd : undefined })
+      this.remember(this.tools, toolKey, run.runId, { run: { ...run }, startedAt: Date.now(), name, structuredTerminal: terminal && options.structuredHostTerminals, command: terminal ? String(input.command ?? input.cmd ?? '') : undefined, shell: typeof input.shell === 'string' ? input.shell : undefined, cwd: typeof input.cwd === 'string' ? input.cwd : undefined })
       await this.record(run, 'tool.started', { name, input: await content(input), status: 'running' }, extra)
-      if (terminal && !options.structuredHostTerminals && !this.preciseTerminals.has(toolKey)) await this.record(run, 'terminal.started', { command: String(input.command ?? input.cmd ?? ''), shell: typeof input.shell === 'string' ? input.shell : undefined, cwd: typeof input.cwd === 'string' ? input.cwd : undefined, status: 'running' }, extra)
+      if (terminal && !options.structuredHostTerminals && !this.preciseTerminals.has(preciseKey!)) await this.record(run, 'terminal.started', { command: String(input.command ?? input.cmd ?? ''), shell: typeof input.shell === 'string' ? input.shell : undefined, cwd: typeof input.cwd === 'string' ? input.cwd : undefined, status: 'running' }, extra)
     } else if (event.type === 'tool_result') {
       const status = event.isError ? 'failed' : 'succeeded'
       await this.record(run, 'tool.completed', { name: String(event.toolName ?? prior?.name ?? 'tool'), result: await content(event.result), status }, extra)
-      if (prior?.command !== undefined && !prior.structuredTerminal && (!toolKey || !this.preciseTerminals.has(toolKey))) await this.record(run, 'terminal.completed', { command: prior.command, shell: prior.shell, cwd: prior.cwd, stdout: await content(event.result), exitCode: unknown('not-emitted'), status }, extra)
+      if (prior?.command !== undefined && !prior.structuredTerminal && (!preciseKey || !this.preciseTerminals.has(preciseKey))) await this.record(run, 'terminal.completed', { command: prior.command, shell: prior.shell, cwd: prior.cwd, stdout: await content(event.result), exitCode: unknown('not-emitted'), status }, extra)
     } else if (event.type === 'thinking_delta' || event.type === 'thinking_complete') {
       await this.record(run, 'reasoning.output', { content: await content(event.text), provenance: 'provider', complete: event.type === 'thinking_complete' }, extra)
 
     } else if (event.type === 'retry') {
-      const attemptRun = event.phase === 'active' ? { ...current, attemptId: randomUUID() } : run
-      if (event.phase === 'active') this.active.set(sessionId, attemptRun)
+      const attemptRun = event.phase === 'active' ? { ...run, attemptId: randomUUID() } : run
+      if (event.phase === 'active') {
+        if (this.active.get(sessionId)?.runId === run.runId) this.active.set(sessionId, attemptRun)
+        if (options.originRun) options.originRun.attemptId = attemptRun.attemptId
+        if (turnKey) this.remember(this.providerTurns, turnKey, attemptRun.runId, { ...attemptRun })
+      }
       await this.record(attemptRun, event.phase === 'end' ? 'attempt.completed' : event.phase === 'active' ? 'attempt.started' : 'operation.queued', event.phase === 'backoff' ? { description: String(event.message ?? 'Provider backoff') } : { status: event.phase === 'end' ? 'succeeded' : 'running' }, extra)
     } else if (event.type === 'text_discard') {
       await this.record(run, 'attempt.completed', { status: 'failed', description: 'Provider discarded output before retry' }, extra)
@@ -297,7 +392,7 @@ export class RuntimeTraceService {
     } else if (event.type === 'error' || event.type === 'typed_error') {
       await this.record(run, 'attempt.completed', { status: 'failed', description: String(event.message ?? (event.error as Record<string, unknown>)?.message ?? '') }, extra)
     } else if (event.type === 'task_backgrounded' || event.type === 'shell_backgrounded') {
-      if (backgroundId && toolUseId) this.backgroundAliases.set(`${sessionId}:${backgroundId}`, toolUseId)
+      if (backgroundId && toolUseId) this.remember(this.backgroundAliases, `${sessionId}:${backgroundId}`, run.runId, { run: { ...run }, toolUseId })
       await this.record(run, 'operation.queued', { description: String(event.intent ?? event.taskId ?? event.shellId ?? event.type) }, extra)
     } else if (event.type === 'task_progress') {
       await this.record(run, 'tool.output', { name: prior?.name ?? 'task', status: 'running', result: { ...(await content({ elapsedSeconds: event.elapsedSeconds })), isDelta: false } }, extra)
@@ -314,11 +409,13 @@ export class RuntimeTraceService {
   }
 
   async conductor(observation: TaskRuntimeObservation): Promise<void> {
-    const { spec, entry, taskRunId, orchestratorSessionId } = observation
+    const { spec, slug, entry, taskRunId, orchestratorSessionId } = observation
     if (!orchestratorSessionId) return
     const key = `${orchestratorSessionId}:${taskRunId}`
     if (entry.kind === 'run-started') {
-      const run = await this.begin(orchestratorSessionId, spec.goal, { launch: { kind: 'manual', triggerId: `task:${spec.id}:${taskRunId}` }, preserveActive: true })
+      // The durable TaskRunner trigger proves a task launch, but carries no causal chat
+      // generation. An overlapping prompt in the same session cannot supply its provenance.
+      const run = await this.begin(orchestratorSessionId, spec.goal, { launch: { kind: 'unknown', triggerId: `task:${spec.id}:${taskRunId}` }, preserveActive: true })
       this.conductorRuns.set(key, run)
       await this.record(run, 'plan.published', { plan: { id: `task:${taskRunId}`, title: spec.title, version: 1,
         tasks: spec.nodes.map(node => conductorTask(spec, taskRunId, node.id, 'queued')) } })
@@ -330,15 +427,25 @@ export class RuntimeTraceService {
     if (entry.kind === 'node-scheduled' || entry.kind === 'node-spawned' || entry.kind === 'node-finished' || entry.kind === 'node-retry') {
       const status: RuntimeStatus = entry.kind === 'node-finished' ? entry.state === 'done' || entry.state === 'skipped' ? 'succeeded' : entry.state === 'cancelled' ? 'cancelled' : entry.state === 'failed' ? 'failed' : 'running'
         : entry.kind === 'node-retry' ? 'queued' : 'running'
-      await this.record(run, 'task.state-changed', { task: conductorTask(spec, taskRunId, entry.nodeId, status, 'sessionId' in entry ? entry.sessionId : undefined) }, extra)
+      const stateEvent = await this.record(run, 'task.state-changed', { task: conductorTask(spec, taskRunId, entry.nodeId, status, 'sessionId' in entry ? entry.sessionId : undefined) }, extra)
       if (entry.kind === 'node-finished' && entry.state === 'done') {
-        await this.record(run, 'artifact.created', { artifact: { id: `task-output:${taskRunId}:${entry.nodeId}`, label: `${entry.nodeId} result`, kind: 'task-node-output', uri: `task://${spec.id}/${taskRunId}/nodes/${entry.nodeId}`, content: { availability: 'not-recorded' } } }, extra)
+        const history = await this.withJournal(run, journal => journal.all())
+        const childResult = history.rows.filter(event => this.scopedEvent(event, run.workspaceId, run.rootSessionId, run.rootRunId)).reverse().find(event => event.kind === 'result.published' && event.sessionId === entry.sessionId && (!observation.messageId || event.messageId === observation.messageId))
+        await this.record(run, 'artifact.created', { artifact: { id: `task-output:${taskRunId}:${entry.nodeId}`, label: `${entry.nodeId} result`, kind: 'task-node-output', uri: observation.outputRef ?? `tasks/${slug}/runs/${taskRunId}/nodes/${entry.nodeId}.json`, content: observation.output ? await this.content(run, observation.output.text) : { availability: 'not-recorded' }, evidenceEventIds: [stateEvent.eventId, ...(childResult ? [childResult.eventId] : [])] } }, extra)
       }
     } else if (entry.kind === 'run-verifying') {
-      await this.record(run, 'acceptance.started', { acceptance: { id: `task-verdict:${taskRunId}`, criterion: spec.acceptance_criteria ?? 'TaskRunner final verification', status: 'running', evidence: [], authorityRef: `tasks/${spec.id}/runs/${taskRunId}/run-log.jsonl` } }, extra)
+      await this.record(run, 'acceptance.started', { acceptance: { id: `task-verdict:${taskRunId}`, criterion: spec.acceptance_criteria ?? 'TaskRunner final verification', status: 'running', evidence: [], authorityRef: `tasks/${slug}/runs/${taskRunId}/run-log.jsonl` } }, extra)
     } else if (entry.kind === 'verdict') {
-      await this.record(run, 'acceptance.completed', { acceptance: { id: `task-verdict:${taskRunId}`, criterion: spec.acceptance_criteria ?? 'TaskRunner final verification', status: entry.result === 'pass' ? 'passed' : entry.result === 'fail' ? 'failed' : 'unknown',
-        evidence: [await this.content(run, JSON.stringify({ authority: 'TaskRunner', result: entry.result, reason: entry.reason, nodes: entry.nodes, recordedAt: entry.t }))], authorityRef: `tasks/${spec.id}/runs/${taskRunId}/run-log.jsonl` } }, extra)
+      const verdictEvent = await this.record(run, 'acceptance.completed', { acceptance: { id: `task-verdict:${taskRunId}`, criterion: spec.acceptance_criteria ?? 'TaskRunner final verification', status: entry.result === 'pass' ? 'passed' : entry.result === 'fail' ? 'failed' : 'unknown',
+        evidence: [await this.content(run, JSON.stringify({ authority: 'TaskRunner', result: entry.result, reason: entry.reason, nodes: entry.nodes, recordedAt: entry.t }))], authorityRef: `tasks/${slug}/runs/${taskRunId}/run-log.jsonl` } }, extra)
+      if (observation.output) {
+        const content = await this.content(run, observation.output.text)
+        const artifactId = `task-verdict-output:${taskRunId}:${verdictEvent.eventId}`
+        const artifactEvent = await this.record(run, 'artifact.created', { artifact: { id: artifactId, label: 'TaskRunner verification result', kind: 'task-verdict-output', uri: observation.outputRef, content, evidenceEventIds: [verdictEvent.eventId] } }, extra)
+        const history = await this.withJournal(run, journal => journal.all())
+        const nodeArtifacts = history.rows.filter(event => this.scopedEvent(event, run.workspaceId, run.rootSessionId, run.rootRunId) && event.kind === 'artifact.created' && event.payload.artifact.kind === 'task-node-output')
+        await this.record(run, 'result.published', { content, artifactIds: [artifactId, ...nodeArtifacts.flatMap(event => event.kind === 'artifact.created' ? [event.payload.artifact.id] : [])], evidenceEventIds: [verdictEvent.eventId, artifactEvent.eventId, ...nodeArtifacts.map(event => event.eventId)] }, { ...extra, messageId: observation.messageId })
+      }
     } else if (entry.kind === 'run-completed' || entry.kind === 'run-failed' || entry.kind === 'run-stopped') {
       this.terminalRuns.add(run.runId)
       await this.record(run, entry.kind === 'run-completed' ? 'run.completed' : 'run.interrupted', { status: entry.kind === 'run-completed' ? 'succeeded' : entry.kind === 'run-stopped' ? 'cancelled' : 'failed', reason: `TaskRunner.${entry.kind}` } as never, extra)
@@ -347,9 +454,11 @@ export class RuntimeTraceService {
 
   getConductorRun(orchestratorSessionId: string, taskRunId: string) { return this.conductorRuns.get(`${orchestratorSessionId}:${taskRunId}`) }
 
-  async publishMessage(sessionId: string, messageId: string, text: string, providerTurnId?: string, intermediate = false): Promise<void> {
-    if (intermediate) return
-    const run = (providerTurnId ? this.providerTurns.get(`${sessionId}:${providerTurnId}`) : undefined) ?? this.active.get(sessionId)
+  async publishMessage(sessionId: string, messageId: string, text: string, providerTurnId?: string, intermediate = false, originRun?: RuntimeTraceRun | null): Promise<void> {
+    if (intermediate || originRun === null) return
+    const turnOrigins = providerTurnId ? this.providerTurns.get(`${sessionId}:${providerTurnId}`) : undefined
+    if (!originRun && turnOrigins && turnOrigins.size > 1) { this.ambiguousOrigin(turnOrigins.values()); return }
+    const run = originRun ?? this.unique(turnOrigins) ?? this.active.get(sessionId)
     if (run) await this.record(run, 'result.published', { content: await this.content(run, text) }, { messageId, providerTurnId })
   }
   async resolveApproval(sessionId: string, requestId: string, approved: boolean): Promise<void> {
@@ -377,6 +486,7 @@ export class RuntimeTraceService {
       this.session(rootSessionId, query.workspaceId)
       let ancestor: RuntimeTraceSession | undefined = session
       for (let i = 0; ancestor && i < 100; i++) {
+        if (ancestor.workspaceId !== query.workspaceId) throw new Error('Runtime trace root lineage access denied')
         if (ancestor.id === rootSessionId) return rootSessionId
         ancestor = ancestor.parentSessionId ? this.resolveSession(ancestor.parentSessionId) : undefined
       }
@@ -398,10 +508,11 @@ export class RuntimeTraceService {
     for (const rootRunId of runIds) {
       const rootSessionId = await this.rootForQuery({ ...query, rootRunId })
       const page = await this.withJournal({ rootSessionId, rootRunId, workspaceId: query.workspaceId }, journal => journal.all())
-      const first = page.rows.filter(isRuntimeEvent).find(event => event.kind === 'run.accepted')
+      const valid = page.rows.filter(event => this.scopedEvent(event, query.workspaceId, rootSessionId, rootRunId))
+      const first = valid.find(event => event.kind === 'run.accepted')
       if (!first || first.kind !== 'run.accepted') continue
-      const terminal = page.rows.filter(isRuntimeEvent).reverse().find(event => (event.kind === 'run.completed' || event.kind === 'run.interrupted') && event.runId === rootRunId)
-      runs.push({ rootRunId, sessionId: rootSessionId, agentId: first.agentId, status: terminal && (terminal.kind === 'run.completed' || terminal.kind === 'run.interrupted') ? terminal.payload.status : 'running', startedAt: first.receivedAt, prompt: first.payload.prompt.text ?? '', coverage: this.coverage(rootRunId, page.rows, page.integrity) })
+      const terminal = [...valid].reverse().find(event => (event.kind === 'run.completed' || event.kind === 'run.interrupted') && event.runId === rootRunId)
+      runs.push({ rootRunId, sessionId: rootSessionId, agentId: first.agentId, status: terminal && (terminal.kind === 'run.completed' || terminal.kind === 'run.interrupted') ? terminal.payload.status : 'running', startedAt: first.receivedAt, prompt: sanitizeRuntimeTrace(first.payload.prompt.text ?? '') as string, coverage: this.coverage(rootRunId, valid, valid.length === page.rows.length ? page.integrity : 'partial') })
     }
     runs.sort((a, b) => a.startedAt - b.startedAt)
     const chatRun = this.active.get(query.sessionId)
@@ -417,8 +528,10 @@ export class RuntimeTraceService {
     if (!(await this.runsFor(session)).includes(query.rootRunId)) throw new Error('Runtime run does not belong to session')
     const rootSessionId = await this.rootForQuery(query)
     const { page, all } = await this.withJournal({ rootSessionId, rootRunId: query.rootRunId, workspaceId: query.workspaceId }, async journal => ({ page: await journal.snapshot(query.afterSeq, query.limit), all: await journal.all() }))
-    const valid = page.rows.filter(isRuntimeEvent).map(event => sanitizeRuntimeTrace(event) as RuntimeEvent)
-    return { events: valid, cursor: { rootRunId: query.rootRunId, seq: page.cursor }, hasMore: page.hasMore, coverage: this.coverage(query.rootRunId, all.rows, all.integrity) }
+    const scoped = (event: unknown): event is RuntimeEvent => this.scopedEvent(event, query.workspaceId, rootSessionId, query.rootRunId)
+    const valid = page.rows.filter(scoped).map(event => sanitizeRuntimeTrace(event) as RuntimeEvent)
+    const validAll = all.rows.filter(scoped)
+    return { events: valid, cursor: { rootRunId: query.rootRunId, seq: page.cursor }, hasMore: page.hasMore, coverage: this.coverage(query.rootRunId, validAll, validAll.length === all.rows.length ? all.integrity : 'partial') }
   }
   async readPayload(query: RuntimePayloadQuery): Promise<RuntimePayloadPage> {
     const rootSessionId = await this.rootForQuery(query)
@@ -426,11 +539,14 @@ export class RuntimeTraceService {
     if (!(await this.runsFor(owner)).includes(query.rootRunId)) throw new Error('Runtime run does not belong to session')
     return await this.withJournal({ rootSessionId, rootRunId: query.rootRunId, workspaceId: query.workspaceId }, async journal => {
       const page = await journal.all()
+      const valid = page.rows.filter(event => this.scopedEvent(event, query.workspaceId, rootSessionId, query.rootRunId))
       // References are admitted only if the requested run actually published them.
-      const hasRef = page.rows.some(event => JSON.stringify(event).includes(`"payloadRef":"${query.payloadRef}"`))
+      const hasRef = valid.some(event => JSON.stringify(event).includes(`"payloadRef":"${query.payloadRef}"`))
       if (!hasRef) throw new Error('Runtime payload does not belong to run')
-      const content = await journal.readContent(query.payloadRef)
-      if (content === null) throw new Error('Runtime payload unavailable')
+      const storedContent = await journal.readContent(query.payloadRef)
+      if (storedContent === null) throw new Error('Runtime payload unavailable')
+      // Verify stored bytes first, then apply any secret values registered since recording.
+      const content = sanitizeRuntimeTrace(storedContent) as string
       const offset = query.offset ?? 0
       const limit = query.limit ?? 65536
       if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 262144) throw new Error('Invalid runtime payload range')
@@ -440,7 +556,7 @@ export class RuntimeTraceService {
         if ((node as Record<string, unknown>).payloadRef === query.payloadRef && (node as Record<string, unknown>).truncated === true) return true
         return Object.values(node).some(referenceTruncated)
       }
-      return { text, offset, nextOffset: offset + text.length < content.length ? offset + text.length : undefined, byteLength: Buffer.byteLength(content), truncated: page.rows.some(referenceTruncated) }
+      return { text, offset, nextOffset: offset + text.length < content.length ? offset + text.length : undefined, byteLength: Buffer.byteLength(content), truncated: valid.some(referenceTruncated) }
     })
   }
 }
