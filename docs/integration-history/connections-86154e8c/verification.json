@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "source_branch": "checkpoint/session-audit-20260821-craft-agents",
+  "source_sha": "86154e8c812746261282bb4c517b16ad7becc0ec",
+  "integration_base": "cc56c95c75cb7bedd025e1b9af60a5312d0cf119",
+  "runtime": "Bun1.3.14",
+  "tests": {
+    "workgraph_and_fabric": 171,
+    "consumer": 53,
+    "failures": 0,
+    "configured_ci_bun": 254,
+    "configured_ci_python": 19
+  },
+  "gates": [
+    "all-package strict types",
+    "locale parity/sort/coverage",
+    "Electron main/preload builds"
+  ],
+  "review": "independent before-controls proved move/revoke both orderings and dishonest too-late device cancellation; repaired with shared mutation barrier and explicit commit state",
+  "native_ui_and_real_oauth_acceptance": false,
+  "original_branch_retained": true,
+  "logs": [
+    {
+      "name": "connection-recovery-tests-final2.log",
+      "sha256": "8dbd3c1e451ba2d0f9cc35d8601d3e5842783fa0905a195bc2de77876f7e9da9"
+    },
+    {
+      "name": "connection-recovery-consumer-tests.log",
+      "sha256": "3e4d14b0d07a0a78ca88787512b6678a34342a5970fc5e5a7c3fd209e5bf40d6"
+    },
+    {
+      "name": "connection-recovery-validate-ci-final2.log",
+      "sha256": "7ac579a460f3cf1ac22ef375a2f08f6c569553f4374b63c4e4c5e7fbe0ac81ae"
+    },
+    {
+      "name": "connection-recovery-main-build.log",
+      "sha256": "45b17aebac6f349df8b7cbf7210b9413c126a320c83a9ea88ede583a2e05b3cc"
+    },
+    {
+      "name": "connection-recovery-preload-build.log",
+      "sha256": "5f2b572850839749bdb24be6b069d694b7bab19297e8ea3aa797a1e34e5a2618"
+    }
+  ],
+  "runtime_files": {
+    "apps/electron/src/main/handlers/workgraph.test.ts": "77bf43e68f8bed00f1d427bcb942153c1fcc3be205125d1b5a545abb424bfce7",
+    "apps/electron/src/main/handlers/workgraph.ts": "60935f9bd24075029b2b7eff198fee407e0d223ba937dd4ce2a6531dccb9e55e",
+    "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "10adb4db85d7fc5e14c1e3e6c0ff5aeb6686fa8c905de52f2b31035f2ffdd41d",
+    "apps/electron/src/shared/types.ts": "33b94b5d80f443eb36747dc91c1ec8d4ee11c42792c01232eaad0e5fb8a6fc51",
+    "apps/electron/src/transport/__tests__/workgraph-channel-map.test.ts": "18919aeb01b0841ae1e2c7e2ec37c7b4c97c752b9e6796ac8428b2edd66ae8d7",
+    "apps/electron/src/transport/channel-map.ts": "b77c2e938307047e7047ce0e57443fe93c0886bce270e39c286800e7f70e29b9",
+    "packages/server-core/src/workgraph/github-oauth-import.test.ts": "75950e3bf7682aa26f1ce9a9b5b4758bb7be2bc8cc58d74aefe2ea52e55ce255",
+    "packages/server-core/src/workgraph/github-oauth-import.ts": "ea9066655f165d6a7dc7d3f268d24d77668d8a3a098f048157546b6ad11e83c1",
+    "packages/server-core/src/workgraph/index.ts": "69bf2f5a01132018dc3b34ec1ba2f1cd84067c5a497023845c3d0150637a1da5",
+    "packages/server-core/src/workgraph/revalidation.test.ts": "0bf7dcedcd042f8d6def08b918ad77af9a996f27a19236c890c696365f74eb48",
+    "packages/server-core/src/workgraph/revalidation.ts": "a8406094d8107317941cc6043912d50431267810088c6c769a026401ceba05cb",
+    "packages/shared/src/credentials/backends/types.ts": "dac55c00f36016455847401182f0449ffd652d2c313eb6cf31d4b974d4b4302f",
+    "packages/shared/src/credentials/fabric/__tests__/broker.test.ts": "500d86a5cb4564dfa7f83d77f96f9525f291877e897ad9c7546f8f3e63f45806",
+    "packages/shared/src/credentials/fabric/__tests__/move-backend.test.ts": "e2d3ed0ef8480171c12042848217dcf4dccdfef4813c97c59a3d105e90b5fe79",
+    "packages/shared/src/credentials/fabric/broker.ts": "2be5c366a751ccd66d4b70a5a8ee7bddb8f452e505ccc4010d2413858c93ad20",
+    "packages/shared/src/credentials/fabric/local-file-provider.ts": "aae80f35f0321cf4c007752aa0000a03a18fd3ca61def0dd0b9148aa73c73fe4",
+    "packages/shared/src/credentials/index.ts": "5e49c18508532687dca24166c0c81b57e111710aad28e1b3acf245ddcfcdd6d2",
+    "packages/shared/src/protocol/channels.ts": "7dc49608b6a22ddc9e8d1185cbdd23372a056e0db3d72431a1249bf4dfdf1c7e",
+    "packages/shared/src/protocol/routing.ts": "49b61ea17692febf51fbd159e16f6ec0357e91e8df08cf53a0de4bb58a4844cf"
+  }
+}
