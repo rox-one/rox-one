@@ -38,7 +38,6 @@ import {
   inspectorVisibleAtom,
   type InspectorSectionId,
 } from '@/atoms/unified-shell'
-import { selectedConnectionAtom } from '@/atoms/connections'
 import { isConnectionsNavigation, useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
@@ -46,7 +45,7 @@ import { getSessionTitle } from '@/utils/session'
 import { getAppLocale } from '@rox/shared/i18n'
 import { APP_NAV_DESTINATIONS } from '@/components/app-shell/nav-destinations'
 import { CENTER_MIN_WIDTH, PANEL_MIN_WIDTH } from '@/components/app-shell/panel-constants'
-import { projectConnectionInspector } from './connection-inspector-model'
+import { ConnectionInfoSection } from './ConnectionInfoSection'
 import { SessionInspectorBody } from '@/components/session-inspector/SessionInspectorBody'
 import { InspectorBrowserPane } from '@/components/session-inspector/InspectorBrowserPane'
 import { InspectorTerminal } from '@/components/session-inspector/InspectorTerminal'
@@ -92,101 +91,6 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
   )
 }
 
-function ConnectionInfoSection() {
-  const { t } = useTranslation()
-  const selected = useAtomValue(selectedConnectionAtom)
-  const [confirmRotate, setConfirmRotate] = useState(false)
-  const [consumers, setConsumers] = useState<Array<{ consumerId: string; status: string }>>([])
-  const [testLogin, setTestLogin] = useState('')
-  if (!selected) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
-        <Info className="h-6 w-6 text-muted-foreground/40" />
-        <span className="text-[13px] font-medium text-foreground/80">
-          {t('inspector.empty.connections.title')}
-        </span>
-        <span className="text-[12px] leading-relaxed text-muted-foreground/60">
-          {t('inspector.empty.connections.body')}
-        </span>
-      </div>
-    )
-  }
-  const fields = projectConnectionInspector(selected)
-  const workspaceId = selected.workspaceId
-  return (
-    <div className="flex min-h-0 flex-1 flex-col divide-y divide-foreground/5 overflow-y-auto">
-      <InfoRow label={t('inspector.field.provider')} value={fields.provider} />
-      <InfoRow label={t('inspector.field.storageMode')} value={fields.storageMode} mono />
-      <InfoRow label={t('inspector.field.credentialRef')} value={fields.credentialRef} mono />
-      <InfoRow label={t('inspector.field.scopes')} value={fields.scopes} mono />
-      {testLogin ? <InfoRow label={t('inspector.field.testLogin')} value={testLogin} mono /> : null}
-      {consumers.length > 0 ? (
-        <InfoRow
-          label={t('inspector.field.consumers')}
-          value={consumers.map((row) => `${row.consumerId}: ${row.status}`).join(', ')}
-        />
-      ) : null}
-      <div className="flex flex-wrap gap-1 px-2.5 py-1.5">
-        <button
-          type="button"
-          className="rounded border px-2 py-1 text-[12px]"
-          onClick={async () => {
-            const testConnection = window.electronAPI?.workgraph?.testConnection
-            if (!workspaceId || typeof testConnection !== 'function') return
-            const result = await testConnection({ workspaceId, connectionId: selected.id })
-            setTestLogin(result.login)
-          }}
-        >
-          {t('connections.test')}
-        </button>
-        <button
-          type="button"
-          className="rounded border px-2 py-1 text-[12px]"
-          onClick={async () => {
-            const repairConnection = window.electronAPI?.workgraph?.repairConnection
-            if (!workspaceId || typeof repairConnection !== 'function') return
-            const result = await repairConnection({ workspaceId, connectionId: selected.id })
-            setConsumers(result.consumers)
-          }}
-        >
-          {t('connections.repair')}
-        </button>
-        {confirmRotate ? (
-          <>
-            <button
-              type="button"
-              className="rounded border px-2 py-1 text-[12px]"
-              onClick={async () => {
-                const rotateConnection = window.electronAPI?.workgraph?.rotateConnection
-                if (!workspaceId || typeof rotateConnection !== 'function') return
-                const result = await rotateConnection({ workspaceId, connectionId: selected.id })
-                setConsumers(result.consumers)
-                setConfirmRotate(false)
-              }}
-            >
-              {t('connections.rotateConfirm')}
-            </button>
-            <button
-              type="button"
-              className="rounded border px-2 py-1 text-[12px]"
-              onClick={() => setConfirmRotate(false)}
-            >
-              {t('connections.rotateCancel')}
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            className="rounded border px-2 py-1 text-[12px]"
-            onClick={() => setConfirmRotate(true)}
-          >
-            {t('connections.rotate')}
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
 
 function InfoSection() {
   const { t } = useTranslation()
