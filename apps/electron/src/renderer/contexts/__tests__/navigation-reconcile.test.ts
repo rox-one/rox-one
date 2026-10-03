@@ -115,7 +115,7 @@ describe('normalizePanelRouteForReconcile', () => {
   })
   it('keeps JSON-valid non-tuple legacy addresses unavailable instead of auto-selecting the focused route', () => {
     for (const route of ['["future"]', '[1]', '[["future"]]']) {
-      expect(parsePanelEntriesFromUrl(route)).toEqual([{route,proportion:0}])
+      expect(parsePanelEntriesFromUrl(route)).toEqual([{route:route as ViewRoute,proportion:0}])
       expect(normalizePanelRouteForReconcile(route as ViewRoute, () => {throw new Error('Unexpected auto-selection')})).toBe(route as ViewRoute)
     }
   })
