@@ -97,6 +97,8 @@ import {
   type SessionHeader,
   type SessionPriority,
   pickSessionFields,
+  sessionProjectIds,
+  withProjectMembership,
   lexorankValidate,
   lexorankBetween,
   backfillRanks,
@@ -843,6 +845,7 @@ type CollectionMutableField =
   | 'priority'
   | 'dueDate'
   | 'projectId'
+  | 'projectIds'
   | 'labels'
   | 'kanbanColumn'
 
@@ -918,8 +921,9 @@ interface ManagedSession {
   enabledSourceSlugs?: string[]
   // Labels applied to this session (additive tags, many-per-session)
   labels?: string[]
-  // Workspace-scoped project binding (undefined = unbound)
+  // Workspace-scoped membership metadata; only the primary is used for project defaults.
   projectId?: string
+  projectIds?: string[]
   // Parent session id — when set, this session is a subtask of the parent (undefined = top-level task)
   parentSessionId?: string
   // Kanban board column id ('todo' | 'in-progress' | 'done'); independent of sessionStatus
@@ -1683,9 +1687,9 @@ export class SessionManager implements ISessionManager {
     }
 
     // Project binding (no dedicated event today — handled via metaChanged broadcast)
-    if (managed.projectId !== header.projectId) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
-      managed.projectId = header.projectId
+    if (managed.projectId !== header.projectId || JSON.stringify(sessionProjectIds(managed)) !== JSON.stringify(sessionProjectIds(header))) {
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
+      Object.assign(managed, withProjectMembership(sessionProjectIds(header)))
       changed = true
     }
 
@@ -8673,10 +8677,11 @@ export class SessionManager implements ISessionManager {
       }
       if (patch.projectId !== undefined) {
         const projectId = patch.projectId ?? undefined
-        affectedFields.push('projectId')
+        affectedFields.push('projectId', 'projectIds')
         before.projectId = managed.projectId
-        optimistic.projectId = projectId
-        headerPatch.projectId = projectId
+        before.projectIds = managed.projectIds
+        Object.assign(optimistic, withProjectMembership(projectId ? [projectId] : []))
+        Object.assign(headerPatch, withProjectMembership(projectId ? [projectId] : []))
       }
 
       const nextLabels = resolveBulkLabels(managed.labels, patch)
@@ -8743,6 +8748,9 @@ export class SessionManager implements ISessionManager {
               break
             case 'projectId':
               managed.projectId = before.projectId
+              break
+            case 'projectIds':
+              managed.projectIds = before.projectIds
               break
             case 'labels':
               managed.labels = before.labels
@@ -8818,16 +8826,22 @@ export class SessionManager implements ISessionManager {
    * the project binding is only used as a default for newly created sessions.
    */
   async setSessionProjectId(sessionId: string, projectId: string | null): Promise<void> {
+    await this.setSessionProjectIds(sessionId, projectId === null ? [] : [projectId])
+  }
+
+  /** Internal metadata writer. Existing RPC authorization still owns project access. */
+  async setSessionProjectIds(sessionId: string, projectIds: readonly string[]): Promise<void> {
     const managed = this.sessions.get(sessionId)
     if (managed) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
-      managed.projectId = projectId ?? undefined
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
+      Object.assign(managed, withProjectMembership(projectIds))
       this.setMetadataWriteGuard(managed)
 
       this.sendEvent({
         type: 'project_id_changed',
         sessionId: managed.id,
         projectId: managed.projectId ?? null,
+        projectIds: [...(managed.projectIds ?? [])],
       }, managed.workspace.id)
 
       this.persistSession(managed)
@@ -8835,6 +8849,19 @@ export class SessionManager implements ISessionManager {
       const watcher = this.configWatchers.get(managed.workspace.rootPath)
       watcher?.notifyFileChange(`sessions/${sessionId}/session.jsonl`)
     }
+  }
+
+  /** Remove metadata edges through the live owner before a project is deleted. */
+  async unlinkProjectFromSessions(workspaceId: string, projectId: string): Promise<number> {
+    let touched = 0
+    for (const managed of this.sessions.values()) {
+      if (managed.workspace.id !== workspaceId) continue
+      const ids = sessionProjectIds(managed)
+      if (!ids.includes(projectId)) continue
+      await this.setSessionProjectIds(managed.id, ids.filter(id => id !== projectId))
+      touched++
+    }
+    return touched
   }
 
   /**
@@ -9038,9 +9065,9 @@ export class SessionManager implements ISessionManager {
     managed.taskSlug = taskSlug
     managed.taskDraft = false
     if (reconcile?.projectId !== undefined) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
     }
-    if (reconcile?.projectId !== undefined) managed.projectId = reconcile.projectId
+    if (reconcile?.projectId !== undefined) Object.assign(managed, withProjectMembership(reconcile.projectId ? [reconcile.projectId] : []))
     if (connectionChanged) managed.llmConnection = reconcile!.llmConnection
     const renamed = Boolean(reconcile?.name && reconcile.name !== managed.name)
     if (renamed) managed.name = reconcile!.name!
@@ -9059,8 +9086,8 @@ export class SessionManager implements ISessionManager {
     // One-shot board promotion: clearing taskDraft (sent as `false`, never `undefined` — undefined
     // is dropped over the JSON wire) reveals the already-announced tile; taskSlug/projectId
     // reconcile its metadata. `false` is falsy for the board's `if (meta.taskDraft)` skip.
-    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string } = { taskDraft: false, taskSlug }
-    if (reconcile?.projectId !== undefined) changes.projectId = reconcile.projectId
+    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string; projectIds?: string[] } = { taskDraft: false, taskSlug }
+    if (reconcile?.projectId !== undefined) { changes.projectId = managed.projectId; changes.projectIds = managed.projectIds }
     this.sendEvent({ type: 'session_metadata_changed', sessionId, changes }, managed.workspace.id)
     if (renamed) {
       this.sendEvent({ type: 'name_changed', sessionId, name: managed.name }, managed.workspace.id)
@@ -9128,9 +9155,9 @@ export class SessionManager implements ISessionManager {
     managed.taskSlug = taskSlug
     managed.taskDraft = false
     if (reconcile?.projectId !== undefined) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
     }
-    if (reconcile?.projectId !== undefined) managed.projectId = reconcile.projectId
+    if (reconcile?.projectId !== undefined) Object.assign(managed, withProjectMembership(reconcile.projectId ? [reconcile.projectId] : []))
     if (connectionChanged) managed.llmConnection = reconcile!.llmConnection
     const renamed = Boolean(reconcile?.name && reconcile.name !== managed.name)
     if (renamed) managed.name = reconcile!.name!
@@ -9146,8 +9173,8 @@ export class SessionManager implements ISessionManager {
     this.persistSession(managed)
     await this.flushSession(managed.id)
 
-    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string } = { taskDraft: false, taskSlug }
-    if (reconcile?.projectId !== undefined) changes.projectId = reconcile.projectId
+    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string; projectIds?: string[] } = { taskDraft: false, taskSlug }
+    if (reconcile?.projectId !== undefined) { changes.projectId = managed.projectId; changes.projectIds = managed.projectIds }
     this.sendEvent({ type: 'session_metadata_changed', sessionId, changes }, managed.workspace.id)
     if (renamed) {
       this.sendEvent({ type: 'name_changed', sessionId, name: managed.name }, managed.workspace.id)

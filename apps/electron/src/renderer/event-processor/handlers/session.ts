@@ -726,6 +726,7 @@ export function handleProjectIdChanged(
       session: {
         ...session,
         projectId: event.projectId ?? undefined,
+        projectIds: event.projectIds ?? (event.projectId ? [event.projectId] : []),
       },
       streaming,
     },

@@ -55,10 +55,18 @@ const sessionFields = ['id', 'workspaceId', 'workspaceName', 'name', 'preview', 
   'lastReadMessageId', 'hasUnread', 'enabledSourceSlugs', 'model', 'llmConnection', 'thinkingLevel',
   'lastMessageRole', 'lastFinalMessageId', 'createdAt', 'messageCount', 'tokenUsage', 'hidden',
   'isArchived', 'archivedAt', 'supportsBranching', 'branchFromMessageId', 'branchFromSessionId',
-  'projectId', 'parentSessionId', 'kanbanColumn', 'rank', 'priority', 'dueDate'] as const
+  'parentSessionId', 'kanbanColumn', 'rank', 'priority', 'dueDate'] as const
+
+/** Public metadata IDs are never host paths or project-context capabilities. */
+function nativeProjectMembership(membership: { projectId?: unknown; projectIds?: unknown }): { projectId?: string; projectIds: string[] } {
+  const raw = [membership.projectId, ...(Array.isArray(membership.projectIds) ? membership.projectIds : [])]
+  const projectIds = [...new Set(raw.filter((id): id is string => typeof id === 'string' && /^[\p{L}\p{N}][\p{L}\p{N}._-]{0,127}$/u.test(id)))]
+  return { projectId: projectIds[0], projectIds }
+}
 
 export function nativeSession(session: Session): Session {
   const projected = Object.fromEntries(sessionFields.map(key => [key, session[key]])) as unknown as Session
+  Object.assign(projected, nativeProjectMembership(session))
   projected.messages = session.messages.map(nativeMessage).filter((message): message is Message => message !== null)
   return projected
 }
@@ -97,6 +105,24 @@ export function nativeSessionEvent(event: SessionEvent): SessionEvent | null {
     case 'session_created': case 'session_deleted': case 'session_flagged': case 'session_unflagged': case 'session_archived': case 'session_unarchived': return { type: event.type, sessionId: event.sessionId }
     case 'session_status_changed': return { ...identity, type: event.type, sessionStatus: event.sessionStatus }
     case 'session_model_changed': return { ...identity, type: event.type, model: event.model }
+    case 'project_id_changed': {
+      if (event.projectIds !== undefined && !Array.isArray(event.projectIds)) return null
+      const membership = nativeProjectMembership(event)
+      return { ...identity, type: event.type, projectId: membership.projectId ?? null, projectIds: membership.projectIds }
+    }
+    case 'session_metadata_changed': {
+      if (!event.changes || typeof event.changes !== 'object'
+        || (!Object.hasOwn(event.changes, 'projectId') && !Object.hasOwn(event.changes, 'projectIds'))
+        || (event.changes.projectIds !== undefined && !Array.isArray(event.changes.projectIds))) return null
+      // Undefined is omitted by JSON, so an explicit empty metadata list must
+      // use the display event's null to clear an existing primary binding.
+      const membership = nativeProjectMembership(event.changes)
+      if (!membership.projectId && Array.isArray(event.changes.projectIds) && event.changes.projectIds.length === 0
+        && (event.changes.projectId === undefined || event.changes.projectId === null || event.changes.projectId === '')) {
+        return { type: 'project_id_changed', sessionId: event.sessionId, projectId: null, projectIds: [] }
+      }
+      return membership.projectId ? { ...identity, type: event.type, changes: membership } : null
+    }
     case 'permission_mode_changed':
       return ['safe', 'ask', 'allow-all'].includes(event.permissionMode) ? {
         ...identity, type: event.type, permissionMode: event.permissionMode,

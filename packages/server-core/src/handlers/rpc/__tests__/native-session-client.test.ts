@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-for (const scenario of ['flow', 'projections', 'lifecycle', 'runtime', 'completion', 'model', 'sidebar', 'permission', 'roster', 'sources']) {
+for (const scenario of ['flow', 'projections', 'lifecycle', 'runtime', 'completion', 'model', 'sidebar', 'permission', 'roster', 'sources', 'membership']) {
   test(`authenticated native WS clients enforce session ${scenario} without Electron proof`, async () => {
     const directory = mkdtempSync(join(tmpdir(), 'native-session-client-'))
     try {

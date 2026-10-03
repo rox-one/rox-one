@@ -27,6 +27,7 @@ import type { RequestContext } from '../../../../transport/types'
 import type { SessionCompletionEvent } from '../../../../sessions/SessionManager'
 import type { ToolStatus } from '@rox/shared/toolchain'
 import type { LoadedSource } from '@rox/shared/sources'
+import { filterSessionMeta } from '@rox/shared/sessions/collection'
 
 const directory = realpathSync(process.env.ROX_CONFIG_DIR!)
 const roots = ['workspace-a', 'workspace-b'].map(id => {
@@ -144,7 +145,74 @@ try {
   a.on(RPC_CHANNELS.sessions.EVENT, event => eventsA.push(event)); b.on(RPC_CHANNELS.sessions.EVENT, event => eventsB.push(event)); c.on(RPC_CHANNELS.sessions.EVENT, event => eventsC.push(event))
   await Promise.all([barrier(a), barrier(b), barrier(c)])
   const mode = process.argv[2]
-  if (mode === 'flow') {
+  if (mode === 'membership') {
+    const originalMessages = JSON.stringify(sessions[0]!.messages), originalDirectory = sessions[0]!.workingDirectory
+    const setMembership = (projectId: string | undefined, projectIds: string[]) => {
+      Object.assign(sessions[0]!, { projectId, projectIds }); persist()
+      server.push(RPC_CHANNELS.sessions.EVENT, { to: 'workspace', workspaceId: 'workspace-a' }, {
+        type: 'project_id_changed', sessionId: 'session-0', projectId: projectId ?? null, projectIds,
+        hostSecret: '/host/private/project',
+      })
+    }
+    setMembership('p1', ['p2', 'p1', 'p2']); await barrier(a); await barrier(b)
+    const listed = await barrier(b), direct = await b.invoke(RPC_CHANNELS.sessions.GET_MESSAGES, 'session-0')
+    assert.deepEqual(listed[0]!.projectIds, ['p1', 'p2']); assert.deepEqual(direct!.projectIds, ['p1', 'p2'])
+    assert.equal(listed[0]!.projectId, 'p1'); assert.equal(filterSessionMeta(listed[0]!, { projectId: ['p2'] }, true), true)
+    const expected = { type: 'project_id_changed', sessionId: 'session-0', projectId: 'p1', projectIds: ['p1', 'p2'] }
+    assert.deepEqual(eventsA, [expected]); assert.deepEqual(eventsB, [expected]); assert.equal(eventsC.length, 0)
+    server.push(RPC_CHANNELS.sessions.EVENT, { to: 'workspace', workspaceId: 'workspace-a' }, {
+      type: 'session_metadata_changed', sessionId: 'session-0', changes: { projectId: 'p1', projectIds: ['p1', 'p2'], taskDraft: false, taskSlug: 'host-private-task' },
+    }); await barrier(b)
+    assert.deepEqual(eventsB.at(-1), { type: 'session_metadata_changed', sessionId: 'session-0', changes: { projectId: 'p1', projectIds: ['p1', 'p2'] } })
+    Object.assign(sessions[0]!, JSON.parse(readFileSync(canonical, 'utf8'))[0])
+    const reloaded = connect(reader); assert.deepEqual((await barrier(reloaded))[0]!.projectIds, ['p1', 'p2'])
+    assert.deepEqual((await reloaded.invoke(RPC_CHANNELS.sessions.GET_MESSAGES, 'session-0'))!.projectIds, ['p1', 'p2'])
+    setMembership('p2', ['p2']); await barrier(b)
+    assert.deepEqual(eventsB.at(-1), { type: 'project_id_changed', sessionId: 'session-0', projectId: 'p2', projectIds: ['p2'] })
+    assert.equal(filterSessionMeta((await barrier(b))[0]!, { projectId: ['p1'] }, true), false)
+    assert.equal(filterSessionMeta((await barrier(b))[0]!, { projectId: ['p2'] }, true), true)
+    Object.assign(sessions[0]!, { projectId: undefined, projectIds: [] }); persist()
+    server.push(RPC_CHANNELS.sessions.EVENT, { to: 'workspace', workspaceId: 'workspace-a' }, {
+      type: 'session_metadata_changed', sessionId: 'session-0', changes: { projectId: undefined, projectIds: [], taskDraft: false, taskSlug: 'host-private-task' },
+    }); await barrier(b)
+    assert.deepEqual(eventsB.at(-1), { type: 'project_id_changed', sessionId: 'session-0', projectId: null, projectIds: [] })
+    assert.deepEqual((await barrier(b))[0]!.projectIds, []); assert.equal((await b.invoke(RPC_CHANNELS.sessions.GET_MESSAGES, 'session-0'))!.projectId, undefined)
+    setMembership(undefined, []); await barrier(b)
+    assert.deepEqual(eventsB.at(-1), { type: 'project_id_changed', sessionId: 'session-0', projectId: null, projectIds: [] })
+    assert.deepEqual((await b.invoke(RPC_CHANNELS.sessions.GET_MESSAGES, 'session-0'))!.projectIds, [])
+    assert.equal((await barrier(b))[0]!.projectId, undefined)
+    const accepted = eventsB.length
+    for (const [target, event] of [
+      [{ to: 'workspace', workspaceId: 'workspace-a' }, { type: 'project_id_changed', sessionId: 'session-1', projectId: 'foreign', projectIds: ['foreign'] }],
+      [{ to: 'all' }, { type: 'project_id_changed', sessionId: 'session-0', projectId: 'global', projectIds: ['global'] }],
+      [{ to: 'workspace', workspaceId: 'workspace-a' }, { type: 'project_id_changed', sessionId: 'session-0', projectId: 'p1', projectIds: { secret: '/private' } }],
+      [{ to: 'workspace', workspaceId: 'workspace-a' }, { type: 'session_metadata_changed', sessionId: 'session-1', changes: { projectId: 'foreign', projectIds: ['foreign'] } }],
+      [{ to: 'all' }, { type: 'session_metadata_changed', sessionId: 'session-0', changes: { projectId: 'global', projectIds: ['global'] } }],
+    ] as const) server.push(RPC_CHANNELS.sessions.EVENT, target, event)
+    await barrier(b); assert.equal(eventsB.length, accepted); assert.equal(eventsC.length, 0)
+    server.push(RPC_CHANNELS.sessions.EVENT, { to: 'workspace', workspaceId: 'workspace-a' }, { type: 'project_id_changed', sessionId: 'session-0', projectId: '/host/private/project', projectIds: ['p2', '../host', 'file:///private'] })
+    await barrier(b); assert.deepEqual(eventsB.at(-1), { type: 'project_id_changed', sessionId: 'session-0', projectId: 'p2', projectIds: ['p2'] })
+    const rootEvents = eventsB.length, originalRoot = roots[0]!.rootPath
+    roots[0]!.rootPath = roots[1]!.rootPath; saveRegistry()
+    server.push(RPC_CHANNELS.sessions.EVENT, { to: 'workspace', workspaceId: 'workspace-a' }, { type: 'project_id_changed', sessionId: 'session-0', projectId: 'p1', projectIds: ['p1'] })
+    await denied(() => barrier(b)); await denied(() => b.invoke(RPC_CHANNELS.sessions.GET_MESSAGES, 'session-0'))
+    assert.equal(eventsB.length, rootEvents); roots[0]!.rootPath = originalRoot; saveRegistry()
+    const beforeWrites = writes
+    await denied(() => b.invoke(RPC_CHANNELS.sessions.COMMAND, 'session-0', { type: 'setProjectId', projectId: 'p1' }))
+    await denied(() => a.invoke(RPC_CHANNELS.sessions.COMMAND, 'session-0', { type: 'setProjectId', projectId: 'p1' }))
+    await denied(() => b.invoke(RPC_CHANNELS.sessions.GET_MESSAGES, 'session-1')); assert.equal(writes, beforeWrites)
+    const readerEvents = eventsB.length
+    authority.revokeWorkspaceGrant(admin.credential, reader.principal.subject, 'workspace-a')
+    authority.grantWorkspace(admin.credential, reader.principal.subject, 'workspace-a', ['subscribe'])
+    setMembership('p2', ['p2']); await barrier(a)
+    await denied(() => barrier(b)); await denied(() => b.invoke(RPC_CHANNELS.sessions.GET_MESSAGES, 'session-0'))
+    assert.equal(eventsB.length, readerEvents)
+    authority.revokeWorkspaceGrant(admin.credential, writer.principal.subject, 'workspace-a')
+    const writerEvents = eventsA.length; setMembership(undefined, []); await barrier(c)
+    assert.equal(eventsA.length, writerEvents); assert.equal(eventsC.length, 0)
+    assert.equal(JSON.stringify(sessions[0]!.messages), originalMessages); assert.equal(sessions[0]!.workingDirectory, originalDirectory)
+    assert(!JSON.stringify([listed, direct, eventsA, eventsB]).includes('host-private'))
+  } else if (mode === 'flow') {
     const listed = await barrier(a); assert.equal(listed.length, 1); assert.equal(listed[0].workspaceId, 'workspace-a'); assert.equal(listed[0].sessionFolderPath, undefined)
     const own = await a.invoke(RPC_CHANNELS.sessions.GET_MESSAGES, 'session-0'); assert.equal(own.messages.length, 1); assert.equal(own.messages[0].attachments, undefined)
     await denied(() => a.invoke(RPC_CHANNELS.sessions.GET_MESSAGES, 'session-1'))
