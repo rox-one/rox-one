@@ -482,3 +482,8 @@ Independent review required and accepted the additional FocusPage consumer seam 
 ## PR1317 recovery evidence retained during integration
 
 The original recovery plan is preserved in [this historical receipt](integration-history/pr-1317-plan.md). It describes its recorded source revision and does not supersede current September/cloud/native contracts or claim final product acceptance. Unique recovery source deltas are integrated separately.
+
+
+## PR1320 session recovery historical evidence
+
+Preserved [the original recovery plan](integration-history/pr1320/plan.md) alongside the current integrated contracts. Historical execution claims remain bound to their recorded source.

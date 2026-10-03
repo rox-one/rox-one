@@ -364,3 +364,8 @@ The Focus page projects deferred notifications only for its current workspace; a
 ## PR1317 recovery evidence retained during integration
 
 The original recovery spec is preserved in [this historical receipt](integration-history/pr-1317-spec.md). It describes its recorded source revision and does not supersede current September/cloud/native contracts or claim final product acceptance. Unique recovery source deltas are integrated separately.
+
+
+## PR1320 session recovery historical evidence
+
+Preserved [the original recovery spec](integration-history/pr1320/spec.md) alongside the current integrated contracts. Historical execution claims remain bound to their recorded source.
