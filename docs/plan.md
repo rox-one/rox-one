@@ -549,6 +549,19 @@ The [original plan](integration-history/pr1321/plan.md) remains preserved. Curre
 
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [plan](integration-history/remote-main-3dd1f98b7/plan.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
 
+## Remaining browser and helper control translations (2026-10-03)
+
+Owner: historical-branch integration worker; integration owner: branch audit lead.
+Source branches: `cursor/rox-p35-65-omnibox-bootstrap-5983`,
+`cursor/rox-p35-70-voice-settings-5983`, `cursor/rox-p35-78-freeform-browser-5983`,
+`cursor/rox-p35-80-webbrowser-panel-5983`, `cursor/rox-p35-103-permission-request-5983`.
+
+1. Port only source-proven untranslated controls onto the current main — complete.
+2. Preserve existing keys and add 13 translated keys across the actual 12 catalogs — complete.
+3. Validate locale and omnibox suites (323 pass, zero failures), parity (11
+   non-English locales), sorted keys and literal-reference coverage — complete.
+4. Deliver a separate PR; integration stays owned by the lead. Native appearance
+   and hosted environments were not part of these source-level validation claims.
 
 ## Parallel branch integration — 2026-10-03
 

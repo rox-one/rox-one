@@ -156,8 +156,8 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
           className="size-7 shrink-0 rounded-full"
           disabled={busy || !instanceId}
           onClick={() => void run(async () => { await window.electronAPI.browserPane.goBack(instanceId!) })}
-          title="后退"
-          aria-label="后退"
+          title={t('browser.back')}
+          aria-label={t('browser.back')}
         >
           <ArrowLeft className="size-4" />
         </Button>
@@ -167,8 +167,8 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
           className="size-7 shrink-0 rounded-full"
           disabled={busy || !instanceId}
           onClick={() => void run(async () => { await window.electronAPI.browserPane.goForward(instanceId!) })}
-          title="前进"
-          aria-label="前进"
+          title={t('browser.forward')}
+          aria-label={t('browser.forward')}
         >
           <ArrowRight className="size-4" />
         </Button>
@@ -192,8 +192,8 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
           className="size-7 shrink-0 rounded-full"
           disabled={busy || !instanceId}
           onClick={() => void run(async () => { await window.electronAPI.browserPane.reload(instanceId!) })}
-          title="刷新"
-          aria-label="刷新"
+          title={t('browser.refresh')}
+          aria-label={t('browser.refresh')}
         >
           <RefreshCw className={cn('size-4', busy && 'animate-spin')} />
         </Button>
@@ -204,12 +204,12 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
             onChange={(event) => setAddress(event.target.value)}
             onFocus={(event) => event.currentTarget.select()}
             className="h-9 w-full rounded-xl border border-black/[0.12] bg-black/[0.04] px-3 text-[14px] outline-none transition focus:border-black/25 focus:bg-background"
-            placeholder="输入网址或搜索内容"
+            placeholder={t('browser.urlPlaceholder')}
             inputMode="url"
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
-            aria-label="网址"
+            aria-label={t('common.url')}
           />
         </form>
 
@@ -219,12 +219,12 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
           className="size-9 shrink-0 rounded-full"
           disabled={!snapshot?.url && !address}
           onClick={() => window.open(snapshot?.url ?? address, '_blank', 'noopener,noreferrer')}
-          title="在新标签页打开"
-          aria-label="在新标签页打开"
+          title={t('browser.openInNewTab')}
+          aria-label={t('browser.openInNewTab')}
         >
           <ExternalLink className="size-4" />
         </Button>
-        <Button variant="ghost" size="icon" className="size-7 shrink-0 rounded-full" onClick={onClose} title="关闭浏览器" aria-label="关闭浏览器">
+        <Button variant="ghost" size="icon" className="size-7 shrink-0 rounded-full" onClick={onClose} title={t('browser.close')} aria-label={t('browser.close')}>
           <X className="size-4" />
         </Button>
       </header>
@@ -236,7 +236,7 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
               <img
                 ref={imageRef}
                 src={image}
-                alt={snapshot?.title || '浏览器页面'}
+                alt={snapshot?.title || t('browser.page')}
                 className={cn('block h-auto w-full cursor-crosshair', busy && 'opacity-70')}
                 onClick={clickViewport}
               />
