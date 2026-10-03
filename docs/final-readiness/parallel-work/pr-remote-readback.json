@@ -1,0 +1,287 @@
+{
+  "capturedAt": "2026-10-03T04:40:37.912Z",
+  "repository": "rox-one/rox-one",
+  "observedDefaultBranchMain": "7e24a97cc8bef429d95c9f703420805f9153a99b",
+  "requestedPullRequests": 19,
+  "allRemoteMerged": true,
+  "allOriginalHeadsReachable": true,
+  "pullRequests": [
+    {
+      "number": 1323,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "3cc2483d61e587fa3e3b54331b1bf623206f16b1",
+      "url": "https://github.com/rox-one/rox-one/pull/1323",
+      "mergeCommit": {
+        "oid": "e7511dddab4d79e1039a4f84135419828874d008"
+      },
+      "originalHead": "3cc2483d61e587fa3e3b54331b1bf623206f16b1",
+      "originalBase": "cloud/all-surfaces-20260930",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1322,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "url": "https://github.com/rox-one/rox-one/pull/1322",
+      "mergeCommit": {
+        "oid": "74e3a1e1f995c0daa43b77823a9306f268417650"
+      },
+      "originalHead": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1321,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "2c7a1fb01ec1d90d923a5e08a4cea60967347bbf",
+      "url": "https://github.com/rox-one/rox-one/pull/1321",
+      "mergeCommit": {
+        "oid": "80fc4857c0774a9be2e89754e9acab523a503701"
+      },
+      "originalHead": "2c7a1fb01ec1d90d923a5e08a4cea60967347bbf",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1320,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "a69187c609898517658365fa80d5ab11270d4305",
+      "url": "https://github.com/rox-one/rox-one/pull/1320",
+      "mergeCommit": {
+        "oid": "42aace078d8bacc31aa5740a4964889e7a3e5fbb"
+      },
+      "originalHead": "a69187c609898517658365fa80d5ab11270d4305",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1319,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed",
+      "url": "https://github.com/rox-one/rox-one/pull/1319",
+      "mergeCommit": {
+        "oid": "8851e8f9bd7ede447524dbe4e77c4234bee31da5"
+      },
+      "originalHead": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed",
+      "originalBase": "feat/september-program-20260930",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1318,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "8c1b8d95944cc21c4745484ba45edd0cf0afbb73",
+      "url": "https://github.com/rox-one/rox-one/pull/1318",
+      "mergeCommit": {
+        "oid": "19ee83bf4ef52140d6478395ccb984eef7eaf96f"
+      },
+      "originalHead": "8c1b8d95944cc21c4745484ba45edd0cf0afbb73",
+      "originalBase": "feat/unified-tables-baserow-20260930",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1317,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "bbb30156a0758d1c00510e97eb6dc715c6b64fbe",
+      "url": "https://github.com/rox-one/rox-one/pull/1317",
+      "mergeCommit": {
+        "oid": "c7ce33c97029299b8051b9da4ed95098fc112be9"
+      },
+      "originalHead": "bbb30156a0758d1c00510e97eb6dc715c6b64fbe",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1316,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "8afd289ac9e7d0a07be98f33c98f7989c2bcb68d",
+      "url": "https://github.com/rox-one/rox-one/pull/1316",
+      "mergeCommit": {
+        "oid": "a786ffe0d576b1cbe591e34d48864cb0969b857b"
+      },
+      "originalHead": "8afd289ac9e7d0a07be98f33c98f7989c2bcb68d",
+      "originalBase": "feat/rox-compound-workspace-20260930",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1315,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "4504549086016dc3b892d17e9855a71afc1925d8",
+      "url": "https://github.com/rox-one/rox-one/pull/1315",
+      "mergeCommit": {
+        "oid": "ccf4a72cecaac5601f3a0a37844a1dc3b2609f2b"
+      },
+      "originalHead": "4504549086016dc3b892d17e9855a71afc1925d8",
+      "originalBase": "fix/webui-bridge-recovery-20260930",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1314,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "8619f908bcdb7784b7b75fe0ae48f4f8902910bd",
+      "url": "https://github.com/rox-one/rox-one/pull/1314",
+      "mergeCommit": {
+        "oid": "e31e2d75e9ec7d9c8be3f9fa9a86099130ff9930"
+      },
+      "originalHead": "8619f908bcdb7784b7b75fe0ae48f4f8902910bd",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1313,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "5a9bf9cafd7df367f6ac32102b80e777377da162",
+      "url": "https://github.com/rox-one/rox-one/pull/1313",
+      "mergeCommit": {
+        "oid": "f7ec24a8000c433f49bffb7af84ee2f3796d2a26"
+      },
+      "originalHead": "5a9bf9cafd7df367f6ac32102b80e777377da162",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1294,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "5f0df2522346b50bbb67f5eb718e30c1bdfcd157",
+      "url": "https://github.com/rox-one/rox-one/pull/1294",
+      "mergeCommit": {
+        "oid": "5f0df2522346b50bbb67f5eb718e30c1bdfcd157"
+      },
+      "originalHead": "5f0df2522346b50bbb67f5eb718e30c1bdfcd157",
+      "originalBase": "wip/september-cloud-snapshot-20260930",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1293,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "8f43e92d2a27a98994573d081b85d0b4c51728de",
+      "url": "https://github.com/rox-one/rox-one/pull/1293",
+      "mergeCommit": {
+        "oid": "fbbe2e535a01e21fb0c9a4ba42edb7087625ea5f"
+      },
+      "originalHead": "8f43e92d2a27a98994573d081b85d0b4c51728de",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1292,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "01889b4a43a2ce4f730d3109b49750a0fbde4db8",
+      "url": "https://github.com/rox-one/rox-one/pull/1292",
+      "mergeCommit": {
+        "oid": "5fa18205d21ad9e3182960fc9aacad75b3bbc8a2"
+      },
+      "originalHead": "01889b4a43a2ce4f730d3109b49750a0fbde4db8",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1230,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "f32863be2d22945163fe17d76fc893f17c005fd0",
+      "url": "https://github.com/rox-one/rox-one/pull/1230",
+      "mergeCommit": {
+        "oid": "51687ed457b9a91fcdbb6da8e81791fb3a47c82d"
+      },
+      "originalHead": "f32863be2d22945163fe17d76fc893f17c005fd0",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1087,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "2e444a1e7fb6165f61c09210904b0e6ca912e9e2",
+      "url": "https://github.com/rox-one/rox-one/pull/1087",
+      "mergeCommit": {
+        "oid": "a3fce2ba26144fb5bc1fc1e61af42630eb2ba2e1"
+      },
+      "originalHead": "2e444a1e7fb6165f61c09210904b0e6ca912e9e2",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1082,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "518636a6cb6c7c7331c3cf614e4182d92cb240df",
+      "url": "https://github.com/rox-one/rox-one/pull/1082",
+      "mergeCommit": {
+        "oid": "a8a9f663cb314e723d7161b31869c1456a27ff2a"
+      },
+      "originalHead": "518636a6cb6c7c7331c3cf614e4182d92cb240df",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1377,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "005eadcf8a7611e3376d628773247ad24158219e",
+      "url": "https://github.com/rox-one/rox-one/pull/1377",
+      "mergeCommit": {
+        "oid": "054dc6fb62059030ebbc46f9f474d71098345e8d"
+      },
+      "originalHead": "005eadcf8a7611e3376d628773247ad24158219e",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    },
+    {
+      "number": 1384,
+      "state": "MERGED",
+      "mergedAt": "2026-10-03T02:08:50Z",
+      "headRefOid": "a9611300a87223d65bb343a00ef8e1c3e0111df6",
+      "url": "https://github.com/rox-one/rox-one/pull/1384",
+      "mergeCommit": {
+        "oid": "2eca0f75ac6771d2091f03b78b14d9ed922b6473"
+      },
+      "originalHead": "a9611300a87223d65bb343a00ef8e1c3e0111df6",
+      "originalBase": "main",
+      "headUnchanged": true,
+      "headAncestorOfObservedMain": true
+    }
+  ],
+  "independentIntegrationPullRequest": {
+    "number": 1385,
+    "state": "OPEN",
+    "isDraft": true,
+    "mergedAt": null,
+    "headRefOid": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+    "url": "https://github.com/rox-one/rox-one/pull/1385",
+    "mergeCommit": null
+  },
+  "independentPromoted": false,
+  "promotionContext": "Requested PR promotion observed during independent reconciliation; remote state does not assign sole authorship or certify a final release."
+}

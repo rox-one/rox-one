@@ -32,6 +32,8 @@ import {
 } from 'lucide-react'
 import { ProjectIcon, invalidateProjectIconCache } from '@/components/projects/ProjectIcon'
 import { toast } from 'sonner'
+import { createNativeNotesSyncController } from '@/lib/native-notes-sync'
+import { RepositorySnapshotPanel } from '@/components/code-intelligence/RepositorySnapshotPanel'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
 import {
@@ -140,6 +142,8 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const roadmapSaverRef = useRef<ReturnType<typeof createRoadmapSaveQueue> | null>(null)
   const saveAttemptRef = useRef(0)
+  const exportAttemptRef = useRef<{ operationId: string; note?: import('@craft-agent/shared/protocol/dto').NoteDocument } | null>(null)
+  const exportingRef = useRef(false)
   const loadedOnce = useRef(false)
 
   // ── Load project (first load shows the spinner; broadcasts reload silently) ──
@@ -455,18 +459,20 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
   }, [workspaceId, project, onCreateSession, t])
 
   const patchProject = useCallback(async (patch: Partial<Omit<LoadedProject['config'], 'id' | 'slug' | 'createdAt'>>) => {
-    if (!workspaceId || !project) return
+    if (!workspaceId || !project) return false
     const act = soupProjectActResult({
       source: 'native',
       action: 'write',
       nativeId: project.config.slug,
     })
-    if (!isClaimableLive(act)) return
+    if (!isClaimableLive(act)) return false
     try {
       await window.electronAPI.updateProject(workspaceId, project.config.slug, patch)
+      return true
     } catch (err) {
       console.error('[ProjectInfoPage] Save failed:', err)
       toast.error(t('projectInfo.saveFailed'))
+      return false
     }
   }, [workspaceId, project, t])
 
@@ -474,12 +480,12 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
     if (!project) return
     setSaving(true)
     try {
-      await patchProject({
+      const saved = await patchProject({
         workingDirectory: editWorkingDir.trim() || undefined,
         details: editDetails.trim() || undefined,
         color: editColor.trim() || undefined,
       })
-      toast.success(t('projectInfo.saved'))
+      if (saved) toast.success(t('projectInfo.saved'))
     } finally {
       setSaving(false)
     }
@@ -584,9 +590,10 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
   const runAi = useCallback(async (request: { mode: 'clarify' | 'spec' | 'improve'; text: string; answers?: { question: string; answer: string }[] }) => {
     if (!workspaceId) return { ok: false as const, error: 'no workspace' }
     const scope = JSON.stringify([workspaceId, projectSlug])
-    // Flush pending edits so the server-side prompt sees the current roadmap.
     const requestSaver = roadmapSaverRef.current
-    if (!requestSaver || !await flushRef.current()) return { ok: false as const, error: 'PROJECT_ROADMAP_SAVE_REQUIRED' }
+    if (!requestSaver) return { ok: false as const, error: 'PROJECT_ROADMAP_SAVE_REQUIRED' }
+    // Wait for the queued native receipt before exposing the draft to the model.
+    if (!await flushRef.current()) return { ok: false as const, error: 'PROJECT_ROADMAP_SAVE_REQUIRED' }
     if (roadmapSaverRef.current !== requestSaver) return { ok: false as const, error: 'PROJECT_ROADMAP_SCOPE_CHANGED' }
     if (scope !== aiScopeRef.current) return { ok: false as const, error: t('projectRoadmap.ai.scopeChanged') }
     const result = await window.electronAPI.runProjectRoadmapAi(workspaceId, projectSlug, {
@@ -595,7 +602,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
       today,
       language: LANGUAGE_NAMES[baseLang] ?? 'Russian',
     })
-    if (scope !== aiScopeRef.current) return { ok: false as const, error: t('projectRoadmap.ai.scopeChanged') }
+    if (scope !== aiScopeRef.current || roadmapSaverRef.current !== requestSaver) return { ok: false as const, error: t('projectRoadmap.ai.scopeChanged') }
     setAiResult(result)
     return result
   }, [workspaceId, projectSlug, today, baseLang, t])
@@ -610,13 +617,15 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
   const improveField = useCallback(async (target: ImproveTarget) => {
     const before = target === 'goal' ? roadmapRef.current.goal : roadmapRef.current.expectedResult
     if (!before.trim()) return
+    const requestSaver = roadmapSaverRef.current
     setImproving(target)
     try {
       const res = await runAi({ mode: 'improve', text: before })
+      if (roadmapSaverRef.current !== requestSaver) return
       if (res.ok && res.mode === 'improve') setImprove({ target, before, after: res.text, roadmapRevision: res.roadmapRevision })
       else if (!res.ok) toast.error(t('projectRoadmap.ai.errorGeneric', { error: res.error }))
     } finally {
-      setImproving(null)
+      if (roadmapSaverRef.current === requestSaver) setImproving(null)
     }
   }, [runAi, t])
 
@@ -638,8 +647,14 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
   }), [t])
 
   const exportToNote = useCallback(async () => {
-    if (!workspaceId || !project) return
+    if (!workspaceId || !project || exportingRef.current) return
+    exportingRef.current = true
+    let controller: ReturnType<typeof createNativeNotesSyncController> | null = null
     try {
+      if (!window.electronAPI.nativeReplica || !window.electronAPI.nativeData) throw new Error('Native Notes export is unavailable')
+      if (!await flushRef.current()) throw new Error('PROJECT_ROADMAP_SAVE_REQUIRED')
+      controller = createNativeNotesSyncController()
+      await controller.start(workspaceId)
       const files = assets.filter((a) => a.filename !== project.config.icon).map((a) => a.filename)
       let markdown = roadmapToMarkdown(roadmapRef.current, project.config.name, markdownLabels, { files })
       if (projectTasks.length) {
@@ -650,13 +665,24 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
         }
         markdown = `${markdown.trimEnd()}\n${lines.join('\n')}\n`
       }
-      const created = await window.electronAPI.createNote(workspaceId, t('projectRoadmap.noteTitle', { name: project.config.name }), `projects/${project.config.slug}`)
-      await window.electronAPI.saveNote(workspaceId, created.id, markdown)
+      const attempt = exportAttemptRef.current ?? { operationId: crypto.randomUUID() }
+      exportAttemptRef.current = attempt
+      const created = attempt.note ?? await window.electronAPI.createNote(workspaceId,
+        t('projectRoadmap.noteTitle', { name: project.config.name }), `projects/${project.config.slug}`,
+        { operationId: attempt.operationId, expectedRevision: null, schemaVersion: 1 })
+      attempt.note = created
+      if (!created.nativeId || !Number.isSafeInteger(created.nativeRevision)) throw new Error('Native Notes creation did not return canonical identity and revision')
+      const queued = await controller.queueSave(created, markdown)
+      const receipts = await controller.flush()
+      if (!receipts.some(receipt => receipt.operationId === queued.operationId)) throw new Error('Native Notes export remains unacknowledged')
+      exportAttemptRef.current = null
       toast.success(t('projectRoadmap.exported'), {
         action: { label: t('projectRoadmap.openNote'), onClick: () => navigate(routes.view.notes(created.id)) },
       })
     } catch (err) {
       toast.error(t('projectRoadmap.exportFailed'), { description: err instanceof Error ? err.message : undefined })
+    } finally {
+      try { await controller?.stop() } finally { exportingRef.current = false }
     }
   }, [workspaceId, project, assets, markdownLabels, projectTasks, milestoneOfTask, t])
 
@@ -721,6 +747,12 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
           updateRoadmap((r) => (p.target === 'goal' ? { ...r, goal: p.after } : p.target === 'expectedResult' ? { ...r, expectedResult: p.after } : r))
           if (!await flushRef.current()) throw new Error('PROJECT_ROADMAP_SAVE_REQUIRED')
         }}
+      />
+      <RepositorySnapshotPanel
+        key={`${workspaceId}:${project.config.id}:${project.config.workingDirectory ?? ''}`}
+        workspaceId={workspaceId!}
+        projectId={project.config.id}
+        workingDirectory={project.config.workingDirectory}
       />
       <Section id="inputs" title={t('projectRoadmap.inputs')} count={assets.filter((a) => a.filename !== project.config.icon).length + roadmap.inputs.length}>
         <ProjectInputs

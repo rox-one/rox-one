@@ -1,0 +1,1410 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-03T02:52:21.673Z",
+  "sourceCommit": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+  "sourceVersion": "0.11.6",
+  "branch": "develop/macos-readiness-2026-10-03",
+  "worktree": "/Users/t/Projects/rox-one-launch-mac-20261003",
+  "scope": {
+    "taskLeaves": [
+      "MAC-001.1",
+      "MAC-001.2",
+      "MAC-002.1",
+      "MAC-002.2",
+      "MAC-003.1",
+      "MAC-003.2"
+    ],
+    "count": 6,
+    "mode": "Read-only source preparation; only this report written",
+    "excludedActions": [
+      "Product source edits",
+      "Install",
+      "Heavy build",
+      "Signing/notarization",
+      "Live external voice/cloud sends",
+      "Persistent user profiles",
+      "Git stage/commit/merge"
+    ]
+  },
+  "summary": "Source fixes introduced by 0.11.6 reduce older backlog gaps but do not provide full macOS release closure. Correct Rox.app, Rox artifact names in native-runner pipeline, target libSQL staging and context-derived afterPack are already implemented. Remaining work is exact legacy identity alignment, current icon provenance, complete native closure, architecture/minimum verification, Intel packaging and truthful signed/public release gates.",
+  "frozenComparison": {
+    "voiceFixCommit": "d93bd3c3aedac0ce3360c5f460170b2da1a16a94",
+    "comparison": "git diff of packages/shared/src/voice and server-core RPC voice/tests to sourceCommit is empty; current frozen source retains the final privacy/cancellation fixes.",
+    "qualifiedRuntimeMetadata": {
+      "path": "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+      "version": "1.3.14 as supplied qualified toolchain",
+      "platform": "MACOS",
+      "minOS": "13.0",
+      "sdk": "15.2",
+      "evidence": "Read-only vtool -show-build output in this preparation. It is not a shipped app or Intel artifact."
+    }
+  },
+  "startNow": [
+    "Legacy naming/install receipt source fixtures (MAC-001.1)",
+    "Icon hook/fallback fixture tests, then SDK-dependent regeneration (MAC-001.2)",
+    "Native closure stager and scoped dependency fixtures (MAC-002.1)",
+    "Mach-O inventory/negative fixtures and Intel CI matrix (MAC-002.2)",
+    "Public-release preflight/receipt validators with mocked missing/rejected credential cases (MAC-003.1)",
+    "Minimum/entitlement inventory and corrected permission disclosure source proposal (MAC-003.2)"
+  ],
+  "scheduling": "These source/fixture workstreams can begin immediately with shared-file coordination. Artifact validation consumes actual staged outputs; signing consumes final approved native resources/entitlements; clean GUI acceptance consumes exact signed artifacts. These are hard output dependencies, not arbitrary calendar order.",
+  "sharedFileOwners": [
+    {
+      "files": [
+        "scripts/desktop-release.ts",
+        "scripts/build/common.ts",
+        "apps/electron/electron-builder.yml",
+        "package.json",
+        ".github/workflows/desktop-release.yml",
+        ".circleci/desktop.yml"
+      ],
+      "owner": "One root-assigned shared desktop/release owner for coordinated Windows/macOS changes; macOS agent proposes target-specific changes, does not edit concurrently"
+    },
+    {
+      "files": [
+        "apps/electron/scripts/afterPack.cjs",
+        "apps/electron/resources/Assets.car",
+        "apps/electron/resources/Assets.car.source-sha256",
+        "apps/electron/build/entitlements.mac.plist",
+        "scripts/build/darwin.ts"
+      ],
+      "owner": "macOS readiness owner after root transfers/reviews this preparation"
+    },
+    {
+      "files": [
+        "scripts/install-app.sh",
+        "scripts/release.ts",
+        "Updater feed deployment/update manifests"
+      ],
+      "owner": "Release/integration owner; coordinate legacy identity/profile migration with macOS owner"
+    }
+  ],
+  "targetEnvironments": [
+    {
+      "target": "darwin-arm64",
+      "packageRunner": "macos-15 currently configured; native ARM64",
+      "toolchain": "Frozen Bun1.3.14/Node24 build host; Electron39.2.7 embedded runtime",
+      "runtime": "Native Apple Silicon test hosts at measured minimum, current macOS and macOS26, fresh accounts and isolated config directories"
+    },
+    {
+      "target": "darwin-x64",
+      "packageRunner": "Add macos-15-intel or maintained native Intel host; currently absent",
+      "toolchain": "Same frozen source/lock, native Intel Bun/SDK/native packages",
+      "runtime": "Native Intel qualification; do not substitute Rosetta emulation for target-native acceptance"
+    },
+    {
+      "target": "Icons",
+      "prerequisite": "macOS26 SDK actool for Assets.car regeneration; older supported OS for fallback visual qualification"
+    },
+    {
+      "target": "Public signing",
+      "prerequisite": "Developer ID Application identity and one supported notary credential/profile set; network access to Apple notarization/timestamp; no secrets in artifacts"
+    },
+    {
+      "target": "Minimum OS",
+      "prerequisite": "Provisional >=13.0 from pinned bundled ARM64 Bun; final value awaits all mandatory binaries and Intel inspection. Hosted macos15 is not an oldest-OS test host."
+    }
+  ],
+  "officialSources": [
+    {
+      "url": "https://www.electronjs.org/docs/latest/breaking-changes",
+      "supports": "Electron38+ minimum macOS12; pinned Electron39.2.7 therefore does not by itself set the full app floor."
+    },
+    {
+      "url": "https://bun.sh/docs/installation",
+      "supports": "Current Bun installation documents macOS13+; actual pinned1.3.14 ARM64 binary independently reports minos13.0. Do not import current CPU assumptions into older pinned Intel binaries."
+    },
+    {
+      "url": "https://sharp.pixelplumbing.com/install/",
+      "supports": "Cross-platform optional dependencies must match target; current Sharp x64 mac minimum10.15 is below the observed Bun floor and does not certify all nested/native modules."
+    },
+    {
+      "url": "https://www.electron.build/v26/docs/mac/",
+      "supports": "Pinned electron-builder26 supports minimumSystemVersion and automatic notarization for supported credential sets. Commented config alone is not evidence auto-notarization is absent."
+    },
+    {
+      "url": "https://www.electronjs.org/blog/electron-39-0",
+      "supports": "System-audio capture on macOS14.2+ uses CoreAudioTap and needs NSAudioCaptureUsageDescription if the feature is enabled; current inspected microphone-only calls do not establish that capability."
+    },
+    {
+      "url": "https://docs.github.com/en/actions/reference/runners/github-hosted-runners",
+      "supports": "Current macos-15 is ARM64 and macos-15-intel is native Intel x64. Add explicit Intel coverage."
+    },
+    {
+      "url": "https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution",
+      "supports": "Developer ID/notarytool/stapler distribution verification is separate from unsigned local package builds."
+    },
+    {
+      "url": "https://developer.apple.com/documentation/security/resolving-common-notarization-issues",
+      "supports": "Notary rejection/log evidence, Developer ID, secure timestamp and spctl checks."
+    },
+    {
+      "url": "https://developer.apple.com/documentation/xcode/packaging-mac-software-for-distribution",
+      "supports": "Sign/notarize/staple exact final distribution containers and retain Gatekeeper-compatible delivery."
+    }
+  ],
+  "runtimeResources": [
+    {
+      "name": "Electron executable/framework/helpers",
+      "version": "39.2.7",
+      "packagedOrManagedPaths": [
+        "Rox.app/Contents/MacOS/Rox",
+        "Rox.app/Contents/Frameworks/**"
+      ],
+      "requiredVerification": "Each Mach-O slice/minOS and nested signature; real app launch, renderer/JIT/restart",
+      "currentCoverage": "Builder supplies Electron; no artifact execution in this preparation",
+      "codeReferences": [
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 1,
+          "endLine": 15,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L1-L15"
+        },
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 102,
+          "endLine": 128,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L102-L128"
+        }
+      ]
+    },
+    {
+      "name": "Bundled Bun",
+      "version": "1.3.14",
+      "packagedOrManagedPaths": [
+        "Contents/Resources/app/vendor/bun/bun"
+      ],
+      "requiredVerification": "Integrity/version/architecture/minOS; Pi subprocess workload/cancel",
+      "currentCoverage": "Current pipeline version probe; existing qualified ARM64 Bun metadata minOS13.0 observed, Intel uninspected",
+      "codeReferences": [
+        {
+          "file": "scripts/build/common.ts",
+          "startLine": 35,
+          "endLine": 45,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L35-L45"
+        },
+        {
+          "file": "scripts/desktop-release.ts",
+          "startLine": 7,
+          "endLine": 62,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L7-L62"
+        }
+      ]
+    },
+    {
+      "name": "Bundled uv",
+      "version": "0.10.6 (separate from managed uv 0.12.2)",
+      "packagedOrManagedPaths": [
+        "Contents/Resources/app/resources/bin/darwin-${arch}/uv",
+        "Contents/Resources/app/dist/resources/bin/darwin-${arch}/uv where copied"
+      ],
+      "requiredVerification": "Version/hash cached and fresh; native Python/doc-tool workload",
+      "currentCoverage": "New-download SHA256 verified; existing-target skip needs revalidation",
+      "codeReferences": [
+        {
+          "file": "scripts/build/common.ts",
+          "startLine": 35,
+          "endLine": 45,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L35-L45"
+        },
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 129,
+          "endLine": 166,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L129-L166"
+        }
+      ]
+    },
+    {
+      "name": "Claude thin SDK/native alias",
+      "version": "0.3.258",
+      "packagedOrManagedPaths": [
+        "Contents/Resources/app/node_modules/@anthropic-ai/claude-agent-sdk",
+        "Contents/Resources/app/node_modules/@anthropic-ai/claude-agent-sdk-binary/claude"
+      ],
+      "requiredVerification": "Exact target slice/minOS/hash and offline CLI startup; session workload requires separate approved provider fixture",
+      "currentCoverage": "Existence/size and --version checked by source; installed session not proved",
+      "codeReferences": [
+        {
+          "file": "scripts/build/common.ts",
+          "startLine": 318,
+          "endLine": 400,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L318-L400"
+        },
+        {
+          "file": "scripts/desktop-release.ts",
+          "startLine": 7,
+          "endLine": 62,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L7-L62"
+        }
+      ]
+    },
+    {
+      "name": "ripgrep",
+      "version": "Lock-resolved @vscode/ripgrep (^1.17.1 declared)",
+      "packagedOrManagedPaths": [
+        "Contents/Resources/app/node_modules/@vscode/ripgrep/bin/rg"
+      ],
+      "requiredVerification": "Target Mach-O/version and recursive Unicode/path fixture search",
+      "currentCoverage": "Host package copied without target check; no canonical executable probe",
+      "codeReferences": [
+        {
+          "file": "scripts/build/common.ts",
+          "startLine": 407,
+          "endLine": 427,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L407-L427"
+        },
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 129,
+          "endLine": 166,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L129-L166"
+        }
+      ]
+    },
+    {
+      "name": "libSQL facade and target NAPI addon",
+      "version": "@tursodatabase/database 0.7.2",
+      "packagedOrManagedPaths": [
+        "Contents/Resources/app/node_modules/@tursodatabase/database",
+        "Contents/Resources/app/node_modules/@tursodatabase/database-common",
+        "Contents/Resources/app/node_modules/@tursodatabase/database-darwin-${arch}"
+      ],
+      "requiredVerification": "Electron-native insert/query/reopen/CAS fixtures, architecture/dylib closure",
+      "currentCoverage": "Target staging fixed; host Node in-memory select only; directory reuse stale risk",
+      "codeReferences": [
+        {
+          "file": "packages/server-core/package.json",
+          "startLine": 35,
+          "endLine": 44,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/package.json#L35-L44"
+        },
+        {
+          "file": "scripts/desktop-release.ts",
+          "startLine": 19,
+          "endLine": 37,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L19-L37"
+        },
+        {
+          "file": "scripts/desktop-release.ts",
+          "startLine": 44,
+          "endLine": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L44-L61"
+        }
+      ]
+    },
+    {
+      "name": "Sharp and libvips",
+      "version": "Sharp 0.35.4; matching @img libvips package 1.3.3",
+      "packagedOrManagedPaths": [
+        "Proposed Contents/Resources/app/node_modules/sharp plus exact resolved @img/sharp-darwin-${arch} and @img/sharp-libvips-darwin-${arch}"
+      ],
+      "requiredVerification": "Native real PNG/JPEG decode/resize/pixel/metadata; include dylib closure",
+      "currentCoverage": "Not staged by canonical release. Do not copy root legacy @img 0.34.5/1.2.4 blindly",
+      "codeReferences": [
+        {
+          "file": "scripts/electron-build-main.ts",
+          "startLine": 399,
+          "endLine": 415,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-main.ts#L399-L415"
+        },
+        {
+          "file": "bun.lock",
+          "startLine": 4436,
+          "endLine": 4442,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/bun.lock#L4436-L4442"
+        },
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 129,
+          "endLine": 166,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L129-L166"
+        }
+      ]
+    },
+    {
+      "name": "Semantic transformers/ONNX",
+      "version": "@xenova/transformers 2.17.2; onnxruntime-node/common 1.14.0; transformers nested Sharp ^0.32.0 locked separately",
+      "packagedOrManagedPaths": [
+        "Proposed Contents/Resources/app/node_modules/@xenova/transformers and actual dependency closure",
+        "Proposed Contents/Resources/app/node_modules/onnxruntime-node/bin/napi-v3/darwin/${arch} (verify exact locked layout before staging)"
+      ],
+      "requiredVerification": "Offline known local ONNX model inference and semantic retrieval, dylib/minOS checks",
+      "currentCoverage": "Externalized, not staged in Mac extraResources; layout/model cache must be qualified",
+      "codeReferences": [
+        {
+          "file": "scripts/electron-build-main.ts",
+          "startLine": 399,
+          "endLine": 415,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-main.ts#L399-L415"
+        },
+        {
+          "file": "bun.lock",
+          "startLine": 1796,
+          "endLine": 1796,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/bun.lock#L1796"
+        },
+        {
+          "file": "bun.lock",
+          "startLine": 3144,
+          "endLine": 3144,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/bun.lock#L3144"
+        }
+      ]
+    },
+    {
+      "name": "Pi agent subprocess and optional koffi",
+      "version": "Workspace bundle; actual imported native dependencies only",
+      "packagedOrManagedPaths": [
+        "Contents/Resources/app/resources/pi-agent-server/index.js",
+        "Contents/Resources/app/resources/pi-agent-server/node_modules/koffi when actually required"
+      ],
+      "requiredVerification": "Spawn/handshake/response/cancel with local fixture and target native addon probe",
+      "currentCoverage": "Staged; optional absent koffi permitted, missing target present-koffi currently copies all platforms",
+      "codeReferences": [
+        {
+          "file": "scripts/build/stage-servers.ts",
+          "startLine": 29,
+          "endLine": 56,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/stage-servers.ts#L29-L56"
+        },
+        {
+          "file": "scripts/build/common.ts",
+          "startLine": 520,
+          "endLine": 578,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L520-L578"
+        }
+      ]
+    },
+    {
+      "name": "Messaging subprocesses and local cloud runner",
+      "version": "Workspace CJS workers and stub runner",
+      "packagedOrManagedPaths": [
+        "Contents/Resources/messaging-whatsapp-worker/worker.cjs",
+        "Contents/Resources/messaging-discord-worker/worker.cjs",
+        "Contents/Resources/app/resources/cloud-runner/stub-runner.js"
+      ],
+      "requiredVerification": "Offline spawn/handshake/stop/restart/receipt tests, not live account login",
+      "currentCoverage": "Resource rules exist; release presence list omits worker and cloud-runner outputs",
+      "codeReferences": [
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 129,
+          "endLine": 166,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L129-L166"
+        },
+        {
+          "file": "scripts/build/stage-servers.ts",
+          "startLine": 29,
+          "endLine": 56,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/stage-servers.ts#L29-L56"
+        },
+        {
+          "file": "scripts/desktop-release.ts",
+          "startLine": 44,
+          "endLine": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L44-L61"
+        }
+      ]
+    },
+    {
+      "name": "Document tool scripts and shell launchers",
+      "version": "Workspace scripts; Python packages pinned by their script/toolchain contracts",
+      "packagedOrManagedPaths": [
+        "Contents/Resources/app/resources/scripts/**",
+        "Contents/Resources/app/resources/bin/{markitdown,pdf-tool,xlsx-tool,doc-diff,img-tool,docx-tool,pptx-tool,ical-tool}"
+      ],
+      "requiredVerification": "Each wrapper invokes bundled uv/managed Python without host PATH dependence; synthetic fixture conversion/export/reopen",
+      "currentCoverage": "Scripts listed in files rules; Python/doc runtime functional closure unproved",
+      "codeReferences": [
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 129,
+          "endLine": 166,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L129-L166"
+        },
+        {
+          "file": "package.json",
+          "startLine": 85,
+          "endLine": 102,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/package.json#L85-L102"
+        }
+      ]
+    },
+    {
+      "name": "Managed user toolchain (not all bundled in DMG)",
+      "version": "OMP18.4.12, Python3.12, Node22.23.2, managed Bun1.3.14/uv0.12.2, FFmpeg9.0 and manifest-selected feature tools",
+      "packagedOrManagedPaths": [
+        "Isolated configDir/toolchain/**",
+        "OMP bin/rox + omp aliases; target-specific managed Node/Bun; uv Python paths"
+      ],
+      "requiredVerification": "Per-target install/integrity/offline cached recovery and feature probes; do not run ensureAll in preparation",
+      "currentCoverage": "Target catalog and dependencies configured; distinct from app resource presence; first-run network/offline behavior must be qualified",
+      "codeReferences": [
+        {
+          "file": "packages/shared/src/toolchain/manifest-data.ts",
+          "startLine": 114,
+          "endLine": 192,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/toolchain/manifest-data.ts#L114-L192"
+        },
+        {
+          "file": "packages/shared/src/toolchain/manifest-data.ts",
+          "startLine": 430,
+          "endLine": 504,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/toolchain/manifest-data.ts#L430-L504"
+        }
+      ]
+    },
+    {
+      "name": "Optional OEM/Rust native sidecar",
+      "version": "OEM pin metadata; Rust backend only when explicitly enabled",
+      "packagedOrManagedPaths": [
+        "Contents/Resources/oem-kernel-pin.json",
+        "Contents/Resources/oem-kernel/** when staged",
+        "Rust sidecar path resolved by native backend configuration, not automatically included by these rules"
+      ],
+      "requiredVerification": "Only promise enabled capability when exact target binary is available, pinned, signed and handshakes; otherwise explicit unavailable state",
+      "currentCoverage": "OEM directory may be empty by design; do not classify native replica JS custody as a mandatory Rust executable",
+      "codeReferences": [
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 129,
+          "endLine": 166,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L129-L166"
+        }
+      ]
+    }
+  ],
+  "tasks": {
+    "MAC-001.1": {
+      "heading": "[MAC-001.1] Remove stale Craft artifact and bundle expectations",
+      "disposition": "partially-implemented",
+      "evidenceLevel": "source-reviewed; no packaged macOS execution in this preparation",
+      "alreadyImplemented": [
+        "The 0.11.6 native-runner pipeline resolves Rox.app and verifies Rox-arm64/Rox-x64 DMG and ZIP names. Darwin packaging also resolves Rox.app correctly. These paths do not require the old bundle-path fix again.",
+        "rox:// is primary and craftagents:// remains a compatibility alias. Keep existing bundle ID/data/keychain identity stable until an explicit migration is designed."
+      ],
+      "remainingGaps": [
+        "Legacy packageDarwin still expects Craft-Agents DMG/ZIP and treats missing updater ZIP as a warning; getArtifactName and build-dmg.sh use the old prefix.",
+        "Bootstrap installer uses Craft Agents.app, selects the first .app in a ZIP and removes quarantine. It does not validate target/version/bundle identity before installation.",
+        "Canonical generic updater feed still points at thecraftagents.com. Desktop workflow uploads packages/blockmaps/manifests but no latest-mac*.yml. This task requires a coordinated release-feed decision and migration contract.",
+        "desktop-release --verify-only accepts existing size-valid artifacts and assigns the current Git commit to their manifest without proving they were built from that commit."
+      ],
+      "concretePatches": [
+        {
+          "files": [
+            "scripts/build/darwin.ts",
+            "scripts/build/common.ts",
+            "apps/electron/scripts/build-dmg.sh",
+            "scripts/install-app.sh"
+          ],
+          "change": "Derive Rox names and exact Rox.app destination from one release identity helper. Require both DMG and updater ZIP. Validate exact bundle ID, CFBundleShortVersionString and target architecture before copy; preserve legacy profile/keychain identity and old-install discovery intentionally. Remove automatic quarantine clearing for public distribution."
+        },
+        {
+          "files": [
+            "scripts/desktop-release.ts",
+            "scripts/release.ts"
+          ],
+          "change": "Use a fresh target-specific output directory or validate a build receipt embedded into the exact bundle. Compare version/commit/target/build identifier before --verify-only; reject stale Craft artifacts and unexpected .app bundles. Replace unsigned-dev-to-public-release instructions with verified artifact inputs."
+        },
+        {
+          "files": [
+            ".github/workflows/desktop-release.yml",
+            "apps/electron/electron-builder.yml"
+          ],
+          "change": "Coordinate the approved Rox updater feed with the release owner, retain migration compatibility, and preserve/upload matching generated latest-mac*.yml plus ZIP and blockmaps. Do not publish URLs until the authenticated remote artifact/update gate has passed."
+        }
+      ],
+      "hardDependencies": [
+        {
+          "output": "Approved canonical updater endpoint, legacy migration contract and release identity",
+          "consumer": "Installer/feed edits and actual update verification",
+          "owner": "Root/release owner; not a prerequisite to local naming fixture fixes"
+        },
+        {
+          "output": "Signed, qualified DMG and ZIP from the same source/target receipt",
+          "consumer": "Fresh install/bootstrap/update acceptance",
+          "from": [
+            "MAC-002.1",
+            "MAC-002.2",
+            "MAC-003.1"
+          ]
+        }
+      ],
+      "proposedCommands": [
+        {
+          "kind": "existing lightweight fixtures; proposed execution later",
+          "command": "bun test scripts/build/__tests__/electron-packaging-files.test.ts scripts/build/__tests__/stage-servers.test.ts"
+        },
+        {
+          "kind": "native package build; not executed here",
+          "command": "bun install --frozen-lockfile && bun scripts/desktop-release.ts",
+          "environment": "Run independently with qualified Bun 1.3.14 on arm64 and Intel x64; clean target outputs first after the patch."
+        },
+        {
+          "kind": "post-install identity checks",
+          "command": "/usr/libexec/PlistBuddy -c \"Print :CFBundleIdentifier\" \"$MAC_APP/Contents/Info.plist\"; /usr/libexec/PlistBuddy -c \"Print :CFBundleShortVersionString\" \"$MAC_APP/Contents/Info.plist\"",
+          "environment": "MAC_APP is the exact installed Rox.app; compare against release receipt, not an assumed name."
+        }
+      ],
+      "codeReferences": [
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 1,
+          "endLine": 15,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L1-L15"
+        },
+        {
+          "file": "scripts/build/darwin.ts",
+          "startLine": 41,
+          "endLine": 84,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/darwin.ts#L41-L84"
+        },
+        {
+          "file": "scripts/build/common.ts",
+          "startLine": 755,
+          "endLine": 762,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L755-L762"
+        },
+        {
+          "file": "apps/electron/scripts/build-dmg.sh",
+          "startLine": 234,
+          "endLine": 279,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/scripts/build-dmg.sh#L234-L279"
+        },
+        {
+          "file": "scripts/install-app.sh",
+          "startLine": 142,
+          "endLine": 148,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/install-app.sh#L142-L148"
+        },
+        {
+          "file": "scripts/install-app.sh",
+          "startLine": 281,
+          "endLine": 300,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/install-app.sh#L281-L300"
+        },
+        {
+          "file": "scripts/desktop-release.ts",
+          "startLine": 7,
+          "endLine": 62,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L7-L62"
+        },
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 83,
+          "endLine": 89,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L83-L89"
+        },
+        {
+          "file": ".github/workflows/desktop-release.yml",
+          "startLine": 30,
+          "endLine": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.github/workflows/desktop-release.yml#L30-L61"
+        },
+        {
+          "file": "scripts/release.ts",
+          "startLine": 13,
+          "endLine": 18,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/release.ts#L13-L18"
+        }
+      ],
+      "Requirements": "Artifact discovery is target/version-specific and never accepts an unrelated stale file.",
+      "DoD": "Fresh build, direct installer and update mechanism all agree on Rox names and paths.",
+      "Full functional verification": "Install through DMG and the supported bootstrap route and launch the resulting app.",
+      "Test method": "Empty-release-directory build tests plus post-install executable/plist/version checks.",
+      "proposedPatchAcceptance": {
+        "Requirements": "Artifact discovery must be target/version/commit-specific; unrelated stale artifacts and wrong .app contents must fail. Keep existing user profile, custody keys, protocol aliases and update identity through an intentional migration.",
+        "DoD": "Every supported entrypoint produces, discovers, installs and updates the same Rox artifacts; ZIP/update metadata are required and match the signed receipt. Clean-install and legacy-upgrade evidence exists for arm64 and x64.",
+        "Full functional verification": "Download the exact released DMG through a quarantine-aware browser on a separate Mac, install Rox, launch, persist/reopen a workspace and note, then install via the supported bootstrap route in a separate fresh test account. Upgrade a copied legacy test profile and confirm data, keychain access and deep links remain usable.",
+        "Test method": "Add empty-output/stale-Craft/wrong-bundle/wrong-version fixtures, installer dry-run assertions and release receipt matching tests. Run actual DMG/bootstrap/update flows on both architectures; retain hashes, installed plist values, executable architecture and screenshots."
+      },
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false
+    },
+    "MAC-001.2": {
+      "heading": "[MAC-001.2] Correct Liquid Glass hook and icon provenance",
+      "disposition": "partially-implemented",
+      "evidenceLevel": "source-reviewed; no packaged macOS execution in this preparation",
+      "alreadyImplemented": [
+        "afterPack now derives the bundle name from context.packager.appInfo.productFilename. The stale Craft Agents.app hook path is already fixed.",
+        "Source-hash checking and fallback to icon.icns already exist. Assets.car and fallback icon.icns are present."
+      ],
+      "remainingGaps": [
+        "Assets.car.source-sha256 is absent from the checkout, so hasCurrentAssetProvenance returns false and Assets.car is skipped on every macOS version. Source SVG SHA256 observed: 86b2e9342fb8a638b6e8e819b17f1f7c1c0c56fd3d1ef7bbe5695cd2226d8734.",
+        "Existing Assets.car cannot be certified against the current SVG merely by writing its hash. Regenerate the catalog with the current approved artwork before recording provenance.",
+        "Missing source SVG with a provenance file throws from readFileSync rather than selecting deterministic fallback; copy failures only log a warning without a machine-readable fallback receipt.",
+        "No inspected hook tests cover non-Darwin, productFilename paths, current/missing/mismatched provenance, missing source, or copy failure. Finder/Dock/app-switcher appearance is unverified."
+      ],
+      "concretePatches": [
+        {
+          "files": [
+            "apps/electron/resources/Assets.car",
+            "apps/electron/resources/Assets.car.source-sha256"
+          ],
+          "change": "Regenerate Assets.car from the approved current icon catalog using an available macOS 26 SDK, then record the current SVG hash. Keep the SDK/actool version and catalog hash as build evidence; never stamp an existing unknown catalog as current."
+        },
+        {
+          "files": [
+            "apps/electron/scripts/afterPack.cjs",
+            "scripts/build/__tests__/after-pack-icon.test.ts (new)"
+          ],
+          "change": "Treat absent/unreadable SVG or provenance as explicit deterministic fallback, verify fallback icon existence, and emit an icon-selection receipt. Add fixture tests with synthetic bundle paths and file copies. Preserve the already corrected context productFilename path."
+        }
+      ],
+      "hardDependencies": [
+        {
+          "output": "Approved artwork and Xcode/macOS 26 SDK catalog compilation",
+          "consumer": "Regenerated current Assets.car/provenance; older-OS fallback fixture work can start now",
+          "owner": "macOS icon owner"
+        },
+        {
+          "output": "Installed app variants and clean GUI test accounts on macOS 26 and declared older minimum",
+          "consumer": "Actual Dock/Finder/app-switcher verification",
+          "from": [
+            "MAC-003.2"
+          ]
+        }
+      ],
+      "proposedCommands": [
+        {
+          "kind": "catalog regeneration; proposed, needs SDK",
+          "command": "xcrun actool apps/electron/resources/icon.icon --compile apps/electron/resources --app-icon AppIcon --minimum-deployment-target 26.0 --platform macosx --output-partial-info-plist /dev/null"
+        },
+        {
+          "kind": "provenance write after successful regeneration only",
+          "command": "shasum -a 256 apps/electron/resources/icon.icon/Assets/icon.svg | cut -d' ' -f1 > apps/electron/resources/Assets.car.source-sha256"
+        },
+        {
+          "kind": "new fixture suite; proposed path does not exist yet",
+          "command": "bun test scripts/build/__tests__/after-pack-icon.test.ts"
+        },
+        {
+          "kind": "installed resources inspection",
+          "command": "ls -l \"$MAC_APP/Contents/Resources/Assets.car\" \"$MAC_APP/Contents/Resources/icon.icns\"",
+          "environment": "Run the positive and fallback variants; the fallback deliberately has no copied Assets.car."
+        }
+      ],
+      "codeReferences": [
+        {
+          "file": "apps/electron/scripts/afterPack.cjs",
+          "startLine": 25,
+          "endLine": 74,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/scripts/afterPack.cjs#L25-L74"
+        },
+        {
+          "file": "apps/electron/scripts/afterPack.cjs",
+          "startLine": 4,
+          "endLine": 18,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/scripts/afterPack.cjs#L4-L18"
+        },
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 102,
+          "endLine": 128,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L102-L128"
+        }
+      ],
+      "Requirements": "Current approved icon appears in the actual Rox bundle and fallback behavior remains deterministic.",
+      "DoD": "Correct Assets.car is copied when present/current; invalid provenance triggers an intentional verified fallback.",
+      "Full functional verification": "Inspect Finder, Dock and app switcher on macOS 26 and an older supported version.",
+      "Test method": "Hook path/provenance tests and installed-app screenshot/bundle inspection.",
+      "proposedPatchAcceptance": {
+        "Requirements": "The approved current icon must reach the real Rox bundle; missing/stale/unreadable provenance must choose a usable deterministic fallback without certifying unrelated Assets.car bytes.",
+        "DoD": "Regenerated catalog/provenance and fallback fixture cases pass; both installed variants show the expected icon and the release receipt identifies the selected icon/source hash.",
+        "Full functional verification": "Inspect Finder, Dock and app switcher on macOS 26 and the oldest supported macOS with the actual installed arm64/x64 artifacts. Repeat with intentionally stale provenance in an isolated fixture build and confirm icon.icns remains visible.",
+        "Test method": "Add hook filesystem fixture tests, record catalog/SVG SHA256 and installed resource bytes, and retain per-OS screenshots. Source-path correction alone is not visual acceptance."
+      },
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false
+    },
+    "MAC-002.1": {
+      "heading": "[MAC-002.1] Select libSQL and native module variants per target",
+      "disposition": "partially-implemented",
+      "evidenceLevel": "source-reviewed; no packaged macOS execution in this preparation",
+      "alreadyImplemented": [
+        "desktop-release stages database, database-common and database-darwin-${arch}; builder now copies release-native/@tursodatabase. The previous hardcoded arm64 resource rule is fixed for this native-host pipeline.",
+        "Target-positive binary matchers and staging tests exist. SDK staging selects target package and verifies non-symlink binary size. Bun/uv downloads verify published checksums on a new download.",
+        "Image-processing dependency pins are now Sharp 0.35.4; lock includes the matching nested native Sharp 0.35.4/libvips 1.3.3 variants."
+      ],
+      "remainingGaps": [
+        "release-native staging is not cleared, so a reused staging directory can carry other-architecture or stale facade contents.",
+        "Builder excludes all node_modules and Mac extraResources only lists SDK, ripgrep, libSQL and workers/OEM. Electron main externalizes Sharp, ONNX and transformers; those native/module closures are not staged by desktop-release or the legacy SDK-only dev staging script.",
+        "Root optional @img pins remain 0.34.5/libvips 1.2.4 while Sharp 0.35.4 resolves nested packages. Flattening root @img packages would ship the wrong closure. Transformers 2.17.2 additionally resolves its Sharp ^0.32.0 closure and ONNX 1.14.0.",
+        "Legacy electron:dist:* entrypoints do not call the new libSQL staging pipeline. A complete release must use the canonical staging entrypoint or wire all supported routes to it.",
+        "Current manifest SQLite probe uses host Node 24, not the installed Electron 39 embedded Node. No actual packaged semantic retrieval/image probe is included."
+      ],
+      "concretePatches": [
+        {
+          "files": [
+            "scripts/desktop-release.ts",
+            "scripts/build/common.ts",
+            "apps/electron/electron-builder.yml"
+          ],
+          "change": "Introduce a target-specific native dependency stager that starts from a clean directory, dereferences only runtime-required files and reproduces dependency resolution from each consuming scope. Stage libSQL facades/native binary, Sharp 0.35.4 with its actual target @img addon/libvips, and transformers/ONNX plus their actual nested dependencies and shared dylibs."
+        },
+        {
+          "files": [
+            "scripts/desktop-release.ts",
+            "scripts/stage-electron-native-deps.sh",
+            "package.json"
+          ],
+          "change": "Route every supported Mac distribution entrypoint through canonical staging. Keep unsupported legacy routes visibly unsupported until wired; update the misleading arm64-only libSQL comment. Require a resource/dependency manifest with package version, resolved scope, target architecture and hashes."
+        },
+        {
+          "files": [
+            "scripts/build/__tests__/native-dependency-staging.test.ts (new)",
+            "scripts/desktop-release.ts"
+          ],
+          "change": "Add fixture closure tests and isolated packaged Electron probes: persistent graph insert/reopen, FTS/account outbox reopen, Sharp PNG/JPEG real decode/resize, local known-fixture ONNX embedding/search. Test resources outside the developer checkout so hoisted dependencies cannot hide missing files."
+        }
+      ],
+      "hardDependencies": [
+        {
+          "output": "Frozen lock and native dependency resolution for darwin-arm64/darwin-x64",
+          "consumer": "Target closure staging; source fixture implementation can start now",
+          "owner": "Shared desktop/native staging owner coordinated with Windows"
+        },
+        {
+          "output": "Local semantic model fixture and native Intel/ARM64 runners",
+          "consumer": "Packaged inference/native imports on both targets",
+          "owner": "macOS qualification owner"
+        }
+      ],
+      "proposedCommands": [
+        {
+          "kind": "existing packaging fixtures",
+          "command": "bun test scripts/build/__tests__/electron-packaging-files.test.ts scripts/build/__tests__/stage-servers.test.ts"
+        },
+        {
+          "kind": "new closure fixtures; proposed path does not exist yet",
+          "command": "bun test scripts/build/__tests__/native-dependency-staging.test.ts"
+        },
+        {
+          "kind": "existing package build after staging patch, both native hosts",
+          "command": "bun scripts/desktop-release.ts"
+        },
+        {
+          "kind": "proposed installed Electron offline native probe",
+          "command": "\"$MAC_APP/Contents/MacOS/Rox\" --rox-native-release-probe \"$MAC_FIXTURE_DIR\"",
+          "environment": "This probe flag is a proposed interface, not an existing command. It must use an isolated test profile and local fixtures, never live credentials or external paid providers."
+        }
+      ],
+      "codeReferences": [
+        {
+          "file": "scripts/desktop-release.ts",
+          "startLine": 19,
+          "endLine": 37,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L19-L37"
+        },
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 129,
+          "endLine": 166,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L129-L166"
+        },
+        {
+          "file": "scripts/electron-build-main.ts",
+          "startLine": 399,
+          "endLine": 415,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-main.ts#L399-L415"
+        },
+        {
+          "file": "packages/server-core/package.json",
+          "startLine": 35,
+          "endLine": 44,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/package.json#L35-L44"
+        },
+        {
+          "file": "bun.lock",
+          "startLine": 4436,
+          "endLine": 4442,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/bun.lock#L4436-L4442"
+        },
+        {
+          "file": "bun.lock",
+          "startLine": 1796,
+          "endLine": 1796,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/bun.lock#L1796"
+        },
+        {
+          "file": "bun.lock",
+          "startLine": 3144,
+          "endLine": 3144,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/bun.lock#L3144"
+        },
+        {
+          "file": "scripts/stage-electron-native-deps.sh",
+          "startLine": 14,
+          "endLine": 49,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/stage-electron-native-deps.sh#L14-L49"
+        },
+        {
+          "file": "package.json",
+          "startLine": 85,
+          "endLine": 102,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/package.json#L85-L102"
+        },
+        {
+          "file": "scripts/desktop-release.ts",
+          "startLine": 44,
+          "endLine": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L44-L61"
+        }
+      ],
+      "Requirements": "All enabled native modules have target-complete dependency closure outside inaccessible bundle locations.",
+      "DoD": "WorkGraph, semantic retrieval and image conversion load the correct modules on both architectures.",
+      "Full functional verification": "Create/reopen graph data, retrieve known semantic fixtures and process images in the installed app.",
+      "Test method": "Packaged native import probes and output assertions on Intel and Apple Silicon.",
+      "proposedPatchAcceptance": {
+        "Requirements": "Every enabled native feature must have complete target-correct runtime dependencies at loader-accessible real paths; nested package versions must match their consuming scope rather than arbitrary hoisted root packages.",
+        "DoD": "Both native architectures run WorkGraph/account custody/FTS persistence, semantic inference/retrieval and image conversion in the installed app without resolving any developer-checkout files or host-installed tools.",
+        "Full functional verification": "Install each exact artifact on a clean native Mac, create/reopen graph and note/account-outbox data, retrieve a known local semantic fixture, and decode/resize/export PNG/JPEG with pixel/metadata assertions. Exercise Pi and messaging worker startup with isolated local fixture transports, then restart and repeat persisted data reads.",
+        "Test method": "Validate staged closure fixtures and lock pins, inspect packaged real files/dylib loader paths and run probes inside the shipped Electron runtime. Host Bun/Node Sharp proof is bounded and cannot close packaged Electron parity."
+      },
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false
+    },
+    "MAC-002.2": {
+      "heading": "[MAC-002.2] Reject wrong-architecture executables during packaging",
+      "disposition": "partially-implemented",
+      "evidenceLevel": "source-reviewed; no packaged macOS execution in this preparation",
+      "alreadyImplemented": [
+        "desktop-release builds only process.platform/process.arch and chooses explicit dmg/zip target architecture. It runs bundled Bun/uv/Claude --version and a host-Node libSQL query.",
+        "SDK copy checks existence, non-symlink status and size. Source matcher fixtures reject other target binary directories and stale release/source files."
+      ],
+      "remainingGaps": [
+        "No Mach-O architecture/minOS/dylib inspection; Rosetta can conceal x64 binaries accidentally shipped in an arm64 app. Size/version alone does not prove target architecture.",
+        "copyRipgrep copies the host-installed package with no architecture check; SDK verification ignores architecture in the legacy packageDarwin helper.",
+        "Reused uv target path skips download and does not revalidate pinned version/hash. Pi staging warns and copies all koffi builds if target-native directory is missing, instead of rejecting a required missing target.",
+        "GitHub and CircleCI package ARM64 only for Mac. The explicit x64 YAML target is not evidence an Intel artifact is built or runs."
+      ],
+      "concretePatches": [
+        {
+          "files": [
+            "scripts/build/verify-macos-resources.ts (new)",
+            "scripts/desktop-release.ts",
+            "scripts/build/common.ts"
+          ],
+          "change": "Enumerate all shipped executable Mach-O files, .node addons and dependent dylibs recursively from the resource manifest. Validate architecture slices, minOS, executable bits, package version and expected integrity; reject absent target slices or unsupported dylib paths before signing. Validate cached uv/Bun/SDK artifacts again on reuse."
+        },
+        {
+          "files": [
+            "scripts/build/common.ts",
+            "scripts/build/darwin.ts"
+          ],
+          "change": "Reject missing required target koffi/native dependencies instead of broad fallback copying; retain optional absent koffi only when the actual Pi bundle does not import it. Add ripgrep --version plus real recursive search output probes and SDK architecture validation."
+        },
+        {
+          "files": [
+            ".github/workflows/desktop-release.yml",
+            ".circleci/desktop.yml"
+          ],
+          "change": "Add a native Intel x64 package/gate using the currently documented macos-15-intel runner or an explicit maintained Intel machine; assert process.arch equals matrix.arch. Keep ARM64 native qualification separately. CI does not replace oldest-OS GUI runtime coverage."
+        }
+      ],
+      "hardDependencies": [
+        {
+          "output": "Clean complete native resource manifest",
+          "consumer": "Enumeration/target/minOS validation; validator fixture implementation can start now",
+          "from": [
+            "MAC-002.1"
+          ]
+        },
+        {
+          "output": "Native Intel runner plus supported oldest/current OS test hosts",
+          "consumer": "Actual x64 execution/CPU qualification",
+          "owner": "CI/macOS environment owner"
+        }
+      ],
+      "proposedCommands": [
+        {
+          "kind": "read-only binary inspection after build; apply to every inventoried binary/addon/dylib",
+          "command": "file \"$MAC_BINARY\"; lipo -archs \"$MAC_BINARY\"; vtool -show-build \"$MAC_BINARY\"; otool -l \"$MAC_BINARY\"; otool -L \"$MAC_BINARY\""
+        },
+        {
+          "kind": "new negative fixture tests; proposed path does not exist yet",
+          "command": "bun test scripts/build/__tests__/macos-resource-validation.test.ts"
+        },
+        {
+          "kind": "bundled executable probes, current canonical pipeline",
+          "command": "bun scripts/desktop-release.ts --verify-only",
+          "environment": "Only after stale-build matching is fixed; add rg/native imports/worker and real workload probes beyond current version-only checks."
+        }
+      ],
+      "codeReferences": [
+        {
+          "file": "scripts/desktop-release.ts",
+          "startLine": 7,
+          "endLine": 62,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L7-L62"
+        },
+        {
+          "file": "scripts/build/common.ts",
+          "startLine": 318,
+          "endLine": 400,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L318-L400"
+        },
+        {
+          "file": "scripts/build/common.ts",
+          "startLine": 407,
+          "endLine": 427,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L407-L427"
+        },
+        {
+          "file": "scripts/build/common.ts",
+          "startLine": 520,
+          "endLine": 578,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L520-L578"
+        },
+        {
+          "file": "scripts/build/__tests__/electron-packaging-files.test.ts",
+          "startLine": 19,
+          "endLine": 95,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/__tests__/electron-packaging-files.test.ts#L19-L95"
+        },
+        {
+          "file": ".github/workflows/desktop-release.yml",
+          "startLine": 30,
+          "endLine": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.github/workflows/desktop-release.yml#L30-L61"
+        },
+        {
+          "file": ".circleci/desktop.yml",
+          "startLine": 4,
+          "endLine": 23,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.circleci/desktop.yml#L4-L23"
+        },
+        {
+          "file": "scripts/build/common.ts",
+          "startLine": 35,
+          "endLine": 45,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L35-L45"
+        }
+      ],
+      "Requirements": "Target architecture, executable mode, version, hash and minimum deployment version are validated.",
+      "DoD": "A wrong-architecture binary fails the release gate before the app is signed/published.",
+      "Full functional verification": "Execute every packaged executable and a representative workload on its native machine.",
+      "Test method": "`file`/`lipo`/`otool` inspection, deliberate wrong-binary fixtures and actual subprocess launches.",
+      "proposedPatchAcceptance": {
+        "Requirements": "Architecture slices, executable mode, exact versions/hashes, minimum deployment version and dylib loader paths must match the target contract. Universal binaries are acceptable only when the requested slice is explicitly present and qualified.",
+        "DoD": "A swapped x64/arm64 binary, missing target addon, stale cached version or external dylib path fails before signing/publication. Native ARM64 and Intel artifacts each have a complete successful execution receipt.",
+        "Full functional verification": "Execute every packaged binary on its native machine without relying on Rosetta, run database/image/inference/search/worker workloads, and verify subprocess exit/output/cancellation. Qualify Intel CPU requirements using the pinned Bun/SDK binaries rather than current generic documentation.",
+        "Test method": "file/lipo/vtool/otool inventory plus deliberate wrong-architecture/missing-addon/stale-hash fixtures. Execute exact signed installed artifacts on native arm64/x64 and preserve probe outputs/OS/CPU/architecture."
+      },
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false
+    },
+    "MAC-003.1": {
+      "heading": "[MAC-003.1] Fail public releases on missing signing or notarization",
+      "disposition": "still-open",
+      "evidenceLevel": "source-reviewed; no packaged macOS execution in this preparation",
+      "alreadyImplemented": [
+        "Hardened runtime and entitlements are configured. Legacy build scripts can use Developer ID identity and notarization credential environment variables.",
+        "electron-builder v26 supports automatic notarization when an accepted credential set is supplied. The commented YAML notarize block is not proof notarization cannot run.",
+        "The new packaging pipeline uses publish never and stores CI artifacts. That is a configured build route, not a verified public release."
+      ],
+      "remainingGaps": [
+        "desktop-release defaults identity autodiscovery off unless CSC_LINK exists, ignoring a valid keychain/CSC_NAME-only release setup.",
+        "manifest signed is Boolean(CSC_LINK), neither actual certificate identity nor signature verification. No notary request/result, staple or Gatekeeper receipt is generated.",
+        "GitHub workflow does not map signing/notarization credentials, assert a public-release mode, or require accepted notarization before artifact upload. CircleCI definition likewise lacks an explicit gate.",
+        "Bootstrap strips quarantine, masking a real fresh-download Gatekeeper check. Release helper suggests unsigned local artifacts as input to gh release publication."
+      ],
+      "concretePatches": [
+        {
+          "files": [
+            "scripts/desktop-release.ts",
+            "scripts/build/verify-macos-release.ts (new)"
+          ],
+          "change": "Add an explicit public-release mode with fail-closed preflight for Developer ID Application identity and one accepted notary credential/profile set. Preserve unsigned developer builds with truthful dev-only receipts. Derive signed/team/certificate identity from codesign output; require accepted notarization and validation of final app/DMG tickets before generating public receipts."
+        },
+        {
+          "files": [
+            ".github/workflows/desktop-release.yml",
+            ".circleci/desktop.yml",
+            "scripts/release.ts"
+          ],
+          "change": "Map secret names without printing secrets, validate final nested signatures/notary status/staples/Gatekeeper and upload receipts with hashes. Separate public artifact publication from unsigned CI artifacts; gate public publication on exact verified final bytes. Confirm the dedicated CircleCI definition is actually selected in the project before claiming it runs."
+        },
+        {
+          "files": [
+            "scripts/install-app.sh"
+          ],
+          "change": "Preserve quarantine for public installation. Verify approved bundle/team identity and artifact hash before installation; add missing/rejected credentials, rejected notarization, mutated-after-signing and unknown-team negative fixture cases."
+        }
+      ],
+      "hardDependencies": [
+        {
+          "output": "Developer ID Application certificate/private key and notary credentials/profile in CI",
+          "consumer": "Actual public signing/notarization; source preflight/fixture edits can start now",
+          "owner": "Release environment owner"
+        },
+        {
+          "output": "Final complete native resources and approved entitlements",
+          "consumer": "Sign exact nested code and app before container/notary verification",
+          "from": [
+            "MAC-002.1",
+            "MAC-002.2",
+            "MAC-003.2"
+          ]
+        },
+        {
+          "output": "Separate clean test Mac/account with quarantine-aware download and no prior Rox approval",
+          "consumer": "Fresh Gatekeeper install acceptance",
+          "owner": "macOS qualification owner"
+        }
+      ],
+      "proposedCommands": [
+        {
+          "kind": "public release interface to implement; not an existing flag",
+          "command": "bun scripts/desktop-release.ts --public-release"
+        },
+        {
+          "kind": "post-signature verification; read only",
+          "command": "codesign --verify --deep --strict --verbose=4 \"$MAC_APP\"; codesign -dv --verbose=4 \"$MAC_APP\"; codesign -d --entitlements :- \"$MAC_APP\"; xcrun stapler validate \"$MAC_APP\"; spctl --assess --type execute --verbose=4 \"$MAC_APP\""
+        },
+        {
+          "kind": "final distribution container verification",
+          "command": "hdiutil verify \"$MAC_DMG\"; xcrun stapler validate \"$MAC_DMG\"; spctl --assess --type open --context context:primary-signature --verbose=4 \"$MAC_DMG\"",
+          "environment": "Require the notarization Accepted result/request ID and final hash. Validate ZIP by unpacking its already signed/stapled app; do not attempt to staple the ZIP itself."
+        },
+        {
+          "kind": "new gate fixture suite; proposed path does not exist yet",
+          "command": "bun test scripts/build/__tests__/macos-public-release.test.ts"
+        }
+      ],
+      "codeReferences": [
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 102,
+          "endLine": 128,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L102-L128"
+        },
+        {
+          "file": "apps/electron/build/entitlements.mac.plist",
+          "startLine": 5,
+          "endLine": 16,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/build/entitlements.mac.plist#L5-L16"
+        },
+        {
+          "file": "scripts/build/darwin.ts",
+          "startLine": 41,
+          "endLine": 84,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/darwin.ts#L41-L84"
+        },
+        {
+          "file": "apps/electron/scripts/build-dmg.sh",
+          "startLine": 234,
+          "endLine": 279,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/scripts/build-dmg.sh#L234-L279"
+        },
+        {
+          "file": "scripts/desktop-release.ts",
+          "startLine": 44,
+          "endLine": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L44-L61"
+        },
+        {
+          "file": ".github/workflows/desktop-release.yml",
+          "startLine": 30,
+          "endLine": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.github/workflows/desktop-release.yml#L30-L61"
+        },
+        {
+          "file": ".circleci/desktop.yml",
+          "startLine": 4,
+          "endLine": 23,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.circleci/desktop.yml#L4-L23"
+        },
+        {
+          "file": "scripts/install-app.sh",
+          "startLine": 281,
+          "endLine": 300,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/install-app.sh#L281-L300"
+        },
+        {
+          "file": "scripts/release.ts",
+          "startLine": 13,
+          "endLine": 18,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/release.ts#L13-L18"
+        }
+      ],
+      "Requirements": "Missing credentials, rejected notarization or invalid final signature stop public artifact publication.",
+      "DoD": "Release evidence includes actual certificate identity, notarization result and final stapled artifact validation.",
+      "Full functional verification": "Install the released file on a Mac that did not build it and has never approved an unsigned Rox app.",
+      "Test method": "Negative credential/rejection cases and positive end-to-end signed distribution gate.",
+      "proposedPatchAcceptance": {
+        "Requirements": "Missing credentials, wrong identity/team, invalid nested code, rejected notarization, absent final tickets or post-signing byte changes must prevent public publication. Secret values must never enter receipts/logs.",
+        "DoD": "Each final ARM64/x64 app, DMG and updater ZIP has byte-bound signature/team/notary/staple evidence and a successful clean-machine Gatekeeper install. signed is measured rather than inferred from environment variable presence.",
+        "Full functional verification": "Download the final release through a browser onto a separate Mac that never approved an unsigned Rox app. Preserve quarantine, verify signature/ticket, mount/install/launch under default Gatekeeper, execute native and permission workloads, and verify an update from the previous approved test release.",
+        "Test method": "Preflight/mock verifier negative cases plus real Developer ID/notary submission and accepted response, final codesign/stapler/spctl checks and quarantine-preserving fresh GUI installation. Unsigned CI package success cannot close this task."
+      },
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false
+    },
+    "MAC-003.2": {
+      "heading": "[MAC-003.2] Validate the minimum OS and entitlement contract",
+      "disposition": "verification-required",
+      "evidenceLevel": "source-reviewed; no packaged macOS execution in this preparation",
+      "alreadyImplemented": [
+        "Electron is pinned to 39.2.7, whose Electron-level floor is macOS 12. Hardened runtime, JIT/executable-memory/library-validation and microphone entitlements exist.",
+        "Microphone and local-network usage descriptions exist. Meeting recorder and dictation use getUserMedia. The schema-3 voice privacy/default/cancel source fixes are present unchanged from d93bd3c3aedac0ce3360c5f460170b2da1a16a94.",
+        "Read-only vtool inspection of the existing qualified Bun 1.3.14 darwin-arm64 binary shows LC_BUILD_VERSION platform MACOS, minos 13.0, sdk 15.2. This mandatory bundled runtime already raises the app floor above Electron-only macOS 12."
+      ],
+      "remainingGaps": [
+        "No mac.minimumSystemVersion is declared. A provisional floor of at least macOS 13 is source/toolchain-supported, but the final floor must be the maximum across all mandatory target binaries and required features.",
+        "Intel Bun/Claude/libSQL/ONNX/Sharp/uv deployment targets and CPU requirements have not been inspected in this preparation. Node 24 is a CI/build host; embedded Electron Node and managed Node 22 are distinct runtimes.",
+        "Broad executable-memory/library-validation entitlements are inherited by helpers without inspected per-binary justification. They must be evaluated against real hardened native imports, not removed speculatively.",
+        "Microphone description promises all transcription is local while explicit cloud ASR consent exists. Text must accurately describe the available local/default and explicitly selected cloud behavior.",
+        "No desktopCapturer/system-audio capture call was found in the inspected Electron source. NSAudioCaptureUsageDescription is therefore a conditional requirement if that capability is enabled, not an observed current missing-microphone fix. Electron 39 CoreAudioTap system-audio capture on macOS 14.2+ requires that description."
+      ],
+      "concretePatches": [
+        {
+          "files": [
+            "apps/electron/electron-builder.yml",
+            "scripts/build/verify-macos-resources.ts (new)",
+            "scripts/desktop-release.ts"
+          ],
+          "change": "Compute/document the release minimum from pinned per-target Mach-O minima and supported feature behavior; provisionally expect >=13.0 from bundled Bun, then set minimumSystemVersion to the verified maximum and encode it in receipts/update eligibility. Prevent installation/update on unsupported versions with an actionable message."
+        },
+        {
+          "files": [
+            "apps/electron/build/entitlements.mac.plist",
+            "apps/electron/electron-builder.yml"
+          ],
+          "change": "Audit required entitlements per executable/helper, preserve Electron JIT/native functionality and narrow only after positive/negative signed workload tests. Correct microphone disclosure to match explicit cloud ASR consent. Add system-audio usage description only if the actual release adds system-audio capture."
+        },
+        {
+          "files": [
+            ".github/workflows/desktop-release.yml",
+            "docs/final-readiness/parallel-work/macos-runtime-matrix.json (proposed future artifact)"
+          ],
+          "change": "Add both-architecture package jobs and a retained oldest/current/macOS26 qualification matrix. Use maintained native test Macs/VMs for the declared minimum: hosted macos15 jobs do not prove macOS13 behavior or TCC GUI prompts."
+        }
+      ],
+      "hardDependencies": [
+        {
+          "output": "Every mandatory native binary minOS/CPU inventory and capability decision",
+          "consumer": "Final minimumSystemVersion and update floor",
+          "from": [
+            "MAC-002.1",
+            "MAC-002.2"
+          ]
+        },
+        {
+          "output": "Final signed app carrying approved entitlement/disclosure contract",
+          "consumer": "Signed installed TCC/native/OS acceptance only; initial contract/fixture work proceeds before signing",
+          "from": [
+            "MAC-003.1"
+          ],
+          "phase": "installed-acceptance"
+        },
+        {
+          "output": "Native ARM64/Intel hosts on the verified minimum, current version and macOS26; fresh test accounts",
+          "consumer": "JIT/native/TCC/local-network/default voice acceptance",
+          "owner": "macOS environment owner"
+        }
+      ],
+      "proposedCommands": [
+        {
+          "kind": "available pinned runtime read-only metadata, executed in this preparation",
+          "command": "/usr/bin/vtool -show-build /tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+          "observed": "MACOS minos 13.0 sdk 15.2"
+        },
+        {
+          "kind": "installed plist contract",
+          "command": "/usr/libexec/PlistBuddy -c \"Print :LSMinimumSystemVersion\" \"$MAC_APP/Contents/Info.plist\"; /usr/libexec/PlistBuddy -c \"Print :NSMicrophoneUsageDescription\" \"$MAC_APP/Contents/Info.plist\"; /usr/libexec/PlistBuddy -c \"Print :NSLocalNetworkUsageDescription\" \"$MAC_APP/Contents/Info.plist\""
+        },
+        {
+          "kind": "native minimum and entitlement inventory",
+          "command": "vtool -show-build \"$MAC_BINARY\"; otool -L \"$MAC_BINARY\"; codesign -d --entitlements :- \"$MAC_BINARY\""
+        },
+        {
+          "kind": "existing isolated voice fixtures; proposed rerun, no external TTS",
+          "command": "bun test packages/shared/src/voice packages/server-core/src/handlers/rpc/__tests__/voice.test.ts",
+          "environment": "Use --no-env-file and fresh ROX_CONFIG_DIR/CRAFT_CONFIG_DIR fixture directories; never existing profiles. Do not call toolchain ensureAll or live Edge/cloud providers for this gate."
+        }
+      ],
+      "codeReferences": [
+        {
+          "file": "apps/electron/electron-builder.yml",
+          "startLine": 102,
+          "endLine": 128,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L102-L128"
+        },
+        {
+          "file": "apps/electron/build/entitlements.mac.plist",
+          "startLine": 5,
+          "endLine": 16,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/build/entitlements.mac.plist#L5-L16"
+        },
+        {
+          "file": "scripts/build/common.ts",
+          "startLine": 35,
+          "endLine": 45,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L35-L45"
+        },
+        {
+          "file": "packages/shared/src/toolchain/manifest-data.ts",
+          "startLine": 430,
+          "endLine": 504,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/toolchain/manifest-data.ts#L430-L504"
+        },
+        {
+          "file": "packages/shared/src/voice/storage.ts",
+          "startLine": 58,
+          "endLine": 99,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/voice/storage.ts#L58-L99"
+        },
+        {
+          "file": "apps/electron/src/renderer/lib/meetings/recorder.ts",
+          "startLine": 146,
+          "endLine": 163,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/renderer/lib/meetings/recorder.ts#L146-L163"
+        },
+        {
+          "file": ".github/workflows/desktop-release.yml",
+          "startLine": 30,
+          "endLine": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.github/workflows/desktop-release.yml#L30-L61"
+        }
+      ],
+      "Requirements": "Declared minimum OS is compatible with every mandatory binary and encoded in install/update metadata.",
+      "DoD": "Oldest and newest supported systems run the full supported feature set with approved entitlements.",
+      "Full functional verification": "Launch and run JIT/native/audio/network workloads on the oldest supported Mac image and current macOS.",
+      "Test method": "OS-version matrix, plist/Mach-O deployment-target inspection and hardened-runtime feature tests.",
+      "proposedPatchAcceptance": {
+        "Requirements": "The declared OS floor must match all mandatory pinned binaries and enabled capabilities, and update/install eligibility must encode it. Permission disclosures and entitlements must truthfully support the released functionality.",
+        "DoD": "The final installed plist and receipt declare the measured floor; oldest/current ARM64 and Intel Macs run the supported JIT/native/audio/network feature set. Each retained entitlement has tested justification and microphone/local-network prompts remain functional after deny/regrant/relaunch.",
+        "Full functional verification": "On fresh OS test accounts, install the signed artifact, exercise offline local voice and cancellation, microphone allow/deny/regrant, meeting recording persistence, explicit cloud-consent UI without unintended transmission, LAN discovery/access, graph/semantic/image/JIT workloads and restart. Repeat on minimum/current systems and macOS26, using no paid/external voice sends for fixture qualification.",
+        "Test method": "Plist/Mach-O/CPU/dylib inventory, controlled inherited-entitlement tests, OS/architecture GUI matrix and retained TCC prompt/recovery evidence. CI Node/Bun tests on macOS15 cannot certify the oldest supported OS."
+      },
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false
+    }
+  },
+  "verification": {
+    "performed": [
+      "Pinned source/branch/status reads",
+      "Six exact backlog leaf acceptance fields compared against actual 0.11.6 source",
+      "Current asset existence/hash inspection",
+      "Voice source byte-diff against final d93 fix (empty)",
+      "Read-only pinned ARM64 Bun Mach-O deployment-target inspection",
+      "Official primary-source constraints checked",
+      "Report JSON and source reference line-bound validation"
+    ],
+    "notPerformed": [
+      "Install/build/package/sign/notarize",
+      "Actual installed GUI/TCC/icon/update validation",
+      "Intel binary metadata or runtime execution",
+      "Root frozen qualification rerun; its retained evidence is independent"
+    ],
+    "fullFunctionalVerified": false,
+    "originalAcceptanceComparison": {
+      "source": "docs/final-readiness/parallel-work/launch-plan.json",
+      "tasks": 6,
+      "fields": 24,
+      "exactStringMatches": 24,
+      "result": "PASS",
+      "strengthenedProposalsLocation": "tasks[ID].proposedPatchAcceptance",
+      "fullDoDClosed": false
+    }
+  },
+  "artifactDependencyGraph": {
+    "nodes": [
+      {
+        "id": "source-fixtures",
+        "tasks": [
+          "MAC-001.1",
+          "MAC-001.2",
+          "MAC-002.1",
+          "MAC-002.2",
+          "MAC-003.1",
+          "MAC-003.2"
+        ],
+        "start": "immediate; shared-file coordination required"
+      },
+      {
+        "id": "native-stage",
+        "tasks": [
+          "MAC-002.1"
+        ],
+        "output": "Clean target-complete resolved resource manifest"
+      },
+      {
+        "id": "target-contract",
+        "tasks": [
+          "MAC-002.2",
+          "MAC-003.2"
+        ],
+        "output": "Architecture/dylib/minOS inventory, declared minimum and approved per-binary entitlements"
+      },
+      {
+        "id": "app-container",
+        "tasks": [
+          "MAC-001.1",
+          "MAC-001.2"
+        ],
+        "output": "Correct Rox bundle/identity/icons, fresh DMG and ZIP byte-bound to version/commit/target"
+      },
+      {
+        "id": "signed-final",
+        "tasks": [
+          "MAC-003.1"
+        ],
+        "output": "Nested code/app/container signatures, Accepted notarization, final stapled hashes and receipts"
+      },
+      {
+        "id": "installed-acceptance",
+        "tasks": [
+          "MAC-001.1",
+          "MAC-001.2",
+          "MAC-002.1",
+          "MAC-002.2",
+          "MAC-003.1",
+          "MAC-003.2"
+        ],
+        "output": "Native oldest/current ARM64/x64 install/update/GUI/TCC/feature evidence"
+      }
+    ],
+    "edges": [
+      {
+        "producer": "source-fixtures",
+        "consumer": "native-stage",
+        "consumed": "Implemented target stager and closure fixtures"
+      },
+      {
+        "producer": "native-stage",
+        "consumer": "target-contract",
+        "consumed": "Actual binaries/addons/dylibs to inspect"
+      },
+      {
+        "producer": "native-stage",
+        "consumer": "app-container",
+        "consumed": "Verified clean target runtime resources"
+      },
+      {
+        "producer": "target-contract",
+        "consumer": "app-container",
+        "consumed": "Final minimum and entitlement/disclosure configuration"
+      },
+      {
+        "producer": "app-container",
+        "consumer": "signed-final",
+        "consumed": "Exact final bundle, icon catalog and distribution container inputs"
+      },
+      {
+        "producer": "target-contract",
+        "consumer": "signed-final",
+        "consumed": "Approved nested executable entitlements and target contract"
+      },
+      {
+        "producer": "signed-final",
+        "consumer": "installed-acceptance",
+        "consumed": "Exact signed/stapled final artifact hashes"
+      }
+    ],
+    "note": "Tasks have multiple phases. Full acceptance dependencies do not block immediate source/fixture work; signing requires final resources/contracts, and GUI acceptance requires signed final artifacts. No parent/child double counting."
+  },
+  "fullDoDClosed": false
+}

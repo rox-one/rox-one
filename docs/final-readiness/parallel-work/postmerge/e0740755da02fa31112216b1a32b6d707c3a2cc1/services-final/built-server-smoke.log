@@ -1,0 +1,2 @@
+NOT_RUN: WebUI timed out before emitting current-source output; existing index/login mtime predates this source check. No stale/static fallback used for the composed hosted gate.
+No tests executed for this composed gate.

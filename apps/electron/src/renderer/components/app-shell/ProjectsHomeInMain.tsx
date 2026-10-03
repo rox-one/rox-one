@@ -1,11 +1,12 @@
 import * as React from 'react'
 import { useState } from 'react'
-import { useSetAtom } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { ProjectsListPanel } from './ProjectsListPanel'
 import { CreateProjectDialog } from '../projects/CreateProjectDialog'
 import type { LoadedProject } from '@craft-agent/shared/projects/types'
+import { projectsAtom } from '@/atoms/projects'
 import { navigate as navigateRoute, routes } from '@/lib/navigate'
 import {
   collectionFiltersAtom,
@@ -14,12 +15,15 @@ import {
 
 /** Full-width Projects library (PagesHome pattern) when middle nav is hidden. */
 export function ProjectsHomeInMain({
-  projects,
+  projects: suppliedProjects,
   workspaceId,
 }: {
-  projects: LoadedProject[]
+  projects?: LoadedProject[]
   workspaceId: string
 }) {
+  const storedProjects = useAtomValue(projectsAtom)
+  // Both entry points use full loaded DTOs and reject a previous workspace's rows.
+  const projects = (suppliedProjects ?? storedProjects).filter(project => project.workspaceId === workspaceId)
   const { t } = useTranslation()
   const [createOpen, setCreateOpen] = useState(false)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)

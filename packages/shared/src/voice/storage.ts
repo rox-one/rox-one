@@ -57,7 +57,8 @@ export function normalizeVoicePrefs(raw: unknown, now: number = Date.now()): Voi
   const obj = raw as Record<string, unknown>
   const version = obj.version === 3 ? 3 : typeof obj.version === 'number' ? obj.version : 1
   const sttEngine = isSttEngine(obj.sttEngine) ? obj.sttEngine : base.sttEngine
-  const ttsEngine = version === 3 && isTtsEngine(obj.ttsEngine) ? obj.ttsEngine : base.ttsEngine
+  const ttsEngine = version === VOICE_PREFS_VERSION && isTtsEngine(obj.ttsEngine)
+    ? obj.ttsEngine : base.ttsEngine
   const audioRetention = isAudioRetention(obj.audioRetention)
     ? obj.audioRetention
     : base.audioRetention

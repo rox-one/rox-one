@@ -1,4 +1,4 @@
-/** Managed OMP 17.2.10 RPC limits; protocol v2 changes framing, not these limits. */
+/** Managed OMP 17.2.10 / 18.4.12 RPC limits; protocol v2 retains these bounds. */
 export const OMP_RPC_MAX_FRAME_BYTES = 1024 * 1024;
 export const OMP_RPC_MAX_REASSEMBLED_BYTES = 64 * 1024 * 1024;
 export const OMP_RPC_CHUNK_BYTES = 256 * 1024;
@@ -68,6 +68,9 @@ export class OmpRpcTransport {
         return undefined;
       }
       if (!isObject(value)) throw new Error('OMP RPC frame must be an object');
+      if (value.type === 'rpc_frame_error') {
+        throw new Error(String(value.error ?? 'OMP RPC frame exceeded the transport limit'));
+      }
       if (value.type !== 'rpc_chunk') {
         if (this.pending) throw new Error('OMP RPC chunk sequence interrupted');
         return value;

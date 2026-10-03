@@ -1,0 +1,206 @@
+[
+  {
+    "locale": "ar",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "marketplace.origin.remote",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  },
+  {
+    "locale": "de",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "marketplace.origin.bundled",
+      "marketplace.origin.empty",
+      "marketplace.origin.stale-cache",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  },
+  {
+    "locale": "en",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "marketplace.origin.bundled",
+      "marketplace.origin.cache",
+      "marketplace.origin.empty",
+      "marketplace.origin.remote",
+      "marketplace.origin.stale-cache",
+      "playground.chat.messagePlaceholder",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  },
+  {
+    "locale": "es",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "marketplace.origin.bundled",
+      "marketplace.origin.cache",
+      "marketplace.origin.empty",
+      "marketplace.origin.remote",
+      "marketplace.origin.stale-cache",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  },
+  {
+    "locale": "fr",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "marketplace.origin.bundled",
+      "marketplace.origin.cache",
+      "marketplace.origin.empty",
+      "marketplace.origin.remote",
+      "marketplace.origin.stale-cache",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  },
+  {
+    "locale": "hu",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "marketplace.origin.bundled",
+      "marketplace.origin.cache",
+      "marketplace.origin.empty",
+      "marketplace.origin.remote",
+      "marketplace.origin.stale-cache",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  },
+  {
+    "locale": "ja",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  },
+  {
+    "locale": "ko",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  },
+  {
+    "locale": "pl",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "marketplace.origin.bundled",
+      "marketplace.origin.cache",
+      "marketplace.origin.empty",
+      "marketplace.origin.remote",
+      "marketplace.origin.stale-cache",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  },
+  {
+    "locale": "ru",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "marketplace.origin.bundled",
+      "marketplace.origin.cache",
+      "marketplace.origin.empty",
+      "marketplace.origin.remote",
+      "marketplace.origin.stale-cache",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  },
+  {
+    "locale": "zh-Hans",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  },
+  {
+    "locale": "zh-Hant",
+    "added": [],
+    "retainedCurrentConflictingKeys": [
+      "automations.webhookMethod",
+      "automations.webhookUrl",
+      "marketplace.origin.empty",
+      "settings.browserImport.auto.consentHint",
+      "settings.browserImport.auto.description",
+      "settings.browserImport.auto.done",
+      "settings.browserImport.auto.offDetected",
+      "settings.browserImport.auto.pending",
+      "settings.messaging.description"
+    ]
+  }
+]

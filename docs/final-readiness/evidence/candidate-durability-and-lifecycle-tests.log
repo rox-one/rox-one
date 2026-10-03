@@ -1,0 +1,93 @@
+bun test v1.4.2 (43848b5a7)
+
+packages/server-core/src/collaboration/sync-service.test.ts:
+(pass) collaboration replica sync service > separate authorized principals read durable entity changes and stable retries do not duplicate [180.60ms]
+(pass) collaboration replica sync service > workspace authorization is checked before exposing snapshots or accepting mutations [75.22ms]
+(pass) collaboration replica sync service > unsupported and credential-bearing categories never enter the journal [53.48ms]
+(pass) collaboration replica sync service > stale concurrent writes preserve a conflict instead of overwriting the committed revision [106.48ms]
+
+packages/server-core/src/collaboration/bro-invite-service.test.ts:
+(pass) BroInviteService membership > refuses invite and join without a Rox account [0.22ms]
+(pass) BroInviteService membership > issues a one-time invite card for an authenticated owner [0.37ms]
+
+packages/shared/src/config/__tests__/config-isolation.test.ts:
+(pass) test config isolation > resolves the config root outside the real ~/.craft-agent [0.04ms]
+
+packages/server-core/src/transport/__tests__/server-lifecycle.test.ts:
+(pass) WsRpcServer lifecycle > accepts valid token [15.28ms]
+(pass) WsRpcServer lifecycle > rejects invalid token with 4005 [4.26ms]
+(pass) WsRpcServer lifecycle > rejects missing token [3.75ms]
+(pass) WsRpcServer lifecycle > hides and denies a local-Electron handler for missing or forged proofs [7.21ms]
+(pass) WsRpcServer lifecycle > uses the Electron-main binding instead of forged handshake scope [6.80ms]
+(pass) WsRpcServer lifecycle > rejects connections when at maxClients [8.15ms]
+(pass) WsRpcServer lifecycle > allows new connections after a client disconnects [57.20ms]
+(pass) WsRpcServer lifecycle > times out slow handlers [4.76ms]
+(pass) WsRpcServer lifecycle > rejects wrong protocol major version [4.46ms]
+(pass) WsRpcServer lifecycle > terminates all clients on close() [5.81ms]
+(pass) a completed real WS request followed by server.close exits a Bun child naturally without late reconnect timers [89.34ms]
+
+packages/server-core/src/transport/__tests__/before-response-authority.test.ts:
+(pass) native response Resource guard runs with verified principal and preserves authorized result after its await [66.89ms]
+(pass) native revoke and regrant during beforeResponse await retracts bytes before serialization and permits a fresh request [35.03ms]
+(pass) fresh WorkspaceActor revalidation precedes Resource guard and preserves an authorized response [6.24ms]
+(pass) Resource read revoke during third WorkspaceActor revalidation retracts private bytes before the final guard and serialization [5.18ms]
+
+packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts:
+(pass) real server ACK workspace is visible before connected state callbacks [7.12ms]
+(pass) real missing ACK workspace cannot become the requested workspace [7.63ms]
+(pass) real null ACK workspace cannot become the requested workspace [7.42ms]
+(pass) real number ACK workspace cannot become the requested workspace [8.18ms]
+(pass) real object ACK workspace cannot become the requested workspace [9.75ms]
+(pass) real empty ACK workspace cannot become the requested workspace [8.03ms]
+(pass) real whitespace ACK workspace cannot become the requested workspace [4.73ms]
+(pass) mismatched actual ACK retains the server value and never substitutes requested scope [10.26ms]
+(pass) reconnect clears old ACK before state publication and waits for the new actual ACK [11.74ms]
+(pass) automatic retry clears ACK while the next wire handshake remains unacknowledged [34.43ms]
+(pass) error clears actual ACK before non-connected state and event callbacks [9.66ms]
+(pass) shutdown clears actual ACK before non-connected state and event callbacks [10.54ms]
+(pass) destroy clears actual ACK before non-connected state and event callbacks [7.79ms]
+(pass) late wire ACK after error cannot restore cleared workspace scope [12.27ms]
+(pass) late wire ACK after shutdown cannot restore cleared workspace scope [14.65ms]
+(pass) response and event workspace fields cannot overwrite received ACK scope [12.66ms]
+
+packages/server-core/src/authority/__tests__/native-authority.test.ts:
+(pass) native authority > issues distinct subjects, authenticates server principals, and survives reopen [29.89ms]
+(pass) native authority > enrollment is single use, expires, and enrolled subjects start ungranted [14.27ms]
+(pass) native authority > invalid secrets cannot exhaust the budget for unrelated credentials or enrollment tickets [112.75ms]
+(pass) native authority > credential expiry is rechecked on authentication and authorization [20.63ms]
+(pass) native authority > grants are action/workspace scoped; revocation and rotation invalidate immediately [34.23ms]
+(pass) native authority > rejects non-interactive bootstrap, aliases, cross-workspace root reuse, and second bootstrap [29.37ms]
+(pass) native authority > recovers the persisted administrator after expiry and invalidates the old credential [24.21ms]
+(pass) native authority > rejects ancestor and descendant roots across workspaces but permits nested roots in one workspace [18.39ms]
+(pass) native authority > does not consume first bootstrap when private delivery path already exists [16.88ms]
+(pass) native authority > maintenance bootstrap and enrollment deliver secrets only to private files [38.39ms]
+
+packages/server-core/src/authority/__tests__/native-journal.test.ts:
+(pass) NativeJournal > commits bytes and immutable receipt across restart; retry is authorized and digest-bound [49.64ms]
+(pass) NativeJournal > reads only authorized canonical entity files and fails closed on external byte changes [66.72ms]
+(pass) NativeJournal > pages changed identities by durable sequence without crossing workspace boundaries [70.78ms]
+(pass) NativeJournal > requires live read permission before inspecting or mutating native paths [40.05ms]
+(pass) NativeJournal > allows only explicitly registered additional entity roots for the same workspace [41.81ms]
+(pass) NativeJournal > supports adding a file to an existing entity without treating the new path as a stale edit [145.47ms]
+(pass) NativeJournal > binds each entity to one root and prevents a second entity from claiming a tracked path [60.20ms]
+(pass) NativeJournal > reserves paths during a prepared mutation against a concurrent distinct identity [146.07ms]
+(pass) NativeJournal > rejects a moved and replaced canonical workspace root without touching either directory [58.22ms]
+(pass) NativeJournal > stale expected revision preserves an external edit and stores both conflict versions [78.79ms]
+(pass) NativeJournal > delete receipt and tombstone survive reopen and reject stale recreation [95.74ms]
+(pass) NativeJournal > prepared and partially replaced transactions recover before issuing a receipt [267.19ms]
+(pass) NativeJournal > rolls back prepared bytes when recovery authorization fence was revoked and permanently aborts the operation [116.64ms]
+(pass) NativeJournal > rejects recovery when an unchanged tracked file was externally edited after prepare [126.16ms]
+(pass) NativeJournal > rolls back immediately when a second authority connection revokes access during replacement [186.33ms]
+(pass) NativeJournal > rejects an unversioned pre-root journal without inventing root ownership metadata [23.08ms]
+(pass) NativeJournal > rejects versioned journals missing root columns [37.87ms]
+(pass) NativeJournal > rejects versioned rows with empty root ownership metadata [32.04ms]
+(pass) NativeJournal > rejects unsupported schemas, unsafe paths, and symlink traversal without changing bytes [47.09ms]
+(pass) NativeJournal > database stores hashes and metadata but not canonical document bytes [60.64ms]
+
+packages/server-core/src/handlers/rpc/__tests__/native-workspace-startup.test.ts:
+(pass) native workspace startup projects only its authorized workspace without legacy window side effects [801.38ms]
+
+ 69 pass
+ 0 fail
+ 639 expect() calls
+Ran 69 tests across 9 files. [4.07s]

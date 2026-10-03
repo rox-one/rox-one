@@ -28,7 +28,7 @@ console.log(JSON.stringify({unknown,resolved,destroys,queries}));
   expect(result.queries).toEqual(['requested-fixture','requested-fixture'])
   expect(result.destroys).toBe(2)
  } finally { rmSync(fixture, {recursive:true,force:true}) }
-}, 15000)
+}, 30000)
 
 test('actual workspace one-shot respects selected durable budget and never releases unknown dispatched usage', async () => {
  const root = join(import.meta.dir, '../../../../../..')
@@ -37,7 +37,7 @@ test('actual workspace one-shot respects selected durable budget and never relea
   const config = join(fixture, 'tsconfig.json')
   writeFileSync(config, JSON.stringify({compilerOptions:{baseUrl:root,paths:{'@craft-agent/shared/*':[join(root,'packages/shared/src/*')],'@craft-agent/server-core/*':[join(root,'packages/server-core/src/*')],'@craft-agent/core/*':[join(root,'packages/core/src/*')]}}}))
   const child = Bun.spawn([process.execPath, '--tsconfig-override', config, '-e', `
-const {mock}=await import('bun:test');const {mkdirSync}=await import('node:fs');const {join}=await import('node:path');const {DatabaseSync}=await import('node:sqlite');
+const {mock}=await import('bun:test');const {mkdirSync}=await import('node:fs');const {join}=await import('node:path');const {DatabaseSync}=await import('@craft-agent/shared/utils/sqlite-runtime');
 const {saveConfig}=await import('./packages/shared/src/config/storage.ts');const {saveWorkspaceConfig}=await import('./packages/shared/src/workspaces/storage.ts');
 const workspace=join(process.env.ROX_CONFIG_DIR,'workspace');mkdirSync(workspace);saveConfig({workspaces:[{id:'own',name:'Own',rootPath:workspace,createdAt:1}],activeWorkspaceId:'own',activeSessionId:null});saveWorkspaceConfig(workspace,{id:'own',name:'Own',slug:'own',defaults:{dailyAgentBudgetUsd:1}});
 const {setupI18n}=await import('@craft-agent/shared/i18n');setupI18n();
@@ -64,4 +64,4 @@ instance.getAgentBudgetLedger().close();db.close();console.log(JSON.stringify({c
   expect(result.queries).toBe(2)
   expect(result.destroys).toBe(result.created)
  } finally {rmSync(fixture,{recursive:true,force:true})}
-},15000)
+}, 30000)

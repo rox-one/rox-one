@@ -1,14 +1,16 @@
 /**
  * «Слушать» for chat messages.
  *
- * Edge TTS MP3 through the voice RPC → native system fallback → Web Speech.
- * Audio plays on this client, including when it connects to a remote host.
+ * Play the RPC's selected engine on this client. Browser speech requires an
+ * explicit renderer response; a failed or refused request never selects it.
  */
 
 export type SpeakVoiceResult = {
   playback?: 'audio' | 'native' | 'renderer' | 'none'
   audioBase64?: string
   mimeType?: 'audio/mpeg'
+  textSent?: boolean
+  textTransmission?: 'not-sent' | 'possible' | 'sent'
   speaking?: boolean
   voice?: string
   reason?: string
@@ -26,7 +28,12 @@ export type MessageAudio = {
 function createBrowserAudio(base64: string, mimeType: string): MessageAudio {
   const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0))
   const url = URL.createObjectURL(new Blob([bytes], { type: mimeType }))
-  const audio = new Audio(url)
+  let audio: HTMLAudioElement
+  try { audio = new Audio(url) } catch (error) {
+    URL.revokeObjectURL(url)
+    throw error
+  }
+  let disposed = false
   return {
     play: () => audio.play(),
     pause: () => audio.pause(),
@@ -35,11 +42,12 @@ function createBrowserAudio(base64: string, mimeType: string): MessageAudio {
     get onerror() { return audio.onerror as (() => void) | null },
     set onerror(fn) { audio.onerror = fn },
     dispose() {
+      if (disposed) return
+      disposed = true
       audio.onended = null
       audio.onerror = null
       audio.removeAttribute('src')
-      audio.load()
-      URL.revokeObjectURL(url)
+      try { audio.load() } finally { URL.revokeObjectURL(url) }
     },
   }
 }
@@ -76,8 +84,7 @@ export function createMessageTts(deps: MessageTtsDeps) {
     if (!previous) return
     previous.onended = null
     previous.onerror = null
-    previous.pause()
-    previous.dispose()
+    try { previous.pause() } finally { previous.dispose() }
   }
 
   const clearPoll = () => {
@@ -106,57 +113,52 @@ export function createMessageTts(deps: MessageTtsDeps) {
       requestTail = promise
       if (previous) await previous
       try {
-      if (mine !== token) return 'unavailable'
-      let ended = false
-      const finish = () => {
-        if (mine !== token || ended) return
-        ended = true
-        clearPoll()
-        clearAudio()
-        onEnd()
-      }
-      let native = false
-      let audioAttempted = false
-      try {
-        const result = await deps.speakVoice?.({ text: trimmed })
+        if (mine !== token) return 'unavailable'
+        let ended = false
+        const finish = () => {
+          if (mine !== token || ended) return
+          ended = true
+          clearPoll()
+          clearAudio()
+          onEnd()
+        }
+        let result: SpeakVoiceResult | undefined
+        try {
+          result = await deps.speakVoice?.({ text: trimmed })
+        } catch { return 'unavailable' }
         if (mine !== token) {
           if (result?.playback === 'native') await deps.speakVoice?.({ stop: true }).catch(() => undefined)
           return 'unavailable'
         }
         if (result?.playback === 'none') return 'unavailable'
-        if (result?.playback === 'audio' && result.audioBase64) {
-          audioAttempted = true
+        if (result?.playback === 'audio') {
+          if (!result.audioBase64 || result.mimeType && result.mimeType !== 'audio/mpeg') return 'unavailable'
           const createAudio = deps.createAudio ?? (typeof Audio !== 'undefined' ? createBrowserAudio : undefined)
-          if (createAudio) {
+          if (!createAudio) return 'unavailable'
+          try {
             audio = createAudio(result.audioBase64, result.mimeType ?? 'audio/mpeg')
             audio.onended = finish
             audio.onerror = finish
             await audio.play()
-            if (mine !== token) return 'unavailable'
+            if (mine !== token || ended) return 'unavailable'
             return 'audio'
+          } catch {
+            if (mine === token) clearAudio()
+            return 'unavailable'
           }
         }
-        native = result?.playback === 'native'
-      } catch {
-        if (mine !== token) return 'unavailable'
-        clearAudio()
-        return audioAttempted ? speakWeb(trimmed, finish) : 'unavailable'
-      }
-      if (mine !== token) return 'unavailable'
-      if (native) {
-        poll = setIntervalFn(() => {
-          void deps.speakVoice?.({ status: true })
-            .then((status) => {
-              if (mine !== token || status?.speaking) return
-              finish()
-            })
-            .catch(() => {
-              finish()
-            })
-        }, deps.pollMs ?? 800)
-        return 'native'
-      }
-      return speakWeb(trimmed, finish)
+        if (result?.playback === 'native') {
+          poll = setIntervalFn(() => {
+            void deps.speakVoice?.({ status: true })
+              .then((status) => {
+                if (mine !== token || status?.speaking) return
+                finish()
+              })
+              .catch(() => { finish() })
+          }, deps.pollMs ?? 800)
+          return 'native'
+        }
+        return result?.playback === 'renderer' ? speakWeb(trimmed, finish) : 'unavailable'
       } finally { finishRequest() }
     },
     stop() {

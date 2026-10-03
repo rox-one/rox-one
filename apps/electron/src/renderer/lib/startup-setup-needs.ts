@@ -1,25 +1,8 @@
-/**
- * Startup gate: decide between onboarding and the app without letting a
- * transient transport/RPC failure masquerade as "not configured".
- *
- * Before this, App.tsx showed onboarding whenever the first
- * `getSetupNeeds()` call threw (server still booting, handshake timeout, a
- * reconnect, or a sibling instance holding ~/.rox/.server.lock). An already
- * set-up user then landed on «Как вы хотите подключиться?» even though their
- * config (connection + setupDeferred) was intact.
- *
- * Rules:
- * - retry the startup RPCs with a short backoff, bounded by an overall
- *   deadline (a hung request cannot stretch startup to minutes);
- * - provider/account readiness does not replace the name-only Welcome;
- * - if every attempt failed, App waits for the transport to reconnect and
- *   probes once more; only then does a user who already finished the Welcome
- *   step go to the app (never onboarding). A genuinely new user (no confirmed
- *   name) falls back to onboarding.
- */
+/** Bounded startup reads. Transport failure never substitutes for caller identity
+ * or authoritative workspace readback; provider readiness stays in Settings. */
 import type { SetupNeeds } from '../../shared/types'
 
-export type StartupAppState = 'onboarding' | 'workspace-picker' | 'ready'
+export type StartupAppState = 'onboarding' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
 export const STARTUP_RETRY_DELAYS_MS = [300, 700, 1500, 2500, 4000] as const
 /** Overall budget for one probe (all attempts + backoff). */
@@ -47,6 +30,14 @@ class ProbeDeadlineError extends Error {
   }
 }
 
+/** Terminal authority denial cannot recover through a cached profile or retry. */
+export function isStartupAuthorityDenial(error: unknown): boolean {
+  const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : ''
+  const message = error instanceof Error ? error.message : String(error)
+  return ['AUTH_FAILED', 'FORBIDDEN', 'UNAUTHENTICATED', 'UNAUTHORIZED'].includes(code)
+    || /\b(?:AUTH_FAILED|FORBIDDEN|UNAUTHENTICATED|UNAUTHORIZED)\b/.test(message)
+}
+
 /** Retry `fn` with backoff; every attempt is raced against the remaining deadline. */
 export async function probeWithRetry<T>(fn: () => Promise<T>, options: ProbeOptions = {}): Promise<ProbeResult<T>> {
   const delays = options.delaysMs ?? STARTUP_RETRY_DELAYS_MS
@@ -70,7 +61,7 @@ export async function probeWithRetry<T>(fn: () => Promise<T>, options: ProbeOpti
       return { ok: true, value, attempts }
     } catch (error) {
       lastError = error
-      if (error instanceof ProbeDeadlineError) break
+      if (error instanceof ProbeDeadlineError || isStartupAuthorityDenial(error)) break
       if (attempt < delays.length) await sleep(Math.min(delays[attempt]!, Math.max(0, deadline - now())))
     }
   }
@@ -82,13 +73,15 @@ export function probeSetupNeeds(fetchNeeds: () => Promise<SetupNeeds>, options: 
 }
 
 export function decideStartupAppState(input: {
-  probe: SetupNeedsProbe
-  usernameConfirmed: boolean
-  workspaceId: string | null | undefined
+  identityProbe: ProbeResult<{ authority: 'native' | 'local'; name?: string } | null>
+  workspaceProbe: ProbeResult<string | null>
 }): StartupAppState {
-  const { usernameConfirmed, workspaceId } = input
-  if (!usernameConfirmed) return 'onboarding'
-  return workspaceId ? 'ready' : 'workspace-picker'
+  const { identityProbe, workspaceProbe } = input
+  if (!identityProbe.ok || !workspaceProbe.ok) return 'transport-unavailable'
+  const identity = identityProbe.value
+  if (!identity || identity.authority !== 'native' && identity.authority !== 'local') return 'transport-unavailable'
+  if (!identity.name?.trim()) return 'onboarding'
+  return workspaceProbe.value ? 'ready' : 'workspace-picker'
 }
 
 /** Re-read an unavailable workspace after a successful setup RPC establishes transport recovery.

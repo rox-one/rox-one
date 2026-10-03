@@ -1,4 +1,5 @@
 import { shouldUploadAudio } from './policy.ts'
+import { VOICE_PREFS_VERSION } from './types.ts'
 import type {
   TranscribeAdapter,
   TranscribeInput,
@@ -66,9 +67,12 @@ export async function transcribeWithPolicy(
 export async function speakWithPolicy(
   prefs: VoicePrefs,
   input: SpeakInput,
-  adapters: { edge: SpeakAdapter; fish?: SpeakAdapter },
+  adapters: { edge: SpeakAdapter },
 ): Promise<SpeakResult> {
-  if (prefs.ttsEngine !== 'edge') throw new Error('Online TTS is not selected')
+  if (prefs.version !== VOICE_PREFS_VERSION || prefs.ttsEngine !== 'edge') {
+    throw new VoicePrivacyError('consent-required', 'Select Edge TTS explicitly in current voice settings')
+  }
+  input.signal?.throwIfAborted()
   const adapter = adapters.edge
   const result = await adapter.speak(input)
   return { ...result, engine: prefs.ttsEngine, uploaded: false }

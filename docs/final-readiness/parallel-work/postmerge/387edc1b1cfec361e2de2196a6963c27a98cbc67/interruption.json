@@ -1,0 +1,14 @@
+{
+  "phase": "INTERRUPTED_STALE_SOURCE_NOT_A_PASSING_FULL_MATRIX",
+  "at": "2026-10-03T03:29:54.963Z",
+  "source": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+  "reason": "Remote main advanced to0.11.7 with updater/release and manifest/lock changes during the run. Preserve completed checks; reconcile latest source and qualify affected paths instead of repeating a stale complete matrix.",
+  "hostLoadObserved": "790+",
+  "ownedStoppedPids": [
+    53533,
+    73257,
+    73262
+  ],
+  "completedRecordsRemainIn": "results.json",
+  "otherUserProcessesPreserved": true
+}

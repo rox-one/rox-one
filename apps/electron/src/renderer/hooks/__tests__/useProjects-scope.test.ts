@@ -286,4 +286,16 @@ describe('useProjects workspace and load generations', () => {
       })
     } finally { h.close() }
   })
+  test('retains complete current project metadata without mutating incoming DTO', async () => {
+    const h = harness()
+    try {
+      const rich = { ...project('B', 'rich'), config: { ...project('B', 'rich').config, description: 'Shared context', owner: 'fixture-owner', details: 'retained metadata' } }
+      const before = structuredClone(rich)
+      h.render('B'); h.requests[0].pending.resolve([rich]); await h.settle()
+      expect(h.atom()).toEqual([before])
+      expect(rich).toEqual(before)
+      h.listeners[0].callback('B', [rich])
+      expect(h.view()).toEqual([before])
+    } finally { h.close() }
+  })
 })

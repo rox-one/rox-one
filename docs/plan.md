@@ -1,5 +1,9 @@
 # September program implementation plan
 
+## Current execution policy — 2026-10-03
+
+The user now authorizes integration of all captured open PRs and concurrent Windows10/11, macOS and hosted Web development. [The Russian parallel launch plan](final-readiness/17-parallel-launch-plan.ru.md) and [exact445-leaf allocation](final-readiness/parallel-work/launch-plan.json) define current dispatch. Only named consumed outputs and phases impose mandatory order; historical global stage sequencing below is retained as historical evidence and does not block independent work. Existing parent acceptance requirements remain intact. [The integration receipt](final-readiness/parallel-work/pr-integration-receipt.json) distinguishes local source lineage, remote merged states and bounded checks from full release acceptance.
+
 
 ## Current native publication runtime recovery (2026-09-30)
 
@@ -383,7 +387,149 @@ Final frozen owner/status gates pass: Shared 4,920 tests/12 skips/0 failures; se
 
 The isolated producer identified the existing LocalMeetingDetail Blob consumer. Independent actual Electron review rejected unnecessary data permission and proved the narrower self/blob policy. Root transfers only index.html; the preserved old voice overlay is excluded. Actual hidden Electron39.2.7 controls load self/Blob media and deny data/external origin with zero external requests; cleanup is explicit on all fixture exits. Frozen affected Electron/UI/core tests pass 4,203/0 (20,022 assertions), standard renderer build passes, and built CSP matches exactly. All 4,851 source entries are stable across gates. Only index.html differs from the earlier whole-repository owner/status gates at121ebea; earlier Shared/server/exactCI/main/preload proof retains that revision. No complete new CI, visible meeting UI, TTS, capture/provider/platform acceptance is inferred. MEETINGS-01 receives partial component evidence; MEETINGS-02 remains NOT_RUN. Root binds committed blobs and remote PR head; 27 implementation/25 verification facets are in progress, zero full original tasks accepted.
 
+## Additive PR1313 integration wave (2026-09-30)
 
-## Retained integration requirements
+Owner: `/root/native_boundary` produces only an isolated feature delta; root owns serial integration, independent review, UI acceptance, Git and delivery. Dependencies: published September owner/status base `f3987fd7f`, original PR1313 head `5a9bf9cafd7df367f6ac32102b80e777377da162` (merge base `c6841b85bddeb8f1bc76df57bc2195062504e081`), existing cached dependencies, and existing native authority/transport and durable budget ledger. No dependency install, new authority or duplicate public PR.
 
-Earlier independent scope is retained in [the integration archive](release-integration-plan-prior-20261003.md).
+1. Inventory all 46 original PR paths and classify additive port/adaptation/omission. Preserve original/repaired worktrees and the existing OKR UI. Keep native protocol and current SessionManager behavior outside the new seam.
+2. Add roadmap storage/DTO/prompt context, actual four-channel wiring and separate UI tab, carrying the reviewed workspace and model provenance repairs. Render unknown effective model and backend warning; preserve late-response scope fencing.
+3. Reuse selected budget admission before backend creation; hold unknown dispatched usage conservatively, test refusal with zero further backend/query dispatch and idempotent/conflicting exact receipt reconciliation. Real provider billing/cancellation remains pending.
+4. Verify actual local WS own/foreign/unbound/stale binding, actual workspace query method with controlled backend, filesystem concurrency/receipt recovery, original OKR/storage regression, rendering and routing/i18n parity. Run shared/server/Electron typechecks using the unchanged existing dependency cache. Bind source manifest and stdout hashes before independent review.
+5. Root integrates only the independently accepted source delta after CSP wave, reruns union/build and exercises the actual UI. No full issue or original September requirement is accepted by the worker's partial checks.
+
+## Current SQLite and Roadmap joint integration (2026-09-30)
+
+Owners: `/root/recovery_scout` produces the isolated import-only SQLite adaptation; `/root/september_gates` independently reviews exact frozen files and runs serial joint gates; root transfers reviewed files, preserves overlays, records the source manifest and owns registry/Git/PR readback. `/root/native_boundary` prepares the portable Electron bridge harness in a separate worktree; that later candidate is excluded from this freeze.
+
+Dependencies: current September source/head `bac082301aed341fe078cb5bd539c4ba074560eb`, independently accepted 46-path PR1313 port, PR1319 head `bdd28272856be5fdead6c7a93ca1b45eb13b17ed` as SQLite lineage, existing cached dependencies and prepared verified document cache. Preserve original feature branches and the two generated machine/test overlays. No broad checkout merge, workflow replacement or dependency installation.
+
+1. Reproduce native Node22 loading of the first adapter's actual esbuild CommonJS bundle. Retain the failing `createRequire(undefined)` evidence; ESM-only success is insufficient for production main/preload/worker format.
+2. Review the narrow filename/module-URL guard, exact consumer import deltas, immediate Bun statement finalization and constructor-fault cleanup. Execute freshly bundled Authority/Journal/Budget consumers on actual Node and Electron, retaining all current ownership and receipt checks.
+3. Keep actual Node CommonJS execution mandatory on headless CI; isolate Electron binary availability as an explicit skip with a real public loader-copy negative control. Fail unexpected loader errors and present-binary execution errors. Bound child execution and clean owned temporary files.
+4. Transfer only the reviewed 12 files after all base/current/frozen-hash checks pass. Add the accepted roadmap delta without replacing OKR, native authority/transport, existing Sources STATUS, budget ownership or the narrower Blob CSP. Freeze the complete source inventory before further execution.
+5. On that unchanged union, run complete Shared, server-core, Electron src/UI/core tests, exact `validate:ci` and standard root `electron:build` serially. Use the existing verified task-private document cache without changing normal commands. Record failures, skips, log hashes, output scope and before/after source digests. Prepared-host success does not establish a fresh network runner or packaged native UI.
+6. Update only bounded progress/evidence while preserving all 109 task IDs, 489 requirements and 464 dependency edges. Commit the exact reviewed files, push PR1293, compare every frozen source entry with its committed blob and read back the exact remote/PR revision. Preserve original 297-row scope and do not infer issue closure from partial checks or published draft code.
+
+## Roadmap translations and CodeQL follow-up (2026-09-30)
+
+Owners: three GPT-6.1 Sol workers prepare disjoint archive-only locale fragments; independent cross-review covers each producer's other languages; root alone writes the common catalogs. Dependencies: published Roadmap/SQLite source and portable harness, current English158-key feature slice, existing locale registry/plural rules and unchanged cached dependencies. No provider requests, foreground UI, language registry expansion or unrelated catalog edits.
+
+1. Translate ten existing locale catalogs, preserving placeholders/literals and consent/model provenance. Freeze all original fragments and retain producer/cross-review hashes. Apply three accepted terminology corrections without overwriting that original evidence.
+2. Reproduce actual Arabic count0/2 fallback, add only four derived zero/two variants under the existing English one/other contract and independently exercise corrected resource resolution. Keep English/Russian and all unrelated values unchanged.
+3. Run production setupI18n/locale registry and actual RoadmapModelResult React rendering with real translations, adversarial escaped warning/model inputs and plural counts. Run existing locale tests and standard parity/sorted/coverage commands. Source-bind this bounded evidence; mounted native/RTL/native-speaker acceptance remains separate.
+4. Independently inventory all90 actual CodeQL annotations from the published PR check, tracing dataflow and caller authority before classifying findings. Preserve configuration-missing Swift diagnostics separately from alerts. Do not suppress checks or assume authenticated callers are automatically authorized.
+5. Real owned probes confirmed quadratic parsing in existing mention and title paths. A separate bounded producer owns linear parsing repairs and behavioral/adversarial compatibility tests; the independent reviewer retains failure history and verifies actual candidate functions. Root accepts only the reviewed delta, freezes the combined source and completes affected shared/server/Electron/CI/build checks before exact source/Git/PR publication.
+
+All109tasks/489requirements/464edges and all297originalrows retain their criteria. Translation or CodeQL pattern counts do not establish complete product/security/platform acceptance. Required trusted CI runners, actual native creation/private custody, provider receipts/cancellation, compound integration and genuine Conation iOS remain independently required.
+
+Historical Roadmap/SQLite joint gates passed on all 4870 unchanged source entries (SHA256 1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54). Shared 4944/0, server-core 1508/0, Electron/UI/core 4205/0; exact local CI and standard root Electron build exit0. Registry records 28 partial implementation and 26 partial verification facets; zero complete original tasks. All original contracts remain byte-identical. Root binds each committed blob and remote PR revision after publication.
+
+## Portable Electron bridge developer probe (2026-09-30)
+
+Owner `/root/native_boundary` produces an isolated harness from exact September base `bac082301aed341fe078cb5bd539c4ba074560eb`; root owns independent review, serial integration, source binding and delivery. Dependency: accepted revision-2 fixture controls, installed project Electron/esbuild and existing standard preload build. Existing SQLite module compatibility work remains separately owned and is not imported.
+
+1. Add portable TS runner and typed service fixture under scripts/tests; keep package-wide commands unchanged. Generate exclusive output/profile roots, whitelist environment, supervise actual child PIDs and bind source/preload/SDK hashes.
+2. Carry create/exact receipt, full-shaped unobserved ACK denial, revoke/no canonical effect, real second-window IPC and graceful stable-operation restart controls. Keep synthetic bootstrap/key adapters explicit and separate from OS/product main acceptance.
+3. Exercise both Bun and Node entry commands on the same isolated source, retain missing-preload/type/readiness failures and stdout, verify strict scoped TypeScript, exact PID exits and root cleanup. Freeze source manifest for independent review before public delivery.
+4. Root integrates accepted harness only and maps it as bounded composition. Product UI E3, OS custody, provider/media/platform and crash/power-loss criteria remain pending; no original full requirement is marked accepted by this probe.
+
+## Linear parsing repair — isolated candidate (2026-09-30)
+
+Owner `/root/native_boundary`: three parser modules and focused behavioral tests in isolated base `5c2cacfab76b8b5be6c111dee75df22f6d4ed1b4`. Root owns serial integration/Git/delivery; `/root/recovery_scout` owns independent read-only review. Dependencies: existing Bun/cache and exact baseline source snapshots; no provider, credentials, user data or new installation.
+
+1. Retain actual original quadratic counterexamples and source snapshots; replace only dot trim, path-token scans and title delimiter scans, preserving historical outputs.
+2. Run relevant existing plus new tests, strict scoped TypeScript, seeded normal/malformed differential functions and bounded old/new timing observations. Preserve unsuccessful commands/assertions and disclose their causes.
+3. Freeze exact three source/three test/additive doc hashes and archive evidence for independent review. Root may integrate only after independent acceptance; full CodeQL/security and original program acceptance remain pending.
+
+
+## Combined localization and parsing validation (2026-10-02)
+
+Parser candidate independently accepted by `/root/recovery_scout`:142 tests,18048 actual old/new comparisons, strict scoped typing and unchanged frozen hashes. Root serially transferred three modules/three tests, preserving ten previously reviewed locale catalogs and all other sources. The combined4876 source manifest `560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e` passed five complete serial local gates and both fresh portable Electron entry commands on the new build. `/root/recovery_scout` owns these integrated gate observations; root owns exact Git/remote publication.
+
+Registry now records30 partial implementation and28 partial verification facets, zero original full acceptance. Original contract hashes, requirement rows and DAG are unchanged. The separate hosted-alert reviewing agent was stopped by the platform risk restriction; the review remains unfinished and is not retried through this validation workflow. Current source publication and complete local proof are distinct from historical packets and required remote/product/platform acceptance.
+
+
+## Actual native Notes product acceptance (2026-10-02)
+
+`/root/native_boundary` owns native foreground UI; `/root/recovery_scout` independently reads only the new task Note and its two operation IDs; root owns registry and publication. Standard full product main PID2566 creates/edits the Note, native menu reload restores it, menu quit exits0 and fresh main12111 restores the same route/text. Canonical193bytes remain identical; journalrev2 andcreate3/1+edit4/2 match persisted ACK metadata, pending0/one encrypted receipt row each. Receipt envelope contents and OS custody are not independently validated.
+
+All4876 gated source entries remain unchanged. No extra complete task or requirement acceptance is recorded. Actual Tasks route reports unavailable persistence/local cache, so Task-to-Note click/reopen remains pending and no cache-only task was created. Next owner recon identifies the failing real Task persistence call before any bounded writer lease; no new task store or grant expansion is implied. Ordinary reload/restart does not accept crash/offline/conflict/revoke/platform criteria.
+
+
+## Projects generation follow-up — 2026-10-02
+
+1. Producer: read exact PR1323 and current September atom/caller contract — complete.
+2. Producer: port only hook and actual-function regression harness — complete; old control 2 pass/12 fail, candidate 14 pass/0 fail/32 assertions.
+3. Producer: initial scoped TypeScript failed TS2688; shell follow-up masked its exit. Failure retained. Archive-only ambient types/module marker correction then standalone strict consumed-contract TypeScript exits 0; actual current DTO/atom and exact two existing IPC signatures unchanged. Whitespace check exits 0.
+4. Independent reviewer: separate phased actual-callback/Jotai lifecycle probe passes 14 cases; exact old-hook control fails 12 of 14. Narrow strict typing and source/hash review pass. Controlled scheduling is not ReactDOM/native acceptance.
+5. Root: exact serial hook/test transfer complete; full relevant gates, DOM/native/product acceptance and publication remain separately pending.
+
+Current projectsAtom is primitive; Cloud projectCatalogAtom/shared catalog wrapper is absent and not imported. Metadata DTO preservation tested; catalog-wrapper retention N/A. No provider calls, installs, UI/profile mutations or producer commit/push.
+
+
+## Integrated Projects generation gates (2026-10-02)
+
+Root serially transferred one production hook and one behavioral test after independent phased lifecycle and exact old-hook negative controls. `/root/native_boundary` ran five complete serial standard gates on frozen4877 source `1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412`. Current primitive atom, shared contracts, previous Roadmap/SQLite/localization/parser/native modules and retained overlays are preserved. Browser DOM evidence, actual native workspace switching and source publication are separately recorded; no full original criterion is accepted by these gates.
+
+## Focus notification isolation slice (2026-10-02)
+
+Owner: isolated Focus producer; root integrates after independent review. Change only focus-session queue pair matching and useNotifications enabled-check ordering. Verify actual production pure functions and isolated hook closures with real Focus local-storage helpers: two workspaces sharing session id, same-pair count/order, 100-entry retention, disabled active Focus zero writes/native calls, enabled Focus queue, normal notification truncation and focused/headless/no-workspace guards. Preserve exact baseline red evidence, run focused existing Focus tests and strict consumed-type checking. No queue-drain/navigation/actor/timer/native-authority expansion; complete original Focus criteria remain pending.
+
+Expanded consumer lease: FocusPage.tsx joins the two production fixes and two test/fixture paths. Independently mount the actual component in a headless DOM with injected synthetic workspace/source dependencies; prove current-only projection, null-workspace empty, pair-key identity, clicking one same-ID pair preserves foreign rows and navigates existing route, and Clear Queue retains other workspaces. Initial four-path manifest is historical, not integration approval. Keep full Focus DoD pending.
+
+
+## Integrated Focus notification gates (2026-10-02)
+
+Independent review required and accepted the additional FocusPage consumer seam after the initial queue-only candidate. Root transferred three production modules and two test/fixture files. `/root/focus_recon` ran five complete serial local gates on frozen4879 source `4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923`. Scoped hook/storage and actual mounted component negative controls are recorded separately from native product and OS notification evidence. Registry records31/29 partial facets and0 full original acceptance; original contracts and all prior unrelated overlays remain preserved.
+
+
+## PR1317 recovery evidence retained during integration
+
+The original recovery plan is preserved in [this historical receipt](integration-history/pr-1317-plan.md). It describes its recorded source revision and does not supersede current September/cloud/native contracts or claim final product acceptance. Unique recovery source deltas are integrated separately.
+
+
+## PR1320 session recovery historical evidence
+
+Preserved [the original recovery plan](integration-history/pr1320/plan.md) alongside the current integrated contracts. Historical execution claims remain bound to their recorded source.
+
+
+## Bounded legacy migration fence plan (2026-09-30)
+
+Owner: compound integration reviewer; lead retains integration and publication. Base: `b9b8aa7197f5d25304ec377a049a8f375eccf3e5`. Scope: one read-only inventory module, its filesystem tests, and these scoped notes. No legacy writer, canonical custody, renderer, dependency, or existing worker checkpoint changes.
+
+1. Import only the reviewed fence module and tests into an isolated branch at the exact base.
+2. Run `bun test tests/lark-suite-extension/legacy-markdown-migration-fence.test.ts` using Bun built-ins; check the public diff and artifact hashes.
+3. Lead reviews and publishes a draft stacked against `feat/rox-compound-workspace-20260930`.
+4. Existing compound integrator separately decides recovery disposition and serial canonical pipeline integration. The inventory stays unwired until an actual preparation path and its authority prerequisites are reviewed.
+
+Verification covers unchanged real fixture bytes, interrupted WAL refusal, unreadable/malformed/symlink state, and deterministic file/parent replacement races. It does not claim complete migration, native UI acceptance, adoption of existing files, or closure of the full compound program.
+
+
+## PR1315 portable runtime historical source and evidence
+
+The [original plan.md](integration-history/pr1315/plan.md) and its September task/evidence snapshots are retained under integration-history/pr1315. Their older source and bounded execution claims do not replace current native authority, request fences or later September evidence. Portable recovery deltas are reconciled against the current implementation.
+
+
+## PR1292 baseline recovery evidence
+
+The [original plan](integration-history/pr1292/plan.md) remains a source-bound historical record. Its descriptor/explicit-clock fixes are preserved in current implementation.
+
+
+## PR1313 roadmap recovery evidence
+
+The [original plan](integration-history/pr1313/plan.md) is retained as historical scope/evidence. Current merged native authorization, revision/CAS and September model/request safeguards remain authoritative.
+
+
+## PR1230 OMP/session program evidence
+
+The [original plan](integration-history/pr1230/plan.md) is retained alongside current runtime context, protocol negotiation, child-scoped transport errors and public-model cleanup contracts. Historical acceptance remains source-bound.
+
+
+## PR1321 sidebar restoration scope/evidence
+
+The [original plan](integration-history/pr1321/plan.md) remains preserved. Current shell keeps persisted sidebar choice across routes and uses the same mounted-rail/effective-collapse contract as the combined rail implementation; bounded source tests and historical native receipts remain distinct.
+
+
+## Parallel release integration — 2026-10-03
+
+The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [plan](integration-history/remote-main-3dd1f98b7/plan.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.

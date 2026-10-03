@@ -20,6 +20,11 @@ describe('completed turn playback controls', () => {
     expect(compare({ ...base, isListening: false }, { ...base, isListening: false })).toBe(true)
   })
 
+  it('retains the completed card session and turn identity fences', () => {
+    expect(compare(base, { ...base, sessionId: 'other-session' })).toBe(false)
+    expect(compare(base, { ...base, turnId: 'other-turn' })).toBe(false)
+  })
+
   it('allows synthesized Blob audio in the Electron content security policy', () => {
     const html = readFileSync(join(import.meta.dir, '../../../../../../apps/electron/src/renderer/index.html'), 'utf8')
     const policy = html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/)![1]!

@@ -1,0 +1,3876 @@
+{
+  "sourceCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+  "runtime": "1.3.14",
+  "capturedAt": "2026-10-03T03:46:14.452Z",
+  "status": "PASS",
+  "failures": [],
+  "scope": "Bounded source/component/contract fixtures and independent planning JSON validation; no GUI/build/deploy/full typecheck claim.",
+  "counts": {
+    "descriptions": 625,
+    "leaves": 445,
+    "rollups": 180,
+    "familyLeaves": {
+      "UI": 237,
+      "SVC": 84,
+      "WIN": 14,
+      "MAC": 12,
+      "WEB": 18,
+      "INT": 37,
+      "QA": 31,
+      "REL": 4,
+      "RECHECK": 8
+    },
+    "product": 321,
+    "platform": 44,
+    "crossCutting": 80,
+    "integration": 37,
+    "qaReleaseRecheck": 43
+  },
+  "acceptance": {
+    "all445Exact": true,
+    "checkedFields": 1780,
+    "firstWaveIds": [
+      "WIN-001.1",
+      "WIN-001.2",
+      "WIN-002.1",
+      "WIN-002.2",
+      "MAC-001.1",
+      "MAC-001.2",
+      "MAC-002.1",
+      "MAC-002.2",
+      "MAC-003.1",
+      "MAC-003.2",
+      "WEB-001.1",
+      "WEB-001.2",
+      "WEB-002.1",
+      "WEB-002.2",
+      "WEB-003.1",
+      "WEB-003.2"
+    ],
+    "firstWaveCount": 16,
+    "firstWaveFields": 64,
+    "sha256": {
+      "backlog": "3636590835be9758571fcf5b68132d074566a52856e88cc2ac18c904804deb06",
+      "launchPlan": "dfcd6366bedd668f3843dc12ac1da7993332b0387578c54bb27cfeffce5c2a46",
+      "windowsFirstWave": "11ee905e5dbf799f81e401b7c5a2ac18d17ab01a370e39507e4436879a0161a8",
+      "macosFirstWave": "9c9345116d0b61286108b60ee77d56a9cb95a03019c0a12f5326018885945984",
+      "webFirstWave": "59a8617180c0d45294f67eadb696f6be457c1e402bd103d8c7d8bc837a33d223"
+    }
+  },
+  "dependencies": {
+    "preparationCanStart": 445,
+    "necessarilySequentialWholeTaskList": "Not defined: producer-output phase gates, not exclusive whole-task scheduling.",
+    "mappingAssumptions": {
+      "direct": "UI: actualAcceptanceOutputs+uiIntegrationOutputs only. SVC/INT: hardAcceptanceDependencyIds resolved to service groups. Platform/QA/release/recheck: hardAcceptanceDependencies inherited from owning package. Deduplicate by leaf ID.",
+      "full": "Add uniform UI immutableReleaseBinding and per-target realExecutionOutput bindings. Count each UI leaf once; do not count948 target activities as extra tasks.",
+      "noDeclaredInputs": "Absence in allocation is not absence of intrinsic internal sequencing, functional requirements, runtime environments or resource limits. Source plan cannot establish current output/resource availability.",
+      "cycles": "Consumer and producer task-level phase gates can form apparent cycles, such as native stage -> installer -> installed native verification. Validating a global whole-task acyclic schedule would be incorrect. MacOS explicit phase-node graph is checked separately."
+    },
+    "directView": {
+      "byFamily": {
+        "UI": {
+          "leaves": 237,
+          "withDeclaredInputs": 221,
+          "noDeclaredInputs": 16
+        },
+        "SVC": {
+          "leaves": 84,
+          "withDeclaredInputs": 30,
+          "noDeclaredInputs": 54
+        },
+        "WIN": {
+          "leaves": 14,
+          "withDeclaredInputs": 14,
+          "noDeclaredInputs": 0
+        },
+        "MAC": {
+          "leaves": 12,
+          "withDeclaredInputs": 12,
+          "noDeclaredInputs": 0
+        },
+        "WEB": {
+          "leaves": 18,
+          "withDeclaredInputs": 18,
+          "noDeclaredInputs": 0
+        },
+        "INT": {
+          "leaves": 37,
+          "withDeclaredInputs": 18,
+          "noDeclaredInputs": 19
+        },
+        "QA": {
+          "leaves": 31,
+          "withDeclaredInputs": 26,
+          "noDeclaredInputs": 5
+        },
+        "REL": {
+          "leaves": 4,
+          "withDeclaredInputs": 4,
+          "noDeclaredInputs": 0
+        },
+        "RECHECK": {
+          "leaves": 8,
+          "withDeclaredInputs": 8,
+          "noDeclaredInputs": 0
+        }
+      },
+      "totals": {
+        "leaves": 445,
+        "withDeclaredInputs": 351,
+        "noDeclaredInputs": 94
+      }
+    },
+    "fullView": {
+      "byFamily": {
+        "UI": {
+          "leaves": 237,
+          "withDeclaredInputs": 237,
+          "noDeclaredInputs": 0
+        },
+        "SVC": {
+          "leaves": 84,
+          "withDeclaredInputs": 30,
+          "noDeclaredInputs": 54
+        },
+        "WIN": {
+          "leaves": 14,
+          "withDeclaredInputs": 14,
+          "noDeclaredInputs": 0
+        },
+        "MAC": {
+          "leaves": 12,
+          "withDeclaredInputs": 12,
+          "noDeclaredInputs": 0
+        },
+        "WEB": {
+          "leaves": 18,
+          "withDeclaredInputs": 18,
+          "noDeclaredInputs": 0
+        },
+        "INT": {
+          "leaves": 37,
+          "withDeclaredInputs": 18,
+          "noDeclaredInputs": 19
+        },
+        "QA": {
+          "leaves": 31,
+          "withDeclaredInputs": 26,
+          "noDeclaredInputs": 5
+        },
+        "REL": {
+          "leaves": 4,
+          "withDeclaredInputs": 4,
+          "noDeclaredInputs": 0
+        },
+        "RECHECK": {
+          "leaves": 8,
+          "withDeclaredInputs": 8,
+          "noDeclaredInputs": 0
+        }
+      },
+      "totals": {
+        "leaves": 445,
+        "withDeclaredInputs": 367,
+        "noDeclaredInputs": 78
+      }
+    },
+    "explicitGroups": {
+      "services": 22,
+      "surfaceConsumerOutputEdges": 247,
+      "platformPackageOutputEdges": 81,
+      "totalStoredGroups": 350,
+      "serviceGroupConsumerExpansions": 70,
+      "platformPackageLeafExpansions": 184
+    },
+    "internalReferences": {
+      "serviceTaskReferences": 100,
+      "surfaceTaskReferences": 494,
+      "platformRoleEdges": 36,
+      "unknown": 0,
+      "macPhaseNodes": 6,
+      "macPhaseEdges": 7
+    },
+    "leafDeclarations": [
+      {
+        "id": "UI-001.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-001.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-002.1",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-002.2",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.3",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.4",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.5",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.6",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.7",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.8",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.9",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.10",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.11",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.12",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.13",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.14",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.15",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.16",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.17",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.18",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.19",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.20",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.21",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-003.22",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-004.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-004.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-005.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-005.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-006.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-006.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-007.1",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-007.2",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-008.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-008.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-009.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-009.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-010.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-010.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-011.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-011.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-012.1",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-012.2",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-013.1",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-013.2",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-014.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-014.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-015.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-015.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-016.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-016.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-017.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-017.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-018.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-018.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-019.1",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-019.2",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-020.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-020.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-021.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-021.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-022.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-022.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-023.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-023.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-024.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-024.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-025.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-025.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-026.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-026.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-027.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-027.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-028.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-028.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-029.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-029.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-030.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-030.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-031.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-031.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-032.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-032.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-033.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-033.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-034.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-034.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-035.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-035.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-036.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-036.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-037.1",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-037.2",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-038.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-038.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-039.1",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-039.2",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-040.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-040.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-041.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-041.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-042.1",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-042.2",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-043.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-043.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-044.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-044.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-045.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-045.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-046.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-046.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-047.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-047.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-048.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-048.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-049.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-049.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-050.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-050.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-051.1",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-051.2",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-052.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-052.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-053.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-053.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-054.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-054.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-055.1",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-055.2",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-056.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-056.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-057.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-057.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-057.3",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-057.4",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-057.5",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-057.6",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-057.7",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-058.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-058.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-059.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-059.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-060.1",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-060.2",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-060.3",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-061.1",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-061.2",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-062.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-062.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-063.1",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-063.2",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-064.1",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-064.2",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-065.1",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-065.2",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-065.3",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-066.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-066.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-067.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-067.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-001.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-001.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-002.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-002.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-003.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-003.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-004.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-004.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-005.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-005.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-006.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-006.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-007.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-007.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-008.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-008.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-009.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-009.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-010.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-010.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-011.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-011.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-012.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-012.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-013.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-013.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-014.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-014.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-015.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-015.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-016.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-016.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-017.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-017.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-018.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-018.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-019.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-019.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-020.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-020.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-021.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-021.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-022.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-022.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-023.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-023.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-024.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-024.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-025.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-025.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-026.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-026.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-027.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-027.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-028.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-028.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-029.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-029.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-030.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-030.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-031.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-031.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-032.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-032.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-033.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-033.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-034.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-034.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-035.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-035.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-036.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-036.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-037.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-037.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-001.1",
+        "family": "WIN",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-001.2",
+        "family": "WIN",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-002.1",
+        "family": "WIN",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-002.2",
+        "family": "WIN",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-003.1",
+        "family": "WIN",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-003.2",
+        "family": "WIN",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-004.1",
+        "family": "WIN",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-004.2",
+        "family": "WIN",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-005.1",
+        "family": "WIN",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-005.2",
+        "family": "WIN",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-006.1",
+        "family": "WIN",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-006.2",
+        "family": "WIN",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-007.1",
+        "family": "WIN",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WIN-007.2",
+        "family": "WIN",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-001.1",
+        "family": "MAC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-001.2",
+        "family": "MAC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-002.1",
+        "family": "MAC",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-002.2",
+        "family": "MAC",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-003.1",
+        "family": "MAC",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-003.2",
+        "family": "MAC",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-004.1",
+        "family": "MAC",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-004.2",
+        "family": "MAC",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-005.1",
+        "family": "MAC",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-005.2",
+        "family": "MAC",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-006.1",
+        "family": "MAC",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "MAC-006.2",
+        "family": "MAC",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-001.1",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-001.2",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-002.1",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-002.2",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-003.1",
+        "family": "WEB",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-003.2",
+        "family": "WEB",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-004.1",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-004.2",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-005.1",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-005.2",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-006.1",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-006.2",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-007.1",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-007.2",
+        "family": "WEB",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-008.1",
+        "family": "WEB",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-008.2",
+        "family": "WEB",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-009.1",
+        "family": "WEB",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "WEB-009.2",
+        "family": "WEB",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-001.1",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-001.2",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-002.1",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-002.2",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-003.1",
+        "family": "INT",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-003.2",
+        "family": "INT",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-004.1",
+        "family": "INT",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-004.2",
+        "family": "INT",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-005.1",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-005.2",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-006.1",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-006.2",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-007.1",
+        "family": "INT",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-007.2",
+        "family": "INT",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-008.1",
+        "family": "INT",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-008.2",
+        "family": "INT",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-009.1",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-009.2",
+        "family": "INT",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-010.1",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-010.2",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-011.1",
+        "family": "INT",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-011.2",
+        "family": "INT",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-012.1",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-012.2",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-013.1",
+        "family": "INT",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-013.2",
+        "family": "INT",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-014.1",
+        "family": "INT",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-014.2",
+        "family": "INT",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-015.1",
+        "family": "INT",
+        "directDeclaredInputCount": 3,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-015.2",
+        "family": "INT",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-001.1",
+        "family": "QA",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "QA-001.2",
+        "family": "QA",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "QA-002.1",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-002.2",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-003.1",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-003.2",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-004.1",
+        "family": "QA",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-004.2",
+        "family": "QA",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-005.1",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-005.2",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-006.1",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-006.2",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-007.1",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-007.2",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-008.1",
+        "family": "QA",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-008.2",
+        "family": "QA",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-009.1",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-009.2",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-010.1",
+        "family": "QA",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-010.2",
+        "family": "QA",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "REL-001.1",
+        "family": "REL",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "REL-001.2",
+        "family": "REL",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "REL-002.1",
+        "family": "REL",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "REL-002.2",
+        "family": "REL",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "RECHECK-001.1",
+        "family": "RECHECK",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "RECHECK-001.2",
+        "family": "RECHECK",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "RECHECK-002.1",
+        "family": "RECHECK",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "RECHECK-002.2",
+        "family": "RECHECK",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "RECHECK-003.1",
+        "family": "RECHECK",
+        "directDeclaredInputCount": 5,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "RECHECK-003.2",
+        "family": "RECHECK",
+        "directDeclaredInputCount": 5,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-068.1",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-068.2",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-068.3",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-069.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-069.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-069.3",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-069.4",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-069.5",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-070.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-070.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-070.3",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-071.1",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-071.2",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-071.3",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-071.4",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-071.5",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-072.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-072.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-072.3",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-072.4",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-073.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-073.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-073.3",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-073.4",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-073.5",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-074.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-074.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-074.3",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.3",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.4",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.5",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.6",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.7",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.8",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.9",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.10",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.11",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.12",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.13",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.14",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.15",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.16",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.17",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.18",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.19",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.20",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.21",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.22",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.23",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.24",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.25",
+        "family": "UI",
+        "directDeclaredInputCount": 4,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.26",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.27",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.28",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.29",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.30",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-075.31",
+        "family": "UI",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-076.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-076.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-076.3",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 5,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-077.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-077.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-077.3",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-077.4",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-078.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-078.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-078.3",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-079.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-079.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-080.1",
+        "family": "UI",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-080.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-080.3",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-081.1",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "UI-081.2",
+        "family": "UI",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 6,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-038.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-038.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-039.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-039.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-040.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-040.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-041.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "SVC-041.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-042.1",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "SVC-042.2",
+        "family": "SVC",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-012",
+        "family": "QA",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-018",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-016.1",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-016.2",
+        "family": "INT",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "INT-016.3",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-016.4",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-017.1",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "INT-017.2",
+        "family": "INT",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "QA-011.1",
+        "family": "QA",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "QA-011.2",
+        "family": "QA",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-011.3",
+        "family": "QA",
+        "directDeclaredInputCount": 1,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-011.4",
+        "family": "QA",
+        "directDeclaredInputCount": 0,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": false,
+        "withAnyDeclaredHardAcceptanceInputs": false
+      },
+      {
+        "id": "RECHECK-004.1",
+        "family": "RECHECK",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "RECHECK-004.2",
+        "family": "RECHECK",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-013.1",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-013.2",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-013.3",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-013.4",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-013.5",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      },
+      {
+        "id": "QA-013.6",
+        "family": "QA",
+        "directDeclaredInputCount": 2,
+        "uniformFinalSourceAndTargetBindingCount": 0,
+        "withDirectDeclaredHardAcceptanceInputs": true,
+        "withAnyDeclaredHardAcceptanceInputs": true
+      }
+    ]
+  },
+  "uiFocused": {
+    "passed": 137,
+    "failed": 0,
+    "assertions": 791,
+    "suiteFiles": 14,
+    "runtime": "1.3.14",
+    "exitCode": 0,
+    "log": "ui-focused.log",
+    "elapsedLog": "127.30s",
+    "runtimeExecutable": "/private/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+    "host": {
+      "platform": "darwin",
+      "architecture": "arm64"
+    },
+    "command": [
+      "/private/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+      "test",
+      "--timeout",
+      "20000",
+      "apps/electron/src/renderer/lib/__tests__/message-tts.test.ts",
+      "packages/ui/src/components/chat/__tests__/turn-card-playback.test.ts",
+      "apps/electron/src/renderer/pages/settings/__tests__/InputSettingsPage.voice.test.ts",
+      "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "apps/electron/src/renderer/lib/__tests__/startup-caller-boundary.test.ts",
+      "apps/electron/src/renderer/lib/__tests__/startup-setup-needs.test.ts",
+      "apps/electron/src/renderer/components/app-shell/__tests__/sidebar-rail-preference.test.ts",
+      "apps/electron/src/renderer/platform/__tests__/activity-rail-labels.test.ts",
+      "apps/electron/src/renderer/components/app-shell/__tests__/projects-home-loaded.test.ts",
+      "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "apps/electron/src/renderer/pages/meetings/__tests__/capture-rpc.test.ts",
+      "apps/electron/src/renderer/pages/meetings/__tests__/manual-rpc.test.ts",
+      "apps/electron/src/renderer/pages/meetings/__tests__/start-rpc.test.ts",
+      "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts"
+    ]
+  },
+  "sourceFences": [
+    {
+      "name": "final actor/authority/native issuer readback",
+      "present": true
+    },
+    {
+      "name": "final workspace readback",
+      "present": true
+    },
+    {
+      "name": "profile routing fence",
+      "present": true
+    },
+    {
+      "name": "authenticated web initializer",
+      "present": true
+    },
+    {
+      "name": "persisted sidebar visibility/current rail geometry",
+      "present": true
+    },
+    {
+      "name": "Roadmap native Notes receipts/export",
+      "present": true
+    },
+    {
+      "name": "Roadmap workspace-qualified AI persistence",
+      "present": true
+    },
+    {
+      "name": "TTS serialized starts and explicit renderer fallback",
+      "present": true
+    }
+  ],
+  "sourceFileHashes": [
+    {
+      "path": "apps/electron/src/renderer/App.tsx",
+      "sha256": "796c08ef8c40a725381eeaa364fa34cb98f5c0949ff7d6098e4000f8db5dee4f"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "sha256": "5fc025c5a080a82f5f702914c3e7186ee7cf52f84a3f54397f99f1cb78e69aec"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "sha256": "648209da0df91ab8ddbe0c079b4f96317b1274519d2825d62a2c49b906c73cb9"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ProjectRoadmapPage.tsx",
+      "sha256": "5946c49677887cc4b03f0d950739b9b7fc49ce4836fd2d9e63f8d15877c9eeaa"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/message-tts.ts",
+      "sha256": "d815db83d5d2dd5f0bcd99b2346ab499137abdb292af23c56719ca9098dba812"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/VoiceSettingsSection.tsx",
+      "sha256": "27cd4cc6abb229cf2462bdd5b8c576c48208e6d1eeca00fd0b8501c9ced7b7ac"
+    },
+    {
+      "path": "packages/ui/src/components/chat/TurnCard.tsx",
+      "sha256": "26aa142d794ccbd1af4fcae14944595be5aca12f694c9a1e5231f28b38c3f5f6"
+    }
+  ],
+  "artifactFiles": [
+    "ui-focused.log",
+    "plan-validation.log",
+    "results.json"
+  ],
+  "sourceMutation": "None; only owned qualification logs/JSON written; no test fixture tracked edits.",
+  "finalWorktreeReadback": {
+    "trackedChangedPaths": [
+      "docs/final-readiness/17-parallel-launch-plan.ru.md",
+      "docs/final-readiness/README.md"
+    ],
+    "appSourceChanges": [],
+    "status": "PASS",
+    "porcelain": [
+      "M docs/final-readiness/17-parallel-launch-plan.ru.md",
+      " M docs/final-readiness/README.md",
+      "?? docs/final-readiness/19-start-work.ru.md",
+      "?? docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/"
+    ],
+    "limits": "Root may edit documentation concurrently; only owned surfaces-final logs/JSON written by this worker."
+  }
+}

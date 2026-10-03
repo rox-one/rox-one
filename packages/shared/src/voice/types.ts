@@ -1,8 +1,9 @@
 /**
  * Voice dictation / playback preferences and engine contracts.
  *
- * Schema v2: cloud-rox is the fresh-install default. Local capture stays on
- * device. Cloud ASR, enhancement and web enrichment are three separate consents.
+ * Schema v3: system TTS is local by default; Edge TTS requires an explicit
+ * current-version selection. Cloud ASR, enhancement and web enrichment have
+ * separate consents. Legacy cloud/TTS defaults never imply user consent.
  */
 
 export const VOICE_PREFS_VERSION = 3 as const
@@ -108,13 +109,19 @@ export interface SpeakInput {
   text: string
   language?: RecognitionLanguage
   signal?: AbortSignal
+  /** Internal adapter progress; never populated from an RPC request payload. */
+  onTextTransmission?: (state: TextTransmission) => void
 }
+
+export type TextTransmission = 'not-sent' | 'possible' | 'sent'
 
 export interface SpeakResult {
   engine: TtsEngine
   /** No microphone audio is uploaded. Online TTS may send text. */
   uploaded: false
   textSent?: boolean
+  /** A cancelled or failed CLI may already have transmitted text. */
+  textTransmission?: TextTransmission
   audioBase64?: string
   mimeType?: 'audio/mpeg'
   playback?: 'audio' | 'native' | 'renderer' | 'none'

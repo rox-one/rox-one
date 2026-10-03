@@ -1,0 +1,25 @@
+{
+  "capturedAt": "2026-10-03T04:40:37.912Z",
+  "source": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+  "checks": [
+    {
+      "runId": 37095251771,
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37095251771",
+      "headSha": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+      "event": "pull_request",
+      "path": ".github/workflows/ci.yml",
+      "conclusion": "success",
+      "completedAt": "2026-10-03T04:08:41Z"
+    },
+    {
+      "runId": 37095251796,
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37095251796",
+      "headSha": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+      "event": "pull_request",
+      "path": ".github/workflows/validate-server.yml",
+      "conclusion": "success",
+      "completedAt": "2026-10-03T04:05:40Z"
+    }
+  ],
+  "limits": "Source/unit/contract/general CI and built local server qualification do not certify signed installed Windows/macOS, Intel/minimum OS, live providers or hosted production. Local failures remain separate. Full445 leaf DoD remains unclosed."
+}

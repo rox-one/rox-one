@@ -51,7 +51,7 @@ describe('OMP negotiated transport before provider execution', () => {
     });
   }
 
-  for (const scenario of ['transport-out-of-order', 'transport-bad-base64', 'transport-oversize', 'transport-interrupted', 'transport-incomplete', 'transport-bad-ack', 'transport-unterminated']) {
+  for (const scenario of ['transport-out-of-order', 'transport-bad-base64', 'transport-oversize', 'transport-interrupted', 'transport-incomplete', 'transport-bad-ack', 'transport-unterminated', 'transport-frame-error']) {
     it(`fails without a provider prompt for ${scenario}`, async () => {
       const { agent, fake } = setup(scenario);
       const events = await chatEvents(agent, 'QA must never reach provider', 8_000);
@@ -61,6 +61,17 @@ describe('OMP negotiated transport before provider execution', () => {
       expect(agent.isProcessing()).toBe(false);
     });
   }
+
+  it('releases a peer frame-error failure and negotiates a fresh child without an old pending request', async () => {
+    const { agent, fake } = setup('transport-frame-error');
+    const failed = await chatEvents(agent, 'QA peer rejects its transport frame', 8_000);
+    expect(failed.some(event => event.type === 'error' && event.message.includes('Controlled transport overflow'))).toBe(true);
+    fake.setScenario('transport-large-catalog');
+    await agent.reconnect();
+    expect((await chatEvents(agent, 'QA recovered peer', 8_000)).some(event => event.type === 'text_complete')).toBe(true);
+    expect(fake.readRpcLog().filter(frame => frame.type === 'prompt')).toHaveLength(1);
+    expect(fake.readRpcLog().filter(frame => frame.type === 'negotiate_protocol')).toHaveLength(2);
+  });
 
   it('discards unfinished assembly on a failed child and negotiates a fresh child', async () => {
     const { agent, fake } = setup('transport-incomplete');

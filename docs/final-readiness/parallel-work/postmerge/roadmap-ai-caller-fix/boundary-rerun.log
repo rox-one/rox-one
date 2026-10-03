@@ -1,0 +1,10 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/handlers/rpc/__tests__/roadmap-boundary-runtime.test.ts:
+killed 1 dangling process
+(fail) roadmap RPCs fence workspace/local callers and preserve unknown effective model warnings [15017.44ms]
+  ^ this test timed out after 15000ms.
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [20.75s]

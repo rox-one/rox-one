@@ -1,0 +1,267 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+  "scope": "BUILT_SERVER_HTTP_AUTH_WS_RESTART_WITH_FIXTURE_HTML",
+  "purpose": "ONE_DIAGNOSTIC_RETRY_AFTER_FROZEN_DEPENDENCY_METADATA_INSTALL",
+  "command": [
+    "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+    "--no-env-file",
+    "test",
+    "--timeout",
+    "90000",
+    "packages/server/src/__tests__/smoke.test.ts"
+  ],
+  "runtimeVersion": "1.3.14",
+  "additionalEnvironment": {
+    "ROX_SERVER_SMOKE_ENTRY": "dist-server/index.js",
+    "ROX_SERVER_SMOKE_WEBUI_DIR": "INTENTIONALLY_UNSET",
+    "TMPDIR": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-runtime-diagnostic-e074-Z06krE",
+    "ROX_CONFIG_DIR": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-runtime-diagnostic-e074-Z06krE/outer-config",
+    "CRAFT_CONFIG_DIR": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-runtime-diagnostic-e074-Z06krE/outer-config"
+  },
+  "environmentPolicy": "Only PATH/LANG inherited; all TMP/config fixture roots are inside this disposable diagnostic directory. No credentials or dotenv inherited.",
+  "dependencyMetadataContext": {
+    "reportedBy": "coordinator",
+    "result": "PASS",
+    "linkedPackages": 1,
+    "lifecycleScripts": "disabled with --ignore-scripts",
+    "nativeInstallClaim": false
+  },
+  "artifacts": [
+    {
+      "path": "packages/pi-agent-server/dist/index.js",
+      "exists": true,
+      "bytes": 33013956,
+      "mtime": "2026-10-03T03:57:39.374Z",
+      "sha256": "212a1f4e7e07aacc9ee498f73b3df5c7f0c6e31b3386d9e7ae26eccd138a0a10",
+      "currentSha256": "212a1f4e7e07aacc9ee498f73b3df5c7f0c6e31b3386d9e7ae26eccd138a0a10",
+      "sameAsFreshBuild": true
+    },
+    {
+      "path": "dist-server/index.js",
+      "exists": true,
+      "bytes": 37048951,
+      "mtime": "2026-10-03T03:58:43.063Z",
+      "sha256": "73adfc62d2a4a096191945399db9c176356cf017a6ad43f89cd8d69e283ab8ea",
+      "currentSha256": "73adfc62d2a4a096191945399db9c176356cf017a6ad43f89cd8d69e283ab8ea",
+      "sameAsFreshBuild": true
+    }
+  ],
+  "firstFailure": {
+    "receipt": "verification.json",
+    "receiptSha256": "d5c50b14c7ed09142699ab0f6d7ecd4bb7a146236878aa90565f333226a9c440",
+    "log": "built-server-fixture-smoke.log",
+    "logSha256": "9230bbbab782cc81984c9cdf59c5f4f6e27d8650b3acd1b932508574946ecf32",
+    "tests": {
+      "scope": "BUILT_SERVER_HTTP_AUTH_WS_RESTART_WITH_FIXTURE_HTML",
+      "requestedTests": 4,
+      "executedTests": 4,
+      "passedTests": 2,
+      "failedTests": 2,
+      "assertions": 6,
+      "status": "FAIL",
+      "composedBuiltWebuiStatus": "NOT_RUN_MISSING_FRESH_WEBUI_INPUT"
+    },
+    "preserved": true
+  },
+  "startedAt": "2026-10-03T04:17:46.454Z",
+  "ownedProcessGroupBoundMs": 180000,
+  "fixtureDeadlinesUnchanged": {
+    "startupMs": 45000,
+    "testMs": 90000,
+    "shutdownMs": 10000
+  },
+  "status": "FAIL",
+  "log": "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/runtime-diagnostic-retry.log",
+  "samples": [
+    {
+      "at": "2026-10-03T04:17:47.815Z",
+      "elapsedSeconds": 1.36,
+      "requestedOwnedPids": [
+        37646
+      ],
+      "columns": [
+        "pid",
+        "ppid",
+        "cpuTime",
+        "rssKiB",
+        "elapsed",
+        "cpuPercent"
+      ],
+      "raw": "37646 37458   0:00.02   3872 00:01   1.5"
+    },
+    {
+      "at": "2026-10-03T04:17:57.760Z",
+      "elapsedSeconds": 11.31,
+      "requestedOwnedPids": [
+        37646
+      ],
+      "columns": [
+        "pid",
+        "ppid",
+        "cpuTime",
+        "rssKiB",
+        "elapsed",
+        "cpuPercent"
+      ],
+      "raw": "37646 37458   0:00.20  24560 00:11   2.2"
+    },
+    {
+      "at": "2026-10-03T04:18:09.040Z",
+      "requestedOwnedPids": [
+        37646,
+        37824
+      ],
+      "sampleError": "owned PID metadata query unavailable or timed out"
+    },
+    {
+      "at": "2026-10-03T04:18:18.835Z",
+      "requestedOwnedPids": [
+        37646,
+        37824
+      ],
+      "sampleError": "owned PID metadata query unavailable or timed out"
+    },
+    {
+      "at": "2026-10-03T04:18:28.972Z",
+      "requestedOwnedPids": [
+        37646,
+        37824
+      ],
+      "sampleError": "owned PID metadata query unavailable or timed out"
+    },
+    {
+      "at": "2026-10-03T04:18:38.806Z",
+      "requestedOwnedPids": [
+        37646,
+        37824
+      ],
+      "sampleError": "owned PID metadata query unavailable or timed out"
+    },
+    {
+      "at": "2026-10-03T04:18:49.115Z",
+      "requestedOwnedPids": [
+        37646,
+        37824
+      ],
+      "sampleError": "owned PID metadata query unavailable or timed out"
+    },
+    {
+      "at": "2026-10-03T04:18:59.663Z",
+      "requestedOwnedPids": [
+        37646,
+        38224
+      ],
+      "sampleError": "owned PID metadata query unavailable or timed out"
+    },
+    {
+      "at": "2026-10-03T04:19:09.517Z",
+      "requestedOwnedPids": [
+        37646,
+        38224
+      ],
+      "sampleError": "owned PID metadata query unavailable or timed out"
+    },
+    {
+      "at": "2026-10-03T04:19:19.493Z",
+      "requestedOwnedPids": [
+        37646,
+        38224
+      ],
+      "sampleError": "owned PID metadata query unavailable or timed out"
+    },
+    {
+      "at": "2026-10-03T04:19:29.423Z",
+      "requestedOwnedPids": [
+        37646,
+        38224
+      ],
+      "sampleError": "owned PID metadata query unavailable or timed out"
+    },
+    {
+      "at": "2026-10-03T04:19:39.435Z",
+      "requestedOwnedPids": [
+        37646,
+        38224
+      ],
+      "sampleError": "owned PID metadata query unavailable or timed out"
+    }
+  ],
+  "limits": [
+    "No WebUI or bundle rebuild. No test source/assertion/deadline change. Exactly one retry; no third attempt.",
+    "Fixture HTML is generated by test; composed current WebUI remains NOT_RUN due prior timed-out build.",
+    "Owned PID metadata sampling only; no systemwide user process inspection."
+  ],
+  "pid": 37646,
+  "code": 1,
+  "signal": null,
+  "timedOut": false,
+  "elapsedSeconds": 120.34,
+  "finishedAt": "2026-10-03T04:19:46.798Z",
+  "tests": {
+    "executed": 4,
+    "pass": 2,
+    "fail": 2,
+    "assertions": 6
+  },
+  "endingCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+  "sourceHeadUnchanged": true,
+  "cleanup": {
+    "ownedPids": [
+      37646,
+      37824,
+      38224
+    ],
+    "disposableRootRemoved": true,
+    "remainingOwnGroupTerminated": false,
+    "groupAlreadyGone": true
+  },
+  "samplingSummary": {
+    "attempts": 12,
+    "successful": 2,
+    "unavailable": 10,
+    "successfulOwnedPidSamples": [
+      {
+        "elapsedSeconds": 1.36,
+        "columns": [
+          "pid",
+          "ppid",
+          "cpuTime",
+          "rssKiB",
+          "elapsed",
+          "cpuPercent"
+        ],
+        "raw": "37646 37458   0:00.02   3872 00:01   1.5"
+      },
+      {
+        "elapsedSeconds": 11.31,
+        "columns": [
+          "pid",
+          "ppid",
+          "cpuTime",
+          "rssKiB",
+          "elapsed",
+          "cpuPercent"
+        ],
+        "raw": "37646 37458   0:00.20  24560 00:11   2.2"
+      }
+    ],
+    "serverChildMetrics": "Unavailable: later direct-owned-child queries timed out. Do not infer child CPU/RSS or a resource cause from missing samples."
+  },
+  "interpretation": {
+    "classification": "REPEATED_STARTUP_GATE_FAILURE_AFTER_METADATA_LINK_WARMUP",
+    "bounds": "Repeated on this same-source host with unchanged test deadlines; not proof of an architecture-independent source defect.",
+    "firstFailurePreserved": true,
+    "composedBuiltWebuiStatus": "NOT_RUN_MISSING_FRESH_WEBUI_INPUT",
+    "thirdAttempt": "NOT_RUN_BY_INSTRUCTION"
+  },
+  "artifactValidation": {
+    "jsonParse": "PASS",
+    "retryLogExists": true,
+    "sourceHeadUnchanged": true,
+    "firstFailurePreserved": true,
+    "freshBuildHashesUnchanged": true,
+    "ownGroupGone": true,
+    "disposableRootRemoved": true
+  }
+}

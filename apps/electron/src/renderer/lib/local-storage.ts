@@ -81,9 +81,6 @@ export const KEYS = {
   workbenchLegacyEnabled: 'feature-unified-shell', // Bounded compatibility read only
   surfaceLayout: 'surface-layout', // Surface layout transport (URL search string; derived via platform/layout-snapshot.ts), workspace-scoped
   activityRailCollapsed: 'activity-rail-collapsed', // Preserve the user's existing collapse preference
-  // Rail with labels: collapsed = icons only. New key so every existing user
-  // (incl. the legacy icons-only rail) lands on the expanded, labelled rail once.
-  activityRailCollapsedV2: 'activity-rail-collapsed-v2',
   inspectorVisible: 'inspector-visible',
   inspectorChromeCollapsed: 'inspector-chrome-collapsed',
   inspectorSection: 'inspector-section',

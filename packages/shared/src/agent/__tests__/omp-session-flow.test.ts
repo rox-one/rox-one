@@ -169,7 +169,7 @@ describe('OmpAgent model switching', () => {
     const commands = fake.readRpcLog().map(frame => frame.type);
     expect(commands.indexOf('negotiate_protocol')).toBeLessThan(commands.indexOf('get_state'));
     agent.setModel('kimi-K2');
-    const frame = await waitForRpcFrame(fake, f => f.type === 'set_model');
+    const frame = await waitForRpcFrame(fake, f => f.type === 'set_model' && f.modelId === 'kimi-k2');
     expect(frame).toMatchObject({ provider: 'rox', modelId: 'kimi-k2' });
   });
 

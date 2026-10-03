@@ -12,7 +12,7 @@ afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: 
 
 // Exercise the actual hook callback, not a duplicate of its implementation.
 function actualCallback(environment: Record<string, unknown>, name: string): Function {
-  const file = resolve(import.meta.dir, '../../../../../apps/electron/src/renderer/pages/ProjectInfoPage.tsx');
+  const file = resolve(import.meta.dir, '../../../../../apps/electron/src/renderer/pages/ProjectRoadmapPage.tsx');
   const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   let callback: ts.Expression | undefined;
   function visit(node: ts.Node) {
@@ -32,7 +32,7 @@ function actualFlush(environment: Record<string, unknown>): () => Promise<void> 
 }
 
 function actualLoad(environment: Record<string, unknown>): () => () => void {
-  const file = resolve(import.meta.dir, '../../../../../apps/electron/src/renderer/pages/ProjectInfoPage.tsx');
+  const file = resolve(import.meta.dir, '../../../../../apps/electron/src/renderer/pages/ProjectRoadmapPage.tsx');
   const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   let callback: ts.Expression | undefined;
   function visit(node: ts.Node) {
@@ -277,4 +277,61 @@ it('actual route cleanup flushes the pending draft through the captured old proj
   expect(loadProjectRoadmap(root, second.slug).exists).toBe(false);
   expect(saverRef.current).toBeNull();
   expect(timerRef.current).toBeNull();
+});
+
+it('actual merged AI caller refuses to send a draft without a successful save receipt', async () => {
+  const saver = {};
+  let calls = 0;
+  const results: unknown[] = [];
+  const run = actualCallback({
+    workspaceId: 'A', projectSlug: 'project', today: '2026-10-03', baseLang: 'en',
+    LANGUAGE_NAMES: { en: 'English' }, t: (key: string) => key,
+    roadmapSaverRef: { current: saver }, roadmapRef: { current: { revision: '1'.repeat(64) } },
+    aiScopeRef: { current: JSON.stringify(['A', 'project']) },
+    flushRef: { current: async () => false }, setAiResult: (result: unknown) => results.push(result),
+    window: { electronAPI: { runProjectRoadmapAi: async () => { calls++; return { ok: true }; } } },
+  }, 'runAi');
+  await expect(run({ mode: 'spec', text: 'retained draft' })).resolves.toEqual({ ok: false, error: 'PROJECT_ROADMAP_SAVE_REQUIRED' });
+  expect(calls).toBe(0);
+  expect(results).toEqual([]);
+});
+
+it('actual merged AI caller sends the acknowledged revision and preserves honest model provenance', async () => {
+  const roadmapRef = { current: { revision: '1'.repeat(64) } };
+  const response = { ok: false, error: 'controlled unavailable', requestedModel: 'requested-model', effectiveModel: null, warning: 'effective model not reported' };
+  const calls: unknown[][] = [];
+  const results: unknown[] = [];
+  const run = actualCallback({
+    workspaceId: 'A', projectSlug: 'project', today: '2026-10-03', baseLang: 'en',
+    LANGUAGE_NAMES: { en: 'English' }, t: (key: string) => key,
+    roadmapSaverRef: { current: {} }, roadmapRef,
+    aiScopeRef: { current: JSON.stringify(['A', 'project']) },
+    flushRef: { current: async () => { roadmapRef.current.revision = '2'.repeat(64); return true; } },
+    setAiResult: (result: unknown) => results.push(result),
+    window: { electronAPI: { runProjectRoadmapAi: async (...args: unknown[]) => { calls.push(args); return response; } } },
+  }, 'runAi');
+  await expect(run({ mode: 'clarify', text: 'brief' })).resolves.toEqual(response);
+  expect(calls).toEqual([['A', 'project', { mode: 'clarify', text: 'brief', roadmapRevision: '2'.repeat(64), today: '2026-10-03', language: 'English' }]]);
+  expect(results).toEqual([response]);
+  expect(response.effectiveModel).toBeNull();
+});
+
+it('actual merged AI caller discards a late result from a replaced writer in the same workspace', async () => {
+  const roadmapSaverRef = { current: {} };
+  let release!: (value: unknown) => void;
+  const results: unknown[] = [];
+  const run = actualCallback({
+    workspaceId: 'A', projectSlug: 'project', today: '2026-10-03', baseLang: 'en',
+    LANGUAGE_NAMES: { en: 'English' }, t: (key: string) => key,
+    roadmapSaverRef, roadmapRef: { current: { revision: '1'.repeat(64) } },
+    aiScopeRef: { current: JSON.stringify(['A', 'project']) },
+    flushRef: { current: async () => true }, setAiResult: (result: unknown) => results.push(result),
+    window: { electronAPI: { runProjectRoadmapAi: () => new Promise(resolve => { release = resolve; }) } },
+  }, 'runAi');
+  const pending = run({ mode: 'improve', text: 'draft' });
+  await Promise.resolve();
+  roadmapSaverRef.current = {};
+  release({ ok: true, mode: 'improve', text: 'obsolete result' });
+  await expect(pending).resolves.toEqual({ ok: false, error: 'projectRoadmap.ai.scopeChanged' });
+  expect(results).toEqual([]);
 });

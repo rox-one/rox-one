@@ -1,0 +1,18 @@
+{
+  "sourceCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+  "comparedAgainst": "d93bd3c3aedac0ce3360c5f460170b2da1a16a94",
+  "command": [
+    "git",
+    "diff",
+    "--exit-code",
+    "d93bd3c3aedac0ce3360c5f460170b2da1a16a94",
+    "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+    "--",
+    "packages/shared/src/voice",
+    "packages/server-core/src/handlers/rpc/voice.ts",
+    "packages/server-core/src/handlers/rpc/__tests__/voice.test.ts"
+  ],
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": ""
+}
