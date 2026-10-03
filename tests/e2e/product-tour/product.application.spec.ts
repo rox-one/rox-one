@@ -106,15 +106,25 @@ test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creati
   await page.getByTestId('learning-start-OBT-17').click()
   const popup = page.locator('[data-product-tour-popover]')
   await expect(popup).toHaveAttribute('data-product-tour-step', 'notes.create')
-  // Notes has several ordinary create buttons; act on the actual highlighted control.
-  const point = await page.locator('[data-product-tour-mask] rect').evaluate(rect => {
-    const x = Number(rect.getAttribute('x')) + Number(rect.getAttribute('width')) / 2
-    const y = Number(rect.getAttribute('y')) + Number(rect.getAttribute('height')) / 2
-    const button = document.elementFromPoint(x, y)?.closest('button')
-    return { x, y, label: button?.getAttribute('aria-label') ?? button?.getAttribute('title') }
+  await expect(popup.getByRole('heading', { name: 'Create a note', exact: true })).toBeVisible()
+  // The production Focus action selects the registered control, among several create buttons.
+  await popup.getByRole('button', { name: 'Focus the control', exact: true }).click()
+  const focused = await page.evaluate(() => {
+    const element = document.activeElement as HTMLElement
+    const bounds = element.getBoundingClientRect()
+    const mask = document.querySelector('[data-product-tour-mask] rect')!
+    const x = Number(mask.getAttribute('x')) + Number(mask.getAttribute('width')) / 2
+    const y = Number(mask.getAttribute('y')) + Number(mask.getAttribute('height')) / 2
+    return { label: element.getAttribute('aria-label'), target: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }, mask: Object.fromEntries(['x', 'y', 'width', 'height'].map(key => [key, mask.getAttribute(key)])), hit: document.elementFromPoint(x, y)?.tagName, pointerEvents: getComputedStyle(element).pointerEvents }
   })
-  expect(point.label).toBe('New note')
-  await page.mouse.click(point.x, point.y)
+  await info.attach('highlighted-control-layout', { body: Buffer.from(JSON.stringify(focused)), contentType: 'application/json' })
+  expect(focused.label).toBe('New note')
+  await expect.poll(() => page.evaluate(() => {
+    const target = document.activeElement!.getBoundingClientRect()
+    const mask = document.querySelector('[data-product-tour-mask] rect')!
+    return Math.max(Math.abs(Number(mask.getAttribute('x')) - (target.x - 8)), Math.abs(Number(mask.getAttribute('y')) - (target.y - 8)), Math.abs(Number(mask.getAttribute('width')) - (target.width + 16)), Math.abs(Number(mask.getAttribute('height')) - (target.height + 16)))
+  })).toBeLessThanOrEqual(2)
+  await page.keyboard.press('Enter')
   const dialog = page.getByRole('dialog').filter({ has: page.getByRole('textbox') })
   await dialog.getByRole('textbox').fill(`Guided canonical note ${Date.now()}`)
   await dialog.getByRole('textbox').press('Enter')
@@ -138,12 +148,11 @@ test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creati
   await attachEvidence(page, info)
 })
 
-test('T-WORKSPACE-SCOPE: the real App resolves a shell target for the voluntary workspace explanation', async ({ page }, info) => {
+test('T-WORKSPACE-SCOPE: restricted WebUI blocks an unavailable workspace switcher without inventing a control', async ({ page }, info) => {
   await openApp(page, 'settings/learning', true)
   await page.getByTestId('learning-start-OBT-02').click()
   const popup = page.locator('[data-product-tour-popover]')
-  await expect(popup).toHaveAttribute('data-product-tour-step', 'workspace.scope')
-  await popup.getByRole('button', { name: /^(Next|Finish)$/i }).click()
+  await expect(page.getByTestId('product-tour-status')).toContainText('The required control has not appeared yet.')
   await expect(popup).toHaveCount(0)
   await attachEvidence(page, info)
 })
@@ -152,7 +161,7 @@ test('APP-03: ordinary navigation away from an active Learning step pauses its r
   await openApp(page, 'settings/learning', true)
   await page.getByTestId('learning-start-OBT-25').click()
   await expect(page.locator('[data-product-tour-popover]')).toHaveAttribute('data-product-tour-step', 'learning.library')
-  await page.locator('[data-tutorial="sources-nav"]').first().click()
+  await page.getByRole('button', { name: /^Runtime/ }).click({ timeout: 15_000 })
   await expect(page.locator('[data-product-tour-popover]')).toHaveCount(0)
   await expect(page.getByTestId('product-tour-status')).toContainText(/changed|paused/i)
   await attachEvidence(page, info)

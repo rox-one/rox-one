@@ -46,7 +46,11 @@ const enums = {
 export function sanitizeLearningEvent(input: unknown): SafeLearningEvent | null {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return null
   try {
-    const source = input as Record<string, unknown>
+    const descriptors = Object.getOwnPropertyDescriptors(input)
+    const source: Record<string, unknown> = Object.create(null)
+    for (const [key, descriptor] of Object.entries(descriptors)) {
+      if (descriptor.enumerable && Object.hasOwn(descriptor, 'value')) source[key] = descriptor.value
+    }
     if (!LEARNING_EVENT_NAMES.includes(source.eventName as LearningEventName)) return null
     const output: Record<string, unknown> = {}
     for (const [key, values] of Object.entries(enums)) {

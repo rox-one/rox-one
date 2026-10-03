@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 
 import {
+  createGitCredentialFill,
   GitCredentialHelperImporter,
   type GitCredentialHelperFill,
   type InProcessCredentialBroker,
@@ -8,6 +9,7 @@ import {
 } from '@rox/shared/credentials'
 
 import type { ConnectionRecord, WorkGraphKernel } from './index'
+import type { HostImportRunners } from './host-import-runners'
 
 export interface GitHelperImportPreview {
   readonly candidateId: string
@@ -26,11 +28,12 @@ function createImporter(input: {
   readonly configPath: string
   readonly provider: LocalFileSecretProvider
   readonly fill?: GitCredentialHelperFill
-}): GitCredentialHelperImporter {
+  readonly runners?: HostImportRunners
+}, includeSecret: boolean): GitCredentialHelperImporter {
   return new GitCredentialHelperImporter({
     configText: readConfigText(input.configPath),
     provider: input.provider,
-    fill: input.fill,
+    fill: includeSecret ? input.fill ?? createGitCredentialFill(input.runners?.git) : undefined,
   })
 }
 
@@ -43,8 +46,9 @@ export async function previewGitHelperImport(input: {
   readonly configPath: string
   readonly provider: LocalFileSecretProvider
   readonly fill?: GitCredentialHelperFill
+  readonly runners?: HostImportRunners
 }): Promise<readonly GitHelperImportPreview[]> {
-  const importer = createImporter(input)
+  const importer = createImporter(input, false)
   const discovered = await importer.discover()
   const out: GitHelperImportPreview[] = []
   for (const candidate of discovered) {
@@ -66,9 +70,10 @@ export async function commitGitHelperImport(input: {
   readonly workspaceId: string
   readonly requestedBy: string
   readonly fill?: GitCredentialHelperFill
+  readonly runners?: HostImportRunners
   readonly broker?: InProcessCredentialBroker
 }): Promise<ConnectionRecord> {
-  const importer = createImporter(input)
+  const importer = createImporter(input, true)
   const discovered = await importer.discover()
   const found = discovered.find((candidate) => candidate.id === input.candidateId)
   if (!found) throw new Error('unknown_candidate')

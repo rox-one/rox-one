@@ -7,6 +7,8 @@ import { resolve } from 'node:path'
 // Real renderer components and DOM; the native transport is an isolated explicit fixture.
 // This is component evidence, not a macOS microphone or full App acceptance claim.
 const root = resolve(import.meta.dir, '../../../../../../../../..')
+const isolatedCase = process.env.ROX_PRODUCT_TOUR_MEETINGS_CASE
+let registeredIsolatedCase = false
 let server: Server, browser: Browser, base: string
 const stubs: Record<string, string> = {
   'react-i18next': `export const useTranslation=()=>({t:(key,options)=>key,i18n:{language:'en',resolvedLanguage:'en'}});`,
@@ -33,15 +35,16 @@ async function bundle() {
     import {createRoot} from 'react-dom/client';
     import {flushSync} from 'react-dom';
     import MeetingsPage from './apps/electron/src/renderer/pages/MeetingsPage';
+    import {buildSummaryPrompt} from './apps/electron/src/renderer/pages/meetings/local-meetings-model';
     import {AutomationEditor} from './apps/electron/src/renderer/components/automations/AutomationEditor';
     import {TourRuntimeContext,TourPanelScope} from './apps/electron/src/renderer/features/product-tour/runtime/hooks';
     const emptyMeeting={schema:1,id:'meeting-a',title:'Native fixture meeting',workspaceId:'ws-a',createdAt:1,updatedAt:10,durationMs:0,status:'ready',source:'none',participants:[],notes:'',audio:null,transcript:{status:'none',progress:0},summary:null,actions:[],documents:[]};
     const automation={id:'automation-a',event:'SchedulerTick',matcherIndex:0,name:'Native automation',summary:'',enabled:false,cron:'0 9 * * *',timezone:'Europe/Moscow',permissionMode:'safe',actions:[{type:'prompt',prompt:'Native stored prompt'}],revision:'native-revision'};
-    const f=window.fixture={workspaceId:'ws-a',panelId:'panel-a',surface:'meetings',selectedId:null,enabled:true,runToken:null,meeting:emptyMeeting,mutations:[],events:[],accepted:[],capabilities:{},targets:{},delayTranscript:false};
-    let deferredTranscript;
+    const f=window.fixture={workspaceId:'ws-a',panelId:'panel-a',surface:'meetings',selectedId:null,enabled:true,runToken:null,meeting:emptyMeeting,mutations:[],events:[],accepted:[],capabilities:{},targets:{},delayTranscript:false,delayCatalog:false,catalogRequests:[]};
+    const pendingTranscriptReads=[];
     const api={
-      list:async()=>[f.meeting],engine:async()=>({ready:false,missing:[],engine:null,binary:null,model:null,modelPath:null,ffmpeg:null}),onChanged:()=>()=>{},
-      readAudio:async()=>null,readTranscript:()=>f.delayTranscript?new Promise(resolve=>{deferredTranscript=resolve}):Promise.resolve(null),
+      list:workspaceId=>f.delayCatalog?new Promise(resolve=>f.catalogRequests.push({workspaceId,resolve,result:[{...f.meeting,workspaceId}]})):Promise.resolve([f.meeting]),engine:async()=>({ready:false,missing:[],engine:null,binary:null,model:null,modelPath:null,ffmpeg:null}),onChanged:()=>()=>{},
+      readAudio:async()=>null,readTranscript:meetingId=>f.delayTranscript?new Promise(resolve=>pendingTranscriptReads.push({meetingId,resolve})):Promise.resolve(null),
       update:async()=>{f.mutations.push('meeting-update');return f.meeting},create:async()=>{f.mutations.push('meeting-create');return f.meeting},
       importAudio:async()=>{f.mutations.push('import');return null},micAccess:async()=>{f.mutations.push('mic');return 'denied'},recStart:async()=>{f.mutations.push('recStart');return {ok:false,code:'denied'}}
     };
@@ -53,10 +56,13 @@ async function bundle() {
       register(target){f.targets[target.id]=target;return()=>{if(f.targets[target.id]?.registrationToken===target.registrationToken)delete f.targets[target.id]}},
       setCapability(scope,id,value){const record={scope,value};f.capabilities[id]=record;return()=>{if(f.capabilities[id]===record)delete f.capabilities[id]}}};
     const root=createRoot(document.getElementById('root'));
-    f.render=()=>flushSync(()=>root.render(<React.StrictMode><TourRuntimeContext.Provider value={f.enabled?runtime:null}><TourPanelScope workspaceId={f.workspaceId} panelId={f.panelId} entityId={f.selectedId??undefined}>{f.surface==='meetings'?<MeetingsPage key={f.workspaceId} workspaceId={f.workspaceId} selectedId={f.selectedId}/>:<AutomationEditor automation={automation} workspaceId={f.workspaceId}/>}</TourPanelScope></TourRuntimeContext.Provider></React.StrictMode>));
+    f.render=()=>flushSync(()=>root.render(<React.StrictMode><TourRuntimeContext.Provider value={f.enabled?runtime:null}><TourPanelScope workspaceId={f.workspaceId} panelId={f.panelId} entityId={f.selectedId??undefined}>{f.surface==='meetings'?<MeetingsPage workspaceId={f.workspaceId} selectedId={f.selectedId}/>:<AutomationEditor automation={automation} workspaceId={f.workspaceId}/>}</TourPanelScope></TourRuntimeContext.Provider></React.StrictMode>));
     f.select=id=>{f.selectedId=id??null;f.render()};
     f.start=token=>{f.runToken=token??'run-a';f.render()};
-    f.finishTranscript=()=>deferredTranscript?.({engine:'fixture',model:'fixture',language:'en',createdAt:10,elapsedMs:1,revision:1,segments:[{id:'segment-a',startMs:0,endMs:1000,text:'Private fixture transcript'}]});
+    f.previewProfile=()=>buildSummaryPrompt({title:f.meeting.title,participants:[],segments:[],language:'en',recipeId:'client',slash:'/client'});
+    f.transcriptReadPending=()=>pendingTranscriptReads.some(read=>read.meetingId===f.meeting.id);
+    f.finishTranscript=()=>{const reads=pendingTranscriptReads.splice(0);if(!reads.length)throw new Error('No pending native transcript read');for(const read of reads){if(read.meetingId!==f.meeting.id)throw new Error('Foreign native transcript read');read.resolve({engine:'fixture',model:'fixture',language:'en',createdAt:10,elapsedMs:1,revision:1,segments:[{id:'segment-a',startMs:0,endMs:1000,text:'Private fixture transcript'}]})}};
+    f.finishCatalog=workspaceId=>{const index=f.catalogRequests.findIndex(request=>request.workspaceId===workspaceId); if(index<0)throw new Error('missing fixture catalog request'); const [request]=f.catalogRequests.splice(index,1);request.resolve(request.result)};
     f.mount=(surface,mode)=>{f.surface=surface;f.selectedId=surface==='automation'?'automation-a':mode==='empty'?null:'meeting-a';
       f.meeting=mode==='summary'?{...emptyMeeting,summary:{text:'Private native summary',generated:false,updatedAt:10}}:mode==='transcript'?{...emptyMeeting,audio:{file:'fixture.webm',mimeType:'audio/webm',bytes:100},transcript:{status:'done',progress:1,segments:1,revision:1,finishedAt:10}}:emptyMeeting;
       f.delayTranscript=mode==='transcript';f.render()};
@@ -68,6 +74,12 @@ async function bundle() {
     bundle: true, write: false, platform: 'browser', format: 'iife', jsx: 'automatic', tsconfig: resolve(root, 'apps/electron/tsconfig.json'),
     plugins: [{ name: 'isolated-native-transport', setup(builder) {
       builder.onResolve({ filter: /.*/ }, args => {
+        // The real pure recipe/planning modules avoid the barrel's host-only artifact I/O.
+        // Keep native components and planning logic intact; only narrow their import entry.
+        if (args.path === '@rox/shared/meeting-agents') {
+          return { path: resolve(root, 'packages/shared/src/meeting-agents',
+            args.importer.endsWith('/LocalMeetingDetail.tsx') ? 'recipes.ts' : 'planning.ts') }
+        }
         const name = stubs[args.path] ? args.path : args.path.endsWith('/decisions-store') ? 'decisions-store'
           : args.path.endsWith('/AutomationsListPanel') ? 'AutomationsListPanel' : null
         return name ? { path: name, namespace: 'fixture' } : null
@@ -79,6 +91,7 @@ async function bundle() {
 }
 
 beforeAll(async () => {
+  if (!isolatedCase) return
   const source = await bundle()
   server = createServer((req, res) => {
     res.setHeader('Content-Type', req.url === '/fixture.js' ? 'application/javascript' : 'text/html')
@@ -101,8 +114,60 @@ async function fixture(surface: 'meetings' | 'automation', mode = 'empty') {
 }
 const inspect = (page: Page) => page.evaluate(() => (window as any).fixture.inspect())
 
+function capturePipe(stream: ReadableStream<Uint8Array>) {
+  const reader = stream.getReader()
+  const decoder = new TextDecoder()
+  let output = ''
+  const done = (async () => {
+    try {
+      for (;;) {
+        const chunk = await reader.read()
+        if (chunk.done) break
+        output = (output + decoder.decode(chunk.value, { stream: true })).slice(-65_536)
+      }
+      output += decoder.decode()
+    } catch (error) { output += `\nOutput stream closed: ${String(error)}` }
+  })()
+  return { done, text: () => output, stop: () => { void reader.cancel().catch(() => {}) } }
+}
+
+// The full suite may mutate Bun module caches before esbuild's plugin callbacks.
+// A fresh process owns each real native component bundle and Chromium lifecycle.
+function browserTest(name: string, operation: () => Promise<void>) {
+  if (isolatedCase && isolatedCase !== name) return
+  if (isolatedCase) registeredIsolatedCase = true
+  it(name, async () => {
+    if (isolatedCase === name) return operation()
+    const child = Bun.spawn([process.execPath, 'test', import.meta.path], {
+      env: { ...process.env, ROX_PRODUCT_TOUR_MEETINGS_CASE: name },
+      stdout: 'pipe', stderr: 'pipe',
+    })
+    const stdout = capturePipe(child.stdout)
+    const stderr = capturePipe(child.stderr)
+    let timedOut = false
+    const timeout = setTimeout(() => { timedOut = true; child.kill() }, 40_000)
+    let drainTimeout: ReturnType<typeof setTimeout> | undefined
+    try {
+      const exitCode = await child.exited
+      // A browser descendant can inherit pipes after Bun exits; EOF is not the test result.
+      await Promise.race([
+        Promise.all([stdout.done, stderr.done]),
+        new Promise<void>(resolve => { drainTimeout = setTimeout(resolve, 1_000) }),
+      ])
+      if (timedOut || exitCode !== 0) throw new Error(`Native Meetings/Automation browser case ${timedOut ? 'timed out' : `exited ${exitCode}`}:\n${stdout.text()}${stderr.text()}`)
+      expect(exitCode).toBe(0)
+    } finally {
+      clearTimeout(timeout)
+      clearTimeout(drainTimeout)
+      child.kill()
+      stdout.stop()
+      stderr.stop()
+    }
+  }, isolatedCase ? 30_000 : 45_000)
+}
+
 describe('A11 rendered native surfaces', () => {
-  it('DOMAIN-18/T-MEETINGS-LIST: Start/replay stays read-only; no artifact remains pending', async () => {
+  browserTest('DOMAIN-18/T-MEETINGS-LIST: Start/replay stays read-only; no artifact remains pending', async () => {
     const page = await fixture('meetings')
     for (const token of ['run-a', 'run-b']) await page.evaluate(token => (window as any).fixture.start(token), token)
     const state = await inspect(page)
@@ -115,7 +180,7 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('T-MEETINGS-RESULT: opening loaded native content emits observed evidence only', async () => {
+  browserTest('T-MEETINGS-RESULT: opening loaded native content emits observed evidence only', async () => {
     const page = await fixture('meetings', 'summary')
     expect((await inspect(page)).events).toEqual([])
     await page.evaluate(() => (window as any).fixture.start())
@@ -126,16 +191,21 @@ describe('A11 rendered native surfaces', () => {
     expect(state.accepted[0].name).toBe('meeting.artifact-opened')
     expect(state.accepted[0].level).toBe('observed')
     expect(JSON.stringify(state.events)).not.toContain('Private native summary')
+    expect(await page.getByTestId('meeting-analysis-profile').locator('option').count()).toBe(5)
+    // Execute the latest production view model and actual planner in Chromium.
+    expect(await page.evaluate(() => (window as any).fixture.previewProfile()))
+      .toContain('Role perspectives: rox.meeting.analyst, rox.meeting.scribe.')
     await page.getByRole('tab', { name: 'meetings.local.tab.actions' }).click()
     expect((await inspect(page)).events).toHaveLength(1)
     expect((await inspect(page)).mutations).toEqual([])
     await page.close()
   })
 
-  it('T-MEETINGS-RESULT: a delayed native load cannot finish a replay or another panel', async () => {
+  browserTest('T-MEETINGS-RESULT: a delayed native load cannot finish a replay or another panel', async () => {
     const page = await fixture('meetings', 'transcript')
     await page.evaluate(() => (window as any).fixture.start('run-old'))
     await page.getByRole('tab', { name: 'meetings.local.tab.transcript' }).click()
+    await page.waitForFunction(() => (window as any).fixture.transcriptReadPending())
     expect((await inspect(page)).events).toEqual([])
     await page.evaluate(() => { (window as any).fixture.start('run-new'); (window as any).fixture.finishTranscript() })
     await page.getByTestId('meeting-transcript').waitFor()
@@ -147,11 +217,14 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('T-MEETINGS-RESULT: changing the panel rejects a pending artifact load', async () => {
+  browserTest('T-MEETINGS-RESULT: changing the panel rejects a pending artifact load', async () => {
     const page = await fixture('meetings', 'transcript')
     await page.evaluate(() => (window as any).fixture.start())
     await page.getByRole('tab', { name: 'meetings.local.tab.transcript' }).click()
-    await page.evaluate(() => { const f = (window as any).fixture; f.panelId = 'foreign-panel'; f.render(); f.finishTranscript() })
+    await page.waitForFunction(() => (window as any).fixture.transcriptReadPending())
+    await page.evaluate(() => { const f = (window as any).fixture; f.panelId = 'foreign-panel'; f.render() })
+    await page.waitForFunction(() => (window as any).fixture.targets['meetings.artifacts']?.context.panelId === 'foreign-panel')
+    await page.evaluate(() => (window as any).fixture.finishTranscript())
     await page.getByTestId('meeting-transcript').waitFor()
     const state = await inspect(page)
     expect(state.events).toEqual([])
@@ -160,7 +233,36 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('DOMAIN-19/T-AUTOMATION-TRIGGER/ACTION/CONTROL: real section refs and schedule stay read-only', async () => {
+  browserTest('T-MEETINGS-LIST/RESULT: A → B → A cannot publish a stale catalog or artifact capability', async () => {
+    const page = await fixture('meetings', 'summary')
+    await page.evaluate(() => {
+      const f = (window as any).fixture
+      f.start(); f.delayCatalog = true; f.workspaceId = 'ws-b'; f.render()
+    })
+    expect((await inspect(page)).capabilities['meetings.available'].value).toEqual({ state: 'pending', reason: 'installing' })
+    expect((await inspect(page)).targets['meetings.artifacts']).toBeUndefined()
+    await page.evaluate(() => { const f = (window as any).fixture; f.workspaceId = 'ws-a'; f.render() })
+    await page.evaluate(async () => {
+      ;(window as any).fixture.finishCatalog('ws-b')
+      await new Promise(requestAnimationFrame)
+      await new Promise(requestAnimationFrame)
+    })
+    const stale = await inspect(page)
+    expect(stale.capabilities['meetings.available'].scope.workspaceId).toBe('ws-a')
+    expect(stale.capabilities['meetings.available'].value).toEqual({ state: 'pending', reason: 'installing' })
+    expect(stale.targets['meetings.artifacts']).toBeUndefined()
+    expect(await page.getByTestId('meeting-detail').count()).toBe(0)
+    await page.evaluate(() => (window as any).fixture.finishCatalog('ws-a'))
+    await page.waitForFunction(() => (window as any).fixture.capabilities['meetings.available']?.value.state === 'ready')
+    const current = await inspect(page)
+    expect(current.targets['meetings.artifacts'].context.workspaceId).toBe('ws-a')
+    expect(current.capabilities['meeting.artifact-present'].value).toEqual({ state: 'ready' })
+    expect(current.events).toEqual([])
+    expect(current.mutations).toEqual([])
+    await page.close()
+  })
+
+  browserTest('DOMAIN-19/T-AUTOMATION-TRIGGER/ACTION/CONTROL: real section refs and schedule stay read-only', async () => {
     const page = await fixture('automation')
     await page.evaluate(() => (window as any).fixture.start())
     const state = await inspect(page)
@@ -183,7 +285,7 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('flag-off and unmount clean target/capability registrations', async () => {
+  browserTest('flag-off and unmount clean target/capability registrations', async () => {
     const page = await fixture('meetings', 'summary')
     await page.evaluate(() => { (window as any).fixture.enabled = false; (window as any).fixture.render() })
     const state = await inspect(page)
@@ -195,7 +297,7 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('T-AUTOMATION-TRIGGER/ACTION/CONTROL: a foreign selection cannot relabel the native entity', async () => {
+  browserTest('T-AUTOMATION-TRIGGER/ACTION/CONTROL: a foreign selection cannot relabel the native entity', async () => {
     const page = await fixture('automation')
     await page.evaluate(() => { const f = (window as any).fixture; f.selectedId = 'foreign-automation'; f.render() })
     const state = await inspect(page)
@@ -207,4 +309,5 @@ describe('A11 rendered native surfaces', () => {
     expect(state.mutations).toEqual([])
     await page.close()
   })
+  if (isolatedCase && !registeredIsolatedCase) throw new Error(`Unknown native Meetings/Automation isolation case: ${isolatedCase}`)
 })

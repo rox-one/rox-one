@@ -49,6 +49,17 @@ describe('completion policies', () => {
     expect(emit(state, value).state.progress?.steps['notes.save']?.verifiedAt).toBeUndefined()
     expect(emit(state, { ...value, level: 'verified' } as unknown as TourSignal).state).toBe(state)
   })
+  test('malformed evidence origins or levels cannot verify a native outcome', () => {
+    const state = show(start(tour([step('notes.save', { completion: signalPolicy('note.persisted') })])))
+    for (const value of [
+      { origin: 'unknown-origin' }, { origin: undefined }, { level: 'acknowledged' }, { level: undefined },
+    ]) {
+      const result = emit(state, { ...signal('note.persisted'), ...value } as unknown as TourSignal)
+      expect(result.state).toBe(state)
+      expect(result.effects).toEqual([])
+      expect(result.state.progress?.steps['notes.save']?.verifiedAt).toBeUndefined()
+    }
+  })
   test('an observed native/UI signal can complete an observed policy', () => {
     const state = show(start(tour([step('first.compose', { completion: signalPolicy('draft.nonempty', { evidence: 'observed' }) })])))
     const result = emit(state, signal('draft.nonempty', { level: 'observed', origin: 'ui-observation', operationToken: undefined }))

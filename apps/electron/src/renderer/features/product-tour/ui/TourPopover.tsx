@@ -22,6 +22,7 @@ export const TourPopover = forwardRef<HTMLDivElement, TourPopoverProps>(function
   const { t } = useTranslation()
   const titleId = useId()
   const descriptionId = useId()
+  const copyPrefix = step.copyKey.replace(/\.$/, '')
   const virtualRef = useMemo(() => ({ current: { getBoundingClientRect: () => geometry.rect } }), [geometry])
   const action = (callback: () => void) => (event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); callback() }
   const focusTarget = () => {
@@ -58,8 +59,8 @@ export const TourPopover = forwardRef<HTMLDivElement, TourPopoverProps>(function
         data-product-tour-run={binding.runToken}
         onKeyDown={(event) => { if (event.key === 'Enter') event.stopPropagation() }}
       >
-        <h2 id={titleId} className="mb-2 text-sm font-semibold">{t(`${step.copyKey}.title`)}</h2>
-        <p id={descriptionId} className="text-sm text-muted-foreground whitespace-pre-line break-words">{t(`${step.copyKey}.body`)}</p>
+        <h2 id={titleId} className="mb-2 text-sm font-semibold">{t(`${copyPrefix}.title`)}</h2>
+        <p id={descriptionId} className="text-sm text-muted-foreground whitespace-pre-line break-words">{t(`${copyPrefix}.body`)}</p>
         <button type="button" className={`${buttonClass} mt-3 text-accent`} onClick={action(focusTarget)}>
           {t('productTour.controls.focusTarget')}
         </button>

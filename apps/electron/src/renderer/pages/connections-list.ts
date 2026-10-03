@@ -83,6 +83,80 @@ export function sanitizeConnectionBindingRows(rows: readonly unknown[]): Connect
   })
 }
 
+export interface ConnectionInspectRow {
+  readonly connectionId: string
+  readonly credentialRefId: string
+  readonly health: string
+  readonly expiry: string
+  readonly provenance: string
+  readonly fingerprint: string
+  readonly kind: string
+  readonly versionId: string
+}
+
+const INSPECT_KEYS = new Set([
+  'connectionId',
+  'credentialRefId',
+  'health',
+  'expiry',
+  'provenance',
+  'fingerprint',
+  'kind',
+  'versionId',
+])
+
+export function sanitizeConnectionInspect(row: unknown): ConnectionInspectRow {
+  if (!row || typeof row !== 'object') throw new Error('Invalid connection inspect metadata')
+  const rec: Record<string, unknown> = Object.create(null)
+  const descriptors = Object.getOwnPropertyDescriptors(row)
+  for (const key of Reflect.ownKeys(descriptors)) {
+    if (typeof key !== 'string' || !INSPECT_KEYS.has(key)) throw new Error('Invalid connection inspect metadata')
+    const descriptor = descriptors[key]!
+    if (!descriptor.enumerable || !Object.hasOwn(descriptor, 'value')) throw new Error('Invalid connection inspect metadata')
+    rec[key] = descriptor.value
+  }
+  const connectionId = rec.connectionId
+  const credentialRefId = rec.credentialRefId
+  const health = rec.health
+  const expiry = rec.expiry
+  const provenance = rec.provenance
+  const fingerprint = rec.fingerprint
+  const kind = rec.kind
+  const versionId = rec.versionId
+  if (
+    typeof connectionId !== 'string'
+    || typeof credentialRefId !== 'string'
+    || typeof health !== 'string'
+    || typeof expiry !== 'string'
+    || typeof provenance !== 'string'
+    || typeof fingerprint !== 'string'
+    || typeof kind !== 'string'
+    || typeof versionId !== 'string'
+  ) {
+    throw new Error('Invalid connection inspect metadata')
+  }
+  return { connectionId, credentialRefId, health, expiry, provenance, fingerprint, kind, versionId }
+}
+
+const STALE_HEALTH = new Set([
+  'expired',
+  'missing',
+  'revoked',
+  'unavailable',
+  'repair_required',
+  'denied',
+])
+
+export function isStaleInspectSummary(
+  fields: { readonly health: string; readonly expiry: string },
+  now = Date.now(),
+): boolean {
+  if (STALE_HEALTH.has(fields.health)) return true
+  if (fields.expiry === '—') return false
+  const expiresAt = Date.parse(fields.expiry)
+  return Number.isFinite(expiresAt) && expiresAt < now
+}
+
 export function sanitizeConnectionRows(rows: readonly unknown[]): ConnectionListRow[] {
   return rows.map((row) => {
     if (!row || typeof row !== 'object') throw new Error('Invalid connection metadata')

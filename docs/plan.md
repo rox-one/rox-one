@@ -1,3 +1,41 @@
+## Product Learning foundation recovery plan — 2026-10-03
+
+1. Freeze final a6 source and import only contracts/core/persistence/analytics; pr_scout owns these interfaces, historical_sweep integrates dependent UI/runtime/current consumers without copying old shell/pages.
+2. Inspect evidence/correlation and durable ownership boundaries. Retain original negative controls; reproduce and fix diagnostic accessor validation/serialization race through single captured own data properties, preserving interfaces.
+3. Exercise pure engine and real Chromium IndexedDB across isolated windows, storage/transaction/future-version failures, scoped reset and privacy/retention. Verify all foundation modules with strict renderer compiler options and actual browser bundling without claiming route/native feature acceptance.
+4. Reconcile live main, freeze source/proof/log receipt, publish/attach a separate PR. Notify dependent worker of exact interfaces/head and preserve every original branch; lead reviews and merges.
+
+## Golden Gate Settings menu recovery plan — 2026-10-03
+
+1. Verify actual current consumers and source intent before import: current menu is a Popover with no arrow/typeahead model; Appearance and ZenShell custom SettingsRow slots lack label/description relationships.
+2. Recover pure source navigation/context helpers and adapt only current MenuSelect/Row behavior. Preserve existing classes/locale strings and keep SettingsSelect unchanged. pr_scout owns these files; root owns remaining Golden semantic audit and main merge.
+3. Execute real production row/menu/Radix controls: field descriptions/overrides, enabled filtered navigation without commit, typeahead/preview/Escape, search caret/empty result, IME/modifier/default-prevented and disabled choices/control, changing options, selection/focus return. Retain source helper/i18n tests and run Electron/WebUI types, renderer build and locale gates.
+4. Reconcile live main, freeze source/head/proof receipt, publish/attach a separate PR, preserving all original branches. Real native route/screenshot/provider and full feature acceptance remain separate.
+
+# Golden Gate surface tab recovery — 2026-10-03
+
+Owner: root. Source5def9ffd36dc160fdc7c908784e0ef97ba6a732e → current-consumer comparison → title loader/navigation helpers → unit failure/cache/workspace controls and actual Chromium SurfaceTabs interactions → renderer strict types/build → separate PR/exact merge readback. Depends on current unified-shell atoms and pending panel focus repair1415; preserve its aria-controls contract when integrating.
+
+## Connections consumer recovery plan — 2026-10-03
+
+1. Freeze source intent and current UI gap; backend1414 is the dependency. pr_scout owns page/lifecycle/device/connection-info consumers only; root owns main integration and SurfaceTabs/remaining Golden semantics.
+2. Restore safe inspect projection and shared committed-scope lifecycle controls, active lease consent, current test/repair/rotate, registered move target and public GitHub device flow. Preserve current page and unrelated inspector contracts.
+3. Exercise actual production page/inspector consumers with controlled backend promises: latest selection, A→B→A, duplicate writes, stale receipts, sanitized errors/retry, confirmations, URI/secret refusal, cancellation/late-start, one poll, slow_down, denial/expiry and scoped import refresh. Retain source history and all locale catalogs.
+4. Reconcile live main, freeze delivered candidate, run scoped UI/projection tests, renderer types/build and localization, record exact source/head/log receipt, push and attach a separate PR. Lead reviews and merges; real native/provider/backend acceptance remains explicit.
+
+## Golden Gate persisted panel workspace recovery plan — 2026-10-03
+
+Closing a focused panel restores DOM focus only when the disconnected node belongs to that removed panel or tab. Preserve another live focus owner, dialog, IME, resize and hidden targets; exercise actual closePanelAtom and production PanelStackContainer in browser adverse controls.
+
+1. Establish the live gap: current main horizontal flex has no workspace grid modes or persisted row/column tracks. Bind the missing closure to the source manifest.
+2. Recover state/parser/atom/hook/menu/sash and adapt current container/slot/axis resize; preserve current native focus and UI-001 guards.
+3. Verify mode and committed fraction persistence, preview/cancel, workspace isolation, malformed stored data, ragged focus, route identity and retained drafts with production renderer components.
+4. Run complete types, WebUI/Electron renderer and i18n gates; publish separate candidate and exact remote readback. Root retains independent review and serial merge; all source branches remain.
+
+# Golden Gate meeting request ownership integration (2026-10-03)
+
+Owner: pr_scout; merge owner: root. Depends on main UI/native/profile contracts; preserve LocalMeetingDetail profile and analysis work owned by historical_sweep. Graph: source/consumer comparison → committed request tracker + current callbacks → executed production-callback adverse timing tests and current Notes equivalence controls → renderer typecheck/build/localization → exact source readback and separate PR. Original branches are retained. Tests cover duplicate submission, edited draft, rejection/retry, A→B→A, disposal, latest record/deletion, stale subscriber, pending catalogue overlay and transcript success/refusal.
+
 ## Golden Gate device diagnostics recovery plan — 2026-10-03
 
 1. Historical scout identified exact source revision and runtime files absent from main; integration worker audited the diagnostic dependency closure and recorded source hashes.
@@ -675,6 +713,19 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
 
 
+# Credential locator boundary validation — 2026-10-03
+
+| Task | Owner | Dependency | Verification |
+| --- | --- | --- | --- |
+| Freeze current main and preserve existing work | Lead | Live GitHub SHA | Clean isolated branch at 635fc495; primary dirty CSS remains untouched |
+| Reproduce own-field fallback at all boundaries | Lead | Frozen source | Initial 63-case suite: base 10 pass / 53 fail; final 64-case suite also covers inherited descriptor.value; fixtures restored synchronously |
+| Snapshot own descriptor values into a null-prototype record | Lead | Failing regressions | Own fields only, zero getter/get-trap reads, frozen compatibility, no mutation on rejection |
+| Validate candidate and independently review | Lead / integration-status reviewer | Correction | Full core, core TypeScript, unchanged validate:ci and source review |
+| Integrate concurrent main repair without losing either matrix | Lead / independent reviewer | PR #1407 production fix and 54 regressions | Preserve identical upstream executable source and all 64 added boundary cases; revalidate combined revision |
+| Publish and merge the exact verified PR head | Lead | Passed checks and review | Hosted validation/lifecycle, bound merge request, remote main ancestry/source readback |
+
+Evidence and delivery receipt: `docs/credential-locator-own-data-validation.md`. .codegraph is absent in the frozen repository; targeted symbol/caller inspection supplies the bounded source map. Native work and Vercel account deployment status remain outside this locator correction.
+
 ## Credential locator repair plan — 2026-10-03
 
 | Task | Owner | Depends on | Owned files | Verification |
@@ -687,11 +738,25 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 
 The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
 
+
+### Session project membership metadata recovery (2026-10-03)
+
+- Owner: recent-features worker; dependencies: current shared serialized session writer, SessionManager, current workspace-confined project delete path and collection query.
+- Selectively adapt source `c0ef036e9c9b627589ad4e2a055abac0212b4295` metadata/storage helpers, preserve primary defaults and canonical project access. Exclude old closed-project-only visibility helpers; current readable-context authority remains canonical.
+- Verify actual create/list/reload/unrelated-save round trips, primary/secondary unlink with transcript preservation, existing manager primary/bulk mutations, workspace-isolated live-owner unlink, secondary filter and external disk mutation during a queued write. Run current persistence/bulk/cold metadata regressions, relevant package types and renderer event controls.
+- Delivery: separate codex branch and PR; original branches retained, lead owns ordered main merge.
 ## Recovered connection audit action projection — 2026-10-03
 
 Owner: branch integration lead. Source: checkpoint/session-audit-20260821-craft-agents @86154e8c812746261282bb4c517b16ad7becc0ec; dependency: delivered Connections producer PR1414 and current canonical WorkGraph SQLite. Recover the missing additive schema3 action column and creation audit projection. V1/V2 migration SQL/checksums must remain identical; migration3 SQL matches the source. Older ledger rows remain immutable and expose event type as the fallback action. Only metadata action labels cross transport; never restore payload content.
 
 Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/installation, schema3 restart, current actions plus creation event, foreign workspace exclusion and update/delete trigger refusal. The negative control runs the actual new test against unchanged main. Existing kernel/connection/revalidation and consumed server types must pass. Deliver independently and retain the source branch. This supplies audit metadata for the separately recovered Connections UI; no native/provider acceptance is claimed.
+
+## Explicit Connection host import recovery — 2026-10-03
+
+1. Historical worker verifies actual source delta and local-only Electron handler -> current adapter -> existing importer/host-runner call chain. Lead retains integration; original source branch remains unchanged.
+2. Recover commit defaults, preserving direct injected importer overrides. Add internal low-level runner ports used only by tests and host composition. Keep candidate previews free of helper password/process execution, except explicit metadata/public-identity list operations.
+3. Test all five positive selected paths, output masking/copy/reference behavior, unknown candidate refusal before secret access, helper failure without Connection/copy, and explicit override precedence. Prove negative controls by restoring exact pre-change adapter blobs, then restore candidate before final checks.
+4. Run existing importer/runner/workgraph/handler controls and consumed server-core/Electron types. Publish a separate codex PR and exact remote-head/proof receipt; lead merges after qualification. No actual host credential reads or external sends are part of verification.
 
 ### Calendar synchronization ownership recovery (2026-10-03)
 
@@ -699,3 +764,26 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 - Recover the absent per-account request fence from source `1dd90c5031087855e72cd3ecfce7dd057a2a6208`, preserving current conflict/identity and provider-readiness behavior.
 - Verification: deterministic deferred adapters reproduce stale event/cursor overwrite, stale conflict/delete replacement and newer-failure/older-success races before the fix; after the fix verify all three and independent-account/revocation controls, plus the complete calendar suite and core types.
 - Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.
+
+
+## Validated personal task import recovery — 2026-10-03
+
+1. Historical worker maps Golden's consumed import guard to actual current TasksPage onImport and cache tryFromJson consumers. Root owns other Golden UI; this recovery changes core validation and tests only.
+2. Add a pure current-model row validator at tryFromJson before store construction. Preserve old empty/missing-collection/version compatibility and richer modern optional fields and link kinds. Use existing quarantine reason/raw preservation.
+3. Verify modern rich export roundtrip, malformed/duplicate/nested rows, nonfinite JSON overflow, cache original/staging separation, and executed current file callback refusing writes for invalid input and preserving existing tasks for valid input. Restore exact old store for negative controls, then restore candidate.
+4. Run relevant personal task/cache/import tests and consumed core/Electron types. Publish a separate PR with exact source/revision/proof; root merges. Retain original Golden branch and do not imply other Golden UI or installed/native acceptance.
+
+## Scoped Notes comment draft recovery — 2026-10-03
+
+1. Historical worker verifies Golden source comment helper is consumed in old NotesPage and finds the same genuine unscoped quote/body state in actual current NativeNotesPage. Parent owns other Golden/layout/focus work; no shared UI layout files are edited here.
+2. Recover the pure keyed draft map and bind current floating composer setters to workspace plus active document identity. Preserve current write/mutation authority and in-page draft lifetime.
+3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
+4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
+
+
+## Golden service navigation and guidance recovery — 2026-10-03
+
+1. Historical integration owns selective `findServicePanel`/focus atom recovery onto the current registry and routes; compose it only into current AppShell root callbacks. Depend on the existing panel stack and its NavigationContext history subscriber. Keep explicit subroutes and compact Settings drill-in.
+2. Recover the source's workspace-scoped dismissal key/helper; compose it into today's flat SidebarChrome/PromoSlot using the existing all-locale `common.dismiss` key. Fence focus by captured workspace and connected/visible profile owner. Keep reminders independent.
+3. Execute actual component callbacks with real panel atoms and controlled local storage: mounted-route/draft preservation, preferred match, missing-service fallback, explicit subroutes, compact mode, durable workspace isolation and stale-callback focus. Verify current DOM keyboard/disclosure, panel lanes, promo policy and Electron types. Run before-source negative controls, restore exact files, reconcile live main without replacing later docs, publish a separate PR and retain all source branches.
+4. Acceptance is bounded source and renderer integration; do not claim installed native UI, old sidebar layout recovery, full Golden source-family completion or production acceptance.

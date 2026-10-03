@@ -4,7 +4,7 @@
  * analysis is a separate, explicitly started ordinary agent session and follows
  * the configured model/provider. Live rooms and system-audio capture are absent.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
@@ -41,6 +41,7 @@ import { getAppLocale } from '@rox/shared/i18n'
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
 import { useMeetingArtifactTour } from '@/features/product-tour/adapters/work/meetings-automations/useMeetingArtifactTour'
+import { MeetingRequestTracker } from './meetings/request-state'
 
 const ERROR_KEYS: Record<string, string> = {
   'mic-denied': 'meetings.local.err.micDenied',
@@ -88,12 +89,38 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   const [planning, setPlanning] = useState(false)
   const [planTitle, setPlanTitle] = useState('')
   const [planAt, setPlanAt] = useState('')
+  const [planningPending, setPlanningPending] = useState(false)
+  const planDraftRef = useRef({ title: planTitle, at: planAt })
+  planDraftRef.current = { title: planTitle, at: planAt }
+  const requestTracker = useRef(new MeetingRequestTracker()).current
+  const catalogUpdatesRef = useRef<Map<string, LocalMeeting | null> | null>(null)
   const [dropActive, setDropActive] = useState(false)
   const importRequestRef = useRef<string | null>(null)
   const [importRequestId, setImportRequestId] = useState<string | null>(null)
   const [cancelingImport, setCancelingImport] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const [now, setNow] = useState(() => Date.now())
+
+  // Only a committed workspace may publish reads or action receipts. Cleanup
+  // invalidates the old visit even for A → B → A or an unmount without a rerender.
+  useLayoutEffect(() => {
+    requestTracker.setScope(workspaceId)
+    catalogUpdatesRef.current = null
+    setMeetings([])
+    setLoadState(api ? 'loading' : 'error')
+    setLoadedWorkspaceId(undefined)
+    setTranscriptText({})
+    setLocalSelectedId(null)
+    setBanner(null)
+    setPlanning(false)
+    setPlanTitle('')
+    setPlanAt('')
+    setPlanningPending(false)
+    importRequestRef.current = null
+    setImportRequestId(null)
+    setCancelingImport(false)
+    return () => { requestTracker.setScope(undefined) }
+  }, [api, workspaceId, requestTracker])
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 60_000)
@@ -102,15 +129,30 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
 
   useEffect(() => {
     if (!api) return
+    const request = requestTracker.beginLatest('catalog', workspaceId)
+    if (!request) return
+    const updates = new Map<string, LocalMeeting | null>()
+    catalogUpdatesRef.current = updates
     let cancelled = false
     setLoadState('loading')
     void api.list(workspaceId).then(
-      (list) => { if (!cancelled) { setMeetings(list); setLoadedWorkspaceId(workspaceId); setLoadState('ready') } },
-      () => { if (!cancelled) setLoadState('error') },
-    )
-    void api.engine().then((e) => { if (!cancelled) setEngine(e) }, () => {})
-    return () => { cancelled = true }
-  }, [api, workspaceId, reload])
+      (list) => {
+        if (!cancelled && request.isCurrent()) {
+          // A slower list snapshot cannot overwrite a newer pushed update or
+          // deletion observed while this exact read was pending.
+          const merged = new Map(list.map(meeting => [meeting.id, meeting]))
+          for (const [id, meeting] of updates) {
+            if (meeting) merged.set(id, meeting)
+            else merged.delete(id)
+          }
+          setMeetings([...merged.values()]); setLoadedWorkspaceId(workspaceId); setLoadState('ready')
+        }
+      },
+      () => { if (!cancelled && request.isCurrent()) setLoadState('error') },
+    ).finally(() => { if (catalogUpdatesRef.current === updates) catalogUpdatesRef.current = null })
+    void api.engine().then((e) => { if (!cancelled && request.isCurrent()) setEngine(e) }, () => {})
+    return () => { cancelled = true; request.finish() }
+  }, [api, workspaceId, reload, requestTracker])
 
   useEffect(() => {
     if (!api) return
@@ -124,17 +166,28 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   // Main pushes every change (recording state, ASR progress, attachments…).
   useEffect(() => {
     if (!api) return
-    return api.onChanged(({ id }) => {
+    const unsubscribe = api.onChanged(({ id }) => {
+      const request = requestTracker.beginLatest(`update:${id}`, workspaceId)
+      if (!request) return
       void api.get(id).then((m) => {
+        if (!request.isCurrent()) return
+        if (workspaceId && m?.workspaceId && m.workspaceId !== workspaceId) return
+        catalogUpdatesRef.current?.set(id, m)
         setMeetings((current) => {
           if (!m) return current.filter((x) => x.id !== id)
           if (workspaceId && m.workspaceId && m.workspaceId !== workspaceId) return current
           const exists = current.some((x) => x.id === id)
           return exists ? current.map((x) => (x.id === id ? m : x)) : [m, ...current]
         })
-      })
+      }, () => {}).finally(() => request.finish())
     })
-  }, [api, workspaceId])
+    return () => {
+      unsubscribe()
+      // Subscription requests never survive their effect owner, including a
+      // remount in the same committed workspace.
+      requestTracker.cancelAll()
+    }
+  }, [api, workspaceId, requestTracker])
 
   useEffect(() => {
     if (rec.error) {
@@ -153,12 +206,14 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     if (!api || terms.length === 0) return
     const missing = meetings.filter((m) => m.transcript.status === 'done' && transcriptText[m.id] === undefined)
     if (missing.length === 0) return
+    const request = requestTracker.beginLatest('transcripts', workspaceId)
+    if (!request) return
     let cancelled = false
     void Promise.all(missing.map(async (m) => [m.id, transcriptPlainText((await api.readTranscript(m.id))?.segments ?? [])] as const)).then((pairs) => {
-      if (!cancelled) setTranscriptText((current) => ({ ...current, ...Object.fromEntries(pairs) }))
-    })
-    return () => { cancelled = true }
-  }, [api, terms, meetings, transcriptText])
+      if (!cancelled && request.isCurrent()) setTranscriptText((current) => ({ ...current, ...Object.fromEntries(pairs) }))
+    }, () => { if (!cancelled && request.isCurrent()) setBanner('unavailable') })
+    return () => { cancelled = true; request.finish() }
+  }, [api, terms, meetings, transcriptText, workspaceId, requestTracker])
 
   const counts = useMemo(() => localBucketCounts(meetings, now), [meetings, now])
   const visible = useMemo(
@@ -199,20 +254,31 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   }, [])
 
   async function handleRecord() {
+    const request = requestTracker.begin('record', workspaceId)
+    if (!request) return
     setBanner(null)
     const title = t('meetings.local.defaultTitle', { date: `${dayFmt.format(Date.now())} ${timeFmt.format(Date.now())}` })
-    const result = await startRecording({ title, workspaceId })
-    if (!result.ok) {
-      setBanner(result.code)
-      return
+    try {
+      const result = await startRecording({ title, workspaceId })
+      if (!request.isCurrent()) return
+      if (!result.ok) {
+        setBanner(result.code)
+        return
+      }
+      upsert(result.meeting)
+      selectMeeting(result.meeting.id)
+      setTab('overview')
+    } catch {
+      if (request.isCurrent()) setBanner('unavailable')
+    } finally {
+      request.finish()
     }
-    upsert(result.meeting)
-    selectMeeting(result.meeting.id)
-    setTab('overview')
   }
 
   async function handleImport(path?: string) {
     if (!api || importRequestRef.current) return
+    const request = requestTracker.begin('import', workspaceId)
+    if (!request) return
     setBanner(null)
     const requestId = newLocalId('import')
     importRequestRef.current = requestId
@@ -220,6 +286,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     setCancelingImport(false)
     try {
       const result = await api.importAudio({ requestId, workspaceId, path })
+      if (!request.isCurrent()) return
       if (!result) return
       if (!result.ok) {
         setBanner(result.code)
@@ -229,9 +296,9 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
       selectMeeting(result.value.id)
       setTab('transcript')
     } catch {
-      setBanner('unavailable')
+      if (request.isCurrent()) setBanner('unavailable')
     } finally {
-      if (importRequestRef.current === requestId) {
+      if (request.finish() && importRequestRef.current === requestId) {
         importRequestRef.current = null
         setImportRequestId(null)
         setCancelingImport(false)
@@ -241,22 +308,38 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
 
   async function cancelImport() {
     if (!api || !importRequestId) return
+    const request = requestTracker.begin('cancel-import', workspaceId)
+    if (!request) return
     try {
-      if (await api.cancelImport(importRequestId)) setCancelingImport(true)
+      if (await api.cancelImport(importRequestId) && request.isCurrent()) setCancelingImport(true)
     } catch {
-      setBanner('unavailable')
+      if (request.isCurrent()) setBanner('unavailable')
+    } finally {
+      request.finish()
     }
   }
 
   async function handlePlan() {
     if (!api || !planTitle.trim()) return
-    const scheduledAt = planAt ? new Date(planAt).getTime() : undefined
-    const m = await api.create({ title: planTitle.trim(), workspaceId, scheduledAt: Number.isFinite(scheduledAt) ? scheduledAt : undefined })
-    upsert(m)
-    selectMeeting(m.id)
-    setPlanning(false)
-    setPlanTitle('')
-    setPlanAt('')
+    const request = requestTracker.begin('plan', workspaceId)
+    if (!request) return
+    const submitted = { title: planTitle, at: planAt }
+    const scheduledAt = submitted.at ? new Date(submitted.at).getTime() : undefined
+    setPlanningPending(true)
+    try {
+      const m = await api.create({ title: submitted.title.trim(), workspaceId, scheduledAt: Number.isFinite(scheduledAt) ? scheduledAt : undefined })
+      if (!request.isCurrent()) return
+      upsert(m)
+      selectMeeting(m.id)
+      // A successful old submission may clear only its own unchanged fields.
+      if (planDraftRef.current.title === submitted.title && planDraftRef.current.at === submitted.at) setPlanning(false)
+      setPlanTitle(current => current === submitted.title ? '' : current)
+      setPlanAt(current => current === submitted.at ? '' : current)
+    } catch {
+      if (request.isCurrent()) setBanner('unavailable')
+    } finally {
+      if (request.finish()) setPlanningPending(false)
+    }
   }
 
   const groupTitle = (group: LocalGroup) => {
@@ -326,7 +409,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
         <form className="mx-3 mt-1 flex items-center gap-2" data-testid="meetings-plan-form" onSubmit={(e) => { e.preventDefault(); void handlePlan() }}>
           <input autoFocus value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} placeholder={t('meetings.local.planTitle')} aria-label={t('meetings.local.planTitle')} className="h-7 min-w-0 flex-1 rounded-[6px] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted" />
           <input type="datetime-local" value={planAt} onChange={(e) => setPlanAt(e.target.value)} aria-label={t('meetings.local.planAt')} className="h-7 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px] outline-none" />
-          <Button type="submit" disabled={!planTitle.trim()}>{t('meetings.screen.add')}</Button>
+          <Button type="submit" disabled={!planTitle.trim() || planningPending}>{t('meetings.screen.add')}</Button>
         </form>
       ) : null}
       <div className="mx-3 mt-1 flex items-center gap-2 rounded-[6px] bg-foreground/[0.05] px-2" data-testid="meetings-search">
