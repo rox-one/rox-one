@@ -171,6 +171,11 @@ function listPackSkillDirs(packDir: string): string[] {
   return skills.sort();
 }
 
+/** Preserve legacy disabled preferences after the first-party pack rename. */
+function disabledPackSet(slugs: string[]): Set<string> {
+  return new Set(slugs.map(slug => slug === 'craft-knowledge' ? 'rox-knowledge' : slug));
+}
+
 function readSkillsLock(bundleRoot: string): Map<string, SkillsLockPack> {
   const map = new Map<string, SkillsLockPack>();
   const lockPath = join(bundleRoot, SKILLS_LOCK_FILE);
@@ -195,7 +200,7 @@ function readSkillsLock(bundleRoot: string): Map<string, SkillsLockPack> {
  */
 export function linkBundledSkillsForOmp(options: EnsureBundledSkillsOptions & { targetRoot: string; userSkillRoots?: string[] }): string[] {
   const bundleRoot = options.bundleRoot ?? getBundledAssetsDir('skills');
-  const disabled = new Set(options.disabled ?? loadStoredConfig()?.bundledSkills?.disabled ?? []);
+  const disabled = disabledPackSet(options.disabled ?? loadStoredConfig()?.bundledSkills?.disabled ?? []);
   const lock = bundleRoot && existsSync(bundleRoot) ? readSkillsLock(bundleRoot) : new Map<string, SkillsLockPack>();
   mkdirSync(options.targetRoot, { recursive: true });
   const linked = new Set<string>();
@@ -307,7 +312,7 @@ export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): Ensur
         disabled = []; // config unreadable — treat as "nothing disabled"
       }
     }
-    const disabledSet = new Set(disabled);
+    const disabledSet = disabledPackSet(disabled);
     const lock = readSkillsLock(bundleRoot);
     const packSlugs = readdirSync(bundleRoot, { withFileTypes: true })
       .filter(e => e.isDirectory() && !e.name.startsWith('.'))
@@ -540,7 +545,7 @@ export function listBundledSkillPacks(options?: EnsureBundledSkillsOptions): Bun
       disabled = [];
     }
   }
-  const disabledSet = new Set(disabled);
+  const disabledSet = disabledPackSet(disabled);
   const lock = readSkillsLock(bundleRoot);
   const packSlugs = readdirSync(bundleRoot, { withFileTypes: true })
     .filter(e => e.isDirectory() && !e.name.startsWith('.'))

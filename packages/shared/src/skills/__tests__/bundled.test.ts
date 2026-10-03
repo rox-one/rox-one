@@ -16,7 +16,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readFileSync, readdirSync } from 'fs';
 import { tmpdir } from 'os';
 import { join, dirname } from 'path';
-import { ensureBundledSkills, type BundledSkillPackStatus } from '../bundled.ts';
+import { ensureBundledSkills, linkBundledSkillsForOmp, type BundledSkillPackStatus } from '../bundled.ts';
 import { getDisabledBundledSkillSlugsFromDisk, loadAllSkills, invalidateSkillsCache } from '../storage.ts';
 
 // ============================================================
@@ -302,5 +302,18 @@ describe('disabled packs hidden from discovery', () => {
     const slugs = getDisabledBundledSkillSlugsFromDisk(targetRoot, ['superpowers']);
     expect(slugs.has('alpha')).toBe(true);
     expect(slugs.has('beta')).toBe(false);
+  });
+});
+
+
+describe('legacy disabled pack migration', () => {
+  it('honors craft-knowledge preference for renamed ROX pack and native discovery', () => {
+    writeFile(bundleRoot, 'rox-knowledge/knowledge-distill/SKILL.md', skillMd('knowledge-distill', 'v1'));
+    writeFile(bundleRoot, 'SKILLS.lock', JSON.stringify({ version: 2, packs: [{ slug: 'rox-knowledge', skills: ['knowledge-distill'] }] }));
+    const result = ensureBundledSkills({ bundleRoot, targetRoot, disabled: ['craft-knowledge'] });
+    expect(statusFor(result.packs, 'rox-knowledge').disabled).toBe(true);
+    expect(existsSync(join(targetRoot, 'knowledge-distill'))).toBe(false);
+    const linked = linkBundledSkillsForOmp({ bundleRoot, targetRoot: join(tempDir, 'native'), disabled: ['craft-knowledge'] });
+    expect(linked).toEqual([]);
   });
 });
