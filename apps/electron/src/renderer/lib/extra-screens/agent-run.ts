@@ -4,12 +4,16 @@
  * `safe` permission mode — visible in Sessions and the Agent Center, and it
  * cannot execute commands or send anything outward.
  */
+import type { RuntimeLaunch } from '@rox/core/runtime-trace'
+
 export interface AgentRunRequest {
   workspaceId: string
   name: string
   prompt: string
   labels?: string[]
   enabledSourceSlugs?: string[]
+  /** Observed producer metadata; ordinary human runs retain their manual origin. */
+  runtimeLaunch?: RuntimeLaunch
   /** Persist an owner claim before a prompt can begin. */
   onCreated?: (sessionId: string) => Promise<void>
 }
@@ -23,7 +27,11 @@ export async function startAgentRun(request: AgentRunRequest): Promise<string> {
     ...(request.enabledSourceSlugs ? { enabledSourceSlugs: request.enabledSourceSlugs } : {}),
   })
   await request.onCreated?.(session.id)
-  await api.sendMessage(session.id, request.prompt)
+  if (request.runtimeLaunch) {
+    await api.sendMessage(session.id, request.prompt, undefined, undefined, { runtimeLaunch: request.runtimeLaunch })
+  } else {
+    await api.sendMessage(session.id, request.prompt)
+  }
   return session.id
 }
 

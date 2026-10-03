@@ -1,0 +1,538 @@
+{
+  "class": "bounded-current-runtime-producers-recovery",
+  "source_pr": 1444,
+  "source_head": "c2e8f07b5cb8a1b1659781e1fe4dd4d0f0207727",
+  "source_branch_preserved": true,
+  "collector_dependency": {
+    "pr": 1485,
+    "head": "eddf753e0aff74703b9055c4417e7b6bfaed77be",
+    "main_merge": "439b9d4f141fe8d484f57f0fa55681de7b7af966"
+  },
+  "candidate_revision": "1a41976f8b85aed45eb8a886a92a8a3c143e035d",
+  "comparison_main": "f1001ca8888e4afb10da9db48c3747f403108c93",
+  "created_at_utc": "2026-10-03T23:25:05.378019+00:00",
+  "producer_partition": [
+    "packages/messaging-gateway/src/gateway.ts",
+    "packages/server-core/src/handlers/session-manager-interface.ts",
+    "packages/server-core/src/handlers/rpc/automations.ts",
+    "packages/server-core/src/handlers/rpc/cloud-runs.ts",
+    "packages/server-core/src/handlers/rpc/tasks.ts",
+    "packages/server-core/src/handlers/rpc/sessions.ts",
+    "packages/server-core/src/handlers/rpc/native-session-scope.ts",
+    "packages/server-core/src/handlers/rpc/runtime-trace.ts",
+    "packages/server-core/src/sessions/SessionManager.ts",
+    "packages/server-core/src/tasks/TaskRunner.ts",
+    "packages/shared/src/agent/omp-agent.ts",
+    "packages/shared/src/agent/omp-runtime-observer.ts",
+    "packages/shared/src/agent/omp-runtime-trace-bridge.ts",
+    "scripts/probes/runtime-map-native-loop.ts"
+  ],
+  "source_hashes": {
+    "packages/messaging-gateway/src/gateway.ts": {
+      "git_blob": "9869ab099c4a4a45adfbd67d22d88f1b97331e50",
+      "sha256": "ffac17662d9edb1bf516317ab5594e4889d86ee0dd7bc0be084456c33211c32d"
+    },
+    "packages/server-core/src/handlers/session-manager-interface.ts": {
+      "git_blob": "8321d5ce731cfcfe66f21ae78dac48414957da36",
+      "sha256": "5fc8efc41fa7b7aac618fd2f450fdff89c6ad24feee211a072be81a81b70ac2b"
+    },
+    "packages/server-core/src/handlers/rpc/automations.ts": {
+      "git_blob": "0c0c782335d8f854d2fe6e9c887fde40d4fa0cf4",
+      "sha256": "958300d55655f688b2f2bbae499e615b0fccf3c4629ee85a641d0f06884eed8b"
+    },
+    "packages/server-core/src/handlers/rpc/cloud-runs.ts": {
+      "git_blob": "f6ea56da164491d01363e4583c72a8d886e7a12f",
+      "sha256": "f185c74168577a6eba26e2436b8f50844a66f9950505eec728877ed702511170"
+    },
+    "packages/server-core/src/handlers/rpc/tasks.ts": {
+      "git_blob": "f341a8d505c295d6903a4c89e64c149473094283",
+      "sha256": "94d946d98ec29a11c55fda969d95c9d520a5da605e50d78abab587b57b663c9e"
+    },
+    "packages/server-core/src/handlers/rpc/sessions.ts": {
+      "git_blob": "ce3c2d2d4446f99e55bed04c95846215333544ae",
+      "sha256": "5abfd5636c2d77a63422a11006a4d18eb0532f9377721e94b5c462aed5e9d982"
+    },
+    "packages/server-core/src/handlers/rpc/native-session-scope.ts": {
+      "git_blob": "c40d9339a80a5c97aa9961bb30a540435c66f6e4",
+      "sha256": "350f849c3e45e5082945fc816e07ab090e249defc3a8e37ac5d9313c8eb805a0"
+    },
+    "packages/server-core/src/handlers/rpc/runtime-trace.ts": {
+      "git_blob": "e72c46464af4186aaf0d5e4e520eef46b27b7ef8",
+      "sha256": "3ffa151446c12616c5d049ca5c066d612ffd7187ea31e37e373d10cea19af76e"
+    },
+    "packages/server-core/src/sessions/SessionManager.ts": {
+      "git_blob": "12413e5339752ff4aaf529f2b389c9b6ac2d6f29",
+      "sha256": "7f0272907e07ff81b5299e1f99628cf5b026201773671a6087cfbd0ebd0d1e2f"
+    },
+    "packages/server-core/src/tasks/TaskRunner.ts": {
+      "git_blob": "c78fda8bc67d158ed04443ff67d790d2c9b86621",
+      "sha256": "7475f19e1dd6f087827423e8c6e222a6f198b0fc0b1817b6e1a08fb9c38d1180"
+    },
+    "packages/shared/src/agent/omp-agent.ts": {
+      "git_blob": "3aa374c46ab4e94ae8fe05c6f9a3df9e3e3b2865",
+      "sha256": "859ced3418bcd0d4c621cbd0eaa79571a747410be5420458ac4b6f4499b91f11"
+    },
+    "packages/shared/src/agent/omp-runtime-observer.ts": {
+      "git_blob": "405852dfdcd3d8b0c0d3e583b4daac0a7227dd47",
+      "sha256": "645b0a4755a9a524c0c85afc112c9d2811826af630b44704346c501aa2c4626a"
+    },
+    "packages/shared/src/agent/omp-runtime-trace-bridge.ts": {
+      "git_blob": "723df0126aeec64ccf6c38ca34e5f31f16e3f135",
+      "sha256": "5bd28405544e1e55759667a4f8d9f2ac4aa61e6ca0e086a7a3c573de76626203"
+    },
+    "scripts/probes/runtime-map-native-loop.ts": {
+      "git_blob": "4ba90be0fdfaed807ed06cc446c86802b79395b7",
+      "sha256": "80ee4a4f785478a9dfc7f76d3a0479c91cf1834728ee942375f11790094e726b"
+    }
+  },
+  "gates": {
+    "source_current_callers": {
+      "pass": 94,
+      "fail": 0,
+      "assertions": 452,
+      "log": "runtime-producers-final-qualified-source.log",
+      "revision": "db6e3d510403e6bb99909dbb9b69001398f6d4a1"
+    },
+    "current_authority_and_real_stdio_MCP_fake_NDJSON": {
+      "pass": 48,
+      "fail": 0,
+      "assertions": 327,
+      "log": "runtime-producers-final-qualified-authority.log",
+      "revision": "db6e3d510403e6bb99909dbb9b69001398f6d4a1"
+    },
+    "incoming_selected_skills_fixture": {
+      "pass": 3,
+      "fail": 0,
+      "assertions": 11,
+      "log": "runtime-producers-final-selected-fixture.log",
+      "revision": "36e3cb2136e912a529bc5937ddffe89fda31cccc"
+    },
+    "shared_strict_types": {
+      "exit": 0,
+      "revision": "1a41976f8b85aed45eb8a886a92a8a3c143e035d",
+      "log": "runtime-producers-current-toolchain-shared-types.log"
+    },
+    "server_core_strict_types": {
+      "exit": 0,
+      "revision": "1a41976f8b85aed45eb8a886a92a8a3c143e035d",
+      "log": "runtime-producers-current-toolchain-server-types.log"
+    },
+    "current_electron_strict_types": {
+      "exit": 0,
+      "log": "runtime-producers-final-current-electron-types.log",
+      "revision": "36e3cb2136e912a529bc5937ddffe89fda31cccc"
+    },
+    "gateway_scoped_strict_types": {
+      "exit": 0,
+      "config": "gateway-scoped.tsconfig.json",
+      "log": "runtime-producers-portable-gateway-types.log",
+      "scope": "Actual gateway production entry and changed button-access test; current server-core strict compiler/aliases. Canonical gateway project retains unrelated old access enum fixtures and unresolved exports/composite diagnostics; no blanket canonical-package pass.",
+      "revision": "36e3cb2136e912a529bc5937ddffe89fda31cccc"
+    },
+    "current_toolchain_native_followup": {
+      "revision": "1a41976f8b85aed45eb8a886a92a8a3c143e035d",
+      "pass": 37,
+      "fail": 0,
+      "assertions": 316,
+      "log": "runtime-producers-current-toolchain-native.log",
+      "reason": "Main1495 changed managed toolchain dependencies; actual native preparation/account/MCP happy-path boundary rerun. Does not sum with prior48."
+    }
+  },
+  "actual_native_sdk_fixture_provider": {
+    "revision": "3651d794d1783615d1d86d953449b50d009bf8e8",
+    "omp_version": "18.4.12",
+    "observations": 63,
+    "provider_requests": 10,
+    "transformed_context_comparisons": 4,
+    "all_matches": true,
+    "network_attempts": 0,
+    "paid_requests": 0,
+    "log": "runtime-producers-qualified-native-loop.log",
+    "receipt": "runtime-producers-qualified-native-loop.json",
+    "scope": "Actual native SDK two-level task worker and eval-agent loops, fixture provider, private observer transport. No installed-app or remote provider claim.",
+    "boundary": {
+      "available": "Actual native fixture provider Context after native transforms",
+      "unavailable": [
+        "HTTP serialized request payload",
+        "exact provider tokenization"
+      ]
+    },
+    "prior_iteration_observations": 66,
+    "prior_iteration_receipt": "runtime-producers-native-loop.json",
+    "iterations_not_summed": true
+  },
+  "watch_probe": {
+    "class": "actual-filesystem-watcher-and-production-bridge-with-bounded-fixture-frames",
+    "assertionsPassed": true,
+    "sourceRevision": "db6e3d510403e6bb99909dbb9b69001398f6d4a1",
+    "sourceRevisionBefore": "db6e3d510403e6bb99909dbb9b69001398f6d4a1",
+    "sourceSha256": {
+      "observer": "645b0a4755a9a524c0c85afc112c9d2811826af630b44704346c501aa2c4626a",
+      "bridge": "5bd28405544e1e55759667a4f8d9f2ac4aa61e6ca0e086a7a3c573de76626203",
+      "test": "46c54aaf5b84f559c3de34c5287896570236b74f6030f526ec8d648851131737"
+    },
+    "measuredSourcesStable": true,
+    "clockScope": "Bun performance.now() in one process, append initiation to actual observer callback; includes local scheduling and preceding drain work",
+    "environment": {
+      "platform": "darwin",
+      "kernel": "27.0.0",
+      "bun": "1.3.14",
+      "nodeCompatibility": "24.3.0",
+      "cpu": "Apple M1 Max",
+      "availableParallelism": 10,
+      "totalMemoryBytes": 68719476736
+    },
+    "measurements": {
+      "physicalFrames": 97,
+      "uniqueSourceFrames": 95,
+      "exactReplaysDroppedByBridge": 2,
+      "watcherNotifications": [
+        {
+          "event": "rename",
+          "filename": "rox-runtime-observer.js"
+        },
+        {
+          "event": "rename",
+          "filename": "native-observations.jsonl"
+        },
+        {
+          "event": "rename",
+          "filename": "native-observations.jsonl"
+        },
+        {
+          "event": "rename",
+          "filename": "native-observations.jsonl"
+        },
+        {
+          "event": "rename",
+          "filename": "native-observations.jsonl"
+        }
+      ],
+      "sourceGap": {
+        "first": 40,
+        "last": 40,
+        "coverageEvents": 1
+      },
+      "appendedButUndeliveredFramesHighWater": 32,
+      "queuedFramesAfterBursts": 0,
+      "deliveryMs": 209.07883300000003,
+      "mapMs": 0.683956000003036,
+      "appendToCallbackMs": {
+        "p50": 44.955083000000286,
+        "p95": 55.42366700000002,
+        "max": 55.5690840000002
+      },
+      "frameLimitBytes": 524288,
+      "oversizedFramesRejected": 1
+    },
+    "limits": [
+      "Controlled fixture frames exercise production filesystem transport and bridge, not SDK/provider execution.",
+      "Measured local latency is not a global product budget or an installed-platform acceptance claim.",
+      "The 64 MiB producer spool quota and emitter-count quota are not exercised by this bounded decoder test."
+    ]
+  },
+  "preserved_invariants": [
+    "SessionManager suppliedExecution stays third argument; passive origin is separate fourth argument.",
+    "Current actor ownership rechecked after awaited trace writes and native authorization remains scoped.",
+    "Spawn preserves inherited actor/assertCurrent/bind before child send, with owner check after bind.",
+    "TaskRunner captures committed output/ref/message before queued observations; canonical verdict repair completes independently.",
+    "Native scopes strip producer metadata at actual SEND and cannot read host/task/header/verdict contents; original observed root user input remains.",
+    "Managed18.4.12 mandatory native policy, Windows hidden options, model-domain one-shot retirement and current startup cleanup remain.",
+    "Host cancellation never fabricates process termination; late/reused-frame permission or completion cannot execute/publish for a successor.",
+    "Observer reads the already-open canonical private fd on coalesced directory events; event filenames never select a path."
+  ],
+  "failure_history": [
+    {
+      "log": "runtime-producers-negative-frozen.log",
+      "result": "16 pass/6 fail/128 assertions",
+      "classification": "Unchanged main+collector baseline: five substantive observer/artifact producer gaps plus one existing skill-directive 8s fixture timeout; timeout is not feature-gap proof."
+    },
+    {
+      "log": "runtime-producers-custody-negative.log",
+      "result": "0 pass/2 fail",
+      "classification": "Actual unchanged TaskRunner lacks captured output version; actual modern SessionManager drops supplied fourth origin."
+    },
+    {
+      "log": "runtime-producers-custody-first.log",
+      "classification": "Initial test mistakenly blocked run-started passive queue before TaskRunner dispatch; corrected to real canonical verdict re-ask. Not product-negative evidence."
+    },
+    {
+      "log": "runtime-producers-frame-current-main-negative.log",
+      "baseline": "f51d610b689840427139c29621ffa1bb778df619",
+      "result": "0 pass/2 fail",
+      "classification": "Actual host method sends stale same-frame result and executes after old permission response. Controlled child identity is not native process acceptance."
+    },
+    {
+      "log": "runtime-producers-frame-custody.log",
+      "classification": "Interim own guard placed after map deletion suppressed valid completion; test also assumed a return value from void respondToPermission. Both corrected before publication."
+    },
+    {
+      "log": "runtime-producers-first-after.log",
+      "result": "49 pass/2 fail",
+      "classification": "Watch3s and model-cancel15s time failures; unchanged isolated rerun3/0 retained separately; no host-load claim."
+    },
+    {
+      "log": "runtime-producers-final-source.log",
+      "result": "49 pass/2 fail",
+      "classification": "Incoming native fixture double context-clone contradicted its managed-env assertion; corrected fixture. Watch3s repeated independently."
+    },
+    {
+      "log": "runtime-producers-watch-event-diagnostics.log",
+      "result": "0 pass/1 fail",
+      "classification": "Actual watcher delivered coalesced rename for extension file while32spool frames remained unread; filename-filter bug. No decoder errors. Reader now drains own fd on any private-directory event."
+    },
+    {
+      "log": "runtime-producers-watch-current-main-baseline.log",
+      "baseline": "f51d610b689840427139c29621ffa1bb778df619",
+      "result": "1 pass/0 fail",
+      "classification": "Same actual burst probe passed on unchanged current main this iteration; not a universal main-failure or global latency claim."
+    },
+    {
+      "log": "runtime-producers-delivery-server-types.log",
+      "classification": "Incoming selected-skills synthetic Workspace missed required slug; initial3 native cases already passed. Added same canonical slug."
+    },
+    {
+      "log": "runtime-producers-qualified-server-types.log",
+      "classification": "Incoming config then missed required activeSessionId. Declared null, keeping actual authority/root/owner fixture unchanged. Final3native cases and full Server-core types0."
+    }
+  ],
+  "log_manifest": {
+    "runtime-producers-negative-frozen.log": {
+      "sha256": "a5a5ec6fba3aedbe9bdf7fa23d70dda544eff358bf84d7ea0819c06696d7d372",
+      "bytes": 14952,
+      "stored": "runtime-producers-negative-frozen.log.gz",
+      "gzip_sha256": "4a2ef049dabb25e85863b920b98cb6729c875c72ffaa73ccb3eb83841f9aae88"
+    },
+    "runtime-producers-custody-negative.log": {
+      "sha256": "d341b36fe980dca751caa9eca40fde5ab5f411c90a98d223cbdebbf9074d7bb0",
+      "bytes": 2197,
+      "stored": "runtime-producers-custody-negative.log.gz",
+      "gzip_sha256": "c9374661efa7c2ab5b8a1425ae85431f7a7aaf09004dd545fb34cfcd9bcdd0c2"
+    },
+    "runtime-producers-custody-first.log": {
+      "sha256": "a2f7ba6d5e6efb59a99c01c5515c2dd41106d1cb1129a2152fffe121b3e7b933",
+      "bytes": 1181,
+      "stored": "runtime-producers-custody-first.log.gz",
+      "gzip_sha256": "0b3111d3b7352b118c6113789027bbb2e9233543b1078935b0a79a6d0a622520"
+    },
+    "runtime-producers-custody-second.log": {
+      "sha256": "5b62e423ce2ded56c76c21e13f126678517916de907870649abdecd5f35e96fe",
+      "bytes": 471,
+      "stored": "runtime-producers-custody-second.log.gz",
+      "gzip_sha256": "34553de9e5236503cb8f9d479e3d070053b40df9d128968b43c61eca2349bff1"
+    },
+    "runtime-producers-frame-current-main-negative.log": {
+      "sha256": "b8c3d7e031117171f44a5dc208734bd0c3264b6958d5a818aa58f93ed0329c89",
+      "bytes": 1826,
+      "stored": "runtime-producers-frame-current-main-negative.log.gz",
+      "gzip_sha256": "1db9eae46c87ab1d63eac7e26993ec7a61c61d80d225b3b5a44189a8a2e17a5e"
+    },
+    "runtime-producers-frame-custody.log": {
+      "sha256": "a9d9f2356560ac395f7fe1dd108dc2900b5aab10ae496ff218052474d87134a8",
+      "bytes": 2235,
+      "stored": "runtime-producers-frame-custody.log.gz",
+      "gzip_sha256": "454c5a5714e150136d08db890befe65d17596c2c79a4f174e1f1203af7f32ff7"
+    },
+    "runtime-producers-qualified-frame-cancellation.log": {
+      "sha256": "b1c2596a3441e8db75273912a16a4b34ee57c8d2cd3e858fc7f7555ed91ca81e",
+      "bytes": 626,
+      "stored": "runtime-producers-qualified-frame-cancellation.log.gz",
+      "gzip_sha256": "9a96be2b0c01d36eed8d74be14c40f66a297b808b1a30b571ebf842fdf9c5b29"
+    },
+    "runtime-producers-first-after.log": {
+      "sha256": "8cc4e6eded6f9fe06efc2b27f0bcba8751ba70d93efd33f98edff3fcecaad17d",
+      "bytes": 16799,
+      "stored": "runtime-producers-first-after.log.gz",
+      "gzip_sha256": "c8363e19855193c20a58127ff3b7cdfa62d4326d4491c307d2face2a6cb31421"
+    },
+    "runtime-producers-failed-controls-isolated.log": {
+      "sha256": "acae03838c12d1d264ccedf8ad85c4d9c4bcbabe5201b4ee3d5683868979171c",
+      "bytes": 2145,
+      "stored": "runtime-producers-failed-controls-isolated.log.gz",
+      "gzip_sha256": "691caf93221d7dee3748059502431792bae443abdb250cf9529dea86a2af5529"
+    },
+    "runtime-producers-final-source.log": {
+      "sha256": "51c3f16e96d17458c842a7bbac46fe8ada3f84240f61a4d0e9097b01ac6e12b6",
+      "bytes": 17415,
+      "stored": "runtime-producers-final-source.log.gz",
+      "gzip_sha256": "072c58f432a96b3a5398317b2c735fe67be685dae91ba39a992b10f8ce4a70ec"
+    },
+    "runtime-producers-final-watch.log": {
+      "sha256": "7e2b6648e382ea786ee3ab6d01341266624d2e803742a75c4cc459ca7fa16ad2",
+      "bytes": 1094,
+      "stored": "runtime-producers-final-watch.log.gz",
+      "gzip_sha256": "e14d6a036ac6704335c3817ffdcf8f7d6a91ffe2407a658198ceb8456993078f"
+    },
+    "runtime-producers-watch-diagnostics.log": {
+      "sha256": "b4dbfea14748de7cdffd3a7c0a84328995503666e3ff01a2052684221912fdf6",
+      "bytes": 1227,
+      "stored": "runtime-producers-watch-diagnostics.log.gz",
+      "gzip_sha256": "a4fcafa0c0c311fb025baf32a7e29844b12e57dd6e9e5f9325358872326fb164"
+    },
+    "runtime-producers-watch-event-diagnostics.log": {
+      "sha256": "96d38ae699922d934151295b576be0dc5beff69282a3f4d106c4195c9248ae08",
+      "bytes": 1301,
+      "stored": "runtime-producers-watch-event-diagnostics.log.gz",
+      "gzip_sha256": "e5e6a8302853394cfc7b74277562abfae57760352dc2a6ebe4cca4cc0d9a18ac"
+    },
+    "runtime-producers-watch-current-main-baseline.log": {
+      "sha256": "36a5326ee68159721958973c0d2752ba67ced20aac25a85e82ac7f9b3522079b",
+      "bytes": 1898,
+      "stored": "runtime-producers-watch-current-main-baseline.log.gz",
+      "gzip_sha256": "fdd6c82e65c8b9c0b5bcee4013240f0b9e83682642feea7db85a347690e1871c"
+    },
+    "runtime-producers-final-qualified-source.log": {
+      "sha256": "9b5662174dd26926e3f6b8a53a6d0d54d2097635726e19dbd7b00929ae4be02b",
+      "bytes": 24044,
+      "stored": "runtime-producers-final-qualified-source.log.gz",
+      "gzip_sha256": "3ad78bce0dd11b1b351f7c0ffffdd972de17869285f509c5adf22babb2cd817f"
+    },
+    "runtime-producers-final-qualified-authority.log": {
+      "sha256": "cac13b1e22467dee16075346c88dd5f65137dc1d5d3c835c23113cd2a02d77d4",
+      "bytes": 7145,
+      "stored": "runtime-producers-final-qualified-authority.log.gz",
+      "gzip_sha256": "d6a48b74af528987b394a5e442e5227015e874df2ff0b5fc77f14797381a1827"
+    },
+    "runtime-producers-final-selected-fixture.log": {
+      "sha256": "8015f23dbba602b546723e176b06b1d4ce0e1a6d993ba94cae93dacd993d9764",
+      "bytes": 474,
+      "stored": "runtime-producers-final-selected-fixture.log.gz",
+      "gzip_sha256": "ef27cf09a2f6cdb1eb3c57644241efac3eaa94521f4ba05074782983072c5290"
+    },
+    "runtime-producers-delivery-server-types.log": {
+      "sha256": "78b01f843159ac3701ebcb5ae2a33245ecd329e4752aba458848576994533eee",
+      "bytes": 239,
+      "stored": "runtime-producers-delivery-server-types.log.gz",
+      "gzip_sha256": "7751143575c780082f63fc689b5ac87b02a2a4884b48fe9a24a06f7732eb50ed"
+    },
+    "runtime-producers-qualified-server-types.log": {
+      "sha256": "2f6d83ee5a01dd844fe2fe973ece4d86fc9d93facc4fa14693c641df15bf2ba4",
+      "bytes": 516,
+      "stored": "runtime-producers-qualified-server-types.log.gz",
+      "gzip_sha256": "c4673106c3aff337f53edeab7d4a39c66a6af284b5592454dd777f8bc4e9fc4f"
+    },
+    "runtime-producers-final-server-qualified-types.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "stored": "runtime-producers-final-server-qualified-types.log.gz",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "runtime-producers-delivery-shared-types.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "stored": "runtime-producers-delivery-shared-types.log.gz",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "runtime-producers-final-current-electron-types.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "stored": "runtime-producers-final-current-electron-types.log.gz",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "runtime-producers-gateway-canonical-types.log": {
+      "sha256": "451d89e38a4681afac8d8d7a4e6c8f8cc48ec0d0325d630ccfcac0f31fb92d70",
+      "bytes": 23010,
+      "stored": "runtime-producers-gateway-canonical-types.log.gz",
+      "gzip_sha256": "5b2f2bb6dbb90f58861e285edebf858b7c48b6e8991eb8ec9b6ce97587d29af4"
+    },
+    "runtime-producers-gateway-qualified-types.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "stored": "runtime-producers-gateway-qualified-types.log.gz",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "runtime-producers-portable-gateway-types.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "stored": "runtime-producers-portable-gateway-types.log.gz",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "runtime-producers-qualified-native-loop.log": {
+      "sha256": "da7e93cb095d01c46e065a1204b2eceba0e5d317b40cb8c57720f015db4b655f",
+      "bytes": 576,
+      "stored": "runtime-producers-qualified-native-loop.log.gz",
+      "gzip_sha256": "bf8e0df2fa8117fca02c29e081c6b76ea2558c9d00dcf8f0af2aea101083f982"
+    },
+    "runtime-producers-qualified-native-loop.json": {
+      "sha256": "ad3a9fec2b2fc557a3af6508b32051f16662605040d0f06e56851aebf73c0e5e",
+      "bytes": 399311,
+      "stored": "runtime-producers-qualified-native-loop.json.gz",
+      "gzip_sha256": "ba4e0c04d6028da691dc59f491740ada2357cac1b15cc693c39964833ead2661"
+    },
+    "runtime-producers-native-loop.json": {
+      "sha256": "2c19eac9255a856dd5d572121ee6ca41823904938f9c0a6c70260488a0c3615d",
+      "bytes": 405837,
+      "stored": "runtime-producers-native-loop.json.gz",
+      "gzip_sha256": "8be293d26a0c823b51dff14640f5b9e61e8ac9dbbd80db54597cfe8edaf7ff4c"
+    },
+    "runtime-producers-native-loop.log": {
+      "sha256": "b630030310cf054f11f39b27fc970a87caa56c55d0b603b9f0df6e0210b7941f",
+      "bytes": 576,
+      "stored": "runtime-producers-native-loop.log.gz",
+      "gzip_sha256": "69b211964b4be90639d3e4afc46fa3c3312f4fc928c6aa3735565fcc93a38d01"
+    },
+    "runtime-producers-final-watch-receipt.json": {
+      "sha256": "bda3ac21727f9c7bab96bd9b03b92a26a9d8b19b472dac91b68cb5b83dd56bbf",
+      "bytes": 2334,
+      "stored": "runtime-producers-final-watch-receipt.json.gz",
+      "gzip_sha256": "c600027dd1350eea04375bb0531e1a389ca8a8974a2fcaec6d5fd35a66686c70"
+    },
+    "runtime-watch-bun-control.json": {
+      "sha256": "18130e6959bbc66ab19f8241addee820c85c4d0512a0006acc857cff43049183",
+      "bytes": 1719,
+      "stored": "runtime-watch-bun-control.json.gz",
+      "gzip_sha256": "975bb9f6d1aafcbb6d43e4795acf546314fabf3aa395f4f7e9a26f0c236164bb"
+    },
+    "runtime-watch-node-control.json": {
+      "sha256": "5a711d92bcca0562fc28134ebc16349ab0d909c884e281198cded7b329eda6f4",
+      "bytes": 1320,
+      "stored": "runtime-watch-node-control.json.gz",
+      "gzip_sha256": "df75b578048945bcb0dfb030064dc76b3a437f2cca398b747224ad2783469b8b"
+    },
+    "runtime-watch-bun-burst-control.json": {
+      "sha256": "be2d59610be578d25bab93cf8754f98fa7e2007cb5f15fbc2ddb243526e58d81",
+      "bytes": 1426,
+      "stored": "runtime-watch-bun-burst-control.json.gz",
+      "gzip_sha256": "5fba38d081ba3bba6de0a8f4711b1e80de8691442fd5640d874f80dd6993b802"
+    },
+    "runtime-watch-node-burst-control.json": {
+      "sha256": "59522c9e71860dae36b49c47c4b752937e21da6acad87a8d8a2ae817a6286f05",
+      "bytes": 1003,
+      "stored": "runtime-watch-node-burst-control.json.gz",
+      "gzip_sha256": "bca01f4afa2af8a25d8f14b6779e4e4a84f38ddfbe4a5461e43b5fc57c13ce76"
+    },
+    "runtime-producers-current-toolchain-native.log": {
+      "sha256": "bdf9b6f98b19d8e5fc52c5e915a643a450f017467c37cb56f83fc2860f555eaf",
+      "bytes": 5991,
+      "stored": "runtime-producers-current-toolchain-native.log.gz",
+      "gzip_sha256": "84be91a1795ed1fd310e614952735a4d0cc9115d71510fd207bcaded5ecd25f7"
+    },
+    "runtime-producers-current-toolchain-shared-types.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "stored": "runtime-producers-current-toolchain-shared-types.log.gz",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "runtime-producers-current-toolchain-server-types.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "stored": "runtime-producers-current-toolchain-server-types.log.gz",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    }
+  },
+  "limits": [
+    "Bounded local qualification, not installed-app/global native/provider/cloud/Windows release acceptance.",
+    "Native SDK uses an isolated fixture provider; actual transformed context equality does not prove HTTP wire serialization or exact provider tokenization.",
+    "Controlled same-frame method tests supplement real NDJSON cancellation/source-proxy and account boundaries; they do not claim a launched native child.",
+    "Watcher3s local measurements do not establish a global latency budget; producer64MiB/emitter-count quotas are not exercised by the bounded decoder probe.",
+    "Gateway canonical standalone package checker remains non-green for unrelated existing enums/exports/composite configuration; scoped current strict checker is explicit.",
+    "No branch deletion or remote main merge by this worker. Parent owns review and merge."
+  ],
+  "delivery_state": "qualified_candidate_not_yet_published_or_merged",
+  "main_reconciliation": {
+    "last_incoming": "f1001ca8888e4afb10da9db48c3747f403108c93",
+    "owned_14_blobs_changed_since_qualified_source": [],
+    "all_source_hashes_rechecked": true,
+    "reason_no_broad_unchanged_repeats": "Main1492 renderer independent +1494 identical slug +1495 managed manager/runner +1472 architecture docs union. Own14sourceblobs unchanged; refreshed Shared/Server and37actual relevant native account/bootstrap/proxy controls. Prior exact Electron/scopedGateway gate retained, not relabelled as new global native acceptance."
+  }
+}

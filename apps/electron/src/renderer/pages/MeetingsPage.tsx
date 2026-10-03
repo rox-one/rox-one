@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
+import { formatHotkeyDisplay } from '@/lib/platform'
 import {
   Badge,
   Button,
@@ -365,7 +366,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   )
 
   const bannerNode = banner ? (
-    <div role="alert" data-testid="meetings-error" className="mx-3 mt-2 flex items-start gap-2 rounded-[6px] bg-destructive/10 px-2 py-1 text-[12px] text-destructive">
+    <div role="alert" data-testid="meetings-error" className="mx-3 mt-2 flex items-start gap-2 rounded-[var(--radius-card)] bg-destructive/10 px-2 py-1 text-[12px] text-destructive">
       <span className="min-w-0 flex-1">{t(ERROR_KEYS[banner] ?? 'meetings.local.err.generic', { code: banner })}</span>
       <button type="button" aria-label={t('common.close')} className="shrink-0 hover:underline" onClick={() => setBanner(null)}>×</button>
     </div>
@@ -406,12 +407,12 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
       />
       {planning ? (
         <form className="mx-3 mt-1 flex items-center gap-2" data-testid="meetings-plan-form" onSubmit={(e) => { e.preventDefault(); void handlePlan() }}>
-          <input autoFocus value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} placeholder={t('meetings.local.planTitle')} aria-label={t('meetings.local.planTitle')} className="h-7 min-w-0 flex-1 rounded-[6px] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted" />
-          <input type="datetime-local" value={planAt} onChange={(e) => setPlanAt(e.target.value)} aria-label={t('meetings.local.planAt')} className="h-7 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px] outline-none" />
+          <input autoFocus value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} placeholder={t('meetings.local.planTitle')} aria-label={t('meetings.local.planTitle')} className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted" />
+          <input type="datetime-local" value={planAt} onChange={(e) => setPlanAt(e.target.value)} aria-label={t('meetings.local.planAt')} className="h-7 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 text-[12px] outline-none" />
           <Button type="submit" disabled={!planTitle.trim() || planningPending}>{t('meetings.screen.add')}</Button>
         </form>
       ) : null}
-      <div className="mx-3 mt-1 flex items-center gap-2 rounded-[6px] bg-foreground/[0.05] px-2" data-testid="meetings-search">
+      <div className="mx-3 mt-1 flex items-center gap-2 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2" data-testid="meetings-search">
         <span aria-hidden className="text-text-muted">⌕</span>
         <input
           ref={searchRef}
@@ -423,7 +424,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
           onKeyDown={(event) => { if (event.key === 'Escape') setQuery('') }}
           className="h-7 min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-text-muted"
         />
-        {query ? <button type="button" className="text-[11px] text-text-muted hover:text-foreground" onClick={() => setQuery('')}>{t('meetings.screen.clearSearch')}</button> : <span className="text-[11px] text-text-muted">⌘F</span>}
+        {query ? <button type="button" className="text-[11px] text-text-muted hover:text-foreground" onClick={() => setQuery('')}>{t('meetings.screen.clearSearch')}</button> : <span className="text-[11px] text-text-muted">{formatHotkeyDisplay('mod+f')}</span>}
       </div>
       {bannerNode}
       <div ref={listTarget} role="listbox" aria-label={t('meetings.title')} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="meetings-list">

@@ -1,0 +1,240 @@
+{
+  "task_id": "source_review",
+  "attempt_id": "28586c49ffa159b4e2a4d554df46b9e0",
+  "packet_hash": "2ad67e8072153eaf29a7785d31cc91b584afa336883eb3a9d2e02abcaf1526e3",
+  "request_id": "ui001-full-integration-e61c84b1",
+  "recordedAt": "2026-10-03T19:40:12.749732+00:00",
+  "scope": "Five toolchain conflict semantic union in new final worktree; no GitHub/native/provider work",
+  "checkout": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+  "inputHead": "5836daa5b1f8bb10a828febf30a06790e4705ea3",
+  "mergeHead": "5211746270f5005d551ddc103970714520b25b67",
+  "frozenPreviousCheckout": {
+    "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-main-e61c84b1",
+    "written": false,
+    "fullRunQualification": "Lead reports original run1841 stopped at101 due OS Keychain despite private HOME; no claim of all-suite green"
+  },
+  "codegraphPresent": false,
+  "sourceWritesCompleted": true,
+  "stagedOnlyOwnedPaths": [
+    "packages/shared/src/toolchain/installer.ts",
+    "packages/shared/src/toolchain/manager.ts",
+    "packages/shared/src/toolchain/__tests__/generated-readiness.test.ts",
+    "packages/shared/src/toolchain/__tests__/kinds.test.ts",
+    "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts"
+  ],
+  "sourcePaths": [
+    {
+      "path": "packages/shared/src/toolchain/installer.ts",
+      "sha256": "96ba1b0b0ec2432712cd0a38941c27ec8b6db545af51fdeab43a953fc01c3e2e",
+      "bytes": 31581,
+      "stagedBytesMatch": true
+    },
+    {
+      "path": "packages/shared/src/toolchain/manager.ts",
+      "sha256": "62d787fea302a94618e4a5ee629d14a0867c9d7e057ed22e2932c10166f9b983",
+      "bytes": 46131,
+      "stagedBytesMatch": true
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/generated-readiness.test.ts",
+      "sha256": "ffda539bc14f8de0d64b0c574ad2186286f608278eb2e74af942855488aa57bd",
+      "bytes": 9151,
+      "stagedBytesMatch": true
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/kinds.test.ts",
+      "sha256": "b9839f018b01272a2bfb6709b486ffa316d4e276ad380533efe81cacc06b5320",
+      "bytes": 20563,
+      "stagedBytesMatch": true
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts",
+      "sha256": "b919b4582bf2f553e5b60eb8e711f3cd86bd1b6b6dd3d96560132f2c69f3b1aa",
+      "bytes": 13961,
+      "stagedBytesMatch": true
+    }
+  ],
+  "semantics": [
+    "Incoming installer retained: permanent dereferenced frozen source/dependencies, private global manifest/cwd/env, wx completion marker after successful global install, temporary checkout cleanup on success and failure.",
+    "Our async manager readiness/adoption preserved: matching installed version and source pin; containment of source/launcher; current selects same real version; complete pinned Windows physical-copy fallback accepted; pre-flip validation independent of current.",
+    "Incoming readInstallIdentity union: bounded regular marker/HEAD opened with no-follow/nonblocking and identity checks; linked marker/HEAD and nonregular or linked frozen lock rejected.",
+    "All incoming recovery security, partial-publication and wrong-current cases retained alongside actual old CLI/current repair/reload proof and complete Windows-copy pin negatives.",
+    "Generated positive fixtures contain real retained source identity/lock/declared launcher/completion receipt; incoming extra two-launcher missing assertion retained; no existing assertion or skip removed."
+  ],
+  "verification": {
+    "toolchainFinal": {
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "packages/shared/src/toolchain/__tests__"
+      ],
+      "exitCode": 0,
+      "bunVersion": "1.3.14",
+      "nodeVersion": "v24.21.0",
+      "sourceBefore": {
+        "packages/shared/src/toolchain/installer.ts": "96ba1b0b0ec2432712cd0a38941c27ec8b6db545af51fdeab43a953fc01c3e2e",
+        "packages/shared/src/toolchain/manager.ts": "62d787fea302a94618e4a5ee629d14a0867c9d7e057ed22e2932c10166f9b983",
+        "packages/shared/src/toolchain/__tests__/generated-readiness.test.ts": "ffda539bc14f8de0d64b0c574ad2186286f608278eb2e74af942855488aa57bd",
+        "packages/shared/src/toolchain/__tests__/kinds.test.ts": "b9839f018b01272a2bfb6709b486ffa316d4e276ad380533efe81cacc06b5320",
+        "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts": "b919b4582bf2f553e5b60eb8e711f3cd86bd1b6b6dd3d96560132f2c69f3b1aa",
+        "scripts/test-all.ts": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a"
+      },
+      "sourceAfter": {
+        "packages/shared/src/toolchain/installer.ts": "96ba1b0b0ec2432712cd0a38941c27ec8b6db545af51fdeab43a953fc01c3e2e",
+        "packages/shared/src/toolchain/manager.ts": "62d787fea302a94618e4a5ee629d14a0867c9d7e057ed22e2932c10166f9b983",
+        "packages/shared/src/toolchain/__tests__/generated-readiness.test.ts": "ffda539bc14f8de0d64b0c574ad2186286f608278eb2e74af942855488aa57bd",
+        "packages/shared/src/toolchain/__tests__/kinds.test.ts": "b9839f018b01272a2bfb6709b486ffa316d4e276ad380533efe81cacc06b5320",
+        "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts": "b919b4582bf2f553e5b60eb8e711f3cd86bd1b6b6dd3d96560132f2c69f3b1aa",
+        "scripts/test-all.ts": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a"
+      },
+      "allSourceStable": true,
+      "head": "5836daa5b1f8bb10a828febf30a06790e4705ea3",
+      "mergeHead": "5211746270f5005d551ddc103970714520b25b67",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/toolchain-merge-521/toolchain-final.log",
+      "passes": 131,
+      "skips": 3,
+      "failures": 0,
+      "assertions": 2248,
+      "cases": 134,
+      "files": 15,
+      "skippedCases": [
+        "launches installer-provisioned node and npx companions through native children",
+        "invokes npm-cli.js through sibling node.exe rather than spawning npm.cmd",
+        "runs managed npm installation under plain Node without a shell"
+      ]
+    },
+    "sharedTypecheck": {
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node24/node_modules/.bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "packages/shared/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/toolchain-merge-521/shared-tsc-final.log"
+    },
+    "identityNegativeControl": {
+      "before": {
+        "runtime": "v24.3.0",
+        "execPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/bun/bin/bun.exe",
+        "sourceHash": "802e4fbbc6733bf9e8dc803a91939601e0145978c2ae00a95a2fe879b642fa9e",
+        "observations": [
+          {
+            "corruption": "linked-marker",
+            "phase": "ready",
+            "expected": "missing"
+          },
+          {
+            "corruption": "linked-source-head",
+            "phase": "ready",
+            "expected": "missing"
+          },
+          {
+            "corruption": "linked-lock",
+            "phase": "ready",
+            "expected": "missing"
+          }
+        ],
+        "passed": false
+      },
+      "after": {
+        "runtime": "v24.3.0",
+        "execPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/bun/bin/bun.exe",
+        "sourceHash": "62d787fea302a94618e4a5ee629d14a0867c9d7e057ed22e2932c10166f9b983",
+        "observations": [
+          {
+            "corruption": "linked-marker",
+            "phase": "missing",
+            "expected": "missing"
+          },
+          {
+            "corruption": "linked-source-head",
+            "phase": "missing",
+            "expected": "missing"
+          },
+          {
+            "corruption": "linked-lock",
+            "phase": "missing",
+            "expected": "missing"
+          }
+        ],
+        "passed": true
+      },
+      "actualManagerStatusBefore": "ready for linked marker/HEAD/lock",
+      "actualManagerStatusAfter": "missing for all three",
+      "bunVersion": "1.3.14",
+      "note": "process.version in Bun control is Node compatibility v24.3.0; qualified Bun binary reports1.3.14. Explicit Node type/AST runtime is24.21.0."
+    },
+    "assertionContract": {
+      "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/toolchain-merge-521/assertion-contract.json",
+      "nodeVersion": "v24.21.0",
+      "typescriptVersion": "5.9.3",
+      "files": 15,
+      "immutableBaselineComparisons": 30,
+      "allCasesMatchersExpectedValuesSkipsDeadlinesPreserved": true,
+      "ownedTestsRawAssertionSubjectsPreserved": true,
+      "qualifiedCaptureException": "Only previously authorized actual acpx/installer stdout/exit capture changes normalize Response(pipe)/exited to durable Node broker stdout/exitCode; exact commands/environments/expectations retained. No such files edited in this scope."
+    },
+    "stagedDiffCheck": {
+      "command": [
+        "git",
+        "diff",
+        "--cached",
+        "--check",
+        "--",
+        "packages/shared/src/toolchain/installer.ts",
+        "packages/shared/src/toolchain/manager.ts",
+        "packages/shared/src/toolchain/__tests__/generated-readiness.test.ts",
+        "packages/shared/src/toolchain/__tests__/kinds.test.ts",
+        "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts"
+      ],
+      "exitCode": 0
+    }
+  },
+  "failureHistory": [
+    {
+      "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/toolchain-merge-521/conflict-history.json",
+      "result": "Original conflicts and every present Git stage retained; first capture attempt exited1 because AA test has no stage1; absence now explicit."
+    },
+    {
+      "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/toolchain-merge-521/incoming-security-before.log",
+      "result": "First Bun test attempt0pass1fail1error before cases due other owner runner conflict marker; never treated as product security negative."
+    },
+    {
+      "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/toolchain-merge-521/identity-before.log",
+      "result": "Actual old manager wrongly ready for3 external identity links; source hash802e preserved."
+    },
+    {
+      "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/toolchain-merge-521/assertion-contract-strict-subject-before.json",
+      "result": "Raw-subject all15-file AST initially flagged2 previously authorized capture fixtures; five owned paths pass raw-subject contract. Normalized only exact documented capture subjects, no matcher/value/skip/deadline change."
+    },
+    {
+      "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-main-e61c84b1/work/ui001-integration-scouts/toolchain-merge-79fa/result.json",
+      "result": "All prior installer/toolchain red histories retained in frozen old checkout."
+    },
+    {
+      "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-main-e61c84b1/work/ui001-integration-scouts/mcp-close-420/result.json",
+      "result": "Original standalone MCP29 remains5pass24fail18errors due Bun capture/setup;4 qualified Node transport recovery probes are bounded evidence only; MCP source unchanged."
+    }
+  ],
+  "supportingReadOnlyHashes": {
+    "scripts/test-all.ts": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a",
+    "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-isolation.test.ts": "410bd5ffa7285b4c374e9a72e8c472bfebbc0e13cbb466b67e63bef9ed855b2a",
+    "packages/shared/src/toolchain/__tests__/installer-git-npm.test.ts": "b4441f2f5c7e55c6d1a29ca21e86984e2ebbbd0b59fdf9d2831345aae8dacbe3"
+  },
+  "acceptanceLimits": [
+    "Three existing actual Windows-only cases remain skipped on macOS; configured Windows copy fixture is not installed Windows acceptance.",
+    "This proves toolchain union and shared typing in working/index source, not full UI001 native/browser/provider acceptance or complete suite qualification.",
+    "Lead retains commit/CI/build/native/merge/remote-readback; frozen old full-suite negative history and MCP original29 remain explicit.",
+    "If final runner source changes after captured hash, rerun capture-dependent qualification against that final source."
+  ],
+  "fullDoDClosed": false,
+  "runnerFinalWriterClosed": true,
+  "qualificationHistory": {
+    "earlierSuccessfulReceipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/toolchain-merge-521/result-before-runner-freeze.json",
+    "earlierReceiptSha256": "c52a8b9fa99c09d30c2acbc3f115726ddc892df953e02f66bc04f325dcb29198",
+    "earlierBoundRunnerHash": "fc0ef0acb61b26a89e96b5249778d50cd983293d3f72b35d681c0200e2aa84fc",
+    "finalReplay": "Same full folder and shared tsc repeated after runner owner closed source; all sources stable and runner hash062da464..."
+  }
+}

@@ -19,6 +19,7 @@ import {
 } from '@rox/core/tasks/personal'
 import { cn } from '@/lib/utils'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { formatHotkeyDisplay } from '@/lib/platform'
 import { Badge, Button, Card, SectionLabel, Tabs } from '@/components/mode-screen/ModeScreen'
 import { ConfirmDialog, Glyph, MiniCalendar, TaskCheckbox } from './parts'
 import type { TaskDetailDraft } from './use-task-detail-drafts'
@@ -150,7 +151,7 @@ export function TaskDetail(props: TaskDetailProps) {
     const session = link.kind === 'session' ? props.sessionMap.get(link.id) : undefined
     const label = session ? (session.name || session.preview || link.id) : (link.label || link.id)
     return (
-      <li key={`${link.kind}:${link.id}`} className="flex items-center gap-2 rounded-[6px] bg-foreground/[0.04] px-2 py-1.5">
+      <li key={`${link.kind}:${link.id}`} className="flex items-center gap-2 rounded-[var(--radius-control)] bg-foreground/[0.04] px-2 py-1.5">
         <span className="shrink-0 text-text-muted">{t(`tasks.linkKind.${link.kind}`)}</span>
         <button type="button" className="min-w-0 flex-1 truncate text-left hover:underline" onClick={() => props.onOpenSource(link)}>
           «{label}»
@@ -170,7 +171,7 @@ export function TaskDetail(props: TaskDetailProps) {
   return (
     <div className="flex flex-col px-5 py-4" data-testid="task-detail">
       {trashed ? (
-        <div className="mb-3 flex items-center gap-2 rounded-[8px] bg-destructive/10 px-3 py-2 text-[12px]" role="status" data-testid="task-trashed">
+        <div className="mb-3 flex items-center gap-2 rounded-[var(--radius-control)] bg-destructive/10 px-3 py-2 text-[12px]" role="status" data-testid="task-trashed">
           <span className="min-w-0 flex-1">{t('tasks.trash.inTrash')}</span>
           <Button onClick={() => mutate((current) => { current.restore(task.id) })}>{t('tasks.trash.restore')}</Button>
           <Button variant="danger" onClick={() => setConfirmPurge(true)}>{t('tasks.trash.deleteForever')}</Button>
@@ -222,7 +223,7 @@ export function TaskDetail(props: TaskDetailProps) {
           {editingNotes ? (
             <textarea
               ref={notesRef}
-              className="min-h-[96px] rounded-[6px] bg-foreground/[0.04] p-2 text-[13px] leading-5 outline-none focus:bg-foreground/[0.06]"
+              className="min-h-[96px] rounded-[var(--radius-card)] bg-foreground/[0.04] p-2 text-[13px] leading-5 outline-none focus:bg-foreground/[0.06]"
               value={notes}
               placeholder={t('tasks.notesPlaceholder')}
               onChange={(event) => update({ notes: mergeNotesMarkers(task.notes, event.target.value) })}
@@ -241,7 +242,7 @@ export function TaskDetail(props: TaskDetailProps) {
             <button
               type="button"
               onClick={() => setEditingNotes(true)}
-              className="min-h-[40px] rounded-[6px] px-2 py-1.5 text-left text-[13px] hover:bg-foreground/[0.04]"
+              className="min-h-[40px] rounded-[var(--radius-control)] px-2 py-1.5 text-left text-[13px] hover:bg-foreground/[0.04]"
               aria-label={t('tasks.notesEdit')}
               data-testid="task-notes"
             >
@@ -325,7 +326,7 @@ export function TaskDetail(props: TaskDetailProps) {
                 ))}
               </ul>
               <form className="mt-1 flex" onSubmit={(event) => { event.preventDefault(); if (!subDraft.trim()) return; mutate((current) => { current.addSubtask(task.id, subDraft.trim()) }); setSubDraft('') }}>
-                <input value={subDraft} onChange={(event) => setSubDraft(event.target.value)} placeholder={t('tasks.addSubtaskPlaceholder')} aria-label={t('tasks.addSubtaskPlaceholder')} className="h-7 min-w-0 flex-1 rounded-[6px] bg-foreground/[0.04] px-2 text-[12px] outline-none" />
+                <input value={subDraft} onChange={(event) => setSubDraft(event.target.value)} placeholder={t('tasks.addSubtaskPlaceholder')} aria-label={t('tasks.addSubtaskPlaceholder')} className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] bg-foreground/[0.04] px-2 text-[12px] outline-none" />
               </form>
             </>
           ) : null}
@@ -336,15 +337,15 @@ export function TaskDetail(props: TaskDetailProps) {
               <>
                 <Button className="min-w-0 max-w-full shrink" onClick={() => props.setPopover(props.popover === 'when' ? null : 'when')} data-testid="task-when" aria-expanded={props.popover === 'when'}>
                   {task.evening ? Glyph.moon : task.list === 'today' ? Glyph.star : null}
-                  <span className="min-w-0 truncate">{whenLabel}</span> <span className="shrink-0 opacity-60">⌘S</span>
+                  <span className="min-w-0 truncate">{whenLabel}</span> <span className="shrink-0 opacity-60">{formatHotkeyDisplay('mod+s')}</span>
                 </Button>
               </>
             ), 'task-field-when')}
             {props.popover === 'when' ? (
-              <div className="mt-1 w-[260px] max-w-full rounded-[8px] sm:ml-[120px] bg-foreground/[0.04] p-2" data-testid="task-when-popover">
+              <div className="mt-1 w-[260px] max-w-full rounded-[var(--radius-card)] sm:ml-[120px] bg-foreground/[0.04] p-2" data-testid="task-when-popover">
                 <div className="flex flex-col gap-0.5">
-                  <button type="button" className="flex h-7 items-center gap-2 rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'today' })}>{Glyph.star}{t('tasks.when.today')}<span className="ml-auto text-[11px] text-text-muted">⌘T</span></button>
-                  <button type="button" className="flex h-7 items-center gap-2 rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'evening' })}>{Glyph.moon}{t('tasks.when.evening')}<span className="ml-auto text-[11px] text-text-muted">⌘E</span></button>
+                  <button type="button" className="flex h-7 items-center gap-2 rounded-[var(--radius-control)] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'today' })}>{Glyph.star}{t('tasks.when.today')}<span className="ml-auto text-[11px] text-text-muted">{formatHotkeyDisplay('mod+t')}</span></button>
+                  <button type="button" className="flex h-7 items-center gap-2 rounded-[var(--radius-control)] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'evening' })}>{Glyph.moon}{t('tasks.when.evening')}<span className="ml-auto text-[11px] text-text-muted">{formatHotkeyDisplay('mod+e')}</span></button>
                 </div>
                 <div className="mt-1.5"><MiniCalendar value={task.startAt} now={now} locale={i18n.language} onPick={(at) => setWhen({ kind: 'date', at })} /></div>
                 <form className="mt-1.5" onSubmit={(event) => {
@@ -352,25 +353,25 @@ export function TaskDetail(props: TaskDetailProps) {
                   const at = parseDateExpression(nlDate, now)
                   if (at != null) setWhen({ kind: 'date', at })
                 }}>
-                  <input value={nlDate} onChange={(event) => setNlDate(event.target.value)} placeholder={t('tasks.when.nlPlaceholder')} aria-label={t('tasks.when.nlPlaceholder')} className="h-7 w-full rounded-[6px] bg-background px-2 text-[12px] outline-none placeholder:text-text-muted" />
+                  <input value={nlDate} onChange={(event) => setNlDate(event.target.value)} placeholder={t('tasks.when.nlPlaceholder')} aria-label={t('tasks.when.nlPlaceholder')} className="h-7 w-full rounded-[var(--radius-control)] bg-background px-2 text-[12px] outline-none placeholder:text-text-muted" />
                 </form>
                 <div className="mt-1.5 flex flex-col gap-0.5">
-                  <button type="button" className="flex h-7 items-center rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'anytime' })}>{t('tasks.when.anytime')}</button>
-                  <button type="button" className="flex h-7 items-center rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'someday' })}>{t('tasks.when.someday')}</button>
-                  <button type="button" className="flex h-7 items-center rounded-[6px] px-2 text-left text-text-muted hover:bg-foreground/[0.07]" onClick={() => setWhen(task.projectId || task.areaId ? { kind: 'anytime' } : { kind: 'inbox' })}>{t('tasks.when.clear')}</button>
+                  <button type="button" className="flex h-7 items-center rounded-[var(--radius-control)] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'anytime' })}>{t('tasks.when.anytime')}</button>
+                  <button type="button" className="flex h-7 items-center rounded-[var(--radius-control)] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'someday' })}>{t('tasks.when.someday')}</button>
+                  <button type="button" className="flex h-7 items-center rounded-[var(--radius-control)] px-2 text-left text-text-muted hover:bg-foreground/[0.07]" onClick={() => setWhen(task.projectId || task.areaId ? { kind: 'anytime' } : { kind: 'inbox' })}>{t('tasks.when.clear')}</button>
                 </div>
               </div>
             ) : null}
             {fieldRow(t('tasks.field.deadline'), (
               <>
                 <Button onClick={() => props.setPopover(props.popover === 'deadline' ? null : 'deadline')} data-testid="task-deadline" className={cn('min-w-0 max-w-full shrink', deadlineDays != null && deadlineDays <= 0 && 'text-destructive')}>
-                  {Glyph.flag}<span className="min-w-0 truncate">{deadlineLabel ?? t('tasks.deadline.add')}</span> <span className="shrink-0 opacity-60">⇧⌘D</span>
+                  {Glyph.flag}<span className="min-w-0 truncate">{deadlineLabel ?? t('tasks.deadline.add')}</span> <span className="shrink-0 opacity-60">{formatHotkeyDisplay('shift+mod+d')}</span>
                 </Button>
                 {task.dueAt != null ? <Button variant="ghost" onClick={() => mutate((current) => { current.setDeadline(task.id, undefined) })}>{t('tasks.clearDate')}</Button> : null}
               </>
             ), 'task-field-deadline')}
             {props.popover === 'deadline' ? (
-              <div className="mt-1 w-[260px] max-w-full rounded-[8px] sm:ml-[120px] bg-foreground/[0.04] p-2">
+              <div className="mt-1 w-[260px] max-w-full rounded-[var(--radius-card)] sm:ml-[120px] bg-foreground/[0.04] p-2">
                 <MiniCalendar value={task.dueAt} now={now} locale={i18n.language} onPick={(at) => { mutate((current) => { current.setDeadline(task.id, at) }); props.setPopover(null) }} />
               </div>
             ) : null}
@@ -378,7 +379,7 @@ export function TaskDetail(props: TaskDetailProps) {
               <>
                 <input
                   type="datetime-local"
-                  className="h-7 rounded-[6px] bg-foreground/[0.07] px-2 text-[12px] outline-none"
+                  className="h-7 rounded-[var(--radius-card)] bg-foreground/[0.07] px-2 text-[12px] outline-none"
                   aria-label={t('tasks.field.reminder')}
                   data-testid="task-reminder"
                   value={task.reminderAt != null ? toLocalInput(task.reminderAt) : ''}
@@ -403,7 +404,7 @@ export function TaskDetail(props: TaskDetailProps) {
                     type="button"
                     aria-pressed={(task.recurrence?.rule ?? 'none') === rule}
                     onClick={() => update({ recurrence: rule === 'none' ? undefined : { rule, interval: task.recurrence?.interval ?? 1, mode: task.recurrence?.mode, weekdays: rule === 'weekly' ? task.recurrence?.weekdays : undefined, timeZone: task.recurrence?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone } })}
-                    className={cn('h-6 rounded-[6px] px-2 text-[12px]', (task.recurrence?.rule ?? 'none') === rule ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary hover:bg-foreground/[0.09]')}
+                    className={cn('h-6 rounded-[var(--radius-control)] px-2 text-[12px]', (task.recurrence?.rule ?? 'none') === rule ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary hover:bg-foreground/[0.09]')}
                   >
                     {t(`tasks.recurrence.${rule}`)}
                   </button>
@@ -420,7 +421,7 @@ export function TaskDetail(props: TaskDetailProps) {
                   value={task.recurrence.interval}
                   onChange={(event) => update({ recurrence: { ...task.recurrence!, interval: Math.max(1, Number(event.target.value) || 1) } })}
                   aria-label={t('tasks.repeat.interval')}
-                  className="h-6 w-12 rounded-[6px] bg-foreground/[0.07] px-1.5 text-center outline-none"
+                  className="h-6 w-12 rounded-[var(--radius-card)] bg-foreground/[0.07] px-1.5 text-center outline-none"
                 />
                 <span>{t(`tasks.repeat.unit.${task.recurrence.rule}`, { count: task.recurrence.interval })}</span>
                 {task.recurrence.rule === 'weekly' ? (
@@ -437,7 +438,7 @@ export function TaskDetail(props: TaskDetailProps) {
                             if (on) set.delete(wd); else set.add(wd)
                             update({ recurrence: { ...task.recurrence!, weekdays: [...set].sort() } })
                           }}
-                          className={cn('size-6 rounded-[4px] text-[11px]', on ? 'bg-accent text-[var(--accent-foreground,white)]' : 'bg-foreground/[0.05] text-text-secondary')}
+                          className={cn('size-6 rounded-[var(--radius-control)] text-[11px]', on ? 'bg-accent text-[var(--accent-foreground,white)]' : 'bg-foreground/[0.05] text-text-secondary')}
                         >
                           {new Intl.DateTimeFormat(i18n.language, { weekday: 'narrow' }).format(new Date(2024, 0, wd === 0 ? 7 : wd))}
                         </button>
@@ -452,7 +453,7 @@ export function TaskDetail(props: TaskDetailProps) {
                       type="button"
                       aria-pressed={(task.recurrence!.mode ?? 'fixed') === mode}
                       onClick={() => update({ recurrence: { ...task.recurrence!, mode } })}
-                      className={cn('h-6 rounded-[6px] px-2', (task.recurrence!.mode ?? 'fixed') === mode ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary')}
+                      className={cn('h-6 rounded-[var(--radius-card)] px-2', (task.recurrence!.mode ?? 'fixed') === mode ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary')}
                     >
                       {t(`tasks.repeat.${mode}`)}
                     </button>
@@ -465,12 +466,12 @@ export function TaskDetail(props: TaskDetailProps) {
           <SectionLabel>{t('tasks.section.organize')}</SectionLabel>
           <div className="flex flex-col gap-0.5">
             {fieldRow(t('tasks.field.place'), (
-              <Button onClick={props.onOpenMove} data-testid="task-move">{props.placeLabel} <span className="opacity-60">⌘K</span></Button>
+              <Button onClick={props.onOpenMove} data-testid="task-move">{props.placeLabel} <span className="opacity-60">{formatHotkeyDisplay('mod+k')}</span></Button>
             ))}
             {fieldRow(t('tasks.tags'), (
               <>
                 {task.tags.map((tag) => (
-                  <span key={tag} className="inline-flex h-6 items-center gap-1 rounded-[6px] bg-foreground/[0.07] pl-2 pr-1 text-[12px]">
+                  <span key={tag} className="inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] bg-foreground/[0.07] pl-2 pr-1 text-[12px]">
                     #{tag}
                     <button type="button" aria-label={t('tasks.tagRemove', { tag })} className="px-0.5 text-text-muted hover:text-foreground" onClick={() => update({ tags: task.tags.filter((x) => x !== tag) })}>×</button>
                   </span>
@@ -491,12 +492,12 @@ export function TaskDetail(props: TaskDetailProps) {
                     placeholder={t('tasks.tagAdd')}
                     aria-label={t('tasks.tagAdd')}
                     data-testid="task-tag-input"
-                    className="h-6 w-[120px] rounded-[6px] bg-foreground/[0.04] px-2 text-[12px] outline-none placeholder:text-text-muted"
+                    className="h-6 w-[120px] rounded-[var(--radius-card)] bg-foreground/[0.04] px-2 text-[12px] outline-none placeholder:text-text-muted"
                   />
                   {tagSuggestions.length ? (
-                    <span className="absolute left-0 top-7 z-10 flex min-w-[140px] flex-col rounded-[6px] bg-background p-1 shadow-[0_6px_20px_rgba(0,0,0,0.2),0_0_0_1px_color-mix(in_oklch,var(--foreground)_12%,transparent)]">
+                    <span className="absolute left-0 top-7 z-10 flex min-w-[140px] flex-col rounded-[var(--radius-card)] bg-background p-1 shadow-[0_6px_20px_rgba(0,0,0,0.2),0_0_0_1px_color-mix(in_oklch,var(--foreground)_12%,transparent)]">
                       {tagSuggestions.map((tag) => (
-                        <button key={tag} type="button" onMouseDown={(event) => { event.preventDefault(); addTag(tag) }} className="h-6 rounded-[4px] px-2 text-left text-[12px] hover:bg-foreground/[0.07]">#{tag}</button>
+                        <button key={tag} type="button" onMouseDown={(event) => { event.preventDefault(); addTag(tag) }} className="h-6 rounded-[var(--radius-control)] px-2 text-left text-[12px] hover:bg-foreground/[0.07]">#{tag}</button>
                       ))}
                     </span>
                   ) : null}
@@ -511,7 +512,7 @@ export function TaskDetail(props: TaskDetailProps) {
                     type="button"
                     aria-pressed={task.priority === priority}
                     onClick={() => update({ priority })}
-                    className={cn('h-6 rounded-[6px] px-2 text-[12px]', task.priority === priority ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary hover:bg-foreground/[0.09]')}
+                    className={cn('h-6 rounded-[var(--radius-control)] px-2 text-[12px]', task.priority === priority ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary hover:bg-foreground/[0.09]')}
                   >
                     {t(`tasks.priority.${priority}`)}
                   </button>
@@ -519,7 +520,7 @@ export function TaskDetail(props: TaskDetailProps) {
               </span>
             ))}
             {source ? fieldRow(t('tasks.field.source'), (
-              <button type="button" onClick={() => props.onOpenSource(source)} className="inline-flex h-7 min-w-0 items-center gap-1.5 rounded-[6px] px-2 text-[12px] hover:bg-foreground/[0.06]" data-testid="task-source">
+              <button type="button" onClick={() => props.onOpenSource(source)} className="inline-flex h-7 min-w-0 items-center gap-1.5 rounded-[var(--radius-control)] px-2 text-[12px] hover:bg-foreground/[0.06]" data-testid="task-source">
                 {Glyph.link}
                 <span className="text-text-muted">{t(`tasks.linkKind.${source.kind}`)}</span>
                 <span className="min-w-0 truncate underline-offset-2 hover:underline">{source.label || source.id}</span>
@@ -533,7 +534,7 @@ export function TaskDetail(props: TaskDetailProps) {
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <span ref={delegateTarget} className="inline-flex" data-tour="tasks.delegate">
                 <Button variant="primary" data-testid="task-delegate" disabled={props.delegating || !props.canDelegate || trashed} onClick={props.onDelegate}>
-                  {props.delegating ? t('tasks.delegate.running') : t('tasks.delegate.action')} <span className="opacity-70">⌘↵</span>
+                  {props.delegating ? t('tasks.delegate.running') : t('tasks.delegate.action')} <span className="opacity-70">{formatHotkeyDisplay('mod+enter')}</span>
                 </Button>
               </span>
               {props.agentChip ? (
@@ -549,7 +550,7 @@ export function TaskDetail(props: TaskDetailProps) {
 
           {!trashed ? (
             <div className="mt-6 flex gap-1.5">
-              <Button variant="danger" onClick={props.onTrash} data-testid="task-trash">{t('tasks.trash.move')} <span className="opacity-60">⌘⌫</span></Button>
+              <Button variant="danger" onClick={props.onTrash} data-testid="task-trash">{t('tasks.trash.move')} <span className="opacity-60">{formatHotkeyDisplay('mod+backspace')}</span></Button>
             </div>
           ) : null}
         </>
@@ -562,13 +563,13 @@ export function TaskDetail(props: TaskDetailProps) {
           <SectionLabel>{t('tasks.addLink')}</SectionLabel>
           <div className="flex flex-wrap gap-1" role="group" aria-label={t('tasks.addLink')}>
             {LINK_KINDS.map((kind) => (
-              <button key={kind} type="button" aria-pressed={linkKind === kind} onClick={() => setLinkKind(kind)} className={cn('h-6 rounded-[6px] px-2 text-[12px]', linkKind === kind ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary')}>
+              <button key={kind} type="button" aria-pressed={linkKind === kind} onClick={() => setLinkKind(kind)} className={cn('h-6 rounded-[var(--radius-control)] px-2 text-[12px]', linkKind === kind ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary')}>
                 {t(`tasks.linkKind.${kind}`)}
               </button>
             ))}
           </div>
           <div className="mt-1.5 flex gap-1">
-            <input className="h-7 min-w-0 flex-1 rounded-[6px] bg-foreground/[0.04] px-2 text-[12px] outline-none" value={linkId} onChange={(event) => setLinkId(event.target.value)} placeholder={t('tasks.linkIdPlaceholder')} aria-label={t('tasks.linkIdPlaceholder')} />
+            <input className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] bg-foreground/[0.04] px-2 text-[12px] outline-none" value={linkId} onChange={(event) => setLinkId(event.target.value)} placeholder={t('tasks.linkIdPlaceholder')} aria-label={t('tasks.linkIdPlaceholder')} />
             <Button onClick={() => { if (!props.isDraftCurrent() || !linkId.trim()) return; const id = linkId.trim(); mutate((current) => { current.link(task.id, { kind: linkKind, id }) }); props.onDraftSubmit('linkId', linkId) }}>{t('tasks.addLink')}</Button>
           </div>
         </>

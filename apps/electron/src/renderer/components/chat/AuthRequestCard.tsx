@@ -350,7 +350,7 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
 
     return (
       <div
-        className={cn('rounded-[8px] overflow-hidden w-fit select-none', variantTextClass)}
+        className={cn('rounded-[var(--radius-card)] overflow-hidden w-fit select-none', variantTextClass)}
         style={{
           backgroundColor: variantBg,
           ...(shadowColor ? { '--shadow-color': shadowColor } as React.CSSProperties : {})
@@ -647,7 +647,7 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
 
   return (
     <div
-      className={cn('rounded-[8px] overflow-hidden', variantTextClass)}
+      className={cn('rounded-[var(--radius-card)] overflow-hidden', variantTextClass)}
       style={{
         backgroundColor: variantBg,
         ...(shadowColor ? { '--shadow-color': shadowColor } as React.CSSProperties : {})

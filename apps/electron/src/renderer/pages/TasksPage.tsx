@@ -65,6 +65,7 @@ import { useTourSignals, useTourTarget, type TourObservation } from '@/features/
 import { derivePersonalTaskSignals, tasksProjectsCapabilities } from '@/features/product-tour/adapters/work/tasks-projects'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
+import { formatHotkeyDisplay } from '@/lib/platform'
 import {
   Badge,
   Button,
@@ -614,8 +615,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const placeGroup = t('tasks.move.places')
     const out: MoveDestination[] = [
       { id: 'list:inbox', label: t('tasks.projection.inbox'), group: listGroup },
-      { id: 'when:today', label: t('tasks.when.today'), group: listGroup, hint: '⌘T' },
-      { id: 'when:evening', label: t('tasks.when.evening'), group: listGroup, hint: '⌘E' },
+      { id: 'when:today', label: t('tasks.when.today'), group: listGroup, hint: formatHotkeyDisplay('mod+t') },
+      { id: 'when:evening', label: t('tasks.when.evening'), group: listGroup, hint: formatHotkeyDisplay('mod+e') },
       { id: 'when:tomorrow', label: t('tasks.due.tomorrow'), group: listGroup },
       { id: 'when:anytime', label: t('tasks.when.anytime'), group: listGroup },
       { id: 'when:someday', label: t('tasks.when.someday'), group: listGroup },
@@ -837,7 +838,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       const sourceId = draggedId(event)
       if (sourceId) applyDestination(sourceId, dest)
     },
-    className: cn('rounded-[6px]', dropHint === `nav:${dest}` && 'bg-accent/20 ring-[1.5px] ring-inset ring-accent'),
+    className: cn('rounded-[var(--radius-card)]', dropHint === `nav:${dest}` && 'bg-accent/20 ring-[1.5px] ring-inset ring-accent'),
   })
 
   // ── Navigator ────────────────────────────────────────────────────────────
@@ -885,13 +886,13 @@ export default function TasksPage(props: TasksPageProps = {}) {
                 placeholder={navCreate === 'area' ? t('tasks.nav.newAreaPlaceholder') : t('tasks.nav.newProjectPlaceholder')}
                 aria-label={navCreate === 'area' ? t('tasks.nav.newArea') : t('tasks.nav.newProject')}
                 data-testid="tasks-nav-create-input"
-                className="h-7 w-full rounded-[6px] bg-foreground/[0.06] px-2 text-[12px] outline-none placeholder:text-text-muted"
+                className="h-7 w-full rounded-[var(--radius-card)] bg-foreground/[0.06] px-2 text-[12px] outline-none placeholder:text-text-muted"
               />
             </form>
           ) : (
             <div className="flex gap-1 px-1">
-              <button type="button" data-testid="tasks-new-project" onClick={() => setNavCreate('project')} className="h-7 min-w-0 flex-1 truncate rounded-[6px] px-2 text-left text-[12px] text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newProject')}</button>
-              <button type="button" data-testid="tasks-new-area" onClick={() => setNavCreate('area')} className="h-7 shrink-0 rounded-[6px] px-2 text-[12px] text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newArea')}</button>
+              <button type="button" data-testid="tasks-new-project" onClick={() => setNavCreate('project')} className="h-7 min-w-0 flex-1 truncate rounded-[var(--radius-control)] px-2 text-left text-[12px] text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newProject')}</button>
+              <button type="button" data-testid="tasks-new-area" onClick={() => setNavCreate('area')} className="h-7 shrink-0 rounded-[var(--radius-control)] px-2 text-[12px] text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newArea')}</button>
             </div>
           )}
         </div>
@@ -922,7 +923,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const renderInline = () => (
     <form
       key="inline"
-      className="mx-1.5 flex items-center gap-2 rounded-[6px] bg-accent/10 px-2 py-[5px]"
+      className="mx-1.5 flex items-center gap-2 rounded-[var(--radius-control)] bg-accent/10 px-2 py-[5px]"
       onSubmit={(event) => { event.preventDefault(); commitInline() }}
     >
       <TaskCheckbox checked={false} onToggle={() => {}} label={t('tasks.complete')} />
@@ -989,8 +990,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
           onClick={() => selectTask(task.id)}
           onDoubleClick={() => { selectTask(task.id); window.setTimeout(() => titleRef.current?.focus(), 0) }}
           className={cn(
-            'mx-1.5 flex cursor-default items-start gap-2 rounded-[6px] px-2 py-[5px] outline-none',
-            selectedRow ? 'relative bg-accent/15 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-l-[6px] before:bg-accent' : 'hover:bg-foreground/[0.04]',
+            'mx-1.5 flex cursor-default items-start gap-2 rounded-[var(--radius-card)] px-2 py-[5px] outline-none',
+            selectedRow ? 'relative bg-accent/15 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-l-[var(--radius-control)] before:bg-accent' : 'hover:bg-foreground/[0.04]',
           )}
         >
           <TaskCheckbox checked={done} pending={pending} cancelled={Boolean(task.cancelledAt)} onToggle={() => toggleComplete(task)} label={t('tasks.complete')} testId={`task-check-${task.id}`} />
@@ -1018,7 +1019,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
             ) : null}
           </div>
           {task.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="mt-[1px] inline-flex h-[18px] max-w-[96px] shrink-0 items-center truncate rounded-[4px] bg-foreground/[0.07] px-1.5 text-[11px] text-text-secondary">{tag}</span>
+            <span key={tag} className="mt-[1px] inline-flex h-[18px] max-w-[96px] shrink-0 items-center truncate rounded-[var(--radius-control)] bg-foreground/[0.07] px-1.5 text-[11px] text-text-secondary">{tag}</span>
           ))}
           {task.dueAt != null && !done ? (
             <span className={cn('mt-[1px] inline-flex h-[18px] shrink-0 items-center gap-1 text-[11px] tabular-nums', daysUntil(task.dueAt, now) <= 0 ? 'font-semibold text-destructive' : 'text-text-secondary')} title={`${t('tasks.field.deadline')}: ${dateFmt.format(task.dueAt)}`}>
@@ -1063,7 +1064,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         {section.subtitle ? <span className="text-[11px] text-text-muted">{section.subtitle}</span> : null}
         <span className="flex-1" />
         {heading ? (
-          <button type="button" onClick={() => setConfirm({ kind: 'removeHeading', id: heading.id })} className="rounded-[4px] px-1.5 text-[11px] text-text-muted opacity-0 hover:text-destructive focus:opacity-100 group-hover:opacity-100">{t('tasks.heading.remove')}</button>
+          <button type="button" onClick={() => setConfirm({ kind: 'removeHeading', id: heading.id })} className="rounded-[var(--radius-control)] px-1.5 text-[11px] text-text-muted opacity-0 hover:text-destructive focus:opacity-100 group-hover:opacity-100">{t('tasks.heading.remove')}</button>
         ) : null}
       </div>
     )
@@ -1179,7 +1180,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       ) : null}
       {view.kind !== 'agents' ? (
         <div className="flex items-center gap-2 px-3.5 pb-1.5">
-          <div className="flex h-7 min-w-0 flex-1 items-center gap-1.5 rounded-[6px] bg-foreground/[0.05] px-2">
+          <div className="flex h-7 min-w-0 flex-1 items-center gap-1.5 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2">
             <span className="text-text-muted">{Glyph.search}</span>
             <input
               ref={searchRef}
@@ -1200,7 +1201,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       {view.kind !== 'agents' && viewTags.length && !searching ? (
         <div className="flex flex-wrap gap-1 px-3.5 pb-1.5" role="group" aria-label={t('tasks.tagFilter')}>
           {viewTags.slice(0, 10).map((tag) => (
-            <button key={tag} type="button" aria-pressed={tagFilter === tag} onClick={() => setTagFilter((cur) => (cur === tag ? null : tag))} className={cn('h-[20px] rounded-[4px] px-1.5 text-[11px]', tagFilter === tag ? 'bg-accent text-accent-foreground' : 'bg-foreground/[0.06] text-text-secondary hover:text-foreground')}>
+            <button key={tag} type="button" aria-pressed={tagFilter === tag} onClick={() => setTagFilter((cur) => (cur === tag ? null : tag))} className={cn('h-[20px] rounded-[var(--radius-control)] px-1.5 text-[11px]', tagFilter === tag ? 'bg-accent text-accent-foreground' : 'bg-foreground/[0.06] text-text-secondary hover:text-foreground')}>
               {tag}
             </button>
           ))}
@@ -1216,7 +1217,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
             placeholder={t('tasks.quickEntryPlaceholder')}
             aria-label={t('tasks.newTask')}
             data-testid="tasks-quick-input"
-            className="h-7 min-w-0 flex-1 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted"
+            className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted"
           />
           <Button type="submit" data-testid="new-task-button">{t('tasks.newTask')}</Button>
         </form>
@@ -1238,7 +1239,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
               key={session.id}
               type="button"
               onClick={() => navigate(routes.view.allSessions(session.id))}
-              className="mx-1.5 flex w-[calc(100%-12px)] items-center gap-2 rounded-[6px] px-2 py-[5px] text-left hover:bg-foreground/[0.04]"
+              className="mx-1.5 flex w-[calc(100%-12px)] items-center gap-2 rounded-[var(--radius-control)] px-2 py-[5px] text-left hover:bg-foreground/[0.04]"
             >
               <span className="min-w-0 flex-1 truncate">{getSessionTitle(session as never)}</span>
               {session.sessionStatus ? <Badge tone="muted">{String(session.sessionStatus)}</Badge> : null}
@@ -1317,8 +1318,19 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }
 
   const shortcuts: Array<[string, string]> = [
-    ['⌘N', 'quick'], ['Space', 'complete'], ['↑ ↓', 'navigate'], ['Enter', 'edit'], ['⌘K', 'move'],
-    ['⌘T', 'today'], ['⌘E', 'evening'], ['⌘S', 'when'], ['⇧⌘D', 'deadline'], ['⌘D', 'duplicate'], ['⌥↑ ↓', 'reorder'], ['⌘⌫', 'trash'], ['A–Я', 'search'],
+    [formatHotkeyDisplay('mod+n'), 'quick'],
+    [formatHotkeyDisplay('space'), 'complete'],
+    ['↑ ↓', 'navigate'],
+    [formatHotkeyDisplay('enter'), 'edit'],
+    [formatHotkeyDisplay('mod+k'), 'move'],
+    [formatHotkeyDisplay('mod+t'), 'today'],
+    [formatHotkeyDisplay('mod+e'), 'evening'],
+    [formatHotkeyDisplay('mod+s'), 'when'],
+    [formatHotkeyDisplay('shift+mod+d'), 'deadline'],
+    [formatHotkeyDisplay('mod+d'), 'duplicate'],
+    [`${formatHotkeyDisplay('alt+up')} / ${formatHotkeyDisplay('alt+down')}`, 'reorder'],
+    [formatHotkeyDisplay('mod+backspace'), 'trash'],
+    ['A–Я', 'search'],
   ]
 
   const detail = selected ? (
@@ -1430,7 +1442,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
                 }}
               />
             </label>
-            <span className="hidden xl:inline">· {t('tasks.status.hint')}</span>
+            <span className="hidden xl:inline">· {t('tasks.status.hint', { new: formatHotkeyDisplay('mod+n'), move: formatHotkeyDisplay('mod+k') })}</span>
           </>
         )}
       />

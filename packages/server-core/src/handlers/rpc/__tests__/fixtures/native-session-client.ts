@@ -54,6 +54,7 @@ const canonical = join(directory, 'session-fixture.json')
 const persist = () => writeFileSync(canonical, JSON.stringify(sessions))
 persist()
 let writes = 0, created = 0, autoComplete = true
+let lastRuntimeLaunch: unknown
 const completionListeners = new Set<(event: SessionCompletionEvent) => void>()
 const lastCompletion = new Map<string, SessionCompletionEvent>()
 const emitCompletion = (event: SessionCompletionEvent) => { for (const listener of completionListeners) listener(event) }
@@ -94,7 +95,8 @@ const manager = {
     writes++; const message = sessions.find(session => session.id === id)!.messages.find(message => message.id === messageId)!
     message.annotations = message.annotations?.map(annotation => annotation.id === annotationId ? { ...annotation, ...patch } : annotation); persist()
   },
-  async sendMessage(id: string, text: string, _a: unknown, _sa: unknown, _o: unknown, _u: unknown, _v: unknown, ack: (id: string) => void) {
+  async sendMessage(id: string, text: string, _a: unknown, _sa: unknown, _o: unknown, _u: unknown, _v: unknown, ack: (id: string) => void, context?: { runtimeLaunch?: unknown }) {
+    lastRuntimeLaunch = context?.runtimeLaunch
     writes++; const session = sessions.find(session => session.id === id)!
     const message = { id: `sent-${writes}`, role: 'user' as const, content: text, timestamp: 3 }; session.messages.push(message); persist(); ack(message.id)
     const reply = { id: `reply-${writes}`, role: 'assistant' as const, content: 'Synthetic completed reply', timestamp: 4 }
@@ -233,7 +235,9 @@ try {
     await a.invoke(RPC_CHANNELS.sessions.COMMAND, 'session-0', { type: 'updateAnnotation', messageId: 'user-0', annotationId: 'like', patch: { status: 'resolved', createdBy: { id: outsider.principal.subject }, meta: { password: 'host-private-forgery' } } })
     const liked = sessions[0]!.messages[0]!.annotations![0]!; assert.equal(liked.status, 'resolved'); assert.equal(liked.body[0]!.type, 'tag'); assert.equal(liked.createdBy!.id, writer.principal.subject)
     await a.invoke(RPC_CHANNELS.sessions.COMMAND, 'session-0', { type: 'removeAnnotation', messageId: 'user-0', annotationId: 'like' }); assert.equal(sessions[0]!.messages[0]!.annotations!.length, 0)
-    const sent = await a.invoke(RPC_CHANNELS.sessions.SEND_MESSAGE, 'session-0', 'new own message'); assert.equal(sent.accepted, true); await barrier(a)
+    const sent = await a.invoke(RPC_CHANNELS.sessions.SEND_MESSAGE, 'session-0', 'new own message', undefined, undefined,
+      { runtimeLaunch: { kind: 'scheduled', scheduleId: 'forged-host-schedule', timezone: 'Europe/Berlin' } })
+    assert.equal(sent.accepted, true); assert.equal(lastRuntimeLaunch, undefined); await barrier(a)
     assert(eventsA.some(e => e.type === 'user_message')); assert(eventsA.some(e => e.type === 'text_delta')); assert(eventsA.some(e => e.type === 'complete'))
     await a.invoke(RPC_CHANNELS.sessions.CANCEL, 'session-0'); await denied(() => b.invoke(RPC_CHANNELS.sessions.CANCEL, 'session-0'))
     assert(readFileSync(canonical, 'utf8').includes('new own message'))

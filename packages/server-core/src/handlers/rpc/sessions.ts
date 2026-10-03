@@ -11,6 +11,7 @@ import {
   type SessionEvent,
 } from '@rox/shared/protocol'
 import type { StoredAttachment, SessionMemoryMode } from '@rox/core/types'
+import { isRuntimeLaunch } from '@rox/core/runtime-trace'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import { perf } from '@rox/shared/utils'
 import { isValidThinkingLevel, THINKING_LEVEL_IDS } from '@rox/shared/agent/thinking-levels'
@@ -350,6 +351,10 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     const callerClientId = ctx.clientId
     const cloudCaller = ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER
     const roxExecutionContext = await peekRoxAccountAuthority()?.capture(cloudCaller)
+    // Native options were stripped above. Invalid producer telemetry cannot turn
+    // a generated dispatch into the exception for the user's original input.
+    const runtimeLaunch = options?.runtimeLaunch === undefined ? undefined
+      : isRuntimeLaunch(options.runtimeLaunch) ? options.runtimeLaunch : { kind: 'unknown' as const }
 
     return await new Promise<{ accepted: true; messageId: string }>((resolve, reject) => {
       let acked = false
@@ -366,7 +371,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       }
 
       sessionManager
-        .sendMessage(sessionId, message, attachments, storedAttachments, options, undefined, undefined, onAck, { callerClientId, roxExecutionContext,
+        .sendMessage(sessionId, message, attachments, storedAttachments, options, undefined, undefined, onAck, { callerClientId, roxExecutionContext, runtimeLaunch,
           nativeMemoryContext: nativeMemoryContext(ctx, deps, server, ctx.workspaceId!) })
         .then(() => {
           // sendMessage finished without firing onAck — should not happen in

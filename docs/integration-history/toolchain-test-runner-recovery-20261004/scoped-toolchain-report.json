@@ -1,0 +1,435 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "root": "/tmp/rox-branch-integration-20261003/infra-toolchain-runner-worktree",
+  "artifactDirectory": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM",
+  "manifestPath": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/manifest.json",
+  "reportPath": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/report.json",
+  "input": {
+    "head": "b91f9ef55405794f3f53bcc904066e3aaa06fe4a",
+    "trackedDiffSha256": "b408e3d3aec40d4c2658f53262f01e032cdf8c8d4b3f2a32ae9dcfe91658361d",
+    "manifestSha256": "3f5e8bd021a1f8f1f52e5387b0fd4a3fac5f0265f238bbc2503306f5ed027f60",
+    "runnerSha256": "76aab6dd06e541726a168bc687e68b77900b282e9c35d58c707f2521d203078d",
+    "bunVersion": "1.3.14",
+    "nodeVersion": "v22.23.3"
+  },
+  "startedAt": "2026-10-03T23:06:45.148Z",
+  "serial": true,
+  "bunTimeoutMs": 40000,
+  "wholeSuiteTimeoutMs": 120000,
+  "summary": {
+    "expected": 15,
+    "completed": 15,
+    "passed": 15,
+    "failed": 0,
+    "blocked": 0
+  },
+  "results": [
+    {
+      "path": "packages/shared/src/toolchain/__tests__/acpx.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/acpx.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-X7zZWr",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00001-22f62d0891bc/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00001-22f62d0891bc/output.log",
+      "logSha256": "a14f51cd8e677cae2a0036ae60ea86ad27a8c213476037ec0f0ac27f6b5823fd",
+      "durationMs": 333,
+      "testCounts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-acpx.test.ts.log.gz",
+      "portable_log_sha256": "5a81255695d2356f29af0e22629f7fdc4a65e3b326371ca81fc6fab4cd987118"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/craft-native.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/craft-native.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-YuUYoh",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00002-909f4de069c2/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00002-909f4de069c2/output.log",
+      "logSha256": "4c5dde3b0387e437cf388a5a4a5914ec0b26fd7e96cc5af586bf1991c0d84d40",
+      "durationMs": 107,
+      "testCounts": {
+        "pass": 4,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-craft-native.test.ts.log.gz",
+      "portable_log_sha256": "553484993df6d1195abc6c136faa40e6a2deba4206f09797e002f85aa93a5af4"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/downloader.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/downloader.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-ay4COG",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00003-cb59a8aea9e5/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00003-cb59a8aea9e5/output.log",
+      "logSha256": "b16ba42d61dded0eff31348cae5fe8cd4e5f59d2b1de8dded0f79205d509066d",
+      "durationMs": 128,
+      "testCounts": {
+        "pass": 5,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-downloader.test.ts.log.gz",
+      "portable_log_sha256": "26f64f95ba43f119da1529a6715a6d466a08eeaa085bf877ddf517c3a7d1c4e4"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/exec.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/exec.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-rdPI8M",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00004-6c80c5e6bbcf/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00004-6c80c5e6bbcf/output.log",
+      "logSha256": "273204e48c3e50f62ace6ae4c5b9ee0a57d3feadfb5c084a43db78a2e286ae4d",
+      "durationMs": 98,
+      "testCounts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-exec.test.ts.log.gz",
+      "portable_log_sha256": "4e1891daa304883ac28548fb79c632f9b065bd325f493d06b91e5d3d50a192bd"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/generated-readiness.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/generated-readiness.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-SFcVEs",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00005-d91e25859ec9/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00005-d91e25859ec9/output.log",
+      "logSha256": "8f8510d997860cb7be77bda90aa0bc668be5102d7575c1563b9edbfbb4aa52dd",
+      "durationMs": 311,
+      "testCounts": {
+        "pass": 12,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-generated-readiness.test.ts.log.gz",
+      "portable_log_sha256": "6468db25a1f7aa7de097e39102158e2ab88d8f746d1902a7455af5bfc862ca79"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/installer-git-npm.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/installer-git-npm.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-GMI4G1",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00006-c30ecd5e304f/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00006-c30ecd5e304f/output.log",
+      "logSha256": "4f8eadef8be0125b3ade3e6bb30e94c0779c67f6711d18242e65d907ff9f701e",
+      "durationMs": 163,
+      "testCounts": {
+        "pass": 5,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-installer-git-npm.test.ts.log.gz",
+      "portable_log_sha256": "b6a96ac15a6d1f1dafc2957fb0d89177454b67a6c3081540db70eb226f232fc3"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/installer.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/installer.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-XVa4u4",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00007-de88d6757de6/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00007-de88d6757de6/output.log",
+      "logSha256": "eecbaa9483f05a6578de7fc8d6eb51ff2d1a5dec8ce8fc3be3839e83c910da12",
+      "durationMs": 649,
+      "testCounts": {
+        "pass": 11,
+        "fail": 0,
+        "skip": 2
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-installer.test.ts.log.gz",
+      "portable_log_sha256": "d5aad516b2ab213427b6cffefa0a3eaacf20f2c51981b68fb926051bb405b459"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/kinds.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/kinds.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-iwGLSG",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00008-c3a857e2da7d/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00008-c3a857e2da7d/output.log",
+      "logSha256": "14e8106f8012f059a3e6119be560257b018119a64fbdf55348315e159908118d",
+      "durationMs": 330,
+      "testCounts": {
+        "pass": 15,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-kinds.test.ts.log.gz",
+      "portable_log_sha256": "dbee02326356913a89dbe00b5c8e72f3ce70efb58c0bf11a84570c22fd8cdeec"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/manager.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/manager.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-nc98MN",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00009-02fbcfc87359/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00009-02fbcfc87359/output.log",
+      "logSha256": "5d916c70302ec2140551899c32d5112cb6a83661c26d19d1952b5f087a8428bd",
+      "durationMs": 279,
+      "testCounts": {
+        "pass": 13,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-manager.test.ts.log.gz",
+      "portable_log_sha256": "a5775d0bdb71c9991acc213b2e64e07493ae41b2bcd685a7c39ad4251a7e428c"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/manifest.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/manifest.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-jM6eAE",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00010-3b8a17b363ec/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00010-3b8a17b363ec/output.log",
+      "logSha256": "23ef1cbf73c024f4bef37d94f712f3bba7fc89b8216176747bf71de1147957df",
+      "durationMs": 90,
+      "testCounts": {
+        "pass": 11,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-manifest.test.ts.log.gz",
+      "portable_log_sha256": "9afaa93dc6bc3efcbb63b41791dc2d77952e0d7b691fec81fb0cfa9e3474c6c3"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/openclaw.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/openclaw.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-lliYxK",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00011-5eae13e83f4b/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00011-5eae13e83f4b/output.log",
+      "logSha256": "da5dc3114fdbba8046f4de3cad890ba38a2c930c2149b254f6d203c6e6176618",
+      "durationMs": 100,
+      "testCounts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-openclaw.test.ts.log.gz",
+      "portable_log_sha256": "b4c2add09f1946efdc70dd3030530df145f4b6ca47f83e89706b3179a7885422"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/resolver.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/resolver.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-gbfZvQ",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00012-44e07ca72a16/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00012-44e07ca72a16/output.log",
+      "logSha256": "232754d8cd4d57f94b720fb760299c368a3cdbfe9b67afba4269ba7711953624",
+      "durationMs": 109,
+      "testCounts": {
+        "pass": 16,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-resolver.test.ts.log.gz",
+      "portable_log_sha256": "29d455135b24633895cad4cc5119b46429b0baa56a4633cc5dfcb803e62dcd7e"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-isolation.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-isolation.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-f6RPe7",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00013-c1269a0d82a5/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00013-c1269a0d82a5/output.log",
+      "logSha256": "66b4b9c2dfca75d5bd05f989655bf331dd76c490a5b50032daef38aba0e7cfad",
+      "durationMs": 220,
+      "testCounts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-rox-readiness-ui-001.git-npm-isolation.test.ts.log.gz",
+      "portable_log_sha256": "b1b967fdd318d65ddf7aa1c094ba6dbf6cf04dd3f29b5476e49efc58a6af2fa6"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-E332PT",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00014-3c50f374dea8/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00014-3c50f374dea8/output.log",
+      "logSha256": "5531c0e211e27829db4aabda235a2fc00de07b0f9d7008bd4ded0d26a443b849",
+      "durationMs": 1146,
+      "testCounts": {
+        "pass": 18,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-rox-readiness-ui-001.git-npm-recovery.test.ts.log.gz",
+      "portable_log_sha256": "df0b2e0f60dde95177d3bb71596d525e27266d1226f5c3108be7eeec7d6c9ff8"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/windows-bootstrap.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "command": [
+        "/private/tmp/rox-branch-integration-20261003/bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/toolchain/__tests__/windows-bootstrap.test.ts",
+        "--timeout",
+        "40000"
+      ],
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-8hSRse",
+      "homeRoot": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00015-64df84b4b333/home",
+      "log": "/tmp/rox-branch-integration-20261003/infra1448-toolchain-scoped-run/run-mSD9IM/00015-64df84b4b333/output.log",
+      "logSha256": "bd06bc92593c7392d8c094c09f5fa4959ca8e8ab6fe2c7ad9a79281d80041a3f",
+      "durationMs": 273,
+      "testCounts": {
+        "pass": 12,
+        "fail": 0,
+        "skip": 1
+      },
+      "signal": null,
+      "timedOut": false,
+      "portable_log": "logs/toolchain-windows-bootstrap.test.ts.log.gz",
+      "portable_log_sha256": "21e60d86dbe9aefee9587aac64f36ac6a4196422376ea772b1ee487295d345e2"
+    }
+  ],
+  "finishedAt": "2026-10-03T23:06:49.570Z"
+}

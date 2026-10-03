@@ -64,7 +64,7 @@ export async function initializeAuthenticatedWebTransport<Client extends Bootstr
   fetch: typeof fetch
   requestedWorkspace: string | null
   signal: AbortSignal
-  createAdapter(options: { serverUrl: string; workspaceId: string }): { api: ElectronAPI; client: Client }
+  createAdapter(options: { serverUrl: string; workspaceId: string; workspaceName?: string }): { api: ElectronAPI; client: Client }
 }): Promise<{ api: ElectronAPI; client: Client; bootstrap: AuthenticatedWebTransportBootstrap }> {
   const { signal } = options
   const readConfig = async (url: string) => {
@@ -79,9 +79,13 @@ export async function initializeAuthenticatedWebTransport<Client extends Bootstr
   const config = await readConfig('/api/config')
   const wsUrl = config && typeof config === 'object' ? (config as { wsUrl?: unknown }).wsUrl : undefined
   if (typeof wsUrl !== 'string' || !/^wss?:\/\//.test(wsUrl)) throw new Error('Server did not return a valid WebSocket URL')
-  const workspaceId = resolveDefaultWorkspace(await readConfig('/api/config/workspaces'), options.requestedWorkspace)
+  const workspaceConfig = await readConfig('/api/config/workspaces')
+  const workspaceId = resolveDefaultWorkspace(workspaceConfig, options.requestedWorkspace)
+  const summary = workspaceConfig && typeof workspaceConfig === 'object'
+    ? (workspaceConfig as { workspace?: { id?: unknown; name?: unknown } }).workspace : undefined
+  const workspaceName = summary?.id === workspaceId && typeof summary.name === 'string' ? summary.name : undefined
   assertActive(signal)
-  const { api, client } = options.createAdapter({ serverUrl: wsUrl, workspaceId })
+  const { api, client } = options.createAdapter({ serverUrl: wsUrl, workspaceId, workspaceName })
   try {
     client.connect()
     await waitForWorkspaceAck(client, workspaceId, signal)

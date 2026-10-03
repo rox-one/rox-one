@@ -153,7 +153,7 @@ export function RepositorySnapshotPanel({ workspaceId, projectId, workingDirecto
   const formatTime = (time: number) => new Intl.DateTimeFormat(i18n.resolvedLanguage, { dateStyle: 'medium', timeStyle: 'short' }).format(time)
 
   return (
-    <section className="space-y-4 rounded-xl border border-foreground/10 p-4" data-testid="repository-snapshot-panel" aria-labelledby="repository-snapshot-title" aria-busy={busy !== null}>
+    <section className="space-y-4 rounded-[var(--radius-card)] border border-foreground/10 p-4" data-testid="repository-snapshot-panel" aria-labelledby="repository-snapshot-title" aria-busy={busy !== null}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h3 id="repository-snapshot-title" className="flex items-center gap-2 text-sm font-semibold"><FolderGit2 className="size-4" aria-hidden />{t('codeIntelligence.repository.title')}</h3>

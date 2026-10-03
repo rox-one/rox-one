@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "failures": [
+    {
+      "id": "remote-2c96-public-context-gate",
+      "actualCheckout": "2c96d8d10e7439372d38bfd969a49495de76bc96",
+      "reportedCandidate": "e2bcc20",
+      "wholeTreeMatchesReportedCandidate": false,
+      "counts": {
+        "pass": 375,
+        "fail": 7,
+        "assertions": 1828
+      },
+      "cause": "The public rox/standard fixture had no trusted caller context. Production ROX_TRUSTED_ACCOUNT_REQUIRED occurs before the peer starts; ten generic negative assertions could falsely pass on that authorization error.",
+      "sourceEvidence": "OmpAgent.chatImpl/publicAccountCredential and prior fixture setup",
+      "qualifiedRemoteSourceReceipt": "outputs/UI-001-expanded-checkout-source-gate-ui-ci-e2bcc20.json"
+    },
+    {
+      "id": "isolated-baseline-first",
+      "sourceRevision": "790216a785189279c376f5b144f76dc2da97795b",
+      "counts": {
+        "pass": 10,
+        "fail": 7,
+        "assertions": 45
+      },
+      "observedBunExitCode": null,
+      "qualification": "First shell batch preserved failure output but did not capture inner Bun exit separately; subsequent exact baseline captured exit1.",
+      "log": "logs/expanded-omp-transport-isolated-red-790216a.log.gz"
+    },
+    {
+      "id": "isolated-baseline-qualified-exit",
+      "sourceRevision": "790216a785189279c376f5b144f76dc2da97795b",
+      "counts": {
+        "pass": 10,
+        "fail": 7,
+        "assertions": 45
+      },
+      "observedBunExitCode": 1,
+      "cause": "Missing trusted caller context; ten negatives were generic false positives.",
+      "receipt": "expanded-omp-transport-isolated-red-exit-790216a.json",
+      "log": "logs/expanded-omp-transport-isolated-red-exit-790216a.log.gz"
+    },
+    {
+      "id": "combined-790-outer-timeouts",
+      "sourceRevision": "790216a785189279c376f5b144f76dc2da97795b",
+      "observedParentExitCode": 1,
+      "childSummaries": [
+        {
+          "pass": 151,
+          "fail": 0,
+          "errors": 0,
+          "assertions": 637
+        },
+        {
+          "pass": 373,
+          "fail": 10,
+          "errors": 7,
+          "assertions": 1847
+        }
+      ],
+      "qualification": "All10 failing cases were marked5000ms outer case timeouts: six transport and four unchanged permission-mode tests. Seven late unhandled callback errors followed the timeout cascade. Final RPC sources child was not executed. No assertion failure from the original missing-context defect survives in the guarded final runs.",
+      "nativeLaunchObserved": true,
+      "providerCallsForThisFailedBatch": "unknown; no zero-provider-attempt claim",
+      "signalsSent": [],
+      "nativeChildAndOwnedParentsAbsentAtReadback": true,
+      "nativeObservationReceipt": "native-child-observation-790216a.json",
+      "receipt": "expanded-omp-transport-followup-790216a.json",
+      "log": "logs/expanded-omp-transport-combined-onboarding-790216a.log.gz",
+      "actualNativeOmpLaunched": true,
+      "providerAttempts": "unknown"
+    }
+  ]
+}

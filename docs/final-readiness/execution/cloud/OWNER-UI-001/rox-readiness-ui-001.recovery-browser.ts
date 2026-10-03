@@ -27,6 +27,7 @@ function read(method,ws,directory) {
 }
 window.electronAPI={
  getSources:(ws)=>read('sources',ws),getSkills:(ws,directory)=>read('skills',ws,directory),
+ getSkillDetails:(ws,slug,directory)=>read('skills',ws,directory).then(items=>items.find(item=>item.slug===slug)??null),
  getSourcePermissionsConfig:async()=>null,getWorkspaceSettings:async()=>({localMcpEnabled:false}),
  onSourcesChanged:(fn)=>{sourceListeners.add(fn);return()=>sourceListeners.delete(fn)},
  onSkillsChanged:(fn)=>{skillListeners.add(fn);return()=>skillListeners.delete(fn)}

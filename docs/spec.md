@@ -1,3 +1,11 @@
+## Current architecture and server-container recheck — resumed local scope
+
+Owner: architecture audit lead; source baseline `57871f492d1b21177ab767454d90395d72496b4e` (root 0.11.8). The user cancelled the 169-package / 445-leaf Cloud dispatch: no new Codex Cloud tasks or retries. Preserve historical plans as evidence, with this scope correction taking precedence.
+
+Deliver a Russian current-main architecture overview and exact 18-workspace dependency inventory; distinguish OMP product policy from retained drivers, PostgreSQL workspace identity from shared-subject headless WebUI auth, and passive runtime map from execution authority. Do not repeat merged #1400/#1420/#1424/#1461. Repair only proven Docker context/manifest/helper recipe gaps in an isolated branch; preserve all other worktrees and existing 625-task acceptance records.
+
+Acceptance: baseline absent-docs-site failure reproduced by actual BuildKit; all 18 workspace manifests and three root inputs copied byte-for-byte; synthetic private/stale markers excluded; missing required manifest rejected; documentation immutable references/acceptance fields validated. Full image build, modified helper execution inside that image, installed Windows/macOS and hosted provider/identity/recovery acceptance remain explicit pending gates.
+
 ## MCP connection deadline/privacy selective recovery — 2026-10-03
 
 Owner: pr_scout; integration lead owns merge. Adapt original PR1436 startup/health/list budgets and secret-free transport diagnostics through current McpConnection/CraftMcpClient, preserving embedded Qdrant shared leases, current config/cwd/env authority, per-source pool serialization and no tool replay. One total30s default budget covers local resolution, transport startup, initialization and health; caller budgets cancel only that lease. HTTP/SSE guarded fetch and pending SSE start observe lifetime/attempt cancellation; failed startup awaits actual child/socket teardown. Later discovery uses its remaining overall budget, never a fresh allowance. Retain HTTP status and redirect type for retry/auth classification, scrub configured credentials and all URL userinfo/query/fragment without retaining raw causes, bound diagnostics and replace source quadratic trailing punctuation regex with a linear scan. Actual validation subprocesses drop inherited blocked host credentials but allow explicit source env. Acceptance: real loopback HTTP/SSE sockets and real stdio children, total deadline clocks, EOF/stubborn teardown, current Qdrant other-lease continuity, pool no-replay/config/recovery controls, privacy adversarial cases, Shared/Electron types and main/preload build. Native Windows filesystem/install and real external providers remain separate.
@@ -584,6 +592,15 @@ Branch `codex/rox-ui-dev-loop-20260901` at `1f56af31d3658ee9880105361ad5312324f3
 The default legacy Markdown engine and official engine must preserve content across parse/edit/export/reopen. Recover the source's portable `:::rox-columns`/`:::rox-column` syntax with validated normalized widths, support the previous slash-menu `:::columns 2/3` aliases, and preserve Obsidian `[!spoiler]-`/`[!details]+` markers without escaping away their meaning. Fold preferences are scoped by workspace/document and separate from Markdown. Read-only callout/resize interactions cannot change document content. Preserve newer comments, mixed task-list handling, trailing nodes, controlled echoes and no-save authority flips. Labels exist in all 12 current locales. Source tests/builds establish bounded integration; native visual interaction acceptance remains separately verifiable.
 
 
+## UI-001 source repair and main integration — 2026-10-03
+
+The user authorized complete source repair and GitHub merge into main. See [continuation specification](final-readiness/execution/cloud/OWNER-UI-001/continuation-spec.md) for exact address preservation, workspace safety, executor isolation and owned worker dependencies. All original UI-001 requirements and platform acceptance remain unchanged.
+
+## UI-001: внешние ссылки и интеграция в main — 2026-10-03
+
+Владелец: `fix/ui-001-main-integration-20261003-7`. [UI-001 спецификация](final-readiness/execution/cloud/OWNER-UI-001/main-integration/spec.md) сохраняет исходную матрицу UI-001.1/UI-001.2 и явное разрешение пользователя на GitHub/merge. Другие разделы и рабочие копии сохраняются.
+
+
 # Credential locator boundary validation — 2026-10-03
 
 Owner: locator boundary-validation lead; independent reviewer: integration-status worker. User authorization includes source repair, GitHub delivery and merge into main. Initial reproduction base: `635fc495d02c3fe1380740444cb90cf4fbdb58d9`. PR #1407 independently delivered the same executable own-descriptor correction during this validation. PR #1408 preserves that production source and its 54 regressions, and adds 64 cases covering attachment, disk reload, persisted nonmutation, frozen records for all variants and ordinary Proxy get traps.
@@ -809,6 +826,86 @@ Owner: branch integration historical worker. Dependency: current native collecti
 Recover the strict local calendar-day check from preserved Golden source5def9ffd into the current Tasks schedule form, through its existing parseDateExpression port. ISO dates must round-trip the exact year/month/day; impossible dates return no schedule change or native write. Valid leap days retain local midnight. Current native task actor/workspace custody, CAS/ACK/readback, import/background barriers and Product Learning producers remain canonical. Owner: recent_features; dependency: current Tasks1456 and runtime main; no legacy CatalogPanel or alternate store.
 
 
+## Zed appearance reconciliation —2026-10-04
+
+Recover geometry0/4/6, chrome-only material, opaque reading surfaces and three licensed UI/code/terminal themes from PR1469 on current main. Preserve current navigation, native authority, task conversion, Product Learning refs, keyboard access, resize and workspace source errors. Existing saved themes survive; only a physically missing config seeds Nordfox. Cookie theme grants remain scoped to the authenticated current workspace with post-await withdrawal checks. Historical source native/WebUI receipts are not acceptance of this combined revision.
+
 ### Golden per-task form draft recovery — 2026-10-04
 
 Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
+
+
+Zed source addendum frozen at7379efcda6f5806b66672e236a1cc61bdffb4e00 includes compact fixed-content Home widgets, a flat mode switch and inspector tint matching the side panel. Adapt Home grid sizing while preserving current per-widget appearance and saved S/M/L layout ownership. Source release29e86 and installed/native reports remain historical.
+
+### Knowledge availability recovery — 2026-10-03
+
+- Owner: `pr_scout`; source #1436 `384843bfc4cf7d4a1f34c902a66a9a3198043c9f`. Recover its offline fast path through the current `KnowledgeNotebookTree` and `KnowledgeHome`, preserving native RPC authority, current Rox Notes routes, search, and saved-view operations.
+- Cache by API identity, explicit workspace and connection. Confirmed probes expire after 30 seconds; missing/error/timeout is unknown with at most one second of reuse. A three-second renderer budget does not cancel the native operation or certify a service is absent. Native changes invalidate once before mounted consumers refresh. Late invalidated responses cannot replace fresh entries.
+- Offline/unknown reads retain workspace-local views/envelopes and skip notebook/title calls. Render hides old-workspace rows immediately; request tickets prevent late event/workspace continuations from publishing rows or starting obsolete kernel reads. No new service, data store, installation CTA or authorization path is introduced.
+
+### 2026-10-04 — Подсказки клавиш по платформе (источник PR #1466)
+
+Tasks, Memory, Meetings, множественный выбор и домашние виджеты отображают Ctrl/Shift/Alt на Windows/Linux и символы Command/Option на macOS через единый форматтер. Реальные сочетания клавиш, нативная авторизация, подтверждения записи Tasks и черновики полей сохраняются. Владение: recent_features; зависимость: свежий main с Pocket SSO и Tasks drafts. Проверка: реальный компонент Tasks в Chromium на трех платформах, SSR Tasks/Memory/Meetings и паритет всех 12 локалей.
+
+## Notes source-path classification recovery — 2026-10-04
+
+Owner: historical branch worker; dependency: externally merged Notes1465 on2338adb95. Validate existing path components from the canonical Notes root toward the requested target before classifying absence. A file in place of a parent directory is a document authority change; a missing requested note remains NOT_FOUND only under a healthy authorized source. Symlinks, inaccessible sources, journal failures and permission revocation retain their existing refusal. This helper is read-only and creates no directory or credential. The temporary-file fixture uses the same canonical native root contract as NativeAuthority, including macOS temporary-directory aliases. Evidence: integration-history/note-read-parent-validation-20261004; bounded RPC/native-port/UI-callback checks do not claim installed Electron or OS identity acceptance.
+
+### OMP hidden Windows launch recovery — 2026-10-04
+
+- Owner: `pr_scout`; source #1436 `384843bfc4cf7d4a1f34c902a66a9a3198043c9f`. Set `windowsHide: true` at the current RPC and one-shot native OMP spawn boundaries, without restoring old external batch launchers or changing models, account generation, native policy, observer lifetime, stdin EOF or prompt argv.
+- Acceptance: both actual OmpAgent callers request hidden windows; literal prompt, private helper model/no-session and shell-free execution remain intact. Controlled protocol fixtures prove launch configuration, not native Windows console visibility or installed18.4.12 acceptance.
+
+
+
+
+### Native OMP launch cancellation recovery — 2026-10-04
+
+Owner recent_features. Recover source1464 through the current OmpAgent. Startup and helper preparation carry launch/account/model-domain generations before every asynchronous boundary; cancelled or destroyed work never spawns a late child. Preparation failures release ready ownership and allow a later valid retry. Managed Bun paths and literal native argv retain policy, source observers and Windows hidden-process options. Runtime guidance is translated in all twelve locales.
+
+## Runtime trace origin and privacy recovery — 2026-10-04
+
+Owner: historical_sweep; root reviews/merges. Preserve frozen #1444 c2e8f07b5cb8a1b1659781e1fe4dd4d0f0207727 and the current scoped read-only journal/own-descriptor privacy contract. Passive tool/provider/native/background observations bind to their captured run origin; reused IDs, late completions, failed begin and idle eviction cannot attribute old output to a successor. Ambiguity drops correlation and reports partial coverage. Persisted rows cannot widen workspace or ancestry scope. Secret redaction covers quoted and serialized environment/header credentials and masks secrets registered after storage during readback. Explicit artifact output refs project evidence without guessing completion from paths/text. Launch/output metadata is passive and grants no execution or credentials. Real SessionManager/gateway/TaskRunner/native producers are a separate pr_scout dependency; preserve current SSO suppliedExecution and captured authority binding. Renderer late additions are a separate historical dependency. This bounded collector qualification is 53 tests/247 assertions plus core/server-core Node22 types; installed/live provider/full runtime acceptance remains separate. Evidence: integration-history/runtime-trace-origin-recovery-20261004.
+
+## UI-001 qualified final integration — 2026-10-04
+
+Original UI-001.1 and UI-001.2 task objects are compared byte-semantically with input `76228cc33e44518e5fab5e59f5c754f4051d1e8c`. Requirements, DoD, Full functional verification and Test method remain unchanged. The current authorization includes complete source repair, GitHub publication and merge to main.
+
+Restore the requested workspace/entity/address through restart, malformed or missing targets, actual Back/Forward and concurrent workspace/remote-owner changes. A stale or foreign continuation cannot select an unrelated chat, write metadata to another owner, send, rename, delete or reopen an obsolete entity. Valid current callbacks still succeed. Geometry reads/writes and queued storage events retain bounded finite sizes and recover from refused storage.
+
+Qualification also repairs concrete prerequisites discovered by complete source-test execution: real Linux unreaped-run reconciliation, own transport-property validation, bounded secure-storage CLI calls, complete immutable test inventory and real Node process-tree capture, dedicated native test configuration and native startup diagnostics. A Windows state-owner check must use the actual Windows identity rather than a missing POSIX UID, retain foreign-owner refusal, and leave the original firstWindow deadline unchanged.
+
+The authoritative result is `result.json`, with immutable source hashes in `source-manifest-v3.json` and curated safe receipts in `verification/final-integration-20261004/`. Actual original full execution remains 1881 files /1775 passed /70 failed /36 blocked; each original log hash is verified and private raw logs are preserved. Separate qualified replays are not substituted into that completed result. Installed Windows10/11, macOS Retina/native overlay and actual hosted application acceptance remain explicit prerequisites, so `fullDoDClosed` remains false.
+
+## Late UI1448 runtime edges — 2026-10-04
+
+Owner root; source e572 frozen. Recover four production paths: own-property RPC serialization/admission, bounded OS credential-provider calls, conservative queued runner liveness and preservation of terminal outcomes during async probes, and static fingerprinted Product Learning CI build. Keep current account/immediateHistory/unavailable-workspace authority. Worker recent_features separately owns manager physical-copy and whole-suite runner custody; full native OS/cloud/CI DoD remains separate. Proof uses private synthetic providers/process probes plus actual local subprocess conformance.
+
+
+
+## Runtime Map context and navigation extension — 2026-10-04
+
+Owner historical_sweep; dependency merged collector1485 and current read-only Runtime RPC/ingress. Recover frozen #1444 c2e8 context groups using each observed agent/snapshot identity, safe public metadata export with scoped aliases, stable measured overview, lazy chunk retry without remounting chat, requested historic event selection and observed catalog lifecycle phases. Presentation and navigation never grant runtime actions or synthesize execution evidence. Preserve current SSO account/workspace ownership,1471 immediate-history lease release, Product Learning roots and all locale keys. Bounded qualification: actual renderer/journal19/0 including native Chromium200% zoom, mounted NavigationProvider39/0, projection/layout/catalog/link29/0, all12 locale/helper282/0, actual parser/routing34/0 (logger-only fixture), full Electron/WebUI types and current renderer build. Retain genuine grouped-context before failure and fixture/platform/browser failures. Evidence: integration-history/runtime-map-context-navigation-20261004. Actual producer custody and installed/live-provider acceptance remain separate.
+
+
+### Selected skill instructions custody recovery — 2026-10-04
+
+Owner recent_features; dependency: externally merged selected-detail1467 at89cb22c and current native request authority. Craft/OMP selected bodies and discovery metadata use one bounded opened-descriptor reader. File links stay inside the selected canonical directory; directory links retain their supported identity. Compare BigInt descriptor/leaf identity and every canonical ancestor before bytes and return. Refuse invalid selected reads and late revoked requests; preserve current SkillInfo ownership/read-only controls, managed tiers and metadata-only OMP lists.
+
+## Opaque route identity follow-up — 2026-10-04
+
+Owner root; depends on external1412/f058 runtime route recovery. Normalize published empty namespace aliases without folding repeated/trailing separators inside opaque Knowledge/run/terminal/diff/extension IDs. Keep the existing Notes filesystem alias, decode percent escapes once, preserve full panel query transport and view-only action denial. Current navigation/account/native authority stays intact; this is a focused identity repair to the newly merged shared boundary.
+
+### Управление runtime и изоляция тестов — 2026-10-04
+
+Владелец recent_features; источник поздних дополнений #1448 закреплён на e572bbdf0b6952b3a0274f1312f347157aee52d1. Физическая Windows-копия current признаётся готовой только вместе с проверенным каталогом той же версии, завершением установки, исходным commit, lock и разрешённым launcher. Остальные способы установки, managed18.4.12, SSO и native policy сохраняют текущих владельцев.
+
+Запускатель исполняет каждый тестовый файл в отдельном процессе и приватном HOME, сохраняет manifest/hash, журналы и дальнейшее покрытие после отказа. Независимый дедлайн ограничивает зависший процесс и его потомков; общий вывод ограничен 64MiB. Исходники до16MiB и журналы читаются через проверенный дескриптор с привязкой к canonical-предкам. Подмена предка и oversized source запрещены до чтения; переименование того же листового inode допускает исходный snapshot, который повторно проверяется перед исполнением. Квалификация ограничена изменёнными controls и всеми15 существующими toolchain-файлами; полный repository/native Windows release этим не принят.
+
+## Runtime actual producer custody recovery — 2026-10-04
+
+Owner pr_scout; frozen #1444 c2e8 producer paths depend on historical collector537caa. Preserve current account/native authorization and host Bash cancellation, managed18.4.12 policy, hidden child options and one-shot generation fences. SessionManager retains suppliedExecution as its third event argument and carries passive trace origin separately. Captured iterator/child/channel/scheduler provenance cannot be borrowed from a newer active prompt. Durable TaskRunner output/ref/message identity is captured after the authority write and before queued repair. Native read projection admits only observed original root user input; host workflow/header/task/verdict metadata remains private. Exact native lifecycle ids correlate task/eval children to actual parent tool spans; ambiguity refuses attribution. Transport cancellation reports unknown process termination, never a fabricated exit.
+
+Qualification requires actual current SessionManager/gateway/TaskRunner callers, isolated canonical readback, malicious credential and late/ambiguous callback controls, actual native SDK fixture provider context and current account/native/host process guards. No installed app, paid provider, Windows console or global runtime acceptance follows from this bounded recovery.
+
+Runtime producer evidence: `integration-history/runtime-actual-producers-recovery-20261004/verification.json`. Actual owned-fd directory-watch notification repair and reused host-frame permission/completion fences retain privacy and do not grant execution. Bounded local qualification is 94 producer cases, 48 current authority/MCP/native-launch cases, 3 incoming selected-fixture cases and exact strict type gates; native SDK mock-provider contexts are compared at the transformed SDK boundary. Parent-owned final merge and installed/live/native program acceptance remain separate.

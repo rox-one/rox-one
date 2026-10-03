@@ -16,7 +16,7 @@ const roots: string[] = []
 afterEach(async () => { for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true }) })
 
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), 'rox-qa-note-read-'))
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'rox-qa-note-read-')))
   roots.push(root)
   const entities = new Map<string, JournalEntitySnapshot>()
   let allowed = true

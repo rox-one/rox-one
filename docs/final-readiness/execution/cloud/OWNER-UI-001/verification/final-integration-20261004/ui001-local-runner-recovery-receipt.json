@@ -1,0 +1,60 @@
+{
+  "kind": "actual-local-runner-liveness-recovery",
+  "observedAt": "2026-10-03T21:07:58.357043+00:00",
+  "sourceBaseRevision": "02237c3874b2c1e31c46ddefdc4b74d255f94fb7",
+  "ownedPaths": {
+    "packages/cloud-runner/src/local-provider.ts": "33f0607206651427702ab80d8d6257433474712d43d590373aeef4c7644ad84d",
+    "packages/cloud-runner/src/__tests__/rox-readiness-ui-001.local-runner-recovery.test.ts": "fe5035cc871eb78025b908b95f9a8d7cbe28c2f0397327d27d3c174d4474ed64"
+  },
+  "runtime": {
+    "linux": "task UID501/tini; actual Bun1.3.14; Node24.21.0",
+    "mac": "Darwin arm64; Bun1.3.14; Node24.21.0"
+  },
+  "negativeControl": "A real Node parent blocks its own event loop while its actual child exits: /proc stateZ and kill(pid,0) both positively observed. Old provider staysqueued; current provider commitsfailed/runner_error, event once, reload samecanonical state. Controlled parent joined and fixtures removed.",
+  "validation": {
+    "originalLinuxGreen": {
+      "file": "ui001-local-runner-liveness-linux-green.log",
+      "sha256": "4a02e4f2cb148e5cbde453b47080f32fde645ec89a65045dc8d0d1353c2d0dbb",
+      "exitCode": 0,
+      "pass": 4,
+      "fail": 0
+    },
+    "actualZombieRed": {
+      "file": "ui001-local-runner-actual-zombie-red.log",
+      "sha256": "47def0e78323d4f0299118362ade097d329645575c068fff9f7166ee766d0a86",
+      "exitCode": 1,
+      "pass": 0,
+      "fail": 1
+    },
+    "actualZombieGreen": {
+      "file": "ui001-local-runner-actual-zombie-green.log",
+      "sha256": "6b8e80dd6ebcea0b3cb1f49290b9fddda025f5a31079b468187a45f4d8fc519e",
+      "exitCode": 0,
+      "pass": 1,
+      "fail": 0
+    },
+    "macOriginalGreen": {
+      "file": "ui001-final-local-provider-mac-original.log",
+      "sha256": "c1a5b6703f3329b01a42f3a3c6249cceb1eeb7287e7b577bcd59f9d6665d321e",
+      "exitCode": 0,
+      "pass": 4,
+      "fail": 0
+    },
+    "cloudRunnerTypecheck": {
+      "file": "ui001-final-cloud-runner-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exitCode": 0,
+      "pass": null,
+      "fail": null
+    }
+  },
+  "unchangedOriginalCases": 4,
+  "platformSpecificSkip": "Actual unreaped Linux zombie test skips on macOS; four original conformance/cancel/budget/crash cases pass on both hosts.",
+  "originalFailureRetained": {
+    "run": "run-epyQIv",
+    "path": "packages/cloud-runner/src/__tests__/local-provider.test.ts",
+    "pass": 3,
+    "fail": 1
+  },
+  "fullDoDClosed": false
+}

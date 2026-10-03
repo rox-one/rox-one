@@ -1,0 +1,203 @@
+{
+  "name": "rox-siri-light",
+  "displayName": "Siri Light",
+  "type": "light",
+  "colors": {
+    "editor.background": "#EFF1F5",
+    "editor.foreground": "#4d4f69",
+    "editor.selectionBackground": "#C7DEFF"
+  },
+  "settings": [
+    {
+      "scope": [
+        "entity.other.attribute-name"
+      ],
+      "settings": {
+        "foreground": "#846b2c"
+      },
+      "name": "Zed capture: attribute"
+    },
+    {
+      "scope": [
+        "constant.language.boolean"
+      ],
+      "settings": {
+        "foreground": "#c5060b"
+      },
+      "name": "Zed capture: boolean"
+    },
+    {
+      "scope": [
+        "comment"
+      ],
+      "settings": {
+        "foreground": "#6a6e78",
+        "fontStyle": "italic"
+      },
+      "name": "Zed capture: comment"
+    },
+    {
+      "scope": [
+        "comment.block.documentation",
+        "comment.line.documentation"
+      ],
+      "settings": {
+        "foreground": "#6a6e78",
+        "fontStyle": "italic"
+      },
+      "name": "Zed capture: comment.doc"
+    },
+    {
+      "scope": [
+        "constant"
+      ],
+      "settings": {
+        "foreground": "#c5060b"
+      },
+      "name": "Zed capture: constant"
+    },
+    {
+      "scope": [
+        "entity.name.function.constructor"
+      ],
+      "settings": {
+        "foreground": "#0433ff"
+      },
+      "name": "Zed capture: constructor"
+    },
+    {
+      "scope": [
+        "meta.embedded"
+      ],
+      "settings": {
+        "foreground": "#333333"
+      },
+      "name": "Zed capture: embedded"
+    },
+    {
+      "scope": [
+        "entity.name.function",
+        "support.function"
+      ],
+      "settings": {
+        "foreground": "#0000a2"
+      },
+      "name": "Zed capture: function"
+    },
+    {
+      "scope": [
+        "keyword",
+        "storage.type",
+        "storage.modifier"
+      ],
+      "settings": {
+        "foreground": "#0433ff",
+        "fontStyle": "italic"
+      },
+      "name": "Zed capture: keyword"
+    },
+    {
+      "scope": [
+        "constant.numeric"
+      ],
+      "settings": {
+        "foreground": "#0433ff"
+      },
+      "name": "Zed capture: number"
+    },
+    {
+      "scope": [
+        "string"
+      ],
+      "settings": {
+        "foreground": "#036a07"
+      },
+      "name": "Zed capture: string"
+    },
+    {
+      "scope": [
+        "constant.character.escape"
+      ],
+      "settings": {
+        "foreground": "#036a07"
+      },
+      "name": "Zed capture: string.escape"
+    },
+    {
+      "scope": [
+        "string.regexp"
+      ],
+      "settings": {
+        "foreground": "#036a07"
+      },
+      "name": "Zed capture: string.regex"
+    },
+    {
+      "scope": [
+        "string.other"
+      ],
+      "settings": {
+        "foreground": "#d21f07"
+      },
+      "name": "Zed capture: string.special"
+    },
+    {
+      "scope": [
+        "constant.other.symbol"
+      ],
+      "settings": {
+        "foreground": "#d21f07"
+      },
+      "name": "Zed capture: string.special.symbol"
+    },
+    {
+      "scope": [
+        "entity.name.tag"
+      ],
+      "settings": {
+        "foreground": "#0433ff"
+      },
+      "name": "Zed capture: tag"
+    },
+    {
+      "scope": [
+        "markup.raw"
+      ],
+      "settings": {
+        "foreground": "#036a07"
+      },
+      "name": "Zed capture: text.literal"
+    },
+    {
+      "scope": [
+        "entity.name.type",
+        "support.type",
+        "support.class"
+      ],
+      "settings": {
+        "foreground": "#6f42c1"
+      },
+      "name": "Zed capture: type"
+    },
+    {
+      "scope": [
+        "variable.other.property",
+        "support.variable.property",
+        "meta.object-literal.key"
+      ],
+      "settings": {
+        "foreground": "#333333"
+      },
+      "name": "Zed capture: property"
+    },
+    {
+      "scope": [
+        "variable"
+      ],
+      "settings": {
+        "foreground": "#333333"
+      },
+      "name": "Zed capture: variable"
+    }
+  ]
+}

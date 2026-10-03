@@ -1,12 +1,13 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { mkdtemp, rm, readFile, readdir, symlink } from 'node:fs/promises'
+import { mkdtemp, rm, readFile, readdir, symlink, appendFile, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { RuntimeTraceService, type RuntimeTraceSession } from './service'
 import { known, type RuntimeEvent } from '@rox/core/runtime-trace'
+import { clearRegisteredSecretValues, registerSecretValues } from '@rox/shared/secrets'
 
 const roots: string[] = []
-afterEach(async () => { await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))) })
+afterEach(async () => { clearRegisteredSecretValues(); await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))) })
 async function setup() {
   const root = await mkdtemp(join(tmpdir(), 'rox-runtime-service-')); roots.push(root)
   const sessions = new Map<string, RuntimeTraceSession>([
@@ -81,6 +82,141 @@ describe('runtime session collector', () => {
     expect(last?.rootRunId).not.toBe(next.rootRunId)
   })
 
+  it('pins reused tool and provider IDs to the exact iterator origin, including queued cancellation', async () => {
+    const { service, emitted } = await setup()
+    const old = await service.begin('parent', 'old')
+    const oldOptions = { structuredHostTerminals: true, originRun: old }
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'bash', toolUseId: 'reused-call', input: { command: 'printf old' }, turnId: 'omp-m-1' }, oldOptions)
+    const observation = { kind: 'terminal.started' as const, payload: { command: 'printf old', status: 'running' as const }, agentId: 'root', toolUseId: 'reused-call', sourceId: 'host:old-generation', sourceEventId: 'old-start', sourceSeq: 1, occurredAt: known(5, 'host-executor'), clockDomain: 'host', origin: 'observed' as const }
+    await service.observe('parent', observation, old)
+    await service.finish('parent', 'interrupted', old)
+    const next = await service.begin('parent', 'next')
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'bash', toolUseId: 'reused-call', input: { command: 'printf next' }, turnId: 'omp-m-1' }, { structuredHostTerminals: true, originRun: next })
+    await service.agentEvent('parent', { type: 'tool_result', toolUseId: 'reused-call', result: 'old result', turnId: 'omp-m-1' }, oldOptions)
+    await service.observe('parent', { ...observation, kind: 'trace.coverage', payload: { coverage: { state: 'partial', source: 'runtime', missing: ['unconfirmed-host-process-termination'] } }, sourceId: 'host:old-cancellation', sourceEventId: 'old-cancel' }, old)
+    // A previously pinned opaque producer ID also correlates late idle executor delivery exactly.
+    await service.observe('parent', { ...observation, kind: 'terminal.output', payload: { command: 'printf old', stdout: { text: 'late old stdout' }, status: 'running' }, sourceEventId: 'old-output', sourceSeq: 2 })
+    await service.publishMessage('parent', 'old-message', 'old answer', 'omp-m-1', false, old)
+    await service.publishMessage('parent', 'new-message', 'new answer', 'omp-m-1', false, next)
+    const starts = emitted.filter(event => event.kind === 'tool.started')
+    expect(starts.map(event => event.rootRunId)).toEqual([old.rootRunId, next.rootRunId])
+    expect(starts.map(event => event.spanId)).toEqual([`${old.runId}:tool:reused-call`, `${next.runId}:tool:reused-call`])
+    expect(emitted.find(event => event.kind === 'tool.completed')?.rootRunId).toBe(old.rootRunId)
+    expect(emitted.find(event => event.kind === 'trace.coverage')?.rootRunId).toBe(old.rootRunId)
+    expect(emitted.find(event => event.kind === 'terminal.output')?.rootRunId).toBe(old.rootRunId)
+    expect(emitted.find(event => event.messageId === 'old-message')?.rootRunId).toBe(old.rootRunId)
+    expect(emitted.find(event => event.messageId === 'new-message')?.rootRunId).toBe(next.rootRunId)
+    const before = emitted.length
+    await service.agentEvent('parent', { type: 'tool_result', toolUseId: 'reused-call', result: 'unscoped ambiguous' })
+    await service.publishMessage('parent', 'ambiguous-message', 'unscoped ambiguous', 'omp-m-1')
+    expect(emitted).toHaveLength(before)
+    expect((await service.getSnapshot({ sessionId: 'parent', workspaceId: 'ws', rootRunId: next.rootRunId })).coverage.missing).toContain('ambiguous-execution-origin')
+  })
+
+  it('treats a new tool start with a distinct turn as new and scopes precise terminal suppression by run', async () => {
+    const { service, emitted } = await setup()
+    const old = await service.begin('parent', 'old')
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'bash', toolUseId: 'reused-call', input: { command: 'printf old' }, turnId: 'old-turn' })
+    await service.observe('parent', { kind: 'terminal.completed', payload: { command: 'printf old', status: 'succeeded', exitCode: known(0, 'actual-executor') }, agentId: 'root', toolUseId: 'reused-call', sourceId: 'actual-old-executor', sourceEventId: 'done', sourceSeq: 1, occurredAt: known(5, 'host'), clockDomain: 'host', origin: 'observed' })
+    const next = await service.begin('parent', 'new')
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'bash', toolUseId: 'reused-call', input: { command: 'printf new' }, turnId: 'new-turn' })
+    await service.agentEvent('parent', { type: 'tool_result', toolUseId: 'reused-call', result: 'new output', turnId: 'new-turn' })
+    expect(emitted.filter(event => event.kind === 'tool.started').map(event => event.rootRunId)).toEqual([old.rootRunId, next.rootRunId])
+    expect(emitted.filter(event => event.kind === 'terminal.started').map(event => event.rootRunId)).toEqual([old.rootRunId, next.rootRunId])
+    expect(emitted.filter(event => event.kind === 'terminal.completed').map(event => event.rootRunId)).toEqual([old.rootRunId, next.rootRunId])
+  })
+
+  it('does not let an old iterator retry or completion change successor trace identity', async () => {
+    const { service, emitted } = await setup()
+    const old = await service.begin('parent', 'old')
+    const next = await service.begin('parent', 'new')
+    await service.agentEvent('parent', { type: 'retry', phase: 'active' }, { originRun: old })
+    expect(service.getActive('parent')?.runId).toBe(next.runId)
+    expect(emitted.at(-1)?.rootRunId).toBe(old.rootRunId)
+    await service.finish('parent', 'complete', old)
+    expect(emitted.at(-1)?.rootRunId).toBe(old.rootRunId)
+    expect((await service.getSnapshot({ sessionId: 'parent', workspaceId: 'ws', rootRunId: next.rootRunId })).runs.find(run => run.rootRunId === next.rootRunId)?.status).toBe('running')
+  })
+
+  it('retains actual idle background origins and drops a reused ambiguous task ID', async () => {
+    const { service, emitted } = await setup()
+    const old = await service.begin('parent', 'old')
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'task', toolUseId: 'old-task-tool', input: {} }, { originRun: old })
+    await service.agentEvent('parent', { type: 'task_backgrounded', toolUseId: 'old-task-tool', taskId: 'reused-background-id' }, { originRun: old })
+    const next = await service.begin('parent', 'new')
+    await service.agentEvent('parent', { type: 'task_completed', taskId: 'reused-background-id', summary: 'actual old completion', turnId: 'successor-delivery-turn' }, { originRun: next })
+    expect(emitted.at(-1)?.rootRunId).toBe(old.rootRunId)
+    expect(emitted.at(-1)?.providerTurnId).toBeUndefined()
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'task', toolUseId: 'new-task-tool', input: {} }, { originRun: next })
+    await service.agentEvent('parent', { type: 'task_backgrounded', toolUseId: 'new-task-tool', taskId: 'reused-background-id' }, { originRun: next })
+    const before = emitted.length
+    await service.agentEvent('parent', { type: 'task_completed', taskId: 'reused-background-id', summary: 'ambiguous completion' })
+    expect(emitted).toHaveLength(before)
+    await service.agentEvent('parent', { type: 'task_completed', taskId: 'reused-background-id', summary: 'actual new completion' }, { originRun: next })
+    // Delivery by the new iterator cannot resolve a reused background launch ID.
+    expect(emitted).toHaveLength(before)
+  })
+
+  it('retains the immutable launch attempt after the iterator retries', async () => {
+    const { service, emitted } = await setup()
+    const origin = await service.begin('parent', 'prompt')
+    const firstAttempt = origin.attemptId
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'bash', toolUseId: 'pending-attempt-a', input: { command: 'printf old' } }, { structuredHostTerminals: true, originRun: origin })
+    await service.agentEvent('parent', { type: 'retry', phase: 'active' }, { originRun: origin })
+    expect(origin.attemptId).not.toBe(firstAttempt)
+    await service.observe('parent', { kind: 'terminal.output', payload: { command: 'printf old', stdout: { text: 'old process' }, status: 'running' }, agentId: 'root', toolUseId: 'pending-attempt-a', sourceId: 'actual-old-attempt', sourceEventId: 'old-output', sourceSeq: 1, occurredAt: known(5, 'host'), clockDomain: 'host', origin: 'observed' }, origin)
+    expect(emitted.at(-1)?.attemptId).toBe(firstAttempt)
+    await service.agentEvent('parent', { type: 'tool_result', toolUseId: 'pending-attempt-a', result: 'old result' }, { originRun: origin })
+    expect(emitted.at(-1)?.attemptId).toBe(firstAttempt)
+  })
+
+  it('suppresses a failed begin origin rather than falling back to a successor', async () => {
+    const { service, emitted, sessions, root } = await setup()
+    const target = join(root, 'symlink-target')
+    await mkdir(target)
+    await symlink(target, sessions.get('parent')!.directory)
+    await expect(service.begin('parent', 'failed recording')).rejects.toThrow('symlink')
+    await rm(sessions.get('parent')!.directory)
+    await service.begin('parent', 'successor')
+    const before = emitted.length
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'read', toolUseId: 'failed-origin-call', input: {} }, { originRun: null })
+    await service.publishMessage('parent', 'failed-origin-message', 'late answer', undefined, false, null)
+    await service.finish('parent', 'complete', null)
+    expect(emitted).toHaveLength(before)
+  })
+
+  it('scopes a reused native emitter and child ID to its explicitly captured root', async () => {
+    const { service, emitted } = await setup()
+    const observation = { kind: 'agent.started' as const, payload: { status: 'running' as const }, agentId: 'child', parentAgentId: 'root', sourceId: 'reused-native-source', sourceEventId: 'same-native-event', sourceSeq: 1, occurredAt: known(5, 'native'), clockDomain: 'native', origin: 'observed' as const }
+    const old = await service.begin('parent', 'old')
+    await service.observe('parent', observation, old)
+    const next = await service.begin('parent', 'next')
+    await service.observe('parent', observation, next)
+    const children = emitted.filter(event => event.kind === 'agent.started')
+    expect(children.map(event => event.rootRunId)).toEqual([old.rootRunId, next.rootRunId])
+    expect(children.map(event => event.runId)).toEqual([`${old.runId}:native:child`, `${next.runId}:native:child`])
+    expect(children.map(event => event.agentId)).toEqual([`${old.agentId}:native:child`, `${next.agentId}:native:child`])
+    const before = emitted.length
+    await service.observe('parent', { ...observation, sourceEventId: 'ambiguous-idle-native-event', sourceSeq: 2 })
+    expect(emitted).toHaveLength(before)
+  })
+
+  it('keeps queued cancellation coverage attached to the genuine originating tool run', async () => {
+    const { service, emitted } = await setup()
+    const old = await service.begin('parent', 'old')
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'bash', toolUseId: 'old-host-call', input: { command: 'printf safe' } }, { structuredHostTerminals: true })
+    await service.finish('parent', 'interrupted')
+    const next = await service.begin('parent', 'successor')
+    await service.observe('parent', { kind: 'trace.coverage', payload: { coverage: { state: 'partial', source: 'runtime', missing: ['unconfirmed-host-process-termination'] } }, agentId: 'root', toolUseId: 'old-host-call', spanId: 'tool:old-host-call', sourceId: 'omp-host-cancellation:original', sourceEventId: 'original-cancellation', sourceSeq: 1, occurredAt: known(Date.now(), 'host invocation cancellation'), clockDomain: 'rox-host', origin: 'observed' })
+    expect(emitted.at(-1)?.rootRunId).toBe(old.rootRunId)
+    expect(emitted.at(-1)?.spanId).toBe(`${old.runId}:tool:old-host-call`)
+    const oldSnapshot = await service.getSnapshot({ sessionId: 'parent', workspaceId: 'ws', rootRunId: old.rootRunId })
+    const nextSnapshot = await service.getSnapshot({ sessionId: 'parent', workspaceId: 'ws', rootRunId: next.rootRunId })
+    expect(oldSnapshot.coverage.missing).toContain('unconfirmed-host-process-termination')
+    expect(nextSnapshot.coverage.missing).not.toContain('unconfirmed-host-process-termination')
+    expect(nextSnapshot.events.some(event => event.toolUseId === 'old-host-call')).toBe(false)
+  })
+
   it('deduplicates native child observations and maps nested native identities', async () => {
     const { service, emitted } = await setup()
     const run = await service.begin('parent', 'prompt')
@@ -90,6 +226,16 @@ describe('runtime session collector', () => {
     expect(emitted.filter(event => event.kind === 'agent.started')).toHaveLength(1)
     expect(emitted.at(-1)?.agentId).toBe(`${run.agentId}:native:native-child`)
     expect(emitted.at(-1)?.parentAgentId).toBe(run.agentId)
+  })
+
+  it('normalizes genuine native root-dispatch parent spans from the exact recorded tool call', async () => {
+    const { service, emitted } = await setup()
+    const run = await service.begin('parent', 'prompt')
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'task', toolUseId: 'exact-dispatch-call', input: {} })
+    await service.observe('parent', { kind: 'agent.started', payload: { status: 'running' }, agentId: 'native-child', parentAgentId: 'root', parentSpanId: 'tool:exact-dispatch-call', sourceId: 'omp:real-reservation', sourceEventId: 'native-start', sourceSeq: 1, occurredAt: known(5, 'native'), clockDomain: 'omp', origin: 'observed' })
+    expect(emitted.at(-1)?.parentSpanId).toBe(`${run.runId}:tool:exact-dispatch-call`)
+    await service.observe('parent', { kind: 'agent.started', payload: { status: 'running' }, agentId: 'grandchild', parentAgentId: 'native-child', parentSpanId: 'native:child-native-session:tool:exact-child-call', sourceId: 'omp:real-reservation-2', sourceEventId: 'grandchild-start', sourceSeq: 1, occurredAt: known(6, 'native'), clockDomain: 'omp', origin: 'observed' })
+    expect(emitted.at(-1)?.parentSpanId).toBe('native:child-native-session:tool:exact-child-call')
   })
 
   it('stores redacted large content and authorizes references by actual session/run ownership', async () => {
@@ -105,6 +251,80 @@ describe('runtime session collector', () => {
     await expect(service.readPayload({ workspaceId: 'ws', sessionId: 'parent', rootRunId: run.rootRunId, payloadRef: 'a'.repeat(64) })).rejects.toThrow('does not belong')
     await expect(service.readPayload({ workspaceId: 'ws', sessionId: 'parent', rootRunId: 'unknown-run', payloadRef: 'a'.repeat(64) })).rejects.toThrow('does not belong')
   })
+  it('redacts quoted credentials, raw JSON and headers before inline transport, journal and blob writes', async () => {
+    const { service, emitted, root } = await setup()
+    const run = await service.begin('parent', 'prompt')
+    const privateValues = ['unregistered quoted password', 'unregistered single password', 'unregistered cookie value', 'unregistered JSON key', 'unregistered ENV value']
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'read', toolUseId: 'safe-call', input: { env: { CUSTOM: privateValues[4] }, password: privateValues[0] } })
+    const serialized = JSON.stringify({ apiKey: privateValues[3], env: { CUSTOM: privateValues[4] }, inputTokens: 123, publicPadding: 'public '.repeat(3000) })
+    await service.record(run, 'terminal.output', { command: `password="${privateValues[0]}" password='${privateValues[1]}'`, stdout: await service.content(run, serialized), stderr: await service.content(run, `Cookie: session=${privateValues[2]}; private-attribute=value`), status: 'running' })
+    const directory = join(root, 'parent', 'meta', 'runtime-trace', run.rootRunId)
+    const journal = await readFile(join(directory, 'events.jsonl'), 'utf8')
+    const blobs = await Promise.all((await readdir(join(directory, 'content'))).map(name => readFile(join(directory, 'content', name), 'utf8')))
+    expect(blobs.length).toBeGreaterThan(0)
+    for (const value of privateValues) {
+      expect(JSON.stringify(emitted)).not.toContain(value)
+      expect(journal).not.toContain(value)
+      expect(blobs.join('')).not.toContain(value)
+    }
+    expect(blobs.join('')).toContain('"inputTokens":123')
+    const before = emitted.length
+    await expect(service.record(run, 'agent.started', { status: 'running' }, { sourceId: 'password="producer private value"' })).rejects.toThrow('Sensitive producer metadata')
+    expect(emitted).toHaveLength(before)
+    expect(await readFile(join(directory, 'events.jsonl'), 'utf8')).not.toContain('producer private value')
+  })
+
+  it('rejects valid recovered rows outside the authorized root envelope and their payload references', async () => {
+    const { service, sessions, emitted, root } = await setup()
+    const run = await service.begin('parent', 'authorized prompt')
+    const orphan = await service.content(run, 'orphan not-published payload '.repeat(1000))
+    const template = emitted[0]!
+    const foreignRows = [
+      { ...template, workspaceId: 'other' },
+      { ...template, rootSessionId: 'foreign' },
+      { ...template, rootRunId: 'foreign-run' },
+      { ...template, sessionId: 'foreign' },
+    ].map((event, index) => ({ ...event, seq: emitted.length + index + 1, eventId: `tampered-row-${index}`, sourceEventId: `tampered-row-${index}`, kind: 'result.published', payload: { content: orphan } }))
+    await appendFile(join(root, 'parent', 'meta', 'runtime-trace', run.rootRunId, 'events.jsonl'), foreignRows.map(event => JSON.stringify(event) + '\n').join(''))
+    const recovered = new RuntimeTraceService(id => sessions.get(id), () => {})
+    const page = await recovered.readEvents({ workspaceId: 'ws', sessionId: 'parent', rootRunId: run.rootRunId, afterSeq: 0 })
+    expect(page.events).toHaveLength(emitted.length)
+    expect(page.events.some(event => event.eventId.startsWith('tampered-row'))).toBe(false)
+    expect(page.coverage.missing).toContain('journal-corruption')
+    const snapshot = await recovered.getSnapshot({ workspaceId: 'ws', sessionId: 'parent' })
+    expect(snapshot.runs[0]?.prompt).toBe('authorized prompt')
+    expect(snapshot.runs[0]?.coverage.missing).toContain('journal-corruption')
+    await expect(recovered.readPayload({ workspaceId: 'ws', sessionId: 'parent', rootRunId: run.rootRunId, payloadRef: orphan.payloadRef! })).rejects.toThrow('does not belong')
+  })
+
+  it('redacts secrets registered after recording in event, prompt-summary and payload readback', async () => {
+    const { service, sessions } = await setup()
+    const secret = 'value-that-was-not-a-known-credential-before-registration'
+    const run = await service.begin('parent', `inspect ${secret}`)
+    const content = await service.content(run, 'public result '.repeat(1000) + secret)
+    await service.record(run, 'result.published', { content })
+    registerSecretValues([secret])
+    const recovered = new RuntimeTraceService(id => sessions.get(id), () => {})
+    const snapshot = await recovered.getSnapshot({ workspaceId: 'ws', sessionId: 'parent' })
+    expect(JSON.stringify(snapshot)).not.toContain(secret)
+    const payload = await recovered.readPayload({ workspaceId: 'ws', sessionId: 'parent', rootRunId: run.rootRunId, payloadRef: content.payloadRef! })
+    expect(payload.text).not.toContain(secret)
+    expect(payload.text).toContain('***REDACTED***')
+  })
+
+  it('requires every persisted child-root lineage ancestor to belong to the requested workspace', async () => {
+    const { service, sessions, root } = await setup()
+    const run = await service.begin('parent', 'prompt')
+    sessions.get('child')!.parentSessionId = 'foreign'
+    sessions.get('foreign')!.parentSessionId = 'parent'
+    const directory = join(root, 'child', 'meta', 'runtime-trace', run.rootRunId)
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, 'root.json'), JSON.stringify({ rootSessionId: 'parent' }))
+    const recovered = new RuntimeTraceService(id => sessions.get(id), () => {})
+    await expect(recovered.readEvents({ workspaceId: 'ws', sessionId: 'child', rootRunId: run.rootRunId, afterSeq: 0 })).rejects.toThrow('lineage access denied')
+    await expect(recovered.getSnapshot({ workspaceId: 'ws', sessionId: 'child' })).rejects.toThrow('lineage access denied')
+  })
+
   it('rejects malformed payloads before writing and prevents metadata from replacing collector scope', async () => {
     const { service, emitted, root } = await setup()
     const run = await service.begin('parent', 'prompt')
@@ -197,6 +417,30 @@ describe('runtime session collector', () => {
     expect(complete.events.map(event => event.sourceSeq)).toEqual(Array.from({ length: 24 }, (_, index) => index + 1))
     expect(complete.coverage.missing).not.toContain('recording-failure')
     expect(service.getCachedJournalCount()).toBeLessThanOrEqual(2)
+  })
+
+  it('prunes idle run correlations and never assigns unscoped evicted output to a successor', async () => {
+    const { sessions, emitted } = await setup()
+    const service = new RuntimeTraceService(id => sessions.get(id), event => emitted.push(event), undefined, 2)
+    const oldest = await service.begin('parent', 'oldest')
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'task', toolUseId: 'evicted-tool', turnId: 'evicted-turn', input: {} }, { originRun: oldest })
+    await service.agentEvent('parent', { type: 'task_backgrounded', toolUseId: 'evicted-tool', taskId: 'evicted-background' }, { originRun: oldest })
+    await service.finish('parent', 'complete', oldest)
+    for (let index = 0; index < 5; index++) {
+      const run = await service.begin('parent', `completed ${index}`)
+      await service.finish('parent', 'complete', run)
+    }
+    const successor = await service.begin('parent', 'successor')
+    const before = emitted.length
+    await service.agentEvent('parent', { type: 'tool_result', toolUseId: 'evicted-tool', result: 'late unknown origin' })
+    await service.agentEvent('parent', { type: 'task_completed', taskId: 'evicted-background', summary: 'late unknown origin' }, { originRun: successor })
+    expect(emitted).toHaveLength(before)
+    expect(service.getCachedJournalCount()).toBeLessThanOrEqual(2)
+    // An explicitly retained original iterator still authorizes exact old-run recording after eviction.
+    await service.agentEvent('parent', { type: 'tool_result', toolUseId: 'evicted-tool', result: 'exact old origin' }, { originRun: oldest })
+    expect(emitted.at(-1)?.rootRunId).toBe(oldest.rootRunId)
+    const replay = await service.getSnapshot({ sessionId: 'parent', workspaceId: 'ws', rootRunId: oldest.rootRunId })
+    expect(replay.events.some(event => event.kind === 'tool.completed' && event.payload.result?.text === 'exact old origin')).toBe(true)
   })
 
   it('uses a fresh native generation for repeated child ids and preserves executor retry attempts', async () => {

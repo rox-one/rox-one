@@ -5,6 +5,7 @@ import type { Message } from '@rox/core'
 import { buildRuntimeGraph, projectRuntimeEvents, type RuntimeGraph, type RuntimeRunSummary, type TraceCoverage, type RuntimeNode, type CapabilityRef } from '@rox/core/runtime-trace'
 import { useRuntimeTrace } from '@/hooks/useRuntimeTrace'
 import { RuntimeCanvas, type RuntimeCanvasApi } from './RuntimeCanvas'
+import { RuntimeContextCanvas } from './RuntimeContextCanvas'
 import { RuntimeToolbar, type RuntimeMapMode } from './RuntimeToolbar'
 import { RuntimeReplayControls } from './RuntimeReplayControls'
 import { RuntimeInspector } from './inspector/RuntimeInspector'
@@ -12,6 +13,7 @@ import type { ReadRuntimePayload } from './inspector/ContentViewer'
 import { layoutRuntimeGraph, nodeMatches, windowRuntimeNodes, type TimelineMode } from './layout/stable-layout'
 import { nodeTitle, nodeSubtitle } from './nodes/node-content'
 import { safeDisplayText } from './measurements'
+import { serializeRuntimeMetadata } from './public-metadata'
 import './runtime-map.css'
 
 export interface RuntimeMapDockProps {
@@ -101,8 +103,7 @@ export function RuntimeMapView({ graph, runs, coverage, scopeKey, loading, error
   }, [focusMessageId, focusToolUseId, focusRequestId, graph.topologyVersion])
   function followLatest() { setFollowing(true); setPending(0); setPage(-1); onReplayCursorChange?.(undefined); canvas.current?.focusLatest() }
   function exportMetadata() {
-    // Export contains public observation metadata only, no instructions/tool payloads.
-    const content = JSON.stringify({ schemaVersion: 1, rootRunId: selectedRootRunId, coverage, nodes: graph.nodes.map(node => ({ id: node.id, kind: node.kind, agentId: node.agentId, status: node.status, seq: node.seq, endSeq: node.endSeq, durationMs: node.durationMs })), edges: graph.edges }, null, 2)
+    const content = serializeRuntimeMetadata(graph, coverage, selectedRootRunId)
     const url = URL.createObjectURL(new Blob([content], { type: 'application/json' }))
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'rox-runtime-trace-metadata.json'; anchor.click(); URL.revokeObjectURL(url)
   }
@@ -111,9 +112,9 @@ export function RuntimeMapView({ graph, runs, coverage, scopeKey, loading, error
     {error && <div className="runtime-warning runtime-transport-error" role="alert"><AlertCircle size={14} /><span>{t('runtimeMap.connectionError')}</span>{onReload && <button type="button" onClick={onReload}><RotateCcw size={13} />{t('runtimeMap.retry')}</button>}</div>}
     <div className="runtime-map-body">
       {mode === 'editor' ? <div className="runtime-editor-slot">{editor}</div> : loading && !graph.nodes.length ? <div className="runtime-empty"><LoaderCircle size={22} /><p>{t('runtimeMap.loading')}</p></div> : !graph.nodes.length ? <div className="runtime-empty"><Waypoints size={32} /><h3>{t('runtimeMap.emptyTitle')}</h3><p>{t('runtimeMap.emptyDescription')}</p>{coverage.state !== 'complete' && <p className="runtime-muted">{t('runtimeMap.coveragePartial')}</p>}</div> : <>
-        <div className="runtime-canvas-column">{mode === 'list' ? <div className="runtime-event-list" role="list" aria-label={t('runtimeMap.mode.list')}>{visible.map(node => <button key={node.id} role="listitem" type="button" data-selected={node.id === selectedId} onClick={() => selectNode(node)}><span>#{node.seq}</span><strong>{nodeTitle(node, t)}</strong><p>{nodeSubtitle(node, t)}</p><small>{safeDisplayText(node.agentId, 80)} · {node.status ? t(`runtimeMap.status.${node.status}`) : t('runtimeMap.unknown')}</small></button>)}</div> : <RuntimeCanvas graph={graph} nodes={visible} layout={layout} scopeKey={scopeKey} selectedId={selectedId} onSelect={selectNode} following={following && replayCursor === undefined} onInspect={() => setFollowing(false)} collapsed={collapsed} onToggleLane={toggleLane} apiRef={canvas} timelineMode={timelineMode} />}
-          {!visible.length && <div className="runtime-no-matches">{t('runtimeMap.noMatches')}</div>}
-          {pageCount > 1 && <div className="runtime-window-nav"><button type="button" disabled={actualPage === 0} onClick={() => { setPage(actualPage - 1); setFollowing(false) }}>{t('runtimeMap.previousWindow')}</button><span>{page < 0 ? t('runtimeMap.latestWindow', { count: visible.length }) : t('runtimeMap.window', { page: actualPage + 1, count: pageCount })}</span><button type="button" disabled={actualPage >= pageCount - 1} onClick={() => { setPage(actualPage + 1); setFollowing(false) }}>{t('runtimeMap.nextWindow')}</button></div>}
+        <div className="runtime-canvas-column">{mode === 'context' ? <RuntimeContextCanvas key={`${scopeKey}:${selectedRootRunId ?? layoutRootRunId}`} graph={graph} scopeKey={`${scopeKey}:context`} selectedId={selectedId} query={query} onSelect={selectNode} onAgentChange={() => setSelectedId(undefined)} apiRef={canvas} /> : mode === 'list' ? <div className="runtime-event-list" role="list" aria-label={t('runtimeMap.mode.list')}>{visible.map(node => <button key={node.id} role="listitem" type="button" data-selected={node.id === selectedId} onClick={() => selectNode(node)}><span>#{node.seq}</span><strong>{nodeTitle(node, t)}</strong><p>{nodeSubtitle(node, t)}</p><small>{safeDisplayText(node.agentId, 80)} · {node.status ? t(`runtimeMap.status.${node.status}`) : t('runtimeMap.unknown')}</small></button>)}</div> : <RuntimeCanvas graph={graph} nodes={visible} layout={layout} scopeKey={scopeKey} selectedId={selectedId} onSelect={selectNode} following={following && replayCursor === undefined} onInspect={() => setFollowing(false)} collapsed={collapsed} onToggleLane={toggleLane} apiRef={canvas} timelineMode={timelineMode} />}
+          {mode !== 'context' && !visible.length && <div className="runtime-no-matches">{t('runtimeMap.noMatches')}</div>}
+          {mode !== 'context' && pageCount > 1 && <div className="runtime-window-nav"><button type="button" disabled={actualPage === 0} onClick={() => { setPage(actualPage - 1); setFollowing(false) }}>{t('runtimeMap.previousWindow')}</button><span>{page < 0 ? t('runtimeMap.latestWindow', { count: visible.length }) : t('runtimeMap.window', { page: actualPage + 1, count: pageCount })}</span><button type="button" disabled={actualPage >= pageCount - 1} onClick={() => { setPage(actualPage + 1); setFollowing(false) }}>{t('runtimeMap.nextWindow')}</button></div>}
         </div>
         {selected && <RuntimeInspector node={selected} readPayload={readPayload} onClose={() => setSelectedId(undefined)} onOpenMessage={onOpenMessage} onOpenCapability={onOpenCapability} onSelectEvent={selectEvent} />}
       </>}

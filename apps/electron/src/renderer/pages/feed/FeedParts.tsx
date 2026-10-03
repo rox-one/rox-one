@@ -134,13 +134,13 @@ export function TagChip({ tag, onRemove, onClick, muted, active }: { tag: string
   return (
     <span
       className={cn(
-        'inline-flex h-5 max-w-[160px] shrink-0 items-center gap-0.5 rounded-[4px] px-1 text-[11px]',
+        'inline-flex h-5 max-w-[160px] shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] px-1 text-[11px]',
         active ? 'bg-accent/15 font-semibold text-foreground' : muted ? 'bg-foreground/[0.04] text-text-muted' : 'bg-foreground/[0.07] text-text-secondary',
       )}
     >
       {onClick ? <button type="button" onClick={onClick} className="inline-flex min-w-0 items-center gap-0.5 outline-none">{body}</button> : body}
       {onRemove ? (
-        <button type="button" aria-label={t('feed.tags.remove', { tag })} title={t('feed.tags.remove', { tag })} onClick={onRemove} className="-mr-0.5 grid size-4 place-items-center rounded-[4px] text-text-muted outline-none hover:text-foreground">
+        <button type="button" aria-label={t('feed.tags.remove', { tag })} title={t('feed.tags.remove', { tag })} onClick={onRemove} className="-mr-0.5 grid size-4 place-items-center rounded-[var(--radius-control)] text-text-muted outline-none hover:text-foreground">
           <XIcon aria-hidden className="size-3" />
         </button>
       ) : null}
@@ -184,14 +184,14 @@ export function TagEditor({ value, onChange, suggestions, testId, inherited }: {
           onBlur={() => { if (draft.trim()) add(draft) }}
           placeholder={full ? t('feed.tags.full') : t('feed.tags.placeholder')}
           aria-label={t('feed.tags.placeholder')}
-          className="h-6 min-w-[120px] flex-1 rounded-[4px] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
+          className="h-6 min-w-[120px] flex-1 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
         />
       </div>
       {sugg.length && !full ? (
         <div className="flex flex-wrap items-center gap-1">
           <span className="text-[11px] text-text-muted">{t('feed.tags.suggested')}</span>
           {sugg.map((s) => (
-            <button key={s} type="button" onClick={() => add(s)} className="inline-flex h-5 items-center rounded-[4px] px-1 text-[11px] text-text-secondary outline-none hover:bg-foreground/[0.07] hover:text-foreground">
+            <button key={s} type="button" onClick={() => add(s)} className="inline-flex h-5 items-center rounded-[var(--radius-control)] px-1 text-[11px] text-text-secondary outline-none hover:bg-foreground/[0.07] hover:text-foreground">
               + {s}
             </button>
           ))}
@@ -245,7 +245,7 @@ export function SourceIcon({ source, size = 28 }: { source: Pick<FeedSource, 'ur
   return (
     <span
       aria-hidden
-      className="relative grid shrink-0 place-items-center overflow-hidden rounded-[6px] bg-foreground/[0.06]"
+      className="relative grid shrink-0 place-items-center overflow-hidden rounded-[var(--radius-control)] bg-foreground/[0.06]"
       style={{ width: size, height: size, color: KIND_TINT[source.kind] }}
     >
       <Icon className="size-[55%]" aria-hidden />

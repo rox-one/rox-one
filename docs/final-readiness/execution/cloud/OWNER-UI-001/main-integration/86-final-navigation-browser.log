@@ -1,0 +1,47 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+(pass) UI-001 actual navigation in Chromium > unknown single link survives reload and never selects its nested session [2168.84ms]
+(pass) UI-001 actual navigation in Chromium > malformed encoding and legacy lossy degradation retain their own unavailable surface [4554.79ms]
+(pass) UI-001 actual navigation in Chromium > multi-panel restore retains valid sibling, unavailable focus and proportions across reload [1186.65ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[]" restores the focused address during history and reload [995.81ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list " [] " restores the focused address during history and reload [2131.70ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list ",," restores the focused address during history and reload [2544.34ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[" restores the focused address during history and reload [1087.35ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[1]" restores the focused address during history and reload [1750.39ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[[\"tasks\"]]" restores the focused address during history and reload [2405.40ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "  " restores the focused address during history and reload [1591.17ms]
+245 |
+246 |   it('known routes with empty separators retain their address through navigation and reload', async () => {
+247 |     const route = 'tasks///?keep=separator'
+248 |     await open(route)
+249 |     await page.waitForFunction(() => (window as any).ui001.snapshot().state.navigator === 'tasks', undefined, { timeout: 5000 })
+250 |     expect((await snapshot()).panels.map((panel: any) => panel.route)).toEqual([route])
+                                                                             ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "tasks///?keep=separator",
++   "tasks?keep=separator",
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:250:72)
+(fail) UI-001 actual navigation in Chromium > known routes with empty separators retain their address through navigation and reload [724.04ms]
+(pass) UI-001 actual navigation in Chromium > actual navigate and deep-link callbacks preserve unavailable route and browser back/forward [4698.12ms]
+(pass) UI-001 actual navigation in Chromium > stored action address cannot execute, while explicit action callback still runs once [2419.90ms]
+(pass) UI-001 actual navigation in Chromium > explicit navigation preserves spelling only after session workspace validation [2291.12ms]
+(pass) UI-001 actual navigation in Chromium > pending search replay retains query and new-panel options [888.94ms]
+(pass) UI-001 actual navigation in Chromium > latest pending unknown address wins without selecting a previous valid session [1426.64ms]
+(pass) UI-001 actual navigation in Chromium > additional query parameters survive list auto-selection, navigation, history and reload [3344.30ms]
+(pass) UI-001 actual navigation in Chromium > literal commas, percent encoding and unknown addresses retain separate panels after reload [2397.00ms]
+(pass) UI-001 actual navigation in Chromium > compact menu labels unavailable panels consistently and Sessions opens its own service [1640.58ms]
+(pass) UI-001 actual navigation in Chromium > desktop unavailable links remove the unrelated navigator and resize boundary [2435.11ms]
+(pass) UI-001 actual navigation in Chromium > workspace restoration and history keep each workspace address [1279.90ms]
+
+ 20 pass
+ 1 fail
+ 318 expect() calls
+Ran 21 tests across 1 file. [49.26s]

@@ -161,7 +161,7 @@ function ScalarPropertyField({ binding, writable, onSave }: {
           if (event.target.value === 'null') setDraft('null')
           setInvalid(false)
         }}
-        className="h-6 rounded-[4px] border border-border/50 bg-background px-1 text-[10px]"
+        className="h-6 rounded-[var(--radius-control)] border border-border/50 bg-background px-1 text-[10px]"
       >
         {['string', 'number', 'boolean', 'null'].map(kind => <option key={kind} value={kind}>{t(`notes.content.propertyTypes.${kind}`)}</option>)}
         {originalType === 'undefined' && <option value="undefined">{t('notes.content.propertyReadOnly.unsupportedValue')}</option>}
@@ -176,7 +176,7 @@ function ScalarPropertyField({ binding, writable, onSave }: {
         aria-describedby={helpId}
         aria-invalid={invalid || undefined}
         aria-busy={pending || undefined}
-        className="h-7 w-full rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30 read-only:text-muted-foreground"
+        className="h-7 w-full rounded-[var(--radius-card)] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30 read-only:text-muted-foreground"
       />
       <p id={helpId} className={cn('text-[10px] leading-4 text-muted-foreground', invalid && 'text-destructive')}>
         {invalid ? t('notes.content.propertyTypeInvalid', { type }) : binding.readOnly
@@ -240,7 +240,7 @@ export function NoteInspector({
     return (
       <aside className="w-8 shrink-0 bg-muted/[0.12] flex flex-col items-center pt-2">
         <button
-          className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
+          className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
           onClick={onToggleCollapsed}
           title={t('notes.inspector.expand')}
         >
@@ -255,14 +255,14 @@ export function NoteInspector({
       <aside className="w-[320px] shrink-0 border-l border-border/60 overflow-y-auto bg-muted/[0.12] p-3">
         <div className="mb-2 flex items-center justify-end">
           <button
-            className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
+            className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
             onClick={onToggleCollapsed}
             title={t('notes.inspector.collapse')}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
-        <div className="rounded-[8px] border border-dashed border-border/70 bg-background/50 p-4 text-center">
+        <div className="rounded-[var(--radius-card)] border border-dashed border-border/70 bg-background/50 p-4 text-center">
           <div className="text-sm font-medium">{t('notes.inspector.title')}</div>
           <div className="mt-1 text-xs text-muted-foreground">{t('notes.inspector.emptyHint')}</div>
         </div>
@@ -283,7 +283,7 @@ export function NoteInspector({
     <aside className="w-[320px] shrink-0 border-l border-border/60 overflow-y-auto bg-muted/[0.12] p-3">
       <div className="mb-3 flex items-center justify-end">
         <button
-          className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
+          className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
           onClick={onToggleCollapsed}
           title={t('notes.inspector.collapse')}
         >
@@ -306,9 +306,9 @@ export function NoteInspector({
             onBlur={onApplyTags}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur(); onApplyTags() } }}
             placeholder={t('notes.inspector.tagsPlaceholder')}
-            className="h-7 min-w-0 flex-1 rounded-[6px] border border-border/60 bg-background px-2 text-xs outline-none focus:border-foreground/30"
+            className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] border border-border/60 bg-background px-2 text-xs outline-none focus:border-foreground/30"
           />
-          <button className="h-7 rounded-[6px] px-2 text-xs hover:bg-foreground/[0.06]" onClick={onApplyTags}>
+          <button className="h-7 rounded-[var(--radius-control)] px-2 text-xs hover:bg-foreground/[0.06]" onClick={onApplyTags}>
             {t('notes.inspector.apply')}
           </button>
         </div>
@@ -317,7 +317,7 @@ export function NoteInspector({
             <button
               key={tag}
               className={cn(
-                'rounded-[6px] bg-foreground/[0.06] px-2 py-1 text-[11px] hover:bg-foreground/[0.1]',
+                'rounded-[var(--radius-control)] bg-foreground/[0.06] px-2 py-1 text-[11px] hover:bg-foreground/[0.1]',
                 selectedTag === tag && 'bg-accent/15 text-accent',
               )}
               onClick={() => onTagClick(tag)}
@@ -336,7 +336,7 @@ export function NoteInspector({
                 <button
                   key={tag}
                   type="button"
-                  className="rounded-[6px] border border-dashed border-border/70 px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-foreground/[0.06]"
+                  className="rounded-[var(--radius-control)] border border-dashed border-border/70 px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-foreground/[0.06]"
                   onClick={() => onAddTag?.(tag)}
                 >
                   #{tag}
@@ -363,10 +363,10 @@ export function NoteInspector({
             <button
               key={`${task.noteId}:${task.line}:${task.text}`}
               onClick={() => onToggleTask(task)}
-              className="flex w-full items-start gap-2 rounded-[6px] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
+              className="flex w-full items-start gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
             >
               <span className={cn(
-                'mt-0.5 grid h-3.5 w-3.5 shrink-0 place-items-center rounded-[4px] border border-border/80',
+                'mt-0.5 grid h-3.5 w-3.5 shrink-0 place-items-center rounded-[var(--radius-control)] border border-border/80',
                 task.checked && 'bg-foreground text-background'
               )}>
                 {task.checked && <Check className="h-2.5 w-2.5" />}
@@ -392,7 +392,7 @@ export function NoteInspector({
         <div className="space-y-1.5">
           {propertyProjection.status === 'readOnly' && <p role="status" className="text-xs text-muted-foreground">{t('notes.content.propertySourceReadOnly')}</p>}
           {propertyProjection.status === 'ok' && propertyProjection.properties.filter(binding => binding.keyPath[0] !== 'tags').map(binding => (
-            <div key={`${activeNote.id}:${JSON.stringify(binding.keyPath)}:${typeof binding.value}:${String(binding.value)}`} className="rounded-[6px] bg-background/80 px-2 py-1.5 ring-1 ring-border/50">
+            <div key={`${activeNote.id}:${JSON.stringify(binding.keyPath)}:${typeof binding.value}:${String(binding.value)}`} className="rounded-[var(--radius-card)] bg-background/80 px-2 py-1.5 ring-1 ring-border/50">
               <ScalarPropertyField binding={binding} writable={propertiesWritable} onSave={onUpdateScalarProperty} />
               {binding.keyPath.length === 1 && !binding.readOnly && propertiesWritable && <button
                 type="button"
@@ -402,11 +402,11 @@ export function NoteInspector({
             </div>
           ))}
           {propertyEntries.filter(([key]) => propertyProjection.status === 'ok' && !propertyProjection.properties.some(binding => binding.keyPath[0] === key)).map(([key, value]) => (
-            <div key={key} className="rounded-[6px] bg-background/80 px-2 py-1.5 ring-1 ring-border/50">
+            <div key={key} className="rounded-[var(--radius-card)] bg-background/80 px-2 py-1.5 ring-1 ring-border/50">
               <div className="mb-1 flex items-center justify-between gap-2">
                 <div className="truncate text-[11px] text-muted-foreground">{key}</div>
                 <button
-                  className="grid h-5 w-5 place-items-center rounded-[4px] text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  className="grid h-5 w-5 place-items-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   disabled={!propertiesWritable}
                   onClick={() => onUpdateProperty(key, undefined)}
                   title={t('notes.inspector.removeProperty', { key })}
@@ -420,13 +420,13 @@ export function NoteInspector({
                 readOnly
                 aria-label={key}
                 title={t('notes.content.propertyReadOnly.unsupportedValue')}
-                className="h-7 w-full rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
+                className="h-7 w-full rounded-[var(--radius-card)] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
               />
             </div>
           ))}
           {propertyEntries.length === 0 && propertyProjection.status === 'ok' && propertyProjection.properties.length === 0 && <span className="text-xs text-muted-foreground">{t('notes.inspector.none')}</span>}
         </div>
-        <div className="mt-2 rounded-[6px] border border-dashed border-border/70 bg-background/50 p-2">
+        <div className="mt-2 rounded-[var(--radius-card)] border border-dashed border-border/70 bg-background/50 p-2">
           <div className="mb-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Plus className="h-3 w-3" />
             {t('notes.inspector.addProperty')}
@@ -438,7 +438,7 @@ export function NoteInspector({
               aria-label={t('notes.inspector.propertyKey')}
               onChange={(e) => onNewPropertyKeyChange(e.target.value)}
               placeholder={t('notes.inspector.propertyKey')}
-              className="h-7 min-w-0 flex-1 rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
+              className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
             />
             <input
               value={newPropertyValue}
@@ -447,9 +447,9 @@ export function NoteInspector({
               onChange={(e) => onNewPropertyValueChange(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') onAddProperty() }}
               placeholder={t('notes.inspector.propertyValue')}
-              className="h-7 min-w-0 flex-1 rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
+              className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
             />
-            <button disabled={!propertiesWritable || propertyProjection.status === 'readOnly'} className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={onAddProperty} title={t('notes.inspector.addProperty')}>
+            <button disabled={!propertiesWritable || propertyProjection.status === 'readOnly'} className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={onAddProperty} title={t('notes.inspector.addProperty')}>
               <Plus className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -464,7 +464,7 @@ export function NoteInspector({
             {t('notes.inspector.assets')}
           </div>
           <button
-            className="h-6 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]"
+            className="h-6 rounded-[var(--radius-control)] px-2 text-[11px] hover:bg-foreground/[0.06]"
             onClick={onOpenAssetDialog}
           >
             {t('notes.inspector.manage')}
@@ -479,7 +479,7 @@ export function NoteInspector({
           ) : currentNoteAssets.length ? currentNoteAssets.map(asset => (
             <button
               key={asset.relativePath}
-              className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
+              className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
               onClick={() => onOpenFile(asset.path)}
             >
               <AssetThumbnail asset={asset} size="sm" />
@@ -489,7 +489,7 @@ export function NoteInspector({
           )) : activeNote.assetRefs.length ? activeNote.assetRefs.map(ref => (
             <button
               key={ref}
-              className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
+              className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
               onClick={() => onOpenFile(resolveNoteAssetPath(activeNote, ref))}
             >
               <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -524,7 +524,7 @@ export function NoteInspector({
             <button
               key={target}
               onClick={() => onMissingLink(target)}
-              className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
+              className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
             >
               <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1 truncate text-xs">{target}</span>
@@ -544,7 +544,7 @@ export function NoteInspector({
             <button
               key={`${backlink.noteId}-${index}`}
               onClick={() => onOpenNote(backlink.noteId)}
-              className="w-full rounded-[6px] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
+              className="w-full rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
             >
               <div className="truncate text-xs font-medium">{backlink.title}</div>
               <div className="line-clamp-2 text-[11px] text-muted-foreground">{backlink.preview}</div>
@@ -567,7 +567,7 @@ export function NoteInspector({
                 // Prefer open by resolved note if caller has it; otherwise missing-link flow
                 onMissingLink(link.target)
               }}
-              className="w-full rounded-[6px] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
+              className="w-full rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
             >
               <div className="truncate text-xs font-medium">[[{link.target}]]</div>
             </button>

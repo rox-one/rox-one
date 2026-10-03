@@ -1,0 +1,661 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:
+(pass) UI-001 external route recovery > retains unavailable address future/session/private without session selection [14.96ms]
+(pass) UI-001 external route recovery > retains unavailable address settings/future without session selection [0.73ms]
+(pass) UI-001 external route recovery > retains unavailable address knowledge/unknown/doc without session selection [0.21ms]
+(pass) UI-001 external route recovery > retains unavailable address notes/note/%E0%A4%A without session selection [3.39ms]
+(pass) UI-001 external route recovery > retains unavailable address cloud-run/%ZZ without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address extension/% without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address action/delete-session/s1 without session selection [0.15ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "tasks/calendar",
++   "navigator": "tasks",
+  }
+
+- Expected  - 2
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address tasks/calendar without session selection [6.81ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "connections/v2",
++   "navigator": "connections",
+  }
+
+- Expected  - 2
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address connections/v2 without session selection [0.17ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "allSessions/future/private",
++   "filter": {
++     "kind": "allSessions",
++   },
++   "navigator": "sessions",
++   "viewMode": undefined,
+  }
+
+- Expected  - 2
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address allSessions/future/private without session selection [0.19ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "flagged/future/private",
++   "filter": {
++     "kind": "flagged",
++   },
++   "navigator": "sessions",
++   "viewMode": undefined,
+  }
+
+- Expected  - 2
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address flagged/future/private without session selection [0.10ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "archived/future/private",
++   "filter": {
++     "kind": "archived",
++   },
++   "navigator": "sessions",
++   "viewMode": undefined,
+  }
+
+- Expected  - 2
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address archived/future/private without session selection [0.84ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "state/todo/future/private",
++   "filter": {
++     "kind": "state",
++     "stateId": "todo",
++   },
++   "navigator": "sessions",
++   "viewMode": undefined,
+  }
+
+- Expected  - 2
++ Received  + 6
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address state/todo/future/private without session selection [0.19ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "label/work/future/private",
++   "filter": {
++     "kind": "label",
++     "labelId": "work",
++   },
++   "navigator": "sessions",
++   "viewMode": undefined,
+  }
+
+- Expected  - 2
++ Received  + 6
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address label/work/future/private without session selection [0.11ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "view/custom/future/private",
++   "filter": {
++     "kind": "view",
++     "viewId": "custom",
++   },
++   "navigator": "sessions",
++   "viewMode": undefined,
+  }
+
+- Expected  - 2
++ Received  + 6
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address view/custom/future/private without session selection [0.11ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "board/future/private",
++   "filter": {
++     "kind": "allSessions",
++   },
++   "navigator": "sessions",
++   "viewMode": "board",
+  }
+
+- Expected  - 2
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address board/future/private without session selection [0.10ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "table/session/s1",
++   "filter": {
++     "kind": "allSessions",
++   },
++   "navigator": "sessions",
++   "viewMode": "table",
+  }
+
+- Expected  - 2
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address table/session/s1 without session selection [0.07ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "heatmap/session/s1",
++   "filter": {
++     "kind": "allSessions",
++   },
++   "navigator": "sessions",
++   "viewMode": "heatmap",
+  }
+
+- Expected  - 2
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address heatmap/session/s1 without session selection [0.07ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "memory/future",
++   "navigator": "memory",
+  }
+
+- Expected  - 2
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address memory/future without session selection [0.04ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "inbox/future",
++   "navigator": "inbox",
+  }
+
+- Expected  - 2
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address inbox/future without session selection [0.05ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "feed/future",
++   "navigator": "feed",
+  }
+
+- Expected  - 2
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address feed/future without session selection [0.05ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "meetings/future",
++   "navigator": "meetings",
+  }
+
+- Expected  - 2
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address meetings/future without session selection [0.05ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "home/future",
++   "navigator": "home",
+  }
+
+- Expected  - 2
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address home/future without session selection [0.04ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "dossier/future/private",
++   "navigator": "screen",
++   "screen": "dossier",
+  }
+
+- Expected  - 2
++ Received  + 2
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address dossier/future/private without session selection [0.07ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "sources/api/future/private",
++   "filter": {
++     "kind": "type",
++     "sourceType": "api",
++   },
++   "navigator": "sources",
+  }
+
+- Expected  - 2
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address sources/api/future/private without session selection [0.09ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "automations/event/future/private",
++   "filter": {
++     "automationType": "event",
++     "kind": "type",
++   },
++   "navigator": "automations",
+  }
+
+- Expected  - 2
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address automations/event/future/private without session selection [0.09ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "details": null,
+-   "navigator": "unavailable",
+-   "route": "skills/skill/s/extra",
++   "details": {
++     "skillSlug": "s",
++     "type": "skill",
++   },
++   "navigator": "skills",
+  }
+
+- Expected  - 3
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address skills/skill/s/extra without session selection [0.08ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "details": null,
+-   "navigator": "unavailable",
+-   "route": "projects/project/p/extra",
++   "details": {
++     "projectSlug": "p",
++     "type": "project",
++   },
++   "navigator": "projects",
+  }
+
+- Expected  - 3
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address projects/project/p/extra without session selection [0.10ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "details": null,
+-   "navigator": "unavailable",
+-   "route": "pages/page/p/extra",
++   "details": {
++     "pageSlug": "p",
++     "type": "page",
++   },
++   "navigator": "pages",
+  }
+
+- Expected  - 3
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address pages/page/p/extra without session selection [0.13ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "details": null,
+-   "navigator": "unavailable",
+-   "route": "browser/instance/b/extra",
++   "details": {
++     "id": "b",
++     "type": "browser",
++   },
++   "navigator": "browser",
+  }
+
+- Expected  - 3
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address browser/instance/b/extra without session selection [0.10ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "details": null,
+-   "navigator": "unavailable",
+-   "route": "settings/app/extra",
++   "navigator": "settings",
++   "subpage": "app",
+  }
+
+- Expected  - 3
++ Received  + 2
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address settings/app/extra without session selection [0.07ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "unavailable",
+-   "route": "knowledge/view",
++   "navigator": "knowledge",
+  }
+
+- Expected  - 2
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address knowledge/view without session selection [0.05ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "details": null,
+-   "navigator": "unavailable",
+-   "route": "allSessions/session/s1/extra",
++   "details": {
++     "sessionId": "s1",
++     "type": "session",
++   },
++   "filter": {
++     "kind": "allSessions",
++   },
++   "navigator": "sessions",
++   "viewMode": undefined,
+  }
+
+- Expected  - 3
++ Received  + 9
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address allSessions/session/s1/extra without session selection [0.13ms]
+23 |   ]
+24 |
+25 |   for (const route of rejected) {
+26 |     it(`retains unavailable address ${route} without session selection`, () => {
+27 |       const state = resolveViewRoute(route)
+28 |       expect(state).toEqual({ navigator: 'unavailable', route, details: null })
+                         ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "details": null,
+-   "navigator": "unavailable",
+-   "route": "tasks/task/t/extra",
++   "details": {
++     "taskId": "t",
++     "type": "task",
++   },
++   "navigator": "tasks",
+  }
+
+- Expected  - 3
++ Received  + 5
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:28:21)
+(fail) UI-001 external route recovery > retains unavailable address tasks/task/t/extra without session selection [0.08ms]
+(pass) UI-001 external route recovery > reconciles valid and malformed panels atomically, retaining focus and proportions [3.29ms]
+(pass) UI-001 external route recovery > preserves established parsing, query and explicit entity addresses [3.68ms]
+
+ 9 pass
+ 27 fail
+ 108 expect() calls
+Ran 36 tests across 1 file. [1.76s]

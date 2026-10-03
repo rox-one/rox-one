@@ -5,6 +5,9 @@ import { TooltipProvider } from '@radix-ui/react-tooltip'
 import { DEFAULT_THEME } from '@config/theme'
 import { routes } from '../../../shared/routes'
 
+// SSR exercises unavailable native capabilities without calling a provider.
+Object.assign(globalThis, { window: { electronAPI: {}, addEventListener() {}, removeEventListener() {} } })
+
 const translations = await import('react-i18next')
 mock.module('react-i18next', () => ({ ...translations, useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }) }))
 mock.module('../../context/ThemeContext', () => ({ useTheme: () => ({ isDark: false, shikiTheme: 'github-light', presetTheme: null, resolvedTheme: DEFAULT_THEME, isScenic: false }) }))

@@ -1,0 +1,45 @@
+{
+  "startedAt": "2026-10-03T22:05:13.604Z",
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+    "test",
+    "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts",
+    "./apps/electron/src/renderer/atoms/__tests__/collection-persist-guard.test.ts",
+    "./apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-account.test.ts",
+    "--timeout",
+    "30000"
+  ],
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+  "head": "37ecdb59b3be817fe02bb8c2514a0aee859d15cd",
+  "bunVersion": "1.3.14",
+  "nodeVersion": "v24.21.0",
+  "sourceHashes": {
+    "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts": "cf7827124c9ae1827aa9c0ce7e283ea9069f518133b3a57f749fed2e263d241c",
+    "./apps/electron/src/renderer/atoms/__tests__/collection-persist-guard.test.ts": "5c3f99105d120dfc996e0ec5eb71309ab5601ac8efbd568a10d27f6ce6e2622c",
+    "./apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-account.test.ts": "9aef656f723028a57640e6b022b82ba920b380443e9290392700063d9aba99ba"
+  },
+  "environmentKeys": [
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "LANG",
+    "PATH",
+    "TMPDIR",
+    "XDG_CONFIG_HOME",
+    "ROX_CONFIG_DIR",
+    "CRAFT_CONFIG_DIR",
+    "GSTACK_HOME",
+    "GSTACK_TEST_LEGACY_ROOT",
+    "PLAYWRIGHT_BROWSERS_PATH"
+  ],
+  "providerCredentialsForwarded": false,
+  "exitCode": 0,
+  "finishedAt": "2026-10-03T22:05:15.778Z",
+  "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/gstack-test-2026-10-03T22-05-13-596Z/output.log",
+  "logSha256": "ae019e54ab7907a3815c8d63aecef3a3b8f98ef3074397cb04fdde4f6d6b255c",
+  "counts": {
+    "pass": 51,
+    "fail": 0,
+    "skip": 0
+  }
+}

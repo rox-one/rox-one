@@ -51,13 +51,13 @@ export function VaultInsightsPanel({
           {insights.linkSuggestions.length ? insights.linkSuggestions.slice(0, 8).map((suggestion) => (
             <div
               key={`${suggestion.targetId}:${suggestion.line}:${suggestion.mention}`}
-              className="rounded-[6px] px-2 py-1.5 hover:bg-foreground/[0.04]"
+              className="rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-foreground/[0.04]"
             >
               <div className="truncate text-xs font-medium">[[{suggestion.targetTitle}]]</div>
               <div className="line-clamp-2 text-[11px] text-muted-foreground">{suggestion.preview}</div>
               <button
                 type="button"
-                className="mt-1 h-6 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]"
+                className="mt-1 h-6 rounded-[var(--radius-control)] px-2 text-[11px] hover:bg-foreground/[0.06]"
                 onClick={() => onApplyLink(suggestion)}
               >
                 {t('notes.inspector.applyLink')}
@@ -74,7 +74,7 @@ export function VaultInsightsPanel({
         </div>
         <div className="space-y-1">
           {insights.entities.length ? insights.entities.slice(0, 10).map((entity) => (
-            <div key={`${entity.id}:${entity.line}:${entity.name}`} className="rounded-[6px] px-2 py-1.5">
+            <div key={`${entity.id}:${entity.line}:${entity.name}`} className="rounded-[var(--radius-card)] px-2 py-1.5">
               <div className="truncate text-xs font-medium">{entity.name}</div>
               <div className="text-[11px] text-muted-foreground">{entity.kind} · {entity.evidence}</div>
             </div>
@@ -83,15 +83,15 @@ export function VaultInsightsPanel({
         {insights.suggestedMerges.length > 0 && (
           <div className="mt-2 space-y-1">
             {insights.suggestedMerges.slice(0, 4).map((merge) => (
-              <div key={`${merge.fromId}:${merge.toId}`} className="rounded-[6px] border border-dashed border-border/70 px-2 py-1.5">
+              <div key={`${merge.fromId}:${merge.toId}`} className="rounded-[var(--radius-card)] border border-dashed border-border/70 px-2 py-1.5">
                 <div className="text-xs">{t('notes.inspector.mergeEntities', { name: merge.toName })}</div>
                 <div className="text-[11px] text-muted-foreground">{merge.fromName} → {merge.toName}</div>
                 <div className="mt-1 flex gap-1">
-                  <button type="button" className="h-6 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={() => onApplyMerge(merge)}>
+                  <button type="button" className="h-6 rounded-[var(--radius-control)] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={() => onApplyMerge(merge)}>
                     <Merge className="mr-1 inline h-3 w-3" />
                     {t('notes.inspector.applyMerge')}
                   </button>
-                  <button type="button" className="h-6 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={() => onUndoMerge(merge)}>
+                  <button type="button" className="h-6 rounded-[var(--radius-control)] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={() => onUndoMerge(merge)}>
                     {t('notes.inspector.undoMerge')}
                   </button>
                 </div>
@@ -111,16 +111,16 @@ export function VaultInsightsPanel({
             value={footnoteDraft}
             onChange={(event) => onFootnoteDraftChange(event.target.value)}
             placeholder={t('notes.inspector.footnotePlaceholder')}
-            className="h-7 w-full min-w-0 rounded-[6px] border border-border/60 bg-background px-2 text-xs outline-none focus:border-foreground/30"
+            className="h-7 w-full min-w-0 rounded-[var(--radius-card)] border border-border/60 bg-background px-2 text-xs outline-none focus:border-foreground/30"
           />
-          <button type="button" className="inline-flex h-7 w-fit shrink-0 items-center gap-1 rounded-[6px] px-2 text-xs hover:bg-foreground/[0.06]" onClick={onCreateFootnote}>
+          <button type="button" className="inline-flex h-7 w-fit shrink-0 items-center gap-1 rounded-[var(--radius-control)] px-2 text-xs hover:bg-foreground/[0.06]" onClick={onCreateFootnote}>
             <Plus className="h-3.5 w-3.5" />
             {t('notes.inspector.createFootnote')}
           </button>
         </div>
         <div className="space-y-1">
           {insights.footnotes.length ? insights.footnotes.map((footnote) => (
-            <div key={footnote.id} className="rounded-[6px] px-2 py-1.5">
+            <div key={footnote.id} className="rounded-[var(--radius-card)] px-2 py-1.5">
               <button type="button" className="w-full text-left" onClick={() => onJumpFootnote(footnote)}>
                 <div className="truncate text-xs font-medium">[^{footnote.id}]</div>
                 <div className="line-clamp-2 text-[11px] text-muted-foreground">{footnote.text || t('notes.inspector.footnotePlaceholder')}</div>
@@ -131,7 +131,7 @@ export function VaultInsightsPanel({
                 defaultValue={footnote.text}
                 onBlur={(event) => onUpdateFootnote(footnote, event.target.value)}
                 onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur() }}
-                className="mt-1 h-7 w-full rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
+                className="mt-1 h-7 w-full rounded-[var(--radius-card)] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
               />
             </div>
           )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.noFootnotes')}</span>}
@@ -144,7 +144,7 @@ export function VaultInsightsPanel({
         </div>
         <div className="space-y-1">
           {insights.brokenLinks.length ? insights.brokenLinks.map((link) => (
-            <div key={`${link.target}:${link.line}`} className="rounded-[6px] px-2 py-1.5">
+            <div key={`${link.target}:${link.line}`} className="rounded-[var(--radius-card)] px-2 py-1.5">
               <div className="truncate text-xs font-medium">[[{link.target}]]</div>
               <div className="line-clamp-2 text-[11px] text-muted-foreground">{link.preview}</div>
             </div>

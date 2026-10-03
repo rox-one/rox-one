@@ -13,9 +13,12 @@ import {
   buildRouteFromNavigationState, buildRightSidebarParam,
 } from '../../../../shared/route-parser'
 import { isSessionsNavigation, DEFAULT_NAVIGATION_STATE } from '../../../../shared/types'
+import { sessionMetaMapAtom } from '../../../atoms/sessions'
 import { preserveRouteQuery, normalizePanelRouteForReconcile } from '../../../contexts/navigation-reconcile'
 
 import { decodePanelEntries, encodePanelEntries } from '../../../lib/panel-url'
+import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey } from '../../../atoms/runtime-trace'
+import { parseRuntimeMapViewRequest } from '../../../../shared/runtime-map-link'
 
 const navURL = new URL('../../../contexts/NavigationContext.tsx', import.meta.url)
 const shellURL = new URL('../AppShell.tsx', import.meta.url)
@@ -40,23 +43,28 @@ function productionClosure(url: URL, name: string, bindings: Record<string, unkn
 
 function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspace') {
   const store = createStore()
+  const requestRuntimeSelection = productionClosure(navURL, 'requestRuntimeSelection', {
+    store, workspaceId: 'a', runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey, parseRuntimeMapViewRequest,
+  })
   const requestedWorkspaceSlugRef = { current: initialRequestedWorkspace }
   let requestedWorkspaceSlug = requestedWorkspaceSlugRef.current
+  const rightSidebarRef = { current: undefined as unknown }
   const writes: unknown[] = [], historyWrites: unknown[] = [], persisted: unknown[] = []
   const reconcile = productionClosure(navURL, 'reconcileFromUrlParams', {
-    store, reconcilePanelStackAtom, parseRouteToNavigationState, normalizePanelRouteForReconcile, decodePanelEntries,
-    rightSidebarRef: { current: undefined }, resolveAutoSelectionRef: { current: (state: unknown) => state }, setRightSidebar: () => {},
+    store, requestRuntimeSelection, reconcilePanelStackAtom, parseRouteToNavigationState, normalizePanelRouteForReconcile, decodePanelEntries,
+    resolveAutoSelectionRef: { current: (state: unknown) => state }, rightSidebarRef, setRightSidebar: () => {},
   })
   const params = new URLSearchParams({ ws: 'deleted-workspace', route: 'notes/note/retained' })
   if (multiple) { params.set('panels', 'home:0.5,notes/note/retained:0.5'); params.set('fi', '0') }
   reconcile(params)
   const navigate = productionClosure(navURL, 'navigate', {
-    parseRoute, resolveRouteNavigationState, parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState, buildRouteFromNavigationState, isSessionsNavigation, navigationOwnerRef: { current: { active: true, revision: 0 } },
-    store, updateFocusedPanelRouteAtom, sessionMetaMapAtom: {}, workspaceId: 'a', remoteWorkspaceId: null,
+    parseRoute, resolveRouteNavigationState, parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState, buildRouteFromNavigationState, preserveRouteQuery, isSessionsNavigation, navigationOwnerRef: { current: { active: true, revision: 0 } },
+    store, requestRuntimeSelection, updateFocusedPanelRouteAtom, sessionMetaMapAtom, workspaceId: 'a', remoteWorkspaceId: null,
     workspaceSlug: 'a', requestedWorkspaceSlugRef, setRequestedWorkspaceSlug: (value: string) => { requestedWorkspaceSlug = value },
     isReady: true, isSessionsReady: true, initialRouteRestoredRef: { current: true }, isPopstateSwitchRef: { current: false },
     suppressPushRef: { current: true }, pendingUrlRestoreRef: { current: null },
-    preserveRouteQuery, historyReconcileRevisionRef: { current: 0 }, historyMountedRef: { current: true }, finishHistoryReconcile: () => {}, pendingNavigationRef: { current: null }, suppressAutoSelectRef: { current: false }, actionEpochRef: { current: 0 },
+    historyReconcileRevisionRef: { current: 0 }, historyMountedRef: { current: true }, finishHistoryReconcile: () => {},
+    pendingNavigationRef: { current: null }, suppressAutoSelectRef: { current: false }, actionEpochRef: { current: 0 },
     handleActionNavigation: () => { throw new Error('Unexpected action') }, pushPanel: () => { throw new Error('Unexpected panel') },
     resolveAutoSelection: (state: unknown) => state, setNavigationRevision: () => {},
     storage: { KEYS: { lastSelectedSessionId: 'last' }, set: (...args: unknown[]) => persisted.push(args) },
@@ -64,7 +72,8 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   const readNavigation = () => productionClosure(navURL, 'navigationState', {
     unavailableWorkspaceSlug: requestedWorkspaceSlug !== 'a' ? requestedWorkspaceSlug : null,
     focusedRoute: store.get(focusedPanelRouteAtom), resolveRouteNavigationState, DEFAULT_NAVIGATION_STATE,
-    rightSidebar: undefined, isSessionsNavigation,
+    rightSidebar: rightSidebarRef.current, isSessionsNavigation,
+    sessionMetaMap: store.get(sessionMetaMapAtom), workspaceId: 'a', remoteWorkspaceId: null,
   })()
   const focusServicePanel = (id: any) => store.set(focusServicePanelAtom, id)
   const serviceNavigate = (route: string) => { writes.push(route); return navigate(route) }
@@ -84,11 +93,11 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   }, true)
   const click = renderClick()
   const syncUrl = productionClosure(navURL, 'syncUrl', {
-    isPopstateSwitchRef: { current: false }, historyMountedRef: { current: true }, initialRouteRestoredRef: { current: true }, suppressPushRef: { current: false },
     requestedWorkspaceSlugRef, workspaceSlug: 'a', store, panelStackAtom, focusedPanelIndexAtom, encodePanelEntries,
     isReady: true, isSessionsReady: true, pendingUrlRestoreRef: { current: null }, previousWorkspaceSlugRef: { current: null },
+    historyMountedRef: { current: true }, isPopstateSwitchRef: { current: false },
     window: { location: { href: 'https://fixture.invalid/?ws=deleted-workspace&route=notes%2Fnote%2Fretained' } },
-    rightSidebarRef: { current: undefined }, buildRightSidebarParam,
+    rightSidebarRef, buildRightSidebarParam,
     nextHistorySeqRef: { current: 1 }, historySeqRef: { current: 0 }, historyMaxSeqRef: { current: 0 },
     updateCanGoBackForward: () => {}, history: { state: {}, pushState: (...args: unknown[]) => historyWrites.push(args), replaceState: (...args: unknown[]) => historyWrites.push(args) },
     storage: { KEYS: { workspaceUrl: 'url' }, set: (...args: unknown[]) => persisted.push(args) },

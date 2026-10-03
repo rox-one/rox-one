@@ -13,6 +13,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { codeToHtml, bundledLanguages, type BundledLanguage } from 'shiki'
 import { cn } from '../../lib/utils'
 import { LANGUAGE_MAP } from './language-map'
+import { resolveShikiTheme } from './zedShikiThemes'
+import { useShikiTheme } from '../../context/ShikiThemeContext'
 
 export interface ShikiCodeViewerProps {
   /** The code content to display */
@@ -75,6 +77,8 @@ export function ShikiCodeViewer({
   const [highlighted, setHighlighted] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const hasCalledReady = useRef(false)
+  const contextShikiTheme = useShikiTheme()
+  const activeShikiTheme = shikiTheme || contextShikiTheme
 
   // Resolve language from props or file path
   const resolvedLang = useMemo(() => {
@@ -92,13 +96,13 @@ export function ShikiCodeViewer({
 
     async function highlight() {
       // Use provided shikiTheme or fall back to github theme based on mode
-      const resolvedShikiTheme = shikiTheme || (theme === 'dark' ? 'github-dark' : 'github-light')
+      const resolvedShikiTheme = activeShikiTheme || (theme === 'dark' ? 'github-dark' : 'github-light')
       const lang = isValidLanguage(resolvedLang) ? resolvedLang : 'text'
 
       try {
         const html = await codeToHtml(code, {
           lang,
-          theme: resolvedShikiTheme,
+          theme: resolveShikiTheme(resolvedShikiTheme),
         })
 
         if (!cancelled) {
@@ -130,12 +134,12 @@ export function ShikiCodeViewer({
     return () => {
       cancelled = true
     }
-  }, [code, resolvedLang, theme, shikiTheme, onReady])
+  }, [code, resolvedLang, theme, activeShikiTheme, onReady])
 
   // Use CSS variables so custom themes are respected
   const backgroundColor = 'var(--background)'
-  const lineNumberColor = theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'
-  const borderColor = theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'
+  const lineNumberColor = 'var(--text-muted, var(--muted-foreground))'
+  const borderColor = 'var(--border-subtle, var(--border))'
 
   return (
     <div

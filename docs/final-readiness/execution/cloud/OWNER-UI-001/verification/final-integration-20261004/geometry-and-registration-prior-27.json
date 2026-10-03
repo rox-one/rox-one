@@ -1,0 +1,545 @@
+{
+  "task_id": "source_review",
+  "attempt_id": "28586c49ffa159b4e2a4d554df46b9e0",
+  "packet_hash": "2ad67e8072153eaf29a7785d31cc91b584afa336883eb3a9d2e02abcaf1526e3",
+  "request_id": "ui001-full-integration-e61c84b1",
+  "scope": "Approved test-only geometry13 event fixture repair plus two GUI registration expected-channel fixtures",
+  "recordedAt": "2026-10-03T20:30:31.160799+00:00",
+  "inputRevision": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+  "currentHead": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+  "checkout": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+  "sourceWritesCompleted": true,
+  "ownedChangedPaths": [
+    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+    "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+    "apps/electron/src/main/handlers/__tests__/registration.test.ts"
+  ],
+  "sourcePaths": [
+    {
+      "path": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+      "sha256": "c7f6493b8db39f9c6a70983005272f047b07e66089530094a38415722f833a27",
+      "bytes": 9908,
+      "stagedBytesMatch": true
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+      "sha256": "56d67407f5415855c16d73094af5e77faa86a81114cf874096d6d287cd28765f",
+      "bytes": 10467,
+      "stagedBytesMatch": true
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+      "sha256": "adb3c3b8457b31b9cd97e48fbad57f4be827152bec74ff1cfd1b59e6b5db899b",
+      "bytes": 10809,
+      "stagedBytesMatch": true
+    }
+  ],
+  "originalSources": [
+    {
+      "path": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+      "sha256": "aee8f356a0856cd5979d9bfd35d528aa50ea7617a3a16dddc2a13b775450cbeb",
+      "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/geometry-registration-2e3d/rox-readiness-ui-001.geometry.test.ts.original.txt"
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+      "sha256": "1118daaea4ac4ca8d5bbbb0fdf565875d3a7a978feca412bd5b00736e178a228",
+      "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/geometry-registration-2e3d/registration-profiles.test.ts.original.txt"
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+      "sha256": "5443b7d7796f4f9712c669d656aa6ea6b4f6bd0b9eca5cf7a772300f6715b26b",
+      "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/geometry-registration-2e3d/registration.test.ts.original.txt"
+    }
+  ],
+  "productionUnchanged": [
+    {
+      "path": "apps/electron/src/renderer/atoms/unified-shell.ts",
+      "sha256": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+      "matchesHead": true
+    },
+    {
+      "path": "apps/electron/src/main/handlers/index.ts",
+      "sha256": "e7b1e942f5cc5ff69c586ad2cc28637fae49fc080ae899b5e114d93b76cf15ba",
+      "matchesHead": true
+    },
+    {
+      "path": "apps/electron/src/main/handlers/voice-clipboard.ts",
+      "sha256": "9005ef55cee7f7cfc3f4705974298a651d9e0feeeaf1be4848ea9ea53b1c4ec9",
+      "matchesHead": true
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "sha256": "a2776b68eacc4f431228fcfcb058d674aff86e1802923e4dbf76d3303cfd806d",
+      "matchesHead": true
+    }
+  ],
+  "implementation": [
+    "Separate emitQueued dispatches historical events without changing backend; live emit setItem/removeItem/clear on the passed storage area before notifying actual Jotai listeners.",
+    "Canonical race case asserts older queued write, queued deletion and queued clear cannot overwrite current max; remount reads current max. All original normalization/corruption/delete/clear checks retained with added remount persistence checks.",
+    "Exactly one source assertion changed: storage.getItem after actual live deletion expects null instead of String(target.max). Executes for both target atoms. Original complete body/hash and four-failure red retained.",
+    "Normal all-channel and profiles GUI fixtures import ../voice-clipboard and spread its declared HANDLED_CHANNELS. Core expected set and all registration callback bodies, exact ownership/duplicate/onboarding assertions unchanged."
+  ],
+  "testEnvironment": {
+    "platform": "macOS arm64",
+    "bunVersion": "1.3.14",
+    "nodeVersion": "v24.21.0",
+    "privateHome": "Separate task-private HOME/XDG paths per test file, process environment only; no global configuration changes",
+    "perFileProcesses": true
+  },
+  "verification": {
+    "before": {
+      "phase": "before",
+      "head": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+      "bunVersion": "1.3.14",
+      "nodeVersion": "v24.21.0",
+      "results": [
+        {
+          "file": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+            "test",
+            "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts"
+          ],
+          "exitCode": 1,
+          "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/private-homes/before/0",
+          "sourceBefore": "aee8f356a0856cd5979d9bfd35d528aa50ea7617a3a16dddc2a13b775450cbeb",
+          "sourceAfter": "aee8f356a0856cd5979d9bfd35d528aa50ea7617a3a16dddc2a13b775450cbeb",
+          "sourceStable": true,
+          "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/before-rox-readiness-ui-001.geometry.test.log",
+          "logSha256": "642075503adceabe5ea6784c648a2ad73c096f3d7ab5bc933a5ace7f62887f75",
+          "pass": 9,
+          "fail": 4,
+          "assertions": 123,
+          "cases": 13,
+          "files": 1,
+          "skip": 0
+        },
+        {
+          "file": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+            "test",
+            "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts"
+          ],
+          "exitCode": 1,
+          "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/private-homes/before/1",
+          "sourceBefore": "1118daaea4ac4ca8d5bbbb0fdf565875d3a7a978feca412bd5b00736e178a228",
+          "sourceAfter": "1118daaea4ac4ca8d5bbbb0fdf565875d3a7a978feca412bd5b00736e178a228",
+          "sourceStable": true,
+          "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/before-registration-profiles.test.log",
+          "logSha256": "a6afc706617657648a30889310a09e7cb40a8d7d44dd878f257a856f6b539d09",
+          "pass": 1,
+          "fail": 1,
+          "assertions": 4,
+          "cases": 2,
+          "files": 1,
+          "skip": 0
+        },
+        {
+          "file": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+            "test",
+            "apps/electron/src/main/handlers/__tests__/registration.test.ts"
+          ],
+          "exitCode": 1,
+          "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/private-homes/before/2",
+          "sourceBefore": "5443b7d7796f4f9712c669d656aa6ea6b4f6bd0b9eca5cf7a772300f6715b26b",
+          "sourceAfter": "5443b7d7796f4f9712c669d656aa6ea6b4f6bd0b9eca5cf7a772300f6715b26b",
+          "sourceStable": true,
+          "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/before-registration.test.log",
+          "logSha256": "4d9b86db19dadaf31c405c1880ef0ea74be7e975f6c2955965a7dc5967e984e5",
+          "pass": 1,
+          "fail": 1,
+          "assertions": 3,
+          "cases": 2,
+          "files": 1,
+          "skip": 0
+        },
+        {
+          "file": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+            "test",
+            "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+          ],
+          "exitCode": 0,
+          "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/private-homes/before/3",
+          "sourceBefore": "21b04e8d0c65f255bf4cfedb28cc0156e438793f75e8ed6a2c1ae41cd846de23",
+          "sourceAfter": "21b04e8d0c65f255bf4cfedb28cc0156e438793f75e8ed6a2c1ae41cd846de23",
+          "sourceStable": true,
+          "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/before-rox-readiness-ui-001.layout.test.log",
+          "logSha256": "b9681d54cee84c5a3fd83d7df1477ecc2669e479fd7a4b1a05c0ba3c3676d83b",
+          "pass": 9,
+          "fail": 0,
+          "assertions": 48,
+          "cases": 9,
+          "files": 1,
+          "skip": 0
+        },
+        {
+          "file": "apps/electron/src/main/handlers/voice-clipboard.test.ts",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+            "test",
+            "apps/electron/src/main/handlers/voice-clipboard.test.ts"
+          ],
+          "exitCode": 0,
+          "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/private-homes/before/4",
+          "sourceBefore": "fac41af43b1e3627f0f233e9efd9e118e5b8be9842aa1af314a61b03a29263ac",
+          "sourceAfter": "fac41af43b1e3627f0f233e9efd9e118e5b8be9842aa1af314a61b03a29263ac",
+          "sourceStable": true,
+          "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/before-voice-clipboard.test.log",
+          "logSha256": "7bd8d8112967cedea5df1454a5ec5f7ce2bb323de68e6e31029da6250efcca09",
+          "pass": 1,
+          "fail": 0,
+          "assertions": 9,
+          "cases": 1,
+          "files": 1,
+          "skip": 0
+        }
+      ]
+    },
+    "after": {
+      "phase": "after",
+      "head": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+      "bunVersion": "1.3.14",
+      "nodeVersion": "v24.21.0",
+      "results": [
+        {
+          "file": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+            "test",
+            "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts"
+          ],
+          "exitCode": 0,
+          "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/private-homes/after/0",
+          "sourceBefore": "c7f6493b8db39f9c6a70983005272f047b07e66089530094a38415722f833a27",
+          "sourceAfter": "c7f6493b8db39f9c6a70983005272f047b07e66089530094a38415722f833a27",
+          "sourceStable": true,
+          "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/after-rox-readiness-ui-001.geometry.test.log",
+          "logSha256": "befca91175673537ff7c0e5f3f2497370211956fb028c9737f7beab81c6634ab",
+          "pass": 13,
+          "fail": 0,
+          "assertions": 157,
+          "cases": 13,
+          "files": 1,
+          "skip": 0
+        },
+        {
+          "file": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+            "test",
+            "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts"
+          ],
+          "exitCode": 0,
+          "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/private-homes/after/1",
+          "sourceBefore": "56d67407f5415855c16d73094af5e77faa86a81114cf874096d6d287cd28765f",
+          "sourceAfter": "56d67407f5415855c16d73094af5e77faa86a81114cf874096d6d287cd28765f",
+          "sourceStable": true,
+          "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/after-registration-profiles.test.log",
+          "logSha256": "a99f1aade2eb28a25b99b06d28b3ebe3399d660efd64d5632ad89b26ff8fcd4f",
+          "pass": 2,
+          "fail": 0,
+          "assertions": 4,
+          "cases": 2,
+          "files": 1,
+          "skip": 0
+        },
+        {
+          "file": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+            "test",
+            "apps/electron/src/main/handlers/__tests__/registration.test.ts"
+          ],
+          "exitCode": 0,
+          "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/private-homes/after/2",
+          "sourceBefore": "adb3c3b8457b31b9cd97e48fbad57f4be827152bec74ff1cfd1b59e6b5db899b",
+          "sourceAfter": "adb3c3b8457b31b9cd97e48fbad57f4be827152bec74ff1cfd1b59e6b5db899b",
+          "sourceStable": true,
+          "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/after-registration.test.log",
+          "logSha256": "e4f2eb582c0e7a55da3a00476faa83f8d0aed97de011e92759a3e1cb4f497af1",
+          "pass": 2,
+          "fail": 0,
+          "assertions": 4,
+          "cases": 2,
+          "files": 1,
+          "skip": 0
+        },
+        {
+          "file": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+            "test",
+            "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+          ],
+          "exitCode": 0,
+          "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/private-homes/after/3",
+          "sourceBefore": "21b04e8d0c65f255bf4cfedb28cc0156e438793f75e8ed6a2c1ae41cd846de23",
+          "sourceAfter": "21b04e8d0c65f255bf4cfedb28cc0156e438793f75e8ed6a2c1ae41cd846de23",
+          "sourceStable": true,
+          "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/after-rox-readiness-ui-001.layout.test.log",
+          "logSha256": "17fa8dd02e0393f7a68a168d0c9e94fedd523c5460b470fdf328912579a346a2",
+          "pass": 9,
+          "fail": 0,
+          "assertions": 48,
+          "cases": 9,
+          "files": 1,
+          "skip": 0
+        },
+        {
+          "file": "apps/electron/src/main/handlers/voice-clipboard.test.ts",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+            "test",
+            "apps/electron/src/main/handlers/voice-clipboard.test.ts"
+          ],
+          "exitCode": 0,
+          "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/private-homes/after/4",
+          "sourceBefore": "fac41af43b1e3627f0f233e9efd9e118e5b8be9842aa1af314a61b03a29263ac",
+          "sourceAfter": "fac41af43b1e3627f0f233e9efd9e118e5b8be9842aa1af314a61b03a29263ac",
+          "sourceStable": true,
+          "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/after-voice-clipboard.test.log",
+          "logSha256": "61cf4fa2bcbcfa9162624a8572bdf3482dae632fadbb60052fdd25a4946b2d52",
+          "pass": 1,
+          "fail": 0,
+          "assertions": 9,
+          "cases": 1,
+          "files": 1,
+          "skip": 0
+        }
+      ]
+    },
+    "electronTypecheck": {
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node24/node_modules/.bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "apps/electron/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/electron-tsc.log"
+    },
+    "assertionContract": {
+      "nodeVersion": "v24.21.0",
+      "typescriptVersion": "5.9.3",
+      "authorizedRenamedCaseExpressions": 1,
+      "authorizedChangedAssertionExpressions": 1,
+      "note": "One source assertion executes once per each of two layout targets; real removeItem now expects null. Every other original assertion subject/matcher/expected expression retained in order. Registration callbacks identical. No skip/deadline weakening.",
+      "reports": [
+        {
+          "path": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+          "originalCaseExpressions": 7,
+          "currentCaseExpressions": 7,
+          "originalAssertionExpressions": 43,
+          "currentAssertionExpressions": 52,
+          "allPreserved": true,
+          "checks": [
+            {
+              "originalTitle": "`${target.name}: validates direct and functional writes before publishing or persisting`",
+              "title": "`${target.name}: validates direct and functional writes before publishing or persisting`",
+              "condition": "it",
+              "deadline": "bun-default",
+              "assertions": 9,
+              "preservedWithOneAuthorizedDeletionExpectation": true
+            },
+            {
+              "originalTitle": "`${target.name}: supports direct and functional RESET and remounts the default`",
+              "title": "`${target.name}: supports direct and functional RESET and remounts the default`",
+              "condition": "it",
+              "deadline": "bun-default",
+              "assertions": 5,
+              "preservedWithOneAuthorizedDeletionExpectation": true
+            },
+            {
+              "originalTitle": "`${target.name}: restores normalized saved values on remount`",
+              "title": "`${target.name}: restores normalized saved values on remount`",
+              "condition": "it",
+              "deadline": "bun-default",
+              "assertions": 2,
+              "preservedWithOneAuthorizedDeletionExpectation": true
+            },
+            {
+              "originalTitle": "`${target.name}: tolerates unavailable reads, quota errors and failed reset removal`",
+              "title": "`${target.name}: tolerates unavailable reads, quota errors and failed reset removal`",
+              "condition": "it",
+              "deadline": "bun-default",
+              "assertions": 6,
+              "preservedWithOneAuthorizedDeletionExpectation": true
+            },
+            {
+              "originalTitle": "`${target.name}: reads event snapshots through races, corrupt values and deletion`",
+              "title": "`${target.name}: normalizes current canonical storage through races, corrupt values and deletion`",
+              "condition": "it",
+              "deadline": "bun-default",
+              "assertions": 7,
+              "preservedWithOneAuthorizedDeletionExpectation": true
+            },
+            {
+              "originalTitle": "`${target.name}: filters other keys/storage areas and releases subscriptions`",
+              "title": "`${target.name}: filters other keys/storage areas and releases subscriptions`",
+              "condition": "it",
+              "deadline": "bun-default",
+              "assertions": 6,
+              "preservedWithOneAuthorizedDeletionExpectation": true
+            },
+            {
+              "originalTitle": "'uses defaults and remains writable when storage access throws or is absent'",
+              "title": "'uses defaults and remains writable when storage access throws or is absent'",
+              "condition": "it",
+              "deadline": "bun-default",
+              "assertions": 8,
+              "preservedWithOneAuthorizedDeletionExpectation": true
+            }
+          ]
+        },
+        {
+          "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+          "originalCaseExpressions": 2,
+          "currentCaseExpressions": 2,
+          "originalAssertionExpressions": 4,
+          "currentAssertionExpressions": 4,
+          "allPreserved": true,
+          "checks": [
+            {
+              "originalTitle": "'registerCoreRpcHandlers registers only core channels'",
+              "title": "'registerCoreRpcHandlers registers only core channels'",
+              "condition": "it",
+              "deadline": "bun-default",
+              "assertions": 2,
+              "preservedWithOneAuthorizedDeletionExpectation": true,
+              "callbackBodyUnchanged": true
+            },
+            {
+              "originalTitle": "'registerGuiRpcHandlers registers only gui channels'",
+              "title": "'registerGuiRpcHandlers registers only gui channels'",
+              "condition": "it",
+              "deadline": "bun-default",
+              "assertions": 2,
+              "preservedWithOneAuthorizedDeletionExpectation": true,
+              "callbackBodyUnchanged": true
+            }
+          ]
+        },
+        {
+          "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+          "originalCaseExpressions": 2,
+          "currentCaseExpressions": 2,
+          "originalAssertionExpressions": 4,
+          "currentAssertionExpressions": 4,
+          "allPreserved": true,
+          "checks": [
+            {
+              "originalTitle": "'registers all declared handled channels exactly once'",
+              "title": "'registers all declared handled channels exactly once'",
+              "condition": "it",
+              "deadline": "bun-default",
+              "assertions": 3,
+              "preservedWithOneAuthorizedDeletionExpectation": true,
+              "callbackBodyUnchanged": true
+            },
+            {
+              "originalTitle": "'keeps onboarding channels in registration coverage'",
+              "title": "'keeps onboarding channels in registration coverage'",
+              "condition": "it",
+              "deadline": "bun-default",
+              "assertions": 1,
+              "preservedWithOneAuthorizedDeletionExpectation": true,
+              "callbackBodyUnchanged": true
+            }
+          ]
+        }
+      ]
+    },
+    "canonicalNegative": {
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/rox-readiness-ui-001.canonical-negative.test.ts",
+        "--test-name-pattern",
+        "normalizes current canonical storage"
+      ],
+      "exitCode": 1,
+      "productionSource": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/apps/electron/src/renderer/atoms/unified-shell.ts",
+      "productionSha256": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+      "isolatedSourceCopy": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/stale-event-negative-source.ts",
+      "negativeMutation": "Only canonical callback changed to historical event.newValue/clear snapshot; alias imports rebound to actual repository modules. Actual production source unchanged.",
+      "copySha256": "cdd7ecfaee75f7344f855ff6b06fcc5d61f159c2e1b58cf3348e54630dbd0972",
+      "isolatedTestCopy": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/rox-readiness-ui-001.canonical-negative.test.ts",
+      "testSourceSha256": "c7f6493b8db39f9c6a70983005272f047b07e66089530094a38415722f833a27",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/canonical-negative.log",
+      "logSha256": "20ccad2e89d571047aacdd379cdd2031e2643251a9885553a800accf260fa29d"
+    },
+    "queuedClearNegative": {
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/rox-readiness-ui-001.queued-clear-negative.test.ts",
+        "--test-name-pattern",
+        "normalizes current canonical storage"
+      ],
+      "exitCode": 1,
+      "productionSource": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/apps/electron/src/renderer/atoms/unified-shell.ts",
+      "productionSha256": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+      "isolatedSourceCopy": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/queued-clear-negative-source.ts",
+      "negativeMutation": "Only clear-event branch regressed to fallback, other events still read canonical current value; actual production source unchanged. Alias imports rebound to actual repository modules.",
+      "copySha256": "5433e64d17e21b83ee1be29452e2868aaffa73ba34c8818b7b876921929871bc",
+      "isolatedTestCopy": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/rox-readiness-ui-001.queued-clear-negative.test.ts",
+      "testSourceSha256": "c7f6493b8db39f9c6a70983005272f047b07e66089530094a38415722f833a27",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/queued-clear-negative.log",
+      "logSha256": "18014f4728c382ecb1a06fa420d54a518a69cc8369259c58f8d44e4748add803"
+    },
+    "negativeExpectedResults": {
+      "eventSnapshotRegression": "0pass2fail, production unchanged",
+      "queuedClearRegression": "0pass2fail, production unchanged"
+    },
+    "stagedDiffCheck": {
+      "exitCode": 0
+    }
+  },
+  "failureHistory": {
+    "linuxFrozenOriginal": {
+      "head": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+      "report": "/proof/full-results/run-K2Dvku/report.json",
+      "geometryLog": "/proof/full-results/run-K2Dvku/00184-632b3c459c9f/output.log",
+      "geometrySha256": "46ed67ac2fea8d6b1b693b73b8c9aefc12f421af8ede98d05272b7ecce86c239",
+      "profilesLog": "/proof/full-results/run-K2Dvku/00138-270ae44923b2/output.log",
+      "profilesSha256": "86cfe957f1e945032a257e262add0e5224e95706c1d9d5cc04751b7270e44940",
+      "normalLog": "/proof/full-results/run-K2Dvku/00139-241ba71df6b3/output.log",
+      "normalSha256": "31532139e1a0577450457292a3830bb47bcf557cf88ba9a918be366f498f8733",
+      "source": "regression_scout exact receipt, not claimed as locally read log bytes"
+    },
+    "freshLocalOriginalRed": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/geometry-registration-2e3d/before-runs.json",
+    "fullOriginalFileCopies": [
+      {
+        "path": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+        "sha256": "aee8f356a0856cd5979d9bfd35d528aa50ea7617a3a16dddc2a13b775450cbeb",
+        "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/geometry-registration-2e3d/rox-readiness-ui-001.geometry.test.ts.original.txt"
+      },
+      {
+        "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+        "sha256": "1118daaea4ac4ca8d5bbbb0fdf565875d3a7a978feca412bd5b00736e178a228",
+        "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/geometry-registration-2e3d/registration-profiles.test.ts.original.txt"
+      },
+      {
+        "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+        "sha256": "5443b7d7796f4f9712c669d656aa6ea6b4f6bd0b9eca5cf7a772300f6715b26b",
+        "artifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/geometry-registration-2e3d/registration.test.ts.original.txt"
+      }
+    ],
+    "localSummaryParser": "First summary parser did not match singular file; preserved before-runs-parser-history.json. Parser correction first hit file. token index, exited1; fixed counts by reading unchanged actual logs. No test rerun or source change was used to hide failures.",
+    "negativeControlCopies": "Both intentional regressions in ignored isolated source/test copies; production callback and core authority unchanged."
+  },
+  "qualifiedResult": "macOS scoped27pass0fail222assertions across5 fresh per-file processes; geometry13/0, registration profiles2/0, registration normal2/0, unchanged layout9/0 and actual local-only clipboard transport1/0. Node24 Electron typecheck0.",
+  "acceptanceLimits": [
+    "No Linux post-patch replay performed by this worker; source-bound original Linux failure evidence reported by regression_scout.",
+    "Full frozen Linux1881 report1775pass70fail36blocked remains original failure history; remaining toolchain/prerequisite failures require independent replay, not replaced by Mac131pass.",
+    "No native clipboard/UI/real provider acceptance; existing clipboard test uses actual local WS transport with injected writeText.",
+    "Lead retains commit/CI/build/native/GitHub/main merge/readback; no such actions performed here."
+  ],
+  "fullDoDClosed": false
+}

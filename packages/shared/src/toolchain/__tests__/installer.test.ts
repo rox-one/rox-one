@@ -8,6 +8,7 @@ import { extractArtifact, generateNpmWrappers, installTool, npmInstallDeps } fro
 import { toolchainPaths } from '../manifest';
 import type { ToolchainPaths } from '../types';
 import { whichTool } from '../exec';
+import { captureTestCommand } from '../../../../../scripts/test-all';
 
 const FIXTURES = path.join(import.meta.dir, 'fixtures');
 const isWindows = process.platform === 'win32';
@@ -46,21 +47,21 @@ describe('installer', () => {
       expect(command).toContain('set "OMP_APP_NAME=rox"\r\n');
       expect(command).not.toContain('set "PI_CODING_AGENT_DIR=');
       if (isWindows) continue;
-      const proc = Bun.spawn([path.join(toolDir, 'bin', name), '--mode', 'rpc', 'argument with spaces'], {
-        env: { ...process.env, CRAFT_BUN_PATH: process.execPath, PI_CODING_AGENT_DIR: '/existing/config' },
-        stdout: 'pipe',
-        stderr: 'pipe',
+      // Keep the real command and environment; the Node broker drains output
+      // into protected files before its completion receipt is published.
+      const proc = await captureTestCommand([path.join(toolDir, 'bin', name), '--mode', 'rpc', 'argument with spaces'], {
+        environment: { ...process.env, CRAFT_BUN_PATH: process.execPath, PI_CODING_AGENT_DIR: '/existing/config' },
       });
-      const output = JSON.parse(await new Response(proc.stdout).text());
-      expect(await proc.exited).toBe(0);
+      const output = JSON.parse(proc.stdout);
+      expect(proc.exitCode).toBe(0);
       expect(output).toEqual({ name: 'rox', args: ['--mode', 'rpc', 'argument with spaces'], config: '/existing/config' });
     }
     if (!isWindows) {
-      const proc = Bun.spawn([path.join(toolDir, 'bin/rox'), '--help'], {
-        env: { ...process.env, CRAFT_BUN_PATH: process.execPath }, stdout: 'pipe', stderr: 'pipe',
+      const proc = await captureTestCommand([path.join(toolDir, 'bin/rox'), '--help'], {
+        environment: { ...process.env, CRAFT_BUN_PATH: process.execPath },
       });
-      expect(await new Response(proc.stdout).text()).toBe('rox v1.0.0\n  $ rox [COMMAND]\n~/.omp/agent\n');
-      expect(await proc.exited).toBe(0);
+      expect(proc.stdout).toBe('rox v1.0.0\n  $ rox [COMMAND]\n~/.omp/agent\n');
+      expect(proc.exitCode).toBe(0);
     }
   });
 

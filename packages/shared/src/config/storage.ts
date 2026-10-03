@@ -37,6 +37,7 @@ import { isValidThinkingLevel, normalizeThinkingLevel } from '../agent/thinking-
 import { parsePermissionMode, PERMISSION_MODE_ORDER } from '../agent/mode-types.ts';
 import { type ConfigDefaults } from './config-defaults-schema.ts';
 import { isValidThemeFile } from './validators.ts';
+import { isSafeThemeId } from './theme-id.ts';
 import { isToolName } from '../toolchain/types.ts';
 import type { ToolName } from '../toolchain/types.ts';
 import type { WorkspaceConfig } from '../workspaces/types.ts';
@@ -121,7 +122,7 @@ export interface StoredConfig {
   // Notifications
   notificationsEnabled?: boolean;  // Desktop notifications for task completion (default: true)
   // Appearance
-  colorTheme?: string;  // ID of selected preset theme (e.g., 'dracula', 'nord'). Default: 'default'
+  colorTheme?: string;  // Selected preset ID; existing profiles without this key retain config-defaults.
   defaultZoomLevel?: number;  // Default app zoom percentage (50-150, default: 90)
   // Auto-update
   dismissedUpdateVersion?: string;  // Version that user dismissed (skip notifications for this version)
@@ -566,6 +567,19 @@ function commitWorkspaceMutation(staged: StagedWorkspaceMutation): CanonicalWork
   return staged.workspace;
 }
 
+/**
+ * Initial registry for a physically missing config.json. Callers must distinguish
+ * absence from an unreadable existing file; this is not a migration/default.
+ */
+export function createInitialStoredConfig(): StoredConfig {
+  return {
+    workspaces: [],
+    activeWorkspaceId: null,
+    activeSessionId: null,
+    colorTheme: 'nordfox-opaque',
+  };
+}
+
 function configForWorkspaceMutation(): StoredConfig {
   const config = loadStoredConfig();
   if (config) return config;
@@ -573,7 +587,7 @@ function configForWorkspaceMutation(): StoredConfig {
     throw new Error('Unable to load existing workspace registry');
   }
   ensureConfigDir();
-  return { workspaces: [], activeWorkspaceId: null, activeSessionId: null };
+  return createInitialStoredConfig();
 }
 
 function buildCanonicalWorkspace(
@@ -2611,10 +2625,14 @@ export function getColorTheme(): string {
  * Set the color theme ID.
  */
 export function setColorTheme(themeId: string): void {
+  if (!isSafeThemeId(themeId)) throw new Error('Invalid theme id');
   const config = loadStoredConfig();
-  if (!config) return;
+  if (!config) throw new Error('Cannot save theme selection: global config is missing or unreadable');
   config.colorTheme = themeId;
   saveConfig(config);
+  if (readJsonFileSync<StoredConfig>(CONFIG_FILE).colorTheme !== themeId) {
+    throw new Error('Theme selection readback did not match the saved value');
+  }
 }
 
 // ============================================
@@ -3821,7 +3839,7 @@ export async function seedDefaultLlmConnection(): Promise<void> {
   let createdFresh = false;
   if (!config) {
     if (existsSync(CONFIG_FILE)) return; // unreadable/corrupt — leave it alone
-    config = { workspaces: [], activeWorkspaceId: null, activeSessionId: null };
+    config = createInitialStoredConfig();
     createdFresh = true;
   }
   if (config.llmConnections && config.llmConnections.length > 0) return;

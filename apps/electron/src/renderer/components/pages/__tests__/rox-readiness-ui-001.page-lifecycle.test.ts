@@ -22,6 +22,11 @@ const deferred = <T>() => {
   return { promise, resolve, reject }
 }
 const flush = async () => { await Promise.resolve(); await Promise.resolve() }
+// These lifecycle cases have no active learning runtime. Keep its explicit
+// capability/target ports inert while executing the actual PageView hooks.
+const inactiveKnowledgeSignals = {
+  capture: () => null, publish() {}, capability: () => () => {},
+}
 const page = (workspaceId = 'a', digest = 'digest-1') => ({
   workspaceId, workspaceRootPath: `/${workspaceId}`, config: { slug: 'shared', name: workspaceId, contentDigest: digest, updatedAt: 1 },
 })
@@ -48,11 +53,12 @@ function fixture(api: Record<string, unknown> = {}) {
     },
     useEffect(create: () => (() => void) | undefined, deps: unknown[]) { pending.push({ create, deps }) },
   }
-  const run = new Function('React', 'useAppShellContext', 'useTranslation', 'useNavigation', 'useAtomValue', 'pagesAtom', 'window', 'pageSlug', executable)
+  const run = new Function('React', 'useAppShellContext', 'useTranslation', 'useNavigation', 'useAtomValue', 'pagesAtom', 'window', 'pageSlug', 'useKnowledgeSignals', 'useTourTarget', executable)
   const render = (workspaceId: string | null, pages: ReturnType<typeof page>[] = []) => {
     stateCursor = 0; pending = []
     const value = run(React, () => ({ activeWorkspaceId: workspaceId, workspaces: workspaceId ? [{ id: workspaceId, rootPath: `/${workspaceId}` }] : [] }),
-      () => ({ t: (key: string) => key }), () => ({ navigate: () => {} }), () => pages, {}, { electronAPI: actualApi }, 'shared')
+      () => ({ t: (key: string) => key }), () => ({ navigate: () => {} }), () => pages, {}, { electronAPI: actualApi }, 'shared',
+      () => inactiveKnowledgeSignals, () => () => {})
     const scheduled = pending
     return {
       ...value,

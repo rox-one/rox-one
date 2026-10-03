@@ -3,7 +3,7 @@ import { Check, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const COLLECTION_MENU_ROW =
-  'group/row flex w-full cursor-pointer items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[12.5px] text-foreground/90 outline-none transition-[background-color,color,opacity] duration-150 hover:bg-foreground/[0.055] hover:text-foreground focus-visible:bg-foreground/[0.07] focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 motion-reduce:transition-none'
+  'group/row flex w-full cursor-pointer items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left text-[12.5px] text-foreground/90 outline-none transition-[background-color,color,opacity] duration-150 hover:bg-foreground/[0.055] hover:text-foreground focus-visible:bg-foreground/[0.07] focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 motion-reduce:transition-none'
 
 export function CollectionMenuCheck({
   selected,

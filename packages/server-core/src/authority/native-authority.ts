@@ -3,6 +3,7 @@ import { chmodSync, closeSync, lstatSync, mkdirSync, openSync, realpathSync, sta
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { normalizeProfileAvatar, normalizeProfileEmail, type Profile, type UpdateProfileInput } from '@rox/core/platform/identity/types'
+import { requireOsOwner } from './native-os-owner'
 
 export const NATIVE_AUTHORITY_ACTIONS = ['read', 'write', 'delete', 'subscribe', 'manage'] as const
 export type NativeAuthorityAction = (typeof NATIVE_AUTHORITY_ACTIONS)[number]
@@ -99,11 +100,6 @@ function pathsOverlap(first: string, second: string): boolean {
   return isContained(firstToSecond) || isContained(secondToFirst)
 }
 
-function requireOsOwner(path: string): void {
-  const uid = typeof process.getuid === 'function' ? process.getuid() : undefined
-  if (uid === undefined || statSync(path).uid !== uid) throw new Error('maintenance requires the state directory OS owner')
-}
-
 export class NativeAuthority {
   readonly #stateDir: string
   readonly #db: DatabaseSync
@@ -134,9 +130,11 @@ export class NativeAuthority {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
       const existingDatabase = lstatSync(databasePath)
-      if (existingDatabase.isSymbolicLink() || !existingDatabase.isFile() || existingDatabase.uid !== process.getuid?.() || existingDatabase.nlink !== 1) {
+      if (existingDatabase.isSymbolicLink() || !existingDatabase.isFile() || existingDatabase.nlink !== 1) {
         throw new Error('authority database must be an OS-owner private regular file')
       }
+      try { requireOsOwner(databasePath) }
+      catch { throw new Error('authority database must be an OS-owner private regular file') }
     }
     chmodSync(databasePath, 0o600)
     this.#db = new DatabaseSync(databasePath)

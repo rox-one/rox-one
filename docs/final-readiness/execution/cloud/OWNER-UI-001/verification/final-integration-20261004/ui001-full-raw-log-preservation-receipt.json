@@ -1,0 +1,11 @@
+{
+  "kind": "complete-original-execution-history-retained-privately",
+  "sourceRevision": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+  "outputLogs": 1881,
+  "allLogHashesMatch": true,
+  "archiveSha256": "727781d5aeed62be4213ec0b9cdc642350047f90353a43f31be22a22690f1e55",
+  "bytes": 894728,
+  "containsOnlyManifestReportAndOutputLogs": true,
+  "noHomeProfileConfigCipherFilesIncluded": true,
+  "publicEvidence": "verification/final-integration-20261004/ui001-linux-complete-1881-public.json.gz"
+}

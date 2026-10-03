@@ -1,0 +1,57 @@
+{
+  "recordedAt": "2026-10-03T21:07:32.722Z",
+  "sourceBaseline": "57871f492d1b21177ab767454d90395d72496b4e",
+  "reconciledMain": "bb047b946da41346301cffe88a43db0adf621dcf",
+  "inventoryManifestsVerified": 19,
+  "backlogUnchanged": true,
+  "backlogSha256": "3636590835be9758571fcf5b68132d074566a52856e88cc2ac18c904804deb06",
+  "mergedPRs": [
+    {
+      "mergeCommit": {
+        "oid": "91dee6f025fe084bc1208152309ab5bd2a529878"
+      },
+      "number": 1400,
+      "state": "MERGED",
+      "url": "https://github.com/rox-one/rox-one/pull/1400"
+    },
+    {
+      "mergeCommit": {
+        "oid": "5c242cf044d6fcbacf60efa9efa08cfc1977d39f"
+      },
+      "number": 1420,
+      "state": "MERGED",
+      "url": "https://github.com/rox-one/rox-one/pull/1420"
+    },
+    {
+      "mergeCommit": {
+        "oid": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be"
+      },
+      "number": 1424,
+      "state": "MERGED",
+      "url": "https://github.com/rox-one/rox-one/pull/1424"
+    },
+    {
+      "mergeCommit": {
+        "oid": "f86660e7d84fbe35342d90b56db0189ae4e62ed4"
+      },
+      "number": 1461,
+      "state": "MERGED",
+      "url": "https://github.com/rox-one/rox-one/pull/1461"
+    },
+    {
+      "mergeCommit": {
+        "oid": "bb047b946da41346301cffe88a43db0adf621dcf"
+      },
+      "number": 1470,
+      "state": "MERGED",
+      "url": "https://github.com/rox-one/rox-one/pull/1470"
+    }
+  ],
+  "contextStatus": "PASS",
+  "qualifiedBun": "1.3.14",
+  "acceptance": "source inventory, documentation and Docker COPY/context only",
+  "fullApplicationImageBuild": false,
+  "installedWindowsMacOSAcceptance": false,
+  "hostedAcceptance": false,
+  "cloudDispatch": "cancelled; no new tasks or retries"
+}

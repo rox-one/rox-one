@@ -61,6 +61,24 @@ describe('parseDeepLink view routes', () => {
     expect(target?.windowMode).toBe('focused')
   })
 
+  it('forwards view queries while retaining separate window and sidebar controls', () => {
+    const target = parseDeepLink('rox://search?q=two%20words&mode=future&window=focused&sidebar=history')
+    expect(target?.view).toBe('search?q=two%20words&mode=future')
+    expect(target?.windowMode).toBe('focused')
+    expect(target?.rightSidebar).toBe('history')
+    expect(parseDeepLink('rox://workspace/ws1/tasks?view=calendar&view=other&window=full')?.view)
+      .toBe('tasks?view=calendar&view=other')
+  })
+
+  it('opens a scoped runtime selection as a read-only view and refuses send intent', () => {
+    const target = parseDeepLink('rox://runtime?workspace=ws1&session=s1&run=r1&event=tool-1')
+    expect(target?.workspaceId).toBe('ws1')
+    expect(target?.view).toBe('allSessions/session/s1?runtimeRun=r1&runtimeEvent=tool-1')
+    expect(target?.action).toBeUndefined()
+    expect(parseRouteToNavigationState(target!.view!)).not.toBeNull()
+    expect(parseDeepLink('rox://runtime?workspace=ws1&session=s1&run=r1&event=tool-1&send=true')).toBeNull()
+  })
+
   it('still rejects unknown hosts and passes auth callbacks through', () => {
     expect(parseDeepLink('rox://definitely-not-a-route')).toBeNull()
     expect(parseDeepLink('rox://auth-callback?code=1')).toBeNull()

@@ -8,7 +8,7 @@ export function reconcileFlowNodes(previous: Map<string, RuntimeCanvasNode>, can
   const cache = new Map<string, RuntimeCanvasNode>()
   const nodes = candidates.map(candidate => {
     const old = previous.get(candidate.id)
-    let equal = old?.type === candidate.type && old?.selected === candidate.selected && old?.position.x === candidate.position.x && old?.position.y === candidate.position.y && old?.ariaLabel === candidate.ariaLabel
+    let equal = old?.type === candidate.type && old?.selected === candidate.selected && old?.position.x === candidate.position.x && old?.position.y === candidate.position.y && old?.ariaLabel === candidate.ariaLabel && old?.initialWidth === candidate.initialWidth && old?.initialHeight === candidate.initialHeight && old?.handles === candidate.handles
     if (equal && old?.type === 'runtime' && candidate.type === 'runtime') equal = old.data.runtime === candidate.data.runtime
     else if (equal && old?.type === 'lane' && candidate.type === 'lane') {
       const a = old.data.lane, b = candidate.data.lane

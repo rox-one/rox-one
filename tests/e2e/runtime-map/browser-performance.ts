@@ -29,10 +29,10 @@ export function createBrowserPerformanceHarness(store: Store, scope: { workspace
       return { fixtureEvents: events.length, projectedNodes: graph.nodes.length, agents: graph.lanes.length, ingressMs,
         mountedCards: document.querySelectorAll('[data-testid="runtime-node"]').length }
     },
-    async measureVisibleUpdate() {
+    async measureVisibleUpdate(mode: 'result-content' | 'completion-status' = 'result-content') {
       const card = [...document.querySelectorAll<HTMLElement>('.runtime-node-tool')].find(item => {
         const rect = item.getBoundingClientRect()
-        return rect.right > 0 && rect.left < innerWidth && rect.bottom > 0 && rect.top < innerHeight
+        return (mode !== 'completion-status' || item.dataset.status === 'running') && rect.right > 0 && rect.left < innerWidth && rect.bottom > 0 && rect.top < innerHeight
       })
       if (!card) throw new Error('No visible production tool card to measure')
       const identity = card.dataset.runtimeId!
@@ -41,17 +41,17 @@ export function createBrowserPerformanceHarness(store: Store, scope: { workspace
       const marker = `Paint measurement ${++seq}`
       const event: RuntimeEvent = { ...startEvent, eventId: `paint-${seq}`, sourceEventId: `paint-${seq}`, seq, sourceSeq: seq,
         kind: 'tool.completed', payload: { name: startEvent.payload.name, result: { text: marker }, status: 'succeeded' },
-        occurredAt: known(Date.now(), 'performance-fixture'), receivedAt: Date.now() }
+        occurredAt: known(1_000 + seq, 'performance-fixture'), receivedAt: Date.now() }
       const start = performance.now()
       return await new Promise<number>((resolve, reject) => {
         const timeout = setTimeout(() => { observer.disconnect(); reject(new Error('Visible card did not render the runtime delta')) }, 3_000)
         const observer = new MutationObserver(() => {
           const updatedCard = [...document.querySelectorAll<HTMLElement>('.runtime-node-tool')].find(item => item.dataset.runtimeId === identity)
-          if (!updatedCard?.textContent?.includes(marker)) return
+          if (mode === 'completion-status' ? updatedCard?.dataset.status !== 'succeeded' : !updatedCard?.textContent?.includes(marker)) return
           observer.disconnect()
           requestAnimationFrame(() => { clearTimeout(timeout); resolve(performance.now() - start) })
         })
-        observer.observe(document.querySelector('[data-testid="runtime-map-dock"]')!, { childList: true, subtree: true, characterData: true })
+        observer.observe(document.querySelector('[data-testid="runtime-map-dock"]')!, { childList: true, subtree: true, characterData: true, attributes: mode === 'completion-status', attributeFilter: mode === 'completion-status' ? ['data-status'] : undefined })
         ingressRuntimeTraceEvent(store, event, scope.workspaceId)
       })
     },

@@ -188,7 +188,7 @@ const PALETTE_ICONS: Record<SessionNodeKind, LucideIcon> = {
 function BranchNode({ data }: NodeProps<Node<BranchNodeData, 'branch'>>) {
   return (
     <div
-      className="w-[168px] min-w-0 rounded-xl bg-card/80 px-2.5 py-1.5 text-left shadow-strong backdrop-blur-xl"
+      className="w-[168px] min-w-0 rounded-[var(--radius-overlay)] bg-card/80 px-2.5 py-1.5 text-left shadow-strong backdrop-blur-xl"
       title={data.name}
     >
       <Handle type="target" position={Position.Left} className="!h-2.5 !w-2.5 !border-border !bg-background/90" />
@@ -1632,7 +1632,7 @@ function EditorInner({
               role="menu"
               aria-label={t('entityView.mapAddNode')}
               data-testid="map-node-picker"
-              className="absolute z-20 w-52 max-w-[calc(100%-1rem)] max-h-[calc(100%-1rem)] overflow-y-auto rounded-xl border border-border/40 bg-popover/95 p-1 text-popover-foreground shadow-strong backdrop-blur-xl"
+              className="absolute z-20 w-52 max-w-[calc(100%-1rem)] max-h-[calc(100%-1rem)] overflow-y-auto rounded-[var(--radius-overlay)] border border-border/40 bg-popover/95 p-1 text-popover-foreground shadow-strong backdrop-blur-xl"
               style={{ left: picker.left, top: picker.top }}
               onKeyDown={(event) => {
                 if (event.key === 'Escape') {
@@ -1685,7 +1685,7 @@ function EditorInner({
             <aside
               data-testid="session-canvas-inspector"
               aria-label={t('entityView.mapInspector')}
-              className={cn('absolute z-10 flex max-w-[calc(100%-1.5rem)] flex-col gap-3 overflow-y-auto rounded-2xl border border-border/40 bg-background/90 p-3 shadow-strong backdrop-blur-xl', toolbarWidth !== null && toolbarWidth < 640 ? 'bottom-3 left-3 right-3 max-h-[40%]' : 'bottom-3 right-3 top-3 w-72')}
+              className={cn('absolute z-10 flex max-w-[calc(100%-1.5rem)] flex-col gap-3 overflow-y-auto rounded-[var(--radius-overlay)] border border-border/40 bg-background/90 p-3 shadow-strong backdrop-blur-xl', toolbarWidth !== null && toolbarWidth < 640 ? 'bottom-3 left-3 right-3 max-h-[40%]' : 'bottom-3 right-3 top-3 w-72')}
             >
               <div className="flex min-w-0 items-center gap-1.5">
                 <span className="min-w-0 truncate rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">

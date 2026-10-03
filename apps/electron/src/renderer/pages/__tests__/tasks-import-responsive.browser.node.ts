@@ -21,6 +21,21 @@ describe('actual modern Tasks import and content-width DOM', {skip:!enabled},()=
   beforeEach(async()=>{context=await browser.newContext({viewport:{width:1440,height:900}});page=await context.newPage();page.setDefaultTimeout(5000);await page.goto(base,{waitUntil:'domcontentloaded'});await page.getByTestId('task-row-existing').waitFor()},{timeout:30_000})
   afterEach(async()=>{await context?.close()},{timeout:30_000})
   after(async()=>{server?.closeAllConnections();const closed=server?new Promise<void>(resolve=>server.close(()=>resolve())):Promise.resolve();try{await browser?.close()}catch(error){console.error('Tasks fixture Chromium teardown failed:',error);throw error}finally{await closed}},{timeout:30_000})
+  for (const platform of ['Win32', 'Linux x86_64', 'MacIntel']) {
+    it(`${platform} shows its actual task shortcut hints and invokes the displayed schedule chord`,async()=>{
+      await page.addInitScript(platform=>Object.defineProperty(navigator,'platform',{configurable:true,value:platform}),platform)
+      await page.reload({waitUntil:'domcontentloaded'});await page.getByTestId('task-row-existing').click()
+      const mac=platform==='MacIntel', detail=page.getByTestId('task-detail')
+      assert.match(await page.getByTestId('task-when').innerText(),mac?/⌘S/:/Ctrl\+S/)
+      assert.match(await page.getByTestId('task-move').innerText(),mac?/⌘K/:/Ctrl\+K/)
+      assert.match(await page.getByTestId('task-trash').innerText(),mac?/⌘⌫/:/Ctrl\+Backspace/)
+      if(!mac)assert.doesNotMatch(await detail.innerText(),/[⌘⇧⌥⌫]/)
+      await page.getByTestId('task-row-existing').focus();await page.keyboard.press(mac?'Meta+s':'Control+s')
+      await page.getByTestId('task-when-popover').waitFor();assert.match(await page.getByTestId('task-when-popover').innerText(),mac?/⌘T/:/Ctrl\+T/)
+      assert.equal((await state()).calls.some((call:string)=>call.startsWith('put:')),false)
+    },{timeout:30_000})
+  }
+
   it('rejects impossible ISO dates in the actual task schedule form without persisting a different day',async()=>{
     await page.getByTestId('task-row-existing').click();await page.getByTestId('task-when').click()
     const form=page.getByTestId('task-when-popover'), input=form.getByRole('textbox')

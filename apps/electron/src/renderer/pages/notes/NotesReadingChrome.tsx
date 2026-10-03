@@ -83,10 +83,10 @@ export function NotesEditorHeadlineStyles() {
         color: color-mix(in oklab, var(--foreground) 45%, transparent);
       }
       .notes-editor-prose .ProseMirror blockquote {
-        color: color-mix(in oklab, var(--foreground) 70%, transparent);
+        color: var(--text-secondary, var(--muted-foreground));
         background: color-mix(in oklab, var(--foreground) 3.5%, transparent);
         border: 0;
-        border-radius: 6px;
+        border-radius: var(--radius-card);
         padding: 0.5em 0.9em;
       }
       .notes-editor-prose .ProseMirror hr {
@@ -192,7 +192,7 @@ export function NotesToc({
                   <button
                     type="button"
                     aria-label={folded ? t('notes.fold.expand') : t('notes.fold.collapse')}
-                    className="h-5 w-5 shrink-0 rounded-[4px] text-muted-foreground hover:bg-foreground/[0.06]"
+                    className="h-5 w-5 shrink-0 rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/[0.06]"
                     onClick={() => onToggleFold(foldId)}
                   >
                     {folded ? '+' : '–'}
@@ -201,7 +201,7 @@ export function NotesToc({
                 <button
                   type="button"
                   onClick={() => onJump(heading.text)}
-                  className="min-w-0 flex-1 rounded-[4px] px-1.5 py-1 text-left text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+                  className="min-w-0 flex-1 rounded-[var(--radius-control)] px-1.5 py-1 text-left text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
                 >
                   {heading.text}
                 </button>
@@ -239,7 +239,7 @@ export function NotesCommentComposer({
   return (
     <form
       className={cn(
-        'w-[240px] rounded-[8px] border border-foreground/[0.08] bg-background p-2 shadow-thin',
+        'w-[240px] rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background p-2 shadow-thin',
         className,
       )}
       data-testid="notes-comments-compose"
@@ -270,7 +270,7 @@ export function NotesCommentComposer({
         rows={3}
         placeholder={quote ? t('notes.comments.placeholderOnSelection') : t('notes.comments.placeholder')}
         className={cn(
-          'w-full resize-none rounded-[6px] border border-foreground/[0.08] bg-background px-2 py-1.5 text-[12px] outline-none',
+          'w-full resize-none rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background px-2 py-1.5 text-[12px] outline-none',
           'focus-visible:border-foreground/40',
         )}
       />
@@ -278,7 +278,7 @@ export function NotesCommentComposer({
       <button
         type="submit"
         disabled={!body.trim()}
-        className="mt-1.5 h-7 w-full rounded-[6px] bg-foreground/12 text-[11px] font-medium text-foreground hover:bg-foreground/18 disabled:opacity-40"
+        className="mt-1.5 h-7 w-full rounded-[var(--radius-control)] bg-foreground/12 text-[11px] font-medium text-foreground hover:bg-foreground/18 disabled:opacity-40"
       >
         {t('notes.comments.add')}
       </button>
@@ -297,7 +297,7 @@ export function NotesCommentTooltip({
 }) {
   return (
     <div
-      className="pointer-events-none absolute z-20 max-w-[240px] rounded-[6px] border border-foreground/[0.08] bg-background px-2.5 py-2 text-[12px] shadow-thin"
+      className="pointer-events-none absolute z-20 max-w-[240px] rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background px-2.5 py-2 text-[12px] shadow-thin"
       data-testid="notes-comment-tooltip"
       style={{ top, left }}
       role="tooltip"
@@ -363,7 +363,7 @@ export function NotesComments({
           </p>
         ) : null}
         {comments.map((comment) => (
-          <article key={comment.id} className="mb-2 rounded-[6px] bg-foreground/[0.05] px-2.5 py-2">
+          <article key={comment.id} className="mb-2 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2.5 py-2">
             {comment.quote ? (
               <button
                 type="button"

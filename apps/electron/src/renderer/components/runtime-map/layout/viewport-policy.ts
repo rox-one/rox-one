@@ -13,3 +13,10 @@ export function clampChatRatio(ratio: number, width: number): number {
   const minimum = 360 / width
   return Math.max(minimum, Math.min(1 - minimum, ratio))
 }
+
+/** Explicit overview may shrink a bounded window further than normal reading zoom. */
+export function overviewMinimumZoom(bounds: { width: number; height: number }, viewport: { width: number; height: number }): number {
+  if (![bounds.width, bounds.height, viewport.width, viewport.height].every(Number.isFinite) || viewport.width <= 0 || viewport.height <= 0) return 0.25
+  const fittingScale = Math.min(viewport.width / Math.max(1, bounds.width), viewport.height / Math.max(1, bounds.height))
+  return Math.max(0.001, Math.min(0.25, fittingScale * 0.5))
+}

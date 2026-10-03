@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chromium, expect as playwrightExpect, type Browser, type Page } from 'playwright/test'
+import { launchOwnedFixtureBrowser } from './rox-readiness-ui-001.browser-owner'
 const repository = resolve(import.meta.dirname, '../../../../../../..')
 const fixture = resolve(import.meta.dirname, 'fixtures/native-surface-owners')
 const executablePath = process.env.CHROMIUM_EXECUTABLE ?? chromium.executablePath()
@@ -13,7 +14,22 @@ const last = async (page: Page, id = 'shared') => (await calls(page)).filter(row
 describe.skipIf(!existsSync(executablePath))('production native surface renderer ownership', () => {
   let ui: ReturnType<typeof Bun.spawn> | undefined
   let browser: Browser
-  const stop = async () => { ui?.kill(); await browser?.close(); await ui?.exited }
+  let ownedBrowser: Awaited<ReturnType<typeof launchOwnedFixtureBrowser>> | undefined
+  const stop = async () => {
+    const ownedUi = ui
+    ui = undefined
+    try { await ownedBrowser?.close() } finally {
+      if (ownedUi && ownedUi.exitCode === null) {
+        ownedUi.kill()
+        const exited = await Promise.race([ownedUi.exited.then(() => true), Bun.sleep(2000).then(() => false)])
+        if (!exited) {
+          ownedUi.kill('SIGKILL')
+          const reaped = await Promise.race([ownedUi.exited.then(() => true), Bun.sleep(2000).then(() => false)])
+          if (!reaped) throw new Error('Owned native renderer fixture did not exit after teardown')
+        }
+      }
+    }
+  }
   beforeAll(async () => {
     try {
       ui = Bun.spawn(['node', resolve(repository, 'node_modules/vite/bin/vite.js'), '--config', resolve(fixture, 'vite.config.ts'), '--port', '5237'], { cwd: repository, stdout: 'ignore', stderr: 'ignore' })
@@ -25,9 +41,17 @@ describe.skipIf(!existsSync(executablePath))('production native surface renderer
         if (Date.now() > deadline) throw new Error('Native ownership fixture startup timeout')
         await Bun.sleep(100)
       }
-      browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
+      ownedBrowser = await launchOwnedFixtureBrowser({ executablePath, headless: true, args: ['--no-sandbox'] })
+      browser = ownedBrowser.browser
+      // A Vite HTML response precedes its first module compilation. Complete
+      // that startup inside the fixture hook, before the per-behavior budget.
+      const warmup = await browser.newPage()
+      try {
+        await warmup.goto(endpoint)
+        await expectDOM(warmup.getByTestId('first-host')).toBeVisible({ timeout: 60000 })
+      } finally { await warmup.close() }
     } catch (error) { await stop(); throw error }
-  }, 45000)
+  }, 90000)
   afterAll(stop, 30000)
   const withPage = async (path: string, run: (page: Page) => Promise<void>) => {
     const page = await browser.newPage({viewport:{width:1250,height:800}})

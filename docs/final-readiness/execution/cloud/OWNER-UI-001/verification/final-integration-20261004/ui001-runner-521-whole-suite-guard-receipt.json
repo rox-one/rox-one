@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "kind": "runner-semantic-union-and-whole-suite-process-supervision",
+  "observedAt": "2026-10-03T19:41:25.387Z",
+  "head": "5836daa5b1f8bb10a828febf30a06790e4705ea3",
+  "mergeHead": "5211746270f5005d551ddc103970714520b25b67",
+  "ownedPaths": [
+    "scripts/test-all.ts",
+    "scripts/rox-readiness-ui-001.runner.test.ts"
+  ],
+  "sourceFiles": [
+    {
+      "path": "scripts/test-all.ts",
+      "sha256": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a"
+    },
+    {
+      "path": "scripts/rox-readiness-ui-001.runner.test.ts",
+      "sha256": "2e85deac62b9414b8bd956f36c3391c2d777569669a96212511fdaac37d2bd21"
+    }
+  ],
+  "semanticUnion": {
+    "incomingPR": 1455,
+    "incoming15CasesRetained": true,
+    "our18CasesRetained": true,
+    "preserved": [
+      {
+        "revision": "5836daa5b1f8bb10a828febf30a06790e4705ea3",
+        "cases": 18,
+        "retained": [
+          {
+            "name": "discovery reads the checked inode when its pathname is replaced before reading",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "failure logger keeps its checked inode and refuses a replacement symlink as execution evidence",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "actual fast-exit Git, Node and Bun commands retain stdout, stderr and real failure codes",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "Git inventory retains tracked and new source suites while excluding ignored generated copies",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "a damaged Git inventory fails instead of executing ignored copies through filesystem fallback",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "an empty Git inventory or direct API manifest cannot become an empty successful run",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "keeps all Bun filename forms and supplemental isolated files while routing actual Playwright tests",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "a missing Playwright configuration stays an explicit failed prerequisite instead of becoming Bun or disappearing",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "runtime Bun imports using the Chromium library keep their Bun executor",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "type-only foreign runner imports do not change a Bun executor",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "foreign Vitest suites retain their own configuration and never disappear from the manifest",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "embedded Vitest uses its package cwd and explicit executable without changing the repository Node",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "a silent successful executor is retained as a failed result with its actual execution witness",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "fresh child processes isolate module mocks, globals and configuration while retaining integration environment",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "direct isolated suites receive private home directories and preserve the caller filesystem and integration environment",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "invalid global timeout values fail before any suite starts or evidence is created",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "one failing file cannot stop later coverage or erase earlier failure history",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "CLI root and artifact overrides list an immutable baseline without executing its tests",
+            "allOriginalBodyStatementsRetained": true
+          }
+        ]
+      },
+      {
+        "revision": "5211746270f5005d551ddc103970714520b25b67",
+        "cases": 15,
+        "retained": [
+          {
+            "name": "actual fast-exit Git, Node and Bun commands retain stdout, stderr and real failure codes",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "Git inventory retains tracked and new source suites while excluding ignored generated copies",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "a damaged Git inventory fails instead of executing ignored copies through filesystem fallback",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "an empty Git inventory or direct API manifest cannot become an empty successful run",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "keeps all Bun filename forms and supplemental isolated files while routing actual Playwright tests",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "a missing Playwright configuration stays an explicit failed prerequisite instead of becoming Bun or disappearing",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "runtime Bun imports using the Chromium library keep their Bun executor",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "type-only foreign runner imports do not change a Bun executor",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "foreign Vitest suites retain their own configuration and never disappear from the manifest",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "embedded Vitest uses its package cwd and explicit executable without changing the repository Node",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "a silent successful executor is retained as a failed result with its actual execution witness",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "fresh child processes isolate module mocks, globals and configuration while retaining integration environment",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "invalid global timeout values fail before any suite starts or evidence is created",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "one failing file cannot stop later coverage or erase earlier failure history",
+            "allOriginalBodyStatementsRetained": true
+          },
+          {
+            "name": "CLI root and artifact overrides list an immutable baseline without executing its tests",
+            "allOriginalBodyStatementsRetained": true
+          }
+        ]
+      }
+    ],
+    "atomicDescriptorCodeqlFixRetained": true,
+    "privateHomeRetained": true,
+    "nodeCaptureBrokerRetained": true,
+    "gitNulAuthoritativeInventoryRetained": true,
+    "noExcludedSourceCoverage": true
+  },
+  "guard": {
+    "defaultWholeSuiteDeadlineMs": 900000,
+    "maximumAcceptedWholeSuiteDeadlineMs": 3600000,
+    "environment": "ROX_TEST_SUITE_TIMEOUT_MS",
+    "cli": "--suite-timeout",
+    "perBunTestDefaultUnchanged": 5000,
+    "allExplicitOriginalTestDeadlinesAndBodyAssertionsUnchanged": true,
+    "posixProcessGroup": "child starts as process group leader; TERM at deadline; forced KILL after2000ms; capture completion requires actual close and drained streams",
+    "windowsTree": "taskkill /pid <owned child> /t, then /f; native Windows observation pending",
+    "hardCleanupBoundMs": 5000,
+    "uncleanTreeOrMissingCloseFailsClosed": true,
+    "timeoutStatus": "failed with actual signal, exit code, timedOut and error; later serial suites still executed after proven group close",
+    "noGlobalKeychainPathShim": true
+  },
+  "negativeControl": {
+    "actualSynchronousSpawnWait": true,
+    "realChildAndGrandchildIgnoreSigterm": true,
+    "bothActualPidsGone": true,
+    "heartbeatStops": true,
+    "laterBunAssertionExecuted": true,
+    "failedExecutorRetained": true,
+    "outerControlDeadlineMs": 1500,
+    "perTestDeadlineMs": 5000,
+    "invalidWholeSuiteValuesRejectBeforeArtifacts": true
+  },
+  "validation": {
+    "direct": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-521-whole-suite-guard-green-or-red.log",
+      "sha256": "ca30ec53cc23c12dc7132991953ae5a56310fb9862661524a3f3a4096c8b0374",
+      "exitCode": 0,
+      "pass": 19,
+      "fail": 0,
+      "expect": 132
+    },
+    "qualified": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-521-whole-suite-guard-qualified-results/run-yQ8Wkb/report.json",
+      "sha256": "6eafb9ee727e65b77d4889d4d79537e3d62b8040a31280ea9b85bac5cc4e4c87",
+      "input": {
+        "head": "5836daa5b1f8bb10a828febf30a06790e4705ea3",
+        "trackedDiffSha256": "f6c8cb83267064d943c53ae68635177d24656cba96c3cdcdfa7dcb9b98cd5a31",
+        "manifestSha256": "96da8b95768ca2788d7e455053f733491fa7989d50329be4207654b3bcefc42f",
+        "runnerSha256": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a",
+        "bunVersion": "1.3.14",
+        "nodeVersion": "v24.21.0"
+      },
+      "counts": {
+        "pass": 19,
+        "fail": 0,
+        "skip": 0
+      },
+      "executionLog": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-521-whole-suite-guard-qualified-results/run-yQ8Wkb/00001-3a720cc5ecb6/output.log",
+        "sha256": "0da403425d67232ff46ad0058bdd231b3c54c58cdfcd2d5ff56d07c5d9b0e919"
+      },
+      "wholeSuiteTimeoutMs": 900000,
+      "bunTimeoutMs": 30000,
+      "status": "passed"
+    },
+    "scopedTypecheck": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-521-whole-suite-guard-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exitCode": 0
+    },
+    "stagedDiffCheckExitCode": 0
+  },
+  "failureHistory": {
+    "interruptedOldFullReport": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-candidate-full-results/run-0rjfIY/report.json",
+      "sha256": "a014ddd44c7d81774c7c6a1b256ad2dc68bde846c67371bf3cebc6102e2bd9de"
+    },
+    "interruptionReceipt": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-full-native-keychain-interruption-5836.json",
+      "sha256": "8c3a3bcd83046912b207ac1cf449f8369c37ae17065363162d6188b1ad18187c"
+    },
+    "redactedProcessReceipt": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-candidate-source-stall-process-receipt.json",
+      "sha256": "1bf4d9ec679172db8b4f727d2ba5f48fdc7b5330b0994545e135afd0d2c6482b"
+    },
+    "exactNativeCloudChildProbe": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-native-cloud-exact-child-Cxt1Ir/receipt.json",
+      "sha256": "217f77ba4bd5dba7d36e0b7cc6127c8d0c2cdf5b4518ad778338886d5e6ec4c2"
+    },
+    "ownProbeCleanup": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-native-cloud-probe-owned-keychain-cleanup.json",
+      "sha256": "8862c19ebbf2a2f22334def40457b154cb38b046e51d50c5bf16ee61c4e50e16"
+    },
+    "oldFullManifest": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-candidate-full-results/run-0rjfIY/manifest.json",
+      "sha256": "90071414153b0eeeabf33971d2dda8d5ee367e9516e6e20db34db4ee730e7991"
+    },
+    "oldFullInventory": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-candidate-source-inventory-5836.json",
+      "sha256": "b99df06f013aaf4046d413e28fa074c4d9b47fa5b013cd81ecde08d2689cb56f"
+    }
+  },
+  "pending": [
+    "Root must commit new semantic integration, refresh inventory and bind all future full runs to new exact head.",
+    "Full interrupted Mac5836 report remains incomplete; only101/1841 completed entries and separately observed102 timeout are available.",
+    "Root owns product keychain subprocess deadline/filefallback repair and official pinned Linux full replay.",
+    "Remote CodeQL exact-head rerun and original native platform acceptance remain separate."
+  ],
+  "fullDoDClosed": false
+}
