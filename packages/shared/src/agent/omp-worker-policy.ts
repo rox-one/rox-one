@@ -40,7 +40,7 @@ export default function roxWorkerPolicy(pi) {
       if (typeof message.content === 'string') return { ...message, content: prefix(message.content) };
       if (!Array.isArray(message.content)) return message;
       const index = message.content.findIndex(block => block.type === 'text');
-      if (index < 0) return message;
+      if (index < 0) return { ...message, content: [{ type: 'text', text: directive }, ...message.content] };
       return { ...message, content: message.content.map((block, i) => i === index ? { ...block, text: prefix(block.text) } : block) };
     }) };
   });

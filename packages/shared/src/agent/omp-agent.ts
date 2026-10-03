@@ -46,7 +46,7 @@ import { spawn, execFile, type ChildProcess } from 'node:child_process';
 import type { LoadAllSkillsOptions } from '../skills/storage.ts';
 import { createInterface, type Interface as ReadlineInterface } from 'node:readline';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { mkdirSync, readFileSync, readdirSync, copyFileSync, cpSync, existsSync } from 'node:fs';
 import { getSessionPath } from '../sessions/storage.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
@@ -59,7 +59,8 @@ import { formatPreferencesForPrompt } from '../config/preferences.ts';
 import type { AgentEvent, AgentEventUsage } from '@rox/core/types';
 import type { FileAttachment } from '../utils/files.ts';
 import { getProxyEnvVars } from '../config/proxy-env.ts';
-import { resolveOmpExecutableOrExplain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
+import { getToolchain, resolveOmpExecutableOrExplain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
+import { prepareOmpNativePolicy } from './omp-native-policy.ts';
 
 import { AbortReason } from './backend/types.ts';
 import type {
@@ -295,6 +296,19 @@ interface PendingPermission {
 // ============================================================
 
 export class OmpAgent extends BaseAgent {
+  private async prepareNativeInvocation(bin: string, env: NodeJS.ProcessEnv): Promise<{bin:string; prefix:string[]; dispose:()=>void}> {
+    const packageDir = join(dirname(bin), '..', 'package');
+    if (!existsSync(join(packageDir, 'src/session/agent-session.ts'))) {
+      // Protocol fixtures intentionally have no native package. Production cannot
+      // silently accept a runtime without the required pre-matcher policy seam.
+      if (process.env.NODE_ENV === 'test') return { bin, prefix: [], dispose: () => {} };
+      throw new Error('ROX mandatory native modes require the managed pinned OMP package; select the managed runtime instead of this external executable');
+    }
+    const bun = env.CRAFT_BUN_PATH || await getToolchain().resolver.findExecutable('bun');
+    if (!bun) throw new Error('Bun runtime is unavailable for mandatory OMP policy');
+    const overlay = prepareOmpNativePolicy(packageDir, join(resolveConfigDir(), 'runtime', 'omp-native'));
+    return { bin: bun, prefix: [overlay.entry], dispose: overlay.dispose };
+  }
   /** RX-TSK-0402 Phase 1 (G4): OMP sessions resolve mentions across the
    * merged craft+OMP registry; craft wins on slug conflicts. */
   protected override getSkillLoadOptions(): LoadAllSkillsOptions {
@@ -770,11 +784,19 @@ export class OmpAgent extends BaseAgent {
       configFiles: env.PI_CONFIG_FILES,
     });
     if (runtimeConfig) Object.assign(env, runtimeConfig.env);
+    let nativeInvocation: Awaited<ReturnType<OmpAgent['prepareNativeInvocation']>>;
+    try { nativeInvocation = await this.prepareNativeInvocation(bin, env); }
+    catch (error) {
+      try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
+      throw error;
+    }
+    env.OMP_APP_NAME = 'rox';
     let child: ChildProcess;
     try {
-      child = spawn(bin, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
+      child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
     } catch (error) {
-      runtimeConfig?.dispose();
+      try { runtimeConfig?.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
+      try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
       throw error;
     }
     // Capture this attempt's disposer: a predecessor closing after respawn
@@ -782,6 +804,7 @@ export class OmpAgent extends BaseAgent {
     child.once('close', () => {
       try { runtimeConfig?.dispose(); }
       catch { this.debug('OMP runtime profile cleanup could not complete'); }
+      try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
     });
 
     this.subprocess = child;
@@ -2288,12 +2311,26 @@ export class OmpAgent extends BaseAgent {
     // importer brings them back as Rox sessions (Лента noise).
     const effectivePrompt = withOmpRequiredModes(prompt);
     const args = ['--no-session', '--thinking', 'max', ...(invocationModel ? ['--model', invocationModel] : []), '-p', effectivePrompt];
+    let nativeInvocation: Awaited<ReturnType<OmpAgent['prepareNativeInvocation']>>;
+    try { nativeInvocation = await this.prepareNativeInvocation(bin, env); }
+    catch (error) {
+      try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
+      throw error;
+    }
+    env.OMP_APP_NAME = 'rox';
     this.debug('runOneShot: spawning -p child');
     return new Promise<string>((resolve, reject) => {
       let child: ChildProcess;
-      try { child = spawn(bin, args, { cwd, env }); }
-      catch (error) { runtimeConfig.dispose(); reject(error); return; }
-      child.once('close', () => runtimeConfig.dispose());
+      try { child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env }); }
+      catch (error) {
+        try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
+        try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
+        reject(error); return;
+      }
+      child.once('close', () => {
+        try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
+        try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
+      });
       this.debug(`runOneShot: spawned pid=${child.pid}`);
       const timer = setTimeout(() => {
         child.kill('SIGKILL');

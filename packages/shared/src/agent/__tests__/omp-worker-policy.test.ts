@@ -41,6 +41,13 @@ describe('mandatory native worker policy', () => {
         expect(context.messages[0].content[1]).toBe(image);
         expect(original.content[0]).toEqual({ type: 'text', text: '> orchestrate workflowz ultrathink' });
         expect(handlers.get('context')!({ messages: context.messages }).messages).toEqual(context.messages);
+        for (const content of [[image], []]) {
+          const imageOnly = { role: 'user', content };
+          const projected = handlers.get('context')!({ messages: [imageOnly] }).messages[0];
+          expect(projected.content).toEqual([{ type: 'text', text: 'orchestrate workflowz ultrathink' }, ...content]);
+          expect(imageOnly.content).toBe(content);
+          expect(handlers.get('context')!({ messages: [projected] }).messages[0]).toEqual(projected);
+        }
         expect(tools).toEqual(name === 'scout' ? ['read', 'grep'] : ['read', 'task', 'eval']);
       }
     } finally { rmSync(dir, { recursive: true, force: true }); }

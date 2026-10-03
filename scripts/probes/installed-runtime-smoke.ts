@@ -12,10 +12,11 @@ import { extractFile } from '@electron/asar';
 import { parse as parseYaml } from 'yaml';
 import { prepareOmpRoxRuntimeConfig } from '../../packages/shared/src/agent/omp-first-run.ts';
 import { OMP_WORKER_POLICY_SOURCE } from '../../packages/shared/src/agent/omp-worker-policy.ts';
+import { OMP_NATIVE_AGENT_SOURCE_SHA256 } from '../../packages/shared/src/agent/omp-native-policy.ts';
 import { readOmpResumeFile, withOmpRequiredModes, writeOmpIdentity } from '../../packages/shared/src/agent/omp-history.ts';
 import { writeWorkerEvidence } from './omp-worker-loop.ts';
 
-interface Manifest { version: 1; appVersion: string; skillCount: number; workerPolicySha256: string; files: Record<string, string> }
+interface Manifest { version: 1; appVersion: string; skillCount: number; workerPolicySha256: string; nativeAgentSourceSha256: string; files: Record<string, string> }
 const sha = (data: string | Buffer) => createHash('sha256').update(data).digest('hex');
 const args = process.argv.slice(2);
 const targetArg = args.shift();
@@ -70,13 +71,12 @@ function expectedManifest(): Manifest {
     }
   };
   walk(trustedSkills);
-  return { version: 1, appVersion: '0.11.8', skillCount: 330, workerPolicySha256: sha(OMP_WORKER_POLICY_SOURCE), files };
+  return { version: 1, appVersion: '0.11.8', skillCount: 330, workerPolicySha256: sha(OMP_WORKER_POLICY_SOURCE), nativeAgentSourceSha256: OMP_NATIVE_AGENT_SOURCE_SHA256, files };
 }
 const expected: Manifest = flags.has('--manifest')
   ? JSON.parse(readFileSync(flags.get('--manifest')!, 'utf8'))
   : expectedManifest();
-if (expected.version !== 1 || expected.appVersion !== '0.11.8' || expected.skillCount !== 330) throw new Error('Expected final 0.11.8 / 330-skill manifest');
-if (flags.has('--write-manifest')) writeWorkerEvidence(flags.get('--write-manifest')!, expected);
+if (expected.version !== 1 || expected.appVersion !== '0.11.8' || expected.skillCount !== 330 || expected.nativeAgentSourceSha256 !== OMP_NATIVE_AGENT_SOURCE_SHA256) throw new Error('Expected final 0.11.8 / 330-skill native-policy manifest');
 const target = resolve(targetArg);
 const layout = [target, join(target, 'Contents', 'Resources'), join(target, 'resources')]
   .map(resources => {
@@ -108,6 +108,7 @@ const main = readAppFile('dist/main.cjs').toString('utf8');
 const policy = [...main.matchAll(/String\.raw\s*`([^`]*)`/g)]
   .map(match => match[1]!).find(source => source.includes('ROX mandatory execution policy'));
 if (!policy || sha(policy) !== expected.workerPolicySha256 || policy !== OMP_WORKER_POLICY_SOURCE) throw new Error('Compiled worker policy is absent or differs from expected bytes');
+if (!main.includes(expected.nativeAgentSourceSha256) || !main.includes('#roxRequiredModes') || !main.includes('OMP native policy source integrity mismatch')) throw new Error('Compiled native pre-matcher policy or integrity guard is absent');
 
 const isolated = mkdtempSync(join(tmpdir(), 'rox-installed-smoke-'));
 try {
@@ -151,8 +152,10 @@ try {
     expectedManifestSha256: sha(JSON.stringify(expected)), verifiedPackagedFiles: Object.keys(expected.files).length,
     packagedSkillCount: 330, isolatedProfileSkillCount: profileSkills.length,
     compiledWorkerPolicySha256: sha(policy), isolatedHome: true, credentialReads: false,
+    compiledNativePolicyGuardSha256: expected.nativeAgentSourceSha256,
     crlfTitleHeaderIdentityResume: true, corruptInteriorRejected: true, win32BasenameEscapesRejected: true,
     scope: 'Packaged resource hashes, compiled policy extraction and source-shared profile generation. No Electron execution, native skill discovery, UI, remote provider or Windows filesystem acceptance.', assertionsPassed: true };
+  if (flags.has('--write-manifest')) writeWorkerEvidence(flags.get('--write-manifest')!, expected);
   if (flags.has('--output')) writeWorkerEvidence(flags.get('--output')!, evidence);
   console.log(JSON.stringify(evidence, null, 2));
   profile.dispose();
