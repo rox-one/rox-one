@@ -1,0 +1,112 @@
+{
+  "oursRevision": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+  "incomingRevision": "bb047b946da41346301cffe88a43db0adf621dcf",
+  "allIncomingBodiesAssertionsDeadlinesPreserved": true,
+  "oursSemanticExceptions": [
+    "Incoming failed-history URL remains unavailable until explicit local navigation instead of rolling back",
+    "Configured remote alias may select but session-selection effect does not persist non-canonical metadata into canonical local workspace"
+  ],
+  "records": [
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+      "sha256": "1d435d3d9243a15cd744edee5f2caaa7c60c76484483c5d31dcee8eda16110cc",
+      "currentStaticCaseExpressions": 3,
+      "parseDiagnostics": 0,
+      "comparisons": [
+        {
+          "source": "ours",
+          "originalCases": 3,
+          "allOriginalBodiesAssertionsDeadlinesPreserved": true,
+          "semanticChanges": []
+        },
+        {
+          "source": "incoming",
+          "originalCases": 3,
+          "allOriginalBodiesAssertionsDeadlinesPreserved": true,
+          "semanticChanges": []
+        }
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+      "sha256": "3d0e9b26c9d2b5a2377c1ddaeff8f99e2b8072e28b6b6f532a91ab44595ffed8",
+      "currentStaticCaseExpressions": 8,
+      "parseDiagnostics": 0,
+      "comparisons": [
+        {
+          "source": "ours",
+          "originalCases": 8,
+          "allOriginalBodiesAssertionsDeadlinesPreserved": true,
+          "semanticChanges": []
+        },
+        {
+          "source": "incoming",
+          "originalCases": 8,
+          "allOriginalBodiesAssertionsDeadlinesPreserved": true,
+          "semanticChanges": []
+        }
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts",
+      "sha256": "cf7827124c9ae1827aa9c0ce7e283ea9069f518133b3a57f749fed2e263d241c",
+      "currentStaticCaseExpressions": 22,
+      "parseDiagnostics": 0,
+      "comparisons": [
+        {
+          "source": "ours",
+          "originalCases": 20,
+          "allOriginalBodiesAssertionsDeadlinesPreserved": false,
+          "semanticChanges": [
+            {
+              "name": "'session-selection side effects wait for metadata and reject foreign cached IDs, while permitting the configured remote alias'",
+              "status": "changedSemanticContract",
+              "oldBody": "() => {\n    for (const [ready, metaWorkspace, expected] of [[false, 'a', 0], [true, 'b', 0], [true, 'a', 1], [true, 'remote-a', 1]] as const) {\n      const selected: unknown[] = [], persisted: unknown[] = []\n      rendererEffect(sourcePath, 'setSession({ selected:', {\n        navigationState: resolveRouteNavigationState('allSessions/session/s'), isSessionsNavigation,\n        isSessionsReady: ready, workspaceId: 'a', remoteWorkspaceId: 'remote-a', setSession: (value: unknown) => selected.push(value),\n        sessionMetaMapAtom: {}, store: { get: () => new Map([['s', { workspaceId: metaWorkspace }]]) },\n        storage: { KEYS: { lastSelectedSessionId: 'last' }, set: (...args: unknown[]) => persisted.push(args) },\n      })\n      expect(selected).toHaveLength(expected)\n      expect(persisted).toHaveLength(expected)\n    }\n  }",
+              "newBody": "() => {\n    for (const [ready, metaWorkspace, expected] of [[false, 'a', 0], [true, 'b', 0], [true, 'a', 1], [true, 'remote-a', 1]] as const) {\n      const selected: unknown[] = [], persisted: unknown[] = []\n      rendererEffect(sourcePath, 'setSession({ selected:', {\n        navigationState: resolveRouteNavigationState('allSessions/session/s'), isSessionsNavigation,\n        isSessionsReady: ready, workspaceId: 'a', remoteWorkspaceId: 'remote-a', setSession: (value: unknown) => selected.push(value),\n        sessionMetaMapAtom: {}, store: { get: () => new Map([['s', { workspaceId: metaWorkspace }]]) },\n        storage: { KEYS: { lastSelectedSessionId: 'last' }, set: (...args: unknown[]) => persisted.push(args) },\n      })\n      expect(selected).toHaveLength(expected)\n      expect(persisted).toHaveLength(metaWorkspace === 'a' ? expected : 0)\n    }\n  }",
+              "deadlineUnchanged": true
+            }
+          ]
+        },
+        {
+          "source": "incoming",
+          "originalCases": 22,
+          "allOriginalBodiesAssertionsDeadlinesPreserved": true,
+          "semanticChanges": []
+        }
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+      "sha256": "19e1ae0c1b357b6df4e770f38c4c40547c39a91281c31f71a5f499a514a4f12a",
+      "currentStaticCaseExpressions": 37,
+      "parseDiagnostics": 0,
+      "comparisons": [
+        {
+          "source": "ours",
+          "originalCases": 28,
+          "allOriginalBodiesAssertionsDeadlinesPreserved": false,
+          "semanticChanges": [
+            {
+              "name": "'missing or rejected workspace history targets release suppression and retain current selection'",
+              "status": "renamedSemanticContract",
+              "oldBody": "async()=>{\n    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')\n    for (const mode of ['missing','reject']) {\n      await page.evaluate(mode=>{(window as any).ui001nav.switchMode(mode);(window as any).ui001nav.pop('?ws=gone&route=notes%2Fnote%2Fforeign')},mode)\n      await page.waitForFunction(()=>new URL(location.href).searchParams.get('ws')==='a')\n      expect((await snapshot()).ws).toBe('ws-a')\n      expect((await snapshot()).nav.details.noteId).toBe('a')\n      await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')\n      await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')\n      await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/a'));await routeIs('notes/note/a')\n    }\n  }",
+              "currentCandidates": [
+                {
+                  "name": "'missing or rejected workspace history targets retain unavailable address until explicit local recovery'",
+                  "body": "async()=>{\n    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')\n    for (const mode of ['missing','reject']) {\n      await page.evaluate(mode=>{(window as any).ui001nav.switchMode(mode);(window as any).ui001nav.pop('?ws=gone&route=notes%2Fnote%2Fforeign')},mode)\n      await page.waitForFunction(()=>JSON.parse(document.querySelector('output')!.textContent!).nav.navigator==='unavailable')\n      expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')\n      expect((await snapshot()).ws).toBe('ws-a')\n      expect((await snapshot()).nav.navigator).toBe('unavailable')\n      await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')\n      await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')\n      await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/a'));await routeIs('notes/note/a')\n    }\n  }",
+                  "deadline": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "source": "incoming",
+          "originalCases": 37,
+          "allOriginalBodiesAssertionsDeadlinesPreserved": true,
+          "semanticChanges": []
+        }
+      ]
+    }
+  ]
+}

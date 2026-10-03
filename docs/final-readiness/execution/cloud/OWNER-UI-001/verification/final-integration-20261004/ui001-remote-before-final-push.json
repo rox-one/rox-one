@@ -1,0 +1,220 @@
+{
+  "baseRefName": "main",
+  "baseRefOid": "5211746270f5005d551ddc103970714520b25b67",
+  "headRefName": "codex/ui001-complete-recovery-20261003-e61c84b1",
+  "headRefOid": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+  "mergeStateStatus": "DIRTY",
+  "mergeable": "CONFLICTING",
+  "number": 1448,
+  "state": "OPEN",
+  "statusCheckRollup": [
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:08:24Z",
+      "conclusion": "FAILURE",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149270366/job/111279490844",
+      "name": "component-recovery",
+      "startedAt": "2026-10-03T20:07:49Z",
+      "status": "COMPLETED",
+      "workflowName": "UI-001 Recovery"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:13:18Z",
+      "conclusion": "FAILURE",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149270434/job/111279491115",
+      "name": "browser-and-domain",
+      "startedAt": "2026-10-03T20:07:53Z",
+      "status": "COMPLETED",
+      "workflowName": "product-tour-native"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149270350/job/111279490745",
+      "name": "lifecycle (lifecycle)",
+      "startedAt": "2026-10-03T19:49:12Z",
+      "status": "QUEUED",
+      "workflowName": "Validate Server (Integration)"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149267078/job/111287021936",
+      "name": "lifecycle (lifecycle)",
+      "startedAt": "2026-10-03T20:30:40Z",
+      "status": "QUEUED",
+      "workflowName": "Validate Server (Integration)"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:11:23Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149270360/job/111279490568",
+      "name": "validate (ubuntu-24.04)",
+      "startedAt": "2026-10-03T20:07:22Z",
+      "status": "COMPLETED",
+      "workflowName": "CI Validate Alias"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:12:14Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149267287/job/111279484519",
+      "name": "Analyze (javascript-typescript)",
+      "startedAt": "2026-10-03T20:05:30Z",
+      "status": "COMPLETED",
+      "workflowName": "CodeQL - Code Quality"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:09:49Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149267344/job/111279485211",
+      "name": "Analyze (actions)",
+      "startedAt": "2026-10-03T20:08:53Z",
+      "status": "COMPLETED",
+      "workflowName": "CodeQL"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:10:50Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149270383/job/111279491107",
+      "name": "durable-runtime (ubuntu-24.04)",
+      "startedAt": "2026-10-03T20:07:50Z",
+      "status": "COMPLETED",
+      "workflowName": "SQLite Runtime Recovery"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149270360/job/111279490688",
+      "name": "validate (macos-15)",
+      "startedAt": "2026-10-03T19:49:12Z",
+      "status": "QUEUED",
+      "workflowName": "CI Validate Alias"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149270383/job/111279490957",
+      "name": "durable-runtime (macos-15)",
+      "startedAt": "2026-10-03T19:49:12Z",
+      "status": "QUEUED",
+      "workflowName": "SQLite Runtime Recovery"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:07:47Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149267287/job/111279484787",
+      "name": "Analyze (python)",
+      "startedAt": "2026-10-03T20:05:50Z",
+      "status": "COMPLETED",
+      "workflowName": "CodeQL - Code Quality"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:18:11Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149267344/job/111279485176",
+      "name": "Analyze (javascript-typescript)",
+      "startedAt": "2026-10-03T20:07:54Z",
+      "status": "COMPLETED",
+      "workflowName": "CodeQL"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:08:50Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149267344/job/111279485145",
+      "name": "Analyze (python)",
+      "startedAt": "2026-10-03T20:06:58Z",
+      "status": "COMPLETED",
+      "workflowName": "CodeQL"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:10:13Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149267344/job/111279484946",
+      "name": "Analyze (rust)",
+      "startedAt": "2026-10-03T20:06:51Z",
+      "status": "COMPLETED",
+      "workflowName": "CodeQL"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149267344/job/111279485118",
+      "name": "Analyze (swift)",
+      "startedAt": "2026-10-03T19:49:10Z",
+      "status": "QUEUED",
+      "workflowName": "CodeQL"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149270434/job/111279491195",
+      "name": "fresh-native-smoke (macos-15)",
+      "startedAt": "2026-10-03T19:49:12Z",
+      "status": "QUEUED",
+      "workflowName": "product-tour-native"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:15:45Z",
+      "conclusion": "FAILURE",
+      "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37149270434/job/111279491239",
+      "name": "fresh-native-smoke (windows-2025)",
+      "startedAt": "2026-10-03T20:08:26Z",
+      "status": "COMPLETED",
+      "workflowName": "product-tour-native"
+    },
+    {
+      "__typename": "StatusContext",
+      "context": "Vercel",
+      "startedAt": "2026-10-03T19:49:10Z",
+      "state": "FAILURE",
+      "targetUrl": "https://vercel.com/knowledge/why-is-my-account-deployment-blocked"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T20:08:43Z",
+      "conclusion": "NEUTRAL",
+      "detailsUrl": "https://github.com/rox-one/rox-one/runs/111283154701",
+      "name": "CodeQL",
+      "startedAt": "2026-10-03T20:08:41Z",
+      "status": "COMPLETED",
+      "workflowName": ""
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T19:54:09Z",
+      "conclusion": "SKIPPED",
+      "detailsUrl": "https://backend.blacksmith.sh/track/enable-autofix",
+      "name": "[code]smith",
+      "startedAt": "2026-10-03T19:54:09Z",
+      "status": "COMPLETED",
+      "workflowName": ""
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-03T19:52:22Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://vercel.com/github",
+      "name": "Vercel Agent Review",
+      "startedAt": "2026-10-03T19:49:13Z",
+      "status": "COMPLETED",
+      "workflowName": ""
+    }
+  ],
+  "url": "https://github.com/rox-one/rox-one/pull/1448"
+}

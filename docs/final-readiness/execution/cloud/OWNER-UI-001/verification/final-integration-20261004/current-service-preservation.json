@@ -1,0 +1,80 @@
+{
+  "path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+  "inputs": {
+    "ours": {
+      "sourceSha256": "1d435d3d9243a15cd744edee5f2caaa7c60c76484483c5d31dcee8eda16110cc",
+      "cases": [
+        {
+          "name": "`explicit Notes service recovers an unavailable workspace (${multiple ? 'focus another retained panel' : 'already focused retained panel'})`",
+          "bodySha256": "17953f5c777896e6137bc92736159f9e2284e5039431a334f8d933ae0338a833",
+          "deadline": "default",
+          "body": "async () => {\n      const f = fixture(multiple)\n      expect(f.readNavigation().navigator).toBe('unavailable')\n      await f.click('notes')\n      f.syncUrl(true)\n      expect(f.requestedWorkspaceSlugRef.current).toBe('a')\n      expect(f.readNavigation().navigator).toBe('notes')\n      expect(f.writes).toEqual(['notes'])\n      expect(f.historyWrites).toHaveLength(1)\n    }"
+        },
+        {
+          "name": "'negative control: direct production navigate performs workspace recovery and actual syncUrl persists it'",
+          "bodySha256": "66cccfe63a3513be1ff75299ab70ac5ad3d28803847dc1cc51f9b439b6ea2022",
+          "deadline": "default",
+          "body": "async () => {\n    const f = fixture()\n    await f.navigate('notes')\n    f.syncUrl(true)\n    expect(f.requestedWorkspaceSlugRef.current).toBe('a')\n    expect(f.readNavigation().navigator).toBe('notes')\n    expect(f.historyWrites).toHaveLength(1)\n    expect(String((f.historyWrites[0] as unknown[])[2])).toContain('ws=a')\n  }"
+        },
+        {
+          "name": "'the actual service hook refreshes its callback when a valid workspace becomes unavailable'",
+          "bodySha256": "7da53ea12b4107a7da583d1165ad4ce3304b213700a2dec29339358e3884365e",
+          "deadline": "default",
+          "body": "async () => {\n    const f = fixture(false, 'a')\n    const panels = f.store.get(panelStackAtom)\n    const focused = f.store.get(focusedPanelIdAtom)\n    await f.click('notes')\n    expect(f.writes).toEqual([])\n    expect(f.store.get(panelStackAtom)).toBe(panels)\n    expect(f.store.get(focusedPanelIdAtom)).toBe(focused)\n    expect(f.renderClick()).toBe(f.click)\n\n    f.requestWorkspace('deleted-workspace')\n    expect(f.readNavigation().navigator).toBe('unavailable')\n    const unavailableClick = f.renderClick()\n    expect(unavailableClick).not.toBe(f.click)\n    await unavailableClick('notes')\n    f.syncUrl(true)\n    expect(f.writes).toEqual(['notes'])\n    expect(f.requestedWorkspaceSlugRef.current).toBe('a')\n    expect(f.readNavigation().navigator).toBe('notes')\n    expect(f.historyWrites).toHaveLength(1)\n  }"
+        }
+      ]
+    },
+    "theirs": {
+      "sourceSha256": "90c7061404f0b582ba61129e648057a009958cf6e3264e38e2112f4ef6c1496b",
+      "cases": [
+        {
+          "name": "`explicit Notes service recovers an unavailable workspace (${multiple ? 'focus another retained panel' : 'already focused retained panel'})`",
+          "bodySha256": "17953f5c777896e6137bc92736159f9e2284e5039431a334f8d933ae0338a833",
+          "deadline": "default",
+          "body": "async () => {\n      const f = fixture(multiple)\n      expect(f.readNavigation().navigator).toBe('unavailable')\n      await f.click('notes')\n      f.syncUrl(true)\n      expect(f.requestedWorkspaceSlugRef.current).toBe('a')\n      expect(f.readNavigation().navigator).toBe('notes')\n      expect(f.writes).toEqual(['notes'])\n      expect(f.historyWrites).toHaveLength(1)\n    }"
+        },
+        {
+          "name": "'negative control: direct production navigate performs workspace recovery and actual syncUrl persists it'",
+          "bodySha256": "66cccfe63a3513be1ff75299ab70ac5ad3d28803847dc1cc51f9b439b6ea2022",
+          "deadline": "default",
+          "body": "async () => {\n    const f = fixture()\n    await f.navigate('notes')\n    f.syncUrl(true)\n    expect(f.requestedWorkspaceSlugRef.current).toBe('a')\n    expect(f.readNavigation().navigator).toBe('notes')\n    expect(f.historyWrites).toHaveLength(1)\n    expect(String((f.historyWrites[0] as unknown[])[2])).toContain('ws=a')\n  }"
+        },
+        {
+          "name": "'the actual service hook refreshes its callback when a valid workspace becomes unavailable'",
+          "bodySha256": "7da53ea12b4107a7da583d1165ad4ce3304b213700a2dec29339358e3884365e",
+          "deadline": "default",
+          "body": "async () => {\n    const f = fixture(false, 'a')\n    const panels = f.store.get(panelStackAtom)\n    const focused = f.store.get(focusedPanelIdAtom)\n    await f.click('notes')\n    expect(f.writes).toEqual([])\n    expect(f.store.get(panelStackAtom)).toBe(panels)\n    expect(f.store.get(focusedPanelIdAtom)).toBe(focused)\n    expect(f.renderClick()).toBe(f.click)\n\n    f.requestWorkspace('deleted-workspace')\n    expect(f.readNavigation().navigator).toBe('unavailable')\n    const unavailableClick = f.renderClick()\n    expect(unavailableClick).not.toBe(f.click)\n    await unavailableClick('notes')\n    f.syncUrl(true)\n    expect(f.writes).toEqual(['notes'])\n    expect(f.requestedWorkspaceSlugRef.current).toBe('a')\n    expect(f.readNavigation().navigator).toBe('notes')\n    expect(f.historyWrites).toHaveLength(1)\n  }"
+        }
+      ]
+    }
+  },
+  "merged": {
+    "sourceSha256": "1cf8749d7eabf573fdebd3cb2a8ec27b6e59e5a51f6756ef4206595aa3860860",
+    "cases": [
+      {
+        "name": "`explicit Notes service recovers an unavailable workspace (${multiple ? 'focus another retained panel' : 'already focused retained panel'})`",
+        "bodySha256": "17953f5c777896e6137bc92736159f9e2284e5039431a334f8d933ae0338a833",
+        "deadline": "default",
+        "body": "async () => {\n      const f = fixture(multiple)\n      expect(f.readNavigation().navigator).toBe('unavailable')\n      await f.click('notes')\n      f.syncUrl(true)\n      expect(f.requestedWorkspaceSlugRef.current).toBe('a')\n      expect(f.readNavigation().navigator).toBe('notes')\n      expect(f.writes).toEqual(['notes'])\n      expect(f.historyWrites).toHaveLength(1)\n    }"
+      },
+      {
+        "name": "'negative control: direct production navigate performs workspace recovery and actual syncUrl persists it'",
+        "bodySha256": "66cccfe63a3513be1ff75299ab70ac5ad3d28803847dc1cc51f9b439b6ea2022",
+        "deadline": "default",
+        "body": "async () => {\n    const f = fixture()\n    await f.navigate('notes')\n    f.syncUrl(true)\n    expect(f.requestedWorkspaceSlugRef.current).toBe('a')\n    expect(f.readNavigation().navigator).toBe('notes')\n    expect(f.historyWrites).toHaveLength(1)\n    expect(String((f.historyWrites[0] as unknown[])[2])).toContain('ws=a')\n  }"
+      },
+      {
+        "name": "'the actual service hook refreshes its callback when a valid workspace becomes unavailable'",
+        "bodySha256": "7da53ea12b4107a7da583d1165ad4ce3304b213700a2dec29339358e3884365e",
+        "deadline": "default",
+        "body": "async () => {\n    const f = fixture(false, 'a')\n    const panels = f.store.get(panelStackAtom)\n    const focused = f.store.get(focusedPanelIdAtom)\n    await f.click('notes')\n    expect(f.writes).toEqual([])\n    expect(f.store.get(panelStackAtom)).toBe(panels)\n    expect(f.store.get(focusedPanelIdAtom)).toBe(focused)\n    expect(f.renderClick()).toBe(f.click)\n\n    f.requestWorkspace('deleted-workspace')\n    expect(f.readNavigation().navigator).toBe('unavailable')\n    const unavailableClick = f.renderClick()\n    expect(unavailableClick).not.toBe(f.click)\n    await unavailableClick('notes')\n    f.syncUrl(true)\n    expect(f.writes).toEqual(['notes'])\n    expect(f.requestedWorkspaceSlugRef.current).toBe('a')\n    expect(f.readNavigation().navigator).toBe('notes')\n    expect(f.historyWrites).toHaveLength(1)\n  }"
+      }
+    ]
+  },
+  "oursBodiesAndDeadlinesPreserved": true,
+  "theirsBodiesAndDeadlinesPreserved": true,
+  "runtimeCases": 4,
+  "onlySourceWrite": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+  "head": "37ecdb59b3be817fe02bb8c2514a0aee859d15cd",
+  "mergeHead": "2b14d1e64e5f1622d213059733bdef6b2462acfc"
+}

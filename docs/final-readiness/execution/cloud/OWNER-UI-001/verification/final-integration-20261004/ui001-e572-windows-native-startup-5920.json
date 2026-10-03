@@ -1,0 +1,8 @@
+{
+  "status": "failed-before-first-window",
+  "platform": "win32",
+  "childPid": 4128,
+  "diagnosticTailLimitCharacters": 32768,
+  "stdout": "2026-10-03T21:34:19.137Z INFO   [bootstrap] Toolchain ensureAll scheduled\n",
+  "stderr": ""
+}

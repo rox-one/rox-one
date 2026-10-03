@@ -1047,3 +1047,14 @@ Owner recent_features; parent owns ordered integration. Retain held-prepare dest
 2. Reproduce origin/privacy/artifact/verdict negatives, including the explicitly pending TaskRunner producer fixture. Restore only the bounded collector layer, then qualify four independent suites (53/0/247), core and server-core Node22 types. Archive source failures and the initial dependent-fixture type diagnostics.
 3. Publish a separate collector PR with qualified hashes and pending producer/UI boundaries. pr_scout preserves current third suppliedExecution argument and spawn authority bind while implementing tagged actual producers in its separate PR. Root owns sequential merge.
 4. Historical worker recovers current renderer context/export/link/retry behavior from the same finite source head; end-to-end producer/UI acceptance needs its own actual consumers and refreshed scoped proof.
+
+## UI-001 final delivery graph — 2026-10-04
+
+1. Lead: preserve the primary dirty checkout, integrate current main by ordinary merges, archive previous manifests/results, and compare both complete original task objects with input76228cc.
+2. Platform scout: resolve only the service fixture setup union, preserve every original body/assertion/deadline, replay actual mounted Navigation/Main/Skill and current workspace/history callbacks, then diagnose the real Windows pre-window failure. Lead owns integration, source manifests and GitHub delivery.
+3. Source scout: qualify incoming registration/storage/geometry collaborators, retained authority/error boundaries, and current-main ownership changes without replacing original failure records.
+4. Regression scout: finish all1881 immutable source suites; verify every log hash; use actual supported Node22 for embedded Vitest, unprivileged Linux prerequisites, real PostgreSQL and original Playwright1.49.1 static source-fingerprinted application programs.
+5. Lead, after source writers close: run qualified project validation and Electron build on a frozen source revision; keep old type/timeout failures; publish exact PR head, merge PR1448 to main, and verify the actual remote merge parents and product source bytes.
+6. Lead: publish canonical merged-result documentation with exact revision-bound receipts, safe artifacts and hashes; read it back from GitHub; retain original installed/native/hosted/provider acceptance as pending and clean only owned temporary processes.
+
+Dependencies are sequential for source mutation, build/validation and delivery. Independent scout receipts record ready tasks, closed writers, actual source hashes and runtime identity. The original full run is immutable; later replays are separate evidence. The final GitHub receipt distinguishes tested source, actual merged source, documentation commit, checks and external prerequisites.

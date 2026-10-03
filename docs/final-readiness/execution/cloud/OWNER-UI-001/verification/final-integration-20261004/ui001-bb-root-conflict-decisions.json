@@ -1,0 +1,15 @@
+{
+  "integrationMain": "bb047b946da41346301cffe88a43db0adf621dcf",
+  "decisions": {
+    "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts": "Retain actual exported voice HANDLED_CHANNELS rather than duplicated literal; retain stronger fullplatform/mode disabled owner+allowlist negative matrix.",
+    "apps/electron/src/main/handlers/__tests__/registration.test.ts": "Retain actual exported voice HANDLED_CHANNELS rather than duplicated literal; retain stronger fullplatform/mode disabled owner+allowlist negative matrix.",
+    "packages/messaging-gateway/src/__tests__/access-control.test.ts": "Retain additional disabled guard matrix; main original cases all retained.",
+    "apps/electron/src/renderer/lib/__tests__/unknown-error-i18n.test.ts": "Retain current main exact7 localized fallback occurrences, matching actual current App source; do not weaken exactexpected count."
+  },
+  "fileSha256": {
+    "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts": "56d67407f5415855c16d73094af5e77faa86a81114cf874096d6d287cd28765f",
+    "apps/electron/src/main/handlers/__tests__/registration.test.ts": "adb3c3b8457b31b9cd97e48fbad57f4be827152bec74ff1cfd1b59e6b5db899b",
+    "packages/messaging-gateway/src/__tests__/access-control.test.ts": "d36033d8d159e01e1e98c78721c23768bec76aae9a083e9e82813a2616cf370b",
+    "apps/electron/src/renderer/lib/__tests__/unknown-error-i18n.test.ts": "7c90f7d7d0ce39678ce5b09fd02110b5e005cc85ec9dbbdb0829f2f5afefa0ae"
+  }
+}

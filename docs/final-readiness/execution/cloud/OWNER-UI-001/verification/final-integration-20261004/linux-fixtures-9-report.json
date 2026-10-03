@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "input": {
+    "head": null,
+    "trackedDiffSha256": null,
+    "manifestSha256": "6312c22c4615cf6f553afebc76c72bb7d71f3f049894678c34b9be0949a5327f",
+    "runnerSha256": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a",
+    "bunVersion": "1.3.14",
+    "nodeVersion": "v24.21.0"
+  },
+  "startedAt": "2026-10-03T21:08:22.089Z",
+  "finishedAt": "2026-10-03T21:08:35.674Z",
+  "summary": {
+    "expected": 9,
+    "completed": 9,
+    "passed": 9,
+    "failed": 0,
+    "blocked": 0
+  },
+  "originalReportSha256": "c0fb0e70650b0e3206080447fc5ab3b2aec05753dac3602a801aa695552df693",
+  "results": [
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1994,
+      "testCounts": {
+        "pass": 8,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "22b9822d4a180cbc7dd9cd4c2f8b0b77f680600748e129a06386ff8bb01338e7"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1747,
+      "testCounts": {
+        "pass": 4,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "c06fa7c6a5284898cbb43fed2f7531623884012cd561364eb4cb5ab2cbed8643"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/__tests__/rox-readiness-ui-001.page-lifecycle.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 881,
+      "testCounts": {
+        "pass": 8,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "6faefd9d5526eba0f44f91954f88d14c684c4ba6ad38054b7a36bdd4d60610a1"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 2350,
+      "testCounts": {
+        "pass": 18,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "faed0582c433091f891745b5bb5ec4115aa8e29cb9d2db3a4d62e5657535ffdb"
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/__tests__/focus-notification-scope.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 133,
+      "testCounts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "7d54f64575c3ec9271b589a438070a7535a970fa875ab663e7452e5603539cb2"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/__tests__/renderer-contract-recovery.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 2228,
+      "testCounts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "9ebf99bcf4332babd1662d8c431950b3a158186f4f48b12e77cab50efeb12c0e"
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 121,
+      "testCounts": {
+        "pass": 13,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "63127f6f1d26c13e753d21689d662ad60d6fc87ae58404be2809dc9e20cdc3ff"
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 2331,
+      "testCounts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "1584fe6d2922283803591d7116436c7b03a00e605566a436ce36979c76f77058"
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1770,
+      "testCounts": {
+        "pass": 2,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "6fb7946a570142092ed6c94ad1e89691d3dc64bbee907885cb5d0a293505ee19"
+    }
+  ]
+}

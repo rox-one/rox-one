@@ -1,0 +1,384 @@
+{
+  "schemaVersion": 1,
+  "status": "failed",
+  "input": {
+    "head": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+    "trackedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifestSha256": "a39f14e61e276e5f8ea364fb9a3df6d2a21200a5dd008bbfcf83bbcd91bd7aa5",
+    "runnerSha256": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a",
+    "bunVersion": "1.3.14",
+    "nodeVersion": "v24.21.0"
+  },
+  "startedAt": "2026-10-03T20:46:13.630Z",
+  "finishedAt": "2026-10-03T20:59:35.625Z",
+  "summary": {
+    "expected": 24,
+    "completed": 24,
+    "passed": 19,
+    "failed": 5,
+    "blocked": 0
+  },
+  "originalReportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+  "results": [
+    {
+      "path": "packages/shared/src/toolchain/__tests__/installer.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3230,
+      "testCounts": {
+        "pass": 11,
+        "fail": 0,
+        "skip": 2
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "1daa4fe8d245be721e6185a7b1d431f358d3b228205d0e4cb2ee820e0797a31e"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/kinds.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 594,
+      "testCounts": {
+        "pass": 15,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "eee5aca96ab28fdfb5b34e1d0548aa002a40c1e661c38501dd79c2f83011f206"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/manager.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 966,
+      "testCounts": {
+        "pass": 13,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "86d4f61ed859dd2c0919e4fa570c38d83ee773b8baa1d56d9940d9f2d537423e"
+    },
+    {
+      "path": "packages/shared/src/credentials/__tests__/secure-storage-migration.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3246,
+      "testCounts": {
+        "pass": 7,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "83d1003b76f0a490b255c393d01a2cdb65c1942c52f967d20e18c83034b11224"
+    },
+    {
+      "path": "scripts/rox-readiness-ui-001.runner.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 17337,
+      "testCounts": {
+        "pass": 19,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "760d16e008c2074f51a6679b4e1e7e9726ff9634436c8b02414dd1395219e0c2"
+    },
+    {
+      "path": "packages/cloud-runner/src/__tests__/local-provider.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "exitCode": 1,
+      "durationMs": 2079,
+      "testCounts": {
+        "pass": 3,
+        "fail": 1,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "85ae9e3cce4bfca80497f906c6e6404562f0cdb9f5a0f0b27ba7c8a43a7c73fc"
+    },
+    {
+      "path": "apps/electron/src/main/__tests__/deep-link-parse.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 665,
+      "testCounts": {
+        "pass": 24,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "fbdeb2ba5dabfc89d25e5bdae779d1f84a47c4591caf6ea23e627c6586881858"
+    },
+    {
+      "path": "apps/electron/src/main/__tests__/deep-link-routing.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 755,
+      "testCounts": {
+        "pass": 5,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "d57b64b12f5749871cad50b27087205ee108f8764c7bf15124af944d161fef02"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-runtime-archives.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 866,
+      "testCounts": {
+        "pass": 4,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "1a899425b4312ad0534d9b21b7ccd4d3fcd5b4963a8833d2de399e287de895d6"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-auth-postgres.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 18624,
+      "testCounts": {
+        "pass": 10,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "7abc2fd214f3478bf9dc3a2ea7244d7276519979ede5b8235519f0923aaea3b7"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-authority-crash.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 156618,
+      "testCounts": {
+        "pass": 15,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "bbdd03002233b635035628a1f8290f7525e57c1e37148ce760308afa2c64e47b"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-http.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 14726,
+      "testCounts": {
+        "pass": 9,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "9ff9957240c7dcb70edbef6b52b1ba1565d37d88eef37cccdc38c23a3b498256"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-native-routing.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 29867,
+      "testCounts": {
+        "pass": 11,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "8316fb52a837d776007bb53513f2aba25729fcff1b0077f7acdcd0fa8cb7341e"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-observability.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 7788,
+      "testCounts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "b77327af2a483db45be6d413119d205e17ee24776e02e9ce9b622c834193249a"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-offline.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 150571,
+      "testCounts": {
+        "pass": 9,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "e4f19663265fa1793624a226f5ebebba1941d4fc41ee3d19699dd3f8c70f7ff5"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-response-schema.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 19121,
+      "testCounts": {
+        "pass": 29,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "185e0eb33861cd4ce86a75ffa303fb2c645bc537d5152a641fb505c7157b5fab"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-runtime.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 29592,
+      "testCounts": {
+        "pass": 10,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "bd7856801e4b8d1f6203b2bcbf53b9fa10cc1edab07de35f89c52556f7381884"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-server.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 39237,
+      "testCounts": {
+        "pass": 10,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "6be66aea4c994596fcd4a1dfdf15d3e7510f5ee3466fcc4c92a59939b2d8e202"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-service-crash.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 19730,
+      "testCounts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "3887ea34114d00d3d0901193fbbfb8d1f8c79cdacdc817126548971d68d88ffb"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-transport.test.ts",
+      "runner": "bun",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 14070,
+      "testCounts": {
+        "pass": 7,
+        "fail": 0,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "f52b7c15b9c9148ee2d6ab397dfcf862b5774cac346336201e9d02f0980fdd9a"
+    },
+    {
+      "path": "tests/macro-integration/wp-01.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "exitCode": 1,
+      "durationMs": 516,
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "a0f1cd22799eca8830f3406c95d4f4a84546248a5fb29f8f1f2cbe6a3c4e0ffc"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-domain.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "exitCode": 1,
+      "durationMs": 89834,
+      "testCounts": {
+        "pass": 0,
+        "fail": 17,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "3e0613ba2b1cf6a18e46e623eeac84744d497aa8dce2b12676518c6cd55f1ee2"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native-policy.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "exitCode": 1,
+      "durationMs": 88033,
+      "testCounts": {
+        "pass": 0,
+        "fail": 18,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "f92a95325956211dae6343d56f1266bf46e6fce5d19f0f2da09c38bcb1f9949b"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native-service.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "exitCode": 1,
+      "durationMs": 93548,
+      "testCounts": {
+        "pass": 0,
+        "fail": 18,
+        "skip": 0
+      },
+      "signal": null,
+      "timedOut": false,
+      "logSha256": "724681e9c9af9545fb20c671c1e6455b76946f8d400364e872d3a7cdaac777dc"
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "task_id": "source_review",
+  "attempt_id": "28586c49ffa159b4e2a4d554df46b9e0",
+  "packet_hash": "2ad67e8072153eaf29a7785d31cc91b584afa336883eb3a9d2e02abcaf1526e3",
+  "request_id": "ui001-full-integration-e61c84b1",
+  "scope": "Read-only isolated recovery of seven storage-startup-migration child deadline failures after concurrent Electron build completed",
+  "created_utc": "2026-10-03T21:12:53.379250+00:00",
+  "checkout": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+  "current_receipt_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+  "current_merge_head": "bb047b946da41346301cffe88a43db0adf621dcf",
+  "historical_ci_head": "02237c3874b2c1e31c46ddefdc4b74d255f94fb7",
+  "runtime": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "bun": "1.3.14 (0d9b296a)",
+    "node": "24.21.0",
+    "private_home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/storage-startup-02237/replay-2-private-home",
+    "private_temporary_directory": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/storage-startup-02237/replay-2-private-tmp"
+  },
+  "run": {
+    "task_id": "source_review",
+    "attempt_id": "28586c49ffa159b4e2a4d554df46b9e0",
+    "packet_hash": "2ad67e8072153eaf29a7785d31cc91b584afa336883eb3a9d2e02abcaf1526e3",
+    "head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+    "source_sha256": "eac185e086f359b0430ae9afb344ee54f6110afee50d92018eaa8c8486285e68",
+    "command": [
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+      "test",
+      "src/config/__tests__/storage-startup-migration.test.ts"
+    ],
+    "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/packages/shared",
+    "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/storage-startup-02237/replay-2-private-home",
+    "temporary_directory": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/storage-startup-02237/replay-2-private-tmp",
+    "config_directory_created_before_preload": true,
+    "bun_version": "1.3.14",
+    "node_version": "v24.21.0",
+    "child_budget_ms": 10000,
+    "case_budget_ms": 25000,
+    "source_writes": false,
+    "start_time": 1791061856.624565,
+    "exit_code": 0,
+    "elapsed_ms": 15214,
+    "source_after_sha256": "eac185e086f359b0430ae9afb344ee54f6110afee50d92018eaa8c8486285e68",
+    "log_sha256": "c7024be777e8c1f21ba56022871b837d2917ed61987c100986bbeaecb2905fb4",
+    "end_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804"
+  },
+  "summary": {
+    "passed": 24,
+    "failed": 0,
+    "assertions": 98,
+    "skipped": 0,
+    "elapsed_ms": 15214
+  },
+  "case_elapsed_min_ms": 363.84,
+  "case_elapsed_max_ms": 1505.66,
+  "source_bindings": {
+    "packages/shared/src/config/__tests__/storage-startup-migration.test.ts": {
+      "current_sha256": "eac185e086f359b0430ae9afb344ee54f6110afee50d92018eaa8c8486285e68",
+      "ci_sha256": "eac185e086f359b0430ae9afb344ee54f6110afee50d92018eaa8c8486285e68",
+      "identical_to_ci_at_receipt": true
+    },
+    "packages/shared/src/config/storage.ts": {
+      "current_sha256": "26826447f3a9898dcddaaaac53f878a73424847022cd8e5fbbdc8d6518b192ca",
+      "ci_sha256": "26826447f3a9898dcddaaaac53f878a73424847022cd8e5fbbdc8d6518b192ca",
+      "identical_to_ci_at_receipt": true
+    },
+    "packages/shared/tests/setup/register-pi-model-resolver.ts": {
+      "current_sha256": "6c0a77b4b320f8cdc187f15eb6f4d1caadf7c6d89e8e9ae7b99599b46ebb02b0",
+      "ci_sha256": "6c0a77b4b320f8cdc187f15eb6f4d1caadf7c6d89e8e9ae7b99599b46ebb02b0",
+      "identical_to_ci_at_receipt": true
+    },
+    "scripts/test-config-isolation.ts": {
+      "current_sha256": "8b847732d8c6ef5f3e901914e8cf15178863ef5c1d68ae09a6d2958d94c5a373",
+      "ci_sha256": "8b847732d8c6ef5f3e901914e8cf15178863ef5c1d68ae09a6d2958d94c5a373",
+      "identical_to_ci_at_receipt": true
+    },
+    "scripts/test-all.ts": {
+      "current_sha256": "c9f014c1708f86811e4497fe12be5000ae3ba3e2763d3f096e3bd38a8fb30855",
+      "ci_sha256": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a",
+      "identical_to_ci_at_receipt": false
+    }
+  },
+  "source_changed": false,
+  "assertions_changed": false,
+  "timeouts_changed": false,
+  "original_child_budget_ms": 10000,
+  "original_case_budget_ms": 25000,
+  "node_broker": {
+    "exists": true,
+    "path": "scripts/test-all.ts",
+    "symbol": "captureTestCommand",
+    "async": true,
+    "used_by_unchanged_migration_test": false,
+    "needed_for_observed_success": false
+  },
+  "history": [
+    {
+      "kind": "original_ci_failure",
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/storage-startup-02237/original-validate-ci.log",
+      "sha256": "5fa38b16467c08ff30841fe0cb8badc268416f601577e9fb584322b1d67c2c7e",
+      "config_step_summary": {
+        "passed": 102,
+        "failed": 7,
+        "assertions": 263,
+        "cases": 109,
+        "files": 4
+      },
+      "cause_observed": "Seven actual subprocess timeout completions with exit null / signal SIGKILL at original 10000ms budget, empty stdout/stderr; coincident full Electron build per parent evidence."
+    },
+    {
+      "kind": "scout_initial_setup_failure",
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/storage-startup-02237/isolated-original.log",
+      "sha256": "36980dbf4932c4a8fc1c648f29f11ea7e8394a2898d2201023230b0f25bb3b8f",
+      "summary": {
+        "passed": 0,
+        "failed": 1,
+        "errors": 1
+      },
+      "cause_observed": "Scouting harness externally assigned ROX_CONFIG_DIR before creating its directory; existing isolation preload copyFileSync failed ENOENT. Test cases did not execute. Fixed only ignored private environment directory setup."
+    },
+    {
+      "kind": "unchanged_isolated_green",
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/storage-startup-02237/replay-2-original.log",
+      "sha256": "c7024be777e8c1f21ba56022871b837d2917ed61987c100986bbeaecb2905fb4",
+      "summary": {
+        "passed": 24,
+        "failed": 0,
+        "assertions": 98,
+        "skipped": 0,
+        "elapsed_ms": 15214
+      }
+    }
+  ],
+  "findings": [
+    {
+      "severity": "qualified_environment_correlation",
+      "statement": "Exact unchanged test passes alone after build completion with all original callbacks, persistence/idempotence assertions and deadlines. No reproducible product or test-helper failure in this bounded replay. Concurrent build contention remains an inference, not directly measured causation."
+    },
+    {
+      "severity": "capture_bound",
+      "statement": "Empty child output accompanied actual SIGKILL deadline in historical CI. The known macOS Bun capture issue is not required to explain or repair this successful unchanged replay."
+    },
+    {
+      "severity": "revision_boundary",
+      "statement": "Replay start/end HEAD and test hashes are captured independently. Any incoming merge modification after the replay needs qualification against its own final bytes; this receipt does not transfer green status to a changed source."
+    }
+  ],
+  "next_action": "Parent completes current ordinary merge, then runs whole unchanged validate:ci serially with no concurrent Electron build. Retain original02237 CI red. If incoming test/source bytes differ, repeat this exact single-file qualification before using current result. No source/broker/deadline patch recommended.",
+  "fullDoDClosed": false,
+  "restrictions_respected": [
+    "No source edits",
+    "No GitHub writes",
+    "No provider calls initiated",
+    "No foreground/native UI",
+    "No global configuration or permissions changes"
+  ]
+}
