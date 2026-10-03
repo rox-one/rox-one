@@ -622,6 +622,17 @@ Dependencies: current server entry point and helper build commands at main
 Binding replay recovery: compare the exact legacy identity alongside the canonical encoded identity; verify raw-key migration followed by repeated imports, and negative controls for wrong kind, unrelated ID and foreign workspace. Run the existing platform-contract tests before separate PR publication.
 The recent worker owns the gstack command redirect prerequisite in an isolated security worktree. Input is the three identical shipped BrowseClient copies at runtime revision `05f1e3741`; dependencies are the existing bearer/port validation and portable provenance catalogs. Verify real HTTP redirects fail before any destination request, direct commands retain authentication, and patch hashes match all parent and portable notices. The lead integrates the committed prerequisite into the runtime PR and retains remote CodeQL closure as a separate pending gate.
 
+
+## Connections producer recovery — 2026-10-03
+
+Owner: branch integration lead. Source: `checkpoint/session-audit-20260821-craft-agents` at `86154e8c812746261282bb4c517b16ad7becc0ec`. Dependencies: existing WorkGraph canonical SQLite kernel, credential registry/broker, generated Electron preload and trusted local window/workspace transport.
+
+Restore the seven missing Connections controller operations: lease metadata, inspection, backend move, reconnect, GitHub device start/poll/cancel. Preserve current ROX config resolution, credential migration contracts and legacy broker ID-only revoke API. Only metadata may cross renderer transport. Device flows belong to the initiating authenticated local client/workspace; revoked/cancelled or concurrent polls cannot commit a late approval. Existing OAuth client configuration is required; no new client ID, account/device grant or real credential import is performed by this integration.
+
+Backend move must verify destination contents before deleting the source, refuse existing destinations and simultaneous moves, revoke outstanding leases before attempting a move, restore the source and clear the destination on recoverable failure, and return a distinct rollback failure when storage recovery cannot be proven. Real credential/backend availability and OAuth sign-in remain environment-dependent; fixture proof does not certify a real provider or native UI.
+
+The existing Connections UI remains a separate consumer recovery; this PR restores its missing backend and transport dependency. Acceptance: original source branch retained; current strict types and the configured validation assertions; real temporary SQLite audits and workspace isolation; generated channel/access inventory; deterministic memory-backend write/readback/delete/rollback failures; OAuth pending/approved/cancel race and concurrent-poll controls. Record exact delivered revision and test receipt under `docs/integration-history/connections-86154e8c/`.
+
 ## Native Notes Knowledge read projection (2026-10-03)
 
 Owner: historical branch recovery. Add NativeNotesKnowledgeProvider over nativeNotesKnowledgeAccess and explicitly authenticated RPC read handlers; preserve existing SiYuan compatibility reads for legacy contexts. Verify real WebSocket principal authentication, committed note search/read/backlinks, exclusion of loose Markdown files, foreign workspace/global connection rejection, forged/missing principal denial, invalidation of captured readers after revocation, and explicit CAPABILITY_DISABLED for unscoped agent calls. Existing Knowledge RPC/tool runtime tests remain green. Native visual Notes/agent adoption is outside this bounded API proof.
@@ -635,6 +646,15 @@ Owner: historical integration; parent retains merge. Dependency: existing useWor
 3. Execute delivered component/hook with actual atoms: initial list, state update, interaction, removal/reconciliation, disabled transfer, unmount and late-event/list controls. Run existing browser/chrome checks and renderer validation.
 4. Publish a separate PR with exact source/head and bounded evidence; original branches remain untouched.
 
+## Voice command transport recovery — 2026-10-03
+
+Owner: recent feature worker; main integration owner: branch audit lead. Dependencies: current HOTKEY wire channel, native window/client binding and composer consent/permission/generation guards at main 3d04470f9be127945dd15c582775ed1e0401ed50.
+
+1. Restore actual toggle/cancel delivery and foreground Right Option pairing onto current contracts. Dispose registrations/held state, preserve application shortcuts and idle Escape, and fail closed for unmanaged/unbound clients.
+2. Route all four commands into current composer capture. Cancel pending/released/finalizing requests and retain current native host ownership; do not copy old capture singleton, provider defaults or authorization.
+3. Verify actual Electron registration adapter with isolated ports, input-to-client-to-controller behavior, repeated/unpaired/foreign/unbound keys, permission-release and finalization cancellation, and unchanged voice/meeting/privacy regressions; run package types and main/renderer builds.
+4. Commit, push and attach a separate PR, preserving every source branch. Lead owns remote main merge; current live ASR, global native key input and visual microphone acceptance remain explicitly unverified.
+
 ## Selective editor block recovery — 2026-10-03
 
 Owner: recent feature worker; integration owner: branch audit lead. Source dependency: `1f56af31d3658ee9880105361ad5312324f36ab8`; base: live main `3d04470f9be127945dd15c582775ed1e0401ed50`.
@@ -643,3 +663,16 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 2. Wire Notes folding preferences and replace placeholder slash insertions with real nodes. Supply legacy parser/serializer adapters required by the current default engine; preserve existing column aliases and literal code fences.
 3. Verify actual installed legacy parser/ProseMirror/serializer parse-edit-export-reopen, official-engine roundtrips, fold state normalization, malformed markers, bounded resizing, read-only refusal and locale parity; run consumed Electron types and renderer build.
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
+
+
+## Credential locator repair plan — 2026-10-03
+
+| Task | Owner | Depends on | Owned files | Verification |
+|---|---|---|---|---|
+| LOC-01: Audit current main and merged PR lineage | Lead + independent scouts | none | task-owned evidence | exact remote SHA; validate current source rather than stale PR body |
+| LOC-02: Add inherited-property regression matrix | locator_audit worker | LOC-01 | credential-types.test.ts | red run on original validator, restoration of polluted prototype before assertions |
+| LOC-03: Capture only own descriptor values | Lead | LOC-02 red proof | credential-types.ts | green focused test, every required field rejects inherited substitution |
+| LOC-04: Validate current integration and built runtime | Lead + independent reviewer | LOC-03 | isolated Linux dependencies/artifacts; task-owned logs | full core/types, validate:ci, WebUI types, three builds and built lifecycle |
+| LOC-05: Publish, review and merge main | Lead | LOC-04 | scoped PR and verification receipt | exact pushed HEAD, check readback, merge SHA and main ancestry; retain unrelated work |
+
+The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.

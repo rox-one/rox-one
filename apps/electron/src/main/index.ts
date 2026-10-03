@@ -541,10 +541,22 @@ app.whenReady().then(async () => {
     browserPaneManager.registerToolbarIpc()
     browserPaneManager.registerCapabilityIpc()
 
-    const { registerVoiceHotkeys, showVoiceOverlay } = await import('./voice/overlay-window')
-    registerVoiceHotkeys(() => {
-      showVoiceOverlay()
-    })
+    const { registerVoiceHotkeys } = await import('./voice/overlay-window')
+    const { sendVoiceHotkeyToClient } = await import('./voice/command-input')
+    const disposeVoiceHotkeys = registerVoiceHotkeys((command, webContentsId) => {
+      const target = webContentsId === undefined
+        ? windowManager?.getLastActiveWindow()
+        : windowManager?.getWindowByWebContentsId(webContentsId)
+      if (!target || target.isDestroyed() || target.webContents.isDestroyed()) return false
+      return sendVoiceHotkeyToClient({
+        webContentsId: target.webContents.id,
+        isManagedWindow: id => Boolean(windowManager?.getWindowByWebContentsId(id)),
+        resolveClient: id => windowManager?.getClientIdForWindow(id),
+        push: windowManager?.getRpcEventSink(),
+        channel: RPC_CHANNELS.voice.HOTKEY,
+      }, command)
+    }, id => windowManager?.getFocusedWindow()?.webContents.id === id)
+    app.once('will-quit', disposeVoiceHotkeys)
     registerMeetingCaptureIpc()
     registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
       getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
