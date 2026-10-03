@@ -87,3 +87,6 @@ scripts/.marketplace-catalog-signing-key.b64
 # Native substrate (Rust workspace + local benches)
 native/target/
 bench-results/
+
+# Serial test runner manifests and retained suite output
+work/test-all/
