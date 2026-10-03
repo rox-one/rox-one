@@ -4,6 +4,7 @@ import {join} from 'node:path';
 import {mkdtempSync,readdirSync,statSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
+import {verifyUpdateMetadata} from './verify-update-metadata';
 const [runId,tag]=process.argv.slice(2);
 if(!/^\d+$/.test(runId??'')||!/^v\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(tag??''))throw new Error('Expected numeric run ID and version tag');
 const repo='rox-one/rox-one';
@@ -31,6 +32,8 @@ for(const [dir,platform,arch] of [['macos','darwin','arm64'],['windows','win32',
     if(local.size!==artifact.size||local.sha256!==artifact.sha256)throw new Error('Checksum mismatch: '+artifact.name);
     records.push(local);console.log('Verified',local.name,local.size,local.sha256);
   }
+  const channelName=await verifyUpdateMetadata(folder,platform,tag.slice(1));
+  records.push(await record(join(folder,channelName),channelName));
   records.push(await record(manifestPath,manifestName));
   for(const name of readdirSync(folder).filter(n=>expected.some(name=>n===name+'.blockmap')))records.push(await record(join(folder,name),name));
 }
