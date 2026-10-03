@@ -149,5 +149,7 @@
     "Raw server-core check resolved stale ui-worktree workspace types, yielding4 cross-tree errors; owned dependency binding fixes the environment, final normal package check passes0.",
     "Generated platform fixtures initially supplied only a launcher; four assertions failed under stronger readiness. Fixtures now retain the actual pin/lock/source/current while preserving original launcher tests and add missing-source/pointer controls.",
     "Before-source negative failures retained; production candidate was restored byte-exactly."
-  ]
+  ],
+  "reconciled_current_main": "89c12aec9524d6a7f5f98a07aa9d537ef134825c",
+  "reconciliation": "Incoming Product1454 retained by normal merge; conflicts onlydocs union. Package adds Product scripts while retaining test=serial runner; owned implementation code unchanged. No repeated heavy build at lead request."
 }

@@ -188,7 +188,12 @@ function acceptSignal(state: RuntimeState, signal: TourSignal): Transition {
   const candidates = state.definition.steps.filter((step, index) => index >= activeIndex
     && step.completion.kind === 'signal' && step.completion.signal === signal.name
     && levels[signal.level] >= levels[step.completion.evidence]
-    && (index === activeIndex || step.completion.priorState === 'same-attempt'))
+    && (index === activeIndex || step.completion.priorState === 'same-attempt'
+      // A current view can describe two neighboring steps with one observation.
+      // Retain only a fresh, scoped UI observation; domain outcomes still need
+      // explicit same-operation continuity or a new event after activation.
+      || (step.completion.priorState === 'allow-current-state' && step.completion.evidence === 'observed'
+        && signal.level === 'observed' && suppliedOrigin === 'ui-observation')))
   const eligible = candidates.filter(step => {
     if (step.completion.priorState === 'after-activation') {
       const activation = state.stepActivatedAt ?? state.attempt!.startedAt

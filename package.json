@@ -124,7 +124,10 @@
     "check-version": "bun run scripts/check-version.ts",
     "oss:sync": "bun run scripts/oss-sync.ts",
     "rx:validate": "bun run scripts/rx-validate.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:product-tour": "bun test apps/electron/src/renderer/features/product-tour && bun test apps/electron/src/renderer/components/app-shell/input/__tests__/product-learning-input.browser.test.ts && bun test apps/electron/src/renderer/context/__tests__/product-tour-layers.test.ts && bun test scripts/product-tour/native-process.test.ts",
+    "test:product-tour:e2e": "node node_modules/@playwright/test/cli.js test --config tests/e2e/product-tour/playwright.config.ts",
+    "test:product-tour:native": "bun scripts/product-tour/run-native.ts"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.947.0",

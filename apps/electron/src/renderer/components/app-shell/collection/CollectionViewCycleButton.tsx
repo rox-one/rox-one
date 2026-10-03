@@ -1,3 +1,5 @@
+import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
+import { useNavigationState, isSessionsNavigation } from '@/contexts/NavigationContext'
 import * as React from 'react'
 import { CalendarRange, ChevronDown, LayoutGrid, List, Table2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -33,6 +35,18 @@ export interface CollectionViewCycleButtonProps {
 
 export function CollectionViewCycleButton({ value, onChange, className }: CollectionViewCycleButtonProps) {
   const { t } = useTranslation()
+  const navigation = useNavigationState()
+  const isSessionCollection = isSessionsNavigation(navigation)
+  const viewTarget = useTourTarget('sessions.view-switcher')
+  const tourSignals = useTourSignals()
+  const pendingView = React.useRef<{ observation: TourObservation | null; value: CollectionViewMode } | null>(null)
+  React.useEffect(() => {
+    const pending = pendingView.current
+    if (isSessionCollection && pending?.value === value) {
+      pendingView.current = null
+      tourSignals.emit(pending.observation, 'sessions.view-visible', 'observed', 'ui-observation')
+    }
+  }, [value, isSessionCollection, tourSignals])
   const [menuOpen, setMenuOpen] = React.useState(false)
   const triggerRef = React.useRef<HTMLButtonElement>(null)
   const Icon = ICONS[value]
@@ -52,9 +66,10 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
   }
 
   const applyMode = React.useCallback((mode: CollectionViewMode) => {
+    if (isSessionCollection) pendingView.current = { observation: tourSignals.capture(), value: mode }
     if (mode !== value) rememberCollectionView(value)
     onChange(mode)
-  }, [onChange, value])
+  }, [onChange, value, isSessionCollection, tourSignals])
 
   const nextLabel = t('collection.view.cycleNext', { mode: t(LABEL_KEY[next]) })
   const prevLabel = t('collection.view.cyclePrev', { mode: t(LABEL_KEY[prev]) })
@@ -77,6 +92,7 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
 
   return (
     <div
+      ref={isSessionCollection ? viewTarget : undefined}
       className={cn('group/cycle inline-flex items-stretch rounded-[4px]', className)}
       onContextMenu={(event) => {
         event.preventDefault()
