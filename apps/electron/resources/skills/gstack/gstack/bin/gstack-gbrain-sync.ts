@@ -29,6 +29,7 @@
  * than building a gstack-side daemon.
  */
 
+import { readBoundedStable } from "../lib/cso/bounded-file";
 import { existsSync, statSync, mkdirSync, writeFileSync, readFileSync, unlinkSync, renameSync, realpathSync } from "fs";
 import { join, dirname } from "path";
 import { execSync, spawnSync } from "child_process";
@@ -823,8 +824,7 @@ function acquireLock(): boolean {
 
 function releaseLock(): void {
   try {
-    if (!existsSync(LOCK_PATH)) return;
-    const raw = readFileSync(LOCK_PATH, "utf-8");
+    const raw = readBoundedStable(LOCK_PATH, 4096, "Sync lock").toString("utf8");
     const info = JSON.parse(raw) as LockInfo;
     if (info.pid === process.pid) {
       unlinkSync(LOCK_PATH);
@@ -868,8 +868,7 @@ export function acquireDreamMarker(): boolean {
 export function releaseDreamMarker(): void {
   try {
     const path = dreamMarkerPath();
-    if (!existsSync(path)) return;
-    const info = JSON.parse(readFileSync(path, "utf-8")) as LockInfo;
+    const info = JSON.parse(readBoundedStable(path, 4096, "Dream marker").toString("utf8")) as LockInfo;
     if (info.pid === process.pid) unlinkSync(path);
   } catch {
     // Best-effort cleanup.
@@ -879,7 +878,7 @@ export function releaseDreamMarker(): void {
 /** Read the pid recorded in a fresh dream marker, for the "already running" message. */
 function dreamMarkerPid(): number | null {
   try {
-    const info = JSON.parse(readFileSync(dreamMarkerPath(), "utf-8")) as LockInfo;
+    const info = JSON.parse(readBoundedStable(dreamMarkerPath(), 4096, "Dream marker").toString("utf8")) as LockInfo;
     return typeof info.pid === "number" ? info.pid : null;
   } catch {
     return null;

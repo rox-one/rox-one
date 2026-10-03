@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
-import { readFileSync, realpathSync, statSync } from 'node:fs';
+import { readBoundedStable } from "../lib/cso/bounded-file";
+import { realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { gbrainInvocation, buildGbrainEnv } from '../lib/gbrain-exec';
@@ -21,10 +22,8 @@ function readCapability(): Verdict {
     root = realpathSync(repo.stdout.trim());
     const pinPath = join(root, '.gbrain-source');
     const statePath = join(resolveStateRoot(), '.gbrain-sync-state.json');
-    if (statSync(pinPath).size > 512 || statSync(statePath).size > 64 * 1024)
-      return unknown('sync state or source pin exceeds the read limit');
-    pin = readFileSync(pinPath, 'utf8').trim();
-    state = JSON.parse(readFileSync(statePath, 'utf8'));
+    pin = readBoundedStable(pinPath, 512, 'Source pin').toString('utf8').trim();
+    state = JSON.parse(readBoundedStable(statePath, 64 * 1024, 'Sync state').toString('utf8'));
   } catch { return unknown('sync state or worktree pin unavailable; run /sync-gbrain'); }
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(pin)
     || state?.schema_version !== 1 || state.last_writer !== 'gstack-gbrain-sync'

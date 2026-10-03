@@ -1,3 +1,4 @@
+import { readBoundedStable } from "./cso/bounded-file";
 /**
  * gstack-memory-helpers — shared helpers for the V1 memory ingest + retrieval pipeline.
  *
@@ -263,10 +264,7 @@ export function secretScanFile(path: string): SecretScanResult {
       ["detect", "--no-git", "--source", path, "--report-format", "json", "--report-path", report, "--exit-code", "0"],
       { env: process.env, stdio: "ignore", timeout: 60_000, killSignal: "SIGKILL" }
     );
-    if (statSync(report).size > maxReportBytes) {
-      return { scanned: false, findings: [], scanner: "error" };
-    }
-    const parsed = JSON.parse(readFileSync(report, "utf-8"));
+    const parsed = JSON.parse(readBoundedStable(report, maxReportBytes, "Secret-scan report").toString("utf8"));
     if (!Array.isArray(parsed) || !parsed.every((f) =>
       f && typeof f.RuleID === "string" && f.RuleID.length > 0 &&
       typeof f.Description === "string" && Number.isInteger(f.StartLine) && f.StartLine > 0 &&

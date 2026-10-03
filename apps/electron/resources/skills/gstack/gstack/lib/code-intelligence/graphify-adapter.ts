@@ -1,3 +1,4 @@
+import { readBoundedStable } from "../cso/bounded-file";
 /**
  * Graphify adapter — real CLI integration (github.com/Graphify-Labs/graphify).
  *
@@ -142,7 +143,7 @@ export class GraphifyProvider implements CodeProvider {
       // is display-only, never worth a hundreds-of-MB JSON.parse heap spike).
       const size = statSync(graphPath).size;
       if (size <= STATUS_PARSE_MAX_BYTES) {
-        const graph = JSON.parse(readFileSync(graphPath, "utf-8")) as { nodes?: unknown[] };
+        const graph = JSON.parse(readBoundedStable(graphPath, STATUS_PARSE_MAX_BYTES, "Graph status").toString("utf8")) as { nodes?: unknown[] };
         if (Array.isArray(graph.nodes)) itemCount = graph.nodes.length;
       } else {
         detail = `${graphPath} (${(size / (1024 * 1024)).toFixed(1)} MB graph; node count skipped)`;

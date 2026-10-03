@@ -40,7 +40,10 @@
  * title/type/tags); gbrain's native dedup keys on session_id.
  */
 
+import { readBoundedStable } from "../lib/cso/bounded-file";
+import { readBoundedRangeStable } from "../lib/cso/bounded-range-file";
 import {
+  lstatSync,
   existsSync,
   readdirSync,
   readFileSync,
@@ -190,6 +193,18 @@ const HOME = homedir();
 const GSTACK_HOME = resolveStateRoot();
 const STATE_PATH = join(GSTACK_HOME, ".transcript-ingest-state.json");
 const DEFAULT_INCREMENTAL_BUDGET_MS = 50;
+// Full-file hashing preserves tail edits for realistic (~50MB) transcripts;
+// the hard ceiling rejects oversized/raced sources instead of reading unbounded.
+export const SOURCE_READ_MAX_BYTES = 64 * 1024 * 1024;
+interface SourceSnapshot { bytes: Buffer; size: number; mtimeMs: number; }
+export function readSourceSnapshot(path: string): SourceSnapshot {
+  const before = lstatSync(path);
+  const bytes = readBoundedStable(path, Math.min(SOURCE_READ_MAX_BYTES, before.size), "Memory source");
+  const after = lstatSync(path);
+  if (!after.isFile() || after.isSymbolicLink() || before.dev !== after.dev || before.ino !== after.ino || before.size !== after.size || before.mtimeMs !== after.mtimeMs || before.ctimeMs !== after.ctimeMs || bytes.length !== after.size)
+    throw new Error("Memory source changed during snapshot");
+  return { bytes, size: after.size, mtimeMs: after.mtimeMs };
+}
 
 const ALL_TYPES: MemoryType[] = [
   "transcript",
@@ -340,7 +355,7 @@ function fileSha256(path: string): string {
   // max for an ingest source is ~50MB (long JSONL); fine to load in
   // memory for hashing.
   try {
-    const buf = readFileSync(path);
+    const buf = readSourceSnapshot(path).bytes;
     return createHash("sha256").update(buf).digest("hex");
   } catch {
     return "";
@@ -568,7 +583,7 @@ interface ParsedSession {
 export function parseTranscriptJsonl(path: string, raw?: string): ParsedSession | null {
   // Best-effort tolerant parser. Handles truncated last lines (D10 partial-flag).
   try {
-    raw ??= readFileSync(path, "utf-8");
+    raw ??= readSourceSnapshot(path).bytes.toString("utf8");
   } catch {
     return null;
   }
@@ -748,7 +763,7 @@ function dateOnly(ts: string | undefined): string {
   }
 }
 
-export function buildTranscriptPage(path: string, session: ParsedSession): PageRecord {
+export function buildTranscriptPage(path: string, session: ParsedSession, snapshot = readSourceSnapshot(path)): PageRecord {
   const remote = resolveGitRemote(session.cwd);
   const slug_repo = repoSlug(remote);
   const date = dateOnly(session.start_time);
@@ -763,8 +778,8 @@ export function buildTranscriptPage(path: string, session: ParsedSession): PageR
   ];
   if (session.partial) tags.push("partial:true");
 
-  const stats = statSync(path);
-  const sha = fileSha256(path);
+  const stats = snapshot;
+  const sha = createHash("sha256").update(snapshot.bytes).digest("hex");
 
   const fmLines = [
     "---",
@@ -816,10 +831,10 @@ export function buildTranscriptPage(path: string, session: ParsedSession): PageR
   };
 }
 
-function buildArtifactPage(path: string, type: MemoryType, raw?: string): PageRecord {
-  const stats = statSync(path);
-  const sha = fileSha256(path);
-  raw ??= readFileSync(path, "utf-8");
+export function buildArtifactPage(path: string, type: MemoryType, raw?: string, snapshot = readSourceSnapshot(path)): PageRecord {
+  const stats = snapshot;
+  const sha = createHash("sha256").update(snapshot.bytes).digest("hex");
+  raw ??= snapshot.bytes.toString("utf8");
 
   // Extract repo slug from path: ~/.gstack/projects/<slug>/...
   let slug_repo = "_unattributed";
@@ -1091,36 +1106,27 @@ export function readNewFailures(
 ): Set<string> {
   const failed = new Set<string>();
   try {
-    if (!existsSync(syncFailuresPath)) return failed;
-    const stat = statSync(syncFailuresPath);
-    if (stat.size <= preImportOffset) return failed;
-    // Read appended bytes only. readSync with a positional offset works
-    // synchronously without slurping the whole file.
-    const fd = openSync(syncFailuresPath, "r");
-    try {
-      const buf = Buffer.alloc(stat.size - preImportOffset);
-      readSync(fd, buf, 0, buf.length, preImportOffset);
-      const text = buf.toString("utf-8");
-      for (const line of text.split("\n")) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        try {
-          const entry = JSON.parse(trimmed) as { path?: string };
-          if (entry.path) {
-            const source = stagedPathToSource.get(entry.path);
-            if (source) failed.add(source);
-          }
-        } catch {
-          // ignore malformed line
+    // Keep old history out of memory, but cap the newly appended range and
+    // verify the descriptor, rather than statting then reopening a pathname.
+    const text = readBoundedRangeStable(syncFailuresPath, preImportOffset, 16 * 1024 * 1024, "Import failures").toString("utf8");
+    for (const line of text.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const entry = JSON.parse(trimmed) as { path?: string };
+        if (entry.path) {
+          const source = stagedPathToSource.get(entry.path);
+          if (source) failed.add(source);
         }
-      }
-    } finally {
-      closeSync(fd);
+      } catch { /* ignore malformed line */ }
     }
-  } catch {
-    // Best-effort. If we can't read failures, we conservatively assume
-    // none — caller will state-record all prepared files. Worst case:
-    // failed files get a retry-on-next-run shot anyway via content_hash.
+  } catch (error) {
+    // No log was produced when there were no per-file failures. Other errors
+    // (including a broken symlink) are unverifiable, not a successful import.
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return failed;
+    // Unverifiable failure output cannot authorize advancing ingest state.
+    // Retrying all staged sources is safer than marking unknown imports done.
+    return new Set(stagedPathToSource.values());
   }
   return failed;
 }
@@ -1469,12 +1475,13 @@ function preparePages(
     let page: PageRecord;
     let sourceFingerprint: SourceFingerprint | undefined;
     try {
-      let raw: string | undefined;
+      const snapshot = readSourceSnapshot(path);
+      const raw = snapshot.bytes.toString("utf8");
       if (args.scanSecrets) {
-        const mtime_ns = Math.floor(statSync(path).mtimeMs * 1e6);
-        const bytes = readFileSync(path);
-        sourceFingerprint = { mtime_ns, sha256: createHash("sha256").update(bytes).digest("hex") };
-        raw = bytes.toString("utf-8");
+        sourceFingerprint = {
+          mtime_ns: Math.floor(snapshot.mtimeMs * 1e6),
+          sha256: createHash("sha256").update(snapshot.bytes).digest("hex"),
+        };
       }
       if (type === "transcript") {
         const session = parseTranscriptJsonl(path, raw);
@@ -1490,9 +1497,9 @@ function preparePages(
           skippedUnattributed++;
           continue;
         }
-        page = buildTranscriptPage(path, session);
+        page = buildTranscriptPage(path, session, snapshot);
       } else {
-        page = buildArtifactPage(path, type, raw);
+        page = buildArtifactPage(path, type, raw, snapshot);
       }
     } catch (err) {
       parseFailed++;
