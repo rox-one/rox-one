@@ -751,9 +751,14 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
 
 
+## UI-001 source repair and main integration — 2026-10-03
+
+The user authorized complete source repair and GitHub merge into main. See [continuation ownership and verification plan](final-readiness/execution/cloud/OWNER-UI-001/continuation-plan.md) for exact address preservation, workspace safety, executor isolation and owned worker dependencies. All original UI-001 requirements and platform acceptance remain unchanged.
+
 ## UI-001: внешние ссылки и интеграция в main — 2026-10-03
 
 Владелец: `fix/ui-001-main-integration-20261003-7`. [UI-001 план](final-readiness/execution/cloud/OWNER-UI-001/main-integration/plan.md) сохраняет исходную матрицу UI-001.1/UI-001.2 и явное разрешение пользователя на GitHub/merge. Другие разделы и рабочие копии сохраняются.
+
 
 # Credential locator boundary validation — 2026-10-03
 
@@ -1063,6 +1068,17 @@ Owner recent_features; parent owns ordered integration. Retain held-prepare dest
 3. Publish a separate collector PR with qualified hashes and pending producer/UI boundaries. pr_scout preserves current third suppliedExecution argument and spawn authority bind while implementing tagged actual producers in its separate PR. Root owns sequential merge.
 4. Historical worker recovers current renderer context/export/link/retry behavior from the same finite source head; end-to-end producer/UI acceptance needs its own actual consumers and refreshed scoped proof.
 
+## UI-001 final delivery graph — 2026-10-04
+
+1. Lead: preserve the primary dirty checkout, integrate current main by ordinary merges, archive previous manifests/results, and compare both complete original task objects with input76228cc.
+2. Platform scout: resolve only the service fixture setup union, preserve every original body/assertion/deadline, replay actual mounted Navigation/Main/Skill and current workspace/history callbacks, then diagnose the real Windows pre-window failure. Lead owns integration, source manifests and GitHub delivery.
+3. Source scout: qualify incoming registration/storage/geometry collaborators, retained authority/error boundaries, and current-main ownership changes without replacing original failure records.
+4. Regression scout: finish all1881 immutable source suites; verify every log hash; use actual supported Node22 for embedded Vitest, unprivileged Linux prerequisites, real PostgreSQL and original Playwright1.49.1 static source-fingerprinted application programs.
+5. Lead, after source writers close: run qualified project validation and Electron build on a frozen source revision; keep old type/timeout failures; publish exact PR head, merge PR1448 to main, and verify the actual remote merge parents and product source bytes.
+6. Lead: publish canonical merged-result documentation with exact revision-bound receipts, safe artifacts and hashes; read it back from GitHub; retain original installed/native/hosted/provider acceptance as pending and clean only owned temporary processes.
+
+Dependencies are sequential for source mutation, build/validation and delivery. Independent scout receipts record ready tasks, closed writers, actual source hashes and runtime identity. The original full run is immutable; later replays are separate evidence. The final GitHub receipt distinguishes tested source, actual merged source, documentation commit, checks and external prerequisites.
+
 
 ## Runtime Map renderer late recovery — 2026-10-04
 
@@ -1070,11 +1086,13 @@ Owner recent_features; parent owns ordered integration. Retain held-prepare dest
 2. Restore only scoped renderer components/helpers/actual ChatPage/MainContentPanel ports. Add read-only runtime link intent to current NavigationContext while preserving its immediate-history release; union the20 runtimeMap keys in all12 current locales.
 3. Qualify focused projection/export/layout/catalog/link behavior, actual mounted context/provenance and lazy retry, retained chat/editor continuities, current package types and renderer build. Preserve every failure and byte-bound receipts; merge latest main normally. Root owns separate PR merge, pr_scout separately owns actual origin-tagged producers.
 
+
 ## Late UI1448 runtime edges — 2026-10-04
 
 1. Freeze source52/9 and reject stale account/navigation regressions; isolate four root-owned production files from worker manager/runner ownership.
 2. Retain codec baseline0/3; qualify12/0 transport,10 actual provider controls with private hanging OS-provider executable/controlled Linux proc and4 real macOS subprocess conformance. Credential regressions use an unavailable synthetic provider; no real user Keychain/Secret Service access.
 3. Qualify full strict Shared/server-core/cloud-runner Node22 types0, preserve first adapter failure and per-file hashes, merge current main with documentation union, publish separate PR. Root integrates qualified worker2-path PR independently; source branches stay intact.
+
 
 Zed final bounded qualification on current991c8b80b: 122 focused +323 Home/token/12-locale tests;29 browser bodies via28 whole-run passes plus unchanged-bundle1-case rerun (whole aggregate retains one cancellation);7 actual App/native-journal and7 production-component cases. All failure histories archived, no assertions or case deadlines weakened. Current main collector/Skills/native launch/Notes changes merged normally; Skills OMP selection/reset buttons retain current semantics with appearance tokens. Full final Electron follow-up and source344 ledger bind their own receipt before publication. Installed OS/cloud/release DoD stays separate.
 

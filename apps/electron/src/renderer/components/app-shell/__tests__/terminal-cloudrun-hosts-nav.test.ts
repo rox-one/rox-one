@@ -1,4 +1,3 @@
-import { navigationEntity } from '../../../features/product-tour/runtime/routes'
 import { describe, expect, it } from 'bun:test'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -8,6 +7,7 @@ import * as navigationGuards from '../../../../shared/types'
 import { parseRouteToNavigationState } from '../../../../shared/route-parser'
 import { createStore } from 'jotai/vanilla'
 import { bottomTerminalOpenAtom } from '../../../atoms/unified-shell'
+import { navigationEntity } from '../../../features/product-tour/runtime/routes'
 
 const mainContentSource = readFileSync(join(__dirname, '../MainContentPanel.tsx'), 'utf8')
 const navContextSource = readFileSync(
@@ -50,12 +50,12 @@ function dispatch(route: string): React.ReactElement {
     useIsMultiSelectActive: () => false, useSelectionCount: () => 0,
     useSelectedIds: () => new Set(), useSelection: () => ({ clearMultiSelect() {} }),
   }
-  const names = ['Panel', 'StoplightProvider', 'RouteErrorBoundary', 'SendResourceToWorkspaceDialog',
+  const names = ['Panel', 'StoplightProvider', 'TourPanelScope', 'RouteErrorBoundary', 'SendResourceToWorkspaceDialog',
     'TerminalSurfacePage', 'CloudRunSurfacePage', 'ChatPage']
   const sessionMetaMapAtom = Symbol()
   const state = parseRouteToNavigationState(route)!
   const bindings: Record<string, unknown> = {
-    ...navigationGuards, ...Object.fromEntries(names.map(name => [name, name])), React,
+    ...navigationGuards, ...Object.fromEntries(names.map(name => [name, name])), React, navigationEntity,
     useCallback: (callback: unknown) => callback, useEffect() {}, useMemo: (callback: () => unknown) => callback(),
     useState: (initial: unknown) => [initial, () => {}], useTranslation: () => ({ t: (key: string) => key }),
     useNavigationState: () => state, useNavigation: () => ({ isSessionsReady: true }),
@@ -63,7 +63,7 @@ function dispatch(route: string): React.ReactElement {
     sessionMetaMapAtom, automationsAtom: Symbol(),
     useAtomValue: (atom: symbol) => atom === sessionMetaMapAtom ? new Map() : [], useSetAtom: () => () => {},
     knowledgeHomeViewAtom: Symbol(), knowledgeActiveViewIdAtom: Symbol(),
-    navigationEntity, TourPanelScope: ({ children }: { children: React.ReactNode }) => children, sourceSelection: selection, skillSelection: selection, automationSelection: selection,
+    TourPanelScope: ({ children }: { children: React.ReactNode }) => children, sourceSelection: selection, skillSelection: selection, automationSelection: selection,
     useSelectedResourceAvailability: () => ({ status: 'ready', retry() {} }),
   }
   const panel = Function(...Object.keys(bindings), javascript)(...Object.values(bindings))

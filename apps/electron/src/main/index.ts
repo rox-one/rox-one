@@ -282,8 +282,8 @@ if (userDataOverride) {
 }
 
 function registerDeeplinkScheme(scheme: string): void {
-  // Isolated developer verification must preserve the user's OS URL associations.
-  // Packaged applications retain the primary and legacy registrations.
+  // Isolated native verification must not replace the user's OS URL associations.
+  // Packaged applications always retain the primary and legacy registrations.
   if (!app.isPackaged && process.env.ROX_DEV_DISABLE_PROTOCOL_REGISTRATION === '1') return
 
   if (process.defaultApp) {

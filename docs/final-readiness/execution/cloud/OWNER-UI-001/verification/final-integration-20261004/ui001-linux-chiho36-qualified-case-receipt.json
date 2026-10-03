@@ -1,0 +1,784 @@
+{
+  "kind": "qualified-embedded-Node22-supplementary-replay",
+  "observedAt": "2026-10-03T20:44:46.290161+00:00",
+  "sourceRevision": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+  "all36OriginalFilesIncluded": true,
+  "allOriginalTestsSourceHashUnchanged": true,
+  "originalFull36BlockedRetained": true,
+  "historicalCaseSummaryAnsiParsingErrorPreserved": true,
+  "qualified": {
+    "nodeMajor": 22,
+    "report": "work/ui001-linux-chiho36-node22-results/run-76qMOS/report.json",
+    "reportSha256": "df959afe0a293605a3dfe23368816e9e120947df1170bbc996db76ebdea86fbc",
+    "input": {
+      "head": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+      "trackedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "manifestSha256": "46887b4975a790db242afe876080e8322b1451db4927fe83295da47a133d595c",
+      "runnerSha256": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a",
+      "bunVersion": "1.3.14",
+      "nodeVersion": "v24.21.0"
+    },
+    "suiteSummary": {
+      "expected": 36,
+      "completed": 36,
+      "passed": 36,
+      "failed": 0,
+      "blocked": 0
+    },
+    "cases": {
+      "pass": 157,
+      "fail": 0,
+      "skip": 0
+    },
+    "files": [
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/ai.service.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "5ad7c81732b3b99e4e52863342e9fbb8eda87e931ce43673a5017e130d21f44c"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/config.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "ce57220c84b19d96dcdc1ec0b2e76ebed3b8a4658f311a3bc042d55e113118f2"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/environment.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "2fb34cbca78014f4b25a4199ca08912958151ddad89a8ab069a86afd993e4153"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/errors.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 5,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "34ec9dfb636f741eb6c8c021b16a9b0b3d44d0f7564a0d3155291af73d1e75ed"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/telegram-client.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 4,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "da527333be510d9e1880311ffad90f0f08e8ea7dfa31a6671fc59186fd539302"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/cli-args.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 6,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "b0125f22ea5f20726224ba66d6339d7802992a6a0693a4107fc86c1b29c1bb0a"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/archive.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "daa444cf4748d39598cb8b833192106c50d766ff2bd2b7e21b5f1ba171b38f47"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/communityTools.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "cf1ac673f06e7614735ed9f8427d4571d4c07bc7fb1c63ab666ef923a6592cb1"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/contacts.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "821d5a87d934d72b3c3eb49cfbd609f61f2092c336f6c88dd29197d92cd2effc"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/crm.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "d895329591b984157bdaf4af8409046a630cf5d7d890ad61b6940d62f3cd42de"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/db.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "38f90973638c3a8f3d41ad59f747c9cb85a7dd5f666cc58f208fbd2a478c0d12"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/durable-sync.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 7,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "f08bf9b2199655459e62e4ebb992a8d5c7a6e76d188b8c9ba7461122f9b08ca7"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/folders.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 8,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "5cb89ebbedb2b5d8d7099be4ca7b67c482805d9c687daf5040122a1708650b68"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/read-only.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 7,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "bc4328709df867696f601cbf7db4adb51a5d90f34cb7a268777b88685483a530"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/rules.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 8,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "bc9b234bf2fed203697f86b758908446ce2e0251926c70c11afd13831bb03510"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/sync.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "dbd09365d0943067d8087509b83643f831ce00356e34046fc8374227211c45b5"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/tags.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "c67d513da5610ac21ea2787060eb0c7ecd24b18bec6b61e91da9d3e28a0778b4"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/candidate-package.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 7,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "3858e13d4b9e2a418f9003e5870e74bd9421b0fa9056ceb7af0d4acad69b45db"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/chiho-cloud-contracts.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "be207e94835e24a3195e1f6047b454341f5c020c3f6c4712b6ce6216dd4709b2"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/tool-contracts.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 14,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "097046d85b28cc280950296716d95daf6d39e2707107b85e50f59ef90092ffa0"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/core/cli-runner.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "67bd7d40b4f3ad649d99bb4ee91ea5a761d12c212f7bb1761d7f3eb88c096742"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/core/tool-dispatch.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 17,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "0dfed53eda7929d6a807863176eb2435413526128cf5cb81c74dc67557b47aef"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/crm-cleanup.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 4,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "af170e0c0c7aa88eb07d220b8c7714f6f1ca77f76608daa963aad5ca8853e2df"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/inventory.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 5,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "4c13020668031db451cf29ccbc18a9baeef6d033f22615c96c399e3aeb7afd1a"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/migrate.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "084a444c617682c8dde208670cf9cfd1742eaede5599d54104a4b9dc3ffaab63"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/peerIdentity.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "948b7e2c098a1c66facfaee67904d5c93d1706f9830a21852a962dde7ab7c4d3"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/schema.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "67eed69bd56be6297c130bca87a595776925d5b3b8d088b8bec4752761634819"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/output.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "5bb93055358b240f86b868a2af78c6a552592696ee55373df479598d76378da7"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/proxy.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 10,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "014cd04236667bdd413c6f32c0efec3f63d095c040cd954e07368329a8200608"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/agentWritePreviewStore.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "1c04872d47b1cdde392a2dc8be61d1757b66bd9f0425e2cf455ef655d7e40948"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/dialogInventory.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "5e54eb92ededd2f89fb7d5adca7939ed3fb6ed7615b74844177ac2b4bfe59d64"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/managedMediaStore.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "4831a16ebac558b43e861a8c580a1d33bac1752d33d050f0fb9acafc038c24d3"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/opaqueCursor.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "5c88967876dc668e8a68377884e317a2ff54bb294c431dc083a9134bfeac3714"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegram.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 9,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "a7e2fd60aed9d41adc9dbc8be170ff2f9ea63e54b2c1c26d8db50c62731123e4"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegramClientTools.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 4,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "0e64ac83277456539d3db8ea2a24a6619a316758341136b7159a8b34aebbd122"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegramUpdateStore.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "b043c14cb1b3399cfc051c5d0b18089096e81a458c627cff828e02792c9d838c"
+      }
+    ]
+  },
+  "earlierUnsupportedNode24FailureRetained": {
+    "nodeMajor": 24,
+    "report": "work/ui001-linux-chiho36-node24-results/run-GmXMXW/report.json",
+    "reportSha256": "68f7ff315afd8cc1b502eb43f8d7639c77cb18525a6849a2525addc6eb385210",
+    "input": {
+      "head": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+      "trackedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "manifestSha256": "46887b4975a790db242afe876080e8322b1451db4927fe83295da47a133d595c",
+      "runnerSha256": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a",
+      "bunVersion": "1.3.14",
+      "nodeVersion": "v24.21.0"
+    },
+    "suiteSummary": {
+      "expected": 36,
+      "completed": 36,
+      "passed": 34,
+      "failed": 2,
+      "blocked": 0
+    },
+    "cases": {
+      "pass": 154,
+      "fail": 3,
+      "skip": 0
+    },
+    "files": [
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/ai.service.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "23923eadbf7b667da6f5f989d1db5ae960217a6cc35e5da846909f11d00833e6"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/config.test.ts",
+        "status": "failed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 2,
+          "skip": 0
+        },
+        "logSha256": "85f1fb61349a45f20dbb4c833a36262a788ea8cda665b55ce5a390e04714d327"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/environment.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "d3050e1bb4f6584960fab51cc20e312e66e600d041b4ed2dc781e80d27a99269"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/errors.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 5,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "803ee4710db78979695ef4d8b1f0a925d00b510ddff9d76336092ac5194f2d42"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/telegram-client.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 4,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "2fdfc95211f70d4b515b342ef1d5c5484027175cdb409a735edfb887a231a0f0"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/cli-args.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 6,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "4c34cfcaa708be25a6268eaafc96cc2a0052dffbcc6f98aa5fc90add347d78dd"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/archive.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "6135cbbfe6ba571a76684c1b535750f30b25726b603e1653889e009d1b029b88"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/communityTools.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "f88f1e3f48541d61d10ab1aae6a04a622e62d386c8a28080e5758bdb5c638aa3"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/contacts.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "ab42a4c9a5cd0a97cce421f1bf3560ceb355eb13d09b10466011bac44f541784"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/crm.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "4e238b963e30204e01c4dc72eb303c4e72a2cfa45ce4d43cd0bdfd62b616fcea"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/db.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "97061033ff5b4581257e4b85311ffe9fd83ab15ec023ced37897f9e75af5338f"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/durable-sync.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 7,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "974bd486de56404cbbecd8863f8004ca9ddb4bde6b934a35bd7b22a0ef1de153"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/folders.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 8,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "b780615b1d1cb81d024c9ad27f0708095a894792cce4e0a37b746183a2bed47f"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/read-only.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 7,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "5b86b93b9b54375ec8ec5abdbc6f0847bd55f219e052c13614b3cd661cb69540"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/rules.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 8,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "d790ec4f2282470a3e629dccbc5e1c2b9400b5fe84ae9d464a95c42908042e93"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/sync.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "a30da846e3a6def13df7a207c7e9b3944017bac02e8b7099b9369f3d68946635"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/tags.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "27d60ad62db6c6a74f02cf19765512d016e00cbd0b5a71580baaa0d977faf79e"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/candidate-package.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 7,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "4d9e275ebe935f4ae6fffa19fb42e7541e89b826602def0ccfbf02c09dfb941e"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/chiho-cloud-contracts.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "9d5a688610b05f1f835a3b576d1856c14eddfa615cbe07c486d18977d3769d6e"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/tool-contracts.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 14,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "35764f6ed0a07e19bab532e7b51b3aa2648a5196ae048d3bc6923a9998be4a2b"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/core/cli-runner.test.ts",
+        "status": "failed",
+        "caseCounts": {
+          "pass": 0,
+          "fail": 1,
+          "skip": 0
+        },
+        "logSha256": "085ba1e88abe185b57275560c96c43d247fbec850bc099fa423435bf31f8f119"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/core/tool-dispatch.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 17,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "2de84b9c6331ce3774d0320026b36472e4db0c72b5102451eec454b5037e51d9"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/crm-cleanup.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 4,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "b467bce61296615959ce2f5b4df9715db1880a568715f4fcbfcfa87d29179608"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/inventory.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 5,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "2906bd65af4d5b4ca19113f95252e086ab60bde0a7ff745f38cd96937b5a3928"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/migrate.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "30814194cea51971220c88f2d91c059a2a3de4838bcec68b133cc867a5eb4062"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/peerIdentity.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "22a75847d94850394cc8fcbbe91de1eb88834aebdb47eabf555e8c0feceab747"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/schema.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "d0ec4c85de046bc958ce04b7afa6f20be2b784d33abd715adbfa3e52b24564ca"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/output.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "cab26c6cb3b3505aa512f47b4f33ab7ed5507ccf46dad65688f4bf9bbda751f8"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/proxy.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 10,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "e43c4dbb2b9ff33e2d2a7fd98ca03ef05514a7650cf612b6aeafed3d4209e272"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/agentWritePreviewStore.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "9eb450ccc362f89d2fe6e6eff325d619989a4e0c300bbfa92770507d4fde7c79"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/dialogInventory.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "bed86a6de64cfa03e6d295c2898f29757ac863ea4feaad8d20cd7bc86460e33d"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/managedMediaStore.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 2,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "073d7c9f1489d0bd66a87071a6c63076c7c66de7e0cfed19e014d4799dae48ec"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/opaqueCursor.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "085a3ec8b6171684c2248d4fccac9767f35bd49eee8bad531fb4d66f1a0d2001"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegram.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 9,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "70d9fa309b7b2d45fa8b77fbf9d5e8bfb6d6283e7e1d3f48f5b869c1d9530953"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegramClientTools.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 4,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "63e35f3d3d7742dea0a16e12443e251d96c272e869579f4060d9b0c5845c9ad4"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegramUpdateStore.test.ts",
+        "status": "passed",
+        "caseCounts": {
+          "pass": 1,
+          "fail": 0,
+          "skip": 0
+        },
+        "logSha256": "73f10e77db41dc24eca4ea27dfe0427c90b703d6f3f9c98f3e80a536a1b3acf9"
+      }
+    ]
+  },
+  "fullDoDClosed": false
+}

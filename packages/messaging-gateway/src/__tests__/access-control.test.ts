@@ -235,4 +235,19 @@ describe('platform accessMode disabled (RX-TSK-0416)', () => {
     const { buildRejectionReply } = await import('../access-control.ts')
     expect(buildRejectionReply('disabled')).toContain('disabled')
   })
+
+  it('denies owners and allowlisted senders for every binding mode and platform while disabled', () => {
+    for (const platform of ['telegram', 'whatsapp', 'lark', 'discord', 'wechat'] as const) {
+      for (const accessMode of ['public-inbox', 'owner-control', 'disabled'] as const) {
+        for (const senderId of [OWNER_ID, STRANGER_ID]) {
+          const verdict = evaluateBindingAccess({
+            msg: buildMsg({ platform, senderId }),
+            workspaceConfig: buildConfig({ platform, accessMode: 'disabled', owners: [OWNER] }),
+            binding: bindingWith({ accessMode, allowedSenderIds: [STRANGER_ID] }),
+          })
+          expect(verdict).toEqual({ kind: 'reject', reason: 'disabled' })
+        }
+      }
+    }
+  })
 })

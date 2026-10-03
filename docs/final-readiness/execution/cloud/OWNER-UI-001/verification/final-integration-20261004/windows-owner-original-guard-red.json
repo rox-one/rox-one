@@ -1,0 +1,32 @@
+{
+  "head": "56fe8105a21be0bfcb523a01b863ef824f257581",
+  "sourcePath": "packages/server-core/src/authority/native-authority.ts",
+  "sourceSha256": "12aa9e45cc37c4496d99a3cf1734513731c9e613a0e0e2339f38bac918a1b7ab",
+  "actualGuardSha256": "6eafd90f5118d398a57e4ff6102263cc253049a48c9b42f4411c949ae3c9cf5c",
+  "guard": "function requireOsOwner(path: string): void {\n  const uid = typeof process.getuid === 'function' ? process.getuid() : undefined\n  if (uid === undefined || statSync(path).uid !== uid) throw new Error('maintenance requires the state directory OS owner')\n}",
+  "cases": [
+    {
+      "name": "win32-missing-getuid",
+      "actualCallback": true,
+      "stat": "actual owned candidate directory",
+      "expectedFailure": true,
+      "error": "maintenance requires the state directory OS owner"
+    },
+    {
+      "name": "real-posix-owner",
+      "actualCallback": true,
+      "stat": "actual owned candidate directory",
+      "expectedFailure": false,
+      "error": null
+    },
+    {
+      "name": "foreign-uid-real-posix-stat",
+      "actualCallback": true,
+      "stat": "actual owned candidate directory",
+      "expectedFailure": true,
+      "error": "maintenance requires the state directory OS owner"
+    }
+  ],
+  "win32NativeExecution": false,
+  "windowDeadlineUnchanged": 30000
+}

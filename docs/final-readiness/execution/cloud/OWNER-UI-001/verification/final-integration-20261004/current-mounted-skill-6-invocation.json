@@ -1,0 +1,78 @@
+{
+  "startedAt": "2026-10-03T22:39:29.372Z",
+  "head": "ed456bc542205ba5dd78aee4fde3cdbae1a4b7a9",
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+  "nodeVersion": "v24.21.0",
+  "sourceManifest": {
+    "apps/electron/src/renderer/pages/__tests__/skill-info-owner.browser.node.ts": "971ff81bd5b17c3dea5c195d187dc3bc18682982dfca69d242139982218a5ff5",
+    "apps/electron/src/renderer/pages/__tests__/skill-info-owner.fixture.mjs": "178a6baa0355f0a1c3c5121e15e25a47dfe19311b1119830e202c959603812ae",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "674f7bf7f63e24fac53ae53e9670a4e328c6ec83150cefa572202e81cbf6c646",
+    "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+    "apps/electron/src/shared/routes.ts": "bc93a4a5aadb384698c48073110164e0cb21746b8ade6ff0c6aaf07f4dd50dab"
+  },
+  "browser": {
+    "executable": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/.gstack-test-runtime/browsers/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+    "sha256": "7687bff7cb2db075f250e6d5848bbc8838cac3802ac3952a899c574f8eccab45"
+  },
+  "playwrightVersion": "1.62.1",
+  "executionLane": "Canonical Node test with only qualified absolute Playwright import",
+  "adapter": {
+    "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-skill-node-driver-2026-10-03T22-39-29-349Z/skill-driver.ts",
+    "sha256": "70d0a87355093a4b56553a9257863898723baaf900a8821d26df9b3b471886fd",
+    "canonicalSha256": "971ff81bd5b17c3dea5c195d187dc3bc18682982dfca69d242139982218a5ff5",
+    "caseCount": 6,
+    "expectCount": 16,
+    "bodiesAssertionsDeadlinesPreserved": true,
+    "casesSha256": "2acdd5a3deb489c8c494a2d633275161859a4946a2bf34440f97293217fc48f6",
+    "assertionsSha256": "0c14bdb8e6a81df494292f05259e7f131a3728ecffe1ec62168120d92a1c34db"
+  },
+  "providerCredentialsForwarded": false,
+  "foreground": false,
+  "headless": true,
+  "bundle": {
+    "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-skill-node-driver-2026-10-03T22-39-29-349Z/fixture.js",
+    "sha256": "3e6f74c07c54e7160061793211bab35c534eb36f92dd614b91aa2dcea34b3cf3",
+    "builderSha256": "178a6baa0355f0a1c3c5121e15e25a47dfe19311b1119830e202c959603812ae",
+    "componentSha256": "674f7bf7f63e24fac53ae53e9670a4e328c6ec83150cefa572202e81cbf6c646"
+  },
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node24/node_modules/.bin/node",
+    "--test",
+    "--test-reporter=tap",
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-skill-node-driver-2026-10-03T22-39-29-349Z/skill-driver.ts"
+  ],
+  "environmentKeys": [
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "LANG",
+    "PATH",
+    "TMPDIR",
+    "XDG_CONFIG_HOME",
+    "ROX_CONFIG_DIR",
+    "CRAFT_CONFIG_DIR",
+    "ROX_SKILL_INFO_BROWSER_TEST",
+    "ROX_SKILL_INFO_FIXTURE_BUNDLE",
+    "ROX_UI001_CHROMIUM_EXECUTABLE"
+  ],
+  "pid": 30437,
+  "exitCode": 0,
+  "counts": {
+    "tests": 6,
+    "pass": 6,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0
+  },
+  "logSha256": "1da6c5610d0697485d65fce13103de36ec08bc0869889879eb48e4b15ac83206",
+  "finishedAt": "2026-10-03T22:39:31.984Z",
+  "timedOut": false,
+  "finalSourceManifest": {
+    "apps/electron/src/renderer/pages/__tests__/skill-info-owner.browser.node.ts": "971ff81bd5b17c3dea5c195d187dc3bc18682982dfca69d242139982218a5ff5",
+    "apps/electron/src/renderer/pages/__tests__/skill-info-owner.fixture.mjs": "178a6baa0355f0a1c3c5121e15e25a47dfe19311b1119830e202c959603812ae",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "674f7bf7f63e24fac53ae53e9670a4e328c6ec83150cefa572202e81cbf6c646",
+    "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+    "apps/electron/src/shared/routes.ts": "bc93a4a5aadb384698c48073110164e0cb21746b8ade6ff0c6aaf07f4dd50dab"
+  },
+  "sourceUnchanged": true
+}

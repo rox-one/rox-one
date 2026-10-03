@@ -6,6 +6,7 @@ on:
       - '.github/workflows/product-tour-native.yml'
       - 'apps/electron/src/renderer/**'
       - 'packages/ui/src/**'
+      - 'packages/server-core/src/authority/**'
       - 'apps/electron/src/main/**'
       - 'apps/electron/src/preload/**'
       - 'apps/electron/vite.config.ts'
@@ -21,6 +22,7 @@ on:
       - '.github/workflows/product-tour-native.yml'
       - 'apps/electron/src/renderer/**'
       - 'packages/ui/src/**'
+      - 'packages/server-core/src/authority/**'
       - 'apps/electron/src/main/**'
       - 'apps/electron/src/preload/**'
       - 'apps/electron/vite.config.ts'
@@ -118,6 +120,8 @@ jobs:
         run: bun install --frozen-lockfile
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify actual OS-owner startup and reopen boundaries
+        run: bun test --timeout 30000 ./packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts
       - name: Build the real desktop main, preload, renderer and resources
         run: bun run electron:build
       - name: Exercise fresh native setup and absence of automatic tour

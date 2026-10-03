@@ -1,0 +1,984 @@
+{
+  "schema": "rox-ui001-platform-integration-v1",
+  "createdAt": "2026-10-03T22:07:55.879857+00:00",
+  "lineage": {
+    "task_id": "platform_scout",
+    "attempt_id": "69555fc7272745fd5fbf08ec5f156540",
+    "packet_hash": "5365fea19f39c0ce62ddd1a902ecc514b0c5e25e9692d60507107e72df42770c"
+  },
+  "legacyFrozenInputRevision": "635fc495d02c3fe1380740444cb90cf4fbdb58d9",
+  "currentIntegrationInput": "37ecdb59b3be817fe02bb8c2514a0aee859d15cd",
+  "incomingMainRevision": "2b14d1e64e5f1622d213059733bdef6b2462acfc",
+  "repository": {
+    "root": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+    "headAtReceipt": "37ecdb59b3be817fe02bb8c2514a0aee859d15cd",
+    "mergeHeadAtReceipt": "2b14d1e64e5f1622d213059733bdef6b2462acfc",
+    "proofBinding": "Exact source SHA256/Git blob frame of ordinary merged candidate; GitHub delivery remains parent-owned"
+  },
+  "onlyChildTrackedWrite": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+  "ownedWriteSha256": "1cf8749d7eabf573fdebd3cb2a8ec27b6e59e5a51f6756ef4206595aa3860860",
+  "writerClosed": true,
+  "staged": true,
+  "conflictDecision": {
+    "setup": "Union of actual navigate collaborator bindings, retaining real sessionMetaMapAtom/Jotai composition, suppressPush=true and incoming pendingUrlRestoreRef; preserveRouteQuery bound once",
+    "cases": "Both branches original three test call expressions/four runtime cases, every body/assertion and original deadline retained; no product source writes"
+  },
+  "readOnlyProductAudit": [
+    {
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "finding": "New accepted navigation claims history before atom writes only after readiness/initial-restoration gate and with pendingUrlRestoreRef null. Existing navigation-owner, action epoch, workspace request and history revision/disposal fences retained. Actual incoming held-RAF Back/Forward mounted scenario passes."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "finding": "Unavailable service guard and navState.navigator dependency retained; workspace resize cancellation/layout restoration retained. Collection loads replace former default-persisting reset, use real workspace/revision leases, and preserve durable edits/live replacement/ABA. Pocket profile uses central account helper and cancelled polling cleanup; controlled tests call no provider."
+    }
+  ],
+  "blockingProductGapFound": false,
+  "counts": {
+    "unitCallback": {
+      "pass": 74,
+      "fail": 0,
+      "skip": 0,
+      "breakdown": {
+        "serviceWorkspaceRecovery": 4,
+        "immediateHistory": 6,
+        "historySwitchLease": 13,
+        "navigationRecovery": 37,
+        "collectionPersistGuard": 13,
+        "profileStripAccount": 1
+      }
+    },
+    "actualMounted": {
+      "pass": 58,
+      "fail": 0,
+      "skip": 0,
+      "cancelled": 0,
+      "navigation": 38,
+      "main": 14,
+      "skill": 6
+    }
+  },
+  "preservation": {
+    "serviceBodiesAssertionsDeadlinesUnchanged": true,
+    "navigationOurs": 37,
+    "navigationIncoming": 38,
+    "navigationActualUnion": 38,
+    "mainOurs": 14,
+    "mainIncoming": 11,
+    "mainActualUnion": 14,
+    "nodeTransportASTOriginalAndAdapterIdentical": true,
+    "mountedExpectExpressions": {
+      "navigation": 111,
+      "main": 32,
+      "skill": 16
+    },
+    "deadlineChanges": false
+  },
+  "currentEvidence": [
+    {
+      "label": "unit-service-history",
+      "invocationPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/gstack-test-2026-10-03T22-03-06-738Z/invocation.json",
+      "invocationSha256": "847231c439bd7330301a3333ad21e6242b62ac6e46cbaf62e36f3fdf7edb9f1d",
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/gstack-test-2026-10-03T22-03-06-738Z/output.log",
+      "logSha256": "898eba3c5ed3331e7296336ded99cbbb670f7e0621b390c3b055c2464c6758f3",
+      "actual": {
+        "startedAt": "2026-10-03T22:03:06.743Z",
+        "command": [
+          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+          "test",
+          "./apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+          "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.immediate-history.test.ts",
+          "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.history-switch-lease.test.ts",
+          "--timeout",
+          "30000"
+        ],
+        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+        "head": "37ecdb59b3be817fe02bb8c2514a0aee859d15cd",
+        "bunVersion": "1.3.14",
+        "nodeVersion": "v24.21.0",
+        "sourceHashes": {
+          "./apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts": "1cf8749d7eabf573fdebd3cb2a8ec27b6e59e5a51f6756ef4206595aa3860860",
+          "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.immediate-history.test.ts": "a6536dfd9d538dd0cbb9aaa7ff9410038d351850f68ee0cef72b78ebffb7df3d",
+          "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.history-switch-lease.test.ts": "63afe825002251bcbf513a7ebfd495f87cf9422a38a2fb55df5df60e9ee025c8"
+        },
+        "environmentKeys": [
+          "HOME",
+          "USER",
+          "LOGNAME",
+          "LANG",
+          "PATH",
+          "TMPDIR",
+          "XDG_CONFIG_HOME",
+          "ROX_CONFIG_DIR",
+          "CRAFT_CONFIG_DIR",
+          "GSTACK_HOME",
+          "GSTACK_TEST_LEGACY_ROOT",
+          "PLAYWRIGHT_BROWSERS_PATH"
+        ],
+        "providerCredentialsForwarded": false,
+        "exitCode": 0,
+        "finishedAt": "2026-10-03T22:03:07.783Z",
+        "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/gstack-test-2026-10-03T22-03-06-738Z/output.log",
+        "logSha256": "898eba3c5ed3331e7296336ded99cbbb670f7e0621b390c3b055c2464c6758f3",
+        "counts": {
+          "pass": 23,
+          "fail": 0,
+          "skip": 0
+        }
+      }
+    },
+    {
+      "label": "unit-navigation-collection-account",
+      "invocationPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/gstack-test-2026-10-03T22-05-13-596Z/invocation.json",
+      "invocationSha256": "d64d43fa3a853db1e0da8abb2fdcc8179d243907210192dc35c3ba1aef2eabb1",
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/gstack-test-2026-10-03T22-05-13-596Z/output.log",
+      "logSha256": "ae019e54ab7907a3815c8d63aecef3a3b8f98ef3074397cb04fdde4f6d6b255c",
+      "actual": {
+        "startedAt": "2026-10-03T22:05:13.604Z",
+        "command": [
+          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+          "test",
+          "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts",
+          "./apps/electron/src/renderer/atoms/__tests__/collection-persist-guard.test.ts",
+          "./apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-account.test.ts",
+          "--timeout",
+          "30000"
+        ],
+        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+        "head": "37ecdb59b3be817fe02bb8c2514a0aee859d15cd",
+        "bunVersion": "1.3.14",
+        "nodeVersion": "v24.21.0",
+        "sourceHashes": {
+          "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts": "cf7827124c9ae1827aa9c0ce7e283ea9069f518133b3a57f749fed2e263d241c",
+          "./apps/electron/src/renderer/atoms/__tests__/collection-persist-guard.test.ts": "5c3f99105d120dfc996e0ec5eb71309ab5601ac8efbd568a10d27f6ce6e2622c",
+          "./apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-account.test.ts": "9aef656f723028a57640e6b022b82ba920b380443e9290392700063d9aba99ba"
+        },
+        "environmentKeys": [
+          "HOME",
+          "USER",
+          "LOGNAME",
+          "LANG",
+          "PATH",
+          "TMPDIR",
+          "XDG_CONFIG_HOME",
+          "ROX_CONFIG_DIR",
+          "CRAFT_CONFIG_DIR",
+          "GSTACK_HOME",
+          "GSTACK_TEST_LEGACY_ROOT",
+          "PLAYWRIGHT_BROWSERS_PATH"
+        ],
+        "providerCredentialsForwarded": false,
+        "exitCode": 0,
+        "finishedAt": "2026-10-03T22:05:15.778Z",
+        "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/gstack-test-2026-10-03T22-05-13-596Z/output.log",
+        "logSha256": "ae019e54ab7907a3815c8d63aecef3a3b8f98ef3074397cb04fdde4f6d6b255c",
+        "counts": {
+          "pass": 51,
+          "fail": 0,
+          "skip": 0
+        }
+      }
+    },
+    {
+      "label": "mounted-navigation",
+      "invocationPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-nav-node-driver-2026-10-03T22-04-09-528Z/invocation.json",
+      "invocationSha256": "2e295bc9fd05de7a41fad586785253e1ca2235d1982bc510cac22157d02bfa3c",
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-nav-node-driver-2026-10-03T22-04-09-528Z/output.log",
+      "logSha256": "835a902028a7fac76f500beabe3913f6e6b94fc938b38d58a2431d8ff438aa95",
+      "actual": {
+        "startedAt": "2026-10-03T22:04:09.530Z",
+        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+        "head": "37ecdb59b3be817fe02bb8c2514a0aee859d15cd",
+        "bunVersion": "1.3.14",
+        "nodeVersion": "v24.21.0",
+        "sourceManifest": {
+          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "640d184c5f099028b8d3170bf1329a9393573afacf5eb66cbed6f9a7b7b4424a",
+          "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "e1d6cf6b1f3c251a9f57a3ed8540d851e440856c658a291ac1a7d14b07f84c13",
+          "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
+          "apps/electron/src/renderer/contexts/NavigationContext.tsx": "399782b7f4a3fcec38d3b39d8293dc4a3cbdda1343ea997d306d55d378162910",
+          "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011",
+          "apps/electron/src/renderer/lib/nav-helpers.ts": "887a8fbc1ba56a3c1e6d5fccd4bdd1c0ef174ed3a32cd92f65301dba6699cd49",
+          "apps/electron/src/shared/route-parser.ts": "c6d324f368b7924ba1980e6b20036672374782807f5944d88e16a9c0de22a134",
+          "apps/electron/src/shared/types.ts": "3acd5c604257bc7f5d7a8a365eb175682b9016de6b48ec82aaf7ee3854c5cd97",
+          "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "f3eb969dc4f8e7b0ecc03486fc89e2c8e45896e4da4334717a34ba6b6d495157"
+        },
+        "browser": {
+          "executable": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/.gstack-test-runtime/browsers/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+          "sha256": "7687bff7cb2db075f250e6d5848bbc8838cac3802ac3952a899c574f8eccab45",
+          "pid": 80967,
+          "args": [
+            "--headless",
+            "--remote-debugging-address=127.0.0.1",
+            "--remote-debugging-port=0",
+            "--user-data-dir=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-nav-node-driver-2026-10-03T22-04-09-528Z/profile",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--disable-gpu"
+          ]
+        },
+        "playwrightVersion": "1.62.1",
+        "executionLane": "Node24 transport adapter: exact final-2b14 merged scenarios/asserts, not original Bun runner",
+        "mergeHead": "2b14d1e64e5f1622d213059733bdef6b2462acfc",
+        "upstreamReference": "2b14d1e64e5f1622d213059733bdef6b2462acfc",
+        "providerCredentialsForwarded": false,
+        "headless": true,
+        "foreground": false,
+        "fixturePath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-nav-node-driver-2026-10-03T22-04-09-528Z/fixture.js",
+        "fixtureSha256": "9f7de976b52fc40930d5e62361c82615591dfb244ceeedbd073b02c2e9e66b03",
+        "fixtureContentsSha256": "524a1c9ad6e76201f245649706ed66cca318a67bdbc9fd3f732d25a6f2d089d5",
+        "fixtureInputManifest": {
+          "node_modules/react/cjs/react.development.js": "1ff3a1d9861a87984329584fa1172aea920855d79eb57dae0d1cebe54093d7e3",
+          "node_modules/react/index.js": "a216c390bf956cbb906c66d29fdb2e2ad6999464a5ca83e476533a6f25ad0ef3",
+          "node_modules/scheduler/cjs/scheduler.development.js": "22e3d959dc9f9cd59fca4e1fc95fecb9fde4d2cb8ecadbd279137ada995983ac",
+          "node_modules/scheduler/index.js": "b413b3aac7bd209fd82cbe2241fda1467558daaef830744f45ed8396fac9185e",
+          "node_modules/react-dom/cjs/react-dom.development.js": "1459b808bc6991de5a1ec3a86d8beee32dbb6c14282cf13f84e00dfebfbdc025",
+          "node_modules/react-dom/index.js": "f26fcb81b5d1dc32c6edea34645c75b60d259916293d3208c8be48ac33e882e4",
+          "node_modules/react-dom/client.js": "a510041dfc40d69b3aa574e5e111864186c711fbeb3db41aa2f27196b27c429f",
+          "node_modules/jotai/esm/vanilla/internals.mjs": "e30ec00bef377d82aad6f1cd0a1bc5d9135a962c85782d16fe7ff665f0fd8465",
+          "node_modules/jotai/esm/vanilla.mjs": "d740f1cc15796e3f6ae5cd0923bbfb3e50a8dea54440b26f5433e45b47718eb1",
+          "node_modules/jotai/esm/react.mjs": "219263de3c44a21fa88f268f45ec8e7ccc9ce3a9014a45ff4f4d9d23fc177d07",
+          "node_modules/jotai/esm/index.mjs": "867ecd736f6f31716faadf9a3574a6694f987128388edfa4e687eb5e89a67065",
+          "node_modules/i18next/dist/esm/i18next.js": "5a50c7091e2abc1421b70a95fb43da86d174d75760176f509d6592d0a73f085a",
+          "node_modules/void-elements/index.js": "6cdd369d090040e4b6c6fa2ac9379cfc1e80b4ede300f0749e8202568d6fc584",
+          "node_modules/html-parse-stringify/dist/html-parse-stringify.module.js": "338ef156c1264fd5ba13314775df208299b12e0f30ab4809b4e2ed679891bdc7",
+          "node_modules/react-i18next/dist/es/utils.js": "f65a4fd627887673f144ff8151f832324fba29f8d2aac6927374245dc987c818",
+          "node_modules/react-i18next/dist/es/unescape.js": "bfa5922fda4fa4757e27dd90b65479199b0c141e085c9ea2be280897e05e3bb3",
+          "node_modules/react-i18next/dist/es/defaults.js": "f96aadbe215bfa24bec3ed6b1bdc1f88037bf1bcd1b5b2d52c5c9f2281b058d3",
+          "node_modules/react-i18next/dist/es/i18nInstance.js": "6dd7ca20fcad9d87eb2c34775933b3047872e5739fab3f58372c80ee074c1abe",
+          "node_modules/react-i18next/dist/es/TransWithoutContext.js": "c6b1e49410f8825cf5e13c7a463683880a61c77aa4b1b76e37070317ea8ed607",
+          "node_modules/react-i18next/dist/es/initReactI18next.js": "4f0289eec280781d7bd04c837aee19c7bc06e92bd1025e4c2b1f4295b76c4197",
+          "node_modules/react-i18next/dist/es/context.js": "ed36ca43e04319bf9d0955e4d18d01d5499c9ad958ad9d0e069bc597b2f4a6f4",
+          "node_modules/react-i18next/dist/es/Trans.js": "05dfa4c236b49ab16d625c75a5739f0862af8a64ccfcf013da82e1d7f4cfabb0",
+          "node_modules/react-i18next/dist/es/IcuTransUtils/TranslationParserError.js": "0c0e335768aa5566b09515502ba3c041af5d2f9644b6c027fac883173430aa56",
+          "node_modules/react-i18next/dist/es/IcuTransUtils/htmlEntityDecoder.js": "6f92f1f02f085aa6703fba93221814f01d4e1444cbf50600e89841d0fa50d357",
+          "node_modules/react-i18next/dist/es/IcuTransUtils/tokenizer.js": "c42f95780825b5213aa1c27dc48a73fb747e2a1e001acd7f6ac2250f02c76045",
+          "node_modules/react-i18next/dist/es/IcuTransUtils/renderTranslation.js": "a7bce1e90c0d12770e73b79273ab4408b1b5afb586c1670760135a0f94ad95c3",
+          "node_modules/react-i18next/dist/es/IcuTransUtils/index.js": "9fad4fb2aea511d5d50af275392aeb0f803b5fef29becbfdf9566bcc0bf63a35",
+          "node_modules/react-i18next/dist/es/IcuTransWithoutContext.js": "10696c5bdf0b9b94b85a97ee1d01e57384318b2523ebe69de82a4caf2fd896b5",
+          "node_modules/react-i18next/dist/es/IcuTrans.js": "16a29cd5f1975ee42dc7c6c2fea6afe47175a2f8d30cbfa88e7cc41aa07f95cc",
+          "node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.development.js": "6dfd5d60543b0a24a524d1366758ff6303fc67604a69eb1536d0b70c47af0e8d",
+          "node_modules/use-sync-external-store/shim/index.js": "de571b60495a636e12a24000b78531994a819aba03917e679803c2b482c66a89",
+          "node_modules/react-i18next/dist/es/useTranslation.js": "f75f757f1ac9d665ca8e0c1c08f9593820b42fcabc8e8ff7951a8dcb44d572b5",
+          "node_modules/react-i18next/dist/es/withTranslation.js": "ac30a3924d6d50e4d44fdfa43bc6dea89bfb2b3535ca914ba855da5ed2e85b3b",
+          "node_modules/react-i18next/dist/es/Translation.js": "298e35f719720b590aa8bf874f1fe92a3d643177601d5e5cb5a1f0b82f79d8d2",
+          "node_modules/react-i18next/dist/es/I18nextProvider.js": "ed13f529bd903e7bea291752bc2f9193eea579978b5b3d7e5149ffc260f31f2e",
+          "node_modules/react-i18next/dist/es/useSSR.js": "862d1c752d97ea6ae0d43441387edf88c4e215ebd388753f027be9bb22dd44c8",
+          "node_modules/react-i18next/dist/es/withSSR.js": "afeafb7b463b06adbc85e6f56a26036639b6c2dc4242b30683879f176b4e8503",
+          "node_modules/react-i18next/dist/es/index.js": "ef60b8fb31d0e27198de71fce359881bb93ae8995f8307aebcd575c092dcf816",
+          "node_modules/sonner/dist/index.mjs": "52ab3b764c74a6e857e0be733326316046b29797ca67d0382e669e9a42c653f3",
+          "apps/electron/src/renderer/hooks/useMultiSelect.ts": "edc79e070f97c8190be96b9fdd32d141bcb9a3fec9211bad5abccf69700e476b",
+          "apps/electron/src/renderer/hooks/useEntitySelection.ts": "380d889da8173789ad224e5d525ed04570da0d0f58fe8e4c037f9c5cc091a379",
+          "apps/electron/src/renderer/hooks/useSession.ts": "218999dfba55a384c67c5b937032f96dde1bf68a3dd47a2e6c950e20f72746b7",
+          "packages/shared/src/labels/types.ts": "940130e46117ef669c446f74c896d7512e5460c824051447743d67a1f03f0630",
+          "packages/shared/src/labels/tree.ts": "56604ced5cf754d7c048f93cf8097ec461192c5a00f1448e792cdcfb8398be20",
+          "packages/shared/src/labels/values.ts": "ab8740000ee3b2da5b4b5409bde976e0b06a50cba1779e9768008ce7e12e5ed0",
+          "packages/shared/src/labels/resolve.ts": "9bc8a42a5c41f8acc1caaeb6924264e2166450e0c7ddcba8812a85996a1f1e90",
+          "packages/shared/src/labels/filter.ts": "e4206816c9e78f46d42c56b924655fa5c9db209d89f6f265f46556de1278ba7c",
+          "packages/shared/src/labels/index.ts": "d076128a077517b9bfd3ec960ea4787cc37fcf17200d49914ccd09ad0e193786",
+          "apps/electron/src/renderer/hooks/useLabels.ts": "8d40e7cd3718b6278ae2cb8644c3064fc752deec8c61cae7e0c6589a25ff2430",
+          "apps/electron/src/shared/settings-registry.ts": "abf502ecc15d15b826907254868e0f9c03a88dd1fe74f7576367261b15fd1a8c",
+          "apps/electron/src/shared/extra-screens.ts": "484851b890a36cc4decfd7f283d02d628058e1a6d45f323f20be93f981324551",
+          "apps/electron/src/shared/route-parser.ts": "c6d324f368b7924ba1980e6b20036672374782807f5944d88e16a9c0de22a134",
+          "apps/electron/src/shared/routes.ts": "bc93a4a5aadb384698c48073110164e0cb21746b8ade6ff0c6aaf07f4dd50dab",
+          "node_modules/zod/v4/core/core.js": "3a988a40d75ea5729a6ffcb2c94619e244ba0341ff1ed981d5a1725229952442",
+          "node_modules/zod/v4/core/util.js": "e41f9e774b96a9fe2b04c08f5aad32e6db2f6aa090671d2a375e7062b4f178aa",
+          "node_modules/zod/v4/core/errors.js": "c920e5549c1abcb8fc95824678beabb43023407d6a92020a3ac4a223af0a7a4b",
+          "node_modules/zod/v4/core/parse.js": "a58b9c7be78e29d71f969f01807fe5f9be1f68d222a0f60c25e32e24f3b6639c",
+          "node_modules/zod/v4/core/regexes.js": "a89562e9bea575edbbf5da84b7762fed64e20c4ff6c105dca318dfc60915706a",
+          "node_modules/zod/v4/core/checks.js": "5a33a20dcad372b4d18ead8d1e58b1950454f136a2216e62f247e0e5601ac838",
+          "node_modules/zod/v4/core/doc.js": "e084bbcc536746a8942fd33b08afe4db345554b3a0383114f1dca95261c958d9",
+          "node_modules/zod/v4/core/versions.js": "4a34ab95373e76c1fdf3b6d989e5d8af4a42a813a27a88ff66962da04350791c",
+          "node_modules/zod/v4/core/schemas.js": "6507a3e2c16a5fa2dbbb25529e367f32b26e70a51a91995df8117ead8f07191c",
+          "node_modules/zod/v4/locales/ar.js": "220ca3ca8cf67e4ccc05d789eeed2692d970269fe0cd82f05db8fd899b661b9e",
+          "node_modules/zod/v4/locales/az.js": "4725ffef0b2f2df947194f9698c792b69f52a8c3a5a1e1bdfabbf62259a1dd46",
+          "node_modules/zod/v4/locales/be.js": "da4bda7fbc940dd9f50efdd914caa9397243be779a505b82bd4be5395d3b795e",
+          "node_modules/zod/v4/locales/bg.js": "48511ad2f86043f0eea6e7673d5e2b848a3295a26c9c4650e96b3884d640196d",
+          "node_modules/zod/v4/locales/ca.js": "796f9ba7dcd53648171aa0132c50271ef358936765cec0a44a642c41d05b3e8c",
+          "node_modules/zod/v4/locales/cs.js": "670a75fe1db1104db090c95aabb01e4eb6decd451fe77fd830c2e4dafc79b49a",
+          "node_modules/zod/v4/locales/da.js": "cdaad7a1fa370abda1943fe9c2caba961e7896b9808d51275daf33f964af49cc",
+          "node_modules/zod/v4/locales/de.js": "521a4ed29fcaf3f781163875dc282cfb5262047773aa2b70a852996b1d8a51b9",
+          "node_modules/zod/v4/locales/en.js": "3e2c03ebed517345ad73a247a8134577e5986622c22e7b6c760b8b9af5827442",
+          "node_modules/zod/v4/locales/eo.js": "ebe08048aa3ee9871ce9fe1271e254cb672b1968ec40ac253066d08d176e8a65",
+          "node_modules/zod/v4/locales/es.js": "4edd9302e9724c408b024220e99092fbd2f90100ac3c6407a94543b79843610c",
+          "node_modules/zod/v4/locales/fa.js": "2dc1bee1e984e8a15191fb3c69aaecaa26c922e12a0d4486ac005a0372b78565",
+          "node_modules/zod/v4/locales/fi.js": "3911184979f01d2ae580ce611710ee40597eff97a410d0fa823ab6ea27cee88c",
+          "node_modules/zod/v4/locales/fr.js": "af85482fed4a3e4c97565ef849b4a14193b979b88b385844633d6af9b2e5ae30",
+          "node_modules/zod/v4/locales/fr-CA.js": "f8716c2baaccdfd1d958743bbc5250c9bdef5152d0801470e9b9a380d618f4ab",
+          "node_modules/zod/v4/locales/he.js": "290512e43d2907700211da09dc3959fd98d120bfb89f8836e6e3f83a472e26fe",
+          "node_modules/zod/v4/locales/hu.js": "913ee94a253db79b31463ae23a337060b6fe28be73dfc7657d8a83a4942bd8a8",
+          "node_modules/zod/v4/locales/hy.js": "0d3bbb96c0f8bc74468a2dfc7d066e838bb56fab64fd5ec03ce9c4d89eccbe99",
+          "node_modules/zod/v4/locales/id.js": "cd2c19b5c30dade3ed91ffcff3deb0b068713be24f02248e7e46b87b2b9553ee",
+          "node_modules/zod/v4/locales/is.js": "ead5b14eac892229f915fe38ec94ab3b1e676f8aa2df2a8450848ba9ca9a1612",
+          "node_modules/zod/v4/locales/it.js": "1409d5c02a8d5922f21577f1d0f892aa141f56f3a3b49a13fe4802395ddaa0ac",
+          "node_modules/zod/v4/locales/ja.js": "43ee10378cac22b0b8aee912a66c3f36a834d5b4c76e9748f88a784044f248fd",
+          "node_modules/zod/v4/locales/ka.js": "b25387ebafa764efb3b1142eda956a24ed3bba8ea523d97a8ace4dc2973f0e38",
+          "node_modules/zod/v4/locales/km.js": "dbdabda94dd93d4a1827e6c809505c79fa6aa7abefec91dc50fa0871382c99cc",
+          "node_modules/zod/v4/locales/kh.js": "78c3d1991041bb8c8fc0f7c5d745aae422d4c2e4e8f30bae44f3fef4765900a8",
+          "node_modules/zod/v4/locales/ko.js": "d2efe22ac069d9b32b0109fa07713ac0695ac1c1357afc4e4277056466f2e196",
+          "node_modules/zod/v4/locales/lt.js": "dad886e52c56a1329d22e072f8b08dc8730f69c3dc5e5acf8267cac18df1ab28",
+          "node_modules/zod/v4/locales/mk.js": "9eb4af0392fc5b9c438cdc6ceea446acc541b59e221dba918f7b80800d9da3d1",
+          "node_modules/zod/v4/locales/ms.js": "c550a9185d997e8fcd17311951aa1e29793a50b8e825e18310efd5a46c641795",
+          "node_modules/zod/v4/locales/nl.js": "acba414579c5bbd7f83dc6661fa1a12d65f1822f9b0f5035549ac60f46d93763",
+          "node_modules/zod/v4/locales/no.js": "1854483c7cf158b8f97f0faf6fd799eb1f762009018b5fde893ca33f2fb0b313",
+          "node_modules/zod/v4/locales/ota.js": "34ae496104bc17fea7d30c3d45c94cfe3d1d569b5d39a6ca51de6c177690c556",
+          "node_modules/zod/v4/locales/ps.js": "f977b5141fa8fb6a8459372e0b2895d74b381c9f2ff4899141f7ee3e639a4513",
+          "node_modules/zod/v4/locales/pl.js": "18eab58f395e30b906e8e3fddc5f212eb19f2c4362410889a5c5e0141ebe2144",
+          "node_modules/zod/v4/locales/pt.js": "df172afc585544dee7c063c484f5a07b5ed103e2c1072a782c763ad8ceb08e17",
+          "node_modules/zod/v4/locales/ru.js": "c397a473e94d7d189a9c09c7890fe379c4f6f46d9556d52a040a90ffa56f7b93",
+          "node_modules/zod/v4/locales/sl.js": "ee2ff3a19b62cd2f89b54b165088773b937de15df7253df220bef07d9adf2d80",
+          "node_modules/zod/v4/locales/sv.js": "97d6718fb643e05d6fe30fa4f9f09b8d9a3eda4a3a350b57dfb2944943d19502",
+          "node_modules/zod/v4/locales/ta.js": "04bbde9766251f9047e786fdd77632f2ecd53aec2eb060eb2fc85bf576ad729d",
+          "node_modules/zod/v4/locales/th.js": "aea70c9ac2b399fe4749e19ba3aa99c3efb4dfb50eadfb62b0b2a6e005748f3d",
+          "node_modules/zod/v4/locales/tr.js": "4449f41d22c6f15ede5066f79d840a52ec45a6b694c859e16f9121062b6fad2f",
+          "node_modules/zod/v4/locales/uk.js": "77136a2a60eef62f7cc803a0f9971aebbc641403af77c1b41fd5ce59abfa5de3",
+          "node_modules/zod/v4/locales/ua.js": "9391169ffbc72f777a83230b6ffcc3f4cf46ab5945ec540de9ef4609dca1f4cc",
+          "node_modules/zod/v4/locales/ur.js": "858f4f38d651073e7a3fbec7ed356692578b3ad1fae1b453cb3d85312a4f39d2",
+          "node_modules/zod/v4/locales/uz.js": "287481257de95c9d99b91e070773ade607fb5c68cf5fb74df311376950d507b6",
+          "node_modules/zod/v4/locales/vi.js": "2c61bd3f4a733f3cbb1ad85e75a053cb15a8ebeb83ab56dc21f2948b1138e12f",
+          "node_modules/zod/v4/locales/zh-CN.js": "99a4b16af598834a0b11607fcdebd1c6de026386ff1d6a5a306b364c154c5899",
+          "node_modules/zod/v4/locales/zh-TW.js": "37dcae620e1553e9174a4b9434bbcc4e465150a627e80c9c17fd01de8baaf59a",
+          "node_modules/zod/v4/locales/yo.js": "98b9cbf31bf00c8b2c00de62725a9dd7cb718ac72d6e8fd4e0a1a7c49723e0f4",
+          "node_modules/zod/v4/locales/index.js": "8b23cfb530a5af9375303c0ffbec9ee260fff97ac59a1f780171f288b6e2f2da",
+          "node_modules/zod/v4/core/registries.js": "620ea1a715ccc4e6e605a271343bf47942dccae90885dc71f137b1f08a972e50",
+          "node_modules/zod/v4/core/api.js": "b0249f67024345bab7b455b0363eccf40dd58c326f492d0321bf825888a71c9a",
+          "node_modules/zod/v4/core/to-json-schema.js": "65e5ee732494eaf58cba0d30603fa341ab873689dce7d092662033576586dcd9",
+          "node_modules/zod/v4/core/json-schema-processors.js": "1872537015ed25ea43461fa109491c70ddccf43dc4995329354fb80a8971d22e",
+          "node_modules/zod/v4/core/json-schema-generator.js": "9cc884cdb535a9c87b85b66e61a593ff6b686222f038834f81c5e92552cd6e23",
+          "node_modules/zod/v4/core/json-schema.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+          "node_modules/zod/v4/core/index.js": "f9698820ee8371215e8d015cfa060230c62e65428397dce83f78e6538976301c",
+          "node_modules/zod/v4/classic/checks.js": "78a162d29e06001b4d919e1ed08f6e7d0d665bba0ef983201373745410d7b354",
+          "node_modules/zod/v4/classic/iso.js": "3cc5e6b4da086b8ffc7ee3188c69e4d3c945b368092e78d2299b5321182752c5",
+          "node_modules/zod/v4/classic/errors.js": "fd807f79ded4f88928ab8205de1922901a4d3a8c9b93d072e1ab8c0a44a95df5",
+          "node_modules/zod/v4/classic/parse.js": "14cbcc416ab9169abc2cde97af77da54ca769684eac1e03a3753c16ea4a7cd95",
+          "node_modules/zod/v4/classic/schemas.js": "74f7043b7de6f35661a86c378e7b0f9198b6170336dfb85b30e6c8d1a43f8ef7",
+          "node_modules/zod/v4/classic/compat.js": "0e948b101771cc0e7b753e54b3f5b486929d3db9bd4c09d98fe4ce86271bcf7b",
+          "node_modules/zod/v4/classic/from-json-schema.js": "826d3386506f0e92b77c9917c04c67b8349c67815e002ac1f712b0e68d7538a7",
+          "node_modules/zod/v4/classic/coerce.js": "fb2efe3b6eacc475c77cbb571b5fb8650d92a10f316dc869e49b722973d83c3c",
+          "node_modules/zod/v4/classic/external.js": "179a03ace3d1d77895cc5b3c54a3fcbf2b7f8bad44d6f030092491c10e5d9097",
+          "node_modules/zod/index.js": "c733a1897d6b4b30dad6998597f6896b265b094a65534359ada34b08ecf8932c",
+          "packages/shared/src/agent/mode-types.ts": "3bd194b3d1ed2860c888464c54c27fbd244eab0666dface6d7eaac83df0a3ced",
+          "apps/electron/src/renderer/lib/navigate.ts": "254b911143e15e8b4ac34a0783b9d4aedc78991ce5792a6eb4e09e2c4de79988",
+          "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011",
+          "apps/electron/src/renderer/lib/panel-url.ts": "739481afb14184d51e6f8922601a52184bd7d7ec53013b3112e61048a41bfea3",
+          "apps/electron/src/renderer/contexts/navigation-history.ts": "da8884b5cd39fa877d2d06793af008c84e123f9d4dd9137ea555c751585df159",
+          "apps/electron/src/renderer/lib/local-storage.ts": "0686d0e67d1cf5c29bfc424d7c9d6b6dbbd7034b5ed8d18dff862bb355244230",
+          "packages/shared/src/protocol/types.ts": "b70d148e7de11fae3dad072a228cefb3d4e18f0e6ae90a610ae033b265eba961",
+          "packages/shared/src/protocol/channels.ts": "78c1d0bc5545865c842dc96be2306cceee07bd2d0e73356c97dd59ba95b0fcad",
+          "packages/core/src/types/message.ts": "88455ab5cd78917d92e122206e5079198aabe1a35f14d2ff8e57422722019013",
+          "packages/core/src/types/message-mapper.ts": "1b97c19a8ccadcafe5b339b645f086f6fffa2c98c40629ac4df13ab35621f4f0",
+          "packages/core/src/types/index.ts": "79f39dcee06cd07840d4e7146384cb1af8507d675b0b7e5a70057daa471684a0",
+          "packages/shared/src/protocol/dto.ts": "0bbb518575de9ffd5fad37a9f7777bafe84707eb02cd14e4b42a9482b99cb31a",
+          "packages/shared/src/protocol/events.ts": "f095dce95f884a8541b9da32c4cdb277db7e51d43c19de74132dd30df646075d",
+          "packages/shared/src/protocol/routing.ts": "95e3713127360628fe1134623c0e742bb4a927ef865a4d46d785a654006d085d",
+          "packages/shared/src/protocol/native-channels.ts": "c481ede583e5b19d4459568191fbd8921bce4f30d81e53a631c3392ce2b4ddbf",
+          "packages/shared/src/protocol/native-replica.ts": "03cb5b0a63174b2ac950d68e2a15835bcc13570c90f1589c8a1f3bf8665ff3b6",
+          "packages/shared/src/protocol/runtime-trace.ts": "2132dc9c715f72823efcef6ec2fa2d2fe3aad90244a3920c86a57684dada23de",
+          "packages/shared/src/protocol/index.ts": "2f7f746ca432cf1e73307f1337d2aca0470a3875e0318eac243a5abba98c7454",
+          "packages/shared/src/agent/thinking-levels.ts": "8ed3e0f3a89a5e1adeb63377281c3a3f82cb9181557212254760a2bb2f773495",
+          "packages/core/src/platform/identity/types.ts": "6276e8b2961c04a2c0605215a00980b4ee779882e86f67f5567287ccabfe2e71",
+          "apps/electron/src/shared/types.ts": "3acd5c604257bc7f5d7a8a365eb175682b9016de6b48ec82aaf7ee3854c5cd97",
+          "node_modules/jotai-family/dist/atomFamily.js": "0e66701cd53ef9df31d04381e4ed5046cddd543b7c7c762172beb47892c1e6d0",
+          "node_modules/jotai-family/dist/atomTree.js": "cc9001408479ce3632b6aab27393007ae26e712453db21c5caa1e455cc079519",
+          "node_modules/jotai-family/dist/index.js": "8b6e7ebebab467a130ddc7de04285b3d742d28fcb3e9ec4bc46942b1b3aa8b95",
+          "apps/electron/src/renderer/lib/sidebar-unseen-status.ts": "c68b5dd13f254e79fabd2c63198747e07028bc9dd739d4b414bfd5b2f62f2f45",
+          "packages/shared/src/sessions/collection-types.ts": "7735d5da94fab5bc47ce6f7702176b26dcd2fbfeab23a2681a238c0b779f7b4e",
+          "packages/shared/src/sessions/collection-agent-family.ts": "82ed149edfbe50546a849123258828153e5fe01f202076948c64225ff6778532",
+          "packages/shared/src/sessions/membership.ts": "f1bd95446fda52bf69ab675512381a00f9e77c0dde71f3a0bf33a8843d8cdf5c",
+          "packages/shared/src/sessions/collection-query.ts": "b8151dfa7aa676ae564aeb9f46b3ab8355c3a4746f4d182d8a88aa8f96c62e6e",
+          "packages/shared/src/sessions/collection-heatmap.ts": "a9ee3272a7e82a5f82ab7b255295fc9a281dbdf223177b069deb040a87166744",
+          "packages/shared/src/sessions/collection-metrics.ts": "8780ea47f74698045849092b2ce140eb621511ed2ab544847eeb8a1fca8fcdac",
+          "packages/shared/src/sessions/lexorank.ts": "af7c33ae00a40d91b648f2e98c6f87c37aeaa1e5a024b629549196261e4f6f1b",
+          "packages/shared/src/sessions/collection.ts": "6893952788d34ac88e9d48740cbe1ab9e3075fc47c442ecc3f0cab3114394832",
+          "apps/electron/src/renderer/atoms/sessions.ts": "98138d1255f09fe6a44e507f3087e21ffbe9076b12baab7adab3a2560b9ebb81",
+          "apps/electron/src/renderer/atoms/panel-stack.ts": "b669a999d338e69c5d6975e322aaab1170638141351696d05d219d786239259c",
+          "node_modules/react/cjs/react-jsx-runtime.development.js": "581f93fa33c32b3aa7ea35b85b80258922517de046f5447236047dcc2845d9ff",
+          "node_modules/react/jsx-runtime.js": "28170e60f2ff0bc045bc7d175f5849e86f68dd02d76d7255369420718b30295a",
+          "apps/electron/src/renderer/contexts/NavigationContext.tsx": "399782b7f4a3fcec38d3b39d8293dc4a3cbdda1343ea997d306d55d378162910",
+          "apps/electron/src/renderer/atoms/pages.ts": "4ba1b132abf4010c1d1abb0d1ad99cc9dd1b1c382216719e62927e677dcedd08",
+          "apps/electron/src/renderer/hooks/usePages.ts": "71c548d1434745eccd9e54ed9d4770f36433e25dfc62a72e533efb7e41082120"
+        },
+        "preservationPreflight": {
+          "originalCases": 38,
+          "adaptedCases": 38,
+          "originalExpect": 111,
+          "adaptedExpect": 111,
+          "firstCaseDifference": -1,
+          "firstExpectDifference": -1
+        },
+        "adapter": {
+          "tsPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-nav-node-driver-2026-10-03T22-04-09-528Z/navigation-driver.ts",
+          "jsPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-nav-node-driver-2026-10-03T22-04-09-528Z/navigation-driver.mjs",
+          "tsSha256": "a22d4fc2c5c19b916941248a8c54032043dc0c10d21cbc8adc54104770eddb8d",
+          "jsSha256": "90177c1ae6024b94b40ce437f5da8d20448e47848515d4b158b2c50696f22347",
+          "canonicalSourceSha256": "f3eb969dc4f8e7b0ecc03486fc89e2c8e45896e4da4334717a34ba6b6d495157",
+          "preservedCaseCount": 38,
+          "preservedExpectCount": 111,
+          "casesSha256": "a5052b6959cd3bd63797b770a928d85252297b551cd07da13e232d2e775da2c2",
+          "assertionsSha256": "134801dd006850e36a8f628321a73d9fefdc9a4ea85f6df07039b3831197ee84",
+          "onlyChanges": [
+            "Bun DSL mapped to Node:test with unchanged explicit deadlines",
+            "Actual Playwright1.62.1 module absolute import",
+            "Bun-only toStartWith compatibility matcher retains string.startsWith",
+            "Canonical fixture root restored after scratch relocation",
+            "TypeScript removed by esbuild transform, without bundling"
+          ]
+        },
+        "command": [
+          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node24/node_modules/.bin/node",
+          "--test",
+          "--test-reporter=tap",
+          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-nav-node-driver-2026-10-03T22-04-09-528Z/navigation-driver.mjs"
+        ],
+        "environmentKeys": [
+          "HOME",
+          "USER",
+          "LOGNAME",
+          "LANG",
+          "PATH",
+          "TMPDIR",
+          "XDG_CONFIG_HOME",
+          "ROX_CONFIG_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ROX_UI001_BROWSER_TEST",
+          "ROX_UI001_NAV_FIXTURE_BUNDLE",
+          "ROX_UI001_CHROMIUM_CDP_URL"
+        ],
+        "cdpEndpoint": "ws://127.0.0.1:53184/devtools/browser/1df80e44-8b3b-4431-942c-073285bb9979",
+        "testPid": 80979,
+        "exitCode": 0,
+        "counts": {
+          "tests": 38,
+          "suites": 1,
+          "pass": 38,
+          "fail": 0,
+          "skip": 0,
+          "cancelled": 0
+        },
+        "logSha256": "835a902028a7fac76f500beabe3913f6e6b94fc938b38d58a2431d8ff438aa95",
+        "finishedAt": "2026-10-03T22:04:22.873Z",
+        "timedOut": false,
+        "finalSourceManifest": {
+          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "640d184c5f099028b8d3170bf1329a9393573afacf5eb66cbed6f9a7b7b4424a",
+          "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "e1d6cf6b1f3c251a9f57a3ed8540d851e440856c658a291ac1a7d14b07f84c13",
+          "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
+          "apps/electron/src/renderer/contexts/NavigationContext.tsx": "399782b7f4a3fcec38d3b39d8293dc4a3cbdda1343ea997d306d55d378162910",
+          "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011",
+          "apps/electron/src/renderer/lib/nav-helpers.ts": "887a8fbc1ba56a3c1e6d5fccd4bdd1c0ef174ed3a32cd92f65301dba6699cd49",
+          "apps/electron/src/shared/route-parser.ts": "c6d324f368b7924ba1980e6b20036672374782807f5944d88e16a9c0de22a134",
+          "apps/electron/src/shared/types.ts": "3acd5c604257bc7f5d7a8a365eb175682b9016de6b48ec82aaf7ee3854c5cd97",
+          "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "f3eb969dc4f8e7b0ecc03486fc89e2c8e45896e4da4334717a34ba6b6d495157"
+        },
+        "sourceUnchanged": true
+      }
+    },
+    {
+      "label": "mounted-main",
+      "invocationPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-main-node-driver-2026-10-03T22-04-09-520Z/invocation.json",
+      "invocationSha256": "1dc06571bf93b3291a09c9dbc611801d411c197bd76a6195c8ccb557216f7a74",
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-main-node-driver-2026-10-03T22-04-09-520Z/output.log",
+      "logSha256": "a37aa7f1f39052059f8e70dbb350abab492177174226e0c13570092fb48981c6",
+      "actual": {
+        "startedAt": "2026-10-03T22:04:09.522Z",
+        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+        "head": "37ecdb59b3be817fe02bb8c2514a0aee859d15cd",
+        "bunVersion": "1.3.14",
+        "nodeVersion": "v24.21.0",
+        "sourceManifest": {
+          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "640d184c5f099028b8d3170bf1329a9393573afacf5eb66cbed6f9a7b7b4424a",
+          "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "e1d6cf6b1f3c251a9f57a3ed8540d851e440856c658a291ac1a7d14b07f84c13",
+          "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
+          "apps/electron/src/renderer/contexts/NavigationContext.tsx": "399782b7f4a3fcec38d3b39d8293dc4a3cbdda1343ea997d306d55d378162910",
+          "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011",
+          "apps/electron/src/renderer/lib/nav-helpers.ts": "887a8fbc1ba56a3c1e6d5fccd4bdd1c0ef174ed3a32cd92f65301dba6699cd49",
+          "apps/electron/src/shared/route-parser.ts": "c6d324f368b7924ba1980e6b20036672374782807f5944d88e16a9c0de22a134",
+          "apps/electron/src/shared/types.ts": "3acd5c604257bc7f5d7a8a365eb175682b9016de6b48ec82aaf7ee3854c5cd97",
+          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "25d578841296e23475383a7556857f0677da3931b8beb6c248775ee7ac8333a6",
+          "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+          "apps/electron/src/renderer/pages/TerminalSurfacePage.tsx": "aea364b7f059d0e53075f65e0854fc1e5ba7bd4a09e5be5f2edc945d6d408510",
+          "apps/electron/src/renderer/pages/CloudRunSurfacePage.tsx": "1746964f33f3da97aed831cf16fa495f62b14b3c105e7d4c57a47a97a56c65ce",
+          "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+          "apps/electron/src/renderer/lib/panel-url.ts": "739481afb14184d51e6f8922601a52184bd7d7ec53013b3112e61048a41bfea3",
+          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "6c2f9a42d64f30ffc7863dd91ea00237fd8b60534960690dca89c30ec74d9b17"
+        },
+        "browser": {
+          "executable": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/.gstack-test-runtime/browsers/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+          "sha256": "7687bff7cb2db075f250e6d5848bbc8838cac3802ac3952a899c574f8eccab45",
+          "pid": 80965,
+          "args": [
+            "--headless",
+            "--remote-debugging-address=127.0.0.1",
+            "--remote-debugging-port=0",
+            "--user-data-dir=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-main-node-driver-2026-10-03T22-04-09-520Z/profile",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--disable-gpu"
+          ]
+        },
+        "playwrightVersion": "1.62.1",
+        "executionLane": "Node24 transport adapter: exact merged14 scenario bodies/asserts, not original Bun runner",
+        "mergeHead": "2b14d1e64e5f1622d213059733bdef6b2462acfc",
+        "upstreamReference": "2b14d1e64e5f1622d213059733bdef6b2462acfc",
+        "providerCredentialsForwarded": false,
+        "headless": true,
+        "foreground": false,
+        "fixturePath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-main-node-driver-2026-10-03T22-04-09-520Z/fixture.js",
+        "fixtureSha256": "be12f61932f9f6eb4ef2f12b814d4a1b178ba4e8c49fd4796c5be3641167d985",
+        "fixtureContentsSha256": "a496cd20139fdcfb5829a731680252412f8c79d0835d671d01743802a1be45d1",
+        "fixtureBuilderPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-main-node-driver-2026-10-03T22-04-09-520Z/fixture-builder.mjs",
+        "fixtureBuilderSha256": "bd597e1f46b16bddbc89ac52e10826704171bee377ebddc5c004bf559be8fd7b",
+        "fixtureInputManifest": {
+          "node_modules/react/cjs/react.development.js": "1ff3a1d9861a87984329584fa1172aea920855d79eb57dae0d1cebe54093d7e3",
+          "node_modules/react/index.js": "a216c390bf956cbb906c66d29fdb2e2ad6999464a5ca83e476533a6f25ad0ef3",
+          "node_modules/react/cjs/react-jsx-runtime.development.js": "581f93fa33c32b3aa7ea35b85b80258922517de046f5447236047dcc2845d9ff",
+          "node_modules/react/jsx-runtime.js": "28170e60f2ff0bc045bc7d175f5849e86f68dd02d76d7255369420718b30295a",
+          "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+          "apps/electron/src/renderer/features/product-tour/runtime/hooks.tsx": "eb0551b997ed6410bcfe9da5c65c063b59637ca683e762e969f5a871d15d6d84",
+          "apps/electron/src/shared/extra-screens.ts": "484851b890a36cc4decfd7f283d02d628058e1a6d45f323f20be93f981324551",
+          "apps/electron/src/shared/routes.ts": "bc93a4a5aadb384698c48073110164e0cb21746b8ade6ff0c6aaf07f4dd50dab",
+          "apps/electron/src/renderer/features/product-tour/runtime/routes.ts": "fe13c830d7602d27631ed3c54ffbcc6c9493f65140b27ad2c7a20c52ccd7df43",
+          "node_modules/scheduler/cjs/scheduler.development.js": "22e3d959dc9f9cd59fca4e1fc95fecb9fde4d2cb8ecadbd279137ada995983ac",
+          "node_modules/scheduler/index.js": "b413b3aac7bd209fd82cbe2241fda1467558daaef830744f45ed8396fac9185e",
+          "node_modules/react-dom/cjs/react-dom.development.js": "1459b808bc6991de5a1ec3a86d8beee32dbb6c14282cf13f84e00dfebfbdc025",
+          "node_modules/react-dom/index.js": "f26fcb81b5d1dc32c6edea34645c75b60d259916293d3208c8be48ac33e882e4",
+          "node_modules/react-dom/client.js": "a510041dfc40d69b3aa574e5e111864186c711fbeb3db41aa2f27196b27c429f",
+          "apps/electron/src/renderer/lib/local-storage.ts": "0686d0e67d1cf5c29bfc424d7c9d6b6dbbd7034b5ed8d18dff862bb355244230",
+          "apps/electron/src/renderer/lib/shell-layout-preferences.ts": "3ee1703a9a235f4a6721e817e3f0584fa13cfbf6978574e5eda3a6751832dfc8",
+          "apps/electron/src/renderer/components/app-shell/resize-activity.ts": "edc692d17994a489ee9e58492f59aeedae46ef06f807ed976eea8092abf9f613",
+          "apps/electron/src/renderer/components/app-shell/resize-math.ts": "dab519851a7ac256f2e949f8aa7bf7adea7a73867ccd7d12439d72f2d4a618ef",
+          "apps/electron/src/renderer/components/app-shell/resize-controller.ts": "0bf849b8cdccd206439157a581c705ce8492b7bd15c19fd2bf5b6ae521d53613",
+          "apps/electron/src/renderer/hooks/usePanelResize.ts": "ac50c51b98b9e1a782cb964e2dfe6ae7ff976777733c0cac0467acf1a4eb02dd",
+          "node_modules/jotai/esm/vanilla/internals.mjs": "e30ec00bef377d82aad6f1cd0a1bc5d9135a962c85782d16fe7ff665f0fd8465",
+          "node_modules/jotai/esm/vanilla.mjs": "d740f1cc15796e3f6ae5cd0923bbfb3e50a8dea54440b26f5433e45b47718eb1",
+          "packages/shared/src/protocol/types.ts": "b70d148e7de11fae3dad072a228cefb3d4e18f0e6ae90a610ae033b265eba961",
+          "packages/shared/src/protocol/channels.ts": "78c1d0bc5545865c842dc96be2306cceee07bd2d0e73356c97dd59ba95b0fcad",
+          "packages/core/src/types/message.ts": "88455ab5cd78917d92e122206e5079198aabe1a35f14d2ff8e57422722019013",
+          "packages/core/src/types/message-mapper.ts": "1b97c19a8ccadcafe5b339b645f086f6fffa2c98c40629ac4df13ab35621f4f0",
+          "packages/core/src/types/index.ts": "79f39dcee06cd07840d4e7146384cb1af8507d675b0b7e5a70057daa471684a0",
+          "packages/shared/src/protocol/dto.ts": "0bbb518575de9ffd5fad37a9f7777bafe84707eb02cd14e4b42a9482b99cb31a",
+          "packages/shared/src/protocol/events.ts": "f095dce95f884a8541b9da32c4cdb277db7e51d43c19de74132dd30df646075d",
+          "packages/shared/src/protocol/routing.ts": "95e3713127360628fe1134623c0e742bb4a927ef865a4d46d785a654006d085d",
+          "packages/shared/src/protocol/native-channels.ts": "c481ede583e5b19d4459568191fbd8921bce4f30d81e53a631c3392ce2b4ddbf",
+          "packages/shared/src/protocol/native-replica.ts": "03cb5b0a63174b2ac950d68e2a15835bcc13570c90f1589c8a1f3bf8665ff3b6",
+          "packages/shared/src/protocol/runtime-trace.ts": "2132dc9c715f72823efcef6ec2fa2d2fe3aad90244a3920c86a57684dada23de",
+          "packages/shared/src/protocol/index.ts": "2f7f746ca432cf1e73307f1337d2aca0470a3875e0318eac243a5abba98c7454",
+          "node_modules/zod/v4/core/core.js": "3a988a40d75ea5729a6ffcb2c94619e244ba0341ff1ed981d5a1725229952442",
+          "node_modules/zod/v4/core/util.js": "e41f9e774b96a9fe2b04c08f5aad32e6db2f6aa090671d2a375e7062b4f178aa",
+          "node_modules/zod/v4/core/errors.js": "c920e5549c1abcb8fc95824678beabb43023407d6a92020a3ac4a223af0a7a4b",
+          "node_modules/zod/v4/core/parse.js": "a58b9c7be78e29d71f969f01807fe5f9be1f68d222a0f60c25e32e24f3b6639c",
+          "node_modules/zod/v4/core/regexes.js": "a89562e9bea575edbbf5da84b7762fed64e20c4ff6c105dca318dfc60915706a",
+          "node_modules/zod/v4/core/checks.js": "5a33a20dcad372b4d18ead8d1e58b1950454f136a2216e62f247e0e5601ac838",
+          "node_modules/zod/v4/core/doc.js": "e084bbcc536746a8942fd33b08afe4db345554b3a0383114f1dca95261c958d9",
+          "node_modules/zod/v4/core/versions.js": "4a34ab95373e76c1fdf3b6d989e5d8af4a42a813a27a88ff66962da04350791c",
+          "node_modules/zod/v4/core/schemas.js": "6507a3e2c16a5fa2dbbb25529e367f32b26e70a51a91995df8117ead8f07191c",
+          "node_modules/zod/v4/locales/ar.js": "220ca3ca8cf67e4ccc05d789eeed2692d970269fe0cd82f05db8fd899b661b9e",
+          "node_modules/zod/v4/locales/az.js": "4725ffef0b2f2df947194f9698c792b69f52a8c3a5a1e1bdfabbf62259a1dd46",
+          "node_modules/zod/v4/locales/be.js": "da4bda7fbc940dd9f50efdd914caa9397243be779a505b82bd4be5395d3b795e",
+          "node_modules/zod/v4/locales/bg.js": "48511ad2f86043f0eea6e7673d5e2b848a3295a26c9c4650e96b3884d640196d",
+          "node_modules/zod/v4/locales/ca.js": "796f9ba7dcd53648171aa0132c50271ef358936765cec0a44a642c41d05b3e8c",
+          "node_modules/zod/v4/locales/cs.js": "670a75fe1db1104db090c95aabb01e4eb6decd451fe77fd830c2e4dafc79b49a",
+          "node_modules/zod/v4/locales/da.js": "cdaad7a1fa370abda1943fe9c2caba961e7896b9808d51275daf33f964af49cc",
+          "node_modules/zod/v4/locales/de.js": "521a4ed29fcaf3f781163875dc282cfb5262047773aa2b70a852996b1d8a51b9",
+          "node_modules/zod/v4/locales/en.js": "3e2c03ebed517345ad73a247a8134577e5986622c22e7b6c760b8b9af5827442",
+          "node_modules/zod/v4/locales/eo.js": "ebe08048aa3ee9871ce9fe1271e254cb672b1968ec40ac253066d08d176e8a65",
+          "node_modules/zod/v4/locales/es.js": "4edd9302e9724c408b024220e99092fbd2f90100ac3c6407a94543b79843610c",
+          "node_modules/zod/v4/locales/fa.js": "2dc1bee1e984e8a15191fb3c69aaecaa26c922e12a0d4486ac005a0372b78565",
+          "node_modules/zod/v4/locales/fi.js": "3911184979f01d2ae580ce611710ee40597eff97a410d0fa823ab6ea27cee88c",
+          "node_modules/zod/v4/locales/fr.js": "af85482fed4a3e4c97565ef849b4a14193b979b88b385844633d6af9b2e5ae30",
+          "node_modules/zod/v4/locales/fr-CA.js": "f8716c2baaccdfd1d958743bbc5250c9bdef5152d0801470e9b9a380d618f4ab",
+          "node_modules/zod/v4/locales/he.js": "290512e43d2907700211da09dc3959fd98d120bfb89f8836e6e3f83a472e26fe",
+          "node_modules/zod/v4/locales/hu.js": "913ee94a253db79b31463ae23a337060b6fe28be73dfc7657d8a83a4942bd8a8",
+          "node_modules/zod/v4/locales/hy.js": "0d3bbb96c0f8bc74468a2dfc7d066e838bb56fab64fd5ec03ce9c4d89eccbe99",
+          "node_modules/zod/v4/locales/id.js": "cd2c19b5c30dade3ed91ffcff3deb0b068713be24f02248e7e46b87b2b9553ee",
+          "node_modules/zod/v4/locales/is.js": "ead5b14eac892229f915fe38ec94ab3b1e676f8aa2df2a8450848ba9ca9a1612",
+          "node_modules/zod/v4/locales/it.js": "1409d5c02a8d5922f21577f1d0f892aa141f56f3a3b49a13fe4802395ddaa0ac",
+          "node_modules/zod/v4/locales/ja.js": "43ee10378cac22b0b8aee912a66c3f36a834d5b4c76e9748f88a784044f248fd",
+          "node_modules/zod/v4/locales/ka.js": "b25387ebafa764efb3b1142eda956a24ed3bba8ea523d97a8ace4dc2973f0e38",
+          "node_modules/zod/v4/locales/km.js": "dbdabda94dd93d4a1827e6c809505c79fa6aa7abefec91dc50fa0871382c99cc",
+          "node_modules/zod/v4/locales/kh.js": "78c3d1991041bb8c8fc0f7c5d745aae422d4c2e4e8f30bae44f3fef4765900a8",
+          "node_modules/zod/v4/locales/ko.js": "d2efe22ac069d9b32b0109fa07713ac0695ac1c1357afc4e4277056466f2e196",
+          "node_modules/zod/v4/locales/lt.js": "dad886e52c56a1329d22e072f8b08dc8730f69c3dc5e5acf8267cac18df1ab28",
+          "node_modules/zod/v4/locales/mk.js": "9eb4af0392fc5b9c438cdc6ceea446acc541b59e221dba918f7b80800d9da3d1",
+          "node_modules/zod/v4/locales/ms.js": "c550a9185d997e8fcd17311951aa1e29793a50b8e825e18310efd5a46c641795",
+          "node_modules/zod/v4/locales/nl.js": "acba414579c5bbd7f83dc6661fa1a12d65f1822f9b0f5035549ac60f46d93763",
+          "node_modules/zod/v4/locales/no.js": "1854483c7cf158b8f97f0faf6fd799eb1f762009018b5fde893ca33f2fb0b313",
+          "node_modules/zod/v4/locales/ota.js": "34ae496104bc17fea7d30c3d45c94cfe3d1d569b5d39a6ca51de6c177690c556",
+          "node_modules/zod/v4/locales/ps.js": "f977b5141fa8fb6a8459372e0b2895d74b381c9f2ff4899141f7ee3e639a4513",
+          "node_modules/zod/v4/locales/pl.js": "18eab58f395e30b906e8e3fddc5f212eb19f2c4362410889a5c5e0141ebe2144",
+          "node_modules/zod/v4/locales/pt.js": "df172afc585544dee7c063c484f5a07b5ed103e2c1072a782c763ad8ceb08e17",
+          "node_modules/zod/v4/locales/ru.js": "c397a473e94d7d189a9c09c7890fe379c4f6f46d9556d52a040a90ffa56f7b93",
+          "node_modules/zod/v4/locales/sl.js": "ee2ff3a19b62cd2f89b54b165088773b937de15df7253df220bef07d9adf2d80",
+          "node_modules/zod/v4/locales/sv.js": "97d6718fb643e05d6fe30fa4f9f09b8d9a3eda4a3a350b57dfb2944943d19502",
+          "node_modules/zod/v4/locales/ta.js": "04bbde9766251f9047e786fdd77632f2ecd53aec2eb060eb2fc85bf576ad729d",
+          "node_modules/zod/v4/locales/th.js": "aea70c9ac2b399fe4749e19ba3aa99c3efb4dfb50eadfb62b0b2a6e005748f3d",
+          "node_modules/zod/v4/locales/tr.js": "4449f41d22c6f15ede5066f79d840a52ec45a6b694c859e16f9121062b6fad2f",
+          "node_modules/zod/v4/locales/uk.js": "77136a2a60eef62f7cc803a0f9971aebbc641403af77c1b41fd5ce59abfa5de3",
+          "node_modules/zod/v4/locales/ua.js": "9391169ffbc72f777a83230b6ffcc3f4cf46ab5945ec540de9ef4609dca1f4cc",
+          "node_modules/zod/v4/locales/ur.js": "858f4f38d651073e7a3fbec7ed356692578b3ad1fae1b453cb3d85312a4f39d2",
+          "node_modules/zod/v4/locales/uz.js": "287481257de95c9d99b91e070773ade607fb5c68cf5fb74df311376950d507b6",
+          "node_modules/zod/v4/locales/vi.js": "2c61bd3f4a733f3cbb1ad85e75a053cb15a8ebeb83ab56dc21f2948b1138e12f",
+          "node_modules/zod/v4/locales/zh-CN.js": "99a4b16af598834a0b11607fcdebd1c6de026386ff1d6a5a306b364c154c5899",
+          "node_modules/zod/v4/locales/zh-TW.js": "37dcae620e1553e9174a4b9434bbcc4e465150a627e80c9c17fd01de8baaf59a",
+          "node_modules/zod/v4/locales/yo.js": "98b9cbf31bf00c8b2c00de62725a9dd7cb718ac72d6e8fd4e0a1a7c49723e0f4",
+          "node_modules/zod/v4/locales/index.js": "8b23cfb530a5af9375303c0ffbec9ee260fff97ac59a1f780171f288b6e2f2da",
+          "node_modules/zod/v4/core/registries.js": "620ea1a715ccc4e6e605a271343bf47942dccae90885dc71f137b1f08a972e50",
+          "node_modules/zod/v4/core/api.js": "b0249f67024345bab7b455b0363eccf40dd58c326f492d0321bf825888a71c9a",
+          "node_modules/zod/v4/core/to-json-schema.js": "65e5ee732494eaf58cba0d30603fa341ab873689dce7d092662033576586dcd9",
+          "node_modules/zod/v4/core/json-schema-processors.js": "1872537015ed25ea43461fa109491c70ddccf43dc4995329354fb80a8971d22e",
+          "node_modules/zod/v4/core/json-schema-generator.js": "9cc884cdb535a9c87b85b66e61a593ff6b686222f038834f81c5e92552cd6e23",
+          "node_modules/zod/v4/core/json-schema.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+          "node_modules/zod/v4/core/index.js": "f9698820ee8371215e8d015cfa060230c62e65428397dce83f78e6538976301c",
+          "node_modules/zod/v4/classic/checks.js": "78a162d29e06001b4d919e1ed08f6e7d0d665bba0ef983201373745410d7b354",
+          "node_modules/zod/v4/classic/iso.js": "3cc5e6b4da086b8ffc7ee3188c69e4d3c945b368092e78d2299b5321182752c5",
+          "node_modules/zod/v4/classic/errors.js": "fd807f79ded4f88928ab8205de1922901a4d3a8c9b93d072e1ab8c0a44a95df5",
+          "node_modules/zod/v4/classic/parse.js": "14cbcc416ab9169abc2cde97af77da54ca769684eac1e03a3753c16ea4a7cd95",
+          "node_modules/zod/v4/classic/schemas.js": "74f7043b7de6f35661a86c378e7b0f9198b6170336dfb85b30e6c8d1a43f8ef7",
+          "node_modules/zod/v4/classic/compat.js": "0e948b101771cc0e7b753e54b3f5b486929d3db9bd4c09d98fe4ce86271bcf7b",
+          "node_modules/zod/v4/classic/from-json-schema.js": "826d3386506f0e92b77c9917c04c67b8349c67815e002ac1f712b0e68d7538a7",
+          "node_modules/zod/v4/classic/coerce.js": "fb2efe3b6eacc475c77cbb571b5fb8650d92a10f316dc869e49b722973d83c3c",
+          "node_modules/zod/v4/classic/external.js": "179a03ace3d1d77895cc5b3c54a3fcbf2b7f8bad44d6f030092491c10e5d9097",
+          "node_modules/zod/index.js": "c733a1897d6b4b30dad6998597f6896b265b094a65534359ada34b08ecf8932c",
+          "packages/shared/src/agent/mode-types.ts": "3bd194b3d1ed2860c888464c54c27fbd244eab0666dface6d7eaac83df0a3ced",
+          "packages/shared/src/agent/thinking-levels.ts": "8ed3e0f3a89a5e1adeb63377281c3a3f82cb9181557212254760a2bb2f773495",
+          "packages/core/src/platform/identity/types.ts": "6276e8b2961c04a2c0605215a00980b4ee779882e86f67f5567287ccabfe2e71",
+          "apps/electron/src/shared/settings-registry.ts": "abf502ecc15d15b826907254868e0f9c03a88dd1fe74f7576367261b15fd1a8c",
+          "apps/electron/src/shared/types.ts": "3acd5c604257bc7f5d7a8a365eb175682b9016de6b48ec82aaf7ee3854c5cd97",
+          "apps/electron/src/shared/route-parser.ts": "c6d324f368b7924ba1980e6b20036672374782807f5944d88e16a9c0de22a134",
+          "node_modules/jotai/esm/react.mjs": "219263de3c44a21fa88f268f45ec8e7ccc9ce3a9014a45ff4f4d9d23fc177d07",
+          "node_modules/jotai/esm/index.mjs": "867ecd736f6f31716faadf9a3574a6694f987128388edfa4e687eb5e89a67065",
+          "node_modules/jotai/esm/vanilla/utils.mjs": "81714e510de0e61171706d7c5dc53cdec797a64ba30211aa4140743270a3059a",
+          "node_modules/jotai/esm/react/utils.mjs": "98114cad5b408d4d4c310bb10a9ed77c45c762fd812a4084472d0b57bcda61c9",
+          "node_modules/jotai/esm/utils.mjs": "c9c5c1285ed64b9d73561bab43177b87dbff5d70763bf9a0a94fb5db6877ce00",
+          "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+          "apps/electron/src/renderer/lib/navigate.ts": "254b911143e15e8b4ac34a0783b9d4aedc78991ce5792a6eb4e09e2c4de79988",
+          "apps/electron/src/renderer/pages/CloudRunSurfacePage.tsx": "1746964f33f3da97aed831cf16fa495f62b14b3c105e7d4c57a47a97a56c65ce",
+          "apps/electron/src/renderer/pages/TerminalSurfacePage.tsx": "aea364b7f059d0e53075f65e0854fc1e5ba7bd4a09e5be5f2edc945d6d408510"
+        },
+        "fixtureSeams": [
+          "Canonical production MainContentPanel/useSelectedResourceAvailability extracted verbatim via TS AST",
+          "Actual production RouteErrorBoundary/lazyRoutePage",
+          "Actual shell resize/layout and Jotai storage atoms",
+          "Actual TerminalSurfacePage/CloudRunSurfacePage",
+          "Canonical explicit fixture IPC/data and other leaf page stubs",
+          "Canonical esbuild react-i18next and child NavigationContext transport seams"
+        ],
+        "preservationPreflight": {
+          "originalCases": 14,
+          "adaptedCases": 14,
+          "originalExpect": 32,
+          "adaptedExpect": 32,
+          "firstCaseDifference": -1,
+          "firstExpectDifference": -1
+        },
+        "adapter": {
+          "tsPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-main-node-driver-2026-10-03T22-04-09-520Z/navigation-driver.ts",
+          "jsPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-main-node-driver-2026-10-03T22-04-09-520Z/navigation-driver.mjs",
+          "tsSha256": "86fc4affe0d306b7bf7dfec64932d7dc16c084794090e72fbb30de388de11eb3",
+          "jsSha256": "1be33a3cf3634453956e8ac4b3474256eef5f90c22c8ded5d0eee00a1848c9f6",
+          "canonicalSourceSha256": "6c2f9a42d64f30ffc7863dd91ea00237fd8b60534960690dca89c30ec74d9b17",
+          "preservedCaseCount": 14,
+          "preservedExpectCount": 32,
+          "casesSha256": "0689554793c47fa2808b1c562ae531b954b57480d2b7edf13169aa1756d2150e",
+          "assertionsSha256": "cae406cfeb9d0d3cd60c8b42fd66fe34c350dc75c711052f05b5daf0f9ba4e7f",
+          "onlyChanges": [
+            "Bun DSL mapped to Node:test with unchanged explicit deadlines",
+            "Actual Playwright1.62.1 module absolute import",
+            "Bun-only toStartWith compatibility matcher retains string.startsWith",
+            "Canonical fixture root restored after scratch relocation",
+            "TypeScript removed by esbuild transform, without bundling"
+          ]
+        },
+        "command": [
+          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node24/node_modules/.bin/node",
+          "--test",
+          "--test-reporter=tap",
+          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-main-node-driver-2026-10-03T22-04-09-520Z/navigation-driver.mjs"
+        ],
+        "environmentKeys": [
+          "HOME",
+          "USER",
+          "LOGNAME",
+          "LANG",
+          "PATH",
+          "TMPDIR",
+          "XDG_CONFIG_HOME",
+          "ROX_CONFIG_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ROX_UI001_BROWSER_TEST",
+          "ROX_UI001_MAIN_FIXTURE_BUNDLE",
+          "ROX_UI001_BROWSER_EVIDENCE_DIR",
+          "ROX_UI001_MAIN_SOURCE",
+          "ROX_UI001_CHROMIUM_CDP_URL"
+        ],
+        "cdpEndpoint": "ws://127.0.0.1:53185/devtools/browser/e2446d96-8e4c-4339-9bff-16c598fa250a",
+        "testPid": 80978,
+        "exitCode": 0,
+        "counts": {
+          "tests": 14,
+          "suites": 1,
+          "pass": 14,
+          "fail": 0,
+          "skip": 0,
+          "cancelled": 0
+        },
+        "logSha256": "a37aa7f1f39052059f8e70dbb350abab492177174226e0c13570092fb48981c6",
+        "finishedAt": "2026-10-03T22:04:15.641Z",
+        "timedOut": false,
+        "finalSourceManifest": {
+          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "640d184c5f099028b8d3170bf1329a9393573afacf5eb66cbed6f9a7b7b4424a",
+          "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "e1d6cf6b1f3c251a9f57a3ed8540d851e440856c658a291ac1a7d14b07f84c13",
+          "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
+          "apps/electron/src/renderer/contexts/NavigationContext.tsx": "399782b7f4a3fcec38d3b39d8293dc4a3cbdda1343ea997d306d55d378162910",
+          "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011",
+          "apps/electron/src/renderer/lib/nav-helpers.ts": "887a8fbc1ba56a3c1e6d5fccd4bdd1c0ef174ed3a32cd92f65301dba6699cd49",
+          "apps/electron/src/shared/route-parser.ts": "c6d324f368b7924ba1980e6b20036672374782807f5944d88e16a9c0de22a134",
+          "apps/electron/src/shared/types.ts": "3acd5c604257bc7f5d7a8a365eb175682b9016de6b48ec82aaf7ee3854c5cd97",
+          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "25d578841296e23475383a7556857f0677da3931b8beb6c248775ee7ac8333a6",
+          "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+          "apps/electron/src/renderer/pages/TerminalSurfacePage.tsx": "aea364b7f059d0e53075f65e0854fc1e5ba7bd4a09e5be5f2edc945d6d408510",
+          "apps/electron/src/renderer/pages/CloudRunSurfacePage.tsx": "1746964f33f3da97aed831cf16fa495f62b14b3c105e7d4c57a47a97a56c65ce",
+          "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+          "apps/electron/src/renderer/lib/panel-url.ts": "739481afb14184d51e6f8922601a52184bd7d7ec53013b3112e61048a41bfea3",
+          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "6c2f9a42d64f30ffc7863dd91ea00237fd8b60534960690dca89c30ec74d9b17"
+        },
+        "sourceUnchanged": true
+      }
+    },
+    {
+      "label": "mounted-skill",
+      "invocationPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-skill-node-driver-2026-10-03T22-04-09-514Z/invocation.json",
+      "invocationSha256": "14b5050ccb635eaece25900082957aae5aeed3f7cc602b66ff3d6a78d023ebec",
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-skill-node-driver-2026-10-03T22-04-09-514Z/output.log",
+      "logSha256": "e94fd2dba6578b194245e7a14ab451cc308bfd710fb65ec08722bc0c058b79eb",
+      "actual": {
+        "startedAt": "2026-10-03T22:04:09.539Z",
+        "head": "37ecdb59b3be817fe02bb8c2514a0aee859d15cd",
+        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+        "nodeVersion": "v24.21.0",
+        "sourceManifest": {
+          "apps/electron/src/renderer/pages/__tests__/skill-info-owner.browser.node.ts": "e7afc1357579bbf281beb88483f4014409e0d4d7da714e8bb6692f8464afe321",
+          "apps/electron/src/renderer/pages/__tests__/skill-info-owner.fixture.mjs": "178a6baa0355f0a1c3c5121e15e25a47dfe19311b1119830e202c959603812ae",
+          "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "b0a9fa69f2edd9b94871cb7df0b00e4e4fdfb2d84b47cdf2f56f99f794188ffd",
+          "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+          "apps/electron/src/shared/routes.ts": "bc93a4a5aadb384698c48073110164e0cb21746b8ade6ff0c6aaf07f4dd50dab"
+        },
+        "browser": {
+          "executable": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/.gstack-test-runtime/browsers/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+          "sha256": "7687bff7cb2db075f250e6d5848bbc8838cac3802ac3952a899c574f8eccab45"
+        },
+        "playwrightVersion": "1.62.1",
+        "executionLane": "Canonical Node test with only qualified absolute Playwright import",
+        "adapter": {
+          "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-skill-node-driver-2026-10-03T22-04-09-514Z/skill-driver.ts",
+          "sha256": "224a149a2364dce147fcce6e7784ee560c586735ce5e7cf4a32e8fa774c6661a",
+          "canonicalSha256": "e7afc1357579bbf281beb88483f4014409e0d4d7da714e8bb6692f8464afe321",
+          "caseCount": 6,
+          "expectCount": 16,
+          "bodiesAssertionsDeadlinesPreserved": true,
+          "casesSha256": "578099fde5b55c4dadd73fa51ec0b12d88a7841e58abca4c1133d68ad9b1d406",
+          "assertionsSha256": "0c14bdb8e6a81df494292f05259e7f131a3728ecffe1ec62168120d92a1c34db"
+        },
+        "providerCredentialsForwarded": false,
+        "foreground": false,
+        "headless": true,
+        "bundle": {
+          "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-skill-node-driver-2026-10-03T22-04-09-514Z/fixture.js",
+          "sha256": "a85b029d0efdb5d90521a842be404b0f328048529051c7f686ac43a76ea45a66",
+          "builderSha256": "178a6baa0355f0a1c3c5121e15e25a47dfe19311b1119830e202c959603812ae",
+          "componentSha256": "b0a9fa69f2edd9b94871cb7df0b00e4e4fdfb2d84b47cdf2f56f99f794188ffd"
+        },
+        "command": [
+          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node24/node_modules/.bin/node",
+          "--test",
+          "--test-reporter=tap",
+          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/final-2b14-skill-node-driver-2026-10-03T22-04-09-514Z/skill-driver.ts"
+        ],
+        "environmentKeys": [
+          "HOME",
+          "USER",
+          "LOGNAME",
+          "LANG",
+          "PATH",
+          "TMPDIR",
+          "XDG_CONFIG_HOME",
+          "ROX_CONFIG_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ROX_SKILL_INFO_BROWSER_TEST",
+          "ROX_SKILL_INFO_FIXTURE_BUNDLE",
+          "ROX_UI001_CHROMIUM_EXECUTABLE"
+        ],
+        "pid": 80994,
+        "exitCode": 0,
+        "counts": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skip": 0,
+          "cancelled": 0
+        },
+        "logSha256": "e94fd2dba6578b194245e7a14ab451cc308bfd710fb65ec08722bc0c058b79eb",
+        "finishedAt": "2026-10-03T22:04:28.788Z",
+        "timedOut": false,
+        "finalSourceManifest": {
+          "apps/electron/src/renderer/pages/__tests__/skill-info-owner.browser.node.ts": "e7afc1357579bbf281beb88483f4014409e0d4d7da714e8bb6692f8464afe321",
+          "apps/electron/src/renderer/pages/__tests__/skill-info-owner.fixture.mjs": "178a6baa0355f0a1c3c5121e15e25a47dfe19311b1119830e202c959603812ae",
+          "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "b0a9fa69f2edd9b94871cb7df0b00e4e4fdfb2d84b47cdf2f56f99f794188ffd",
+          "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+          "apps/electron/src/shared/routes.ts": "bc93a4a5aadb384698c48073110164e0cb21746b8ade6ff0c6aaf07f4dd50dab"
+        },
+        "sourceUnchanged": true
+      }
+    }
+  ],
+  "sourceFrame": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": {
+      "sha256": "640d184c5f099028b8d3170bf1329a9393573afacf5eb66cbed6f9a7b7b4424a",
+      "gitBlob": "c88d6b8846bf01318ab172806e104aa4f8812790"
+    },
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
+      "sha256": "25d578841296e23475383a7556857f0677da3931b8beb6c248775ee7ac8333a6",
+      "gitBlob": "acda12c855a361f70d79f3427b326d0a264f348b"
+    },
+    "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": {
+      "sha256": "e1d6cf6b1f3c251a9f57a3ed8540d851e440856c658a291ac1a7d14b07f84c13",
+      "gitBlob": "98d79898048b0dc8c8ef43f207f05f132634dad8"
+    },
+    "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": {
+      "sha256": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
+      "gitBlob": "c2a0faabc06bf035506f72060c869d2895d54494"
+    },
+    "apps/electron/src/renderer/components/app-shell/profile-strip-account.ts": {
+      "sha256": "10c00aa65f3208618f787dba9f23d6c8709881c03c3edb7aa8c6b2cba55f5694",
+      "gitBlob": "ee7b06466ba0ec96444bfda9e2e9122fe5756c7a"
+    },
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": {
+      "sha256": "399782b7f4a3fcec38d3b39d8293dc4a3cbdda1343ea997d306d55d378162910",
+      "gitBlob": "5140e4430225cdaf419d39ad185eb997e3bc6de1"
+    },
+    "apps/electron/src/renderer/contexts/navigation-reconcile.ts": {
+      "sha256": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011",
+      "gitBlob": "3288e56a79f2605b4bb9a33613bad122dd3efd41"
+    },
+    "apps/electron/src/renderer/atoms/panel-stack.ts": {
+      "sha256": "b669a999d338e69c5d6975e322aaab1170638141351696d05d219d786239259c",
+      "gitBlob": "f9a54f661583b0c63a388770b8c1d0ceec894a8c"
+    },
+    "apps/electron/src/renderer/atoms/sessions.ts": {
+      "sha256": "98138d1255f09fe6a44e507f3087e21ffbe9076b12baab7adab3a2560b9ebb81",
+      "gitBlob": "727589f7a853d25b1a0e02ac8643f3631a2d4adb"
+    },
+    "apps/electron/src/renderer/atoms/unified-shell.ts": {
+      "sha256": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+      "gitBlob": "1f388860371407858e09ca5f6bbdc2e52f59854f"
+    },
+    "apps/electron/src/renderer/atoms/collection-display.ts": {
+      "sha256": "3bee1904423c2a12a13c093dbca0460d1c574efd3a3270426271c7b6c69b91a7",
+      "gitBlob": "beb46cca5e3d6f3d58a0905c74dcd2113f728808"
+    },
+    "apps/electron/src/renderer/atoms/collection-filters.ts": {
+      "sha256": "1ffa6ef442d8221e8b478d0faa64c26b862968c57717a6e08d84227ddb609478",
+      "gitBlob": "a4919e065d7641a8d73113742f1b5e5e824feae5"
+    },
+    "apps/electron/src/renderer/lib/nav-helpers.ts": {
+      "sha256": "887a8fbc1ba56a3c1e6d5fccd4bdd1c0ef174ed3a32cd92f65301dba6699cd49",
+      "gitBlob": "0f95e901a250c027696c23c94d9323179a8a0882"
+    },
+    "apps/electron/src/renderer/lib/route-recovery.tsx": {
+      "sha256": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+      "gitBlob": "f8fce260152304bc97a24d9bd0e0787a76264260"
+    },
+    "apps/electron/src/renderer/lib/panel-url.ts": {
+      "sha256": "739481afb14184d51e6f8922601a52184bd7d7ec53013b3112e61048a41bfea3",
+      "gitBlob": "9d52cc7dc72400386501f4d778c81a8f799d0db9"
+    },
+    "apps/electron/src/shared/route-parser.ts": {
+      "sha256": "c6d324f368b7924ba1980e6b20036672374782807f5944d88e16a9c0de22a134",
+      "gitBlob": "26664701c2d3039463835fe1131406f8f7409151"
+    },
+    "apps/electron/src/shared/types.ts": {
+      "sha256": "3acd5c604257bc7f5d7a8a365eb175682b9016de6b48ec82aaf7ee3854c5cd97",
+      "gitBlob": "4a994dc3606a0a3f19720e87bf6c860478e5827c"
+    },
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": {
+      "sha256": "b0a9fa69f2edd9b94871cb7df0b00e4e4fdfb2d84b47cdf2f56f99f794188ffd",
+      "gitBlob": "6f7785b6176d56a60f306a2092c6587c9cac34fc"
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts": {
+      "sha256": "1cf8749d7eabf573fdebd3cb2a8ec27b6e59e5a51f6756ef4206595aa3860860",
+      "gitBlob": "b326a941ae54a85ed9b047a87a7ff13414693a7b"
+    },
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts": {
+      "sha256": "cf7827124c9ae1827aa9c0ce7e283ea9069f518133b3a57f749fed2e263d241c",
+      "gitBlob": "944f1a8efd5520bc1157ef2b194de5baf1273bba"
+    },
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.immediate-history.test.ts": {
+      "sha256": "a6536dfd9d538dd0cbb9aaa7ff9410038d351850f68ee0cef72b78ebffb7df3d",
+      "gitBlob": "cc14ff9e26a5bc90db4ec06b2009da57be745bf0"
+    },
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.history-switch-lease.test.ts": {
+      "sha256": "63afe825002251bcbf513a7ebfd495f87cf9422a38a2fb55df5df60e9ee025c8",
+      "gitBlob": "413a8fe8ac9fa46fcfd3d7b31bd99d2eaa3f5560"
+    },
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": {
+      "sha256": "f3eb969dc4f8e7b0ecc03486fc89e2c8e45896e4da4334717a34ba6b6d495157",
+      "gitBlob": "5080587c7603bf863da9a4160ddd6151cc58ffe7"
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": {
+      "sha256": "6c2f9a42d64f30ffc7863dd91ea00237fd8b60534960690dca89c30ec74d9b17",
+      "gitBlob": "bac7a90f733d4372d10ed03ac6698365ba31505b"
+    },
+    "apps/electron/src/renderer/atoms/__tests__/collection-persist-guard.test.ts": {
+      "sha256": "5c3f99105d120dfc996e0ec5eb71309ab5601ac8efbd568a10d27f6ce6e2622c",
+      "gitBlob": "fad2f8ab9ca05fb2f19688932ec668b24cdf1566"
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-account.test.ts": {
+      "sha256": "9aef656f723028a57640e6b022b82ba920b380443e9290392700063d9aba99ba",
+      "gitBlob": "2e6fcdfba2a79df77fc15fce85dfd44e40f0287a"
+    },
+    "apps/electron/src/renderer/pages/__tests__/skill-info-owner.browser.node.ts": {
+      "sha256": "e7afc1357579bbf281beb88483f4014409e0d4d7da714e8bb6692f8464afe321",
+      "gitBlob": "413564f24eebb132bc4798dde4fd7d1f138f95c4"
+    },
+    "apps/electron/src/renderer/pages/__tests__/skill-info-owner.fixture.mjs": {
+      "sha256": "178a6baa0355f0a1c3c5121e15e25a47dfe19311b1119830e202c959603812ae",
+      "gitBlob": "dc487d2b6904ad1b2b7848d88a3bc76b49a5348b"
+    }
+  },
+  "artifacts": {
+    "input.json": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/merge-2b14/input.json",
+      "sha256": "cf580083d216378baea82e0140b98190cd7097135a63b2a8e72aca09d139ad7c"
+    },
+    "service-preservation.json": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/merge-2b14/service-preservation.json",
+      "sha256": "dc21f8fce5d9f6eadc455a2e45cb6c7b193228e4c9f15613a95e157666b43921"
+    },
+    "mounted-union-preservation.json": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/merge-2b14/mounted-union-preservation.json",
+      "sha256": "91afbfe126af28d305007477c226484a064128a54ae2a7d8c1fc12713ede0795"
+    },
+    "mounted-adapter-manifest.json": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/merge-2b14/mounted-adapter-manifest.json",
+      "sha256": "838e03baeeb7a8818c90fc74f3b94fd4be7ec851e1177cf49454f17ee8efd5de"
+    }
+  },
+  "failureHistory": {
+    "priorBb047Receipt": {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-bb-platform-integration-receipt.json",
+      "sha256": "85438310c9a8388555bc514822222a7954def06db4294b568791d579a81e67c7"
+    },
+    "preservedUnchanged": true,
+    "earlierOriginalBunCDPSetupUnready": "Prior native Bun fixture-host capture/stall is retained; current mount results use documented Node24 actual Playwright transport adapter rather than claiming original Bun green",
+    "fullRepository20MinuteTypeBaseline": "Parent reports prior 20-minute baseline37 deadline and owned-child cleanup; no green claim from this pass",
+    "originalLinux1881": "Original frozen2e3d full run remains1775 passed/70 failed/36 blocked; this pass is scoped and does not replace it"
+  },
+  "boundary": {
+    "fullDoDClosed": false,
+    "nativeInstalledAcceptance": false,
+    "realProviderAcceptance": false,
+    "wholeRepositoryGreenClaim": false,
+    "githubWritesByWorker": false,
+    "foregroundUiByWorker": false,
+    "globalConfigChanged": false,
+    "deliveryOwner": "/root"
+  }
+}

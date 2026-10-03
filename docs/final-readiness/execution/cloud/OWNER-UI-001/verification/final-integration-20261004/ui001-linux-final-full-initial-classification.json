@@ -1,0 +1,2434 @@
+{
+  "schemaVersion": 1,
+  "kind": "completed-frozen-linux-full-classification-initial",
+  "observedAt": "2026-10-03T20:28:59.068Z",
+  "input": {
+    "head": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+    "trackedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifestSha256": "db631973e5f243acdd71a314cc68f687fd95bdc7fe71bc3c364a6a1bc97fe342",
+    "runnerSha256": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a",
+    "bunVersion": "1.3.14",
+    "nodeVersion": "v24.21.0"
+  },
+  "fullStatus": "failed",
+  "summary": {
+    "expected": 1881,
+    "completed": 1881,
+    "passed": 1775,
+    "failed": 70,
+    "blocked": 36
+  },
+  "finishedAt": "2026-10-03T20:23:18.019Z",
+  "reportSha256": "0f7c23edcff0612c0b829200962a6c152e1794eccca2e96319988b55612ac571",
+  "manifestSha256": "db631973e5f243acdd71a314cc68f687fd95bdc7fe71bc3c364a6a1bc97fe342",
+  "all1881LogHashesVerified": true,
+  "logHashMismatches": 0,
+  "baselineSummary": {
+    "expected": 1677,
+    "completed": 1677,
+    "passed": 1593,
+    "failed": 45,
+    "blocked": 39
+  },
+  "comparison": {
+    "baselinePassRetained": 1550,
+    "baselineNonPassNowPassed": [
+      {
+        "path": "apps/electron/resources/skills/gstack/gstack/browse/test/cookie-import-native-job.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/resources/skills/gstack/gstack/browse/test/watchdog.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/resources/skills/gstack/ios-qa/daemon/test/allowlist.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/session-branch-rollback.isolated.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/ui/__tests__/continue-visual-3-chrome.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/__tests__/zen-shell-acceptance.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/extension-center-h4.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/leftover-041-052-i18n.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/src/renderer/platform/__tests__/inspector-strip-host.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/src/renderer/platform/__tests__/workbench-leftover-chrome.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "ops/fleet-infra/control-plane.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/messaging-gateway/src/__tests__/access-control.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/messaging-gateway/src/__tests__/gateway-button-access.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/server-core/src/bootstrap/lock-identity.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/roadmap-model-provenance.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/server-core/src/sessions/first-session-welcome-persistence.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/server-core/src/sessions/refresh-connection-runtime.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/shared/src/agent/__tests__/omp-source-proxy.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/shared/src/agent/core/__tests__/prerequisite-manager.isolated.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/shared/src/config/theme-vibrancy.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/shared/src/credentials/__tests__/manager-dual-read.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/shared/src/identity/__tests__/terminology-lint.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/shared/src/utils/__tests__/sqlite-runtime.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "packages/ui/src/components/annotations/__tests__/interaction-state-machine.test.ts",
+        "baseline": "blocked"
+      },
+      {
+        "path": "packages/ui/src/components/overlay/__tests__/rich-block-parity.test.ts",
+        "baseline": "blocked"
+      },
+      {
+        "path": "packages/ui/src/components/overlay/__tests__/useRichBlockInteractions.test.ts",
+        "baseline": "blocked"
+      },
+      {
+        "path": "plans/rox2/__tests__/program.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "plans/rox2/__tests__/rox2-192-200-leftover-honesty.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "scripts/electron-build-resources.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/resources/skills/gstack/gstack/ios-qa/scripts/gen-accessors.test.ts",
+        "baseline": "failed"
+      },
+      {
+        "path": "apps/electron/resources/skills/gstack/ios-qa/scripts/gen-accessors.test.ts",
+        "baseline": "failed"
+      }
+    ],
+    "baselineNonPassRemaining": [
+      {
+        "path": "apps/electron/resources/skills/gstack/gstack/browse/test/cookie-import-native.test.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/ai.service.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/config.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/environment.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/errors.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/telegram-client.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/cli-args.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/archive.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/communityTools.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/contacts.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/crm.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/db.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/durable-sync.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/folders.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/read-only.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/rules.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/sync.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/tags.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/candidate-package.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/chiho-cloud-contracts.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/tool-contracts.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/core/cli-runner.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/core/tool-dispatch.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/crm-cleanup.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/inventory.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/migrate.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/peerIdentity.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/schema.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/output.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/proxy.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/agentWritePreviewStore.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/dialogInventory.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/managedMediaStore.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/opaqueCursor.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegram.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegramClientTools.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegramUpdateStore.test.ts",
+        "baseline": "blocked",
+        "candidate": "blocked"
+      },
+      {
+        "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/__tests__/unknown-error-i18n.test.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "apps/electron/src/renderer/platform/__tests__/panel-inset-alignment.test.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "tests/e2e/meeting-agents/bootstrap-permissions.spec.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "tests/e2e/meeting-agents/harness.test.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "tests/e2e/meeting-agents/lifecycle.spec.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-http.test.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-native-routing.test.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-transport.test.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01.test.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      },
+      {
+        "path": "tests/rox-suite/focus-native-ack.test.ts",
+        "baseline": "failed",
+        "candidate": "failed"
+      }
+    ],
+    "priorPassNowNonPass": [
+      {
+        "path": "apps/electron/resources/skills/gstack/gstack/browse/test/xvfb.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/deep-link-parse.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/deep-link-routing.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/components/__tests__/renderer-contract-recovery.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": false
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": false
+      },
+      {
+        "path": "apps/electron/src/renderer/components/session-inspector/__tests__/inspector-browser-pane-lifecycle.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/hooks/__tests__/focus-notification-scope.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-031-settings-hub.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-041-043-settings-pages.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-044-046-settings-pages.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-047-049-settings-pages.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-050-052-settings-pages.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-053-055-settings-pages.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-056-058-settings-pages.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-059-061-settings-pages.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-062-shortcuts-settings-page.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/SecuritySettingsPage.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/voice-overlay.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/update-metadata-fixtures.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "packages/cloud-runner/src/__tests__/local-provider.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/rox2-187-190-rpc-actions.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/workspace.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "packages/shared/src/__tests__/interceptor-packaging-contract.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "packages/shared/src/credentials/__tests__/secure-storage-migration.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "packages/shared/src/skills/__tests__/bundled.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": false
+      },
+      {
+        "path": "packages/shared/src/toolchain/__tests__/installer.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": false
+      },
+      {
+        "path": "packages/shared/src/toolchain/__tests__/kinds.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": false
+      },
+      {
+        "path": "packages/shared/src/toolchain/__tests__/manager.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": false
+      },
+      {
+        "path": "tests/macro-integration/wp-01-auth-postgres.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "tests/macro-integration/wp-01-authority-crash.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "tests/macro-integration/wp-01-observability.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "tests/macro-integration/wp-01-offline.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "tests/macro-integration/wp-01-response-schema.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "tests/macro-integration/wp-01-runtime.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "tests/macro-integration/wp-01-server.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "tests/macro-integration/wp-01-service-crash.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "tests/macro-integration/wp-48-domain.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "tests/macro-integration/wp-48-native-policy.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "tests/macro-integration/wp-48-native-service.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      },
+      {
+        "path": "tests/macro-integration/wp-48-runtime-archives.test.ts",
+        "candidate": "failed",
+        "suiteSourceUnchanged": true
+      }
+    ],
+    "newSuiteNonPass": [
+      "apps/electron/src/renderer/components/app-shell/__tests__/chat-scroll.browser.test.ts",
+      "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+      "apps/electron/src/renderer/components/app-shell/input/__tests__/runtime-catalog.browser.test.ts",
+      "apps/electron/src/renderer/components/pages/__tests__/rox-readiness-ui-001.page-lifecycle.test.ts",
+      "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+      "apps/electron/src/renderer/pages/extra-screens/__tests__/radar-workflow.browser.test.ts",
+      "apps/electron/src/renderer/pages/inbox/__tests__/inbox-focus.browser.test.ts",
+      "apps/electron/src/renderer/pages/notes/__tests__/notes-responsive-tools.browser.test.ts",
+      "apps/electron/src/renderer/pages/settings/__tests__/security-runtime.browser.test.ts",
+      "apps/electron/src/renderer/platform/__tests__/inspector-resize.browser.test.ts",
+      "apps/electron/src/renderer/platform/__tests__/surface-tabs.browser.test.ts",
+      "scripts/rox-readiness-ui-001.runner.test.ts",
+      "tests/e2e/product-tour/product.application.spec.ts",
+      "tests/e2e/product-tour/product.native.spec.ts"
+    ],
+    "newSuitePassed": 190
+  },
+  "nonPasses": [
+    {
+      "path": "apps/electron/resources/skills/gstack/gstack/browse/test/cookie-import-native.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00016-d0ebf8ffd42b/output.log",
+      "logSha256": "af3c5d3fe7b07e9608b4a2f1d5c1424ef7f3d6f071254a0a5f7a974e6fbf22e6",
+      "testCounts": {
+        "pass": 32,
+        "fail": 4,
+        "skip": 0
+      },
+      "errorLines": [
+        "ENOENT: no such file or directory, copyfile '/workspace/apps/electron/resources/skills/gstack/gstack/node_modules/playwright/package.json' -> '/tmp/native-cookies-p5jZJS/admission-gFgd4C/node_modules/playwright/package.json'",
+        "(fail) production adapter source-bound qualification > matching code passes admission, while later worker/core/database/bundle edits reject the old receipt [1.70ms]",
+        "ENOENT: no such file or directory, copyfile '/workspace/apps/electron/resources/skills/gstack/gstack/node_modules/playwright/package.json' -> '/tmp/native-cookies-p5jZJS/admission-f0VDv9/node_modules/playwright/package.json'",
+        "(fail) production adapter source-bound qualification > activation-only edits preserve all bound bytes, including a rebuilt Node bundle [1.38ms]",
+        "ENOENT: no such file or directory, copyfile '/workspace/apps/electron/resources/skills/gstack/gstack/node_modules/playwright/package.json' -> '/tmp/native-cookies-p5jZJS/admission-SFFKkl/node_modules/playwright/package.json'",
+        "(fail) production adapter source-bound qualification > partial or legacy receipts cannot activate even when their browser/runtime tuple matches [2.13ms]",
+        "error: expect(received).toContainEqual(expected)",
+        "(fail) production Node Playwright worker > real synthetic Playwright pipe smoke uses no TCP and leaves no browser [408.30ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/resources/skills/gstack/gstack/browse/test/xvfb.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00032-4f21737b7db7/output.log",
+      "logSha256": "938ef64172b824ca7f0d0eb292e7bcaba3ed256293b703fc70b3ca0497b24878",
+      "testCounts": {
+        "pass": 21,
+        "fail": 10,
+        "skip": 3
+      },
+      "errorLines": [
+        "error: expect(received).not.toBeNull()",
+        "(fail) daemon-owned display lifecycle > registered shutdown waits for owned display allocation before process exit [1.73ms]",
+        "error: expect(received).toBe(expected)",
+        "(fail) daemon-owned display lifecycle > welcome: startup settles welcome before publishing daemon readiness [15028.64ms]",
+        "error: expect(received).toBe(expected)",
+        "(fail) daemon-owned display lifecycle > welcome failure: startup settles welcome before publishing daemon readiness [15009.86ms]",
+        "error: expect(received).toBe(expected)",
+        "(fail) daemon-owned display lifecycle > shutdown: startup settles welcome before publishing daemon readiness [15012.03ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/ai.service.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00037-c4550305c8e8/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/config.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00038-1f33a04453f3/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/environment.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00039-e10bd2e4170a/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/errors.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00040-8a5a28f491ac/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/telegram-client.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00041-0602403ac41d/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/cli-args.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00042-8a05b4a0058f/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/archive.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00043-3b7e75fa9278/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/communityTools.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00044-bc12aa1ae7ef/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/contacts.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00045-7e356d3ebe08/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/crm.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00046-830ee6d643d7/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/db.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00047-da1d8e422bfa/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/durable-sync.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00048-3b498f3f2ca2/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/folders.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00049-ea672c1227ea/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/read-only.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00050-57bc720d5815/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/rules.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00051-d9382c2421a0/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/sync.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00052-c18e3baad405/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/tags.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00053-e6395ad89905/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/candidate-package.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00054-da7b483892c1/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/chiho-cloud-contracts.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00055-9f4a0a748367/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/tool-contracts.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00056-ef2c8bea1047/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/core/cli-runner.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00057-38f45e5c886d/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/core/tool-dispatch.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00058-d62beb5ba6d5/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/crm-cleanup.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00059-19d3c3865580/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/inventory.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00060-632f9f42016a/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/migrate.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00061-f586fbb6d904/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/peerIdentity.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00062-d240a2c1e812/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/schema.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00063-9c3dd52577c6/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/output.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00064-587c002bdb58/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/proxy.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00065-a8f8c7955eb7/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/agentWritePreviewStore.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00066-4a13e017e250/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/dialogInventory.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00067-75a309bd56c2/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/managedMediaStore.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00068-c2b5f8284653/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/opaqueCursor.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00069-1e0f6e07859a/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegram.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00070-05bf4e4e72d9/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegramClientTools.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00071-7480efdbd4a2/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegramUpdateStore.test.ts",
+      "runner": "vitest",
+      "status": "blocked",
+      "baselineStatus": "blocked",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00072-81e0df57af7a/output.log",
+      "logSha256": "07d8dfc13ced5a93d50a90684bb079f91e582ff34673bd2aca527916906a683e",
+      "testCounts": null,
+      "error": "Local Vitest executable is not installed for apps/electron/resources/skills/telegram/chiho-telegram",
+      "errorLines": []
+    },
+    {
+      "path": "apps/electron/src/main/__tests__/deep-link-parse.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00088-73367bbe66a9/output.log",
+      "logSha256": "9b3ab479b62132df21e860cb9207511c05dc319f8b4a454d5d7a784b953957e6",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Electron failed to install correctly, please delete node_modules/electron and try installing again"
+      ]
+    },
+    {
+      "path": "apps/electron/src/main/__tests__/deep-link-routing.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00089-e20ce590fc02/output.log",
+      "logSha256": "7f64b41f1d06c03b012c941d5b22b44f135ae23fa71444246617896a059b3a8c",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Electron failed to install correctly, please delete node_modules/electron and try installing again"
+      ]
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00138-270ae44923b2/output.log",
+      "logSha256": "86cfe957f1e945032a257e262add0e5224e95706c1d9d5cc04751b7270e44940",
+      "testCounts": {
+        "pass": 1,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toEqual(expected)",
+        "(fail) RPC handler profile registration > registerGuiRpcHandlers registers only gui channels [2.10ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00139-241ba71df6b3/output.log",
+      "logSha256": "31532139e1a0577450457292a3830bb47bcf557cf88ba9a918be366f498f8733",
+      "testCounts": {
+        "pass": 1,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toEqual(expected)",
+        "(fail) RPC handler registration > registers all declared handled channels exactly once [1266.34ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00184-632b3c459c9f/output.log",
+      "logSha256": "46ed67ac2fea8d6b1b693b73b8c9aefc12f421af8ede98d05272b7ecce86c239",
+      "testCounts": {
+        "pass": 9,
+        "fail": 4,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toBe(expected)",
+        "(fail) ROX UI-001 real Jotai layout storage behavior > inspector: reads event snapshots through races, corrupt values and deletion [0.45ms]",
+        "error: expect(received).toBe(expected)",
+        "(fail) ROX UI-001 real Jotai layout storage behavior > inspector: filters other keys/storage areas and releases subscriptions [0.22ms]",
+        "error: expect(received).toBe(expected)",
+        "(fail) ROX UI-001 real Jotai layout storage behavior > terminal dock: reads event snapshots through races, corrupt values and deletion [0.18ms]",
+        "error: expect(received).toBe(expected)",
+        "(fail) ROX UI-001 real Jotai layout storage behavior > terminal dock: filters other keys/storage areas and releases subscriptions [0.12ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/components/__tests__/renderer-contract-recovery.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00188-aa01be56eba0/output.log",
+      "logSha256": "d1dbc877dbb4744d3ac30b7825487dd4de0c5775539a2655bbe9592ad2b479a2",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: 200 |   const [busy, setBusy] = React.useState(false)",
+        "TypeError: undefined is not an object (evaluating 'window.electronAPI')",
+        "(fail) recovered renderer contracts mount with real component implementations [1245.70ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/chat-scroll.browser.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00196-28d2daef9a6c/output.log",
+      "logSha256": "86a0bfb17329a3ad43155a646cd18268a90e0f399b38ed0f24778fc185d3956b",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Owned Chrome process identity unavailable",
+        "(fail) production ChatDisplay private output viewport > (unnamed) [852.35ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00221-22e21c6cea96/output.log",
+      "logSha256": "dbf209ef052cc1c6b4cbae9017e5f8db68e9f5391ec23aefe459f91e4366a8e6",
+      "testCounts": {
+        "pass": 9,
+        "fail": 9,
+        "skip": 0
+      },
+      "errorLines": [
+        "ReferenceError: useTourTarget is not defined",
+        "(fail) compact Overview permission selection > clicks safe for new-empty-session, selects it, and reconciles the persisted version [34.60ms]",
+        "ReferenceError: useTourTarget is not defined",
+        "(fail) compact Overview permission selection > clicks safe for active-chat-session, selects it, and reconciles the persisted version [37.36ms]",
+        "ReferenceError: useTourTarget is not defined",
+        "(fail) compact Overview permission selection > restores the actual mode when RPC fails before the optimistic UI commits [33.11ms]",
+        "ReferenceError: useTourTarget is not defined",
+        "(fail) compact Overview permission selection > rolls back after a failed command and unavailable readback [37.85ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00231-b3d0cc8b51f4/output.log",
+      "logSha256": "4b8bb45e4b7be54b00f4b0f749227e666cddb03cf196743da246d5799075e00d",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: launch: Executable doesn't exist at /proof/full-results/run-K2Dvku/00231-b3d0cc8b51f4/home/.cache/ms-playwright/chromium-1148/chrome-linux/chrome",
+        "(fail) UI-001 real Chromium component and persistence fixtures > (unnamed) [478.75ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00239-b4a3389d8763/output.log",
+      "logSha256": "b170693030f17a49648596783ffb1f471843abc3614a5c6966e244969350cda0",
+      "testCounts": {
+        "pass": 0,
+        "fail": 4,
+        "skip": 0
+      },
+      "errorLines": [
+        "ReferenceError: isSessionsNavigation is not defined",
+        "(fail) UI-001 service selection over unavailable workspace — actual composed callbacks > explicit Notes service recovers an unavailable workspace (already focused retained panel) [107.16ms]",
+        "ReferenceError: isSessionsNavigation is not defined",
+        "(fail) UI-001 service selection over unavailable workspace — actual composed callbacks > explicit Notes service recovers an unavailable workspace (focus another retained panel) [36.37ms]",
+        "ReferenceError: isSessionsNavigation is not defined",
+        "(fail) UI-001 service selection over unavailable workspace — actual composed callbacks > negative control: direct production navigate performs workspace recovery and actual syncUrl persists it [35.94ms]",
+        "ReferenceError: isSessionsNavigation is not defined",
+        "(fail) UI-001 service selection over unavailable workspace — actual composed callbacks > the actual service hook refreshes its callback when a valid workspace becomes unavailable [23.15ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00255-50e2023ce2c9/output.log",
+      "logSha256": "305d56b198692e16c3fe3804cb8df6a9e5a2f813ee0b53e56a2812614bb33c33",
+      "testCounts": {
+        "pass": 7,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "ReferenceError: TourPanelScope is not defined",
+        "(fail) MainContentPanel terminal + cloud-run hosts (#571) > dispatches selected and empty terminal/cloud-run addresses to their own hosts [286.43ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/input/__tests__/runtime-catalog.browser.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00294-8bce8f2cd265/output.log",
+      "logSha256": "dac84af0f3a10a2421cb5edc784e4467d82d0c3e9d0bfff98fec77e420aa627b",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Runtime catalog warmup failed: Cannot read properties of null (reading 'useRef'); Cannot read properties of null (reading 'useRef'); Cannot read properties of null (reading 'useRef')",
+        "(fail) public native runtime catalog renderer DOM > (unnamed) [62440.15ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/__tests__/rox-readiness-ui-001.page-lifecycle.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00351-6ba7fc8b04c8/output.log",
+      "logSha256": "d331e12762bd661c8044ea02deef4f96a85bbf19490df448e27eb22e38c49592",
+      "testCounts": {
+        "pass": 0,
+        "fail": 8,
+        "skip": 0
+      },
+      "errorLines": [
+        "ReferenceError: useKnowledgeSignals is not defined",
+        "(fail) UI-001 actual PageView fallback, lease and snapshot lifecycle > retains valid atom page and binds lease and data to the requested workspace [5.72ms]",
+        "ReferenceError: useKnowledgeSignals is not defined",
+        "(fail) UI-001 actual PageView fallback, lease and snapshot lifecycle > does not display a foreign workspace atom or carry old lease/snapshot across same-slug switch [0.37ms]",
+        "ReferenceError: useKnowledgeSignals is not defined",
+        "(fail) UI-001 actual PageView fallback, lease and snapshot lifecycle > a new list invalidates old deep-link fallback immediately and late read cannot revive deletion [0.17ms]",
+        "ReferenceError: useKnowledgeSignals is not defined",
+        "(fail) UI-001 actual PageView fallback, lease and snapshot lifecycle > successful fallback is hidden on list change and failed replacement is resolved unavailable [0.10ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/components/session-inspector/__tests__/inspector-browser-pane-lifecycle.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00355-e5e27086c3c1/output.log",
+      "logSha256": "badbea0f1b95e43489d958d924d78cc0cf6130ad7b0c8567be68328ce01f6f3e",
+      "testCounts": {
+        "pass": 2,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toContain(expected)",
+        "(fail) Issue 14 pane lifecycle and link routing > hides on unmount and restores instead of leaving a dead pane [0.15ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00403-e0d077c77780/output.log",
+      "logSha256": "fb245206cae5afde1f5d38340dfd5f51e9a1610e3c94f5727170837a425915d1",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: launch: Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome",
+        "(fail) UI-001 mounted NavigationProvider raw URL/readiness/history > (unnamed) [90.74ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/__tests__/focus-notification-scope.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00443-1f83485c8026/output.log",
+      "logSha256": "6e013ed14168f6097c867eaace8cc7dda93b40020686ffdb464b28007f8f9dcc",
+      "testCounts": {
+        "pass": 2,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toEqual(expected)",
+        "(fail) isolated production hook closures honor enabled setting before Focus persistence [36.68ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/__tests__/unknown-error-i18n.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00515-a32530516b64/output.log",
+      "logSha256": "f27cb9cabb6ee8e6febc01b3f910890df1c09acc8c130ef03c623ff6812ddb44",
+      "testCounts": {
+        "pass": 6,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toBe(expected)",
+        "(fail) unknown-error toast fallbacks are i18n > App toast fallbacks use toast.unknownError [0.40ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/__tests__/radar-workflow.browser.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00550-7190ea341851/output.log",
+      "logSha256": "1aa96645c7bf6f23ada742b7fd9dc62d7b8de8cfa6026daad36830490630d78c",
+      "testCounts": {
+        "pass": 0,
+        "fail": 6,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: fill: Target page, context or browser has been closed",
+        "(fail) Radar source and schedule workflow > topic, keywords, explicit sources and daily hour survive reload [35015.07ms]",
+        "error: page: Target page, context or browser has been closed",
+        "(fail) Radar source and schedule workflow > a real-shaped agent response displays source/date and distinct buckets; its source link opens the recorded URL [2.28ms]",
+        "error: page: Target page, context or browser has been closed",
+        "(fail) Radar source and schedule workflow > a finished empty response is an error and retry loads a new source-backed digest [4.70ms]",
+        "error: page: Target page, context or browser has been closed",
+        "(fail) Radar source and schedule workflow > startup failure is visible and can be retried without abandoning setup [0.75ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/__tests__/inbox-focus.browser.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00557-a62eb236fad3/output.log",
+      "logSha256": "8e4a732c0c26d248177a8aaa0833d1927e280f85eb75a29ef1879e5c18ad04c0",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Timed out 30000ms waiting for expect(locator).toBeVisible()",
+        "(fail) Inbox foreground and real source actions > (unnamed) [31487.19ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/__tests__/notes-responsive-tools.browser.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00584-f5a75d820e5f/output.log",
+      "logSha256": "8b569293c1138998f64eefddbf3c4a69e6eb9805a779063d06269c031bfd9a26",
+      "testCounts": {
+        "pass": 5,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toBe(expected)",
+        "(fail) real sash keyboard/IME bounds use persisted140–480 and pointer cancel/unmount removes its lease [629.56ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-031-settings-hub.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00615-1dc1d6d5bb22/output.log",
+      "logSha256": "af2a12af79a81a8f15a4c32f49e91134bbdf0b59cc8e783f77e4034a89b792b3",
+      "testCounts": {
+        "pass": 2,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toHaveLength(expected)",
+        "(fail) ROX2-031 native settings hub > settings hub stays registered and reachable without Conation [0.17ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-041-043-settings-pages.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00616-53e6e8de8745/output.log",
+      "logSha256": "4db67f55fc6d908ae1b53f1c0c6317bcc827e56a6072d389e4c47ac4beca4d6a",
+      "testCounts": {
+        "pass": 3,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toEqual(expected)",
+        "(fail) ROX2-041..043 native settings pages > account, privacy, and runtime stay in SETTINGS_PAGES without Conation flags [1.18ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-044-046-settings-pages.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00617-c1515aabe5b3/output.log",
+      "logSha256": "38d005701d0bdbcafe2e22389b7b9b790672ef137709650cc774f204ec63a812",
+      "testCounts": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toEqual(expected)",
+        "(fail) ROX2-044..046 native settings pages > context, marketplace, and knowledge stay in SETTINGS_PAGES without Conation flags [0.16ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-047-049-settings-pages.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00618-4dd10d6b3cd5/output.log",
+      "logSha256": "5bc49d686e25d0f4b0ce3cdee2e7367d0284be6e6a062b018b7d3896105222dc",
+      "testCounts": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toEqual(expected)",
+        "(fail) ROX2-047..049 native settings pages > extensions, import, and app stay in SETTINGS_PAGES without Conation flags [0.43ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-050-052-settings-pages.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00619-a57d80b69222/output.log",
+      "logSha256": "5891778bda6c21be6034503b2a99d511c38c4874d4fff7e74befba61164e254f",
+      "testCounts": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toEqual(expected)",
+        "(fail) ROX2-050..052 native settings pages > ai, appearance, and input stay in SETTINGS_PAGES without Conation flags [0.42ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-053-055-settings-pages.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00620-22da73b887bd/output.log",
+      "logSha256": "6666e49a51efc5660962a9585cc26ec6cc670261055f049d3521afd6085f0d95",
+      "testCounts": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toEqual(expected)",
+        "(fail) ROX2-053..055 native settings pages > workspace, accounts, and permissions stay in SETTINGS_PAGES without Conation flags [0.17ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-056-058-settings-pages.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00621-f7f344a6ed89/output.log",
+      "logSha256": "68875900af50c1fbaec896d53afdb45f1e690963913736986dcf7613a61cdcf1",
+      "testCounts": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toEqual(expected)",
+        "(fail) ROX2-056..058 native settings pages > security, labels, and organizations stay in SETTINGS_PAGES without Conation flags [0.18ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-059-061-settings-pages.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00622-ca80d4e19c98/output.log",
+      "logSha256": "5fbddcfc21a66b1f431266d30b94ac3319634c9a5c0b30efa53b74c07326a5fe",
+      "testCounts": {
+        "pass": 5,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toEqual(expected)",
+        "(fail) ROX2-059..061 native settings pages > messaging, server, and cloudRuns stay in SETTINGS_PAGES without Conation flags [0.17ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-062-shortcuts-settings-page.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00623-45f525de139d/output.log",
+      "logSha256": "cad83f3646e808d165f4ee1cfcbad62211199a55ff9b12aeecc388619a15e485",
+      "testCounts": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toEqual(expected)",
+        "(fail) ROX2-062 native shortcuts settings page > shortcuts stays in SETTINGS_PAGES without Conation flags [2.94ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/security-runtime.browser.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00626-d5b5d370bd0f/output.log",
+      "logSha256": "b04efee0e75b09df6fa5928b74166085df77f6218fde32777e6590928426dcb8",
+      "testCounts": {
+        "pass": 7,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "TypeError: undefined is not an object (evaluating '(await calls(\"navigate\"))[0].args')",
+        "(fail) Security runtime production renderer DOM > shows actual Rox readiness/version and default model while optional OpenClaw is not installed [826.16ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/SecuritySettingsPage.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00628-f359c5ca933c/output.log",
+      "logSha256": "7a6f1cbd1cceee98d739424be1f93d446f03105ab8128f7819676d521dc6d3a2",
+      "testCounts": {
+        "pass": 6,
+        "fail": 3,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toContain(expected)",
+        "(fail) SecuritySettingsPage source contracts > uses only the safe data surface, retains a stale snapshot on refresh failure, and clears a known-empty latest result [0.55ms]",
+        "error: expect(received).toContain(expected)",
+        "(fail) SecuritySettingsPage source contracts > renders truthful loading, unavailable, partial, and deep-not-requested states through current i18n key patterns [0.29ms]",
+        "error: expect(received).toContain(expected)",
+        "(fail) SecuritySettingsPage source contracts > puts every mutation behind a pending confirmation before it can invoke an API [0.53ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/voice-overlay.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00635-d899c7511261/output.log",
+      "logSha256": "a4df9ae806980d292dd1840244185727be9f8380a63f09e1d75a158d4c4dd6c4",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toContain(expected)",
+        "(fail) voice overlay and hotkeys > ships a non-focus-stealing overlay entry and Right Option gate [0.17ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/__tests__/inspector-resize.browser.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00661-b902e67c75cb/output.log",
+      "logSha256": "d56ef58d562649296f5d0b54374b12571d36cc85a7b9aa860f702d1d08d22cd8",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Surface tabs fixture startup timeout",
+        "(fail) actual InspectorHost resize lifecycle > (unnamed) [55212.95ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/__tests__/panel-inset-alignment.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00676-3ba753415bf1/output.log",
+      "logSha256": "60d46cef8fc700cb688ad8a44efed12b95e892edb41a0a1ef4dfeaf493c1b363",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toContain(expected)",
+        "(fail) panel inset alignment > keeps the rounded desktop stack on its shared 4px inset [0.24ms]"
+      ]
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/__tests__/surface-tabs.browser.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00684-bcf2f3ad2ca1/output.log",
+      "logSha256": "65f0a25583df4c720fd25f68695c8581d2ff8ecd4e341e3621f0d362736096e0",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Owned temporary Chrome PID could not be verified",
+        "(fail) actual SurfaceTabs keyboard and title lifecycle > (unnamed) [1568.77ms]"
+      ]
+    },
+    {
+      "path": "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/update-metadata-fixtures.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00748-7edde5f6fa17/output.log",
+      "logSha256": "126b5d00c466ac4b1db8f5c8cb44538785e89d704bf4fc75842b2874b7702d08",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Cannot find module '/Users/t/Projects/rox-one-recheck-candidate-20261003/scripts/verify-update-metadata.ts' from '/workspace/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/update-metadata-fixtures.test.ts'"
+      ]
+    },
+    {
+      "path": "packages/cloud-runner/src/__tests__/local-provider.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00753-f6e34cb3a3e9/output.log",
+      "logSha256": "70c98cd661c2610fed7b84aa83831047f0260090f2d9858faa71b2cc0dc96b3c",
+      "testCounts": {
+        "pass": 3,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toBe(expected)",
+        "(fail) LocalSubprocessProvider crash reconcile (local-only) > cancel kills nested children, not only runner.pid [2019.58ms]"
+      ]
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/__tests__/rox2-187-190-rpc-actions.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00977-56f0bc121dae/output.log",
+      "logSha256": "4bbbb4eda6763cec1012f3c223712f79b8f9b646b9efa1a446ec9d8af29b113b",
+      "testCounts": {
+        "pass": 3,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toContain(expected)",
+        "(fail) ROX2-187..190 native RPC list/read/act gates > voice.ts gates list/read/write/destroy; transcribe/speak/start are not spend [0.41ms]"
+      ]
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/__tests__/workspace.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/00989-1891d64edd95/output.log",
+      "logSha256": "32ce4ebaab7ccb837619877422bab7b9b44c15847c6110a0acf61f76705610a9",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "SyntaxError: Export named 'resolveConfigDir' not found in module '/workspace/packages/shared/src/config/index.ts'.",
+        "(fail) window:getWorkspace > binds an unmapped window to the available local workspace before remote fallback [448.13ms]"
+      ]
+    },
+    {
+      "path": "packages/shared/src/__tests__/interceptor-packaging-contract.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01207-10c58abdd582/output.log",
+      "logSha256": "a834d8476e2c5931299d7400eccbbbab97e52bbe86a15b8ca37c5f6368ea195a",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toContain(expected)",
+        "(fail) interceptor packaging contract > includes interceptor-request-utils.ts in all packaging manifests/scripts [0.66ms]"
+      ]
+    },
+    {
+      "path": "packages/shared/src/credentials/__tests__/secure-storage-migration.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01406-093cb8e52cb6/output.log",
+      "logSha256": "487fe5d1ff1ea6668fb7a632508070bbb84b78ba4be373e24f546b0aa9bdf190",
+      "testCounts": {
+        "pass": 6,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: ",
+        "(fail) SecureStorageBackend controlled migrations > keeps cached reads on atomic apply failure [39.89ms]"
+      ]
+    },
+    {
+      "path": "packages/shared/src/skills/__tests__/bundled.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01645-7f2ad1d164d3/output.log",
+      "logSha256": "ccf32ff76730ad68e31276b8bd8749c8a82d76ca0986180c2cb05178122985b4",
+      "testCounts": {
+        "pass": 9,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toBeUndefined()",
+        "(fail) bundled packs end-to-end (real bundle, synthetic HOME) > ensureBundledSkills installs the vendored packs and loadAllSkills discovers them [1840.59ms]"
+      ]
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/installer.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01693-de88d6757de6/output.log",
+      "logSha256": "94c90d87c712a004a04167a2188b0cb90b24e9fcfbdaa5e1e12d8b5d01fcee82",
+      "testCounts": {
+        "pass": 10,
+        "fail": 1,
+        "skip": 2
+      },
+      "errorLines": [
+        "error: Executable not found in $PATH: \"unzip\"",
+        "(fail) installer > extract zip: раскладывает дерево [1.54ms]"
+      ]
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/kinds.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01694-c3a857e2da7d/output.log",
+      "logSha256": "b4cdf08b33618d7167cbac9649a8d21c7d80b09025bb19741aa790c26e48244e",
+      "testCounts": {
+        "pass": 13,
+        "fail": 2,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toBe(expected)",
+        "(fail) kinds: tier-фильтр ensureAll > core ставится всегда; default-on — если не disabled; opt-in — никогда [15.13ms]",
+        "error: expect(received).toBe(expected)",
+        "(fail) kinds: tier-фильтр ensureAll > disabled=['fzf']: default-on из списка пропускается, core ставится; очистка списка доустанавливает [2.49ms]"
+      ]
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/manager.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01695-02fbcfc87359/output.log",
+      "logSha256": "4a0496e67036e790b88acf0917f430bceb0aee9132fb439381edaaae75be6f04",
+      "testCounts": {
+        "pass": 7,
+        "fail": 6,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toBe(expected)",
+        "(fail) manager status transitions > missing -> downloading -> installing -> ready; state.json персистится [21.44ms]",
+        "error: expect(received).toBe(expected)",
+        "(fail) manager status transitions > повторный ensureAll ничего не ставит (актуальная версия) [9.58ms]",
+        "ENOENT: no such file or directory, rm '/tmp/tc-mgr-goFygK/cfg-2/toolchain/jq/1.0.0/bin/demo'",
+        "(fail) manager status transitions > repairs an installed version whose catalog executable is missing [4.22ms]",
+        "error: expect(received).toBe(expected)",
+        "(fail) manager status transitions > bump версии в манифесте -> outdated -> переустановка -> ready [3.59ms]"
+      ]
+    },
+    {
+      "path": "scripts/rox-readiness-ui-001.runner.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01824-3a720cc5ecb6/output.log",
+      "logSha256": "f88aaea2c26b3dcde309b99ebf2a21fec1d95e0359ecd7080c46d5767f219c0b",
+      "testCounts": {
+        "pass": 18,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: expect(received).toBe(expected)",
+        "(fail) UI-001 repository test runner > the whole-suite guard terminates a synchronously blocked child tree and retains later coverage [5657.40ms]"
+      ]
+    },
+    {
+      "path": "tests/e2e/meeting-agents/bootstrap-permissions.spec.ts",
+      "runner": "playwright",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01827-4c8325d2c4b1/output.log",
+      "logSha256": "e304ee6ea16d4d2283ce94e9ec6d3b5be1b621bbb591bfd48d62210c52b54497",
+      "testCounts": null,
+      "errorLines": [
+        "SyntaxError: TypeScript parameter property is not supported in strip-only mode",
+        "Error: No tests found."
+      ]
+    },
+    {
+      "path": "tests/e2e/meeting-agents/harness.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01828-e5e823e2aa70/output.log",
+      "logSha256": "a96a7be829695525198a5eb8731ddbd267e0d55f498993f1d9c51610b16b0d2f",
+      "testCounts": {
+        "pass": 7,
+        "fail": 3,
+        "skip": 0
+      },
+      "errorLines": [
+        "(fail) meeting-agents harness (#385) > bootMeetingApp starts a live Electron pid on an isolated profile [24.30ms]",
+        "(fail) meeting-agents harness (#385) > restart reopens the same profileDir and keeps storage [10.59ms]",
+        "(fail) meeting-agents harness (#385) > dispose stops Electron and removes only the owned temp profile [5.46ms]"
+      ]
+    },
+    {
+      "path": "tests/e2e/meeting-agents/lifecycle.spec.ts",
+      "runner": "playwright",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01829-54f726000d52/output.log",
+      "logSha256": "e304ee6ea16d4d2283ce94e9ec6d3b5be1b621bbb591bfd48d62210c52b54497",
+      "testCounts": null,
+      "errorLines": [
+        "SyntaxError: TypeScript parameter property is not supported in strip-only mode",
+        "Error: No tests found."
+      ]
+    },
+    {
+      "path": "tests/e2e/product-tour/product.application.spec.ts",
+      "runner": "playwright",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01830-927f37188f29/output.log",
+      "logSha256": "f9ac0430f244a97b364512f1bb301073b59b5cefbcc8110a60e04f8c35ea8cdc",
+      "testCounts": null,
+      "errorLines": []
+    },
+    {
+      "path": "tests/e2e/product-tour/product.native.spec.ts",
+      "runner": "playwright",
+      "status": "failed",
+      "baselineStatus": "new-suite",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01831-f044cd317494/output.log",
+      "logSha256": "95ba9571d03805b4ca070d39bc6a106a8905a88f1c45352d510978208478fba7",
+      "testCounts": null,
+      "errorLines": [
+        "Error: No tests found."
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01-auth-postgres.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01853-9984aadcb83b/output.log",
+      "logSha256": "d5e3f5dd7a9d82e92f603fd1faf8566cb55a3d54ca4417f0bf511de169b568b1",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) (unnamed) [2.28ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01-authority-crash.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01855-00e3521eeaee/output.log",
+      "logSha256": "d9e998b7e3937cf7387f1c8b45b398f0f54d476b7455f9f357ce8b8f41ebe612",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) (unnamed) [12.73ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01-http.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01856-e43a76072bd9/output.log",
+      "logSha256": "32f64c5ff5e5f3cec4b2586e592da194968c0264093378ca89da992134514b1c",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) (unnamed) [1.30ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01-native-routing.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01858-c23c345ea3fc/output.log",
+      "logSha256": "e43510a78d259392535f9838d9cdb3f1e0b2c37efeaa9f485abaf2760e3fa012",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) (unnamed) [3.00ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01-observability.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01859-89aab0ce00b2/output.log",
+      "logSha256": "de1c9ec7bc3adf87161ffe2542b22e4a306d02ff01b1e7d549db3de2ba4f3d7e",
+      "testCounts": {
+        "pass": 0,
+        "fail": 3,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) fixed counters follow actual committed/replayed/conflicting SQL branches; rollback never reports applied [3.66ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) consumer exception rolls back effect/inbox/watermark; retry and exhausted inbox dedup are measured from durable state [0.44ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) actual source CLI emits host-only fixed aggregates after graceful drain and resets process counters on restart [0.45ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01-offline.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01860-a4058126afa7/output.log",
+      "logSha256": "ce809834d69612a807510238ca66b0c0365caeff8898196d215880dcb71509ab",
+      "testCounts": {
+        "pass": 0,
+        "fail": 9,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) actual encrypted queue persists before send; SIGKILL/new process/offline reload retain IDs, payload and verified scope; explicit retry applies once [5.46ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) real accepted WS response cut + main SIGKILL retains uncertain intent; fresh process recovers exact original receipt without duplicate [1.17ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) offline cancellation survives process restart; conflicting drafts cannot replace immutable pending bytes or IDs [1.44ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) live session revoke blocks retry durably without send; fresh same-user or other-principal sessions cannot view/replay old intent [2.31ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01-response-schema.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01861-26525e116d61/output.log",
+      "logSha256": "a5cd4a5c5a9d57904d17956d23c946ef7c1e6697714c0d5109801916c7c4ac46",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) (unnamed) [9.96ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01-runtime.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01862-16e641e7f560/output.log",
+      "logSha256": "7c54702be3273a7741e4c16f9db79761a35435d08b65c9d3e77522eebef0a613",
+      "testCounts": {
+        "pass": 5,
+        "fail": 5,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) WP-01 protected service runtime and actual subprocess persistence > actual source CLI provisions crypto accounts; WS and HTTP share authority; key/receipt/cursor survive full restart [2.17ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) WP-01 protected service runtime and actual subprocess persistence > SIGTERM keeps a command blocked on the real PostgreSQL transaction gate alive; release persists one durable receipt [2.38ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) WP-01 protected service runtime and actual subprocess persistence > trusted issuer has no credential fallback and pinned loopback JWKS verifies existing persisted sessions [0.79ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) WP-01 protected service runtime and actual subprocess persistence > actual HTTPS listener permits non-loopback binding only with protected TLS material and explicit public issuer keys [1.69ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01-server.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01863-13bac6a6f68f/output.log",
+      "logSha256": "54da57bd02deb17d559a9e96bf10e7c8f10cf859b96894a5ab3bd061447875d0",
+      "testCounts": {
+        "pass": 0,
+        "fail": 10,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > WS creates a canonical private project that the same HTTP authority reads; B and outsider receive no title [1.37ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > outsider/forged handshakes and command actor/workspace injection cannot obtain authority [0.63ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > cross-transport concurrent retries and full listener/pool restart retain key, project, receipt and replay cursor [6.79ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > durable session revocation denies an existing WS client and HTTP receipt replay after restart [2.15ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01-service-crash.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01864-a145c07ca673/output.log",
+      "logSha256": "b98b1a74a80e374bd46913fca5f7b4e4539868265edc64ac5ac8e2daea2553f6",
+      "testCounts": {
+        "pass": 0,
+        "fail": 3,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) WP-01 actual service process dies after SQL commit and before private reply > fresh process retains receipt/key/cursor; concurrent HTTP/WS retries create no duplicate and durable consumer applies once [4.02ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) WP-01 actual service process dies after SQL commit and before private reply > revoked persisted session cannot recover a private receipt after restart; new real login recovers exactly the original receipt [2.02ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) WP-01 actual service process dies after SQL commit and before private reply > current membership removal denies receipt/project/event replay despite a valid old signed session after restart [0.65ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01-transport.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01865-dbf7b76c9d27/output.log",
+      "logSha256": "8786b54a2520288a852e3f87b9ee2e24a0720dc538ed5c5e1aea387f1d4f4893",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) (unnamed) [1.03ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-01.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01866-7b296c079dfe/output.log",
+      "logSha256": "dc5c3045b242ad9c957f5adb86f9499389df4bba8749a10aa1d31e64dc864669",
+      "testCounts": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) (unnamed) [3.14ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-48-domain.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01869-b57f5dd63455/output.log",
+      "logSha256": "411f40dd827608d4074c2862dded82f8e6cb05b97649bb1daf3d66b35b0178a9",
+      "testCounts": {
+        "pass": 0,
+        "fail": 17,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) actual checker persists review_required through canonical HTTP/WS, receipt and atomic reference event [7.11ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) real member/outsider and forged actor/workspace/approval/path cannot cross Resource boundary [4.00ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) concurrent idempotency, full listener restart and authorized event cursor recover one original receipt [3.27ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) server-side read/write/action grants independently deny audit and retract evidence [5.21ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native-policy.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01871-58b9c2e4cbe7/output.log",
+      "logSha256": "8d3d332841d5d74bd5c6b23577eda18d991169f133bd2aaeeca11bf6a9200419",
+      "testCounts": {
+        "pass": 0,
+        "fail": 18,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) actual checker persists review_required through canonical HTTP/WS, receipt and atomic reference event [11.13ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) real member/outsider and forged actor/workspace/approval/path cannot cross Resource boundary [0.81ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) concurrent idempotency, full listener restart and authorized event cursor recover one original receipt [1.01ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) server-side read/write/action grants independently deny audit and retract evidence [2.52ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-48-native-service.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01872-c5ba077be309/output.log",
+      "logSha256": "66fdd7ae48cd0593260703b13c0e35097782be5e4825748191a0b22d88c70000",
+      "testCounts": {
+        "pass": 0,
+        "fail": 18,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) actual checker persists review_required through canonical HTTP/WS, receipt and atomic reference event [5.23ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) real member/outsider and forged actor/workspace/approval/path cannot cross Resource boundary [4.46ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) concurrent idempotency, full listener restart and authorized event cursor recover one original receipt [2.73ms]",
+        "error: Protected workspace PostgreSQL configuration unavailable",
+        "(fail) server-side read/write/action grants independently deny audit and retract evidence [1.12ms]"
+      ]
+    },
+    {
+      "path": "tests/macro-integration/wp-48-runtime-archives.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "passed",
+      "suiteSourceUnchanged": true,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01875-44fdba7ada67/output.log",
+      "logSha256": "0aed00b2db57890e2793673168ba09fd541a125107fd18e3f131bd62351114c1",
+      "testCounts": {
+        "pass": 2,
+        "fail": 2,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Executable not found in $PATH: \"zip\"",
+        "(fail) reads exact regular ZIP binary member without filesystem extraction [4.41ms]",
+        "error: Executable not found in $PATH: \"zip\"",
+        "(fail) rejects binary ZIP member symlink and malformed ZIP bytes [0.49ms]"
+      ]
+    },
+    {
+      "path": "tests/rox-suite/focus-native-ack.test.ts",
+      "runner": "bun",
+      "status": "failed",
+      "baselineStatus": "failed",
+      "suiteSourceUnchanged": false,
+      "log": "work/ui001-linux-final-complete-K2Dvku/01878-727844ccb1a8/output.log",
+      "logSha256": "cba1252000db68c43ff64b1c7caa5eccd3ab99144892d18246ac2bb5556fc34f",
+      "testCounts": {
+        "pass": 2,
+        "fail": 1,
+        "skip": 0
+      },
+      "errorLines": [
+        "error: Native personal task storage unavailable",
+        "(fail) RS-FOCUS-01 canonical native acknowledgement > the shared bridge waits, preserves failure draft identity, retries unknown ACK without duplicates, and reloads native persistence [1.99ms]"
+      ]
+    }
+  ],
+  "qualifiedSupplementaryResultsSeparate": true,
+  "fullDoDClosed": false
+}

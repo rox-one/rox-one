@@ -592,9 +592,14 @@ Branch `codex/rox-ui-dev-loop-20260901` at `1f56af31d3658ee9880105361ad5312324f3
 The default legacy Markdown engine and official engine must preserve content across parse/edit/export/reopen. Recover the source's portable `:::rox-columns`/`:::rox-column` syntax with validated normalized widths, support the previous slash-menu `:::columns 2/3` aliases, and preserve Obsidian `[!spoiler]-`/`[!details]+` markers without escaping away their meaning. Fold preferences are scoped by workspace/document and separate from Markdown. Read-only callout/resize interactions cannot change document content. Preserve newer comments, mixed task-list handling, trailing nodes, controlled echoes and no-save authority flips. Labels exist in all 12 current locales. Source tests/builds establish bounded integration; native visual interaction acceptance remains separately verifiable.
 
 
+## UI-001 source repair and main integration — 2026-10-03
+
+The user authorized complete source repair and GitHub merge into main. See [continuation specification](final-readiness/execution/cloud/OWNER-UI-001/continuation-spec.md) for exact address preservation, workspace safety, executor isolation and owned worker dependencies. All original UI-001 requirements and platform acceptance remain unchanged.
+
 ## UI-001: внешние ссылки и интеграция в main — 2026-10-03
 
 Владелец: `fix/ui-001-main-integration-20261003-7`. [UI-001 спецификация](final-readiness/execution/cloud/OWNER-UI-001/main-integration/spec.md) сохраняет исходную матрицу UI-001.1/UI-001.2 и явное разрешение пользователя на GitHub/merge. Другие разделы и рабочие копии сохраняются.
+
 
 # Credential locator boundary validation — 2026-10-03
 
@@ -862,14 +867,26 @@ Owner recent_features. Recover source1464 through the current OmpAgent. Startup 
 
 Owner: historical_sweep; root reviews/merges. Preserve frozen #1444 c2e8f07b5cb8a1b1659781e1fe4dd4d0f0207727 and the current scoped read-only journal/own-descriptor privacy contract. Passive tool/provider/native/background observations bind to their captured run origin; reused IDs, late completions, failed begin and idle eviction cannot attribute old output to a successor. Ambiguity drops correlation and reports partial coverage. Persisted rows cannot widen workspace or ancestry scope. Secret redaction covers quoted and serialized environment/header credentials and masks secrets registered after storage during readback. Explicit artifact output refs project evidence without guessing completion from paths/text. Launch/output metadata is passive and grants no execution or credentials. Real SessionManager/gateway/TaskRunner/native producers are a separate pr_scout dependency; preserve current SSO suppliedExecution and captured authority binding. Renderer late additions are a separate historical dependency. This bounded collector qualification is 53 tests/247 assertions plus core/server-core Node22 types; installed/live provider/full runtime acceptance remains separate. Evidence: integration-history/runtime-trace-origin-recovery-20261004.
 
+## UI-001 qualified final integration — 2026-10-04
+
+Original UI-001.1 and UI-001.2 task objects are compared byte-semantically with input `76228cc33e44518e5fab5e59f5c754f4051d1e8c`. Requirements, DoD, Full functional verification and Test method remain unchanged. The current authorization includes complete source repair, GitHub publication and merge to main.
+
+Restore the requested workspace/entity/address through restart, malformed or missing targets, actual Back/Forward and concurrent workspace/remote-owner changes. A stale or foreign continuation cannot select an unrelated chat, write metadata to another owner, send, rename, delete or reopen an obsolete entity. Valid current callbacks still succeed. Geometry reads/writes and queued storage events retain bounded finite sizes and recover from refused storage.
+
+Qualification also repairs concrete prerequisites discovered by complete source-test execution: real Linux unreaped-run reconciliation, own transport-property validation, bounded secure-storage CLI calls, complete immutable test inventory and real Node process-tree capture, dedicated native test configuration and native startup diagnostics. A Windows state-owner check must use the actual Windows identity rather than a missing POSIX UID, retain foreign-owner refusal, and leave the original firstWindow deadline unchanged.
+
+The authoritative result is `result.json`, with immutable source hashes in `source-manifest-v3.json` and curated safe receipts in `verification/final-integration-20261004/`. Actual original full execution remains 1881 files /1775 passed /70 failed /36 blocked; each original log hash is verified and private raw logs are preserved. Separate qualified replays are not substituted into that completed result. Installed Windows10/11, macOS Retina/native overlay and actual hosted application acceptance remain explicit prerequisites, so `fullDoDClosed` remains false.
+
 ## Late UI1448 runtime edges — 2026-10-04
 
 Owner root; source e572 frozen. Recover four production paths: own-property RPC serialization/admission, bounded OS credential-provider calls, conservative queued runner liveness and preservation of terminal outcomes during async probes, and static fingerprinted Product Learning CI build. Keep current account/immediateHistory/unavailable-workspace authority. Worker recent_features separately owns manager physical-copy and whole-suite runner custody; full native OS/cloud/CI DoD remains separate. Proof uses private synthetic providers/process probes plus actual local subprocess conformance.
 
 
+
 ## Runtime Map context and navigation extension — 2026-10-04
 
 Owner historical_sweep; dependency merged collector1485 and current read-only Runtime RPC/ingress. Recover frozen #1444 c2e8 context groups using each observed agent/snapshot identity, safe public metadata export with scoped aliases, stable measured overview, lazy chunk retry without remounting chat, requested historic event selection and observed catalog lifecycle phases. Presentation and navigation never grant runtime actions or synthesize execution evidence. Preserve current SSO account/workspace ownership,1471 immediate-history lease release, Product Learning roots and all locale keys. Bounded qualification: actual renderer/journal19/0 including native Chromium200% zoom, mounted NavigationProvider39/0, projection/layout/catalog/link29/0, all12 locale/helper282/0, actual parser/routing34/0 (logger-only fixture), full Electron/WebUI types and current renderer build. Retain genuine grouped-context before failure and fixture/platform/browser failures. Evidence: integration-history/runtime-map-context-navigation-20261004. Actual producer custody and installed/live-provider acceptance remain separate.
+
 
 ### Selected skill instructions custody recovery — 2026-10-04
 

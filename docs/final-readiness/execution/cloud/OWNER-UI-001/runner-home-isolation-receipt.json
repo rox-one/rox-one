@@ -1,0 +1,445 @@
+{
+  "schemaVersion": 1,
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "workerTask": "regression_scout",
+  "kind": "per-suite-home-isolation-and-managed-test-relocation-verification",
+  "observedAt": "2026-10-03T19:03:05.486Z",
+  "source": {
+    "head": "a378ba7d0e3b66b0ead2454db6b1b421073af138",
+    "mergeHead": "42034d8deb617630f923be8f61b33c72c05ed782",
+    "state": "420 no-commit integration; proof bound to owned file hashes and current tree, lead commits after handback",
+    "ownedChangedPaths": [
+      "scripts/test-all.ts",
+      "scripts/rox-readiness-ui-001.runner.test.ts",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/runner-home-isolation-receipt.json"
+    ],
+    "files": [
+      {
+        "path": "scripts/test-all.ts",
+        "sha256": "5f0fec62a94391f61ccbe9e9058d87394bdcf2b6ce774f5fa1c81b16bf61eeeb"
+      },
+      {
+        "path": "scripts/rox-readiness-ui-001.runner.test.ts",
+        "sha256": "96ba1a2dcc277d8c69fde699283967c7eb440ff8e600c9ef4de956c126f94af1"
+      }
+    ]
+  },
+  "problem": "runSuites discovered managed-skills-installation.isolated.ts directly, while only its standard wrapper established a synthetic HOME. Direct homedir() cleanup could affect caller skill directories.",
+  "implementation": {
+    "everyDiscoveredSuitePreserved": true,
+    "freshHomePerSuite": true,
+    "homeEnvironmentKeys": [
+      "HOME",
+      "USERPROFILE",
+      "XDG_CONFIG_HOME",
+      "XDG_CACHE_HOME",
+      "XDG_DATA_HOME",
+      "APPDATA",
+      "LOCALAPPDATA"
+    ],
+    "homeDirectoriesMode": "0700",
+    "canonicalConfigAliasesPreserved": [
+      "ROX_CONFIG_DIR",
+      "CRAFT_CONFIG_DIR"
+    ],
+    "integrationAndRuntimeEnvironmentPreserved": [
+      "ROX_WORKSPACE_TEST_CONFIG",
+      "PATH",
+      "ROX_TEST_VITEST_NODE_EXECUTABLE",
+      "PLAYWRIGHT_BROWSERS_PATH"
+    ],
+    "callerEnvironmentUnmodified": true,
+    "testMayOverrideItsOwnEnvironment": true,
+    "reportField": "results[].homeRoot",
+    "original17CasesAndAssertionsRetained": true,
+    "meaningfulNewRegression": "Two actual directly discovered isolated children clean their own bundle dirs, preserve a synthetic caller sentinel, use disjoint real homedir() paths and retain protected integration/executor/browser paths."
+  },
+  "failureHistory": [
+    {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-home-isolation-red.log",
+      "sha256": "93073e4a58c3dbe809f148a92060a94a79d386b624a47ef017db93cc90c8a482",
+      "exitCode": 1,
+      "counts": {
+        "pass": 0,
+        "fail": 1,
+        "filtered": 17,
+        "expect": 3
+      },
+      "reason": "Old source removes the synthetic caller sentinel during isolated beforeEach; actual user HOME was never supplied to this replay."
+    },
+    {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-home-isolation-typecheck.log",
+      "sha256": "d4070f8723e66c22cb264c90eb43f51d1d6c66e55f3e620e77507c5184e6bc13",
+      "exitCode": 2,
+      "reason": "New test environment spread inferred no PATH index member; explicit NodeJS.ProcessEnv annotation corrected only fixture typing."
+    }
+  ],
+  "validation": [
+    {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-home-isolation-green.log",
+      "sha256": "150801a4dcb8c74e8d336d29ed27323b1bb55c5fdde47995f1cbc92cb970e4e6",
+      "exitCode": 0,
+      "counts": {
+        "pass": 18,
+        "fail": 0,
+        "expect": 111
+      }
+    },
+    {
+      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-home-isolation-typecheck-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exitCode": 0,
+      "command": "qualified Node24.21.0 node_modules/typescript/bin/tsc --noEmit --target ESNext --module ESNext --moduleResolution bundler --allowImportingTsExtensions --skipLibCheck --types bun scripts/test-all.ts scripts/rox-readiness-ui-001.runner.test.ts"
+    },
+    {
+      "commandLog": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-home-isolation-qualified.log",
+        "sha256": "0b8bc980ff53b3e2fb44aca561102df98be5a64737ac61c629258b78acee1bca"
+      },
+      "report": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-home-isolation-qualified-results/run-ZsPQkN/report.json",
+        "sha256": "9b4e3a8571e2d529c0ed8a77860a3245ab006c77ab3a2f4f095e9c3e2adabd78"
+      },
+      "input": {
+        "head": "a378ba7d0e3b66b0ead2454db6b1b421073af138",
+        "trackedDiffSha256": "2f766446df116043103c7420b3e7b6b3ba054d488a6d884f82df626a41828d45",
+        "manifestSha256": "ec87a5ea25af626653cbbbf22ee5fd19e492956d24474439ea0ffd6db1e25aa0",
+        "runnerSha256": "5f0fec62a94391f61ccbe9e9058d87394bdcf2b6ce774f5fa1c81b16bf61eeeb",
+        "bunVersion": "1.3.14",
+        "nodeVersion": "v24.21.0"
+      },
+      "summary": {
+        "expected": 1,
+        "completed": 1,
+        "passed": 1,
+        "failed": 0,
+        "blocked": 0
+      },
+      "suitePath": "scripts/rox-readiness-ui-001.runner.test.ts",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/bun/bin/bun.exe",
+        "test",
+        "./scripts/rox-readiness-ui-001.runner.test.ts",
+        "--timeout",
+        "30000"
+      ],
+      "testCounts": {
+        "pass": 18,
+        "fail": 0,
+        "skip": 0
+      },
+      "expectations": 111,
+      "homeRoot": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-home-isolation-qualified-results/run-ZsPQkN/00001-3a720cc5ecb6/home",
+      "homeMode": "0700",
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-P55UyB",
+      "executionLog": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-runner-home-isolation-qualified-results/run-ZsPQkN/00001-3a720cc5ecb6/output.log",
+        "sha256": "396c61854c15479b65bde060ae2d46a9dae605070017b2cfb5fac2f62d460b44"
+      }
+    },
+    {
+      "commandLog": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-relocation-qualified.log",
+        "sha256": "db3a5c24d6df122bd91c60ea703cb18383c6388adeaa904b820134d476126b56"
+      },
+      "report": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-relocation-qualified-results/run-p7r0Lx/report.json",
+        "sha256": "d2de860deb6eb315b3df60dc5a2cab579dbcde641be50da0490cfde7f2ab8271"
+      },
+      "input": {
+        "head": "a378ba7d0e3b66b0ead2454db6b1b421073af138",
+        "trackedDiffSha256": "2f766446df116043103c7420b3e7b6b3ba054d488a6d884f82df626a41828d45",
+        "manifestSha256": "59d564a122e0a3f1d1b6cf547c070bcde79cc8258cea9b11c8b10c8c94d9e138",
+        "runnerSha256": "5f0fec62a94391f61ccbe9e9058d87394bdcf2b6ce774f5fa1c81b16bf61eeeb",
+        "bunVersion": "1.3.14",
+        "nodeVersion": "v24.21.0"
+      },
+      "summary": {
+        "expected": 1,
+        "completed": 1,
+        "passed": 1,
+        "failed": 0,
+        "blocked": 0
+      },
+      "suitePath": "packages/server-core/src/handlers/rpc/__tests__/managed-skills-installation.isolated.ts",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/bun/bin/bun.exe",
+        "test",
+        "./packages/server-core/src/handlers/rpc/__tests__/managed-skills-installation.isolated.ts",
+        "--timeout",
+        "30000"
+      ],
+      "testCounts": {
+        "pass": 12,
+        "fail": 0,
+        "skip": 0
+      },
+      "expectations": 108,
+      "homeRoot": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-relocation-qualified-results/run-p7r0Lx/00001-e08311b00fe7/home",
+      "homeMode": "0700",
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-hmwwwf",
+      "executionLog": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-relocation-qualified-results/run-p7r0Lx/00001-e08311b00fe7/output.log",
+        "sha256": "3d3b64cd574fb5c7d2fd2dffa29f24d5d4082393478bee74eb3012e633690b00"
+      }
+    },
+    {
+      "commandLog": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-wrapper-qualified.log",
+        "sha256": "66a6aa8b759ab7e7189111269f22ca838e46693581f3bd984595b4197398a933"
+      },
+      "report": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-wrapper-qualified-results/run-456q6N/report.json",
+        "sha256": "78f71262c49f9eb4a90d57de4fe1d4d63276cc9e3663e054b9b2588239404d43"
+      },
+      "input": {
+        "head": "a378ba7d0e3b66b0ead2454db6b1b421073af138",
+        "trackedDiffSha256": "2f766446df116043103c7420b3e7b6b3ba054d488a6d884f82df626a41828d45",
+        "manifestSha256": "696c888ab3412829835f5f748b897a5060415801dc56da672c201a4ae1eeaf76",
+        "runnerSha256": "5f0fec62a94391f61ccbe9e9058d87394bdcf2b6ce774f5fa1c81b16bf61eeeb",
+        "bunVersion": "1.3.14",
+        "nodeVersion": "v24.21.0"
+      },
+      "summary": {
+        "expected": 1,
+        "completed": 1,
+        "passed": 1,
+        "failed": 0,
+        "blocked": 0
+      },
+      "suitePath": "packages/shared/src/skills/__tests__/managed-installation.test.ts",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/bun/bin/bun.exe",
+        "test",
+        "./packages/shared/src/skills/__tests__/managed-installation.test.ts",
+        "--timeout",
+        "30000"
+      ],
+      "testCounts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      },
+      "expectations": 4,
+      "homeRoot": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-wrapper-qualified-results/run-456q6N/00001-9cd294ae56c1/home",
+      "homeMode": "0700",
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-a6sOBD",
+      "executionLog": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-wrapper-qualified-results/run-456q6N/00001-9cd294ae56c1/output.log",
+        "sha256": "b2e51566e9397674b49a2fd9fbbec6b655777db8bf36aaf25888850ee020e490"
+      }
+    }
+  ],
+  "relocation": {
+    "oldRevision": "8e4e56bedbc4a17c3c36b9772aaf45bc5b999135",
+    "incomingRevision": "79fa5274315941f66ea26975551c66580e6036cd",
+    "oldPath": "packages/shared/src/skills/__tests__/managed-installation.isolated.ts",
+    "newPath": "packages/server-core/src/handlers/rpc/__tests__/managed-skills-installation.isolated.ts",
+    "oldSha256": "4ab6c546d3e93c529113066bddb68e1b4f7ece780d282be524cfbc22e2b08551",
+    "newSha256": "9b931f97b10e9d4787d52dc417878feb0e943e84f1129c3315df74487c8daed7",
+    "gitSimilarity": "R061",
+    "byteIdentical": false,
+    "originalCases": 8,
+    "allOriginalCasesRetained": true,
+    "all49OriginalExpectAssertionsRetained": true,
+    "sevenOriginalBodiesIdentical": true,
+    "expandedActualCases": 12,
+    "currentExpectCallsites": 79,
+    "coverageOmission": false,
+    "retained": [
+      {
+        "originalTitle": "duplicate bundled packs and a user skill coexist; actual agent mentions resolve each app path",
+        "currentTitle": "duplicate bundled packs and a user skill coexist; agent mentions and native file actions resolve each app path",
+        "originalAssertions": 7,
+        "currentAssertions": 10,
+        "allOriginalAssertionsRetained": true,
+        "bodyIdentical": false,
+        "currentLine": 38
+      },
+      {
+        "originalTitle": "qualified aliases remain stable across restart, upgrades, owner removal and local edits",
+        "currentTitle": "qualified aliases remain stable across restart, upgrades, owner removal and local edits",
+        "originalAssertions": 5,
+        "currentAssertions": 5,
+        "allOriginalAssertionsRetained": true,
+        "bodyIdentical": true,
+        "currentLine": 67
+      },
+      {
+        "originalTitle": "disabling an app pack removes only its links and never hides a foreign skill with the same name",
+        "currentTitle": "disabling an app pack removes only its links and never hides a foreign skill with the same name",
+        "originalAssertions": 6,
+        "currentAssertions": 6,
+        "allOriginalAssertionsRetained": true,
+        "bodyIdentical": true,
+        "currentLine": 86
+      },
+      {
+        "originalTitle": "a failed external link leaves app discovery functional and dangling foreign links untouched",
+        "currentTitle": "a failed external link leaves app discovery functional and dangling foreign links untouched",
+        "originalAssertions": 6,
+        "currentAssertions": 6,
+        "allOriginalAssertionsRetained": true,
+        "bodyIdentical": true,
+        "currentLine": 104
+      },
+      {
+        "originalTitle": "marketplace defaults to the app store; aliases preserve pins, updates and uninstall ownership",
+        "currentTitle": "marketplace defaults to the app store; aliases preserve pins, updates and uninstall ownership",
+        "originalAssertions": 8,
+        "currentAssertions": 8,
+        "allOriginalAssertionsRetained": true,
+        "bodyIdentical": true,
+        "currentLine": 120
+      },
+      {
+        "originalTitle": "updating a marketplace pack removes untouched dropped skills and preserves edited dropped skills",
+        "currentTitle": "updating a marketplace pack removes untouched dropped skills and preserves edited dropped skills",
+        "originalAssertions": 7,
+        "currentAssertions": 7,
+        "allOriginalAssertionsRetained": true,
+        "bodyIdentical": true,
+        "currentLine": 137
+      },
+      {
+        "originalTitle": "unsafe names and checkout symlinks fail without reading or modifying external skill files",
+        "currentTitle": "unsafe names and checkout symlinks fail without reading or modifying external skill files",
+        "originalAssertions": 6,
+        "currentAssertions": 6,
+        "allOriginalAssertionsRetained": true,
+        "bodyIdentical": true,
+        "currentLine": 151
+      },
+      {
+        "originalTitle": "uninstall preserves a replaced target symlink and the foreign directory it points at",
+        "currentTitle": "uninstall preserves a replaced target symlink and the foreign directory it points at",
+        "originalAssertions": 4,
+        "currentAssertions": 4,
+        "allOriginalAssertionsRetained": true,
+        "bodyIdentical": true,
+        "currentLine": 168
+      }
+    ],
+    "added": [
+      {
+        "title": "directory-mode packs expose every nested skill with stable qualified identities even without links",
+        "assertionStatements": 10,
+        "expectCallsites": 10,
+        "line": 181
+      },
+      {
+        "title": "`failed ${variant} directory-pack update restores exact provenance, aliases, content and links when lock commit fails`",
+        "assertionStatements": 17,
+        "expectCallsites": 17,
+        "line": 199,
+        "loopVariants": [
+          "swapped",
+          "locally-modified",
+          "unmarked-legacy"
+        ]
+      }
+    ],
+    "actualDirectExecution": {
+      "commandLog": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-relocation-qualified.log",
+        "sha256": "db3a5c24d6df122bd91c60ea703cb18383c6388adeaa904b820134d476126b56"
+      },
+      "report": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-relocation-qualified-results/run-p7r0Lx/report.json",
+        "sha256": "d2de860deb6eb315b3df60dc5a2cab579dbcde641be50da0490cfde7f2ab8271"
+      },
+      "input": {
+        "head": "a378ba7d0e3b66b0ead2454db6b1b421073af138",
+        "trackedDiffSha256": "2f766446df116043103c7420b3e7b6b3ba054d488a6d884f82df626a41828d45",
+        "manifestSha256": "59d564a122e0a3f1d1b6cf547c070bcde79cc8258cea9b11c8b10c8c94d9e138",
+        "runnerSha256": "5f0fec62a94391f61ccbe9e9058d87394bdcf2b6ce774f5fa1c81b16bf61eeeb",
+        "bunVersion": "1.3.14",
+        "nodeVersion": "v24.21.0"
+      },
+      "summary": {
+        "expected": 1,
+        "completed": 1,
+        "passed": 1,
+        "failed": 0,
+        "blocked": 0
+      },
+      "suitePath": "packages/server-core/src/handlers/rpc/__tests__/managed-skills-installation.isolated.ts",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/bun/bin/bun.exe",
+        "test",
+        "./packages/server-core/src/handlers/rpc/__tests__/managed-skills-installation.isolated.ts",
+        "--timeout",
+        "30000"
+      ],
+      "testCounts": {
+        "pass": 12,
+        "fail": 0,
+        "skip": 0
+      },
+      "expectations": 108,
+      "homeRoot": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-relocation-qualified-results/run-p7r0Lx/00001-e08311b00fe7/home",
+      "homeMode": "0700",
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-hmwwwf",
+      "executionLog": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-relocation-qualified-results/run-p7r0Lx/00001-e08311b00fe7/output.log",
+        "sha256": "3d3b64cd574fb5c7d2fd2dffa29f24d5d4082393478bee74eb3012e633690b00"
+      }
+    },
+    "actualWrapperExecution": {
+      "commandLog": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-wrapper-qualified.log",
+        "sha256": "66a6aa8b759ab7e7189111269f22ca838e46693581f3bd984595b4197398a933"
+      },
+      "report": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-wrapper-qualified-results/run-456q6N/report.json",
+        "sha256": "78f71262c49f9eb4a90d57de4fe1d4d63276cc9e3663e054b9b2588239404d43"
+      },
+      "input": {
+        "head": "a378ba7d0e3b66b0ead2454db6b1b421073af138",
+        "trackedDiffSha256": "2f766446df116043103c7420b3e7b6b3ba054d488a6d884f82df626a41828d45",
+        "manifestSha256": "696c888ab3412829835f5f748b897a5060415801dc56da672c201a4ae1eeaf76",
+        "runnerSha256": "5f0fec62a94391f61ccbe9e9058d87394bdcf2b6ce774f5fa1c81b16bf61eeeb",
+        "bunVersion": "1.3.14",
+        "nodeVersion": "v24.21.0"
+      },
+      "summary": {
+        "expected": 1,
+        "completed": 1,
+        "passed": 1,
+        "failed": 0,
+        "blocked": 0
+      },
+      "suitePath": "packages/shared/src/skills/__tests__/managed-installation.test.ts",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/bun/bin/bun.exe",
+        "test",
+        "./packages/shared/src/skills/__tests__/managed-installation.test.ts",
+        "--timeout",
+        "30000"
+      ],
+      "testCounts": {
+        "pass": 1,
+        "fail": 0,
+        "skip": 0
+      },
+      "expectations": 4,
+      "homeRoot": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-wrapper-qualified-results/run-456q6N/00001-9cd294ae56c1/home",
+      "homeMode": "0700",
+      "configRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-test-config-a6sOBD",
+      "executionLog": {
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-managed-skills-wrapper-qualified-results/run-456q6N/00001-9cd294ae56c1/output.log",
+        "sha256": "b2e51566e9397674b49a2fd9fbbec6b655777db8bf36aaf25888850ee020e490"
+      }
+    }
+  },
+  "externalPrerequisites": [
+    "Lead must commit final integrated source and refresh authoritative Git+lstat manifest before full serial replay.",
+    "Full qualified serial suite has not run on final420 candidate yet.",
+    "Remote CodeQL must rerun on the delivered exact head; local TOCTOU regression does not prove remote check resolution.",
+    "Native Windows/macOS/hosted browser and real provider original acceptance remains separately observed by lead; no complete DoD claim from these fixtures."
+  ],
+  "fullDoDClosed": false
+}

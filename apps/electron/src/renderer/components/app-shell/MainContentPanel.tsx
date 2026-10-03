@@ -226,7 +226,7 @@ export function MainContentPanel({
   const remoteWorkspaceId = workspaces.find(workspace => workspace.id === activeWorkspaceId)?.remoteServer?.remoteWorkspaceId
   // PanelSlot supplies its own route state, including for unfocused panels.
   // Validate that state here before a foreign session can mount its ChatPage.
-  const navState: import('../../../shared/types').NavigationState = selectedSession && activeWorkspaceId
+  const navState: import('../../../shared/types').NavigationState = isSessionsReady && selectedSession && activeWorkspaceId
     && selectedSession.workspaceId !== activeWorkspaceId && (!remoteWorkspaceId || selectedSession.workspaceId !== remoteWorkspaceId)
     ? { navigator: 'unavailable', route: buildRouteFromNavigationState(requestedNavState), reason: 'workspace-mismatch',
         ...(requestedNavState.rightSidebar ? { rightSidebar: requestedNavState.rightSidebar } : {}) }
@@ -243,6 +243,7 @@ export function MainContentPanel({
     isScreenNavigation(navState) ? navState.screen : null,
     navState.navigator === 'search' ? navState.query : null,
     navState.navigator === 'unavailable' ? [navState.route, navState.reason] : null,
+    unavailableWorkspaceSlug,
     isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
   ])
   const [sessionSelection] = useSession()
@@ -309,7 +310,6 @@ export function MainContentPanel({
     activeWorkspaceId, resourceKind, resourceSlug,
     resourceKind === 'skill' ? activeSessionWorkingDirectory : undefined,
   )
-
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
   const [sendResourceType, setSendResourceType] = useState<SendResourceType>('source')
   const [sendResourceIds, setSendResourceIds] = useState<string[]>([])
@@ -768,7 +768,9 @@ export function MainContentPanel({
           <Panel variant="grow" className={className}>
             <div role="status" aria-live="polite" data-testid={isSessionsReady ? 'route-session-missing' : 'route-session-loading'} data-route-entity={sessionId}
               className="flex h-full items-center justify-center p-4 text-muted-foreground">
-              <p className="text-sm">{t(isSessionsReady ? 'chat.sessionNoLongerExists' : 'common.loading')}</p>
+              <div data-testid={isSessionsReady ? 'route-session-unavailable' : undefined} data-session-id={sessionId}>
+                <p className="text-sm">{t(isSessionsReady ? 'chat.sessionNoLongerExists' : 'common.loading')}</p>
+              </div>
             </div>
             {sessionsBulkBar}
           </Panel>
@@ -801,7 +803,14 @@ export function MainContentPanel({
         data-route={navState.navigator === 'unavailable' ? navState.route : undefined}
       >
         {/* Unknown/stale deep links must not masquerade as an unrelated chat route. */}
-        <p className="text-sm">{t('common.unavailable')}</p>
+        {navState.navigator === 'unavailable' && navState.reason === 'workspace-mismatch'
+          && isSessionsNavigation(requestedNavState) && requestedNavState.details ? (
+          <div data-testid="route-session-missing" data-route-entity={requestedNavState.details.sessionId}>
+            <div data-testid="route-session-unavailable" data-session-id={requestedNavState.details.sessionId}>
+              <p className="text-sm">{t('common.unavailable')}</p>
+            </div>
+          </div>
+        ) : <p className="text-sm">{t('common.unavailable')}</p>}
       </div>
     </Panel>
   )

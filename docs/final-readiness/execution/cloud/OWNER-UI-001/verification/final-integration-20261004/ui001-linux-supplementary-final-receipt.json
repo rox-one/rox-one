@@ -1,0 +1,2394 @@
+{
+  "schemaVersion": 1,
+  "kind": "separate qualified supplementary execution; immutable full history preserved",
+  "createdAt": "2026-10-03T21:59:53.579371+00:00",
+  "underlyingSourceRevision": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+  "originalFull": {
+    "expectedFiles": 1881,
+    "passed": 1775,
+    "failed": 70,
+    "blocked": 36,
+    "status": "failed",
+    "manifestSha256": "db631973e5f243acdd71a314cc68f687fd95bdc7fe71bc3c364a6a1bc97fe342",
+    "reportSha256": "0f7c23edcff0612c0b829200962a6c152e1794eccca2e96319988b55612ac571",
+    "runnerSha256": "062da464c6807640f2006c90e8fe245cbc4e03dd1192a514ecb5e8614eaebb1a",
+    "all1881LogHashesPreviouslyVerified": true,
+    "allHistoryRetained": true
+  },
+  "originalAcceptanceTaskObjectsUnchanged": {
+    "UI-001.1": "fcfd841ae4bb937a5a01e51013844c164a292f08d2cf7a664e94ea777094b53d",
+    "UI-001.2": "a4b0feba3fac80742d58f64fc2f74ca47be1373a2167dfd024d889dbced93fb7"
+  },
+  "runtime": {
+    "bun": "1.3.14 official0d9b296a bytes",
+    "node": "24.21.0 outer/general",
+    "vitestNode": "22.22.3 supported embedded",
+    "executor": "actual serial child processes with task-owned HOME, nonrootUID501 and realtini subreaper",
+    "scope": "task-owned Linux container only",
+    "requiredPackages": "actual zip/unzip, Xvfb/xauth, encrypted storage, own realPostgreSQL; no provider or systemKeychain calls"
+  },
+  "runtime24Latest": {
+    "totalSelectedFiles": 24,
+    "passedFiles": 23,
+    "remainingFailedFiles": 1,
+    "casesAmongPassedFiles": {
+      "pass": 281,
+      "fail": 0,
+      "skip": 2
+    },
+    "files": [
+      {
+        "path": "packages/shared/src/toolchain/__tests__/installer.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 11,
+          "fail": 0,
+          "skip": 2
+        },
+        "suiteSha256": "6ddf74c7f293d508ea0cc4bbf47520cd4e2b2f69f0d34bdb70f5ccb13ad866b7",
+        "originalSuiteSha256": "6ddf74c7f293d508ea0cc4bbf47520cd4e2b2f69f0d34bdb70f5ccb13ad866b7",
+        "testSourceUnchanged": true,
+        "logSha256": "1daa4fe8d245be721e6185a7b1d431f358d3b228205d0e4cb2ee820e0797a31e",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "packages/shared/src/toolchain/__tests__/kinds.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 15,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "b9839f018b01272a2bfb6709b486ffa316d4e276ad380533efe81cacc06b5320",
+        "originalSuiteSha256": "b9839f018b01272a2bfb6709b486ffa316d4e276ad380533efe81cacc06b5320",
+        "testSourceUnchanged": true,
+        "logSha256": "eee5aca96ab28fdfb5b34e1d0548aa002a40c1e661c38501dd79c2f83011f206",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "packages/shared/src/toolchain/__tests__/manager.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 13,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "8683cb883a9eb84a89e77db0d6f96af38f82d1932ca023999c5732ed7d9569c8",
+        "originalSuiteSha256": "8683cb883a9eb84a89e77db0d6f96af38f82d1932ca023999c5732ed7d9569c8",
+        "testSourceUnchanged": true,
+        "logSha256": "86d4f61ed859dd2c0919e4fa570c38d83ee773b8baa1d56d9940d9f2d537423e",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "packages/shared/src/credentials/__tests__/secure-storage-migration.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 7,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "b54931d177fd6c3e68b0a5850b2c87d3bfebb9365a442620e8eb5769b5199190",
+        "originalSuiteSha256": "b54931d177fd6c3e68b0a5850b2c87d3bfebb9365a442620e8eb5769b5199190",
+        "testSourceUnchanged": true,
+        "logSha256": "83d1003b76f0a490b255c393d01a2cdb65c1942c52f967d20e18c83034b11224",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "scripts/rox-readiness-ui-001.runner.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 19,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "2e85deac62b9414b8bd956f36c3391c2d777569669a96212511fdaac37d2bd21",
+        "originalSuiteSha256": "2e85deac62b9414b8bd956f36c3391c2d777569669a96212511fdaac37d2bd21",
+        "testSourceUnchanged": true,
+        "logSha256": "760d16e008c2074f51a6679b4e1e7e9726ff9634436c8b02414dd1395219e0c2",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "new",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/deep-link-parse.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 24,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "91ca61a4e270106a7150e3d548019cb7733e8399ca4e0643404a6be99f6d181e",
+        "originalSuiteSha256": "91ca61a4e270106a7150e3d548019cb7733e8399ca4e0643404a6be99f6d181e",
+        "testSourceUnchanged": true,
+        "logSha256": "fbdeb2ba5dabfc89d25e5bdae779d1f84a47c4591caf6ea23e627c6586881858",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/deep-link-routing.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 5,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "43446638cb487e1f679b28ceb85aad81d8a545ecec7f9d6bdddc3437fef8b6a8",
+        "originalSuiteSha256": "43446638cb487e1f679b28ceb85aad81d8a545ecec7f9d6bdddc3437fef8b6a8",
+        "testSourceUnchanged": true,
+        "logSha256": "d57b64b12f5749871cad50b27087205ee108f8764c7bf15124af944d161fef02",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-48-runtime-archives.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 4,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "43746c74f7696e67459fb83738ca5a30cb8922ef85a24c47a505616ddefbbec2",
+        "originalSuiteSha256": "43746c74f7696e67459fb83738ca5a30cb8922ef85a24c47a505616ddefbbec2",
+        "testSourceUnchanged": true,
+        "logSha256": "1a899425b4312ad0534d9b21b7ccd4d3fcd5b4963a8833d2de399e287de895d6",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-auth-postgres.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 10,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "6207cbc95efe27759133160edb8f01e4d001c32a7000da018331aa497a063706",
+        "originalSuiteSha256": "6207cbc95efe27759133160edb8f01e4d001c32a7000da018331aa497a063706",
+        "testSourceUnchanged": true,
+        "logSha256": "7abc2fd214f3478bf9dc3a2ea7244d7276519979ede5b8235519f0923aaea3b7",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-authority-crash.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 15,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "b1791d90e32ebce8deb10033b2107bad954fd62624d24d9ab2b728b67fcb9e6f",
+        "originalSuiteSha256": "b1791d90e32ebce8deb10033b2107bad954fd62624d24d9ab2b728b67fcb9e6f",
+        "testSourceUnchanged": true,
+        "logSha256": "bbdd03002233b635035628a1f8290f7525e57c1e37148ce760308afa2c64e47b",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-http.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 9,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "5b0d467212a49f6497475913a5650bf3bccd0b9b3ad36b7257f956633211d4fe",
+        "originalSuiteSha256": "5b0d467212a49f6497475913a5650bf3bccd0b9b3ad36b7257f956633211d4fe",
+        "testSourceUnchanged": true,
+        "logSha256": "9ff9957240c7dcb70edbef6b52b1ba1565d37d88eef37cccdc38c23a3b498256",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "failed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-native-routing.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 11,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "6b8ba569d653778c99edf8bd51698f8528c094e1d303b079891f1ad0100ac9f0",
+        "originalSuiteSha256": "6b8ba569d653778c99edf8bd51698f8528c094e1d303b079891f1ad0100ac9f0",
+        "testSourceUnchanged": true,
+        "logSha256": "8316fb52a837d776007bb53513f2aba25729fcff1b0077f7acdcd0fa8cb7341e",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "failed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-observability.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "e63eecb4be67c165d061a3d57134b8464632b268deedf08e0daf6ab72c676c26",
+        "originalSuiteSha256": "e63eecb4be67c165d061a3d57134b8464632b268deedf08e0daf6ab72c676c26",
+        "testSourceUnchanged": true,
+        "logSha256": "b77327af2a483db45be6d413119d205e17ee24776e02e9ce9b622c834193249a",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-offline.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 9,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "262f369ce10429f3419da437935515b5730891e90c2f461495c55301ce46588a",
+        "originalSuiteSha256": "262f369ce10429f3419da437935515b5730891e90c2f461495c55301ce46588a",
+        "testSourceUnchanged": true,
+        "logSha256": "e4f19663265fa1793624a226f5ebebba1941d4fc41ee3d19699dd3f8c70f7ff5",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-response-schema.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 29,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "b024d963607c17baf6e3ca2f47c0bfabed698df07d7e6abd53a252e4b1136da6",
+        "originalSuiteSha256": "b024d963607c17baf6e3ca2f47c0bfabed698df07d7e6abd53a252e4b1136da6",
+        "testSourceUnchanged": true,
+        "logSha256": "185e0eb33861cd4ce86a75ffa303fb2c645bc537d5152a641fb505c7157b5fab",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-runtime.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 10,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "9551b09e41ef400ef18d2a2acb815133e4c16f524d82565fe03e2ecfd632ee7c",
+        "originalSuiteSha256": "9551b09e41ef400ef18d2a2acb815133e4c16f524d82565fe03e2ecfd632ee7c",
+        "testSourceUnchanged": true,
+        "logSha256": "bd7856801e4b8d1f6203b2bcbf53b9fa10cc1edab07de35f89c52556f7381884",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-server.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 10,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "987ea7808844cf414ada0c3f78ac71eaf14dde2413b53c5cb719b05f6d769519",
+        "originalSuiteSha256": "987ea7808844cf414ada0c3f78ac71eaf14dde2413b53c5cb719b05f6d769519",
+        "testSourceUnchanged": true,
+        "logSha256": "6be66aea4c994596fcd4a1dfdf15d3e7510f5ee3466fcc4c92a59939b2d8e202",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-service-crash.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 3,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "88775ff80f721d1becf24f8edf89c103ead84f9eb319c9c3417816bd7db065c6",
+        "originalSuiteSha256": "88775ff80f721d1becf24f8edf89c103ead84f9eb319c9c3417816bd7db065c6",
+        "testSourceUnchanged": true,
+        "logSha256": "3887ea34114d00d3d0901193fbbfb8d1f8c79cdacdc817126548971d68d88ffb",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01-transport.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 7,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "ec03a01db3e910b542ed6774820e923c3663ef500cbb09787fd5219020e90b06",
+        "originalSuiteSha256": "ec03a01db3e910b542ed6774820e923c3663ef500cbb09787fd5219020e90b06",
+        "testSourceUnchanged": true,
+        "logSha256": "f52b7c15b9c9148ee2d6ab397dfcf862b5774cac346336201e9d02f0980fdd9a",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "failed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-01.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 14,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "4e0c82ed1cb48bfa74b82edbd352ef29a04fbab0b058028523234a2ffee42cf5",
+        "originalSuiteSha256": "4e0c82ed1cb48bfa74b82edbd352ef29a04fbab0b058028523234a2ffee42cf5",
+        "testSourceUnchanged": true,
+        "logSha256": "1bed54be143ebf897709169dee0e5931b8fe015d807be2889f68c09663499b88",
+        "reportSha256": "2ebdc5f66b7f2c8e84dd010383d19e7f3b017c1e0902f83ec6cb85d65c317a41",
+        "reportArtifact": "work/ui001-linux-pg-checker4-results/run-iivWCA/report.json",
+        "baselineStatus": "failed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-48-domain.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 17,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "871c7b6af4b1f92ebc9289a79b567823f3c627300345cc3ef60cc14f8f2de1b0",
+        "originalSuiteSha256": "871c7b6af4b1f92ebc9289a79b567823f3c627300345cc3ef60cc14f8f2de1b0",
+        "testSourceUnchanged": true,
+        "logSha256": "225340ceccd19da775d8616c9e49ee18778da2dc0a8ca06ad3d90a771e2a0bd2",
+        "reportSha256": "2ebdc5f66b7f2c8e84dd010383d19e7f3b017c1e0902f83ec6cb85d65c317a41",
+        "reportArtifact": "work/ui001-linux-pg-checker4-results/run-iivWCA/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-48-native-policy.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 18,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "0f6ea5b7527929714fb4c94fb2f336c5ff89ebb3ad3376bb471745e3dd46c3ba",
+        "originalSuiteSha256": "0f6ea5b7527929714fb4c94fb2f336c5ff89ebb3ad3376bb471745e3dd46c3ba",
+        "testSourceUnchanged": true,
+        "logSha256": "7b7ac3f9154d3c4d3d19605e749db5c516db74c2b8cc02e40577eaba6730b504",
+        "reportSha256": "2ebdc5f66b7f2c8e84dd010383d19e7f3b017c1e0902f83ec6cb85d65c317a41",
+        "reportArtifact": "work/ui001-linux-pg-checker4-results/run-iivWCA/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      },
+      {
+        "path": "tests/macro-integration/wp-48-native-service.test.ts",
+        "runner": "bun",
+        "status": "passed",
+        "cases": {
+          "pass": 18,
+          "fail": 0,
+          "skip": 0
+        },
+        "suiteSha256": "4e7d28a454f85eae848b9d574fb4d36ff045d51f8de64aea76de765d4d682155",
+        "originalSuiteSha256": "4e7d28a454f85eae848b9d574fb4d36ff045d51f8de64aea76de765d4d682155",
+        "testSourceUnchanged": true,
+        "logSha256": "f382fba809f8cdea380dd16a86e58ae0a34beed05559413bc6eaf303c7f0f879",
+        "reportSha256": "2ebdc5f66b7f2c8e84dd010383d19e7f3b017c1e0902f83ec6cb85d65c317a41",
+        "reportArtifact": "work/ui001-linux-pg-checker4-results/run-iivWCA/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      }
+    ],
+    "remainingOriginalFailure": [
+      {
+        "path": "packages/cloud-runner/src/__tests__/local-provider.test.ts",
+        "runner": "bun",
+        "status": "failed",
+        "cases": {
+          "pass": 3,
+          "fail": 1,
+          "skip": 0
+        },
+        "suiteSha256": "623037fa9fe4883edb4e9bb07e2e6287965e60be9bbae7404a38d4b6ef2e4b7c",
+        "originalSuiteSha256": "623037fa9fe4883edb4e9bb07e2e6287965e60be9bbae7404a38d4b6ef2e4b7c",
+        "testSourceUnchanged": true,
+        "logSha256": "85ae9e3cce4bfca80497f906c6e6404562f0cdb9f5a0f0b27ba7c8a43a7c73fc",
+        "reportSha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+        "reportArtifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+        "baselineStatus": "passed",
+        "originalFullStatus": "failed"
+      }
+    ],
+    "PG4Subset": {
+      "files": 4,
+      "pass": 67,
+      "fail": 0,
+      "skip": 0,
+      "alreadyIncludedIn281": true,
+      "usesActualLoopbackRelayAndProtectedOwner501Envelope": true,
+      "authenticationLicenseOwnershipAssertionsUnchanged": true,
+      "relayStoppedAfterReplay": {
+        "pid": 74191,
+        "actualClosedReceiptSha256": "e52a58f461f4527cecdef30c9aeede24712e88821c7dbb2737c5eb71391ceb2f",
+        "pidAbsent": true
+      }
+    }
+  },
+  "groups": [
+    {
+      "name": "supported Node22 / all36 original Vitest files",
+      "reportArtifact": "work/ui001-linux-chiho36-node22-results/run-76qMOS/report.json",
+      "reportSha256": "df959afe0a293605a3dfe23368816e9e120947df1170bbc996db76ebdea86fbc",
+      "manifestSha256": "46887b4975a790db242afe876080e8322b1451db4927fe83295da47a133d595c",
+      "summary": {
+        "expected": 36,
+        "completed": 36,
+        "passed": 36,
+        "failed": 0,
+        "blocked": 0
+      },
+      "cases": {
+        "pass": 157,
+        "fail": 0,
+        "skip": 0
+      },
+      "allLogHashesVerified": true,
+      "sourceRevision": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+      "files": [
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/ai.service.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 3,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "6ee9fcb499925ae3d638db43eeb992f47e117908667f6d1765b248c3c597f0ee",
+          "originalSuiteSha256": "6ee9fcb499925ae3d638db43eeb992f47e117908667f6d1765b248c3c597f0ee",
+          "testSourceUnchanged": true,
+          "logSha256": "5ad7c81732b3b99e4e52863342e9fbb8eda87e931ce43673a5017e130d21f44c",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/config.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 3,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "15ff0a6f3c2d5f2f7a43196eb4d03b02cebbfe272c9664eaf2f4c434e7eb448d",
+          "originalSuiteSha256": "15ff0a6f3c2d5f2f7a43196eb4d03b02cebbfe272c9664eaf2f4c434e7eb448d",
+          "testSourceUnchanged": true,
+          "logSha256": "ce57220c84b19d96dcdc1ec0b2e76ebed3b8a4658f311a3bc042d55e113118f2",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/environment.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 2,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "5e4e46589d5d1079a1d1f635d902b335cba5b18905bd6df5335904df7e4f46bc",
+          "originalSuiteSha256": "5e4e46589d5d1079a1d1f635d902b335cba5b18905bd6df5335904df7e4f46bc",
+          "testSourceUnchanged": true,
+          "logSha256": "2fb34cbca78014f4b25a4199ca08912958151ddad89a8ab069a86afd993e4153",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/errors.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 5,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "7d407d32e1c8a31eba9601a1523b10888bc6437f80af0d95439f52ddb7ac6a7f",
+          "originalSuiteSha256": "7d407d32e1c8a31eba9601a1523b10888bc6437f80af0d95439f52ddb7ac6a7f",
+          "testSourceUnchanged": true,
+          "logSha256": "34ec9dfb636f741eb6c8c021b16a9b0b3d44d0f7564a0d3155291af73d1e75ed",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/app/telegram-client.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 4,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "9f0bbc2d5f94f6fc0a7ae6a4f3883f86be569f694638c1898625bf8870373f52",
+          "originalSuiteSha256": "9f0bbc2d5f94f6fc0a7ae6a4f3883f86be569f694638c1898625bf8870373f52",
+          "testSourceUnchanged": true,
+          "logSha256": "da527333be510d9e1880311ffad90f0f08e8ea7dfa31a6671fc59186fd539302",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/cli-args.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 6,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "b3b1650d174615b81d8605733e11fbadebc939114db4acf484b6f09c749cb6c9",
+          "originalSuiteSha256": "b3b1650d174615b81d8605733e11fbadebc939114db4acf484b6f09c749cb6c9",
+          "testSourceUnchanged": true,
+          "logSha256": "b0125f22ea5f20726224ba66d6339d7802992a6a0693a4107fc86c1b29c1bb0a",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/archive.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 2,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "a663bf033ddadbfba56ef206c9ff276603b21019bcbc94700c84fa11ddd9fc5b",
+          "originalSuiteSha256": "a663bf033ddadbfba56ef206c9ff276603b21019bcbc94700c84fa11ddd9fc5b",
+          "testSourceUnchanged": true,
+          "logSha256": "daa444cf4748d39598cb8b833192106c50d766ff2bd2b7e21b5f1ba171b38f47",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/communityTools.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 1,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "74d67dc1c34b1ff71018d892d98f6e86f8aee4210e45f74201861e4e87779397",
+          "originalSuiteSha256": "74d67dc1c34b1ff71018d892d98f6e86f8aee4210e45f74201861e4e87779397",
+          "testSourceUnchanged": true,
+          "logSha256": "cf1ac673f06e7614735ed9f8427d4571d4c07bc7fb1c63ab666ef923a6592cb1",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/contacts.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 3,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "7f04d8e198e8d0879a83ebe2331ea4686cb29602f9dc5c6f87906cb807744346",
+          "originalSuiteSha256": "7f04d8e198e8d0879a83ebe2331ea4686cb29602f9dc5c6f87906cb807744346",
+          "testSourceUnchanged": true,
+          "logSha256": "821d5a87d934d72b3c3eb49cfbd609f61f2092c336f6c88dd29197d92cd2effc",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/crm.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 1,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "e9e4488ab1759d6e8915357787d7b8405511ee083720eb34e828631a1d47034a",
+          "originalSuiteSha256": "e9e4488ab1759d6e8915357787d7b8405511ee083720eb34e828631a1d47034a",
+          "testSourceUnchanged": true,
+          "logSha256": "d895329591b984157bdaf4af8409046a630cf5d7d890ad61b6940d62f3cd42de",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/db.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 1,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "b6835be41ec63e376babcecb951c1bdce4aaccbfe2a79cee4d7bd0b65a778ef5",
+          "originalSuiteSha256": "b6835be41ec63e376babcecb951c1bdce4aaccbfe2a79cee4d7bd0b65a778ef5",
+          "testSourceUnchanged": true,
+          "logSha256": "38f90973638c3a8f3d41ad59f747c9cb85a7dd5f666cc58f208fbd2a478c0d12",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/durable-sync.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 7,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "5d31e573371ca1bc464ce6d9959d3147a3f7e22be29c4ac9fe84c509cf17797c",
+          "originalSuiteSha256": "5d31e573371ca1bc464ce6d9959d3147a3f7e22be29c4ac9fe84c509cf17797c",
+          "testSourceUnchanged": true,
+          "logSha256": "f08bf9b2199655459e62e4ebb992a8d5c7a6e76d188b8c9ba7461122f9b08ca7",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/folders.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 8,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "5753b6fbe748381932f108f921b644c535e8f76ae33c5ce8a420e470afae69bd",
+          "originalSuiteSha256": "5753b6fbe748381932f108f921b644c535e8f76ae33c5ce8a420e470afae69bd",
+          "testSourceUnchanged": true,
+          "logSha256": "5cb89ebbedb2b5d8d7099be4ca7b67c482805d9c687daf5040122a1708650b68",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/read-only.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 7,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "e88bcf043856abec3aaa77e55b7944aa93e9d34cae36c8207c9b7b9db383a911",
+          "originalSuiteSha256": "e88bcf043856abec3aaa77e55b7944aa93e9d34cae36c8207c9b7b9db383a911",
+          "testSourceUnchanged": true,
+          "logSha256": "bc4328709df867696f601cbf7db4adb51a5d90f34cb7a268777b88685483a530",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/rules.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 8,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "da5d26a9bfb2fc8dadeb27d6c2887551a352cc0cb95fca502107dbb9b8bc3f1c",
+          "originalSuiteSha256": "da5d26a9bfb2fc8dadeb27d6c2887551a352cc0cb95fca502107dbb9b8bc3f1c",
+          "testSourceUnchanged": true,
+          "logSha256": "bc9b234bf2fed203697f86b758908446ce2e0251926c70c11afd13831bb03510",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/sync.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 1,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "603b390db11a8d66e19914abac4c0d56f1f8269397965657cb1d5d482135e06c",
+          "originalSuiteSha256": "603b390db11a8d66e19914abac4c0d56f1f8269397965657cb1d5d482135e06c",
+          "testSourceUnchanged": true,
+          "logSha256": "dbd09365d0943067d8087509b83643f831ce00356e34046fc8374227211c45b5",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/commands/tags.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 2,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "17daf227a4bec64287f2904085e5104932bb55077d16983e589e84378504e26f",
+          "originalSuiteSha256": "17daf227a4bec64287f2904085e5104932bb55077d16983e589e84378504e26f",
+          "testSourceUnchanged": true,
+          "logSha256": "c67d513da5610ac21ea2787060eb0c7ecd24b18bec6b61e91da9d3e28a0778b4",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/candidate-package.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 7,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "69184eb412cc11f0840102b33af43833ae50533974ee6a5e1213d521e2d8ad2a",
+          "originalSuiteSha256": "69184eb412cc11f0840102b33af43833ae50533974ee6a5e1213d521e2d8ad2a",
+          "testSourceUnchanged": true,
+          "logSha256": "3858e13d4b9e2a418f9003e5870e74bd9421b0fa9056ceb7af0d4acad69b45db",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/chiho-cloud-contracts.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 2,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "4d90a76a2bc2f34e45b2d8c9c8e56bf2d63c119aab39e4a5791d3630bee1d73a",
+          "originalSuiteSha256": "4d90a76a2bc2f34e45b2d8c9c8e56bf2d63c119aab39e4a5791d3630bee1d73a",
+          "testSourceUnchanged": true,
+          "logSha256": "be207e94835e24a3195e1f6047b454341f5c020c3f6c4712b6ce6216dd4709b2",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/contracts/tool-contracts.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 14,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "3f880dc8597e46999508be49f7bcd9d6055523d2f470192ae1be1b0b089660a2",
+          "originalSuiteSha256": "3f880dc8597e46999508be49f7bcd9d6055523d2f470192ae1be1b0b089660a2",
+          "testSourceUnchanged": true,
+          "logSha256": "097046d85b28cc280950296716d95daf6d39e2707107b85e50f59ef90092ffa0",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/core/cli-runner.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 1,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "35dd622952f59d87760d61894cf2a3245046ed964f76cd15a989bbaa8f6695be",
+          "originalSuiteSha256": "35dd622952f59d87760d61894cf2a3245046ed964f76cd15a989bbaa8f6695be",
+          "testSourceUnchanged": true,
+          "logSha256": "67bd7d40b4f3ad649d99bb4ee91ea5a761d12c212f7bb1761d7f3eb88c096742",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/core/tool-dispatch.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 17,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "6d89feb30eef0b30b0a87876ad780eca030fbb3c20ad604190177e4e85d2573a",
+          "originalSuiteSha256": "6d89feb30eef0b30b0a87876ad780eca030fbb3c20ad604190177e4e85d2573a",
+          "testSourceUnchanged": true,
+          "logSha256": "0dfed53eda7929d6a807863176eb2435413526128cf5cb81c74dc67557b47aef",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/crm-cleanup.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 4,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "b3eb19afc7f6c1923af633f778ba798040a9170f3c889b57367a4c59b8100459",
+          "originalSuiteSha256": "b3eb19afc7f6c1923af633f778ba798040a9170f3c889b57367a4c59b8100459",
+          "testSourceUnchanged": true,
+          "logSha256": "af170e0c0c7aa88eb07d220b8c7714f6f1ca77f76608daa963aad5ca8853e2df",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/inventory.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 5,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "39fd50ae75e77acf39fd15b12d9e516995138cec13d531ca8cbb9e46b68067b2",
+          "originalSuiteSha256": "39fd50ae75e77acf39fd15b12d9e516995138cec13d531ca8cbb9e46b68067b2",
+          "testSourceUnchanged": true,
+          "logSha256": "4c13020668031db451cf29ccbc18a9baeef6d033f22615c96c399e3aeb7afd1a",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/migrate.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 2,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "f80d2fe4fe8e9309f4d05a6650d99a420d292a08db63542701f6a74b20ccca92",
+          "originalSuiteSha256": "f80d2fe4fe8e9309f4d05a6650d99a420d292a08db63542701f6a74b20ccca92",
+          "testSourceUnchanged": true,
+          "logSha256": "084a444c617682c8dde208670cf9cfd1742eaede5599d54104a4b9dc3ffaab63",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/peerIdentity.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 3,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "23427c278f902faabfc1c49d8d6d53f67a945d064d4bd77974823d15f56245f8",
+          "originalSuiteSha256": "23427c278f902faabfc1c49d8d6d53f67a945d064d4bd77974823d15f56245f8",
+          "testSourceUnchanged": true,
+          "logSha256": "948b7e2c098a1c66facfaee67904d5c93d1706f9830a21852a962dde7ab7c4d3",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/db/schema.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 1,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "7dfcc7396a4efe097bf1043cea9ac9141195110d7ebfac1ea44796d3274ae79f",
+          "originalSuiteSha256": "7dfcc7396a4efe097bf1043cea9ac9141195110d7ebfac1ea44796d3274ae79f",
+          "testSourceUnchanged": true,
+          "logSha256": "67eed69bd56be6297c130bca87a595776925d5b3b8d088b8bec4752761634819",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/output.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 3,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "587ab3a8304237db0a11ba0ef04229442e7e9cf77c1c98f4a4c92e2f6c0cb114",
+          "originalSuiteSha256": "587ab3a8304237db0a11ba0ef04229442e7e9cf77c1c98f4a4c92e2f6c0cb114",
+          "testSourceUnchanged": true,
+          "logSha256": "5bb93055358b240f86b868a2af78c6a552592696ee55373df479598d76378da7",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/proxy.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 10,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "8cc1838931a0ee021ca3ca38ef8cbaf68e131cc458acf707777744579b7604a3",
+          "originalSuiteSha256": "8cc1838931a0ee021ca3ca38ef8cbaf68e131cc458acf707777744579b7604a3",
+          "testSourceUnchanged": true,
+          "logSha256": "014cd04236667bdd413c6f32c0efec3f63d095c040cd954e07368329a8200608",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/agentWritePreviewStore.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 2,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "30b32b56f023fb77ab8b3b4c7f5069e67797c2bff8181854aaae76951c272b8e",
+          "originalSuiteSha256": "30b32b56f023fb77ab8b3b4c7f5069e67797c2bff8181854aaae76951c272b8e",
+          "testSourceUnchanged": true,
+          "logSha256": "1c04872d47b1cdde392a2dc8be61d1757b66bd9f0425e2cf455ef655d7e40948",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/dialogInventory.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 3,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "ab7d97a6ac8560b4791f52c70faf4ff07ef59c95e7de7384ab273bbc992a6f5b",
+          "originalSuiteSha256": "ab7d97a6ac8560b4791f52c70faf4ff07ef59c95e7de7384ab273bbc992a6f5b",
+          "testSourceUnchanged": true,
+          "logSha256": "5e54eb92ededd2f89fb7d5adca7939ed3fb6ed7615b74844177ac2b4bfe59d64",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/managedMediaStore.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 2,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "d17b20cb6911dc87dfd1e44e2c07e378b44ba6be9ae2f3b05c81556bc51908bb",
+          "originalSuiteSha256": "d17b20cb6911dc87dfd1e44e2c07e378b44ba6be9ae2f3b05c81556bc51908bb",
+          "testSourceUnchanged": true,
+          "logSha256": "4831a16ebac558b43e861a8c580a1d33bac1752d33d050f0fb9acafc038c24d3",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/opaqueCursor.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 3,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "bd2c45e59f2af7d7ec4a32c8fe19c8ac96d08153eaca730aaaa45d291734ee3f",
+          "originalSuiteSha256": "bd2c45e59f2af7d7ec4a32c8fe19c8ac96d08153eaca730aaaa45d291734ee3f",
+          "testSourceUnchanged": true,
+          "logSha256": "5c88967876dc668e8a68377884e317a2ff54bb294c431dc083a9134bfeac3714",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegram.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 9,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "246a52d9e12538991a8f4b369fdc864dbef15b407a86bbe174f55c7bdd628207",
+          "originalSuiteSha256": "246a52d9e12538991a8f4b369fdc864dbef15b407a86bbe174f55c7bdd628207",
+          "testSourceUnchanged": true,
+          "logSha256": "a7e2fd60aed9d41adc9dbc8be170ff2f9ea63e54b2c1c26d8db50c62731123e4",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegramClientTools.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 4,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "b835b3d40ad15ff853488a520d446643d8c718bade466c714ac507e1d8f8d9c8",
+          "originalSuiteSha256": "b835b3d40ad15ff853488a520d446643d8c718bade466c714ac507e1d8f8d9c8",
+          "testSourceUnchanged": true,
+          "logSha256": "0e64ac83277456539d3db8ea2a24a6619a316758341136b7159a8b34aebbd122",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        },
+        {
+          "path": "apps/electron/resources/skills/telegram/chiho-telegram/src/services/telegramUpdateStore.test.ts",
+          "runner": "vitest",
+          "status": "passed",
+          "cases": {
+            "pass": 1,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "9175c9032da92e4d41cdf3bc0dae1d38dfe9792cd94e0cc4a078b098bc014d2a",
+          "originalSuiteSha256": "9175c9032da92e4d41cdf3bc0dae1d38dfe9792cd94e0cc4a078b098bc014d2a",
+          "testSourceUnchanged": true,
+          "logSha256": "b043c14cb1b3399cfc051c5d0b18089096e81a458c627cff828e02792c9d838c",
+          "originalFullStatus": "blocked",
+          "baselineStatus": "blocked"
+        }
+      ]
+    },
+    {
+      "name": "9 authorized fixture bindings against unchanged2e3d product subjects",
+      "reportArtifact": "work/ui001-linux-fixture9-results/run-MTv4GK/report.json",
+      "reportSha256": "c0fb0e70650b0e3206080447fc5ab3b2aec05753dac3602a801aa695552df693",
+      "manifestSha256": "6312c22c4615cf6f553afebc76c72bb7d71f3f049894678c34b9be0949a5327f",
+      "summary": {
+        "expected": 9,
+        "completed": 9,
+        "passed": 9,
+        "failed": 0,
+        "blocked": 0
+      },
+      "cases": {
+        "pass": 59,
+        "fail": 0,
+        "skip": 0
+      },
+      "allLogHashesVerified": true,
+      "sourceRevision": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+      "files": [
+        {
+          "path": "apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+          "runner": "bun",
+          "status": "passed",
+          "cases": {
+            "pass": 8,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "01a37265091f4f4320cfc0a355ef881fce772f12c68c608e91de1414320a683c",
+          "originalSuiteSha256": "93134b178eb01f24158ddbe965efd1d446d792a55e3d14a4b2693512805b79cf",
+          "testSourceUnchanged": false,
+          "logSha256": "22b9822d4a180cbc7dd9cd4c2f8b0b77f680600748e129a06386ff8bb01338e7",
+          "originalFullStatus": "failed",
+          "baselineStatus": "passed"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+          "runner": "bun",
+          "status": "passed",
+          "cases": {
+            "pass": 4,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "1d435d3d9243a15cd744edee5f2caaa7c60c76484483c5d31dcee8eda16110cc",
+          "originalSuiteSha256": "24dc1395fd021324063dfe700895bed79417918b081279a3fa2d5a257cc70c0d",
+          "testSourceUnchanged": false,
+          "logSha256": "c06fa7c6a5284898cbb43fed2f7531623884012cd561364eb4cb5ab2cbed8643",
+          "originalFullStatus": "failed",
+          "baselineStatus": "new"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/pages/__tests__/rox-readiness-ui-001.page-lifecycle.test.ts",
+          "runner": "bun",
+          "status": "passed",
+          "cases": {
+            "pass": 8,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "775b6bd1f496e5f4e3f05b7fbbc6640539eb034b5e400a0d90ed623c1177f1ce",
+          "originalSuiteSha256": "3fddb893c74ba7ff23604065ae3953103d7572767ffe7f7248966475a3640d5f",
+          "testSourceUnchanged": false,
+          "logSha256": "6faefd9d5526eba0f44f91954f88d14c684c4ba6ad38054b7a36bdd4d60610a1",
+          "originalFullStatus": "failed",
+          "baselineStatus": "new"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts",
+          "runner": "bun",
+          "status": "passed",
+          "cases": {
+            "pass": 18,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "af1a35cbf163f1304196a22ac1ea4bdaa69a4bbc2540c3c1596e955edf272173",
+          "originalSuiteSha256": "e7dbb9a89f01ab813b3e920f625e09d1922c8e1020adebbeef94c38528e951a3",
+          "testSourceUnchanged": false,
+          "logSha256": "faed0582c433091f891745b5bb5ec4115aa8e29cb9d2db3a4d62e5657535ffdb",
+          "originalFullStatus": "failed",
+          "baselineStatus": "passed"
+        },
+        {
+          "path": "apps/electron/src/renderer/hooks/__tests__/focus-notification-scope.test.ts",
+          "runner": "bun",
+          "status": "passed",
+          "cases": {
+            "pass": 3,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "5a5afc8af1aab61831417c6423999e0063db7a520293248176de6aa55a504944",
+          "originalSuiteSha256": "5a5afc8af1aab61831417c6423999e0063db7a520293248176de6aa55a504944",
+          "testSourceUnchanged": true,
+          "logSha256": "7d54f64575c3ec9271b589a438070a7535a970fa875ab663e7452e5603539cb2",
+          "originalFullStatus": "failed",
+          "baselineStatus": "passed"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/__tests__/renderer-contract-recovery.test.ts",
+          "runner": "bun",
+          "status": "passed",
+          "cases": {
+            "pass": 1,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "a09b07eeb27858c16d09b6405b9700ded1570e5e6a7e0bd998eb6901af99715c",
+          "originalSuiteSha256": "a09b07eeb27858c16d09b6405b9700ded1570e5e6a7e0bd998eb6901af99715c",
+          "testSourceUnchanged": true,
+          "logSha256": "9ebf99bcf4332babd1662d8c431950b3a158186f4f48b12e77cab50efeb12c0e",
+          "originalFullStatus": "failed",
+          "baselineStatus": "passed"
+        },
+        {
+          "path": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+          "runner": "bun",
+          "status": "passed",
+          "cases": {
+            "pass": 13,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "c7f6493b8db39f9c6a70983005272f047b07e66089530094a38415722f833a27",
+          "originalSuiteSha256": "aee8f356a0856cd5979d9bfd35d528aa50ea7617a3a16dddc2a13b775450cbeb",
+          "testSourceUnchanged": false,
+          "logSha256": "63127f6f1d26c13e753d21689d662ad60d6fc87ae58404be2809dc9e20cdc3ff",
+          "originalFullStatus": "failed",
+          "baselineStatus": "passed"
+        },
+        {
+          "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+          "runner": "bun",
+          "status": "passed",
+          "cases": {
+            "pass": 2,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "56d67407f5415855c16d73094af5e77faa86a81114cf874096d6d287cd28765f",
+          "originalSuiteSha256": "1118daaea4ac4ca8d5bbbb0fdf565875d3a7a978feca412bd5b00736e178a228",
+          "testSourceUnchanged": false,
+          "logSha256": "1584fe6d2922283803591d7116436c7b03a00e605566a436ce36979c76f77058",
+          "originalFullStatus": "failed",
+          "baselineStatus": "failed"
+        },
+        {
+          "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+          "runner": "bun",
+          "status": "passed",
+          "cases": {
+            "pass": 2,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "adb3c3b8457b31b9cd97e48fbad57f4be827152bec74ff1cfd1b59e6b5db899b",
+          "originalSuiteSha256": "5443b7d7796f4f9712c669d656aa6ea6b4f6bd0b9eca5cf7a772300f6715b26b",
+          "testSourceUnchanged": false,
+          "logSha256": "6fb7946a570142092ed6c94ad1e89691d3dc64bbee907885cb5d0a293505ee19",
+          "originalFullStatus": "failed",
+          "baselineStatus": "failed"
+        }
+      ],
+      "immutableProductSubjectHashes": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "6fcb1608c14e8bcdff668f37fd526bbd35d2d3ada92d80a30c353e70a5190f0d",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "4129a9223afbf47ccc2b9852c7c725fc9c1e58cae76c8101a3a72a66f1382033",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "231e9f96f58b97a42fdc44fca47ccb58305bb8b91250967605b2f19cc0ac2525",
+        "apps/electron/src/renderer/components/pages/PageView.tsx": "cb570415990e80845b733110badfcf2ca399c80d78c80fd520b681edf659b5f8",
+        "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx": "a3797499e67a8fc1ccffc7b26b2ed91a9d7403a5f777cccbae97c94fd7a0afd0",
+        "apps/electron/src/renderer/hooks/useNotifications.ts": "e20f4602dfe85fbc9419f60c4376852f5927c4b1a84c9965a5ae5a394a9035f2",
+        "apps/electron/src/renderer/components/memory/MemoryScreen.tsx": "b3e458bf81369abc7636d9a71b62c7bd3a1e9e3ef6a2cdff7dd181531de3682f",
+        "apps/electron/src/renderer/App.tsx": "3e289d656d2b62afcb7fccfd321f5d329d6a6fc4464f04615a337ebeacffdb5a",
+        "apps/electron/src/renderer/lib/focus-session.ts": "51755fed0b4e5e20099fc343b4505242b5ed7c0681c00cb866281209ebf1ebf9"
+      },
+      "authorizedFixtureFileHashes": [
+        {
+          "path": "apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+          "sha256": "01a37265091f4f4320cfc0a355ef881fce772f12c68c608e91de1414320a683c",
+          "fixtureModified": true
+        },
+        {
+          "path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+          "sha256": "1d435d3d9243a15cd744edee5f2caaa7c60c76484483c5d31dcee8eda16110cc",
+          "fixtureModified": true
+        },
+        {
+          "path": "apps/electron/src/renderer/components/pages/__tests__/rox-readiness-ui-001.page-lifecycle.test.ts",
+          "sha256": "775b6bd1f496e5f4e3f05b7fbbc6640539eb034b5e400a0d90ed623c1177f1ce",
+          "fixtureModified": true
+        },
+        {
+          "path": "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts",
+          "sha256": "af1a35cbf163f1304196a22ac1ea4bdaa69a4bbc2540c3c1596e955edf272173",
+          "fixtureModified": true
+        },
+        {
+          "path": "apps/electron/src/renderer/hooks/__tests__/fixtures/focus-notification-runner.ts",
+          "sha256": "53f9a625b34a82d0353048953d43aa695f6ef1ad33bb1e6ab309b3aa968e279d",
+          "fixtureModified": true
+        },
+        {
+          "path": "apps/electron/src/renderer/components/__tests__/renderer-contract-recovery.isolated.tsx",
+          "sha256": "a822ca11de9c779157ec7366d601a44930cfd5c2048a8488406561d223a01335",
+          "fixtureModified": true
+        },
+        {
+          "path": "apps/electron/src/renderer/hooks/__tests__/focus-notification-scope.test.ts",
+          "sha256": "5a5afc8af1aab61831417c6423999e0063db7a520293248176de6aa55a504944",
+          "fixtureModified": false
+        },
+        {
+          "path": "apps/electron/src/renderer/components/__tests__/renderer-contract-recovery.test.ts",
+          "sha256": "a09b07eeb27858c16d09b6405b9700ded1570e5e6a7e0bd998eb6901af99715c",
+          "fixtureModified": false
+        },
+        {
+          "path": "package.json",
+          "sha256": "999100cd459b8f2cf3870997d8480207e51f0425d02a12f6a0ca1902f90f306a",
+          "fixtureModified": false
+        },
+        {
+          "path": "tsconfig.json",
+          "sha256": "6c66b5748636786b8aad8cc2f08692e9a2221c6b3f8a21a6355f2600416f7200",
+          "fixtureModified": false
+        },
+        {
+          "path": "bunfig.toml",
+          "sha256": "deeae6086535bc87b723805491fb04850c07c23f730fc8764137432cf15bd529",
+          "fixtureModified": false
+        },
+        {
+          "path": "apps/electron/package.json",
+          "sha256": "f5bdd2fad16b352a68e08d7a0f77504ed9abec4428ebda4f0f9bc93abb45bc68",
+          "fixtureModified": false
+        },
+        {
+          "path": "apps/electron/tsconfig.json",
+          "sha256": "0abc5838632fa096cd000193b40545140f6046fefb17a654c986662ec81730ff",
+          "fixtureModified": false
+        },
+        {
+          "path": "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+          "sha256": "c7f6493b8db39f9c6a70983005272f047b07e66089530094a38415722f833a27",
+          "originalSha256": "aee8f356a0856cd5979d9bfd35d528aa50ea7617a3a16dddc2a13b775450cbeb",
+          "fixtureModified": true
+        },
+        {
+          "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+          "sha256": "56d67407f5415855c16d73094af5e77faa86a81114cf874096d6d287cd28765f",
+          "originalSha256": "1118daaea4ac4ca8d5bbbb0fdf565875d3a7a978feca412bd5b00736e178a228",
+          "fixtureModified": true
+        },
+        {
+          "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+          "sha256": "adb3c3b8457b31b9cd97e48fbad57f4be827152bec74ff1cfd1b59e6b5db899b",
+          "originalSha256": "5443b7d7796f4f9712c669d656aa6ea6b4f6bd0b9eca5cf7a772300f6715b26b",
+          "fixtureModified": true
+        }
+      ],
+      "productionSourceChanged": false,
+      "originalFrozenTestsAndFailureHistoryRetained": true
+    },
+    {
+      "name": "original bundled-source pack / restored symlink guard",
+      "reportArtifact": "work/ui001-linux-sourcepack-clean-results/run-zua9RY/report.json",
+      "reportSha256": "4ffb8a1a7ef58244cf9025da7c138439c073e4c2c350fb19cca6a8757414c351",
+      "manifestSha256": "340bb18ade8c2b0f2e6407f498d162f1b03c5a72e62c9987ad3f33147f9f0e79",
+      "summary": {
+        "expected": 1,
+        "completed": 1,
+        "passed": 1,
+        "failed": 0,
+        "blocked": 0
+      },
+      "cases": {
+        "pass": 10,
+        "fail": 0,
+        "skip": 0
+      },
+      "allLogHashesVerified": true,
+      "sourceRevision": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+      "files": [
+        {
+          "path": "packages/shared/src/skills/__tests__/bundled.test.ts",
+          "runner": "bun",
+          "status": "passed",
+          "cases": {
+            "pass": 10,
+            "fail": 0,
+            "skip": 0
+          },
+          "suiteSha256": "c27e3393754d716fda2f5d278adc5479fc03c7fdc004a79c4b4fb41a4b76cfc1",
+          "originalSuiteSha256": "c27e3393754d716fda2f5d278adc5479fc03c7fdc004a79c4b4fb41a4b76cfc1",
+          "testSourceUnchanged": true,
+          "logSha256": "56784758976a7acabd8eaf8729664dc2c3b1a75e7fc801333fdb06a3cad790aa",
+          "originalFullStatus": "failed",
+          "baselineStatus": "passed"
+        }
+      ]
+    }
+  ],
+  "unionOfSeparateQualifiedOriginalNonpassPaths": {
+    "files": 70,
+    "passCases": 514,
+    "failCases": 0,
+    "originalExplicitPlatformSkippedCases": 2,
+    "combinesLatestDistinctPathsOnly": true,
+    "doesNotReplaceOrReclassifyOriginalFullReport": true,
+    "note": "70 original full nonpass paths qualified separately; App14 also includes one file that already passed the original full"
+  },
+  "remainingOriginalNonpassBeforeParentIndependentFixes": [
+    {
+      "path": "apps/electron/resources/skills/gstack/gstack/browse/test/cookie-import-native.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "failed",
+      "suiteSha256": "4d4d569f4b45af376e5faed5cd4c262795bddbe4073a9f33e7fe4b9051fa1830",
+      "originalLogSha256": "af3c5d3fe7b07e9608b4a2f1d5c1424ef7f3d6f071254a0a5f7a974e6fbf22e6",
+      "testCases": {
+        "pass": 32,
+        "fail": 4,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/resources/skills/gstack/gstack/browse/test/xvfb.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "b1b53d175c9f7448f4199c5f2d03efc98527752d6bb671c24c57ccff3098bbc4",
+      "originalLogSha256": "938ef64172b824ca7f0d0eb292e7bcaba3ed256293b703fc70b3ca0497b24878",
+      "testCases": {
+        "pass": 21,
+        "fail": 10,
+        "skip": 3
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/chat-scroll.browser.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "new",
+      "suiteSha256": "f878c2c0679b597d290754b775da306a270784023c915369ad32962f4513eff0",
+      "originalLogSha256": "86a0bfb17329a3ad43155a646cd18268a90e0f399b38ed0f24778fc185d3956b",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "753d7567c31c5516cc0b1618ab7682cd5176ad57fa53f43b5bedc671f036d4b2",
+      "originalLogSha256": "4b8bb45e4b7be54b00f4b0f749227e666cddb03cf196743da246d5799075e00d",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/input/__tests__/runtime-catalog.browser.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "new",
+      "suiteSha256": "d06b7eb963dd43991ebeaca15c399bda16db5247f97cf871b418b091ea9f8896",
+      "originalLogSha256": "dac84af0f3a10a2421cb5edc784e4467d82d0c3e9d0bfff98fec77e420aa627b",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/components/session-inspector/__tests__/inspector-browser-pane-lifecycle.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "6db1d6905f3cb4bbd7df6b9574a5b8f33c577b4d1e0719024f2fac8692298e55",
+      "originalLogSha256": "badbea0f1b95e43489d958d924d78cc0cf6130ad7b0c8567be68328ce01f6f3e",
+      "testCases": {
+        "pass": 2,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "new",
+      "suiteSha256": "3d378e7b643bf8b926b1a41ffaf0d589c77746ab6e59303ff505cc968ac1b3b9",
+      "originalLogSha256": "fb245206cae5afde1f5d38340dfd5f51e9a1610e3c94f5727170837a425915d1",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/__tests__/unknown-error-i18n.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "failed",
+      "suiteSha256": "219433da7f89c41e6a78528d09a10da9c16fa999d0c320c7b4715f6a0512934b",
+      "originalLogSha256": "f27cb9cabb6ee8e6febc01b3f910890df1c09acc8c130ef03c623ff6812ddb44",
+      "testCases": {
+        "pass": 6,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/__tests__/radar-workflow.browser.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "new",
+      "suiteSha256": "593f0aeb195f59e73c97da9e289fddf191cd10933ab405cfb504382fdfca5550",
+      "originalLogSha256": "1aa96645c7bf6f23ada742b7fd9dc62d7b8de8cfa6026daad36830490630d78c",
+      "testCases": {
+        "pass": 0,
+        "fail": 6,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/__tests__/inbox-focus.browser.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "new",
+      "suiteSha256": "67f50101bd84b960f67365a0f557ad747ee27ab7bdf19a65f31cc945dd8646fa",
+      "originalLogSha256": "8e4a732c0c26d248177a8aaa0833d1927e280f85eb75a29ef1879e5c18ad04c0",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/__tests__/notes-responsive-tools.browser.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "new",
+      "suiteSha256": "cc2ff081399e9fc347165d272402ae077132ead77992776e3bfc25011e4b1159",
+      "originalLogSha256": "8b569293c1138998f64eefddbf3c4a69e6eb9805a779063d06269c031bfd9a26",
+      "testCases": {
+        "pass": 5,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-031-settings-hub.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "9f78dbe0c3427e298146e69fdda833f14de79d733921c4fc3cc553452d064170",
+      "originalLogSha256": "af2a12af79a81a8f15a4c32f49e91134bbdf0b59cc8e783f77e4034a89b792b3",
+      "testCases": {
+        "pass": 2,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-041-043-settings-pages.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "48b935ab075b7c4a19efc785340d048923d8bc9ef8ed2480814d371ba56a155c",
+      "originalLogSha256": "4db67f55fc6d908ae1b53f1c0c6317bcc827e56a6072d389e4c47ac4beca4d6a",
+      "testCases": {
+        "pass": 3,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-044-046-settings-pages.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "691f009665aa24755b69078e141a0a611465146ece2170d485393b068c822729",
+      "originalLogSha256": "38d005701d0bdbcafe2e22389b7b9b790672ef137709650cc774f204ec63a812",
+      "testCases": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-047-049-settings-pages.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "796780d2d49ffd3bc4f9e77d8dd76a9ca464d3ac4d83001fdcb964b400d48890",
+      "originalLogSha256": "5bc49d686e25d0f4b0ce3cdee2e7367d0284be6e6a062b018b7d3896105222dc",
+      "testCases": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-050-052-settings-pages.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "6a4f4b81807c34b74c526a1de51acd1cb8e7979c7aaec95d8dbc64f50d8de74b",
+      "originalLogSha256": "5891778bda6c21be6034503b2a99d511c38c4874d4fff7e74befba61164e254f",
+      "testCases": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-053-055-settings-pages.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "757abdcc67afa8c7ee25837b4be812d10e62c57cfe47215e9ed78cdfee660926",
+      "originalLogSha256": "6666e49a51efc5660962a9585cc26ec6cc670261055f049d3521afd6085f0d95",
+      "testCases": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-056-058-settings-pages.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "93e7ae08e28fdcb23ef5b4865be6933625fbe7f67d65ee123c7a82579de5df2d",
+      "originalLogSha256": "68875900af50c1fbaec896d53afdb45f1e690963913736986dcf7613a61cdcf1",
+      "testCases": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-059-061-settings-pages.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "ddfa90cd485985449a557de4d63958267b61374eac09ae962ff541b907f064ab",
+      "originalLogSha256": "5fbddcfc21a66b1f431266d30b94ac3319634c9a5c0b30efa53b74c07326a5fe",
+      "testCases": {
+        "pass": 5,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-062-shortcuts-settings-page.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "1aeb571206fe1ec166ca755e895c24b6ac7b3ca412ed1a5fd4ccbe0c3e996c50",
+      "originalLogSha256": "cad83f3646e808d165f4ee1cfcbad62211199a55ff9b12aeecc388619a15e485",
+      "testCases": {
+        "pass": 4,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/security-runtime.browser.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "new",
+      "suiteSha256": "f7d14fc341116d805f846e4197a3f0ee653a3d3cd0ac1285aeb9818e756c04ed",
+      "originalLogSha256": "b04efee0e75b09df6fa5928b74166085df77f6218fde32777e6590928426dcb8",
+      "testCases": {
+        "pass": 7,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/SecuritySettingsPage.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "f573f1fed14e96fd52a31aa142e6a54e1fe55efc91fd906f83e65b0a5c0979bb",
+      "originalLogSha256": "7a6f1cbd1cceee98d739424be1f93d446f03105ab8128f7819676d521dc6d3a2",
+      "testCases": {
+        "pass": 6,
+        "fail": 3,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/voice-overlay.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "53de98738a571b5c2d425b5e9d4db8e3e5c10384a1456baee2e9567c3c67ed1f",
+      "originalLogSha256": "a4df9ae806980d292dd1840244185727be9f8380a63f09e1d75a158d4c4dd6c4",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/__tests__/inspector-resize.browser.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "new",
+      "suiteSha256": "c9b73f00ab0627595ad83ce697a3188331b3deecd9c49b11bb7d719cd7f8a383",
+      "originalLogSha256": "d56ef58d562649296f5d0b54374b12571d36cc85a7b9aa860f702d1d08d22cd8",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/__tests__/panel-inset-alignment.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "failed",
+      "suiteSha256": "90a7fd990f9e24bf43cc240450feba204113601c7be54b69047595959109b64f",
+      "originalLogSha256": "60d46cef8fc700cb688ad8a44efed12b95e892edb41a0a1ef4dfeaf493c1b363",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/__tests__/surface-tabs.browser.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "new",
+      "suiteSha256": "9e7cc1225722c92bcabe53590573227a050c3595157299d93c38287b1b450f26",
+      "originalLogSha256": "65f0a25583df4c720fd25f68695c8581d2ff8ecd4e341e3621f0d362736096e0",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/update-metadata-fixtures.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "2a4a3d416c5c76b4efb11f8a784fb2ce4280cbee0e3d47ecad56217e54d07f73",
+      "originalLogSha256": "126b5d00c466ac4b1db8f5c8cb44538785e89d704bf4fc75842b2874b7702d08",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "packages/cloud-runner/src/__tests__/local-provider.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "623037fa9fe4883edb4e9bb07e2e6287965e60be9bbae7404a38d4b6ef2e4b7c",
+      "originalLogSha256": "70c98cd661c2610fed7b84aa83831047f0260090f2d9858faa71b2cc0dc96b3c",
+      "testCases": {
+        "pass": 3,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/__tests__/rox2-187-190-rpc-actions.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "39edfcdc1662ecf11516e58c756ba54d536e89f9fd580d34d6d706d07c9e7751",
+      "originalLogSha256": "4bbbb4eda6763cec1012f3c223712f79b8f9b646b9efa1a446ec9d8af29b113b",
+      "testCases": {
+        "pass": 3,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/__tests__/workspace.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "4d467bc36438f447204b9f6000dee9d0b72e44a96503c5dbb542f7c57e8e7ddf",
+      "originalLogSha256": "32ce4ebaab7ccb837619877422bab7b9b44c15847c6110a0acf61f76705610a9",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "packages/shared/src/__tests__/interceptor-packaging-contract.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "passed",
+      "suiteSha256": "2a01a1fba968b57259ed5919b7976161df9634fccd8a13527c69075c0763b918",
+      "originalLogSha256": "a834d8476e2c5931299d7400eccbbbab97e52bbe86a15b8ca37c5f6368ea195a",
+      "testCases": {
+        "pass": 0,
+        "fail": 1,
+        "skip": 0
+      }
+    },
+    {
+      "path": "tests/e2e/meeting-agents/bootstrap-permissions.spec.ts",
+      "runner": "playwright",
+      "originalFullStatus": "failed",
+      "baselineStatus": "failed",
+      "suiteSha256": "d1e9264db9592aebef02c9da6ed7de66c3b54afea1e555481076d6683f157934",
+      "originalLogSha256": "e304ee6ea16d4d2283ce94e9ec6d3b5be1b621bbb591bfd48d62210c52b54497",
+      "testCases": null
+    },
+    {
+      "path": "tests/e2e/meeting-agents/harness.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "failed",
+      "suiteSha256": "4dce0a0b9105b36fdc72926e91226d88a20ca0458ffe87211b542df9237485b4",
+      "originalLogSha256": "a96a7be829695525198a5eb8731ddbd267e0d55f498993f1d9c51610b16b0d2f",
+      "testCases": {
+        "pass": 7,
+        "fail": 3,
+        "skip": 0
+      }
+    },
+    {
+      "path": "tests/e2e/meeting-agents/lifecycle.spec.ts",
+      "runner": "playwright",
+      "originalFullStatus": "failed",
+      "baselineStatus": "failed",
+      "suiteSha256": "cc999d2ec80ae89bb5998e8e8ec0498be395c698b79f6a530191e69908cb028f",
+      "originalLogSha256": "e304ee6ea16d4d2283ce94e9ec6d3b5be1b621bbb591bfd48d62210c52b54497",
+      "testCases": null
+    },
+    {
+      "path": "tests/e2e/product-tour/product.native.spec.ts",
+      "runner": "playwright",
+      "originalFullStatus": "failed",
+      "baselineStatus": "new",
+      "suiteSha256": "fa76d97f36d783ac5feeb7277366f5efd16eff9ef2be6d3c8bf3bfb613c71dff",
+      "originalLogSha256": "95ba9571d03805b4ca070d39bc6a106a8905a88f1c45352d510978208478fba7",
+      "testCases": null
+    },
+    {
+      "path": "tests/rox-suite/focus-native-ack.test.ts",
+      "runner": "bun",
+      "originalFullStatus": "failed",
+      "baselineStatus": "failed",
+      "suiteSha256": "9f95814c99118513efd8d97d7140f2eb0d0fed478f46557dc14f534da034ed7b",
+      "originalLogSha256": "cba1252000db68c43ff64b1c7caa5eccd3ab99144892d18246ac2bb5556fc34f",
+      "testCases": {
+        "pass": 2,
+        "fail": 1,
+        "skip": 0
+      }
+    }
+  ],
+  "failureHistory": [
+    {
+      "artifact": "work/ui001-linux-prereq24-results/run-epyQIv/report.json",
+      "sha256": "de17ae5b65f5eeee04b6e6b6fafec0cbf7b1b8b92a4131ee25959b15d22ffaa7",
+      "status": "failed",
+      "summary": {
+        "expected": 24,
+        "completed": 24,
+        "passed": 19,
+        "failed": 5,
+        "blocked": 0
+      },
+      "stats": null
+    },
+    {
+      "artifact": "work/ui001-linux-pg-checker4-results/run-iivWCA/report.json",
+      "sha256": "2ebdc5f66b7f2c8e84dd010383d19e7f3b017c1e0902f83ec6cb85d65c317a41",
+      "status": "passed",
+      "summary": {
+        "expected": 4,
+        "completed": 4,
+        "passed": 4,
+        "failed": 0,
+        "blocked": 0
+      },
+      "stats": null
+    },
+    {
+      "artifact": "work/ui001-linux-sourcepack-negative-results/run-i94cqa/report.json",
+      "sha256": "415520c6e60ccf0d986e2cf9a6eec32f28fb8083a886733f6a5dc9b8f191e765",
+      "status": "failed",
+      "summary": {
+        "expected": 1,
+        "completed": 1,
+        "passed": 0,
+        "failed": 1,
+        "blocked": 0
+      },
+      "stats": null
+    },
+    {
+      "artifact": "work/ui001-linux-sourcepack-clean-results/run-zua9RY/report.json",
+      "sha256": "4ffb8a1a7ef58244cf9025da7c138439c073e4c2c350fb19cca6a8757414c351",
+      "status": "passed",
+      "summary": {
+        "expected": 1,
+        "completed": 1,
+        "passed": 1,
+        "failed": 0,
+        "blocked": 0
+      },
+      "stats": null
+    },
+    {
+      "artifact": "work/ui001-linux-chiho36-node24-results/run-GmXMXW/report.json",
+      "sha256": "68f7ff315afd8cc1b502eb43f8d7639c77cb18525a6849a2525addc6eb385210",
+      "status": "failed",
+      "summary": {
+        "expected": 36,
+        "completed": 36,
+        "passed": 34,
+        "failed": 2,
+        "blocked": 0
+      },
+      "stats": null
+    },
+    {
+      "artifact": "work/ui001-linux-chiho36-node22-results/run-76qMOS/report.json",
+      "sha256": "df959afe0a293605a3dfe23368816e9e120947df1170bbc996db76ebdea86fbc",
+      "status": "passed",
+      "summary": {
+        "expected": 36,
+        "completed": 36,
+        "passed": 36,
+        "failed": 0,
+        "blocked": 0
+      },
+      "stats": null
+    },
+    {
+      "artifact": "work/ui001-linux-fixture9-results/run-MTv4GK/report.json",
+      "sha256": "c0fb0e70650b0e3206080447fc5ab3b2aec05753dac3602a801aa695552df693",
+      "status": "passed",
+      "summary": {
+        "expected": 9,
+        "completed": 9,
+        "passed": 9,
+        "failed": 0,
+        "blocked": 0
+      },
+      "stats": null
+    },
+    {
+      "artifact": "work/ui001-linux-product-app14-static-results/run-jQX2p4/report.json",
+      "sha256": "c81f166aaff01cee3344534754e2a2c540a67c7f282ef437fa866b724803ddb3",
+      "status": "failed",
+      "summary": null,
+      "stats": {
+        "startTime": "2026-10-03T21:26:58.043Z",
+        "duration": 1226.4250000000002,
+        "expected": 0,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "artifact": "work/ui001-linux-product-app14-static-results/run-UR1YQX/report.json",
+      "sha256": "5091fbe03acf21e5c3455e84eefb43cfd153b522ab3ff9af47476a6de4278f69",
+      "status": "failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "stats": {
+        "startTime": "2026-10-03T21:35:38.444Z",
+        "duration": 120208.34000000001,
+        "expected": 0,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "artifact": "work/ui001-linux-product-app14-prebuild-results/run-HiqOUR/report.json",
+      "sha256": "1925d9ef79184f633d104729a27bd2ed6149d67fbfd2be9fc1eef7e416fa9c99",
+      "status": "failed",
+      "exitCode": null,
+      "timedOut": true,
+      "stats": null
+    },
+    {
+      "artifact": "work/ui001-linux-product-app14-prebuild-node24-results/run-SKVtnb/report.json",
+      "sha256": "bfb52e39bdc273a69e69ecafa66f3db7d8ed027579bd628e53b1b45b3c75f0f4",
+      "status": "failed-before-cases",
+      "signal": "SIGABRT",
+      "timedOut": false,
+      "logSha256": "a030d6c6b11415ab089c8a3b4a540f4d55d4cff76b88d226aeb055527c30b730",
+      "reason": "qualifiedNode24 default2.18GiB heap exhausted during actual unchanged Vite build"
+    },
+    {
+      "artifact": "work/ui001-linux-product-app14-prebuild-node24-results/run-1BSbUW/report.json",
+      "sha256": "8bedfc902b638670a4dff0a2670dc18b886c2dd783a2947dadc69f565f3aa852",
+      "status": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "stats": null
+    },
+    {
+      "artifact": "work/ui001-linux-product-app14-prebuilt-results/run-20V49V/report.json",
+      "sha256": "6ac5ae243f8a138373a373271c92f1160e170ac1860bf843896f7a868f7d830a",
+      "status": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "stats": {
+        "startTime": "2026-10-03T21:56:20.455Z",
+        "duration": 86673.56499999999,
+        "expected": 14,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    }
+  ],
+  "staticApplication14": {
+    "name": "exactoriginalApp7+spotlight7 existingstatic sourcefingerprint preview",
+    "status": "passed",
+    "inputRevision": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+    "reportArtifact": "work/ui001-linux-product-app14-prebuilt-results/run-20V49V/report.json",
+    "reportSha256": "6ac5ae243f8a138373a373271c92f1160e170ac1860bf843896f7a868f7d830a",
+    "manifestSha256": "841c41745d037a59c8afbf7e2c3bf372ebabbd289d0c6652763f99dcac85632c",
+    "logSha256": "506983d754f2b2d23db7d09784d7acbbf4ddc423da7a35a2c1d24c42f18f4898",
+    "cases": {
+      "pass": 14,
+      "fail": 0,
+      "skip": 0,
+      "flaky": 0
+    },
+    "caseDetails": [
+      {
+        "file": "product.application.spec.ts",
+        "line": 34,
+        "title": "APP-01/APP-06: an existing profile without the tour flag loads the real App without a forced tour",
+        "ok": true,
+        "projects": [
+          {
+            "name": "real-app-isolated-native-store",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 5192,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "product.application.spec.ts",
+        "line": 46,
+        "title": "APP-05: restricted WebUI keeps host inventory unavailable and denies a direct host-session read",
+        "ok": true,
+        "projects": [
+          {
+            "name": "real-app-isolated-native-store",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 5323,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "product.application.spec.ts",
+        "line": 58,
+        "title": "DOMAIN-12: the real Notes UI creates, edits, commits, reloads, and finds a canonical native note",
+        "ok": true,
+        "projects": [
+          {
+            "name": "real-app-isolated-native-store",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 11828,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "product.application.spec.ts",
+        "line": 87,
+        "title": "T-LEARNING-LIBRARY/T-LEARNING-CONTROLS: production learning controls start a voluntary non-mutating tour",
+        "ok": true,
+        "projects": [
+          {
+            "name": "real-app-isolated-native-store",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 5511,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "product.application.spec.ts",
+        "line": 103,
+        "title": "T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creation and save only after ordinary user actions",
+        "ok": true,
+        "projects": [
+          {
+            "name": "real-app-isolated-native-store",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 11434,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "product.application.spec.ts",
+        "line": 151,
+        "title": "T-WORKSPACE-SCOPE: restricted WebUI blocks an unavailable workspace switcher without inventing a control",
+        "ok": true,
+        "projects": [
+          {
+            "name": "real-app-isolated-native-store",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 14671,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "product.application.spec.ts",
+        "line": 160,
+        "title": "APP-03: ordinary navigation away from an active Learning step pauses its real App presentation",
+        "ok": true,
+        "projects": [
+          {
+            "name": "real-app-isolated-native-store",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 7488,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "spotlight.ui.spec.ts",
+        "line": 12,
+        "title": "UI-01/UI-03: production target registry resolves only the bound panel and retains a newer StrictMode registration",
+        "ok": true,
+        "projects": [
+          {
+            "name": "production-components",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 2081,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "spotlight.ui.spec.ts",
+        "line": 23,
+        "title": "UI-05/UI-09: production mask follows measured target geometry after move and viewport resize without stealing focus",
+        "ok": true,
+        "projects": [
+          {
+            "name": "production-components",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 3224,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "spotlight.ui.spec.ts",
+        "line": 49,
+        "title": "UI-08: a normal outside application click executes and pauses the production overlay",
+        "ok": true,
+        "projects": [
+          {
+            "name": "production-components",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 2609,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "spotlight.ui.spec.ts",
+        "line": 57,
+        "title": "UI-07: a higher-priority native handoff hides the popup and consumes the first Escape",
+        "ok": true,
+        "projects": [
+          {
+            "name": "production-components",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 1961,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "spotlight.ui.spec.ts",
+        "line": 69,
+        "title": "UI-11: production geometry observers disconnect after the tour closes",
+        "ok": true,
+        "projects": [
+          {
+            "name": "production-components",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 1823,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "spotlight.ui.spec.ts",
+        "line": 91,
+        "title": "UI-02/UI-04/UI-10: visible variant selection rejects hidden, clipped and iframe-document registrations",
+        "ok": true,
+        "projects": [
+          {
+            "name": "production-components",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 1512,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "file": "spotlight.ui.spec.ts",
+        "line": 120,
+        "title": "UI-04: clipping the active control pauses for target occlusion before any ordinary action",
+        "ok": true,
+        "projects": [
+          {
+            "name": "production-components",
+            "status": "expected",
+            "expectedStatus": "passed",
+            "runs": [
+              {
+                "status": "passed",
+                "durationMs": 1987,
+                "retry": 0
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "caseDetailsSha256": "d18a0e3879fe490488a0c8b322f680d3b0f4723c56ca57e56c667b16e3688bce",
+    "suites": [
+      {
+        "path": "tests/e2e/product-tour/product.application.spec.ts",
+        "runner": "playwright",
+        "sha256": "ed6df3c1c8b5fa92d14bcfb48331f7137211551a90f03c2bfd9ef409fde6602f",
+        "config": "tests/e2e/product-tour/playwright.config.ts",
+        "packageRoot": ".",
+        "declaredCases": 7
+      },
+      {
+        "path": "tests/e2e/product-tour/spotlight.ui.spec.ts",
+        "runner": "playwright",
+        "sha256": "338bf7dff43dff7456b31129c1230b386b02316e918d6fe18351a515d2213342",
+        "config": "tests/e2e/product-tour/playwright.config.ts",
+        "packageRoot": ".",
+        "declaredCases": 7
+      }
+    ],
+    "runtime": {
+      "bun": "1.3.14",
+      "node": "v24.21.0",
+      "playwright": "1.49.1",
+      "uid": 501,
+      "chromiumExecutable": "/usr/lib/chromium/chromium"
+    },
+    "existingStaticAndPrebuiltSourceReceiptMode": true,
+    "sourceFingerprint": "e35db14acd8238ad35f1f8477cfb70d108098b840abb0a0f12133221ccef9f05",
+    "sourceReceiptSha256": "46a6c8fde10851c1c87662a782ef2a450e1252078fe88df6ebed91f329bb68fe",
+    "actualBuildReportSha256": "8bedfc902b638670a4dff0a2670dc18b886c2dd783a2947dadc69f565f3aa852",
+    "actualBuildLogSha256": "84b4ad88853c5ceb79c1d402a7eb7b6440138391c76e5ad0dd90c2a24cc16244",
+    "taskOnlyBuildNodeHeapMB": 6144,
+    "testBodyAssertionsSourceDeadlinesUnchanged": true,
+    "originalWebServerDeadlineMs": 120000,
+    "originalApplicationCaseDeadlineMs": 90000,
+    "originalUICaseDeadlineMs": 60000,
+    "all1881OriginalSuiteHashesMatchedBeforeAndAfter": true,
+    "proofBoundary": "browser test fixture using actualproductionApp/components/nativeauthority/nativejournal; no nativeOS/hosted/provider/fullDoD acceptance",
+    "allPriorColdViteStartupAndMemoryFailuresRetained": true
+  },
+  "limits": {
+    "fullDoDClosed": false,
+    "nativeWindowsMacAcceptanceClosed": false,
+    "hostedWebAcceptanceClosed": false,
+    "realProviderAcceptanceClosed": false,
+    "noSourceOrHostGlobalConfigurationWritesBySupplementaryRunner": true,
+    "privateHomeConfigCipherKeyPayloadExcluded": true
+  },
+  "allDistinctSupplementaryFiles": {
+    "files": 71,
+    "passCases": 521,
+    "failCases": 0,
+    "originalExplicitPlatformSkippedCases": 2,
+    "includes14AppBrowserCases": true,
+    "originalNonpassQualifiedPaths": 70,
+    "doesNotReplaceOriginal1881Full": true
+  },
+  "publicDataCheck": {
+    "actualProtectedDatabasePasswordMatches": 0,
+    "credentialQueryPattern": false,
+    "onlyReportsManifestsOutputLogHashesCopied": true,
+    "privateProfileConfigCipherKeyPayloadCopied": false
+  },
+  "finalFrozenSourceReadback": {
+    "artifact": "work/ui001-linux-final-frozen-source-readback.json",
+    "sha256": "a84237e3dbebd83527f8711a50abd522776bd6a53d210c75c10fed20ea7ee3fc",
+    "inputRevision": "2e3d56dd035ea7ea4e0b424c5b4b45a660d368ed",
+    "all1881OriginalSuiteHashesMatched": true,
+    "suiteHashMismatches": 0,
+    "trackedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "threeTaskDependencyLinksActuallyRestored": {
+      "apps/electron/resources/skills/telegram/chiho-telegram/node_modules": true,
+      "apps/electron/resources/skills/gstack/node_modules": true,
+      "apps/electron/resources/skills/gstack/gstack/node_modules": true
+    },
+    "PGRelayPID74191Absent": true
+  }
+}

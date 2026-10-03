@@ -5,6 +5,8 @@ import ts from 'typescript'
 import { parseRoute, resolveRouteNavigationState, buildRouteFromNavigationState } from '../../../shared/route-parser'
 import { isSessionsNavigation } from '../../../shared/types'
 import { preserveRouteQuery } from '../navigation-reconcile'
+import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey } from '../../atoms/runtime-trace'
+import { parseRuntimeMapViewRequest } from '../../../shared/runtime-map-link'
 
 const source = readFileSync(join(import.meta.dir, '../NavigationContext.tsx'), 'utf8')
 const ast = ts.createSourceFile('NavigationContext.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
@@ -17,6 +19,17 @@ visit(ast)
 if (matches.length !== 1 || !matches[0]?.initializer || !ts.isCallExpression(matches[0].initializer)) throw new Error('Actual navigate callback missing/ambiguous')
 const callback = matches[0].initializer.arguments[0]!
 const executable = ts.transpileModule('return (' + callback.getText(ast) + ');', {
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
+}).outputText
+let runtimeSelection: ts.Expression | undefined
+function findRuntimeSelection(node: ts.Node) {
+  if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === 'requestRuntimeSelection'
+    && node.initializer && ts.isCallExpression(node.initializer)) runtimeSelection = node.initializer.arguments[0]
+  ts.forEachChild(node, findRuntimeSelection)
+}
+findRuntimeSelection(ast)
+if (!runtimeSelection) throw new Error('Actual runtime selection callback missing')
+const runtimeExecutable = ts.transpileModule('return (' + runtimeSelection.getText(ast) + ');', {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
 }).outputText
 
@@ -43,7 +56,9 @@ function fixture(overrides: { ready?: boolean; restored?: boolean; pendingUrl?: 
     store: { set: (_atom: unknown, route: string) => observe('route', route) },
     storage: { KEYS: { lastSelectedSessionId: 'selected' }, set: () => {} },
   }
-  const navigate = new Function(...Object.keys(bindings), executable)(...Object.values(bindings)) as
+  const runtimeBindings = { ...bindings, runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey, parseRuntimeMapViewRequest }
+  const scope = { ...bindings, requestRuntimeSelection: new Function(...Object.keys(runtimeBindings), runtimeExecutable)(...Object.values(runtimeBindings)) }
+  const navigate = new Function(...Object.keys(scope), executable)(...Object.values(scope)) as
     (route: string, options?: { newPanel?: boolean }) => Promise<void>
   return { refs, writes, navigate }
 }

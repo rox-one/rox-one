@@ -1,0 +1,10 @@
+import { discoverSuites, runSuites } from '/workspace/scripts/test-all'
+const root = '/workspace'
+const manifest = await discoverSuites(root)
+const generator = (path: string) => path.endsWith('/ios-qa/scripts/gen-accessors.test.ts')
+manifest.suites.sort((a, b) => Number(generator(a.path)) - Number(generator(b.path)) || a.path.localeCompare(b.path))
+const report = await runSuites({ root, manifest, artifactDirectory: '/proof/full-results',
+  environment: { ...process.env, ROX_TEST_TIMEOUT_MS: '30000', ROX_TEST_SUITE_TIMEOUT_MS: '300000' },
+  onResult: (result, completed, expected) => console.log(JSON.stringify({ completed, expected, path: result.path, status: result.status, counts: result.testCounts, durationMs: result.durationMs })) })
+console.log(JSON.stringify({ report: report.reportPath, status: report.status, summary: report.summary }))
+process.exitCode = report.status === 'passed' ? 0 : 1

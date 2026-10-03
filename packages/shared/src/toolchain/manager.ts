@@ -476,7 +476,8 @@ export function createManager(
         const git = await resolver.findExecutable('git');
         if (!git && !opts.gitNpmInstallImpl) throw new Error('git not found: git-npm tools require git (dependsOn git)');
         await (opts.gitNpmInstallImpl ?? defaultGitNpmInstall)({ entry, paths, versionDir, bun, git: git ?? undefined });
-        if (!hasUsableGitNpm(entry, versionDir, entry.version, false)) {
+        // Validate the completed version before its current selector is flipped.
+        if (!(await hasUsableInstall(entry, versionDir, entry.version, false))) {
           throw new Error(`git-npm installation is incomplete: ${entry.name}@${entry.version}`);
         }
         await flipCurrent(toolRoot, entry.version, versionDir);
@@ -575,6 +576,12 @@ export function createManager(
     return p;
   }
 
+  /** Preserve async planning/status gates while sharing the canonical strict git-npm check. */
+  async function hasUsableInstall(entry: ToolEntry, installedPath: string, installedVersion: string, requireCurrent = true): Promise<boolean> {
+    if (!fs.existsSync(installedPath)) return false;
+    return entry.kind !== 'git-npm' || hasUsableGitNpm(entry, installedPath, installedVersion, requireCurrent);
+  }
+
   /** Причина установки для entry или null, если актуальная версия уже стоит. */
   async function planItem(entry: ToolEntry, artifact: ToolArtifact): Promise<WorkItem | null> {
     const state = await readStateFile(paths.stateFile);
@@ -582,7 +589,8 @@ export function createManager(
     if (!installed || !installed.installedVersion) return { entry, artifact, reason: 'missing' };
     if (installed.installedVersion !== entry.version) return { entry, artifact, reason: 'outdated' };
     // версия совпала, но директория могли подтереть — проверяем факт
-    if (!hasInstalledFiles(entry, artifact, installed.installedPath)) return { entry, artifact, reason: 'missing' };
+    if (!hasInstalledFiles(entry, artifact, installed.installedPath) ||
+      !(await hasUsableInstall(entry, installed.installedPath, installed.installedVersion))) return { entry, artifact, reason: 'missing' };
     return null;
   }
 
@@ -651,9 +659,8 @@ export function createManager(
 
       if (installed?.installedVersion && (installed.installedVersion === entry.version
         ? hasInstalledFiles(entry, artifact, installed.installedPath)
-        : entry.kind === 'git-npm'
-          ? hasUsableGitNpm(entry, installed.installedPath, installed.installedVersion)
-          : fs.existsSync(installed.installedPath))) {
+        : fs.existsSync(installed.installedPath)) &&
+        await hasUsableInstall(entry, installed.installedPath, installed.installedVersion)) {
         statuses.push(
           installed.installedVersion === entry.version
             ? {
@@ -710,7 +717,8 @@ export function createManager(
           const st = await readStateFile(paths.stateFile);
           for (const [n, meta] of Object.entries(st.tools)) {
             const entry = manifest.find((entry) => entry.name === n);
-            if (entry && meta?.installedVersion && hasInstalledFiles(entry, entry.artifacts[platform], meta.installedPath)) {
+            if (entry && meta?.installedVersion && hasInstalledFiles(entry, entry.artifacts[platform], meta.installedPath) &&
+              await hasUsableInstall(entry, meta.installedPath, meta.installedVersion)) {
               installedNames.add(n as ToolName);
             }
           }
@@ -739,7 +747,8 @@ export function createManager(
             const st = await readStateFile(paths.stateFile);
             for (const w of batch) {
               const meta = st.tools[w.entry.name];
-              if (meta?.installedVersion && meta.installedPath && hasInstalledFiles(w.entry, w.artifact, meta.installedPath)) {
+              if (meta?.installedVersion && meta.installedPath && hasInstalledFiles(w.entry, w.artifact, meta.installedPath) &&
+                await hasUsableInstall(w.entry, meta.installedPath, meta.installedVersion)) {
                 installedNames.add(w.entry.name);
               }
             }

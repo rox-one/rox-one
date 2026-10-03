@@ -88,7 +88,7 @@ async function bundle() {
     import {lazyRoutePage,RouteErrorBoundary} from './apps/electron/src/renderer/lib/route-recovery';
     import {useCallback,useEffect,useMemo,useState} from 'react';
     import {createRoot} from 'react-dom/client';
-    import {Provider,atom,createStore,useAtomValue,useSetAtom} from 'jotai';
+    import {Provider,atom,createStore,useAtomValue,useSetAtom,useStore} from 'jotai';
     import {NavigationProvider,useNavigation,useNavigationState} from './apps/electron/src/renderer/contexts/NavigationContext';
     import {CompactWorkspaceMenu} from './apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu';
     import {APP_NAV_DESTINATIONS} from './apps/electron/src/renderer/components/app-shell/nav-destinations';
@@ -96,6 +96,9 @@ async function bundle() {
     import {panelStackAtom,focusedPanelIdAtom,focusedSessionIdAtom} from './apps/electron/src/renderer/atoms/panel-stack';
     import {sessionMetaMapAtom} from './apps/electron/src/renderer/atoms/sessions';
     import {useSession} from './apps/electron/src/renderer/hooks/useSession';
+    import {runtimeTraceScopeKey,runtimeTraceSessionAtomFamily} from './apps/electron/src/renderer/atoms/runtime-trace';
+    import {loadRuntimeTrace} from './apps/electron/src/renderer/event-processor/runtime-trace-ingress';
+    import {runtimeCatalogCapabilities,runtimeCatalogScope} from './apps/electron/src/renderer/lib/runtime-catalog-capabilities';
     import {sourceSelection,skillSelection,automationSelection} from './apps/electron/src/renderer/hooks/useEntitySelection';
     import * as guards from './apps/electron/src/shared/types';
     import {resolveViewRoute,buildRouteFromNavigationState} from './apps/electron/src/shared/route-parser';
@@ -111,6 +114,7 @@ async function bundle() {
     const records=[{id:'s1',workspaceId:'ws-a',name:'Session A'},{id:'s2',workspaceId:'ws-b',name:'Session B'}];
     store.set(sessionMetaMapAtom,new Map(records.map(x=>[x.id,x])));
     window.electronAPI={
+      getRuntimeTraceSnapshot:async({workspaceId,sessionId})=>({schemaVersion:1,workspaceId,sessionId,runs:[],events:[],coverage:{state:'complete',source:'runtime',missing:[]}}),
       listLabels:async()=>[],onLabelsChanged:callback=>{labels.add(callback);return()=>labels.delete(callback)},
       getSources:async()=>[{config:{slug:'src',name:'Fixture source',type:'local'}}],
       getSkills:async()=>[{slug:'skill'}],
@@ -302,22 +306,32 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
   }, 30000)
 
   for (const panels of ['v2:[]', 'v2:[', '[]', '[', '']) {
-    it(`invalid panel data ${JSON.stringify(panels)} without a route restores the workspace default`, async () => {
+    it(`invalid panel data ${JSON.stringify(panels)} without a route retains its unavailable raw address`, async () => {
+      const route = panels || '?panels='
       const search = '?' + new URLSearchParams({ ws: 'ws-a', panels })
       await page.goto(base + '/' + search)
-      await page.waitForFunction(() => (window as any).ui001?.snapshot().panels[0]?.route === 'allSessions/session/s1', undefined, { timeout: 5000 })
-      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual(['allSessions/session/s1'])
+      await page.waitForFunction(() => Boolean((window as any).ui001))
+      await unavailable(route)
+      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual([route])
+      expect((await snapshot()).session).toBeNull()
+      expect(await page.locator('[data-leaf="session"]').count()).toBe(0)
+      const retainedUrl = page.url()
       await page.evaluate(() => (window as any).ui001.navigate('future/stale-no-route'))
       await unavailable('future/stale-no-route')
       await page.evaluate(search => {
         history.pushState(null, '', search)
         window.dispatchEvent(new PopStateEvent('popstate'))
       }, search)
-      await page.waitForFunction(() => (window as any).ui001.snapshot().panels[0]?.route === 'allSessions/session/s1', undefined, { timeout: 5000 })
-      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual(['allSessions/session/s1'])
+      await unavailable(route)
+      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual([route])
+      expect((await snapshot()).session).toBeNull()
+      expect(page.url()).toBe(retainedUrl)
       await page.reload()
-      await page.waitForFunction(() => (window as any).ui001?.snapshot().panels[0]?.route === 'allSessions/session/s1')
-      expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s1')
+      await unavailable(route)
+      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual([route])
+      expect((await snapshot()).session).toBeNull()
+      expect(new URLSearchParams((await snapshot()).search).get('route')).toBe(route)
+      expect(page.url()).toBe(retainedUrl)
     }, 30000)
   }
 

@@ -1,0 +1,253 @@
+{
+  "schemaVersion": 1,
+  "task_id": "platform_scout",
+  "attempt_id": "69555fc7272745fd5fbf08ec5f156540",
+  "packet_hash": "5365fea19f39c0ce62ddd1a902ecc514b0c5e25e9692d60507107e72df42770c",
+  "contract_hash": "f75e80e8f640206536aaec208351950f6c1048a5809ded8bf99c62dcf74ce450",
+  "updatedAt": "2026-10-03T22:37:52.783528+00:00",
+  "checkout": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+  "testInputRevision": "56fe8105a21be0bfcb523a01b863ef824f257581",
+  "liveHeadAtReceipt": "ed456bc542205ba5dd78aee4fde3cdbae1a4b7a9",
+  "ownedChangedPaths": [
+    "packages/server-core/src/authority/native-authority.ts",
+    "packages/server-core/src/authority/native-os-owner.ts",
+    "packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts"
+  ],
+  "ownedSourceSha256": {
+    "packages/server-core/src/authority/native-authority.ts": "1eb9f20c07b6b7d7bb2966243fc6a4e6a713ac48032cb1a36d0c1d5c02b5735e",
+    "packages/server-core/src/authority/native-os-owner.ts": "80c376beda505142f9f4659ca0a56de6d2c2666691078d3d3a452b104842a9b9",
+    "packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts": "83deacfc342ad8f9f1072813befa54af82e3988db0b104bed854112d3ca6cd87"
+  },
+  "writerClosed": true,
+  "stagedOnlyOwnedPaths": true,
+  "sourceBefore": {
+    "path": "packages/server-core/src/authority/native-authority.ts",
+    "sha256": "12aa9e45cc37c4496d99a3cf1734513731c9e613a0e0e2339f38bac918a1b7ab",
+    "actualCallbackRed": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/windows-owner-56fe/original-guard-red.json",
+    "actualCallbackRedSha256": "7186488ada5c28cc67b82449750f1d002b032086f595ed7c1b0b06d10c9577f3",
+    "cases": [
+      {
+        "name": "win32-missing-getuid",
+        "actualCallback": true,
+        "stat": "actual owned candidate directory",
+        "expectedFailure": true,
+        "error": "maintenance requires the state directory OS owner"
+      },
+      {
+        "name": "real-posix-owner",
+        "actualCallback": true,
+        "stat": "actual owned candidate directory",
+        "expectedFailure": false,
+        "error": null
+      },
+      {
+        "name": "foreign-uid-real-posix-stat",
+        "actualCallback": true,
+        "stat": "actual owned candidate directory",
+        "expectedFailure": true,
+        "error": "maintenance requires the state directory OS owner"
+      }
+    ]
+  },
+  "failureHistory": {
+    "windowsArtifact": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-e572-windows-native-artifact.zip",
+    "windowsArtifactSha256": "2d17ddc57ef42ac902ae903929bb1ddada971e81c2042797185ef00773d4ac56",
+    "windowsArtifactId": 11285906302,
+    "windowsWorkflowLog": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-e572-windows-native-smoke.log",
+    "windowsWorkflowLogSha256": "ccb3021c2965b122bf39f4f54e5d4882e85f5ff6b3b64a43d2bc5c6c842b9eca",
+    "observedSyntheticRevision": "0d09346024ef949abaf031a743318583cbbc91a0",
+    "stage": "firstWindow",
+    "firstWindowTimeoutMs": 30000,
+    "diagnosticStartupJsonEntry": "native/startup-5920.json",
+    "diagnosticStartup": {
+      "status": "failed-before-first-window",
+      "platform": "win32",
+      "childPid": 4128,
+      "diagnosticTailLimitCharacters": 32768,
+      "stdout": "2026-10-03T21:34:19.137Z INFO   [bootstrap] Toolchain ensureAll scheduled\n",
+      "stderr": ""
+    },
+    "originalStageFailed": true,
+    "realWindowsOwnerExceptionNotCaptured": true,
+    "sourceBackedChain": [
+      "main/index.ts awaits bootstrapServer before createInitialWindows",
+      "bootstrapServer creates NativeAuthority before listening and session initialize",
+      "old requireOsOwner rejects every runtime without POSIX process.getuid",
+      "Windows Node exposes no process.getuid; outer initialization catch does not create first window",
+      "Toolchain ensureAll scheduled is fire-and-forget and not proof of an awaited download"
+    ]
+  },
+  "implementation": {
+    "windowsOwnerPolicy": "ACL owner SID equals exactly current WindowsIdentity.User.Value OR current WindowsIdentity.Owner.Value",
+    "posixOwnerPolicy": "original UID equality guard remains; reopen now uses the same OS ownership check",
+    "readOnlyAcl": true,
+    "permissionOrOwnerChangesAdded": false,
+    "arbitraryGroupMembershipBypass": false,
+    "command": "SystemRoot\\System32\\WindowsPowerShell\\v1.0\\powershell.exe (Sysnative for ia32)",
+    "argv": [
+      "-NoLogo",
+      "-NoProfile",
+      "-NonInteractive",
+      "-EncodedCommand",
+      "static UTF-16LE base64 script"
+    ],
+    "targetChannel": "ROX_NATIVE_OWNER_PROBE_PATH in private child env; Get-Acl -LiteralPath",
+    "perProbeTimeoutMs": 2000,
+    "perProbeMaxBufferBytes": 1024,
+    "capturedStdoutPolicy": "only 1 or 0; errors fail closed with generic original message",
+    "preservedGuards": [
+      "real state directory",
+      "symlink rejection",
+      "regular existing DB",
+      "single DB hardlink",
+      "canonical state realpath"
+    ],
+    "firstWindowTimeoutMsUnchanged": 30000,
+    "primarySources": [
+      "https://learn.microsoft.com/en-us/windows/win32/secauthz/owner-of-a-new-object",
+      "https://learn.microsoft.com/en-us/dotnet/api/system.security.principal.windowsidentity.owner",
+      "https://learn.microsoft.com/en-us/powershell/module/Microsoft.PowerShell.Security/get-acl"
+    ]
+  },
+  "verification": {
+    "host": {
+      "platform": "darwin",
+      "arch": "arm64",
+      "bun": "1.3.14",
+      "node": "24.21.0"
+    },
+    "latest": {
+      "startedAt": "2026-10-03T22:35:05.971Z",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "./packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts",
+        "./packages/server-core/src/authority/__tests__/native-authority.test.ts",
+        "./packages/server-core/src/authority/__tests__/native-journal.test.ts",
+        "--timeout",
+        "30000"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+      "head": "56fe8105a21be0bfcb523a01b863ef824f257581",
+      "bunVersion": "1.3.14",
+      "nodeVersion": "v24.21.0",
+      "sourceHashes": {
+        "./packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts": "83deacfc342ad8f9f1072813befa54af82e3988db0b104bed854112d3ca6cd87",
+        "./packages/server-core/src/authority/__tests__/native-authority.test.ts": "43b8f1a7ceb222307ea36cd41da34264a79a5838ee4ab11741ad47329fc1822f",
+        "./packages/server-core/src/authority/__tests__/native-journal.test.ts": "1e2c6362b187a607da92fe76ac308ad8d47ba3a54d2b4aeeb5e5b2f1bb288b35"
+      },
+      "environmentKeys": [
+        "HOME",
+        "USER",
+        "LOGNAME",
+        "LANG",
+        "PATH",
+        "TMPDIR",
+        "XDG_CONFIG_HOME",
+        "ROX_CONFIG_DIR",
+        "CRAFT_CONFIG_DIR",
+        "GSTACK_HOME",
+        "GSTACK_TEST_LEGACY_ROOT",
+        "PLAYWRIGHT_BROWSERS_PATH"
+      ],
+      "providerCredentialsForwarded": false,
+      "exitCode": 0,
+      "finishedAt": "2026-10-03T22:35:16.367Z",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/gstack-test-2026-10-03T22-35-05-919Z/output.log",
+      "logSha256": "ff02c3b63c8d1c7477c0cb967a4e6f1d8fb34ea3eb65f32b98f158c7f9185b1a",
+      "counts": {
+        "pass": 49,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    "latestInvocationSha256": "7e384c63a02dd0d153ae0dec04504d84bc042491f9770824a13b1593103a10e4",
+    "initialPreTokenOwnerCorrection": {
+      "startedAt": "2026-10-03T22:27:37.210Z",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "./packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts",
+        "./packages/server-core/src/authority/__tests__/native-authority.test.ts",
+        "./packages/server-core/src/authority/__tests__/native-journal.test.ts",
+        "--timeout",
+        "30000"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+      "head": "56fe8105a21be0bfcb523a01b863ef824f257581",
+      "bunVersion": "1.3.14",
+      "nodeVersion": "v24.21.0",
+      "sourceHashes": {
+        "./packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts": "c958f6b81ae4e2369cfab23a9bf6c1f8f9357834057c19d81d3a80bdc47a457e",
+        "./packages/server-core/src/authority/__tests__/native-authority.test.ts": "43b8f1a7ceb222307ea36cd41da34264a79a5838ee4ab11741ad47329fc1822f",
+        "./packages/server-core/src/authority/__tests__/native-journal.test.ts": "1e2c6362b187a607da92fe76ac308ad8d47ba3a54d2b4aeeb5e5b2f1bb288b35"
+      },
+      "environmentKeys": [
+        "HOME",
+        "USER",
+        "LOGNAME",
+        "LANG",
+        "PATH",
+        "TMPDIR",
+        "XDG_CONFIG_HOME",
+        "ROX_CONFIG_DIR",
+        "CRAFT_CONFIG_DIR",
+        "GSTACK_HOME",
+        "GSTACK_TEST_LEGACY_ROOT",
+        "PLAYWRIGHT_BROWSERS_PATH"
+      ],
+      "providerCredentialsForwarded": false,
+      "exitCode": 0,
+      "finishedAt": "2026-10-03T22:27:47.289Z",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/gstack-test-2026-10-03T22-27-37-199Z/output.log",
+      "logSha256": "14d17df17dce913cb7a4d430964cda5a93320c77dc8823e2bac3a3ae3dfd489c",
+      "counts": {
+        "pass": 49,
+        "fail": 0,
+        "skip": 0
+      }
+    },
+    "initialInvocationSha256": "46f93b04ed1d039aa91b5399308de993645f1cd7046602d805353bde0e17fe47",
+    "latestAssertions": 469,
+    "latestCases": {
+      "newOwnerCases": 19,
+      "existingUnchangedAuthorityAndJournalCases": 30,
+      "totalPass": 49,
+      "fail": 0,
+      "skip": 0
+    },
+    "existingTestHashes": {
+      "packages/server-core/src/authority/__tests__/native-authority.test.ts": "43b8f1a7ceb222307ea36cd41da34264a79a5838ee4ab11741ad47329fc1822f",
+      "packages/server-core/src/authority/__tests__/native-journal.test.ts": "1e2c6362b187a607da92fe76ac308ad8d47ba3a54d2b4aeeb5e5b2f1bb288b35"
+    },
+    "gitDiffCheck": {
+      "exitCode": 0,
+      "scopedToOwnedPaths": true
+    },
+    "actualPosixNodeCreateReopenHardlinkAliasCli": true,
+    "controlledWindowsDependencyCallbacks": true,
+    "actualWindowsCliAndPowerShellExecutedLocally": false,
+    "windowsCiExposure": {
+      "test": "./packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts",
+      "requirements": [
+        "Windows host PowerShell5.1",
+        "qualified Bun1.3.14",
+        "Node24 on PATH",
+        "esbuild workspace dependency"
+      ],
+      "conditionalCase": "actual Windows PowerShell production script accepts actual user/default-token-owner SID and rejects controlled foreign ACL SID",
+      "allHostCase": "actual NativeAuthority Node create/reopen, real DB hardlink rejection and directory alias/junction rejection",
+      "hostSubprocessTimeoutMs": 15000,
+      "outerCaseTimeoutMs": 20000,
+      "perPowerShellProbeTimeoutMs": 2000
+    }
+  },
+  "explicitExternalPrerequisites": [
+    "root Windows CI execution of actual OS owner and constructor/reopen cases",
+    "root real Windows Electron firstWindow and native smoke within unchanged 30000ms event deadline"
+  ],
+  "githubMutationsByWorker": false,
+  "foregroundOrProviderLaunchByWorker": false,
+  "realNativeWindowsAcceptanceObserved": false,
+  "fullDoDClosed": false
+}

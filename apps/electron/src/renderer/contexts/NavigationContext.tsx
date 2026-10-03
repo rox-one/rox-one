@@ -157,7 +157,7 @@ interface NavigationProviderProps {
   /** Current workspace slug (used for URL ?ws= param and localStorage) */
   workspaceSlug: string | null
   /** Switch by slug; false or rejection means the history target is unavailable. */
-  onSwitchWorkspaceBySlug?: (slug: string) => boolean | Promise<boolean>
+  onSwitchWorkspaceBySlug?: (slug: string) => boolean | void | Promise<boolean | void>
   /** Session creation handler */
   onCreateSession: (workspaceId: string, options?: import('../../shared/types').CreateSessionOptions) => Promise<Session>
   /** Input change handler for pre-filling chat input */
@@ -251,7 +251,7 @@ export function NavigationProvider({
       }
     }
     return rightSidebar ? { ...state, rightSidebar } : state
-  }, [focusedRoute, rightSidebar, sessionMetaMap, workspaceId, remoteWorkspaceId, unavailableWorkspaceSlug])
+  }, [focusedRoute, rightSidebar, unavailableWorkspaceSlug, sessionMetaMap, workspaceId, remoteWorkspaceId])
 
   // =========================================================================
   // BROWSER HISTORY TRACKING
@@ -546,7 +546,9 @@ export function NavigationProvider({
    */
   const reconcileFromUrlParams = useCallback(
     (params: URLSearchParams) => {
-      const initialRoute = params.get('route') || (params.has('panels') ? routes.view.allSessions() : null)
+      // A broken layout still carries the requested address; restoring it must
+      // not auto-select a different chat. Explicit entity routes take priority.
+      const initialRoute = params.get('route') || (params.has('panels') ? (params.get('panels') || '?panels=') : null)
       const sidebarParam = params.get('sidebar') || undefined
       const panelsParam = params.get('panels')
       const focusedIndexParam = params.get('fi')
