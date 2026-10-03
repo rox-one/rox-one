@@ -22,24 +22,13 @@ describe('one-surface shell', () => {
   })
 
   it('renders sidebar and navigator as flush panes with a hairline divider', () => {
-    const sidebarStart = stack.indexOf('data-panel-role="sidebar"')
-    const navigatorStart = stack.indexOf('data-panel-role="navigator"')
-    const contentStart = stack.indexOf('data-panel-grid-viewport="true"')
-    expect(sidebarStart).toBeGreaterThan(-1)
-    expect(navigatorStart).toBeGreaterThan(sidebarStart)
-    expect(contentStart).toBeGreaterThan(navigatorStart)
-    const sidebar = stack.slice(sidebarStart, navigatorStart)
-    const navigator = stack.slice(navigatorStart, contentStart)
-    for (const pane of [sidebar, navigator]) {
-      expect(pane).toContain('rox-shell-pane')
-      expect(pane).not.toContain('rox-panel')
-      expect(pane).not.toContain('shadow-middle')
-      expect(pane).not.toContain('borderTopLeftRadius')
-    }
-    expect(sidebar).toContain("overflowX: 'clip', overflowY: 'visible'")
-    expect(sidebar).toContain("display: isCompact ? 'none' : undefined")
-    expect(navigator).toContain('rox-shell-divider-r')
-    expect(navigator).toContain("position: isCompact ? 'absolute' : 'relative'")
+    // Grid, focus and compact arrangements now share one persistent container.
+    const sidebar = stack.slice(stack.indexOf('data-panel-role="sidebar"'), stack.indexOf('data-panel-role="navigator"'))
+    expect(sidebar).toContain('rox-shell-pane')
+    expect(sidebar).toContain('rox-shell-divider-r')
+    expect(sidebar).not.toContain('rox-panel')
+    expect(sidebar).not.toContain('shadow-middle')
+    expect(sidebar).not.toContain('borderTopLeftRadius')
     expect(stack).not.toContain('RADIUS_EDGE')
   })
 

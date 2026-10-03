@@ -63,7 +63,14 @@ function mountedStore(target: typeof targets[number]) {
   disposers.push(store.sub(target.atom, () => {}))
   return store
 }
-function emit(key: string | null, newValue: string | null, area: Storage = storage) {
+function emit(key: string | null, newValue: string | null, area: Storage = storage, updateCanonical = true) {
+  // Browser events follow the cross-window storage write. A queued snapshot can
+  // deliberately skip this update when a newer canonical value is already saved.
+  if (updateCanonical) {
+    if (key === null) area.clear()
+    else if (newValue === null) area.removeItem(key)
+    else area.setItem(key, newValue)
+  }
   for (const listener of [...listeners]) listener({ key, newValue, storageArea: area } as StorageEvent)
 }
 
@@ -126,9 +133,12 @@ describe('ROX UI-001 real Jotai layout storage behavior', () => {
       expect(() => store.set(target.atom, RESET)).not.toThrow()
       expect(store.get(target.atom)).toBe(target.fallback)
     })
-    it(`${target.name}: reads event snapshots through races, corrupt values and deletion`, () => {
+    it(`${target.name}: reads current storage through queued races, corrupt values and deletion`, () => {
       const store = mountedStore(target)
-      storage.setItem(target.key, String(target.max)) // Store advanced beyond queued snapshots.
+      storage.setItem(target.key, String(target.max)) // Store advanced beyond a queued snapshot.
+      emit(target.key, String(target.fallback + 20.6), storage, false)
+      expect(store.get(target.atom)).toBe(target.max)
+      expect(storage.getItem(target.key)).toBe(String(target.max))
       emit(target.key, String(target.fallback + 20.6))
       expect(store.get(target.atom)).toBe(target.fallback + 21)
       emit(target.key, '-20')
@@ -140,7 +150,7 @@ describe('ROX UI-001 real Jotai layout storage behavior', () => {
       emit(target.key, String(target.min))
       emit(target.key, null)
       expect(store.get(target.atom)).toBe(target.fallback)
-      expect(storage.getItem(target.key)).toBe(String(target.max))
+      expect(storage.getItem(target.key)).toBeNull()
       emit(target.key, String(target.min))
       emit(null, null)
       expect(store.get(target.atom)).toBe(target.fallback)

@@ -1,0 +1,8 @@
+$ tsc --noEmit
+src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts(109,13): error TS7006: Parameter 'builder' implicitly has an 'any' type.
+src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts(110,73): error TS7006: Parameter 'args' implicitly has an 'any' type.
+src/renderer/contexts/__tests__/navigation-reconcile.test.ts(63,90): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(expected: ViewRoute): void', gave the following error.
+    Argument of type '"tasks?view=calendar"' is not assignable to parameter of type 'ViewRoute'.
+  Overload 2 of 2, '(expected: ViewRoute): void', gave the following error.
+    Argument of type '"tasks?view=calendar"' is not assignable to parameter of type 'ViewRoute'.

@@ -584,6 +584,10 @@ Branch `codex/rox-ui-dev-loop-20260901` at `1f56af31d3658ee9880105361ad5312324f3
 The default legacy Markdown engine and official engine must preserve content across parse/edit/export/reopen. Recover the source's portable `:::rox-columns`/`:::rox-column` syntax with validated normalized widths, support the previous slash-menu `:::columns 2/3` aliases, and preserve Obsidian `[!spoiler]-`/`[!details]+` markers without escaping away their meaning. Fold preferences are scoped by workspace/document and separate from Markdown. Read-only callout/resize interactions cannot change document content. Preserve newer comments, mixed task-list handling, trailing nodes, controlled echoes and no-save authority flips. Labels exist in all 12 current locales. Source tests/builds establish bounded integration; native visual interaction acceptance remains separately verifiable.
 
 
+## UI-001: внешние ссылки и интеграция в main — 2026-10-03
+
+Владелец: `fix/ui-001-main-integration-20261003-7`. [UI-001 спецификация](final-readiness/execution/cloud/OWNER-UI-001/main-integration/spec.md) сохраняет исходную матрицу UI-001.1/UI-001.2 и явное разрешение пользователя на GitHub/merge. Другие разделы и рабочие копии сохраняются.
+
 # Credential locator boundary validation — 2026-10-03
 
 Owner: locator boundary-validation lead; independent reviewer: integration-status worker. User authorization includes source repair, GitHub delivery and merge into main. Initial reproduction base: `635fc495d02c3fe1380740444cb90cf4fbdb58d9`. PR #1407 independently delivered the same executable own-descriptor correction during this validation. PR #1408 preserves that production source and its 54 regressions, and adds 64 cases covering attachment, disk reload, persisted nonmutation, frozen records for all variants and ordinary Proxy get traps.

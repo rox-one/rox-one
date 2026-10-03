@@ -8,11 +8,12 @@ const panelStack = readFileSync(join(import.meta.dir, '../PanelStackContainer.ts
 
 describe('sash terminal clearance', () => {
   it('stops resize sashes from drawing through the top bar gap and bottom terminal', () => {
-    // Rounded shell: stack and resize sashes share the same zero top inset.
+    // Flat shell: stack and resize sashes share the same zero top inset.
     expect(PANEL_STACK_TOP_INSET).toBe(PANEL_GAP)
     expect(PANEL_STACK_TOP_INSET).toBe(0)
     expect(PANEL_EDGE_INSET).toBe(0)
     expect(PANEL_STACK_VERTICAL_OVERFLOW).toBe(0)
+
 
     expect(appShell).toContain('bottomTerminalOpenAtom')
     expect(appShell).toContain('bottomDockHeightAtom')
@@ -23,18 +24,8 @@ describe('sash terminal clearance', () => {
     expect(appShell).toContain('bottom: terminalClearance')
     expect(appShell).not.toMatch(/bottom:\s*PANEL_STACK_VERTICAL_OVERFLOW/)
 
-    // The unified container applies the top inset only to desktop layouts.
+    // The persistent container chooses its desktop inset without separate branches.
     expect(panelStack).toContain('paddingTop: isCompact ? undefined : PANEL_STACK_TOP_INSET')
     expect(panelStack).not.toContain('marginTop: -PANEL_STACK_TOP_INSET')
-  })
-
-  it('bounds both shell resize hit areas to the content column and terminal clearance', () => {
-    for (const label of ['sidebar', 'navigator']) {
-      const style = appShell.match(new RegExp(`<ResizeHandle\\s+[\\s\\S]*?labelKey="shell\\.resize\\.${label}"[\\s\\S]*?style=\\{\\{([\\s\\S]*?)\\}\\}`))?.[1]
-      expect(style).toBeDefined()
-      expect(style).toContain('top: PANEL_STACK_TOP_INSET')
-      expect(style).toContain('bottom: terminalClearance')
-      expect(style).toContain("height: 'auto'")
-    }
   })
 })

@@ -589,6 +589,7 @@ function AppShellContent({
   // «Ещё» screens (Досье, Радар, Решения, Центр агентов, Фокус) do the same —
   // without this the navigator column stayed mounted and empty beside them.
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
+  // Unavailable addresses have no collection navigator or resize boundary.
   const hideModuleMiddleNav =
     navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
 

@@ -232,7 +232,7 @@ export function PanelStackContainer({
           transition={transition}
           aria-hidden={!hasSidebar || undefined}
           {...(!hasSidebar ? { inert: '' } : {})}
-          className="h-full relative shrink-0 overflow-hidden rox-shell-pane"
+          className={`h-full relative shrink-0 overflow-hidden rox-shell-pane ${hasSidebar ? 'rox-shell-divider-r' : ''}`}
           style={{ overflowX: 'clip', overflowY: 'visible', display: isCompact ? 'none' : undefined }}
         >
           <div className="h-full" style={{ width: sidebarWidth }}>{sidebarSlot}</div>
