@@ -39,7 +39,7 @@ describe('settings knowledge page', () => {
     expect(page).toContain("t('knowledge.local.title')")
     expect(page).toContain("t('knowledge.local.body')")
     expect(page).toContain("t('knowledge.local.engineOptional')")
-    expect(page).toContain('NOTES_AI_MODEL')
+    expect(page).toContain("t('notes.ai.workspaceModel')")
     expect(page).not.toContain('required connection')
   })
 })

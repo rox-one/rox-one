@@ -51,6 +51,12 @@ export type CanvasNode = {
   permissionMode?: PermissionMode
   provenance?: CanvasNodeProvenance
   createdAt: number
+  /** Canvas presentation survives version forks and JSON import/export. */
+  appearance?: {
+    role?: 'node' | 'sticky' | 'frame' | 'group'
+    color?: 'amber' | 'blue' | 'green' | 'rose' | 'violet'
+    size?: { width: number; height: number }
+  }
 }
 
 export type CanvasEdge = {

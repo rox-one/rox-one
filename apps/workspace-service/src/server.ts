@@ -22,6 +22,8 @@ import { DOMAIN_LICENSE_RPC, type LicenseAuthority } from '../../../packages/sha
 import { LicenseCommands } from './modules/licenses/commands.ts'
 import { LicenseRepository } from './modules/licenses/repository.ts'
 import type { TrustedLicenseRegistry } from './modules/licenses/registry.ts'
+import type { WorkspaceBroInvitationAuthority } from './modules/collaboration/invitations.ts'
+import { createDurableWorkspaceCollaboration } from './modules/collaboration/runtime.ts'
 
 const BOOTSTRAP_MIGRATIONS = ['01-domain-contract.sql', '01-local-auth-bootstrap.sql'] as const
 const DEFAULT_SCHEMA = 'public'
@@ -38,6 +40,8 @@ export interface WorkspaceRequestLifecycle {
 }
 
 export interface WorkspaceServerConfiguration {
+  /** The host owning canonical sessions supplies this; no client owner claims. */
+  readonly collaborationAuthority?: WorkspaceBroInvitationAuthority
   readonly licenseRegistry?: TrustedLicenseRegistry
   readonly requestLifecycle?: WorkspaceRequestLifecycle
   readonly database: SQL
@@ -141,8 +145,17 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
   const repository = new IdentityRepository(configuration.database, schema, observability, licenseRepository)
   const authority = new IdentityCommands(repository)
   const lifecycle = configuration.requestLifecycle
+  const ownedCollaboration = configuration.collaborationAuthority ? undefined : createDurableWorkspaceCollaboration()
+  const collaborationAuthority = configuration.collaborationAuthority ?? ownedCollaboration!.authority
+  let collaborationRequests = 0
+  let collaborationClosing = false
+  const disposeCollaboration = () => {
+    collaborationClosing = true
+    if (collaborationRequests === 0) ownedCollaboration?.close()
+  }
   const httpHandler = createWorkspaceHttpHandler({
     authority,
+    collaborationAuthority,
     licenseAuthority,
     ...(licenseAuthority ? { licenseResponseGuard: licenseAuthority.assertReadableResponse.bind(licenseAuthority) } : {}),
     actorResolver,
@@ -162,19 +175,25 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
       revalidate: session => authenticationPhase(() => actorResolver.revalidate(session)),
     },
     httpHandler: (req, res) => {
-      if (lifecycle && !lifecycle.begin()) {
+      if (collaborationClosing || (lifecycle && !lifecycle.begin())) {
         req.resume()
         res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
         res.end(JSON.stringify({ error: { code: 'PROVIDER_UNAVAILABLE' } }))
         return
       }
+      collaborationRequests += 1
       // Completion follows all accepted I/O even if a client closes its response early.
-      void httpHandler(req, res).finally(() => lifecycle?.end()).catch(() => res.destroy())
+      void httpHandler(req, res).finally(() => {
+        collaborationRequests -= 1
+        if (collaborationClosing && collaborationRequests === 0) ownedCollaboration?.close()
+        lifecycle?.end()
+      }).catch(() => res.destroy())
     },
   })
+  server.onShutdown(disposeCollaboration)
   registerSharedProjectHandlers(server, authority, lifecycle)
   if (licenseAuthority) registerLicenseHandlers(server, licenseAuthority, lifecycle)
-  return { server, authority, repository, licenseAuthority, licenseRepository, identity, actorResolver, migrations, observability: Object.freeze({ snapshot: () => observability.snapshot() }) }
+  return { server, authority, repository, collaborationAuthority, licenseAuthority, licenseRepository, identity, actorResolver, migrations, observability: Object.freeze({ snapshot: () => observability.snapshot() }) }
 }
 
 function requireLocalIssuer(value: Awaited<ReturnType<typeof createLocalIssuer>> | undefined) {

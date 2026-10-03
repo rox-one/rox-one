@@ -3,7 +3,7 @@ import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import { setZenShellPreference } from '@rox/shared/config'
 import { parseZenShellPatch } from '../../shared/shell-appearance'
-import { peekZenShellSnapshot, reapplyZenShellOnAllWindows } from '../shell-material'
+import { peekZenShellSnapshotForWindow, reapplyZenShellOnAllWindows } from '../shell-material'
 import type { HandlerDeps } from './handler-deps'
 
 export const GUI_HANDLED_CHANNELS = [
@@ -18,7 +18,7 @@ export const GUI_HANDLED_CHANNELS = [
 // GUI-only settings (require Electron-specific APIs)
 // ============================================================
 
-export function registerSettingsGuiHandlers(server: RpcServer, _deps: HandlerDeps): void {
+export function registerSettingsGuiHandlers(server: RpcServer, deps: HandlerDeps): void {
   // Set keep awake while running setting (requires Electron power-manager)
   server.handle(RPC_CHANNELS.power.SET_KEEP_AWAKE, async (_ctx, enabled: boolean) => {
     const { setKeepAwakeWhileRunning } = await import('@rox/shared/config/storage')
@@ -47,16 +47,19 @@ export function registerSettingsGuiHandlers(server: RpcServer, _deps: HandlerDep
     }
   })
 
-  server.handle(RPC_CHANNELS.appearance.GET_SHELL_SNAPSHOT, async () => {
-    return peekZenShellSnapshot()
+  server.handle(RPC_CHANNELS.appearance.GET_SHELL_SNAPSHOT, async ctx => {
+    return peekZenShellSnapshotForWindow(deps.windowManager?.getWindowByWebContentsId(ctx.webContentsId!))
   })
 
-  server.handle(RPC_CHANNELS.appearance.SET_ZEN_SHELL, async (_ctx, raw: unknown) => {
+  server.handle(RPC_CHANNELS.appearance.SET_ZEN_SHELL, async (ctx, raw: unknown) => {
     const patch = parseZenShellPatch(raw)
     setZenShellPreference(patch)
     reapplyZenShellOnAllWindows()
-    const snapshot = peekZenShellSnapshot()
-    pushTyped(server, RPC_CHANNELS.appearance.SHELL_CHANGED, { to: 'all' }, snapshot)
-    return snapshot
+    // Paint and GPU state can differ between windows; publish each actual state.
+    for (const window of BrowserWindow.getAllWindows()) {
+      const clientId = deps.windowManager?.getClientIdForWindow(window.webContents.id)
+      if (clientId) pushTyped(server, RPC_CHANNELS.appearance.SHELL_CHANGED, { to: 'client', clientId }, peekZenShellSnapshotForWindow(window))
+    }
+    return peekZenShellSnapshotForWindow(deps.windowManager?.getWindowByWebContentsId(ctx.webContentsId!))
   })
 }

@@ -1,17 +1,18 @@
 import { useEffect } from 'react'
 import type { ZenShellSnapshot } from '../../shared/shell-appearance'
-import { readDesktopAppearance } from '@/lib/desktop-appearance'
+import { subscribeDesktopShellAppearance } from '@/lib/shell-appearance-subscription'
 
 function applySnapshot(snapshot: ZenShellSnapshot): void {
   const root = document.documentElement
+  // Keep the material fallback even when shell styling is disabled, so an
+  // explicit opt-out cannot leave the default glass chrome visible.
+  root.setAttribute('data-shell-material', snapshot.material)
   if (snapshot.enabled) {
     root.setAttribute('data-shell-style', 'zen')
-    root.setAttribute('data-shell-material', snapshot.material)
   } else {
     if (root.getAttribute('data-shell-style') === 'zen') {
       root.removeAttribute('data-shell-style')
     }
-    root.removeAttribute('data-shell-material')
   }
 }
 
@@ -22,19 +23,8 @@ function applySnapshot(snapshot: ZenShellSnapshot): void {
 export function useShellAppearance(): void {
   useEffect(() => {
     const api = typeof window === 'undefined' ? undefined : window.electronAPI
-    if (!api?.getShellSnapshot || api.getRuntimeEnvironment?.() !== 'electron') return undefined
-
-    let cancelled = false
-    const cancelRead = readDesktopAppearance(api, () => api.getShellSnapshot(), snapshot => {
-      if (!cancelled && snapshot) applySnapshot(snapshot)
-    }, error => { if (error) console.warn('Desktop shell appearance unavailable:', error) })
-    const unsubscribe = api.onShellChanged?.((snapshot) => {
-      if (!cancelled) applySnapshot(snapshot)
+    return subscribeDesktopShellAppearance(api, applySnapshot, error => {
+      if (error) console.warn('Desktop shell appearance unavailable:', error)
     })
-    return () => {
-      cancelled = true
-      cancelRead()
-      unsubscribe?.()
-    }
   }, [])
 }

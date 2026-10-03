@@ -25,9 +25,6 @@ import {
   ListHeader,
   ListRow,
   ModeScreenLayout,
-  NavItem,
-  NavSection,
-  NavTitle,
   SectionLabel,
   useListKeys,
   type Tone,
@@ -50,22 +47,10 @@ import {
 } from './inbox/inbox-model'
 import type { MailFolder } from '../../shared/mail-local'
 import { useMail } from './inbox/mail/useMail'
-import { MailCompose, MailListPanel, MailNavSection, MailReader, folderLabel, useComposeState } from './inbox/mail/MailPanels'
+import { MailCompose, MailListPanel, MailReader, folderLabel, useComposeState } from './inbox/mail/MailPanels'
 import { emailIdFromItem, mailItemId, mailToInboxItem, statusKey } from './inbox/mail/mail-view'
 import type { TeamInboxItem } from '@rox/shared/team'
-
-const KIND_GLYPH: Record<InboxKind, string> = {
-  permission: '⚿',
-  credential: '⚷',
-  plan: '☰',
-  memory: '▤',
-  skill: '✦',
-  sender: '☺',
-  reply: '◧',
-  error: '!',
-  mail: '✉',
-  'team-recipient': '↗',
-}
+import { InboxSidebar, InboxKindIcon, isMailFilter, type InboxPageFilter } from './inbox/InboxSidebar'
 
 const KIND_TONE: Record<InboxKind, Tone> = {
   permission: 'warning',
@@ -81,19 +66,6 @@ const KIND_TONE: Record<InboxKind, Tone> = {
 }
 
 const KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error', 'team-recipient']
-
-/** Inbox views plus a mail folder (`mail` = JMAP mailbox id, 'inbox' before the list loads). */
-type PageFilter = InboxFilter | { mail: string }
-
-function isMailFilter(f: PageFilter): f is { mail: string } {
-  return typeof f === 'object' && 'mail' in f
-}
-
-function sameFilter(a: PageFilter, b: PageFilter): boolean {
-  if (typeof a === 'string' || typeof b === 'string') return a === b
-  if (isMailFilter(a) || isMailFilter(b)) return isMailFilter(a) && isMailFilter(b) && a.mail === b.mail
-  return a.kind === b.kind
-}
 
 export default function InboxPage({ selectedId }: { selectedId?: string | null }) {
   const { t, i18n } = useTranslation()
@@ -112,7 +84,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   const { items, state, setState, counts, now, errors, staleSources, reload, workspaceId, shell, sessions } = useInboxItems({ withRemote: true, teamInbox })
   const [preferences, setPreferences] = useAtom(inboxPreferencesAtom)
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<PageFilter>('all')
+  const [filter, setFilter] = useState<InboxPageFilter>('all')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
   const [bulkAction, setBulkAction] = useState<'read' | 'archive' | null>(null)
   const [bulkFailures, setBulkFailures] = useState<Record<string, string>>({})
@@ -183,6 +155,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     messages: countFor('messages'),
     snoozed: countFor('snoozed'),
     done: countFor('done'),
+    blocking: filterInbox(allItems, state, 'all', now).filter(matchesQuery).filter((item) => item.blocking).length,
     byKind: Object.fromEntries(KINDS.concat('mail').map((kind) => [kind, countFor({ kind })])) as typeof counts.byKind,
   }
 
@@ -353,6 +326,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
       if (target?.closest('input, textarea, [contenteditable="true"]')) return
+      if (target?.closest('[data-inbox-sidebar]')) return
       if (event.metaKey || event.ctrlKey || event.altKey) return
       if (inMail) {
         const m = mail.message && mail.message.id === mailSelected ? mail.message : null
@@ -376,34 +350,9 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
 
   const kindLabel = (kind: InboxKind) => t(`inbox.kind.${kind}`)
 
-  const navigator = (
-    <>
-      <NavTitle>{t('inbox.title')}</NavTitle>
-      <NavItem label={t('inbox.view.all')} count={filteredCounts.all} active={sameFilter(filter, 'all')} onClick={() => setFilter('all')} testId="inbox-nav-all" />
-      <NavItem label={t('inbox.view.decisions')} count={filteredCounts.decisions} dot={visibleBlockingCount ? 'warning' : undefined} active={sameFilter(filter, 'decisions')} onClick={() => setFilter('decisions')} testId="inbox-nav-decisions" />
-      <NavItem label={t('inbox.view.messages')} count={filteredCounts.messages} active={sameFilter(filter, 'messages')} onClick={() => setFilter('messages')} />
-      <NavItem label={t('inbox.view.snoozed')} count={filteredCounts.snoozed} active={sameFilter(filter, 'snoozed')} onClick={() => setFilter('snoozed')} />
-      <NavItem label={t('inbox.view.done')} count={filteredCounts.done} active={sameFilter(filter, 'done')} onClick={() => setFilter('done')} />
-      <NavSection title={t('inbox.types')}>
-        {KINDS.map((kind) => (
-          <NavItem
-            key={kind}
-            label={kindLabel(kind)}
-            count={filteredCounts.byKind[kind]}
-            active={sameFilter(filter, { kind })}
-            onClick={() => setFilter({ kind })}
-          />
-        ))}
-      </NavSection>
-      <MailNavSection mail={mail} activeFolderId={inMail ? filter.mail : null} onSelectFolder={openFolder} />
-      <NavSection title={t('inbox.notConnected')}>
-        <NavItem label={t('inbox.kind.meetingProposals')} dot="muted" onClick={() => navigate(routes.view.meetings())} testId="inbox-nav-meetings" />
-        {teamInboxEnabled && !teamInboxConnected ? (
-          <NavItem label={t('teamCollab.inboxNav')} dot="muted" onClick={() => navigate(routes.view.settings('organizations'))} testId="inbox-nav-team" />
-        ) : null}
-      </NavSection>
-    </>
-  )
+  const navigator = <InboxSidebar filter={filter} counts={filteredCounts} onSelect={setFilter} mail={mail} onSelectFolder={openFolder}
+    onOpenMeetings={() => navigate(routes.view.meetings())} onConnectTeam={() => navigate(routes.view.settings('organizations'))}
+    teamNeedsConnection={teamInboxEnabled && !teamInboxConnected} />
 
   const row = (item: InboxItem) => {
     const sourceKey = item.kind === 'memory' ? 'memory' : item.kind === 'skill' ? 'skills' : item.kind === 'sender' ? 'senders' : null
@@ -425,7 +374,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
           onChange={(event) => toggleSelected(item.id, event.currentTarget.checked)}
           className="mt-1 size-3.5 shrink-0 accent-[var(--accent)]"
         />
-        <span aria-hidden className="w-4 shrink-0 pt-px text-center text-text-muted">{KIND_GLYPH[item.kind]}</span>
+        <InboxKindIcon kind={item.kind} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[12px] text-text-muted">{kindLabel(item.kind)} · {item.source}</span>
           <span className={`block truncate ${unread || item.blocking ? 'font-semibold' : ''}`}>{item.title}</span>

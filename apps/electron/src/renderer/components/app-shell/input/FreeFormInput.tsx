@@ -54,6 +54,7 @@ import {
 } from '@/components/ui/styled-dropdown'
 import { cn } from '@/lib/utils'
 import { coerceInputText } from '@/lib/input-text'
+import { createSessionLink, copySessionLink, presentSessionLink, requestJoinSession } from '@/lib/session-sharing'
 import { isMac, isWebUI } from '@/lib/platform'
 import { applySmartTypography } from '@/lib/smart-typography'
 import { AttachmentPreview } from '../AttachmentPreview'
@@ -102,6 +103,7 @@ import { CompactPermissionModeSelector } from './CompactPermissionModeSelector'
 import { CompactModelSelector } from './CompactModelSelector'
 import {
   formatTokenCount,
+  getConnectionModelsForPicker,
   getConnectionPickerMeta,
   groupConnectionsByProvider,
   stripPiPrefixForDisplay,
@@ -434,7 +436,7 @@ export function FreeFormInput({
       return ANTHROPIC_MODELS // Safety net — shouldn't happen
     }
 
-    return dedupModelsById(connection.models || ANTHROPIC_MODELS)
+    return dedupModelsById(getConnectionModelsForPicker(connection))
   }, [llmConnections, currentConnection, workspaceDefaultConnection, connectionUnavailable])
 
   const availableThinkingLevels = THINKING_LEVELS
@@ -1050,15 +1052,15 @@ export function FreeFormInput({
         }
       }).catch((err: unknown) => console.error('Undo failed:', err))
     } else if (commandId === 'share' && sessionId) {
-      window.electronAPI.sessionCommand(sessionId, { type: 'shareToViewer' }).then((result) => {
-        const payload = result as { success?: boolean; url?: string; error?: string } | undefined
-        if (payload?.success && payload.url) {
-          void navigator.clipboard.writeText(payload.url)
-          toast.success(t('toast.linkCopied'), { description: payload.url })
-        } else {
-          toast.error(t('toast.failedToShare'), { description: payload?.error || t('toast.unknownError') })
+      void (async () => {
+        try {
+          const link = await createSessionLink(window.electronAPI.sessionCommand, sessionId, 'share')
+          const copied = await copySessionLink(link.url, text => navigator.clipboard.writeText(text))
+          presentSessionLink({ ...link, copied })
+        } catch (error) {
+          toast.error(t('toast.failedToShare'), { description: error instanceof Error && error.message ? error.message : t('toast.unknownError') })
         }
-      }).catch((err: unknown) => toast.error(t('toast.failedToShare'), { description: String(err) }))
+      })()
     } else if (commandId === 'export' && sessionId) {
       void (async () => {
         try {
@@ -1081,19 +1083,7 @@ export function FreeFormInput({
         }
       })()
     } else if (commandId === 'join') {
-      void (async () => {
-        let candidate = ''
-        try {
-          candidate = (await navigator.clipboard.readText()).trim()
-        } catch {
-          candidate = ''
-        }
-        if (/^https?:\/\//i.test(candidate)) {
-          window.electronAPI.openUrl(candidate)
-          return
-        }
-        toast.info(t('toast.joinNeedsLink'))
-      })()
+      requestJoinSession()
     } else if (commandId === 'vibe') {
       toast.info(t('toast.vibeHint'))
     }
@@ -2511,7 +2501,7 @@ export function FreeFormInput({
                           {isAuthenticated && (
                             <StyledDropdownMenuSubContent className="min-w-[220px]">
                               {/* Show models for this connection - use provider-specific models as fallback */}
-                              {dedupModelsById(conn.models || ANTHROPIC_MODELS).map((model) => {
+                              {dedupModelsById(getConnectionModelsForPicker(conn)).map((model) => {
                                 const modelId = typeof model === 'string' ? model : model.id
                                 const modelName = typeof model === 'string'
                                   ? stripPiPrefixForDisplay(getModelShortName(model))

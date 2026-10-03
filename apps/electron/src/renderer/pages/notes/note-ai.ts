@@ -1,7 +1,4 @@
 import type { AIActionMode } from './NotesAIMenu'
-
-/** Default free Rox parent model — never a missing SiYuan/CY model. */
-export const NOTES_AI_MODEL = 'rox/standard'
 export const NOTES_AI_PROMPTS_STORAGE_KEY = 'notes:ai-prompts'
 
 export const NOTES_AI_PROMPT_KEYS: Record<AIActionMode, string> = {

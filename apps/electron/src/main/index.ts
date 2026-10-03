@@ -7,7 +7,7 @@ loadShellEnv()
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, nativeTheme, session, shell, type BrowserWindowConstructorOptions } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, nativeTheme, safeStorage, session, shell, type BrowserWindowConstructorOptions } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 import { hostname, homedir } from 'os'
 import * as Sentry from '@sentry/electron/main'
@@ -100,6 +100,8 @@ import type { PlatformServices } from '../runtime/platform'
 import { createElectronPlatform } from './platform'
 import type { HandlerDeps } from './handlers/handler-deps'
 import { resolveNativeTransportCredential } from './native-transport-credential'
+import { createBrowserCredentialPermissionAdapter } from './browser-credential-permissions'
+import { createBrowserCredentialVaultKeyStore } from './browser-credential-vault-keys'
 import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@rox/server-core/bootstrap'
 import { isAllowedServerEndpoint } from './server-endpoint-policy'
 import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@rox/messaging-gateway'
@@ -829,6 +831,42 @@ app.whenReady().then(async () => {
         bindRpcServer: (sm, server) => sm.setRpcServer(server),
         createHandlerDeps: ({ sessionManager: sm, platform: p, oauthFlowStore: ofs, nativeAuthority, nativeJournal, collaborationSync }) => {
           localNativeAuthority = nativeAuthority
+          const browserCredentialPermissions = createBrowserCredentialPermissionAdapter({
+            async confirm(request) {
+              const owner = request.webContentsId == null ? null : windowManager?.getWindowByWebContentsId(request.webContentsId)
+              if (!owner || owner.isDestroyed() || windowManager?.getWorkspaceForWindow(owner.webContents.id) !== request.workspaceId) return 'cancel'
+              const answer = await dialog.showMessageBox(owner, {
+                type: 'question',
+                title: i18n.t('settings.browserImport.credentials.nativeTitle'),
+                message: i18n.t('settings.browserImport.credentials.nativeMessage', { profile: request.profile.name }),
+                detail: i18n.t('settings.browserImport.credentials.nativeDetail'),
+                buttons: [i18n.t('common.cancel'), i18n.t('settings.browserImport.credentials.nativeAllow')],
+                defaultId: 0, cancelId: 0, noLink: true,
+              })
+              if (owner.isDestroyed() || windowManager?.getWorkspaceForWindow(owner.webContents.id) !== request.workspaceId) return 'cancel'
+              return answer.response === 1 ? 'allow' : 'cancel'
+            },
+          })
+          const browserCredentialVaultKeys = createBrowserCredentialVaultKeyStore({
+            directory: join(app.getPath('userData'), 'browser-credential-keys'), safeStorage,
+          })
+          const browserCredentials = {
+            capabilities: browserCredentialPermissions.capabilities,
+            async requestAccess(request: Parameters<typeof browserCredentialPermissions.requestAccess>[0]) {
+              const currentOwner = () => {
+                const owner = request.webContentsId == null ? null : windowManager?.getWindowByWebContentsId(request.webContentsId)
+                return owner && !owner.isDestroyed() && windowManager?.getWorkspaceForWindow(owner.webContents.id) === request.workspaceId
+              }
+              if (!currentOwner()) return { status: 'cancelled' as const, reason: 'browser-credential-access-cancelled' }
+              const grant = await browserCredentialPermissions.requestAccess(request)
+              if (grant.status === 'granted' && !currentOwner()) {
+                grant.release()
+                return { status: 'cancelled' as const, reason: 'browser-credential-access-cancelled' }
+              }
+              return grant
+            },
+            vaultKeys: browserCredentialVaultKeys,
+          }
           // The messaging handle is built here because it needs sessionManager.
           // The WS publisher is attached after bootstrapServer resolves (via
           // handle.setPublisher) because wsServer isn't available yet.
@@ -871,6 +909,7 @@ app.whenReady().then(async () => {
             browserPaneManager: browserPaneManager ?? undefined,
             oauthFlowStore: ofs,
             messagingRegistry: messagingHandle.registry,
+            ...(!isHeadless ? { browserCredentials } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
             nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
           }

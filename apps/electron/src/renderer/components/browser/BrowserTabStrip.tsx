@@ -99,7 +99,7 @@ export function BrowserTabStrip({
   if (orderedInstances.length === 0) return null
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex min-w-0 items-center gap-1.5">
       {visible.map((instance) => (
         <DropdownMenu key={instance.id}>
           <DropdownMenuTrigger asChild>
@@ -119,7 +119,7 @@ export function BrowserTabStrip({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="h-[26px] px-1.5 rounded-lg text-[11px] text-foreground/50 bg-background shadow-minimal hover:bg-foreground/[0.03] transition-colors cursor-pointer titlebar-no-drag"
+              className="h-[26px] shrink-0 px-1.5 rounded-lg text-[11px] text-foreground/50 bg-background shadow-minimal hover:bg-foreground/[0.03] transition-colors cursor-pointer titlebar-no-drag"
             >
               +{overflow.length}
             </button>

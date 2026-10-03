@@ -839,6 +839,8 @@ export interface ElectronAPI {
   foreignAutoImportRun(args: { workspaceId?: string; all?: boolean }): Promise<ForeignAutoImportStatus>
   foreignAutoImportSet(args: { workspaceId?: string; enabled: boolean }): Promise<ForeignAutoImportStatus>
   discoverBrowserProfiles(args: { consent: true; explicitId?: string }): Promise<DiscoveredProfile[]>
+  browserCredentialCapabilities(args: { workspaceId: string; profileId: string }): Promise<import('@rox/shared/browser/browser-credential-host').BrowserCredentialCapability>
+  browserDataAutoImport(args: { workspaceId: string; action: 'status' | 'set' | 'run'; enabled?: boolean; profileId?: string }): Promise<import('@rox/shared/browser/profile-import').BrowserDataAutoStatus>
   browserCookieAutoStatus(): Promise<BrowserCookieAutoStatus>
   browserCookieAutoSet(args: { consent: boolean; profileId?: string; domains?: string[] }): Promise<BrowserCookieAutoStatus>
   browserCookieAutoRun(): Promise<BrowserCookieAutoStatus>

@@ -67,28 +67,21 @@ export function CompactPermissionModeSelector({
 }: CompactPermissionModeSelectorProps) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
-  // Optimistic local state — updates immediately, syncs with prop
-  const [optimisticMode, setOptimisticMode] = React.useState(permissionMode)
-
-  React.useEffect(() => {
-    setOptimisticMode(permissionMode)
-  }, [permissionMode])
 
   const handleSelect = React.useCallback((mode: PermissionMode) => {
-    setOptimisticMode(mode)
     onPermissionModeChange?.(mode)
     setOpen(false)
   }, [onPermissionModeChange])
 
-  const style = MODE_STYLES[optimisticMode]
+  const style = MODE_STYLES[permissionMode]
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <button
           type="button"
-          aria-label={`${t('mode.permissionMode')}: ${t(MODE_LABEL_KEYS[optimisticMode].name)}`}
-          title={`${t('mode.permissionMode')}: ${t(MODE_LABEL_KEYS[optimisticMode].name)}`}
+          aria-label={`${t('mode.permissionMode')}: ${t(MODE_LABEL_KEYS[permissionMode].name)}`}
+          title={`${t('mode.permissionMode')}: ${t(MODE_LABEL_KEYS[permissionMode].name)}`}
           className={cn(
             isWebUI
               ? "h-7 w-7 p-0 text-xs font-medium rounded-[6px] flex items-center justify-center outline-none select-none shrink-0 text-foreground/70 hover:bg-foreground/5 transition-colors"
@@ -96,8 +89,8 @@ export function CompactPermissionModeSelector({
             !isWebUI && style.className,
           )}
         >
-          <ModeIcon mode={optimisticMode} className="h-3.5 w-3.5" />
-          {!isWebUI && <span>{t(MODE_LABEL_KEYS[optimisticMode].short)}</span>}
+          <ModeIcon mode={permissionMode} className="h-3.5 w-3.5" />
+          {!isWebUI && <span>{t(MODE_LABEL_KEYS[permissionMode].short)}</span>}
         </button>
       </DrawerTrigger>
 
@@ -108,7 +101,7 @@ export function CompactPermissionModeSelector({
 
         <div className="px-4 pb-6 flex flex-col gap-1">
           {PERMISSION_MODE_ORDER.map((mode) => {
-            const isSelected = mode === optimisticMode
+            const isSelected = mode === permissionMode
             return (
               <DrawerClose asChild key={mode}>
                 <button

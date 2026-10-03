@@ -1071,6 +1071,7 @@ export interface UnreadSummary {
 
 export interface BroInviteCommandResult {
   success: boolean
+  workspaceId?: string
   url?: string
   qrPayload?: string
   contactShareText?: string

@@ -9,6 +9,7 @@
 import type { ModelDefinition } from './models.ts';
 
 export const ROX_PUBLIC_MODEL_IDS = [
+  'rox/r1-max',
   'rox/explore',
   'rox/standard',
   'rox/max',
@@ -18,13 +19,15 @@ export const ROX_PUBLIC_MODEL_IDS = [
 
 export type RoxPublicModelId = (typeof ROX_PUBLIC_MODEL_IDS)[number];
 
-export const ROX_DEFAULT_PARENT_MODEL: RoxPublicModelId = 'rox/standard';
+export const ROX_DEFAULT_PARENT_MODEL: RoxPublicModelId = 'rox/r1-max';
 export const ROX_DEFAULT_SUBAGENT_MODEL: RoxPublicModelId = 'rox/fast';
 export const ROX_DEFAULT_CONNECTION_NAME = 'ROX';
 export const ROX_GATEWAY_BASE_URL = 'https://api.rox.one/v1';
 export const ROX_LEGACY_INTERNAL_MODEL_IDS = ['kimi-K3', 'kimi-k3'] as const;
 export const ROX_KIMI_PUBLIC_MODELS_MIGRATION = 'rox-kimi-public-models-v1';
 export const ROX_CONNECTION_DISPLAY_NAME_MIGRATION = 'rox-connection-display-name-v1';
+export const ROX_R1_MAX_DEFAULT_MIGRATION = 'rox-r1-max-default-v1';
+export const ROX_ONBOARDING_R1_MAX_DEFAULT_MIGRATION = 'rox-onboarding-r1-max-default-v1';
 export const ROX_DEFAULT_CONNECTION_SLUG = 'rox-kimi';
 
 /**
@@ -33,6 +36,7 @@ export const ROX_DEFAULT_CONNECTION_SLUG = 'rox-kimi';
  * Explicit `model` on spawn_session always wins.
  */
 const SUBAGENT_TIER: Record<RoxPublicModelId, RoxPublicModelId> = {
+  'rox/r1-max': 'rox/fast',
   'rox/explore': 'rox/fast',
   'rox/standard': 'rox/fast',
   'rox/max': 'rox/fast',
@@ -41,6 +45,7 @@ const SUBAGENT_TIER: Record<RoxPublicModelId, RoxPublicModelId> = {
 };
 
 export const ROX_PUBLIC_MODEL_DESCRIPTION_KEYS = {
+  'rox/r1-max': 'model.roxR1MaxDesc',
   'rox/explore': 'model.roxExploreDesc',
   'rox/fast': 'model.roxFastDesc',
   'rox/max': 'model.roxMaxDesc',
@@ -66,7 +71,7 @@ export function toRoxPublicConnectionModels(): Array<{
   supportsThinking: boolean
   supportsImages: boolean
 }> {
-  return ROX_PUBLIC_MODEL_CATALOG.map((entry) => ({
+  return ROX_PUBLIC_MODEL_CATALOG.filter((entry) => entry.id === ROX_DEFAULT_PARENT_MODEL).map((entry) => ({
     id: entry.id,
     name: entry.name,
     shortName: entry.shortName,
@@ -81,16 +86,37 @@ export function toRoxPublicConnectionModels(): Array<{
 export function connectionUsesLegacyRoxInternalModels(connection: {
   slug?: string
   providerType?: string
+  baseUrl?: string
   defaultModel?: string
   models?: Array<{ id?: string } | string>
 }): boolean {
   if (connection.slug !== ROX_DEFAULT_CONNECTION_SLUG) return false
   if (connection.providerType !== 'omp') return false
+  if (connection.baseUrl && connection.baseUrl.replace(/\/$/, '') !== ROX_GATEWAY_BASE_URL) return false
   const ids = [
     connection.defaultModel,
     ...(connection.models ?? []).map((model) => (typeof model === 'string' ? model : model.id)),
   ].filter((id): id is string => typeof id === 'string' && id.length > 0)
   return ids.some(isRoxLegacyInternalModelId)
+}
+
+/** Recognize the seeded connection and old first-run Rox connections, without claiming private runtimes. */
+export function connectionUsesBuiltInRoxModels(connection: {
+  slug?: string
+  name?: string
+  providerType?: string
+  baseUrl?: string
+  defaultModel?: string
+  models?: Array<{ id?: string } | string>
+}): boolean {
+  if (connection.providerType !== 'omp') return false
+  if (connection.baseUrl && connection.baseUrl.replace(/\/$/, '') !== ROX_GATEWAY_BASE_URL) return false
+  if (connection.slug === ROX_DEFAULT_CONNECTION_SLUG) return true
+  // Before the seed was unified, onboarding created Rox as omp, omp-2, etc.
+  if (!/^omp(?:-[1-9]\d*)?$/.test(connection.slug ?? '') || connection.name?.trim().toLowerCase() !== 'rox') return false
+  const ids = [connection.defaultModel, ...(connection.models ?? []).map(model => typeof model === 'string' ? model : model.id)]
+    .filter((id): id is string => typeof id === 'string' && id.length > 0)
+  return ids.length > 0 && ids.every(id => isRoxPublicModelId(id) || isRoxLegacyInternalModelId(id))
 }
 
 function assertNever(value: never): never {
@@ -145,6 +171,15 @@ export const ROX_PUBLIC_MODEL_CATALOG: ReadonlyArray<{
   supportsThinking: boolean;
   supportsImages: boolean;
 }> = [
+  {
+    id: 'rox/r1-max',
+    name: 'Rox R1 Max',
+    shortName: 'R1 Max',
+    description: 'Default Rox model for chat and coding',
+    contextWindow: 1_048_576,
+    supportsThinking: true,
+    supportsImages: false,
+  },
   {
     id: 'rox/explore',
     name: 'ROX Explore',
@@ -204,6 +239,11 @@ export function toRoxPublicModelDefinitions(): ModelDefinition[] {
     supportsThinking: entry.supportsThinking,
     supportsImages: entry.supportsImages,
   }));
+}
+
+/** Built-in choices for new sessions. Legacy endpoints remain valid for stored sessions. */
+export function toRoxSelectableModelDefinitions(): ModelDefinition[] {
+  return toRoxPublicModelDefinitions().filter((entry) => entry.id === ROX_DEFAULT_PARENT_MODEL);
 }
 
 export function splitRoxPublicModel(id: RoxPublicModelId): { provider: 'rox'; modelId: string } {
