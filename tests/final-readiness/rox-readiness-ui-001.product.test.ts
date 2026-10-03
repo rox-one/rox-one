@@ -209,6 +209,34 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       await page.reload(); await ready(); expect(await route()).toBe(sessionBRoute)
       await capture('session-direct-reload')
 
+      stage('actual-new-panel-positive-geometry-reload')
+      await navigate(sessionARoute)
+      await page.evaluate(target => window.dispatchEvent(new CustomEvent('rox-navigate',
+        { detail: { route: target, newPanel: true, targetLaneId: 'main' } })), sessionBRoute)
+      await page.waitForFunction(target => new URL(location.href).searchParams.get('route') === target
+        && !!new URL(location.href).searchParams.get('panels'), sessionBRoute)
+      const panelsParam = await page.evaluate(() => new URL(location.href).searchParams.get('panels'))
+      expect(panelsParam!.startsWith('v2:')).toBe(true)
+      const encodedPanels = JSON.parse(panelsParam!.slice(3))
+      expect(encodedPanels.map((panel: { route: string }) => panel.route)).toEqual([sessionARoute, sessionBRoute])
+      expect(encodedPanels.every((panel: { proportion: number }) => Number.isFinite(panel.proportion)
+        && panel.proportion > 0 && panel.proportion <= 1)).toBe(true)
+      const panelHosts = page.locator('[data-panel-role="content"][data-panel-id]')
+      await page.waitForFunction(() => document.querySelectorAll('[data-panel-role="content"][data-panel-id]').length === 2)
+      await panelHosts.nth(0).getByText('UI001 session A', { exact: true }).first().waitFor()
+      await panelHosts.nth(1).getByText('UI001 session B', { exact: true }).first().waitFor()
+      await page.reload(); await ready(); expect(await route()).toBe(sessionBRoute)
+      await page.waitForFunction(() => document.querySelectorAll('[data-panel-role="content"][data-panel-id]').length === 2)
+      expect(await page.evaluate(() => new URL(location.href).searchParams.get('panels'))).toBe(panelsParam)
+      const nativePanelBounds = await panelHosts.evaluateAll(nodes => nodes.map(node => {
+        const bounds = node.getBoundingClientRect(); return { width: bounds.width, height: bounds.height }
+      }))
+      expect(nativePanelBounds.every(bounds => bounds.width > 0 && bounds.height > 0)).toBe(true)
+      observations.newPanel = { encodedPanels, restoredBothCanonicalSessions: true, nativePanelBounds }
+      await capture('new-panel-reloaded')
+      await direct(sessionBRoute)
+      await page.waitForFunction(() => document.querySelectorAll('[data-panel-role="content"][data-panel-id]').length === 1)
+
       stage('source-project-history')
       const sourceRoute = `sources/source/${seed.sourceSlug}`
       const projectRoute = `projects/project/${seed.projectSlug}`

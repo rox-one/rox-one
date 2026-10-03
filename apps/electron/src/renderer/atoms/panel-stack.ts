@@ -205,7 +205,11 @@ export const pushPanelAtom = atom(
       insertAt = afterIndex + 1
     }
 
-    const newEntry = createEntry(route, 0)
+    // Reserve an average panel share before normalization. A zero weight
+    // creates an invisible pane and cannot be restored from the URL.
+    const newEntry = createEntry(route, stack.length > 0
+      ? stack.reduce((sum, panel) => sum + panel.proportion, 0) / stack.length
+      : 1)
     const newStack = [
       ...stack.slice(0, insertAt),
       newEntry,

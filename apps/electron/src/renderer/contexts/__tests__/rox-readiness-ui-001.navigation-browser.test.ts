@@ -260,7 +260,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('allSessions/session/first-b')
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('home')
     await page.evaluate(()=>{
-      (window as any).ui001nav.resolveCreate(0,'late-prefill')
+      (window as any).ui001nav.resolveCreate(0,'late-prefill');
       (window as any).ui001nav.resolveCreate(1,'late-send')
     })
     await page.waitForTimeout(200)
