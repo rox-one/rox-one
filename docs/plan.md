@@ -1,3 +1,18 @@
+## Credential metadata own-data repair and integration — 2026-10-03
+
+The user authorized full source repair, GitHub writes and merge into `main`. The original checkout and its unrelated CSS edits are preserved. One lead owns the isolated `fix/credential-metadata-own-data-20261003` source branch; an independent reviewer owns separate evidence artifacts. Initial integration base: `829e2cbd840e2980b421038457866d0efd0893f2`.
+
+| Task | Owner | Dependencies | Verification / delivery |
+| --- | --- | --- | --- |
+| LOC-STATE | Lead | none | Exact fresh main, clean isolated checkout, live PR and publishing policy readback |
+| LOC-FIX | Lead | LOC-STATE | Own-data snapshots in registry/attachment; regressions for all locator variants, accessors, frozen controls and persisted state |
+| LOC-REVIEW | Independent reviewer | LOC-STATE, LOC-FIX | Source hashes, adversarial holdout, negative controls and actionable compatibility findings |
+| LOC-VERIFY | Lead | LOC-FIX | Pinned Linux Bun 1.3.14 full core, core TypeScript and unchanged CI alias; preserve any initial failures and exact logs |
+| LOC-CI | Lead | LOC-FIX | Full core suite plus unchanged CI alias on hosted Ubuntu 24.04 and macOS 15; existing permissions/install/deadlines/assertions retained |
+| LOC-DELIVER | Lead | LOC-REVIEW, LOC-VERIFY, LOC-CI | Commit/push scoped files, publish a current PR, resolve actionable feedback, merge main, read back delivered source and save revision-bound report |
+
+The earlier local-only candidate and its results remain historical evidence. They do not replace complete verification of this new base or the delivered revision. Integration receipts, commands, exits, source/artifact hashes, actual hosted run URLs and final main identity are saved outside the checkout; no publication or acceptance is inferred from a task launch. This slice does not change broader native/provider/platform acceptance.
+
 
 Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
 ## Session UX branch integration plan — 2026-10-03

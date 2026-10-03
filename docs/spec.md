@@ -1,3 +1,13 @@
+## Credential metadata own-data validation — 2026-10-03
+
+This scoped follow-up repairs the credential registry and attachment boundary after the core validation delivery. Integration starts from `829e2cbd840e2980b421038457866d0efd0893f2` in isolated `fix/credential-metadata-own-data-20261003`. The user explicitly authorized source repair, GitHub publication and merge into `main`; unrelated work and the broader program's acceptance state are preserved.
+
+For all ten provider locator variants, validation must consume only the caller's own enumerable data properties. Missing required fields must reject without reading inherited values or invoking getters. An accessor cannot become a data property because `Object.prototype.value` exists. A null-prototype snapshot of own descriptor values enforces this contract; valid readonly/frozen plain records keep their existing behavior, normalization and public output shape.
+
+The same contract applies to attachment connection/input fields. Required `kind`, `providerId` and `locator` cannot fall back to the prototype; inherited optional `now` is ignored and the existing clock default applies. Registration retains the genuine-registry and canonical-prototype method boundary. Rejected registration/update/attachment must leave registry state, active versions and disk bytes unchanged. Reload skips malformed persisted rows without changing the source files or losing valid records.
+
+Acceptance requires meaningful inherited-data/getter, descriptor-pollution, frozen-record, persistence and reload regressions; an independent source-bound holdout; full `bun test packages/core`, core `bun run tsc --noEmit`, and unchanged `bun run validate:ci` under pinned Bun 1.3.14 on Linux; green owned hosted checks and remote readback after merge. The comprehensive CI workflow additionally runs the full core suite on hosted Linux and macOS, so attachment regressions absent from the narrower connection-fabric list are exercised. Existing compiler/test/i18n assertions, frozen install, token permissions and optional pages-worker skip stay intact. Arbitrary Proxy reflection traps and externally controlled prototype-pollution exploit paths are outside this bounded repair.
+
 ## Session UX branch integration — 2026-10-03
 
 Owner: PR scout/integration worker in isolated `codex/integrate-session-ux-20261003`, based on exact #1391 head `ddf97e3d5025288819e0bfdc3b26741f75b6d3b1`. Preserve original branches and all unrelated work. The latest 203-file app completion commit remains substantive; the first four #1391 commits already occur in #1392.
