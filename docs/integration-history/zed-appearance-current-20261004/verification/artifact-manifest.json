@@ -1,0 +1,132 @@
+[
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-appearance-pr1469-live.json.gz",
+    "original_bytes": 20413,
+    "sha256": "430bff30043786510d771baf39cadc6e9077e148079b12d85cad0e8b947cb003"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-composed-main-electron-types.log.gz",
+    "original_bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-composed-main-renderer-build.log.gz",
+    "original_bytes": 61595,
+    "sha256": "698aff2114f255856534c6d4e85a7e9f11276cc5b1801372ad021061ba37b88e"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-composed-main-server-core-types.log.gz",
+    "original_bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-composed-main-webui-build.log.gz",
+    "original_bytes": 54591,
+    "sha256": "c8d9ff842f7389f1055c22d62524e3e061a88f2b3b9b78ee6da2ec5b0b551eef"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-composed-main-webui-types.log.gz",
+    "original_bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-browser-first.log.gz",
+    "original_bytes": 1786,
+    "sha256": "8050dd76c0d9c897f6ee15f7a5242259385965345615b3bd457a6b9e5c0e43da"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-browser-node-each.log.gz",
+    "original_bytes": 8945,
+    "sha256": "a0c0398138267ef25bc2b50048189a4689a8a056a22f6a186332e62dc9097564"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-browser-node-qualified-final.log.gz",
+    "original_bytes": 8540,
+    "sha256": "97a94124c10ef02d031def3dfccd99aa1cdaac66cc83c428a98d1dbb5cb1ac78"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-browser-node-qualified.log.gz",
+    "original_bytes": 17107,
+    "sha256": "238ac2defd713f022a5d6cb854b716094e2c9c3d5da5c4939717c5f4ac207277"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-browser-node.log.gz",
+    "original_bytes": 1501,
+    "sha256": "364c3e8f2a77a9a5e70d0bbcf308e9815ff2e7117c190ae6f4a0b561e1f75c7e"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-electron-types-first.log.gz",
+    "original_bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-fine-pointer-rerun.log.gz",
+    "original_bytes": 564,
+    "sha256": "89f56cec9b0a786a049995c844c7bce55bc9f496640902e01bf7f20cfb3c0f79"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-focused-first-result.json.gz",
+    "original_bytes": 1443,
+    "sha256": "e263e3db92f33737d2039eae1fef39fb39a7db39c4a447088f19470a72abbb2c"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-focused-first.log.gz",
+    "original_bytes": 16028,
+    "sha256": "86ca0e3c71ac7c550c6eed5b639ecb8f776161472832c5bb30f562732d40afb1"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-home-token-locale.log.gz",
+    "original_bytes": 47388,
+    "sha256": "70fe83e8f637a9461297a68ed1745c0226b9d81789f136eb8f787d42e54f7628"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-real-app-first.log.gz",
+    "original_bytes": 1589,
+    "sha256": "9bf7e902703e8d2625b3aa373d59c18573b2e2d19661fcd12a0421da5de3b4ec"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-real-app-qualified.log.gz",
+    "original_bytes": 10657,
+    "sha256": "ccf6b7e4dabf5f28a0e3bb151ab5de420abc315afc44b97641c03b4d62f72f9e"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-real-components-port-first.log.gz",
+    "original_bytes": 150,
+    "sha256": "4e9ad253b003b5a3eb81ed84c2eb6043144d4f9503353d62c6db8efd7c50d41c"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-shared-types-first.log.gz",
+    "original_bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-ui-types-first.log.gz",
+    "original_bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-webui-types-first.log.gz",
+    "original_bytes": 481,
+    "sha256": "7973211169eb61344ff35ad62d55cd8e8344117fa0014735bef06d8d9eb3e987"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-webui-types-resolved.log.gz",
+    "original_bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-final-current-electron-types.log.gz",
+    "original_bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-server-core-local-resolution.tsconfig.json.gz",
+    "original_bytes": 1599,
+    "sha256": "47ce67341974fcfc434435921735df1934c66076987e35eea55e233a77c1efe6"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-real-components-qualified.log.gz",
+    "original_bytes": 3000,
+    "sha256": "fac9d93d77b797362bae404855b9b8d01f20fd4ea2de856fe29d72f4c1d9162a"
+  }
+]
