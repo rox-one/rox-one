@@ -1,0 +1,2 @@
+$ bun run scripts/check-i18n-parity.ts
+i18n parity OK (11 locales, 8715 keys each)

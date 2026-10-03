@@ -1,0 +1,38 @@
+bun test v1.4.2 (43848b5a7)
+
+apps/electron/src/renderer/atoms/__tests__/auxiliary-panels.test.ts:
+(pass) retained workspace panels > tool focus and late dialogue creation cannot replace the main surface [2.37ms]
+(pass) retained workspace panels > tools are singletons and closing tools retains the owning main entry [0.24ms]
+(pass) retained workspace panels > closing the last main surface with tools keeps a primary inbox [0.25ms]
+(pass) retained workspace panels > reload preserves context and matching React ownership with equal routes [0.47ms]
+(pass) retained workspace panels > wide, intermediate and narrow layouts show reachable panels without removing entries [0.25ms]
+
+apps/electron/src/renderer/contexts/__tests__/navigation-history-key.test.ts:
+(pass) buildSemanticHistoryKey > changes when focused panel index changes even if routes are identical [0.03ms]
+(pass) buildSemanticHistoryKey > stays stable for identical semantic inputs [0.02ms]
+(pass) canRunInitialRestore > returns false until session metadata is ready [0.02ms]
+(pass) canRunInitialRestore > returns true only when all restore conditions are satisfied [0.01ms]
+
+apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts:
+(pass) normalizePanelRouteForReconcile > auto-selects session details for filter-only session routes [0.30ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit session details unchanged [0.03ms]
+(pass) normalizePanelRouteForReconcile > normalizes each session panel route independently [0.05ms]
+(pass) normalizePanelRouteForReconcile > keeps route unchanged when resolver leaves state without details [0.02ms]
+(pass) normalizePanelRouteForReconcile > keeps non-session routes unchanged with session-only resolver [0.04ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail route even if resolver tries to rewrite it [0.03ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail routes distinct across multiple panels [0.03ms]
+(pass) auto-selected collection retains opaque view parameters [0.03ms]
+
+apps/electron/src/renderer/lib/__tests__/navigate-events.test.ts:
+(pass) surface navigation through the real event receiver retains a focused agent and its context [0.48ms]
+(pass) new-panel and auto-selection options survive the same receiver [0.05ms]
+
+apps/electron/src/renderer/lib/__tests__/draft-persistence.test.ts:
+(pass) a slow old write cannot overwrite a newer snapshot with attachments [0.50ms]
+(pass) retrying a flush recovers a transient failure without changing the draft [0.14ms]
+(pass) a failed write is visible and an explicit new save recovers [0.10ms]
+
+ 22 pass
+ 0 fail
+ 45 expect() calls
+Ran 22 tests across 5 files. [150.00ms]

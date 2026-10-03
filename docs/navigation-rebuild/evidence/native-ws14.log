@@ -1,0 +1,24 @@
+bun test v1.4.2 (43848b5a7)
+
+packages/server-core/src/handlers/rpc/__tests__/memory-native-acceptance.test.ts:
+(pass) actual native WS preserves personal owner and source, denies foreign workspace/read-only/revoked actions across restart [672.74ms]
+(pass) production LessonStore backup failure preserves source; interrupted archive replay retains provenance and owner isolation [53.05ms]
+(pass) actual native GET_CONTEXT excludes machine-private preferences at every response depth [657.52ms]
+
+packages/server-core/src/handlers/rpc/__tests__/native-inbox-queues.test.ts:
+(pass) native Inbox empty: real scoped authority and WebSocket [601.95ms]
+(pass) native Inbox owned: real scoped authority and WebSocket [639.99ms]
+(pass) native Inbox skills: real scoped authority and WebSocket [638.22ms]
+(pass) native Inbox messaging: real scoped authority and WebSocket [624.60ms]
+(pass) native Inbox extraction: real scoped authority and WebSocket [645.54ms]
+(pass) native Inbox extraction-root: real scoped authority and WebSocket [577.27ms]
+(pass) native Inbox lifecycle: real scoped authority and WebSocket [948.52ms]
+(pass) native Inbox producer: real scoped authority and WebSocket [2227.01ms]
+(pass) native Inbox producer-deferred: real scoped authority and WebSocket [2369.24ms]
+(pass) native Inbox producer-revoked: real scoped authority and WebSocket [2063.96ms]
+(pass) native Inbox producer-root: real scoped authority and WebSocket [2120.72ms]
+
+ 14 pass
+ 0 fail
+ 14 expect() calls
+Ran 14 tests across 2 files. [15.06s]

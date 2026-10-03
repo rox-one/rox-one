@@ -1,0 +1,88 @@
+bun test v1.4.2 (43848b5a7)
+
+apps/electron/src/renderer/atoms/__tests__/panel-workspace.test.ts:
+(pass) workspace layout atom lifecycle > previews in memory, restores on cancel and hydrates only the committed geometry [2.23ms]
+(pass) workspace layout atom lifecycle > arrangement changes preserve routes, panel identities and keyboard focus behavior [1.84ms]
+
+apps/electron/src/renderer/lib/__tests__/open-workspace-tool.test.ts:
+(pass) explicit workspace utility links > opens an automation separately without replacing the Pages primary panel [0.58ms]
+(pass) explicit workspace utility links > retargets an existing utility rather than duplicating it or redirecting the main [0.16ms]
+(pass) explicit workspace utility links > does not deliver a late creation into another workspace [0.10ms]
+(pass) explicit workspace utility links > does not steal focus after the user moves to another pane in the same workspace [0.10ms]
+(pass) explicit workspace utility links > does not resurrect an explicitly closed agent after a pending creation [0.23ms]
+(pass) explicit workspace utility links > keeps late responses out of a primary surface that changed after the click [0.13ms]
+
+apps/electron/src/renderer/lib/__tests__/pages-project-context.test.ts:
+(pass) Pages project selection > global project choices select one library project and all-project resets the filter [0.02ms]
+(pass) Pages project selection > one real library project becomes global context while advanced filters keep global all-project scope [0.06ms]
+(pass) Pages project selection > creation binds only a real loaded project and ignores stale or unassigned IDs [0.03ms]
+
+apps/electron/src/renderer/lib/__tests__/workspace-work-client.test.ts:
+(pass) workspace work canonical client > binds each read and write to the requested workspace and explicit revision [0.31ms]
+(pass) workspace work canonical client > rejects a successful transport response from a different workspace [0.08ms]
+(pass) workspace work canonical client > leaves a stale mutation rejected and never retries it automatically [0.31ms]
+(pass) workspace work canonical client > dispatches only events belonging to its workspace and releases the actual subscription [0.07ms]
+(pass) workspace work canonical client > keeps a missing default profile missing and denies profile snapshots from another workspace [0.12ms]
+(pass) workspace work canonical client > uses only named project options from the active workspace in the untyped project transport [0.23ms]
+(pass) workspace work canonical client > round-trips local appointment inputs without an implicit UTC offset and clears empty deadlines [3.87ms]
+
+apps/electron/src/renderer/lib/__tests__/panel-keyboard.test.ts:
+(pass) mounted panel keyboard authority > dispatches a key only to the focused event-origin pane while the main remains mounted [0.47ms]
+(pass) mounted panel keyboard authority > denies a hidden, inert or aria-hidden main even if stale atom focus still names it [0.04ms]
+(pass) mounted panel keyboard authority > denies CSS-hidden, collapsed, boxless and disconnected panes [0.03ms]
+(pass) mounted panel keyboard authority > keeps sidebar, portalled dialog and document targets out of retained page shortcuts [0.02ms]
+
+apps/electron/src/renderer/lib/__tests__/panel-workspace-layout.test.ts:
+(pass) workspace arrangements > shows a single panel, 2×2 and 3×2 grids without dropping extra panels [0.33ms]
+(pass) workspace arrangements > preserves legacy column proportions and balances the incomplete grid row [0.40ms]
+(pass) workspace arrangements > resizes adjacent tracks while preserving the untouched track and total [0.51ms]
+(pass) workspace arrangements > starts a resize from CSS-clamped pixels without moving an untouched column [0.26ms]
+(pass) workspace arrangements > captures clamped rows and ignores incomplete or invalid layout measurements [0.04ms]
+(pass) workspace arrangements > keeps dedicated services visible in compact mode when they have no navigator [0.10ms]
+(pass) directional workspace focus > moves through 2×2 cells without changing panel order or wrapping edges [0.07ms]
+(pass) directional workspace focus > keeps the column in a 3×2 grid and chooses a real cell in a ragged last row [0.03ms]
+(pass) directional workspace focus > cannot enter absent rows, missing focus or hidden focus-mode siblings [0.03ms]
+(pass) persisted panel geometry validation > rejects foreign workspaces and unknown schemas [0.02ms]
+(pass) persisted panel geometry validation > recovers invalid modes and track data without NaN or invisible panels [0.06ms]
+(pass) persisted panel geometry validation > keeps independently resized arrangements across mode changes [0.09ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/surface-navigation-model.test.ts:
+(pass) surface rail keyboard focus > crosses the surface/tool boundary without activating either control [0.05ms]
+(pass) surface rail keyboard focus > wraps through every control and keeps native Tab and activation keys untouched [0.03ms]
+(pass) surface rail keyboard focus > uses visible controls when a rail item is disabled or unavailable [0.03ms]
+(pass) surface rail keyboard focus > supports first/last controls and an empty compact rail safely [0.02ms]
+
+apps/electron/src/renderer/lib/meetings/__tests__/meeting-task-bridge.test.ts:
+(pass) qualified task, source anchor and meeting backlink survive real store reload [18.47ms]
+(pass) failed or unavailable task write creates no meeting backlink [5.47ms]
+(pass) lost create response resolves durable action origin and retries reuse one task [7.65ms]
+(pass) backlink failure retains known task ID; retry links without duplicating [9.16ms]
+(pass) scope mismatch, invalid receipt, unknown action and deleted origin never fake success [16.79ms]
+(pass) main store rejects invented shared backlinks through action and generic update paths [10.43ms]
+(pass) legacy personal task ID loads unchanged; a confirmed personal ref remains explicitly personal [4.70ms]
+
+apps/electron/src/renderer/pages/notes/__tests__/note-ai-session.test.ts:
+(pass) Notes AI uses the selected workspace model and invariant Agent utility > opens a canonical draft on Rox and configured external or local providers, preserving the note [2.45ms]
+(pass) Notes AI uses the selected workspace model and invariant Agent utility > reuses the same note session without replacing its model or draft [0.66ms]
+(pass) Notes AI uses the selected workspace model and invariant Agent utility > binds the explicit workspace project to both the new session and utility context [0.92ms]
+(pass) Notes AI uses the selected workspace model and invariant Agent utility > creates a fresh conversion draft when reuse is explicitly disabled [0.27ms]
+(pass) Notes AI uses the selected workspace model and invariant Agent utility > does not reuse a deleted note session [0.18ms]
+(pass) Notes AI uses the selected workspace model and invariant Agent utility > keeps a late created draft but never replaces a later main surface [0.14ms]
+
+apps/electron/src/renderer/pages/notes/__tests__/project-note-scope.test.ts:
+(pass) notes workspace project scope > all-project scope includes workspace notes; a selected project uses its real folder path [0.20ms]
+(pass) notes workspace project scope > unavailable or malformed projects fail closed during loading or deletion [0.14ms]
+(pass) notes workspace project scope > new notes default to the selected project and never silently relocate explicit destinations [0.04ms]
+(pass) notes workspace project scope > relative new folders belong to the selected project while all-project folders remain explicit [0.03ms]
+
+apps/electron/src/renderer/pages/notes/__tests__/notes-auxiliary-tools.test.ts:
+(pass) Notes Inspector fit preserves the document width without reserving a second Agent composer [0.09ms]
+(pass) actual narrow page Inspector callback toggles sheet without mutating saved collapse preference [6.37ms]
+(pass) actual wide page Inspector callback retains current persisted collapse preference [13.38ms]
+(pass) actual page preserves the Inspector owner when switching between inline and narrow sheet [21.95ms]
+(pass) actual contextual metadata guard retires another workspace without touching durable session or draft [18.81ms]
+
+ 60 pass
+ 0 fail
+ 289 expect() calls
+Ran 60 tests across 11 files. [997.00ms]

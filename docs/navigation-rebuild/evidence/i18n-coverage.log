@@ -1,0 +1,2 @@
+$ bun run scripts/check-i18n-coverage.ts
+i18n coverage OK (8174 literal references, 5822 unique keys, 8715 English keys)

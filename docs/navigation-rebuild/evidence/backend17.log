@@ -1,0 +1,33 @@
+bun test v1.4.2 (43848b5a7)
+
+packages/server-core/src/workspace-work/workspace-work.test.ts:
+(pass) canonical task IDs, workspace project ref and receipt survive store reload [7.73ms]
+(pass) meeting action origin deduplicates retries, cannot retarget, and survives deletion [7.73ms]
+(pass) retained unavailable links, project and assignee do not block task edits; new missing selections fail [5.49ms]
+(pass) author or assignee edits, other member comments, manager can edit [7.09ms]
+(pass) profiles owner/manage edits, shared default manage-only, captured capabilities immutable [7.00ms]
+(pass) multiple work blocks keep task deadline separate; half-open overlap reports owner [6.72ms]
+(pass) invalid, unknown, spoofed and foreign IDs never write [4.62ms]
+(pass) stale second writer fails; busy lease and symlink are denied without resetting data [3.56ms]
+(pass) delete atomically removes dependent blocks/comments and preserves canonical tombstone [6.67ms]
+(pass) authorization is checked again before durable commit; denial leaves canonical bytes unchanged [2.52ms]
+(pass) real killed writer releases the OS lease; canonical bundle survives and accepts next revision [23.41ms]
+
+packages/server-core/src/sessions/agent-profile-session.test.ts:
+(pass) new dialog captures default profile, persists ceiling, rejects expansion and preserves legacy [791.17ms]
+
+packages/server-core/src/handlers/rpc/workspace-work.test.ts:
+(pass) real native RPC enforces grants, actor ownership, scope, revisions and restart [703.34ms]
+
+apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts:
+(pass) RPC handler profile registration > registerCoreRpcHandlers registers only core channels [713.51ms]
+(pass) RPC handler profile registration > registerGuiRpcHandlers registers only gui channels [0.58ms]
+
+apps/electron/src/main/handlers/__tests__/registration.test.ts:
+(pass) RPC handler registration > registers all declared handled channels exactly once [1.62ms]
+(pass) RPC handler registration > keeps onboarding channels in registration coverage [0.42ms]
+
+ 17 pass
+ 0 fail
+ 71 expect() calls
+Ran 17 tests across 5 files. [2.83s]
