@@ -1,0 +1,71 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:
+killed 2 dangling processes
+(fail) production native surface renderer ownership > hidden/released duplicate hosts cannot hide their visible sibling, while clipping hides the selected host [30088.93ms]
+  ^ this test timed out after 30000ms.
+28 |       browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
+29 |     } catch (error) { await stop(); throw error }
+30 |   }, 45000)
+31 |   afterAll(stop, 30000)
+32 |   const withPage = async (path: string, run: (page: Page) => Promise<void>) => {
+33 |     const page = await browser.newPage({viewport:{width:1250,height:800}})
+                                    ^
+error: page: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:33:32
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:38:5
+(fail) production native surface renderer ownership > retains a typed draft through responsive hiding, restores geometry and suppresses overlays [280.51ms]
+28 |       browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
+29 |     } catch (error) { await stop(); throw error }
+30 |   }, 45000)
+31 |   afterAll(stop, 30000)
+32 |   const withPage = async (path: string, run: (page: Page) => Promise<void>) => {
+33 |     const page = await browser.newPage({viewport:{width:1250,height:800}})
+                                    ^
+error: page: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:33:32
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:49:83
+(fail) production native surface renderer ownership > releases an inspector attachment arriving after close without hiding a sibling surface [206.21ms]
+28 |       browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
+29 |     } catch (error) { await stop(); throw error }
+30 |   }, 45000)
+31 |   afterAll(stop, 30000)
+32 |   const withPage = async (path: string, run: (page: Page) => Promise<void>) => {
+33 |     const page = await browser.newPage({viewport:{width:1250,height:800}})
+                                    ^
+error: page: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:33:32
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:56:76
+(fail) production native surface renderer ownership > ignores an obsolete attachment failure after a newer open succeeds [375.33ms]
+
+# Unhandled error between tests
+-------------------------------
+32 |   const withPage = async (path: string, run: (page: Page) => Promise<void>) => {
+33 |     const page = await browser.newPage({viewport:{width:1250,height:800}})
+34 |     const errors: string[] = []
+35 |     page.on('pageerror', error => errors.push(error.message))
+36 |     try { await page.goto(endpoint + path); await expectDOM(page.getByTestId('first-host')).toBeVisible(); await expectDOM.poll(async () => (await last(page))?.rect?.width).toBe(300); await run(page); expect(errors).toEqual([]) }
+37 |     catch (error) { throw new Error(`Native renderer fixture ${path} failed; calls=${JSON.stringify(await calls(page))}; body=${await page.locator('body').innerText()}`, { cause: error }) }
+                                                                                                               ^
+error: evaluate: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:37:107
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+-------------------------------
+
+28 |       browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
+29 |     } catch (error) { await stop(); throw error }
+30 |   }, 45000)
+31 |   afterAll(stop, 30000)
+32 |   const withPage = async (path: string, run: (page: Page) => Promise<void>) => {
+33 |     const page = await browser.newPage({viewport:{width:1250,height:800}})
+                                    ^
+error: page: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:33:32
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:68:73
+(fail) production native surface renderer ownership > preserves imported-cookie consent controls and routes explicit opt-in to a private instance [1.96ms]
+
+ 0 pass
+ 5 fail
+ 1 error
+ 2 expect() calls
+Ran 5 tests across 1 file. [51.73s]

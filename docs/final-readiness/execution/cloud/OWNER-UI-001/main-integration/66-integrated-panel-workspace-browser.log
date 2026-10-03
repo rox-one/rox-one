@@ -1,0 +1,17 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/panel-workspace.browser.test.ts:
+(pass) production persistent panel container and resize > keeps drafts and panel identities mounted across grid, focus and compact arrangements [36901.57ms]
+(pass) production persistent panel container and resize > commits column and row sizes, restores them after reload and isolates workspace preferences [15751.67ms]
+(pass) production persistent panel container and resize > keeps pointer preview transient and restores it on Escape before a final commit [8253.82ms]
+(pass) production persistent panel container and resize > preserves native spatial focus, while editing, dialogs and composition fence keyboard shortcuts [22791.85ms]
+(pass) production persistent panel container and resize > restores DOM focus after the focused panel closes without remounting surviving drafts [13025.53ms]
+(pass) production persistent panel container and resize > does not steal a surviving editor or toolbar focus when another focused panel closes [20941.34ms]
+(pass) production persistent panel container and resize > leaves modal and composing focus untouched on panel removal [16017.24ms]
+(pass) production persistent panel container and resize > restores focus for the removed tab owner and preserves a newer focus acquired before the frame [15973.67ms]
+(pass) production persistent panel container and resize > rejects malformed or foreign saved layout without losing usable panel geometry [9342.80ms]
+
+ 9 pass
+ 0 fail
+ 18 expect() calls
+Ran 9 tests across 1 file. [173.35s]

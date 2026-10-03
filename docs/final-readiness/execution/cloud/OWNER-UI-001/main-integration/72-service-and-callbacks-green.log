@@ -1,0 +1,36 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts:
+(pass) normalizePanelRouteForReconcile > auto-selects session details for filter-only session routes [4.80ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit session details unchanged [0.64ms]
+(pass) normalizePanelRouteForReconcile > normalizes each session panel route independently [0.52ms]
+(pass) normalizePanelRouteForReconcile > keeps route unchanged when resolver leaves state without details [0.05ms]
+(pass) normalizePanelRouteForReconcile > preserves every query parameter when reconciling a list or search route [2.10ms]
+(pass) normalizePanelRouteForReconcile > keeps non-session routes unchanged with session-only resolver [0.23ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail route even if resolver tries to rewrite it [0.10ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail routes distinct across multiple panels [0.06ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/compact-workspace-navigation.test.ts:
+(pass) compact workspace navigation > does not match an unavailable retained route to the sessions service [11.24ms]
+(pass) compact workspace navigation > keeps every registered service reachable without a desktop rail or sidebar [0.40ms]
+(pass) compact workspace navigation > selects any open panel and preserves its identity, route, filter and sizing [0.81ms]
+(pass) compact workspace navigation > reuses an open service before calling its normal opener [0.47ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/notes-canonical-navigation.test.ts:
+(pass) Notes shell navigation > opens the workspace-local Notes surface instead of a knowledge provider [2340.46ms]
+(pass) Notes shell navigation > resolves imported chat notes to local Notes, not SiYuan [2.19ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/connections-nav.test.ts:
+(pass) CF-6.2 Connections nav and surface > registers an enabled connections destination for the Workbench rail [11.20ms]
+(pass) CF-6.2 Connections nav and surface > exposes Connections in the single primary sidebar using the canonical route [788.41ms]
+(pass) CF-6.2 Connections nav and surface > renders ConnectionsPage from MainContentPanel on the connections navigator [0.05ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-navigation.test.ts:
+(pass) UI-001 retained addresses and service focus > cannot classify unavailable or malformed addresses as an existing service [106.88ms]
+(pass) UI-001 retained addresses and service focus > refuses to focus an unavailable panel and preserves its address [0.18ms]
+(pass) UI-001 retained addresses and service focus > focuses a valid service sibling while preserving all retained panel identities [0.12ms]
+
+ 20 pass
+ 0 fail
+ 116 expect() calls
+Ran 20 tests across 5 files. [11.72s]

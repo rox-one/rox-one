@@ -20,6 +20,19 @@ function createMockWindow(webContentsId: number) {
 }
 
 describe('handleDeepLink routing', () => {
+  it('delivers the native search query and future parameters through the actual navigation sink', async () => {
+    const targetWindow = createMockWindow(22)
+    const manager = {
+      getFocusedWindow: () => targetWindow,
+      getLastActiveWindow: () => targetWindow,
+      getWorkspaceForWindow: () => 'ws-target',
+    } as unknown as WindowManager
+    const sent: unknown[][] = []
+    const result = await handleDeepLink('rox://search?q=two%20words&mode=future', manager,
+      (_channel, _target, ...args) => { sent.push(args) }, () => 'client-target')
+    expect(result.success).toBe(true)
+    expect(sent).toEqual([[{ view: 'search?q=two%20words&mode=future', action: undefined, actionParams: undefined }]])
+  })
   it('prefers resolved target client over preferred caller client', async () => {
     const targetWindow = createMockWindow(22)
 

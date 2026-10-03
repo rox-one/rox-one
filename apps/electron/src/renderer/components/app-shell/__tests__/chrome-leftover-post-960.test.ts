@@ -36,8 +36,13 @@ describe('ship-rox-chrome-leftover-post-960', () => {
   })
 
   it('does not reopen inspector strip host from #958/#959', () => {
+    // Responsive suppression now retains the host's draft without making it
+    // visible or interactive; the same chrome flags still gate presentation.
     expect(host).toContain('<RetainedSurface visible={!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed)}>')
     expect(host).toContain('<InspectorHost />')
+    const retained = readFileSync(join(appShell, '../../platform/RetainedSurface.tsx'), 'utf8')
+    expect(retained).toContain('element.inert = !visible')
+    expect(retained).toContain("display: visible ? 'contents' : 'none'")
     expect(host).toMatch(/<RetainedSurface[^>]*>\s*<InspectorHost \/>\s*<\/RetainedSurface>/)
     const start = inspector.indexOf('if (chromeCollapsed)')
     const collapsedReturn = inspector.indexOf('return (', start)

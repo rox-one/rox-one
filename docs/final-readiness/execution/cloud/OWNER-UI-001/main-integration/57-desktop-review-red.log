@@ -1,0 +1,23 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+339 |   it('desktop unavailable links remove the unrelated navigator and resize boundary', async () => {
+340 |     for (const width of [960, 1440]) {
+341 |       await page.setViewportSize({ width, height: 900 })
+342 |       await open('knowledge/unknown/doc')
+343 |       await unavailable('knowledge/unknown/doc')
+344 |       expect(await page.locator('[data-shell-navigator]').count()).toBe(0)
+                                                                         ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:344:68)
+(fail) UI-001 actual navigation in Chromium > desktop unavailable links remove the unrelated navigator and resize boundary [2900.80ms]
+
+ 0 pass
+ 12 filtered out
+ 1 fail
+ 7 expect() calls
+Ran 1 test across 1 file. [8.67s]

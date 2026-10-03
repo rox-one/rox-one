@@ -1,0 +1,5 @@
+$ cd apps/electron && bun run typecheck
+$ tsc --noEmit
+error: script "typecheck" was terminated by signal SIGTERM (Polite quit request)
+/bin/bash: line 1: 26600 Terminated: 15          bun run typecheck
+error: script "typecheck:electron" exited with code 143

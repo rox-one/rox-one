@@ -1,0 +1,143 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1373:9:
+      1373 │     case 'pages':
+           ╵          ~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1347:9:
+      1347 │     case 'pages':
+           ╵          ~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1375:9:
+      1375 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1349:9:
+      1349 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+killed 2 dangling processes
+
+# Unhandled error between tests
+-------------------------------
+137 |   it('unknown single link survives reload and never selects its nested session', async () => {
+138 |     const route = 'future/session/private?keep=1'
+139 |     await open(route)
+140 |     await unavailable(route)
+141 |     expect((await snapshot()).selected).toBeNull()
+142 |     await page.screenshot({ path: join(evidence, 'unknown-link.png') })
+                     ^
+error: screenshot: Target page, context or browser has been closed
+Call log:
+[2m  - taking page screenshot[22m
+[2m  - waiting for fonts to load...[22m
+[2m  - fonts loaded[22m
+
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:142:16
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+-------------------------------
+
+129 |     await new Promise<void>(resolve => server.once('listening', resolve))
+130 |     base = `http://127.0.0.1:${(server.address() as any).port}`
+131 |     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
+132 |   }, 60000)
+133 |   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
+134 |   afterEach(async () => { await context?.close() }, 15000)
+                                               ^
+error: close: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:134:42
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > unknown single link survives reload and never selects its nested session [7853.63ms]
+  ^ this test timed out after 5000ms.
+128 |     }).listen(0, '127.0.0.1')
+129 |     await new Promise<void>(resolve => server.once('listening', resolve))
+130 |     base = `http://127.0.0.1:${(server.address() as any).port}`
+131 |     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
+132 |   }, 60000)
+133 |   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
+                                                         ^
+error: context: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:133:52
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > malformed encoding and legacy lossy degradation retain their own unavailable surface [204.24ms]
+128 |     }).listen(0, '127.0.0.1')
+129 |     await new Promise<void>(resolve => server.once('listening', resolve))
+130 |     base = `http://127.0.0.1:${(server.address() as any).port}`
+131 |     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
+132 |   }, 60000)
+133 |   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
+                                                         ^
+error: context: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:133:52
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > multi-panel restore retains valid sibling, unavailable focus and proportions across reload [348.55ms]
+128 |     }).listen(0, '127.0.0.1')
+129 |     await new Promise<void>(resolve => server.once('listening', resolve))
+130 |     base = `http://127.0.0.1:${(server.address() as any).port}`
+131 |     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
+132 |   }, 60000)
+133 |   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
+                                                         ^
+error: context: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:133:52
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > actual navigate and deep-link callbacks preserve unavailable route and browser back/forward [43.41ms]
+128 |     }).listen(0, '127.0.0.1')
+129 |     await new Promise<void>(resolve => server.once('listening', resolve))
+130 |     base = `http://127.0.0.1:${(server.address() as any).port}`
+131 |     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
+132 |   }, 60000)
+133 |   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
+                                                         ^
+error: context: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:133:52
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > stored action address cannot execute, while explicit action callback still runs once [65.89ms]
+128 |     }).listen(0, '127.0.0.1')
+129 |     await new Promise<void>(resolve => server.once('listening', resolve))
+130 |     base = `http://127.0.0.1:${(server.address() as any).port}`
+131 |     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
+132 |   }, 60000)
+133 |   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
+                                                         ^
+error: context: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:133:52
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > pending search replay retains query and new-panel options [364.71ms]
+128 |     }).listen(0, '127.0.0.1')
+129 |     await new Promise<void>(resolve => server.once('listening', resolve))
+130 |     base = `http://127.0.0.1:${(server.address() as any).port}`
+131 |     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
+132 |   }, 60000)
+133 |   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
+                                                         ^
+error: context: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:133:52
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > latest pending unknown address wins without selecting a previous valid session [20.28ms]
+128 |     }).listen(0, '127.0.0.1')
+129 |     await new Promise<void>(resolve => server.once('listening', resolve))
+130 |     base = `http://127.0.0.1:${(server.address() as any).port}`
+131 |     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
+132 |   }, 60000)
+133 |   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
+                                                         ^
+error: context: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:133:52
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > workspace restoration and history keep each workspace address [27.34ms]
+
+ 0 pass
+ 8 fail
+ 1 error
+ 7 expect() calls
+Ran 8 tests across 1 file. [24.38s]

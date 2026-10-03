@@ -1,0 +1,441 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_AMS-Regular.woff2
+
+    node_modules/katex/dist/katex.min.css:1:90:
+      1 │ ...weight:400;src:url(fonts/KaTeX_AMS-Regular.woff2) format("woff2"...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_AMS-Regular.woff
+
+    node_modules/katex/dist/katex.min.css:1:141:
+      1 │ ...format("woff2"),url(fonts/KaTeX_AMS-Regular.woff) format("woff")...
+        ╵                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Main-Bold.ttf
+
+    node_modules/katex/dist/katex.min.css:1:1475:
+      1 │ ...) format("woff"),url(fonts/KaTeX_Main-Bold.ttf) format("truetype...
+        ╵                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_SansSerif-Bold.woff2
+
+    node_modules/katex/dist/katex.min.css:1:2865:
+      1 │ ...eight:700;src:url(fonts/KaTeX_SansSerif-Bold.woff2) format("woff...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Main-Regular.woff
+
+    node_modules/katex/dist/katex.min.css:1:2166:
+      1 │ ...ormat("woff2"),url(fonts/KaTeX_Main-Regular.woff) format("woff")...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Size2-Regular.woff
+
+    node_modules/katex/dist/katex.min.css:1:4208:
+      1 │ ...ormat("woff2"),url(fonts/KaTeX_Size2-Regular.woff) format("woff"...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_AMS-Regular.ttf
+
+    node_modules/katex/dist/katex.min.css:1:190:
+      1 │ ... format("woff"),url(fonts/KaTeX_AMS-Regular.ttf) format("truetyp...
+        ╵                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Main-BoldItalic.woff2
+
+    node_modules/katex/dist/katex.min.css:1:1616:
+      1 │ ...ight:700;src:url(fonts/KaTeX_Main-BoldItalic.woff2) format("woff...
+        ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Main-BoldItalic.woff
+
+    node_modules/katex/dist/katex.min.css:1:1671:
+      1 │ ...rmat("woff2"),url(fonts/KaTeX_Main-BoldItalic.woff) format("woff...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Main-BoldItalic.ttf
+
+    node_modules/katex/dist/katex.min.css:1:1724:
+      1 │ ...ormat("woff"),url(fonts/KaTeX_Main-BoldItalic.ttf) format("truet...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Main-Italic.woff
+
+    node_modules/katex/dist/katex.min.css:1:1922:
+      1 │ ...format("woff2"),url(fonts/KaTeX_Main-Italic.woff) format("woff")...
+        ╵                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Main-Italic.ttf
+
+    node_modules/katex/dist/katex.min.css:1:1971:
+      1 │ ... format("woff"),url(fonts/KaTeX_Main-Italic.ttf) format("truetyp...
+        ╵                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_SansSerif-Regular.ttf
+
+    node_modules/katex/dist/katex.min.css:1:3501:
+      1 │ ...rmat("woff"),url(fonts/KaTeX_SansSerif-Regular.ttf) format("true...
+        ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_SansSerif-Italic.woff
+
+    node_modules/katex/dist/katex.min.css:1:3180:
+      1 │ ...mat("woff2"),url(fonts/KaTeX_SansSerif-Italic.woff) format("woff...
+        ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_SansSerif-Bold.ttf
+
+    node_modules/katex/dist/katex.min.css:1:2971:
+      1 │ ...format("woff"),url(fonts/KaTeX_SansSerif-Bold.ttf) format("truet...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Main-Italic.woff2
+
+    node_modules/katex/dist/katex.min.css:1:1871:
+      1 │ ...weight:400;src:url(fonts/KaTeX_Main-Italic.woff2) format("woff2"...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Main-Regular.woff2
+
+    node_modules/katex/dist/katex.min.css:1:2114:
+      1 │ ...weight:400;src:url(fonts/KaTeX_Main-Regular.woff2) format("woff2...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_SansSerif-Italic.woff2
+
+    node_modules/katex/dist/katex.min.css:1:3124:
+      1 │ ...ight:400;src:url(fonts/KaTeX_SansSerif-Italic.woff2) format("wof...
+        ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_SansSerif-Bold.woff
+
+    node_modules/katex/dist/katex.min.css:1:2919:
+      1 │ ...rmat("woff2"),url(fonts/KaTeX_SansSerif-Bold.woff) format("woff"...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_SansSerif-Regular.woff
+
+    node_modules/katex/dist/katex.min.css:1:3446:
+      1 │ ...mat("woff2"),url(fonts/KaTeX_SansSerif-Regular.woff) format("wof...
+        ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_SansSerif-Italic.ttf
+
+    node_modules/katex/dist/katex.min.css:1:3234:
+      1 │ ...ormat("woff"),url(fonts/KaTeX_SansSerif-Italic.ttf) format("true...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Size1-Regular.woff2
+
+    node_modules/katex/dist/katex.min.css:1:3905:
+      1 │ ...eight:400;src:url(fonts/KaTeX_Size1-Regular.woff2) format("woff2...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_SansSerif-Regular.woff2
+
+    node_modules/katex/dist/katex.min.css:1:3389:
+      1 │ ...ght:400;src:url(fonts/KaTeX_SansSerif-Regular.woff2) format("wof...
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Script-Regular.woff2
+
+    node_modules/katex/dist/katex.min.css:1:3652:
+      1 │ ...eight:400;src:url(fonts/KaTeX_Script-Regular.woff2) format("woff...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Script-Regular.woff
+
+    node_modules/katex/dist/katex.min.css:1:3706:
+      1 │ ...rmat("woff2"),url(fonts/KaTeX_Script-Regular.woff) format("woff"...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Script-Regular.ttf
+
+    node_modules/katex/dist/katex.min.css:1:3758:
+      1 │ ...format("woff"),url(fonts/KaTeX_Script-Regular.ttf) format("truet...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Size1-Regular.ttf
+
+    node_modules/katex/dist/katex.min.css:1:4009:
+      1 │ ...format("woff"),url(fonts/KaTeX_Size1-Regular.ttf) format("truety...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Typewriter-Regular.woff2
+
+    node_modules/katex/dist/katex.min.css:1:4910:
+      1 │ ...ght:400;src:url(fonts/KaTeX_Typewriter-Regular.woff2) format("wo...
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Size1-Regular.woff
+
+    node_modules/katex/dist/katex.min.css:1:3958:
+      1 │ ...ormat("woff2"),url(fonts/KaTeX_Size1-Regular.woff) format("woff"...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Size2-Regular.ttf
+
+    node_modules/katex/dist/katex.min.css:1:4259:
+      1 │ ...format("woff"),url(fonts/KaTeX_Size2-Regular.ttf) format("truety...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Math-BoldItalic.ttf
+
+    node_modules/katex/dist/katex.min.css:1:2468:
+      1 │ ...ormat("woff"),url(fonts/KaTeX_Math-BoldItalic.ttf) format("truet...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Size3-Regular.woff2
+
+    node_modules/katex/dist/katex.min.css:1:4405:
+      1 │ ...eight:400;src:url(fonts/KaTeX_Size3-Regular.woff2) format("woff2...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Size3-Regular.woff
+
+    node_modules/katex/dist/katex.min.css:1:4458:
+      1 │ ...ormat("woff2"),url(fonts/KaTeX_Size3-Regular.woff) format("woff"...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Size3-Regular.ttf
+
+    node_modules/katex/dist/katex.min.css:1:4509:
+      1 │ ...format("woff"),url(fonts/KaTeX_Size3-Regular.ttf) format("truety...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Size4-Regular.woff2
+
+    node_modules/katex/dist/katex.min.css:1:4655:
+      1 │ ...eight:400;src:url(fonts/KaTeX_Size4-Regular.woff2) format("woff2...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Math-BoldItalic.woff2
+
+    node_modules/katex/dist/katex.min.css:1:2360:
+      1 │ ...ight:700;src:url(fonts/KaTeX_Math-BoldItalic.woff2) format("woff...
+        ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Size4-Regular.woff
+
+    node_modules/katex/dist/katex.min.css:1:4708:
+      1 │ ...ormat("woff2"),url(fonts/KaTeX_Size4-Regular.woff) format("woff"...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Math-BoldItalic.woff
+
+    node_modules/katex/dist/katex.min.css:1:2415:
+      1 │ ...rmat("woff2"),url(fonts/KaTeX_Math-BoldItalic.woff) format("woff...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Size4-Regular.ttf
+
+    node_modules/katex/dist/katex.min.css:1:4759:
+      1 │ ...format("woff"),url(fonts/KaTeX_Size4-Regular.ttf) format("truety...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Size2-Regular.woff2
+
+    node_modules/katex/dist/katex.min.css:1:4155:
+      1 │ ...eight:400;src:url(fonts/KaTeX_Size2-Regular.woff2) format("woff2...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Main-Regular.ttf
+
+    node_modules/katex/dist/katex.min.css:1:2216:
+      1 │ ... format("woff"),url(fonts/KaTeX_Main-Regular.ttf) format("truety...
+        ╵                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Math-Italic.woff
+
+    node_modules/katex/dist/katex.min.css:1:2666:
+      1 │ ...format("woff2"),url(fonts/KaTeX_Math-Italic.woff) format("woff")...
+        ╵                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Math-Italic.woff2
+
+    node_modules/katex/dist/katex.min.css:1:2615:
+      1 │ ...weight:400;src:url(fonts/KaTeX_Math-Italic.woff2) format("woff2"...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Math-Italic.ttf
+
+    node_modules/katex/dist/katex.min.css:1:2715:
+      1 │ ... format("woff"),url(fonts/KaTeX_Math-Italic.ttf) format("truetyp...
+        ╵                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Fraktur-Bold.woff2
+
+    node_modules/katex/dist/katex.min.css:1:875:
+      1 │ ...weight:700;src:url(fonts/KaTeX_Fraktur-Bold.woff2) format("woff2...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Caligraphic-Bold.woff2
+
+    node_modules/katex/dist/katex.min.css:1:340:
+      1 │ ...ight:700;src:url(fonts/KaTeX_Caligraphic-Bold.woff2) format("wof...
+        ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Caligraphic-Bold.woff
+
+    node_modules/katex/dist/katex.min.css:1:396:
+      1 │ ...mat("woff2"),url(fonts/KaTeX_Caligraphic-Bold.woff) format("woff...
+        ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Caligraphic-Bold.ttf
+
+    node_modules/katex/dist/katex.min.css:1:450:
+      1 │ ...ormat("woff"),url(fonts/KaTeX_Caligraphic-Bold.ttf) format("true...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Caligraphic-Regular.woff
+
+    node_modules/katex/dist/katex.min.css:1:664:
+      1 │ ...at("woff2"),url(fonts/KaTeX_Caligraphic-Regular.woff) format("wo...
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Caligraphic-Regular.ttf
+
+    node_modules/katex/dist/katex.min.css:1:721:
+      1 │ ...mat("woff"),url(fonts/KaTeX_Caligraphic-Regular.ttf) format("tru...
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Fraktur-Bold.woff
+
+    node_modules/katex/dist/katex.min.css:1:927:
+      1 │ ...ormat("woff2"),url(fonts/KaTeX_Fraktur-Bold.woff) format("woff")...
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Fraktur-Bold.ttf
+
+    node_modules/katex/dist/katex.min.css:1:977:
+      1 │ ... format("woff"),url(fonts/KaTeX_Fraktur-Bold.ttf) format("truety...
+        ╵                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Fraktur-Regular.woff2
+
+    node_modules/katex/dist/katex.min.css:1:1124:
+      1 │ ...ight:400;src:url(fonts/KaTeX_Fraktur-Regular.woff2) format("woff...
+        ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Main-Bold.woff2
+
+    node_modules/katex/dist/katex.min.css:1:1379:
+      1 │ ...-weight:700;src:url(fonts/KaTeX_Main-Bold.woff2) format("woff2")...
+        ╵                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Fraktur-Regular.ttf
+
+    node_modules/katex/dist/katex.min.css:1:1232:
+      1 │ ...ormat("woff"),url(fonts/KaTeX_Fraktur-Regular.ttf) format("truet...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Main-Bold.woff
+
+    node_modules/katex/dist/katex.min.css:1:1428:
+      1 │ ... format("woff2"),url(fonts/KaTeX_Main-Bold.woff) format("woff"),...
+        ╵                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Typewriter-Regular.woff
+
+    node_modules/katex/dist/katex.min.css:1:4968:
+      1 │ ...at("woff2"),url(fonts/KaTeX_Typewriter-Regular.woff) format("wof...
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_Typewriter-Regular.ttf
+
+    node_modules/katex/dist/katex.min.css:1:5024:
+      1 │ ...rmat("woff"),url(fonts/KaTeX_Typewriter-Regular.ttf) format("tru...
+        ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Fraktur-Regular.woff
+
+    node_modules/katex/dist/katex.min.css:1:1179:
+      1 │ ...rmat("woff2"),url(fonts/KaTeX_Fraktur-Regular.woff) format("woff...
+        ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Caligraphic-Regular.woff2
+
+    node_modules/katex/dist/katex.min.css:1:605:
+      1 │ ...ht:400;src:url(fonts/KaTeX_Caligraphic-Regular.woff2) format("wo...
+        ╵               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] Cannot import "node_modules/react-pdf/dist/Page/AnnotationLayer.css" into a JavaScript file without an output path configured
+
+    packages/ui/src/components/overlay/PDFPreviewOverlay.tsx:19:7:
+      19 │ import 'react-pdf/dist/Page/AnnotationLayer.css'
+         ╵        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] Cannot import "node_modules/react-pdf/dist/Page/TextLayer.css" into a JavaScript file without an output path configured
+
+    packages/ui/src/components/overlay/PDFPreviewOverlay.tsx:20:7:
+      20 │ import 'react-pdf/dist/Page/TextLayer.css'
+         ╵        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] Cannot import "node_modules/katex/dist/katex.min.css" into a JavaScript file without an output path configured
+
+    packages/ui/src/components/markdown/Markdown.tsx:7:7:
+      7 │ import 'katex/dist/katex.min.css'
+        ╵        ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] Cannot import "node_modules/katex/dist/katex.min.css" into a JavaScript file without an output path configured
+
+    packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx:30:7:
+      30 │ import 'katex/dist/katex.min.css'
+         ╵        ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] Cannot import "packages/ui/src/components/markdown/tiptap-editor.css" into a JavaScript file without an output path configured
+
+    packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx:31:7:
+      31 │ import './tiptap-editor.css'
+         ╵        ~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] Cannot import "packages/ui/src/components/markdown/extensions/animated-task-item.css" into a JavaScript file without an output path configured
+
+    packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx:32:7:
+      32 │ import './extensions/animated-task-item.css'
+         ╵        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] Cannot import "node_modules/react-pdf/dist/Page/AnnotationLayer.css" into a JavaScript file without an output path configured
+
+    packages/ui/src/components/markdown/MarkdownPdfBlock.tsx:39:7:
+      39 │ import 'react-pdf/dist/Page/AnnotationLayer.css'
+         ╵        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] Cannot import "node_modules/react-pdf/dist/Page/TextLayer.css" into a JavaScript file without an output path configured
+
+    packages/ui/src/components/markdown/MarkdownPdfBlock.tsx:40:7:
+      40 │ import 'react-pdf/dist/Page/TextLayer.css'
+         ╵        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1462 |     let { file, line, column } = e.location;
+1463 |     let pluginText = e.pluginName ? `[plugin: ${e.pluginName}] ` : "";
+1464 |     return `
+1465 | ${file}:${line}:${column}: ERROR: ${pluginText}${e.text}`;
+1466 |   }).join("");
+1467 |   let error = new Error(text);
+                         ^
+error: Build failed with 68 errors:
+node_modules/katex/dist/katex.min.css:1:90: ERROR: No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_AMS-Regular.woff2
+node_modules/katex/dist/katex.min.css:1:141: ERROR: No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_AMS-Regular.woff
+node_modules/katex/dist/katex.min.css:1:190: ERROR: No loader is configured for ".ttf" files: node_modules/katex/dist/fonts/KaTeX_AMS-Regular.ttf
+node_modules/katex/dist/katex.min.css:1:340: ERROR: No loader is configured for ".woff2" files: node_modules/katex/dist/fonts/KaTeX_Caligraphic-Bold.woff2
+node_modules/katex/dist/katex.min.css:1:396: ERROR: No loader is configured for ".woff" files: node_modules/katex/dist/fonts/KaTeX_Caligraphic-Bold.woff
+...
+      at failureErrorWithLog (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:1467:19)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:926:25)
+      at buildResponseToResult (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:924:7)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:603:9)
+      at handleIncomingPacket (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:658:12)
+      at readFromStdout (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/esbuild/lib/main.js:581:7)
+      at emit (node:events:95:22)
+      at addChunk (internal:streams/readable:264:47)
+      at readableAddChunkPushByteMode (internal:streams/readable:242:18)
+      at handleArrayBufferViewResult (internal:streams/native-readable:79:16)
+      at <anonymous> (internal:streams/native-readable:43:68)
+(fail) UI-001 actual navigation in Chromium > (unnamed) [6299.80ms]
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [12.86s]
