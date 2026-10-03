@@ -68,6 +68,8 @@ import {
   modelSupportsImages,
 } from '@config/llm-connections'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
+import { useOptionalModalRegistry } from '@/context/ModalContext'
+import { useOptionalDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
 import { SourceAvatar } from '@/components/ui/source-avatar'
 import { SourceSelectorPopover } from '@/components/ui/SourceSelectorPopover'
@@ -387,7 +389,32 @@ export function FreeFormInput({
   const sourcesTarget = useTourTarget('composer.sources', { sessionId, workspaceId, variant: tourVariant })
   const skillsTarget = useTourTarget('composer.skills', { sessionId, workspaceId, variant: tourVariant })
   const compactDirectoryTarget = useTourTarget('composer.directory', { sessionId, workspaceId, variant: 'compact' })
-  const attachmentObservationRef = React.useRef<TourObservation | null>(null)
+  const modalRegistry = useOptionalModalRegistry()
+  const dismissibleRegistry = useOptionalDismissibleLayerRegistry()
+  const attachmentScopeRef = React.useRef({ workspaceId, sessionId })
+  if (attachmentScopeRef.current.workspaceId !== workspaceId || attachmentScopeRef.current.sessionId !== sessionId) {
+    attachmentScopeRef.current = { workspaceId, sessionId }
+  }
+  const attachmentMountedRef = React.useRef(true)
+  const attachmentPickerRef = React.useRef<{
+    observation: TourObservation | null
+    signals: typeof tourSignals
+    scope: typeof attachmentScopeRef.current
+    cancelled: boolean
+    retireLayer: () => void
+    settle: () => void
+    cancel: () => void
+  } | null>(null)
+  React.useEffect(() => {
+    attachmentMountedRef.current = true
+    return () => { attachmentMountedRef.current = false; attachmentPickerRef.current?.cancel() }
+  }, [])
+  // A new scope/attempt retires only the old tour layer. Keep the native selection's
+  // scope until it settles; a legitimate file still belongs to the same session.
+  React.useEffect(() => () => {
+    const picker = attachmentPickerRef.current
+    if (picker?.signals === tourSignals) picker.retireLayer()
+  }, [tourSignals])
   React.useEffect(() => tourSignals.capability('attachments.available', { state: 'ready' }), [tourSignals])
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
   const promptHistoryRef = React.useRef<PromptHistory>(EMPTY_PROMPT_HISTORY)
@@ -714,12 +741,6 @@ export function FreeFormInput({
   const containerRef = React.useRef<HTMLDivElement>(null)
   const sourceButtonRef = React.useRef<HTMLButtonElement>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
-  React.useEffect(() => {
-    const input = fileInputRef.current
-    const cancel = () => { tourSignals.handoff(attachmentObservationRef.current, false); attachmentObservationRef.current = null }
-    input?.addEventListener('cancel', cancel)
-    return () => input?.removeEventListener('cancel', cancel)
-  }, [tourSignals])
 
   // Merge refs for RichTextInput
   const internalInputRef = React.useRef<RichTextInputHandle>(null)
@@ -1322,10 +1343,10 @@ export function FreeFormInput({
   const hasElectronAPI = typeof window !== 'undefined' && !!window.electronAPI
 
   // Shared helper: read a File, add as attachment, decrement loading count
-  const processFileAttachment = async (file: File, overrideName?: string, observation: TourObservation | null = null) => {
+  const processFileAttachment = async (file: File, overrideName?: string, observation: TourObservation | null = null, isCurrent: () => boolean = () => true) => {
     try {
       const attachment = await readFileAsAttachment(file, overrideName)
-      if (attachment) {
+      if (attachment && isCurrent()) {
         setAttachments(prev => [...prev, attachment])
         tourSignals.emit(observation, 'attachment.ready', 'observed', 'ui-observation')
       }
@@ -1337,28 +1358,63 @@ export function FreeFormInput({
 
   // File attachment handlers
   const handleAttachClick = () => {
-    if (disabled) return
-    attachmentObservationRef.current = tourSignals.capture()
-    tourSignals.handoff(attachmentObservationRef.current, true)
-    fileInputRef.current?.click()
+    const input = fileInputRef.current
+    if (disabled || !input) return
+    attachmentPickerRef.current?.cancel()
+    const observation = tourSignals.capture()
+    const id = `native-file-picker-${crypto.randomUUID()}`
+    let unregisterModal = () => {}
+    let unregisterLayer = () => {}
+    let layerOpen = true
+    let settled = false
+    const picker: NonNullable<typeof attachmentPickerRef.current> = {
+      observation, signals: tourSignals, scope: attachmentScopeRef.current, cancelled: false,
+      retireLayer() {
+        if (!layerOpen) return
+        layerOpen = false
+        unregisterLayer(); unregisterModal()
+        // A late callback never closes a replacement picker in the same attempt.
+        if (attachmentPickerRef.current === picker) tourSignals.handoff(observation, false)
+      },
+      settle() {
+        if (settled) return
+        settled = true
+        picker.retireLayer()
+        input.removeEventListener('cancel', picker.cancel)
+        if (attachmentPickerRef.current === picker) attachmentPickerRef.current = null
+      },
+      cancel() { if (settled) return; picker.cancelled = true; picker.settle() },
+    }
+    attachmentPickerRef.current = picker
+    input.addEventListener('cancel', picker.cancel)
+    // Register synchronously: the native picker may blur after React paints.
+    unregisterModal = modalRegistry?.registerModal(id, picker.cancel) ?? unregisterModal
+    unregisterLayer = dismissibleRegistry?.registerLayer({ id, type: 'modal', close: picker.cancel }) ?? unregisterLayer
+    tourSignals.handoff(observation, true)
+    try { input.click() } catch (error) { picker.cancel(); throw error }
   }
 
   const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+    const input = e.currentTarget
+    const picker = attachmentPickerRef.current
+    const files = input.files
+    if (!files || files.length === 0) { picker?.cancel(); return }
 
-    const observation = attachmentObservationRef.current
-    attachmentObservationRef.current = null
+    const scope = picker?.scope ?? attachmentScopeRef.current
+    const observation = picker?.observation ?? null
+    // Selection closes the actual native prompt. File reading does not suppress
+    // ordinary window blur, and uses the context captured before its async work.
+    picker?.settle()
+    const isCurrent = () => attachmentMountedRef.current && attachmentScopeRef.current === scope && !picker?.cancelled
     const fileList = Array.from(files)
     setLoadingCount(prev => prev + fileList.length)
-
-    for (const file of fileList) {
-      await processFileAttachment(file, undefined, observation)
+    try {
+      for (const file of fileList) await processFileAttachment(file, undefined, observation, isCurrent)
+    } finally {
+      // Reset only when no replacement prompt owns this input.
+      if (!attachmentPickerRef.current) input.value = ''
+      picker?.settle()
     }
-
-    // Reset input so re-selecting the same file triggers onChange again
-    e.target.value = ''
-    tourSignals.handoff(observation, false)
   }
 
   const handleRemoveAttachment = (index: number) => {
