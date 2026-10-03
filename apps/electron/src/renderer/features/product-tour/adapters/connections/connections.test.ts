@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import type { LoadedSource } from '../../../../shared/types'
+import type { LoadedSource } from '../../../../../shared/types'
 import type { TourObservation } from '../../runtime/hooks'
 import { connectionCapabilities, deriveConnectionSignals, resolvePublishedToolSource, sourceReadiness, toggleSourceSelection } from './index'
 import { proxyToolName } from '../../../../../../../../packages/shared/src/mcp/proxy-tool-name'

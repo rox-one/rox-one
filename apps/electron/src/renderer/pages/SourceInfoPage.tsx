@@ -7,6 +7,8 @@
  */
 
 import * as React from 'react'
+import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { sourceReadiness } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { AlertCircle } from 'lucide-react'
@@ -16,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { SourceAvatar } from '@/components/ui/source-avatar'
+import { SourceStatusIndicator, deriveConnectionStatus } from '@/components/ui/source-status-indicator'
 import { SourceMenu } from '@/components/app-shell/SourceMenu'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { toast } from 'sonner'
@@ -184,6 +187,8 @@ function getPermissionsDescription(source: LoadedSource, t: (key: string) => str
 export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: SourceInfoPageProps) {
   const { t } = useTranslation()
   const { navigateToSource } = useNavigation()
+  const sourceStatusTarget = useTourTarget('source.status', { workspaceId, entityId: sourceSlug })
+  const tour = useTourSignals({ workspaceId })
   const [source, setSource] = useState<LoadedSource | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -320,6 +325,16 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
 
     return cleanup
   }, [sourceSlug, workspaceId])
+
+  // Only a rendered native source detail view supplies visibility evidence.
+  useEffect(() => {
+    if (loading || !source || source.config.slug !== sourceSlug || source.workspaceId !== workspaceId) return
+    tour.emit(tour.capture(), 'source.details-visible', 'observed', 'ui-observation')
+  }, [tour, loading, source, sourceSlug, workspaceId])
+  useEffect(() => {
+    if (!source || source.config.slug !== sourceSlug || source.workspaceId !== workspaceId) return
+    return tour.capability('sources.ready', sourceReadiness(source, localMcpEnabled))
+  }, [tour, source, localMcpEnabled, sourceSlug, workspaceId])
 
   // Compute source URL
   const sourceUrl = useMemo(() => source ? getSourceUrl(source) : null, [source])
@@ -487,6 +502,10 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
             }
           >
             <div className="space-y-3 px-4 py-3">
+              <div ref={sourceStatusTarget} role="status" className="flex items-center gap-2 text-sm" data-product-tour-target="source.status">
+                <SourceStatusIndicator status={deriveConnectionStatus(source, localMcpEnabled)} errorMessage={source.config.connectionError} />
+                <span>{t({ connected: 'sourceStatus.connected', needs_auth: 'sourceStatus.needsAuth', failed: 'sourceStatus.failed', untested: 'sourceStatus.untested', local_disabled: 'sourceStatus.disabled' }[deriveConnectionStatus(source, localMcpEnabled)])}</span>
+              </div>
               <div className="grid gap-1.5">
                 <label className="text-xs font-medium text-muted-foreground">{t('common.name')}</label>
                 <Input

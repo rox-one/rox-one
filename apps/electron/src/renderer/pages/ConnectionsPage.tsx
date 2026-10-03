@@ -1,5 +1,7 @@
 import { useAtom } from 'jotai'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, useRef, type ReactNode } from 'react'
+import { useTourTarget, useTourSignals, type TourObservation } from '@/features/product-tour/runtime/hooks'
+import { connectionCapabilities } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { RefreshCw } from 'lucide-react'
@@ -68,9 +70,16 @@ function ImportPanel({
 export default function ConnectionsPage() {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
+  const servicesTarget = useTourTarget('connections.services', { workspaceId: workspace?.id })
+  const auditTarget = useTourTarget('connections.audit', { workspaceId: workspace?.id })
+  const tour = useTourSignals({ workspaceId: workspace?.id })
+  const auditObservation = useRef<TourObservation | null>(null)
+  const [auditSurface, setAuditSurface] = useState<SurfaceState | 'loading'>('loading')
   const [tab, setTab] = useState<ConnectionsTab>('services')
   const [selected, setSelected] = useAtom(selectedConnectionAtom)
   const [rows, setRows] = useState<ConnectionListRow[] | null>(null)
+  const [rowsWorkspaceId, setRowsWorkspaceId] = useState<string | null>(null)
+  const [auditWorkspaceId, setAuditWorkspaceId] = useState<string | null>(null)
   const [surface, setSurface] = useState<SurfaceState>('ready')
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [rotatingId, setRotatingId] = useState<string | null>(null)
@@ -108,10 +117,12 @@ export default function ConnectionsPage() {
       return
     }
     let stale = false
+    setRows(null)
     listConnections(workspaceId)
       .then((raw) => {
         if (stale) return
         setRows(sanitizeConnectionRows(raw))
+        setRowsWorkspaceId(workspaceId)
         setSurface('ready')
       })
       .catch((error) => {
@@ -131,19 +142,27 @@ export default function ConnectionsPage() {
 
   useEffect(() => {
     if (tab !== 'audit') return
+    setAuditSurface('loading')
     const workspaceId = workspace?.id
     const listConnectionAudit = window.electronAPI?.workgraph?.listConnectionAudit
     if (!workspaceId || typeof listConnectionAudit !== 'function') {
       setAuditRows([])
+      setAuditSurface('unavailable')
       return
     }
     let stale = false
+    auditObservation.current = tour.capture()
     listConnectionAudit({ workspaceId })
       .then((raw) => {
-        if (!stale) setAuditRows(sanitizeConnectionAuditRows(raw))
+        if (stale) return
+        setAuditRows(sanitizeConnectionAuditRows(raw))
+        setAuditSurface('ready')
+        setAuditWorkspaceId(workspaceId)
       })
       .catch(() => {
-        if (!stale) setAuditRows([])
+        if (stale) return
+        setAuditRows([])
+        setAuditSurface('unavailable')
       })
     return () => {
       stale = true
@@ -171,6 +190,21 @@ export default function ConnectionsPage() {
     }
   }, [tab, workspace?.id])
 
+  useEffect(() => {
+    const fabric = rowsWorkspaceId !== workspace?.id ? 'loading' : surface !== 'ready' ? surface : rows === null ? 'loading' : tab === 'audit' ? auditSurface : 'ready'
+    return tour.capability('connection-fabric.available', connectionCapabilities({ fabric })['connection-fabric.available']!)
+  }, [tour, surface, rows, tab, auditSurface, rowsWorkspaceId, workspace?.id])
+
+  useEffect(() => {
+    if (tab !== 'audit' || surface !== 'ready' || rows === null || auditSurface !== 'ready' || rowsWorkspaceId !== workspace?.id || auditWorkspaceId !== workspace?.id) return
+    const current = tour.capture()
+    const captured = auditObservation.current
+    // An outstanding native read retains its original attempt; the ready view
+    // can be observed again when a new tour opens on the already rendered tab.
+    const observation = captured?.binding.runToken === current?.binding.runToken ? captured : current
+    tour.emit(observation, 'connections.audit-visible', 'observed', 'ui-observation')
+  }, [tour, tab, surface, rows, auditSurface, rowsWorkspaceId, auditWorkspaceId, workspace?.id])
+
   const refreshRows = async (workspaceId: string) => {
     const listConnections = window.electronAPI?.workgraph?.listConnections
     if (typeof listConnections !== 'function') {
@@ -179,6 +213,7 @@ export default function ConnectionsPage() {
     }
     try {
       setRows(sanitizeConnectionRows(await listConnections(workspaceId)))
+      setRowsWorkspaceId(workspaceId)
       setSurface('ready')
     } catch (error) {
       setRows([])
@@ -476,6 +511,8 @@ export default function ConnectionsPage() {
         {TABS.map((id) => (
           <button
             key={id}
+            ref={id === 'audit' ? auditTarget : undefined}
+            data-product-tour-target={id === 'audit' ? 'connections.audit' : undefined}
             type="button"
             role="tab"
             aria-selected={tab === id}
@@ -692,7 +729,7 @@ export default function ConnectionsPage() {
             </ul>
           </div>
         ) : tab === 'services' ? (
-          <div className="space-y-6 text-sm text-foreground">
+          <div ref={servicesTarget} className="space-y-6 text-sm text-foreground" data-product-tour-target="connections.services">
             {workspace?.id ? <ConnectionsOverview workspaceId={workspace.id} reloadKey={reloadKey} /> : null}
             <OverviewGroup
               title={t('connections.overview.credentials')}
