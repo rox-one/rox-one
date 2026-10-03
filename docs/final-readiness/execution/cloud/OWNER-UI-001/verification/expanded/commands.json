@@ -13,11 +13,11 @@
     "nativeBuildRenderer": "bun tests/final-readiness/rox-readiness-ui-001.build.ts --renderer",
     "nativeBuildDriver": "bun tests/final-readiness/rox-readiness-ui-001.build.ts --node-driver",
     "nativeReplay": "ROX_UI_001_PRODUCT_E2E=1 ROX_UI_001_BUN=<Bun1.3.14 executable> ROX_UI_001_ELECTRON=<isolated Electron39.2.7 executable> node work/rox-readiness-ui-001.native-driver.cjs",
-    "diff": "git diff --check",
+    "diff": "git diff --check excluding immutable native raw logs and original adapter-filter diff",
     "radarSelected": "bun test ./apps/electron/src/renderer/pages/extra-screens/__tests__/rox-readiness-ui-001.radar-selected.isolated.ts (separate process)",
     "meetingSource": "bun test ./apps/electron/src/renderer/lib/extra-screens/__tests__/rox-readiness-ui-001.meetings-source.test.ts (separate process)"
   },
   "browserNodeFallback": "See the revision-bound fixture manifests and reproducible scripts under verification/expanded/harness. That lane runs the same registered test callbacks with Node assertions and Playwright transport; it does not claim a Bun test runner pass.",
   "excludedWrapper": "profile-strip-accessibility.test.tsx failed because bun:test child process returned empty stdout. The actual isolated component file was run directly with qualified Bun and passed. The wrapper failure remains in history.",
-  "frozenSourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d"
+  "frozenSourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81"
 }

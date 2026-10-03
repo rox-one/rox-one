@@ -1,0 +1,15 @@
+{
+  "verifiedSourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "observedExitCode": 0,
+  "passed": 709,
+  "skipped": 78,
+  "failed": 0,
+  "assertions": 2888,
+  "files": 108,
+  "runner": "qualified Bun1.3.14",
+  "logSha256": "ff15d7946ca9e33f8b7b82a36ec575ce3b56e1b7500449a4c146078bc89f69c0",
+  "pathArguments": "explicit ./ directory/file arguments; scratch negative controls excluded",
+  "excludedWrapper": "ProfileStrip subprocess wrapper; actual component direct isolated5pass0fail25assertions separately retained",
+  "postNativeChanges": "Two source-wiring assertion tests only; no shipped source or product harness changes",
+  "fullDoDClosed": false
+}

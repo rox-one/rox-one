@@ -1,5 +1,5 @@
 {
-  "verifiedSourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "verifiedSourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
   "integratedMainRevision": "ae19683e69f079893cd09065487cfa7653d01154",
   "hashes": {
     "apps/electron/src/main/deep-link.ts": "4bc5762d28f14fb03980980662a5beeb9832fe3f6d7caf1f4616ad4a55e0521a",
@@ -10,7 +10,7 @@
     "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
     "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "c70de20413482f2873923d92a7582336b6ff29bb7e77038b6b37eff5867decfd",
     "apps/electron/src/renderer/components/pages/PageView.tsx": "e9379e0f6ff8f2cb72f0d8703dabc6234c528957d4af11cb1bcdef4bc34432dc",
-    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "f9849afff8791539720582497d0fbf9c9b62bad33598a864ff28970b03d98829",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "807106e633dd513c1d76623ff938deca99069301c9ddb00f81e041a1136b1d98",
     "apps/electron/src/renderer/contexts/navigation-history.ts": "9da735adc486083d686878e9afa108a486ff19dcf465d0486e1b86845110f3b6",
     "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "e881a85c503f492fe47186b9dd9241a6884855dda46072bdcfbbfcc932fd0e2b",
     "apps/electron/src/renderer/hooks/usePages.ts": "71c548d1434745eccd9e54ed9d4770f36433e25dfc62a72e533efb7e41082120",

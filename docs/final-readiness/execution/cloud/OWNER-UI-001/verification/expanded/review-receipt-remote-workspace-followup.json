@@ -1,0 +1,234 @@
+{
+  "schemaVersion": 1,
+  "owner": "OWNER-UI-001",
+  "updatedAtUtc": "2026-10-03T16:41:46.139331+00:00",
+  "fullDoDClosed": false,
+  "priorSeal": {
+    "sourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+    "archiveCount": 87,
+    "snapshot": "verification/history/pre-remote-workspace-followup/preservation.json",
+    "snapshotSha256": "a7c98fb4d24a96fbf445ef0a2a217d3d3360895f70921fd526b0f2b85559c7e8",
+    "historicalPointerResolution": [
+      {
+        "original": "verification/expanded/log-manifest.json",
+        "snapshot": "verification/history/pre-remote-workspace-followup/log-manifest.json",
+        "sha256": "554ca2cd59580a0baf2d8b68a3333145ef0820c11822b6a7997d1055f1f4288e",
+        "bytes": 108563
+      },
+      {
+        "original": "verification/expanded/failure-history.json",
+        "snapshot": "verification/history/pre-remote-workspace-followup/failure-history.json",
+        "sha256": "e5b80ca7c5c15574aab661aaa6bbf450c86428b93ab533bf053ae5fb60638836",
+        "bytes": 38052
+      },
+      {
+        "original": "verification/expanded/review-receipt.json",
+        "snapshot": "verification/history/pre-remote-workspace-followup/review-receipt.json",
+        "sha256": "11b5e186c61377a3b5711907ababe3af169e91bedcd740ff9a2fa5a37ce49664",
+        "bytes": 29429
+      },
+      {
+        "original": "verification/expanded/rox-readiness-ui-001.ci-final-receipt.json",
+        "snapshot": "verification/history/pre-remote-workspace-followup/rox-readiness-ui-001.ci-final-receipt.json",
+        "sha256": "47422d068173e8409b6e5f4b67b3a1c1bcdccd9df4e292b322123afc93d4a2f4",
+        "bytes": 458
+      },
+      {
+        "original": "verification/expanded/rox-readiness-ui-001.regression-final-receipt.json",
+        "snapshot": "verification/history/pre-remote-workspace-followup/rox-readiness-ui-001.regression-final-receipt.json",
+        "sha256": "b00e945d9a8a0dd315942e08fd7e6634b176dd195a47eccf76a071856efd81b6",
+        "bytes": 669
+      },
+      {
+        "original": "verification/expanded/native-final-source-readback.json",
+        "snapshot": "verification/history/pre-remote-workspace-followup/native-final-source-readback.json",
+        "sha256": "97e1d3ef612df4cbc604873acc34a66c093d49d590455fe8dba32f098ac0cdd3",
+        "bytes": 304
+      },
+      {
+        "original": "verification/expanded/authored-product-manifest.json",
+        "snapshot": "verification/history/pre-remote-workspace-followup/authored-product-manifest.json",
+        "sha256": "05124fe2f9ed352e3f4a1cdd13160085fbe586da6f1cc61876f6513df40a0b7b",
+        "bytes": 5910
+      }
+    ],
+    "reviewReceipt": "verification/expanded/review-receipt.json",
+    "reviewReceiptSha256": "11b5e186c61377a3b5711907ababe3af169e91bedcd740ff9a2fa5a37ce49664"
+  },
+  "reason": "Remote workspace ID-only changes invalidated the former navigation owner without refreshing the deep-link subscription. The earlier5e proof and its qualifications remain immutable; this receipt supplements them with new source-specific review and validation.",
+  "followup": {
+    "currentFrozenRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+    "priorEvidenceSnapshotCommit": "e35aa30af754a660ca595e50c7168c88d9696223",
+    "updatedAtUtc": "2026-10-03T16:40:40.338311+00:00",
+    "independentNarrowReview": {
+      "files": [
+        {
+          "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+          "sha256": "807106e633dd513c1d76623ff938deca99069301c9ddb00f81e041a1136b1d98"
+        },
+        {
+          "path": "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+          "sha256": "d25916b710ef86751d3f2fca0c32b120864fbe7c1aab84e23f9f37ea4ecb8001"
+        }
+      ],
+      "conclusion": "No new actionable issue observed in the minimal remote-only dependency correction.",
+      "observations": "Ownership layout effect rotates for both local and remote workspace IDs. The subscription effect now shares those dependency boundaries, captures the newly installed owner after layout effects, and retains active/current-owner fences. The mounted fixture uses independently mutable remote ID and stable provider callbacks so navigate identity churn cannot mask registration. Tests cover local/null/new remote ingress and current action/prefill plus retained remote-owner ABA navigation/create/send suppression.",
+      "scope": "Read-only source/test review; actual mounted run, CI and native acceptance are separate receipts."
+    },
+    "negativeControlInputManifest": {
+      "path": "verification/expanded/navigation-remote-negative-input-manifest.json",
+      "sha256": "1c5052e05d961308c355c121658685db9febe4ff2194d35303d59738fab4830e",
+      "qualification": "New mounted cases against captured older actual product source at the e35 snapshot; not a complete clean repository revision acceptance run. Actual Node callbacks adapter with external Chromium, no Bun pass or installed-native claim."
+    },
+    "archivalWhitespaceQualification": {
+      "evidenceSnapshotCommit": "e35aa30af754a660ca595e50c7168c88d9696223",
+      "fullStagedDiffCheckExitStatus": 2,
+      "cause": "Preserved raw Playwright logs contain trailing spaces; adapter-filter-diff.txt contains literal raw diff markers. These archival bytes remain unchanged.",
+      "scopedSourceDocsDiffCheckExitStatus": 0,
+      "scopeExclusions": [
+        "native-e2e raw evidence",
+        "raw adapter fixture diff"
+      ],
+      "coordinatorChecks": {
+        "sourceDocsJsonParsed": true,
+        "secretPatternMatches": 0,
+        "filesOver50MiB": 0
+      },
+      "basis": "Explicit coordinator receipts; no raw evidence normalization or invented source-whitespace success."
+    },
+    "toolingPreparationHistory": [
+      {
+        "kind": "Python input-receipt script syntax error",
+        "effect": "A quoting typo failed before execution or file writes; corrected and rerun. No product/test/validation conclusion is derived from this tooling preparation failure.",
+        "standaloneLog": "None; tool output retained in conversation."
+      },
+      {
+        "kind": "GitHub job log retrieval fallback",
+        "attempts": [
+          "gh run view --job --log refused because the overall matrix run remains in progress.",
+          "Direct jobs/logs API initially required --allow-escape-sequences because the raw job log includes ANSI bytes.",
+          "Direct API with that output flag succeeded; original raw bytes preserved."
+        ],
+        "effect": "Read-only retrieval friction; no CI/product failure or rerun."
+      }
+    ],
+    "allRequestedLocalProofReceiptsObserved": true,
+    "fullDoDClosed": false,
+    "mountedCurrentProof": {
+      "logSource": "work/rox-readiness-ui-001.navigation-remote-full.log",
+      "pass": 26,
+      "fail": 0,
+      "assertions": 74,
+      "coordinatorObservedExitStatus": 0,
+      "elapsedMs": 196562,
+      "runtime": "Node actual source callbacks adapter with external Chromium; no Bun test pass/installed native claim.",
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "inputManifest": "verification/expanded/navigation-remote-final-8e3-input-manifest.json",
+      "inputManifestSha256": "d4651767ff7d3bc3009bf9fe901bce280cc6e17133cfe70c30d437cdc0dd725f",
+      "inputCount": 169,
+      "bundleSha256": "f7711584df681fa5826f8b8757e28486d3b2be0a0822994c66aa08bfca3c9b7c",
+      "testcaseTimeoutsChanged": false,
+      "outerHarnessTimeoutSeconds": 600,
+      "controlReceipt": {
+        "path": "verification/expanded/harness/rox-readiness-ui-001.navigation-remote-owner-result-8e3.json",
+        "sha256": "0caa3096a9954ca719b209d050e3eec4ffc1f55e63eeeedd7548f1d8d2599ea3"
+      },
+      "earlierOuterAttempt": {
+        "partialPassCases": 18,
+        "fullSuiteResultReported": false,
+        "outerDeadlineSeconds": 200,
+        "testcaseDeadlineSeconds": 30,
+        "disposition": "Retained incomplete orchestration timeout; current600s outer retry passed all26 with unchanged testcase limits."
+      }
+    },
+    "currentRemoteIssueReviewConfirmation": {
+      "path": "verification/expanded/remote-workspace-review-confirmation-8e3.json",
+      "sha256": "cafe4da19470be77afec7ca9f292682704e245c85085e48c4ed76d58dc04545f",
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "confirmedValidRepairComment": 4173886115,
+      "resolvedIssueComment": 4173757207,
+      "outcomeMarker": "ISSUE_RESOLVED"
+    },
+    "currentRemoteCI": {
+      "path": "verification/expanded/ci-remote-ubuntu-8e3-receipt.json",
+      "sha256": "dc9ef38e712bf2a496d4f53f33291adb2d46d42c8496fb3ed3be7c548cdc4c75"
+    },
+    "currentGitHubChecks": {
+      "path": "verification/expanded/github-checks-8e3-receipt.json",
+      "sha256": "ab7de80e8aec08e64e3d1b80edecc9eee1af020f4373aa8ca953d7b14a434249"
+    },
+    "currentLocalCI": {
+      "path": "verification/expanded/rox-readiness-ui-001.ci-final-receipt.json",
+      "sha256": "9e635902bed382b729ec56e673f7f47bcb49ad365674cbe4256b6660b3cdda2c"
+    },
+    "currentBroadRegression": {
+      "path": "verification/expanded/rox-readiness-ui-001.regression-final-receipt.json",
+      "sha256": "c20fb2222a0c14e38581b0566ee3fe8dfb0f2e8bb01573fa465076e88cb41255",
+      "pass": 709,
+      "skip": 80,
+      "fail": 0,
+      "assertions": 2888,
+      "tests": 789,
+      "files": 108
+    },
+    "buildReceipts": [
+      {
+        "path": "native-e2e/rox-readiness-ui-001.build-8e3f6d-main.final.json",
+        "sha256": "1e5fb8cb0ac921139b63b8eadc7c74b3a01769df654b5cb27512f2d81cd6022f"
+      },
+      {
+        "path": "native-e2e/rox-readiness-ui-001.build-8e3f6d-renderer.final.json",
+        "sha256": "7d557ad0b2f6131624a2babea7df5ef8569a2794e70623ed7df5bfd0aca41f4f"
+      }
+    ],
+    "currentNativeFirstAttempt": {
+      "path": "native-e2e/rox-readiness-ui-001-1791044832057/rox-readiness-ui-001.result.json",
+      "sha256": "382d490f091336e1b784b5d1bc972ddc2840effa662bcccae2257513e61a806b",
+      "status": "failed",
+      "stage": "boot-native-product",
+      "error": "electronApplication.firstWindow: Timeout30000ms exceeded while waiting for event window",
+      "qualification": "Actual original startup bound failed under the contended host; no renderer error observed. Retained as failed native acceptance attempt, with unchanged product/build before retry. Not a native pass."
+    },
+    "localCIResourceRemedyHistory": {
+      "proposed": "Stop duplicate localCI if current merged-candidate remoteCI is qualified, to free native capacity.",
+      "actual": "LocalCI completed fullSUCCESS before cancellation; coordinator observed exit0, no signal sent and no cancellation files written.",
+      "localLogSha256": "d1a775343e55fb88cb978c3701bc0563bbc053dc3c9fc307c49f00341ffc19dd"
+    },
+    "currentNativeFinal": {
+      "path": "verification/expanded/native-8e3-followup-readback.json",
+      "sha256": "4b52ce1e72ef530d601b9005e11c20d831d56ba913312e70fc300ee4e1f3c2d2"
+    },
+    "retainedMainContentProof": {
+      "path": "verification/expanded/harness/rox-readiness-ui-001.main-rebinding-8e3f6d841f2e.json",
+      "sha256": "7c11dff36050d389704c0886b7882d5f2f5756df5e429367e227aca73f0b2c53",
+      "priorObservedSourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+      "currentSourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "pass": 11,
+      "fail": 0,
+      "assertions": 23,
+      "inputCount": 125,
+      "allInputsAndBundleBytesEqual": true,
+      "newMountedReplayClaimed": false,
+      "qualification": "All125 rebuilt input bytes and output bundle bytes equal prior5e mounted proof; source/disk mismatch arrays empty. NavigationContext is an explicit lane seam and its remote-owner behavior has separate actual26-case replay."
+    },
+    "supportedMountedCases": {
+      "newlyReplayedCurrentNavigationProvider": 26,
+      "retainedMainContentViaCompleteBundleEquality": 11,
+      "totalSupported": 37,
+      "assertions": 97,
+      "newlyExecutedAll37Claimed": false
+    }
+  },
+  "newArchivedLogPaths": [
+    "verification/expanded/logs/rox-readiness-ui-001.navigation-remote-negative.followup-dd51f836721c.log.gz",
+    "verification/expanded/logs/rox-readiness-ui-001.navigation-remote-full.followup-27848cdac365.log.gz",
+    "verification/expanded/logs/rox-readiness-ui-001.navigation-remote-positive.followup-307a9d020010.log.gz",
+    "verification/expanded/logs/expanded-regression-8e3f6d841-final.followup-ab5e6cc02687.log.gz",
+    "verification/expanded/logs/expanded-validate-ci-8e3f6d841.followup-d1a775343e55.log.gz",
+    "verification/expanded/logs/rox-readiness-ui-001-build-8e3f6d-main.followup-0b76c2d60ef0.log.gz",
+    "verification/expanded/logs/rox-readiness-ui-001-build-8e3f6d-renderer.followup-3476c007a718.log.gz",
+    "verification/expanded/logs/expanded-native-8e3f6d841-final.followup-22618baae15d.log.gz",
+    "verification/expanded/logs/patch-scout-ubuntu-validate-8e3-direct.followup-6dc689d5841d.log.gz",
+    "verification/expanded/logs/expanded-native-8e3f6d841-retry.followup-d6f45b14f9c6.log.gz"
+  ]
+}

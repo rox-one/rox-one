@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "owner": "OWNER-UI-001",
-  "packagedAtUtc": "2026-10-03T15:56:42.118512+00:00",
+  "packagedAtUtc": "2026-10-03T16:41:46.139331+00:00",
   "acceptance": "Diagnostic history only. Evolving or unbound source runs are unqualified as frozen-source acceptance; successful counts do not close original DoD. Root owns structured final results and revision-bound delivery.",
   "fullDoDClosed": false,
   "preservedPriorSnapshot": [
@@ -425,6 +425,34 @@
       },
       "interpretation": "707 pass/78 skip/2 fail/2886 assertions with explicit ./ production-directory anchors. Scratch negative controls are no longer discovered. Only the old Notes/Connections direct-navigation source-text expectations fail after incoming service-helper integration; actual callbacks independently passed30/0/127 and the prepared minimal source-binding tests passed5/0/17.",
       "originalSha256": "e6889ce1f5daa972a103d8bc6bafc7abe102d535d5af3352459013ef96205a2b"
+    },
+    {
+      "log": "verification/expanded/logs/rox-readiness-ui-001.navigation-remote-negative.followup-dd51f836721c.log.gz",
+      "classification": "actual_mounted_product_negative_control",
+      "observedCounts": {
+        "pass": 0,
+        "fail": 2,
+        "assertions": 0,
+        "cases": 2
+      },
+      "interpretation": "Actual mounted old-source/current-regression Node adapter:0 pass/2 fail, both waiting for a new subscription after remote-only ownership rotation; the stale subscription cannot handle current ingress. Stable callback props prevent incidental navigate identity changes masking the defect.",
+      "originalSha256": "dd51f836721ce326fe7555dd93c9f63c41fffc4c925bd22aed8479ae9932fe07"
+    },
+    {
+      "log": "verification/expanded/logs/rox-readiness-ui-001.navigation-remote-positive.followup-307a9d020010.log.gz",
+      "classification": "incomplete_outer_orchestration_timeout",
+      "observedCounts": {},
+      "interpretation": "Initial full run reached18 passing cases, then the200s outer orchestration deadline ended execution. No testcase failure was reported, but no full-suite pass is claimed. The retry raised only the outer harness deadline to600s; unchanged30s testcase limits and same169-input bundle yielded26/0/74.",
+      "originalSha256": "307a9d0200107ca2224c1d695c734ac6fad13518a0e993a97bb3a37367dd8b73",
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81"
+    },
+    {
+      "log": "verification/expanded/logs/expanded-native-8e3f6d841-final.followup-22618baae15d.log.gz",
+      "classification": "failed_native_startup_original_bound",
+      "observedCounts": {},
+      "interpretation": "Current qualified8e native attempt failed firstWindow30000ms startup bound under contention; no renderer error observed. Preserve actual failed native attempt before unchanged-bound retry.",
+      "originalSha256": "22618baae15dee103a44a10938d9e0fb87fbff60d85d4ac1903b6250ebfed9a8",
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81"
     }
   ],
   "unloggedHistory": [
@@ -670,6 +698,12 @@
       "acceptanceLevel": "actual local macOS unpackaged Electron with shipped RPC and disposable canonical backend",
       "fullDoDClosed": false,
       "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    }
+  ],
+  "followupReceipts": [
+    {
+      "path": "verification/expanded/review-receipt-remote-workspace-followup.json",
+      "sha256": "7fd3a524ac45da5cf0baf6f84e06498137c9515abfc3f6009e3d818f6d7619ab"
     }
   ]
 }

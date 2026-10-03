@@ -11,8 +11,8 @@
   },
   "qualifiedBun": "1.3.14",
   "fullDoDClosed": false,
-  "nextAction": "Commit/push evidence and test-only source-assertion updates; mark PR1420 ready; expected-head merge then GitHub/main authored source readback; emit delivery receipt",
-  "verifiedSourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "nextAction": "Seal public proof; commit/push evidence only; ready and merge PR1420 with expected head; verify actual GitHub main product hashes",
+  "verifiedSourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
   "integrationBaseRevision": "ae19683e69f079893cd09065487cfa7653d01154",
   "pullRequest": "https://github.com/rox-one/rox-one/pull/1420",
   "verified": {
@@ -41,5 +41,14 @@
       "scope": "unpackaged macOS Electron39.2.7"
     },
     "originalContractUnchanged": true
+  },
+  "currentVerification": {
+    "localCI": "pass exit0 Bun1.3.14",
+    "remoteCI": "pass integrated e1e3899 exact45blobmatch",
+    "rendererRegression": "709pass80skip0fail2888assertions",
+    "mountedNavigation": "26pass0fail74assertions",
+    "mountedMain": "prior11pass0fail23assertions, fresh125-input identical-byte rebinding",
+    "native": "pass19stages32screenshots2776hashes",
+    "fullDoDClosed": false
   }
 }

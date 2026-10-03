@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "owner": "OWNER-UI-001",
-  "packagedAtUtc": "2026-10-03T15:56:42.118512+00:00",
+  "packagedAtUtc": "2026-10-03T16:41:46.139331+00:00",
   "pathBase": "docs/final-readiness/execution/cloud/OWNER-UI-001",
   "compression": "gzip level9 mtime0; original bytes preserved and verified by decompress/readback",
   "fullDoDClosed": false,
@@ -24,7 +24,7 @@
   ],
   "failureHistory": {
     "path": "verification/expanded/failure-history.json",
-    "sha256": "e5b80ca7c5c15574aab661aaa6bbf450c86428b93ab533bf053ae5fb60638836"
+    "sha256": "5d63e6afee5408bebf6c9019f61196ee1e78d4d91c946bf3f8e0aa9e51bb9bb1"
   },
   "entries": [
     {
@@ -2427,6 +2427,287 @@
       "sourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
       "sourceBindingBasis": "Coordinator final receipt: only two source-shape test expectations changed after native completion; independent byte readback confirms all2776 build-manifest source inputs unchanged.",
       "coordinatorReportedExitStatus": 0
+    },
+    {
+      "path": "verification/expanded/logs/rox-readiness-ui-001.navigation-remote-negative.followup-dd51f836721c.log.gz",
+      "sourceLocation": {
+        "base": "repository",
+        "path": "work/rox-readiness-ui-001.navigation-remote-negative.log"
+      },
+      "originalBytes": 2135,
+      "originalSha256": "dd51f836721ce326fe7555dd93c9f63c41fffc4c925bd22aed8479ae9932fe07",
+      "compressedBytes": 505,
+      "compressedSha256": "a3935961e7ebf881b562133fd96e40ccefb0e92a14a766a9f351eda834d3c1fa",
+      "roundtripBytesVerified": true,
+      "sourceUnchangedDuringCopy": true,
+      "classification": "actual_mounted_product_negative_control",
+      "interpretation": "Actual mounted old-source/current-regression Node adapter:0 pass/2 fail, both waiting for a new subscription after remote-only ownership rotation; the stale subscription cannot handle current ingress. Stable callback props prevent incidental navigate identity changes masking the defect.",
+      "observedCounts": {
+        "pass": 0,
+        "fail": 2,
+        "assertions": 0,
+        "cases": 2
+      },
+      "snapshotAtUtc": "2026-10-03T16:16:06.719557+00:00",
+      "qualification": {
+        "sourceRevisionBound": false,
+        "runtimeBun1314Observed": false,
+        "evolvingOrUnboundSource": true,
+        "fullDoDClosed": false
+      },
+      "sourceBindingBasis": "Captured prior product source input hashes in navigation-remote-negative-input-manifest.json; new tests make this a deliberate mixed-source negative control, not a full clean-revision acceptance run.",
+      "coordinatorReportedExitStatus": 1,
+      "runtime": "Node actual source callbacks adapter with external Chromium"
+    },
+    {
+      "path": "verification/expanded/logs/rox-readiness-ui-001.navigation-remote-full.followup-27848cdac365.log.gz",
+      "sourceLocation": {
+        "base": "repository",
+        "path": "work/rox-readiness-ui-001.navigation-remote-full.log"
+      },
+      "originalBytes": 2758,
+      "originalSha256": "27848cdac36586d9297c58c99815c9b2d43ccdfa7a0c3cb3339ca68a1bebf324",
+      "compressedBytes": 1198,
+      "compressedSha256": "3a5f4f4cfff0f9e1bafa17e860c5f6f92694a08f094753c56fd7bc6339310b15",
+      "roundtripBytesVerified": true,
+      "sourceUnchangedDuringCopy": true,
+      "classification": "passed_revision_bound_actual_mounted_callbacks",
+      "interpretation": "All26 mounted NavigationProvider cases passed with74 assertions, including the two remote-only subscription/ABA regressions and all24 prior cases under stable callback props. Node actual source callbacks adapter with external Chromium, not a Bun test/native installation claim.",
+      "observedCounts": {
+        "pass": 26,
+        "fail": 0,
+        "assertions": 74,
+        "cases": 26
+      },
+      "snapshotAtUtc": "2026-10-03T16:22:21.188790+00:00",
+      "qualification": {
+        "sourceRevisionBound": true,
+        "runtimeBun1314Observed": false,
+        "evolvingOrUnboundSource": false,
+        "fullDoDClosed": false
+      },
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "sourceBindingBasis": "Spec review supplied actual successful process receipt and fresh169-input bundle manifest; captured NavigationContext bytes match the frozen product.",
+      "coordinatorReportedExitStatus": 0,
+      "runtime": "Node actual source callbacks adapter with external Chromium"
+    },
+    {
+      "path": "verification/expanded/logs/rox-readiness-ui-001.navigation-remote-positive.followup-307a9d020010.log.gz",
+      "sourceLocation": {
+        "base": "repository",
+        "path": "work/rox-readiness-ui-001.navigation-remote-positive.log"
+      },
+      "originalBytes": 1814,
+      "originalSha256": "307a9d0200107ca2224c1d695c734ac6fad13518a0e993a97bb3a37367dd8b73",
+      "compressedBytes": 862,
+      "compressedSha256": "81d4640819d54ffc99f9234196865e8204c0107b4d7fe46a37948182d35332db",
+      "roundtripBytesVerified": true,
+      "sourceUnchangedDuringCopy": true,
+      "classification": "incomplete_outer_orchestration_timeout",
+      "interpretation": "Initial full run reached18 passing cases, then the200s outer orchestration deadline ended execution. No testcase failure was reported, but no full-suite pass is claimed. The retry raised only the outer harness deadline to600s; unchanged30s testcase limits and same169-input bundle yielded26/0/74.",
+      "observedCounts": {},
+      "snapshotAtUtc": "2026-10-03T16:22:21.188790+00:00",
+      "qualification": {
+        "sourceRevisionBound": true,
+        "runtimeBun1314Observed": false,
+        "evolvingOrUnboundSource": false,
+        "fullDoDClosed": false
+      },
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "sourceBindingBasis": "Same stable current-source fixture; coordinator reports18 passing cases before the200s outer orchestration timeout, without testcase failure.",
+      "runtime": "Node actual source callbacks adapter with external Chromium"
+    },
+    {
+      "path": "verification/expanded/logs/expanded-regression-8e3f6d841-final.followup-ab5e6cc02687.log.gz",
+      "sourceLocation": {
+        "base": "task",
+        "path": "work/expanded-regression-8e3f6d841-final.log"
+      },
+      "originalBytes": 110369,
+      "originalSha256": "ab5e6cc026878c2b59bda74057b1068acb5138640df952382efc4e72a8927259",
+      "compressedBytes": 24090,
+      "compressedSha256": "26a0a88842945fc9fa8addc4d70c18cf8cd64b9f7e40f63f70ed8bfb89aa13a5",
+      "roundtripBytesVerified": true,
+      "sourceUnchangedDuringCopy": true,
+      "classification": "passed_revision_bound_qualified_bun",
+      "interpretation": "Current frozen8e anchored broad suite709pass80skip0fail2888assertions; coordinator observed exit0, source/test hashes unchanged, testcase timeouts unchanged.",
+      "observedCounts": {
+        "pass": 709,
+        "fail": 0,
+        "skip": 80,
+        "assertions": 2888
+      },
+      "snapshotAtUtc": "2026-10-03T16:36:37.615539+00:00",
+      "qualification": {
+        "sourceRevisionBound": true,
+        "runtimeBun1314Observed": true,
+        "evolvingOrUnboundSource": false,
+        "fullDoDClosed": false
+      },
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "sourceBindingBasis": "Completed actual coordinator receipt/current public build or process receipt; remote case has exact tested merge and45-file readback in ci-remote-ubuntu-8e3-receipt.json.",
+      "coordinatorReportedExitStatus": 0
+    },
+    {
+      "path": "verification/expanded/logs/expanded-validate-ci-8e3f6d841.followup-d1a775343e55.log.gz",
+      "sourceLocation": {
+        "base": "task",
+        "path": "work/expanded-validate-ci-8e3f6d841.log"
+      },
+      "originalBytes": 43016,
+      "originalSha256": "d1a775343e55fb88cb978c3701bc0563bbc053dc3c9fc307c49f00341ffc19dd",
+      "compressedBytes": 8366,
+      "compressedSha256": "8b7eea2309a44ee531e07299dc2dc6ea917528be63b667e016da3d4209f575ec",
+      "roundtripBytesVerified": true,
+      "sourceUnchangedDuringCopy": true,
+      "classification": "passed_revision_bound_qualified_bun",
+      "interpretation": "Current bare8e complete local validate:ci exit0 under qualified Bun1.3.14 --bun; complete typecheck and validation, unchanged source/tests/timeouts.",
+      "observedCounts": {
+        "pass": 1,
+        "fail": 0,
+        "assertions": 2
+      },
+      "snapshotAtUtc": "2026-10-03T16:36:37.615539+00:00",
+      "qualification": {
+        "sourceRevisionBound": true,
+        "runtimeBun1314Observed": true,
+        "evolvingOrUnboundSource": false,
+        "fullDoDClosed": false
+      },
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "sourceBindingBasis": "Completed actual coordinator receipt/current public build or process receipt; remote case has exact tested merge and45-file readback in ci-remote-ubuntu-8e3-receipt.json.",
+      "coordinatorReportedExitStatus": 0
+    },
+    {
+      "path": "verification/expanded/logs/rox-readiness-ui-001-build-8e3f6d-main.followup-0b76c2d60ef0.log.gz",
+      "sourceLocation": {
+        "base": "task",
+        "path": "work/rox-readiness-ui-001-build-8e3f6d-main.log"
+      },
+      "originalBytes": 98,
+      "originalSha256": "0b76c2d60ef0ba5a34ab1d49edde745a95463283be495084fb7df98f0f407808",
+      "compressedBytes": 105,
+      "compressedSha256": "e22d45afc444dd2f387c38e2d5a36c8355ceed5a625a06220c081926ee430de4",
+      "roundtripBytesVerified": true,
+      "sourceUnchangedDuringCopy": true,
+      "classification": "passed_revision_bound_native_build",
+      "interpretation": "Current frozen8e main build completed exit0; public qualified receipt retains exact2776-source manifest binding.",
+      "observedCounts": {},
+      "snapshotAtUtc": "2026-10-03T16:36:37.615539+00:00",
+      "qualification": {
+        "sourceRevisionBound": true,
+        "runtimeBun1314Observed": false,
+        "evolvingOrUnboundSource": false,
+        "fullDoDClosed": false
+      },
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "sourceBindingBasis": "Completed actual coordinator receipt/current public build or process receipt; remote case has exact tested merge and45-file readback in ci-remote-ubuntu-8e3-receipt.json.",
+      "coordinatorReportedExitStatus": 0
+    },
+    {
+      "path": "verification/expanded/logs/rox-readiness-ui-001-build-8e3f6d-renderer.followup-3476c007a718.log.gz",
+      "sourceLocation": {
+        "base": "task",
+        "path": "work/rox-readiness-ui-001-build-8e3f6d-renderer.log"
+      },
+      "originalBytes": 43564,
+      "originalSha256": "3476c007a71879a9915d055348681d14147b5472b3b5c939f7ba28eabe89d1a0",
+      "compressedBytes": 9368,
+      "compressedSha256": "dd19f814a79ae9c19b830896479e94125a0d491f9aa12ae7a81efe777908096c",
+      "roundtripBytesVerified": true,
+      "sourceUnchangedDuringCopy": true,
+      "classification": "passed_revision_bound_native_build",
+      "interpretation": "Current frozen8e shipped-config renderer build completed exit0; public qualified receipt retains exact2776-source manifest binding.",
+      "observedCounts": {},
+      "snapshotAtUtc": "2026-10-03T16:36:37.615539+00:00",
+      "qualification": {
+        "sourceRevisionBound": true,
+        "runtimeBun1314Observed": false,
+        "evolvingOrUnboundSource": false,
+        "fullDoDClosed": false
+      },
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "sourceBindingBasis": "Completed actual coordinator receipt/current public build or process receipt; remote case has exact tested merge and45-file readback in ci-remote-ubuntu-8e3-receipt.json.",
+      "coordinatorReportedExitStatus": 0
+    },
+    {
+      "path": "verification/expanded/logs/expanded-native-8e3f6d841-final.followup-22618baae15d.log.gz",
+      "sourceLocation": {
+        "base": "task",
+        "path": "work/expanded-native-8e3f6d841-final.log"
+      },
+      "originalBytes": 777,
+      "originalSha256": "22618baae15dee103a44a10938d9e0fb87fbff60d85d4ac1903b6250ebfed9a8",
+      "compressedBytes": 329,
+      "compressedSha256": "ad53a55d8bbfbe70a7b66471f83f2b6b1d061174597c5ef4d0d03da417ab7bed",
+      "roundtripBytesVerified": true,
+      "sourceUnchangedDuringCopy": true,
+      "classification": "failed_native_startup_original_bound",
+      "interpretation": "Current qualified8e native attempt failed firstWindow30000ms startup bound under contention; no renderer error observed. Preserve actual failed native attempt before unchanged-bound retry.",
+      "observedCounts": {},
+      "snapshotAtUtc": "2026-10-03T16:36:37.615539+00:00",
+      "qualification": {
+        "sourceRevisionBound": true,
+        "runtimeBun1314Observed": false,
+        "evolvingOrUnboundSource": false,
+        "fullDoDClosed": false
+      },
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "sourceBindingBasis": "Completed actual coordinator receipt/current public build or process receipt; remote case has exact tested merge and45-file readback in ci-remote-ubuntu-8e3-receipt.json.",
+      "coordinatorReportedExitStatus": 1
+    },
+    {
+      "path": "verification/expanded/logs/patch-scout-ubuntu-validate-8e3-direct.followup-6dc689d5841d.log.gz",
+      "sourceLocation": {
+        "base": "repository",
+        "path": "work/patch-scout-ubuntu-validate-8e3-direct.log"
+      },
+      "originalBytes": 343624,
+      "originalSha256": "6dc689d5841d175033634196d122dc1af5369ba7ed659079e106fb94262f7b4d",
+      "compressedBytes": 73470,
+      "compressedSha256": "bbd4e4ddf29e6f594d068a542750ab3c59b7b6d98aeba9ee1d5ac204e8f49410",
+      "roundtripBytesVerified": true,
+      "sourceUnchangedDuringCopy": true,
+      "classification": "passed_qualified_remote_integration_candidate_ci",
+      "interpretation": "Actual GitHub Ubuntu validate jobSUCCESS with Bun1.3.14 at e1e389932b628e1a41b7b078602dc268b11c987c, parents b697e96+8e. All45 authored current product blobs match tested tree; full validate:ci stepSUCCESS. See exact remote CI receipt.",
+      "observedCounts": {},
+      "snapshotAtUtc": "2026-10-03T16:36:37.615539+00:00",
+      "qualification": {
+        "sourceRevisionBound": true,
+        "runtimeBun1314Observed": true,
+        "evolvingOrUnboundSource": false,
+        "fullDoDClosed": false
+      },
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "sourceBindingBasis": "Completed actual coordinator receipt/current public build or process receipt; remote case has exact tested merge and45-file readback in ci-remote-ubuntu-8e3-receipt.json.",
+      "coordinatorReportedExitStatus": 0
+    },
+    {
+      "path": "verification/expanded/logs/expanded-native-8e3f6d841-retry.followup-d6f45b14f9c6.log.gz",
+      "sourceLocation": {
+        "base": "task",
+        "path": "work/expanded-native-8e3f6d841-retry.log"
+      },
+      "originalBytes": 1207,
+      "originalSha256": "d6f45b14f9c6ddaba0bfc624ab534514542a48069fcb182df13d929a617fa49f",
+      "compressedBytes": 474,
+      "compressedSha256": "b41a251cbbf1c98e3125f126e56fd1992f5f1e98828b031c1cc25ca6bc4c8db0",
+      "roundtripBytesVerified": true,
+      "sourceUnchangedDuringCopy": true,
+      "classification": "passed_revision_bound_actual_unpacked_macos_native",
+      "interpretation": "Actual strict full native driver19stages32screenshots passed, errors/skipped/diagnosticFailures[]; shipped RPC+disposable canonical backend and qualified build. Original startup/testcase bounds unchanged after first failed attempt. Not installed platform/hostedweb/provider fullDoD.",
+      "observedCounts": {},
+      "snapshotAtUtc": "2026-10-03T16:41:46.139331+00:00",
+      "qualification": {
+        "sourceRevisionBound": true,
+        "runtimeBun1314Observed": false,
+        "evolvingOrUnboundSource": false,
+        "fullDoDClosed": false
+      },
+      "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+      "sourceBindingBasis": "Actual root process exit0 and publicnative result1791045258553 plus independent2776-source/395-build/32-screenshot hash readback.",
+      "coordinatorReportedExitStatus": 0,
+      "runtime": "Actual local macOS unpackaged Electron with shipped RPC and disposable canonical backend"
     }
   ],
   "immutableSnapshotPolicy": "Existing gzip archives are never overwritten; changed raw source logs produce a hash-suffixed archive and retain earlier classification/exit history.",
@@ -2435,10 +2716,17 @@
     "sha256": "11b5e186c61377a3b5711907ababe3af169e91bedcd740ff9a2fa5a37ce49664"
   },
   "snapshotCounts": {
-    "entries": 87,
-    "uniqueSourceLogs": 80,
+    "entries": 97,
+    "uniqueSourceLogs": 90,
     "newThisRefresh": 1,
-    "rawBytes": 1788550,
-    "compressedBytes": 381267
-  }
+    "rawBytes": 2337912,
+    "compressedBytes": 500034
+  },
+  "followupReceipts": [
+    {
+      "path": "verification/expanded/review-receipt-remote-workspace-followup.json",
+      "sha256": "7fd3a524ac45da5cf0baf6f84e06498137c9515abfc3f6009e3d818f6d7619ab"
+    }
+  ],
+  "rootFollowupProofCountsPending": false
 }
