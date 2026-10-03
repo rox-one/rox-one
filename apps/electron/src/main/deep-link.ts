@@ -45,6 +45,7 @@ import { RPC_CHANNELS } from '../shared/types'
 import type { EventSink } from '@rox/server-core/transport'
 import { isRoxDeeplinkProtocol } from '@rox/shared/identity'
 import { COMPOUND_ROUTE_PREFIXES } from '../shared/route-parser'
+import { parseRuntimeMapLinkUrl } from '../shared/runtime-map-link'
 
 export interface DeepLinkTarget {
   /** Workspace ID - undefined means use active window */
@@ -124,6 +125,11 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
     const pathParts = parsed.pathname.split('/').slice(1)
     const windowMode = parseWindowMode(parsed)
     const rightSidebar = parseRightSidebar(parsed)
+
+    if (host === 'runtime') {
+      const selection = parseRuntimeMapLinkUrl(parsed)
+      return selection ? { ...selection, windowMode, rightSidebar } : null
+    }
 
     // rox://auth-callback?... (OAuth callbacks - return null to let existing handler process)
     if (host === 'auth-callback') {
