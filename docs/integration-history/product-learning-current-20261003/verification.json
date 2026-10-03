@@ -160,8 +160,8 @@
     },
     "webui_and_all_renderer": {
       "exit": 0,
-      "revision": "0c67eb5fa",
-      "log": "product-tour-current-final-node-webui-types.log"
+      "revision": "fa0c979ad0edc7431b5f9014d1f7706e938364db",
+      "log": "product-tour-current-joined-webui-types-qualified.log"
     }
   },
   "build": {
