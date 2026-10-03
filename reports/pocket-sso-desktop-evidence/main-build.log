@@ -1,0 +1,62 @@
+$ esbuild src/main/index.ts --bundle --platform=node --format=cjs --outfile=dist/main.cjs --external:electron --external:@anthropic-ai/claude-agent-sdk --external:onnxruntime-node --external:@xenova/transformers --external:sharp --external:bun:* --alias:node-fetch=./src/main/shims/node-fetch.cjs --alias:abort-controller=./src/main/shims/abort-controller.cjs
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    src/shared/route-parser.ts:1347:9:
+      1347 │     case 'pages':
+           ╵          ~~~~~~~
+
+  The earlier case clause is here:
+
+    src/shared/route-parser.ts:1321:9:
+      1321 │     case 'pages':
+           ╵          ~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    src/shared/route-parser.ts:1349:9:
+      1349 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    src/shared/route-parser.ts:1323:9:
+      1323 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+▲ [WARNING] "import.meta" is not available with the "cjs" output format and will be empty [empty-import-meta]
+
+    src/main/ssh-tunnel/server-artifact.ts:40:30:
+      40 │       : dirname(fileURLToPath(import.meta.url))
+         ╵                               ~~~~~~~~~~~
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+▲ [WARNING] "import.meta" is not available with the "cjs" output format and will be empty [empty-import-meta]
+
+    ../../packages/shared/src/utils/sqlite-runtime.ts:29:83:
+      29 │ ...ire(typeof __filename === 'string' ? __filename : import.meta.url)
+         ╵                                                      ~~~~~~~~~~~
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+▲ [WARNING] "import.meta" is not available with the "cjs" output format and will be empty [empty-import-meta]
+
+    ../../packages/cloud-runner/src/local-provider.ts:65:13:
+      65 │   if (typeof import.meta.url === 'string' && import.meta.url) {
+         ╵              ~~~~~~~~~~~
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+▲ [WARNING] "import.meta" is not available with the "cjs" output format and will be empty [empty-import-meta]
+
+    ../../packages/cloud-runner/src/local-provider.ts:65:45:
+      65 │   if (typeof import.meta.url === 'string' && import.meta.url) {
+         ╵                                              ~~~~~~~~~~~
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+6 of 7 warnings shown (disable the message limit with --log-limit=0)
+
+  dist/main.cjs  54.0mb ⚠️
+
+⚡ Done in 2780ms
