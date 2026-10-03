@@ -210,6 +210,24 @@ try {
     const restored = JSON.parse((await page.locator('#panel-stack').textContent())!)
     assert.deepEqual(restored.map((panel: any) => panel.route), ['home', 'sources/source/two'])
   })
+  await check('Split-panel reload and history preserve commas and numeric colon suffixes inside unavailable addresses', async () => {
+    for (const route of ['knowledge/unknown,id/x', 'retired/surface:0.5']) {
+      await page.goto(`${origin}?ws=workspace-a&route=home`)
+      await selected('home')
+      await page.evaluate(route => (window as any).ui001.navigate(route, { newPanel: true }), route)
+      await selected('unavailable')
+      await page.waitForFunction(route => new URL(location.href).searchParams.get('route') === route, route)
+      await page.reload(); await selected('unavailable')
+      assert.equal((await state()).route, route)
+      const restored = JSON.parse((await page.locator('#panel-stack').textContent())!)
+      assert.deepEqual(restored.map((panel: any) => panel.route), ['home', route])
+      await page.evaluate(() => (window as any).ui001.navigate('sources/source/one'))
+      await selected('sources', 'one'); await page.waitForFunction(() => new URL(location.href).searchParams.get('route') === 'sources/source/one')
+      await page.goBack(); await selected('unavailable')
+      assert.equal((await state()).route, route)
+      await page.goForward(); await selected('sources', 'one')
+    }
+  })
   await check('A queued deep-link action retains query parameters and executes once after readiness', async () => {
     await page.goto(`${origin}?ws=workspace-a&route=home&delayed=1`)
     await page.waitForFunction(() => !!(window as any).ui001?.navigation)

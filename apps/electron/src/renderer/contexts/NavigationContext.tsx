@@ -53,7 +53,7 @@ import { routes, type Route, type ViewRoute } from '../../shared/routes'
 import { parsePermissionMode } from '@rox/shared/agent/mode-types'
 import { NAVIGATE_EVENT, type NavigateOptions } from '../lib/navigate'
 import { normalizePanelRouteForReconcile } from './navigation-reconcile'
-import { buildSemanticHistoryKey, canRunInitialRestore } from './navigation-history'
+import { buildSemanticHistoryKey, canRunInitialRestore, parsePanelHistory, serializePanelHistory } from './navigation-history'
 import * as storage from '@/lib/local-storage'
 import type {
   DeepLinkNavigation,
@@ -305,7 +305,7 @@ export function NavigationProvider({
 
     // ?panels= encodes ALL panels in stack order
     if (panels.length > 1) {
-      const encoded = panels.map(p => `${p.route}:${p.proportion.toFixed(4)}`).join(',')
+      const encoded = serializePanelHistory(panels)
       url.searchParams.set('panels', encoded)
     } else {
       url.searchParams.delete('panels')
@@ -464,23 +464,10 @@ export function NavigationProvider({
       let focusedIndex = 0
 
       if (panelsParam) {
-        // Canonical format: ?panels= contains ALL panels, ?fi= is focused index.
-        // We intentionally no longer support older mixed route/panels formats.
-        entries = panelsParam.split(',').filter(Boolean).map(entry => {
-          const colonIdx = entry.lastIndexOf(':')
-          if (colonIdx > 0) {
-            const proportionText = entry.slice(colonIdx + 1)
-            const proportion = /^(?:\d+(?:\.\d*)?|\.\d+)$/.test(proportionText) ? Number(proportionText) : NaN
-            if (Number.isFinite(proportion) && proportion >= 0 && proportion <= 1) {
-              const rawRoute = entry.slice(0, colonIdx) as ViewRoute
-              const route = normalizePanelRouteForReconcile(rawRoute, (state) => resolveAutoSelectionRef.current(state))
-              return { route, proportion }
-            }
-          }
-          const rawRoute = entry as ViewRoute
-          const route = normalizePanelRouteForReconcile(rawRoute, (state) => resolveAutoSelectionRef.current(state))
-          return { route, proportion: 0 }
-        })
+        entries = parsePanelHistory(panelsParam).map(({ route, proportion }) => ({
+          route: normalizePanelRouteForReconcile(route as ViewRoute, state => resolveAutoSelectionRef.current(state)),
+          proportion,
+        }))
 
         const hasUsableProportions = entries.every(e => e.proportion > 0)
         if (!hasUsableProportions) {
@@ -494,7 +481,8 @@ export function NavigationProvider({
         }
 
         focusedIndex = focusedIndexParam != null ? (parseInt(focusedIndexParam, 10) || 0) : 0
-      } else if (initialRoute) {
+      }
+      if (entries.length === 0 && initialRoute) {
         // Single panel from ?route=
         const navState = parseRouteToNavigationState(initialRoute)
         if (navState) {
