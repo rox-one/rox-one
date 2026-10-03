@@ -1,14 +1,14 @@
 {
-  "integrationBase": "5211746270f5005d551ddc103970714520b25b67",
+  "integrationBase": "bb047b946da41346301cffe88a43db0adf621dcf",
   "sourceSha256": {
-    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "81e0b2f35e066542e5a816cbae64aca4fc86af8dd9449267ed4a5e7afeafc3d2",
-    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "f56030780229a616eac5e6ebb72c8c050b87167f0963e79aba7ca24c956291b8",
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "47de25aa61eac95f05c5c8e092171d3ab9eea8a748983b794045d225b0cd5a9c",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "284020622cacdae95efd48727a59a98ae5f1f4c1984ee7ec20e054dd58260d60",
     "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
-    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "9419bdf4ad7d84f35e3d59997d19555786d98fb52a1c24f8492eda245fc01d3c",
-    "apps/electron/src/shared/route-parser.ts": "613068e6cc643848b45f9ee3a4fb8a991cbb80873bd31bbf1f40d48f2bfe8ad5",
-    "apps/electron/src/shared/types.ts": "eec3e74933277a2e1b88b46192aaf49ab8e73786a846d3e9cfe8e80d5e85142d",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "8e4535909c47b15de52e79e3715d88e997dc40f1d6d65f38d0581989dd18bb43",
+    "apps/electron/src/shared/route-parser.ts": "c6d324f368b7924ba1980e6b20036672374782807f5944d88e16a9c0de22a134",
+    "apps/electron/src/shared/types.ts": "bf7d165e7bd97e3900b59904c930ef4892a66bf3b9b3d8196cecacb4f74fe441",
     "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "b0a9fa69f2edd9b94871cb7df0b00e4e4fdfb2d84b47cdf2f56f99f794188ffd",
-    "apps/electron/src/renderer/lib/nav-helpers.ts": "7b94fc00f694ee2c83a682725ca9460d88a138b4a421fa452d1a77d034df5e2f",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "887a8fbc1ba56a3c1e6d5fccd4bdd1c0ef174ed3a32cd92f65301dba6699cd49",
     "apps/electron/src/renderer/atoms/panel-stack.ts": "b669a999d338e69c5d6975e322aaab1170638141351696d05d219d786239259c",
     "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff",
     "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
@@ -26,5 +26,9 @@
     "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
     "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011"
   },
-  "candidateSourceRevision": "817e477091ff326fa06e4de6de13eb75eb60e996"
+  "previousEmbeddedRevisionFields": {
+    "integrationBase": "5211746270f5005d551ddc103970714520b25b67",
+    "candidateSourceRevision": "817e477091ff326fa06e4de6de13eb75eb60e996"
+  },
+  "candidateRevisionBinding": "The Git HEAD observed in each runtime/CI receipt binds this sourceSha256 manifest; a tracked file cannot embed its own commit id."
 }

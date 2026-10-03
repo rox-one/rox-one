@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import ts from 'typescript'
-import { parseRoute, parseRouteToNavigationStateOrUnavailable, buildRouteFromNavigationState } from '../../../shared/route-parser'
+import { parseRoute, resolveRouteNavigationState, buildRouteFromNavigationState } from '../../../shared/route-parser'
 import { isSessionsNavigation } from '../../../shared/types'
 import { preserveRouteQuery } from '../navigation-reconcile'
 
@@ -28,12 +28,14 @@ function fixture(overrides: { ready?: boolean; restored?: boolean; pendingUrl?: 
     pendingNavigationRef: { current: null as any },
     initialRouteRestoredRef: { current: overrides.restored ?? true },
     pendingUrlRestoreRef: { current: overrides.pendingUrl ?? null },
+    requestedWorkspaceSlugRef: { current: 'workspace-a' }, actionEpochRef: { current: 0 },
   }
   const writes: Array<{ route: string; suppressed: boolean; kind: string }> = []
   const observe = (kind: string, route: string) => writes.push({ kind, route, suppressed: refs.suppressPushRef.current })
   const bindings = {
     ...refs, isReady: overrides.ready ?? true, isSessionsReady: overrides.ready ?? true,
-    workspaceId: 'workspace-a', parseRoute, parseRouteToNavigationStateOrUnavailable, buildRouteFromNavigationState,
+    workspaceId: 'workspace-a', workspaceSlug: 'workspace-a', parseRoute, resolveRouteNavigationState, buildRouteFromNavigationState,
+    setRequestedWorkspaceSlug: () => {},
     isSessionsNavigation, preserveRouteQuery, resolveAutoSelection: (state: unknown) => state,
     handleActionNavigation: async (parsed: { name: string }) => { observe('action', parsed.name) },
     pushPanel: (entry: { route: string }) => observe('panel', entry.route),
@@ -61,14 +63,16 @@ describe('accepted navigation claims actual history before writes', () => {
     const f = fixture({ ready: false }); const route = 'sources/source/a%2Fb?fixture=1'
     await f.navigate(route, { newPanel: true })
     expect(f.writes).toEqual([])
-    expect(f.refs.pendingNavigationRef.current).toEqual({ route, options: { newPanel: true }, owner: f.refs.navigationOwnerRef.current })
+    expect(f.refs.pendingNavigationRef.current).toEqual({ route, options: { newPanel: true }, workspaceId: 'workspace-a', owner: f.refs.navigationOwnerRef.current })
     expect(f.refs.suppressPushRef.current).toBe(true)
     expect(f.refs.historyReconcileRevisionRef.current).toBe(5)
   })
 
-  test('an incomplete initial restoration retains suppression', async () => {
-    const f = fixture({ restored: false }); await f.navigate('sources/source/two')
-    expect(f.writes[0]!.suppressed).toBe(true)
+  test('an incomplete initial restoration queues its exact route without writes and retains suppression', async () => {
+    const f = fixture({ restored: false }); const route = 'sources/source/a%2Fb?fixture=1'
+    await f.navigate(route)
+    expect(f.writes).toEqual([])
+    expect(f.refs.pendingNavigationRef.current).toEqual({ route, options: undefined, workspaceId: 'workspace-a', owner: f.refs.navigationOwnerRef.current })
     expect(f.refs.suppressPushRef.current).toBe(true)
     expect(f.refs.historyReconcileRevisionRef.current).toBe(5)
   })

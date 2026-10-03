@@ -56,6 +56,12 @@ describe('terminology linter', () => {
     expect(localeValueViolations('inspector.context.attachments', 'Pièces jointes')).toEqual([])
   })
 
+  it('preserves an exact documented environment variable without permitting the uppercase product name', () => {
+    expect(localeValueViolations('onboarding.ompCredential.envHint', 'Set ROX_API_KEY before starting Rox.')).toEqual([])
+    expect(localeValueViolations('onboarding.ompCredential.keyPlaceholder', 'ROX_API_KEY')).toEqual([])
+    expect(localeValueViolations('onboarding.ompCredential.envHint', 'Set ROX_API_KEY before starting ROX.')).toEqual(['ROX'])
+  })
+
   it('scans every locale for leaked runtime names outside the allowlist', () => {
     const files = readdirSync(LOCALES_DIR).filter((file) => file.endsWith('.json'))
     // Keep in sync with packages/shared/src/i18n/locales (en + supported locales).
