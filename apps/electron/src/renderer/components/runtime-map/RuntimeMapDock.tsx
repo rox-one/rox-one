@@ -12,6 +12,7 @@ import type { ReadRuntimePayload } from './inspector/ContentViewer'
 import { layoutRuntimeGraph, nodeMatches, windowRuntimeNodes, type TimelineMode } from './layout/stable-layout'
 import { nodeTitle, nodeSubtitle } from './nodes/node-content'
 import { safeDisplayText } from './measurements'
+import { serializeRuntimeMetadata } from './public-metadata'
 import './runtime-map.css'
 
 export interface RuntimeMapDockProps {
@@ -101,8 +102,7 @@ export function RuntimeMapView({ graph, runs, coverage, scopeKey, loading, error
   }, [focusMessageId, focusToolUseId, focusRequestId, graph.topologyVersion])
   function followLatest() { setFollowing(true); setPending(0); setPage(-1); onReplayCursorChange?.(undefined); canvas.current?.focusLatest() }
   function exportMetadata() {
-    // Export contains public observation metadata only, no instructions/tool payloads.
-    const content = JSON.stringify({ schemaVersion: 1, rootRunId: selectedRootRunId, coverage, nodes: graph.nodes.map(node => ({ id: node.id, kind: node.kind, agentId: node.agentId, status: node.status, seq: node.seq, endSeq: node.endSeq, durationMs: node.durationMs })), edges: graph.edges }, null, 2)
+    const content = serializeRuntimeMetadata(graph, coverage, selectedRootRunId)
     const url = URL.createObjectURL(new Blob([content], { type: 'application/json' }))
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'rox-runtime-trace-metadata.json'; anchor.click(); URL.revokeObjectURL(url)
   }

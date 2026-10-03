@@ -7,6 +7,14 @@ import { COMPOUND_ROUTE_PREFIXES, parseRouteToNavigationState } from '../../shar
  * not just the historical allSessions/flagged/state/sources/settings/skills.
  */
 describe('parseDeepLink view routes', () => {
+  it('routes copied runtime references to a workspace-scoped session view', () => {
+    const target = parseDeepLink('rox://runtime?workspace=ws1&session=s1&run=r1&event=tool-1')
+    expect(target?.workspaceId).toBe('ws1')
+    expect(target?.view).toBe('allSessions/session/s1?runtimeRun=r1&runtimeEvent=tool-1')
+    expect(target?.action).toBeUndefined()
+    expect(parseRouteToNavigationState(target!.view!)).not.toBeNull()
+    expect(parseDeepLink('rox://runtime?workspace=ws1&session=s1&run=r1&event=e&send=true')).toBeNull()
+  })
   const NAVIGATOR_ROUTES = [
     'home',
     'tasks',

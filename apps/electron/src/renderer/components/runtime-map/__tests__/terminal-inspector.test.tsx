@@ -13,7 +13,7 @@ it('keeps actual stderr output separate when stdout was not recorded', async () 
     : event)
   const terminal = buildRuntimeGraph(projectRuntimeEvents(events)).nodes.find(node => node.kind === 'terminal')!
   const i18n = createInstance()
-  await i18n.init({ lng: 'en', fallbackLng: 'en', initImmediate: false, resources: { en: { translation: { runtimeMap: { notRecorded: 'Unavailable' } } } } })
+  await i18n.init({ lng: 'en', fallbackLng: 'en', initAsync: false, resources: { en: { translation: { runtimeMap: { notRecorded: 'Unavailable' } } } } })
   const html = renderToStaticMarkup(<I18nextProvider i18n={i18n}><RuntimeInspector node={terminal} onClose={() => undefined} /></I18nextProvider>)
   expect(html.match(/stderr-only-marker/g)).toHaveLength(1)
   const stdout = html.slice(html.indexOf('<h4>stdout</h4>'), html.indexOf('<h4>stderr</h4>'))

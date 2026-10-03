@@ -40,6 +40,8 @@ import {
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useAtomValue, useSetAtom, useStore } from 'jotai'
+import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey } from '@/atoms/runtime-trace'
+import { parseRuntimeMapViewRequest } from '../../shared/runtime-map-link'
 import { useSession } from '@/hooks/useSession'
 import { useLabels } from '@/hooks/useLabels'
 import { matchesLabelFilter } from '@rox/shared/labels'
@@ -54,7 +56,7 @@ import {
 import { routes, type Route, type ViewRoute } from '../../shared/routes'
 import { parsePermissionMode } from '@rox/shared/agent/mode-types'
 import { NAVIGATE_EVENT, type NavigateOptions } from '../lib/navigate'
-import { normalizePanelRouteForReconcile } from './navigation-reconcile'
+import { preserveRouteQuery, normalizePanelRouteForReconcile } from './navigation-reconcile'
 import { encodePanelEntries, decodePanelEntries } from '@/lib/panel-url'
 import { buildSemanticHistoryKey, canRunInitialRestore } from './navigation-history'
 import * as storage from '@/lib/local-storage'
@@ -202,6 +204,12 @@ export function NavigationProvider({
 
   // Store reference for reading fresh atom values in callbacks (avoids stale closures)
   const store = useStore()
+  const requestRuntimeSelection = useCallback((route: string) => {
+    const selection = parseRuntimeMapViewRequest(route)
+    if (!selection || !workspaceId) return
+    const target = runtimeMapOpenRequestAtomFamily(runtimeTraceScopeKey({ workspaceId, sessionId: selection.sessionId }))
+    store.set(target, { rootRunId: selection.rootRunId, eventId: selection.eventId, requestId: (store.get(target)?.requestId ?? 0) + 1 })
+  }, [store, workspaceId])
 
   // =========================================================================
   // DERIVED NAVIGATION STATE (from focused panel + right sidebar)
@@ -435,6 +443,7 @@ export function NavigationProvider({
       const sidebarParam = params.get('sidebar') || undefined
       const panelsParam = params.get('panels')
       const focusedIndexParam = params.get('fi')
+      if (initialRoute) requestRuntimeSelection(initialRoute)
 
       // Restore right sidebar
       if (sidebarParam) {
@@ -485,7 +494,7 @@ export function NavigationProvider({
         store.set(reconcilePanelStackAtom, { entries, focusedIndex })
       }
     },
-    [store]
+    [store, requestRuntimeSelection]
   )
 
   // Keep ref fresh for use in event handlers / effects that capture stale closures
@@ -887,6 +896,8 @@ export function NavigationProvider({
         return
       }
 
+      requestRuntimeSelection(route)
+
       // For view routes with newPanel: push a panel using lane-aware routing.
       //
       // Important distinction:
@@ -917,7 +928,7 @@ export function NavigationProvider({
       if (newNavState) {
         // Resolve auto-selection (pure — no side effects)
         const resolvedState = resolveAutoSelection(newNavState, options)
-        const finalRoute = buildRouteFromNavigationState(resolvedState) as ViewRoute
+        const finalRoute = preserveRouteQuery(route, buildRouteFromNavigationState(resolvedState))
 
         // Persist last selected session for auto-select on next visit
         if (isSessionsNavigation(resolvedState) && resolvedState.details && workspaceId) {
@@ -930,7 +941,7 @@ export function NavigationProvider({
         setNavigationRevision(revision => revision + 1)
       }
     },
-    [isReady, isSessionsReady, handleActionNavigation, resolveAutoSelection, store, pushPanel, workspaceId]
+    [isReady, isSessionsReady, handleActionNavigation, resolveAutoSelection, store, pushPanel, workspaceId, requestRuntimeSelection]
   )
 
   // =========================================================================
@@ -1266,7 +1277,7 @@ export function NavigationProvider({
 
     const resolved = resolveAutoSelection(currentState)
     if (isSessionsNavigation(resolved) && resolved.details) {
-      void navigate(buildRouteFromNavigationState(resolved) as ViewRoute)
+      void navigate(preserveRouteQuery(currentRoute, buildRouteFromNavigationState(resolved)))
     }
   }, [
     isReady,

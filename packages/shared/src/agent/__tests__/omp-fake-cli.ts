@@ -198,6 +198,10 @@ function rpcLoop() {
           send({ type: 'turn_start' });
           send({ type: 'host_tool_call', id: 'htc-1', toolName: 'mcp__session__mermaid_validate', arguments: { code: 'graph TD\n  A-->B' } });
           send({ type: 'host_tool_call', id: 'htc-2', toolName: 'mcp__session__no_such_tool', arguments: {} });
+        } else if (scenario === 'host-tool-spawn') {
+          send({ type: 'agent_start' });
+          send({ type: 'turn_start' });
+          send({ type: 'host_tool_call', id: 'htc-spawn', toolCallId: 'actual-spawn-call', toolName: 'mcp__session__spawn_session', arguments: { name: 'Fixture child', prompt: 'Actual delivered child prompt', permissionMode: 'allow-all' } });
         } else if (scenario === 'host-tool-bash') {
           send({ type: 'agent_start' });
           send({ type: 'turn_start' });
@@ -211,7 +215,7 @@ function rpcLoop() {
         if (scenario === 'host-tool' && hostToolResultsReceived >= 2) {
           emitTurnStream();
         }
-        if (scenario === 'host-tool-bash' && hostToolResultsReceived >= 1) {
+        if ((scenario === 'host-tool-bash' || scenario === 'host-tool-spawn') && hostToolResultsReceived >= 1) {
           emitTurnStream();
         }
         break;

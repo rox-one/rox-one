@@ -66,6 +66,19 @@ export class RuntimeTraceService {
     if (!session || (workspaceId && session.workspaceId !== workspaceId)) throw new Error('Runtime trace session access denied')
     return session
   }
+  private scopedEvent(event: unknown, workspaceId: string, rootSessionId: string, rootRunId: string): event is RuntimeEvent {
+    if (!isRuntimeEvent(event) || event.workspaceId !== workspaceId || event.rootSessionId !== rootSessionId || event.rootRunId !== rootRunId) return false
+    // A recovered row cannot enlarge the query's authority. Deleted child sessions retain their
+    // historical observations; existing sessions must still have the same authorized lineage.
+    let session = this.resolveSession(event.sessionId)
+    if (!session) return true
+    for (let index = 0; session && index < 100; index++) {
+      if (session.workspaceId !== workspaceId) return false
+      if (session.id === rootSessionId) return true
+      session = session.parentSessionId ? this.resolveSession(session.parentSessionId) : undefined
+    }
+    return false
+  }
   private directory(session: RuntimeTraceSession, rootRunId: string): string {
     if (!ID.test(rootRunId)) throw new Error('Invalid runtime run id')
     return join(session.directory, 'meta', 'runtime-trace', rootRunId)
@@ -153,6 +166,7 @@ export class RuntimeTraceService {
       const eventId = randomUUID()
       // Only producer/correlation metadata is admitted from an executor; scope and sequence belong to this collector.
       const metadata = Object.fromEntries(['eventId', 'sourceEventId', 'sourceId', 'sourceSeq', 'spanId', 'parentSpanId', 'providerTurnId', 'providerCallId', 'messageId', 'toolUseId', 'causationEventId', 'occurredAt', 'clockDomain', 'elapsedMs', 'origin'].filter(key => (extra as Record<string, unknown>)[key] !== undefined).map(key => [key, (extra as Record<string, unknown>)[key]]))
+      if (JSON.stringify(sanitizeRuntimeTrace(metadata)) !== JSON.stringify(metadata)) throw new Error('Sensitive producer metadata withheld before runtime recording')
       const observation = { schemaVersion: 1, eventId, sourceEventId: eventId, sourceId, sourceSeq,
         occurredAt: known(now, 'server-observation-receipt'), clockDomain: 'server-wall', origin: 'observed', ...metadata,
         workspaceId: run.workspaceId, rootSessionId: run.rootSessionId, sessionId: run.sessionId,
@@ -232,9 +246,11 @@ export class RuntimeTraceService {
       assignment.agentId = assignment.agentId === 'root' ? current.agentId : `${current.agentId}:native:${assignment.agentId}`
       if (assignment.parentAgentId) assignment.parentAgentId = assignment.parentAgentId === 'root' ? current.agentId : `${current.agentId}:native:${assignment.parentAgentId}`
     }
+    const parentToolRun = observation.parentAgentId === 'root' && observation.parentSpanId?.startsWith('tool:')
+      ? this.tools.get(`${sessionId}:${observation.parentSpanId.slice(5)}`)?.run : undefined
     if (terminalTool) this.preciseTerminals.add(`${sessionId}:${observation.toolUseId}`)
     try {
-      await this.record(correlatedRun, observation.kind, payload as never, { ...observation, ...(terminalTool ? { spanId: `${correlatedRun.runId}:tool:${observation.toolUseId}` } : {}), agentId, parentAgentId: parentId, eventId: `${correlatedRun.rootRunId}:${observation.sourceId}:${observation.sourceEventId}` } as Partial<RuntimeEvent>)
+      await this.record(correlatedRun, observation.kind, payload as never, { ...observation, ...(parentToolRun ? { parentSpanId: `${parentToolRun.runId}:${observation.parentSpanId}` } : {}), ...(terminalTool ? { spanId: `${correlatedRun.runId}:tool:${observation.toolUseId}` } : {}), agentId, parentAgentId: parentId, eventId: `${correlatedRun.rootRunId}:${observation.sourceId}:${observation.sourceEventId}` } as Partial<RuntimeEvent>)
     } catch (error) { this.seen.delete(sourceKey); throw error }
   }
 
@@ -262,7 +278,7 @@ export class RuntimeTraceService {
     if (turnKey && !this.providerTurns.has(turnKey)) this.providerTurns.set(turnKey, run)
     const extra = { toolUseId, providerTurnId, spanId: toolUseId ? `${run.runId}:tool:${toolUseId}` : undefined,
       parentSpanId: typeof event.parentToolUseId === 'string' ? `${run.runId}:tool:${event.parentToolUseId}` : undefined }
-    const content = async (value: unknown) => await this.content(run, typeof value === 'string' ? value : JSON.stringify(value ?? {}))
+    const content = async (value: unknown) => await this.content(run, typeof value === 'string' ? value : JSON.stringify(sanitizeRuntimeTrace(value ?? {})))
     if (event.type === 'tool_start' && toolKey) {
       const input = (event.input ?? {}) as Record<string, unknown>
       const name = String(event.toolName)
@@ -368,6 +384,7 @@ export class RuntimeTraceService {
       this.session(rootSessionId, query.workspaceId)
       let ancestor: RuntimeTraceSession | undefined = session
       for (let i = 0; ancestor && i < 100; i++) {
+        if (ancestor.workspaceId !== query.workspaceId) throw new Error('Runtime trace root lineage access denied')
         if (ancestor.id === rootSessionId) return rootSessionId
         ancestor = ancestor.parentSessionId ? this.resolveSession(ancestor.parentSessionId) : undefined
       }
@@ -389,10 +406,11 @@ export class RuntimeTraceService {
     for (const rootRunId of runIds) {
       const rootSessionId = await this.rootForQuery({ ...query, rootRunId })
       const page = await this.withJournal({ rootSessionId, rootRunId, workspaceId: query.workspaceId }, journal => journal.all())
-      const first = page.rows.filter(isRuntimeEvent).find(event => event.kind === 'run.accepted')
+      const valid = page.rows.filter(event => this.scopedEvent(event, query.workspaceId, rootSessionId, rootRunId))
+      const first = valid.find(event => event.kind === 'run.accepted')
       if (!first || first.kind !== 'run.accepted') continue
-      const terminal = page.rows.filter(isRuntimeEvent).reverse().find(event => (event.kind === 'run.completed' || event.kind === 'run.interrupted') && event.runId === rootRunId)
-      runs.push({ rootRunId, sessionId: rootSessionId, agentId: first.agentId, status: terminal && (terminal.kind === 'run.completed' || terminal.kind === 'run.interrupted') ? terminal.payload.status : 'running', startedAt: first.receivedAt, prompt: first.payload.prompt.text ?? '', coverage: this.coverage(rootRunId, page.rows, page.integrity) })
+      const terminal = [...valid].reverse().find(event => (event.kind === 'run.completed' || event.kind === 'run.interrupted') && event.runId === rootRunId)
+      runs.push({ rootRunId, sessionId: rootSessionId, agentId: first.agentId, status: terminal && (terminal.kind === 'run.completed' || terminal.kind === 'run.interrupted') ? terminal.payload.status : 'running', startedAt: first.receivedAt, prompt: sanitizeRuntimeTrace(first.payload.prompt.text ?? '') as string, coverage: this.coverage(rootRunId, valid, valid.length === page.rows.length ? page.integrity : 'partial') })
     }
     runs.sort((a, b) => a.startedAt - b.startedAt)
     const chatRun = this.active.get(query.sessionId)
@@ -408,8 +426,10 @@ export class RuntimeTraceService {
     if (!(await this.runsFor(session)).includes(query.rootRunId)) throw new Error('Runtime run does not belong to session')
     const rootSessionId = await this.rootForQuery(query)
     const { page, all } = await this.withJournal({ rootSessionId, rootRunId: query.rootRunId, workspaceId: query.workspaceId }, async journal => ({ page: await journal.snapshot(query.afterSeq, query.limit), all: await journal.all() }))
-    const valid = page.rows.filter(isRuntimeEvent).map(event => sanitizeRuntimeTrace(event) as RuntimeEvent)
-    return { events: valid, cursor: { rootRunId: query.rootRunId, seq: page.cursor }, hasMore: page.hasMore, coverage: this.coverage(query.rootRunId, all.rows, all.integrity) }
+    const scoped = (event: unknown): event is RuntimeEvent => this.scopedEvent(event, query.workspaceId, rootSessionId, query.rootRunId)
+    const valid = page.rows.filter(scoped).map(event => sanitizeRuntimeTrace(event) as RuntimeEvent)
+    const validAll = all.rows.filter(scoped)
+    return { events: valid, cursor: { rootRunId: query.rootRunId, seq: page.cursor }, hasMore: page.hasMore, coverage: this.coverage(query.rootRunId, validAll, validAll.length === all.rows.length ? all.integrity : 'partial') }
   }
   async readPayload(query: RuntimePayloadQuery): Promise<RuntimePayloadPage> {
     const rootSessionId = await this.rootForQuery(query)
@@ -417,11 +437,14 @@ export class RuntimeTraceService {
     if (!(await this.runsFor(owner)).includes(query.rootRunId)) throw new Error('Runtime run does not belong to session')
     return await this.withJournal({ rootSessionId, rootRunId: query.rootRunId, workspaceId: query.workspaceId }, async journal => {
       const page = await journal.all()
+      const valid = page.rows.filter(event => this.scopedEvent(event, query.workspaceId, rootSessionId, query.rootRunId))
       // References are admitted only if the requested run actually published them.
-      const hasRef = page.rows.some(event => JSON.stringify(event).includes(`"payloadRef":"${query.payloadRef}"`))
+      const hasRef = valid.some(event => JSON.stringify(event).includes(`"payloadRef":"${query.payloadRef}"`))
       if (!hasRef) throw new Error('Runtime payload does not belong to run')
-      const content = await journal.readContent(query.payloadRef)
-      if (content === null) throw new Error('Runtime payload unavailable')
+      const storedContent = await journal.readContent(query.payloadRef)
+      if (storedContent === null) throw new Error('Runtime payload unavailable')
+      // Verify stored bytes first, then apply any secret values registered since recording.
+      const content = sanitizeRuntimeTrace(storedContent) as string
       const offset = query.offset ?? 0
       const limit = query.limit ?? 65536
       if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 262144) throw new Error('Invalid runtime payload range')
@@ -431,7 +454,7 @@ export class RuntimeTraceService {
         if ((node as Record<string, unknown>).payloadRef === query.payloadRef && (node as Record<string, unknown>).truncated === true) return true
         return Object.values(node).some(referenceTruncated)
       }
-      return { text, offset, nextOffset: offset + text.length < content.length ? offset + text.length : undefined, byteLength: Buffer.byteLength(content), truncated: page.rows.some(referenceTruncated) }
+      return { text, offset, nextOffset: offset + text.length < content.length ? offset + text.length : undefined, byteLength: Buffer.byteLength(content), truncated: valid.some(referenceTruncated) }
     })
   }
 }

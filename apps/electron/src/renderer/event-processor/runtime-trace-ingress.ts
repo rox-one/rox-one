@@ -4,7 +4,7 @@ import type { RuntimeEvent, RuntimeEventsPage, RuntimeEventsQuery, RuntimePayloa
 import { createRuntimeProjection, reduceRuntimeEvent, runtimeProjectionEvents, runtimeProjectionCoverage, type RuntimeProjection } from '@rox/core/runtime-trace/projector'
 import { isRuntimeEvent, isRuntimeTraceSnapshot, isRuntimeEventsPage, isTraceCoverage } from '@rox/core/runtime-trace/validation'
 import { mergeTraceCoverage } from '@rox/core/runtime-trace/coverage'
-import { runtimeTraceSessionAtomFamily, runtimeTraceScopeKey, createRuntimeTraceSessionState, type RuntimeTraceScope, type RuntimeTraceSessionState } from '../atoms/runtime-trace'
+import { runtimeTraceSessionAtomFamily, runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey, createRuntimeTraceSessionState, type RuntimeTraceScope, type RuntimeTraceSessionState } from '../atoms/runtime-trace'
 
 export interface RuntimeTraceAPI {
   getRuntimeTraceSnapshot(query: RuntimeTraceQuery): Promise<RuntimeTraceSnapshot>
@@ -100,6 +100,7 @@ export function recoverRuntimeTrace(store: Store, query: RuntimeTraceQuery & {ro
 }
 export function removeRuntimeTraceSession(store:Store,scope:RuntimeTraceScope):void{
   const key=runtimeTraceScopeKey(scope);for(const scoped of aliasMap(store).values())scoped.delete(key);aliasMap(store).delete(key);const atom=runtimeTraceSessionAtomFamily(key);store.set(atom,prev=>({...createRuntimeTraceSessionState(),generation:prev.generation+1}))
+  store.set(runtimeMapOpenRequestAtomFamily(key), undefined)
   // Keep the tombstone until outstanding reads finish; a late response cannot resurrect deleted state.
 }
 

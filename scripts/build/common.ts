@@ -3,7 +3,7 @@
  */
 
 import { $ } from 'bun';
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import {
   existsSync,
   mkdirSync,
@@ -40,7 +40,7 @@ export const BUN_VERSION = 'bun-v1.3.14';
  * uv version to bundle with the app.
  * Update this when upgrading uv. Check latest at: https://github.com/astral-sh/uv/releases
  */
-export const UV_VERSION = '0.10.6';
+export const UV_VERSION = '0.12.2';
 
 /**
  * Get platform key for resources/bin folder naming.
@@ -99,6 +99,18 @@ export async function verifySha256(filePath: string, expectedHash: string): Prom
   return hash.toLowerCase() === expectedHash.toLowerCase();
 }
 
+/** Extract ZIPs using the build host's native tooling, including quoted Windows paths. */
+async function extractBuildZip(zipPath: string, destination: string): Promise<void> {
+  if (process.platform === 'win32') {
+    const psQuote = (value: string) => `'${value.replaceAll("'", "''")}'`;
+    execFileSync('powershell.exe', ['-NoProfile', '-Command',
+      `Expand-Archive -LiteralPath ${psQuote(zipPath)} -DestinationPath ${psQuote(destination)} -Force`],
+    { stdio: 'pipe', windowsHide: true });
+  } else {
+    await $`unzip -o ${zipPath} -d ${destination}`.quiet();
+  }
+}
+
 /**
  * Download and verify Bun binary
  * Uses curl for downloads (more reliable in CI than fetch + Bun.write)
@@ -152,7 +164,8 @@ export async function downloadBun(config: BuildConfig): Promise<void> {
 
     // Extract
     console.log('  Extracting...');
-    await $`unzip -o ${zipPath} -d ${tempDir}`.quiet();
+    // Bun ZIPs contain one binary (unlike Node's deep npm dependency tree).
+    await extractBuildZip(zipPath, tempDir);
 
     // Copy binary
     const bunBinary = platform === 'win32' ? 'bun.exe' : 'bun';
@@ -203,10 +216,16 @@ export async function downloadUv(config: BuildConfig): Promise<void> {
   const targetDir = join(electronDir, 'resources', 'bin', platformKey);
   const targetPath = join(targetDir, uvBinaryName);
 
-  // Skip when already provisioned
-  if (existsSync(targetPath)) {
-    console.log(`uv already present at ${targetPath}`);
-    return;
+  // Existence alone could ship a stale version after a pin bump. Cross-target
+  // executables cannot be probed on this host, so fetch the target pin again.
+  if (existsSync(targetPath) && platform === process.platform && arch === process.arch) {
+    try {
+      const version = execFileSync(targetPath, ['--version'], { encoding: 'utf8', timeout: 10_000, windowsHide: true }).trim();
+      if (version.split(/\s+/)[1] === UV_VERSION) {
+        console.log(`uv ${UV_VERSION} already present at ${targetPath}`);
+        return;
+      }
+    } catch { /* repair stale/non-executable cached binary */ }
   }
 
   console.log(`Downloading uv ${UV_VERSION} for ${platformKey}...`);
@@ -246,8 +265,7 @@ export async function downloadUv(config: BuildConfig): Promise<void> {
     mkdirSync(extractDir, { recursive: true });
 
     if (uvDownload.endsWith('.zip')) {
-      // Use PowerShell on Windows for consistent extraction support.
-      await $`powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath '${assetPath}' -DestinationPath '${extractDir}' -Force"`;
+      await extractBuildZip(assetPath, extractDir);
     } else {
       await $`tar -xzf ${assetPath} -C ${extractDir}`;
     }
@@ -597,7 +615,7 @@ export function buildMcpServers(config: BuildConfig): void {
   if (existsSync(join(cloudRunnerDir, 'src'))) {
     mkdirSync(join(cloudRunnerDir, 'dist'), { recursive: true });
     execSync(
-      `bun build ${join(cloudRunnerDir, 'src', 'runners', 'stub-runner.ts')} --outfile ${cloudRunnerOut} --target bun --format esm`,
+      `bun build "${join(cloudRunnerDir, 'src', 'runners', 'stub-runner.ts')}" --outfile "${cloudRunnerOut}" --target bun --format esm`,
       { cwd: rootDir, stdio: 'inherit', shell: true }
     );
     if (!existsSync(cloudRunnerOut)) {
@@ -612,7 +630,7 @@ export function buildMcpServers(config: BuildConfig): void {
   if (existsSync(join(piDir, 'src'))) {
     mkdirSync(join(piDir, 'dist'), { recursive: true });
     execSync(
-      `bun build ${join(piDir, 'src', 'index.ts')} --outdir ${join(piDir, 'dist')} --target bun --format esm --external koffi`,
+      `bun build "${join(piDir, 'src', 'index.ts')}" --outdir "${join(piDir, 'dist')}" --target bun --format esm --external koffi`,
       { cwd: rootDir, stdio: 'inherit', shell: true }
     );
     if (!existsSync(piOut)) {

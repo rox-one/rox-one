@@ -4187,6 +4187,79 @@ export class SessionManager implements ISessionManager {
     }
   }
 
+  private createSpawnSessionHandler(managed: ManagedSession): NonNullable<AgentInstance['onSpawnSession']> {
+    return async (request) => {
+      sessionLog.info(`Spawn session request from session ${managed.id}:`, request.name || '(unnamed)')
+
+      const session = await this.createSession(managed.workspace.id, {
+        name: request.name,
+        llmConnection: request.llmConnection ?? managed.llmConnection,
+        model: resolveSpawnSessionModel({
+          requested: request.model,
+          parentModel: managed.model,
+          connectionSlug: request.llmConnection ?? managed.llmConnection,
+          roxConnectionSlug: ROX_DEFAULT_CONNECTION_SLUG,
+        }),
+        enabledSourceSlugs: request.enabledSourceSlugs ?? managed.enabledSourceSlugs,
+        permissionMode: request.permissionMode ?? managed.permissionMode,
+        thinkingLevel: request.thinkingLevel ?? managed.thinkingLevel,
+        labels: request.labels ?? managed.labels,
+        workingDirectory: request.workingDirectory,
+        projectId: request.projectId ?? managed.projectId,
+        // Spawned sessions become subtasks of the spawning session.
+        parentSessionId: managed.id,
+      })
+
+      // Build FileAttachment[] from paths (if any)
+      let fileAttachments: FileAttachment[] | undefined
+      if (request.attachments?.length) {
+        const attachments: FileAttachment[] = []
+        for (const a of request.attachments) {
+          try {
+            const extraDirs = getWorkspaceAllowedDirs(managed.workspace.id)
+            if (request.workingDirectory) extraDirs.push(request.workingDirectory)
+            const safePath = await validateFilePath(a.path, extraDirs)
+            const attachment = readFileAttachment(safePath)
+            if (attachment) {
+              if (a.name) attachment.name = a.name
+              attachments.push(attachment)
+            } else {
+              sessionLog.warn(`Spawn session: attachment not found: ${a.path}`)
+            }
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error)
+            sessionLog.warn(`Spawn session: blocked attachment path ${a.path}: ${message}`)
+          }
+        }
+        if (attachments.length > 0) fileAttachments = attachments
+      }
+
+      await this.captureRuntime(async () => {
+        const run = this.runtimeTrace.getActive(managed.id)
+        if (!run) return
+        await this.runtimeTrace.assign(managed.id, session.id, { name: session.name || request.name || session.id,
+          task: await this.runtimeTrace.content(run, request.prompt), prompt: await this.runtimeTrace.content(run, request.prompt),
+          sessionId: session.id, nativeKind: 'rox-session', permissionMode: session.permissionMode,
+          model: { requested: session.model, confirmed: unknown('not-emitted'), contextWindow: unknown('not-emitted') } })
+      })
+
+      // (session_created is emitted by createSession above.)
+
+      // Fire and forget — send the message but don't await completion
+      this.sendMessage(session.id, request.prompt, fileAttachments).catch(err => {
+        sessionLog.error(`Failed to send message to spawned session ${session.id}:`, err)
+      })
+
+      return {
+        sessionId: session.id,
+        name: session.name || request.name || session.id,
+        status: 'started' as const,
+        connection: session.llmConnection,
+        model: session.model,
+      }
+    }
+  }
+
   /**
    * Get or create agent for a session (lazy loading)
    * Creates the appropriate backend agent based on LLM connection.
@@ -5175,76 +5248,7 @@ export class SessionManager implements ISessionManager {
       }
 
       // Wire up onSpawnSession to create independent sessions from agent tool calls
-      managed.agent.onSpawnSession = async (request) => {
-        sessionLog.info(`Spawn session request from session ${managed.id}:`, request.name || '(unnamed)')
-
-        const session = await this.createSession(managed.workspace.id, {
-          name: request.name,
-          llmConnection: request.llmConnection ?? managed.llmConnection,
-          model: resolveSpawnSessionModel({
-            requested: request.model,
-            parentModel: managed.model,
-            connectionSlug: request.llmConnection ?? managed.llmConnection,
-            roxConnectionSlug: ROX_DEFAULT_CONNECTION_SLUG,
-          }),
-          enabledSourceSlugs: request.enabledSourceSlugs ?? managed.enabledSourceSlugs,
-          permissionMode: request.permissionMode ?? managed.permissionMode,
-          thinkingLevel: request.thinkingLevel ?? managed.thinkingLevel,
-          labels: request.labels ?? managed.labels,
-          workingDirectory: request.workingDirectory,
-          projectId: request.projectId ?? managed.projectId,
-          // Spawned sessions become subtasks of the spawning session.
-          parentSessionId: managed.id,
-        })
-
-        // Build FileAttachment[] from paths (if any)
-        let fileAttachments: FileAttachment[] | undefined
-        if (request.attachments?.length) {
-          const attachments: FileAttachment[] = []
-          for (const a of request.attachments) {
-            try {
-              const extraDirs = getWorkspaceAllowedDirs(managed.workspace.id)
-              if (request.workingDirectory) extraDirs.push(request.workingDirectory)
-              const safePath = await validateFilePath(a.path, extraDirs)
-              const attachment = readFileAttachment(safePath)
-              if (attachment) {
-                if (a.name) attachment.name = a.name
-                attachments.push(attachment)
-              } else {
-                sessionLog.warn(`Spawn session: attachment not found: ${a.path}`)
-              }
-            } catch (error) {
-              const message = error instanceof Error ? error.message : String(error)
-              sessionLog.warn(`Spawn session: blocked attachment path ${a.path}: ${message}`)
-            }
-          }
-          if (attachments.length > 0) fileAttachments = attachments
-        }
-
-        await this.captureRuntime(async () => {
-          const run = this.runtimeTrace.getActive(managed.id)
-          if (!run) return
-          await this.runtimeTrace.assign(managed.id, session.id, { name: session.name || request.name || session.id,
-            task: await this.runtimeTrace.content(run, request.prompt), prompt: await this.runtimeTrace.content(run, request.prompt),
-            sessionId: session.id, nativeKind: 'rox-session', permissionMode: session.permissionMode,
-            model: { requested: session.model, confirmed: unknown('not-emitted'), contextWindow: unknown('not-emitted') } })
-        })
-
-        // (session_created is emitted by createSession above.)
-
-        // Fire and forget — send the message but don't await completion
-        this.sendMessage(session.id, request.prompt, fileAttachments).catch(err => {
-          sessionLog.error(`Failed to send message to spawned session ${session.id}:`, err)
-        })
-
-        return {
-          sessionId: session.id,
-          name: session.name || request.name || session.id,
-          status: 'started' as const,
-          connection: session.llmConnection,
-          model: session.model,
-        }
-      }
+      managed.agent.onSpawnSession = this.createSpawnSessionHandler(managed)
 
       // Wire up session self-management tools (set_session_labels, set_session_status, etc.)
       mergeSessionScopedToolCallbacks(managed.id, {

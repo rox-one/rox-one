@@ -6,9 +6,11 @@ import { performance } from 'node:perf_hooks'
 import { createRuntimeTraceFixture } from '../../../packages/core/src/runtime-trace/fixture'
 import { known, type RuntimeAgentObservation, type RuntimeEvent, type RuntimePayloadQuery, type RuntimeTraceQuery, type RuntimeEventsQuery } from '../../../packages/core/src/runtime-trace/types'
 import { RuntimeTraceService, type RuntimeTraceRun } from '../../../packages/server-core/src/sessions/runtime-trace/service'
+import { createCatalogFixture } from './catalog-store'
 
 if (process.env.ROX_RUNTIME_MAP_E2E !== '1' || process.env.NODE_ENV === 'production') throw new Error('Isolated runtime-map test server requires explicit test opt-in')
 const directory = await mkdtemp(join(tmpdir(), 'rox-runtime-map-e2e-'))
+const catalog = createCatalogFixture(directory)
 const subscribers = new Set<ReadableStreamDefaultController<Uint8Array>>()
 const encoder = new TextEncoder()
 let generation = 0, index = 2, run: RuntimeTraceRun | undefined
@@ -42,6 +44,10 @@ const server = Bun.serve({ hostname: '127.0.0.1', port: 4177, idleTimeout: 0, as
   const path = new URL(request.url).pathname
   if (request.method === 'OPTIONS') return new Response(null, { headers })
   try {
+    if (path.startsWith('/catalog/')) {
+      const result = catalog.handle(path, request.method === 'POST' ? await request.json() : undefined)
+      return result === undefined ? json({ error: 'Unknown catalog test route' }, 404) : json(result)
+    }
     if (path === '/health') return json({ class: 'renderer-e2e', syntheticExecutor: true })
     if (path === '/events') {
       let subscriber: ReadableStreamDefaultController<Uint8Array>
@@ -72,6 +78,12 @@ const server = Bun.serve({ hostname: '127.0.0.1', port: 4177, idleTimeout: 0, as
       if (run) return json({ error: 'A test run already exists' }, 409)
       runtimeStarts++
       run = await service.begin('fixture-session', fixture[0].kind === 'run.accepted' ? fixture[0].payload.prompt.text! : '', { messageId: 'fixture-user', launch: { kind: 'manual' } })
+      return json({ rootRunId: run.rootRunId })
+    }
+    if (path === '/next-run' && request.method === 'POST') {
+      if (!run || index < fixture.length) return json({ error: 'Previous test run must be complete' }, 409)
+      runtimeStarts++; index = 2
+      run = await service.begin('fixture-session', 'Второй тестовый запрос', { messageId: 'fixture-user-next', launch: { kind: 'manual' } })
       return json({ rootRunId: run.rootRunId })
     }
     if (path === '/step' && request.method === 'POST') {

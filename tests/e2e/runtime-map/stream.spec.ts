@@ -35,6 +35,7 @@ test('real ChatDisplay stays mounted while the journal streams into the right do
   expect(before.runtimeStarts).toBe(1)
   expect(before.providerRequests).toBe(0)
   expect(before.terminalExecutions).toBe(0)
+  expect(before.sourceConnections).toBe(1)
   for (let index = 3; index < 16; index++) { await page.getByTestId('step-run').click(); await expect(page.getByTestId('received-count')).toHaveText(String(index + 1)) }
   await expect(page.getByTestId('runtime-chat-slot').getByText('Оба источника проверены.', { exact: true })).toBeVisible()
   await page.screenshot({ path: info.outputPath('split-result-light.png'), fullPage: true })
@@ -45,6 +46,7 @@ test('real ChatDisplay stays mounted while the journal streams into the right do
   expect(after.runtimeStarts).toBe(1)
   expect(after.terminalExecutions).toBe(1)
   expect(after.providerRequests).toBe(0)
+  expect(after.sourceConnections).toBe(1)
   expect(pageErrors).toEqual([])
 })
 
@@ -101,4 +103,3 @@ test('empty production chat keeps ROX welcome and suggestions above the lower co
   await expect(page.getByTestId('received-count')).toHaveText('2')
   await expect(page.getByTestId('starter-prompt-list')).toHaveCount(0)
 })
-

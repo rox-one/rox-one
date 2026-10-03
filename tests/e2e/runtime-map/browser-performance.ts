@@ -41,7 +41,7 @@ export function createBrowserPerformanceHarness(store: Store, scope: { workspace
       const marker = `Paint measurement ${++seq}`
       const event: RuntimeEvent = { ...startEvent, eventId: `paint-${seq}`, sourceEventId: `paint-${seq}`, seq, sourceSeq: seq,
         kind: 'tool.completed', payload: { name: startEvent.payload.name, result: { text: marker }, status: 'succeeded' },
-        occurredAt: known(Date.now(), 'performance-fixture'), receivedAt: Date.now() }
+        occurredAt: known(1_000 + seq, 'performance-fixture'), receivedAt: Date.now() }
       const start = performance.now()
       return await new Promise<number>((resolve, reject) => {
         const timeout = setTimeout(() => { observer.disconnect(); reject(new Error('Visible card did not render the runtime delta')) }, 3_000)

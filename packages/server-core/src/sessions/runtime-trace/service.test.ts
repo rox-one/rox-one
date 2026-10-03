@@ -1,12 +1,13 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { mkdtemp, rm, readFile, readdir, symlink } from 'node:fs/promises'
+import { mkdtemp, rm, readFile, readdir, symlink, appendFile, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { RuntimeTraceService, type RuntimeTraceSession } from './service'
 import { known, type RuntimeEvent } from '@rox/core/runtime-trace'
+import { clearRegisteredSecretValues, registerSecretValues } from '@rox/shared/secrets/redact'
 
 const roots: string[] = []
-afterEach(async () => { await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))) })
+afterEach(async () => { clearRegisteredSecretValues(); await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))) })
 async function setup() {
   const root = await mkdtemp(join(tmpdir(), 'rox-runtime-service-')); roots.push(root)
   const sessions = new Map<string, RuntimeTraceSession>([
@@ -68,6 +69,16 @@ describe('runtime session collector', () => {
     expect(emitted.at(-1)?.parentAgentId).toBe(run.agentId)
   })
 
+  it('normalizes genuine native root-dispatch parent spans from the exact recorded tool call', async () => {
+    const { service, emitted } = await setup()
+    const run = await service.begin('parent', 'prompt')
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'task', toolUseId: 'exact-dispatch-call', input: {} })
+    await service.observe('parent', { kind: 'agent.started', payload: { status: 'running' }, agentId: 'native-child', parentAgentId: 'root', parentSpanId: 'tool:exact-dispatch-call', sourceId: 'omp:real-reservation', sourceEventId: 'native-start', sourceSeq: 1, occurredAt: known(5, 'native'), clockDomain: 'omp', origin: 'observed' })
+    expect(emitted.at(-1)?.parentSpanId).toBe(`${run.runId}:tool:exact-dispatch-call`)
+    await service.observe('parent', { kind: 'agent.started', payload: { status: 'running' }, agentId: 'grandchild', parentAgentId: 'native-child', parentSpanId: 'native:child-native-session:tool:exact-child-call', sourceId: 'omp:real-reservation-2', sourceEventId: 'grandchild-start', sourceSeq: 1, occurredAt: known(6, 'native'), clockDomain: 'omp', origin: 'observed' })
+    expect(emitted.at(-1)?.parentSpanId).toBe('native:child-native-session:tool:exact-child-call')
+  })
+
   it('stores redacted large content and authorizes references by actual session/run ownership', async () => {
     const { service } = await setup()
     const run = await service.begin('parent', 'prompt')
@@ -81,6 +92,80 @@ describe('runtime session collector', () => {
     await expect(service.readPayload({ workspaceId: 'ws', sessionId: 'parent', rootRunId: run.rootRunId, payloadRef: 'a'.repeat(64) })).rejects.toThrow('does not belong')
     await expect(service.readPayload({ workspaceId: 'ws', sessionId: 'parent', rootRunId: 'unknown-run', payloadRef: 'a'.repeat(64) })).rejects.toThrow('does not belong')
   })
+  it('redacts quoted credentials, raw JSON and headers before inline transport, journal and blob writes', async () => {
+    const { service, emitted, root } = await setup()
+    const run = await service.begin('parent', 'prompt')
+    const privateValues = ['unregistered quoted password', 'unregistered single password', 'unregistered cookie value', 'unregistered JSON key', 'unregistered ENV value']
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'read', toolUseId: 'safe-call', input: { env: { CUSTOM: privateValues[4] }, password: privateValues[0] } })
+    const serialized = JSON.stringify({ apiKey: privateValues[3], env: { CUSTOM: privateValues[4] }, inputTokens: 123, publicPadding: 'public '.repeat(3000) })
+    await service.record(run, 'terminal.output', { command: `password="${privateValues[0]}" password='${privateValues[1]}'`, stdout: await service.content(run, serialized), stderr: await service.content(run, `Cookie: session=${privateValues[2]}; private-attribute=value`), status: 'running' })
+    const directory = join(root, 'parent', 'meta', 'runtime-trace', run.rootRunId)
+    const journal = await readFile(join(directory, 'events.jsonl'), 'utf8')
+    const blobs = await Promise.all((await readdir(join(directory, 'content'))).map(name => readFile(join(directory, 'content', name), 'utf8')))
+    expect(blobs.length).toBeGreaterThan(0)
+    for (const value of privateValues) {
+      expect(JSON.stringify(emitted)).not.toContain(value)
+      expect(journal).not.toContain(value)
+      expect(blobs.join('')).not.toContain(value)
+    }
+    expect(blobs.join('')).toContain('"inputTokens":123')
+    const before = emitted.length
+    await expect(service.record(run, 'agent.started', { status: 'running' }, { sourceId: 'password="producer private value"' })).rejects.toThrow('Sensitive producer metadata')
+    expect(emitted).toHaveLength(before)
+    expect(await readFile(join(directory, 'events.jsonl'), 'utf8')).not.toContain('producer private value')
+  })
+
+  it('rejects valid recovered rows outside the authorized root envelope and their payload references', async () => {
+    const { service, sessions, emitted, root } = await setup()
+    const run = await service.begin('parent', 'authorized prompt')
+    const orphan = await service.content(run, 'orphan not-published payload '.repeat(1000))
+    const template = emitted[0]!
+    const foreignRows = [
+      { ...template, workspaceId: 'other' },
+      { ...template, rootSessionId: 'foreign' },
+      { ...template, rootRunId: 'foreign-run' },
+      { ...template, sessionId: 'foreign' },
+    ].map((event, index) => ({ ...event, seq: emitted.length + index + 1, eventId: `tampered-row-${index}`, sourceEventId: `tampered-row-${index}`, kind: 'result.published', payload: { content: orphan } }))
+    await appendFile(join(root, 'parent', 'meta', 'runtime-trace', run.rootRunId, 'events.jsonl'), foreignRows.map(event => JSON.stringify(event) + '\n').join(''))
+    const recovered = new RuntimeTraceService(id => sessions.get(id), () => {})
+    const page = await recovered.readEvents({ workspaceId: 'ws', sessionId: 'parent', rootRunId: run.rootRunId, afterSeq: 0 })
+    expect(page.events).toHaveLength(emitted.length)
+    expect(page.events.some(event => event.eventId.startsWith('tampered-row'))).toBe(false)
+    expect(page.coverage.missing).toContain('journal-corruption')
+    const snapshot = await recovered.getSnapshot({ workspaceId: 'ws', sessionId: 'parent' })
+    expect(snapshot.runs[0]?.prompt).toBe('authorized prompt')
+    expect(snapshot.runs[0]?.coverage.missing).toContain('journal-corruption')
+    await expect(recovered.readPayload({ workspaceId: 'ws', sessionId: 'parent', rootRunId: run.rootRunId, payloadRef: orphan.payloadRef! })).rejects.toThrow('does not belong')
+  })
+
+  it('redacts secrets registered after recording in event, prompt-summary and payload readback', async () => {
+    const { service, sessions } = await setup()
+    const secret = 'value-that-was-not-a-known-credential-before-registration'
+    const run = await service.begin('parent', `inspect ${secret}`)
+    const content = await service.content(run, 'public result '.repeat(1000) + secret)
+    await service.record(run, 'result.published', { content })
+    registerSecretValues([secret])
+    const recovered = new RuntimeTraceService(id => sessions.get(id), () => {})
+    const snapshot = await recovered.getSnapshot({ workspaceId: 'ws', sessionId: 'parent' })
+    expect(JSON.stringify(snapshot)).not.toContain(secret)
+    const payload = await recovered.readPayload({ workspaceId: 'ws', sessionId: 'parent', rootRunId: run.rootRunId, payloadRef: content.payloadRef! })
+    expect(payload.text).not.toContain(secret)
+    expect(payload.text).toContain('***REDACTED***')
+  })
+
+  it('requires every persisted child-root lineage ancestor to belong to the requested workspace', async () => {
+    const { service, sessions, root } = await setup()
+    const run = await service.begin('parent', 'prompt')
+    sessions.get('child')!.parentSessionId = 'foreign'
+    sessions.get('foreign')!.parentSessionId = 'parent'
+    const directory = join(root, 'child', 'meta', 'runtime-trace', run.rootRunId)
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, 'root.json'), JSON.stringify({ rootSessionId: 'parent' }))
+    const recovered = new RuntimeTraceService(id => sessions.get(id), () => {})
+    await expect(recovered.readEvents({ workspaceId: 'ws', sessionId: 'child', rootRunId: run.rootRunId, afterSeq: 0 })).rejects.toThrow('lineage access denied')
+    await expect(recovered.getSnapshot({ workspaceId: 'ws', sessionId: 'child' })).rejects.toThrow('lineage access denied')
+  })
+
   it('rejects malformed payloads before writing and prevents metadata from replacing collector scope', async () => {
     const { service, emitted, root } = await setup()
     const run = await service.begin('parent', 'prompt')

@@ -34,6 +34,7 @@ const pending = <T>() => {
 }
 function fixture() {
   const refs = { notesListRequestRef: { current: 0 }, assetsRequestRef: { current: 0 },
+    readWorkspaceGenerationRef: { current: 0 },
     readWorkspaceRef: { current: undefined as string | undefined }, readsMountedRef: { current: false } }
   const events: Array<[string, unknown]> = []
   let commit!: () => () => void

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { Panel } from './Panel'
 import { MemoryScreen } from '../memory/MemoryScreen'
@@ -9,6 +9,10 @@ import { MultiSelectPanel } from './MultiSelectPanel'
 import { CollectionBulkBar } from './collection/CollectionBulkBar'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { runtimeTraceScopeKey, runtimeTraceSessionAtomFamily } from '@/atoms/runtime-trace'
+import { useSession } from '@/hooks/useSession'
+import { loadRuntimeTrace, type RuntimeTraceAPI } from '@/event-processor/runtime-trace-ingress'
+import { runtimeCatalogCapabilities, runtimeCatalogScope } from '@/lib/runtime-catalog-capabilities'
 import { StoplightProvider } from '@/context/StoplightContext'
 import {
   useNavigationState,
@@ -176,10 +180,23 @@ export function MainContentPanel({
     labels,
     activeSessionWorkingDirectory,
     localMcpEnabled,
+    skills,
   } = useAppShellContext()
 
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const remoteWorkspaceId = workspaces.find((workspace) => workspace.id === activeWorkspaceId)?.remoteServer?.remoteWorkspaceId
+  const [sessionSelection] = useSession()
+  const store = useStore()
+  const catalogSessionId = sessionSelection.selected
+  const catalogScope = isSkillsNavigation(navState) || isSourcesNavigation(navState)
+    ? runtimeCatalogScope(activeWorkspaceId, catalogSessionId, catalogSessionId ? sessionMetaMap.get(catalogSessionId)?.workspaceId : undefined, remoteWorkspaceId) : undefined
+  const catalogTrace = useAtomValue(runtimeTraceSessionAtomFamily(catalogScope ? runtimeTraceScopeKey(catalogScope) : 'catalog:no-session'))
+  const catalogCapabilities = useMemo(() => runtimeCatalogCapabilities(catalogTrace, catalogScope, skills), [catalogTrace, catalogScope?.workspaceId, catalogScope?.sessionId, skills])
+  useEffect(() => {
+    if (!catalogScope || !isSkillsNavigation(navState) && !isSourcesNavigation(navState)) return
+    // Reuse canonical snapshot/cursor ingress; the catalog adds no live listener.
+    void loadRuntimeTrace(store, catalogScope, window.electronAPI as unknown as RuntimeTraceAPI)
+  }, [store, catalogScope?.workspaceId, catalogScope?.sessionId, navState.navigator])
   const visibleSessionIds = useMemo(
     () =>
       [...sessionMetaMap.values()]
@@ -256,6 +273,14 @@ export function MainContentPanel({
     setSendResourceLabel(`${count} ${type}${count !== 1 ? 's' : ''}`)
     setSendDialogOpen(true)
   }, [])
+
+  const skillPhaseSummary = (['selected', 'loaded', 'applied'] as const).map(phase => ({
+    phase,
+    refs: catalogCapabilities[phase].filter(ref => phase === 'applied'
+      || !catalogCapabilities.applied.some(applied => applied.kind === ref.kind && applied.scope === ref.scope && applied.id === ref.id))
+      .filter(ref => phase !== 'selected'
+        || !catalogCapabilities.loaded.some(loaded => loaded.kind === ref.kind && loaded.scope === ref.scope && loaded.id === ref.id)),
+  })).filter(group => group.refs.length)
 
   const pageFallback = (
     <Panel variant="grow" className={className}>
@@ -367,6 +392,7 @@ export function MainContentPanel({
           workspaceRootPath={workspaces.find(workspace => workspace.id === activeWorkspaceId)?.rootPath}
           sourceFilter={navState.filter}
           localMcpEnabled={localMcpEnabled}
+          usedCapabilities={catalogCapabilities.usedCapabilities}
         />
       </Panel>
     )
@@ -398,11 +424,22 @@ export function MainContentPanel({
     }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <SkillsCatalogPage
-          workspaceId={activeWorkspaceId || ''}
-          workspaceRootPath={workspaces.find(workspace => workspace.id === activeWorkspaceId)?.rootPath}
-          workingDirectory={activeSessionWorkingDirectory}
-        />
+        <div className="flex h-full min-h-0 flex-col">
+          {!!skillPhaseSummary.length && <div role="status" aria-label={t('capabilityCatalog.usedInRun')} data-testid="catalog-skill-runtime-phases" className="shrink-0 space-y-1 border-b border-border/50 px-4 py-3 text-xs text-muted-foreground">
+            {skillPhaseSummary.map(group => <p key={group.phase} data-skill-phase={group.phase}>
+              <span className="font-medium">{t(`runtimeMap.skill.${group.phase}`)}</span>{': '}
+              {group.refs.map(ref => ref.label).join(', ')}
+            </p>)}
+          </div>}
+          <div className="min-h-0 flex-1">
+            <SkillsCatalogPage
+              workspaceId={activeWorkspaceId || ''}
+              workspaceRootPath={workspaces.find(workspace => workspace.id === activeWorkspaceId)?.rootPath}
+              workingDirectory={activeSessionWorkingDirectory}
+              usedCapabilities={catalogCapabilities.usedCapabilities}
+            />
+          </div>
+        </div>
       </Panel>
     )
   }

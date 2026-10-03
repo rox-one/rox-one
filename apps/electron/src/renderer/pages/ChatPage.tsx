@@ -10,7 +10,9 @@ import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { AlertCircle, Globe, Copy, RefreshCw, Link2Off, Info, Pencil, Eye, EyeOff, SquareSlash, MoreHorizontal } from 'lucide-react'
 import { ChatDisplay, type ChatDisplayHandle } from '@/components/app-shell/ChatDisplay'
-import { ChatRuntimeSplit } from '@/components/runtime-map/ChatRuntimeSplit'
+import { ChatRuntimeSplit, createRetryableRuntimeMapLazy } from '@/components/runtime-map/ChatRuntimeSplit'
+import type { RuntimeMapDockProps } from '@/components/runtime-map/RuntimeMapDock'
+import type { SessionWorkflowEditorProps } from '@/components/session-workbench/SessionWorkflowEditor'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SessionMenu } from '@/components/app-shell/SessionMenu'
 import { CompactSessionMenu } from '@/components/app-shell/CompactSessionMenu'
@@ -34,6 +36,7 @@ import { branchErrorDescription } from '@/lib/branch-error'
 import { messageActionId } from '@/lib/message-action-id'
 import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { kanbanEditorTargetAtom } from '@/atoms/kanban'
+import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey } from '@/atoms/runtime-trace'
 import { rememberCollectionView } from '@/components/app-shell/collection/collection-view-cycle'
 import { getSessionTitle } from '@/utils/session'
 import {
@@ -61,12 +64,12 @@ import { useSessionMenuActions } from '@/hooks/useSessionMenuActions'
 // Secondary session tabs (workflow xyflow, knowledge surface, mindmap outline) — lazy so
 // the default standard chat transcript path stays on the eager ChatPage chunk.
 const KnowledgeSurfacePage = React.lazy(() => import('@/pages/KnowledgeSurfacePage'))
-const SessionWorkflowEditor = React.lazy(() =>
+const SessionWorkflowEditor = createRetryableRuntimeMapLazy<SessionWorkflowEditorProps>(() =>
   import('@/components/session-workbench/SessionWorkflowEditor').then((m) => ({
     default: m.SessionWorkflowEditor,
   })),
 )
-const RuntimeMapDock = React.lazy(() =>
+const RuntimeMapDock = createRetryableRuntimeMapLazy<RuntimeMapDockProps>(() =>
   import('@/components/runtime-map/RuntimeMapDock').then((m) => ({ default: m.RuntimeMapDock })),
 )
 const SessionGitOutline = React.lazy(() =>
@@ -121,6 +124,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   const [runtimeFocusRequestId, setRuntimeFocusRequestId] = React.useState(0)
   const [runtimeInitialMode, setRuntimeInitialMode] = React.useState<'execution' | 'context' | 'editor'>('execution')
   const [runtimeModeRequestId, setRuntimeModeRequestId] = React.useState(0)
+  const runtimeOpenRequest = useAtomValue(runtimeMapOpenRequestAtomFamily(runtimeTraceScopeKey({ workspaceId: appShell.activeWorkspaceId ?? '', sessionId })))
+  const handledRuntimeOpenRequest = React.useRef<string>()
 
   const appShellContext = appShell
   const {
@@ -366,6 +371,17 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
     return () => clearInterval(interval)
   }, [sessionId, getDraft])
+
+  // Listen for restore-input events (queued messages restored to input on abort)
+  React.useEffect(() => {
+    if (!runtimeOpenRequest || isFocusedPanel === false) return
+    const key = JSON.stringify([activeWorkspaceId, sessionId, runtimeOpenRequest.requestId])
+    if (handledRuntimeOpenRequest.current === key) return
+    handledRuntimeOpenRequest.current = key
+    setRuntimeInitialMode('execution')
+    setRuntimeModeRequestId(previous => previous + 1)
+    setSessionView('map')
+  }, [runtimeOpenRequest, isFocusedPanel, activeWorkspaceId, sessionId, setSessionView])
 
   // Listen for restore-input events (queued messages restored to input on abort)
   React.useEffect(() => {
@@ -829,6 +845,9 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
                   focusRequestId={runtimeFocusRequestId}
                   initialMode={runtimeInitialMode}
                   modeRequestId={runtimeModeRequestId}
+                  requestedRootRunId={runtimeOpenRequest?.rootRunId}
+                  selectedEventId={runtimeOpenRequest?.eventId}
+                  eventRequestId={runtimeOpenRequest?.requestId}
                   onClose={() => setSessionView('standard')}
                   onOpenMessage={(id, toolUseId) => {
                     const mounted = session?.messages.find(message => message.id === id || message.backendMessageId === id || (toolUseId && message.toolUseId === toolUseId))
@@ -907,6 +926,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       runtimeFocusRequestId,
       runtimeInitialMode,
       runtimeModeRequestId,
+      runtimeOpenRequest,
       sessionMindMapLoading,
       messageLoadState.error,
       handleMindMapNavigate,
