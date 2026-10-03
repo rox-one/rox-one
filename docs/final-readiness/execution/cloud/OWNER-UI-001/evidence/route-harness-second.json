@@ -1,0 +1,20 @@
+{
+  "label": "route-harness-second",
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "test",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts"
+  ],
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+  "startedAt": "2026-10-03T10:38:14.423556+00:00",
+  "finishedAt": "2026-10-03T10:38:14.597359+00:00",
+  "exitCode": 1,
+  "sourceSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
+    "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+  },
+  "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/route-harness-second.log",
+  "logSha256": "9d0cf208676766a6f2412139f66c65c0b43b25d8995fad7121586721d96702a7"
+}

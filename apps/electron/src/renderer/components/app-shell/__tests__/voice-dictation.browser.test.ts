@@ -76,6 +76,21 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
     expect((await calls()).filter((call) => call.method === 'transcribeVoice')).toHaveLength(0)
   }, timeout)
 
+  it('preserves the latest draft ending in space, newline or tab with both trailing-space preferences', async () => {
+    const transcript = 'Synthetic first paragraph.\n\nSynthetic second paragraph.'
+    for (const ending of [' ', '\n', '\t']) {
+      for (const trailingSpace of [false, true]) {
+        await load(`deferredStop=true&trailingSpace=${trailingSpace}`)
+        await start(); await finish(); await waitForCall('stopVoiceCapture')
+        const draft = `Edited while transcribing${ending}`
+        await page.getByRole('textbox', { name: 'Draft' }).fill(draft)
+        await page.evaluate(() => (window as any).__voiceFixture.resolveStop())
+        await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue(`${draft}${transcript}${trailingSpace ? ' ' : ''}`)
+        expect((await calls()).filter(call => call.method === 'stopVoiceCapture')).toHaveLength(1)
+      }
+    }
+  }, timeout)
+
   it('asks for cloud upload consent at first use and starts only after the saved grant', async () => {
     await load('consent=false&migration=true'); await start()
     await expectDOM(page.getByRole('dialog')).toBeVisible()
@@ -310,6 +325,59 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
     await load('delivery=clipboard&trailingSpace=true'); await start(); await finish()
     await page.waitForFunction(() => (window as any).__voiceFixture.calls.some((call: any) => call.method === 'copyVoiceText'))
     expect((await calls()).find(call => call.method === 'copyVoiceText')?.args).toEqual({ text: 'Synthetic first paragraph.\n\nSynthetic second paragraph. ' })
+  }, timeout)
+
+  const learning = () => page.evaluate(() => {
+    const state = (window as any).__voiceFixture.learning
+    return { signals: state.signals, accepted: state.accepted, handoffs: state.handoffs,
+      targets: [...state.targets.values()], capabilities: [...state.capabilities.entries()] }
+  })
+
+  it('learning observes only actual draft insertion, scoped target and balanced native handoff without transcript content', async () => {
+    await load('learning=true&compact=true'); await start(); await finish()
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+    const observed = await learning()
+    expect(observed.targets).toEqual([{ variant: 'compact', workspaceId: 'voice-workspace', panelId: 'voice-panel' }])
+    expect(observed.capabilities).toEqual([['voice.available', { state: 'ready' }]])
+    expect(observed.handoffs).toEqual([{ open: true, runToken: 'voice-original-attempt' }, { open: false, runToken: 'voice-original-attempt' }])
+    expect(observed.signals).toHaveLength(1)
+    expect(observed.signals[0]).toMatchObject({ name: 'dictation.inserted', level: 'observed', origin: 'native-event',
+      binding: { workspaceId: 'voice-workspace', panelId: 'voice-panel', sessionId: 'voice-session', runToken: 'voice-original-attempt' } })
+    expect(observed.accepted).toHaveLength(1)
+    expect(JSON.stringify(observed)).not.toContain('Synthetic first paragraph')
+    expect((await calls()).filter(call => call.method === 'stopVoiceCapture')).toHaveLength(1)
+  }, timeout)
+
+  it('learning never verifies consent refusal, capture refusal, no speech, cancellation or clipboard-only completion', async () => {
+    await load('learning=true&consent=false'); await start(); await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+    expect((await learning()).signals).toEqual([]); expect((await learning()).handoffs).toEqual([])
+    expect((await calls()).filter(call => call.method === 'getUserMedia')).toEqual([])
+    await load('learning=true&refusedStart=true'); await hotkey('ptt-down'); await waitForCall('stopTrack')
+    expect((await learning()).signals).toEqual([])
+    expect((await learning()).handoffs.map((item: { open: boolean }) => item.open)).toEqual([true, false])
+    await load('learning=true&noSpeech=true'); await start(); await finish()
+    await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
+    expect((await learning()).signals).toEqual([])
+    await load('learning=true'); await start(); await hotkey('cancel'); await waitForCall('cancelVoiceCapture')
+    expect((await learning()).signals).toEqual([])
+    await load('learning=true&delivery=clipboard'); await start(); await finish(); await waitForCall('copyVoiceText')
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    expect((await learning()).signals).toEqual([])
+  }, timeout)
+
+  it('late STOP retains its original observation and disabled learning leaves successful dictation uninstrumented', async () => {
+    await load('learning=true&deferredStop=true'); await start(); await finish(); await waitForCall('stopVoiceCapture')
+    await page.evaluate(() => { const f = (window as any).__voiceFixture; f.changeAttempt(); f.resolveStop() })
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+    expect((await learning()).signals[0].binding.runToken).toBe('voice-original-attempt')
+    expect((await learning()).accepted).toEqual([])
+    await load('learning=true&deferredStop=true'); await start(); await finish(); await waitForCall('stopVoiceCapture')
+    await page.evaluate(() => (window as any).__voiceFixture.unmount()); await waitForCall('cancelVoiceCapture')
+    await page.evaluate(() => (window as any).__voiceFixture.resolveStop()); await page.waitForTimeout(25)
+    expect((await learning()).signals).toEqual([]); expect((await learning()).targets).toEqual([])
+    await load(); await start(); await finish()
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+    expect(await learning()).toEqual({ signals: [], accepted: [], handoffs: [], targets: [], capabilities: [] })
   }, timeout)
 
 })

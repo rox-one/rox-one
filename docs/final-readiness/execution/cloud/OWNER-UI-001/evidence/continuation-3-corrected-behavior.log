@@ -1,0 +1,16 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts:
+(pass) UI-001 real Chromium component and persistence fixtures > selected source deletion and recreation preserve workspace and entity address [478.22ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retry recovers an unavailable selected source through the actual click handler [430.87ms]
+(pass) UI-001 real Chromium component and persistence fixtures > late resource load cannot replace a new missing address [366.54ms]
+(pass) UI-001 real Chromium component and persistence fixtures > cloud run switch clears previous content while the new callback is pending [282.99ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retries rejected lazy imports and keeps the selected route [344.95ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retries rendering failure and a new route clears a previous error [376.73ms]
+(pass) UI-001 real Chromium component and persistence fixtures > workspace switch cancels a real pending resize timer before it can persist old geometry [900.65ms]
+(pass) UI-001 real Chromium component and persistence fixtures > actual localStorage persists valid sizes across reload and other windows [527.15ms]
+
+ 8 pass
+ 0 fail
+ 17 expect() calls
+Ran 8 tests across 1 file. [4.90s]

@@ -48,7 +48,7 @@ async function fixtureBundle() {
     import { loadShellLayout, commitShellLayout } from './apps/electron/src/renderer/lib/shell-layout-preferences';
     import { createStore, getDefaultStore } from 'jotai/vanilla';
     import * as guards from './apps/electron/src/shared/types';
-    import { parseRouteToNavigationStateOrUnavailable as parseRouteToNavigationState } from './apps/electron/src/shared/route-parser';
+    import { parseRouteToNavigationStateOrUnavailable as parseRouteToNavigationState, buildRouteFromNavigationState } from './apps/electron/src/shared/route-parser';
     import { inspectorPanelWidthAtom, bottomDockHeightAtom, bottomTerminalOpenAtom } from './apps/electron/src/renderer/atoms/unified-shell';
     import CloudRunSurfacePage from './apps/electron/src/renderer/pages/CloudRunSurfacePage';
     import TerminalSurfacePage from './apps/electron/src/renderer/pages/TerminalSurfacePage';
@@ -198,10 +198,11 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
     await page.evaluate(()=>{(window as any).ui001.sessions([{id:'a',workspaceId:'ws-a'},{id:'foreign',workspaceId:'ws-b'}]);(window as any).ui001.navigate('allSessions/session/a')})
     await page.locator('[data-fixture-chat="a"]').waitFor()
     await page.evaluate(()=>(window as any).ui001.sessions([{id:'foreign',workspaceId:'ws-b'}]))
-    await page.locator('[data-testid="route-session-missing"][data-route-entity="a"]').waitFor()
+    await page.locator('[data-testid="route-session-unavailable"][data-session-id="a"]').waitFor()
     expect(await page.locator('[data-fixture-chat]').count()).toBe(0)
     await page.evaluate(()=>(window as any).ui001.navigate('allSessions/session/foreign'))
-    await page.locator('[data-testid="route-session-missing"][data-route-entity="foreign"]').waitFor()
+    await page.locator('[data-testid="route-unavailable"]').waitFor()
+    expect((await page.evaluate(()=>(window as any).ui001.address())).nav.details.sessionId).toBe('foreign')
     expect(await page.locator('[data-fixture-chat]').count()).toBe(0)
   })
 

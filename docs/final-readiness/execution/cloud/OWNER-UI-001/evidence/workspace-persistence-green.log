@@ -1,0 +1,16 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late sources responses after workspace/directory change [224.93ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live sources deletion ahead of a pending initial snapshot [34.22ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late skills responses after workspace/directory change [106.46ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live skills deletion ahead of a pending initial snapshot [28.25ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > recovers from request rejection and unmount without installing stale data [30.56ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > restores workspace geometry before an old pending keyboard resize can commit [58.76ms]
+(pass) ROX UI-001 workspace persistence isolation > does not save old viewFilters over the next workspace during restoration [31.34ms]
+(pass) ROX UI-001 workspace persistence isolation > does not save old collapsedSidebarItems over the next workspace during restoration [24.28ms]
+
+ 8 pass
+ 0 fail
+ 22 expect() calls
+Ran 8 tests across 1 file. [1321.00ms]
