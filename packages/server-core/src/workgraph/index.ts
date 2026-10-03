@@ -9,7 +9,7 @@ import { atomicWriteFileSync } from '@rox/shared/utils'
 const WORKGRAPH_DIRECTORY = 'workgraph'
 const DATABASE_FILENAME = 'workgraph.db'
 const PROVISIONING_FILENAME = 'workgraph-provisioning.json'
-const WORKGRAPH_SCHEMA_VERSION = 2
+const WORKGRAPH_SCHEMA_VERSION = 3
 const OPAQUE_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/
 const CREDENTIAL_REF_ID =
   /^cred_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -104,6 +104,7 @@ export interface ConnectionRecord {
 }
 
 export interface ConnectionAuditRecord {
+  readonly action: string
   readonly connectionId: string
   readonly eventType: string
   readonly occurredAt: number
@@ -287,6 +288,9 @@ const MIGRATIONS: readonly Migration[] = [
     CREATE INDEX IF NOT EXISTS workgraph_connection_bindings_workspace_idx
       ON workgraph_connection_bindings (workspace_id, connection_id);
   `),
+  migration(3, `
+    ALTER TABLE workgraph_ledger ADD COLUMN action TEXT;
+  `),
 ]
 
 export function isWorkGraphPlatformSupported(platform: WorkGraphPlatform = process): boolean {
@@ -458,8 +462,8 @@ export class WorkGraphKernel {
       await transaction.run(
         `INSERT INTO workgraph_ledger (
           event_id, workspace_id, object_id, relation_id, event_type, occurred_at, actor_kind, actor_id,
-          source_kind, correlation_id, causation_id, schema_version, outcome, payload_digest
-        ) VALUES (?, ?, ?, NULL, ?, ?, ?, NULL, ?, NULL, NULL, ?, ?, ?)`,
+          source_kind, correlation_id, causation_id, schema_version, outcome, payload_digest, action
+        ) VALUES (?, ?, ?, NULL, ?, ?, ?, NULL, ?, NULL, NULL, ?, ?, ?, ?)`,
         eventId,
         input.workspaceId,
         id,
@@ -470,6 +474,7 @@ export class WorkGraphKernel {
         WORKGRAPH_SCHEMA_VERSION,
         'committed',
         payloadDigest,
+        'connection.create',
       )
     })
     await mutation.immediate()
@@ -647,15 +652,15 @@ export class WorkGraphKernel {
     assertOpaqueId(workspaceId, 'workspace ID')
     if (connectionId) assertOpaqueId(connectionId, 'connection ID')
     const eventTypes = (
-      "'connection-audit', 'connection-revoked', 'connection-rotated', 'connection-repaired', 'connection-reconnected', 'connection-moved', 'connection-converted', 'connection-binding-revoked'"
+      "'connection-created', 'connection-audit', 'connection-revoked', 'connection-rotated', 'connection-repaired', 'connection-reconnected', 'connection-moved', 'connection-converted', 'connection-binding-revoked'"
     )
     const sql = connectionId
-      ? `SELECT object_id, event_type, occurred_at, actor_id, outcome, payload_digest
+      ? `SELECT object_id, event_type, occurred_at, actor_id, outcome, payload_digest, action
          FROM workgraph_ledger
          WHERE workspace_id = ? AND object_id = ?
            AND event_type IN (${eventTypes})
          ORDER BY sequence DESC LIMIT 100`
-      : `SELECT object_id, event_type, occurred_at, actor_id, outcome, payload_digest
+      : `SELECT object_id, event_type, occurred_at, actor_id, outcome, payload_digest, action
          FROM workgraph_ledger
          WHERE workspace_id = ?
            AND event_type IN (${eventTypes})
@@ -681,6 +686,7 @@ export class WorkGraphKernel {
         actorId: row.actor_id ?? null,
         outcome: row.outcome,
         payloadDigest: row.payload_digest,
+        action: typeof row.action === 'string' ? row.action : row.event_type,
       }
     })
   }
@@ -710,8 +716,8 @@ export class WorkGraphKernel {
     await database.run(
       `INSERT INTO workgraph_ledger (
         event_id, workspace_id, object_id, relation_id, event_type, occurred_at, actor_kind, actor_id,
-        source_kind, correlation_id, causation_id, schema_version, outcome, payload_digest
-      ) VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?)`,
+        source_kind, correlation_id, causation_id, schema_version, outcome, payload_digest, action
+      ) VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?)`,
       randomUUID(),
       input.workspaceId,
       input.connectionId,
@@ -723,6 +729,7 @@ export class WorkGraphKernel {
       WORKGRAPH_SCHEMA_VERSION,
       input.decision === 'allow' ? 'committed' : 'denied',
       payloadDigest,
+      input.action,
     )
   }
 

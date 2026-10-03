@@ -9,6 +9,7 @@ import * as React from 'react'
 
 import { createLayoutCommitDebouncer, SHELL_LAYOUT_KEYBOARD_DEBOUNCE_MS } from '@/lib/shell-layout-preferences'
 import { createResizeController, type ResizeBounds, type ResizeController } from '@/components/app-shell/resize-controller'
+import type { PanelResizeAxis } from '@/lib/panel-workspace-layout'
 
 export interface UsePanelResizeHandlers {
   onPreview: (sizeA: number, sizeB: number) => void
@@ -16,14 +17,15 @@ export interface UsePanelResizeHandlers {
   onCancel: (sizeA: number, sizeB: number) => void
 }
 
-export function usePanelResize(handlers: UsePanelResizeHandlers) {
+export function usePanelResize(handlers: UsePanelResizeHandlers, axis: PanelResizeAxis = 'x') {
   const handlersRef = React.useRef(handlers)
   handlersRef.current = handlers
   const controllerRef = React.useRef<ResizeController | null>(null)
-  const originXRef = React.useRef(0)
-  const capturingElRef = React.useRef<HTMLElement | null>(null)
+  const originRef = React.useRef(0)
+  const captureRef = React.useRef<{ element: HTMLElement; pointerId: number } | null>(null)
   const releasedNormallyRef = React.useRef(false)
   const previousBodyRef = React.useRef<{ cursor: string; userSelect: string }>({ cursor: '', userSelect: '' })
+  const ownsBodyStylesRef = React.useRef(false)
   const [dragging, setDragging] = React.useState(false)
 
   const keyboardCommit = React.useMemo(
@@ -34,8 +36,21 @@ export function usePanelResize(handlers: UsePanelResizeHandlers) {
   )
 
   const restoreBody = React.useCallback(() => {
+    if (!ownsBodyStylesRef.current) return
+    ownsBodyStylesRef.current = false
     document.body.style.cursor = previousBodyRef.current.cursor
     document.body.style.userSelect = previousBodyRef.current.userSelect
+  }, [])
+
+  const stopCapture = React.useCallback(() => {
+    const capture = captureRef.current
+    captureRef.current = null
+    if (!capture) return
+    try {
+      if (capture.element.hasPointerCapture(capture.pointerId)) {
+        capture.element.releasePointerCapture(capture.pointerId)
+      }
+    } catch { /* Element may have been removed during a panel close. */ }
   }, [])
 
   const ensureController = React.useCallback(() => {
@@ -45,71 +60,64 @@ export function usePanelResize(handlers: UsePanelResizeHandlers) {
       onCommit: (a, b) => {
         setDragging(false)
         restoreBody()
+        stopCapture()
         handlersRef.current.onCommit(a, b)
       },
       onCancel: (a, b) => {
         setDragging(false)
         restoreBody()
+        stopCapture()
         handlersRef.current.onCancel(a, b)
       },
     })
     return controllerRef.current
-  }, [restoreBody])
-
-  const stopCapture = React.useCallback(() => {
-    const el = capturingElRef.current
-    capturingElRef.current = null
-    if (el && typeof el.hasPointerCapture === 'function') {
-      try {
-        // hasPointerCapture needs an id; release if any
-      } catch {
-        // ignore
-      }
-    }
-  }, [])
+  }, [restoreBody, stopCapture])
 
   const handlePointerDown = React.useCallback((event: React.PointerEvent<HTMLElement>, bounds: ResizeBounds | null) => {
     if (event.button !== 0 || event.isPrimary === false || !bounds) return
     const controller = ensureController()
+    keyboardCommit.cancel()
+    if (controller.active) controller.commit()
     if (!controller.start(bounds)) return
-    originXRef.current = event.clientX
+    originRef.current = axis === 'x' ? event.clientX : event.clientY
     releasedNormallyRef.current = false
     previousBodyRef.current = {
       cursor: document.body.style.cursor,
       userSelect: document.body.style.userSelect,
     }
-    document.body.style.cursor = 'col-resize'
+    ownsBodyStylesRef.current = true
+    document.body.style.cursor = axis === 'x' ? 'col-resize' : 'row-resize'
     document.body.style.userSelect = 'none'
     setDragging(true)
-    capturingElRef.current = event.currentTarget
+    captureRef.current = { element: event.currentTarget, pointerId: event.pointerId }
     event.currentTarget.setPointerCapture(event.pointerId)
     event.preventDefault()
-  }, [ensureController])
+  }, [axis, ensureController, keyboardCommit])
 
   const handlePointerMove = React.useCallback((event: React.PointerEvent<HTMLElement>) => {
     const controller = controllerRef.current
     if (!controller?.active || !controller.snapshot) return
-    controller.moveTo(controller.snapshot.sizeA + (event.clientX - originXRef.current))
-  }, [])
+    if (captureRef.current?.pointerId !== event.pointerId) return
+    const coordinate = axis === 'x' ? event.clientX : event.clientY
+    controller.moveTo(controller.snapshot.sizeA + coordinate - originRef.current)
+  }, [axis])
 
   const handlePointerUp = React.useCallback((event: React.PointerEvent<HTMLElement>) => {
     const controller = controllerRef.current
     if (!controller?.active) return
+    if (captureRef.current?.pointerId !== event.pointerId) return
     releasedNormallyRef.current = true
-    try { event.currentTarget.releasePointerCapture(event.pointerId) } catch { /* already released */ }
-    capturingElRef.current = null
+    stopCapture()
     controller.commit()
-  }, [])
+  }, [stopCapture])
 
   const handlePointerCancel = React.useCallback(() => {
     controllerRef.current?.cancel()
-    capturingElRef.current = null
   }, [])
 
   const handleLostPointerCapture = React.useCallback(() => {
     if (releasedNormallyRef.current) return
     controllerRef.current?.cancel()
-    capturingElRef.current = null
   }, [])
 
   const handleKeyAdjust = React.useCallback((delta: number, bounds: ResizeBounds | null) => {
@@ -124,6 +132,7 @@ export function usePanelResize(handlers: UsePanelResizeHandlers) {
   }, [ensureController, keyboardCommit])
 
   const handleKeyCommit = React.useCallback(() => {
+    if (captureRef.current) return
     keyboardCommit.cancel()
     controllerRef.current?.commit()
   }, [keyboardCommit])

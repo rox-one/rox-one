@@ -1,3 +1,16 @@
+## Golden Gate persisted panel workspace recovery plan — 2026-10-03
+
+Closing a focused panel restores DOM focus only when the disconnected node belongs to that removed panel or tab. Preserve another live focus owner, dialog, IME, resize and hidden targets; exercise actual closePanelAtom and production PanelStackContainer in browser adverse controls.
+
+1. Establish the live gap: current main horizontal flex has no workspace grid modes or persisted row/column tracks. Bind the missing closure to the source manifest.
+2. Recover state/parser/atom/hook/menu/sash and adapt current container/slot/axis resize; preserve current native focus and UI-001 guards.
+3. Verify mode and committed fraction persistence, preview/cancel, workspace isolation, malformed stored data, ragged focus, route identity and retained drafts with production renderer components.
+4. Run complete types, WebUI/Electron renderer and i18n gates; publish separate candidate and exact remote readback. Root retains independent review and serial merge; all source branches remain.
+
+# Golden Gate meeting request ownership integration (2026-10-03)
+
+Owner: pr_scout; merge owner: root. Depends on main UI/native/profile contracts; preserve LocalMeetingDetail profile and analysis work owned by historical_sweep. Graph: source/consumer comparison → committed request tracker + current callbacks → executed production-callback adverse timing tests and current Notes equivalence controls → renderer typecheck/build/localization → exact source readback and separate PR. Original branches are retained. Tests cover duplicate submission, edited draft, rejection/retry, A→B→A, disposal, latest record/deletion, stale subscriber, pending catalogue overlay and transcript success/refusal.
+
 ## Golden Gate device diagnostics recovery plan — 2026-10-03
 
 1. Historical scout identified exact source revision and runtime files absent from main; integration worker audited the diagnostic dependency closure and recorded source hashes.
@@ -688,9 +701,43 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
 
 
+### Session project membership metadata recovery (2026-10-03)
+
+- Owner: recent-features worker; dependencies: current shared serialized session writer, SessionManager, current workspace-confined project delete path and collection query.
+- Selectively adapt source `c0ef036e9c9b627589ad4e2a055abac0212b4295` metadata/storage helpers, preserve primary defaults and canonical project access. Exclude old closed-project-only visibility helpers; current readable-context authority remains canonical.
+- Verify actual create/list/reload/unrelated-save round trips, primary/secondary unlink with transcript preservation, existing manager primary/bulk mutations, workspace-isolated live-owner unlink, secondary filter and external disk mutation during a queued write. Run current persistence/bulk/cold metadata regressions, relevant package types and renderer event controls.
+- Delivery: separate codex branch and PR; original branches retained, lead owns ordered main merge.
+## Recovered connection audit action projection — 2026-10-03
+
+Owner: branch integration lead. Source: checkpoint/session-audit-20260821-craft-agents @86154e8c812746261282bb4c517b16ad7becc0ec; dependency: delivered Connections producer PR1414 and current canonical WorkGraph SQLite. Recover the missing additive schema3 action column and creation audit projection. V1/V2 migration SQL/checksums must remain identical; migration3 SQL matches the source. Older ledger rows remain immutable and expose event type as the fallback action. Only metadata action labels cross transport; never restore payload content.
+
+Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/installation, schema3 restart, current actions plus creation event, foreign workspace exclusion and update/delete trigger refusal. The negative control runs the actual new test against unchanged main. Existing kernel/connection/revalidation and consumed server types must pass. Deliver independently and retain the source branch. This supplies audit metadata for the separately recovered Connections UI; no native/provider acceptance is claimed.
+
+## Explicit Connection host import recovery — 2026-10-03
+
+1. Historical worker verifies actual source delta and local-only Electron handler -> current adapter -> existing importer/host-runner call chain. Lead retains integration; original source branch remains unchanged.
+2. Recover commit defaults, preserving direct injected importer overrides. Add internal low-level runner ports used only by tests and host composition. Keep candidate previews free of helper password/process execution, except explicit metadata/public-identity list operations.
+3. Test all five positive selected paths, output masking/copy/reference behavior, unknown candidate refusal before secret access, helper failure without Connection/copy, and explicit override precedence. Prove negative controls by restoring exact pre-change adapter blobs, then restore candidate before final checks.
+4. Run existing importer/runner/workgraph/handler controls and consumed server-core/Electron types. Publish a separate codex PR and exact remote-head/proof receipt; lead merges after qualification. No actual host credential reads or external sends are part of verification.
+
 ### Calendar synchronization ownership recovery (2026-10-03)
 
 - Owner: recent-features integration worker; dependency: current canonical CalendarStore and adapters.
 - Recover the absent per-account request fence from source `1dd90c5031087855e72cd3ecfce7dd057a2a6208`, preserving current conflict/identity and provider-readiness behavior.
 - Verification: deterministic deferred adapters reproduce stale event/cursor overwrite, stale conflict/delete replacement and newer-failure/older-success races before the fix; after the fix verify all three and independent-account/revocation controls, plus the complete calendar suite and core types.
 - Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.
+
+
+## Validated personal task import recovery — 2026-10-03
+
+1. Historical worker maps Golden's consumed import guard to actual current TasksPage onImport and cache tryFromJson consumers. Root owns other Golden UI; this recovery changes core validation and tests only.
+2. Add a pure current-model row validator at tryFromJson before store construction. Preserve old empty/missing-collection/version compatibility and richer modern optional fields and link kinds. Use existing quarantine reason/raw preservation.
+3. Verify modern rich export roundtrip, malformed/duplicate/nested rows, nonfinite JSON overflow, cache original/staging separation, and executed current file callback refusing writes for invalid input and preserving existing tasks for valid input. Restore exact old store for negative controls, then restore candidate.
+4. Run relevant personal task/cache/import tests and consumed core/Electron types. Publish a separate PR with exact source/revision/proof; root merges. Retain original Golden branch and do not imply other Golden UI or installed/native acceptance.
+
+## Scoped Notes comment draft recovery — 2026-10-03
+
+1. Historical worker verifies Golden source comment helper is consumed in old NotesPage and finds the same genuine unscoped quote/body state in actual current NativeNotesPage. Parent owns other Golden/layout/focus work; no shared UI layout files are edited here.
+2. Recover the pure keyed draft map and bind current floating composer setters to workspace plus active document identity. Preserve current write/mutation authority and in-page draft lifetime.
+3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
+4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
