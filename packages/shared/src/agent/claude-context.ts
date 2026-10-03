@@ -193,6 +193,7 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
       : [null, null];
     const readiness = getBuiltinMcpReadiness(sharedSource.config, {
       token, credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
+      workspaceRootPath: sharedSource.workspaceRootPath, sourceFolderPath: sharedSource.folderPath,
     });
     if (readiness.status !== 'ready') return { config: null, error: readiness.reason || 'MCP source setup is incomplete.' };
     const built = getSourceServerBuilder().buildMcpServer(sharedSource, token, credential);
@@ -212,7 +213,10 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
       };
       const manager = getSourceCredentialManager();
       const [token, credential] = await Promise.all([manager.getToken(sharedSource), manager.getApiCredential(sharedSource)]);
-      const builtinOptions = { token, credential: credential && isMultiHeaderCredential(credential) ? credential : undefined };
+      const builtinOptions = {
+        token, credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
+        workspaceRootPath: sharedSource.workspaceRootPath, sourceFolderPath: sharedSource.folderPath,
+      };
       const readiness = getBuiltinMcpReadiness(config, builtinOptions);
       if (readiness.status !== 'ready') return { config: null, error: readiness.reason || 'MCP source setup is incomplete.' };
       const built = getSourceServerBuilder().buildMcpServer(sharedSource, token, credential);
