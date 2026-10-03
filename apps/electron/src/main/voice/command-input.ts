@@ -51,11 +51,12 @@ export type VoiceInputPort = {
 
 /** Foreground key-up pairing, separate from globalShortcut's key-down API. */
 export function attachVoiceCommandInput(port: VoiceInputPort, options: {
-  prefs(): Pick<VoicePrefs, 'hotkeyMode' | 'cancelAccelerator'>
+  prefs(): Pick<VoicePrefs, 'hotkeyMode' | 'cancelAccelerator' | 'pttModifier'>
   isFocused(): boolean
   send(command: HotkeyCommand): boolean
 }): { cancelHeld(): void; dispose(): void } {
   let held = false
+  let heldModifier: string | undefined
   const cancelHeld = () => {
     if (!held) return
     held = false
@@ -71,14 +72,17 @@ export function attachVoiceCommandInput(port: VoiceInputPort, options: {
       if (options.send('cancel') && wasHeld) event.preventDefault()
       return
     }
-    const rightOption = input.code === 'AltRight' || (input.key?.toLowerCase() === 'alt' && input.location === 2)
-    if (!rightOption) return
+    const modifier = prefs.pttModifier ?? 'AltRight'
+    if (held && heldModifier !== modifier) { cancelHeld(); return }
+    const rightModifier = modifier !== 'none' && (input.code === modifier || (input.location === 2
+      && input.key?.toLowerCase() === (modifier === 'ControlRight' ? 'control' : 'alt')))
+    if (!rightModifier) return
     if (input.type === 'keyUp' && held) {
       held = false
       if (options.send('ptt-up')) event.preventDefault()
     } else if (input.type === 'keyDown' && prefs.hotkeyMode === 'ptt') {
       if (held) { event.preventDefault(); return }
-      if (options.send('ptt-down')) { held = true; event.preventDefault() }
+      if (options.send('ptt-down')) { held = true; heldModifier = modifier; event.preventDefault() }
     }
   }
   port.on('before-input-event', listener)

@@ -15,6 +15,7 @@ import { RPC_CHANNELS } from './channels'
 // ---------------------------------------------------------------------------
 
 export const LOCAL_ONLY_CHANNELS = new Set<string>([
+  RPC_CHANNELS.voice.COPY_TEXT,
   // Repository capture uses the verified local Electron source owner.
   RPC_CHANNELS.codeIntelligence.PREVIEW,
   RPC_CHANNELS.codeIntelligence.BIND,
@@ -504,6 +505,9 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.voice.HISTORY_FAVORITE,
   RPC_CHANNELS.voice.HISTORY_DELETE,
   RPC_CHANNELS.voice.HISTORY_EXPORT,
+  RPC_CHANNELS.voice.HISTORY_EDIT,
+  RPC_CHANNELS.voice.HISTORY_SELECT,
+  RPC_CHANNELS.voice.HISTORY_AUDIO,
   RPC_CHANNELS.voice.RETRANSCRIBE,
   RPC_CHANNELS.voice.REPROCESS,
   RPC_CHANNELS.voice.PROCESS,
