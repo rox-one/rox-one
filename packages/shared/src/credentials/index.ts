@@ -170,3 +170,5 @@ export type {
   CredentialMigrationSnapshot,
   CredentialMigrationStatus,
 } from './backends/types.ts';
+
+export { NamedCredentialBackend } from './backends/types.ts';

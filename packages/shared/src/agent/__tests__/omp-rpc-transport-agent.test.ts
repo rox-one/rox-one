@@ -27,16 +27,22 @@ describe('OMP negotiated transport before provider execution', () => {
     expect(frames.find(frame => frame.type === 'prompt')?.observedModel).toEqual({ provider: 'rox', id: 'standard' });
   });
 
-  it('sends a large provider command using negotiated outbound chunks', async () => {
-    const { agent, fake } = setup('transport-large-command');
-    const message = 'QA large command ' + 'x'.repeat(1_424_866);
-    const events = await chatEvents(agent, message, 8_000);
-    expect(events.some(event => event.type === 'text_complete')).toBe(true);
-    expect(fake.readRpcLog().find(frame => frame.type === 'prompt')?.message).toBe(
-      `<sources>\nActive: none\n</sources>\n\n${withOmpRequiredModes(message)}`,
-    );
-    expect(fake.readRpcLog().find(frame => frame.type === 'prompt')?.observedModel).toEqual({ provider: 'rox', id: 'standard' });
-  });
+  for (const sourceState of ['', '<sources>\nActive: none\n</sources>']) {
+    it(`sends an exact large provider command with ${sourceState ? 'source' : 'empty'} context using negotiated outbound chunks`, async () => {
+      const { agent, fake } = setup('transport-large-command');
+      // Own this fixture instead of inheriting another suite's SourceManager
+      // module mock. Production adds this volatile context before the user tail.
+      agent.getSourceManager().formatSourceState = () => sourceState;
+      const message = 'QA large command ' + 'x'.repeat(1_424_866);
+      const events = await chatEvents(agent, message, 8_000);
+      expect(events.some(event => event.type === 'error')).toBe(false);
+      expect(events.some(event => event.type === 'text_complete')).toBe(true);
+      const prompts = fake.readRpcLog().filter(frame => frame.type === 'prompt');
+      expect(prompts).toHaveLength(1);
+      expect(prompts[0]?.message).toBe(`${sourceState}\n\n${withOmpRequiredModes(message)}`);
+      expect(prompts[0]?.observedModel).toEqual({ provider: 'rox', id: 'standard' });
+    });
+  }
 
   it('preserves a small ordinary turn with an older v1-only peer', async () => {
     const { agent, fake } = setup('transport-v1');
