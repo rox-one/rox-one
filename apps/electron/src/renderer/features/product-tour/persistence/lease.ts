@@ -3,6 +3,14 @@ import { createDatabaseAccess, requestValue, transaction, UnsupportedLearningSch
 import type { LearningStorageOptions, StorageStatus } from './database'
 
 const memoryLeases = new Map<string, WindowLease>()
+function memoryLeaseKey(options: LearningStorageOptions, profileId: string) {
+  return JSON.stringify([options.databaseName ?? 'rox-product-tour', profileId])
+}
+/** Realm-local fallback only; it cannot prove ownership in another window. */
+export function hasCurrentMemoryLease(options: LearningStorageOptions, profileId: string, lease: WindowLease, now: number): boolean {
+  const current = memoryLeases.get(memoryLeaseKey(options, profileId))
+  return owns(current, lease) && current!.expiresAt > now && lease.expiresAt > now
+}
 export interface LearningLeaseRepository extends LeaseRepository {
   getStorageStatus(): StorageStatus
 }
@@ -34,7 +42,7 @@ export function createLeaseRepository(options: LearningStorageOptions = {}): Lea
       status = error instanceof UnsupportedLearningSchema ? 'failed' : 'memory-only'
     }
     if (status !== 'memory-only' || !options.allowMemoryOnlyLease) return null
-    const key = JSON.stringify([options.databaseName ?? 'rox-product-tour', profileId])
+    const key = memoryLeaseKey(options, profileId)
     const next = change(memoryLeases.get(key))
     if (next) memoryLeases.set(key, next)
     return next

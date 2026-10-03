@@ -56,6 +56,76 @@ describe('real IndexedDB learning transactions', () => {
     expect(result.afterRelease?.fence).toBe(result.next!.fence + 1)
   })
 
+  test('DATA-02 stale owner cannot persist milestones after another window acquires a newer fence', async () => {
+    const result = await inLearningWindows(async (first, second) => {
+      const original = await first.evaluate(async () => window.learningTest.createLeaseRepository().acquire('profile', 'a', 100))
+      if (!original) throw new Error('Expected original lease')
+      const replacement = await second.evaluate(async expiresAt => window.learningTest.createLeaseRepository().acquire('profile', 'b', expiresAt), original.expiresAt)
+      if (!replacement) throw new Error('Expected replacement lease')
+      const stale = await first.evaluate(async ({ tour, lease, now }) => {
+        const repository = window.learningTest.createProgressRepository({ now: () => now })
+        const scope = window.learningTest.createLearningScopeKey('profile', 'workspace')
+        try {
+          await repository.apply(scope, tour, { kind: 'evidence', stepId: 'first.send', stepVersion: 1, level: 'verified', at: now },
+            { profileId: 'profile', lease })
+          return { rejected: false, progress: await repository.read(scope, tour.id) }
+        } catch (error) {
+          return { rejected: error instanceof window.learningTest.LearningLeaseLostError, progress: await repository.read(scope, tour.id) }
+        }
+      // A locally valid expiry must not bypass the newer persisted fence.
+      }, { tour, lease: { ...original, expiresAt: replacement.expiresAt }, now: original.expiresAt + 1 })
+      const accepted = await second.evaluate(async ({ tour, lease, now }) => window.learningTest.createProgressRepository({ now: () => now }).apply(
+        window.learningTest.createLearningScopeKey('profile', 'workspace'), tour,
+        { kind: 'evidence', stepId: 'first.result', stepVersion: 1, level: 'verified', at: now }, { profileId: 'profile', lease }),
+      { tour, lease: replacement, now: original.expiresAt + 2 })
+      return { stale, accepted }
+    })
+    expect(result.stale.rejected).toBeTrue()
+    expect(result.stale.progress).toEqual({ status: 'saved', value: null })
+    expect(result.accepted.status).toBe('saved')
+    if (result.accepted.status === 'saved') {
+      expect(result.accepted.value.steps['first.send']).toBeUndefined()
+      expect(result.accepted.value.steps['first.result']?.verifiedAt).toBe(15_102)
+    }
+  })
+
+  test('guard rejects a released durable lease without switching progress into memory fallback', async () => {
+    const result = await inLearningBrowser(page => page.evaluate(async tour => {
+      const repository = window.learningTest.createProgressRepository({ now: () => 101 })
+      const leases = window.learningTest.createLeaseRepository()
+      const lease = await leases.acquire('profile', 'a', 100)
+      const scope = window.learningTest.createLearningScopeKey('profile', 'workspace')
+      await leases.release('profile', lease!)
+      let rejected = false
+      try { await repository.apply(scope, tour, { kind: 'skip', stepId: 'first.send', stepVersion: 1, at: 101 }, { profileId: 'profile', lease: lease! }) }
+      catch (error) { rejected = error instanceof window.learningTest.LearningLeaseLostError }
+      return { rejected, read: await repository.read(scope, tour.id) }
+    }, tour))
+    expect(result).toEqual({ rejected: true, read: { status: 'saved', value: null } })
+  })
+
+  test('explicit memory guard validates realm lease and never writes durable milestones', async () => {
+    const result = await inLearningBrowser(page => page.evaluate(async tour => {
+      const leaseRepository = window.learningTest.createLeaseRepository({ indexedDB: null, allowMemoryOnlyLease: true })
+      const lease = await leaseRepository.acquire('profile', 'a', 100)
+      const scope = window.learningTest.createLearningScopeKey('profile', 'workspace')
+      const repository = window.learningTest.createProgressRepository({ now: () => 101 })
+      const progress = await repository.apply(scope, tour, { kind: 'evidence', stepId: 'first.send', stepVersion: 1, level: 'verified', at: 101 },
+        { profileId: 'profile', lease: lease!, memoryOnly: true })
+      const durable = await window.learningTest.createProgressRepository().read(scope, tour.id)
+      await leaseRepository.release('profile', lease!)
+      let rejected = false
+      try { await repository.apply(scope, tour, { kind: 'skip', stepId: 'first.result', stepVersion: 1, at: 102 },
+        { profileId: 'profile', lease: lease!, memoryOnly: true }) }
+      catch (error) { rejected = error instanceof window.learningTest.LearningLeaseLostError }
+      return { progress, durable, memoryRead: await repository.read(scope, tour.id), rejected }
+    }, tour))
+    expect(result.progress.status).toBe('memory-only')
+    expect(result.memoryRead.status).toBe('memory-only')
+    expect(result.durable).toEqual({ status: 'saved', value: null })
+    expect(result.rejected).toBeTrue()
+  })
+
   test('DATA-03 denied storage is explicit memory-only and cannot claim a partition lease', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async tour => {
       const progress = window.learningTest.createProgressRepository({ indexedDB: null })
