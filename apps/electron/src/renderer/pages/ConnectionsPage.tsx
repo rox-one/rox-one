@@ -81,6 +81,11 @@ export default function ConnectionsPage() {
   const auditViewReady = useRef(false)
   const [auditSurface, setAuditSurface] = useState<SurfaceState | 'loading'>('loading')
   const [tab, setTab] = useState<ConnectionsTab>('services')
+  const servicesViewport = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    servicesTarget(tab === 'services' ? servicesViewport.current : null)
+    return () => servicesTarget(null)
+  }, [servicesTarget, tab])
   const [selected, setSelected] = useAtom(selectedConnectionAtom)
   const [rows, setRows] = useState<ConnectionListRow[] | null>(null)
   const [rowsWorkspaceId, setRowsWorkspaceId] = useState<string | null>(null)
@@ -114,11 +119,15 @@ export default function ConnectionsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const currentWorkspace = useRef<string | undefined>(undefined)
   const listGeneration = useRef(0)
+  const auditGeneration = useRef(0)
   useLayoutEffect(() => {
     const id = workspace?.id
-    currentWorkspace.current = id; listGeneration.current++
+    const invalidateRequests = () => { listGeneration.current++; auditGeneration.current++ }
+    currentWorkspace.current = id; invalidateRequests()
+    auditObservation.current = null
     setRows(null); setSelected(null)
-    return () => { if (currentWorkspace.current === id) currentWorkspace.current = undefined; listGeneration.current++ }
+    setAuditRows([]); setAuditWorkspaceId(null); setAuditSurface('loading')
+    return () => { if (currentWorkspace.current === id) currentWorkspace.current = undefined; invalidateRequests() }
   }, [workspace?.id, setSelected])
 
   useEffect(() => {
@@ -156,6 +165,8 @@ export default function ConnectionsPage() {
   useEffect(() => {
     if (tab !== 'audit') return
     setAuditSurface('loading')
+    setAuditWorkspaceId(null)
+    setAuditRows([])
     const workspaceId = workspace?.id
     const listConnectionAudit = window.electronAPI?.workgraph?.listConnectionAudit
     if (!workspaceId || typeof listConnectionAudit !== 'function') {
@@ -164,16 +175,17 @@ export default function ConnectionsPage() {
       return
     }
     let stale = false
+    const request = ++auditGeneration.current
     auditObservation.current = captureTour.current()
     listConnectionAudit({ workspaceId })
       .then((raw) => {
-        if (stale) return
+        if (stale || currentWorkspace.current !== workspaceId || request !== auditGeneration.current) return
         setAuditRows(sanitizeConnectionAuditRows(raw))
         setAuditSurface('ready')
         setAuditWorkspaceId(workspaceId)
       })
       .catch(() => {
-        if (stale) return
+        if (stale || currentWorkspace.current !== workspaceId || request !== auditGeneration.current) return
         setAuditRows([])
         setAuditSurface('unavailable')
       })
@@ -204,9 +216,10 @@ export default function ConnectionsPage() {
   }, [tab, workspace?.id])
 
   useEffect(() => {
-    const fabric = surface !== 'ready' ? surface : rowsWorkspaceId !== workspace?.id || rows === null ? 'loading' : tab === 'audit' ? auditSurface : 'ready'
+    // Audit has its own loading/result evidence; its read does not disable Fabric.
+    const fabric = surface !== 'ready' ? surface : rowsWorkspaceId !== workspace?.id || rows === null ? 'loading' : 'ready'
     return tour.capability('connection-fabric.available', connectionCapabilities({ fabric })['connection-fabric.available']!)
-  }, [tour, surface, rows, tab, auditSurface, rowsWorkspaceId, workspace?.id])
+  }, [tour, surface, rows, rowsWorkspaceId, workspace?.id])
 
   auditViewReady.current = tab === 'audit' && surface === 'ready' && rows !== null && auditSurface === 'ready' && rowsWorkspaceId === workspace?.id && auditWorkspaceId === workspace?.id
   useEffect(() => {
@@ -544,7 +557,7 @@ export default function ConnectionsPage() {
           </button>
         ))}
       </div>
-      <ScrollArea className="flex-1 min-h-0">
+      <ScrollArea viewportRef={servicesViewport} data-product-tour-target={tab === 'services' ? 'connections.services' : undefined} className="flex-1 min-h-0">
       <div className="mx-auto flex w-full max-w-4xl flex-col px-6 pt-2 pb-16 text-muted-foreground">
         {tab === 'services' && <ProjectAuthorityConnectionPanel />}
         {tab === 'imports' ? (
@@ -753,7 +766,7 @@ export default function ConnectionsPage() {
             </ul>
           </div>
         ) : tab === 'services' ? (
-          <div ref={servicesTarget} className="space-y-6 text-sm text-foreground" data-product-tour-target="connections.services">
+          <div className="space-y-6 text-sm text-foreground">
             {workspace?.id ? <ConnectionsOverview workspaceId={workspace.id} reloadKey={reloadKey} /> : null}
             <OverviewGroup
               title={t('connections.overview.credentials')}

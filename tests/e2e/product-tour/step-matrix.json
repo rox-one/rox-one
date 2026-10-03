@@ -221,7 +221,7 @@
         "priorState": "same-attempt",
         "requireAcknowledgementAfterEvidence": true
       },
-      "handoff": false,
+      "handoff": true,
       "optional": false,
       "onUnavailable": "block"
     },

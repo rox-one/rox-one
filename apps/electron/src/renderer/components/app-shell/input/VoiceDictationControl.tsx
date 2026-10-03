@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { Mic, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useOptionalModalRegistry } from '@/context/ModalContext'
+import { useOptionalDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import { isMac } from '@/lib/platform'
 import { VoiceCommandController } from '../../../voice/command-controller'
 import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
@@ -48,6 +50,15 @@ export function VoiceDictationControl({
   const { t } = useTranslation()
   const voiceTarget = useTourTarget('composer.voice', { variant: compactMode ? 'compact' : 'regular' })
   const tourSignals = useTourSignals()
+  const modals = useOptionalModalRegistry()
+  const layers = useOptionalDismissibleLayerRegistry()
+  const nativePermissionRef = useRef<{ captureId: number; close: () => void } | null>(null)
+  const closeNativePermission = useCallback((captureId?: number) => {
+    const prompt = nativePermissionRef.current
+    if (!prompt || (captureId !== undefined && prompt.captureId !== captureId)) return
+    nativePermissionRef.current = null
+    prompt.close()
+  }, [])
   const dictationObservationRef = useRef<TourObservation | null>(null)
   useEffect(() => tourSignals.capability('voice.available', typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof window.electronAPI?.startVoiceCapture === 'function' ? { state: 'ready' } : { state: 'unavailable', reason: 'api-unavailable' }), [tourSignals])
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
@@ -180,6 +191,7 @@ export function VoiceDictationControl({
   }, [prefs?.sttEngine, prefs?.delivery, prefs?.trailingSpace, stopTracks, t, tourSignals])
 
   const cancelRecording = useCallback(() => {
+    closeNativePermission(captureIdRef.current)
     dictationObservationRef.current = null
     nativeRecordingIdRef.current = null
     pendingOverlayCommandsRef.current.clear()
@@ -196,7 +208,7 @@ export function VoiceDictationControl({
     stopTracks()
     if (recorder && recorder.state !== 'inactive') recorder.stop()
     if (hostStarted) void cancelHostCapture()
-  }, [stopTracks])
+  }, [closeNativePermission, stopTracks])
 
   const cancelRecordingRef = useRef(cancelRecording)
   cancelRecordingRef.current = cancelRecording
@@ -216,15 +228,34 @@ export function VoiceDictationControl({
     const captureId = ++captureIdRef.current
     nativeRecordingIdRef.current = null
     pendingOverlayCommandsRef.current.clear()
-    dictationObservationRef.current = tourSignals.capture()
+    const observation = tourSignals.capture()
+    dictationObservationRef.current = observation
     activeRequestRef.current = true
     let pendingStream: MediaStream | null = null
     try {
-      pendingStream = await navigator.mediaDevices.getUserMedia({
-        audio: selectedPrefs.selectedInputDeviceId
-          ? { deviceId: { exact: selectedPrefs.selectedInputDeviceId } }
-          : true,
-      })
+      if (observation) {
+        // The OS permission prompt has no DOM layer. Register this capture's
+        // ownership before opening it so the provider retains its handoff on blur.
+        const id = `voice-microphone-${observation.operationToken}`
+        const cancel = () => { if (captureId === captureIdRef.current) cancelRecordingRef.current() }
+        const unregisterModal = modals?.registerModal(id, cancel, 100)
+        const unregisterLayer = layers?.registerLayer({ id, type: 'custom', priority: 100, close: cancel })
+        nativePermissionRef.current = { captureId, close: () => {
+          unregisterLayer?.()
+          unregisterModal?.()
+          tourSignals.handoff(observation, false)
+        } }
+        tourSignals.handoff(observation, true)
+      }
+      try {
+        pendingStream = await navigator.mediaDevices.getUserMedia({
+          audio: selectedPrefs.selectedInputDeviceId
+            ? { deviceId: { exact: selectedPrefs.selectedInputDeviceId } }
+            : true,
+        })
+      } finally {
+        closeNativePermission(captureId)
+      }
       const stream = pendingStream
       if (captureId !== captureIdRef.current) {
         stream.getTracks().forEach((track) => track.stop())
@@ -290,7 +321,7 @@ export function VoiceDictationControl({
       startingRef.current = false
       if (captureId === captureIdRef.current) setStarting(false)
     }
-  }, [finishRecording, prefs, stopTracks, t, tourSignals])
+  }, [closeNativePermission, finishRecording, layers, modals, prefs, stopTracks, t, tourSignals])
 
   const enableCloudTranscription = useCallback(async () => {
     const captureId = captureIdRef.current
@@ -338,13 +369,14 @@ export function VoiceDictationControl({
 
   useEffect(() => () => {
     void commandRef.current?.handle('cancel')
+    closeNativePermission()
     captureIdRef.current += 1
     const recorder = recorderRef.current
     recorderRef.current = null
     chunksRef.current = []
     if (recorder && recorder.state !== 'inactive') recorder.stop()
     stopTracks()
-  }, [stopTracks])
+  }, [closeNativePermission, stopTracks])
 
   const label = starting ? t('common.loading') : recording ? t('chat.dictateStop') : t('chat.dictate')
 
