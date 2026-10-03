@@ -393,3 +393,8 @@ The [original spec](integration-history/pr1292/spec.md) remains a source-bound h
 ## PR1313 roadmap recovery evidence
 
 The [original spec](integration-history/pr1313/spec.md) is retained as historical scope/evidence. Current merged native authorization, revision/CAS and September model/request safeguards remain authoritative.
+
+
+## PR1230 OMP/session program evidence
+
+The [original spec](integration-history/pr1230/spec.md) is retained alongside current runtime context, protocol negotiation, child-scoped transport errors and public-model cleanup contracts. Historical acceptance remains source-bound.
