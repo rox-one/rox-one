@@ -1,5 +1,9 @@
 # September program implementation plan
 
+## Current execution policy — 2026-10-03
+
+The user now authorizes integration of all captured open PRs and concurrent Windows10/11, macOS and hosted Web development. [The Russian parallel launch plan](final-readiness/17-parallel-launch-plan.ru.md) and [exact445-leaf allocation](final-readiness/parallel-work/launch-plan.json) define current dispatch. Only named consumed outputs and phases impose mandatory order; historical global stage sequencing below is retained as historical evidence and does not block independent work. Existing parent acceptance requirements remain intact. [The integration receipt](final-readiness/parallel-work/pr-integration-receipt.json) distinguishes local source lineage, remote merged states and bounded checks from full release acceptance.
+
 
 ## Current native publication runtime recovery (2026-09-30)
 

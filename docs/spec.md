@@ -1,5 +1,9 @@
 # Unified Rox / Conation / RMA / Golden Gate behavioral specification
 
+## Current target and execution scope — 2026-10-03
+
+Windows10/11, macOS and hosted Web remain simultaneous completion targets. [Current dispatch and unavoidable dependencies](final-readiness/17-parallel-launch-plan.ru.md) preserve every original requirement/DoD and schedule445 executable leaves plus180 parent acceptance rollups. Historical sequential stage notes below do not supersede the user's latest concurrent-work authorization. PR integration and bounded source/fixture/runtime checks do not certify signed installed or production-hosted release behavior.
+
 
 ## Current September publication: SQLite runtime portability (2026-09-30)
 
