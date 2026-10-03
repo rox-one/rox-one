@@ -1,8 +1,38 @@
 #!/usr/bin/env bun
 /** Autoplan's blind reviewer inputs contain only the current implementation plan. */
 import { createHash } from 'node:crypto';
-import { linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmdirSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import fs from 'node:fs';
+import { linkSync, lstatSync, mkdirSync, mkdtempSync, realpathSync, renameSync, rmdirSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join } from 'node:path';
+
+/** A single bounded descriptor owns bytes and full-width file identity. */
+export function readAutoplanSnapshot(file: string): { bytes: Buffer; stat: fs.BigIntStats } {
+  const fd = fs.openSync(file, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
+  try {
+    const before = fs.fstatSync(fd, { bigint: true });
+    const named = fs.lstatSync(file, { bigint: true });
+    if (!before.isFile() || !named.isFile() || named.isSymbolicLink() || before.dev !== named.dev || before.ino !== named.ino || before.size > 32n * 1024n * 1024n)
+      throw new Error('Autoplan input must be one bounded regular file');
+    // One extra byte detects growth without allocating from a raced pathname.
+    const bytes = Buffer.alloc(Number(before.size) + 1);
+    let length = 0;
+    while (length < bytes.length) {
+      const count = fs.readSync(fd, bytes, length, bytes.length - length, null);
+      if (count === 0) break;
+      length += count;
+    }
+    const after = fs.fstatSync(fd, { bigint: true }), current = fs.lstatSync(file, { bigint: true });
+    if (!current.isFile() || current.isSymbolicLink() || before.dev !== current.dev || before.ino !== current.ino || before.mode !== current.mode || before.mode !== after.mode || before.size !== after.size || before.mtimeNs !== after.mtimeNs || before.ctimeNs !== after.ctimeNs || before.size !== current.size || before.mtimeNs !== current.mtimeNs || before.ctimeNs !== current.ctimeNs || BigInt(length) !== before.size)
+      throw new Error('Autoplan input changed during descriptor read');
+    return { bytes: bytes.subarray(0, length), stat: before };
+  } finally { fs.closeSync(fd); }
+}
+export function readAutoplanFile(file: string): Buffer;
+export function readAutoplanFile(file: string, encoding: 'utf8'): string;
+export function readAutoplanFile(file: string, encoding?: 'utf8'): Buffer | string {
+  const bytes = readAutoplanSnapshot(file).bytes;
+  return encoding ? bytes.toString(encoding) : bytes;
+}
 
 const PHASES = ['ceo', 'design', 'dx', 'eng'];
 const sha256 = (text: string | Buffer) => createHash('sha256').update(text).digest('hex');
@@ -23,7 +53,7 @@ function dxTermsFor(content: string) {
 /** Byte-bound scope evidence; semantic product/user triggers can only enable DX. */
 export function detectDxScope(activePlan: string, developerTool = false, agentPrimary = false) {
   const source = realpathSync(activePlan);
-  const content = extractImplementationPlan(readFileSync(source, 'utf8'));
+  const content = extractImplementationPlan(readAutoplanFile(source, 'utf8'));
   const terms = dxTermsFor(content);
   return { activePlan: source, sha256: sha256(content), ...terms, developerTool, agentPrimary,
     dxRequired: terms.dxRequiredByTerms || developerTool || agentPrimary };
@@ -312,7 +342,7 @@ function expectedAmendment(plan: string, phase: string, prior: string, state: Re
 /** The CLI close check adds exact recorded-obligation retention to the byte check. */
 export function checkPhaseImplementation(phase: string, activePlan: string, snapshotPath: string, expected: string) {
   const checked = checkImplementation(phase, activePlan, snapshotPath, expected);
-  const plan = readFileSync(checked.activePlan, 'utf8');
+  const plan = readAutoplanFile(checked.activePlan, 'utf8');
   const prior = snapshotIdentity(phase, activePlan, snapshotPath).original;
   const state = obligationState(plan, phase, prior);
   if (state.block.none ? state.applied.has(phase) : state.applied.get(phase)?.raw !== state.block.raw) {
@@ -329,7 +359,8 @@ export function checkPhaseImplementation(phase: string, activePlan: string, snap
 /** Copy the current phase's whole accepted block; never re-summarize its conditions. */
 export function amendImplementation(phase: string, activePlan: string, snapshotPath: string) {
   const source = realpathSync(activePlan);
-  const original = readFileSync(source, 'utf8');
+  const originalSnapshot = readAutoplanSnapshot(source);
+  const original = originalSnapshot.bytes.toString('utf8');
   const prior = snapshotIdentity(phase, activePlan, snapshotPath).original;
   // Reuse the unchanged snapshot identity checks without assuming current changes.
   checkImplementation(phase, source, snapshotPath, extractImplementationPlan(original) === prior ? 'unchanged' : 'changed');
@@ -352,13 +383,13 @@ export function amendImplementation(phase: string, activePlan: string, snapshotP
     throw new Error('Assembled accepted obligations do not match; no overwrite');
   }
   if (next !== original) {
-    const before = statSync(source, { bigint: true });
+    const before = originalSnapshot.stat;
     const directory = mkdtempSync(join(dirname(source), '.autoplan-amend-'));
     try {
       const stage = join(directory, 'plan');
       writeFileSync(stage, next, { flag: 'wx', mode: Number(before.mode & 0o777n) });
       const current = statSync(source, { bigint: true });
-      if (before.dev !== current.dev || before.ino !== current.ino || readFileSync(source, 'utf8') !== original) {
+      if (before.dev !== current.dev || before.ino !== current.ino || readAutoplanFile(source, 'utf8') !== original) {
         throw new Error('Active plan changed during amendment; no overwrite');
       }
       renameSync(stage, source);
@@ -380,15 +411,16 @@ export function initializePlan(sourcePlan: string, activePlan: string, restorePa
     const canonical = join(realpathSync(parent), ...missing, basename(file));
     const state = lstatSync(canonical, { throwIfNoEntry: false, bigint: true });
     if (state && !state.isFile()) throw new Error('Initialization destinations must be regular files, not links or directories');
-    return { file: canonical, state, bytes: state ? readFileSync(canonical) : undefined };
+    const snapshot = state ? readAutoplanSnapshot(canonical) : undefined;
+    return { file: canonical, state: snapshot?.stat, bytes: snapshot?.bytes };
   };
   const active = destination(activePlan);
   const restore = destination(restorePath);
   // Windows file IDs can exceed Number's exact range. Preserve their full
   // identity for alias, concurrent-change and rollback ownership checks.
-  const sourceState = statSync(source, { bigint: true });
-  if (!sourceState.isFile()) throw new Error('Initialization source must be a regular file');
-  const sourceBytes = readFileSync(source);
+  const sourceSnapshot = readAutoplanSnapshot(source);
+  const sourceState = sourceSnapshot.stat;
+  const sourceBytes = sourceSnapshot.bytes;
   const sameFile = (a: typeof sourceState, b: typeof sourceState) => a.dev === b.dev && a.ino === b.ino;
   if (restore.file === source || restore.file === active.file ||
       (restore.state && (sameFile(restore.state, sourceState) || (active.state && sameFile(restore.state, active.state)))) ||
@@ -427,8 +459,8 @@ export function initializePlan(sourcePlan: string, activePlan: string, restorePa
   const unchanged = () => {
     const now = statSync(source, { bigint: true });
     const current = lstatSync(active.file, { throwIfNoEntry: false, bigint: true });
-    if (!sameFile(now, sourceState) || !readFileSync(source).equals(sourceBytes) ||
-        (active.state ? !current?.isFile() || !sameFile(current, active.state) || !readFileSync(active.file).equals(active.bytes!) : current !== undefined)) {
+    if (!sameFile(now, sourceState) || !readAutoplanFile(source).equals(sourceBytes) ||
+        (active.state ? !current?.isFile() || !sameFile(current, active.state) || !readAutoplanFile(active.file).equals(active.bytes!) : current !== undefined)) {
       throw new Error('Initialization input or destination changed; refusing to overwrite it');
     }
   };
@@ -498,7 +530,7 @@ function methodologyContent(phase: string, skillFile: string) {
   const readPart = (file: string) => {
     const resolved = realpathSync(file);
     if (!statSync(resolved).isFile()) throw new Error('Methodology source must be a regular file');
-    const bytes = readFileSync(resolved);
+    const bytes = readAutoplanFile(resolved);
     const text = bytes.toString('utf8');
     if (!Buffer.from(text).equals(bytes)) throw new Error('Methodology source must be valid UTF-8');
     return { path: file, resolvedPath: resolved, bytes, text };
@@ -560,7 +592,7 @@ export function prepareMethodology(phase: string, skillFile: string, restorePath
   const directory = mkdtempSync(join(dirname(restore), `autoplan-${phase}-methodology-`));
   try {
     const methodologyPath = join(directory, 'methodology.md');
-    const manifest = { phase, methodologyPath, restorePath: restore, restoreSha256: sha256(readFileSync(restore)),
+    const manifest = { phase, methodologyPath, restorePath: restore, restoreSha256: sha256(readAutoplanFile(restore)),
       sha256: sha256(content.toString('utf8')), bytes: content.length,
       lines: content.toString('utf8').split('\n').length,
       readRanges: methodologyReadRanges(content.toString('utf8').split('\n').length), sources,
@@ -585,21 +617,22 @@ function requireMethodology(phase: string, restore: string, methodologyPath: str
       !basename(directory).startsWith(`autoplan-${phase}-methodology-`)) {
     throw new Error('Methodology artifact does not belong to this phase and restore directory');
   }
-  for (const file of [methodologyPath, manifestPath]) {
-    const stat = lstatSync(file);
-    if (!stat.isFile() || (process.platform !== 'win32' && (stat.mode & 0o777) !== 0o444)) {
+  const artifacts = new Map([methodologyPath, manifestPath].map(file => [file, readAutoplanSnapshot(file)]));
+  for (const artifact of artifacts.values()) {
+    const stat = artifact.stat;
+    if (process.platform !== 'win32' && (stat.mode & 0o777n) !== 0o444n) {
       throw new Error('Expected immutable regular methodology files');
     }
   }
-  const manifestBytes = readFileSync(manifestPath);
+  const manifestBytes = artifacts.get(manifestPath)!.bytes;
   const manifest = JSON.parse(manifestBytes.toString('utf8'));
   if (manifest.phase !== phase || manifest.methodologyPath !== methodologyPath || manifest.restorePath !== restore ||
-      manifest.restoreSha256 !== sha256(readFileSync(restore)) || !Array.isArray(manifest.sources) ||
+      manifest.restoreSha256 !== sha256(readAutoplanFile(restore)) || !Array.isArray(manifest.sources) ||
       typeof manifest.sources[0]?.path !== 'string') {
     throw new Error('Methodology identity does not match this phase and restore point');
   }
   const { content, sources } = methodologyContent(phase, manifest.sources[0].path);
-  if (!readFileSync(methodologyPath).equals(content) || manifest.sha256 !== sha256(content.toString('utf8')) ||
+  if (!artifacts.get(methodologyPath)!.bytes.equals(content) || manifest.sha256 !== sha256(content.toString('utf8')) ||
       manifest.bytes !== content.length || manifest.lines !== content.toString('utf8').split('\n').length ||
       JSON.stringify(manifest.readRanges) !== JSON.stringify(methodologyReadRanges(manifest.lines)) ||
       JSON.stringify(manifest.sources) !== JSON.stringify(sources)) {
@@ -615,7 +648,7 @@ export function createSnapshot(phase: string, activePlan: string, restorePath: s
   const restore = realpathSync(restorePath);
   if (source === restore || !statSync(restore).isFile()) throw new Error('Expected a separate restore-point file');
   const methodology = requireMethodology(phase, restore, methodologyPath);
-  const plan = readFileSync(source, 'utf8');
+  const plan = readAutoplanFile(source, 'utf8');
   const sourceContent = extractImplementationPlan(plan);
   const review = plan.slice(implementationBounds(plan).reviewStart);
   const records = acceptedBlocks(review);
@@ -675,8 +708,8 @@ function snapshotIdentity(phase: string, activePlan: string, snapshotPath: strin
   phaseName(phase);
   const source = realpathSync(activePlan);
   const snapshot = realpathSync(snapshotPath);
-  const manifest = JSON.parse(readFileSync(join(dirname(snapshot), 'snapshot.json'), 'utf8'));
-  const content = readFileSync(snapshot, 'utf8');
+  const manifest = JSON.parse(readAutoplanFile(join(dirname(snapshot), 'snapshot.json'), 'utf8'));
+  const content = readAutoplanFile(snapshot, 'utf8');
   if (![1, 2].includes(manifest.schemaVersion) || manifest.phase !== phase || manifest.activePlan !== source ||
       manifest.snapshotPath !== snapshot || manifest.sha256 !== sha256(content) || basename(snapshot) !== `${phase}-implementation.md`) {
     throw new Error('Snapshot identity/content does not match this phase and active plan');
@@ -687,7 +720,7 @@ function snapshotIdentity(phase: string, activePlan: string, snapshotPath: strin
     if (manifest.sourceSnapshotPath !== originalPath || !lstatSync(originalPath).isFile()) {
       throw new Error('Snapshot source identity does not match its immutable directory');
     }
-    original = readFileSync(originalPath, 'utf8');
+    original = readAutoplanFile(originalPath, 'utf8');
     if (manifest.sourceSha256 !== sha256(original) || manifest.sourceBytes !== Buffer.byteLength(original) ||
         implementationForReview(original) !== content) {
       throw new Error('Snapshot source content or blind review projection does not match');
@@ -703,7 +736,7 @@ function snapshotIdentity(phase: string, activePlan: string, snapshotPath: strin
 export function checkImplementation(phase: string, activePlan: string, snapshotPath: string, expected: string) {
   if (expected !== 'changed' && expected !== 'unchanged') throw new Error('Expected changed or unchanged');
   const { source, snapshot, original } = snapshotIdentity(phase, activePlan, snapshotPath);
-  const implementation = extractImplementationPlan(readFileSync(source, 'utf8'));
+  const implementation = extractImplementationPlan(readAutoplanFile(source, 'utf8'));
   const changed = implementation !== original;
   if (changed !== (expected === 'changed')) {
     throw new Error(`Implementation plan is ${changed ? 'changed' : 'unchanged'}; review-record/task edits are not implementation amendments`);
@@ -725,7 +758,7 @@ export function prepareAmendedInput(phase: string, activePlan: string, checkpoin
     }
     // The fresh snapshot is a readback, not a new baseline for existing edit records.
     checkImplementation(phase, amended.activePlan, exported.snapshotPath, 'unchanged');
-    const reviewInput = readFileSync(exported.snapshotPath, 'utf8');
+    const reviewInput = readAutoplanFile(exported.snapshotPath, 'utf8');
     const reviewInputLines = reviewInput.split('\n').length;
     return { phase, activePlan: amended.activePlan, checkpointPath: amended.snapshotPath,
       reviewInputPath: exported.snapshotPath, reviewInputSha256: exported.sha256,
@@ -743,7 +776,7 @@ export function prepareAmendedInput(phase: string, activePlan: string, checkpoin
 export function preparePhaseClose(phase: string, activePlan: string, checkpointPath: string, restorePath: string, methodologyPath: string) {
   const prepared = prepareAmendedInput(phase, activePlan, checkpointPath, restorePath, methodologyPath);
   try {
-    const implementation = readFileSync(prepared.reviewInputPath, 'utf8');
+    const implementation = readAutoplanFile(prepared.reviewInputPath, 'utf8');
     const report = {
       ceo: { number: '1', total: '6', next: 'Phase 2 (Design Review; the driver skips it if no UI scope)' },
       design: { number: '2', total: 'rows in the completed design litmus scorecard', next: '[Phase 2.5 (DX Review) if DX scope was detected; otherwise Phase 3 (Eng Review)]' },

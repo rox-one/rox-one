@@ -6,7 +6,7 @@ import * as os from 'node:os';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
-import { extractImplementationPlan, checkPhaseImplementation, acceptedBlocks } from '../../bin/gstack-autoplan-snapshot';
+import { extractImplementationPlan, checkPhaseImplementation, acceptedBlocks, readAutoplanFile, readAutoplanSnapshot } from '../../bin/gstack-autoplan-snapshot';
 import { autoplanPhaseCompletions } from '../../lib/autoplan-phase-publication';
 import { readOwnedClaudePublicTranscript, nativePathSpelling, ownedNativePath, sameNativePath,
   type ClaudeParentPublicEvent, type OwnedTranscriptReason } from '../../lib/claude-public-transcript';
@@ -49,19 +49,13 @@ interface Invocation { activePlan: string; restorePath: string; originalSha256: 
 /** Stable, bounded regular bytes; links never establish an artifact identity. */
 function read(file: string, immutable = false): string {
   if (!ownPath(file) || !samePath(fs.realpathSync(file), file)) fail('Artifact path is unavailable or aliased.');
-  const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
-  try {
-    const before = fs.fstatSync(fd, { bigint: true });
-    if (!before.isFile() || before.size > 32n * 1024n * 1024n ||
-        (immutable && process.platform !== 'win32' && (before.mode & 0o222n) !== 0n)) fail('Artifact is not immutable bounded data.');
-    const bytes = fs.readFileSync(fd), after = fs.fstatSync(fd, { bigint: true }), current = fs.lstatSync(file, { bigint: true });
-    if (!current.isFile() || before.dev !== current.dev || before.ino !== current.ino ||
-        before.size !== after.size || before.mtimeNs !== after.mtimeNs || before.size !== current.size ||
-        before.mtimeNs !== current.mtimeNs || before.size !== BigInt(bytes.length)) fail('Artifact changed during read.');
-    const text = bytes.toString('utf8');
-    if (!Buffer.from(text).equals(bytes)) fail('Artifact is not complete UTF-8.');
-    return text;
-  } finally { fs.closeSync(fd); }
+  const snapshot = readAutoplanSnapshot(file);
+  if (immutable && process.platform !== 'win32' && (snapshot.stat.mode & 0o222n) !== 0n)
+    fail('Artifact is not immutable bounded data.');
+  if (!samePath(fs.realpathSync(file), file)) fail('Artifact path changed or is aliased.');
+  const text = snapshot.bytes.toString('utf8');
+  if (!Buffer.from(text).equals(snapshot.bytes)) fail('Artifact is not complete UTF-8.');
+  return text;
 }
 
 function phaseName(file: unknown, cwd: string): Phase | undefined {
@@ -500,11 +494,11 @@ export function linkedWorktrees(projectDir: string): string[] {
     try {
       const link = path.join(admin, entry.name);
       // worktree.useRelativePaths writes each side relative to its own file's directory.
-      const forward = /^([^\r\n]+)\r?\n?$/.exec(fs.readFileSync(path.join(link, 'gitdir'), 'utf8'))?.[1];
+      const forward = /^([^\r\n]+)\r?\n?$/.exec(readAutoplanFile(path.join(link, 'gitdir'), 'utf8'))?.[1];
       if (!forward) return [];
       const gitFile = nativePathSpelling(path.resolve(link, nativePathSpelling(forward)));
       if (path.basename(gitFile) !== '.git' || !fs.lstatSync(gitFile).isFile()) return [];
-      const back = /^gitdir: ([^\r\n]+)\r?\n?$/.exec(fs.readFileSync(gitFile, 'utf8'))?.[1];
+      const back = /^gitdir: ([^\r\n]+)\r?\n?$/.exec(readAutoplanFile(gitFile, 'utf8'))?.[1];
       if (!back || nativePathSpelling(fs.realpathSync(path.resolve(path.dirname(gitFile), nativePathSpelling(back)))) !==
           nativePathSpelling(fs.realpathSync(link))) return [];
       const worktree = nativePathSpelling(fs.realpathSync(path.dirname(gitFile)));
