@@ -41,9 +41,10 @@ test('OBS-001: runtime mouse and keyboard selection loads the named detail among
     'md-slides', 'tool-prompt-optimization', 'md-slides', 'md-slides',
   ])
   await expect(page.getByTestId('detail').getByRole('button', { name: 'Save', exact: true })).toHaveCount(0)
-  // Current MainContentPanel reads metadata once per changed selection for its
-  // availability gate. SkillInfoPage itself only fetches one selected body.
-  expect(await page.evaluate(() => (window as any).qa.metrics.lists)).toBe(4)
+  // Current main's unselected SkillsCatalogPage reads metadata once, in addition
+  // to the fixture's initial list and MainContentPanel's three changed-selection
+  // availability reads. SkillInfoPage itself only fetches one selected body.
+  expect(await page.evaluate(() => (window as any).qa.metrics.lists)).toBe(5)
   expect(await page.evaluate(() => (window as any).qa.metrics.details)).toEqual([
     'fixture:md-slides', 'fixture:tool-prompt-optimization', 'fixture:md-slides',
   ])

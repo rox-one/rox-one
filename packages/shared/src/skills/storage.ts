@@ -219,8 +219,12 @@ function loadSkillsFromDir(skillsDir: string, source: SkillSource): LoadedSkill[
               if (!isSafeSkillName(slug) || typeof rel !== 'string' || isAbsolute(rel)) continue;
               const path = resolve(packDir, rel);
               if (!isInsideSkillStore(path, packDir)) continue;
-              const nested = loadSkillAtPath(path, slug, source);
-              if (nested) skills.push(nested);
+              try {
+                const nested = loadSkillAtPath(path, slug, source);
+                if (nested) skills.push(nested);
+              } catch {
+                // A denied view must not hide later healthy views from this pack.
+              }
             }
           } catch { /* A malformed marker never makes application startup fail. */ }
         }

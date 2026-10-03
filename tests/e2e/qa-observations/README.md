@@ -16,9 +16,10 @@ SkillInfoPage, PanelStackContainer, PanelSlot, panel-stack atoms, resize sash,
 route builders/parsers, and renderer CSS. A separate Bun fixture invokes the
 actual registered skills RPC handlers against 2,216 real disposable SKILL.md
 files. Runtime list responses contain `content: ''`, exactly as in production.
-Only `getSkillDetails` returns the selected runtime body. Current main's actual
-MainContentPanel availability gate performs metadata reads before changed
-selections; SkillInfoPage does not fetch a list or populate its cache with bodies.
+Only `getSkillDetails` returns the selected runtime body. Current main's initial
+SkillsCatalogPage reads metadata once, and its MainContentPanel availability gate
+performs metadata reads before changed selections; SkillInfoPage does not fetch a
+list or populate its cache with bodies.
 
 Boundary doubles replace the Electron wire with local HTTP, AppShellContext,
 the navigation hook (actual predicates/parser remain), action registration,
