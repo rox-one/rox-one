@@ -63,6 +63,7 @@ import { debug } from '../utils/debug.ts';
 import { getSessionPlansPath, getSessionPath, getSessionDataPath } from '../sessions/storage.ts';
 import { updatePreferences as updatePreferencesImpl } from '../config/preferences.ts';
 import { resolveConfigDir } from "../config/paths.ts"
+import { createHostBashEnv } from '../toolchain-runtime.ts';
 
 // Re-export types that may be needed by consumers
 export type { SessionToolContext, SessionToolCallbacks } from '@craft-agent/session-tools-core';
@@ -76,6 +77,7 @@ export interface ClaudeContextOptions {
   workspaceId: string;
   onPlanSubmitted: (planPath: string) => void;
   onAuthRequest: (request: unknown) => void;
+  getHostBashEnv?: SessionToolContext['getHostBashEnv'];
 }
 
 /**
@@ -220,6 +222,7 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
     plansFolderPath: getSessionPlansPath(workspacePath, sessionId),
     sessionPath: getSessionPath(workspacePath, sessionId),
     dataPath: getSessionDataPath(workspacePath, sessionId),
+    getHostBashEnv: options.getHostBashEnv ?? createHostBashEnv,
     callbacks,
     fs,
     validators,

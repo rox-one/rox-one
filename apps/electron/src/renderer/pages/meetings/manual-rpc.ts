@@ -25,7 +25,7 @@ export type MeetingManualApi = {
 }
 
 export function resolveMeetingManualApi(injected?: MeetingManualApi | null): MeetingManualApi | null {
-  if (injected?.addManualNote && injected.correctSegment) return injected
+  if (typeof injected?.addManualNote === 'function' && typeof injected.correctSegment === 'function') return injected
   if (typeof window === 'undefined') return null
   const api = window.electronAPI
   if (!api?.addManualNote || !api?.correctSegment) return null

@@ -49,8 +49,10 @@ function httpConfig(token: string, url = 'https://mcp.example.com'): SdkMcpServe
 class TestablePool extends McpClientPool {
   public connectCalls: Array<{ slug: string; config: SdkMcpServerConfig }> = [];
   public disconnectCalls: string[] = [];
+  public failConnections = false;
 
-  async connect(slug: string, config: SdkMcpServerConfig): Promise<void> {
+  protected override async connectSource(slug: string, config: SdkMcpServerConfig): Promise<void> {
+    if (this.failConnections) throw new Error('Server unavailable');
     this.connectCalls.push({ slug, config });
     await this.registerClient(slug, makeMockClient());
     this.activeConfigs.set(slug, config);
@@ -64,9 +66,9 @@ class TestablePool extends McpClientPool {
     await this.registerClient(slug, makeMockClient(tools, onCallTool));
   }
 
-  async disconnect(slug: string): Promise<void> {
+  protected override async disconnectSource(slug: string): Promise<void> {
     this.disconnectCalls.push(slug);
-    await super.disconnect(slug);
+    await super.disconnectSource(slug);
   }
 
   /** Reset tracking arrays between sync phases within a single test */
@@ -179,17 +181,11 @@ describe('McpClientPool.sync — config change detection', () => {
   });
 
   it('reports failure when reconnect fails after token refresh', async () => {
-    let connectAttempts = 0;
     const failPool = new TestablePool();
-    const origConnect = failPool.connect.bind(failPool);
-    failPool.connect = async (slug: string, config: SdkMcpServerConfig) => {
-      connectAttempts++;
-      if (connectAttempts > 1) throw new Error('Server unavailable');
-      return origConnect(slug, config);
-    };
 
     await failPool.sync({ craft: httpConfig('old-token') });
     expect(failPool.isConnected('craft')).toBe(true);
+    failPool.failConnections = true;
 
     // Token refresh — disconnect succeeds but reconnect throws
     const failures = await failPool.sync({ craft: httpConfig('new-token') });

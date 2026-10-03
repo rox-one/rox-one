@@ -161,7 +161,7 @@ export function joinNativeRoom(input: {
   readonly actorId: string
   readonly guest?: boolean
   readonly recordingConsent?: boolean
-}): { ok: false; reason: string; decided: false } {
+}): { ok: false; reason: string; decided: typeof ROOM_PROVIDER_DECISION.decided } {
   const result = joinRoom(
     {
       roomId: input.roomId,

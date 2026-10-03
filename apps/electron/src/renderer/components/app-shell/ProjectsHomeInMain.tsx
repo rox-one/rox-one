@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { ProjectsListPanel } from './ProjectsListPanel'
 import { CreateProjectDialog } from '../projects/CreateProjectDialog'
-import { useAppShellContext } from '@/context/AppShellContext'
+import type { LoadedProject } from '@craft-agent/shared/projects/types'
 import { navigate as navigateRoute, routes } from '@/lib/navigate'
 import {
   collectionFiltersAtom,
@@ -17,7 +17,7 @@ export function ProjectsHomeInMain({
   projects,
   workspaceId,
 }: {
-  projects: NonNullable<ReturnType<typeof useAppShellContext>['projects']>
+  projects: LoadedProject[]
   workspaceId: string
 }) {
   const { t } = useTranslation()

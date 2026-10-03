@@ -171,7 +171,9 @@ export function createProductionLocalTranscribeAdapter(
 }
 
 /** Production HTTP. Never returns fixture ASR JSON. */
-export function createProductionVoiceHttp(env: VoiceEnv = process.env): { fetch: typeof fetch } {
+export function createProductionVoiceHttp(env: VoiceEnv = process.env): {
+  fetch: (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
+} {
   if (resolveVoiceGatewayMode(env) !== 'live') {
     return {
       async fetch() {

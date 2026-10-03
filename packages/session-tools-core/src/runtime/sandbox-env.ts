@@ -22,7 +22,7 @@ export { BLOCKED_ENV_VAR_PREFIXES, BLOCKED_ENV_VARS, isBlockedEnvVar };
 export function createSanitizedEnv(baseEnv: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...baseEnv };
   for (const key of Object.keys(env)) {
-    if (isBlockedEnvVar(key)) {
+    if (isBlockedEnvVar(process.platform === 'win32' ? key.toUpperCase() : key)) {
       delete env[key];
     }
   }

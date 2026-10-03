@@ -144,7 +144,7 @@ export type AgentReadinessState = {
   readonly running: boolean
 }
 
-export function readinessBlocker(state: AgentReadinessState): string | null {
+export function readinessBlocker(state: AgentReadinessState): 'not-installed' | 'disabled' | 'unauthorized' | 'unhealthy' | 'not-running' | null {
   if (!state.installed) return 'not-installed'
   if (!state.enabled) return 'disabled'
   if (!state.authorized) return 'unauthorized'

@@ -171,6 +171,9 @@ export interface SessionToolContext {
   /** Working directory (project root) for the session, if set */
   workingDirectory?: string;
 
+  /** Host runtime environment, resolved per Bash call. Credentials are scrubbed by the handler. */
+  getHostBashEnv?: () => NodeJS.ProcessEnv | Promise<NodeJS.ProcessEnv>;
+
   // ============================================================
   // Callbacks (transport-agnostic)
   // ============================================================

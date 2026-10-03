@@ -28,14 +28,14 @@ import {
 } from './omp-fake-cli.ts';
 
 const agents: OmpAgent[] = [];
-const cleanups: Array<() => void> = [];
+const cleanups: Array<() => void | Promise<void>> = [];
 
-afterEach(() => {
+afterEach(async () => {
   for (const agent of agents.splice(0)) {
     try { agent.destroy(); } catch {}
   }
   for (const c of cleanups.splice(0)) {
-    try { c(); } catch {}
+    try { await c(); } catch {}
   }
 });
 
@@ -44,7 +44,7 @@ function track(agent: OmpAgent): OmpAgent {
   return agent;
 }
 
-/** Build a custom fake omp binary (shell wrapper around a script body). */
+/** Build a custom fake omp binary (native Bun/script launch on Windows). */
 function makeCustomFakeOmp(scriptBody: string): { dir: string; binPath: string; workspaceRoot: string; spawnLog: string } {
   const dir = mkdtempSync(join(tmpdir(), 'omp-hardening-'));
   const workspaceRoot = join(dir, 'workspace');
@@ -52,12 +52,20 @@ function makeCustomFakeOmp(scriptBody: string): { dir: string; binPath: string; 
   const spawnLog = join(dir, 'spawns.log');
   const scriptPath = join(dir, 'fake.js');
   writeFileSync(scriptPath, scriptBody);
-  const binPath = join(dir, 'fake-omp');
-  writeFileSync(binPath, `#!/bin/sh\nexec "${process.execPath}" "${scriptPath}" "$@"\n`);
-  chmodSync(binPath, 0o755);
+  const binPath = process.platform === 'win32' ? scriptPath : join(dir, 'fake-omp');
+  if (process.platform !== 'win32') {
+    writeFileSync(binPath, `#!/bin/sh\nexec "${process.execPath}" "${scriptPath}" "$@"\n`);
+    chmodSync(binPath, 0o755);
+  }
   cleanups.push(() => {
     // Kill any wedged survivors (SIGTERM-immune scenarios) by script path.
-    try { execSync(`pkill -9 -f "${scriptPath}" 2>/dev/null || true`); } catch {}
+    if (process.platform === 'win32') {
+      for (const pid of spawnPids(spawnLog)) {
+        try { process.kill(pid, 'SIGKILL'); } catch {}
+      }
+    } else {
+      try { execSync(`pkill -9 -f "${scriptPath}" 2>/dev/null || true`); } catch {}
+    }
     try { rmSync(dir, { recursive: true, force: true }); } catch {}
   });
   return { dir, binPath, workspaceRoot, spawnLog };
@@ -67,8 +75,10 @@ function makeCustomFakeOmp(scriptBody: string): { dir: string; binPath: string; 
 function envFor(binPath: string, extra: Record<string, string> = {}): void {
   const saved = new Map<string, string | undefined>();
   saved.set('OMP_CLI_PATH', process.env.OMP_CLI_PATH);
+  saved.set('CRAFT_BUN_PATH', process.env.CRAFT_BUN_PATH);
   for (const k of Object.keys(extra)) saved.set(k, process.env[k]);
   process.env.OMP_CLI_PATH = binPath;
+  process.env.CRAFT_BUN_PATH = process.execPath;
   for (const [k, v] of Object.entries(extra)) process.env[k] = v;
   cleanups.push(() => {
     for (const [k, v] of saved) {
@@ -116,7 +126,9 @@ describe('A1: concurrent chat() during startup shares one spawn', () => {
     const fake: FakeOmp = createFakeOmp('slow-ready'); // ready at +1500ms
     const restore = useFakeOmpEnv(fake);
     cleanups.push(restore, () => fake.cleanup());
-    cleanups.push(() => { try { execSync(`pkill -9 -f "${join(fake.dir, 'fake-omp.js')}" 2>/dev/null || true`); } catch {} });
+    if (process.platform !== 'win32') {
+      cleanups.push(() => { try { execSync(`pkill -9 -f "${join(fake.dir, 'fake-omp.js')}" 2>/dev/null || true`); } catch {} });
+    }
     const agent = track(new OmpAgent(makeOmpConfig(fake)));
     shrinkReadyTimeout(3_000); // a cross-settled loser timeout would fail the winner at ~3s
 
@@ -153,7 +165,7 @@ setInterval(() => {}, 60000); // never ready, never exits on its own
 `);
     envFor(fake.binPath, { SPAWN_LOG: fake.spawnLog });
     const agent = track(new OmpAgent(configFor(fake)));
-    shrinkReadyTimeout(80);
+    shrinkReadyTimeout(process.platform === 'win32' ? 250 : 80);
 
     const first = await chatEvents(agent, 'hi', 8_000);
     const firstTyped = first.find((e) => e.type === 'typed_error') as any;

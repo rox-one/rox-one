@@ -9,6 +9,7 @@ import { MultiSelectPanel } from './MultiSelectPanel'
 import { CollectionBulkBar } from './collection/CollectionBulkBar'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { projectsAtom } from '@/atoms/projects'
 import { StoplightProvider } from '@/context/StoplightContext'
 import {
   useNavigationState,
@@ -113,6 +114,7 @@ export function MainContentPanel({
   } = useAppShellContext()
 
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const loadedProjects = useAtomValue(projectsAtom)
   const visibleSessionIds = useMemo(
     () =>
       [...sessionMetaMap.values()]
@@ -345,7 +347,7 @@ export function MainContentPanel({
     }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <ProjectsHomeInMain projects={projects} workspaceId={activeWorkspaceId || ''} />
+        <ProjectsHomeInMain projects={loadedProjects} workspaceId={activeWorkspaceId || ''} />
       </Panel>
     )
   }

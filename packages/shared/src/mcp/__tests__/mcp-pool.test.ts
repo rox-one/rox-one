@@ -13,7 +13,11 @@ class TestPool extends McpClientPool {
   connectCalls: Array<{ slug: string; config: SdkMcpServerConfig }> = [];
   closedSlugs: string[] = [];
 
-  override async connect(slug: string, config: SdkMcpServerConfig): Promise<void> {
+  async registerForTest(slug: string, client: PoolClient): Promise<void> {
+    await this.registerClient(slug, client);
+  }
+
+  protected override async connectSource(slug: string, config: SdkMcpServerConfig): Promise<void> {
     this.connectCalls.push({ slug, config });
     const self = this;
     const fake: PoolClient = {
@@ -53,6 +57,57 @@ describe('McpClientPool.ensureConnected', () => {
     expect(pool.connectCalls.length).toBe(2);
     expect(pool.closedSlugs).toEqual(['craft']);
     expect(pool.isConnected('craft')).toBe(true);
+  });
+
+  test('reconnects when a lowercase authorization header changes', async () => {
+    const pool = new TestPool();
+    await pool.ensureConnected('craft', { type: 'http', url: 'https://example.test/mcp', headers: { authorization: 'Bearer a' } });
+    await pool.ensureConnected('craft', { type: 'http', url: 'https://example.test/mcp', headers: { authorization: 'Bearer b' } });
+    expect(pool.connectCalls.length).toBe(2);
+    expect(pool.closedSlugs).toEqual(['craft']);
+  });
+
+  test('reconnects when stdio command, arguments, or environment changes', async () => {
+    const pool = new TestPool();
+    const config: SdkMcpServerConfig = { type: 'stdio', command: 'npx', args: ['server'], env: { MODE: 'a' } };
+    await pool.ensureConnected('local', config);
+    await pool.ensureConnected('local', { ...config, args: ['server', '--flag'] });
+    await pool.ensureConnected('local', { ...config, env: { MODE: 'b' } });
+    await pool.ensureConnected('local', { ...config, command: 'npx.cmd' });
+    expect(pool.connectCalls.length).toBe(4);
+    expect(pool.closedSlugs).toEqual(['local', 'local', 'local']);
+  });
+
+  test('closes a client whose tool discovery fails and never publishes its state', async () => {
+    const pool = new TestPool();
+    let closed = false;
+    await expect(pool.registerForTest('broken', {
+      listTools: async () => { throw new Error('discovery failed'); },
+      callTool: async () => ({}),
+      close: async () => { closed = true; throw new Error('cleanup failed'); },
+    })).rejects.toThrow('discovery failed');
+    expect(closed).toBe(true);
+    expect(pool.isConnected('broken')).toBe(false);
+    expect(pool.getProxyToolDefs()).toEqual([]);
+  });
+
+  test('attributes server-returned tool errors and forwards cancellation/timeouts', async () => {
+    const pool = new TestPool();
+    const controller = new AbortController();
+    let received: unknown;
+    await pool.registerForTest('broken', {
+      listTools: async () => [{ name: 'fail', inputSchema: { type: 'object' } }],
+      callTool: async (_name, _args, options) => {
+        received = options;
+        return { isError: true, content: [{ type: 'text', text: 'server rejected call' }] };
+      },
+      close: async () => {},
+    });
+    const options = { signal: controller.signal, timeoutMs: 25 };
+    expect(await pool.callTool('mcp__broken__fail', {}, options)).toEqual({
+      content: 'server rejected call', isError: true, sourceSlug: 'broken',
+    });
+    expect(received).toBe(options);
   });
 
   test('does not touch other pool members', async () => {

@@ -567,6 +567,7 @@ function AppShellContent({
   const isMeetingsView = isMeetingsNavigation(navState)
   const isMemoryView = isMemoryNavigation(navState)
   const isProjectsView = isProjectsNavigation(navState)
+  const selectedProjectSlug = isProjectsView ? navState.details?.projectSlug ?? null : null
   // Mode screens (Входящие, Лента) render their own three panels too.
   // «Ещё» screens (Досье, Радар, Решения, Центр агентов, Фокус) do the same —
   // without this the navigator column stayed mounted and empty beside them.
@@ -3010,7 +3011,7 @@ function AppShellContent({
                 onProjectClick={(slug) => navigate(routes.view.projects(slug))}
                 onAddProject={openAddProject}
                 onJumpToSessions={handleJumpToProjectSessions}
-                selectedProjectSlug={isProjectsNavigation(navState) ? navState.details?.projectSlug ?? null : null}
+                selectedProjectSlug={selectedProjectSlug}
               />
             )}
             {isAutomationsNavigation(navState) && (

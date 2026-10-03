@@ -146,7 +146,18 @@ export class SourceCredentialManager {
    * (credentials may have been stored via different auth modes)
    */
   async load(source: LoadedSource): Promise<StoredCredential | null> {
-    const manager = getCredentialManager();
+    // Folder pointers and local processes have no source authentication. Do not
+    // touch the vault (or revive credentials left over from a previous type).
+    if (source.config.type === 'local' ||
+        (source.config.type === 'mcp' && source.config.mcp?.transport === 'stdio')) {
+      return null;
+    }
+
+    const mcp = source.config.mcp;
+    if (source.config.type === 'mcp' &&
+        (!mcp?.authType || mcp.authType === 'none') && !mcp?.headerNames?.length) {
+      return null;
+    }
 
     // For MCP sources, try both OAuth and bearer credentials
     // (stdio transport doesn't need credentials)
@@ -165,6 +176,7 @@ export class SourceCredentialManager {
 
     // For other sources, use the credential ID based on authType
     const credentialId = this.getCredentialId(source);
+    const manager = getCredentialManager();
     const cred = await manager.get(credentialId);
 
     if (cred) {

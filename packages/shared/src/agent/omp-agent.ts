@@ -48,8 +48,8 @@ import { spawn, execFile, type ChildProcess } from 'node:child_process';
 import type { LoadAllSkillsOptions } from '../skills/storage.ts';
 import { createInterface, type Interface as ReadlineInterface } from 'node:readline';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
-import { mkdirSync, readFileSync, readdirSync, copyFileSync } from 'node:fs';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { mkdirSync, readFileSync, readdirSync, copyFileSync, realpathSync, statSync } from 'node:fs';
 import { getSessionPath } from '../sessions/storage.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
 import type { ProjectPromptContext } from '../projects/types.ts';
@@ -61,6 +61,7 @@ import type { AgentEvent, AgentEventUsage } from '@craft-agent/core/types';
 import type { FileAttachment } from '../utils/files.ts';
 import { getProxyEnvVars } from '../config/proxy-env.ts';
 import { resolveOmpExecutableOrExplain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
+import { executableCandidates, pathEnvKey } from '../toolchain/exec.ts';
 
 import { AbortReason } from './backend/types.ts';
 import type {
@@ -201,6 +202,77 @@ export function composeOmpAppendSystemPrompt(input: {
 /** Spawn argv fragment that pushes composed system prompt into OMP. */
 export function getOmpSpawnSystemPromptArgs(append: string): string[] {
   return ['--append-system-prompt', append];
+}
+
+export interface OmpLaunchSpec {
+  command: string;
+  argsPrefix: string[];
+}
+
+/**
+ * Windows cannot CreateProcess a .cmd/.bat file (Node reports spawn EINVAL).
+ * Bypass known OMP package shims using package.json's bin entry, never cmd.exe:
+ * prompts and multiline system context must remain literal argv, not shell code.
+ * Unknown batch overrides fail closed; point OMP_CLI_PATH at a native binary or
+ * the CLI script instead. Unix/native launches retain their existing behavior.
+ */
+export function buildOmpLaunchSpec(
+  executable: string,
+  env: NodeJS.ProcessEnv,
+  platform: NodeJS.Platform = process.platform,
+): OmpLaunchSpec {
+  if (platform !== 'win32') return { command: executable, argsPrefix: [] };
+
+  const isFile = (file: string): boolean => {
+    try { return statSync(file).isFile(); } catch { return false; }
+  };
+  // The last-resort bare 'omp' also needs PATH lookup: CreateProcess does not
+  // resolve npm's .cmd shims. Use the effective child PATH, including overrides.
+  const pathEnv = env[pathEnvKey(env, true)] ?? '';
+  if (!isAbsolute(executable) && !/[\\/]/.test(executable)) {
+    const names = executableCandidates(executable, true);
+    for (const dir of pathEnv.split(';').filter(Boolean)) {
+      const found = names.map((name) => join(dir.replace(/^"|"$/g, ''), name)).find(isFile);
+      if (found) { executable = found; break; }
+    }
+  }
+
+  let script: string | undefined;
+  if (/\.(cmd|bat)$/i.test(executable)) {
+    const binDir = dirname(resolve(executable));
+    // Managed tarball layout; npm global and node_modules/.bin layouts.
+    const packageDirs = [
+      join(binDir, '..', 'package'),
+      join(binDir, 'node_modules', '@oh-my-pi', 'pi-coding-agent'),
+      join(binDir, '..', '@oh-my-pi', 'pi-coding-agent'),
+    ];
+    if (/^omp\.(cmd|bat)$/i.test(basename(executable))) {
+      for (const packageDir of packageDirs) {
+        try {
+          const pkg = JSON.parse(readFileSync(join(packageDir, 'package.json'), 'utf8'));
+          const bin = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.omp;
+          if (pkg.name !== '@oh-my-pi/pi-coding-agent' || typeof bin !== 'string') continue;
+          const root = realpathSync(packageDir);
+          const entry = realpathSync(resolve(packageDir, bin));
+          const rel = relative(root, entry);
+          if (!rel || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel) || !isFile(entry)) continue;
+          if (!/\.(js|mjs|cjs|ts)$/i.test(entry)) continue;
+          script = entry;
+          break;
+        } catch { /* Not a recognized, complete OMP package layout. */ }
+      }
+    }
+    if (!script) throw new Error(`OMP batch launcher cannot be started safely: ${executable}. Set OMP_CLI_PATH to the CLI script or a native executable.`);
+  } else if (/\.(js|mjs|cjs|ts)$/i.test(executable)) {
+    script = resolve(executable);
+  }
+  if (!script) return { command: executable, argsPrefix: [] };
+
+  // Preserve the installed wrapper's Bun precedence without interpreting it.
+  const managedBun = join(dirname(executable), '..', '..', '..', 'bun', 'current', 'bun-windows-x64', 'bun.exe');
+  const command = env.CRAFT_BUN_PATH?.trim() || (isFile(managedBun) ? managedBun : 'bun');
+  if (/\.(cmd|bat)$/i.test(command)) throw new Error('OMP requires a native Bun executable, not a batch launcher.');
+  return { command, argsPrefix: [script] };
 }
 
 /**
@@ -774,11 +846,27 @@ export class OmpAgent extends BaseAgent {
       ...(this.config.envOverrides ?? {}),
     });
 
-    const child = spawn(bin, args, {
-      cwd,
-      env,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    let child: ChildProcess;
+    let launch: OmpLaunchSpec | undefined;
+    try {
+      launch = buildOmpLaunchSpec(bin, env);
+      child = spawn(launch.command, [...launch.argsPrefix, ...args], {
+        cwd,
+        env,
+        shell: false,
+        windowsHide: true,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+    } catch (error) {
+      const startupError = new OmpStartupError({
+        code: 'OMP_NOT_CONFIGURED',
+        message: error instanceof Error ? error.message : String(error),
+        hint: 'Install the OMP runtime or set OMP_CLI_PATH to a valid CLI script or native executable.',
+        cause: error,
+      });
+      this.settleReady(startupError);
+      throw startupError;
+    }
 
     this.subprocess = child;
 
@@ -841,7 +929,7 @@ export class OmpAgent extends BaseAgent {
         this.settleReady(errno === 'ENOENT'
           ? new OmpStartupError({
               code: 'OMP_NOT_CONFIGURED',
-              message: `OMP executable not found at "${bin}".`,
+              message: `OMP executable not found at "${launch?.command ?? bin}".`,
               hint: 'Install the omp CLI, wait for the toolchain download to finish, or set OMP_CLI_PATH to a valid omp binary.',
               stderr: this.recentStderr.trim(),
               cause: error,
@@ -2172,9 +2260,10 @@ export class OmpAgent extends BaseAgent {
     // internal — never persist them as OMP sessions, or the foreign auto
     // importer brings them back as Rox sessions (Лента noise).
     const args = model ? ['--no-session', '--model', model, '-p', prompt] : ['--no-session', '-p', prompt];
+    const launch = buildOmpLaunchSpec(bin, env);
     this.debug('runOneShot: spawning -p child');
     return new Promise<string>((resolve, reject) => {
-      const child = spawn(bin, args, { cwd, env });
+      const child = spawn(launch.command, [...launch.argsPrefix, ...args], { cwd, env, shell: false, windowsHide: true });
       this.debug(`runOneShot: spawned pid=${child.pid}`);
       const timer = setTimeout(() => {
         child.kill('SIGKILL');

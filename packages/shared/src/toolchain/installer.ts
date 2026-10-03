@@ -9,7 +9,7 @@ import * as path from 'node:path';
 
 import { TOOLCHAIN_INSTALL_COMPLETE_MARKER } from './types';
 import type { ToolArtifact, ToolName, ToolchainPaths } from './types';
-import { runCommand, whichTool } from './exec';
+import { prependPath, runCommand, whichTool } from './exec';
 import { getNpmLock } from './npm-locks';
 
 const isWindows = process.platform === 'win32';
@@ -308,12 +308,20 @@ export async function npmInstallDeps(
     }
     throw new Error('npm not found: toolchain node required (omp dependsOn node), fallback PATH npm');
   }
-  const env = {
-    ...process.env,
-    PATH: `${path.dirname(npm)}${path.delimiter}${process.env.PATH ?? ''}`,
-  };
+  const env = prependPath(process.env, path.dirname(npm));
   const runCmd = opts?.runCmd ?? runCommand;
-  const baseArgs = [npm, 'ci', '--omit=dev', '--no-audit', '--no-fund'];
+  let npmCommand = [npm];
+  if (isWindows && /\.(cmd|bat)$/i.test(npm)) {
+    // Plain Node cannot argv-spawn .cmd (EINVAL). Invoke npm's JS entrypoint
+    // with its sibling Node, preserving argv without cmd.exe interpolation.
+    const node = path.join(path.dirname(npm), 'node.exe');
+    const cli = path.join(path.dirname(npm), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+    if (!fs.existsSync(node) || !fs.existsSync(cli)) {
+      throw new Error('npm launcher requires sibling node.exe and node_modules/npm/bin/npm-cli.js');
+    }
+    npmCommand = [node, cli];
+  }
+  const baseArgs = [...npmCommand, 'ci', '--omit=dev', '--no-audit', '--no-fund'];
   // Default: never run lifecycle scripts (supply-chain fail-closed).
   try {
     await runCmd([...baseArgs, '--ignore-scripts'], { cwd: pkgDir, env });
@@ -463,6 +471,8 @@ export async function installTool(
 export interface GitNpmPinnedInstall {
   /** toolchain-первый bun executable. */
   bun: string;
+  /** Resolved Git executable (managed MinGit on Windows); bare git for legacy callers. */
+  git?: string;
   /** toolchain/<name>/<version> — BUN_INSTALL root (install/global + bin). */
   versionDir: string;
   /** 'owner/repo' на GitHub. */
@@ -498,25 +508,27 @@ export interface GitNpmPinnedInstall {
  */
 export async function installGitNpmPinned(req: GitNpmPinnedInstall): Promise<void> {
   const runCmd = req.runCmd ?? runCommand;
-  const env: NodeJS.ProcessEnv = {
+  const git = req.git ?? 'git';
+  const binDirs = [path.dirname(req.bun), ...(req.git ? [path.dirname(req.git)] : [])];
+  const env: NodeJS.ProcessEnv = prependPath({
     ...process.env,
     // BUN_INSTALL направляет глобальную установку внутрь toolchain-layout:
     // versionDir/install/global/node_modules/<pkg> + лончер versionDir/bin/<bin>.
     BUN_INSTALL: req.versionDir,
     // Лончеры сгенерированных npm-wrapper'ов должны находить именно этот bun.
     CRAFT_BUN_PATH: req.bun,
-  };
+  }, binDirs.join(path.delimiter));
   await fs.promises.mkdir(req.versionDir, { recursive: true });
 
   let hasLockfile = false;
   await fs.promises.rm(req.workDir, { recursive: true, force: true });
   try {
     await fs.promises.mkdir(req.workDir, { recursive: true });
-    await runCmd(['git', 'init', '-q', req.workDir]);
-    await runCmd(['git', 'remote', 'add', 'origin', `https://github.com/${req.repo}.git`], { cwd: req.workDir });
+    await runCmd([git, 'init', '-q', req.workDir], { env });
+    await runCmd([git, 'remote', 'add', 'origin', `https://github.com/${req.repo}.git`], { cwd: req.workDir, env });
     // fetch по полному sha — content-addressed: FETCH_HEAD === req.commit.
-    await runCmd(['git', 'fetch', '-q', '--depth', '1', 'origin', req.commit], { cwd: req.workDir });
-    await runCmd(['git', '-c', 'advice.detachedHead=false', 'checkout', '-q', 'FETCH_HEAD'], { cwd: req.workDir });
+    await runCmd([git, 'fetch', '-q', '--depth', '1', 'origin', req.commit], { cwd: req.workDir, env });
+    await runCmd([git, '-c', 'advice.detachedHead=false', 'checkout', '-q', 'FETCH_HEAD'], { cwd: req.workDir, env });
     // Defense-in-depth: same HEAD===pin invariant as marketplace.checkoutPinnedRef.
     // runCommand is void (no stdout capture) — read detached HEAD from .git/HEAD.
     const headRaw = (await fs.promises.readFile(path.join(req.workDir, '.git', 'HEAD'), 'utf8')).trim();

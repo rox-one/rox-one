@@ -138,6 +138,10 @@ export const StoredConfigSchema = z.object({
   cloudRuns: CloudRunsConfigSchema.optional(),
   defaultThinkingLevel: z.enum([...THINKING_LEVEL_IDS, 'think'] as [string, ...string[]]).transform(v => v === 'think' ? 'medium' : v).optional(),
   runtime: RuntimeConfigSchema.optional(),
+  toolchain: z.object({
+    disabled: z.array(z.string()).optional(),
+    dependencyMode: z.enum(['auto', 'bundled', 'system']).optional(),
+  }).passthrough().optional(),
   // Note: tokenDisplay, showCost, cumulativeUsage, defaultPermissionMode removed
   // Permission mode and cyclable modes are now per-workspace in workspace config.json
 });

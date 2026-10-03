@@ -5,6 +5,7 @@ import type { ToolResult } from '../types.ts';
 import { createSanitizedEnv } from '../runtime/sandbox-env.ts';
 import { resolveHostBashCwd } from '../runtime/host-bash-cwd.ts';
 import { getHostBashPort, type HostBashExecResult } from '../runtime/host-bash-port.ts';
+import { HOST_BASH_KILL_GRACE_MS, killHostBashProcessTree, resolveHostBashShell } from '../runtime/host-bash-process.ts';
 import {
   isHostBashSandboxEnabled,
   planHostBashSandbox,
@@ -30,29 +31,6 @@ function truncateOutput(text: string): { text: string; truncated: boolean } {
   };
 }
 
-function killProcessTree(pid: number): void {
-  try {
-    if (process.platform === 'win32') {
-      process.kill(pid, 'SIGKILL');
-      return;
-    }
-    process.kill(-pid, 'SIGKILL');
-  } catch {
-    try {
-      process.kill(pid, 'SIGKILL');
-    } catch {
-      /* already dead */
-    }
-  }
-}
-
-function resolveShell(): { command: string; argsPrefix: string[] } {
-  if (process.platform === 'win32') {
-    return { command: 'bash', argsPrefix: ['-lc'] };
-  }
-  return { command: '/bin/bash', argsPrefix: ['-lc'] };
-}
-
 /**
  * Craft-executed host-tool Bash.
  *
@@ -70,6 +48,7 @@ export async function runHostBash(req: {
   cwd: string;
   workspaceRoot?: string;
   timeoutMs?: number;
+  envProvider?: SessionToolContext['getHostBashEnv'];
 }): Promise<ToolResult> {
   const command = typeof req.command === 'string' ? req.command.trim() : '';
   if (!command) {
@@ -88,7 +67,9 @@ export async function runHostBash(req: {
 
   const sandboxEnabled = isHostBashSandboxEnabled();
   const port = getHostBashPort();
-  if (port && !sandboxEnabled) {
+  // Legacy native exec has no environment contract. Never silently drop the
+  // host's managed runtime environment by delegating such calls to that port.
+  if (port && !sandboxEnabled && !req.envProvider) {
     try {
       const remote = await port({
         command,
@@ -102,9 +83,24 @@ export async function runHostBash(req: {
     }
   }
 
-  const env = createSanitizedEnv();
-  const shell = resolveShell();
-  const shellArgs = [...shell.argsPrefix, command];
+  let env: NodeJS.ProcessEnv;
+  try {
+    env = createSanitizedEnv(req.envProvider ? await req.envProvider() : process.env);
+  } catch (error) {
+    return errorResponse(`Error resolving host-tool bash environment: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  let shell: ReturnType<typeof resolveHostBashShell>;
+  try {
+    shell = resolveHostBashShell(env);
+  } catch (error) {
+    return errorResponse(`Error running host-tool bash: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  // Windows' managed Python is python.exe; PATH alone cannot make python3
+  // resolve to it. The trusted host provider supplies this explicit binding.
+  const pythonBinding = process.platform === 'win32' && env.CRAFT_HOST_BASH_PYTHON
+    ? 'python3() { "$CRAFT_HOST_BASH_PYTHON" "$@"; }; export -f python3\n'
+    : '';
+  const shellArgs = [...shell.argsPrefix, pythonBinding + command];
   const jailRoot = req.workspaceRoot?.trim() || cwd;
   const sandbox = sandboxEnabled ? planHostBashSandbox(shell.command, shellArgs, jailRoot) : null;
   if (sandbox && sandbox.status !== 'enforced') {
@@ -129,16 +125,30 @@ export async function runHostBash(req: {
         env,
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: process.platform !== 'win32',
+        windowsHide: true,
       });
 
       let stdout = '';
       let stderr = '';
       let timedOut = false;
       const pid = child.pid;
+      let cleanup: Promise<void> | undefined;
+      let cleanupTimer: ReturnType<typeof setTimeout> | undefined;
+
+      const finishTimeout = () => {
+        clearTimeout(cleanupTimer);
+        // 'exit' is not 'close': an orphan can still hold these handles. After
+        // bounded tree cleanup, release our pipe ends and settle explicitly.
+        child.stdout.destroy();
+        child.stderr.destroy();
+        resolvePromise({ stdout, stderr, code: child.exitCode, timedOut: true });
+      };
 
       const killTimer = setTimeout(() => {
         timedOut = true;
-        if (typeof pid === 'number') killProcessTree(pid);
+        cleanupTimer = setTimeout(finishTimeout, HOST_BASH_KILL_GRACE_MS);
+        cleanup = typeof pid === 'number' ? killHostBashProcessTree(pid, startedAt) : Promise.resolve();
+        void cleanup.then(finishTimeout, finishTimeout);
       }, timeoutMs);
 
       child.stdout.on('data', (chunk: Buffer) => {
@@ -150,10 +160,12 @@ export async function runHostBash(req: {
 
       child.on('close', (code) => {
         clearTimeout(killTimer);
-        resolvePromise({ stdout, stderr, code, timedOut });
+        // Wait for descendant cleanup even if the root's pipes close first.
+        if (!timedOut) resolvePromise({ stdout, stderr, code, timedOut });
       });
       child.on('error', (err) => {
         clearTimeout(killTimer);
+        clearTimeout(cleanupTimer);
         reject(err);
       });
     });
@@ -186,6 +198,7 @@ export async function handleHostBash(
     cwd,
     workspaceRoot: ctx.workspacePath,
     timeoutMs: args.timeoutMs,
+    envProvider: ctx.getHostBashEnv,
   });
 }
 

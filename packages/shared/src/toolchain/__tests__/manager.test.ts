@@ -5,6 +5,8 @@ import * as path from 'node:path';
 
 import { createManager } from '../manager';
 import { currentPlatform, toolchainPaths } from '../manifest';
+import { TOOLCHAIN_MANIFEST } from '../manifest';
+import { createResolver } from '../resolver';
 import type { ToolArtifact, ToolEntry, ToolStatus } from '../types';
 
 const FIXTURES = path.join(import.meta.dir, 'fixtures');
@@ -94,6 +96,39 @@ describe('manager status transitions', () => {
     const snapshot = await manager.ensureAll({ background: false });
     expect(snapshot[0]?.phase).toBe('ready');
     expect(downloads).toBe(0);
+  });
+
+  it('repairs an installed version whose catalog executable is missing', async () => {
+    const { manager, paths } = makeManager(makeManifest(), okFetch());
+    await manager.ensureAll({ background: false });
+    fs.rmSync(path.join(paths.toolchainDir, 'jq', '1.0.0', 'bin', 'demo'));
+    const fresh = createManager(paths, { manifest: makeManifest(), fetchImpl: okFetch() });
+    expect((await fresh.status())[0]?.phase).toBe('missing');
+    expect((await fresh.ensureAll({ background: false }))[0]?.phase).toBe('ready');
+    expect(fs.existsSync(path.join(paths.toolchainDir, 'jq', 'current', 'bin', 'demo'))).toBe(true);
+  });
+
+  it('a media download failure leaves OMP installed and resolvable', async () => {
+    const paths = toolchainPaths(path.join(tmpDir, 'media-failure'));
+    const win = process.platform === 'win32';
+    const bytes = Buffer.from('fixture');
+    const { createHash } = await import('node:crypto');
+    const artifact: ToolArtifact = {
+      url: 'https://test.invalid/omp', sha256: createHash('sha256').update(bytes).digest('hex'),
+      size: bytes.length, archive: 'raw', binPaths: [win ? 'bin/omp.cmd' : 'bin/omp'],
+    };
+    const manifest: ToolEntry[] = [
+      { name: 'omp', version: 'fixture', displayName: 'omp', artifacts: { [currentPlatform()]: artifact } },
+      { ...TOOLCHAIN_MANIFEST.find((entry) => entry.name === 'ffmpeg')! },
+    ];
+    const manager = createManager(paths, { manifest, pathEnv: '', windowsBootstrap: null, retryDelaysMs: [],
+      fetchImpl: (async (url: string | URL | Request) => String(url).endsWith('/omp')
+        ? new Response(bytes) : new Response('missing media release', { status: 404 })) as typeof fetch,
+    });
+    const status = await manager.ensureAll({ background: false });
+    expect(status.find((tool) => tool.name === 'ffmpeg')?.phase).toBe('error');
+    expect(status.find((tool) => tool.name === 'omp')?.phase).toBe('ready');
+    expect(await createResolver(paths, { manifest, pathEnv: '', windowsBootstrap: null }).findExecutable('omp')).not.toBeNull();
   });
 
   it('bump версии в манифесте -> outdated -> переустановка -> ready', async () => {
@@ -198,6 +233,34 @@ describe('manager status transitions', () => {
     const status = await manager.update('jq');
     expect(status.phase).toBe('ready');
     expect(status.installedVersion).toBe('1.0.0');
+  });
+
+  it('managed Python stays isolated and its stable link resolves inside the version directory', async () => {
+    const paths = toolchainPaths(path.join(tmpDir, 'python-isolated'));
+    const shim = path.join(tmpDir, 'uv-shim');
+    fs.mkdirSync(shim, { recursive: true });
+    fs.writeFileSync(path.join(shim, process.platform === 'win32' ? 'uv.exe' : 'uv'), '', { mode: 0o755 });
+    const calls: string[][] = [];
+    const manager = createManager(paths, {
+      manifest: TOOLCHAIN_MANIFEST.filter((entry) => entry.name === 'python'),
+      pathEnv: shim,
+      pythonRunCmd: async (args) => {
+        calls.push(args);
+        const versionDir = args[args.indexOf('--install-dir') + 1]!;
+        const cpython = path.join(versionDir, 'cpython-3.12.99-test');
+        const bin = process.platform === 'win32' ? 'python.exe' : 'bin/python3';
+        fs.mkdirSync(path.dirname(path.join(cpython, bin)), { recursive: true });
+        fs.writeFileSync(path.join(cpython, bin), '', { mode: 0o755 });
+      },
+    });
+    const status = await manager.update('python');
+    expect(status.phase).toBe('ready');
+    expect(calls[0]).toContain('--no-bin');
+    expect(calls[0]).toContain('--no-registry');
+    const resolver = createResolver(paths, { pathEnv: '' });
+    const executable = await resolver.findExecutable('python');
+    expect(executable).not.toBeNull();
+    expect(fs.realpathSync(executable!)).toContain(path.join('python', '3.12', 'cpython-3.12.99-test'));
   });
 
   it('status snapshot and emissions always include tier from the entry', async () => {

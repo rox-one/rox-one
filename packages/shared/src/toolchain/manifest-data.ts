@@ -182,28 +182,28 @@ export const MANIFEST_DATA: Partial<Record<ToolName, ManifestToolData>> = {
         sha256: '61130f394c1630d211dd50aecc4353d379480f36d3ac913cd85dbba1aed585c6',
         size: 50068815,
         archive: 'tar.gz',
-        binPaths: ['node-v22.23.2-darwin-arm64/bin/node', 'node-v22.23.2-darwin-arm64/bin/npx'],
+        binPaths: ['node-v22.23.2-darwin-arm64/bin/node', 'node-v22.23.2-darwin-arm64/bin/npx', 'node-v22.23.2-darwin-arm64/bin/npm'],
       },
       'darwin-x64': {
         url: 'https://nodejs.org/dist/v22.23.2/node-v22.23.2-darwin-x64.tar.gz',
         sha256: '58e99022c2ff89395576cc7fd4d98cea24bb68081475d5f88b801ee8729fb026',
         size: 51246936,
         archive: 'tar.gz',
-        binPaths: ['node-v22.23.2-darwin-x64/bin/node', 'node-v22.23.2-darwin-x64/bin/npx'],
+        binPaths: ['node-v22.23.2-darwin-x64/bin/node', 'node-v22.23.2-darwin-x64/bin/npx', 'node-v22.23.2-darwin-x64/bin/npm'],
       },
       'linux-x64': {
         url: 'https://nodejs.org/dist/v22.23.2/node-v22.23.2-linux-x64.tar.gz',
         sha256: 'b294a556e639d64338823920e5866c21c02741742d2e1529ee1a225c1ec9252a',
         size: 56851233,
         archive: 'tar.gz',
-        binPaths: ['node-v22.23.2-linux-x64/bin/node', 'node-v22.23.2-linux-x64/bin/npx'],
+        binPaths: ['node-v22.23.2-linux-x64/bin/node', 'node-v22.23.2-linux-x64/bin/npx', 'node-v22.23.2-linux-x64/bin/npm'],
       },
       'win32-x64': {
         url: 'https://nodejs.org/dist/v22.23.2/node-v22.23.2-win-x64.zip',
         sha256: '1177b4137ba5adaa56354ae40f1080c7450e8ae09cecb47da459d1c52ac99f97',
         size: 35683585,
         archive: 'zip',
-        binPaths: ['node-v22.23.2-win-x64/node.exe', 'node-v22.23.2-win-x64/npx.cmd'],
+        binPaths: ['node-v22.23.2-win-x64/node.exe', 'node-v22.23.2-win-x64/npx.cmd', 'node-v22.23.2-win-x64/npm.cmd'],
       },
     },
   },
@@ -384,13 +384,15 @@ export const MANIFEST_DATA: Partial<Record<ToolName, ManifestToolData>> = {
   },
 
   // ffmpeg — darwin: статические сборки martin-riedl.de (single-binary zip, версия 9.0);
-  // linux/win: BtbN FFmpeg-Builds autobuild-2026-08-06-13-39, sha256 сверены с checksums.sha256.
+  // linux: original BtbN pin; Windows refreshed independently after the old asset returned 404.
+  // Windows 9.0.2 build: SHA-256/size verified locally and against release checksums.sha256.
   ffmpeg: {
     version: '9.0',
     kind: 'binary',
     tier: 'core',
     displayName: 'FFmpeg',
-    critical: true,
+    // Media support is feature-specific, not a prerequisite for OMP/chat.
+    critical: false,
     artifacts: {
       'darwin-arm64': {
         url: 'https://ffmpeg.martin-riedl.de/download/macos/arm64/1785863997_9.0/ffmpeg.zip',
@@ -415,11 +417,11 @@ export const MANIFEST_DATA: Partial<Record<ToolName, ManifestToolData>> = {
         binPaths: ['ffmpeg-N-125978-g95c43d7df7-linux64-lgpl/bin/ffmpeg'],
       },
       'win32-x64': {
-        url: 'https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-08-06-13-39/ffmpeg-N-125978-g95c43d7df7-win64-lgpl.zip',
-        sha256: '79ab2838ff13a71df85ba452d633b964fe5cc681f7eccb1f3e873649974fbe1f',
-        size: 148267877,
+        url: 'https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-30-13-08/ffmpeg-n9.0.2-17-g2a571b6068-win64-lgpl-9.0.zip',
+        sha256: '6b264b9e6019103f601d98c292bd332fd87acf1c5e941ddff4fb71760fe63432',
+        size: 171535354,
         archive: 'zip',
-        binPaths: ['ffmpeg-N-125978-g95c43d7df7-win64-lgpl/bin/ffmpeg.exe'],
+        binPaths: ['ffmpeg-n9.0.2-17-g2a571b6068-win64-lgpl-9.0/bin/ffmpeg.exe'],
       },
     },
   },
@@ -477,28 +479,29 @@ export const MANIFEST_DATA: Partial<Record<ToolName, ManifestToolData>> = {
         sha256: 'fa909fea3bc06f460db79017030a221fdbc43ec4478f089cb554d8335c090817',
         size: 17676261,
         archive: 'tar.gz',
-        binPaths: ['uv-aarch64-apple-darwin/uv'],
+        binPaths: ['uv-aarch64-apple-darwin/uv', 'uv-aarch64-apple-darwin/uvx'],
       },
       'darwin-x64': {
         url: 'https://github.com/astral-sh/uv/releases/download/0.12.2/uv-x86_64-apple-darwin.tar.gz',
         sha256: 'a6e6506a9109801222d65d17461abf4ed13bdecc5d2b13af0495418a82972c6b',
         size: 19517927,
         archive: 'tar.gz',
-        binPaths: ['uv-x86_64-apple-darwin/uv'],
+        binPaths: ['uv-x86_64-apple-darwin/uv', 'uv-x86_64-apple-darwin/uvx'],
       },
       'linux-x64': {
         url: 'https://github.com/astral-sh/uv/releases/download/0.12.2/uv-x86_64-unknown-linux-gnu.tar.gz',
         sha256: 'd66e96b5f1ca3b99806eee283a8125d33a0bd669e6e6d9bc4ab7ffda63c41bf4',
         size: 21700643,
         archive: 'tar.gz',
-        binPaths: ['uv-x86_64-unknown-linux-gnu/uv'],
+        binPaths: ['uv-x86_64-unknown-linux-gnu/uv', 'uv-x86_64-unknown-linux-gnu/uvx'],
       },
       'win32-x64': {
         url: 'https://github.com/astral-sh/uv/releases/download/0.12.2/uv-x86_64-pc-windows-msvc.zip',
         sha256: '01442d8ce5c7124151a73e697c836d252c6da853c18c73206d3cc4c2378a91d2',
         size: 18977266,
         archive: 'zip',
-        binPaths: ['uv-x86_64-pc-windows-msvc/uv.exe'],
+        // Verified against the pinned zip: Windows has no top-level directory.
+        binPaths: ['uv.exe', 'uvx.exe'],
       },
     },
   },
@@ -512,7 +515,7 @@ export const MANIFEST_DATA: Partial<Record<ToolName, ManifestToolData>> = {
     kind: 'git-npm',
     tier: 'default-on',
     displayName: 'gbrain',
-    dependsOn: ['bun'],
+    dependsOn: ['bun', 'git'],
     artifacts: {},
   },
 

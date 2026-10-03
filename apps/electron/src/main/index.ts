@@ -118,6 +118,7 @@ import { ensureDefaultPermissions } from '@craft-agent/shared/agent/permissions-
 import { ensureToolIcons, ensurePresetThemes } from '@craft-agent/shared/config'
 import { setBundledAssetsRoot } from '@craft-agent/shared/utils'
 import { initializeBackendHostRuntime } from '@craft-agent/shared/agent/backend'
+import { prependPath, pathEnvKey } from '@craft-agent/shared/toolchain'
 import { setPowerShellValidatorRoot } from '@craft-agent/shared/agent'
 import { handleDeepLink } from './deep-link'
 import { BrowserPaneManager } from './browser-pane-manager'
@@ -182,7 +183,8 @@ if (isDebugMode) {
   process.env.CRAFT_UV = bundledUvExists ? uvBinary : (fallbackUv ?? uvBinary)
 
   // Bun runtime (packaged builds should prefer bundled runtime over PATH)
-  const bunBinary = join(resourcesBase, 'vendor', 'bun', process.platform === 'win32' ? 'bun.exe' : 'bun')
+  const bunBase = app.isPackaged && process.platform === 'win32' ? process.resourcesPath : resourcesBase
+  const bunBinary = join(bunBase, 'vendor', 'bun', process.platform === 'win32' ? 'bun.exe' : 'bun')
   if (existsSync(bunBinary)) {
     process.env.CRAFT_BUN = bunBinary
   }
@@ -202,7 +204,16 @@ if (isDebugMode) {
   // Prepend both generic wrappers dir and platform uv dir:
   // - binDir exposes wrapper commands (pdf-tool, docx-tool, ...)
   // - uvPlatformDir exposes raw `uv` for direct shell usage / debugging
-  process.env.PATH = `${binDir}${delimiter}${uvPlatformDir}${delimiter}${process.env.PATH}`
+  const rgDir = join(resourcesBase, 'node_modules', '@vscode', 'ripgrep', 'bin')
+  const rgBinary = join(rgDir, process.platform === 'win32' ? 'rg.exe' : 'rg')
+  const prefix = [binDir, uvPlatformDir,
+    ...(existsSync(bunBinary) ? [join(bunBase, 'vendor', 'bun')] : []),
+    ...(existsSync(rgBinary) ? [rgDir] : []),
+  ].join(delimiter)
+  const next = prependPath(process.env, prefix)
+  const pathKey = pathEnvKey(process.env)
+  for (const key of Object.keys(process.env)) if (key !== pathKey && key.toUpperCase() === 'PATH') delete process.env[key]
+  process.env[pathKey] = next[pathKey]
 
   if (!bundledUvExists) {
     mainLog.warn('Bundled uv binary missing, CLI document tools may fail unless uv is available on PATH.', {
@@ -434,6 +445,21 @@ app.whenReady().then(async () => {
   // (docs, permissions, themes, tool-icons resolve via getBundledAssetsDir)
   setBundledAssetsRoot(__dirname)
 
+  if (process.platform === 'win32' && !process.env.CRAFT_SERVER_URL) {
+    const { initializeWindowsBootstrap } = await import('./windows-bootstrap')
+    const { getToolchainDependencyMode, getGitBashPath } = await import('@craft-agent/shared/config')
+    const result = await initializeWindowsBootstrap({
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath,
+      managedRoot: join(CONFIG_DIR, 'toolchain'),
+      preference: getToolchainDependencyMode(),
+      gitBashPreference: getGitBashPath(),
+    })
+    // Structured non-secret diagnostics; never log receipt errors or process output.
+    if (result?.missingTools.length || result?.recoveryCode) mainLog.warn('[windows-bootstrap]', result)
+    else if (result) mainLog.info('[windows-bootstrap]', result)
+  }
+
   // Initialize backend runtime bootstrapping (Codex vendor root, Claude SDK runtime paths).
   initializeBackendHostRuntime({
     hostRuntime: {
@@ -660,16 +686,14 @@ app.whenReady().then(async () => {
     if (!isClientOnly) {
       // Restore persisted Git Bash path on Windows (must happen before any SDK subprocess spawn)
       if (process.platform === 'win32') {
-        const { getGitBashPath, clearGitBashPath } = await import('@craft-agent/shared/config')
+        const { getGitBashPath } = await import('@craft-agent/shared/config')
         const gitBashPath = getGitBashPath()
         if (gitBashPath) {
           const validation = await validateGitBashPath(gitBashPath)
           if (validation.valid) {
-            process.env.CLAUDE_CODE_GIT_BASH_PATH = validation.path
+            process.env.CLAUDE_CODE_GIT_BASH_PATH ??= validation.path
           } else {
-            clearGitBashPath()
-            delete process.env.CLAUDE_CODE_GIT_BASH_PATH
-            mainLog.warn(`Cleared invalid persisted Git Bash path: ${gitBashPath}`)
+            mainLog.warn('Persisted Git Bash path is unusable; preference retained for repair')
           }
         }
       }

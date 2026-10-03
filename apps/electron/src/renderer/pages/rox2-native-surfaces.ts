@@ -10,7 +10,7 @@ import {
   queuedResult,
   type Rox2Entity,
   type Rox2EntityKind,
-  type Rox2Result,
+  type Rox2CanonicalResult,
 } from '@craft-agent/core/rox2'
 
 export const NATIVE_RAIL_SURFACE_IDS = [
@@ -66,7 +66,7 @@ export function bindNativeSurfaceEntity(
 export function nativeSurfaceListResult(
   surfaceId: NativeRailSurfaceId,
   entities: readonly Rox2Entity[],
-): Rox2Result {
+): Rox2CanonicalResult {
   const kind = kindForNativeSurface(surfaceId)
   return liveResult({
     entityId: entities[0]?.id ?? formatRox2EntityId(kind, 'empty-list'),
@@ -79,7 +79,7 @@ export function nativeSurfaceListResult(
 export function nativeSurfaceResult(
   surfaceId: NativeRailSurfaceId | typeof BROWSER_SURFACE_ID,
   source: 'native' | 'fixture' | 'conation',
-): Rox2Result {
+): Rox2CanonicalResult {
   if (source === 'fixture') {
     return fixtureResult(`${surfaceId}.fixture`, `Playground ${surfaceId} rows are fixture, not live`)
   }

@@ -54,7 +54,7 @@ export function i18nKeyForImportError(code: string | undefined): string {
 }
 
 export async function specFromBytes(bytes: Uint8Array, mimeType?: string): Promise<ImportMediaSpec> {
-  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  const digest = await crypto.subtle.digest('SHA-256', Uint8Array.from(bytes))
   const contentHash = [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, '0')).join('')
   return { contentHash, byteLength: bytes.byteLength, mimeType }
 }
