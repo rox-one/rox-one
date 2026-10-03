@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
-import { existsSync, mkdirSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
 import { chromium, expect as expectDOM, type Browser, type Page } from 'playwright/test'
 const repository = resolve(import.meta.dirname, '../../../../../../..')
 const fixture = resolve(import.meta.dirname, 'fixtures/voice-dictation')
@@ -11,6 +12,7 @@ const timeout = 30_000
 
 describe.skipIf(!existsSync(executablePath))('voice dictation production renderer DOM', () => {
   let server: ReturnType<typeof Bun.spawn> | undefined
+  let browserOwnerDirectory: string | undefined
   let browser: Browser
   let page: Page
   const errors: string[] = []
@@ -18,7 +20,22 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
     // The ephemeral bundler owns no persistent state. Retire it deterministically
     // even when another package build has saturated the host during teardown.
     const owned = server; server = undefined; owned?.kill('SIGKILL')
-    try { await browser?.close() } finally { await owned?.exited }
+    const ownedBrowserDirectory = browserOwnerDirectory; browserOwnerDirectory = undefined
+    const close = browser?.close()
+    const pidFile = ownedBrowserDirectory && join(ownedBrowserDirectory, 'browser.pid')
+    // The launcher records its own PID before exec, preserving Playwright's
+    // private process group. Kill only that group; browser.close reaps it and
+    // removes the private profile even if graceful CDP shutdown stalled.
+    if (pidFile && existsSync(pidFile)) {
+      const pid = Number(readFileSync(pidFile, 'utf8').trim())
+      if (!Number.isSafeInteger(pid) || pid <= 1) throw new Error('Invalid owned browser PID')
+      try { process.kill(process.platform === 'win32' ? pid : -pid, 'SIGKILL') }
+      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error }
+    }
+    try { await close } finally {
+      await owned?.exited
+      if (ownedBrowserDirectory) rmSync(ownedBrowserDirectory, { recursive: true, force: true })
+    }
   }
   beforeAll(async () => {
     try {
@@ -30,7 +47,11 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
         if (Date.now() > deadline) throw new Error('Voice DOM fixture did not start')
         await Bun.sleep(100)
       }
-      browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
+      browserOwnerDirectory = mkdtempSync(join(tmpdir(), 'rox-voice-browser-'))
+      browser = await chromium.launch({
+        executablePath: process.platform === 'win32' ? executablePath : resolve(fixture, 'browser-launcher.sh'), headless: true, args: ['--no-sandbox'],
+        env: { ...process.env, VOICE_BROWSER_PID_FILE: join(browserOwnerDirectory, 'browser.pid'), VOICE_BROWSER_ACTUAL_EXECUTABLE: executablePath },
+      })
       const warmup = await browser.newPage(); warmup.on('pageerror', (error) => console.error('Voice fixture warmup:', error.message)); warmup.on('console', (message) => { if (message.type() === 'error') console.error('Voice fixture console:', message.text()) }); await warmup.goto(url)
       await expectDOM(warmup.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled({ timeout })
       await warmup.close()
