@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "time_utc": "2026-10-03T18:25:22.872217+00:00",
+  "source_pr": 1436,
+  "source_head": "384843bfc4cf7d4a1f34c902a66a9a3198043c9f",
+  "qualified_source": "8ac78baf1cb4d816e5fed0e8cf385f450837a1ff",
+  "integrated_main": "79fa5274315941f66ea26975551c66580e6036cd",
+  "owner": "pr_scout; integration and remote merge: root",
+  "scope": [
+    "one overall caller deadline for local resolution, connect, initialize, health and tool discovery",
+    "lease-local cancellation preserves shared Qdrant owners",
+    "typed HTTP/redirect/tool diagnostics scrub configured credentials with linear URL suffix processing",
+    "source-owned Windows PATH aliases; inherited private environment filtering",
+    "modern pool generation, serialization, readiness and no-replay behavior retained"
+  ],
+  "gates": [
+    {
+      "name": "current MCP aggregate before final Windows PATH projection addition",
+      "tests": 135,
+      "fail": 0,
+      "assertions": 527,
+      "seconds": 42.86
+    },
+    {
+      "name": "integrated changed client, Qdrant and deadline/privacy controls including Windows PATH projection",
+      "tests": 57,
+      "fail": 0,
+      "assertions": 216,
+      "seconds": 17.63
+    },
+    {
+      "name": "shared TypeScript integrated",
+      "exit_code": 0
+    },
+    {
+      "name": "Electron TypeScript integrated",
+      "exit_code": 0
+    },
+    {
+      "name": "full default main/worker build and output verification",
+      "exit_code": 0
+    },
+    {
+      "name": "preload build and output verification",
+      "exit_code": 0
+    }
+  ],
+  "evidence": [
+    {
+      "file": "mcp-deadline-settled-aggregate.log",
+      "sha256": "8770ffddcf1d720371302ea20ff3b6fd8415f490cc339f981beab88c89531de3"
+    },
+    {
+      "file": "mcp-deadline-integrated-targeted.log",
+      "sha256": "b9ade63d19f65cd4c4e326e9734b6d8196c6a670f6ee8ac9d17414ae8308c894"
+    },
+    {
+      "file": "mcp-deadline-final-shared-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "mcp-deadline-integrated-electron-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "mcp-deadline-default-main-build.log",
+      "sha256": "a12d70f7324691a6e6945839fac472557ff69cbb2ba341716c1745620e68afbc"
+    },
+    {
+      "file": "mcp-deadline-integrated-preload-build.log",
+      "sha256": "4bdb84b3daf9154149caa03c9dd1be3206aa605c81d1be60108c7ae6becdfb31"
+    }
+  ],
+  "limits": [
+    "Real Node HTTP/SSE sockets and stdio children exercised on macOS; Windows PATH mapping is platform-projected and does not establish native Windows acceptance.",
+    "No model/provider prompt or native installed acceptance.",
+    "HTTP 400/404/405 legacy SSE negotiation remains a separate source recovery obligation.",
+    "Default main build passed; custom --outdir verification exposed an existing extension-host worker hardcoded output path, assigned to the next infrastructure PR.",
+    "No full PR1436 or exhaustive branch-integration completion claim."
+  ],
+  "retained_failure_history": [
+    "Initial four deadline diagnostics/realpath fixture mismatches corrected without increasing product deadlines.",
+    "Real 200ms clock under cold typecheck could expire before discovery phase; phase-owned fixture clock now waits for actual request then advances 199+1ms.",
+    "Under concurrent host load, fixture I/O and runner 5s limits failed; outer runner 30s and fixture I/O 10s now preserve all actual caller 200/500ms and product 30s budgets.",
+    "Integrated shared types found two unknown error-result assertions; fixture explicitly narrows Error. Final shared types pass.",
+    "Custom --outdir full main build failed extension-host worker path verification; full default main build passed."
+  ]
+}
