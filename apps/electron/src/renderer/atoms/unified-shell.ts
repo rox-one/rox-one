@@ -11,9 +11,80 @@
  * Granular workbench.* experimental flags default ON (P35-08). Conation stays off.
  */
 import { atom } from 'jotai'
-import { atomWithStorage } from 'jotai/utils'
+import { atomWithStorage, RESET } from 'jotai/utils'
 import { KEYS, getKeyString } from '@/lib/local-storage'
 import { SIDE_PANEL_DEFAULT_WIDTH } from '@/lib/shell-layout-preferences'
+
+export const INSPECTOR_PANEL_WIDTH_MIN = 280
+export const INSPECTOR_PANEL_WIDTH_MAX = 1400
+export const BOTTOM_DOCK_HEIGHT_MIN = 88
+export const BOTTOM_DOCK_HEIGHT_MAX = 480
+
+/** Keep corrupt/stale layout values from making shell controls inaccessible. */
+export function clampPersistedLayoutSize(
+  value: unknown,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.min(max, Math.max(min, Math.round(value)))
+    : fallback
+}
+
+function boundedNumberStorage(min: number, max: number, fallback: number) {
+  return {
+    getItem(key: string, initialValue: number): number {
+      try {
+        if (typeof localStorage === 'undefined') return initialValue
+        return clampPersistedLayoutSize(JSON.parse(localStorage.getItem(key) ?? 'null'), min, max, fallback)
+      } catch {
+        return fallback
+      }
+    },
+    setItem(key: string, value: number): void {
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(key, JSON.stringify(clampPersistedLayoutSize(value, min, max, fallback)))
+        }
+      } catch {
+        // Resizing remains usable when storage is denied or its quota is full.
+      }
+    },
+    removeItem(key: string): void {
+      try {
+        if (typeof localStorage !== 'undefined') localStorage.removeItem(key)
+      } catch {
+        // The live preference can still reset when persistence is unavailable.
+      }
+    },
+    subscribe(key: string, callback: (value: number) => void): () => void {
+      if (typeof window === 'undefined') return () => {}
+      const onStorage = (event: StorageEvent) => {
+        try {
+          if (event.storageArea !== localStorage || (event.key !== key && event.key !== null)) return
+          callback(this.getItem(key, fallback))
+        } catch {
+          callback(fallback)
+        }
+      }
+      window.addEventListener('storage', onStorage)
+      return () => window.removeEventListener('storage', onStorage)
+    },
+  }
+}
+
+/** Normalize before Jotai publishes, including functional updates and RESET. */
+function boundedLayoutAtom(key: string, min: number, max: number, fallback: number) {
+  const persisted = atomWithStorage<number>(key, fallback, boundedNumberStorage(min, max, fallback), { getOnInit: true })
+  return atom(
+    (get) => get(persisted),
+    (get, set, update: number | typeof RESET | ((previous: number) => number | typeof RESET)) => {
+      const value = typeof update === 'function' ? update(get(persisted)) : update
+      set(persisted, value === RESET ? RESET : clampPersistedLayoutSize(value, min, max, fallback))
+    },
+  )
+}
 
 /** Wave flag: unified shell chrome (ActivityRail + SurfaceTabs + InspectorHost). Master stays off. */
 export const featureUnifiedShellAtom = atomWithStorage<boolean>(
@@ -236,11 +307,11 @@ export const inspectorSectionAtom = atomWithStorage<InspectorSectionId>(
 )
 
 /** Inspector panel width in px (drag-resized). */
-export const inspectorPanelWidthAtom = atomWithStorage<number>(
+export const inspectorPanelWidthAtom = boundedLayoutAtom(
   getKeyString(KEYS.inspectorPanelWidth),
+  INSPECTOR_PANEL_WIDTH_MIN,
+  INSPECTOR_PANEL_WIDTH_MAX,
   SIDE_PANEL_DEFAULT_WIDTH,
-  undefined,
-  { getOnInit: true },
 )
 
 /** Terminal docked under the main column (stacks with the right inspector). */
@@ -252,9 +323,9 @@ export const bottomTerminalOpenAtom = atomWithStorage<boolean>(
 )
 
 /** Bottom terminal dock height in px. */
-export const bottomDockHeightAtom = atomWithStorage<number>(
+export const bottomDockHeightAtom = boundedLayoutAtom(
   getKeyString(KEYS.bottomDockHeight),
+  BOTTOM_DOCK_HEIGHT_MIN,
+  BOTTOM_DOCK_HEIGHT_MAX,
   104,
-  undefined,
-  { getOnInit: true },
 )

@@ -114,6 +114,39 @@ export function MainContentPanel({
     activeSessionWorkingDirectory,
   } = useAppShellContext()
 
+  // Detail state belongs to its workspace and entity, including project-level skills.
+  const routeKey = JSON.stringify([
+    activeWorkspaceId,
+    navState.navigator,
+    'details' in navState ? navState.details : null,
+    isSettingsNavigation(navState) ? navState.subpage : null,
+    isScreenNavigation(navState) ? navState.screen : null,
+    navState.navigator === 'search' ? navState.query : null,
+    isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
+  ])
+  const selectedSourceSlug = isSourcesNavigation(navState) ? navState.details?.sourceSlug : undefined
+  const selectedSkillSlug = isSkillsNavigation(navState) && navState.details?.type === 'skill'
+    ? navState.details.skillSlug : undefined
+  const [missingEntity, setMissingEntity] = useState<{ routeKey: string; missing: boolean } | null>(null)
+  useEffect(() => {
+    setMissingEntity(null)
+    if (!activeWorkspaceId || (!selectedSourceSlug && !selectedSkillSlug)) return
+    let cancelled = false
+    // These snapshots are authoritative only for the selected workspace. Keep the
+    // route selected after deletion so its missing state survives subsequent events.
+    const cleanup = selectedSourceSlug
+      ? window.electronAPI?.onSourcesChanged?.((workspaceId, sources) => {
+        if (cancelled || workspaceId !== activeWorkspaceId) return
+        setMissingEntity({ routeKey, missing: !sources.some(source => source.config.slug === selectedSourceSlug) })
+      })
+      : window.electronAPI?.onSkillsChanged?.((workspaceId, skills) => {
+        if (cancelled || workspaceId !== activeWorkspaceId) return
+        setMissingEntity({ routeKey, missing: !skills.some(skill => skill.slug === selectedSkillSlug) })
+      })
+    return () => { cancelled = true; cleanup?.() }
+  }, [activeWorkspaceId, selectedSourceSlug, selectedSkillSlug, routeKey])
+  const selectedEntityMissing = missingEntity?.routeKey === routeKey && missingEntity.missing
+
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const visibleSessionIds = useMemo(
     () =>
@@ -180,7 +213,7 @@ export function MainContentPanel({
   )
 
   const wrapWithStoplight = (content: React.ReactNode) => (
-    <StoplightProvider value={isSidebarAndNavigatorHidden}>
+    <StoplightProvider key={routeKey} value={isSidebarAndNavigatorHidden}>
       <React.Suspense fallback={pageFallback}>
         {content}
       </React.Suspense>
@@ -194,6 +227,19 @@ export function MainContentPanel({
         activeWorkspaceId={activeWorkspaceId || ''}
       />
     </StoplightProvider>
+  )
+
+  const missingEntityPanel = (family: 'source' | 'skill', message: string) => wrapWithStoplight(
+    <Panel variant="grow" className={className}>
+      <div
+        role="status"
+        className="flex h-full items-center justify-center text-muted-foreground"
+        data-testid="route-entity-missing"
+        data-route-family={family}
+      >
+        <p className="text-sm">{message}</p>
+      </div>
+    </Panel>,
   )
 
   if (isSettingsNavigation(navState)) {
@@ -226,6 +272,7 @@ export function MainContentPanel({
       )
     }
     if (navState.details) {
+      if (selectedEntityMissing) return missingEntityPanel('source', t('sourceInfo.notFound'))
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <SourceInfoPage sourceSlug={navState.details.sourceSlug} workspaceId={activeWorkspaceId || ''} />
@@ -256,6 +303,7 @@ export function MainContentPanel({
       )
     }
     if (navState.details?.type === 'skill') {
+      if (selectedEntityMissing) return missingEntityPanel('skill', t('skillInfo.notFound'))
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <SkillInfoPage
@@ -553,10 +601,15 @@ export function MainContentPanel({
     )
   }
 
+  // A stale route stays unavailable instead of falling back to session.selectConversation.
   return wrapWithStoplight(
     <Panel variant="grow" className={className}>
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        <p className="text-sm">{t("session.selectConversation")}</p>
+      <div
+        className="flex items-center justify-center h-full text-muted-foreground"
+        data-testid="route-unavailable"
+      >
+        {/* Unknown/stale deep links must not masquerade as an unrelated chat route. */}
+        <p className="text-sm">{t('common.unavailable')}</p>
       </div>
     </Panel>
   )
