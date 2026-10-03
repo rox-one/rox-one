@@ -1,3 +1,4 @@
+import { personalTaskBundleRowsAreValid } from './import-validation.ts'
 import { parseQuickEntry, startOfLocalDay, zonedDateTimeParts, zonedDateTimeToEpoch } from './dates.ts'
 import { nextRepeatDate } from './quick-entry.ts'
 import {
@@ -114,6 +115,9 @@ export class PersonalTaskStore {
       if (record[key] !== undefined && !Array.isArray(record[key])) {
         return { status: 'quarantine', reason: 'invalid-shape', preserved: raw }
       }
+    }
+    if (!personalTaskBundleRowsAreValid(record)) {
+      return { status: 'quarantine', reason: 'invalid-shape', preserved: raw }
     }
     return {
       status: 'ok',

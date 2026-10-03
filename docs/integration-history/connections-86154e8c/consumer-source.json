@@ -1,0 +1,47 @@
+{
+  "source_sha": "86154e8c812746261282bb4c517b16ad7becc0ec",
+  "source_pr": 54,
+  "source_paths": [
+    {
+      "path": "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+      "sha256": "f13a376a66b49396322b99f80af2640dec3c6c9847bbe3c8efba900895cf540a"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/connections-list.ts",
+      "sha256": "d9d9e39226b6a16fa4a17361993daaa7e03cbe3fbbe7b15cca657a147afb19bc"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/connections-ui.ts",
+      "sha256": "b80629ae6b2c5e33305254e6edcd39fe0b88abd77d4f629f5bbf5f59c7981707"
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/InspectorHost.tsx",
+      "sha256": "4ddbc55b8dbfc3c376a8cfc74970941399dae2bc4bccba2ca76ca458c8aff0fd"
+    }
+  ],
+  "integration_main": "2ccafa7211d6da4b10250c5a33b63e3c7eee5a4a",
+  "backend_dependency_pr": 1414,
+  "consumed_intents": [
+    "live inspect health/expiry/provenance/fingerprint/kind/version",
+    "actual lease preview and explicit reconnect/move confirmation",
+    "registered source move target local-alt with explicit denial, no arbitrary path/backend input",
+    "user-started GitHub device login public code/approved GitHub URI, poll timing/slow_down/denied/expiry/import, cancellation"
+  ],
+  "adaptations": [
+    "current overview/import/policy/audit page retained",
+    "scoped shared lifecycle component in page and current inspector connection section only",
+    "committed workspace/selected-credential owner invalidates A-to-B-to-A, disposal, foreign receipts",
+    "current base projection retained; new inspect exact own enumerable data descriptor allowlist never invokes getters",
+    "coalesced mutations and latest inspection, generic sanitized failure display",
+    "device cancellation covers late start, pending poll and a replacement flow before unmount",
+    "27 source/new translations in all12 current locale catalogs"
+  ],
+  "preserved": [
+    "TopBar/SurfaceTabs/current shell navigation",
+    "Inspector geometry, retained surface, browser/terminal consent and focus guards",
+    "LocalMeetingDetail/Notes authority and native single-writer contracts",
+    "original source branches"
+  ],
+  "acceptance_limit": "Executed production page/connection inspector components with substituted unrelated overview/project/context and metadata-only backend fixture; actual provider sign-in/backend migration/native app acceptance separate",
+  "source_branch": "checkpoint/session-audit-20260821-craft-agents"
+}

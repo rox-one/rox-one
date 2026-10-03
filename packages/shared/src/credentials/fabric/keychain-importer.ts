@@ -31,7 +31,7 @@ export interface KeychainImporterOptions {
 export class KeychainImporter implements CredentialImporter {
   readonly id = 'macos-keychain';
   readonly sourceKind = 'keychain';
-  private readonly candidates = new Map<string, ImportCandidate>();
+  private readonly candidates = new Map<string, { candidate: ImportCandidate; item: KeychainItem }>();
   private lastCommit: CredentialRefId | undefined;
 
   constructor(private readonly options: KeychainImporterOptions) {}
@@ -49,16 +49,21 @@ export class KeychainImporter implements CredentialImporter {
         conflictKey: `keychain:${item.service}:${item.account}`,
         locator: `${item.service}/${item.account}`,
       };
-      this.candidates.set(candidate.id, candidate);
+      const existing = this.candidates.get(candidate.id);
+      if (existing && (existing.item.service !== item.service || existing.item.account !== item.account)) {
+        this.candidates.clear();
+        throw new Error('ambiguous_keychain_candidate');
+      }
+      this.candidates.set(candidate.id, { candidate, item: { service: item.service, account: item.account } });
       out.push(candidate);
     }
     return out;
   }
 
   async preview(input: { candidateId: string }): Promise<ImportPreview> {
-    const candidate = this.candidates.get(input.candidateId);
-    if (!candidate) throw new Error('Unknown import candidate');
-    const [service, account] = splitLocator(candidate.locator ?? '');
+    const record = this.candidates.get(input.candidateId);
+    if (!record) throw new Error('Unknown import candidate');
+    const { candidate, item: { service, account } } = record;
     const material = await this.options.get({ service, account });
     const password = material.password ?? '';
     const preview: ImportPreview = {
@@ -84,9 +89,9 @@ export class KeychainImporter implements CredentialImporter {
   async commit(input: ImportCommitInput): Promise<{ credentialRefId: CredentialRefId }> {
     const valid = await this.validate(input);
     if (!valid.ok) throw new Error(valid.code);
-    const candidate = this.candidates.get(input.candidateId);
-    if (!candidate) throw new Error('unknown_candidate');
-    const [service, account] = splitLocator(candidate.locator ?? '');
+    const record = this.candidates.get(input.candidateId);
+    if (!record) throw new Error('unknown_candidate');
+    const { candidate, item: { service, account } } = record;
     const material = await this.options.get({ service, account });
     if (input.mode === 'copy' && !material.password) throw new Error('secret_unavailable');
     const written = await this.options.provider.write({
@@ -114,10 +119,4 @@ export class KeychainImporter implements CredentialImporter {
     });
     if (this.lastCommit === id) this.lastCommit = undefined;
   }
-}
-
-function splitLocator(locator: string): [string, string] {
-  const slash = locator.indexOf('/');
-  if (slash <= 0) return [locator, locator];
-  return [locator.slice(0, slash), locator.slice(slash + 1)];
 }

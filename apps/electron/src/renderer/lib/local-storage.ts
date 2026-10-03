@@ -33,6 +33,7 @@ export const KEYS = {
   theme: 'theme',
 
   // Panel layouts (dynamic key suffix)
+  panelWorkspaceLayout: 'panel-workspace-layout', // Geometry only, scoped to workspace id
   panelLayout: 'panel-layout', // Used as: panelLayout:${key}
 
   // Tabs (workspace-scoped)

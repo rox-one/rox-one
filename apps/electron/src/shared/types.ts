@@ -657,6 +657,7 @@ export interface ElectronAPI {
   getTaskResults(workspaceId: string, slug: string, runId?: string): Promise<TaskResultsDto>
   listMeetings(workspaceId: string, cursor?: string, limit?: number): Promise<unknown>
   getMeeting(workspaceId: string, meetingId: string): Promise<unknown>
+  planMeetingActions(workspaceId: string, input: import('@rox/shared/meeting-agents').MeetingPlanInput): Promise<import('@rox/shared/meeting-agents').MeetingActionPlan>
   searchMeetings(
     workspaceId: string,
     query: string,

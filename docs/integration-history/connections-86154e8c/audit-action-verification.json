@@ -1,0 +1,34 @@
+{
+  "source": "86154e8c812746261282bb4c517b16ad7becc0ec",
+  "integration_base": "c25270ad173fdb774ae69145bb910837ec1037d7",
+  "tests": {
+    "negative": {
+      "pass": 0,
+      "fail": 2
+    },
+    "positive": {
+      "pass": 62,
+      "fail": 0,
+      "assertions": 353
+    }
+  },
+  "types": "server-core strict types exit0 after Meetings/Calendar integration; subsequent main change is SSE test-only",
+  "review": "independent source review no high-confidence actionable issue; no global security claim",
+  "migration1_and2_sql_unchanged": true,
+  "migration3_source_sql_identical": true,
+  "limits": "darwin/arm64 native SQLite tuple; no installed native UI/provider acceptance",
+  "log_hashes": {
+    "connection-audit-before.log": "1ec3288110ae458026e94ff325f04f8f743b2516b7fd23c8d8b644225f01f7f6",
+    "connection-audit-after.log": "2dcc9e103c2b14e612472549a9ca446634fff6d0201a5b153a95a03124f09993",
+    "connection-audit-after2.log": "f2e2eefb710236d71763d44626352c00677f90c72c1c9f1c31e68fbe2042cced",
+    "connection-audit-final2.log": "cc1873bfb4297293808f33f1135c758bbc153d70a22844d55bd19f74c2f1a06b",
+    "connection-audit-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "connection-audit-combined-final.log": "1e459a6e1eedc23784f8695708bd82ecd283ee21e623aecdeb71bc304057ff96",
+    "connection-audit-combined-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "files": {
+    "packages/server-core/src/workgraph/index.ts": "0a82c489fe77827e28ee2b18ece753edb83b99a43200b6981ac77fbbdd176267",
+    "packages/server-core/src/workgraph/connection-audit-migration.test.ts": "156f3cffb76e5384649df2cc9ae296ff306fbb1964d5b22e10d9011e1f090be1"
+  },
+  "qualified_runtime_commit": "98096ab804571de20881d4eada35ad1e40a848ba"
+}
