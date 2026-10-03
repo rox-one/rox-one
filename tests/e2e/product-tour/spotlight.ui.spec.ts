@@ -38,6 +38,12 @@ test('UI-05/UI-09: production mask follows measured target geometry after move a
   const box = await page.locator('[data-product-tour-popover]').boundingBox()
   expect(box!.x).toBeGreaterThanOrEqual(0); expect(box!.y).toBeGreaterThanOrEqual(0)
   expect(box!.x + box!.width).toBeLessThanOrEqual(1100); expect(box!.y + box!.height).toBeLessThanOrEqual(800)
+  const motion = await page.locator('[data-product-tour-popover]').evaluate(element => {
+    const style = getComputedStyle(element)
+    return { animation: style.animationDuration, transition: style.transitionDuration }
+  })
+  expect(motion.animation.split(',').every(duration => parseFloat(duration) === 0)).toBe(true)
+  expect(motion.transition.split(',').every(duration => parseFloat(duration) === 0)).toBe(true)
 })
 
 test('UI-08: a normal outside application click executes and pauses the production overlay', async ({ page }) => {
@@ -64,9 +70,9 @@ test('UI-11: production geometry observers disconnect after the tour closes', as
   await page.addInitScript(() => {
     const active = new Set<object>()
     for (const name of ['ResizeObserver', 'MutationObserver'] as const) {
-      const Original = window[name]
+      const Original: any = window[name]
       ;(window as any)[name] = class extends Original {
-        observe(...args: any[]) { active.add(this); return super.observe(...args as [any, any]) }
+        observe(...args: any[]) { active.add(this); return super.observe(...args) }
         disconnect() { active.delete(this); return super.disconnect() }
       }
     }
