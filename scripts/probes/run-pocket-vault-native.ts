@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import electron from 'electron'
-import { projectNativeVaultReceipt, safeVaultErrorCode } from './pocket-vault-diagnostics'
+import { projectNativeVaultReceipt, safeVaultErrorCode, windowsLocalStateKeyFingerprint } from './pocket-vault-diagnostics'
 
 const workspace = resolve(import.meta.dir, '../..')
 const directory = await mkdtemp(join(tmpdir(), 'rox-pocket-native-vault-'))
@@ -10,8 +10,10 @@ const bundle = join(directory, 'probe.cjs')
 const reports = join(workspace, 'reports/pocket-sso-native-vault')
 const report = join(reports, `${process.platform}.json`)
 const receipts: unknown[] = []
+const localState: { phase: 'write' | 'read'; encryptedKeyPresent: boolean; encryptedKeyStable: boolean | null }[] = []
+let writeKeyFingerprint: string | null = null
 let phase: 'write' | 'read' | 'runner' = 'runner'
-const save = (passed: boolean, code: string | null = null, exitCode: number | null = null) => writeFile(report, JSON.stringify({ receipts, platform: process.platform, nativeStoreRestartPassed: passed, failure: passed ? null : { phase, code, exitCode }, scope: 'Actual OS encryption and store restart; no OAuth, provider or GUI acceptance.' }, null, 2) + '\n')
+const save = (passed: boolean, code: string | null = null, exitCode: number | null = null) => writeFile(report, JSON.stringify({ receipts, localState, platform: process.platform, nativeStoreRestartPassed: passed, failure: passed ? null : { phase, code, exitCode }, scope: 'Actual OS encryption and store restart; no OAuth, provider or GUI acceptance.' }, null, 2) + '\n')
 try {
   await mkdir(reports, { recursive: true })
   await rm(report, { force: true })
@@ -26,6 +28,11 @@ try {
     const [stdout, , code] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]).finally(() => clearTimeout(timer))
     const receipt = stdout.split('\n').flatMap(line => { try { const parsed = projectNativeVaultReceipt(JSON.parse(line), currentPhase); return parsed ? [parsed] : [] } catch { return [] } }).at(-1)
     if (receipt) receipts.push(receipt)
+    // Read after actual process exit, including failed read phases. Only publish
+    // presence/stability booleans; the wrapped-key fingerprint stays in memory.
+    const fingerprint = process.platform === 'win32' ? windowsLocalStateKeyFingerprint(join(directory, 'electron-profile')) : null
+    const stable = currentPhase === 'write' ? null : fingerprint !== null && fingerprint === writeKeyFingerprint
+    if (process.platform === 'win32') localState.push({ phase: currentPhase, encryptedKeyPresent: fingerprint !== null, encryptedKeyStable: stable })
     if (code !== 0 || !receipt?.passed) {
       const knownCode = receipt?.code ?? (code !== 0 ? 'native_process_failed' : 'native_probe_receipt_missing')
       await save(false, knownCode, code)
@@ -33,6 +40,12 @@ try {
       console.log(JSON.stringify({ platform: process.platform, phase: currentPhase, stage: receipt?.stage ?? 'initialize', code: knownCode, exitCode: code, nativeStoreRestartPassed: false }))
       process.exitCode = 1
       break
+    }
+    if (!receipt.profileIsolated) throw new Error('native_profile_not_isolated')
+    if (process.platform === 'win32') {
+      if (!fingerprint) throw new Error('native_local_state_key_missing')
+      if (currentPhase === 'write') writeKeyFingerprint = fingerprint
+      else if (!stable) throw new Error('native_local_state_key_changed')
     }
   }
   if (!process.exitCode) {

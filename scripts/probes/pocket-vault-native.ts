@@ -13,6 +13,8 @@ app.setName('ROX SSO Native Vault Probe')
 const profile = join(directory, 'electron-profile')
 mkdirSync(profile, { recursive: true, mode: 0o700 })
 app.setPath('userData', profile)
+app.setPath('sessionData', profile)
+const profileIsolated = app.getPath('userData') === profile && app.getPath('sessionData') === profile
 const caller = { issuer: 'rox:native-vault-probe', subject: 'isolated-fixture' }
 const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
 const encryptedFiles = (path: string) => Object.fromEntries(readdirSync(path).sort().map(file => [file, createHash('sha256').update(readFileSync(join(path, file))).digest('hex')]))
@@ -20,8 +22,9 @@ const encryptedFiles = (path: string) => Object.fromEntries(readdirSync(path).so
 let stage: VaultStage = 'initialize'
 let encryptionAvailable = false
 let fsync: FsyncDiagnostic[] = []
-const receipt = (passed: boolean, error?: unknown) => ({ phase, platform: process.platform, electron: process.versions.electron, encryptionAvailable, backend: process.platform === 'darwin' ? 'Keychain' : 'DPAPI', stage, passed, code: passed ? null : safeVaultErrorCode(error), fsync })
+const receipt = (passed: boolean, error?: unknown) => ({ phase, platform: process.platform, electron: process.versions.electron, encryptionAvailable, profileIsolated, backend: process.platform === 'darwin' ? 'Keychain' : 'DPAPI', stage, passed, code: passed ? null : safeVaultErrorCode(error), fsync })
 app.whenReady().then(async () => {
+  if (!profileIsolated) throw new Error('native_profile_not_isolated')
   stage = 'encryption_available'
   encryptionAvailable = safeStorage.isEncryptionAvailable()
   if (!['darwin', 'win32'].includes(process.platform) || !encryptionAvailable) {
@@ -71,5 +74,8 @@ app.whenReady().then(async () => {
   }
   stage = 'complete'
   console.log(JSON.stringify(receipt(true)))
-  app.exit(0)
+  // Windows ready may precede the native main message loop. An immediate exit
+  // can bypass Chromium's Local State commit containing the DPAPI-wrapped key.
+  // Graceful quit lets Electron finish startup and flush its native preferences.
+  app.quit()
 }).catch(error => { console.log(JSON.stringify(receipt(false, error))); app.exit(1) })

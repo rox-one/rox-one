@@ -1,4 +1,5 @@
-import { constants, openSync, closeSync, fsyncSync, writeFileSync, rmSync } from 'node:fs'
+import { constants, openSync, closeSync, fsyncSync, writeFileSync, readFileSync, statSync, rmSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { join } from 'node:path'
 
 export const VAULT_STAGES = ['initialize', 'bundle', 'encryption_available', 'fsync_fixture', 'account_write', 'logout_write', 'binding_write', 'plaintext_scan', 'hash_write', 'expected_read', 'ciphertext_readback', 'account_read', 'logout_read', 'binding_read', 'account_clear', 'logout_clear', 'clear_readback', 'complete'] as const
@@ -6,6 +7,7 @@ export type VaultStage = typeof VAULT_STAGES[number]
 const knownCodes = new Set(['EACCES', 'EPERM', 'EBADF', 'EINVAL', 'EIO', 'ENOSYS', 'ENOENT', 'EEXIST', 'ENOSPC', 'EROFS', 'ROX_OS_SECURE_STORAGE_UNAVAILABLE', 'ROX_SECURE_STORE_READ_FAILED', 'ROX_SECURE_STORE_WRITE_FAILED', 'plaintext_fixture_in_sealed_store', 'native_store_restart_readback_failed', 'native_store_clear_readback_failed', 'native_fsync_writable_failed', 'native_probe_bundle_failed', 'native_probe_receipt_missing', 'native_process_failed', 'unknown'])
 for (const stage of ['open', 'inspect', 'read', 'decrypt', 'parse']) knownCodes.add(`secure_store_${stage}_failed`)
 knownCodes.add('ciphertext_fixture_readback_failed')
+for (const code of ['native_profile_not_isolated', 'native_local_state_key_missing', 'native_local_state_key_changed']) knownCodes.add(code)
 export function safeVaultErrorCode(error: unknown): string {
   if (error && typeof error === 'object') {
     const value = error as { code?: unknown; message?: unknown }
@@ -15,6 +17,16 @@ export function safeVaultErrorCode(error: unknown): string {
   return 'unknown'
 }
 export interface FsyncDiagnostic { access: 'readonly' | 'writable'; opened: boolean; flushed: boolean; code: string | null }
+/** Internal fingerprint only: callers publish presence/stability booleans, never key bytes. */
+export function windowsLocalStateKeyFingerprint(profile: string): string | null {
+  const file = join(profile, 'Local State')
+  try {
+    if (statSync(file).size > 1_000_000) return null
+    const value = JSON.parse(readFileSync(file, 'utf8'))
+    const encryptedKey = value?.os_crypt?.encrypted_key
+    return typeof encryptedKey === 'string' && encryptedKey.length > 0 ? createHash('sha256').update(encryptedKey).digest('hex') : null
+  } catch { return null }
+}
 export function nativeFsyncFixture(directory: string): FsyncDiagnostic[] {
   const path = join(directory, 'fsync-fixture')
   writeFileSync(path, Buffer.from('synthetic filesystem metadata only'), { flag: 'wx', mode: 0o600 })
@@ -42,5 +54,5 @@ export function projectNativeVaultReceipt(value: unknown, phase: 'write' | 'read
   }) : []
   const electron = typeof v.electron === 'string' && /^[1-9]\d*\.\d+\.\d+$/.test(v.electron) ? v.electron : 'unknown'
   if (v.passed && (v.stage !== 'complete' || v.encryptionAvailable !== true || v.code !== null || electron === 'unknown' || !fsync.some(entry => entry.access === 'writable' && entry.opened && entry.flushed && entry.code === null))) return null
-  return { phase, platform: v.platform as 'darwin' | 'win32', electron, encryptionAvailable: v.encryptionAvailable === true, backend: v.platform === 'darwin' ? 'Keychain' : 'DPAPI', stage: typeof v.stage === 'string' && (VAULT_STAGES as readonly string[]).includes(v.stage) ? v.stage : 'initialize', passed: v.passed, code: v.passed ? null : safeVaultErrorCode({ code: v.code }), fsync }
+  return { phase, platform: v.platform as 'darwin' | 'win32', electron, encryptionAvailable: v.encryptionAvailable === true, profileIsolated: v.profileIsolated === true, backend: v.platform === 'darwin' ? 'Keychain' : 'DPAPI', stage: typeof v.stage === 'string' && (VAULT_STAGES as readonly string[]).includes(v.stage) ? v.stage : 'initialize', passed: v.passed, code: v.passed ? null : safeVaultErrorCode({ code: v.code }), fsync }
 }
