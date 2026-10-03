@@ -2,9 +2,8 @@
 
 This guide explains how to create and configure skills in ROX.
 
-> **CLI-first workflow (recommended):** Use `craft-agent skill ...` commands instead of editing `SKILL.md` files directly.
-> - `craft-agent skill --help`
-> - Canonical command reference: [craft-cli.md](./craft-cli.md)
+> **Supported workflow:** Use the ROX Skills interface to inspect available skills. For custom skills, edit the workspace `skills/{slug}/SKILL.md` using the format below and validate with the available `skill_validate` tool.
+> - Interface and tooling reference: [ROX configuration interfaces](./craft-cli.md)
 
 ## What Are Skills?
 

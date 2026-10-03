@@ -2,9 +2,8 @@
 
 Labels are additive tags that can be applied to sessions. Unlike statuses (which are exclusive — one per session), labels are multi-select (many per session). They support hierarchical organization via nested JSON trees.
 
-> **CLI-first workflow (recommended):** Use `craft-agent label ...` commands instead of editing JSON directly.
-> - `craft-agent label --help`
-> - Canonical command reference: [craft-cli.md](./craft-cli.md)
+> **Supported workflow:** Use the ROX Labels interface to create and update labels. For authorized agent edits, follow the JSON schema below and validate with `config_validate({ target: "labels" })`.
+> - Interface and tooling reference: [ROX configuration interfaces](./craft-cli.md)
 
 ## Storage Locations
 
@@ -140,19 +139,7 @@ The optional `valueType` in config is a hint only — the parser always infers f
 
 ## Adding Labels
 
-Prefer `craft-agent` commands:
-
-```bash
-craft-agent label create --name "Bug" --color "destructive"
-craft-agent label create --name "Priority" --color "accent" --value-type number
-craft-agent label create --name "Due Date" --color "info" --value-type date
-craft-agent label create --name "Docs" --color "info" --value-type link
-craft-agent label create --name "Project" --color "foreground/60"
-craft-agent label create --name "Alpha" --color "info" --parent-id project
-craft-agent label create --name "Beta" --color "success" --parent-id project
-```
-
-Use direct JSON edits only for bulk/manual operations where CLI is not sufficient.
+Create labels through the ROX Labels interface. For authorized agent edits, update the workspace `labels/config.json` using the schema above, preserving existing IDs, hierarchy and entries. Validate with `config_validate({ target: "labels" })` after editing.
 
 ## Color Conventions
 

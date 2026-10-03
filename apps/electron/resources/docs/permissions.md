@@ -2,9 +2,8 @@
 
 This guide explains how to configure custom permission rules for Explore mode.
 
-> **CLI-first workflow (recommended):** Use `craft-agent permission ...` commands instead of editing JSON directly.
-> - `craft-agent permission --help`
-> - Canonical command reference: [craft-cli.md](./craft-cli.md)
+> **Supported workflow:** Use the permission badge to select Explore, Ask, or Execute mode. For custom rules, follow the JSON schema below and validate with the available `config_validate` tool.
+> - Interface and tooling reference: [ROX configuration interfaces](./craft-cli.md)
 
 ## Overview
 
