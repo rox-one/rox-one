@@ -170,6 +170,10 @@ export function VoiceDictationControl({
         hostStartedRef.current = false
         return
       }
+      // Publish the acquired tracks before awaiting the host grant, so release
+      // during that await stops the microphone immediately.
+      streamRef.current = stream
+      pendingStream = null
       await window.electronAPI.grantVoicePermission?.()
       if (captureId !== captureIdRef.current) {
         stream.getTracks().forEach((track) => track.stop())
@@ -178,8 +182,6 @@ export function VoiceDictationControl({
         hostStartedRef.current = false
         return
       }
-      streamRef.current = stream
-      pendingStream = null
       const recorder = new MediaRecorder(stream)
       chunksRef.current = []
       recorder.ondataavailable = (event) => {
@@ -195,6 +197,7 @@ export function VoiceDictationControl({
     } catch (error) {
       pendingStream?.getTracks().forEach((track) => track.stop())
       if (captureId === captureIdRef.current) {
+        stopTracks()
         captureIdRef.current += 1
         activeRequestRef.current = false
         const hostStarted = hostStartedRef.current
