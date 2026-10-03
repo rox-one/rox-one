@@ -5,6 +5,11 @@ import { createHash } from 'node:crypto';
 import { verifyUpdateMetadata } from './verify-update-metadata';
 import { copySDK, copyRipgrep, verifySDKCopy, downloadBun, downloadUv, type BuildConfig } from './build/common';
 
+// GitHub exposes absent optional secrets as empty environment values. Builder
+// treats an empty CSC_LINK as a certificate path, so omit unset credentials.
+for (const name of ['CSC_LINK', 'CSC_KEY_PASSWORD', 'APPLE_ID', 'APPLE_APP_SPECIFIC_PASSWORD', 'APPLE_TEAM_ID']) {
+  if (!process.env[name]?.trim()) delete process.env[name];
+}
 const platform = process.platform;
 const arch = process.arch;
 if (!['darwin', 'win32'].includes(platform) || !['arm64', 'x64'].includes(arch)) throw new Error(`Unsupported runner ${platform}-${arch}`);
