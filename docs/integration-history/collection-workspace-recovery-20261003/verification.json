@@ -6,8 +6,8 @@
   "production_hashes": {
     "apps/electron/src/renderer/atoms/collection-display.ts": "3bee1904423c2a12a13c093dbca0460d1c574efd3a3270426271c7b6c69b91a7",
     "apps/electron/src/renderer/atoms/collection-filters.ts": "1ffa6ef442d8221e8b478d0faa64c26b862968c57717a6e08d84227ddb609478",
-    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "3992a69c59b845762e870e56ed018b9c65d26dd15982ba583729c8487b0c3d85",
-    "apps/electron/src/renderer/atoms/__tests__/collection-persist-guard.test.ts": "edadbaf88293c2b30541118368a2a7f85b9e67f4782a6a1e6a98165a64326347",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "358412c055360dde392c2b7a8f17e04a44c841dc31147539f518d465f91cafef",
+    "apps/electron/src/renderer/atoms/__tests__/collection-persist-guard.test.ts": "5c3f99105d120dfc996e0ec5eb71309ab5601ac8efbd568a10d27f6ce6e2622c",
     "apps/electron/src/renderer/atoms/__tests__/collection-workspace.browser.mjs": "0ce91d9dcc4dd1f5a230c400205dd175fe8bb527a8bca4dbd8e4b091ffa014d6"
   },
   "gates": {
@@ -19,7 +19,8 @@
     "current_native_and_related": {
       "pass": 33,
       "fail": 0,
-      "assertions": 80
+      "assertions": 80,
+      "source": "current reconciled bb047; concrete atom reads and exact literal groupBy test fixtures"
     },
     "mounted_browser_prior_owner_projection": {
       "pass": 5,
@@ -31,11 +32,18 @@
       "fail": 0,
       "scope": "exact current AppShell workspace/grouping consumers mounted in real React/Jotai, controlled preferences RPC contract; current native filesystem cases separately33/0"
     },
-    "electron_types": "pending"
+    "electron_types": {
+      "runtime": "Node22.23.3",
+      "exit": 0,
+      "scope": "full current apps/electron tsconfig; literal test fixtures typed precisely after two rejected generic attempts"
+    }
   },
   "limits": [
     "No installed desktop or real OS IPC custody acceptance",
     "Original branch retained; only three current production files adapted",
     "Canonical CollectionDisplay groupBy owns grouping; no parallel legacy store writes"
-  ]
+  ],
+  "base_current_main": "bb047b946da41346301cffe88a43db0adf621dcf",
+  "qualification_tree_parent": "608a4649b46f16554a3a19daa94aafa3f43db77b",
+  "deleted_paths_against_current_main": []
 }
