@@ -1,0 +1,37 @@
+{
+  "source_branch": "codex/rox-canonical-remaining-p0-20261003",
+  "source_pr": 1436,
+  "source_sha": "384843bfc4cf7d4a1f34c902a66a9a3198043c9f",
+  "base": "c9f149554f22b89cb3db1b65a3b9cb6b882f8dbb",
+  "production_hashes": {
+    "apps/electron/src/renderer/atoms/collection-display.ts": "3bee1904423c2a12a13c093dbca0460d1c574efd3a3270426271c7b6c69b91a7",
+    "apps/electron/src/renderer/atoms/collection-filters.ts": "1ffa6ef442d8221e8b478d0faa64c26b862968c57717a6e08d84227ddb609478",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "3992a69c59b845762e870e56ed018b9c65d26dd15982ba583729c8487b0c3d85",
+    "apps/electron/src/renderer/atoms/__tests__/collection-persist-guard.test.ts": "edadbaf88293c2b30541118368a2a7f85b9e67f4782a6a1e6a98165a64326347",
+    "apps/electron/src/renderer/atoms/__tests__/collection-workspace.browser.mjs": "0ce91d9dcc4dd1f5a230c400205dd175fe8bb527a8bca4dbd8e4b091ffa014d6"
+  },
+  "gates": {
+    "original_source_negative": {
+      "pass": 0,
+      "fail": 9,
+      "scope": "exact current AppShell callbacks, real Jotai and native preference storage"
+    },
+    "current_native_and_related": {
+      "pass": 33,
+      "fail": 0,
+      "assertions": 80
+    },
+    "mounted_browser_prior_owner_projection": {
+      "pass": 5,
+      "fail": 0,
+      "scope": "exact current AppShell callbacks mounted in real React/Jotai; controlled preferences RPC contract and browser reload; native disk independently checked"
+    },
+    "final_browser": "pending after fresh-main reconciliation",
+    "electron_types": "pending"
+  },
+  "limits": [
+    "No installed desktop or real OS IPC custody acceptance",
+    "Original branch retained; only three current production files adapted",
+    "Canonical CollectionDisplay groupBy owns grouping; no parallel legacy store writes"
+  ]
+}

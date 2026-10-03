@@ -965,3 +965,10 @@ Owner root. Depends on existing rail-links/Popover/Select and current product-to
 2. Exercise actual local variable resolution, repeated agent context, explicit empty/disabled/missing folders, metadata arrival order, stale-type auth and current managed credential guards. Exercise real temporary-file obsolete migration/idempotence/custom prefs/old-path evidence, link/hardlink/FIFO/oversize/content replacement refusal and fresh exclusive default seeding. Keep native Windows migration controls explicitly skipped off Windows.
 3. Run source/current SourceManager and adjacent builder/builtin credential controls, shared/Electron types; freeze source and bounded receipt. Compare actual old consumers to prove the gap, retain failure history, reconcile current main and publish/attach separate PR for lead review/merge.
 4. Continue #1436 host Bash lifetime and collection/knowledge performance actual consumers and function-level ledger; no whole original branch acceptance from this slice.
+
+
+## Collection preference recovery — 2026-10-03
+
+1. Historical worker: reproduce reset and grouping failures on the exact current AppShell consumer with real native JSON storage (original 0/9).
+2. Restore current preference loads and sole canonical grouping; add per-store load/edit/event/ABA ownership and dispatched-write ordering, including previous-workspace projection isolation.
+3. Qualify native persistence and current related callbacks (33/0/80), mounted exact AppShell callbacks in Chromium, and current Electron types after main reconciliation. Preserve original failure history and all source branches; lead reviews and merges the separate PR. Installed/native platform acceptance remains separate.
