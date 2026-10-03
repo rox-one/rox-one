@@ -1,3 +1,11 @@
+## Golden Gate native surface ownership recovery — 2026-10-03
+
+Owner: isolated `codex/recover-golden-native-surfaces-20261003`. Restore the absent owner arbiter, DOM visibility/clipping invalidator, bounds hook, placeholder and retained-surface primitive from preserved Golden Gate revision `5def9ffd36dc160fdc7c908784e0ef97ba6a732e`. `docs/golden-native-source.json` records original file hashes and current-main decisions.
+
+Browser and extension hosts use one compositor contract: the latest visible owner holds an instance; hiding/releasing another owner cannot erase it; bounds writes serialize/coalesce and a final hide cannot be overtaken by a prior update. A partially clipped, hidden, inert, unfocused or overlay-suppressed surface sends null without destroying its persistent native instance. Responsive inspector suppression retains local React state while its subtree is hidden/inert. Inspector cleanup acts only on its claimed id and safely releases late async attachments; it never enumerates and hides sibling instances. Preserve current imported-cookie consent controls and per-request opt-in. Preserve the current explicit SiYuan removal/redirect to Rox Notes, all current inspector rail/layout contracts and external #1400 route/geometry/storage work.
+
+Acceptance: source owner/invalidator/visibility and backend extension lifetime tests, production BrowserPanel/InspectorBrowser/RetainedSurface in headless browser with synthetic native bridge (duplicates, clipping, overlay suppression, draft retention, late attachment and consent), complete types and WebUI/Electron renderer builds, locale parity/sorting/coverage. These prove renderer/RPC ownership behavior, not native hardware compositor acceptance. Panel workspace persistence/resize and current Notes/Meetings/task request lifecycle remain separate recovery slices.
+
 # Unified Rox / Conation / RMA / Golden Gate behavioral specification
 
 ## Desktop runtime 0.11.8 delivery — 2026-10-03
