@@ -3,7 +3,7 @@ import { mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { build, type PluginBuild } from 'esbuild'
 import ts from 'typescript'
-import { chromium, type Browser, type BrowserContext, type Page } from '@playwright/test'
+import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { launchOwnedFixtureBrowser } from './rox-readiness-ui-001.browser-owner'
 
 // Actual NavigationProvider, URL/history, panel/selection atoms and MainContentPanel
