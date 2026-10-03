@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test'
+import type { TourId } from '../contracts'
 import { productTourCatalogue, tourCatalogue, validateProductTourCatalogue } from './index'
 
 const clone = () => structuredClone(productTourCatalogue)
 
 describe('full product learning catalogue', () => {
   test('keeps all 25 pinned IDs, 56 unique steps and test IDs', () => {
-    expect(productTourCatalogue.map(tour => tour.id)).toEqual(Array.from({ length: 25 }, (_, i) => `OBT-${String(i + 1).padStart(2, '0')}`))
+    expect(productTourCatalogue.map(tour => tour.id)).toEqual(Array.from({ length: 25 }, (_, i) => `OBT-${String(i + 1).padStart(2, '0')}` as TourId))
     const steps = productTourCatalogue.flatMap(tour => tour.steps)
     expect(steps).toHaveLength(56)
     expect(new Set(steps.map(step => step.id)).size).toBe(56)
