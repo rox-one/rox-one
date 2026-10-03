@@ -1,51 +1,78 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { chromium, type Browser, type Page } from '@playwright/test'
-import { build } from 'esbuild'
-import { dirname, resolve } from 'node:path'
+import { build, version as esbuildVersion } from 'esbuild'
+import { basename, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile, rm, writeFile } from 'node:fs/promises'
 import en from '../../../../../../../../packages/shared/src/i18n/locales/en.json'
 import { noteNativeBrowserStage as stage, runNativeBrowserProcess } from '../../adapters/work/meetings-automations/native-browser-process'
+import { adoptVerifiedRendererArtifact, bindRendererControls, createFreshRendererDirectory, fileDigest, loadOrBuildRendererArtifact, verifyRendererArtifact } from '../../../../../../../../scripts/product-tour/native-renderer-artifact.mjs'
 
 const isolatedCase = process.env.ROX_PRODUCT_TOUR_FILE_DIALOG_CASE
 let registeredCase = false
 let browser: Browser | undefined
 let server: ReturnType<typeof Bun.serve> | undefined
 const root = resolve(import.meta.dir, '../../../../../../../..')
+let rendererDirectory: string | undefined
+let adoptedManifestDigest: string | undefined
+let rendererArtifact: Awaited<ReturnType<typeof loadOrBuildRendererArtifact>> | undefined
 let rendererReceipt: { path: string; sources: Map<string, string>; virtualInputs: string[] } | undefined
 beforeAll(async () => {
-  if (!isolatedCase) return
+  if (!isolatedCase) { rendererDirectory = await createFreshRendererDirectory(); return }
   stage('file-dialog:bundle:start')
-  const themesDirectory = resolve(root, 'apps/electron/resources/themes')
-  const themes: Record<string, unknown> = {}
-  const themeFiles: string[] = []
-  for (const name of new Bun.Glob('*.json').scanSync({ cwd: themesDirectory })) {
-    const path = resolve(themesDirectory, name)
-    themes[`../../../resources/themes/${name}`] = await Bun.file(path).json()
-    themeFiles.push(path)
-  }
-  const bundle = await build({ absWorkingDir: root, entryPoints: [resolve(import.meta.dir, 'fixtures/native-file-dialog.browser.tsx')], tsconfig: resolve(root, 'apps/electron/tsconfig.json'), bundle: true, platform: 'browser', format: 'esm', write: false, metafile: true, outdir: 'native-file-dialog-browser', jsx: 'automatic', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl', '.png': 'dataurl' }, plugins: [
-    { name: 'worker-ui-package', setup(build) { build.onResolve({ filter: /^@rox\/ui$/ }, () => ({ path: resolve(root, 'packages/ui/src/index.ts') })) } },
-    { name: 'production-renderer-node-boundary', setup(build) { build.onResolve({ filter: /^node:/ }, () => ({ path: resolve(root, 'apps/electron/src/renderer/shims/node-stub.ts') })) } },
-    { name: 'production-theme-inventory', setup(build) { build.onLoad({ filter: /\/context\/ThemeContext\.tsx$/ }, async args => ({ contents: (await Bun.file(args.path).text()).replace(/import\.meta\.glob\([^)]*\)/, JSON.stringify(themes)), loader: 'tsx', resolveDir: dirname(args.path) })) } },
-    { name: 'unused-preview-worker-url', setup(build) { build.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'unused-preview-worker' })); build.onLoad({ filter: /.*/, namespace: 'unused-preview-worker' }, () => ({ contents: "export default 'about:blank'", loader: 'js' })) } },
-  ] })
-  const nativeStyles = await Bun.file(resolve(root, 'packages/ui/src/styles/index.css')).text()
-  const spinnerLayout = nativeStyles.match(/\.spinner \{[^}]*\}/)?.[0]
-  if (!spinnerLayout) throw new Error('Expected production Spinner layout')
+  rendererArtifact = await loadOrBuildRendererArtifact(process.env.ROX_PRODUCT_TOUR_FILE_DIALOG_RENDERER_DIRECTORY,
+    process.env.ROX_PRODUCT_TOUR_FILE_DIALOG_RENDERER_DIGEST, async () => {
+      stage('file-dialog:themes:start')
+      const themesDirectory = resolve(root, 'apps/electron/resources/themes')
+      const themes: Record<string, unknown> = {}
+      const themeFiles: string[] = []
+      for (const name of new Bun.Glob('*.json').scanSync({ cwd: themesDirectory })) {
+        const path = resolve(themesDirectory, name)
+        themes[`../../../resources/themes/${name}`] = await Bun.file(path).json()
+        themeFiles.push(path)
+      }
+      stage('file-dialog:themes:ready')
+      stage('file-dialog:renderer-build:start')
+      const bundle = await build({ absWorkingDir: root, entryPoints: [resolve(import.meta.dir, 'fixtures/native-file-dialog.browser.tsx')], tsconfig: resolve(root, 'apps/electron/tsconfig.json'), bundle: true, platform: 'browser', format: 'esm', write: false, metafile: true, outdir: 'native-file-dialog-browser', jsx: 'automatic', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl', '.png': 'dataurl' }, plugins: [
+        { name: 'worker-ui-package', setup(build) { build.onResolve({ filter: /^@rox\/ui$/ }, () => ({ path: resolve(root, 'packages/ui/src/index.ts') })) } },
+        { name: 'production-renderer-node-boundary', setup(build) { build.onResolve({ filter: /^node:/ }, () => ({ path: resolve(root, 'apps/electron/src/renderer/shims/node-stub.ts') })) } },
+        { name: 'production-theme-inventory', setup(build) { build.onLoad({ filter: /\/context\/ThemeContext\.tsx$/ }, async args => ({ contents: (await Bun.file(args.path).text()).replace(/import\.meta\.glob\([^)]*\)/, JSON.stringify(themes)), loader: 'tsx', resolveDir: dirname(args.path) })) } },
+        { name: 'unused-preview-worker-url', setup(build) { build.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'unused-preview-worker' })); build.onLoad({ filter: /.*/, namespace: 'unused-preview-worker' }, () => ({ contents: "export default 'about:blank'", loader: 'js' })) } },
+      ] })
+      stage('file-dialog:renderer-build:ready')
+      const nativeStyles = await Bun.file(resolve(root, 'packages/ui/src/styles/index.css')).text()
+      const spinnerLayout = nativeStyles.match(/\.spinner \{[^}]*\}/)?.[0]
+      if (!spinnerLayout) throw new Error('Expected production Spinner layout')
+      stage('file-dialog:source-hash:start')
+      const inputs = Object.keys(bundle.metafile!.inputs)
+      const virtualInputs = inputs.filter(path => path.startsWith('unused-preview-worker:'))
+      const paths = new Set([...inputs.filter(path => !virtualInputs.includes(path)).map(path => resolve(root, path)),
+        ...themeFiles, resolve(root, 'packages/ui/src/styles/index.css')])
+      const sources = new Map<string, string>()
+      for (const path of paths) sources.set(path, await fileDigest(path))
+      const absentControls = await bindRendererControls(sources, [fileURLToPath(import.meta.url),
+        resolve(root, 'apps/electron/tsconfig.json'), resolve(root, 'tsconfig.json'), resolve(root, 'tsconfig.base.json'),
+        resolve(root, 'bun.lock'), resolve(root, 'package.json'),
+        resolve(root, 'scripts/product-tour/native-renderer-artifact.mjs'),
+        resolve(root, 'scripts/product-tour/run-browser-node.mjs'), resolve(root, 'scripts/product-tour/browser-node-adapter.mjs'),
+        resolve(root, 'scripts/product-tour/browser-node-process.mjs'),
+        resolve(root, 'apps/electron/src/renderer/features/product-tour/adapters/work/meetings-automations/native-browser-process.ts')])
+      stage('file-dialog:source-hash:ready')
+      return { script: bundle.outputFiles.find(file => file.path.endsWith('.js'))!.text, spinnerLayout,
+        sources, absentControls, virtualInputs, inventories: [{ directory: themesDirectory, names: themeFiles.map(path => basename(path)).sort() }], esbuildVersion }
+  })
+  stage(`file-dialog:artifact:${rendererArtifact.buildKind}`)
   if (process.env.ROX_PRODUCT_TOUR_NODE_BUNDLE) {
-    const inputs = Object.keys(bundle.metafile!.inputs)
-    const virtualInputs = inputs.filter(path => path.startsWith('unused-preview-worker:'))
-    const paths = new Set([...inputs.filter(path => !virtualInputs.includes(path)).map(path => resolve(root, path)),
-      ...themeFiles, resolve(root, 'packages/ui/src/styles/index.css')])
-    const sources = new Map<string, string>()
-    for (const path of paths) sources.set(path, createHash('sha256').update(await readFile(path)).digest('hex'))
-    rendererReceipt = { path: `${process.env.ROX_PRODUCT_TOUR_NODE_BUNDLE}.renderer-source.json`, sources, virtualInputs }
+    rendererReceipt = { path: `${process.env.ROX_PRODUCT_TOUR_NODE_BUNDLE}.renderer-source.json`,
+      sources: rendererArtifact.sources, virtualInputs: rendererArtifact.virtualInputs }
     await writeFile(rendererReceipt.path, JSON.stringify({ test: fileURLToPath(import.meta.url), selectedCase: isolatedCase,
-      sources: Object.fromEntries(sources), virtualInputs, verifiedAfterCase: false }, null, 2) + '\n')
+      sources: Object.fromEntries(rendererReceipt.sources), virtualInputs: rendererReceipt.virtualInputs,
+      artifact: { buildKind: rendererArtifact.buildKind, manifestDigest: rendererArtifact.manifestDigest,
+        outputDigest: rendererArtifact.outputDigest, esbuildVersion: rendererArtifact.esbuildVersion,
+        inventories: rendererArtifact.inventories, absentControls: rendererArtifact.absentControls }, verifiedAfterCase: false }, null, 2) + '\n')
   }
-  const script = bundle.outputFiles.find(file => file.path.endsWith('.js'))!.text
+  const { script, spinnerLayout } = rendererArtifact
   stage('file-dialog:bundle:ready')
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) { return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'Content-Type': 'text/javascript' } }) : new Response(`<!doctype html><style>${spinnerLayout}svg{width:20px;height:20px}main>div{min-height:50px}button{min-width:30px;min-height:24px}</style><div id="root"></div><script type="module" src="/script.js"></script>`, { headers: { 'Content-Type': 'text/html' } }) } })
   stage('file-dialog:browser:launch')
@@ -53,14 +80,19 @@ beforeAll(async () => {
   stage('file-dialog:browser:ready')
 }, 30_000)
 afterAll(async () => {
+  if (!isolatedCase) { if (rendererDirectory) await rm(rendererDirectory, { recursive: true, force: true }); return }
   await browser?.close(); server?.stop(true)
-  if (rendererReceipt) {
-    for (const [path, hash] of rendererReceipt.sources) {
-      if (createHash('sha256').update(await readFile(path)).digest('hex') !== hash) throw new Error(`Renderer source changed during file-dialog case: ${path}`)
-    }
+  if (rendererArtifact) {
+    stage('file-dialog:verify-after-case:start')
+    await verifyRendererArtifact(rendererArtifact)
+    stage('file-dialog:verify-after-case:ready')
+  }
+  if (rendererReceipt && rendererArtifact) {
     await writeFile(rendererReceipt.path, JSON.stringify({ test: fileURLToPath(import.meta.url), selectedCase: isolatedCase,
       sources: Object.fromEntries(rendererReceipt.sources), virtualInputs: rendererReceipt.virtualInputs,
-      verifiedAfterCase: true }, null, 2) + '\n')
+      artifact: { buildKind: rendererArtifact.buildKind, manifestDigest: rendererArtifact.manifestDigest,
+        outputDigest: rendererArtifact.outputDigest, esbuildVersion: rendererArtifact.esbuildVersion,
+        inventories: rendererArtifact.inventories, absentControls: rendererArtifact.absentControls }, verifiedAfterCase: true }, null, 2) + '\n')
   }
 })
 function browserTest(name: string, operation: () => Promise<void>) {
@@ -68,7 +100,15 @@ function browserTest(name: string, operation: () => Promise<void>) {
   if (isolatedCase) registeredCase = true
   test(name, async () => {
     if (isolatedCase) { stage('file-dialog:case:start'); await operation(); stage('file-dialog:case:passed'); return }
-    expect(await runNativeBrowserProcess(['node', resolve(root, 'scripts/product-tour/run-browser-node.mjs'), 'apps/electron/src/renderer/features/product-tour/runtime/__tests__/native-file-dialog.browser.test.ts'], { label: name, env: { ...process.env, ROX_PRODUCT_TOUR_FILE_DIALOG_CASE: name }, deadlineMs: 35_000 })).toBe(0)
+    expect(await runNativeBrowserProcess(['node', resolve(root, 'scripts/product-tour/run-browser-node.mjs'), 'apps/electron/src/renderer/features/product-tour/runtime/__tests__/native-file-dialog.browser.test.ts'], { label: name, env: { ...process.env, ROX_PRODUCT_TOUR_FILE_DIALOG_CASE: name,
+      ROX_PRODUCT_TOUR_FILE_DIALOG_RENDERER_DIRECTORY: rendererDirectory,
+      ROX_PRODUCT_TOUR_FILE_DIALOG_RENDERER_DIGEST: adoptedManifestDigest }, deadlineMs: 35_000 })).toBe(0)
+    const suffix = createHash('sha256').update(name).digest('hex').slice(0, 12)
+    const receipt = JSON.parse(await readFile(resolve(root, `test-results/product-tour/node-browser/native-file-dialog.browser.test.${suffix}.mjs.renderer-source.json`), 'utf8'))
+    if (receipt.selectedCase !== name || receipt.verifiedAfterCase !== true) throw new Error('Selected child did not verify its renderer after the actual case')
+    const manifestDigest = await adoptVerifiedRendererArtifact(rendererDirectory!, receipt.artifact)
+    if (adoptedManifestDigest && manifestDigest !== adoptedManifestDigest) throw new Error('Renderer manifest changed between child verification and parent adoption')
+    adoptedManifestDigest = manifestDigest
   }, isolatedCase ? 30_000 : 40_000)
 }
 async function setup() {

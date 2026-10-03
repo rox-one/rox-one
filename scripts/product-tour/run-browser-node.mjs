@@ -76,6 +76,7 @@ for (const relative of tests) {
         throw new Error(`Selected file-dialog child did not execute exactly one passing case:\n${report}`)
       }
       receipt.selectedCaseVerified = true
+      receipt.selectedCaseStages = [...report.matchAll(/\[native-browser\] (file-dialog:[a-z:-]+)/g)].map(match => match[1])
     }
   } finally {
     clearTimeout(drainTimeout)
