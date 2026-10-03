@@ -1,7 +1,7 @@
 {
   "source_branch": "codex/golden-gate-workspace",
   "source_sha": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
-  "base_main": "2f03faa5dcc075d4acbd364dd7bdb3ba14993596",
+  "base_main": "e28bf0c6a7155fd746ad12f3f9ea8116e8e8f8af",
   "owner": "branch-integration-root",
   "changes": "Actual current InspectorHost uses transient shared resize controller; current limits/center/overlay/default/contents remain authoritative",
   "runtime_sha256": {
@@ -12,9 +12,9 @@
   "checks": {
     "actual_current_host_chromium": "5 pass,0 fail: keyboard transient/cancel/commit/reload/ARIA,pointercancel/commit,bounds/reset,drafts,unmount/body/window blur, viewport-change cancellation and explicit overlay",
     "adjacent_layout_controller_and12locales": "295 pass,0 fail,6476 assertions",
-    "electron_strict_types": "Initial whole Electron exit0; latest whole check found one test-only possibly-undefined child PID, now corrected; final integrated whole check pending",
+    "electron_strict_types": "Whole Electron strict types exit0,zero diagnostics on integrated688161516841f0a427400c416837788a8abaf80a",
     "responsive_layout_browser": "Additional actual Chromium responsive1pass0fail; saved screenshot visually inspected",
-    "renderer_bundle": "initial build exit0; final changed Sash build result pending",
+    "renderer_bundle": "Integrated688161 renderer build exit0 in2m26s",
     "exact_old_host_negative": "0pass1fail: actual old Host has no accessible keyboard sash, qualified candidate restored"
   },
   "failure_history": [
@@ -30,5 +30,6 @@
     "Installed native compositor and full release acceptance not established"
   ],
   "original_branches_preserved": true,
-  "screenshot": "/Users/t/Pictures/Shots/Agents/rox-branch-integration-20261003/inspector-resize-overlay.png"
+  "screenshot": "/Users/t/Pictures/Shots/Agents/rox-branch-integration-20261003/inspector-resize-overlay.png",
+  "qualified_revision": "688161516841f0a427400c416837788a8abaf80a"
 }
