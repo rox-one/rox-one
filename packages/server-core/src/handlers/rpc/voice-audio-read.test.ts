@@ -44,3 +44,10 @@ for (const target of ['leaf', 'parent'] as const) test(`linked ${target} is refu
     expect(() => readVoiceAudioChunk(f.root, f.recording, { offset: 0 })).toThrow()
   } finally { f.dispose(); rmSync(outside, { recursive: true, force: true }) }
 })
+
+test('actual ancestor directory replacement before leaf stat is rejected before any foreign descriptor read', async () => {
+  const process_ = Bun.spawn([process.execPath, join(import.meta.dir, '__tests__/voice-audio-race.fixture.ts')], { stdout: 'pipe', stderr: 'pipe' })
+  const [exit, stdout, stderr] = await Promise.all([process_.exited, new Response(process_.stdout).text(), new Response(process_.stderr).text()])
+  expect({ exit, stderr }).toEqual({ exit: 0, stderr: '' })
+  expect(JSON.parse(stdout)).toEqual({ replaced: true, rejected: true, foreignReads: 0, returnedFrame: false })
+})

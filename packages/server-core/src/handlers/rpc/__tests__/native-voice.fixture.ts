@@ -93,7 +93,11 @@ const capture = async (c: WsRpcClient) => {
 
 try {
   await startServer()
-  const a = client(first), b = client(second), ro = client(reader)
+  // Complete each authenticated initialization before starting the next client.
+  // invoke awaits the transport's real ready promise; concurrent capture remains tested below.
+  const a = client(first); await a.invoke(RPC_CHANNELS.voice.GET)
+  const b = client(second); await b.invoke(RPC_CHANNELS.voice.GET)
+  const ro = client(reader); await ro.invoke(RPC_CHANNELS.voice.GET)
   const aEvents: unknown[] = [], bEvents: unknown[] = []
   a.on(RPC_CHANNELS.voice.CHANGED, value => aEvents.push(value)); b.on(RPC_CHANNELS.voice.CHANGED, value => bEvents.push(value))
   a.on(RPC_CHANNELS.voice.JOB, value => aEvents.push(value)); b.on(RPC_CHANNELS.voice.JOB, value => bEvents.push(value))
