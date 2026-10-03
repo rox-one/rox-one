@@ -26,7 +26,7 @@ async function fixtureBundle() {
     import { sessionMetaMapAtom } from './apps/electron/src/renderer/atoms/sessions';
     import { usePages } from './apps/electron/src/renderer/hooks/usePages';
     import { pagesAtom } from './apps/electron/src/renderer/atoms/pages';
-    import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom } from './apps/electron/src/renderer/atoms/panel-stack';
+    import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom, focusedSessionIdAtom } from './apps/electron/src/renderer/atoms/panel-stack';
     const store = createStore();
     let ready=true, sessionsReady=true, ws='ws-a', slug='a', remote='remote-a', deepLink;
     let state, pagesChanged, switchMode='ok'; const switches=[];
@@ -82,7 +82,7 @@ async function fixtureBundle() {
       holdActionTimers(){window.setTimeout=(callback,delay,...args)=>delay===100?(scheduled.push(()=>callback(...args)),scheduled.length):nativeSetTimeout(callback,delay,...args)},
       timers(){return scheduled.length},
       fireActionTimers(){window.setTimeout=nativeSetTimeout;scheduled.splice(0).forEach(callback=>callback())},
-      snapshot(){return{nav:state.navigationState,panels:store.get(panelStackAtom),ws,slug}},
+      snapshot(){return{nav:state.navigationState,panels:store.get(panelStackAtom),ws,slug,session:store.get(focusedSessionIdAtom)}},
       switchMode(value){switchMode=value}, resolveSwitch(index, result){switches[index].resolve(result)},
       rejectSwitch(index){switches[index].reject(new Error('fixture switch rejected'))},
       pendingSwitches(){return switches.map(({next})=>({next}))},
@@ -172,6 +172,23 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     expect((await snapshot()).nav).toMatchObject({ navigator: 'unavailable', route: 'allSessions/session/first-b' })
     await page.evaluate(()=>(window as any).ui001nav.navigate('allSessions/session/remote'))
     await routeIs('allSessions/session/remote')
+  })
+
+  browserTest('standalone malformed or empty panel layout stays unavailable without selecting another chat across reload',async()=>{
+    for(const [panels,route] of [['v2:{','v2:{'],['','?panels=']]){
+      await page.goto(base+'/?'+new URLSearchParams({ws:'a',panels}).toString())
+      await routeIs(route)
+      expect((await snapshot()).nav).toMatchObject({navigator:'unavailable',route})
+      expect((await snapshot()).session).toBeNull()
+      expect((await snapshot()).panels.map((panel: {route: string})=>panel.route)).toEqual([route])
+      expect(new URL(page.url()).searchParams.get('route')).toBe(route)
+      const retainedUrl=page.url()
+      await page.reload();await routeIs(route)
+      expect((await snapshot()).nav).toMatchObject({navigator:'unavailable',route})
+      expect((await snapshot()).session).toBeNull()
+      expect(new URL(page.url()).searchParams.get('route')).toBe(route)
+      expect(page.url()).toBe(retainedUrl)
+    }
   })
 
   browserTest('unknown and malformed routes preserve raw addresses on initial load/reload/deep link',async()=>{

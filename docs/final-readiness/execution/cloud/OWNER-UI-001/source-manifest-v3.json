@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "integrationBase": "f51d610b689840427139c29621ffa1bb778df619",
+  "integrationBase": "485673240415d781dc34f4a3797c8355e43cf990",
   "originalTaskInputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
   "candidateRevisionBinding": "The Git HEAD in each receipt binds these exact source bytes. A tracked manifest cannot embed its own commit id.",
   "sourceSha256": {
@@ -46,7 +46,7 @@
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-notes.test.ts": "ac3a2cd9b006aea906e597fb70b9126ac3f02348ca63b4ea6674cb3404bd5a52",
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-project.test.ts": "5fdd319155614139f2862271f234c64cabbffd87a85521db12d00489c195dcc8",
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-terminal.test.ts": "31de2be7d4fbdcc92f021f1931b209591ff3c72e6a0488b5c667fcb4d7c01527",
-    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "a32fa2f2ed902d13079f5d3051252223b504088bd6407983b4850dfdfd2a5d3f",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "5f6fe5ba646e7de23a445c3da418ae6d44a5e660c9567f50212b79f9c1311f90",
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-navigation.test.ts": "7f9983b9e78c32976826baea3f42fd084c9a57cfb3ee9da167773e9564151072",
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts": "1cf8749d7eabf573fdebd3cb2a8ec27b6e59e5a51f6756ef4206595aa3860860",
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.shell-callback.ts": "e41e5fd356fd009f1e5dbb34494ea81922fbba930937ee3e92660ab270be9331",
@@ -61,11 +61,11 @@
     "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "630d34dbd2875e15d06d86f03d42c3e53fcc1f0b4b33770d63723c15b3d9fd65",
     "apps/electron/src/renderer/components/pages/__tests__/rox-readiness-ui-001.page-lifecycle.test.ts": "775b6bd1f496e5f4e3f05b7fbbc6640539eb034b5e400a0d90ed623c1177f1ce",
     "apps/electron/src/renderer/components/ui/__tests__/continue-visual-3-chrome.test.ts": "783ad29959ec83532c26f313603d5615e7fbb33152387574e1a7bbdb864439c2",
-    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "01ea8a9bf790a171c4d032d8e78b510cb44e72dd888a6db0df0a4b8d4446e901",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "61248ca1bab8fcb0a3027cd748c16480b18186714d7c5fef82b1f1a3eaeaa2bd",
     "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.history-switch-lease.test.ts": "63afe825002251bcbf513a7ebfd495f87cf9422a38a2fb55df5df60e9ee025c8",
     "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.immediate-history.test.ts": "a6536dfd9d538dd0cbb9aaa7ff9410038d351850f68ee0cef72b78ebffb7df3d",
-    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "014a4208c126301350ded68a7baef03556e4169fc030f3e202776b0d650ccbf8",
-    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts": "cf7827124c9ae1827aa9c0ce7e283ea9069f518133b3a57f749fed2e263d241c",
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "f75c211d35e8c935da90db906665c3fac885bb1b53cdf323ff30a4526627d084",
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts": "adbae074098b697931d3a6a995b7cb1ee74ebe73cd5309208617d26c7b5619d1",
     "apps/electron/src/renderer/contexts/navigation-history.ts": "da8884b5cd39fa877d2d06793af008c84e123f9d4dd9137ea555c751585df159",
     "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "7b629c124b37c73ce434a40692446ccb970aaaf6f159bfeb2d5f4f8d499cf349",
     "apps/electron/src/renderer/hooks/__tests__/fixtures/focus-notification-runner.ts": "53f9a625b34a82d0353048953d43aa695f6ef1ad33bb1e6ab309b3aa968e279d",
@@ -160,7 +160,7 @@
   "incomingMainManifest": "verification/history/main-2b14-source-manifest-v3.json",
   "updatedAt": "2026-10-03T22:37:38.183233+00:00",
   "incomingMainIntegration": {
-    "revision": "f51d610b689840427139c29621ffa1bb778df619",
-    "scope": "Exact union resolution preserves all test bodies from both parents; new incoming subjects bound here and requalified separately."
+    "revision": "485673240415d781dc34f4a3797c8355e43cf990",
+    "scope": "Preserved all parent test bodies; corrected five incoming wrong standalone corrupt-layout chat expectations after actual red proof, added unavailable/reload regression. Prior failure history retained."
   }
 }

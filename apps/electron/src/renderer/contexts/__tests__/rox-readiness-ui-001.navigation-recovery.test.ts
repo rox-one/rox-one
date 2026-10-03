@@ -7,6 +7,7 @@ import {
   resolveRouteNavigationState, buildRouteFromNavigationState,
 } from '../../../shared/route-parser'
 import { isSessionsNavigation, getNavigationStateKey, parseNavigationStateKey } from '../../../shared/types'
+import { routes } from '../../../shared/routes'
 import { preserveRouteQuery, normalizePanelRouteForReconcile } from '../navigation-reconcile'
 import { rendererEffect as productionRendererEffect, deferred, settle } from '../../components/app-shell/__tests__/rox-readiness-ui-001.effect-harness'
 
@@ -414,6 +415,40 @@ describe('UI-001 address preservation through actual navigation callbacks', () =
         resolveAutoSelectionRef: { current: (state: unknown) => state }, setRightSidebar: () => {},
       })(new URLSearchParams({ route }))
       expect(writes.at(-1)).toEqual({ entries: [{ route, proportion: 1 }], focusedIndex: 0 })
+    }
+  })
+
+  it('restores corrupt panel transports to their unavailable address without selecting an unrelated chat', () => {
+    for (const panels of ['v2:{', 'json:{', 'v2:[{"route":null,"proportion":1}]', '[["notes/note/selected",1]', 'v2:[]', 'json:[]', '']) {
+      const writes: any[] = []
+      let autoSelections = 0
+      callback('reconcileFromUrlParams', {
+        routes, store: { set: (_key: unknown, value: unknown) => writes.push(value) }, reconcilePanelStackAtom: {},
+        parseRouteToNavigationState, normalizePanelRouteForReconcile, buildRouteFromNavigationState,
+        resolveAutoSelectionRef: { current: (state: any) => {
+          autoSelections++
+          return { ...state, details: { type: 'session', sessionId: 'unrelated-existing-chat' } }
+        } }, setRightSidebar: () => {},
+      })(new URLSearchParams({ panels }))
+      const expectedRoute = panels || '?panels='
+      expect(writes).toEqual([{ entries: [{ route: expectedRoute, proportion: 1 }], focusedIndex: 0 }])
+      expect(resolveRouteNavigationState(expectedRoute)).toEqual({ navigator: 'unavailable', route: expectedRoute, details: null })
+      expect(autoSelections).toBe(0)
+    }
+  })
+
+  it('retains explicit entity addresses and nested note identities beside a corrupt optional panel layout', () => {
+    for (const route of ['sources/source/current?keep=a%2Fb', 'notes/note/parent/child?keep=a%2Fb', 'unknown/raw']) {
+      const writes: any[] = []
+      callback('reconcileFromUrlParams', {
+        routes, store: { set: (_key: unknown, value: unknown) => writes.push(value) }, reconcilePanelStackAtom: {},
+        parseRouteToNavigationState, normalizePanelRouteForReconcile, buildRouteFromNavigationState,
+        resolveAutoSelectionRef: { current: () => { throw new Error('Explicit target must not auto-select') } },
+        setRightSidebar: () => {},
+      })(new URLSearchParams({ route, panels: 'v2:{' }))
+      expect(writes).toEqual([{ entries: [{ route, proportion: 1 }], focusedIndex: 0 }])
+      if (route.startsWith('notes/')) expect(resolveRouteNavigationState(route)).toMatchObject({ navigator: 'notes', details: { type: 'note', noteId: 'parent/child' } })
+      if (route.startsWith('sources/')) expect(resolveRouteNavigationState(route)).toMatchObject({ navigator: 'sources', details: { type: 'source', sourceSlug: 'current' } })
     }
   })
 

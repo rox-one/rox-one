@@ -538,7 +538,9 @@ export function NavigationProvider({
    */
   const reconcileFromUrlParams = useCallback(
     (params: URLSearchParams) => {
-      const initialRoute = params.get('route') || (params.has('panels') ? routes.view.allSessions() : null)
+      // A broken layout still carries the requested address; restoring it must
+      // not auto-select a different chat. Explicit entity routes take priority.
+      const initialRoute = params.get('route') || (params.has('panels') ? (params.get('panels') || '?panels=') : null)
       const sidebarParam = params.get('sidebar') || undefined
       const panelsParam = params.get('panels')
       const focusedIndexParam = params.get('fi')

@@ -302,22 +302,32 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
   }, 30000)
 
   for (const panels of ['v2:[]', 'v2:[', '[]', '[', '']) {
-    it(`invalid panel data ${JSON.stringify(panels)} without a route restores the workspace default`, async () => {
+    it(`invalid panel data ${JSON.stringify(panels)} without a route retains its unavailable raw address`, async () => {
+      const route = panels || '?panels='
       const search = '?' + new URLSearchParams({ ws: 'ws-a', panels })
       await page.goto(base + '/' + search)
-      await page.waitForFunction(() => (window as any).ui001?.snapshot().panels[0]?.route === 'allSessions/session/s1', undefined, { timeout: 5000 })
-      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual(['allSessions/session/s1'])
+      await page.waitForFunction(() => Boolean((window as any).ui001))
+      await unavailable(route)
+      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual([route])
+      expect((await snapshot()).session).toBeNull()
+      expect(await page.locator('[data-leaf="session"]').count()).toBe(0)
+      const retainedUrl = page.url()
       await page.evaluate(() => (window as any).ui001.navigate('future/stale-no-route'))
       await unavailable('future/stale-no-route')
       await page.evaluate(search => {
         history.pushState(null, '', search)
         window.dispatchEvent(new PopStateEvent('popstate'))
       }, search)
-      await page.waitForFunction(() => (window as any).ui001.snapshot().panels[0]?.route === 'allSessions/session/s1', undefined, { timeout: 5000 })
-      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual(['allSessions/session/s1'])
+      await unavailable(route)
+      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual([route])
+      expect((await snapshot()).session).toBeNull()
+      expect(page.url()).toBe(retainedUrl)
       await page.reload()
-      await page.waitForFunction(() => (window as any).ui001?.snapshot().panels[0]?.route === 'allSessions/session/s1')
-      expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s1')
+      await unavailable(route)
+      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual([route])
+      expect((await snapshot()).session).toBeNull()
+      expect(new URLSearchParams((await snapshot()).search).get('route')).toBe(route)
+      expect(page.url()).toBe(retainedUrl)
     }, 30000)
   }
 

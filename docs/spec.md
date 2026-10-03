@@ -869,6 +869,11 @@ Qualification also repairs concrete prerequisites discovered by complete source-
 
 The authoritative result is `result.json`, with immutable source hashes in `source-manifest-v3.json` and curated safe receipts in `verification/final-integration-20261004/`. Actual original full execution remains 1881 files /1775 passed /70 failed /36 blocked; each original log hash is verified and private raw logs are preserved. Separate qualified replays are not substituted into that completed result. Installed Windows10/11, macOS Retina/native overlay and actual hosted application acceptance remain explicit prerequisites, so `fullDoDClosed` remains false.
 
+## Late UI1448 runtime edges — 2026-10-04
+
+Owner root; source e572 frozen. Recover four production paths: own-property RPC serialization/admission, bounded OS credential-provider calls, conservative queued runner liveness and preservation of terminal outcomes during async probes, and static fingerprinted Product Learning CI build. Keep current account/immediateHistory/unavailable-workspace authority. Worker recent_features separately owns manager physical-copy and whole-suite runner custody; full native OS/cloud/CI DoD remains separate. Proof uses private synthetic providers/process probes plus actual local subprocess conformance.
+
+
 
 ### Selected skill instructions custody recovery — 2026-10-04
 

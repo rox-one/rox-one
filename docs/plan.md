@@ -1071,6 +1071,13 @@ Owner recent_features; parent owns ordered integration. Retain held-prepare dest
 
 Dependencies are sequential for source mutation, build/validation and delivery. Independent scout receipts record ready tasks, closed writers, actual source hashes and runtime identity. The original full run is immutable; later replays are separate evidence. The final GitHub receipt distinguishes tested source, actual merged source, documentation commit, checks and external prerequisites.
 
+## Late UI1448 runtime edges — 2026-10-04
+
+1. Freeze source52/9 and reject stale account/navigation regressions; isolate four root-owned production files from worker manager/runner ownership.
+2. Retain codec baseline0/3; qualify12/0 transport,10 actual provider controls with private hanging OS-provider executable/controlled Linux proc and4 real macOS subprocess conformance. Credential regressions use an unavailable synthetic provider; no real user Keychain/Secret Service access.
+3. Qualify full strict Shared/server-core/cloud-runner Node22 types0, preserve first adapter failure and per-file hashes, merge current main with documentation union, publish separate PR. Root integrates qualified worker2-path PR independently; source branches stay intact.
+
+
 Zed final bounded qualification on current991c8b80b: 122 focused +323 Home/token/12-locale tests;29 browser bodies via28 whole-run passes plus unchanged-bundle1-case rerun (whole aggregate retains one cancellation);7 actual App/native-journal and7 production-component cases. All failure histories archived, no assertions or case deadlines weakened. Current main collector/Skills/native launch/Notes changes merged normally; Skills OMP selection/reset buttons retain current semantics with appearance tokens. Full final Electron follow-up and source344 ledger bind their own receipt before publication. Installed OS/cloud/release DoD stays separate.
 
 
