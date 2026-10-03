@@ -66,7 +66,11 @@ describe('UI-001 actual meeting source effect completion and ownership', () => {
       const read = deferred<Array<{ id: string; title: string }>>()
       const loaded: unknown[] = [], notes: unknown[] = []
       const cleanup = rendererEffect(radarSource, 'api.listNotes(workspaceId)', {
-        workspaceId: 'b', window: { electronAPI: { listNotes: () => read.promise } },
+        workspaceId: 'b', context: { current: { workspaceId: 'b', generation: 0 } },
+        window: { electronAPI: { listNotes: (requestedWorkspace: string) => {
+          expect(requestedWorkspace).toBe('b')
+          return read.promise
+        } } }, setSources: () => {},
         setNotes: (value: unknown) => notes.push(value), setNotesLoadedWorkspace: (value: unknown) => loaded.push(value),
       })!
       expect(loaded).toEqual([undefined])
@@ -78,23 +82,65 @@ describe('UI-001 actual meeting source effect completion and ownership', () => {
       cleanup()
     }
   })
+  it('actual note lookup cannot publish after disposal, workspace changes or an A-B-A return', async () => {
+    for (const staleBy of ['disposal', 'workspace-change', 'a-b-a']) {
+      const read = deferred<Array<{ id: string; title: string }>>()
+      const context = { current: { workspaceId: 'a', generation: 0 } }
+      const loaded: unknown[] = [], notes: unknown[] = []
+      const cleanup = rendererEffect(radarSource, 'api.listNotes(workspaceId)', {
+        workspaceId: 'a', context, window: { electronAPI: { listNotes: (requestedWorkspace: string) => {
+          expect(requestedWorkspace).toBe('a')
+          return read.promise
+        } } }, setSources: () => {},
+        setNotes: (value: unknown) => notes.push(value), setNotesLoadedWorkspace: (value: unknown) => loaded.push(value),
+      })!
+      if (staleBy === 'disposal') cleanup()
+      else {
+        context.current = { workspaceId: 'b', generation: 1 }
+        if (staleBy === 'a-b-a') context.current = { workspaceId: 'a', generation: 2 }
+      }
+      read.resolve([{ id: 'old', title: 'Old note' }]); await settle(); await settle()
+      expect(notes).toEqual([[]])
+      expect(loaded).toEqual([undefined])
+      cleanup()
+    }
+  })
   it('actual sweep read failure becomes unavailable and disposed replies cannot revive its loading owner', async () => {
     const read = deferred<string>(), states: string[] = []
     let cleared = 0
-    const cleanup = rendererEffect(radarSource, 'syncRadarSweep(workspaceId, sweep.id)', {
-      workspaceId: 'b', sweep: { id: 'sweep' }, syncRadarSweep: () => read.promise,
+    let currentOwner!: () => boolean
+    const cleanup = rendererEffect(radarSource, 'syncRadarSweep(workspaceId, sweep.id,', {
+      workspaceId: 'b', context: { current: { workspaceId: 'b', generation: 0 } }, sweep: { id: 'sweep' },
+      syncRadarSweep: (requestedWorkspace: string, requestedSweep: string, options: { isCurrent: () => boolean }) => {
+        expect(requestedWorkspace).toBe('b'); expect(requestedSweep).toBe('sweep')
+        currentOwner = options.isCurrent
+        return read.promise
+      },
       setSyncState: (value: string) => states.push(value),
       window: { setInterval: () => 1, clearInterval: () => { cleared++ } },
     })!
+    expect(currentOwner()).toBe(true)
     read.reject(new Error('offline')); await settle()
     expect(states).toEqual(['failed'])
     cleanup(); expect(cleared).toBe(1)
+    expect(currentOwner()).toBe(false)
     const oldRead = deferred<string>(), oldStates: string[] = []
-    const oldCleanup = rendererEffect(radarSource, 'syncRadarSweep(workspaceId, sweep.id)', {
-      workspaceId: 'a', sweep: { id: 'old-sweep' }, syncRadarSweep: () => oldRead.promise,
+    const oldContext = { current: { workspaceId: 'a', generation: 0 } }
+    let oldOwner!: () => boolean
+    const oldCleanup = rendererEffect(radarSource, 'syncRadarSweep(workspaceId, sweep.id,', {
+      workspaceId: 'a', context: oldContext, sweep: { id: 'old-sweep' },
+      syncRadarSweep: (requestedWorkspace: string, requestedSweep: string, options: { isCurrent: () => boolean }) => {
+        expect(requestedWorkspace).toBe('a'); expect(requestedSweep).toBe('old-sweep')
+        oldOwner = options.isCurrent
+        return oldRead.promise
+      },
       setSyncState: (value: string) => oldStates.push(value),
       window: { setInterval: () => 2, clearInterval: () => { cleared++ } },
     })!
+    expect(oldOwner()).toBe(true)
+    oldContext.current = { workspaceId: 'b', generation: 1 }
+    oldContext.current = { workspaceId: 'a', generation: 2 }
+    expect(oldOwner()).toBe(false)
     oldCleanup(); oldRead.resolve('done'); await settle()
     expect(oldStates).toEqual([])
     expect(cleared).toBe(2)

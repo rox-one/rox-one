@@ -34,6 +34,7 @@ import type { StoredMessage, SessionMemoryMode } from '@rox/core/types'
 import type {
   DistillResult,
   Lesson,
+  LessonOwner,
   LessonConflict,
   LessonScope,
   LessonTrigger,
@@ -43,6 +44,7 @@ import type {
   WorkspaceMemory,
 } from '@rox/shared/memory/types'
 import { dirname } from 'path'
+import { createHash } from 'crypto'
 import { LessonStore, lessonKey } from './LessonStore'
 import { MemoryFileStore } from './MemoryFileStore'
 import { SkillPendingQueue } from './SkillPendingQueue'
@@ -83,6 +85,14 @@ interface DistillJob {
    * M2 maps it to the episodic kind: complete → success, anything else → failure.
    */
   reason?: SessionCompletionLike['reason']
+  nativeContext?: NativeMemoryContext
+}
+
+/** In-process authority provenance. Never accepted from a renderer DTO. */
+export interface NativeMemoryContext {
+  owner: LessonOwner
+  /** Rechecks the originating grant, workspace root and storage custody. */
+  assertAuthorized: () => void
 }
 
 export interface MemoryServiceDeps {
@@ -123,6 +133,7 @@ export interface MemoryServiceDeps {
    * absent/unknown sessions) write as before. Injectable for tests.
    */
   getSessionMode?: (sessionId: string) => SessionMemoryMode
+  getNativeContext?: (sessionId: string) => NativeMemoryContext | undefined
   /**
    * L1 feedback loop: lessons that were injected into a session's prompts
    * (spec F4 provenance record), as `{rule, scope}` pairs. Wired to
@@ -398,15 +409,18 @@ export class MemoryService {
    * (EPISODIC_PROMPT_BUDGET_MS) and fail-soft so a cold model download or any
    * episodic error only means the tail is omitted — never a broken prompt.
    */
-  async buildMemoryBlocks(opts?: { query?: string }): Promise<MemoryPromptBlocks | undefined> {
+  async buildMemoryBlocks(opts?: { query?: string; nativeContext?: NativeMemoryContext }): Promise<MemoryPromptBlocks | undefined> {
     if (!this.config.enabled) return undefined
+    opts?.nativeContext?.assertAuthorized()
+    const owner = opts?.nativeContext?.owner
     const globalStore = this.deps.lessonStoreFactory?.('global') ?? this.defaultLessonStore('global')
     const workspaceStore = this.deps.lessonStoreFactory?.('workspace') ?? this.defaultLessonStore('workspace')
-    let globalLessons = globalStore.forContext()
-    let workspaceLessons = workspaceStore.forContext()
-    let memory = this.fileStore.loadWorkspaceMemory()
+    let globalLessons = globalStore.forContext(owner)
+    let workspaceLessons = workspaceStore.forContext(owner)
+    // Legacy context/history/episodes are host-wide text without an owner.
+    let memory = owner ? { context: '', preferences: '', recentHistory: '' } : this.fileStore.loadWorkspaceMemory()
     const query = opts?.query?.trim()
-    if (query) {
+    if (query && !owner) {
       const ranked = this.rankByQuery(query, globalStore, workspaceStore)
       if (ranked) {
         globalLessons = ranked.globalLessons
@@ -420,8 +434,8 @@ export class MemoryService {
     // throw during formatting never inflates counters. Fail-soft: usage counters
     // must never break prompt assembly (session-start path). touchUsed([]) no-ops.
     try {
-      globalStore.touchUsed(globalLessons.map(l => l.rule))
-      workspaceStore.touchUsed(workspaceLessons.map(l => l.rule))
+      globalStore.touchUsed(globalLessons.map(l => l.rule), owner)
+      workspaceStore.touchUsed(workspaceLessons.map(l => l.rule), owner)
     } catch (err) {
       this.logger.warn('MemoryService: touchUsed failed', err)
     }
@@ -433,7 +447,7 @@ export class MemoryService {
     }
     // M2: semantic (episodic) recall tail (spec §M2). Opt-in via memory.semantic;
     // needs a query to match against. Budgeted and fully fail-soft.
-    if (this.config.semantic && query) {
+    if (this.config.semantic && query && !owner) {
       try {
         const episodes = await episodicWithTimeout(this.episodic.search(query), EPISODIC_PROMPT_BUDGET_MS)
         if (episodes.length > 0) {
@@ -446,6 +460,7 @@ export class MemoryService {
         this.logger.warn('MemoryService: episodic recall failed', err)
       }
     }
+    opts?.nativeContext?.assertAuthorized()
     return blocks
   }
 
@@ -532,6 +547,8 @@ export class MemoryService {
     const readProvenance = this.deps.readSessionProvenance
     if (!readProvenance) return
     try {
+      const nativeContext = this.deps.getNativeContext?.(evt.sessionId)
+      nativeContext?.assertAuthorized()
       const used = readProvenance(evt.sessionId)
       if (!used || used.length === 0) return
       const reason: LessonConflict['reason'] =
@@ -540,7 +557,7 @@ export class MemoryService {
       for (const lesson of used) {
         try {
           const store = this.deps.lessonStoreFactory?.(lesson.scope) ?? this.defaultLessonStore(lesson.scope)
-          store.recordConflict(lesson.rule, { sessionId: evt.sessionId, ts, reason }, 'distill')
+          store.recordConflict(lesson.rule, { sessionId: evt.sessionId, ts, reason }, 'distill', nativeContext?.owner)
         } catch (err) {
           this.logger.warn(`MemoryService: recordConflict failed for ${evt.sessionId}`, err)
         }
@@ -560,6 +577,11 @@ export class MemoryService {
 
   private enqueue(job: DistillJob): void {
     if (this.queue.length >= 50) return // backpressure: drop rather than grow forever
+    const nativeContext = this.deps.getNativeContext?.(job.sessionId)
+    if (nativeContext) {
+      try { nativeContext.assertAuthorized() } catch { return }
+      job.nativeContext = { owner: { ...nativeContext.owner }, assertAuthorized: nativeContext.assertAuthorized }
+    }
     this.queue.push(job)
     // Async drain — the event handler must never await.
     void Promise.resolve()
@@ -598,6 +620,7 @@ export class MemoryService {
   private async runDistill(job: DistillJob): Promise<void> {
     let result: DistillResult | null = null
     try {
+      job.nativeContext?.assertAuthorized()
       const messages = (this.deps.readMessages ?? ((id) => readSessionMessages(getSessionFilePath(this.deps.workspaceRoot, id))))(
         job.sessionId,
       )
@@ -610,6 +633,7 @@ export class MemoryService {
       let raw: string | null = null
       try {
         raw = await this.distiller(buildDistillPrompt(windowText, job.full, negativeFirst))
+        job.nativeContext?.assertAuthorized()
       } catch (err) {
         this.logger.warn(`MemoryService: distiller failed for ${job.sessionId}: ${err instanceof Error ? err.message : String(err)}`, err)
         return
@@ -618,6 +642,7 @@ export class MemoryService {
       if (!result) {
         // One retry with a harder JSON-only instruction.
         raw = await this.distiller(buildDistillPrompt(windowText, job.full, negativeFirst) + '\nReturn only valid JSON')
+        job.nativeContext?.assertAuthorized()
         result = parseDistillResult(raw ?? '')
         if (!result) {
           this.logger.warn(`MemoryService: distiller returned invalid JSON twice for ${job.sessionId}`)
@@ -635,6 +660,7 @@ export class MemoryService {
     const workspaceId = this.deps.workspaceId ?? this.deps.workspaceRoot
     let wroteMemory = false
     try {
+      job.nativeContext?.assertAuthorized()
       // Defense-in-depth: the distiller reads a redacted window, but its output
       // is still untrusted text — never persist a re-emitted secret.
       const extraPatterns = this.config.redactExtraPatterns
@@ -656,11 +682,12 @@ export class MemoryService {
           scope: 'workspace',
           negative: lesson.negative,
           source: { sessionId: job.sessionId, trigger: job.trigger },
+          ...(job.nativeContext ? { owner: { ...job.nativeContext.owner } } : {}),
         }
         store.add(entry, 'distill')
         wroteMemory = true
       }
-      if (result.history_entry) {
+      if (result.history_entry && !job.nativeContext) {
         this.fileStore.appendDailyHistory(result.history_entry)
         // M2: episodic memory — opt-in via memory.semantic. Kind maps from the
         // session-completion reason (complete → success, bad endings →
@@ -676,7 +703,7 @@ export class MemoryService {
         }
         wroteMemory = true
       }
-      if (result.memory_update) {
+      if (result.memory_update && !job.nativeContext) {
         const existing = this.fileStore.readContext()
         if (!existing.includes(result.memory_update)) {
           this.fileStore.writeContext(existing ? `${existing}\n\n${result.memory_update}` : result.memory_update)
@@ -697,10 +724,15 @@ export class MemoryService {
           this.logger.warn(`MemoryService: dropped sensitive skill candidate '${cand.slug}'`)
         } else {
           const candidate: SkillCandidate = {
-            slug: cand.slug,
+            // Personal candidates cannot suppress another actor's proposal or
+            // turn an unrelated host skill with the same name into an update.
+            slug: job.nativeContext ? `${cand.slug.slice(0, 47)}-${createHash('sha256')
+              .update(JSON.stringify([job.nativeContext.owner.issuer, job.nativeContext.owner.subject]))
+              .digest('hex').slice(0, 16)}` : cand.slug,
             description: cand.description,
             body: cand.body,
-            source: { sessionId: job.sessionId, ts: new Date(this.clock()).toISOString() },
+            source: { sessionId: job.sessionId, ts: new Date(this.clock()).toISOString(),
+              ...(job.nativeContext ? { owner: { ...job.nativeContext.owner } } : {}) },
           }
           const queue = this.deps.skillQueue ?? new SkillPendingQueue(this.deps.workspaceRoot)
           if (queue.enqueue(candidate)) {

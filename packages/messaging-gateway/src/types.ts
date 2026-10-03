@@ -370,6 +370,7 @@ export function normalizeBindingConfig(
 }
 
 export interface ChannelBinding {
+  nativeOwner?: { issuer: string; subject: string }
   id: string
   workspaceId: string
   sessionId: string
@@ -467,6 +468,7 @@ export type PendingRejectReason = 'not-owner' | 'not-on-binding-allowlist'
  * the second silently overwrite the first.
  */
 export interface PendingSender {
+  nativeOwner?: { issuer: string; subject: string }
   /** Platform identity. */
   platform: PlatformType
   userId: string
@@ -491,6 +493,14 @@ export interface PendingSender {
   sessionId?: string
   channelId?: string
   threadId?: number
+}
+
+/** Trusted in-process pairing authority; never a bot message or wire DTO. */
+export interface NativeMessagingContext {
+  owner: { issuer: string; subject: string }
+  assertAuthorized: () => void
+  registerBinding?: (binding: ChannelBinding) => void
+  canReplaceBinding?: (binding: ChannelBinding) => boolean
 }
 
 export interface MessagingConfig {
