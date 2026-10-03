@@ -140,7 +140,7 @@ describe('OMP actual stream callbacks drain before finalizing child exit', () =>
     child.stdout.pause();
     for (const frame of largeResponse('catalogue')) child.stdout.write(frame);
     child.exit();
-    expect(state.subprocess).toBe(child);
+    expect(state.subprocess).toBe(child as unknown as ChildProcess);
     expect(resolved).toBeUndefined();
     await child.close();
     expect(resolved).toBe('x'.repeat(1_050_000));
@@ -200,7 +200,7 @@ describe('OMP actual stream callbacks drain before finalizing child exit', () =>
     successor.stdout.write(largeResponse('unfinished-successor')[0]!);
     await child.close(1);
     clock.fire();
-    expect(state.subprocess).toBe(successor);
+    expect(state.subprocess).toBe(successor as unknown as ChildProcess);
     expect(eventSnapshot(state.eventQueue)).toEqual([]);
     successor.exit();
     await successor.close();

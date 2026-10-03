@@ -1,0 +1,17 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "inputRevision": "976a377b0ab0c4951e3fca759ba2958e9098239d",
+  "failure": "Shared typecheck TS2769 on two expected identity operands in the new Child fixture",
+  "localObservedExitCode": 2,
+  "remoteValidateConclusion": "failure",
+  "remoteOnboardingConclusion": "skipped",
+  "repair": "Use the same explicit unknown-to-ChildProcess adapter cast already used when storing fixture child, on the two toBe expected operands. Runtime identity assertions unchanged.",
+  "runtimeJsByteIdentical": true,
+  "transpileTarget": "ES2022/ESNext with current TypeScript package",
+  "changedExpectedOperands": 2,
+  "qualifiedValidation": "Pending separate actual final committed source replay and full validate receipts; no old result promoted.",
+  "fullDoDClosed": false
+}

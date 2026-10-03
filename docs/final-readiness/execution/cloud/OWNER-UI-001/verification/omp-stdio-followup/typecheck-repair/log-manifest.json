@@ -1,0 +1,16 @@
+{
+  "archives": [
+    {
+      "path": "logs/expanded-stdio-full-validate-ci-976a377.log.gz",
+      "rawSha256": "cd8687f3d279148191c9d0649a1a0c0cf789fd0fcf9ca5697ba60155eaa43e2e",
+      "archiveSha256": "847b801f73f0322d5e5d975332039563bf5b654f7fafab8111778eff1d207a70",
+      "rawBytes": 2187
+    },
+    {
+      "path": "logs/expanded-stdio-final-validate-976a377-job.log.gz",
+      "rawSha256": "81c602c3d59671df32eddf7292ae015df58c89a0b38d5904c0043a4c6cb26fe2",
+      "archiveSha256": "e539d771a7249c464df6329e0b6bdd7b033dcbe23e767bcefc18f72f4d92e0dd",
+      "rawBytes": 200080
+    }
+  ]
+}
