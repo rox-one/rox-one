@@ -1,4 +1,5 @@
-import { mkdir, readFile, writeFile, realpath, stat, readdir, readlink, symlink, unlink } from 'node:fs/promises'
+import { mkdir, readFile, writeFile, realpath, open, readdir, readlink, symlink, unlink } from 'node:fs/promises'
+import { constants } from 'node:fs'
 import { join, relative, isAbsolute, dirname } from 'node:path'
 import { homedir } from 'node:os'
 import { createHash } from 'node:crypto'
@@ -55,11 +56,23 @@ async function cloneRuntime() {
     for (const bin of artifact.binPaths) {
       const originalBin = await realpath(join(source, bin))
       const copiedBin = await realpath(join(destination, bin))
-      if (!copiedBin.startsWith((await realpath(destination)) + '/') || ((await stat(copiedBin)).mode & 0o111) === 0) {
+      if (!copiedBin.startsWith((await realpath(destination)) + '/')) {
         throw new Error(`Copied executable is not isolated: ${entry.name}/${bin}`)
       }
       const before = createHash('sha256').update(await readFile(originalBin)).digest('hex')
-      const after = createHash('sha256').update(await readFile(copiedBin)).digest('hex')
+      // Validate and hash one opened object. O_NOFOLLOW rejects replacement
+      // with a symlink; fstat/read on this handle cannot race a pathname reopen.
+      const handle = await open(copiedBin, constants.O_RDONLY | constants.O_NOFOLLOW)
+      let after: string
+      try {
+        const metadata = await handle.stat()
+        if (!metadata.isFile() || (metadata.mode & 0o111) === 0) {
+          throw new Error(`Copied executable is not a regular executable: ${entry.name}/${bin}`)
+        }
+        after = createHash('sha256').update(await handle.readFile()).digest('hex')
+      } finally {
+        await handle.close()
+      }
       if (before !== after) throw new Error(`Copied executable bytes differ: ${entry.name}/${bin}`)
       executables.push({ bin, sha256: before })
     }

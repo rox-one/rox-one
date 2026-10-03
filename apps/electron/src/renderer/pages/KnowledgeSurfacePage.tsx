@@ -33,7 +33,6 @@ import { toast } from 'sonner'
 import { focusedPanelIdAtom } from '@/atoms/panel-stack'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { isKnowledgeFeatureEnabled } from '@/lib/feature-flags'
-import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import {
   DropdownMenu,
@@ -102,11 +101,6 @@ export default function KnowledgeSurfacePage({
   compat,
   mode: modeProp = 'editor',
 }: KnowledgeSurfacePageProps) {
-  // Product path purged: never embed SiYuan — send users to Rox Notes.
-  React.useEffect(() => {
-    navigate(routes.view.notes())
-  }, [])
-
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef(0)

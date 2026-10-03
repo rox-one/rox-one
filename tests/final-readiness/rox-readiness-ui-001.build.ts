@@ -19,12 +19,12 @@ if (process.argv.includes('--node-driver')) {
 async function snapshot() {
   const child = Bun.spawn(['git', 'ls-files', 'apps/electron/src', 'packages'], { cwd: root, stdout: 'pipe' })
   const tracked = (await new Response(child.stdout).text()).trim().split('\n'); await child.exited
-  const paths = tracked.filter(path => /\.(?:ts|tsx|json|html|css)$/.test(path) && !path.includes('/__tests__/')
+  const paths = tracked.filter(path => /\.(?:ts|tsx|[cm]?js|json|html|css)$/.test(path) && !path.includes('/__tests__/')
     && !path.includes('/tests/') && (path.startsWith('apps/electron/src/') || path.includes('/src/'))).sort()
   // Include new shipped recovery helpers before the lead commits them.
   const untracked = Bun.spawn(['git', 'ls-files', '--others', '--exclude-standard', 'apps/electron/src', 'packages'], { cwd: root, stdout: 'pipe' })
   for (const path of (await new Response(untracked.stdout).text()).trim().split('\n')) {
-    if (/\.(?:ts|tsx|json|html|css)$/.test(path) && !path.includes('/__tests__/') && !path.includes('/tests/')) paths.push(path)
+    if (/\.(?:ts|tsx|[cm]?js|json|html|css)$/.test(path) && !path.includes('/__tests__/') && !path.includes('/tests/')) paths.push(path)
   }
   await untracked.exited
   const sourceHashes = Object.fromEntries(await Promise.all([...new Set(paths)].sort().map(async path => [path,

@@ -399,6 +399,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const assetsRequestRef = React.useRef(0)
   const readsMountedRef = React.useRef(false)
   const readWorkspaceRef = React.useRef(activeWorkspaceId)
+  const readWorkspaceGenerationRef = React.useRef(0)
   const [notesReadError, setNotesReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const [assetsReadError, setAssetsReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const readUnavailable = notesReadError?.workspaceId === activeWorkspaceId ? notesReadError
@@ -407,10 +408,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     // A committed workspace lease invalidates A requests even across A → B → A.
     readWorkspaceRef.current = activeWorkspaceId
     readsMountedRef.current = true
+    ++readWorkspaceGenerationRef.current
     ++notesListRequestRef.current
     ++assetsRequestRef.current
     return () => {
       readsMountedRef.current = false
+      ++readWorkspaceGenerationRef.current
       ++notesListRequestRef.current
       ++assetsRequestRef.current
     }
@@ -792,6 +795,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     refreshAssets()
     void refreshIndexHealth()
     if (!activeWorkspaceId) return
+    const workspaceGeneration = readWorkspaceGenerationRef.current
+    let subscribed = true
+    const isCurrentSubscription = () => subscribed && readsMountedRef.current
+      && readWorkspaceGenerationRef.current === workspaceGeneration
+      && readWorkspaceRef.current === activeWorkspaceId
     void nativeNotesSync.start(activeWorkspaceId)
       .then(() => nativeNotesSync.flush())
       .catch(error => {
@@ -802,7 +810,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     }).then(() => { void refreshIndexHealth() })
     const unsubscribe = window.electronAPI.onNotesChanged((rawPayload) => {
       const payload = normalizeChangedPayload(rawPayload)
-      if (!readsMountedRef.current || readWorkspaceRef.current !== activeWorkspaceId || payload.workspaceId !== activeWorkspaceId) return
+      if (!isCurrentSubscription() || payload.workspaceId !== activeWorkspaceId) return
 
       const selectedTarget = selectedNoteId ? parseNoteBlockAddress(selectedNoteId).noteId : null
       if (payload.reason === 'delete' && payload.noteId && (payload.noteId === activeNoteIdRef.current || payload.noteId === selectedTarget)) {
@@ -833,11 +841,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         const opening = openNoteRequestRef.current
         setContentResolution(null)
         void window.electronAPI.resolveContent({ workspaceId: activeWorkspaceId, entityId: `note:${nativeId}` }).then(resolution => {
-          if (workspaceIdRef.current !== activeWorkspaceId || activeNoteIdRef.current !== noteId || openNoteRequestRef.current !== opening) return
+          if (!isCurrentSubscription() || workspaceIdRef.current !== activeWorkspaceId || activeNoteIdRef.current !== noteId || openNoteRequestRef.current !== opening) return
           setContentResolution(resolution)
           if (resolution.status !== 'ok' || !resolution.capabilities.write) setSaveNeedsReload(true)
         }).catch(() => {
-          if (workspaceIdRef.current === activeWorkspaceId && activeNoteIdRef.current === noteId) {
+          if (isCurrentSubscription() && workspaceIdRef.current === activeWorkspaceId && activeNoteIdRef.current === noteId && openNoteRequestRef.current === opening) {
             setContentResolution({ status: 'error', code: 'denied' })
             setSaveNeedsReload(true)
           }
@@ -862,6 +870,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     })
 
     return () => {
+      subscribed = false
       unsubscribe()
       void nativeNotesSync.stop().catch(error => {
         toast.error(error instanceof Error ? error.message : t('notes.toast.watchFailed'))

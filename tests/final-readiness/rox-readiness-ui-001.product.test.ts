@@ -6,6 +6,9 @@ import { createHash } from 'node:crypto'
 
 const root = resolve(import.meta.dir, '../..')
 const enabled = process.env.ROX_UI_001_PRODUCT_E2E === '1'
+const diagnosticSkipKnowledge = process.env.ROX_UI_001_DIAGNOSTIC_SKIP_KNOWLEDGE === '1'
+const diagnosticSkipExtension = process.env.ROX_UI_001_DIAGNOSTIC_SKIP_EXTENSION === '1'
+const diagnostic = diagnosticSkipKnowledge || diagnosticSkipExtension
 const sha256 = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex')
 const redactLog = (value: string) => value
   .replace(/([?&](?:token|access_token|refresh_token)=)[^\s&"']+/gi, '$1[REDACTED]')
@@ -23,6 +26,12 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
     const profile = await mkdtemp(join(root, 'work', 'rox-readiness-ui-001-'))
     const bunPath = process.env.ROX_UI_001_BUN ?? process.execPath
     const executablePath = process.env.ROX_UI_001_ELECTRON ?? join(root, 'work/electron-39.2.7/Electron.app/Contents/MacOS/Electron')
+    const harnessPaths = ['tests/final-readiness/rox-readiness-ui-001.product.test.ts',
+      'tests/final-readiness/rox-readiness-ui-001.seed.ts', 'tests/final-readiness/rox-readiness-ui-001.node-driver.ts',
+      'tests/final-readiness/rox-readiness-ui-001.build.ts', 'work/rox-readiness-ui-001.native-driver.cjs']
+    const harnessReceipt = { capturedBeforeSeedAndNativeLaunch: true, capturedAt: new Date().toISOString(),
+      hashes: Object.fromEntries(await Promise.all(harnessPaths.map(async path => [path, sha256(await readFile(join(root, path)))]))) }
+    await writeFile(join(evidence, 'rox-readiness-ui-001.harness.json'), JSON.stringify(harnessReceipt, null, 2))
     const bin = join(profile, 'bin'); await mkdir(bin)
     for (const [name, path] of [['bun', bunPath], ['node', '/opt/homebrew/bin/node'], ['sh', '/bin/sh'],
       ['env', '/usr/bin/env'], ['git', '/usr/bin/git'], ['uname', '/usr/bin/uname'], ['which', '/usr/bin/which']]) {
@@ -72,13 +81,18 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
     const qualifiedBuild = buildReceipts.every(receipt => receipt?.inputRevision === inputRevision)
       && buildReceipts[0]?.sourceManifestSha256 === buildReceipts[1]?.sourceManifestSha256
     const russian = JSON.parse(await readFile(join(root, 'packages/shared/src/i18n/locales/ru.json'), 'utf8'))
-    const observations: Record<string, unknown> = { inputRevision, sourceHashes, buildHashes, profile,
+    const observations: Record<string, unknown> = { inputRevision, sourceHashes, buildHashes, harnessReceipt, profile,
       driver: { versions: process.versions, executablePath: process.execPath, canonicalSeedBunPath: bunPath },
       electronExecutableSha256: sha256(await readFile(executablePath)),
       buildProvenanceQualified: qualifiedBuild, buildReceipts,
       buildQualifier: qualifiedBuild ? 'frozen source manifest checked before and after main/renderer builds'
         : 'provisional product replay; current source snapshot does not bind the earlier generated build',
-      acceptanceLevel: 'actual local macOS Electron with shipped RPC and disposable canonical backend',
+      acceptanceLevel: diagnostic ? 'diagnostic continuation with explicitly listed known gaps excluded; no readiness acceptance'
+        : 'actual local macOS Electron with shipped RPC and disposable canonical backend',
+      diagnosticSkippedRoutes: [
+        ...(diagnosticSkipKnowledge ? ['knowledge/block/ui001-absent-block'] : []),
+        ...(diagnosticSkipExtension ? ['extension/ui001-absent-extension/ui001-absent-view'] : []),
+      ],
       fullDoDClosed: false, platformLimits: ['Windows 10/11 DPI and native acceptance not run', 'Hosted web ingress/transport acceptance not run'],
       protocolRegistration: 'explicit test-only guard; OS protocol registration itself not exercised',
       environmentIsolation: { homePreserved: environment.HOME === process.env.HOME, credentialsInherited: false,
@@ -88,6 +102,7 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
     const errors: string[] = []
     const logs: string[] = []
     const stages: unknown[] = []
+    const diagnosticFailures: { name: string; error: string }[] = []
     let app: ElectronApplication | null = null
     let launchCompleted = false
     let page: Page
@@ -106,8 +121,20 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
     const capture = async (name: string) => {
       const path = join(evidence, `rox-readiness-ui-001.${name}.png`)
       const bytes = await page.screenshot({ path })
-      screenshots.push({ name, path, sha256: sha256(bytes) })
+      const address = await page.evaluate(() => ({ url: location.href, route: new URL(location.href).searchParams.get('route'),
+        panels: new URL(location.href).searchParams.get('panels'), focusedIndex: new URL(location.href).searchParams.get('fi'),
+        compact: Boolean(document.querySelector('[data-compact-profile]')) }))
+      screenshots.push({ name, path, sha256: sha256(bytes), address })
       await writeFile(join(evidence, `rox-readiness-ui-001.${name}.txt`), await page.locator('body').innerText())
+    }
+    const probe = async (name: string, run: () => Promise<void>) => {
+      if (!diagnostic) return run()
+      try { await run() } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        diagnosticFailures.push({ name, error: message })
+        console.warn(`UI-001 diagnostic finding: ${name}: ${message}`)
+        await capture(`diagnostic-${name}-failure`).catch(() => {})
+      }
     }
     const route = () => page.evaluate(() => new URL(location.href).searchParams.get('route'))
     const navigate = async (target: string) => {
@@ -278,22 +305,27 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       stage('unavailable-capability-routes')
       for (const [target, selector] of [
         ['terminal/ui001-absent-terminal', '[data-testid="terminal-surface-unavailable"]'],
-        ['browser/ui001-absent-browser', '[data-testid="browser-surface-missing"], [data-testid="browser-surface-unavailable"]'],
+        ['browser/instance/ui001-absent-browser', '[data-testid="browser-surface-missing"], [data-testid="browser-surface-unavailable"]'],
         ['cloud-run/ui001-absent-run', '[data-testid="cloud-run-surface-not-found"], [data-testid="cloud-run-surface-unavailable"]'],
         ['knowledge/block/ui001-absent-block', '[data-testid="knowledge-entity-unavailable"]'],
         ['extension/ui001-absent-extension/ui001-absent-view', '[data-testid="extension-surface-unavailable"]'],
       ]) {
+        if (diagnosticSkipKnowledge && target === 'knowledge/block/ui001-absent-block') continue
+        if (diagnosticSkipExtension && target === 'extension/ui001-absent-extension/ui001-absent-view') continue
         await direct(target!); await page.locator(selector!).waitFor({ timeout: 30_000 })
         expect(await route()).toBe(target!); await capture(target!.split('/')[0]! + '-unavailable')
       }
       for (const screen of ['dossier', 'radar', 'decisions', 'agents', 'focus']) {
         const target = `${screen}/item/ui001-absent-item`
-        await direct(target); await missing(target); await capture(`${screen}-missing`)
+        await probe(`${screen}-missing`, async () => {
+          await direct(target); await missing(target); await capture(`${screen}-missing`)
+        })
       }
       observations.unsupportedTargets = { terminal: 'unavailable with requested ID retained', cloudRun: 'missing/unavailable without provider calls',
         knowledge: 'missing/unavailable without configured provider', extension: 'missing installed ID', extraScreens: 'five missing selected IDs' }
 
       stage('geometry-resize-and-modal')
+      await probe('geometry-persistence', async () => {
       await navigate(sessionARoute)
       const sashes = page.getByRole('separator')
       await sashes.first().waitFor()
@@ -310,9 +342,12 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       expect(pointerValue).toBeGreaterThan(valueAfter)
       observations.geometry = { valueBefore, valueAfter, pointerValue, persisted: preferences }
       await capture('geometry-persisted')
+      })
 
       // The shipped title menu opens the real Radix rename modal; the draft is
       // cancelled so no provider operation or unrelated persistence is needed.
+      await probe('native-modal-resize', async () => {
+      await navigate(sessionARoute)
       const titleButton = page.getByRole('button', { name: 'UI001 session A', exact: true }).last()
       await titleButton.click()
       await page.getByRole('menuitem', { name: /Переименовать|Rename/i }).first().click()
@@ -330,85 +365,115 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       expect(modalBounds!.y + modalBounds!.height).toBeLessThanOrEqual(viewport.height)
       await capture('modal-after-native-resize'); await page.keyboard.press('Escape'); await dialog.waitFor({ state: 'hidden' })
       observations.modal = { openedThroughShippedMenu: true, trappedFocus: true, usableAfterNativeResize: true, cancelledWithoutSaving: true }
+      })
 
       stage('zoom-layout-usable')
+      await probe('zoom-layout', async () => {
       const zoom = []
+      observations.zoom = zoom
+      try {
       for (const factor of [1, 1.5, 2]) {
         await app!.evaluate(({ BrowserWindow }, factor) => BrowserWindow.getAllWindows()[0]!.webContents.setZoomFactor(factor), factor)
         await page.waitForTimeout(150)
         const bounds = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, devicePixelRatio,
+          compact: Boolean(document.querySelector('[data-compact-profile]')),
           handles: [...document.querySelectorAll('[role="separator"]')].map(node => { const r = node.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height } }) }))
-        if (bounds.width >= 768) expect(bounds.handles.length).toBeGreaterThan(0)
+        zoom.push({ factor, ...bounds })
+        if (!bounds.compact) expect(bounds.handles.length).toBeGreaterThan(0)
         expect(bounds.handles.every(handle => handle.width > 0 && handle.height > 0)).toBe(true)
-        zoom.push({ factor, ...bounds }); await capture(`zoom-${factor}`)
+        expect(await route()).toBe(sessionARoute)
+        await capture(`zoom-${factor}`)
       }
+      } finally {
       await app!.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.webContents.setZoomFactor(1))
-      observations.zoom = zoom
+      }
+      })
 
       stage('live-source-deletion')
+      await probe('source-deletion', async () => {
       await navigate(sourceRoute)
       await page.evaluate(seed => window.electronAPI.deleteSource(seed.workspaceId, seed.sourceSlug), seed)
       expect(await page.evaluate(async seed => (await window.electronAPI.getSources(seed.workspaceId)).some(source => source.config.slug === seed.sourceSlug), seed)).toBe(false)
       await missing(sourceRoute); await capture('source-deleted'); await page.reload(); await ready(); await missing(sourceRoute)
       await page.getByTestId('route-resource-retry').click(); await missing(sourceRoute)
+      })
 
       stage('live-skill-deletion')
+      await probe('skill-deletion', async () => {
       const skillRoute = `skills/skill/${seed.skillSlug}`
       await navigate(skillRoute)
       await page.evaluate(seed => window.electronAPI.deleteSkill(seed.workspaceId, seed.skillSlug), seed)
-      expect(await page.evaluate(async seed => (await window.electronAPI.getSkills(seed.workspaceId, seed.workspaceRoot)).some(skill => skill.slug === seed.skillSlug), seed)).toBe(false)
+      // The genuine ConfigWatcher invalidates the shared skill catalog after
+      // deletion. Require its eventual RPC readback before missing/reload.
+      await page.waitForFunction(async seed => !(await window.electronAPI.getSkills(seed.workspaceId, seed.workspaceRoot)).some(skill => skill.slug === seed.skillSlug), seed)
       await missing(skillRoute); await capture('skill-deleted')
       await page.getByTestId('route-resource-retry').click(); await missing(skillRoute)
       await page.reload(); await ready(); await missing(skillRoute)
+      })
 
       stage('live-project-deletion')
+      await probe('project-deletion', async () => {
       await navigate(projectRoute)
       await page.evaluate(seed => window.electronAPI.deleteProject(seed.workspaceId, seed.projectSlug), seed)
       expect(await page.evaluate(seed => window.electronAPI.getProject(seed.workspaceId, seed.projectSlug), seed)).toBeNull()
       await missing(projectRoute); await capture('project-deleted')
       await page.reload(); await ready(); await missing(projectRoute)
+      })
 
       stage('live-page-deletion')
+      await probe('page-deletion', async () => {
       const pageRoute = `pages/page/${seed.pageSlug}`
       await navigate(pageRoute)
       const pageDeleteReceipt = await page.evaluate(seed => window.electronAPI.deletePage(seed.workspaceId, seed.pageSlug), seed)
       expect(await page.evaluate(seed => window.electronAPI.getPage(seed.workspaceId, seed.pageSlug), seed)).toBeNull()
       await missing(pageRoute); observations.pageDeleteReceipt = pageDeleteReceipt; await capture('page-deleted')
       await page.reload(); await ready(); await missing(pageRoute)
+      })
 
       stage('live-note-deletion')
+      await probe('note-deletion', async () => {
       const noteRoute = `notes/note/${seed.noteId}`
       await navigate(noteRoute)
       const noteDeleteReceipt = await page.evaluate(seed => window.electronAPI.deleteNote(seed.workspaceId, seed.noteId), seed)
       expect(noteDeleteReceipt).toBe(true)
       expect(await stat(join(seed.noteRoot, seed.noteId + '.md')).then(() => true).catch(() => false)).toBe(false)
       await missing(noteRoute); observations.noteDeleteReceipt = noteDeleteReceipt; await capture('note-deleted')
+      stage('deleted-note-retry')
       await page.getByTestId('route-note-missing').getByRole('button', { name: russian['common.retry'], exact: true }).click()
-      await missing(noteRoute); await page.reload(); await ready(); await missing(noteRoute)
+      await missing(noteRoute); await capture('note-retried')
+      stage('deleted-note-reload')
+      await page.reload(); await ready(); await missing(noteRoute); await capture('note-reloaded')
+      })
 
       stage('live-session-deletion-and-native-restart')
+      await probe('session-deletion-native-restart', async () => {
       await navigate(sessionBRoute)
       await page.evaluate(seed => window.electronAPI.deleteSession(seed.sessionB), seed)
       await missing(sessionBRoute); await capture('session-deleted')
       await closeNative(); await launch()
       expect(await route()).toBe(sessionBRoute); await missing(sessionBRoute); await capture('native-restart-deleted-session')
+      })
 
       stage('unknown-raw-link-unavailable')
+      await probe('unknown-raw-link', async () => {
       await direct('not-a-supported-ui001-route')
       await page.getByTestId('route-unavailable').waitFor(); expect(await route()).toBe('not-a-supported-ui001-route')
       await capture('unknown-link-unavailable')
+      })
       if (qualifiedBuild) {
         const frozenHashes: Record<string, string> = buildReceipts[0].sourceHashes
         for (const [path, hash] of Object.entries(frozenHashes)) expect(sha256(await readFile(join(root, path)))).toBe(hash)
       }
-      observations.status = 'passed'; observations.errors = errors; expect(errors).toEqual([])
+      observations.diagnosticFailures = diagnosticFailures
+      if (diagnosticFailures.length) throw new Error(`Diagnostic continuation found ${diagnosticFailures.length} additional failures; see diagnosticFailures`)
+      observations.status = diagnostic ? 'diagnostic-passed' : 'passed'; observations.errors = errors; expect(errors).toEqual([])
     } catch (error) {
       observations.status = 'failed'; observations.error = error instanceof Error ? error.message : String(error)
       if (app && page!) await capture('failure').catch(() => {})
       throw error
     } finally {
       await closeNative()
-      observations.stages = stages; observations.screenshots = screenshots; observations.errors = errors
+      observations.stages = stages; observations.screenshots = screenshots; observations.errors = errors; observations.diagnosticFailures = diagnosticFailures
       await writeFile(join(evidence, 'rox-readiness-ui-001.result.json'), JSON.stringify(observations, null, 2))
       await writeFile(join(evidence, 'rox-readiness-ui-001.native.log'), redactLog(logs.join('')))
       if (!launchCompleted) {

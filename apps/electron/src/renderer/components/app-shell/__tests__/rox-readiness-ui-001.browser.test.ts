@@ -294,16 +294,23 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
   })
 
   browserTest('actual localStorage persists valid sizes across reload and other windows', async () => {
-    const other=await page.context().newPage(); await other.goto(base); await other.waitForFunction(()=>!!(window as any).ui001)
+    const other=await page.context().newPage(); await other.goto(base); await other.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
     try {
+      await page.bringToFront()
       await page.evaluate(()=>(window as any).ui001.setSize(10_000,119.6))
       expect(await page.evaluate(()=>(window as any).ui001.sizes())).toEqual([1400,120])
-      await other.waitForFunction(()=>JSON.stringify((window as any).ui001.sizes())==='[1400,120]')
-      await page.reload(); await page.waitForFunction(()=>!!(window as any).ui001)
+      await other.bringToFront()
+      await other.waitForFunction(()=>JSON.stringify((window as any).ui001.sizes())==='[1400,120]',undefined,{polling:100})
+      // External headless CDP hosts can pause animation-frame polling in an
+      // inactive tab. Restore its viewport before reload and poll data by time.
+      await page.bringToFront()
+      await page.reload(); await page.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
       expect(await page.evaluate(()=>(window as any).ui001.sizes())).toEqual([1400,120])
       await page.evaluate(()=>localStorage.setItem('craft-bottom-dock-height','1e999'))
-      await other.waitForFunction(()=>(window as any).ui001.sizes()[1]===104)
-      await page.reload(); await page.waitForFunction(()=>!!(window as any).ui001)
+      await other.bringToFront()
+      await other.waitForFunction(()=>(window as any).ui001.sizes()[1]===104,undefined,{polling:100})
+      await page.bringToFront()
+      await page.reload(); await page.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
       expect(await page.evaluate(()=>(window as any).ui001.sizes())).toEqual([1400,104])
     } finally { await other.close() }
   })
