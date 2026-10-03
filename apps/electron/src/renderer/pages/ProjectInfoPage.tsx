@@ -43,6 +43,8 @@ import { PROJECT_COLOR_PALETTE } from '@/utils/project-colors'
 import { InlineColorPickerRow } from '@/components/ui/inline-color-picker-row'
 import type { LoadedProject, OkrCycle, OkrKeyResult, OkrObjective, OkrProgress, ProjectOkrDocument, ProjectAsset } from '@rox/shared/projects/types'
 import { calculateOkrCycle, createOkrCycle } from '@rox/shared/projects'
+import { useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { deriveProjectSignals } from '@/features/product-tour/adapters/work/tasks-projects'
 
 interface ProjectInfoPageProps {
   projectSlug: string
@@ -61,12 +63,24 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id
+  const tour = useTourSignals({ workspaceId, entityId: projectSlug })
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const { onCreateSession, onOpenFile } = useAppShellContext()
 
   const [project, setProject] = useState<LoadedProject | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  useEffect(() => tour.capability('projects.available', loading
+    ? { state: 'pending', reason: 'installing' }
+    : error ? { state: 'unavailable', reason: 'api-unavailable' }
+      : project ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' }), [tour, loading, error, project])
+  useEffect(() => {
+    if (loading || error || !project) return
+    const observation = tour.capture()
+    for (const signal of deriveProjectSignals(observation, project, true)) {
+      tour.emit(observation, signal.name, signal.level, signal.origin, signal.eventToken)
+    }
+  }, [tour, loading, error, project])
   const [tab, setTab] = useState<TabKey>('sessions')
   const [taskStore, setTaskStore] = useState(loadPersonalTaskStore)
   const [newTaskTitle, setNewTaskTitle] = useState('')

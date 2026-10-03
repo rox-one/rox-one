@@ -18,6 +18,7 @@ import {
   type TaskWhen,
 } from '@rox/core/tasks/personal'
 import { cn } from '@/lib/utils'
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { Badge, Button, Card, SectionLabel, Tabs } from '@/components/mode-screen/ModeScreen'
 import { ConfirmDialog, Glyph, MiniCalendar, TaskCheckbox } from './parts'
 import { checklistProgress, daysUntil, deriveTaskSource, mergeNotesMarkers, visibleNotes, type AgentChip, type AgentSessionLike } from './task-model'
@@ -58,6 +59,7 @@ export interface TaskDetailProps {
 
 export function TaskDetail(props: TaskDetailProps) {
   const { task, mutate, now } = props
+  const delegateTarget = useTourTarget('tasks.delegate', { entityId: task.id })
   const { t, i18n } = useTranslation()
   const [tab, setTab] = React.useState<DetailTab>('details')
   const [editingNotes, setEditingNotes] = React.useState(false)
@@ -484,7 +486,7 @@ export function TaskDetail(props: TaskDetailProps) {
                     className="h-6 w-[120px] rounded-[6px] bg-foreground/[0.04] px-2 text-[12px] outline-none placeholder:text-text-muted"
                   />
                   {tagSuggestions.length ? (
-                    <span className="absolute left-0 top-7 z-10 flex min-w-[140px] flex-col rounded-[6px] bg-background p-1 shadow-[0_6px_20px_rgba(0,0,0,0.2),0_0_0_1px_color-mix(in_oklch,var(--foreground)_12%,transparent)]">
+                    <span className="absolute left-0 top-7 z-10 flex min-w-[140px] flex-col rounded-[6px] bg-background p-1 shadow-modal-small">
                       {tagSuggestions.map((tag) => (
                         <button key={tag} type="button" onMouseDown={(event) => { event.preventDefault(); addTag(tag) }} className="h-6 rounded-[4px] px-2 text-left text-[12px] hover:bg-foreground/[0.07]">#{tag}</button>
                       ))}
@@ -521,9 +523,11 @@ export function TaskDetail(props: TaskDetailProps) {
             <div className="text-[13px] font-semibold">{t('tasks.delegate.title')}</div>
             <div className="mt-1 text-[12px] text-text-secondary">{t('tasks.delegate.body')}</div>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <Button variant="primary" data-testid="task-delegate" disabled={props.delegating || !props.canDelegate || trashed} onClick={props.onDelegate}>
-                {props.delegating ? t('tasks.delegate.running') : t('tasks.delegate.action')} <span className="opacity-70">⌘↵</span>
-              </Button>
+              <span ref={delegateTarget} className="inline-flex" data-tour="tasks.delegate">
+                <Button variant="primary" data-testid="task-delegate" disabled={props.delegating || !props.canDelegate || trashed} onClick={props.onDelegate}>
+                  {props.delegating ? t('tasks.delegate.running') : t('tasks.delegate.action')} <span className="opacity-70">⌘↵</span>
+                </Button>
+              </span>
               {props.agentChip ? (
                 <>
                   <Badge tone={CHIP_TONE[props.agentChip.chip]}>{t(`tasks.chip.${props.agentChip.chip}`)}</Badge>

@@ -15,6 +15,7 @@ export function createNativeNotesSyncController(api: NativeNotesApi = (globalThi
   let workspaceId: string | null = null
   let handle: string | null = null
   let starting: Promise<void> | null = null
+  let stopping: Promise<void> | null = null
   let flushing: Promise<NativeDataReceipt[]> | null = null
   let generation = 0
   let lifecycleRequest = 0
@@ -50,11 +51,16 @@ export function createNativeNotesSyncController(api: NativeNotesApi = (globalThi
   return {
     async start(nextWorkspaceId: string): Promise<void> {
       if (!nextWorkspaceId) throw new Error('A workspace is required for native Notes sync')
+      const request = ++lifecycleRequest
+      // The production bridge invalidates receipts when a handle closes. StrictMode
+      // cleanup must finish closing an obsolete opener before mounting a new one.
+      const closing = stopping
+      if (closing) await closing
+      if (request !== lifecycleRequest) return
       if (workspaceId === nextWorkspaceId && (handle || starting)) {
         await starting
         return
       }
-      const request = ++lifecycleRequest
       if (workspaceId || handle || starting) await closeSession()
       if (request !== lifecycleRequest) return
       workspaceId = nextWorkspaceId
@@ -167,7 +173,11 @@ export function createNativeNotesSyncController(api: NativeNotesApi = (globalThi
 
     async stop(): Promise<void> {
       lifecycleRequest++
-      await closeSession()
+      const prior = stopping
+      const closing = closeSession()
+      const settled = prior ? Promise.all([prior, closing]).then(() => {}) : closing
+      stopping = settled
+      try { await settled } finally { if (stopping === settled) stopping = null }
     },
   }
 }

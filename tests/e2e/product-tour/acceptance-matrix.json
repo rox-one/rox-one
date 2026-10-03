@@ -1,0 +1,502 @@
+{
+  "contractSha": "f00ffcacc6a94a88b6e99b2f708224050842be7f",
+  "status": "PREINTEGRATION_EVIDENCE_ONLY",
+  "cases": [
+    {
+      "id": "CORE-01",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "CORE-02",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "CORE-03",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "CORE-04",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "CORE-05",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "CORE-06",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "CORE-07",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "CORE-08",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "CORE-09",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "CORE-10",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-01",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-02",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-03",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-04",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-05",
+      "level": "application",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-06",
+      "level": "application",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-07",
+      "level": "application",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-08",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-09",
+      "level": "application",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-10",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-11",
+      "level": "application",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DATA-01",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DATA-02",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DATA-03",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DATA-04",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DATA-05",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DATA-06",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DATA-07",
+      "level": "privacy",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DATA-08",
+      "level": "privacy",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-01",
+      "level": "application",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-02",
+      "level": "application",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-03",
+      "level": "application",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-04",
+      "level": "application",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-05",
+      "level": "application",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-06",
+      "level": "application",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-07",
+      "level": "application",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-08",
+      "level": "application",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-09",
+      "level": "application",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-10",
+      "level": "application",
+      "owner": "A5",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-11",
+      "level": "application",
+      "owner": "A5",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-12",
+      "level": "application",
+      "owner": "A6",
+      "releaseBlocking": true,
+      "evidenceStatus": "BLOCKED",
+      "verification": "Unadapted Notes UI blocked by native accessory inventory denial; no fixture success counted."
+    },
+    {
+      "id": "DOMAIN-13",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-14",
+      "level": "application",
+      "owner": "A6",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-15",
+      "level": "application",
+      "owner": "A6",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-16",
+      "level": "application",
+      "owner": "A10",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-17",
+      "level": "application",
+      "owner": "A10",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-18",
+      "level": "application",
+      "owner": "A11",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-19",
+      "level": "application",
+      "owner": "A11",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "APP-01",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "BASELINE_APP_PASS",
+      "verification": "Real App browser harness at CONTRACT_SHA; integrated candidate rerun still required."
+    },
+    {
+      "id": "APP-02",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "APP-03",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "APP-04",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "APP-05",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "BASELINE_APP_PASS",
+      "verification": "Real App browser harness at CONTRACT_SHA; integrated candidate rerun still required."
+    },
+    {
+      "id": "APP-06",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "BASELINE_APP_PASS",
+      "verification": "Real App browser harness at CONTRACT_SHA; integrated candidate rerun still required."
+    },
+    {
+      "id": "APP-07",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "NATIVE-01",
+      "level": "native-macos",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "NATIVE-02",
+      "level": "native-windows",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "NATIVE-03",
+      "level": "native-manual",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "BUILD-01",
+      "level": "build",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "evidenceStatus": "BASELINE_BUILD_PASS",
+      "verification": "c9b73303 renderer build exit 0; candidate comparison pending."
+    },
+    {
+      "id": "DELTA-01",
+      "level": "integration",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DELTA-02",
+      "level": "integration",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DELTA-03",
+      "level": "static-contract",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    }
+  ]
+}

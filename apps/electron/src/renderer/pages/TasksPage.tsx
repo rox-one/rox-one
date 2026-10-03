@@ -55,7 +55,12 @@ import {
   personalTasksSyncConflicts,
   resolvePersonalTaskConflict,
   subscribePersonalTasks,
+  subscribePersonalTaskCommits,
+  personalTasksNativeAvailable,
+  persistPersonalTaskSessionLink,
 } from '@/lib/personal-tasks'
+import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
+import { derivePersonalTaskSignals, tasksProjectsCapabilities } from '@/features/product-tour/adapters/work/tasks-projects'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import {
@@ -145,6 +150,10 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const { t, i18n } = useTranslation()
   const workspace = useActiveWorkspace()
   const shell = useOptionalAppShellContext()
+  const tour = useTourSignals({ workspaceId: workspace?.id })
+  const quickEntryTarget = useTourTarget('tasks.quick-entry', { workspaceId: workspace?.id })
+  const pendingCreates = useRef(new Map<string, { observation: TourObservation; task: PersonalTask }>())
+  const delegationInFlight = useRef(false)
   const { projects } = useProjects(workspace?.id)
   const sessionMap = useAtomValue(sessionMetaMapAtom) as ReadonlyMap<string, AgentSessionLike>
   const [store, setStore] = useState(loadPersonalTaskStore)
@@ -181,6 +190,20 @@ export default function TasksPage(props: TasksPageProps = {}) {
     else setLocalSelectedId(id)
   }, [routeBound])
   const now = Date.now()
+  const tourRef = useRef(tour)
+  tourRef.current = tour
+
+  useEffect(() => {
+    const pending = pendingCreates.current
+    const off = subscribePersonalTaskCommits(record => {
+      const creation = pending.get(record.task.id)
+      if (!creation) return
+      const signals = derivePersonalTaskSignals(creation.observation, { kind: 'created', expected: creation.task, persisted: record })
+      for (const signal of signals) tourRef.current.emit(creation.observation, signal.name, signal.level, signal.origin, signal.eventToken)
+      if (signals.length) pending.delete(record.task.id)
+    })
+    return () => { off(); pending.clear() }
+  }, [])
 
   useEffect(() => subscribePersonalTasks(() => setStore(loadPersonalTaskStore())), [])
   useEffect(() => {
@@ -235,7 +258,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   // ── Actions ──────────────────────────────────────────────────────────────
   const delegate = useCallback(async (task: PersonalTask) => {
-    if (!workspace?.id || !shell) return
+    if (!workspace?.id || !shell || delegationInFlight.current || task.trashedAt != null || !personalTasksNativeAvailable()) return
+    const observation = tour.capture()
+    delegationInFlight.current = true
     setDelegating(true)
     setDelegateError(null)
     try {
@@ -248,14 +273,24 @@ export default function TasksPage(props: TasksPageProps = {}) {
       })
       await window.electronAPI.sessionCommand(session.id, { type: 'rename', name: task.title })
       await window.electronAPI.sessionCommand(session.id, { type: 'setSessionStatus', state: 'todo' })
-      mutate((current) => current.link(task.id, { kind: 'session', id: session.id }))
+      const committed = await persistPersonalTaskSessionLink(task.id, session.id)
       await window.electronAPI.sendMessage(session.id, fullPrompt)
+      const [nativeSession, nativeTasksSnapshot] = await Promise.all([
+        window.electronAPI.getSessionMessages(session.id), window.electronAPI.personalTasksList(),
+      ])
+      const savedTask = nativeTasksSnapshot.tasks.find(entry => entry.id === task.id)
+      const persisted = savedTask ? { task: savedTask, revision: nativeTasksSnapshot.revisions[task.id] ?? 0 } : null
+      const promptAccepted = Boolean(nativeSession?.messages.some(message => message.role === 'user' && message.content === fullPrompt))
+      for (const signal of derivePersonalTaskSignals(observation, { kind: 'delegated', expected: committed.task, persisted, session: nativeSession, sessionId: session.id, promptAccepted })) {
+        tour.emit(observation, signal.name, signal.level, signal.origin, signal.eventToken)
+      }
     } catch (error) {
       setDelegateError(error instanceof Error ? error.message : String(error))
     } finally {
+      delegationInFlight.current = false
       setDelegating(false)
     }
-  }, [workspace?.id, shell, mutate, t, projects])
+  }, [workspace?.id, shell, t, projects, tour])
 
   const dropPending = (id: string) => setPendingDone((prev) => {
     const next = new Set(prev)
@@ -342,6 +377,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const createFromEntry = useCallback((parsed: ParsedTaskEntry, opts: { notes?: string; context?: SectionContext; afterId?: string; open?: boolean; projectId?: string | null; areaId?: string | null; checklistItems?: string[] } = {}) => {
     const mention = parseAgentMention(parsed.title)
     if (!mention.title) return null
+    const observation = tour.capture()
     const d = viewDefaults()
     let createdId: string | null = null
     mutate((current) => {
@@ -371,12 +407,16 @@ export default function TasksPage(props: TasksPageProps = {}) {
       if (opts.afterId) current.placeAfter(task.id, opts.afterId)
       if (parsed.deadlineAt != null) current.setDeadline(task.id, parsed.deadlineAt)
       createdId = task.id
+      if (observation) {
+        for (const [id, pending] of pendingCreates.current) if (pending.observation.binding.runToken !== observation.binding.runToken) pendingCreates.current.delete(id)
+        pendingCreates.current.set(task.id, { observation, task: structuredClone(task) })
+      }
     })
     const created = createdId ? storeRef.current.get(createdId) ?? null : null
     if (created && (opts.open ?? true)) selectTask(created.id)
     if (mention.delegate && created) void delegate(created)
     return created
-  }, [delegate, mutate, selectTask, viewDefaults])
+  }, [delegate, mutate, selectTask, viewDefaults, tour])
 
   const onQuickEntry = (result: QuickEntryResult) => {
     const created = createFromEntry(result.parsed, { notes: result.notes, open: result.open, projectId: result.projectId, areaId: result.areaId, checklistItems: result.checklistItems })
@@ -516,6 +556,18 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const visible = useMemo(() => sections.flatMap((section) => section.tasks), [sections])
   const selected = selectedId ? store.get(selectedId) : undefined
+  const nativeTasks = personalTasksNativeAvailable()
+  const syncState = personalTasksSyncState()
+  const delegationApi = Boolean(shell && typeof window.electronAPI?.sendMessage === 'function'
+    && typeof window.electronAPI?.sessionCommand === 'function' && typeof window.electronAPI?.getSessionMessages === 'function')
+  useEffect(() => {
+    const capabilities = tasksProjectsCapabilities({ projectsApi: typeof window.electronAPI?.getProjects === 'function',
+      personalTasksApi: nativeTasks, syncState, delegationApi, workspacePresent: Boolean(workspace?.id),
+      taskPresent: Boolean(selected), taskTrashed: selected?.trashedAt != null })
+    const cleanups = [tour.capability('personal-tasks.available', capabilities['personal-tasks.available']!),
+      tour.capability('task.delegation-available', capabilities['task.delegation-available']!)]
+    return () => { for (const cleanup of cleanups) cleanup() }
+  }, [tour, nativeTasks, syncState, delegationApi, workspace?.id, selected?.id, selected?.trashedAt])
   const subtasks = selected ? subtasksOf(tasks, selected.id) : []
   const selectedChip = selected ? agentChipFor(selected, sessionMap) : null
   const viewTags = useMemo(() => allTaskTags(visible).map((x) => x.tag), [visible])
@@ -1031,6 +1083,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const headerControls = (
     <>
+      <span ref={quickEntry ? undefined : quickEntryTarget} className="inline-flex" data-tour="tasks.quick-entry">
+        <Button onClick={() => setQuickEntry({ initial: '' })}>{t('tasks.quickEntry.title')}</Button>
+      </span>
       {view.kind === 'list' && view.id === 'trash' && trashCount ? (
         <Button variant="danger" onClick={() => setConfirm({ kind: 'emptyTrash' })} data-testid="tasks-empty-trash">{t('tasks.trash.empty')}</Button>
       ) : null}
@@ -1236,7 +1291,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       agentChip={selectedChip}
       delegating={delegating}
       delegateError={delegateError}
-      canDelegate={Boolean(workspace?.id && shell)}
+      canDelegate={Boolean(workspace?.id && nativeTasks && delegationApi)}
       onDelegate={() => void delegate(selected)}
       onToggleComplete={() => toggleComplete(selected)}
       onOpenMove={() => setMoveFor(selected.id)}
