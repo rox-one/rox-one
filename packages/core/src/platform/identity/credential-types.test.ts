@@ -20,6 +20,26 @@ function createRegistry(): CredentialRefRegistry {
   return new CredentialRefRegistry(() => REF_ID);
 }
 
+function withPrototypeProperty(field: string, descriptor: PropertyDescriptor, run: () => void): void {
+  const original = Object.getOwnPropertyDescriptor(Object.prototype, field);
+  Object.defineProperty(Object.prototype, field, descriptor);
+  try {
+    run();
+  } finally {
+    if (original) Object.defineProperty(Object.prototype, field, original);
+    else Reflect.deleteProperty(Object.prototype, field);
+  }
+}
+
+function captureError(run: () => unknown): unknown {
+  try {
+    run();
+    return undefined;
+  } catch (error) {
+    return error;
+  }
+}
+
 function withPrototypeField<T>(field: string, descriptor: PropertyDescriptor, run: () => T): T {
   const previous = Object.getOwnPropertyDescriptor(Object.prototype, field);
   try {
@@ -448,12 +468,12 @@ describe('CredentialRefRegistry', () => {
       let error: unknown;
       let registered: ReturnType<CredentialRefRegistry['register']> | undefined;
       const locator = Object.freeze({ ...validLocator });
-      withPrototypeField('type', {
+      withPrototypeProperty('type', {
         configurable: true,
         enumerable: true,
         get: () => { reads += 1; return 'invalid'; },
       }, () => {
-        error = errorFrom(() => { registered = registry.register({ kind: 'api_key', providerId: 'local', locator, now: 100 }); });
+        error = captureError(() => { registered = registry.register({ kind: 'api_key', providerId: 'local', locator, now: 100 }); });
       });
       expect(error).toBeUndefined();
       expect(reads).toBe(0);
@@ -472,13 +492,13 @@ describe('CredentialRefRegistry', () => {
     let updateError: unknown;
     const locator = { type: 'local' };
     Object.defineProperty(locator, 'key', { enumerable: true, get: () => { locatorReads += 1; return 'accessor-key'; } });
-    withPrototypeField('value', {
+    withPrototypeProperty('value', {
       configurable: true,
       enumerable: true,
       get: () => { descriptorReads += 1; return 'inherited-descriptor-value'; },
     }, () => {
-      registerError = errorFrom(() => registry.register({ kind: 'api_key', providerId: 'other', locator: locator as never }));
-      updateError = errorFrom(() => updateRegistry.updateProvider(original.id, 'other', locator as never, 200));
+      registerError = captureError(() => registry.register({ kind: 'api_key', providerId: 'other', locator: locator as never }));
+      updateError = captureError(() => updateRegistry.updateProvider(original.id, 'other', locator as never, 200));
     });
     expect(locatorReads).toBe(0);
     expect(descriptorReads).toBe(0);
@@ -500,8 +520,8 @@ describe('CredentialRefRegistry', () => {
         const before = files.map(file => existsSync(join(directory, file)) ? readFileSync(join(directory, file), 'utf8') : undefined);
         let reads = 0;
         let error: unknown;
-        withPrototypeField('key', { configurable: true, enumerable: true, get: () => { reads += 1; return 'inherited'; } }, () => {
-          error = errorFrom(() => original
+        withPrototypeProperty('key', { configurable: true, enumerable: true, get: () => { reads += 1; return 'inherited'; } }, () => {
+          error = captureError(() => original
             ? registry.updateProvider(original.id, 'other', { type: 'local' } as never, 200)
             : registry.register({ kind: 'api_key', providerId: 'other', locator: { type: 'local' } as never, now: 200 }));
         });
@@ -533,7 +553,7 @@ describe('CredentialRefRegistry', () => {
       writeFileSync(file, contents);
       let reads = 0;
       let registry: CredentialRefRegistry | undefined;
-      withPrototypeField('key', { configurable: true, enumerable: true, get: () => { reads += 1; return 'inherited'; } }, () => {
+      withPrototypeProperty('key', { configurable: true, enumerable: true, get: () => { reads += 1; return 'inherited'; } }, () => {
         registry = new CredentialRefRegistry({ directory });
       });
       expect(reads).toBe(0);
