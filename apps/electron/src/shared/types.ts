@@ -1698,13 +1698,17 @@ export interface ElectronAPI {
     durationMs?: number
   }>
   /**
-   * Start speaking `text` (resolves once playback started), stop with
+   * Synthesize `text` as MP3 or start native fallback playback, stop with
    * `{ stop: true }`, or poll native playback with `{ status: true }`.
    */
   speakVoice(payload: { text?: string; stop?: boolean; status?: boolean }): Promise<{
     engine: string
     uploaded: false
-    playback?: 'native' | 'renderer' | 'none'
+    playback?: 'audio' | 'native' | 'renderer' | 'none'
+    audioBase64?: string
+    mimeType?: 'audio/mpeg'
+    textSent?: boolean
+    textTransmission?: 'not-sent' | 'possible' | 'sent'
     stopped?: boolean
     speaking?: boolean
     voice?: string

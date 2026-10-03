@@ -1,9 +1,13 @@
 import { shouldUploadAudio } from './policy.ts'
+import { VOICE_PREFS_VERSION } from './types.ts'
 import type {
   TranscribeAdapter,
   TranscribeInput,
   TranscribeResult,
   VoicePrefs,
+  SpeakAdapter,
+  SpeakInput,
+  SpeakResult,
 } from './types.ts'
 
 export class VoicePrivacyError extends Error {
@@ -60,6 +64,19 @@ export async function transcribeWithPolicy(
   }
 }
 
+export async function speakWithPolicy(
+  prefs: VoicePrefs,
+  input: SpeakInput,
+  adapters: { edge: SpeakAdapter },
+): Promise<SpeakResult> {
+  if (prefs.version !== VOICE_PREFS_VERSION || prefs.ttsEngine !== 'edge') {
+    throw new VoicePrivacyError('consent-required', 'Select Edge TTS explicitly in current voice settings')
+  }
+  input.signal?.throwIfAborted()
+  const adapter = adapters.edge
+  const result = await adapter.speak(input)
+  return { ...result, engine: prefs.ttsEngine, uploaded: false }
+}
 
 export function assertEditableTranscript(text: string): string {
   const next = text.trim()

@@ -97,6 +97,8 @@
     "./privacy": "./src/privacy/index.ts",
     "./projects": "./src/projects/index.ts",
     "./projects/types": "./src/projects/types.ts",
+    "./projects/roadmap": "./src/projects/roadmap.ts",
+    "./projects/roadmap-ai": "./src/projects/roadmap-ai.ts",
     "./prompts": "./src/prompts/index.ts",
     "./protocol": "./src/protocol/index.ts",
     "./protocol/native-replica": "./src/protocol/native-replica.ts",
@@ -143,8 +145,6 @@
     "./capabilities": "./src/capabilities/index.ts",
     "./code-intelligence": "./src/code-intelligence/index.ts",
     "./security": "./src/security/index.ts",
-    "./projects/roadmap": "./src/projects/roadmap.ts",
-    "./projects/roadmap-ai": "./src/projects/roadmap-ai.ts",
     "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts"
   },
   "license": "Apache-2.0",
@@ -162,5 +162,5 @@
   },
   "type": "module",
   "types": "src/index.ts",
-  "version": "0.11.5"
+  "version": "0.11.6"
 }

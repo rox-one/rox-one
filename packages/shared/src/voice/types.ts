@@ -1,15 +1,16 @@
 /**
  * Voice dictation / playback preferences and engine contracts.
  *
- * Schema v2: cloud-rox is the fresh-install default. Local capture stays on
- * device. Cloud ASR, enhancement and web enrichment are three separate consents.
+ * Schema v3: system TTS is local by default; Edge TTS requires an explicit
+ * current-version selection. Cloud ASR, enhancement and web enrichment have
+ * separate consents. Legacy cloud/TTS defaults never imply user consent.
  */
 
 export const VOICE_PREFS_VERSION = 3 as const
 export const DEFAULT_WAKE_PHRASE = 'Так, Рокс!'
 
 export type SttEngine = 'local-whisper' | 'cloud-rox'
-export type TtsEngine = 'system'
+export type TtsEngine = 'system' | 'edge'
 export type AudioRetention = 'none' | 'session' | 'cloud-policy'
 export type LocalArchivePolicy = 'until-delete' | 'session' | 'none'
 export type ModelHealthStatus = 'missing' | 'downloading' | 'ready' | 'error' | 'unsupported'
@@ -21,7 +22,7 @@ export type RecognitionLanguage = 'auto' | 'en' | 'ru'
 
 export const STT_ENGINES: readonly SttEngine[] = ['local-whisper', 'cloud-rox'] as const
 
-export const TTS_ENGINES: readonly TtsEngine[] = ['system'] as const
+export const TTS_ENGINES: readonly TtsEngine[] = ['system', 'edge'] as const
 
 export const AUDIO_RETENTION_POLICIES: readonly AudioRetention[] = [
   'none',
@@ -104,17 +105,38 @@ export interface TranscribeResult {
   durationMs?: number
 }
 
+export interface SpeakInput {
+  text: string
+  language?: RecognitionLanguage
+  signal?: AbortSignal
+  /** Internal adapter progress; never populated from an RPC request payload. */
+  onTextTransmission?: (state: TextTransmission) => void
+}
+
+export type TextTransmission = 'not-sent' | 'possible' | 'sent'
+
+export interface SpeakResult {
+  engine: TtsEngine
+  /** No microphone audio is uploaded. Online TTS may send text. */
+  uploaded: false
+  textSent?: boolean
+  /** A cancelled or failed CLI may already have transmitted text. */
+  textTransmission?: TextTransmission
+  audioBase64?: string
+  mimeType?: 'audio/mpeg'
+  playback?: 'audio' | 'native' | 'renderer' | 'none'
+  voice?: string
+  reason?: 'russian-system-voice-unavailable'
+}
+
 export interface TranscribeAdapter {
   engine: SttEngine
   transcribe(input: TranscribeInput): Promise<TranscribeResult>
 }
 
-export interface SpeakResult {
+export interface SpeakAdapter {
   engine: TtsEngine
-  uploaded: false
-  playback: 'native' | 'renderer' | 'none'
-  voice?: string
-  reason?: 'russian-system-voice-unavailable'
+  speak(input: SpeakInput): Promise<SpeakResult>
 }
 
 export function isSttEngine(value: unknown): value is SttEngine {

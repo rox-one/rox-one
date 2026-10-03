@@ -37,7 +37,7 @@ const check = async (name: string, command: string[], cwd = source) => {
 if (!await check('frozen-install', [runtime, 'install', '--frozen-lockfile'])) process.exit(1)
 const manifests = ['apps', 'packages'].flatMap(g => readdirSync(join(source, g)).map(n => `${g}/${n}`).filter(p => Bun.file(join(source, p, 'package.json')).size > 0))
 const queue = [...manifests]
-await Promise.all(Array.from({ length: 2 }, async () => {
+await Promise.all(Array.from({ length: 1 }, async () => {
   while (queue.length) {
     const p = queue.shift()!
     const m = JSON.parse(readFileSync(join(source, p, 'package.json'), 'utf8'))
@@ -58,8 +58,9 @@ await check('durability-web-packaging', [runtime, 'test',
   'apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts',
   'packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts',
   'packages/server-core/src/handlers/rpc/__tests__/roadmap-boundary-runtime.test.ts',
-  'packages/server-core/src/handlers/rpc/__tests__/roadmap-model-provenance.test.ts',
 ])
+// Cold subprocess and fixture-scoped config checks need an independent module graph.
+await check('roadmap-model-provenance', [runtime, 'test', 'packages/server-core/src/handlers/rpc/__tests__/roadmap-model-provenance.test.ts'])
 const web = await check('web-build', [runtime, 'run', 'webui:build'])
 const pi = await check('pi-subprocess-build', [runtime, 'run', 'server:build:subprocess'])
 const bundle = await check('server-build', [runtime, 'build', 'packages/server/src/index.ts', '--target', 'bun', '--outdir', 'dist-server-integration', '--external', 'xlsx'])

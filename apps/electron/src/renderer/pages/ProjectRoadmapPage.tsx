@@ -733,7 +733,8 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
   const side = (
     <div className="flex min-w-0 flex-col gap-6">
       <ProjectAiPanel
-        projectId={project.config.id}
+        key={`${workspaceId}:${project.config.id}`}
+        projectId={`${workspaceId}:${project.config.id}`}
         roadmap={roadmap}
         status={aiStatus}
         runAi={runAi}

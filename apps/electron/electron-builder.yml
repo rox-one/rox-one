@@ -142,12 +142,8 @@ mac:
     # WorkGraph local-only libSQL driver. The bundled main process dynamically
     # imports the JavaScript facade; its NAPI arm64 artifact must remain a
     # real file outside ASAR for Electron's native loader.
-    - from: ../../node_modules/@tursodatabase/database
-      to: app/node_modules/@tursodatabase/database
-    - from: ../../node_modules/@tursodatabase/database-common
-      to: app/node_modules/@tursodatabase/database-common
-    - from: ../../node_modules/@tursodatabase/database-darwin-arm64
-      to: app/node_modules/@tursodatabase/database-darwin-arm64
+    - from: release-native/@tursodatabase
+      to: app/node_modules/@tursodatabase
     # WhatsApp worker subprocess (self-contained; Baileys bundled in).
     - from: ../../packages/messaging-whatsapp-worker/dist/worker.cjs
       to: messaging-whatsapp-worker/worker.cjs
@@ -212,6 +208,8 @@ win:
       to: app/node_modules/@anthropic-ai/claude-agent-sdk-binary
     - from: node_modules/@vscode/ripgrep
       to: app/node_modules/@vscode/ripgrep
+    - from: release-native/@tursodatabase
+      to: app/node_modules/@tursodatabase
     - from: vendor/bun/bun.exe
       to: vendor/bun/bun.exe
     - from: resources/bin/win32-x64

@@ -22,6 +22,8 @@ import {
   catalogTemplate,
   createProductionLocalTranscribeAdapter,
   createProductionVoiceHttp,
+  createEdgeSpeakAdapter,
+  EdgeTtsError,
   deleteRecording,
   exportRecording,
   getDefaultVoicePrefs,
@@ -35,6 +37,10 @@ import {
   saveVoicePrefs,
   setFavorite,
   transcribeWithPolicy,
+  speakWithPolicy,
+  type SpeakAdapter,
+  type TextTransmission,
+  type TtsEngine,
   voiceGatewayBaseUrl,
   VOICE_PREFS_VERSION,
   type TranscribeAdapter,
@@ -45,7 +51,7 @@ import {
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { createSystemSpeaker } from './system-tts'
+import { createSystemSpeaker, type SystemSpeaker } from './system-tts'
 import {
   isClaimableLive,
   rpcVoiceActResult,
@@ -134,13 +140,13 @@ function cloudAdapter(caps: VoiceCapabilities): TranscribeAdapter {
 }
 
 
+
 let cachedCaps: VoiceCapabilities = {
   ...LAST_KNOWN_GOOD_CAPABILITIES,
   availability: 'ok',
   quota: { asr: { remaining: 100, resetAt: 0 }, process: { remaining: 100, resetAt: 0 } },
 }
 let host: VoiceHost | null = null
-const systemSpeaker = createSystemSpeaker()
 
 function getHost(server: RpcServer): VoiceHost {
   if (!host) {
@@ -174,7 +180,20 @@ function broadcast(server: RpcServer, prefs: VoicePrefs): void {
   pushTyped(server, RPC_CHANNELS.voice.CHANGED, { to: 'all' }, prefs)
 }
 
-export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): void {
+export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps, options: {
+  edgeSpeaker?: SpeakAdapter
+  systemSpeaker?: SystemSpeaker
+  loadPrefs?: () => VoicePrefs
+} = {}): void {
+  const edgeSpeaker = options.edgeSpeaker ?? createEdgeSpeakAdapter()
+  const systemSpeaker = options.systemSpeaker ?? createSystemSpeaker()
+  const readPrefs = options.loadPrefs ?? loadVoicePrefs
+  let synthesis: { controller: AbortController; engine: TtsEngine; textTransmission: TextTransmission } | null = null
+  let lastTextTransmission: TextTransmission = 'not-sent'
+  const transmissionEvidence = (textTransmission: TextTransmission) => ({
+    textTransmission,
+    ...(textTransmission === 'possible' ? {} : { textSent: textTransmission === 'sent' }),
+  })
   server.handle(RPC_CHANNELS.voice.GET, async () => {
     const listed = rpcVoiceListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) throw new Error('voice prefs are not live')
@@ -254,17 +273,56 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
   server.handle(RPC_CHANNELS.voice.SPEAK, async (_ctx, payload: unknown) => {
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
     if (body.status === true) {
-      return { engine: 'system', uploaded: false as const, playback: 'none' as const, speaking: systemSpeaker.isSpeaking() }
+      return { engine: synthesis?.engine ?? 'system', uploaded: false as const, playback: 'none' as const,
+        speaking: synthesis !== null || systemSpeaker.isSpeaking(), ...transmissionEvidence(synthesis?.textTransmission ?? lastTextTransmission) }
     }
     if (body.stop === true) {
-      const stopped = systemSpeaker.stop()
-      return { engine: 'system', uploaded: false as const, playback: 'none' as const, stopped }
+      const pending = synthesis !== null
+      const evidence = transmissionEvidence(synthesis?.textTransmission ?? lastTextTransmission)
+      synthesis?.controller.abort()
+      synthesis = null
+      const stopped = systemSpeaker.stop() || pending
+      return { engine: 'system', uploaded: false as const, playback: 'none' as const, stopped, ...evidence }
     }
     const text = assertEditableTranscript(typeof body.text === 'string' ? body.text : '')
-    const result = await systemSpeaker.speak(text)
-    return result.played
-      ? { engine: 'system', uploaded: false as const, playback: 'native' as const, voice: result.voice }
-      : { engine: 'system', uploaded: false as const, playback: 'none' as const, reason: 'russian-system-voice-unavailable' as const }
+    synthesis?.controller.abort()
+    systemSpeaker.stop()
+    const controller = new AbortController()
+    const prefs = readPrefs()
+    const request = { controller, engine: prefs.ttsEngine, textTransmission: 'not-sent' as TextTransmission }
+    synthesis = request
+    lastTextTransmission = 'not-sent'
+    const updateTransmission = (state: TextTransmission) => {
+      request.textTransmission = state
+      if (synthesis === request) lastTextTransmission = state
+    }
+    const cancelled = () => ({ engine: prefs.ttsEngine, uploaded: false as const, playback: 'none' as const,
+      ...transmissionEvidence(request.textTransmission) })
+    try {
+      if (prefs.ttsEngine === 'edge' && prefs.version === VOICE_PREFS_VERSION) {
+        try {
+          // Custom adapters without progress evidence are conservatively possible.
+          updateTransmission('possible')
+          const policy = await speakWithPolicy(prefs, { text, language: prefs.recognitionLanguage,
+            signal: controller.signal, onTextTransmission: updateTransmission }, { edge: edgeSpeaker })
+          updateTransmission(policy.textTransmission ?? (policy.textSent === true ? 'sent' : policy.textSent === false ? 'not-sent' : request.textTransmission))
+          if (controller.signal.aborted) return cancelled()
+          if (policy.audioBase64) return { ...policy, ...transmissionEvidence(request.textTransmission), playback: 'audio' as const }
+        } catch (error) {
+          if (error instanceof EdgeTtsError) updateTransmission(error.textTransmission)
+          if (controller.signal.aborted) return cancelled()
+        }
+      }
+      if (controller.signal.aborted) return cancelled()
+      const result = await systemSpeaker.speak(text)
+      if (controller.signal.aborted) return cancelled()
+      return result.played
+        ? { engine: 'system', uploaded: false as const, playback: 'native' as const, voice: result.voice, ...transmissionEvidence(request.textTransmission) }
+        : { engine: 'system', uploaded: false as const, playback: 'none' as const,
+          reason: 'russian-system-voice-unavailable' as const, ...transmissionEvidence(request.textTransmission) }
+    } finally {
+      if (synthesis === request) synthesis = null
+    }
   })
 
   server.handle(RPC_CHANNELS.voice.START, async () => getHost(server).start(loadVoicePrefs()))

@@ -22,10 +22,10 @@ Full machine-readable dispatch: [445 leaves, exact owners, code references, requ
 
 ## [PW-LAUNCH] Start now
 
-1. Root integrates the17 captured open PR heads without dropping either side's behavior; records changed contracts, focused tests and remote merged states. Integration has a single promotion owner. Draft status alone is not a product defect; qualify substantive changes before publishing.
+1. Root integrates the19 requested PR heads (17 initial plus two late arrivals) without dropping either side's behavior; records changed contracts, focused tests and remote merged states. Integration has a single promotion owner. Draft status alone is not a product defect; qualify substantive changes before publishing.
 2. Launch Windows, macOS and hosted Web source/build/environment work simultaneously. They consume the same versioned shared contracts and can build separate preliminary artifacts immediately. No target waits for another target to finish.
 3. Launch the84 service leaves and237 UI leaves in isolated source branches, bounded by actual executor capacity. Probe existing implementations first; finish the remaining requirements instead of rewriting features already delivered by PRs.
-4. Launch37 integration leaves and47 QA/release/recheck leaves: scenarios, fixtures, CI, typecheck repairs, accessibility, security and recovery work start now. Actual composed acceptance consumes concrete outputs as they become available.
+4. Launch37 integration leaves and43 QA/release/recheck leaves: scenarios, fixtures, CI, typecheck repairs, accessibility, security and recovery work start now. Actual composed acceptance consumes concrete outputs as they become available.
 5. Provision GUI machines, signing, provider sandboxes, staging TLS/storage and target browsers concurrently; a missing environment delays its specific runtime proof only.
 6. Review dirty Compound/OMP/sidebar work read-only; capture exact deltas and adopt reviewed changes into isolated branches. Existing user worktrees and active data remain preserved.
 

@@ -86,6 +86,17 @@ describe('voice privacy policy', () => {
     expect(prefs.privacyMigrationPending).toBe(true)
     expect(prefs.ttsEngine).toBe('system')
   })
+  it('retains only explicit current-version Edge choices independently of ASR consent', () => {
+    for (const version of [undefined, 1, 2, 4]) {
+      expect(normalizeVoicePrefs({ version, ttsEngine: 'edge' }).ttsEngine).toBe('system')
+    }
+    const pending = normalizeVoicePrefs({ version: 3, ttsEngine: 'edge', privacyMigrationPending: true, cloudAsrConsent: false })
+    expect(pending.ttsEngine).toBe('edge')
+    expect(pending.privacyMigrationPending).toBe(true)
+    expect(pending.cloudAsrConsent).toBe(false)
+    expect(normalizeVoicePrefs({ version: 3, ttsEngine: 'edge', privacyMigrationPending: false }).ttsEngine).toBe('edge')
+    expect(normalizeVoicePrefs({ version: 3, ttsEngine: 'fish-speech' }).ttsEngine).toBe('system')
+  })
   it('requires explicit ASR consent instead of silently switching engines', async () => {
     const prefs = getDefaultVoicePrefs(1)
     let localCalls = 0

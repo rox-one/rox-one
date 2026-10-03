@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "rox-one/rox-one",
-  "generatedAt": "2026-10-03T01:21:23.949Z",
+  "generatedAt": "2026-10-03T02:33:33.353Z",
   "backlogSha256": "3636590835be9758571fcf5b68132d074566a52856e88cc2ac18c904804deb06",
   "counts": {
     "descriptions": 625,
@@ -64,7 +64,9 @@
     "oneSharedFilePromotionOwner": true,
     "gitPolicy": "Merge only; no rebase. Preserve original dirty worktrees.",
     "actualCapacity": "Four agent slots in this session, including root. Allocation does not claim445 workers or provisioned GUI/signing/hosting resources.",
-    "prDeliveryReceipt": "pr-integration-receipt.json"
+    "prDeliveryReceipt": "pr-integration-receipt.json",
+    "initialPullRequestCount": 17,
+    "currentRequestedPullRequestCount": 19
   },
   "tasks": [
     {

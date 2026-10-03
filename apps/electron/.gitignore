@@ -14,3 +14,6 @@ resources/bin/linux-x64/
 resources/oem-kernel/*
 !resources/oem-kernel/.gitkeep
 !resources/oem-kernel/README.md
+
+# Native database resources staged for release packaging
+release-native/

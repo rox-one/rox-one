@@ -378,4 +378,4 @@ export type RoadmapAiResponse =
   | { ok: true; mode: 'clarify'; questions: string[]; model?: string; requestedModel?: string; effectiveModel: string | null; warning?: string; roadmapRevision?: string }
   | { ok: true; mode: 'spec'; proposal: RoadmapProposal; model?: string; requestedModel?: string; effectiveModel: string | null; warning?: string; roadmapRevision?: string }
   | { ok: true; mode: 'improve'; text: string; model?: string; requestedModel?: string; effectiveModel: string | null; warning?: string; roadmapRevision?: string }
-  | { ok: false; error: string; unavailable?: boolean; raw?: string; model?: string; requestedModel?: string; effectiveModel?: string | null; warning?: string };
+  | { ok: false; error: string; unavailable?: boolean; raw?: string; model?: string; requestedModel?: string; effectiveModel?: string | null; warning?: string; roadmapRevision?: string };

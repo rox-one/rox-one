@@ -528,3 +528,8 @@ The [original plan](integration-history/pr1230/plan.md) is retained alongside cu
 ## PR1321 sidebar restoration scope/evidence
 
 The [original plan](integration-history/pr1321/plan.md) remains preserved. Current shell keeps persisted sidebar choice across routes and uses the same mounted-rail/effective-collapse contract as the combined rail implementation; bounded source tests and historical native receipts remain distinct.
+
+
+## Parallel release integration — 2026-10-03
+
+The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [plan](integration-history/remote-main-3dd1f98b7/plan.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.

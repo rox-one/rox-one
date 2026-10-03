@@ -121,7 +121,7 @@ let selectedModel = scenario.startsWith('model-') || scenario.startsWith('transp
   : { provider: 'rox', id: 'kimi-k3' };
 const availableModels = [
   { provider: 'rox', id: 'kimi-k3', name: 'Kimi K3' },
-  { provider: 'rox', id: 'kimi-k2', name: scenario === 'large-catalog' ? 'Model'.repeat(250000) : 'Kimi K2' },
+  { provider: 'rox', id: 'kimi-k2', name: 'Kimi K2' },
   ...((scenario.startsWith('model-') || scenario.startsWith('transport-')) && scenario !== 'model-legacy-catalog'
     ? [{ provider: 'rox', id: scenario === 'model-public-qualified' ? 'rox/standard' : 'standard', name: 'ROX R1' }]
     : []),
@@ -237,7 +237,7 @@ function rpcLoop() {
         if (scenario.startsWith('transport-') && !['transport-v1', 'transport-bad-ack', 'transport-large-command'].includes(scenario)) {
           respond({ models: [...availableModels, ...Array.from({ length: 858 }, (_, i) =>
             ({ provider: 'fixture', id: 'catalog-' + i, name: 'x'.repeat(1700) }))] });
-        } else respond(availableModels);
+        } else respond(readScenario() === 'large-catalog' ? availableModels.map(m => m.id === 'kimi-k2' ? { ...m, name: 'Model'.repeat(250000) } : m) : availableModels);
         break;
       case 'set_model': {
         const target = availableModels.find(m => m.provider === msg.provider && m.id === msg.modelId);
