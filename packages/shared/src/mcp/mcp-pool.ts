@@ -228,6 +228,7 @@ export class McpClientPool {
     let tools: Tool[];
     try {
       tools = await client.listTools();
+      if (client.isConnected?.() === false) throw new Error(`MCP source "${slug}" closed during tool discovery`);
       if (!canRegister()) throw new Error(`MCP connection cancelled for source "${slug}"`);
     } catch (error) {
       await client.close().catch(() => {});
