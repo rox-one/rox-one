@@ -58,4 +58,13 @@ describe('memory model', () => {
     expect(patch.tags).toEqual(['a', 'b'])
     expect(patch.pinned).toBe(true)
   })
+
+  it('stores exact reversible merge origins and rejects cross-scope merges', () => {
+    const keeper = make('primary', { source: { trigger: 'explicit', sessionId: 'session-a' }, usageCount: 2 })
+    const source = make('secondary', { source: { trigger: 'error', sessionId: 'session-b' }, disabled: true })
+    const patch = mergePatch(keeper, [source], 'combined')
+    expect(patch.mergeHistory?.lessons).toEqual([keeper, source])
+    expect(patch.mergedFrom).toContain('secondary')
+    expect(() => mergePatch(keeper, [make('global', { scope: 'global' })], 'combined')).toThrow('different scopes')
+  })
 })

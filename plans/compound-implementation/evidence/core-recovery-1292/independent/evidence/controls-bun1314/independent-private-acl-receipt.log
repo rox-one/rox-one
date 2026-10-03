@@ -1,0 +1,11 @@
+bun test v1.3.14 (0d9b296a)
+
+../evidence/canonical-acl-private.test.ts:
+(pass) independent core integration boundaries > actor grants never transfer to another actor [0.08ms]
+(pass) independent core integration boundaries > denied cached Notes disclose no title, body or revision [0.13ms]
+(pass) independent core integration boundaries > canonical receipt metadata and verification policy survive normalization [0.16ms]
+
+ 3 pass
+ 0 fail
+ 27 expect() calls
+Ran 3 tests across 1 file. [26.00ms]

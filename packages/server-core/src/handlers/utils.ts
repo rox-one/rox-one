@@ -1,4 +1,4 @@
-import { normalize, isAbsolute } from 'path'
+import { normalize, isAbsolute, dirname, basename, join } from 'path'
 import { homedir, tmpdir } from 'os'
 import { realpath } from 'fs/promises'
 import { getWorkspaceByNameOrId, type Workspace } from '@craft-agent/shared/config'
@@ -107,13 +107,30 @@ export async function validateFilePath(
     throw new Error('Only absolute file paths are allowed')
   }
 
-  // Resolve symlinks to get the real path
+  // Resolve the nearest existing ancestor as well as existing files. A draft
+  // under macOS /var (an alias of /private/var) must compare against the same
+  // canonical root; a nonexistent child of a symlink must not escape it.
   let realFilePath: string
   try {
     realFilePath = await realpath(normalizedPath)
   } catch {
-    // File doesn't exist or can't be resolved - use normalized path
-    realFilePath = normalizedPath
+    let ancestor = normalizedPath
+    const suffix: string[] = []
+    while (true) {
+      const parent = dirname(ancestor)
+      if (parent === ancestor) {
+        realFilePath = normalizedPath
+        break
+      }
+      suffix.unshift(basename(ancestor))
+      ancestor = parent
+      try {
+        realFilePath = join(await realpath(ancestor), ...suffix)
+        break
+      } catch {
+        // Continue to the next existing ancestor.
+      }
+    }
   }
 
   const extraDirs = (additionalAllowedDirs ?? []).filter(Boolean)

@@ -25,6 +25,7 @@ import { registerOnboardingHandlers } from './onboarding'
 import { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
 import { registerSessionForeignImportHandlers } from './session-foreign-import'
 import { registerNotesHandlers, cleanupNotesWatchForClient } from './notes'
+import { registerNativeDataHandlers } from './native-data.ts'
 export { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
 export { cleanupNotesWatchForClient } from './notes'
 import { registerKnowledgeHandlers, cleanupKnowledgeWatchForClient } from './knowledge'
@@ -39,6 +40,7 @@ import { registerPrivacyHandlers } from './privacy'
 import { registerVoiceHandlers } from './voice'
 import { registerEnvironmentHandlers } from './environment'
 import { registerProjectsHandlers } from './projects'
+import { registerCodeIntelligenceHandlers } from './code-intelligence'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerPersonalTasksHandlers } from './personal-tasks'
@@ -113,6 +115,7 @@ export function registerCoreRpcHandlers(
   registerVoiceHandlers(server, deps)
   registerEnvironmentHandlers(server, deps)
   registerProjectsHandlers(server, deps)
+  registerCodeIntelligenceHandlers(server, deps)
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
   registerPersonalTasksHandlers(server, deps)
@@ -134,6 +137,7 @@ export function registerCoreRpcHandlers(
   registerMemoryInsightsHandlers(server, deps)
   registerSkillsPendingHandlers(server, deps)
   registerNotesHandlers(server, deps)
+  if (deps.nativeData) registerNativeDataHandlers(server, deps)
   registerKnowledgeHandlers(server, deps)
   registerMindmapHandlers(server, deps)
   registerBrowserProfileImportHandlers(server, deps)

@@ -8,10 +8,11 @@
  * in the shared renderer components — no webui-specific layout hacks needed.
  */
 
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { createWebApi } from './adapter/web-api'
-import type { WsRpcClient } from '../../electron/src/transport/client'
+import type { AuthenticatedWebTransportBootstrap } from '../../electron/src/renderer/lib/authenticated-web-bootstrap'
+import { initializeAuthenticatedWebTransport } from './adapter/transport-bootstrap'
 import { WEBUI_REQUIRES_CONATION_FLAG } from './rox2-webui-surface'
 
 export { WEBUI_REQUIRES_CONATION_FLAG, WEBUI_SURFACE_ID, webuiSurfaceResult } from './rox2-webui-surface'
@@ -69,87 +70,63 @@ export default function App() {
   }
   const [phase, setPhase] = useState<Phase>('loading')
   const [error, setError] = useState('')
-  const clientRef = useRef<WsRpcClient | null>(null)
-  const initRef = useRef(false)
-
-  const initialize = async () => {
-    setPhase('loading')
-    setError('')
-
-    try {
-      // 1. Fetch WS URL from the server (cookie auth)
-      const configRes = await fetch('/api/config', { credentials: 'same-origin' })
-      if (!configRes.ok) {
-        if (configRes.status === 401) {
-          // Session expired — redirect to login
-          window.location.href = '/login'
-          return
-        }
-        throw new Error(`Failed to fetch config: ${configRes.status}`)
-      }
-
-      const { wsUrl } = await configRes.json() as { wsUrl: string }
-      if (!wsUrl) throw new Error('Server did not return a WebSocket URL')
-
-      // 2. Determine workspace — check URL params first
-      const params = new URLSearchParams(window.location.search)
-      let workspaceId = params.get('workspace') ?? undefined
-
-      // If no workspace in URL, fetch the default from the server
-      // so we can include it in the WebSocket handshake
-      if (!workspaceId) {
-        try {
-          const wsRes = await fetch('/api/config/workspaces', { credentials: 'same-origin' })
-          if (wsRes.ok) {
-            const { defaultWorkspaceId } = await wsRes.json() as { defaultWorkspaceId?: string }
-            if (defaultWorkspaceId) workspaceId = defaultWorkspaceId
-          }
-        } catch {
-          // Non-fatal — workspace will be set via switchWorkspace later
-        }
-      }
-
-      // 3. Create web API adapter
-      // Destroy previous client on retry
-      if (clientRef.current) {
-        clientRef.current.destroy()
-      }
-
-      const { api, client } = createWebApi({ serverUrl: wsUrl, workspaceId })
-      clientRef.current = client
-
-      // 4. Set window.electronAPI — must happen before any Electron component mounts
-      ;(window as any).electronAPI = api
-
-      // 5. Connect the WebSocket client
-      client.connect()
-
-      setPhase('ready')
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      setError(msg)
-      setPhase('error')
-    }
-  }
+  const [attempt, setAttempt] = useState(0)
+  const [bootstrap, setBootstrap] = useState<AuthenticatedWebTransportBootstrap | null>(null)
 
   useEffect(() => {
-    if (!initRef.current) {
-      initRef.current = true
-      initialize()
-    }
+    const controller = new AbortController()
+    let ownedClient: ReturnType<typeof createWebApi>['client'] | undefined
+    let unsubscribe: (() => void) | undefined
+    setPhase('loading')
+    setError('')
+    setBootstrap(null)
+
+    void initializeAuthenticatedWebTransport({
+      fetch: window.fetch.bind(window),
+      requestedWorkspace: new URLSearchParams(window.location.search).get('workspace'),
+      signal: controller.signal,
+      createAdapter: options => {
+        const adapter = createWebApi(options)
+        ownedClient = adapter.client
+        return adapter
+      },
+    }).then(({ api, client, bootstrap: verified }) => {
+      if (controller.signal.aborted) return
+      // Only a server-acknowledged connection may mount the shared renderer.
+      window.electronAPI = api
+      setBootstrap(verified)
+      setPhase('ready')
+      unsubscribe = client.onConnectionStateChanged(state => {
+        if (state.status === 'connected' && client.getAcknowledgedWorkspaceId() !== verified.workspaceId) {
+          setError('Server acknowledged workspace does not match the configured workspace')
+          setPhase('error')
+          client.destroy()
+        }
+      })
+    }).catch((err: unknown) => {
+      if (controller.signal.aborted) return
+      if (err && typeof err === 'object' && 'status' in err && err.status === 401) {
+        window.location.href = '/login'
+        return
+      }
+      setError(err instanceof Error ? err.message : String(err))
+      setPhase('error')
+    })
 
     return () => {
-      // Cleanup on unmount
-      clientRef.current?.destroy()
+      controller.abort()
+      unsubscribe?.()
+      ownedClient?.destroy()
     }
-  }, [])
+  }, [attempt])
 
   if (phase === 'loading') return <LoadingScreen />
-  if (phase === 'error') return <ErrorScreen message={error} onRetry={initialize} />
+  if (phase === 'error') return <ErrorScreen message={error} onRetry={() => setAttempt(value => value + 1)} />
+  if (!bootstrap) return <LoadingScreen />
 
   return (
     <Suspense fallback={<LoadingScreen />}>
-      <ElectronApp />
+      <ElectronApp webTransportBootstrap={bootstrap} />
     </Suspense>
   )
 }

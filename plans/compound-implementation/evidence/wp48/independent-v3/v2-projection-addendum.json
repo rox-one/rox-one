@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-30T15:15:24.969Z",
+  "evaluator": "independent GPT6.1Sol Ultra",
+  "proposal": {
+    "path": "/tmp/rox-wp48-domain/backend-v2/manifest.json",
+    "sha256": "9cacef3af110aede208e279c1e614d1fa52acb1e1b439db2d557ca8ee77f371d",
+    "bytes": 6186
+  },
+  "previousSealedReview": {
+    "path": "/tmp/rox-wp48-independent-ultra-20260930/v2-review-report.json",
+    "sha256": "13069b30bb973b67b6caeed39aba9c94320a4ca1cc0ff73ea3e3467617ed9fbc",
+    "bytes": 17542
+  },
+  "finding": {
+    "id": "F5",
+    "severity": "HIGH",
+    "class": "COHERENT_PROJECTION_EVIDENCE_FORGERY",
+    "source": {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+      "sha256": "75c9c70f6ce4d3300dad77663102eea45da2f17104737028ed7d9d8ff0c3485b",
+      "bytes": 20158,
+      "symbol": "LicenseRepository.view",
+      "line": 50
+    },
+    "onlyMutated": [
+      "license_component.evidence",
+      "license_component.audit_digest"
+    ],
+    "actual": {
+      "httpGetStatus": 200,
+      "httpListStatus": 200,
+      "httpGetState": "reviewed_exact_artifact",
+      "httpListState": "reviewed_exact_artifact",
+      "wsGetState": "reviewed_exact_artifact",
+      "wsListState": "reviewed_exact_artifact",
+      "httpOriginalReplayStatus": 200,
+      "originalReceiptExact": true,
+      "originalReceiptState": "review_required",
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    "requiredFix": "Bind current projected evidence/digest/time/watermark/revision to independent retained receipt/event and trusted registry before GET/LIST serialization. Unkeyed hash self-consistency is insufficient."
+  },
+  "execution": {
+    "actualExitCode": 1,
+    "tests": 1,
+    "passed": 0,
+    "failed": 1,
+    "assertions": 5,
+    "seconds": 1.93,
+    "exactFailure": "Expected HTTP503; received200 at wp-48-projection-adversarial.test.ts92",
+    "log": {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/projection-execution.log",
+      "sha256": "e1e7da991d1a5d99226cce2277cf294e6d0cffb68957d17981d6e046b6ba4154",
+      "bytes": 1554
+    },
+    "oracle": {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/tests/macro-integration/wp-48-projection-adversarial.test.ts",
+      "sha256": "ef6daa3a6fb439e970511d30fd245f82ed284e1037cf8a934bee9157da3d2ec8",
+      "bytes": 14044
+    }
+  },
+  "observations": {
+    "path": "/tmp/rox-wp48-independent-ultra-20260930/projection-observations.json",
+    "sha256": "b8895514760a78868fc7c1f8f151c9394342aafbfabab4b4c1de681dadf8a0d4",
+    "bytes": 8180
+  },
+  "cleanup": {
+    "schema": "wp48_93c1d8cff4e7",
+    "reusedSoleOwnedSchemaAfterPriorCleanup": true,
+    "remainingOwnedSchemas": 0,
+    "privateStateRemoved": true,
+    "listenerPort": 65134,
+    "listenerOpen": false
+  },
+  "additionalSourceReview": {
+    "status": "NOT_ACTUAL_REPRODUCED_NOT_COUNTED_AS_CONFIRMED",
+    "issue": "Outbound Resource policy revalidation after domain transaction: existing final HTTP/WS guard revalidates session/workspace only; a concurrent specific Resource READ revoke might disclose already-read evidence.",
+    "scope": "Resource current policy only; no generic grant framework request",
+    "producerNotified": true
+  },
+  "foundationAcceptance": "HOLD_V2_FIVE_CONFIRMED_CLASSES_EIGHT_VARIANTS",
+  "legalApproval": false,
+  "wp48Complete": false,
+  "rootWrites": false,
+  "nativeExecution": false,
+  "oldArtifactsRewritten": false
+}

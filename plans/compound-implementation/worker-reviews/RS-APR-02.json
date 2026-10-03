@@ -1,0 +1,340 @@
+{
+  "task_id": "RS-APR-02-preflight",
+  "attempt_id": "7209ebe81c3790219b04eb34de44d3c0",
+  "packet_hash": "18d959c0f200d910c8dd0727c3bf6cad41edaf47f01c37b11b8ce00fa6bebce0",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "RS-APR-02",
+  "featureComplete": false,
+  "mode": "inspect",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-APR-01", "RS-MCP-01"],
+  "dependencyEvidence": "plans/rox-suite/issues.json:856-884 and published specification:11,139-146. Dispatch depends_on=[] describes the preflight task, not implementation readiness. RS-HD-01 and RS-SIG-02 are related requirements, not explicit dependencies.",
+  "evidenceStatus": {
+    "basis": "Read-only working-tree inspection; input_revision is the supplied dispatch revision, not a claim that uncommitted source equals HEAD. Whole-file digests were observed after the source reads. Root-owned wave0 may change these files during integration; rehash and reread changed seams before applying any patch.",
+    "specManifestMatches": true,
+    "issueManifestMatches": true,
+    "codegraph": "Unavailable: tool reported no .codegraph index. Scoped read/grep/glob used instead; no index created.",
+    "runtimeVerification": "NOT_RUN_BY_DESIGN: no builds, tests, native UI, network or feature verification were performed. Proposed verifications below are future acceptance obligations, not results.",
+    "scope": "Only package specification/record, named implementation paths and direct-import seams inspected. No product, test, manifest, progress, shared-file or Git mutation.",
+    "newPathObservation": "Glob found none of the five normative new files; apps/workspace-service/ and components/approvals/ were missing. tests/rox-suite/ exists, with other tests. This is an inspected-checkout observation, not a prediction of post-wave0 layout."
+  },
+  "foundationGates": [
+    {
+      "ids": ["WP-03", "WP-04", "WP-05", "WP-06", "WP-07", "WP-36", "WP-37", "WP-47", "WP-52"],
+      "source": "docs/rox-suite/published/RS-APR-02.md:13,70,95",
+      "gate": "Published architecture prerequisites separate from the two explicit DAG edges.",
+      "currentEvidence": "Specification names these IDs without titles. This scoped inspection does not assign guessed WP-to-capability mappings or claim accepted implementation receipts.",
+      "missingPrerequisite": "Lead must provide accepted receipts and concrete interfaces for these exact WP prerequisites before package implementation; resolve their individual capability mapping from normative foundation records. Do not reconstruct foundation code inside this issue."
+    },
+    {
+      "ids": [],
+      "source": "docs/rox-suite/published/RS-APR-02.md:49-78,95; packages/core/src/rox2/platform-contract.ts:232-239,592-619",
+      "gate": "Canonical Revision2 authority, authenticated command/query gateway, principal/resource grants and policy revisions.",
+      "currentEvidence": "Rox2EntityRef exists; authorizeRox2Action only matches actorId and permission in supplied grants, with no resource, node, expiry, policy revision or transport authentication. isRevisionedEntityRef and isAuditableRox2Event are pure predicates, not durable authority/audit implementations.",
+      "missingPrerequisite": "Accepted resource-scoped authorization/gateway interface, transport-derived actor, current-policy resolver, principal eligibility and revoke propagation. Never use Entity.permissions, capability advertisements or a renderer role as authorization."
+    },
+    {
+      "ids": [],
+      "source": "docs/rox-suite/published/RS-APR-02.md:13,53-57,70,95",
+      "gate": "Common durable entity store, migration runner, transaction/outbox and provider effect journal.",
+      "currentEvidence": "Normative apps/workspace-service target directory is absent in the inspected checkout. Existing platform contract explicitly performs no I/O (lines 2-6). Inbox triage is renderer state, not domain persistence.",
+      "missingPrerequisite": "Lead's committed wave0 plus canonical store/transaction/outbox, migration registration, command idempotency, leased background processing and shared effect journal/reconciliation interface. Receipt must define crash/replay behavior. Do not build a second store or claim atomicity across the provider boundary."
+    },
+    {
+      "ids": [],
+      "source": "docs/rox-suite/published/RS-APR-02.md:57,70,76-78,124-125",
+      "gate": "Common source/link/mention/grant, attention/search/activity/memory projections, dedup and retraction/reconnect.",
+      "currentEvidence": "useInboxItems joins sessions and memory/skills/senders via existing RPCs; no business approval source is present in InboxKind or InboxSources. Rox2Relation already includes mentions and derived-from.",
+      "missingPrerequisite": "Accepted policy-filtered projection APIs, common notification IDs/read state, event cursor/reconnect and revoke retraction contract. Restricted counts/titles/bodies cannot be projected before authorization."
+    },
+    {
+      "ids": [],
+      "source": "docs/rox-suite/published/RS-APR-02.md:32,45-47,127-131",
+      "gate": "Shared transport/navigation/i18n ownership and required delivery evidence lanes.",
+      "currentEvidence": "InboxNavigationState/getNavigationStateKey/parseNavigationStateKey only support item details. ModeScreenLayout reserves 220px navigator plus 240px list plus 320px detail minima; narrow acceptance needs a shared layout integration. Existing selected fonts/tokens must be retained.",
+      "missingPrerequisite": "Lead-owned parser/host/history/client/transport integration, locale parity, responsive drilldown/help primitives, Linux lane, revision-pinned macOS lane and provider-live adapter evidence where actual dispatch acts. Pending required lanes keep featureComplete=false."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/approvals/ApprovalInstanceDetail.tsx",
+    "apps/workspace-service/src/modules/approvals/instance-commands.ts",
+    "apps/workspace-service/src/modules/approvals/effect-dispatch.ts",
+    "apps/workspace-service/migrations/approval-instances.sql",
+    "tests/rox-suite/approval-inbox.spec.ts"
+  ],
+  "newFileContributions": [
+    {
+      "path": "apps/workspace-service/src/modules/approvals/instance-commands.ts",
+      "proposedSymbols": ["start", "read", "list", "decide", "delegate", "cancel", "previewEffect"],
+      "change": "Implement normative approvals commands on the accepted common gateway/store. Pin definitionVersion and form snapshot/digest at start, preserve authorized source refs/audience, return instanceRef/currentNode/receipt. decide accepts instance/node/formVersion/baseRevision/nodeVersion/decision/reason/previewHash/commandId, derives actor from transport, validates current eligibility/grants/policy and preview digest, and commits decision, quorum advance, effect intent and outbox together. Use unique(instance,node,actor,decisionGeneration), command-id dedup and guarded revision advancement; duplicate retry returns the original receipt. Implement reasoned reject/return, policy-limited delegation with purpose/expiry/cycle checks, and cancellation audit without deleting history. read/list are query-only, including when called by MCP/agents. Symbol names are proposed, not existing exports."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/approvals/effect-dispatch.ts",
+      "proposedSymbols": ["dispatch", "reconcile", "recordProviderReceipt"],
+      "change": "Consume durable eligible effect intents via shared journal/outbox worker. Recheck current target/provider scopes and preview-bound arguments/source/audience/policy at dispatch; approval authority is not target.write. Record blocked/queued/accepted/readback/failed/unknown distinctly. Use stable idempotency key and dedup providerEventId; persist receipts before projecting outcomes. Resolve duplicate/out-of-order callbacks by existing effect state/journal, never regress readback or resend an unknown outcome blindly. Reconcile provider state with finite recovery and append immutable audit events. Provider work is async outside the DB transaction. Exact adapter/worker imports await lead receipts."
+    },
+    {
+      "path": "apps/workspace-service/migrations/approval-instances.sql",
+      "proposedSymbols": ["approval_instances", "decisions", "delegations", "effect_intents"],
+      "change": "Register with the canonical migration runner. Persist workspace/entity/versionRef/targetRef/formDigest/snapshot/state/revision and route generations; decisions uniquely constrained by instance/node/actor/decisionGeneration; delegation purpose/expiry lineage; effects with durable idempotency key. Bind command dedup, immutable audit and callback providerEventId uniqueness to common receipt/journal/outbox tables instead of inventing a second audit/effect store. Transactionally support quorum CAS and outbox, aliases and reload. Exact foreign keys/alias names depend on accepted canonical schema."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/approvals/ApprovalInstanceDetail.tsx",
+      "proposedSymbols": ["ApprovalInstanceDetail"],
+      "change": "Render canonical instanceRef, pinned snapshot/source links, route timeline/quorum/current node, submission review with Cmd+Enter, effect preview, reasoned explicit Approve/Reject/Return, eligible-principal Delegate and audit/receipt tab. Show immutable domain decision independently from execution outcome; never show completed for blocked/unknown effects. Preserve drafts across navigation/error/conflict/timeout under workspace/purpose/current grants; no success before receipt. Reuse tokens/fonts/native controls, accessible help and narrow drilldown; query/open/read/selection/help never decides. Unsupported capability is honestly disabled with reason."
+    },
+    {
+      "path": "tests/rox-suite/approval-inbox.spec.ts",
+      "proposedSymbols": ["approval inbox end-to-end scenarios"],
+      "change": "Exercise real persisted commands and renderer/API/MCP equivalents using deterministic synthetic principals and a controlled provider adapter with meaningful receipt/readback/failure oracles. Cover all six normative tests and the complete user journey/reload, transport actor spoof, revoke/replay, delegation expiry/cycles, source-audience non-expansion, projection retraction and adjacent permission/credential/mail flows. Retain green baseline and seeded-mutant intended-assertion evidence; mocks/render-only success do not prove feature completion. Required native/provider lanes are additional external evidence, not silently replaced by this test file."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/InboxPage.tsx",
+      "symbol": "InboxPage / PageFilter / KIND_GLYPH / KIND_TONE / allItems / navigator / detailBody / done / snoozeItem",
+      "change": "Add distinct business approval rows and Согласования/Мне/Мои/Завершённые representations to the existing Inbox; domain completed must use canonical instance/effect outcome, not state.done. Resolve approval detail directly by canonical instanceRef so deep links work even when the row is filtered or absent; mount ApprovalInstanceDetail in existing detail pane. Preserve mail pinning, permissions/credentials/memory/skills and triage reducers. Route selection/open/done/snooze only through navigation/query/attention actions; explicitly separate reviewed decision controls from existing permission Allow/AlwaysAllow. Approval filter history must be typed, not ephemeral local-only state.",
+      "reason": "Current allItems only merges existing items/mail; selected lookup depends on row membership, and unresolved currentId is rendered as resolved. Existing e/s shortcuts are attention triage, never business decisions."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/inbox-model.ts",
+      "symbol": "InboxKind / InboxItem / InboxSources / DECISION_KINDS / ALL_KINDS / buildInboxItems / filterInbox / inboxCounts",
+      "change": "Add an approval kind and authorized typed instance projection using canonical workspace-scoped ref, revision, requester/process/version/due/domain state. Aggregate without storing domain decisions in InboxState.done/snoozed. Keep stable common notification identity, policy-filtered counts and attention semantics; do not interpret group='decision' as authority or completion.",
+      "reason": "Closed kind/source unions currently lack business approvals; done/snoozed are local presentation state only."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useInboxItems.ts",
+      "symbol": "InboxRemoteSource / useInboxItems / load / items / allLoaded / reload",
+      "change": "Add accepted authenticated approvals.list projection and revoke/event/reconnect subscription to the existing aggregator; distinguish unsupported/loading/forbidden/error from empty, guard workspace switches and remove revoked cached rows/counts. Extend load completion/pruning to prevent unloaded approval attention marks being discarded. Never reuse optional-API fallback Promise.resolve([]) for a missing approval backend. Use common cursor/dedup contract and no decision mutations from effects or reload.",
+      "reason": "Current remote sources only include memory/skills/senders, fallback missing RPCs to [] and refresh only their existing event/timer paths."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.inbox",
+      "change": "Preserve existing inbox/item route and add an explicitly typed approval instance builder under Inbox, proposed inbox/approvals/{mine|requested|completed}/instance/{encodedInstanceRef}, with matching list route. Builder accepts the canonical request ref and never becomes an action route; parser/host/history owner must integrate identical grammar atomically.",
+      "reason": "Current builder only accepts generic itemId; the specification requires shared requestRef contextual deep links and approval subviews. Grammar is a proposal requiring lead-owned transport/navigation integration, not an observed parser feature."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "InboxNavigationState / getNavigationStateKey / parseNavigationStateKey / ElectronAPI",
+      "change": "Add discriminated approval-instance detail and approval view state matching the proposed builder; serialize/parse encoded refs and views without overloading itemId. Expose typed authenticated approvals.start/read/list/decide/delegate/cancel/previewEffect plus event/readback contracts through the chosen IPC/generated-client transport with commandId, revision, receipt and actionable errors; no actorId supplied as trusted input. Preserve existing item route roundtrip. Lead must separately locate and patch the actual route parser, host render/history and preload/main or authenticated generated client; those downstream files were not inspected under this package-only scope.",
+      "reason": "Existing InboxNavigationState supports only {type:'item',itemId}; its state key conversion only handles inbox/item. Transport-only type addition is insufficient without runtime integration."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS / Rox2EntityRef / Rox2Event / Rox2Receipt / Rox2CanonicalResult / authorizeRox2Action / isClaimableLive",
+      "change": "Lead-owned registry integration must recognize the accepted canonical approval instance kind from APR-01/foundation so parseRox2EntityId/parseRox2TypedRecord can consume it; current list has no approval kind. Reuse Rox2EntityRef and auditable event causation/correlation/revision, and keep business/effect state on domain records. Preserve executionMode/lifecycle/verification enum values and claim verification only from real policy-required receipt/readback. Resource/node authorization belongs to the accepted common gateway; do not widen the actor-only helper into a second approvals policy service.",
+      "reason": "Current contract is pure and actor grants are not resource scoped. Domain approved/blocked/accepted are not new canonical status enum values; existing isClaimableLive preserves required separation."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx",
+      "symbol": "PermissionRequest / handleAllow / handleAlwaysAllow / handleDeny",
+      "change": "Preserve existing PermissionResponse callbacks unchanged as tool permission controls. If product integration needs a business-request cross-link, add only query/navigation context supplied by the lead, never invoke approvals.decide from these callbacks or reuse alwaysAllow as business authorization. Fix the existing literal Tool: label via the shared locale owner if this surface is touched.",
+      "reason": "These handlers currently emit allowed/alwaysAllow booleans only; they provide no pinned form/quorum/decision receipt and cannot satisfy the business workflow."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx",
+      "symbol": "ModeScreenLayout / NavItem / ListRow",
+      "change": "Shared UI owner should add existing-shell single-main-pane drilldown and sheet navigation at narrow width/zoom for Inbox while retaining desktop panes, stable selection/scroll and visible keyboard focus. Reuse selected typography and theme tokens; no global font override. Use common accessible tooltip/popover primitives for approval controls, with 500ms hover, focus help, click detail, Escape focus restoration and reduced-motion handling.",
+      "reason": "Layout currently has combined pane minima of 780px and no responsive branch in inspected lines 12-54; NavItem/ListRow set outline-none without an explicit focus style in inspected class lists. New detail alone cannot satisfy whole-shell 390px acceptance."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "new approval Inbox/detail/help/status/error translation keys",
+      "change": "Shared locale owner adds ASCII-sorted approval labels/help/disabled reasons/status/errors in all ten locales, Russian default and correct plural forms. Specific locale file contents were not inspected; this request follows the loaded repository i18n rule and observed useTranslation seams. Do not embed user-facing strings in the new component.",
+      "reason": "InboxPage and PermissionRequest already use t(); repository requires ten-locale parity. Locale files remain shared and are not worker-owned."
+    },
+    {
+      "path": "apps/workspace-service/migrations/approval-instances.sql",
+      "symbol": "canonical migration registration / transaction / immutable audit and effect journal integration",
+      "change": "Although the SQL body is a normative package new file, lead owns migration registration/ordering and common schema/contracts. Supply exact runner, table/foreign-key/alias names and command/outbox/journal interfaces; serialize integration with APR-01. Lead must identify runtime registries/jobs/transport/MCP/projection paths after committed wave0 rather than inventing files in the currently absent service tree.",
+      "reason": "File ownership does not authorize independent shared schema/gateway/journal changes; normative spec line 95 requires one shared owner."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD 1: UI and typed routes/history/contextual deep links work in existing ROX.",
+      "currentEvidence": "InboxPage select at 107-110 uses routes.view.inbox; row/detail at 277-295,491-507; routes builder 174-176; InboxNavigationState 2496-2500 and key roundtrip 2771-2773,3000-3004 only support itemId.",
+      "requiredChange": "Integrate typed approval views and direct canonical requestRef detail lookup, existing Inbox tabs/list and ApprovalInstanceDetail; update parser/state/history/host/client together. No second app/surface.",
+      "verification": "Future: Task/Page/Ticket/agent link opens same pinned request; back/forward, reload, list filtering and missing-row direct link preserve canonical ref/selection and never mutate decision/effect. Existing inbox/item links still open permissions/mail.",
+      "missingPrerequisite": "Committed wave0, accepted APR-01/MCP-01 and lead navigation/transport patch receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 2: Entity model, persistence/migration aliases, queries/commands/receipts and required background processing implemented.",
+      "currentEvidence": "Spec 51-57 defines normative entities/commands/transaction. New service directory absent; platform-contract 115-167,232-239,617-619 provides types/predicates only, not database/runtime.",
+      "requiredChange": "Implement four service/SQL seams above on canonical entity store, pinned APR-01 version/snapshot, durable decision/delegation/quorum, idempotency/receipts/audit/outbox, async dispatch and reconciliation; register aliases/migration/worker through lead.",
+      "verification": "Future: start/decide/delegate/cancel/read/list via real authenticated service; crash/reload restores exact pinned snapshot/audit/receipts; migration/alias roundtrip and worker restart keep one quorum advance/intent and no duplicate send.",
+      "missingPrerequisite": "Canonical service/store/migration/outbox/effect-journal and APR-01 definition interfaces/receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 3: Source/entity links and mentions use common IDs; source audience never expands automatically.",
+      "currentEvidence": "Rox2EntityRef 232-239 is workspace scoped; Rox2Relation 125-129 and rules 380-389 support mentions/derived-from. Spec 38,51,70,74 requires source/audience digest and common refs.",
+      "requiredChange": "Bind target/source/version refs and mention projections to canonical IDs and authorized grants; include source/audience in preview digest and strip unauthorized excerpts from form/projections without widening grants.",
+      "verification": "Future: narrow-source request aimed at wider audience never exports restricted body/title/count; cross-entity link and mention do not grant read; links reload same version and revoke retracts them.",
+      "missingPrerequisite": "Common link/mention/resource grant and redaction/export policy interfaces.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 4: Shared authorization/sharing/revoke covers UI/API/MCP/jobs/offline replay.",
+      "currentEvidence": "authorizeRox2Action 601-609 checks supplied actor grants only; Entity.permissions is explicitly not actor authority at 597-600. Spec 74-78 requires transport identity/current policy across all ingress.",
+      "requiredChange": "Run start/read/list/decide/delegate/cancel/preview/dispatch through the same authenticated resource gateway. Enforce requester/eligible approver separation, no hidden self-approval, separate decision and target-write checks, delegation policy/purpose/expiry/no cycle; recheck revoke on open screen/job/replay. Deny actor spoof.",
+      "verification": "Future: identical denied results at renderer/API/MCP/job/replay; spoofed actor payload cannot sign; revoke while request open blocks decide and removes sensitive projections; expired/self-cycle/unauthorized delegation denied without ACL grant.",
+      "missingPrerequisite": "Accepted gateway/current-policy/principal/delegation and MCP-01 authenticated tool routing.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 5: Search/notification/activity/agent/memory projections preserve policy/provenance; dedup/retraction verified.",
+      "currentEvidence": "useInboxItems 26-38,61-83,91-116 has existing source joins, no approval events/cursor; Rox2Event 131-141 and isAuditableRox2Event 618-619 model correlation/revision but no consumers.",
+      "requiredChange": "Emit normative approval/effect events through commit-bound outbox and shared policy-filtered projection consumers. Use common dedup IDs and revision/provenance; retract restricted rows/counts/push/context after revoke. Notification.read has zero domain mutation.",
+      "verification": "Future: duplicate event/callback produces one projection; reconnect gap catches up exact state; grant revocation retracts search title/body/count, notification, activity detail and agent/memory refs; denied data never reaches logs/push.",
+      "missingPrerequisite": "Accepted outbox, policy-filtered search/activity/attention/context consumers, retraction/reconnect contract.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 6: Required realtime/reconnect/persistence concurrency scenarios pass; unavailable capability honestly disabled.",
+      "currentEvidence": "Spec 99-116 defines states and six tests. Existing useInboxItems only refreshes its sources; none of five normative new files found.",
+      "requiredChange": "Implement revision/generation guards, durable command dedup/quorum CAS, preview invalidation, current-policy dispatch, callback dedup/reconciliation and honest capability/offline states. Wire shared event cursor/replay, not renderer-only timers as domain recovery.",
+      "verification": "Future: all six named tests below pass against persisted/reloaded outputs; crash after commit/before reply, reconnect duplicate/gap, simultaneous quorum and unknown provider recovery preserve one effect. Missing backend appears unsupported, not empty/success.",
+      "missingPrerequisite": "Common transaction/outbox/journal/event/offline replay interfaces and baseline-ready domain runner.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 7: Hover/focus/click help, keyboard, loading/empty/error/offline, narrow390px, zoom200%, reduced-motion verified.",
+      "currentEvidence": "InboxPage 220-244 preserves e/s/Escape triage shortcuts and input guard; ModeScreenLayout 31-43 requires 220+240+320px panes. Spec 32,45-47 defines exact help, keyboard and draft contracts.",
+      "requiredChange": "Add accessible explicit decision/reason/delegation/preview/audit controls with 500ms hover and keyboard-focus definition, Что это? detail help, required instructions, role/policy/disabled reason/source/asOf/examples/units-or-not-applicable. Click help does not mutate. Responsive single-pane/sheets, focus ring/Escape restoration, stable keys/scroll, reduced spatial motion and workspace/purpose/grant-bound draft retention. Distinguish every specified query/offline/failure state.",
+      "verification": "Future: real renderer/native interaction for Tab/ShiftTab/roving arrows only in menus/tablists, Escape restoration, Cmd+Enter review submission and no hidden approve hotkey. At390px/200% no whole-shell horizontal overflow; reduced-motion removes spatial transitions. Failure/navigation/reload preserve allowed drafts, revoke prevents sensitive retention; no success until receipt.",
+      "missingPrerequisite": "Shared responsive shell/help/draft primitives, locale owner and live UI lane.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 8: Linux domain/renderer lane; source-pinned macOS native for IPC/font/device; provider-live where actual adapter acts. Pending required lane keeps feature incomplete.",
+      "currentEvidence": "Spec 127 is mandatory; current report is source-only and has no runtime result.",
+      "requiredChange": "Lead schedules all required lanes on integrated source-pinned revision; exercise actual authenticated IPC/client and selected font/device surface, plus real adapter provider accepted/readback/failure when dispatch is active.",
+      "verification": "Future: retain exact commit/environment, commands/actions and persisted expected/observed results from Linux, macOS native and relevant provider-live lane; distinguish environment failure from product failure. No mock/provider-less substitute.",
+      "missingPrerequisite": "Integrated implementation, lane runners/native surface/authorized live provider adapter and accepted evidence receipts.",
+      "state": "REQUIRED_LANES_PENDING"
+    },
+    {
+      "criterion": "DoD 9: Screenshots/ARIA and logs/hash/expected-observed with synthetic data and exact tested commit.",
+      "currentEvidence": "Spec 7,103,128 requires synthetic evidence and nonsecret correlation; supplied input revision and observed file hashes are inspection evidence only.",
+      "requiredChange": "Produce accessibility and screenshots of all required states/help/narrow/native surface, sanitized workspace/entity/command/receipt/event/policy correlation, artifact hashes and expected-observed values, revision bound.",
+      "verification": "Future: independent reviewer can reproduce evidence against exact implementation revision; no private source bodies/secrets in artifacts/logs, no screenshot-only backend claims. Metrics include source/denominator and asOf.",
+      "missingPrerequisite": "Completed runtime lanes and lead-owned artifact collection/revision binding.",
+      "state": "REQUIRED_EVIDENCE_PENDING"
+    },
+    {
+      "criterion": "DoD 10: Independent review, meaningful negative controls, runbook, source licensing/dependencies and user docs ready.",
+      "currentEvidence": "Spec 7,103,112,129,134-136 disallows copied Lark assets and requires reconciliation/cleanup documentation and full vertical slices; no implementation/review evidence produced here.",
+      "requiredChange": "Lead obtains independent source/runtime review, meaningful seeded mutants; document on-call unknown reconciliation, finite retry/recovery, stale permission/search/cache cleanup, user request/decision/delegation/receipt semantics and licenses/dependencies without copied assets. Shared documentation paths are for lead assignment, not invented worker-owned files.",
+      "verification": "Future: green baseline and intended assertion failure for every mutant; reviewer signs exact revision; runbook exercised on unknown/revoke/reconnect incidents and docs match real UI/API outcomes. License/dependency review recorded.",
+      "missingPrerequisite": "Integrated feature, independent reviewer/negative-control lane and lead documentation ownership.",
+      "state": "REVIEW_AND_DOCUMENTATION_PENDING"
+    },
+    {
+      "criterion": "DoD 11: GitHub completion links implementation commit/PR and evidence, not just rendered screen.",
+      "currentEvidence": "issues.json 870-884 identifies open #1118 and PLANNED_NOT_IMPLEMENTED; spec 130 forbids screen-only completion. No network/Git operation authorized for this preflight.",
+      "requiredChange": "Lead links accepted integrated commit/PR and full acceptance evidence to #1118 only after every required gate passes; retain feature incomplete while any required lane/dependency is pending.",
+      "verification": "Future: actual issue/PR readback confirms revision/evidence links and accepted dependency receipts; package completion does not rely on this planning JSON validator.",
+      "missingPrerequisite": "Accepted implementation/dependency receipts, all DoD evidence, lead-authorized publication.",
+      "state": "DELIVERY_PENDING_NOT_FEATURE_COMPLETE"
+    },
+    {
+      "criterion": "Test 1: Open/read/snooze/done attention item creates exactly zero decision/effect rows.",
+      "currentEvidence": "InboxPage select 107-110, done 183-197 and snoozeItem 198-202 currently navigate/triage; inbox-model markDone 245-249 and snooze 259-261 only update renderer state. Permission callbacks are explicit at PermissionRequest 35-45.",
+      "requiredChange": "Preserve query/attention separation in new approvals detail and aggregator; do not wire read/unread/local triage to decide, quorum or dispatch.",
+      "verification": "Future: snapshot persisted decisions/intents/provider calls, perform each action via UI and API/tool equivalents, reload and assert exactly unchanged counts and audit decision/effect sequence. Separate legitimate attention marks allowed.",
+      "missingPrerequisite": "Real approval persistence plus common attention query/command integration.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Test 2: Two concurrent decisions at quorum produce one advance/effect; retry same commandId after timeout produces one decision.",
+      "currentEvidence": "Spec 55,108 mandates transactional quorum/outbox and unique decisions; current inspected platform and Inbox have no quorum persistence.",
+      "requiredChange": "Transactional generation/revision check and quorum advance with unique effect idempotency and command receipt dedup; define losing concurrent command conflict/receipt response via accepted gateway.",
+      "verification": "Future: synchronize two eligible actors at final quorum edge; inspect persisted advance/intent/outbox uniqueness; lose response after commit then retry same commandId and compare identical receipt/decision count after process restart.",
+      "missingPrerequisite": "Canonical transaction/CAS/idempotency and APR-01 quorum semantics.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Test 3: Form/recipient/policy changes after preview reject stale approval; revoke blocks open request decision.",
+      "currentEvidence": "Spec 40,42,74,109 binds preview to reviewed effect/current policy; isRevisionedEntityRef 613-615 checks presence only, not stale revision or authority.",
+      "requiredChange": "Hash formVersion/payload/source/audience/recipient/target/action/policy authority into preview and validate current values, baseRevision and nodeVersion before commit; current approver grant checked on every decide.",
+      "verification": "Future: mutate each digest input independently between preview and decide; expect stale/conflict denial with no decision/effect and preserved allowed draft. Revoke role while detail stays open and retry from UI/API/MCP.",
+      "missingPrerequisite": "Preview digest/policy revision/current grant resolver and transport gateway.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Test 4: Approved decision with target write denied yields blocked effect, never completed UI.",
+      "currentEvidence": "PermissionResponse allowed booleans at 35-45 cannot express separate effects; isClaimableLive 540-551 requires live+succeeded+verification. Spec 74,110 requires both current authorizations.",
+      "requiredChange": "Persist approved decision separately; dispatch checks target/provider write and records effect blocked/actionable code/audit without send. UI derives completion from domain effect receipt/readback policy, not local done or approved alone.",
+      "verification": "Future: eligible approver lacking target.write reaches decision approved; inspect blocked intent and zero provider calls; reload/detail/API show no completed badge and retain exact audit and denial reason.",
+      "missingPrerequisite": "Resource/provider scope authority and effect journal.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Test 5: Out-of-order/duplicate callbacks and unknown send outcome reconcile without repeated external effect.",
+      "currentEvidence": "Spec 43,55,99,111 requires providerEventId uniqueness and outcome distinctions; Rox2Receipt/Status 99-111 only define result fields, not provider reconciliation.",
+      "requiredChange": "Journal each attempt/idempotency/receipt, dedup callbacks and reconcile by current durable effect state; unknown timeout is unknown, not retry success/failure. Never blindly resend; use accepted adapter readback/idempotency semantics and finite recovery.",
+      "verification": "Future: provider accepts then response lost, restart worker, deliver readback before accepted and duplicate event IDs; assert one external effect, stable verified outcome/audit and explicit unknown when readback unavailable. Cancel/revoke before dispatch prevents new send.",
+      "missingPrerequisite": "Common effect journal plus adapter idempotency/readback/callback contract and background worker receipt.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Test 6: Seeded read-to-approve, actor-spoof and decision-to-scope-bypass mutations fail intended assertions with green baseline.",
+      "currentEvidence": "Spec 112,116 requires meaningful negative controls; existing read/triage and permission callbacks are distinct source seams, but no baseline or mutant was run.",
+      "requiredChange": "Target three actual implementation seams after integration: query/attention handler erroneously calls decide; decide trusts payload actor instead of transport; dispatch drops independent current target scope check. Maintain identical persisted/effect oracles and baseline fixtures.",
+      "verification": "Future: demonstrate baseline green, then each seeded mutant fails zero-row, actor authorization/signature, or blocked/no-send assertion respectively; distinguish environment/compiler failures from intended assertion kills and record seeds/artifact hashes.",
+      "missingPrerequisite": "Working real implementation and deterministic service/provider test lane; mutations remain prohibited in this preflight.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "User scenario: pinned v1 submission -> read without effect -> explicit decision -> quorum -> guarded dispatch -> provider readback or explicit failure -> reload exact audit; regress permission/credential/mail.",
+      "currentEvidence": "Spec 114-116 is end-to-end requirement; InboxPage 117-159,359-390,463-490 preserves actual mail and tool/credential flows; no business instance workflow exists in inspected seams.",
+      "requiredChange": "Deliver vertical slices in dependency order: canonical start/read and authorized projections, explicit reviewed decisions/delegation/quorum, guarded journal dispatch/reconciliation, then integrated UI/API/MCP/replay and full evidence. Do not close package on a single UI slice.",
+      "verification": "Future: synthetic requester submits pinned v1 while definition later becomes v2; approver reads with zero effects then explicitly decides; quorum yields one guarded send; show readback and explicit failure branches; restart/reload audit exact actors/digests/revisions/receipts. Exercise each step's denied path and adjacent existing permission/credential/mail behavior.",
+      "missingPrerequisite": "All explicit dependencies, foundation receipts, committed service/transport/projection integrations and runtime lanes.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-APR-02.md","symbol":"Dependency IDs / architecture prerequisites / controls / domain / DoD","lineStart":11,"lineEnd":136,"sha256":"49edf1afbf899e1f80bd3700712d345494ee1303f00bfc54a9c1afe994fe6713"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-APR-02 normative issue record","lineStart":856,"lineEnd":884,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/renderer/pages/InboxPage.tsx","symbol":"InboxPage / allItems / select / done / snoozeItem / detailBody","lineStart":91,"lineEnd":518,"sha256":"9e7b98fc482a3dca7a18042123f48e295d8c5a88d0f9cb48a2e6b464943209e3"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.inbox","lineStart":174,"lineEnd":176,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx","symbol":"PermissionRequest / handleAllow / handleAlwaysAllow / handleDeny","lineStart":28,"lineEnd":45,"sha256":"2fbd2cc78ce33d5b2e1ced7bdfe588ed3ca79c5794aaadea67c5df9c20889478"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":232,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action / isRevisionedEntityRef / isAuditableRox2Event","lineStart":592,"lineEnd":619,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"isClaimableLive","lineStart":539,"lineEnd":552,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"apps/electron/src/renderer/hooks/useInboxItems.ts","symbol":"InboxRemoteSource / useInboxItems / load / items / allLoaded","lineStart":26,"lineEnd":116,"sha256":"6d19994bf049e6200f0005efd3e1da775979045f57f5d33c618f3b7116a6eca7"},
+    {"path":"apps/electron/src/renderer/pages/inbox/inbox-model.ts","symbol":"InboxKind / InboxItem / InboxState / InboxSources / buildInboxItems","lineStart":8,"lineEnd":199,"sha256":"e6834df3cd5881c81b4c92f512b9ed698a68e9311011c07ada9fe60caba8fda2"},
+    {"path":"apps/electron/src/renderer/pages/inbox/inbox-model.ts","symbol":"filterInbox / markDone / snooze / pruneInboxState","lineStart":220,"lineEnd":271,"sha256":"e6834df3cd5881c81b4c92f512b9ed698a68e9311011c07ada9fe60caba8fda2"},
+    {"path":"apps/electron/src/renderer/lib/navigate.ts","symbol":"navigate / NAVIGATE_EVENT","lineStart":21,"lineEnd":50,"sha256":"fbf258fb42a94c07a2a5db579714706140e75c049e9ccad6125959c2b21a7fac"},
+    {"path":"apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx","symbol":"ModeScreenLayout / NavItem / ListRow","lineStart":12,"lineEnd":170,"sha256":"9610f99c424dcf1760915eaff638eaf1b4cea9a854399e9eb420e3a5ec3c3905"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"InboxNavigationState","lineStart":2496,"lineEnd":2500,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"getNavigationStateKey inbox branch","lineStart":2771,"lineEnd":2773,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"parseNavigationStateKey inbox branch","lineStart":3000,"lineEnd":3004,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"}
+  ],
+  "nextExecutableAction": "Lead accepts the preflight artifact with the dispatch verifier. Implementation must wait for lead wave0 commit and accepted RS-APR-01, RS-MCP-01 and architecture prerequisite receipts. Then rehash these concrete seams, reread any changed files, receive canonical store/gateway/effect-journal/transport/projection interfaces and shared patch ownership, and begin start/read/list plus migration vertical slice before decide/quorum and dispatch. No feature implementation is claimed by this artifact.",
+  "leadArtifactVerification": {
+    "argv": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/RS-APR-02.json", "${ROX_COMPOUND_PACKET_ROOT}/RS-APR-02/packet.json"],
+    "status": "LEFT_TO_LEAD; not executed by this read/write-artifact preflight; artifact validation is not feature verification"
+  },
+  "risks": [
+    "Nine published WP gates and shared provider journal are outside the explicit DAG dependency array; two dependency completions alone do not prove readiness.",
+    "Service directory missing at inspection: inventing gateway/store/migration/job imports would duplicate unaccepted foundation work. Root wave0 may establish them later.",
+    "Read/open/attention done or snooze accidentally becoming approval or dispatch is a security failure; existing e/s hotkeys must stay triage only.",
+    "Approved decision, local durable receipt, provider accepted and verified readback are separate outcomes; local done/notification read or tool AlwaysAllow cannot establish business completion.",
+    "Actor-only authorizeRox2Action and capability enums are not sufficient for resource/node/policy/current provider authorization; copying them into package authority would permit scope bypass.",
+    "Concurrent quorum, timeout retry and crash replay require one transaction plus unique constraints/receipt identity; provider call cannot join that transaction.",
+    "Unknown provider send outcome must reconcile from durable journal/readback before replay; callback arrival order must not regress final verified outcome.",
+    "Pinned form version does not waive current policy; recipient/source/audience/policy digest invalidation and revoke while open/replay must deny stale decision/effect.",
+    "Generic itemId lookup and resolved fallback can hide valid direct-linked requests outside current Inbox projections; new canonical instanceRef detail query must be independent of row selection.",
+    "Current layout pane minima conflict with narrow390px/200% whole-shell acceptance; isolated detail styling cannot fix shared shell geometry.",
+    "Existing optional-RPC fallbacks to [] cannot be copied for approvals because missing capability must be unsupported, not genuine empty; stale workspace/grant responses must not leak titles/counts/body.",
+    "Shared paths/routes/types/registry/schema/transport/locales require one integration owner; normative new SQL ownership does not authorize unsynchronized migration registry changes.",
+    "All source hashes describe observed working-tree bytes, not necessarily the supplied HEAD or future integration revision; stale evidence must be replaced before implementation/verification.",
+    "Linux/macOS/provider-live, independent review, negative controls, runbook/docs/licensing and exact-commit artifacts remain required; this report and any schema verifier do not close #1118."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

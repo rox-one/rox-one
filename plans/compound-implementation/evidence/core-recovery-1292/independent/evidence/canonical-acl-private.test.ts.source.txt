@@ -1,0 +1,58 @@
+import { describe, expect, test } from 'bun:test'
+import {
+  authorizeRox2Action,
+  isClaimableLive,
+  normalizeRox2Result,
+  type Rox2CanonicalResult,
+} from '../proposed/packages/core/src/rox2/platform-contract.ts'
+import { createNotesRepository } from '../proposed/packages/core/src/rox2/notes-repository.ts'
+
+describe('independent core integration boundaries', () => {
+  test('actor grants never transfer to another actor', () => {
+    const grant = { actorId: 'owner-a', permission: 'write' } as const
+    expect(authorizeRox2Action({ actorId: 'owner-a', grants: [grant], permission: 'write' })).toBe(true)
+    expect(authorizeRox2Action({ actorId: 'other-b', grants: [grant], permission: 'write' })).toBe(false)
+    expect(authorizeRox2Action({ actorId: undefined, grants: [grant], permission: 'write' })).toBe(false)
+    expect(authorizeRox2Action({ actorId: 'owner-a', grants: [], permission: 'write' })).toBe(false)
+    expect(authorizeRox2Action({ actorId: 'owner-a', grants: [grant], permission: 'read' })).toBe(false)
+  })
+
+  test('denied cached Notes disclose no title, body or revision', () => {
+    const repo = createNotesRepository([{
+      entityId: 'note:private-fixture', title: 'Private fixture', body: 'fixture bytes',
+      revision: 'fixture-r9', updatedAt: 9, origin: 'conation',
+    }])
+    for (const online of [true, false]) {
+      const denied = repo.get('note:private-fixture', { readable: false, online })
+      expect(denied).toEqual({ status: 'denied' })
+      expect(Object.keys(denied)).toEqual(['status'])
+    }
+    const readable = repo.get('note:private-fixture', { readable: true, online: false })
+    expect(readable.status).toBe('ok')
+    if (readable.status === 'ok') {
+      expect(readable.sync).toBe('stale')
+      expect(readable.note.revision).toBe('fixture-r9')
+    }
+  })
+
+  test('canonical receipt metadata and verification policy survive normalization', () => {
+    const receipt = { requestId: 'fixture-request', observedRevision: 'fixture-r2', provider: 'fixture' }
+    for (const verification of ['receipt_verified', 'readback_verified'] as const) {
+      const result: Rox2CanonicalResult = {
+        executionMode: 'live', lifecycle: 'succeeded', verification,
+        entityId: 'note:fixture', receipt,
+      }
+      const normalized = normalizeRox2Result(result)
+      expect(normalized.receipt).toEqual(receipt)
+      expect(normalized.verification).toBe(verification)
+      expect(normalized.ok).toBe(true)
+      expect(isClaimableLive(result, 'any')).toBe(true)
+      expect(isClaimableLive(result, 'receipt')).toBe(verification === 'receipt_verified')
+      expect(isClaimableLive(result, 'readback')).toBe(verification === 'readback_verified')
+    }
+    const legacy = normalizeRox2Result({ ok: true, state: 'live', entityId: 'note:legacy' })
+    expect(legacy.verification).toBe('unverified')
+    expect(legacy.ok).toBe(false)
+    expect(legacy.receipt).toBeUndefined()
+  })
+})

@@ -1,0 +1,233 @@
+{
+  "task_id": "LSX-WP-019-preflight",
+  "attempt_id": "4a13cd989c3fa90843df5b16ab4adfb7",
+  "packet_hash": "375150ebcb180ec83f986591775f8f46da4727f50d3b7a84d3a5cc59dbde500a",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-019",
+  "featureComplete": false,
+  "mode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow",
+  "dependencies": ["LSX-WP-012", "LSX-WP-010"],
+  "explicitExternalPrerequisites": [],
+  "inspectionBoundary": {
+    "writes": ["plans/compound-implementation/worker-reviews/LSX-WP-019.json"],
+    "productChanges": false,
+    "buildsTestsNativeUiNetwork": "NOT_RUN_BY_INSTRUCTION",
+    "gitOperations": "NOT_RUN",
+    "revisionEvidence": "input_revision is the dispatch assertion, not an independently observed Git revision. Evidence is bound to inspected working-tree whole-file SHA256 values, not claimed committed HEAD contents.",
+    "codegraph": "Tool reported no .codegraph index; continued with read/grep/find/glob. No indexing performed.",
+    "findLimitation": "One scoped find failed all judgments due to provider 402; its no-hits result is not absence evidence. Named normative source paths were read directly instead.",
+    "freshness": "Root integration may change inspected files after hashing. Re-read and rehash before implementation; reject stale line anchors. NotesViewHost current hash differs from the specification's product-baseline hash; do not apply baseline patches blindly.",
+    "observedNewFilePresence": "glob returned Path not found for the four normative new paths. This is filesystem inspection evidence only, not implementation readiness."
+  },
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/bases/BaseList.tsx",
+    "apps/electron/src/renderer/pages/bases/BulkActionReview.tsx",
+    "tests/lark-suite-extension/lsx-wp-019.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-019.spec.ts"
+  ],
+  "foundationGates": [
+    {
+      "gate": "Published RS-BASE-01 depends on RS-DRV-01",
+      "relationship": "Hidden published-spec dependency, not an added LSX-WP-019 explicit DAG edge",
+      "evidence": "docs/rox-suite/published/RS-BASE-01.md:95-109 explicitly requires RS-DRV-01 / issue 1109. LSX-WP-019 links this published specification at work-packages.json:7447-7456 despite external_prerequisites being empty.",
+      "requiredReceipt": "Lead must resolve the affected Drive/Base page identity, routing, persistence and inherited-grants readiness from the RS-DRV-01 owner, or provide reviewed scope reconciliation showing which required seams are already fulfilled. Publication is not readiness.",
+      "state": "UNRESOLVED_NO_RECEIPT_INSPECTED"
+    },
+    {
+      "gate": "Native Tasks CAS, durable receipt and authenticated authority",
+      "relationship": "Transitive foundation through LSX-WP-012; not a new direct DAG edge",
+      "evidence": "execution-packages.json:980-1006 lists LSX-WP-004/005/010/011 beneath LSX-WP-012. PersonalTaskStore.update/complete/reopen at store.ts:207-231 accept only id/patch/time and mutate the in-memory bundle; PersonalTask has no revision field at types.ts:42-75. Design sections 2 and 15 require mandatory CAS/atomic Notes/Tasks RPC writes; published RS-BASE-01:52 requires operationId/expectedRevision and transport actor.",
+      "requiredReceipt": "Accepted LSX-WP-012 and its native-owner dependencies must expose authenticated, expectedRevision-checked, replay-safe complete/reopen operations with durable authoritative readback. Renderer must not call PersonalTaskStore as a persistence or ACL substitute.",
+      "state": "BLOCKED_ON_ACCEPTED_DEPENDENCY_RECEIPTS"
+    },
+    {
+      "gate": "Server-owned bulk preview/apply digest",
+      "relationship": "Underspecified implementation ownership outside this package's renderer-only product write paths",
+      "evidence": "work-packages.json:7347-7362 names base.previewBulkAction(input) and base.applyBulkAction(digest); :7373-7375 mandates current selection/capability revalidation on apply. execution-packages.json:1608-1615 authorizes only two renderer files, two tests and NotesViewHost. LSX-WP-012 outputs describe scalar preview/receipt, not an accepted bulk server implementation.",
+      "requiredReceipt": "Lead must identify the accepted common command/data-plane owner for both operations, authenticated transport registration, actor/query/selection/action/revision-bound digest, current ACL/CAS revalidation, one classified outcome per requested ref, and replay persistence. If dependencies do not provide it, update the reviewed packet and ownership before changing any server/transport source. A renderer-only digest or loop cannot establish server enforcement.",
+      "state": "UNRESOLVED_OWNER_AND_BOUNDARY"
+    },
+    {
+      "gate": "Authorized query and canonical Base/view config",
+      "relationship": "LSX-WP-010 plus transitive base/schema foundation",
+      "evidence": "LSX-WP-010 execution record :811-840 depends on LSX-WP-009 and promises queryRevision/permissionEpoch/freshness, permitted rows/cursor and denied-field rejection. NotesViewHost.tsx:132-162 currently stores v1 layouts in localStorage and applies note-only filtering. note-views.ts:24-34 has only table/base v1 layouts. Design :193 and :199 require shared refs/query and a persisted Base Page/config.",
+      "requiredReceipt": "Accepted query-contract/query-service and canonical Base/view identity/config must supply permission-scoped ordered row refs, compact typed field IDs, query revision, permission epoch, source-empty versus filtered-empty and revoke invalidation. LocalStorage remains personal preferences only; do not add a new Base store.",
+      "state": "BLOCKED_ON_ACCEPTED_DEPENDENCY_RECEIPTS"
+    },
+    {
+      "gate": "Event aliases and cross-surface recovery",
+      "relationship": "Required common infrastructure, not established by local task audit",
+      "evidence": "work-packages.json:7368-7371 labels task.updated/command.batchResult as proposed aliases needing verification and specifies the event envelope. store.ts:685-687 records only at/action/taskId/detail. Published RS-BASE-01:50-56 requires shared outbox and revoke/subscription/cache effects.",
+      "requiredReceipt": "Resolve actual accepted event/subscription names and envelope from dependency integration. Task/List/Board must refresh authoritative same-ref data after commands, revoke and reconnect; partial results stay explicit. In-memory TaskAuditEvent is not the required event receipt.",
+      "state": "UNRESOLVED_EVENT_ALIAS_AND_SUBSCRIPTION_CONTRACT"
+    },
+    {
+      "gate": "Routing and locale ownership beyond listed shared seam",
+      "relationship": "Integration scope gate; do not silently expand writes",
+      "evidence": "NotesViewHost.tsx:69-77 accepts only table/canvas/graph/outline and onOpenNote/onConvert; no query/bulk bridge or canonical task-opening callback. Its direct import NoteViewKind at note-views.ts:5 also lacks list. Repository AGENTS requires t() and all ten locale files for new keys, but none of those files is an LSX-WP-019 allowedWritePath/sharedPatchPath.",
+      "requiredReceipt": "Lead supplies accepted routing/query/command bridge and integration-owned Russian/default plus ten-locale key updates, with any additional caller/transport/export paths explicitly authorized by an updated packet. Do not make a disconnected fixture surface or hardcode Russian to evade the gate.",
+      "state": "UNRESOLVED_INTEGRATION_SCOPE"
+    },
+    {
+      "gate": "Exact implementation launch baseline and evidence lanes",
+      "relationship": "Dispatch and normative launch gates, not feature implementation",
+      "evidence": "Dispatch forbids implementation before lead wave0 commit and dependency acceptance. work-packages.json:7491-7501 requires resolved reference revision/digest, spec artifact hashes, approved prerequisite commits, exclusive shared-path lease and integrated readback. Published RS-BASE-01 cites 249b3b4 while execution package baseline is e953786; current dispatch input is a21aeab.",
+      "requiredReceipt": "Lead reconciles the three revision contexts, supplies wave0 and accepted dependency commits/receipts plus reference delivery manifest/hash verification, grants NotesViewHost lease, and discovers supported actual Electron UI runner. Independent source/schema, generated/negative, native-readback, restart, ACL and actual-UI proofs remain mandatory.",
+      "state": "IMPLEMENTATION_NOT_AUTHORIZED_IN_THIS_PREFLIGHT"
+    }
+  ],
+  "proposedContribution": {
+    "status": "PROPOSED_ONLY_SYMBOL_NAMES_NOT_IMPLEMENTED",
+    "BaseList.tsx": [
+      "Export BaseList and its typed request/result/error boundary contract using accepted dependency types rather than copies. Accept canonical base/view identity, authorized query snapshot/ref, compact field IDs, native action capabilities and the accepted command/query bridge.",
+      "Render ordered canonical refs and compact permitted values from the same query as Table/Board; group using accepted query group metadata. Do not run projectTasks/buildTodayPlan over an unrestricted client dataset or turn NoteProjectionRow checkbox counts into Task state.",
+      "Maintain only personal ListSelection scoped to workspace/Base/view/query/permission epoch, with explicit ref and expectedRevision tuples. Clear targets when filtered out, deleted, inaccessible or source/view changes; invalidate previews on changed revision/capability/selection. Paging/virtualization unmount alone must not imply filtering or permission loss.",
+      "Keep checkbox checked state derived from authoritative Task completion; pending state is separate. Space dispatches permitted complete/reopen through native owner commands, never markdown checkbox edits or direct store mutation. Preserve native recurrence semantics by using the accepted native complete operation, not an ad hoc completedAt patch.",
+      "Provide roving row focus, Up/Down navigation, multi-selection independent of task completion, Enter canonical open, Space native action and keyboard-reachable inline menu. Ignore command handling for editable descendants, contenteditable, IME composition and already-handled events.",
+      "Expose loading, source-empty, filtered-empty, stale, read-only, denied, offlineUnsupported, validation, conflict and recovery states without inventing sample rows or a second persistent store."
+    ],
+    "BulkActionReview.tsx": [
+      "Export BulkActionReview to display the server-authorized preview for the exact selected refs/revisions/action. Show eligible and skipped targets with actor-readable reasons and explicit per-owner atomicity support; never claim global all-or-none for mixed owners.",
+      "Apply only the accepted server digest. Current actor/grants, ref existence, revisions and capabilities must be checked by the server again. Freeze submitted target identity for receipts while clearing newly ineligible future actions; do not replace explicit selections with the visible dataset.",
+      "Present every requested target's classified durable outcome, partial commits, denied/skipped/conflicted/deleted results and supported retry/reconciliation. Retry/undo use native idempotent/inverse commands with revision preconditions; neither revert a copied dataset nor overwrite intervening changes.",
+      "Implement dialog focus entry/trap/return, Escape cancel-before-submit, disabled/stale preview state, accessible status announcements, t()-based help/errors and reduced-motion/theme inheritance."
+    ],
+    "requestSketch": {
+      "status": "PROPOSED_MUST_ALIGN_WITH_ACCEPTED_DEPENDENCY_SCHEMAS",
+      "preview": "{queryRef, baseRef, viewId, compactFieldIds, actionId, targets:[{ref, expectedRevision}], operationId}; transport supplies actor/workspace authorization context, never a trusted payload actor",
+      "previewResult": "actor-scoped digest plus exact target classifications/eligible native operations, query/permission freshness and explicitly supported atomicity scope; preview has no mutation effect",
+      "apply": "base.applyBulkAction(digest), through authenticated registered command transport; digest resolves immutable requested refs/revisions/action, not current visible dataset",
+      "applyResult": "one typed classified outcome per requested target, native receipt/ref/revision/hash for committed targets, explicit partial batch state; no acknowledgement from optimistic checkbox/toast",
+      "errors": ["validation", "conflict", "denied", "deleted", "offlineUnsupported", "missingDependency", "rateLimited", "unknownFormat"],
+      "requiredEvents": "Resolve task.updated and command.batchResult aliases; envelope must carry eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId."
+    }
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost",
+      "change": "Under an integration-owner lease, import BaseList and add an explicit List branch before the existing table/canvas/outline/graph dispatch. Extend the view discriminator with list only after accepted route wiring exists. Add typed Base/query/compact-field context and accepted native command/query/open-entity bridge props; forward those into BaseList. The List branch must consume LSX-WP-010 authoritative rows, not notes.map(parseNoteDocument). Retain existing non-List routes and their behavior; do not treat onConvert as complete/reopen. Rebase the patch on the current blockTree/onOpenBlock-aware function at lines 58-117, not the older published line numbers.",
+      "reason": "Current host has no List branch, authorized snapshot, explicit refs/revisions, bulk command bridge or native Task opener; changing only new components cannot make the feature reachable.",
+      "prerequisite": "Accepted Base routing/query/native command transport and caller integration; extra caller/transport source changes need an updated reviewed packet."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote",
+      "change": "Review the note-only contract at lines 48-56 alongside the new List props. Keep id/title/markdown as the existing Notes contract; do not assign task IDs, completion booleans or inferred revisions to it. If accepted Notes source integration needs canonical metadata, add only dependency-defined optional ref/revision metadata populated by the authoritative adapter; keep native Task rows in the accepted query projection type, not NotesViewNote. No standalone note/type rewrite is needed merely to render BaseList.",
+      "reason": "The named shared seam is note-only and carries neither canonical Task identity nor revision/capability information. Forcing native tasks through it would establish a second record model or derive completion from Markdown counts.",
+      "prerequisite": "Accepted source adapter type and any authorized caller patch; optional metadata must not be fabricated or used as server authorization."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "List/query ref equivalence",
+      "currentEvidence": ["projections.ts:13-15 and 21-59 implement local Task filtering/sorting, not a permission-aware Base snapshot.", "NotesViewHost.tsx:79-88 projects parsed Markdown note task counts; note-views.ts:133-169 returns note IDs then local filters/sorts.", "LSX-WP-010 execution record:826-840 defines the required future query outputs/contract paths."],
+      "requiredChange": "BaseList renders the accepted query's permitted ordered refs and compact fields without broadening ACL or applying independent filtering; section and view changes preserve query/source semantics. Selection actions contain only currently permitted matching refs, not filtered-away targets.",
+      "actualSeam": "NotesViewHost rows/dispatch; projectTasks/filterAndSortTasks are native semantic reference only; proposed BaseList consumes accepted LSX-WP-010 query-contract.",
+      "verification": "Future unit/property lane: compare exact ordered ref/revision tuples against the same authorized query used by Table/Board, with stable ties and pagination. Include hidden rows/fields, source-empty versus filtered-empty, revoke and filtered-out selected target. Future actual Electron lane: switch views under the same filters and verify canonical opened refs.",
+      "missingPrerequisite": "Accepted LSX-WP-010 query snapshot, canonical Base/view identity, authorized route integration and receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "bulk never implies global atomicity",
+      "currentEvidence": ["Design:205 requires explicit refs/expected revisions/patch, per-row outcome and mixed-provider partial receipts.", "PersonalTaskStore.complete/reopen at :217-231 are single-task in-memory methods; no bulk durable receipt is established by them.", "work-packages.json:7347-7349 proposes previewBulkAction/applyBulkAction."],
+      "requiredChange": "BulkActionReview shows eligible/skipped preview and per-row apply results for the exact submitted refs. Mark atomicity only when the accepted single owner explicitly supports it; expose partial commits across unsupported/mixed owners. Server apply rechecks current capability, ACL, existence and expectedRevision. Undo uses native inverse commands with preconditions.",
+      "actualSeam": "Native PersonalTaskStore.complete/reopen/completeTask beneath the accepted command owner; proposed BulkActionReview and BaseList request/result boundary.",
+      "verification": "Future command/domain tests submit five explicit targets: eligible commit, denied, stale conflict, deleted and unsupported/read-only skip; assert exactly five classified results and unchanged skipped/denied/unselected tasks. Inject a later-target failure after an earlier durable commit, verify explicit partial state, retry idempotency and authoritative native readback without false rollback/global-success claims.",
+      "missingPrerequisite": "Accepted server bulk owner/transport/digest and native durable operation/CAS/replay receipts; renderer files alone cannot satisfy it.",
+      "state": "NOT_IMPLEMENTED_FOUNDATION_GATE"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": ["work-packages.json:7351-7362 locates the proposed contract in BaseList.tsx and requires eight error discriminants/transport actor.", "store.ts:207-231 has no authenticated actor or expectedRevision parameter.", "NotesViewHost.tsx:69-77 exposes workspaceId and note callbacks, not an authenticated bulk API."],
+      "requiredChange": "Reuse dependency-defined canonical refs/revisions/action types in exported typed List/bulk contracts; validate explicit target tuples and all eight required error alternatives at the registered server boundary. Server derives actor/authorized workspace from session, binds preview digest to that context and revalidates apply. Do not add trust in renderer owner/workspace/actor fields.",
+      "actualSeam": "NotesViewHost typed props; proposed BaseList contract_file; server registration must be furnished by accepted dependency/integration owner, not written in this preflight.",
+      "verification": "Future SOURCE_SCHEMA lane compiles exact request/result/error types in both real consumers; execute validation failures, missingDependency/unknownFormat/offlineUnsupported/rateLimited and forged actor/workspace/cross-workspace refs at the real server boundary. A mocked renderer echo is not server proof.",
+      "missingPrerequisite": "Bulk server and transport schema ownership plus reviewed scope extension if dependencies do not expose required operations; accepted dependency type exports.",
+      "state": "NOT_IMPLEMENTED_FOUNDATION_GATE"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": ["store.ts:81-86 snapshots/serializes an in-memory bundle; :217-231 returns mutated tasks; :685-687 records an in-memory audit event.", "types.ts:42-75 PersonalTask has no revision/hash field.", "store.ts:434-463 shows recurrence-aware native completeTask semantics that a raw checkbox patch would bypass."],
+      "requiredChange": "Space and pointer checkbox commands use accepted native complete/reopen, including recurrence semantics. Keep pending separate from committed completion; acknowledge only native durable receipts with authoritative ref/revision/hash. Query/readback and events reconcile the same Tasks/List/Board identity; restart reloads native state, never an independently persisted List done bit.",
+      "actualSeam": "PersonalTaskStore.completeTask/complete/reopen are underlying native semantic seams; proposed BaseList invokes the accepted durable owner bridge, not this store directly.",
+      "verification": "Future NATIVE_DOMAIN_READBACK + RESTART_RECOVERY: complete via List Space, verify same Task in native Tasks, reopen via native Tasks and observe List; restart actual owner/app and compare exact ref/revision/hash and completion. Repeat with recurring task and operation replay, assert one native successor and no duplicated completion effect.",
+      "missingPrerequisite": "Accepted native Tasks command persistence/CAS/replay owner, authoritative revision/hash readback and real event aliases/subscriptions.",
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": ["work-packages.json:7393-7396 specifies Space/native reload, five grants/conflict targets, and filtered-out target exclusion.", "Design:281 requires one CAS winner, one conflict and same receipt on idempotent replay.", "Design:203 specifies offline owner support or explicit offline read-only and conflict reconciliation."],
+      "requiredChange": "Add normative domain tests for selection boundaries, preview/apply ACL changes, concurrent CAS, digest replay, duplicate clicks, deletion/filter removal, stale query/permission epochs, unsupported/offline paths, and partial batch recovery. Keep local draft/pending/error distinctions and retain prior durable results through retries.",
+      "actualSeam": "Proposed lsx-wp-019.test.ts exercises accepted native command/query APIs through BaseList/bulk contracts; store.completeTask semantics guide the recurrence case.",
+      "verification": "Future command: bun test tests/lark-suite-extension/lsx-wp-019.test.ts. Separate native service/app smoke and restart/reconnect scenarios prove durable behavior. Preserve seed, exact inputs/SHA256, actor grants, attempts, expected/observed outcomes, owner receipts and integrated commit; assert server denial despite a forged enabled UI and a changed grant between preview/apply.",
+      "missingPrerequisite": "Accepted runnable dependency APIs, isolated native-owner fixture setup, supported actual service/app runner and receipt artifacts. No such commands were run during preflight.",
+      "state": "NOT_RUN_BY_PREFLIGHT_INSTRUCTION"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": ["work-packages.json:7409-7417 defines the whole-visible-dataset mutation and three named assertions.", "NotesViewHost.tsx:161-162 computes visible/groups; that visible dataset must not become bulk targets."],
+      "requiredChange": "In the normative lsx-wp-019.test.ts suite, seed an isolated canonical query with explicitly selected and unselected tasks plus five classified targets. Inject the named mutant at the request construction boundary: whole visible dataset instead of selected ref/revision tuples. Keep baseline and mutant evaluated bytes pinned.",
+      "actualSeam": "Proposed BaseList selection-to-preview input construction and BulkActionReview apply result reconciliation; not a source-text test or mock echo.",
+      "verification": "Future green baseline and caught-mutant receipt must retain all three mandated semantic assertions: unselected task unchanged, skipped/denied targets untouched, and five requested targets yield five classified outcomes. Prove the whole-visible-dataset mutant is rejected by named semantic assertion failures, not infrastructure failure. Record each assertion's actual expected/observed result, seed, baseline input hash and mutant diff/hash; do not omit any required assertion or count a crash/timeout as caught mutation.",
+      "missingPrerequisite": "Accepted real native batch/query integration and isolated deterministic fixtures; approved negative-control runner under lead verification.",
+      "state": "NOT_RUN_BY_PREFLIGHT_INSTRUCTION"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": ["NotesViewHost.tsx:132 uses useTranslation and existing theme-token classes at :167-297.", "Design:188 prescribes Up/Down, Enter, Space, sections and explicit empty states; work-packages.json:7433-7434 warns Space must not complete tasks while typing.", "Published RS-BASE-01:42 requires inherited theme/font, focus/click help, 120-160ms opacity/transform motion and reduced motion; repository AGENTS requires ten locales."],
+      "requiredChange": "Implement accessible BaseList and BulkActionReview with keyboard/pointer parity, independent selection and checkbox semantics, native action capabilities, clear skipped/partial/error states and focus preservation on removal/update. Guard editable/IME events. Use t() for all user text with integration-owned ten-locale parity; preserve theme, load actual Rox Mono, provide hover/focus/click help, disable motion for reduced-motion and keep 200% zoom usable.",
+      "actualSeam": "NotesViewHost List dispatch and useTranslation/theme conventions; proposed BaseList/BulkActionReview and lsx-wp-019.spec.ts.",
+      "verification": "Future ACTUAL_ELECTRON_UI: pointer complete/reopen; Up/Down/Enter/Space; multi-select/review/apply; type spaces and compose IME in search/editor without mutation; verify focus after filtering/deletion and modal return; inspect denied/read-only/stale/loading/source-empty/filtered-empty/partial states. Capture screenshots/ARIA/computed loaded-font evidence in actual Electron at light/dark theme, Russian/default and representative locales, reduced motion and 200% zoom; retain revision/environment/hash. Discover the supported runner rather than invent a command.",
+      "missingPrerequisite": "Accepted reachable route, integration-owned locale keys for all ten files, actual Electron verification lane and font assets/runtime evidence. Locale/caller edits are not authorized by current worker paths.",
+      "state": "NOT_RENDERED_NOT_UI_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": ["work-packages.json:7400-7407 lists SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI.", "execution-packages.json:1640-1657 requires exact implementation diff/commit, hashes, readback, screenshots and integration rerun.", "Published RS-BASE-01:84-89 requires mechanism, regression, independent review and migration/rollback evidence."],
+      "requiredChange": "Keep featureComplete false until every required lane has independent exact-version evidence and accepted integration readback; record failures and missing prerequisites without marking requirements N/A. Attach reviewed implementation diff, artifact hashes, seeds/inputs, native receipts before/after restart, UI proofs and rollback/regression evidence. Provider/collaboration evidence is required when those effects are exercised, not simulated.",
+      "actualSeam": "Acceptance receipt production by lead/integration owner for the implemented BaseList/BulkActionReview route and real native query/commands.",
+      "verification": "Future lead acceptance checks each lane's expected/observed receipts against the integrated implementation commit and authoritative readback, including a seeded semantic failure and native UI behavior. This report's syntax/source inspection is only preflight delivery evidence and never proof of feature completion.",
+      "missingPrerequisite": "Wave0/dependency acceptance, actual implementation and all independent lane receipts plus integration review. None is claimed by this preflight.",
+      "state": "FEATURE_INCOMPLETE_ALL_PROOF_LANES_PENDING"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/tasks/personal/projections.ts","symbol":"projectTasks / filterAndSortTasks / matchesProjection","lineStart":13,"lineEnd":59,"sha256":"d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"},
+    {"path":"packages/core/src/tasks/personal/projections.ts","symbol":"buildTodayPlan / compareTaskOrder","lineStart":207,"lineEnd":266,"sha256":"d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.update / complete / reopen","lineStart":207,"lineEnd":231,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.completeTask","lineStart":429,"lineEnd":463,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.snapshot / exportJson","lineStart":81,"lineEnd":87,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/types.ts","symbol":"PersonalTask","lineStart":42,"lineEnd":75,"sha256":"4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesViewNote / NotesViewHost","lineStart":48,"lineEnd":117,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesTableView layout persistence / visible groups","lineStart":119,"lineEnd":164,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"NoteBaseView","lineStart":24,"lineEnd":34,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"projectNoteRows / applyNoteBaseView / groupNoteRows","lineStart":133,"lineEnd":186,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[18] / LSX-WP-019 definition_of_done","lineStart":7212,"lineEnd":7503,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-019 normative execution record","lineStart":1578,"lineEnd":1662,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"Sections 8 and 9 / List, selection, bulk, native Tasks workflow","lineStart":179,"lineEnd":211,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"Section 14 verification / Section 15 foundations","lineStart":273,"lineEnd":298,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"Domain / Commands / Permissions","lineStart":44,"lineEnd":56,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"Published dependencies / normative handoff","lineStart":95,"lineEnd":109,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"}
+  ],
+  "nextExecutableAction": {
+    "owner": "lead/integration-owner",
+    "action": "Review this preflight while wave0 finishes. Resolve the bulk server/digest/transport owner, published RS-DRV-01 foundation and locale/routing scope gaps. After wave0 is committed and LSX-WP-012 plus LSX-WP-010 have accepted artifact/native-readback receipts, reconcile exact implementation baseline/reference manifest and acquire the NotesViewHost lease. Rehash/re-read these seams on that approved integrated revision; then implement only the four normative new files and request the serialized host patch. Run the six required proof lanes on the integrated feature, not during this restricted preflight.",
+    "mustNot": "Do not start from dirty wave0, claim specification publication as acceptance, invent a server batch endpoint, mutate native store from renderer or treat this report as feature implementation."
+  },
+  "risks": [
+    "Server-owned preview/apply has no authorized implementation file in this package; a renderer-only bulk feature cannot satisfy authenticated ACL/digest/CAS acceptance.",
+    "Current NotesViewHost hash a2a3232c differs from normative baseline 2fc3fc07; the function already includes blockTree/onOpenBlock. Concurrent root integration can stale line anchors or replace the proposed seam.",
+    "Space handling can complete tasks while typing or IME composing, or toggle selection and completion twice unless event handling separates those commands.",
+    "Native completion has recurrence side effects; bypassing completeTask-equivalent accepted command semantics can skip or duplicate the successor on replay.",
+    "Filter/revoke/deletion after preview can leave hidden targets actionable; current server ACL/revision revalidation and preview invalidation are mandatory.",
+    "Visibility window is not the query result universe: clearing selection merely because a row unmounts differs from removing a filtered/denied target, and passing all visible rows violates the explicit-selection contract.",
+    "Group rendering must preserve accepted query ordering semantics; buildTodayPlan regroups by local day/project and is not a permission-aware Base query implementation.",
+    "Local note Markdown task counts and localStorage layouts are not canonical Task completion or shared Base persistence; reusing them as such would create a second authority.",
+    "Published CustomRecord/new-kind/Postgres wording and lark design page-contentKind wording require lead reconciliation if used by prerequisite Base foundations; LSX-WP-019 must not create or migrate either store itself.",
+    "Required ten-locale keys, route callers, authenticated command registration and event subscriptions may require integration paths absent from this packet; scope must be revised rather than silently expanded.",
+    "Durable partial results, inverse-command undo and idempotent retries must not erase intervening writes or imply cross-owner global atomicity.",
+    "All runtime, native UI, restart, schema-compilation and negative-control outcomes remain unobserved by instruction. Source-backed preparation is not readiness/completion evidence."
+  ]
+}

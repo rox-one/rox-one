@@ -57,6 +57,8 @@ export interface WorkspaceInfo {
   mcpUrl?: string;
   mcpAuthType?: McpAuthType;
   remoteServer?: RemoteServerConfig;
+  /** Separate domain-only authority; JWT is stored in encrypted service_oauth credentials. */
+  projectAuthority?: { readonly url: string; readonly workspaceId: string; readonly workspaceName?: string };
   /**
    * Explicit authority mode. Runtime persistence normalizes legacy missing
    * values to `personal`; team workspaces require a non-empty `orgId`.

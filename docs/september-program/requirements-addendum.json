@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "source": "Current user interjection: per-project OKR, Objectives, Key Results, weights, daily agent tracking and notifications; two Lark OKR visual references",
+  "historicalRegister": "requirements-full.json",
+  "rule": "These five new authorized rows are additive; the 484 historical IDs and ten original prompts remain unchanged. Current source image bytes are preserved privately, not uploaded publicly. Feature implementation and daily execution remain NOT_RUN.",
+  "requirements": [
+    {
+      "requirementId": "ADD-OKR-R001",
+      "requirement": "В каждом проекте доступна собственная OKR-поверхность по визуальному паттерну Lark: иерархические карточки целей и результатов, период, прогресс, статус, веса, компактный редактор и справка с примерами.",
+      "sourceRefs": ["latest-user:OKR", "latest-user:OKR-reference-1", "latest-user:OKR-reference-2"],
+      "primaryIssue": "OKR-01",
+      "kind": "requested",
+      "status": "NOT_RUN",
+      "acceptance": [
+        "Открыть два реальных проекта, создать разные OKR-периоды и данные, переключить проекты и перезапустить: одинаковые stable IDs и содержимое остаются в правильном project scope.",
+        "Чужой/отозванный проект не раскрывает OKR; empty/loading/error/conflict различимы. Клавиатура, narrow viewport, hover/focus/reduced-motion и русская справка/примеры доступны без копирования персонального содержимого референса."
+      ]
+    },
+    {
+      "requirementId": "ADD-OKR-R002",
+      "requirement": "Пользователь задаёт несколько Objectives и несколько измеримых Key Results для каждой цели; сохраняет, редактирует, публикует и повторно открывает их с привязкой к проекту и периоду.",
+      "sourceRefs": ["latest-user:OKR", "latest-user:OKR-reference-1"],
+      "primaryIssue": "OKR-01",
+      "kind": "requested",
+      "status": "NOT_RUN",
+      "acceptance": [
+        "Создать две цели с несколькими KR, единицами, baseline/target/current и source/evidence; сохранить, reload/restart и прочитать те же сущности. Отмена черновика не меняет опубликованные данные.",
+        "Неверная цель/метрика, конфликт concurrent edit и denied mutation не дают ложный успех и не теряют последнюю валидную revision; завершённая задача не считается KR без явно заданной связи."
+      ]
+    },
+    {
+      "requirementId": "ADD-OKR-R003",
+      "requirement": "Редактируемые веса у целей и KR определяют прозрачный, объяснимый расчёт прогресса; неизвестные измерения не превращаются в достижение.",
+      "sourceRefs": ["latest-user:OKR", "latest-user:OKR-reference-1"],
+      "primaryIssue": "OKR-01",
+      "kind": "requested",
+      "status": "NOT_RUN",
+      "acceptance": [
+        "KR scores 100%/50% с весами 75/25 дают 87.5%; Objectives scores 87.5%/50% с весами 60/40 дают 72.5%. Увеличение/уменьшение использует clamp((current-baseline)/(target-baseline),0,1); binary0/1 имеет evidence; UI объясняет normalized shares и обе ступени расчёта.",
+        "Negative/nonfinite weights, сумма0, target=baseline или неверное направление отклоняются. Unknown KR с положительным весом не исключается и не перенормируется: видны known contribution/coverage и неизвестный общий результат; zero-weight не влияет."
+      ]
+    },
+    {
+      "requirementId": "ADD-OKR-R004",
+      "requirement": "Агент реально ежедневно отслеживает OKR проекта по авторизованным данным, сохраняет датированный check-in, изменение метрик и доказательства.",
+      "sourceRefs": ["latest-user:OKR"],
+      "primaryIssue": "OKR-02",
+      "kind": "requested",
+      "status": "NOT_RUN",
+      "acceptance": [
+        "Настроить enabled daily monitoring с local time/timezone и источниками; реальный durable worker запускается по расписанию, сохраняет один check-in для project/cycle/localdate, с observed KR deltas, timestamps/evidence и статусом каждого источника. Restart/repeated ticks не создают дубль.",
+        "Denied/revoked/stale/offline/no-data не создают выдуманный прогресс; stop/pause останавливают будущую работу. DST/смена timezone/offline catch-up соответствуют once-per-localdate и одному актуальному missed report без спама. Агент не меняет цели/targets/weights без принятия пользователем."
+      ]
+    },
+    {
+      "requirementId": "ADD-OKR-R005",
+      "requirement": "Ежедневный мониторинг присылает полезные уведомления о прогрессе, рисках и отсутствии данных в выбранный разрешённый канал без дублей.",
+      "sourceRefs": ["latest-user:OKR"],
+      "primaryIssue": "OKR-02",
+      "kind": "requested",
+      "status": "NOT_RUN",
+      "acceptance": [
+        "Реальный daily check-in создаёт digest с project/cycle/KR delta/evidence и deep link к тем же данным; сообщение фактически наблюдается получателем в настроенном authorized sink. Queued/sent/delivered/read различаются по доступной capability, queued не принимается за доставку.",
+        "Focus/quiet-hours откладывают уведомление, не теряют digest и после окончания выпускают его один раз. Revoked recipient/channel, timeout/unknown delivery и restart сохраняют честное состояние и не вызывают слепую повторную отправку или утечку чужих OKR."
+      ]
+    }
+  ]
+}

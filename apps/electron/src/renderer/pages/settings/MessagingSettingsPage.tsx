@@ -76,6 +76,8 @@ import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { getSessionTitle } from '@/utils/session'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { MessagingPlatformRuntimeInfo } from '../../../shared/types'
+import { MESSAGING_PROVIDER_CAPABILITIES } from '@craft-agent/messaging-gateway/capabilities'
+
 import { isClaimableLive } from '@craft-agent/core/rox2'
 import {
   settingsPageActionAllowed,
@@ -141,7 +143,10 @@ export default function MessagingSettingsPage() {
     }
   }, [workspaceId, setBindings])
 
-  if (!activeWorkspace) return null
+  if (!activeWorkspace) return <div className="flex h-full min-h-0 flex-col" data-testid="messaging-workspace-unavailable">
+    <PanelHeader title={t('settings.messaging.title')} />
+    <p role="status" className="p-6 text-sm text-muted-foreground">{t('common.unavailable')}</p>
+  </div>
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -158,9 +163,9 @@ export default function MessagingSettingsPage() {
                 <PlatformRow platform={platform} workspaceId={activeWorkspace.id} />
               </SettingsCard>
             ))}
-            {COMING_SOON_PLATFORMS.map((platform) => (
+            {UNSUPPORTED_PLATFORMS.map((platform) => (
               <SettingsCard key={platform}>
-                <ComingSoonRow platform={platform} />
+                <UnsupportedProviderRow platform={platform} />
               </SettingsCard>
             ))}
           </SettingsSection>
@@ -171,24 +176,26 @@ export default function MessagingSettingsPage() {
   )
 }
 
-/** Messengers with a working bridge in packages/messaging-gateway. */
-const LIVE_PLATFORMS = ['telegram', 'discord', 'lark', 'wechat', 'whatsapp'] as const
-/** Listed honestly without a fake connect button until a bridge exists. */
-const COMING_SOON_PLATFORMS = ['slack'] as const
+/** Providers without an implemented bridge are listed without a connect action. */
+const UNSUPPORTED_PLATFORMS = ['slack'] as const
 
-function ComingSoonRow({ platform }: { platform: (typeof COMING_SOON_PLATFORMS)[number] }) {
+function UnsupportedProviderRow({
+  platform,
+}: {
+  platform: (typeof UNSUPPORTED_PLATFORMS)[number]
+}) {
   const { t } = useTranslation()
   return (
-    <div className="flex items-center gap-3 px-4 py-3.5" data-testid={`messaging-coming-soon-${platform}`}>
+    <div className="flex items-center gap-3 px-4 py-3.5" data-testid={`messaging-unsupported-${platform}`}>
       <MessagingPlatformIcon platform={platform} size={22} />
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium">{t(`settings.messaging.${platform}.title`)}</div>
         <div className="mt-0.5 text-xs text-muted-foreground">
-          {t(`settings.messaging.${platform}.comingSoonHint`)}
+          {t(`settings.messaging.${platform}.unavailableHint`)}
         </div>
       </div>
       <span className="rounded-md bg-foreground/5 px-2 py-1 text-xs text-muted-foreground">
-        {t('settings.messaging.comingSoon')}
+        {t('settings.messaging.unsupported')}
       </span>
     </div>
   )
@@ -198,7 +205,8 @@ function ComingSoonRow({ platform }: { platform: (typeof COMING_SOON_PLATFORMS)[
 // Platform row
 // ---------------------------------------------------------------------------
 
-type Platform = 'telegram' | 'whatsapp' | 'lark' | 'discord' | 'wechat'
+type Platform = keyof typeof MESSAGING_PROVIDER_CAPABILITIES
+const LIVE_PLATFORMS = Object.keys(MESSAGING_PROVIDER_CAPABILITIES) as Platform[]
 
 const PLATFORM_LABEL_KEYS: Record<Platform, string> = {
   telegram: 'settings.messaging.telegram.title',
@@ -490,6 +498,13 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
             </Button>
           )}
         </div>
+        {!MESSAGING_PROVIDER_CAPABILITIES[platform].importsHistory && (
+          <p className="px-4 pb-3 text-xs text-muted-foreground">
+            {t('settings.messaging.capabilities.bridgeOnly')}
+            {' · '}
+            {t('settings.messaging.capabilities.noHistoryImport')}
+          </p>
+        )}
 
         {platform === 'telegram' && runtime.connected ? (
           <>

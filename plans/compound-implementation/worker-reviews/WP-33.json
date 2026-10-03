@@ -1,0 +1,585 @@
+{
+  "task_id": "WP-33-preflight",
+  "attempt_id": "c10878767062ac6a7b228355497b70a7",
+  "packet_hash": "55e913fb429d6a37fccc7c7f1d762633c548a9d89678d267fca885f50bed8b9f",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-33",
+  "featureComplete": false,
+  "mode": "read-only preflight; only this report is written",
+  "workTier": "bounded-workflow within an already dispatched independent worker slice",
+  "dependencies": ["WP-31", "WP-32", "WP-39", "WP-52"],
+  "dependencyAcceptance": {
+    "requiredForEach": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "currentState": "NOT_INSPECTED_OR_ACCEPTED_BY_THIS_PREFLIGHT",
+    "implementationStartGate": "Lead wave0 commit plus accepted dependency receipts, then refresh hashes and shared-file ownership. Packet depends_on=[] schedules preflight only; it does not remove feature dependencies.",
+    "contractsNeeded": {
+      "WP-31": "Canonical call/room binding; authenticated call authority; LiveKit adapter and externally reconciled room/provider receipts; preserve standalone mode.",
+      "WP-32": "Participant identity/intervals and guest expiry/revocation; authenticated webhook verification/dedup; participant policy-change signal for consent fencing.",
+      "WP-39": "Private finalized object/file identity, checksum/size validation, signed authorized read, quarantine/deletion and projection invalidation; recording must reuse these rather than create another object store.",
+      "WP-52": "Applied shared migrations and genuine PostgreSQL/object/LiveKit/egress capability receipts; isolated sandbox credential references, worker runtime and reachable private asset endpoints. Room health alone is not egress readiness."
+    }
+  },
+  "evidenceBoundary": {
+    "observedDate": "2026-09-30",
+    "inputManifestSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "inputManifestMatchesDispatch": true,
+    "revisionMeaning": "input_revision is the dispatched revision, not a claim that inspected uncommitted working files belong to that commit. No Git state was queried or modified.",
+    "sourceFreshness": "Whole-file hashes below identify the actual inspected working-tree bytes. Concurrent root integration may invalidate them; no runtime evidence exists for these bytes. Rehash and reread changed seams after wave0 before implementation.",
+    "discovery": "Codegraph reported no .codegraph index and was not retried. Scoped find failed because its judgment provider returned 402; known specification paths and literal-symbol searches supplied the actual evidence instead.",
+    "declaredArtifactPresence": "Glob of declared calls contracts/module/job/migration/media-worker directories and the two WP-33 tests returned Path not found at inspection time. This is a scoped observation, not a repository-wide absence claim.",
+    "notPerformed": ["product edits", "test or build execution", "native UI", "provider/runtime/network scenarios", "Git mutations", "changes to shared progress, manifests or documents"],
+    "verificationMeaning": "All verification entries below are proposed implementation acceptance procedures, not observed passes. The preflight report itself is checked by readback."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-AUTHORITY",
+      "classification": "transitive foundation, not a new explicit DAG edge",
+      "packages": ["WP-01", "WP-02", "WP-03", "WP-04", "WP-51"],
+      "specEvidence": ["docs/macro-integration/21-implementation-plan.md:5-7,624,793,1022-1053", "plans/macro-integration/work-packages.json:29478-29484,29889-29919"],
+      "sourceEvidence": "registerMeetingHandlers ignores _ctx for capture/finalize and accepts actorId/grant arguments (meetings.ts:399-450). buildMeetingCaptureGrant constructs a client grant (capture-rpc.ts:30-41). MeetingJournal is standalone filesystem persistence, not the shared command authority.",
+      "requiredPrerequisite": "Accepted transport-derived principal, canonical registry/composite FK, current resource ACL/policy epoch, command request-hash/idempotency/CAS transaction/outbox, and explicit writer-mode fence. Never use caller-supplied consent principal IDs or renderer grants as proof. Shared calls cannot enter local journal writers; allow-all does not override ACL."
+    },
+    {
+      "id": "FG-READ-PROJECTIONS",
+      "classification": "WP-06 is transitive through WP-39; offline and attention/context capabilities are implicit completeness gates",
+      "packages": ["WP-05", "WP-06", "WP-07", "WP-36"],
+      "specEvidence": ["docs/macro-integration/21-implementation-plan.md:793", "docs/macro-integration/22-test-plan.md:197-222", "plans/macro-integration/work-packages.json:29416-29438"],
+      "sourceEvidence": "searchVisible only filters an in-memory MeetingShareRecord recap/privateNotes (sharing.ts:49-53); MeetingPageState lacks queued/loading/retryable states (meeting-page-model.ts:1); selected UI has no recording domain subscription.",
+      "requiredPrerequisite": "Common ACL-filtered extractor/delete/watermark, durable replay/projection and offline command policy, event/activity/attention consumers and acting-user domain tool registration. Request contracts from their owners without assuming implementation or creating a calls-specific second projection/message/notification store."
+    },
+    {
+      "id": "FG-DERIVED-SOURCE-RETENTION",
+      "classification": "hidden acceptance integration gate; downstream packages must not be added as startup DAG dependencies",
+      "packages": ["WP-34", "WP-50", "WP-47"],
+      "specEvidence": ["plans/macro-integration/work-packages.json:29391-29393", "docs/macro-integration/21-implementation-plan.md:693,1004-1018,944-963", "docs/macro-integration/22-test-plan.md:148-157,210-214"],
+      "sourceEvidence": "deleteOwnedCopies cannot delete anything (retention.ts:21-41), and revokeMember merely filters members/clears links (sharing.ts:62-64). LocalMeeting includes transcript and summary but no source-invalidated/consent state (meetings-local.ts:84-105).",
+      "requiredPrerequisite": "Define source-policy/tombstone invalidation interface now with WP-39/WP-06 and provenance owner; later verify existing derived transcript/summary/search/context references are withdrawn after retention/revoke. WP-34 and WP-47 depend on WP-33: waiting for their implementation before starting WP-33 creates a cycle. Absence of derived consumers today does not make the full retention/summary acceptance N/A; leave end-to-end claim pending."
+    },
+    {
+      "id": "FG-RUNTIME-LICENSE",
+      "classification": "operational and release prerequisite beyond explicit package edges",
+      "packages": ["WP-48"],
+      "specEvidence": ["plans/macro-integration/work-packages.json:29395-29396,29440-29441,29916-29919", "docs/macro-integration/21-implementation-plan.md:967-983,1050-1053", "docs/macro-integration/22-test-plan.md:7,28,145-157"],
+      "sourceEvidence": "ROOM_PROVIDER_DECISION is null/undecided and roomCapabilityEnabled returns false (rooms.ts:12-16,41-43). No declared preview worker directory was found.",
+      "requiredPrerequisite": "Real isolated egress/object readback; pinned ffmpeg binary/build flags/codecs/license/SBOM and enforceable CPU/memory/time/network sandbox; independently probed recording capability. Never enable room/recording based on fixtures or copy upstream code absent the license decision."
+    },
+    {
+      "id": "FG-CONTRACT-POLICY-DECISIONS",
+      "classification": "unresolved published contract details, not explicit DAG edges",
+      "specEvidence": ["plans/macro-integration/work-packages.json:29343,29391-29393,29478-29507,29881-29882,30417-30448", "docs/macro-integration/21-implementation-plan.md:7,685-687"],
+      "sourceEvidence": "staleConsent/approveThenRevoke are pure illustrative boolean/TTL helpers (security-policy.ts:41-48), not persisted participant consent transitions. finalize.ts completes a native intent without a media checksum.",
+      "requiredPrerequisite": "Lead must ratify consentVersion:string + consentingPrincipalIds at the public command boundary versus consentRevision:number in StartCallRecording, a strict mapping to immutable server consent evidence, StopRecording/GetPreview/webhook schemas, recording-revoke stop/redaction semantics, signed URL lifetime, retention/search-summary removal SLA, playable duration tolerance and resource limits. Numeric limits/SLA are not specified in the inspected WP-33 record; do not invent acceptance values. Reconcile two proposed migration names through the selected migrator, without duplicate object_asset/provider_receipt/common foundation tables."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/calls/contracts.ts",
+    "apps/workspace-service/src/modules/calls/commands.ts",
+    "apps/workspace-service/src/modules/calls/repository.ts",
+    "tests/macro-integration/wp-33.test.ts",
+    "apps/workspace-service/src/modules/calls/recording.ts",
+    "apps/workspace-service/src/modules/calls/egress-reconciliation.ts",
+    "apps/workspace-service/src/jobs/call-recording-preview.ts",
+    "services/rox-media-worker/src/preview.ts",
+    "apps/workspace-service/migrations/033_call_recording_consent_artifacts.sql",
+    "tests/macro-integration/call-recording-artifact-recovery.test.ts",
+    "apps/workspace-service/migrations/33-domain-contract.sql"
+  ],
+  "ownedNewFilesMeaning": "Exact normative newFiles array; not permission to create product files during preflight. calls/contracts.ts, commands.ts and repository.ts are also proposed by WP-31/32: after accepted predecessors these are extensions owned by the common calls-file integration owner, never overwritten independently. 33-domain-contract.sql is a proposed identifier; the selected migrator decides its physical filename and division of DDL with 033_call_recording_consent_artifacts.sql.",
+  "contributionPlan": [
+    {
+      "path": "packages/shared/src/workspace-domain/calls/contracts.ts",
+      "proposedSymbols": ["StartCallRecording", "StopCallRecording", "FinalizeCallRecording", "GetRecordingPreview", "RecordingArtifact", "RecordingConsentEvidence"],
+      "change": "Extend accepted calls contract with strict command and authorized read DTOs, canonical recording/file refs, independent raw/preview/transcript lifecycle, immutable participant/version consent evidence, receipt/policy epoch and sanitized errors. Align public request/response schemas with RoxCommand v2 and accepted result status/verification mapping; these names are proposed, not existing exports."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/calls/commands.ts",
+      "proposedSymbols": ["StartRecording", "StopRecording", "HandleEgressWebhook", "GetPreview"],
+      "change": "Register one domain execution path for HTTP/native/agent callers. Reject body actor, unknown fields and cross-workspace refs; enforce expectedRevision, immutable request-hash idempotency, current call/channel/guest rights and server-owned consent snapshot. Persist starting/queued intent and outbox before egress; ambiguous external effects remain reconciling/unknown, never blindly start twice."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/calls/repository.ts",
+      "proposedSymbols": ["persistRecordingIntent", "claimPreviewLease", "finalizeRecordingArtifact"],
+      "change": "Extend accepted PostgreSQL repository in the foundation transaction, never instantiate a second local store. Unique egress binding and verified provider event receipt, immutable consent evidence, common entity FK and revision/policy fences; final artifact association + call.recording_ready + preview job enqueue atomic. Job uniqueness follows recording_id/artifact_kind/input_checksum/processor_version; lease claims are not processed receipts."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/calls/recording.ts",
+      "proposedSymbols": ["startRecording", "stopRecording", "applyConsentRevocation"],
+      "change": "Use WP-31 LiveKit adapter and WP-32 participant snapshot; recheck policy/consent immediately before external start and stop on policy change under ratified semantics. Proposed safe default for lead approval: stop whole mixed capture, block publishing uncertain intervals, quarantine until redaction/policy verification, emit durable stop/redaction receipt; this is a proposal, not a published decision."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/calls/egress-reconciliation.ts",
+      "proposedSymbols": ["reconcileEgress", "finalizeEgressArtifact"],
+      "change": "Consume verified WP-32 webhook authentication boundary; scope known egress binding to workspace/provider/account and durable provider event ID; reconcile independently with provider/object metadata. Use WP-39 finalize on size/hash/codec-valid private object only; repeat/crash after write recovers the same stable artifact ref. Unknown egress, forged callback or checksum mismatch cannot publish."
+    },
+    {
+      "path": "apps/workspace-service/src/jobs/call-recording-preview.ts",
+      "proposedSymbols": ["runCallRecordingPreviewJob"],
+      "change": "Use foundation job leases with fencing token, bounded attempts/backoff/DLQ and policy recheck at claim/write/publish. Process only finalized input checksum. Reconcile output after crash before rewriting; publish recording.preview_ready exactly once for successful current job. Lease expiry recovers killed worker; old lease cannot commit. Preview job never writes transcript ready or promotes unfinished raw media."
+    },
+    {
+      "path": "services/rox-media-worker/src/preview.ts",
+      "proposedSymbols": ["createRecordingPreview"],
+      "change": "Pinned sandboxed ffmpeg/ffprobe adapter with fixed args and validated input/output paths, CPU/memory/wall-time/output-size limits, restricted protocols/no network egress and sanitized failure classes. Validate decodability/codec/duration before WP-39 finalization; hostile/truncated input times out or quarantines. An executable must supply this behavior, not an echo/mock URL."
+    },
+    {
+      "path": "apps/workspace-service/migrations/033_call_recording_consent_artifacts.sql",
+      "proposedSymbols": ["recording consent/egress/artifact/job DDL"],
+      "change": "Add immutable consent/version/participant evidence, egress uniqueness, recording-to-WP-39 file/object association, artifact checksum/size/codec/retention label and unique preview job key using accepted common tables and composite workspace/entity identity. Coordinate provider_receipt and object_asset ownership with WP-04/WP-39 before DDL; do not duplicate them."
+    },
+    {
+      "path": "apps/workspace-service/migrations/33-domain-contract.sql",
+      "proposedSymbols": ["normative migration identifier"],
+      "change": "Root selected migrator assigns actual artifact name; map every common constraint/index/forward-and-rollback rule to applied DDL receipt. This identifier and 033_call_recording_consent_artifacts.sql must not both create the same tables."
+    },
+    {
+      "path": "tests/macro-integration/wp-33.test.ts",
+      "proposedSymbols": ["WP-33 consent/recording/authorization acceptance"],
+      "change": "Exercise real domain transport with W1 actors A/B/C and guest/agent ACL, strict schemas, consent decline/revoke, playable media hash/duration, URL expiry and all nine acceptance rows; retain command/provider/outbox readback. Future real provider/UI acceptance remains distinct from isolated deterministic contract tests."
+    },
+    {
+      "path": "tests/macro-integration/call-recording-artifact-recovery.test.ts",
+      "proposedSymbols": ["egress/artifact/lease crash-recovery acceptance"],
+      "change": "Deterministic crash boundaries before/after intent commit, provider success, object write, DB finalize, event ACK and preview publication; duplicate/out-of-order callbacks, killed worker fencing, hostile media and retention failure. Assert canonical refs, one finalized artifact/job/event and immutable request-hash receipt, not just nonempty output. Catch ready-before-finalize mutation and independent holdout separately from infrastructure errors."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/meetings/model.ts",
+      "symbol": "Meeting / MeetingEntityRef / MEETING_KIND / OperationResultV2 / isUiVerified",
+      "change": "Keep MEETING_KIND='call' and canonical scoped identity. Extend call read model with typed recording/file refs and separate recording/preview status + consent revision/receipt metadata from accepted calls contracts; do not equate Meeting.completed or start intent with recording ready. Preserve production+succeeded+verified gating and standalone sourceBinding semantics.",
+      "reason": "Current Meeting only contains archiveGranted/sourceBinding; no persisted recording artifact or consent evidence. Avoid a second Meeting identity or false live success."
+    },
+    {
+      "path": "packages/server-core/src/meetings/rooms.ts",
+      "symbol": "ROOM_PROVIDER_DECISION / joinRoom / roomCapabilityEnabled",
+      "change": "Via WP-31/52 owner, consume genuine provider/capability readiness and authenticated WP-32 participant/guest authority. Recording capability separately requires egress/object/media-worker readiness and persisted consent; boolean recordingConsent is not proof. Keep disabled result on missing capability.",
+      "reason": "Current provider/license are null and every join fails; merely flipping decided cannot create media/recording."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/meetings.ts",
+      "symbol": "registerMeetingHandlers / handleCapture / ROOM_JOIN / FINALIZE / MEETING_HANDLED_CHANNELS",
+      "change": "Route shared Start/StopRecording and authorized preview through accepted common domain dispatcher with ctx-derived principal, RoxCommand v2 validation/idempotency/CAS and current ACL/consent fences. Do not reuse _ctx plus body actorId/grant or hardcoded recordingConsent:true. Preserve native capture/import/finalize only under explicit standalone writer mode; ensure LIST/GET/SEARCH use shared ACL-filtered projection in shared mode. Register supported channels only after dispatch and capability contracts exist.",
+      "reason": "Current capture/finalize ignore context and call local journal intent; ROOM_JOIN hardcodes consent. Local in-memory jobStores cannot be durable preview queue."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+      "symbol": "MeetingsWorkspace / MeetingsElectronApi / onStart / load / captureState",
+      "change": "Extend existing Call detail, not a second surface: server-evidenced participant opt-in/decline/version, recording indicator, start/stop receipt states, authorized playback/preview with processing/retry/quarantine and separate transcript readiness. Shared mode uses domain command principal and canonical refs, never buildMeetingCaptureGrant for consent. Explicit loading/empty/denied/offline_queued/retryable_error/applied_verified + refresh/reconnect; local device capture remains separate. All changed labels/status text via t(), with parity across 10 existing locales through their owner.",
+      "reason": "Current onStart only native intent/device fallback; no consent UI, playable element or recording DTO. Raw capture status and several labels are currently printed directly."
+    },
+    {
+      "path": "packages/server-core/src/meetings/finalize.ts",
+      "symbol": "applyNativeFinalizeIntent / isNativeBinding",
+      "change": "Keep native journal intent behavior only in standalone mode behind common writer-mode routing. Shared recording finalization uses WP-33 reconciliation + WP-39 object finalize, not this status-only journal transition; expose artifact readiness only from verified shared read model.",
+      "reason": "Native completed commits one status event with empty outbox and no ASR/media object validation; it must not prove playable recording."
+    },
+    {
+      "path": "packages/server-core/src/meetings/sharing.ts",
+      "symbol": "MeetingShareRecord / audienceRecap / searchVisible / revokeMember",
+      "change": "For shared recordings, read grant/guest expiry/policy epoch via common authority and WP-39 signed-read capability. Extend artifact/source links using canonical refs; revoke fences future reads, active capture policy and dependent search/summary/context invalidation receipts. Preserve local private-note filtering/external-retained honesty; do not implement another members/links store as shared authority.",
+      "reason": "Pure members array and cleared links do not revoke remote tokens, signed assets, recording consent or derived projections."
+    },
+    {
+      "path": "packages/server-core/src/meetings/security-policy.ts",
+      "symbol": "actorFromRpc / staleConsent / approveThenRevoke",
+      "change": "Replace illustrative recording decisions in real shared flow with server-owned immutable consent evidence + participant membership/version/current policy-epoch checks; fence start/retries and subscribe active recording to revoke. Body actor is rejected by strict transport schema, not merely ignored. Define lead-approved stop/redaction outcome and receipt; retain standalone permission helper only where actually needed.",
+      "reason": "Helpers are pure TTL/boolean checks with no durable participant evidence and do not execute a recording stop."
+    },
+    {
+      "path": "packages/server-core/src/meetings/retention.ts",
+      "symbol": "deleteOwnedCopies / nativeDeleteAvailable / retentionNativeEvidence",
+      "change": "Shared mode delegates to WP-39 owned object/key deletion with durable receipt and legal-hold/retention policy, source tombstone and idempotent projection/derived-source removal within approved SLA. Read access fails after deletion/key revoke including previously issued URLs; retain typed unknown/retry/DLQ when physical delete fails. Preserve unsupported standalone native deletion and externalRetained truth until a real implementation exists.",
+      "reason": "Current function always returns ownedCopiesDeleted:false, unsupported/U1; this cannot satisfy deletion evidence."
+    },
+    {
+      "path": "apps/electron/src/shared/meetings-local.ts",
+      "symbol": "LocalMeeting / LocalMeetingPatch / MeetingsLocalApi / LocalMeetingAudio / LocalMeetingTranscriptState",
+      "change": "Coordinate WP-35 backward-compatible persisted consent metadata distinguishing device recording from outbound upload/cloud processing; any shared publishing command references canonical call alias and server-verified consent revision. Keep recStart/recChunk/recStop/readAudio/recover/transcribe usable offline and local audio private. Coordinate schema migration/readback rather than silently making old recordings upload-eligible.",
+      "reason": "Current types describe entirely local audio/Whisper and independent transcript/summary; neither participants:string[] nor microphone permission proves upload or shared consent."
+    },
+    {
+      "path": "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+      "symbol": "sharing-retention describe / revoked members / native delete cases",
+      "change": "Preserve meaningful standalone private-note/external-copy behavior coverage. Add domain-backed revoke/URL/deletion/derived-source scenarios with applied receipts through accepted fixture authority, and remove incidental hardcoded U1/not_run/always-false assertions if that behavior is replaced. Never rewrite them to assert shared ready from a fixture.",
+      "reason": "Existing tests demonstrate pure filtering and intentional unsupported native operations, not private storage deletion or signed URL revocation."
+    },
+    {
+      "path": "packages/server-core/src/meetings/__tests__/security.test.ts",
+      "symbol": "meeting-agent adversarial security / actor / approve then revoke cases",
+      "change": "Add actual shared transport rejection for body actor, outsider/guest-expiry and agent allow-all, stale consent revision, revoke-before-start and revoke-during-capture race with provider-stop/readback receipt. Replace illustrative-only consent proof with observable domain behavior; preserve substantive existing cross-workspace/private-source defenses.",
+      "reason": "A pure approveThenRevoke(true,true) assertion cannot prove a provider was stopped or recording was prevented."
+    },
+    {
+      "path": "packages/server-core/src/meetings/capture.ts",
+      "symbol": "applyNativeCaptureIntent / TARGET_STATUS",
+      "change": "Via common routing/writer-fence owner, enforce standalone-only entry for journal intent. Shared recording commands must not use stop:'completed' or native-journal binding as artifact/transcript readiness. Preserve local start/pause/stop regression behavior.",
+      "reason": "Direct import of RPC; current function mutates status only and stop immediately marks completed."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/capture-rpc.ts",
+      "symbol": "buildMeetingCaptureGrant / applyCaptureIntentViaRpc",
+      "change": "Retain explicitly local device intent adapter; shared recording adapter uses accepted strict domain command, server principal and consent evidence, with no synthesized mic/send grant. Map shared consent/provider/pending_fence/quarantine errors into localized UI states without treating native sourceBinding as shared readback.",
+      "reason": "Direct import of MeetingsWorkspace; renderer-generated grant and native-journal status checks are standalone mechanics."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/meeting-page-model.ts",
+      "symbol": "MeetingPageState / MeetingArtifactView / MeetingPageItem / toMeetingPageItems / listStateFromResult",
+      "change": "Extend typed shared projection for recording/file refs, finalized checksum/size/duration and independent preview/recording/transcript state. Preserve projection fields in toMeetingPageItems; represent loading/unconfigured/unavailable/pending_fence/offline_queued/retryable states rather than mapping absent runtime to empty or success.",
+      "reason": "Direct import of UI; current mapping drops artifacts and has no loading/retry/queue state even though MeetingArtifactView exists."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.meetings / accepted common domain operation registry",
+      "change": "Coordinate foundation dispatcher owner to expose nativeRpc domain.call.startRecording exactly as normative transport specifies and strict Stop/GetPreview operations once schemas are accepted. Keep existing meetings:* capture channels for explicit standalone mode; do not introduce a parallel shared execution path. Update existing protocol/type/preload registration through owning root integration after discovery of actual dispatcher exports.",
+      "reason": "Current meetings channel list only has local capture/import/finalize; dispatch/protocol discovery beyond direct import is prerequisite, not a fabricated existing symbol."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-33 section / dependency and ownership notes",
+      "change": "Lead records accepted consent schema mapping, Stop/GetPreview/webhook DTOs, revoke/redaction policy, migration ownership, real capability prerequisites and pending downstream retention/provenance gate. Add implementation/readback/recovery evidence only after actual execution.",
+      "reason": "Published section gives goals but not numeric SLA/timeouts, stop semantics or full secondary API contract; no implementation is claimed."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "CALL-01 / feature completeness checklist / negative-control evidence",
+      "change": "Lead binds WP-33 exact revision/schema/image, isolated room/object prefix, consent participant fixture, playable duration tolerance, approved retention SLA and worker kill boundaries to future observed receipts; include separate local regression and provider-independent contract coverage.",
+      "reason": "Current file is explicitly a future verification plan; assertions require real surface/provider evidence and cannot be passed by fixture output."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Recording after consent stores playable media",
+      "currentEvidence": "rooms.ts:12-16,26-43 is fail-closed; capture.ts:57-103 persists native status/binding only; MeetingsWorkspace.tsx:92-122 has no shared consent/player.",
+      "requiredChange": "Proposed StartRecording in recording.ts/commands.ts validates server consentVersion/revision+participant set, persists intent, starts/reconciles egress and finalizes through WP-39; UI displays opt-in/decline and authorized playable asset only after codec/hash/size validation.",
+      "verification": "Future CALL-01 isolated A/B streams: explicit consent revision audit and recording indicator, independent egress/object readback, decoder playback and hash/size/duration within approved tolerance; decline yields no recording artifact while call policy remains respected.",
+      "missingPrerequisite": "Accepted WP-31/32/39/52 receipts, consent schema/policy, provider/worker capabilities and duration tolerance.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "duplicate webhook one record",
+      "currentEvidence": "Declared egress-reconciliation.ts/repository.ts absent at inspection; native MeetingJournal.commit only deduplicates local commandIds (journal.ts:121-130), not provider callbacks.",
+      "requiredChange": "Verified webhook ingress and unique provider event/egress binding in shared repository; duplicate callback returns existing receipt/canonical recording and cannot emit a second ready event.",
+      "verification": "Replay identical and differently identified callback for same egress across restart and concurrent consumers; DB unique recording/provider receipt/event counts and authorized canonical readback unchanged.",
+      "missingPrerequisite": "WP-32 webhook authentication/participant interface, foundation transactional receipt/inbox and WP-39 artifact API.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "killed preview worker retries",
+      "currentEvidence": "RPC jobStores is a process-local Map (meetings.ts:36-63); declared preview job/worker not found. Native journal outbox is not a preview lease implementation.",
+      "requiredChange": "Proposed runCallRecordingPreviewJob uses persistent unique job key, expiring fenced lease, bounded retry/DLQ and reconciliation of previous output; commit only with current input checksum/policy epoch/lease token.",
+      "verification": "Kill real preview worker after claim, during ffmpeg and after output write; restart/reclaim one job, observe bounded retries and one usable preview; stale worker result cannot commit. Keep retry/DLQ trace.",
+      "missingPrerequisite": "WP-52 real worker runtime and common lease contract; WP-39 output-finalize; approved resource/retry limits.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "partial object unavailable",
+      "currentEvidence": "applyNativeFinalizeIntent commits completed without object validation (finalize.ts:54-70); LocalMeetingAudio is a local metadata type, not private object finalization.",
+      "requiredChange": "Use WP-39 pending/quarantined/finalized object state; checksum/size/codec validation before finalized artifact association/outbox; GetPreview/SignedDownload must deny pending, corrupt, missing and unauthorized objects.",
+      "verification": "Interrupt upload and object-write/DB-finalize boundary; raw/preview API, signed download and UI cannot read partial asset or report ready; resumed validated finalize produces one artifact. Ready-before-finalize mutation must fail this assertion.",
+      "missingPrerequisite": "Accepted WP-39 private object finalization/read boundary and policy-filtered recording queries.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "signed URL expires",
+      "currentEvidence": "Sharing uses members/links arrays (sharing.ts:9-17,44-64); MeetingArtifactView.url is just optional string (meeting-page-model.ts:15-26), not signed access verification.",
+      "requiredChange": "GetPreview reuses WP-39 current ACL/guest-expiry/policy checks and bounded signed-read TTL; do not persist token values or convert room membership to recording access. Denied reads omit asset title/metadata/count.",
+      "verification": "Authorized URL works before expiry and fails at/after it through the actual asset endpoint; forged/cross-workspace/guest-not-granted read denied. Re-fetch requires current grant; cached/CDN path cannot extend validity.",
+      "missingPrerequisite": "WP-39 signed access mechanism and approved TTL; WP-52 actual asset host/key/caching configuration.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Duplicate egress webhook and worker crash after object write produces one finalized artifact.",
+      "currentEvidence": "No egress receipt/object-reconciliation seam exists in inspected sources; journal dedupe does not cover provider object write.",
+      "requiredChange": "egress-reconciliation.ts+repository.ts keep stable recording/artifact/job identity and verified object key/checksum, reconcile preexisting object before retry; atomically finalize association, receipt, ready event and preview job once. Preview publication follows fenced job receipt.",
+      "verification": "Duplicate egress webhook while process killed after provider/raw or preview object write before DB commit; recover/replay and assert one finalized artifact for each requested kind, one association/event/job, same canonical IDs and verified bytes; no orphan becomes accessible.",
+      "missingPrerequisite": "WP-39 finalize idempotency and object metadata readback; WP-04 transaction/outbox and real kill/restart harness.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Participant revoke before capture start rejects; revoke while recording triggers defined stop/redaction behavior with receipt.",
+      "currentEvidence": "security-policy.ts:41-48 is pure TTL/boolean logic; policies.ts:45-62 checks only supplied grant. ROOM_JOIN passes recordingConsent:true (meetings.ts:387-391), capture ignores authenticated context.",
+      "requiredChange": "Server immutable consent evidence/policy epoch from WP-32/03; revoke fence immediately before egress and at retry/publication. Persist stop/redaction command/provider receipt and quarantine/redact intervals/derived outputs per ratified policy; prevent further append/publish/read once fenced.",
+      "verification": "Revoke race after consent commit but before provider start denies with no capture; revoke while active proves provider stop/readback and interval/redaction outcome/receipt, future URL/context denied; outsider or allow-all agent cannot bypass.",
+      "missingPrerequisite": "Defined revoke/stop/redaction semantics, WP-32 participant change stream, WP-51 fence and actual egress stop capability.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Truncated/hostile media times out/quarantines; ffmpeg preview retry never marks raw media/transcript ready.",
+      "currentEvidence": "No declared media-worker/preview files found; native capture/finalize use completed statuses independent of raw media and ASR (capture.ts:18-22; finalize.ts:1-3). Local transcript is separately typed (meetings-local.ts:48-58).",
+      "requiredChange": "Proposed createRecordingPreview enforces fixed safe args/protocol and runtime resource bounds, validates decodability/duration and quarantines bad media. Distinct raw artifact, preview job/output and transcript states; preview retry only transitions its own stage after finalized input.",
+      "verification": "Deterministic truncated, malformed codec, excessive duration/size and hostile URL/path media produce timeout/quarantine with bounded resources/no network; retry preserves raw validation result and transcript pending/unavailable, never synthetic ready. Observe real ffmpeg process termination.",
+      "missingPrerequisite": "Pinned audited ffmpeg/codecs/license, actual worker sandbox enforcement and approved bounds/timeout policy.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Object or key deleted on retention -> signed URL fails and search/summary source removed within defined SLA.",
+      "currentEvidence": "retention.ts:21-41 always unsupported/ownedCopiesDeleted:false; sharing.ts:49-64 only filters an in-memory recap and members; LocalMeeting.summary/transcript persist independently with no invalidation marker.",
+      "requiredChange": "WP-39 owned object/key deletion receipt + retention/legal-hold policy and source tombstone. Propagate idempotent source invalidation to authorized search, summary/provenance/context through common outbox; block reads immediately by policy fence while physical cleanup retries, preserving audit/external-copy truth.",
+      "verification": "Issue real signed URL; expire retention or delete/revoke owned key/object and prove old/new URL failure, source removal from real search and existing derived summary/context by approved SLA/watermark. Restart delete/invalidation worker and replay without resurrection; legal hold prevents deletion with explicit receipt.",
+      "missingPrerequisite": "Approved retention/removal SLA and key/CDN semantics, WP-39/WP-06 contracts, WP-50 provenance invalidation; full derived-summary integration with downstream WP-34/47 remains pending, not N/A.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Integration: Recording after consent stores playable media; duplicate webhook one record; killed preview worker retries; partial object unavailable; signed URL expires",
+      "currentEvidence": "Existing package tests only exercise native/pure helpers; docs/22-test-plan.md:145-157 requires real recording/object/provider readback.",
+      "requiredChange": "Implement all five paths above through tests/macro-integration/wp-33.test.ts and existing changed UI/domain API, with isolated provider and independent asset decoder readback.",
+      "verification": "Future bun test tests/macro-integration/wp-33.test.ts plus real CALL-01 Electron/browser execution and independent egress/object/playback proof bound to implementation SHA/schema/image; fixture tests alone do not pass provider acceptance.",
+      "missingPrerequisite": "Integrated dependencies and all capability/policy gates; no test/runtime executed in this preflight.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Negative-control: Seed broken calls boundary: unauthorized actor or dropped/duplicated event must fail WP-33 acceptance",
+      "currentEvidence": "security.test.ts only calls helpers; normative negativeControl at work-packages.json:30355-30358 specifies ready-before-object-finalize mutation and independent holdout.",
+      "requiredChange": "Transport-level outsider/forged actor rejection and event/reconciliation invariant assertions; inject premature ready plus an independent unauthorized/dropped/duplicated variant in isolated evaluation, not production code.",
+      "verification": "Establish passing real baseline, seed mutation, observe specific privacy/finalize/count assertion fail, restore baseline; independent evaluator holdout. Provider unavailable or setup timeout cannot count as caught mutation; preserve seed 20260963.",
+      "missingPrerequisite": "Accepted runnable slice and mutation/evaluator harness from integration owner.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Persistence-recovery: Restart between persisted command and reply; state/receipt/canonical ID remain consistent",
+      "currentEvidence": "MeetingJournal dedupes commandIds and CAS locally (journal.ts:112-131), but RPC has no shared request-hash command receipt and uses local Maps.",
+      "requiredChange": "WP-04 transaction commits recording intent/command receipt/outbox before reply; identical retry yields same canonical recording/result receipt, altered payload same key rejected; reconcile unknown egress without blind repeat.",
+      "verification": "Crash after commit before reply, after external success before provider receipt, after finalized object before DB finalize and before event ACK; restart/retry from UI/API and compare requestHash/receipt/ref/revision/event count, including stale CAS/idempotency conflict.",
+      "missingPrerequisite": "Shared command transaction/authority and egress reconciliation interfaces plus restart harness.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "MeetingsWorkspace.tsx:145-199 renders list/start/delete/status only, no consent/player; onStart is native/device intent.",
+      "requiredChange": "Extend same Meetings/Call detail with server consent, recording indicator, playback and preview processing/error/retry/retention states; local recording stays distinct. t() all changed strings with 10-locale parity.",
+      "verification": "Actual A/B consent/decline/start/stop/playback plus permission denied/revoke/loading/offline/reload; visual/ARIA and focus/keyboard evidence on exact revision. Verify preview duration, not presence of element.",
+      "missingPrerequisite": "Accepted shared call surface/router and localized DTO/status contract; native/UI runs forbidden here.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "MeetingEntityRef uses Rox2 scoped ref and MEETING_KIND='call' (model.ts:11,68); UI selected item currently uses plain id (meeting-page-model.ts:28-36).",
+      "requiredChange": "Expose recording/file refs under canonical Call detail deep link through existing resolver; do not create second Meeting/call identity or raw object-key route.",
+      "verification": "Open authorized canonical call/recording link from event and restored navigation; history/reload maintains same ref; revoked/missing/foreign refs return typed nonleaking state.",
+      "missingPrerequisite": "WP-31 call link binding and shared router owner interface; router implementation outside scoped inspection.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "Meeting is Call-compatible, revisioned and workspace-scoped (model.ts:68,102-120); no recording entity/file/media_job DTO present.",
+      "requiredChange": "Extend accepted calls/contracts and model projection with recording/file/media_job refs, consent revision, artifact metadata and independent stages; canonical registry/alias ownership with scoped FK, no second entity store.",
+      "verification": "Strict schema rejects foreign/invalid refs, unknown fields and unsupported schema; repeated egress/restart keeps identical scoped recording/file/call refs and revisions.",
+      "missingPrerequisite": "WP-02 registry and accepted WP-31/39 contract types.",
+      "state": "PARTIAL_FOUNDATION_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "MeetingJournal local filesystem CAS/dedup/quarantine exists (journal.ts:82-131); no declared shared calls repository/migrations found.",
+      "requiredChange": "Shared authority PostgreSQL transaction with immutable consent/provider receipts, finalized object linkage and fenced media jobs; preserve local journal standalone and explicit import/projection route.",
+      "verification": "Apply selected migration and capture schema receipt; restart all service/worker boundaries and read same refs/consent/hash/receipt, one event/artifact/job; forward repair preserves recent writes.",
+      "missingPrerequisite": "Selected migrator, common table ownership and dependency applied migrations.",
+      "state": "PARTIAL_FOUNDATION_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "handleCapture and FINALIZE accept body actor/grant and write native intent (meetings.ts:399-450). Normative primary operation is call.startRecording.",
+      "requiredChange": "Accepted RoxCommand v2 Start/StopRecording through common transport dispatcher, authenticated principal, expectedRevision/idempotencyKey/requestHash/consent fence. Map provider queued/reconciling/ambiguous truthfully.",
+      "verification": "HTTP and nativeRPC same actor/result: unauthorized, workspace mismatch, invalid payload, stale CAS, same-key changed payload, missing/stale/revoked consent, unavailable provider and unknown external effect/pending fence; no provider side effect on rejected request.",
+      "missingPrerequisite": "WP-04/WP-51 dispatcher contracts and resolved public/domain schema mapping.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "LIST/GET/SEARCH use native catalog and lack shared ACL path (meetings.ts:153-176); GetPreview not present in inspected entrypoint.",
+      "requiredChange": "Authorized bounded typed recording/preview query over canonical authority/projection with current ACL and authorized cursor; omit hidden title/metadata/totals; signed access only finalized objects.",
+      "verification": "Owner/member/guest-expiry/outsider/revoked reads and cursor tampering; denied asset metadata absent and finalized read matches hash/version after restart.",
+      "missingPrerequisite": "WP-39 signed-read and WP-31 common query DTO/authorization contract; GetPreview schema approval.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "Native capture/finalize commit outboxEntries:[] (capture.ts:101; finalize.ts:68); UI load is one-shot, not shared recording event replay.",
+      "requiredChange": "Transactional call.recording_ready/recording.preview_ready events after finalize, consumer inbox dedup/fenced revisions, authorized subscription/replay/gap handling; media presence separate from durable domain readiness.",
+      "verification": "Duplicate/out-of-order event and disconnect/reconnect rebuild identical current ready projection; revoke closes subscription; no event published for pending/quarantined object.",
+      "missingPrerequisite": "WP-04 outbox/inbox and shared delivery/projection owner contracts.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "MeetingGrant local helper checks revokedAt, actor/workspace/device/capability (policies.ts:45-62); it does not prove server recording consent or guest policy. Capture omits action.now expiry check.",
+      "requiredChange": "Common current call/channel/guest grant, server actor and consent evidence with policy epoch at start/stop/retry/read; include current time for expiry and fencing; allow-all remains separate execution policy.",
+      "verification": "A/B/C/guest/Agent-V matrix; forged principal list/grant and body actor denied; revoke-before-start and active capture race negative paths with no private media/metadata leakage.",
+      "missingPrerequisite": "WP-03/32/51 authority and ratified participant consent lifecycle.",
+      "state": "PARTIAL_FOUNDATION_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "audienceRecap/searchVisible/revokeMember are pure member-array checks; native export unsupported (sharing.ts:44-64).",
+      "requiredChange": "Recording/file access explicit from common grants; room guest is not automatic asset recipient; policy-bounded signed links expire/revoke and derived audience checks preserve private notes/source provenance.",
+      "verification": "Permitted B asset opens; G with room-only grant and C denied; expire/revoke issued asset link and summary share loses source permissions; external copies remain correctly labeled.",
+      "missingPrerequisite": "WP-39 access contract, WP-32 guest scopes and provenance invalidation owner.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "searchVisible searches only a string recap and excludes private note match (sharing.ts:49-53); no recording extractor/tombstone/watermark in inspected package.",
+      "requiredChange": "Recording/call metadata and artifact source refs flow into existing WP-06 search projection; independent transcript producer supplies transcript terms, current ACL overrides stale index, retention removes source/backlinks by approved SLA.",
+      "verification": "Known authorized call metadata/recording reference searchable after watermark; outsider/guest/revoked cannot see snippet/title/count; deletion/replay never resurrects source. Transcript/summary scenario remains pending until producers integrated.",
+      "missingPrerequisite": "WP-06 transitively via WP-39; downstream WP-34 source contract and retention SLA.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "Existing inspected Meeting/recording paths have no mention occurrence/source revision or notification consumer. Published checklist requires target policy (22-test-plan.md:211).",
+      "requiredChange": "Coordinate common mention owner for call/recording refs in existing discussion/context with source revision and target ACL; do not infer mention from participant opt-in list or introduce calls-only message store. Explicitly document valid mention-bearing sources through accepted contract.",
+      "verification": "Mention authorized B on call-linked existing discussion resolves canonical call/source revision once; denied recording target metadata/notification is filtered; revoke removes access. Never mark N/A just because consumer is absent.",
+      "missingPrerequisite": "Accepted mention/discussion integration interface; outside scoped implementation, requires root owner request.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "No recording-ready recipient/dedup/seen state in inspected files; durable events listed by normative WP-33.",
+      "requiredChange": "Route ready/failure/revoke notifications through common attention consumer with policy-filtered recipients, semantic dedup by event/source and existing seen/done/mute/snooze behavior; no separate notification ledger.",
+      "verification": "Replay webhook/ready event yields one permitted recipient notification; denied/expired guest gets no asset title/URL; seen/done survives restart/second client and existing mute policy applies.",
+      "missingPrerequisite": "Accepted common attention/event contract and policy decision for recording event notification recipients.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event supports actor/causation/correlation/revision (platform-contract.ts:131-141), native capture lacks provider/consent activity receipts.",
+      "requiredChange": "Common outbox/audit records consent transitions, command/provider receipts, object finalize, preview, stop/redaction and retention with canonical source/actor/revision/policy epoch, sanitized payload and separate audit retention.",
+      "verification": "Authorized activity readback links one command/provider/event chain across retry/crash; privacy log/audit checks exclude tokens/raw transcript/media/private bodies; retained audit does not expose deleted source.",
+      "missingPrerequisite": "Foundation audit/outbox contracts and approved privacy/retention payload policy.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Local grants explicitly do not bypass scopes via allow-all (policies.ts:1-3,45-62); no WP-33 domain recording tool entry was inspected/present in package.",
+      "requiredChange": "Root domain-tool owner exposes same typed recording command/query through accepted dispatcher with acting user + service principal, outbound execution grant and source provenance; consent cannot be minted by transcript instruction or model-supplied principal IDs.",
+      "verification": "Actual agent dispatcher authorized read/start returns same receipt/ref as UI; Agent-V allow-all denied; revoked consent/context invalidation blocks retry/read and mixed-audience result share hides source.",
+      "missingPrerequisite": "Accepted shared tool registry/context interface and WP-50 provenance boundary; not a separate agent store.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Native meetings:* capture/finalize protocol exists (channels.ts:998-1020); normative domain.call.startRecording and HTTP operation are not these native intent handlers.",
+      "requiredChange": "HTTP POST /v1/workspaces/{workspaceId}/commands/call.startRecording and nativeRpc domain.call.startRecording/MCP route one accepted domain dispatcher; additional stop/webhook/preview schemas strict and authenticated with sanitized typed DTOs.",
+      "verification": "Same payload/idempotency/principal across native, HTTP and agent/MCP produces canonical same receipt; schema/forged body actor/workspace/CAS failures identical; provider verification triad preserved.",
+      "missingPrerequisite": "Common operation registry and secondary DTO/result schema decisions, root transport owners integration.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Rox2Event has causationId/correlationId/aggregateRevision (platform-contract.ts:131-141); WP-33 requires commandId/policyEpoch/projectionWatermark/retry-DLQ metrics not implemented by inspected capture/preview paths.",
+      "requiredChange": "Use existing telemetry owner for command/provider/event/job correlation, consent policy epoch, object validation, lease/retry/DLQ counters/queue lag and projection watermark; redact transcript, tokens, raw email/body and object signed secrets.",
+      "verification": "Inject provider outage/worker kill/retention failure and inspect actual backlog/retry/DLQ traces; trace same receipt chain and scan logs for PRIVATE_WP-33 and fixture secret markers without leaking raw content.",
+      "missingPrerequisite": "Shared telemetry/privacy contract and runtime from WP-52; observability module itself not inspected outside scope.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "security.test.ts and sharing-retention.test.ts prove helper/native unsupported behavior; declared WP-33 integration/recovery tests absent at inspection.",
+      "requiredChange": "Add the two normative tests for all nine criteria, schema/auth/CAS/idempotency transitions, crash boundaries and seeded controls; update affected existing meaningful tests without pinning incidental implementation wording.",
+      "verification": "Future bun test tests/macro-integration/wp-33.test.ts tests/macro-integration/call-recording-artifact-recovery.test.ts and changed existing package tests; real surface/provider verification independently required. Preserve fixture seed 20260963 and sensitive holdout evidence.",
+      "missingPrerequisite": "Accepted dependencies, isolation/capability/policy gates and implementation; tests explicitly prohibited for this preflight.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "docs/21-implementation-plan.md:667-689 and docs/22-test-plan.md:138-157 describe planned behavior only, not execution.",
+      "requiredChange": "Root doc owners record actual behavior, consent and revoke semantics, URL TTL/retention SLA, secondary APIs, capability limits, private storage/ffmpeg license/resource policy, retry/reconcile/recovery, standalone/shared boundary and evidence links after implementation.",
+      "verification": "Documentation references accepted schema, migrated artifacts and observed SHA/image/receipts; no planned fixture or unsupported native function presented as live recording.",
+      "missingPrerequisite": "Final contract/policy and real implementation verification; this worker may only request patches.",
+      "state": "PLANNED_ONLY"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Native functions expose simple grant/config/journal errors; no egress ambiguity/quarantine/preview retry state (capture.ts:65-107; finalize.ts:29-74).",
+      "requiredChange": "Typed denied/consent_missing/stale/provider_unavailable/unknown_external_effect/reconciling/pending_fence/checksum_mismatch/quarantine/retryable/terminal states; independent raw/preview/transcript transitions and explicit retry/reconciliation affordance.",
+      "verification": "Provider unavailable, storage timeout, corrupt object, hostile media, expired consent and kill worker show correct user state/readback; never ready or success from unknown/queued result; reconnect recovery observed.",
+      "missingPrerequisite": "Accepted domain error/result schemas and dependency provider failure contracts.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "UI initializes empty and does not enter loading before list call (MeetingsWorkspace.tsx:64-85); model states have no loading.",
+      "requiredChange": "Explicit loading/stale/refresh/processing state for shared call/recording projection, command and preview query while keeping last authorized data only until policy invalidation; no false empty/success.",
+      "verification": "Delay shared list/consent/start/preview responses and refresh/reconnect; actual UI shows intended pending state, controls prevent duplicate command, old unauthorized data cleared on revoke.",
+      "missingPrerequisite": "Shared query/projection DTO and UI owner accepted state model.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "Absent workspace/API/channel causes empty list (MeetingsWorkspace.tsx:71-74); listStateFromResult defaults empty on zero count (meeting-page-model.ts:78-81).",
+      "requiredChange": "Separate genuinely no recording/declined recording from unconfigured runtime/unavailable egress/permission denied/pending artifact. Local no-audio state stays separate from shared capability readiness.",
+      "verification": "Zero legitimate recordings, consent declined, missing runtime, denied query and worker processing produce distinct localized empty/error/pending UI and no false ready asset.",
+      "missingPrerequisite": "WP-52 capability DTO and server-filtered query/state mapping.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "MeetingsLocalApi exposes offline recChunk/recover/readAudio/transcribe (meetings-local.ts:140-161); shared UI catch only sets offline, no durable queued consent/start command (MeetingsWorkspace.tsx:82-85).",
+      "requiredChange": "Preserve standalone audio/import/recovery with no automatic upload. Shared offline intent/replay uses common durable command/projection mechanism, stays offline_queued and cannot claim capture until provider/consent revalidated; revoke before retry blocks external side effect.",
+      "verification": "Disconnect/reload/reconnect with queued start, same idempotency receipt once; revoked queued command rejected/quarantined; no audio send before separate upload consent. Existing local record/import/playback/recovery remains usable network-disabled.",
+      "missingPrerequisite": "WP-05/WP-51 accepted replay/fence contract and WP-35 local-publishing consent coordination; offline local runtime not tested here.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Strict operation contract, migration/domain constraints and source privacy",
+      "currentEvidence": "Normative schemas at work-packages.json:29478-29877 and constraints at 29879-29928,30445-30448; current body-actor grant flow and commandIds-only journal do not implement them.",
+      "requiredChange": "Strict additionalProperties:false, required mutable expectedRevision and idempotency conflict requestHash, canonical result receipt and truthful provider states; common FK/alias/consumer constraints; unique egress/session evidence and job key; checksum/size/codec/retention metadata, private signed read, bounded sandbox. Preserve additive/backfill/quarantine/forward-repair migration rules and no sensitive log content.",
+      "verification": "Schema parity/compiled DTO gate, unauthorized-field rejection, applied migration/unique-key/FK readback, job/input fencing, alias scope collision, stale/replayed event controls and privacy checks. Never claim provider-ready from queued or unsupported result.",
+      "missingPrerequisite": "Foundation contracts/migrator/common table ownership, schema discrepancy resolution, approved sandbox/retention values and exact license audit.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Verification gate: actual changed surface and relevant failure/reload path; fixture is not live receipt",
+      "currentEvidence": "work-packages.json:29441 and docs/22-test-plan.md:7-9,145-157 explicitly require genuine surface/provider behavior. No implementation/runtime observed in preflight.",
+      "requiredChange": "Lead integration acceptance binds real Electron/browser/API/MCP/provider/object/worker proof to exact source SHA, image digest, schema and artifact hashes after dependencies and changes applied.",
+      "verification": "Observe all acceptance scenarios and current failure/reload coverage; retain UI/ARIA, canonical IDs/revision, typed API readback, DB counts, consent/command/provider/event receipts, projection watermark and seeded failure trace. Separate implemented/verified/delivered from this report.",
+      "missingPrerequisite": "Integrated implemented slice and independent acceptance runner; this report is not feature evidence.",
+      "state": "NOT_RUN"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-33 normative record / operations / migrations / acceptance","lineStart":29283,"lineEnd":30451,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0","inspection":"Selected ranges plus exact normative record supplied in dispatch; hash covers whole file."},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-33 / explicit dependencies / constraints","lineStart":667,"lineEnd":689,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-50 / WP-51 / WP-52 foundation gates","lineStart":1002,"lineEnd":1055,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"CALL-01 consent / playable artifact / reload / controls","lineStart":138,"lineEnd":157,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Feature completeness checklist","lineStart":197,"lineEnd":222,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"packages/core/src/meetings/model.ts","symbol":"Meeting / MEETING_KIND / MeetingEntityRef / isUiVerified","lineStart":9,"lineEnd":195,"sha256":"67b9b6f0f90315eb3cf537a1a3a73762d47427d74989aa8b82e2ca45ad7781d5"},
+    {"path":"packages/server-core/src/meetings/rooms.ts","symbol":"ROOM_PROVIDER_DECISION / joinRoom / roomCapabilityEnabled","lineStart":6,"lineEnd":43,"sha256":"5bab2a582a2f87ebc2e88bbb769d55fdfbc97e2fddb7e9acb0d6fe517e7cda88"},
+    {"path":"packages/server-core/src/handlers/rpc/meetings.ts","symbol":"registerMeetingHandlers / LIST / GET / SEARCH / jobStores","lineStart":36,"lineEnd":176,"sha256":"f229c26fa5b194570454af9d9c230243681dac258ea5935974e4cd982e83f263"},
+    {"path":"packages/server-core/src/handlers/rpc/meetings.ts","symbol":"ROOM_JOIN / handleCapture / START_CAPTURE / FINALIZE","lineStart":387,"lineEnd":453,"sha256":"f229c26fa5b194570454af9d9c230243681dac258ea5935974e4cd982e83f263"},
+    {"path":"apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx","symbol":"MeetingsWorkspace / load / onStart / captureState","lineStart":59,"lineEnd":199,"sha256":"c88204d2edabea775190a103cfa698fe28554dbd97895388d4e201066a4f69dd"},
+    {"path":"packages/server-core/src/meetings/finalize.ts","symbol":"applyNativeFinalizeIntent / isNativeBinding","lineStart":16,"lineEnd":78,"sha256":"1b628dcd177f27fecbf1ce1742d88101ac712f78948bba8fb7f6f0d0f1e2eea7"},
+    {"path":"packages/server-core/src/meetings/sharing.ts","symbol":"MeetingShareRecord / searchVisible / audienceRecap / revokeMember","lineStart":9,"lineEnd":64,"sha256":"1d9ecf62a485e1b5b708e9fe849051245d33d08c38d7ef27ea179229dbb2b203"},
+    {"path":"packages/server-core/src/meetings/security-policy.ts","symbol":"actorFromRpc / staleConsent / approveThenRevoke","lineStart":6,"lineEnd":48,"sha256":"463ea4e391b97f30f3c3c42514a6633a460b6ef8ff7715adc7b26f2d93657640"},
+    {"path":"packages/server-core/src/meetings/retention.ts","symbol":"deleteOwnedCopies / nativeDeleteAvailable / retentionNativeEvidence","lineStart":11,"lineEnd":42,"sha256":"d4ff0adc0435b97e3839060e943b3e3824b0181c65927a4d8bafec4b3d64f154"},
+    {"path":"apps/electron/src/shared/meetings-local.ts","symbol":"LocalMeeting / MeetingsLocalApi / LocalMeetingAudio / LocalMeetingTranscriptState","lineStart":35,"lineEnd":162,"sha256":"577d5de0a91d51483a0c639b82dbe063f3ca1e6f4c2f6c73b1f4edcf1fa2a2a4"},
+    {"path":"packages/server-core/src/meetings/__tests__/sharing-retention.test.ts","symbol":"sharing-retention describe / native delete and revoked-member tests","lineStart":17,"lineEnd":74,"sha256":"078aab351437cc3303daefb598739cf789ae4ab6e63bbb5b4622a72a30a9b30f"},
+    {"path":"packages/server-core/src/meetings/__tests__/security.test.ts","symbol":"adversarial security / forged actor / approve then revoke","lineStart":12,"lineEnd":37,"sha256":"76ec0b604fb08480db5b32164415ad0f3f0100edb107ae9c399daa05711d4de5"},
+    {"path":"packages/server-core/src/meetings/capture.ts","symbol":"applyNativeCaptureIntent / TARGET_STATUS / nativeCaptureBinding","lineStart":18,"lineEnd":111,"sha256":"360e676d7be841fda31fa448b50abcfe7275f2683cf4db3084af0066477a0edc"},
+    {"path":"packages/server-core/src/meetings/journal.ts","symbol":"MeetingJournal.read / commit / applyCommand","lineStart":82,"lineEnd":189,"sha256":"c5938700403fe6c90c189c6229fd9d9c58fdba63507c542ad71c6122d2d0baf1"},
+    {"path":"packages/shared/src/meeting-agents/policies.ts","symbol":"MeetingGrant / authorizeMeetingAction / canUseCloudFallback","lineStart":16,"lineEnd":80,"sha256":"f5ab0ed8f26ff63eda1c9da16eb9588ec030231f9cc7c65f2ad471996c4aa2bd"},
+    {"path":"apps/electron/src/renderer/pages/meetings/capture-rpc.ts","symbol":"buildMeetingCaptureGrant / applyCaptureIntentViaRpc","lineStart":30,"lineEnd":109,"sha256":"b4c02ab68ea05a37787c2f17256cb369fb8fabdfcd8c2fad27b4c11d5d476f8d"},
+    {"path":"apps/electron/src/renderer/pages/meetings/meeting-page-model.ts","symbol":"MeetingPageState / MeetingArtifactView / toMeetingPageItems / listStateFromResult","lineStart":1,"lineEnd":82,"sha256":"ba4fe011afdb8aadc23c9600b461379b7b42a374aa20f81a1376efb021d4b3f9"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.meetings","lineStart":998,"lineEnd":1020,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0","inspection":"Known-symbol grep returned actual channel declarations; whole-file hash recorded."},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2Status / Rox2Event / Rox2EntityRef","lineStart":107,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5","inspection":"Read ranges 100-158 and 230-253, not every intervening declaration."}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead consumes this owned preflight artifact; no feature implementation is authorized for this worker.",
+    "afterPrerequisites": "After wave0 commit and accepted WP-31/32/39/52 typed-interface/migration/scenario receipts: rehash inspected seams; obtain accepted calls/file/common-dispatch/lease exports and shared owner acknowledgement; resolve consent schema, stop/redaction, TTL/SLA/resource limits and migration ownership; extend common calls contracts/commands/repository with recording intent/receipts, then egress finalization, fenced preview worker, current existing UI and full verification. No startup dependency on downstream WP-34/47."
+  },
+  "risks": [
+    "The shared calls/contracts.ts, commands.ts and repository.ts names are repeated across WP-31/32/33/34. Treat them as one owned integration area, not independently creatable files after predecessors land.",
+    "Actual inspected sources may change during root wave0 integration; dispatched input HEAD and whole-file content hashes are different forms of evidence. Refresh changed files, not silently reuse stale line numbers.",
+    "Public StartRecording payload consentVersion:string/consentingPrincipalIds differs from domain StartCallRecording consentRevision:number; recordingRef/result lifecycle also needs accepted canonical-result mapping. Avoid parallel or permissive schemas.",
+    "StopRecording and GetPreview are required by apiChanges but lack full normative secondary schemas; provider callback authenticity and unknown-egress/account scope must be supplied by accepted WP-32 contracts.",
+    "rooms currently disabled; setting provider decided/recordingConsent:true or marking a native journal completed is not genuine recording evidence.",
+    "Supplied grants are forgeable at the boundary absent server authority; pure expiry helper only checks expiry when action.now is supplied. Capture call currently omits now. Replace shared authorization, do not special-case a failing actor.",
+    "Crash after external egress/object success before receipt is ambiguous; naive retries create duplicate effects or accessible orphan objects. Stable refs, reconciliation, unique keys and fenced publication all required.",
+    "Signed URL expiry alone does not ensure immediate revoke/deleted-key denial through CDN/cache. Accepted WP-39 access/key/asset-host semantics must demonstrate old URL failure and current policy, without claiming deletion of external copies.",
+    "ffmpeg CPU/wall/memory/protocol/output limits and codec/build license must be actually enforceable and audited; process timeout alone may leave children or unsafe network protocols.",
+    "Participant recording revoke/stop/redaction semantics, media tolerance, retry/resource bounds and retention source-removal SLA are not numeric/fully defined in inspected WP-33 specification. Root must ratify them; preflight does not weaken criteria.",
+    "Full summary/search/agent source invalidation involves downstream WP-34 and provenance WP-50; startup must not wait on WP-34/47 (would cycle), but full integrated acceptance cannot be called N/A or complete before those behaviors are observed.",
+    "Preserve usable standalone device/local Whisper/audio/import/recovery pipeline and require separate upload/cloud-send consent; no new recording store/surface and no automatic local media upload.",
+    "Generic mentions/notifications/agent access are mandatory completeness items with integration-owner contracts still missing in scoped code; lack of implementation is not a reason to mark them N/A.",
+    "No runtime, provider, UI or test acceptance was executed. This report is code/spec-backed planning, not implementation, delivery or live receipt."
+  ]
+}

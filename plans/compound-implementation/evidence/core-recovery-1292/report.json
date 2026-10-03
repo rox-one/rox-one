@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "acceptance": "PASS-scoped-core-compatibility",
+  "taskId": "recovery-core-1292-integration-gate",
+  "inputRevision": "665ba43ac1f360b7753a0e939d06794a956f4969",
+  "exactRecoveryHead": "01889b4a43a2ce4f730d3109b49750a0fbde4db8",
+  "manifest": {
+    "path": "/tmp/rox-core-integration-gate-ultra-20260930/manifest.json",
+    "sha256": "fcf0311297b6bc8d72b663b904a9fbba3723d600c474632581d4911324c6445b"
+  },
+  "combinedPatch": {
+    "path": "/tmp/rox-core-integration-gate-ultra-20260930/patches/core-1292-compatible.patch",
+    "sha256": "193573e67cd05103813a18b41edc785da5bc2f394872283dff4d20ac8cdba91b",
+    "bytes": 18760
+  },
+  "tests": {
+    "currentRuntime": {
+      "before": "805 pass / 3 fail / 3471 assertions / 77 files",
+      "after": "816 pass / 0 fail / 3499 assertions / 77 files"
+    },
+    "pinnedBun1314": {
+      "before": "805 pass / 3 fail / 3471 assertions / 77 files",
+      "after": "816 pass / 0 fail / 3499 assertions / 77 files"
+    },
+    "parentRegressionRed": "46 pass / 9 fail / 170 assertions / 3 files",
+    "focused": "279 pass / 0 fail / 1434 assertions / 8 files",
+    "independentBoundaries": "3 pass / 0 fail / 27 assertions",
+    "types": {
+      "version": "5.9.3",
+      "beforeDiagnostics": 12,
+      "afterDiagnostics": 0
+    },
+    "negativeControls": {
+      "exercised": 10,
+      "caughtDefects": 9,
+      "originalWeakCalendarOracleSurvivor": 1,
+      "sourceRestorationVerified": true
+    }
+  },
+  "scope": {
+    "parentRepair": [
+      "packages/core/src/platform/identity/credential-types.test.ts",
+      "packages/core/src/platform/identity/credential-types.ts",
+      "packages/core/src/tasks/personal/store.ts",
+      "packages/core/src/tasks/personal/things.test.ts"
+    ],
+    "followupCompatiblePort": [
+      "packages/core/src/calendar/calendar.test.ts",
+      "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts",
+      "packages/core/src/rox2/__tests__/platform-contract.test.ts"
+    ],
+    "exactFollowupOwnParentScope": [
+      "packages/core/src/calendar/calendar.test.ts",
+      "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts",
+      "packages/core/src/rox2/__tests__/platform-contract.test.ts",
+      "packages/core/src/rox2/meeting-conation-shell.ts"
+    ]
+  },
+  "preserved": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "sha256": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af"
+    },
+    {
+      "path": "packages/core/src/rox2/meeting-conation-shell.ts",
+      "sha256": "f2d628e81cc06d722efbc044a10d3b99549c6d9d34fb9cac7e84632c913ad815"
+    },
+    {
+      "path": "packages/core/src/rox2/notes-repository.ts",
+      "sha256": "74384b88dbb255bbc5bad0f87898f6aebc804cd5f6fdaf49131761f49102992c"
+    },
+    {
+      "path": "packages/core/src/rox2/project-membership.ts",
+      "sha256": "c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"
+    },
+    {
+      "path": "packages/core/src/platform/identity/attach-credential-ref.ts",
+      "sha256": "777d67ee71446170a4c3dfc5a2dbab9d4a65823e76a70d556a209d2c6f666b5d"
+    },
+    {
+      "path": "bun.lock",
+      "sha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1"
+    },
+    {
+      "path": "package.json",
+      "sha256": "19d87bd05284457f64319bcef6fd3eec987648a67e51b17e3b3b6d89d4444858"
+    }
+  ],
+  "sourceInventory": {
+    "beforeFiles": 5945,
+    "afterFiles": 5945,
+    "unchangedFiles": 5938,
+    "changedFiles": 7,
+    "beforeSha256": "e294ab1165f9314a42a61ba4a0b77b134703996548b73549fc29c7cd7e449f40",
+    "afterSha256": "ba233b75b6d859919664832d82b2b66871859a4ea8f0b3068203ec1c298fe8c2"
+  },
+  "artifacts": [
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/baseline-core-tests.log",
+      "sha256": "fc909f42053900a0dfaf3d5f51d0108fa502c3d6c2429761e96e8c841cb1290d",
+      "bytes": 95746,
+      "pass": 805,
+      "fail": 3,
+      "assertions": 3471,
+      "files": 77
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/proposed-core-tests.log",
+      "sha256": "dca82a8e87315e55ecb618b57fade4bc653e846e0a6651c7bc00883ac241c211",
+      "bytes": 95749,
+      "pass": 805,
+      "fail": 3,
+      "assertions": 3471,
+      "files": 77
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/baseline-core-tests-bun1314.log",
+      "sha256": "25903c38fac759e32ba2cdb355377b6003fab88a838b4bb90c47f8c52eacc59d",
+      "bytes": 95760,
+      "pass": 805,
+      "fail": 3,
+      "assertions": 3471,
+      "files": 77
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/parent-regressions-red.log",
+      "sha256": "f64965307eaa70589fe449152fbf38b135e987ed2c6dcc1818f9343df253b09d",
+      "bytes": 13393,
+      "pass": 46,
+      "fail": 9,
+      "assertions": 170,
+      "files": 3
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/parent-regressions-red-bun1314.log",
+      "sha256": "3a0a66b0eacb547463ce7960c7f597dffcc0d8e990e59a1a259e926aaca92bec",
+      "bytes": 13404,
+      "pass": 46,
+      "fail": 9,
+      "assertions": 170,
+      "files": 3
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/final-core-tests-bun142.log",
+      "sha256": "900705e67d33e53a5ca7adb185ce0e7d22e66497f5552fa5d17f241c2f0ab106",
+      "bytes": 94342,
+      "pass": 816,
+      "fail": 0,
+      "assertions": 3499,
+      "files": 77
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/final-core-tests-bun1314.log",
+      "sha256": "9e58a10739e2031bf4e073bee20e0386e180ef446c63a6f62d7d993a93365234",
+      "bytes": 94423,
+      "pass": 816,
+      "fail": 0,
+      "assertions": 3499,
+      "files": 77
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/baseline-types.log",
+      "sha256": "df55a9109f33f79a6bf39e336fd05d279be71b8f59fefeebe697cf009176ff7f",
+      "bytes": 2529
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/proposed-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/final-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/controls-bun142/focused-core-acl-receipt.log",
+      "sha256": "8175bb96763f9ae8e783baa1a45cc2053c26ce00aa8ae222099244d5ca00450b",
+      "bytes": 33348,
+      "pass": 279,
+      "fail": 0,
+      "assertions": 1434,
+      "files": 8
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/controls-bun142/independent-private-acl-receipt.log",
+      "sha256": "6a721ccc104d47d18fe8c7401bcfb223bd2b9418bb6aa793288d419c9a59937d",
+      "bytes": 493,
+      "pass": 3,
+      "fail": 0,
+      "assertions": 27,
+      "files": 1
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/controls-bun142/negative-controls.json",
+      "sha256": "529220d1fb5dc2de07a734b6b94a2c5fb5b86a9d83967516b6542a6bdb6e0209",
+      "bytes": 11512
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/controls-bun1314/focused-core-acl-receipt.log",
+      "sha256": "228b17e965267d0068ed8030c6844f81a844b395ce06b4b48f8ac40108bbd57d",
+      "bytes": 33356,
+      "pass": 279,
+      "fail": 0,
+      "assertions": 1434,
+      "files": 8
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/controls-bun1314/independent-private-acl-receipt.log",
+      "sha256": "dbf0b4ee03537f5566ec259c0fe008a5eb03832abf1447a3943e8aa3c162b513",
+      "bytes": 493,
+      "pass": 3,
+      "fail": 0,
+      "assertions": 27,
+      "files": 1
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/controls-bun1314/negative-controls.json",
+      "sha256": "a22d911315f99b1a80051ba356bb7107b00cfa7bc5a1c9513567b349a545cdcf",
+      "bytes": 12163
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/type-only-control-history/actor-acl-grant-substitution-mutant.log",
+      "sha256": "ff5ffc0ac665afc1ca961a037d5d7d07b5e3fc593085ecba08f458442693c869",
+      "bytes": 281,
+      "pass": 1,
+      "fail": 0,
+      "assertions": 4,
+      "files": 0
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/canonical-acl-private.test.ts",
+      "sha256": "97b7e5a66c4da8388f7a159896a12732aa4937e48c70f3dbba26a0022736a211",
+      "bytes": 2943
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/run-controls.ts",
+      "sha256": "0ad5321cd0da9fdc8203fd5d96ae19953b3ba4d450d1470009338160392fc8ae",
+      "bytes": 6933
+    },
+    {
+      "path": "/tmp/rox-core-integration-gate-ultra-20260930/seal-gate.ts",
+      "sha256": "f91622245a37aea5c73c669cd2fdb5697e9fe2d3d3905450bc90a07162ca21ef",
+      "bytes": 9045
+    }
+  ],
+  "failureHistory": [
+    "The first three-test-file port produced zero types but retained all three runtime baseline failures; scope was corrected to include exact f898 own-parent locator/clock repairs.",
+    "The original actor authorization test did not catch a mismatched nonempty actor mutation. Its raw surviving log is retained; an independent outside actor-mismatch oracle catches the defect without changing production ACL source.",
+    "A combined exact patch could not apply to current meeting tests because current already contains the stronger combined queue regression. The two strict unverified assertions were ported without replacing that regression.",
+    "The first optional npm pinned-binary fetch was slow, then completed. Current and pinned runtimes were both actually tested; root runtime and lockfile were unchanged."
+  ],
+  "countExplanation": "816 integration tests versus delivered 817 is expected: current uses one combined queued verified-state regression instead of two separate exact-01889b4 tests. Both verified states plus an unverified control remain asserted; integration has three more assertions (3499 versus3496).",
+  "remainingGates": [
+    "Root live preimage/result hash verification and application after the native source lease permits mutations.",
+    "Root revision-bound integration, Git delivery and any wider consumers.",
+    "Native/WebUI/service acceptance and all143 compound fullDoD remain outside this scoped core gate."
+  ]
+}

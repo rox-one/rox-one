@@ -11,7 +11,9 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Session } from '../../shared/types'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { deferIfDeepWork } from '@/lib/focus-session'
+import { deferIfDeepWork, isFocusRunning, loadFocusState } from '@/lib/focus-session'
+import { useTaskReminders } from '@/lib/task-reminders'
+import type { PersonalTask } from '@craft-agent/core/tasks/personal'
 
 /**
  * Draw a badge onto an icon image using Canvas
@@ -142,6 +144,11 @@ export function useNotifications({
 }: UseNotificationsOptions): UseNotificationsResult {
   const { t } = useTranslation()
   const [isWindowFocused, setIsWindowFocused] = useState(true)
+  const deferTaskReminder = useCallback((_task: PersonalTask, now: number) => {
+    const focus = loadFocusState()
+    return isFocusRunning(focus, now) ? now + 30_000 : null
+  }, [])
+  useTaskReminders(undefined, undefined, deferTaskReminder, enabled)
   const onNavigateToSessionRef = useRef(onNavigateToSession)
 
   // Check once whether this server has GUI notification channels (headless servers don't)

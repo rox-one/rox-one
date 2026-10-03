@@ -4,6 +4,9 @@ import { join } from 'node:path'
 import {
   nextStepAfterUsername,
   parseOnboardingUsername,
+  persistOnboardingUsername,
+  type OnboardingIdentityApi,
+  type OnboardingCallerIdentity,
 } from '../onboarding-username'
 
 describe('parseOnboardingUsername', () => {
@@ -43,16 +46,90 @@ describe('nextStepAfterUsername', () => {
 })
 
 describe('WelcomeStep username gate', () => {
-  it('reuses the parser and records onboardingUsernameConfirmed', () => {
+  it('reuses the parser and persists the name through privileged identity APIs', () => {
     const source = readFileSync(join(import.meta.dir, '../WelcomeStep.tsx'), 'utf8')
     expect(source).toContain('parseOnboardingUsername')
-    expect(source).toContain('onboardingUsernameConfirmed')
-    expect(source).toContain('identityUpdateProfile')
+    expect(source).toContain('persistOnboardingUsername(api, parsed)')
+    expect(source).not.toContain('onboardingUsernameConfirmed')
+    expect(source).toContain("orgIdentity.authority === 'local'")
     expect(source).toContain('ONBOARDING_USERNAME_MAX')
     expect(source).toContain('usernameSaveFailed')
     expect(source).toContain('usernameTooLong')
     expect(source).toContain('rememberLocalProfile')
     expect(source).not.toContain('caught.message')
+  })
+})
+
+describe('authenticated onboarding profile persistence', () => {
+  function fixture(authority: 'native' | 'local') {
+    let identity: OnboardingCallerIdentity = { authority, userId: 'current-user', ...(authority === 'native' ? { issuer: 'server-a' } : {}) }
+    const updates: Array<{ username?: string; name?: string }> = []
+    const hostUpdates: string[] = []
+    const api: OnboardingIdentityApi = {
+      getOrgIdentity: async () => ({ ...identity }),
+      updateOrgIdentity: async update => {
+        updates.push(update)
+        identity = { ...identity, name: update.name }
+      },
+      identityUpdateProfile: async update => { hostUpdates.push(update.displayName) },
+    }
+    return { api, updates, hostUpdates, setIdentity: (value: OnboardingCallerIdentity) => { identity = value } }
+  }
+
+  it('saves native self metadata without reading or changing the host profile', async () => {
+    const f = fixture('native')
+    delete f.api.identityUpdateProfile
+    await persistOnboardingUsername(f.api, '  Native Ada  ')
+    expect(f.updates).toEqual([{ name: 'Native Ada' }])
+    expect(f.hostUpdates).toEqual([])
+    expect((await f.api.getOrgIdentity()).name).toBe('Native Ada')
+  })
+
+  it('retains legacy local profile updates and confirms persistent name readback', async () => {
+    const f = fixture('local')
+    await persistOnboardingUsername(f.api, 'Local Ada')
+    expect(f.hostUpdates).toEqual(['Local Ada'])
+    expect(f.updates).toEqual([{ username: 'Local Ada', name: 'Local Ada' }])
+  })
+
+  it('rejects failed saves without advancing through a host-profile fallback', async () => {
+    const f = fixture('native')
+    f.api.updateOrgIdentity = async () => { throw new Error('revoked') }
+    await expect(persistOnboardingUsername(f.api, 'Ada')).rejects.toThrow('revoked')
+    expect(f.hostUpdates).toEqual([])
+  })
+
+  it('rejects a successful response whose durable name did not change', async () => {
+    const f = fixture('native')
+    f.api.updateOrgIdentity = async () => ({ name: 'Ada' })
+    await expect(persistOnboardingUsername(f.api, 'Ada')).rejects.toThrow('identity-readback-mismatch')
+  })
+
+  it('rejects a workspace or account switch during save even if the name matches', async () => {
+    const f = fixture('native')
+    f.api.updateOrgIdentity = async () => f.setIdentity({ authority: 'native', userId: 'other-user', name: 'Ada' })
+    await expect(persistOnboardingUsername(f.api, 'Ada')).rejects.toThrow('identity-readback-mismatch')
+  })
+
+  it('rejects a native issuer change with the same subject and display name', async () => {
+    const f = fixture('native')
+    f.api.updateOrgIdentity = async () => f.setIdentity({ authority: 'native', issuer: 'server-b', userId: 'current-user', name: 'Ada' })
+    await expect(persistOnboardingUsername(f.api, 'Ada')).rejects.toThrow('identity-readback-mismatch')
+  })
+
+  it('uses the same Unicode and whitespace normalization as native profile storage', async () => {
+    const f = fixture('native')
+    await persistOnboardingUsername(f.api, '  A\u0301da  Native  ')
+    expect(f.updates).toEqual([{ name: '\u00c1da Native' }])
+    await expect(persistOnboardingUsername(f.api, 'Ada\nOther')).rejects.toThrow('invalid-username')
+    expect(f.updates).toHaveLength(1)
+  })
+
+  it('rejects invalid input before any identity mutation', async () => {
+    const f = fixture('local')
+    await expect(persistOnboardingUsername(f.api, '   ')).rejects.toThrow('invalid-username')
+    expect(f.updates).toEqual([])
+    expect(f.hostUpdates).toEqual([])
   })
 })
 

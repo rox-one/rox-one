@@ -1,0 +1,382 @@
+[
+  {
+    "id": "IN001",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/components/app/split-layout/layoutManager.ts",
+    "symbol": "createSplitLayout/createNewSplit/removeSplit/swapSplit",
+    "lineStart": 1307,
+    "lineEnd": 1402,
+    "claim": "Shell: executable split create inserts at index, reuses already-open non-component entities, removal replaces last empty split with default, reorder swaps adjacent split state. No backend collaboration assertion."
+  },
+  {
+    "id": "IN002",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/components/app/split-layout/layoutManager.ts",
+    "symbol": "back/backTo/forward",
+    "lineStart": 889,
+    "lineEnd": 958,
+    "claim": "Shell: each split has executable navigation-history back/forward operations with capture and apply of entry state."
+  },
+  {
+    "id": "IN003",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/components/app/split-layout/registerSplitHotkeys.ts",
+    "symbol": "registerSplitHotkeys",
+    "lineStart": 8,
+    "lineEnd": 120,
+    "claim": "Shell: scoped keyboard close/back-to-list, spotlight, history back/forward and adjacent split focus; conditions and handlers are registered."
+  },
+  {
+    "id": "IN004",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/components/app/split-layout/split-router/app-routes.ts",
+    "symbol": "appSplitRoutes",
+    "lineStart": 31,
+    "lineEnd": 58,
+    "claim": "Shell: route definitions include drive/settings/agents/home/recent/activity/reminders/email/tasks/reviews/calendar/channels/calls/companies/search/PR and legacy routes; registration proves navigation availability, not feature completeness."
+  },
+  {
+    "id": "IN005",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-pdf/component/Block.tsx",
+    "symbol": "BlockPdf/PdfBlockContent",
+    "lineStart": 28,
+    "lineEnd": 93,
+    "claim": "PDF block passes document version/proxy/modification data and canComment/canEdit/owner permissions to PdfDocument, with sidepanel and tabs."
+  },
+  {
+    "id": "IN006",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-pdf/store/comments/commentOperations.ts",
+    "symbol": "useCreateMessageComment",
+    "lineStart": 128,
+    "lineEnd": 199,
+    "claim": "PDF shared message comment path creates anchored root for highlight/free placeable or replies to an existing root, then activates returned created message."
+  },
+  {
+    "id": "IN007",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-pdf/primitives/pdf-definitions.ts",
+    "symbol": "TermLexicon.load/get",
+    "lineStart": 12,
+    "lineEnd": 53,
+    "claim": "PDF definition lookup parses precomputed XML terms including definition/page/position/reference data and returns cloned terms; not evidence of general live dictionary API."
+  },
+  {
+    "id": "IN008",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-pdf/component/TopBar.tsx",
+    "symbol": "TopBar/download/downloadDocx/ops",
+    "lineStart": 88,
+    "lineEnd": 131,
+    "claim": "PDF viewer downloads PDF with modifications/comments; Download DOCX is exposed only when underlying fileType is docx. Does not establish arbitrary PDF-to-DOCX export."
+  },
+  {
+    "id": "IN009",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/convert_service/src/process/convert.rs",
+    "symbol": "process_message",
+    "lineStart": 23,
+    "lineEnd": 125,
+    "claim": "Conversion queue processing calls convert and handles DOCX conversion success/failure notifications; separate worker path, not proof of PDF-to-DOCX export."
+  },
+  {
+    "id": "IN010",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-image/component/Block.tsx",
+    "symbol": "BlockImage",
+    "lineStart": 11,
+    "lineEnd": 56,
+    "claim": "Image viewer renders loaded document Blob in ImageContent and file sidepanel; cmd-copy emits document entity ref."
+  },
+  {
+    "id": "IN011",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-image/component/ImageContent.tsx",
+    "symbol": "ImageContent",
+    "lineStart": 1,
+    "lineEnd": 33,
+    "claim": "Image content derives object URL from Blob for native img preview and cleanup; source entry for media preview only."
+  },
+  {
+    "id": "IN012",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-video/component/VideoContent.tsx",
+    "symbol": "VideoContent",
+    "lineStart": 5,
+    "lineEnd": 44,
+    "claim": "Video viewer renders native video controls/autoplay for available URL and reports unsupported/error playback; no transcoding or shared playback assertion."
+  },
+  {
+    "id": "IN013",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/notifications/notification-source.ts",
+    "symbol": "createNotificationSource/bulkMarkAsDone/bulkMarkAsRead",
+    "lineStart": 474,
+    "lineEnd": 508,
+    "claim": "Unified notification source executes bulk done and seen mutations with persistent optimistic overrides and rollback on failure; empty batches skipped."
+  },
+  {
+    "id": "IN014",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/notifications/components/MarkMessageNotifications.tsx",
+    "symbol": "MarkMessageNotifications",
+    "lineStart": 10,
+    "lineEnd": 62,
+    "claim": "Message notification marker matches exact messageId/commentId among parent notifications and bulk marks all unseen; max three attempts per mount. TODO warns current parent scope is thread-aware."
+  },
+  {
+    "id": "IN015",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/notifications/components/SnoozePicker.tsx",
+    "symbol": "SnoozePicker",
+    "lineStart": 14,
+    "lineEnd": 76,
+    "claim": "Snooze UI belongs to notifications and delegates chosen deadline via onSelect; pending guards repeat selection. UI text alone does not establish scheduler execution."
+  },
+  {
+    "id": "IN016",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/activity/views/my-activity-view.tsx",
+    "symbol": "MyActivityView",
+    "lineStart": 75,
+    "lineEnd": 163,
+    "claim": "My activity uses ActivityContext/state with virtualized rows, pinned date, pagination and caller onOpen entity callback."
+  },
+  {
+    "id": "IN017",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/activity/views/entity-activity-section.tsx",
+    "symbol": "EntityActivitySectionConditional/EntityActivitySection/ReadyActivityList",
+    "lineStart": 38,
+    "lineEnd": 126,
+    "claim": "Per-entity activity is rollout-flag gated (no query while disabled), keyed by entity type/id, has loading/error/empty states and folded timeline."
+  },
+  {
+    "id": "IN018",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/activity/src/domain/service.rs",
+    "symbol": "ActivityReadService::subject_activity_range",
+    "lineStart": 86,
+    "lineEnd": 122,
+    "claim": "Activity domain executes bounded subject activity read and resolves distinct property display metadata through viewer-scoped resolver; this file does not establish all entity event writers."
+  },
+  {
+    "id": "IN019",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/favorites/FavoriteContextMenu.tsx",
+    "symbol": "FavoriteContextMenu/openFavorite",
+    "lineStart": 24,
+    "lineEnd": 89,
+    "claim": "Favorites UI opens canonical split content current/new/fullscreen and invokes remove-favorite mutation keyed entity type/id."
+  },
+  {
+    "id": "IN020",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/favorites/src/domain/service.rs",
+    "symbol": "FavoritesServiceImpl::add_favorite/list_favorites/remove_favorite_by_entity/reorder_favorites",
+    "lineStart": 79,
+    "lineEnd": 159,
+    "claim": "Favorites domain adds via authenticated View receipt, lists/removes per user, validates reorder length and uniqueness before persistence port call."
+  },
+  {
+    "id": "IN021",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/sharing/global-share-modal/GlobalShareModal.tsx",
+    "symbol": "openGlobalShareModal",
+    "lineStart": 10,
+    "lineEnd": 28,
+    "claim": "Contextual share entry validates supported entity type and opens shared modal outside block; passes OWNER UI permission assumption, which is not authoritative server authorization."
+  },
+  {
+    "id": "IN022",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/macro_db_client/src/share_on_mention.rs",
+    "symbol": "share_link_shared_document_with_mentioned_users",
+    "lineStart": 14,
+    "lineEnd": 66,
+    "claim": "Mention-driven share inserts direct entity_access for mentioned users on PUBLIC or TEAM link without filtering team membership, never downgrades existing grants. This security-sensitive behavior is not ROX target default."
+  },
+  {
+    "id": "IN023",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-chat/component/Block.tsx",
+    "symbol": "ChatBlock",
+    "lineStart": 14,
+    "lineEnd": 34,
+    "claim": "Legacy AI Chat block reads chat data and marks chat entity notifications, composes Chat plus sidepanel; distinct from human MessageParent."
+  },
+  {
+    "id": "IN024",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-chat/component/Chat.tsx",
+    "symbol": "Chat/onSend/onStop",
+    "lineStart": 199,
+    "lineEnd": 253,
+    "claim": "AI chat sends optimistic user message, invokes send command, records send failure or attaches returned stream; stop calls cognition stopChatStream. Domain tool authorization is elsewhere."
+  },
+  {
+    "id": "IN025",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/agents-view/views/NewChatPage.tsx",
+    "symbol": "NewChatPage/canSelectRepository/repoBranch/send",
+    "lineStart": 149,
+    "lineEnd": 218,
+    "claim": "Agent composer chooses repository/branch for coder context, explicit repo accepted only Cursor harness, blocks unavailable agents/pending uploads, emits onStart with persona/model/effort/attachments."
+  },
+  {
+    "id": "IN026",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/agents-view/views/AgentsView.tsx",
+    "symbol": "startConversation",
+    "lineStart": 203,
+    "lineEnd": 214,
+    "claim": "Coding/chat agent surface starts pending session using userId then opens agent_session context. This entry does not prove server provisioning or rerun semantics."
+  },
+  {
+    "id": "IN027",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/agents-view/components/AgentSessionCodeDetails.tsx",
+    "symbol": "AgentSessionCodeDetails",
+    "lineStart": 9,
+    "lineEnd": 85,
+    "claim": "Coding session displays repository/branch and PR status open/draft/merged/closed, with internal callback or GitHub link; not write/review submission."
+  },
+  {
+    "id": "IN028",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-pr/views/PrDetail.tsx",
+    "symbol": "usePrDetail/PrDetailBody",
+    "lineStart": 41,
+    "lineEnd": 115,
+    "claim": "PR detail queries foreign entity, displays title/metadata/description and GitHub comment timeline. Local Macro discussion is explicitly prototype-only and lost on reload; no diff renderer in this path."
+  },
+  {
+    "id": "IN029",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-pr/data/timeline.ts",
+    "symbol": "buildTimeline",
+    "lineStart": 44,
+    "lineEnd": 120,
+    "claim": "PR timeline merges GitHub issue/review comments and review summaries into ordered threaded timeline; review-comment replies use GitHub single-level thread semantics."
+  },
+  {
+    "id": "IN030",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/skills/src/domain/service.rs",
+    "symbol": "SkillServiceImpl::read_skill/search_skills/list_skills",
+    "lineStart": 88,
+    "lineEnd": 160,
+    "claim": "Skill read permits built-in system skills directly, otherwise authorizes document and verifies nondeleted Markdown Skill subtype; search/list merge domain results with static system skills."
+  },
+  {
+    "id": "IN031",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/skills/src/inbound/toolset/read_skill.rs",
+    "symbol": "ReadSkill::call",
+    "lineStart": 49,
+    "lineEnd": 68,
+    "claim": "Agent read_skill tool delegates skill service with authenticated context user; supports full skill content. Not standalone activation engine."
+  },
+  {
+    "id": "IN032",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/lib/core/util/create.ts",
+    "symbol": "createSkill",
+    "lineStart": 264,
+    "lineEnd": 296,
+    "claim": "Frontend creates Markdown Skill via storage createSkill command then previews canonical document subtype skill and refreshes Soup; exact creation source lies outside crates/skills root."
+  },
+  {
+    "id": "IN033",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-automation/component/Automation.tsx",
+    "symbol": "Automation/schedulesQuery/formError/autosave",
+    "lineStart": 90,
+    "lineEnd": 147,
+    "claim": "Automation editor loads schedules, selects by id, validates prompt/frequency/time, autosaves update mutation using current cron schedule; not evidence of arbitrary event DSL."
+  },
+  {
+    "id": "IN034",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/block-automation/views/routine-history.tsx",
+    "symbol": "RoutineHistory",
+    "lineStart": 154,
+    "lineEnd": 171,
+    "claim": "Automation run history renders up to 50 passed records with loading/no-runs states; persistence established by scheduled action service separately."
+  },
+  {
+    "id": "IN035",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/scheduled_action/src/domain/service.rs",
+    "symbol": "ScheduledActionServiceImpl::create_action/get_actions/set_enabled/execute_action_now/get_execution_records",
+    "lineStart": 216,
+    "lineEnd": 328,
+    "claim": "Scheduler validates target and event management, persists owner/config revision/next run then dispatches create; owned enable/delete/manual execution and persisted history queries exist."
+  },
+  {
+    "id": "IN036",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/scheduled_action/src/domain/event_trigger.rs",
+    "symbol": "ActionTrigger/EventName",
+    "lineStart": 29,
+    "lineEnd": 87,
+    "claim": "Scheduler has Cron timezone and Events filters; closed allowlist currently document.created/updated and five channel event variants. New broker event does not automatically enable a routine."
+  },
+  {
+    "id": "IN037",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/scheduled_action/src/domain/models.rs",
+    "symbol": "ActionKind/AgentTask",
+    "lineStart": 60,
+    "lineEnd": 81,
+    "claim": "Scheduled ActionKind currently only Agent; task carries prompt/user_prompt and optional model/agent persona. Do not claim generic notify/reminder task kind from this schema."
+  },
+  {
+    "id": "IN038",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/scheduled_action/src/domain/service.rs",
+    "symbol": "ScheduledActionServiceImpl::new/with_event_management_enabled",
+    "lineStart": 24,
+    "lineEnd": 62,
+    "claim": "Event management defaults off in scheduled action constructor and must be explicitly enabled by service composition. Event model presence does not prove all deployments expose event-trigger routines."
+  }
+]

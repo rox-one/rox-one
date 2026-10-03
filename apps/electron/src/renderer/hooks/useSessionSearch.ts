@@ -358,7 +358,7 @@ export function useSessionSearch({
     }
 
     const searchId = Date.now().toString(36)
-    searchLog.info('query:change', { searchId, query: searchQuery })
+    searchLog.info('query:change', { searchId, queryLength: searchQuery.length })
 
     let cancelled = false
     setIsSearchingContent(true)

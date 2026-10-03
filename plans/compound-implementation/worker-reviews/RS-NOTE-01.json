@@ -1,0 +1,410 @@
+{
+  "task_id": "RS-NOTE-01-preflight",
+  "attempt_id": "e115f17f89b61aa43f95927e595cca0f",
+  "packet_hash": "dc5d7a9c0c17d8fbee7c50ffdae4d30949ebf31a8c27621d7df3c6a69f301bba",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "RS-NOTE-01",
+  "featureComplete": false,
+  "mode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow: one owned report, sequential specification/source inspection and artifact validation",
+  "dependencies": ["RS-DRV-01", "RS-DOC-01"],
+  "dependencyEvidence": {
+    "normativeRecord": "plans/rox-suite/issues.json:686-713",
+    "publishedSpec": "docs/rox-suite/published/RS-NOTE-01.md:61-86",
+    "distinction": "The preflight dispatch packet has depends_on=[] because inspection can run now. It does not replace the feature dependencies above. RS-DOC-01 additionally depends on RS-MSG-02 in issues.json:625-653; that is transitive, not a third direct RS-NOTE-01 edge.",
+    "acceptance": "Implementation must be dispatched only after the lead's wave0 commit and root-accepted, revision-bound RS-DRV-01 and RS-DOC-01 integration receipts. Published links and PLANNED_NOT_IMPLEMENTED records are not receipts."
+  },
+  "inspection": {
+    "inputRevisionStatus": "Dispatch-supplied input revision; no Git commands were run. Source evidence is the inspected working tree, including user-reported uncommitted wave0 work, not asserted to equal committed HEAD.",
+    "manifestStatus": "shasum -a 256 matched both supplied input-manifest hashes for RS-NOTE-01.md and issues.json.",
+    "sourceDriftPolicy": "Whole-file hashes below identify the inspected bytes. Re-read and re-hash affected seams after root integration; if any hash changes, invalidate that evidence and rebase the patch request before implementation. No current hash proves feature execution.",
+    "staleEvidence": [{"path":"packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx","supersededSha256":"5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747","reason":"First artifact verification rejected this source hash because the file changed during root work. The editor seam was re-read at lines 175-320 and re-hashed. Props moved from line 202 to 203; source references below now identify the refreshed whole-file bytes. Relevant Markdown/editable/wiki/image behavior remains as described; original evidence is stale, not accepted."}],
+    "importantDelta": "The published source evidence is from 249b3b44220bcfbd7d467de9cfc18f76e1c37807. Current NotesPage.saveCurrentNote already sends required expectedRevision/sourceStoreId through commitMarkdown, keeps operation IDs for uncertain-result replay, and blocks on HASH_CONFLICT/authority errors. Current notes.SAVE requires a revision and delegates to nativeContent.commit. MarkdownCommitStore already has filesystem leases, fsynced intents/receipts, recovery and current authorization callbacks. Preserve these wave0 mechanisms; do not reimplement a second save queue, descriptor store or Markdown writer.",
+    "limits": "No product edits, builds, tests, native UI, network operations or Git state changes. Only the owned report is written. Runtime acceptance remains NOT_VERIFIED.",
+    "searchLimit": "Codegraph reported no project index. A scoped find failed because its judge backend returned 402; it was not treated as evidence of absence. Inspection continued with known specification paths, literal grep and reads."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-IDENTITY-ALIASES",
+      "kind": "hidden-foundation-not-explicit-DAG-edge",
+      "specEvidence": "RS-NOTE-01.md:27,31,37,54; RS-DRV-01.md:38,62",
+      "currentEvidence": "notes.ts.noteIdFromRelativePath and renameNote derive a new ID from the path; bindNativeNote formats note:<path-id>. content-descriptor.ts canonicalPageRef changes kind only, retaining the path-derived native ID. StoredDescriptor has aliases, but resolver.load checks snapshot.nativeId against the requested ID and checks origin identity against that ID.",
+      "requiredPrerequisite": "Accepted common registry/alias transaction supporting a stable scoped NoteRef distinct from mutable native path, source-owner lookup through aliases, collision quarantine, same-workspace adoption without a new identity and explicit cross-workspace mapping. Freeze the resulting Note/Drive command/query types before UI implementation.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-NATIVE-EXTERNAL-PUBLISH",
+      "kind": "hidden-foundation-not-explicit-DAG-edge",
+      "specEvidence": "RS-NOTE-01.md:26,37,53",
+      "currentEvidence": "MarkdownCommitStore.commitLocked serializes cooperating writers and compares revisions; publishContent rechecks the file at line 685 then performs a separate asynchronous rename at line 686. applyNativeJournal similarly checks at 484 then links/renames at 485-486.",
+      "requiredPrerequisite": "Root-accepted native publisher contract and external-writer concurrency evidence covering the interval between final revision read and namespace replacement. [INFERENCE] The filesystem leases alone cannot fence an external editor that does not participate in them. A final read followed by rename must not be described as proven OS-level atomic CAS. Do not narrow the external-writer DoD to cooperating ROX clients.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-SHARED-CUTOVER",
+      "kind": "hidden-foundation-not-explicit-DAG-edge",
+      "specEvidence": "RS-NOTE-01.md:28,37,48,55",
+      "currentEvidence": "content.ts.services supplies a Markdown source with authorityEpoch=1; owner.authorityEpoch also returns 1. descriptor-resolver.ts.adoptDescriptor explicitly refuses authority/content-kind conversion at 460-463. Descriptor adoption is metadata-only and is not shared adoption.",
+      "requiredPrerequisite": "Accepted durable owner-conversion operation spanning inventory/hash/backup, reviewed audience/assets, idempotency, epoch fence, server CRDT initialization, alias mapping, receipt/readback and restart/rollback reconciliation. Local and server steps require an explicit recoverable transition, not two loosely sequenced writes.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-POLICY-AND-PRIVATE-SOURCES",
+      "kind": "hidden-foundation-not-explicit-DAG-edge",
+      "specEvidence": "RS-NOTE-01.md:29,33,37,56,74",
+      "currentEvidence": "Native content has an authenticated local window/device principal. Several Notes query/asset/watch handlers instead take _ctx and return native paths or source metadata. NoteAsset is a path-based payload, not a FileRef grant. Shared authorization cannot be inferred from filesystem ownership or from a link.",
+      "requiredPrerequisite": "Accepted authenticated shared principal/current-policy ports, independently authorized File/wiki/mail source resolution, grant/copy/exclude review semantics, revocation invalidation and an authority-enforced agent write route. RS-DRV-01/RS-DOC-01 receipts must identify these real ports and their owning root/shared files.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-DURABLE-OFFLINE-SCHEMAS",
+      "kind": "hidden-foundation-not-explicit-DAG-edge",
+      "specEvidence": "RS-NOTE-01.md:37,57; RS-DOC-01.md:37,53",
+      "currentEvidence": "Native WAL lives under .rox-docs/commits and corrupt/unsupported journal schemas throw. Vault search is a rebuildable .craft/vault-index.sqlite projection; openDb applies schema before checking version, and ensure/rebuild may unlink the index and its SQLite WAL/SHM. Renderer pendingCommitsRef is in-memory, not proof of a durable offline shared journal.",
+      "requiredPrerequisite": "Accepted RS-DOC-01 docWAL/ACK/replay interface with schema hold, current-policy replay and migration ownership. Cache upgrade/rebuild must address only classified disposable projections and never clear document WAL, descriptor records or migration receipts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-EVENTS-EXTRACTORS-DISCUSSION",
+      "kind": "hidden-foundation-and-transitive-dependency",
+      "specEvidence": "RS-NOTE-01.md:37,74; RS-DOC-01.md:43,62,81-82",
+      "currentEvidence": "Native Markdown receipt events feed the existing Notes invalidation callback. Notes search/backlinks/insights read the local vault index. The published Docs contract requires common discussion from RS-MSG-02; RS-DOC-01's exact DAG includes it.",
+      "requiredPrerequisite": "Accepted common outbox and ACL-scoped Note extractor contracts for search, memory, mentions and agents; common discussion/attention delivery through accepted RS-DOC-01/RS-MSG-02 work. Share/comment/mention emits meaningful notifications; autosave heartbeats do not. Do not create a Note-specific discussion or event store.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-NATIVE-REGRESSION-EVIDENCE",
+      "kind": "related-issue-quality-gate-not-DAG-edge",
+      "specEvidence": "RS-NOTE-01.md:58,65-66,76",
+      "currentEvidence": "Existing Notes mounts Tiptap keyed by activeNote.id, retains comments/TOC/320px inspector and multiple views. Existing document-ia and wiki fixtures cover portions of semantics; source-string tests in rox2-028-notes.test.ts are not native interaction proof.",
+      "requiredPrerequisite": "Separate authorized Electron-native #563 IME/focus/zoom/sheets acceptance and #570 Page/content-kind/grant regressions with exact revision, fixtures and evidence. Linux fixture screenshots cannot substitute for Electron-native or service/provider readback gates.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/notes/NoteAuthorityDialog.tsx",
+    "apps/electron/src/renderer/components/notes/NoteConflictReview.tsx"
+  ],
+  "ownedNewFileContract": {
+    "normativeSource": "RS-NOTE-01.md:43 compact components/notes/{NoteAuthorityDialog,NoteConflictReview}.tsx notation; expanded renderer paths follow the existing components/notes location.",
+    "NoteAuthorityDialog": "520-640px/max90vw reviewed conversion dialog displaying server-produced preview ref/revision/body hash, workspace/audience, alias/collision impact, private source/asset decisions, pending/rejected/committed receipt and readback. Cancel mutates nothing. Confirmation consumes a typed reviewed digest and frozen dependency command contract, not a renderer-authored grant.",
+    "NoteConflictReview": "650px or stacked narrow compare of base/local draft/current disk revision with source/hash/time meaning; retain disk, copy an authorized draft or manually merge and submit against the new revision. Preserve the existing editor instance, focus, selection and draft until explicit resolution. No automatic overwrite or second editor framework.",
+    "ownershipLimit": "These are the only normative new files named for this package. Existing-file edits and test changes are integration requests to the lead, not worker ownership. No invented new backend, store, tests or docs paths are allocated here."
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "openNote / saveCurrentNote / onNotesChanged / authority header / mounted TiptapMarkdownEditor",
+      "change": "Keep the existing revision queue, uncertain-result operation replay and source-binding checks. Populate command authorityEpoch from the resolved owner instead of hardcoded 1, and route by current authority: native commitMarkdown versus accepted Docs collaborative binding. Add authority badge, Show in Drive and explicit conversion preview/confirm actions; integrate the two owned dialogs in existing sheets. Capture base revision/body for three-way conflict review without overwriting contentRef. Key the mounted editor by stable canonical identity rather than mutable path once aliases are available. Clear revoked cached context and re-resolve authority before replay or send. Retain notes/note native routing, 70ch body, comments, TOC and all views.",
+      "reason": "Current save path is already materially upgraded by wave0; remaining work is owner routing, identity-stable mounting and real reviewed conflict/shared UI, not replacement persistence."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "handleRename / refreshRenameImpact / handleRenameFolder / handleExportPdf / openNotesRightSession / handleAskAgent / sendSideSession",
+      "change": "Flush or resolve the dirty draft before path-changing operations, preserve canonical ref while updating aliases, send reviewed revision/impact preconditions and display receipts. Add the normative Markdown import/export flow using allowed exact revision, digest/assets/aliases and per-file receipts; keep PDF as its distinct existing export. Bind agent context to real content revision rather than updatedAt, attach only authorized NoteRef/source excerpts, and recheck policy at send. Typed agent proposals must be previewed and dispatched through owner authority; a path or allow-all session is not a shared grant.",
+      "reason": "Rename currently navigates to the newly path-derived ID; PDF exports live DOM; agent prompt embeds body/backlink titles and uses a timestamp revision with permissionMode allow-all. None proves stable aliases, authorized revision export or shared tool fencing."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "registerNotesHandlers / notes.SAVE / renameNote / renameFolder / SEARCH / GET_BACKLINKS / GET_INSIGHTS / asset and WATCH handlers",
+      "change": "Reuse nativeContent.commit/writeNative and require source/revision/epoch on every applicable mutation. Add typed note.update/adoptShared/move/import/export dispatch using the accepted common identity/File/Docs ports; preview and confirm migration against immutable digest/current policy, persist idempotent receipt and recoverable alias/backup mapping. Re-resolve authority before legacy SAVE and each native lifecycle write, denying shared IDs and aliases. Maintain canonical ref through rename/move and use explicit cross-workspace mapping. Add trusted actor/scope checks before Notes queries, asset metadata/body returns and watches; never expose local paths as shared download authority.",
+      "reason": "Existing CRUD now uses wave0 native authority, but explicit shared adoption, stable alias migration and shared policy-aware projections are not established in these handlers."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/content.ts",
+      "symbol": "registerContentHandlers.services / owner.bindingFor / safeRead / MarkdownCommitOwner.authorityEpoch / commit / writeNative",
+      "change": "Resolve the existing canonical registry and mutable native alias before safeRead. Compose the native and accepted shared owner ports in the same authority router; remove hardcoded markdown/epoch=1 assumptions from bindings and write commands. Read the current authority epoch on each authorization, replay and publish fence, and connect durable authority/content/alias event IDs to common outbox delivery. Keep localContentPrincipal for native operations, use only transport-authenticated actor for shared operations and retain localElectron boundaries where applicable.",
+      "reason": "The current composition is deliberately native-only and cannot implement shared cutover by changing a badge or installing a descriptor."
+    },
+    {
+      "path": "packages/server-core/src/docs/descriptor-resolver.ts",
+      "symbol": "StoredDescriptor / createDescriptorResolver.load / adoptDescriptor / FileDescriptorStore",
+      "change": "Reuse descriptor metadata and alias collision checks; resolve alias to the stable canonical owner before deriving origin/snapshot expectations. Coordinate ownerRef/native-path aliases with accepted registry rename and conversion transactions while preserving unknown descriptor bytes and read-only hold. Keep adoptDescriptor metadata-only and keep its authority-conversion rejection; the separate reviewed native owner conversion operation must own the durable cutover and epoch transition.",
+      "reason": "Current load derives nativeId from the request and compares snapshot.nativeId to it, so merely appending an old-path alias is insufficient after rename. Descriptor adoption at 460-463 explicitly is not the migration command."
+    },
+    {
+      "path": "packages/server-core/src/docs/markdown-commit.ts",
+      "symbol": "MarkdownCommitStore.publishContent / applyNativeJournal / assertAuthorized / recover / readJournal",
+      "change": "Preserve existing WAL, leases, event intents, opId fingerprint checks and current authorization recovery. Integrate the root-approved native conditional publisher into ordinary save and lifecycle writes, covering external mutation between final hash read and replacement. Use live owner epoch/authority fencing for cutover, including prepared-journal recovery; deny native replay for shared IDs. Preserve original bytes and durable intents on conflict or unsupported schema; do not clear commits as cache. Extend fault points/oracles to exercise the final-check/publish interval and cutover boundaries once the primitive is approved.",
+      "reason": "Current last hash read plus async rename is not evidence of atomic exclusion for non-participating external editors; existing durability must not be discarded while closing the external writer and shared-replay gates."
+    },
+    {
+      "path": "packages/core/src/docs/command-envelope.ts",
+      "symbol": "MarkdownCommitCommand / decodeMarkdownCommitCommand",
+      "change": "Retain required native expectedRevision/authorityEpoch/source binding and opId validation. Extend the existing command contract area with exact note.update/adoptShared/rename/move/import/export decoders only after accepted identity/Docs/File types are available; validate scoped refs, reviewed preview digest, audience/source decisions and revision preconditions before dispatch. Carry actor from trusted context, not payload. Do not reinterpret MarkdownCommitCommand as a shared raw-file write.",
+      "reason": "Only native Markdown mutation shape is presently evidenced; the specification requires all adoption and alias command schemas to compile before dispatch."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "symbol": "NoteSummary / NoteDocument / NoteAsset / NoteRenameImpact / NoteRenameResult / NoteChangedPayload",
+      "change": "Add accepted typed canonical NoteRef, mutable native aliases, owner authority/epoch/revision and receipt references without replacing existing native fields. Model reviewed rename/adoption impact and per-file import/export results; use common FileRef/source policy payloads rather than granting access with NoteAsset.path. Add authority/alias transition events and honest pending/committed/readback status. Keep unrelated Page/File types distinct.",
+      "reason": "Current DTOs are path IDs, local assets and optional native revision/source binding; they do not express the reviewed identity/privacy conversion."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.notes / RPC_CHANNELS.content / RPC_CHANNELS.notesImport",
+      "change": "Register the agreed typed preview/adoptShared/move/Markdown import/export operations in the existing protocol and preserve current native channels. Lead must migrate the actual RPC map, Electron API/preload and routing callers together after their concrete paths are inspected; no alias-only compatibility shim and no worker edits outside ownership.",
+      "reason": "Current notes channels include SAVE/RENAME but no explicit shared adoption or Markdown export; channel strings alone are not a complete compiled contract. Uninspected bridge callsites remain a lead integration prerequisite."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes-rox2-surface.ts",
+      "symbol": "bindNativeNote",
+      "change": "Bind native Notes to the accepted stable scoped registry identity and policy-derived capabilities; retain source=native and legacy route aliases. Do not derive canonical identity from current path or unconditional read/write permissions when constructing Drive/agent projections.",
+      "reason": "Current formatRox2EntityId('note', input.id) receives the path-based ID and always returns read/write permissions."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/wiki-autocomplete.ts",
+      "symbol": "noteMatchesWikiTarget / findNoteByWikiTarget / matchWikiLinkCandidates",
+      "change": "Prioritize exact scoped canonical/path alias matches over title matches, consult accepted stable alias mapping and return an explicit ambiguity selection for duplicate title targets rather than first array match. Filter inaccessible targets before building labels/subtitles. Preserve wiki headings/block/alias syntax and existing folder-aware create behavior; use the same mapping for rename/backlinks.",
+      "reason": "findNoteByWikiTarget currently returns the first title/basename/alias match; same-title notes must not merge and private target names must not leak."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NoteInspector.tsx",
+      "symbol": "NoteInspectorProps / NoteInspector / currentNoteAssets / propertiesWritable",
+      "change": "Keep the existing 320px collapsible inspector and footnote/task/property chrome. Accept current authority and policy-reviewed File/wiki/source rows with exclude/copy/grant actions, hidden-label-safe denied states and revocation clearing. Open the common conversion review instead of a new attachment store or editor.",
+      "reason": "Current inspector receives native path assets and editor writable state but not independent source grants or shared conversion review."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote / NotesViewHost / onOpenNote / onConvert",
+      "change": "Carry stable canonical refs/aliases and authority-aware opening through existing table/canvas/graph/outline projections. Keep current task/session-draft conversion separate from reviewed shared adoption; expose Show in Drive/select using the accepted library contract without duplicating Note bodies or entities.",
+      "reason": "The current onConvert union is session-draft|task, not a privacy/authority migration, and id-based projections must survive native rename."
+    },
+    {
+      "path": "packages/server-core/src/knowledge/notes-import.ts",
+      "symbol": "scanSourceFolder / ScannedNote / MaterializeResult / materializeImport",
+      "change": "Preserve no-follow reads, size/depth bounds, exclusive collision writes and provenance isolation. Add a digest-bound preview inventory, explicit collision decisions, asset/wiki/frontmatter provenance and per-file status/hash/ref receipts; revalidate scanned bytes at execute and route adopted Note writes through the owner rather than inventing another vault. Maintain the existing consented staging import as distinct from shared adoption.",
+      "reason": "Preview currently carries paths/sizes, execution silently suffixes collisions and returns aggregate counts; provenance is overwritten per import and lacks the required accepted-revision/hash mapping."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes-import.ts",
+      "symbol": "registerNotesImportHandlers / parseInput",
+      "change": "Require transport-authenticated native workspace scope and reviewed inventory digest, return typed per-file receipts and authorize any adopted destination through the existing owner. Keep these channels local-only; do not promote imported private notes or attachments into shared scope implicitly.",
+      "reason": "Existing handlers ignore _context and execute rescans sourcePath without a reviewed snapshot digest. Local-only routing is not independently sufficient scope or adoption policy."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/notes/NotesImportButton.tsx",
+      "symbol": "ScanResult / MaterializeResult / execute / NotesImportButton",
+      "change": "Extend the existing preview/consent dialog with exact digests, alias/asset and collision decisions and per-file failure receipts from the typed import contract; preserve current isolated provenance flow and do not trigger indexing/agent ingestion or sharing as a side effect of preview.",
+      "reason": "Current UI provides bounded folder preview and aggregate copy results, not the normative Markdown revision/asset collision review."
+    },
+    {
+      "path": "packages/server-core/src/knowledge/vault-index.ts",
+      "symbol": "openDb / applySchema / ensureVaultIndex / rebuildVaultIndex / applyVaultWatchTick",
+      "change": "Classify rebuildable vault-index separately from document WAL and descriptor/migration stores. Detect incompatible existing schemas before applySchema/version stamping and hold unsupported data instead of wiping it. Exclude shared materialization writes from mutation replay; watcher may invalidate/reindex permitted projections but must not become a shared writer. Scope Note extraction and queries through current personal/shared policy.",
+      "reason": "Current index is intentionally disposable, applies schema before version check and can unlink its DB/WAL/SHM; those recovery conventions cannot be inherited by document journals or future incompatible authoritative data."
+    },
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "TiptapMarkdownEditorProps / TiptapMarkdownEditor",
+      "change": "Only if required by the accepted Docs binding, extend the existing editor binding API to attach shared collaboration while retaining native Markdown mode, IME, mounted instance, comments/task/wiki/footnote roundtrip and authority-controlled editability. Gate embeds/paste/drop rendering through policy-reviewed sources in shared mode; never create a second Note editor/framework.",
+      "reason": "Current props expose Markdown onUpdate/editable and wiki callbacks, not a verified CRDT binding; allowBase64 images and FileHandler are not private-source ACL enforcement."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/__tests__/document-ia.test.ts",
+      "symbol": "round-trips headings, tasks, footnotes, wikilinks, comments and columns",
+      "change": "Reuse the existing semantic corpus and strengthen behavior-level preserved frontmatter/wiki/footnote/comment/task/asset assertions across save/rename/import/export and native-to-shared conversion. Maintain separate real #563/#570 fixtures; do not treat this pure parser test as a native UI test.",
+      "reason": "The existing fixture provides real semantic assertions worth preserving but does not cover authority conversion, rendering, persistence or native interactions."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/__tests__/wiki-autocomplete.test.ts",
+      "symbol": "wiki-link autocomplete",
+      "change": "Extend behavioral fixtures with duplicate titles, conflicting native aliases, exact scoped path precedence, rename/reload and inaccessible-target redaction. Assert distinct canonical refs and explicit ambiguity, not first-match behavior.",
+      "reason": "Existing fixtures cover aliases/ranking/folder create but use unique titles and cannot detect the namealias seed."
+    },
+    {
+      "path": "packages/server-core/src/knowledge/__tests__/notes-import.test.ts",
+      "symbol": "materializes copies (no symlinks), writes provenance, renames collisions / notes import TOCTOU regression",
+      "change": "Keep no-follow and hostile-path consumer-visible invariants; evolve collision expectations to reviewed choices/per-file receipts and add changed-after-preview digest rejection, asset exclusion and exact allowed-revision byte readback. Assert source bytes and existing destination remain intact on rejected conversion/import.",
+      "reason": "Existing tests prove isolated materialization behavior, not digest-bound review, grants or shared conversion."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/rox2-028-notes.test.ts",
+      "symbol": "notes remain reachable without Conation flags / NotesPage and notes RPC have no conation.dev iframe",
+      "change": "Retire source-text/wiring assertions rather than re-pin them to the new implementation; preserve consumer-visible route/identity coverage through existing behavioral/native fixtures and the package acceptance scenarios.",
+      "reason": "Source includes/not-toMatch assertions are not evidence of native preservation or ACL behavior."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD-1: Existing create/move/rename/delete/import/export/frontmatter/wiki/footnotes/comments/tasks roundtrip retained.",
+      "seam": "notes.ts CRUD/renameNote/renameFolder; NotesPage.handleRename/handleRichBodyChange/handleExportPdf; notes-import.ts.materializeImport; document-ia.test.ts corpus",
+      "currentEvidence": "Native lifecycle writes use writeNative; rich editor preserves frontmatter/body separation. Existing parser assertions check wiki/footnotes/comments/tasks. The inspected export handler is PDF of editor DOM, not proof of allowed Markdown export; import is consented staging with aggregate receipts.",
+      "requiredChange": "Retain existing flows and semantic corpus; introduce authority-aware stable alias move/rename and reviewed per-file Markdown import/export without replacing the native vault or editor. Preserve exact unsupported content/frontmatter bytes where the existing source mechanism requires it.",
+      "verification": "After integration, exercise actual create, folder/path move, rename/backlink impact, delete, import and allowed-revision Markdown export; reload and compare byte hashes plus parsed frontmatter/wiki/footnote/comment/task/asset meaning. Confirm duplicate-title files remain distinct and failed files have distinct receipts. Existing semantic fixtures are supplements, not end-to-end proof.",
+      "missingPrerequisite": "Accepted wave0 native lifecycle proof and dependency identity/File/Docs contracts, plus a revision-bound native/runtime verification slot.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD-2: Concurrent native external writer preserves newer disk bytes; seeded read-check-write CAS omission caught.",
+      "seam": "MarkdownCommitStore.commitLocked/publishContent/applyNativeJournal; NotesPage.saveCurrentNote; NoteConflictReview",
+      "currentEvidence": "Native revision is required and fsynced WAL/leases exist. Final revision validation at publishContent:685 precedes separate rename:686; this is source evidence, not exercised atomic exclusion for arbitrary external writers.",
+      "requiredChange": "Reuse the native writer but close or explicitly resolve the external read/publish coordination prerequisite; preserve newer source bytes and local draft on conflict and implement base/local/current comparison and manual rebase at the new revision.",
+      "verification": "Force external writes after initial read, during async authorization, and between final revision observation and publish; require conflict plus exact newer disk bytes and retained local draft. Two ROX processes contend on the same physical vault under separate workspace aliases. Seed removal of final expectedRevision comparison and catch a specific stale-content/hash assertion, not timeout. Confirm keep-file, permitted draft copy and merged new-revision paths.",
+      "missingPrerequisite": "FG-NATIVE-EXTERNAL-PUBLISH accepted primitive/participation evidence; do not silently substitute a cooperating-client-only scenario.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD-3: Drive personal Note neither uploads nor shares; stable ref after path rename/reload.",
+      "seam": "bindNativeNote; content-descriptor.contentEntityKey/canonicalPageRef; StoredDescriptor.aliases; renameNote; NotesViewHost",
+      "currentEvidence": "IDs currently follow the path and rename returns a new path ID. A NoteRef-shaped Rox2EntityRef exists, but canonicalPageRef changes only type, not path identity. Drive selection integration is not evidenced by native bindings.",
+      "requiredChange": "Register a typed personal projection in the existing accepted Drive registry with a stable scoped identity; keep native paths as aliases and Show in Drive as selection/navigation only. Shared unavailable has an explanatory state with no authority change.",
+      "verification": "Select personal Note in Drive, assert no upload/create-shared/grant operation and unchanged native body/hash; rename/move/restart and open both old and current aliases to the same canonical ref. Verify same-title notes in different folders remain two identities and private rows do not appear for B.",
+      "missingPrerequisite": "Accepted RS-DRV-01 selection/projection and stable alias receipt contracts; FG-IDENTITY-ALIASES.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD-4: Crash before/after sharedcutover one writer; oldsave/rawagentwrite rejects shared ID.",
+      "seam": "content.ts.services/commit/writeNative; descriptor-resolver.adoptDescriptor; MarkdownCommitStore.recover; NoteAuthorityDialog",
+      "currentEvidence": "Native composition hardcodes epoch 1; adoptDescriptor refuses authority migration. Current native replay authorizes against owner but no shared transition receipt is proved. Raw agent filesystem tool implementation is outside this scoped inspection.",
+      "requiredChange": "Implement the separate reviewed owner conversion using the existing registry/native WAL and accepted Docs server authority; fence native writes before exposing shared readiness, persist migration inventory/backup/alias/epoch mapping and idempotent receipt, and recover pending transitions to one authoritative writer. Root must enforce raw tool/path denial for every shared ID and native alias.",
+      "verification": "Crash before intent, after backup, after native fence, after server CRDT initialization and after committed receipt; restart/retry exact opId and compare authority/ref/revision/hash with server readback. Verify cancel changes nothing, pending is not shared, A/B shared edits converge and old SAVE/commitMarkdown/lifecycle/raw agent file writes all fail after cutover, including alias and stale offline replay. Rollback cannot restore a second writer or overwrite acknowledged shared edits.",
+      "missingPrerequisite": "Accepted RS-DOC-01 append/WAL/fence/readback plus FG-SHARED-CUTOVER; lead-supplied exact raw-agent enforcement seams and receipts, not an assumed UI restriction.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD-5: Shared Note with private image/wiki/mail source no body/URL leak; revoke purges context.",
+      "seam": "NoteInspector.currentNoteAssets; NotesPage.handleAskAgent/sendSideSession; Notes asset/query handlers; Tiptap image/wiki binding",
+      "currentEvidence": "Assets expose native paths and inspector uses native rows. Agent prompt embeds body and backlink names. Editor permits base64 images and wiki callbacks; none of these is an independent shared grant or revoke purge mechanism.",
+      "requiredChange": "Inventory embedded bytes/URLs and wiki/mail-derived content before conversion, require independently approved exclude/copy/grant decisions, and render only current-policy permitted File/source references. Purge revoked cached previews, mention candidates, pending agent context and permitted connected-device projections; never grant access through plain links.",
+      "verification": "A private note contains image bytes and URL plus private wiki and mail excerpts. Convert with exclusions, inspect B's actual editor/API/export/search/mention/agent output for forbidden body/title/URL canaries; independently approve one asset and verify only it becomes available. Revoke with open views and prepared agent prompt; assert purge and read/write denial. State disconnected-device physical erase is not guaranteed.",
+      "missingPrerequisite": "Accepted independent File/wiki/mail ACL and source-extractor/revocation ports with authenticated shared actors.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD-6: Projection watcher no write loop; cacheupgrade never clears docWAL; incompatible schema hold notwipe.",
+      "seam": "notes.ts.WATCH/isOwnWrite; vault-index.applyVaultWatchTick/openDb/rebuildVaultIndex; MarkdownCommitStore.readJournal/recover; FileDescriptorStore",
+      "currentEvidence": "Watcher uses internal mtime suppression and reindexes external changes. Native WAL is .rox-docs/commits; vault index is .craft/vault-index.sqlite. Index recovery can unlink its own DB/WAL/SHM and applies schema before checking version; native journal validation throws on unsupported schema.",
+      "requiredChange": "Make shared Markdown strictly a materialized projection/export asset: watcher never dispatches shared body writes. Separate disposable index recovery from durable document/migration WAL, detect unsupported schemas before mutation, retain bytes in a held state and replay only under current policy/epoch.",
+      "verification": "Apply a shared change and observe one materialization/invalidation with no collaboration append echo loop, then edit projection externally and assert no second-master overwrite. Crash/upgrade with offline edits before ACK and hash exact WAL IDs/contents after restart/reconnect. Seed future versions in index, descriptor, migration and doc journals and assert hold plus unchanged authoritative bytes; run cache reset independently and verify docWAL remains intact.",
+      "missingPrerequisite": "Accepted Docs materialization/docWAL/schema-upgrade contract and root classification of all cache reset/upgrade owners; those global callsites were not inspected here.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD-7: Native #563 IME/focus/zoom/sheets and #570 Page regressions proof separate fixtures.",
+      "seam": "NotesPage mounted TiptapMarkdownEditor/NotesDialogs/NoteInspector/NotesViewHost; published related issue gates",
+      "currentEvidence": "Editor remains 70ch and inspector 320px; key=activeNote.id can remount after rename. document-ia tests inspect parser semantics; rox2-028 includes source-string checks and does not demonstrate Electron interactions. Page implementation is deliberately outside this package inspection.",
+      "requiredChange": "Preserve the existing editor/view/sheet mount and focus mechanisms while adding authority/conflict dialogs. Lead must retain a distinct native Notes regression fixture and a distinct Page artifact/content-kind/grant fixture; remove implementation-text assertions instead of repinning them.",
+      "verification": "Electron-native IME composition/save/navigation, focus/selection before and after sheets/Escape/rename, zoom and narrow states are exercised on the actual surface. Separately exercise #570 HTML artifact sandbox/render/refresh/grants/export versus collaborative document identity. Bind each fixture to tested revision and screenshot/interaction evidence.",
+      "missingPrerequisite": "Authorized native fixture runner and accepted #563/#570 regression evidence; no native UI or tests are authorized in this preflight.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD-8: Seed dualwriter/autoembedshare/namealias each caught identity/policy/hash assertions.",
+      "seam": "content owner router/MarkdownCommitStore; conversion asset review; findNoteByWikiTarget and descriptor alias collision checks",
+      "currentEvidence": "Existing native writer and descriptor collisions are useful seams. wiki lookup returns first title/alias match; conversion and independent source policy are not yet proven.",
+      "requiredChange": "Create deterministic behavioral negative controls for dual authority, implicit attachment sharing and wrong title/alias identity. Use exact canonical ref/epoch, forbidden-source policy and allowed body/hash oracles; don't count wiring snapshots, unrelated failures or infra timeouts as sensitivity.",
+      "verification": "For each seed, first show baseline scenario satisfies its invariant, then inject only dualwriter, autoembedshare or namealias defect and capture the matching failed assertion, then restore and re-exercise unchanged scenario. Require one stable identity/one writer, independent grant canary and correct duplicate-title target/hash respectively.",
+      "missingPrerequisite": "Working conversion/identity/policy implementation and root-owned mutation harness with revision-bound seed receipts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative conversion control: exact content/hash/aliases/workspace/audience/assets preview; cancel no mutation, confirm receipt/readback, pending not shared.",
+      "seam": "NoteAuthorityDialog and existing NotesPage sheet integration; native owner conversion requested separately from adoptDescriptor",
+      "currentEvidence": "Current source-info dialog displays descriptor/source/epoch but no shared migration inventory/audience confirmation.",
+      "requiredChange": "Use server-produced reviewed preview tied to body/source digest and current policy. Revalidate stale preview at confirm, represent each migration phase honestly, and return idempotent canonical alias/authority receipts plus readback or explicit unknown result.",
+      "verification": "Cancel, double confirm, stale body, changed audience/grant, renamed alias, unavailable dependency and interrupted response scenarios; assert zero mutation on cancel/rejection, exact receipt on replay and no shared badge before authority commitment/readback.",
+      "missingPrerequisite": "Frozen accepted adoption command/preview/receipt types and recoverable migration owner.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative identity conversion: same-workspace adoption preserves NoteRef/native aliases; cross-workspace transfer has explicit mapping/new scoped ref.",
+      "seam": "Rox2EntityRef/contentEntityKey; StoredDescriptor.ownerRef/aliases; renameNote/bindNativeNote",
+      "currentEvidence": "Workspace/account identity fields exist and descriptor has collision checks, but path aliases and cross-workspace transfer are not a proved conversion mechanism.",
+      "requiredChange": "Keep the original stable canonical identity on same-workspace adoption; record old/current native aliases in the existing registry. Cross-workspace conversion requires reviewed source-to-target scoped mapping and independent target policy; hash/title/path is never a global identity.",
+      "verification": "Same-workspace before/after canonical-ref equality and legacy-route opening after restart; different workspace/account creates an explicit different ref with receipt mapping. Duplicate hashes/titles must remain distinct and alias collisions reject without mutation.",
+      "missingPrerequisite": "FG-IDENTITY-ALIASES and approved cross-workspace command contract.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative agent control: separate Session proposal, authorized NoteRef/mode/revision, typed preview write, no raw shared file bypass or whole-vault ingestion.",
+      "seam": "NotesPage.openNotesRightSession/handleAskAgent/sendSideSession; current content command router",
+      "currentEvidence": "Separate side Session and prefill-not-auto-send exist, but body/backlinks are copied into prompt, mode is allow-all, revision is updatedAt and sendSideSession does not revalidate Note policy.",
+      "requiredChange": "Preserve separate Session/pre-send UI while producing scoped authorized provenance context at real revision, clear it after revocation and enforce typed proposal preview/commit in the authority router. Lead must map and migrate actual raw agent tool callsites; their absence from this inspection is a missing prerequisite, not N/A.",
+      "verification": "Open proposal without send; change content/policy before send and reject or rebuild stale context; assert unrelated personal vault not ingested. Approve typed native/shared proposal under current revision and deny direct shared path mutation through all relevant agent tools.",
+      "missingPrerequisite": "Accepted agent/current-policy write adapter and explicit tool enforcement inventory from the root owner.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative events/search/memory/mentions/attention: authority/content/alias changes common outbox; private scope until adoption; share/comments/mentions notify, autosave not heartbeat noise.",
+      "seam": "MarkdownCommitStore.changed event intents; notes.ts.changed/SEARCH/GET_BACKLINKS/GET_INSIGHTS; vault-index projections",
+      "currentEvidence": "Durable native changed-event intent exists with stable eventId and Notes UI invalidation. This is not proof of shared common outbox, ACL-scoped extractors or once-only meaningful notifications.",
+      "requiredChange": "Bridge existing native receipt events and accepted shared owner events into common transactional outbox using stable identities, ensure current-policy extractors and purge behavior, and reuse accepted Docs/common discussion notification flow. Preserve personal scope before explicit shared adoption.",
+      "verification": "Restart between event persistence and delivery; assert stable IDs, one effective share/mention/comment notification, no autosave notification storm and correct alias/search watermark. B sees no private facets/snippets/mention candidates/memory until adoption; revoke removes permitted cached context and future event payload exposure.",
+      "missingPrerequisite": "Common outbox/extractor contract and RS-DOC-01's accepted RS-MSG-02 transitive integration.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative command/API/actor gate: schemas compile before dispatch, transport-authenticated actor, failures and per-operation receipts.",
+      "seam": "decodeMarkdownCommitCommand; RPC_CHANNELS; Notes DTOs; localContentPrincipal and scoped RPC handlers",
+      "currentEvidence": "Native Markdown decoder validates hash revision/epoch/source binding and local actor comes from a window/device context. Other Notes query/import handlers still ignore context; shared commands and bridge types are not established here.",
+      "requiredChange": "Freeze and migrate note.update/adoptShared/rename/move/import/export contracts end to end with root-inspected actual bridge/callers; validate incoming commands before any mutation, derive actors only from authenticated transport and distinguish denied/conflict/unavailable/queued/committed/readback results.",
+      "verification": "Lead runs contract/type verification once after integration and exercises malformed refs/revisions/epochs/digests, forged actor/workspace, inaccessible alias, stale source, transport interruption and idempotent retries against actual handlers. Assert no mutation and safe errors for each negative case.",
+      "missingPrerequisite": "Accepted foundation contract types plus actual Electron API/preload/RPC-map integration ownership and paths supplied by lead.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative UI/quality: existing navigation/editor/chrome; header48, body70ch, inspector320; conversion520-640/max90vw, compare650/stacked; RU i18n and accessible help/focus/motion.",
+      "seam": "NotesPage header/TiptapMarkdownEditor/NotesViewHost/NoteInspector; two proposed dialogs; existing t() pattern",
+      "currentEvidence": "70ch editor and 320px inspector exist; inspected header uses 42px, and several icon hitboxes are 28px. Existing dialog/button/t() conventions must be reused. Geometry in the published spec is proposed, not an observed screenshot measurement.",
+      "requiredChange": "Integrate controls into the preserved surface with specified dialog/header geometry and responsive compare. Supply Russian labels through t() with parity in all 10 existing locales; preserve semantic theme/font/accent and verify light plus dark. Provide 32px desktop/44px touch hitboxes, visible focus/contrast, reduced-motion, Escape focus return and hover/focus/click help explaining hash/mtime/device, source clocks and freshness. Hover performs no mutation.",
+      "verification": "Authorized fixture UI and separate Electron-native run capture actual screenshots, ARIA, bounding boxes, computed font, locale/viewport, light/dark/narrow states, keyboard/tab/Escape, hover/focus/click help and reduced-motion behavior. Assert no send/share/read mutation on hover.",
+      "missingPrerequisite": "Frozen dialog payload types, root-managed locale patch ownership and real UI/native verification. Locale paths follow the auto-loaded AGENTS contract; their current contents were not read in this preflight.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative complete user flow: native edit/device save → same Note in Drive → external conflict compare → private asset exclusion → one-writer cutover → B shared edit → legacy deny → restart correct body/aliases/readback.",
+      "seam": "Existing NotesPage save/view/session chrome; accepted Drive/Docs ports; new authority and conflict reviews",
+      "currentEvidence": "Some native save/provenance/recovery seams exist in uncommitted wave0, but the integrated user flow has not been run or implemented by this worker.",
+      "requiredChange": "Integrate all preceding changes in dependency order; no feature completion from isolated components, mocks, labels or successful compilation. Maintain real native/server storage and authority across restart.",
+      "verification": "Run this exact A/B scenario against delivered revision with native source byte hashes, canonical ref/aliases, migration receipt/current epoch, independent asset decisions, CRDT body readback and denial receipts. Distinguish Linux fixture, live service, Electron-native and provider readback gates; capture seeded assertion failures separately from infra errors.",
+      "missingPrerequisite": "Lead wave0 commit; accepted RS-DRV-01/RS-DOC-01 receipts; every listed foundation gate and authorized runtime environments.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-NOTE-01.md","symbol":"Domain / API / storage / realtime / events / ACL and Tests / Definition of Done","lineStart":18,"lineEnd":76,"sha256":"48915bdf82194df2ade2c05b2b7db346e4f4f01be854b3aa0756da08fe24c002"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-NOTE-01 normative record","lineStart":686,"lineEnd":713,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"saveCurrentNote","lineStart":1023,"lineEnd":1099,"sha256":"872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"openNotesRightSession / handleAskAgent / sendSideSession","lineStart":1749,"lineEnd":1847,"sha256":"872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path":"packages/server-core/src/handlers/rpc/notes.ts","symbol":"renameNote","lineStart":562,"lineEnd":584,"sha256":"6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97"},
+    {"path":"packages/server-core/src/handlers/rpc/notes.ts","symbol":"registerNotesHandlers / notes.SAVE","lineStart":909,"lineEnd":973,"sha256":"6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97"},
+    {"path":"packages/server-core/src/handlers/rpc/content.ts","symbol":"registerContentHandlers.services / owner.bindingFor / MarkdownCommitOwner","lineStart":52,"lineEnd":171,"sha256":"d5189c2e79c4f479b8b907177e1b6a8f560e054dc1efd26f371198d6b7680acd"},
+    {"path":"packages/server-core/src/docs/markdown-commit.ts","symbol":"MarkdownCommitStore.commitLocked","lineStart":118,"lineEnd":164,"sha256":"0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"},
+    {"path":"packages/server-core/src/docs/markdown-commit.ts","symbol":"MarkdownCommitStore.publishContent","lineStart":673,"lineEnd":688,"sha256":"0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"},
+    {"path":"packages/server-core/src/docs/descriptor-resolver.ts","symbol":"createDescriptorResolver.load / adoptDescriptor","lineStart":352,"lineEnd":488,"sha256":"c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790"},
+    {"path":"packages/core/src/docs/content-descriptor.ts","symbol":"contentEntityKey / canonicalPageRef / legacyNoteAlias","lineStart":95,"lineEnd":121,"sha256":"0234ad0d971b59dd3d9fc511b6257601c584bc76112faea0ddaf555321b47263"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"formatRox2EntityId / Rox2EntityRef","lineStart":218,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"apps/electron/src/renderer/pages/notes-rox2-surface.ts","symbol":"bindNativeNote","lineStart":18,"lineEnd":34,"sha256":"cfdbb9e20fe50ac5b1fe3aac7c4216493d014f5451cb40ab02f5427905b9b216"},
+    {"path":"apps/electron/src/renderer/pages/notes/wiki-autocomplete.ts","symbol":"noteMatchesWikiTarget / findNoteByWikiTarget","lineStart":39,"lineEnd":50,"sha256":"58f179e9b08cb2e5e4d92a6ccdd976acd06d896c4c1c1b8e5a5863f14c5571cd"},
+    {"path":"packages/shared/src/protocol/dto.ts","symbol":"NoteSummary / NoteDocument / NoteAsset / NoteChangedPayload","lineStart":669,"lineEnd":730,"sha256":"b4c6e49e9135b778456f769133ce822dab433e9ca7238a06b8c4dafded3c3e57"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.content / notes / notesImport","lineStart":170,"lineEnd":217,"sha256":"89177712f430183f89657f08f985ea50861c8d774652dbb56471d5eb7cca0aaa"},
+    {"path":"packages/core/src/docs/command-envelope.ts","symbol":"MarkdownCommitCommand / decodeMarkdownCommitCommand","lineStart":1,"lineEnd":46,"sha256":"39e55e808796e48fee16ff0ee40c345886af9264bbc776c91657ce1ea2286817"},
+    {"path":"packages/server-core/src/knowledge/notes-import.ts","symbol":"materializeImport","lineStart":202,"lineEnd":277,"sha256":"080f108b95f66223d2dac320081b3008b20905ca0eafa0e5d755a154d6b4c1d8"},
+    {"path":"packages/server-core/src/handlers/rpc/notes-import.ts","symbol":"registerNotesImportHandlers","lineStart":66,"lineEnd":97,"sha256":"b8a0c6b2d63a77a0be7e33c2efb7ba7a534f0efafe3b1783be6f4cc5bb394992"},
+    {"path":"packages/server-core/src/knowledge/vault-index.ts","symbol":"openDb / ensureVaultIndex / applyVaultWatchTick","lineStart":365,"lineEnd":408,"sha256":"7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path":"apps/electron/src/renderer/pages/notes/NoteInspector.tsx","symbol":"NoteInspectorProps / NoteInspector","lineStart":71,"lineEnd":117,"sha256":"427ca7f04927a49771cb090e6d5900aa3c6aaee9836c69a1c31b2e44069de6cb"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesViewNote / NotesViewHost","lineStart":48,"lineEnd":117,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx","symbol":"TiptapMarkdownEditorProps / TiptapMarkdownEditor","lineStart":203,"lineEnd":282,"sha256":"8c8b658c506988c210389a239ada69743d7f9a5efc4ccaa2c1c6116d0b161724"},
+    {"path":"apps/electron/src/renderer/pages/notes/__tests__/document-ia.test.ts","symbol":"round-trips headings, tasks, footnotes, wikilinks, comments and columns","lineStart":33,"lineEnd":100,"sha256":"3201b93235eac22eca54feea412c0fa547b9e0cfbe46a2331de11abab9728dc7"},
+    {"path":"docs/rox-suite/published/RS-DOC-01.md","symbol":"Shared authority / common discussion / dependency handoff","lineStart":35,"lineEnd":82,"sha256":"b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path":"docs/rox-suite/published/RS-DRV-01.md","symbol":"Canonical registry / native aliases / foundation gate","lineStart":36,"lineEnd":65,"sha256":"ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"}
+  ],
+  "nextExecutableAction": "Lead consumes this preflight and supplies the committed wave0 revision plus root-accepted RS-DRV-01 and RS-DOC-01 integration receipts with actual registry/selection, CRDT owner/WAL, independent File/source ACL and migration contracts. Revalidate every affected whole-file hash against that input, resolve FG-NATIVE-EXTERNAL-PUBLISH, and freeze command/preview/receipt types. Then dispatch RS-NOTE-01 implementation in dependency order: personal Drive projection/stable aliases first, reviewed shared cutover second. Worker implementation ownership remains the two normative UI files; lead integrates all shared patch requests and verifies full DoD. No feature implementation starts from this preflight alone.",
+  "risks": [
+    "Uncommitted root wave0 is live and may change these hashes/seams before integration; the published source snapshot must not overwrite the newer commitMarkdown mechanism.",
+    "Filesystem lease safety for cooperating writers is not universal external-editor CAS; [INFERENCE] a non-participating write can race the final check/rename interval unless a real publication contract addresses it.",
+    "Path-derived IDs and first-match wiki titles can select the wrong note, remount the editor or detach old aliases. Canonical page/note kind conversion alone is not stable native identity.",
+    "Installing a descriptor or flipping UI mode without recoverable owner conversion creates dual writers or stranded drafts. Hardcoded authorityEpoch=1 must not survive shared cutover composition.",
+    "Independent image/base64/wiki/mail source privacy is not solved by sharing only the parent Note. Review must prevent embedded bytes, names, URLs, export and cached agent context leaks.",
+    "Disposable vault-index recovery patterns can destroy authoritative offline state if reused for docWAL; unsupported schema stamping/wipe is specifically forbidden.",
+    "Current in-memory renderer replay state is not evidence of durable shared offline recovery, server ACK-after-persist or current-policy replay.",
+    "Scoped preflight cannot certify uninspected global agent tool bypasses, cache reset/upgrade callers, bridge callsites or Page regression behavior. These require exact lead-owned seams and acceptance receipts before full DoD can pass.",
+    "Published feature requires real Linux fixture, service, Electron-native and provider readback evidence plus caught seeded assertions. Source inspection, mocked APIs, source-string tests or timeout errors cannot substitute for those gates."
+  ],
+  "verification": {
+    "productExecution": "NOT_RUN_BY_AUTHORIZATION",
+    "sourceManifest": "Both supplied specification/issue SHA-256 hashes matched the read-only shasum output.",
+    "artifactValidation": "First --verify attempt rejected a concurrently changed editor source. That seam was re-read and its source reference refreshed; the final read-only validator result is reported in the worker final response. Artifact validity does not imply feature completion."
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "task_id": "CI-013-preflight",
+  "attempt_id": "5554d57a3e86251dad9fa3743ba7e9f9",
+  "packet_hash": "e4c01ed0014b09b52770bf943157160201dedb0f4075dc2581aa8999a963d868",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-013",
+  "featureComplete": false,
+  "mode": "source-backed preflight; not implementation",
+  "workTier": "bounded-workflow",
+  "dependencies": ["CI-002", "CI-005", "CI-006", "CI-008"],
+  "evidenceScope": {
+    "inspectionDate": "2026-09-30",
+    "revisionMeaning": "input_revision is the dispatch baseline, not a claim that the dirty working tree is committed at that revision. No Git state was changed or queried.",
+    "specificationDigests": [
+      {"path": "plans/lark-suite-reference/code-intelligence.json", "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7", "matchesPacket": true},
+      {"path": "plans/lark-suite-reference/execution-packages.json", "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b", "matchesPacket": true}
+    ],
+    "sourceFreshness": "Whole-file digests below were obtained read-only after inspection. They bind observations to working-tree bytes, not accepted dependency commits. Concurrent root integration can invalidate them; compare digests and re-read changed seams after wave0 and dependency acceptance. No live readiness or runtime behavior was verified.",
+    "discoveryLimitations": [
+      "Codegraph reported no .codegraph index; no indexing was attempted.",
+      "The scoped find on packages/server-core/src/code-intelligence reported that directory absent. Exact proposed-file lookup also reported all four normative new paths absent at inspection.",
+      "find on the specification-named Knowledge RPC seam failed because its judge provider returned HTTP 402; known-symbol grep and direct reads supplied the actual boundary evidence instead. This is not evidence of missing Knowledge functionality."
+    ],
+    "operations": "Read/grep/find/glob and read-only shasum; only this report written. No builds, product tests, native UI, network operations, source edits or Git operations."
+  },
+  "dependencyContracts": [
+    {
+      "package": "CI-002",
+      "requiredSeam": "Specification API authorizeRepositoryRead/Write/Job; proposed repository-scope.ts and provider-policy.ts",
+      "contribution": "Resolve bindingId to authenticated workspace/source policy and canonical targets; authorize both lexical aliases and resolved targets at stage and apply; retain local-owned versus remote-private offline rules.",
+      "missingPrerequisite": "Accepted artifact plus authoritative readback receipt and actual exported resolver signatures. The implementation directory was absent at inspection."
+    },
+    {
+      "package": "CI-005",
+      "requiredSeam": "Groma provider/version capability and source ownership mapping; proposed providers/groma.ts and groma-compatibility.md",
+      "contribution": "Supply pinned Groma instruction-format/version evidence and distinguish read-only import from optional writer scan. Do not call groma init or auto-install external instructions to obtain a patch.",
+      "missingPrerequisite": "Accepted Groma importer/capability receipt, verified source/format pin and actual ownership contract."
+    },
+    {
+      "package": "CI-006",
+      "requiredSeam": "Provider-neutral RepoWiki contract and optional OpenWiki adapter inside the existing pack",
+      "contribution": "Supply selected provider/version, generation versus local retrieval exposure and telemetry configuration; keep repository instructions as scoped untrusted input.",
+      "missingPrerequisite": "Accepted RepoWiki/OpenWiki receipts and audited on-demand provider selection revision; no assumption that upstream tools are installed."
+    },
+    {
+      "package": "CI-008",
+      "requiredSeam": "Immutable artifact manifest, output-ownership.ts and freshness/base-hash conflict boundary",
+      "contribution": "Store InstructionPatch target manifest, raw-byte base hashes, marker ownership and review/application receipts with existing artifacts/proposals. Deduplicate canonical target identity and prevent stale publication.",
+      "missingPrerequisite": "Accepted artifact/output ownership receipt, persistence schema and exact staging/application interfaces; do not introduce a second proposal store."
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "FG-BASELINE-AND-RECEIPTS",
+      "kind": "launch foundation, not an added DAG edge",
+      "evidence": "execution-packages.json:5196-5225 specifies fail_closed_if_unresolved, unresolved reference revision/digest, baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab and accepted dependency receipts; dispatch uses a21aeab1da5a67e56788384ff930945b0f487879 and explicitly requires the lead wave0 commit first.",
+      "requiredChange": "Lead resolves the delivery manifest and approved baseline chain, commits wave0, accepts CI-002/005/006/008 artifacts and readbacks, and issues a revision-bound implementation packet with exclusive shared-file leases.",
+      "state": "BLOCKED_PENDING_LEAD_RECEIPTS"
+    },
+    {
+      "id": "FG-REVIEWED-FILESYSTEM-MUTATION",
+      "kind": "hidden integration foundation not named in the explicit dependencies",
+      "evidence": "CI-013 API at code-intelligence.json:4688-4694 requires staged preview/apply through the existing reviewed boundary. Knowledge RPC already delegates propose/approve/apply to KnowledgeBridgeService. But MutationOp (mutations.ts:56-61) only permits createDocument/appendBlock/updateBlock/setAttribute, MutationProposal:127 supports one Knowledge target, and bridge-service.ts:263-296/426-429 reads provider Markdown and normalizes its hash. No existing filesystem instruction-patch op was found in the inspected contract.",
+      "requiredChange": "Integration owner must expose a reviewed local-file artifact operation through the existing lifecycle/store, with a raw-byte hash algorithm distinct from sha256-canonical-v1. Bind an authorized canonical target manifest and dispatch the instruction patch executor only after persisted approval and fresh authorization/hash checks. Do not cast a repository path to a SiYuan block or use updateBlock as a filesystem alias.",
+      "prerequisitePatchRequests": [
+        {"path": "packages/core/src/knowledge/mutations.ts", "symbol": "MutationOp / MutationProposal / transition", "change": "Agree the typed managed-file proposal extension with CI-008/CI-011: target manifest, marker namespace, explicit byte-hash semantics and same review/apply/conflict lifecycle. Preserve Knowledge operation whitelist and existing canonical hash behavior for existing proposals.", "reason": "Current closed union and single-target canonical record cannot directly represent CI-013 filesystem writes."},
+        {"path": "packages/server-core/src/knowledge/bridge-service.ts", "symbol": "KnowledgeBridgeDeps / KnowledgeBridgeService.propose / apply / toWireRecord / toCoreRecord", "change": "Integrate an authorized managed-file artifact executor into the existing proposal lifecycle and persistence; keep raw-byte read/base/post-hash and canonical target revalidation separate from the current hard-coded canonical Markdown path. Route managed-file conflicts through existing review status/audit rather than a new store.", "reason": "Stage and apply currently call hashKnowledgeContent and require a KnowledgeProvider; byte-only drift would otherwise be missed."},
+        {"path": "packages/server-core/src/handlers/rpc/knowledge.ts", "symbol": "registerKnowledgeHandlers / bridgeFor / PROPOSE_MUTATION / APPROVE_PROPOSAL / APPLY_PROPOSAL", "change": "Through the lead-owned artifact contract, expose instruction stage/preview and route reviewed apply to the same workspace bridge with authenticated actor/source authorization. Register required staged/applied/conflict events through the accepted protocol contract; keep agent proposal separate from navigator application.", "reason": "CI-013 owns no RPC/protocol files, so its new instruction-patch.ts cannot alone make the API reachable."}
+      ],
+      "ownership": "These are additional foundation integration requests, not CI-013 worker write authorization. Lead must assign them to existing boundary owners and approve the integration scope before implementation.",
+      "state": "BLOCKED_REQUIRES_INTEGRATION_CONTRACT"
+    },
+    {
+      "id": "FG-BYTE-HASH-NOT-KNOWLEDGE-HASH",
+      "kind": "hidden correctness foundation",
+      "evidence": "normalizeKnowledgeMarkdown (provider.ts:117-119) changes CRLF/CR to LF and trims. hashKnowledgeContent:121-126 hashes the normalized UTF-8 string. bridge-service.ts:296 and 429 use it for base/re-read; CI-013 requires unrelated instruction byte equality and basehash drift detection.",
+      "requiredChange": "instruction-patch.ts must capture and hash exact Buffer bytes, splice only owned byte ranges, retain BOM/EOL/trailing bytes and compare raw whole-target hashes again at application. A preview string is not the authoritative write payload or base hash. Keep existing Knowledge normalization unchanged for existing consumers.",
+      "state": "BLOCKED_PENDING_MANAGED_FILE_CONTRACT"
+    },
+    {
+      "id": "FG-PACK-DECISION-AND-SOURCE-PINS",
+      "kind": "transitive CI-001 foundation, not a new direct dependency",
+      "evidence": "CI-001 DoD at code-intelligence.json:2152-2153 requires reconciliation and no silent rejected-tool re-enable. packs.ts:48-54 synthesizes pins from id@version; :92-155 contains example repositories, including codewiki/deepwiki. CI-013 cloudGate:4820-4821 requires pinned source policy/version and recorded pack/registry selection revision.",
+      "requiredChange": "Wait for CI-001/CI-006's accepted registry decision and verified provider manifests, then enrich that same inventory with notice/egress provenance. Declaration hashes cannot be license-source or installation evidence; keep the existing off-by-default/on-demand decisions.",
+      "state": "BLOCKED_PENDING_RECONCILED_REGISTRY_RECEIPT"
+    },
+    {
+      "id": "FG-REVIEW-AND-POLICY-SURFACE",
+      "kind": "hidden UI/callsite handoff; not a fabricated CI-013 DAG edge",
+      "evidence": "CI-013 references RC-01/RC-04/RC-05 and requires reviewable patch output. CI-011 outputs at code-intelligence.json:4235-4238 include artifact diff/apply; :4256-4257 require separate review/application and recoverable hash conflict. CI-UI-07/08:1840-1914 specifies affected-files/base-hash/exposure preview and explicit stage actions. CI-013 allowed paths include no renderer files.",
+      "requiredChange": "Arrange CI-011/existing review and policy UI owner handoff for instruction patch manifests, marker-only diff, approved-target application and conflict recovery. Do not create another instruction editor or review surface. If any surface changes, that owner must provide actual RC-01/04/05 UI/ARIA/font/keyboard proof on the integrated revision.",
+      "state": "BLOCKED_PENDING_SURFACE_HANDOFF"
+    },
+    {
+      "id": "FG-EXTERNAL-AND-LICENSE-READINESS",
+      "kind": "published external prerequisites separate from DAG edges",
+      "evidence": "execution-packages.json:5235-5239 lists EG-IDENTITY, scoped repository/egress policy, upstream version/license/runtime readiness and native transport when tools used. License source records pin MIT OpenWiki/GitDiagram/Groma and Apache-2.0 Zoekt, but no actual redistributed inventory or Zoekt NOTICE review was provided to this preflight.",
+      "requiredChange": "Require scoped identity/policy receipts and pinned license texts/distribution manifest. For adopted Zoekt, inspect the exact upstream LICENSE/NOTICE/dependencies and packaged notices, not only its license identifier. Native transport/provider runtime lanes require real receipts when exercised. Unknown Repogrep terms/license cannot authorize copying or private-code calls.",
+      "state": "BLOCKED_PENDING_SCOPED_READINESS_RECEIPTS"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/code-intelligence/instruction-patch.ts",
+    "docs/code-intelligence/provider-notices.md",
+    "docs/code-intelligence/agent-routing.md",
+    "packages/server-core/src/code-intelligence/__tests__/instruction-patch.test.ts"
+  ],
+  "proposedCodeContribution": {
+    "status": "DESIGN_PROPOSAL_ONLY_NAMES_NOT_EXISTING_EXPORTS",
+    "path": "packages/server-core/src/code-intelligence/instruction-patch.ts",
+    "symbols": [
+      {"symbol": "buildInstructionPatch", "change": "Pure byte-oriented planner taking authorized target bytes, binding/manifest identity, reviewed provider policy, markerNamespace and bounded replacement bytes. Return InstructionPatch fields id/bindingId/targetPath/baseHash/markerNamespace/diff/reviewStatus plus manifest identity through the accepted artifact schema. Plan append/create or replace exactly one owned marker range; fail explicitly on malformed, nested or duplicate namespace markers. Do not run an initializer or mutate during planning."},
+      {"symbol": "stageInstructionPatch", "change": "Resolve allowed AGENTS/CLAUDE/INSTRUCTIONS target aliases with CI-002, authorize canonical targets and deduplicate them through CI-008 manifest identity. Persist proposed patch/base hashes/target manifest in existing reviewed artifacts/proposals; return preview, not an applied receipt."},
+      {"symbol": "applyInstructionPatch", "change": "Executor called only by the accepted reviewed mutation boundary. Reauthorize the current actor/workspace/binding and both aliases and resolved targets; check canonical identity, owned marker range and exact raw-byte baseHash immediately before writing. Reject changed target/symlink/hash or unapproved proposal without writes. Apply one write per canonical target through accepted output-ownership semantics, then read back exact bytes and persist application/conflict receipt through the same boundary."}
+    ],
+    "markerDecision": "Use an explicitly ROX-owned namespace, e.g. rox:code-intelligence:<provider-id>, with paired start/end comment markers, only after CI-008 marker ownership agreement. Groma/autonomous-operator/user blocks are not ROX-owned and must remain untouched. This example is proposed, not an existing repository convention.",
+    "testContribution": "Normative instruction-patch.test.ts must cover consumer-visible byte preservation, duplicate/malformed marker rejection, authorized canonical alias deduplication, escape/symlink-retarget denial, raw-hash drift and review-state denial. Use isolated temp targets and accepted interfaces; no permanent source-text, wiring or mock-echo tests."
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/code-intelligence/sbom.ts",
+      "symbol": "SbomScan / runSyftSbom; proposed ProviderNoticeRecord and buildProviderNoticeInventory",
+      "change": "Alongside the current optional Syft helper, define a bounded provider notice inventory projection from accepted provider/distribution manifests: provider id, repository identity, exact revision, source artifact hash, license file hash/text reference, copyright/attribution references, redistribution/adoption decision, NOTICE evidence and explicit unresolved obligations. Reject unknown/unverified license as permission-to-copy; retain unknown as unresolved. Build from actual license/manifest receipts even if Syft is unavailable. Keep runSyftSbom(argv runner), unavailable outcome and no-install/no-auto-enable semantics unchanged.",
+      "reason": "The current file returns only available/tool/documents and contains no provider attribution inventory. Optional scanner success/failure cannot establish license permission or replace required notice retention.",
+      "dependsOnFoundation": ["FG-EXTERNAL-AND-LICENSE-READINESS", "FG-PACK-DECISION-AND-SOURCE-PINS"]
+    },
+    {
+      "path": "packages/shared/src/capabilities/agents-md.ts",
+      "symbol": "generateAgentsMdHeuristics / buildOfflineCapabilityReport",
+      "change": "Extend the existing generator/report using CI-001/006's reconciled selection and accepted ProviderPolicy projection: bounded routing, provider/source provenance, source-to-model egress, telemetry and retention status, explicit high-risk/read-versus-generation authority. Generate managed-block content only; leave file target resolution, byte splice and reviewed writes in instruction-patch.ts. State that offline tool availability grants no protected source read/write authority. Do not treat source AGENTS/CLAUDE/INSTRUCTIONS as authority or emit routes that silently select rejected wiki daemons.",
+      "reason": "These functions already provide the routing/offline surface, but accept only installedIds and report installation/declaration metadata, not actor policy or protected-content authorization.",
+      "dependsOnFoundation": ["FG-PACK-DECISION-AND-SOURCE-PINS", "FG-BYTE-HASH-NOT-KNOWLEDGE-HASH"]
+    },
+    {
+      "path": "packages/shared/src/capabilities/packs.ts",
+      "symbol": "CapabilityTool / CAPABILITY_TOOLS / tool / gitRef / checksum",
+      "change": "Augment CI-001/006's accepted source-verified provider manifests in this same registry with license/notice source refs, exact upstream revision/content receipts, provider egress/telemetry/retention disclosure refs and reviewed adoption decision. For Code Intelligence providers do not generate verification evidence using gitRef(id,version) or checksum(id,version), and do not substitute example repositories. Preserve default available/off-by-default behavior and selection/rejection history; no new install registry or enablement path.",
+      "reason": "Current metadata fabricates declaration pins from names/versions and cannot support source-pinned MIT/Apache notices. The registry is already shared with CI-001/006 and needs a leased integration patch, not concurrent package rewrites.",
+      "dependsOnFoundation": ["FG-PACK-DECISION-AND-SOURCE-PINS", "FG-EXTERNAL-AND-LICENSE-READINESS"],
+      "consumerHandoff": "install.ts recordFor/buildProvenanceManifest consumes registry checksum/license/ref. Ask its CI-001 owner to retain receipt semantics and update affected consumers/tests if the accepted metadata shape changes. CI-013 does not independently edit install.ts."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-013-AC-1",
+      "criterion": "No wholesale AGENTS overwrite",
+      "currentEvidence": "agents-md.ts:4-36 generates a complete heuristic string but performs no file writes or reviewed merge. instruction-patch.ts was absent; KnowledgeBridgeService exists but cannot execute managed local-file ops under the current whitelist.",
+      "requiredChange": "Implement proposed buildInstructionPatch/stageInstructionPatch/applyInstructionPatch through the accepted reviewed boundary. Append a new owned block for no-marker input or replace exactly its owned body; never use writeFile(target,generateAgentsMdHeuristics(...)) as a whole-policy replacement. Preview/reject must be read-only; no provider initializer call.",
+      "verification": ["Run the complete package proof lane described below.", "For existing nonempty AGENTS, empty target, absent target and existing owned block, stage/preview and compare exact bytes; after approved apply only owned inserted/replaced bytes differ.", "Reject proposal and attempt apply before approval; neither changes target bytes. Run actual stage/review/apply path, reload and verify applied receipt plus target readback."],
+      "missingPrerequisites": ["Accepted CI-002/008 contracts and CI-005/006 receipts", "FG-REVIEWED-FILESYSTEM-MUTATION", "FG-REVIEW-AND-POLICY-SURFACE"],
+      "state": "GAP_BLOCKS_COMPLETION_NOT_IMPLEMENTED"
+    },
+    {
+      "id": "CI-013-AC-2",
+      "criterion": "marker namespace and byte-preserving surrounding text",
+      "currentEvidence": "agents-md.ts has no managed-marker parser. provider.ts:117-126 normalizes EOL and trims before hashing; bridge-service.ts:296/429 uses this normalized hash. That mechanism cannot detect all byte drift required here.",
+      "requiredChange": "Use an ownership-agreed ROX namespace and exact byte-range splice in buildInstructionPatch; reject duplicate/unbalanced/nested markers and cross-namespace adoption. Preserve prefix/suffix bytes including BOM, CRLF, trailing spaces/newlines and Unicode. Persist raw target SHA-256 and reject any intervening byte drift at apply, without changing existing Knowledge hash semantics.",
+      "verification": ["Run the complete package proof lane described below.", "Fixture exact byte comparisons for existing/empty/absent block, LF/CRLF/BOM/multibyte/trailing whitespace and unrelated managed/user instruction blocks.", "Duplicate and malformed markers produce explicit conflict with zero writes.", "Change only an EOL or trailing space after staging; apply must conflict even when hashKnowledgeContent would normalize both inputs identically."],
+      "missingPrerequisites": ["Accepted CI-008 ownership/marker contract", "FG-BYTE-HASH-NOT-KNOWLEDGE-HASH", "FG-REVIEWED-FILESYSTEM-MUTATION"],
+      "state": "GAP_BLOCKS_COMPLETION_NOT_IMPLEMENTED"
+    },
+    {
+      "id": "CI-013-AC-3",
+      "criterion": "symlink targets deduplicated and authorized",
+      "currentEvidence": "Spec provider security at code-intelligence.json:443-444 records Groma realpath deduplication, but this is upstream reference behavior, not implemented ROX authorization. CI-002 proposes a canonical resolver; the server-core code-intelligence directory was absent.",
+      "requiredChange": "stageInstructionPatch uses CI-002 authenticated binding/root policy, resolves aliases to real targets and builds one patch per authorized canonical target in CI-008 manifest. At apply re-resolve and reauthorize; block escape, foreign workspace, exclusion and symlink-retarget changes. Do not implement a separate permissive resolver or write directly through aliases.",
+      "verification": ["Run the complete package proof lane described below.", "Two instruction aliases linked to one allowed target produce one reviewed target and one physical update; surrounding bytes remain equal.", "Links outside allowed roots, foreign-workspace targets, excluded targets and link retarget between preview/apply are denied with zero writes and no target contents in denial logs.", "Exercise canonical target hash drift and accepted actor-policy change through actual apply boundary."],
+      "missingPrerequisites": ["CI-002 accepted authorizeRepositoryWrite/canonical resolver receipt", "CI-008 target identity/output ownership receipt", "FG-REVIEWED-FILESYSTEM-MUTATION"],
+      "state": "GAP_BLOCKS_COMPLETION_NOT_IMPLEMENTED"
+    },
+    {
+      "id": "CI-013-AC-4",
+      "criterion": "upstream MIT notices retained if code redistributed",
+      "currentEvidence": "Spec source records pin OpenWiki LICENSE to fab24e77afd1055078338848f3df3af7f785e291/hash 1126322e2cc8d165adc4c792eeb195717de2bcc7b39be1ce77959d78e87ef685; GitDiagram LICENSE to 7cf140c5072ff647fe702b0c54f9dc19c8f7a051/hash 1f4d0e04838dd51ef52d70211fd17f86bad26b2f6518497098524bc05f61af15; Groma LICENSE to 46b1572d755ae3736414de4021d06726d282cf77/hash b97c251e502d39094c7110c14f1c912d5b0cd30c4b03cd30b4f7a9f776960c48. These are specification citations, not locally fetched license texts or inspected distribution contents. sbom.ts:5-24 contains no attribution projection; packs.ts license labels are insufficient evidence.",
+      "requiredChange": "Produce provider-notices.md plus the existing inventory projection with upstream identity/revision/license SHA-256, actual copyright and license text references and exact adopted/redistributed components. If upstream code is redistributed, retain required text in actual delivered notice/license artifacts and record their hashes; if not redistributed, record that verified distribution decision rather than N/A or an assumed MIT exemption.",
+      "verification": ["Run the complete package proof lane described below.", "Compare actual accepted distribution manifest and delivered notice/license bytes to pinned source license texts for every redistributed MIT provider/component.", "Negative control: remove required MIT notice or mismatch its source revision/hash; inventory/distribution validation must reject the release.", "Verify notice inventory can expose unresolved obligations when optional Syft is unavailable; scanner absence must not approve distribution."],
+      "missingPrerequisites": ["Accepted CI-005/006 adoption/version receipts", "Actual pinned license texts and redistributed component manifest", "FG-EXTERNAL-AND-LICENSE-READINESS", "FG-PACK-DECISION-AND-SOURCE-PINS"],
+      "state": "GAP_BLOCKS_COMPLETION_NOTICE_RETENTION_NOT_VERIFIED"
+    },
+    {
+      "id": "CI-013-AC-5",
+      "criterion": "Apache2 Zoekt NOTICE/license obligations reviewed if adopted",
+      "currentEvidence": "code-intelligence.json:510-549 identifies optional Zoekt; :6099-6111 pins LICENSE at 153817f643cde8b229ee388c1dddbcf07f4798af/hash c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4. The source list contains no Zoekt NOTICE review receipt. Neither sbom.ts nor current capability inventory implements this review.",
+      "requiredChange": "Add Zoekt to provider-notices.md/inventory with explicit adoption status. Before any adoption/distribution, obtain exact pinned LICENSE, determine whether upstream NOTICE exists, review applicable Apache-2.0 notice/change/attribution obligations for the adopted artifact and dependencies, and link reviewed packaged license/NOTICE content. No assertion that NOTICE exists, is absent, or is unnecessary without evidence. Optional status must not turn the criterion into N/A.",
+      "verification": ["Run the complete package proof lane described below.", "An adopted Zoekt decision cannot pass without a source-pinned license/NOTICE review receipt and applicable delivered notice/license artifacts.", "Negative control: mark adopted while review unresolved or omit an applicable notice; validation must fail closed.", "If not adopted, verify the actual decision/distribution manifest excludes it and retains the explicit future-adoption notice gate; do not claim its obligations are already satisfied."],
+      "missingPrerequisites": ["Pinned upstream LICENSE/NOTICE existence and dependency evidence", "Actual adoption/distribution decision, coordinated with the CI-014 optional provider owner if adoption is chosen", "FG-EXTERNAL-AND-LICENSE-READINESS"],
+      "state": "GAP_BLOCKS_COMPLETION_ADOPTION_AND_NOTICE_REVIEW_UNVERIFIED"
+    },
+    {
+      "id": "CI-013-AC-6",
+      "criterion": "unknown Repogrep license not treated as permission to copy",
+      "currentEvidence": "code-intelligence.json:454-506 sets Repogrep license UNKNOWN, records no verified source repository/license and limits it to a manual external reference. :6030-6083 pins public asset evidence only. The current sbom.ts inventory cannot express unresolved copy permission; packs.ts declared license strings are not a verified source contract.",
+      "requiredChange": "Keep Repogrep license/terms/retention explicitly unknown and copy/vendor permission denied in the same inventory and provider-notices.md. agent-routing.md retains manual public reference only; neither bundled endpoint shape nor UI-source visibility authorizes a provider adapter, copied code or private repository/token egress.",
+      "verification": ["Run the complete package proof lane described below.", "Attempt to build an adopted/redistributed Repogrep inventory from public asset hashes with no verified license; fail closed with unresolved permission, not inferred MIT/Apache permission.", "Inspect actual accepted distribution inventory for no unauthorized copied/vendored Repogrep code and verify routing cannot auto-enable its undocumented internal endpoint.", "Any later verified primary license/API/terms decision must be revision-bound and reviewed explicitly; no private requests are authorized by this preflight."],
+      "missingPrerequisites": ["Accepted reconciled registry/inventory contract", "Actual distribution manifest for negative copy evidence", "Primary verified license/API/terms receipt if adoption is ever proposed"],
+      "state": "GAP_BLOCKS_COMPLETION_POLICY_ENFORCEMENT_NOT_IMPLEMENTED"
+    },
+    {
+      "id": "CI-013-CONTRACT-REVIEW-EVENTS-PERSISTENCE",
+      "criterion": "Stage instruction-patch/preview/apply via existing reviewed mutation boundary; persist patch hashes/markers/target manifest and emit staged/applied/conflict events",
+      "currentEvidence": "CI-013 record:4688-4694/4719-4723 specifies this contract. Existing Knowledge RPC proposal channels and bridge persisted lifecycle exist, but there is no instruction file operation in the inspected union and no proposed instruction-patch.ts.",
+      "requiredChange": "Implement the planner/executor and complete FG-REVIEWED-FILESYSTEM-MUTATION handoff. Persist the InstructionPatch fields defined by CI-E-21 plus canonical manifest through accepted CI-008 records. Deliver instruction.patch.staged/applied/conflict through lead-owned typed routing and existing review UI, scoped/redacted per actor. No new persistence authority.",
+      "verification": ["Exercise real stage -> preview -> reject and stage -> review -> apply plus byte-only drift -> conflict.", "Restart/reload persisted pending and applied proposals; base hashes, marker ownership, target manifest and authoritative readback remain correct.", "Verify required event payloads do not expose raw source/secrets to unauthorized actors; capture exact integrated revision/artifact digests.", "Actual RC-01/04/05 surface checks if UI changed, including keyboard apply, recoverable conflict, ARIA and computed font."],
+      "missingPrerequisites": ["FG-REVIEWED-FILESYSTEM-MUTATION", "FG-REVIEW-AND-POLICY-SURFACE", "Accepted CI-008 persistence and protocol/event owner handoff"],
+      "state": "GAP_BLOCKS_COMPLETION_INTEGRATION_NOT_IMPLEMENTED"
+    },
+    {
+      "id": "CI-013-CONTRACT-PROVIDER-GUIDE",
+      "criterion": "License/attribution inventory and provider egress/telemetry guide use the existing routing/report surface and preserve local actor policy/untrusted external instructions",
+      "currentEvidence": "CI-013 outputs:4652-4655 and offline policy:4704 require these results. agents-md.ts reports tools, not content authorization. Provider security records:252-256/349-352/442-444/498-506 identify exposure distinctions and unknowns.",
+      "requiredChange": "provider-notices.md documents source-pinned license/adoption inventory without legal-audit overclaims. agent-routing.md covers local read versus model-backed generation, selected provider source exposure, credential refs, telemetry opt-out (OpenWiki OPENWIKI_TELEMETRY_DISABLED/DO_NOT_TRACK), retention unknowns, managed-only reviewed instruction changes and offline scope. Reuse agents-md generator/report with accepted ProviderPolicy; no new configuration store.",
+      "verification": ["Validate guide disclosures against accepted version-pinned provider configuration and actual egress/telemetry receipts when providers are exercised.", "Owned-local offline stage/apply follows current local actor authority; remote-private offline source content is denied without accepted scoped lease.", "Injected repository instructions cannot elevate permissions or change authoritative policy, online or offline.", "Unavailable optional providers/Syft remain unavailable, not implicitly installed/enabled by guide or inventory generation."],
+      "missingPrerequisites": ["CI-002 policy and CI-005/006 provider/version receipts", "FG-PACK-DECISION-AND-SOURCE-PINS", "FG-EXTERNAL-AND-LICENSE-READINESS"],
+      "state": "GAP_BLOCKS_COMPLETION_GUIDES_AND_POLICY_PROJECTION_NOT_IMPLEMENTED"
+    }
+  ],
+  "plannedVerification": {
+    "performed": false,
+    "reason": "Preflight authorization prohibits product builds/tests/native UI/network operations. All commands/scenarios here are future implementation verification, not observed passes.",
+    "completePackageProofLane": [
+      "existing/empty/duplicate marker",
+      "shared symlink target",
+      "basehash drift",
+      "unrelated instruction byte equality",
+      "license inventory source pin"
+    ],
+    "proofLaneCoverage": "The published observableAcceptance repeats all five proof items for every AC-1 through AC-6. Retain the full lane for package acceptance; criterion-specific scenarios above add semantic assertions rather than narrowing the published proof set.",
+    "futureFocusedCommand": "bun test packages/server-core/src/code-intelligence/__tests__/instruction-patch.test.ts",
+    "existingCoverage": "packs.test.ts:167-183 asserts generated wording/checksum text; adapter.test.ts:60-65 asserts unavailable Syft result. No passing test result was observed, and these fixtures do not prove instruction review/byte preservation or actual license retention. Update affected contract tests through their owners; do not re-pin incidental wording assertions.",
+    "runtimeProof": "On the integrated commit, invoke actual staged/preview/review/apply APIs against isolated authorized instruction targets, inspect raw bytes and persisted receipts, exercise rejection/hash drift/link retarget, restart and read back. Capture actor/workspace policy and exact target/source/notice hashes. Native/provider/UI lanes only through their actual assigned owners when exercised, never simulated success.",
+    "deliveryProof": "Root verifies the owned report with the packet verifier; feature implementation later requires integrated commit, compiled schema report, runtime/negative-control receipts, artifact SHA-256 and authoritative before/after-restart readback. No completion by agent final text."
+  },
+  "sourceReferences": [
+    {"path": "packages/shared/src/capabilities/agents-md.ts", "symbol": "generateAgentsMdHeuristics", "lineStart": 3, "lineEnd": 37, "sha256": "230851668eb541a455f215862f92b51555a4ce8d71ecb60577f61f85599c99f6"},
+    {"path": "packages/shared/src/capabilities/agents-md.ts", "symbol": "buildOfflineCapabilityReport", "lineStart": 39, "lineEnd": 58, "sha256": "230851668eb541a455f215862f92b51555a4ce8d71ecb60577f61f85599c99f6"},
+    {"path": "packages/shared/src/code-intelligence/sbom.ts", "symbol": "SbomScan / CommandRunner / runSyftSbom", "lineStart": 5, "lineEnd": 24, "sha256": "ec59d14022dddf58bdbb481167974dadecc58103a066c326fed843786f924d54"},
+    {"path": "packages/shared/src/capabilities/packs.ts", "symbol": "CapabilityTool / gitRef / checksum / tool", "lineStart": 23, "lineEnd": 89, "sha256": "0746e6c5df67dcb72e8bc8adb112a50dc337d207473a05beed74f6088540af9e"},
+    {"path": "packages/shared/src/capabilities/packs.ts", "symbol": "CAPABILITY_TOOLS Code Intelligence declarations", "lineStart": 91, "lineEnd": 155, "sha256": "0746e6c5df67dcb72e8bc8adb112a50dc337d207473a05beed74f6088540af9e"},
+    {"path": "packages/shared/src/capabilities/install.ts", "symbol": "recordFor / buildProvenanceManifest", "lineStart": 74, "lineEnd": 117, "sha256": "8b1d53b84a5c755d6fc0aaa77a3c94e34b2ffabaa4b37b84b2c410e4943d06dd"},
+    {"path": "packages/core/src/knowledge/provider.ts", "symbol": "KnowledgeProvider / normalizeKnowledgeMarkdown / hashKnowledgeContent", "lineStart": 104, "lineEnd": 127, "sha256": "e675f22be93f414e6fbdad2f305bc23208c821d01a1320be1c6bfb26c3156a3c"},
+    {"path": "packages/core/src/knowledge/mutations.ts", "symbol": "MutationOp / MutationInput", "lineStart": 54, "lineEnd": 86, "sha256": "df2329725a75159951fce462154de40abe7f55e5d32d6a22c9b74e6a0651f242"},
+    {"path": "packages/core/src/knowledge/mutations.ts", "symbol": "MutationProposal", "lineStart": 123, "lineEnd": 151, "sha256": "df2329725a75159951fce462154de40abe7f55e5d32d6a22c9b74e6a0651f242"},
+    {"path": "packages/core/src/knowledge/mutations.ts", "symbol": "transition beginApply / resolveHashCheck / applyOpsSucceeded", "lineStart": 833, "lineEnd": 864, "sha256": "df2329725a75159951fce462154de40abe7f55e5d32d6a22c9b74e6a0651f242"},
+    {"path": "packages/server-core/src/knowledge/bridge-service.ts", "symbol": "KnowledgeBridgeDeps", "lineStart": 121, "lineEnd": 139, "sha256": "416484c77f41bf69f7a9a9eedf67ffb9761eb8e0c7bf6cd96640f974e65d5712"},
+    {"path": "packages/server-core/src/knowledge/bridge-service.ts", "symbol": "KnowledgeBridgeService.propose", "lineStart": 263, "lineEnd": 323, "sha256": "416484c77f41bf69f7a9a9eedf67ffb9761eb8e0c7bf6cd96640f974e65d5712"},
+    {"path": "packages/server-core/src/knowledge/bridge-service.ts", "symbol": "KnowledgeBridgeService.apply", "lineStart": 407, "lineEnd": 450, "sha256": "416484c77f41bf69f7a9a9eedf67ffb9761eb8e0c7bf6cd96640f974e65d5712"},
+    {"path": "packages/server-core/src/handlers/rpc/knowledge.ts", "symbol": "registerKnowledgeHandlers / bridgeFor", "lineStart": 563, "lineEnd": 593, "sha256": "31af116347a9189834945bd8d2b4c029eb060416dca73da365096f3a43a9c571"},
+    {"path": "packages/server-core/src/handlers/rpc/knowledge.ts", "symbol": "PROPOSE_MUTATION / APPROVE_PROPOSAL handlers", "lineStart": 1092, "lineEnd": 1119, "sha256": "31af116347a9189834945bd8d2b4c029eb060416dca73da365096f3a43a9c571"},
+    {"path": "packages/server-core/src/handlers/rpc/knowledge.ts", "symbol": "APPLY_PROPOSAL handler", "lineStart": 1135, "lineEnd": 1167, "sha256": "31af116347a9189834945bd8d2b4c029eb060416dca73da365096f3a43a9c571"},
+    {"path": "packages/shared/src/capabilities/packs.test.ts", "symbol": "AGENTS.md heuristics and offline report tests", "lineStart": 166, "lineEnd": 184, "sha256": "f5d751a2b89dc4f24f37b1ccf72d546b44d280835963cd43a5f5c6a3583282e7"},
+    {"path": "packages/shared/src/code-intelligence/__tests__/adapter.test.ts", "symbol": "syft SBOM unavailable fixture", "lineStart": 60, "lineEnd": 67, "sha256": "38d3c94c95a523cd6f9831306b5653038e368f471e8463609e81c41586365297"},
+    {"path": "plans/lark-suite-reference/code-intelligence.json", "symbol": "/workPackages/12 CI-013", "lineStart": 4635, "lineEnd": 4843, "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path": "plans/lark-suite-reference/code-intelligence.json", "symbol": "CI-E-19 ReviewProposal / CI-E-20 ProviderPolicy / CI-E-21 InstructionPatch", "lineStart": 1346, "lineEnd": 1398, "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "CI-013 execution record and cloudPacket gates", "lineStart": 5155, "lineEnd": 5242, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/lark-suite-reference/14-code-intelligence-ui.md", "symbol": "RC-01/RC-04/RC-05 and authority/security requirements", "lineStart": 42, "lineEnd": 99, "sha256": "2c07a58511e385a7bef7d8630d333c685b924fb8e71819cf2215c097107b3c75"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead validates this preflight report against its dispatch packet and schedules the reviewed-filesystem/hash/UI contract handoffs while wave0 finishes. Do not start CI-013 product edits yet.",
+    "implementationResumePoint": "After wave0 commit and accepted CI-002/005/006/008 artifact+readback receipts, resolve delivery manifest/base chain and acquire shared-file leases. Rehash inspected sources, re-read changed seams, settle managed-file proposal/raw-byte hash/marker ownership contracts, then implement the four normative new files and submit the three scoped shared patches to the integration owner.",
+    "firstCodeStep": "Bind buildInstructionPatch's byte planner and isolated regression cases to the accepted InstructionPatch/artifact schema, then connect stage/preview/reviewed apply through the existing boundary. Do not infer readiness from this report or create a disconnected helper-only implementation."
+  },
+  "risks": [
+    "Normalized Knowledge hashes can miss EOL/trailing-space drift; copying that helper would violate base-hash and byte-preservation requirements.",
+    "A complete generated heuristic string could overwrite user AGENTS unless only the owned marker range is applied.",
+    "Canonicalization only at preview misses symlink retarget/policy changes at apply; aliases must deduplicate and remain authorized.",
+    "Current Knowledge op whitelist/store/bridge/RPC cannot directly express managed local-file application. CI-013 allowed paths alone cannot deliver end-to-end API/UI behavior; lead-owned foundation integration is required.",
+    "Synthetic capability checksums, example repositories and declared license labels are not source/license/distribution evidence; provenance projection currently prefers registry metadata.",
+    "Optional Syft unavailable must not silently waive provider notice inventory or cause an implicit installation.",
+    "Zoekt optionality does not waive an explicit adoption/NOTICE review gate; no NOTICE existence or absence was observed.",
+    "Repogrep public asset visibility does not authorize code copying, stable API use, credential forwarding or private-code exposure.",
+    "Existing spec is based on e953786 while the dispatch is a21aeab1 and root wave0 is dirty; integration must reconcile the exact baseline and reject stale evidence, not reset the user's working tree.",
+    "All acceptance remains unimplemented/unverified; source inspection is not a runtime, UI, legal audit, dependency acceptance or feature-completion receipt."
+  ],
+  "promptEvolution": "No prompt/skill changes proposed: this bounded preflight demonstrates package integration facts, not an evaluated general workflow improvement. Only the assigned report path is writable."
+}

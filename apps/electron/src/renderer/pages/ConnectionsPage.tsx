@@ -28,6 +28,7 @@ import {
   type PreviewSource,
 } from './connections-ui'
 import { ConnectionsOverview, OverviewGroup, OverviewRow, type OverviewStatus } from './connections-overview'
+import { ProjectAuthorityConnectionPanel } from '@/components/projects/ProjectAuthorityConnectionPanel'
 
 const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
 const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent'] as const
@@ -487,6 +488,7 @@ export default function ConnectionsPage() {
       </div>
       <ScrollArea className="flex-1 min-h-0">
       <div className="mx-auto flex w-full max-w-4xl flex-col px-6 pt-2 pb-16 text-muted-foreground">
+        {tab === 'services' && <ProjectAuthorityConnectionPanel />}
         {tab === 'imports' ? (
           <div className="space-y-3 text-sm text-foreground">
             <ul className="flex flex-wrap gap-2 text-xs">

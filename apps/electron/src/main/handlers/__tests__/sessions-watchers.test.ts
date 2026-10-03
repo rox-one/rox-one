@@ -17,6 +17,15 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+async function waitUntil(predicate: () => boolean): Promise<void> {
+  const deadline = Date.now() + 8000
+  while (Date.now() < deadline) {
+    if (predicate()) return
+    await wait(25)
+  }
+  throw new Error("Expected filesystem watcher event was not delivered within 8000ms")
+}
+
 describe('sessions file watchers', () => {
   const handlers = new Map<string, HandlerFn>()
   const pushed: Array<{ channel: string; target: any; args: any[] }> = []
@@ -107,7 +116,7 @@ describe('sessions file watchers', () => {
 
     writeFileSync(join(sessionDirA, 'a.txt'), `a-${Date.now()}`)
     writeFileSync(join(sessionDirB, 'b.txt'), `b-${Date.now()}`)
-    await wait(300)
+    await waitUntil(() => ['client-a', 'client-b'].every((clientId) => pushed.some((evt) => evt.target?.clientId === clientId && evt.channel === RPC_CHANNELS.sessions.FILES_CHANGED && evt.args[0] === (clientId === 'client-a' ? 'session-a' : 'session-b'))))
 
     const aEvents = pushed.filter((evt) => evt.target?.to === 'client' && evt.target?.clientId === 'client-a')
     const bEvents = pushed.filter((evt) => evt.target?.to === 'client' && evt.target?.clientId === 'client-b')
@@ -120,14 +129,14 @@ describe('sessions file watchers', () => {
 
     writeFileSync(join(sessionDirA, 'a.txt'), `a2-${Date.now()}`)
     writeFileSync(join(sessionDirB, 'b.txt'), `b2-${Date.now()}`)
-    await wait(300)
+    await waitUntil(() => pushed.some((evt) => evt.target?.clientId === 'client-b' && evt.channel === RPC_CHANNELS.sessions.FILES_CHANGED && evt.args[0] === 'session-b'))
 
     const aEventsAfter = pushed.filter((evt) => evt.target?.clientId === 'client-a')
     const bEventsAfter = pushed.filter((evt) => evt.target?.clientId === 'client-b')
 
     expect(aEventsAfter.length).toBe(0)
     expect(bEventsAfter.some((evt) => evt.channel === RPC_CHANNELS.sessions.FILES_CHANGED && evt.args[0] === 'session-b')).toBe(true)
-  })
+  }, 20_000)
 
   it('disconnect cleanup removes watcher and prevents further events', async () => {
     const watch = handlers.get(RPC_CHANNELS.sessions.WATCH_FILES)

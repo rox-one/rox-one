@@ -1,12 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  CalendarStore,
-  FixtureCalendarAdapter,
-  mergeTodayUpcoming,
-  type CalendarProvider,
-  type TaskLike,
-} from '@craft-agent/core/calendar'
+import { calendarEventIdentity, CalendarStore, mergeTodayUpcoming, type TaskLike } from '@craft-agent/core/calendar'
 import { CalendarConnectorChips } from './CalendarConnectorChips'
 import { cn } from '@/lib/utils'
 
@@ -53,27 +47,8 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
     [tasks, store, now],
   )
   const events = merged.filter((item) => item.kind === 'event')
+  const conflicts = store.conflicts()
   const proposals = store.proposals()
-
-  const connect = (provider: CalendarProvider) => {
-    void mutate(async (current) => {
-      try {
-        const account = current.connect(provider, provider, tz)
-        current.markConnected(account.id)
-        const sampleStart = now + 60 * 60 * 1000
-        const adapter = new FixtureCalendarAdapter(provider, [{
-          id: `${provider}-demo`,
-          title: provider,
-          startAt: sampleStart,
-          endAt: sampleStart + 30 * 60 * 1000,
-          timeZone: tz,
-        }])
-        await current.sync(account.id, adapter, now)
-      } catch {
-        // Unwired connector — chips stay disabled; status stays none/pending.
-      }
-    })
-  }
 
   const revoke = (accountId: string) => {
     void mutate((current) => {
@@ -92,9 +67,9 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
 
   return (
     <div className="flex flex-col gap-1 px-3 py-2 text-[11px]" data-testid="calendar-status-strip">
-      <div className={cn('flex flex-wrap items-center gap-2', status === 'conflict' && 'text-amber-600', status === 'timezone' && 'text-amber-600')}>
+      <div className={cn('flex flex-wrap items-center gap-2', (status === 'conflict' || status === 'localChanges' || status === 'timezone') && 'text-amber-600')}>
         <span>{t(`calendar.status.${status}`)}</span>
-        <CalendarConnectorChips onConnect={connect} />
+        <CalendarConnectorChips />
         {store.accounts().filter((account) => account.status === 'connected').map((account) => (
           <button key={account.id} type="button" className="underline" onClick={() => revoke(account.id)}>
             {t('calendar.revoke')} · {t(`calendar.provider.${account.provider}`)}
@@ -112,15 +87,36 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
         />
         <button type="submit" className="underline">{t('calendar.addLocalReminder')}</button>
       </form>
+      {conflicts.length > 0 ? (
+        <ul className="flex flex-col gap-1">
+          {conflicts.map((conflict) => {
+            const event = conflict.eventIdentity
+              ? store.events().find((item) => calendarEventIdentity(item) === conflict.eventIdentity)
+              : undefined
+            if (!event) return null
+            return (
+              <li key={conflict.id} className="flex flex-wrap items-center gap-2">
+                <span>{t('calendar.conflict.event', { title: event.title })}</span>
+                <button type="button" className="underline" onClick={() => void mutate((current) => { current.resolveConflict(conflict.id, 'local') })}>
+                  {t('calendar.conflict.keepLocal')}
+                </button>
+                <button type="button" className="underline" onClick={() => void mutate((current) => { current.resolveConflict(conflict.id, 'remote') })}>
+                  {t('calendar.conflict.useRemote')}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      ) : null}
       {events.length > 0 ? (
         <ul className="flex flex-wrap gap-2 text-muted-foreground">
           {events.map((item) => (
-            <li key={item.id}>
+            <li key={calendarEventIdentity(item.event)}>
               {t('calendar.kind.event')} · {item.title}
               <button
                 type="button"
                 className="ml-1 underline"
-                onClick={() => void mutate((current) => { current.proposeReminder(item.id) })}
+                onClick={() => void mutate((current) => { current.proposeReminder(item.event) })}
               >
                 {t('calendar.proposals')}
               </button>

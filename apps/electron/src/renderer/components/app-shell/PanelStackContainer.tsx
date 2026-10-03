@@ -22,11 +22,11 @@
  * feel rather than a CSS reflow.
  */
 
-import { useRef, useEffect } from 'react'
-import { useAtomValue } from 'jotai'
+import { useRef, useEffect, useCallback } from 'react'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { motion } from 'motion/react'
 import { cn } from '@/lib/utils'
-import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom } from '@/atoms/panel-stack'
+import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
 import { parseRouteToNavigationState } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
 import { PanelSlot } from './PanelSlot'
@@ -39,6 +39,13 @@ import {
   PANEL_STACK_TOP_INSET,
   PANEL_STACK_BOTTOM_INSET,
 } from './panel-constants'
+
+const SPATIAL_DIRECTION_BY_KEY: Record<string, PanelSpatialDirection> = {
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+}
 
 /** Spring transition matching AppShell's sidebar/navigator animation */
 const PANEL_SPRING = { type: 'spring' as const, stiffness: 600, damping: 49 }
@@ -87,6 +94,72 @@ export function PanelStackContainer({
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const prevCountRef = useRef(contentPanels.length)
+  const setFocusedPanel = useSetAtom(focusedPanelIdAtom)
+
+  const focusPanelInDirection = useCallback((direction: PanelSpatialDirection): boolean => {
+    const container = scrollRef.current
+    if (!container) return false
+    const containerRect = container.getBoundingClientRect()
+    const elements = Array.from(container.querySelectorAll<HTMLElement>('[data-panel-role="content"][data-panel-id]'))
+    const bounds = elements.flatMap((element) => {
+      const rect = element.getBoundingClientRect()
+      const left = Math.max(rect.left, containerRect.left)
+      const top = Math.max(rect.top, containerRect.top)
+      const right = Math.min(rect.right, containerRect.right)
+      const bottom = Math.min(rect.bottom, containerRect.bottom)
+      const id = element.dataset.panelId
+      return id && right > left && bottom > top ? [{ id, left, top, right, bottom }] : []
+    })
+    const nextPanelId = findPanelInDirection(focusedPanelId, bounds, direction)
+    if (!nextPanelId) return false
+
+    const nextPanel = elements.find((element) => element.dataset.panelId === nextPanelId)
+    if (!nextPanel) return false
+    setFocusedPanel(nextPanelId)
+    nextPanel.focus({ preventScroll: true })
+    return true
+  }, [focusedPanelId, setFocusedPanel])
+
+  const handleSpatialPanelKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    const direction = SPATIAL_DIRECTION_BY_KEY[event.key]
+    if (!direction || !event.altKey || !(event.metaKey || event.ctrlKey) || event.shiftKey
+      || event.defaultPrevented || event.nativeEvent.isComposing
+      || document.querySelector('[role="dialog"]')) {
+      return
+    }
+
+    const target = event.target
+    if (target instanceof Element && target.closest(
+      'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="combobox"], [role="menu"], [role="listbox"], [role="tree"], [data-terminal], .xterm, .monaco-editor, .cm-editor',
+    )) {
+      return
+    }
+
+    if (focusPanelInDirection(direction)) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  }, [focusPanelInDirection])
+
+  useEffect(() => {
+    return window.electronAPI?.onPanelFocusDirection?.((direction) => {
+      focusPanelInDirection(direction)
+    })
+  }, [focusPanelInDirection])
+  const previousFocusedPanelRef = useRef(focusedPanelId)
+  useEffect(() => {
+    const previousFocusedPanelId = previousFocusedPanelRef.current
+    previousFocusedPanelRef.current = focusedPanelId
+    if (!previousFocusedPanelId || panelStack.some((panel) => panel.id === previousFocusedPanelId) || !focusedPanelId) return
+
+    const frame = requestAnimationFrame(() => {
+      const nextPanel = Array.from(
+        scrollRef.current?.querySelectorAll<HTMLElement>('[data-panel-role="content"][data-panel-id]') ?? [],
+      ).find((element) => element.dataset.panelId === focusedPanelId)
+      nextPanel?.focus({ preventScroll: true })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [focusedPanelId, panelStack])
 
   const hasSidebar = sidebarWidth > 0
   // Desktop: navigator is shown when AppShell asks for it. Compact: navigator
@@ -121,6 +194,7 @@ export function PanelStackContainer({
     return (
       <div
         ref={scrollRef}
+        onKeyDown={handleSpatialPanelKeyDown}
         data-mobile-menu-root="true"
         data-shell-density="compact"
         className="flex-1 min-w-0 relative panel-scroll @container/shell"
@@ -174,6 +248,7 @@ export function PanelStackContainer({
   return (
     <div
       ref={scrollRef}
+      onKeyDown={handleSpatialPanelKeyDown}
       data-mobile-menu-root="true"
       data-shell-density={isCompact ? 'compact' : 'regular'}
       className="flex-1 min-w-0 flex relative z-panel panel-scroll @container/shell"

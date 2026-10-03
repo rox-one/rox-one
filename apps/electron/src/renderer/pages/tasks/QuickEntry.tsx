@@ -6,31 +6,46 @@
  */
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { parseTaskEntry, type ParsedTaskEntry } from '@craft-agent/core/tasks/personal'
+import { PremiumMenuSelect } from '@craft-agent/ui'
+import { parseTaskEntry, type ParsedTaskEntry, type TaskArea, type TaskProject } from '@craft-agent/core/tasks/personal'
 import { Overlay } from './parts'
 
 export interface QuickEntryResult {
   parsed: ParsedTaskEntry
   notes: string
   open: boolean
+  projectId: string | null
+  areaId: string | null
+  checklistItems: string[]
 }
 
 export function QuickEntry({
   onClose,
   onSubmit,
   destinationLabel,
+  projects,
+  areas,
+  initialProjectId,
+  initialAreaId,
   now,
   initialText = '',
 }: {
   onClose: () => void
   onSubmit: (result: QuickEntryResult) => void
   destinationLabel: string
+  projects: readonly TaskProject[]
+  areas: readonly TaskArea[]
+  initialProjectId?: string | null
+  initialAreaId?: string | null
   now: number
   initialText?: string
 }) {
   const { t, i18n } = useTranslation()
   const [text, setText] = React.useState(initialText)
   const [notes, setNotes] = React.useState('')
+  const [projectId, setProjectId] = React.useState(initialProjectId ?? '')
+  const [areaId, setAreaId] = React.useState(initialAreaId ?? '')
+  const [checklistText, setChecklistText] = React.useState('')
   const inputRef = React.useRef<HTMLInputElement>(null)
   React.useEffect(() => { inputRef.current?.focus() }, [])
   const parsed = React.useMemo(() => parseTaskEntry(text, now), [text, now])
@@ -39,7 +54,14 @@ export function QuickEntry({
 
   const submit = (open: boolean) => {
     if (!parsed.title.trim()) return
-    onSubmit({ parsed, notes, open })
+    onSubmit({
+      parsed,
+      notes,
+      open,
+      projectId: projectId || null,
+      areaId: areaId || null,
+      checklistItems: checklistText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean),
+    })
   }
 
   const whenLabel = (() => {
@@ -97,6 +119,44 @@ export function QuickEntry({
             }
           }}
           className="resize-none bg-transparent text-[13px] leading-5 outline-none placeholder:text-text-muted"
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <label className="flex min-w-0 flex-col gap-1 text-[11px] text-text-muted">
+            {t('tasks.quickEntry.project')}
+            <PremiumMenuSelect
+              aria-label={t('tasks.quickEntry.project')}
+              className="h-7 w-full max-w-none"
+              items={[
+                { id: '', label: t('tasks.quickEntry.none') },
+                ...projects.map((project) => ({ id: project.id, label: project.name })),
+              ]}
+              placeholder={t('tasks.quickEntry.none')}
+              selectedId={projectId || undefined}
+              onSelect={(item) => setProjectId(item.id)}
+            />
+          </label>
+          <label className="flex min-w-0 flex-col gap-1 text-[11px] text-text-muted">
+            {t('tasks.quickEntry.area')}
+            <PremiumMenuSelect
+              aria-label={t('tasks.quickEntry.area')}
+              className="h-7 w-full max-w-none"
+              items={[
+                { id: '', label: t('tasks.quickEntry.none') },
+                ...areas.map((area) => ({ id: area.id, label: area.name })),
+              ]}
+              placeholder={t('tasks.quickEntry.none')}
+              selectedId={areaId || undefined}
+              onSelect={(item) => setAreaId(item.id)}
+            />
+          </label>
+        </div>
+        <textarea
+          value={checklistText}
+          onChange={(event) => setChecklistText(event.target.value)}
+          placeholder={t('tasks.quickEntry.checklistItems')}
+          aria-label={t('tasks.quickEntry.checklistItems')}
+          rows={2}
+          className="resize-none rounded-[6px] bg-foreground/[0.03] px-2 py-1 text-[12px] leading-5 outline-none placeholder:text-text-muted"
         />
         <div className="flex min-h-6 flex-wrap items-center gap-1" aria-live="polite" data-testid="tasks-quick-entry-preview">
           {chips.length ? chips.map((chip) => (

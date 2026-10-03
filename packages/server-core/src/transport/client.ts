@@ -14,6 +14,7 @@ import {
   REQUEST_TIMEOUT_MS,
   SEQUENCE_ACK_INTERVAL_MS,
   isErrorCode,
+  assertNativeCredentialTransport,
   type ErrorCode,
   type MessageEnvelope,
 } from '@craft-agent/shared/protocol'
@@ -129,6 +130,7 @@ export class WsRpcClient implements RpcClient {
   private anyEventListeners = new Set<(channel: string, ...args: any[]) => void>()
   private clientId: string | null = null
   private _serverVersion: string | null = null
+  private acknowledgedWorkspaceId: string | null = null
   private connected = false
   private reconnectAttempt = 0
   private lastSeenSeq = 0
@@ -264,6 +266,11 @@ export class WsRpcClient implements RpcClient {
   /** Server version from handshake_ack (null if server didn't send one / not yet connected). */
   getServerVersion(): string | null {
     return this._serverVersion
+  }
+
+  /** Workspace received in the current connection's ACK; never the requested scope. */
+  getAcknowledgedWorkspaceId(): string | null {
+    return this.acknowledgedWorkspaceId
   }
 
   getConnectionState(): TransportConnectionState {
@@ -436,6 +443,16 @@ export class WsRpcClient implements RpcClient {
   /** Open the WebSocket against the current (already-resolved) url/token. */
   private openSocket(): void {
     if (this.destroyed) return
+    try {
+      assertNativeCredentialTransport(this.url, this.token)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid connection target'
+      const err = this.createConnectionError('auth', message, 'TLS_REQUIRED')
+      this.connectError = err
+      this.setConnectionState({ status: 'failed', lastError: this.toErrorState(err), attempt: this.reconnectAttempt })
+      this.failReady(err)
+      return
+    }
 
     this.setConnectionState({
       status: this.computeConnectingStatus(),
@@ -633,6 +650,12 @@ export class WsRpcClient implements RpcClient {
       case 'handshake_ack': {
         const wasReconnectAttempt = this.currentHandshakeWasReconnect
         const serverRecognizedReconnect = envelope.reconnected === true
+        const awaitingHandshake = this.connectionState.status === 'connecting'
+          || this.connectionState.status === 'reconnecting'
+        this.acknowledgedWorkspaceId = awaitingHandshake && !this.destroyed && !this.permanentlyClosed
+          && typeof envelope.workspaceId === 'string' && envelope.workspaceId.trim().length > 0
+          ? envelope.workspaceId
+          : null
 
         this.currentHandshakeWasReconnect = false
         this.pendingReconnect = null
@@ -1035,6 +1058,9 @@ export class WsRpcClient implements RpcClient {
   private setConnectionState(
     partial: Omit<Partial<TransportConnectionState>, 'mode' | 'url' | 'updatedAt'>,
   ): void {
+    if ((partial.status ?? this.connectionState.status) !== 'connected') {
+      this.acknowledgedWorkspaceId = null
+    }
     this.connectionState = {
       ...this.connectionState,
       ...partial,

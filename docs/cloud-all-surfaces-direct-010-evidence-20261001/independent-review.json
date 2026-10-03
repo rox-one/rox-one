@@ -1,0 +1,908 @@
+{
+  "kind": "independent-read-only-direct-candidate-ui-review",
+  "status": "PASS",
+  "reviewedAtUTC": "2026-10-01T17:31:09.520471+00:00",
+  "reviewerTask": "/root/r15_direct_ui_review",
+  "sourceCandidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "checkout": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "applicationSourceOrCheckoutWritesByReviewer": false,
+  "browserExecutedByReviewer": false,
+  "staticReview": {
+    "pass": true,
+    "changesOnly": [
+      "observer taskRoot path",
+      "observer evidence runRoot path",
+      "provisioner owned profile root guard"
+    ],
+    "assertionsUnchanged": true,
+    "helperOriginalSha256": "19bbb4245ca862bbfdf39123ee4e04de7a64bd40867f90b229f5aefb2367d6fc",
+    "helperAdaptedSha256": "0f1622d50a9921b2670a60b7e02d91eba0a7fd1612a7cab07e6ebce499776c07",
+    "provisionerOriginalSha256": "c52bcbb1a2d11ced10f8eb5b0df072efe4f5c4bac666ff1982fdf6655cc9f5ba",
+    "provisionerAdaptedSha256": "7ed896a9c0967cdac736d72fe68bfe312d320cc770575cd30a88b8703d02e216",
+    "noFabricatedNativeContextRPCResponsesModelGrants": true,
+    "realConfigUtilitiesAndPersistedPrivateFixtures": true,
+    "realBuiltServerProductionWebUIDistLoginRPCPagesObserver": true
+  },
+  "installSourceClosure": {
+    "trackedFileCount": 6178,
+    "beforeAfterInstallEqual": true
+  },
+  "actualBrowserReview": {
+    "status": "PASS",
+    "inputRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "executionEquivalenceRequired": false,
+    "resultFileSha256": "3ef56a2c3b45ea4a8611960497feaf6237ef0bdb41debcb4749fd3dd0d6b4f13",
+    "helperExecutedSha256Verified": true,
+    "pass": 99,
+    "fail": 0,
+    "phaseErrors": 0,
+    "pageErrors": 0,
+    "rootRoutes": 22,
+    "settingsRoutes": 22,
+    "modeClicks": 7,
+    "mainScreenshots": 64,
+    "mainHTMLSnapshots": 64,
+    "allSnapshotHTMLBoundFreshProductionEntry": true,
+    "optimizedEntry": {
+      "path": "apps/webui/dist/assets/main-C_p8tRWb.js",
+      "sha256": "42c107212df162cea09f9d1ef136fe5ab7bf108eb9b44ba47c495e715c202d96",
+      "bytes": 32945
+    },
+    "browserVersion": "151.0.7922.173",
+    "observedSocketsCountedOnce": 53,
+    "observedAckFramesCountedOnce": 53,
+    "authoritativeWorkspaceId": "e0fbee7a-45ae-f362-0248-d9ceb67a3298",
+    "freshRestartSubset": {
+      "newSocketCount": 1,
+      "actualWorkspaceIds": [
+        "e0fbee7a-45ae-f362-0248-d9ceb67a3298"
+      ]
+    },
+    "combinedMainAndSupplementalAuthObservedSocketCount": 54,
+    "combinedMainAndSupplementalAuthObservedAckFrameCount": 54,
+    "ackCountMethod": "Count each page.webSockets entry and handshake_ack frame once. Restart1/1 is a subset of main53/53; duplicated assertions/details are never recounted.",
+    "realPagesCreatePersistedReloadRestart": {
+      "id": "page_de046b8a",
+      "slug": "new-page",
+      "name": "New Page",
+      "kind": "interactive"
+    },
+    "actualNotesUnavailableControl": {
+      "disabled": true,
+      "realMouseClickAttempted": true,
+      "realEnterPressed": true,
+      "mutationChannels": [],
+      "nativeEditorMounted": false,
+      "status": "explicit missing-capability refusal; no native functional acceptance"
+    },
+    "missingBootstrapExplicitRefusal": true,
+    "urlWorkspaceMismatchExplicitRefusal": true,
+    "consoleErrorCount": 175,
+    "consoleErrorCategories": [
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "[useToolchainStatus] Failed to load status: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}",
+      "Failed to load profile strip: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}",
+      "Failed to load secret refs: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}",
+      "Failed to load disabled toolchain tools: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}",
+      "Failed to load session env overrides: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}",
+      "Failed to list context docs: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}",
+      "Failed to load settings: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}",
+      "Failed to load settings: {code: CHANNEL_NOT_FOUND, message: No handler for: workspaces:get}",
+      "Failed to load preset themes: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}",
+      "Failed to load workspace themes: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}",
+      "Failed to load tool icon mappings: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}",
+      "Failed to load input settings: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}"
+    ],
+    "failedRequestHostErrors": {
+      "fonts.googleapis.com:net::ERR_NAME_NOT_RESOLVED": 57
+    },
+    "badResponses": [],
+    "cleanup": {
+      "browserClosed": true,
+      "childAudits": [],
+      "profilesDeleted": [],
+      "errors": [],
+      "shortBrowserTmpDeleted": true,
+      "remainingChildren": 0,
+      "remainingProfiles": 0
+    },
+    "screenshotsVisuallyInspected": [
+      "actual-activity-rail-user-expanded.png",
+      "fresh-empty-profile.png",
+      "same-profile-restart-persisted-page.png",
+      "negative-mismatched-url-workspace.png",
+      "pre-existing-private-note.png"
+    ],
+    "nativeCapabilityScope": "Actual unavailable Notes/Project contexts; no native editor, native principal, provider grant or source action fabricated."
+  },
+  "notAcceptedByThisGate": [
+    "full143",
+    "109",
+    "installed native hosts",
+    "provider OAuth",
+    "iOS",
+    "protected PG",
+    "CodeQL/security acceptance"
+  ],
+  "productionBuildReview": {
+    "serverBuildExit": 0,
+    "webUIBuildExit": 0,
+    "all6178TrackedHashesUnchanged": true,
+    "htmlEntry": "apps/webui/dist/assets/main-C_p8tRWb.js",
+    "reachableJsCount": 386,
+    "reachableMapCount": 386,
+    "allRecordedArtifactHashesVerified": true,
+    "artifactHashMismatches": [],
+    "trackedSourceMapUniqueSourcesCount": 1123,
+    "allTrackedMappedSourcesExactCheckoutBytes": false,
+    "trackedMappedMismatches": [
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/rox-mark-portrait-18.png",
+        "file": "apps/electron/src/renderer/assets/rox-mark-portrait-18.png"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/rox-mark-portrait-36.png",
+        "file": "apps/electron/src/renderer/assets/rox-mark-portrait-36.png"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/rox-mark-portrait-54.png",
+        "file": "apps/electron/src/renderer/assets/rox-mark-portrait-54.png"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/aws.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/aws.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/azure.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/azure.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/claude.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/claude.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/copilot.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/copilot.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/google.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/google.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/huggingface.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/huggingface.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/kimi.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/kimi.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/minimax.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/minimax.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/mistral.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/mistral.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/ollama.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/ollama.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/openai.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/openai.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/openrouter.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/openrouter.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/rox.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/rox.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/vercel.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/vercel.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/rox-logo.png",
+        "file": "apps/electron/src/renderer/assets/rox-logo.png"
+      },
+      {
+        "map": "apps/webui/dist/assets/MessagingPlatformIcon-DN-K5zzJ.js.map",
+        "source": "../../../electron/src/renderer/assets/messaging-icons/telegram.svg",
+        "file": "apps/electron/src/renderer/assets/messaging-icons/telegram.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/MessagingPlatformIcon-DN-K5zzJ.js.map",
+        "source": "../../../electron/src/renderer/assets/messaging-icons/whatsapp.svg",
+        "file": "apps/electron/src/renderer/assets/messaging-icons/whatsapp.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/MessagingPlatformIcon-DN-K5zzJ.js.map",
+        "source": "../../../electron/src/renderer/assets/messaging-icons/lark.svg",
+        "file": "apps/electron/src/renderer/assets/messaging-icons/lark.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/MessagingPlatformIcon-DN-K5zzJ.js.map",
+        "source": "../../../electron/src/renderer/assets/messaging-icons/discord.svg",
+        "file": "apps/electron/src/renderer/assets/messaging-icons/discord.svg"
+      },
+      {
+        "map": "apps/webui/dist/assets/MessagingPlatformIcon-DN-K5zzJ.js.map",
+        "source": "../../../electron/src/renderer/assets/messaging-icons/wechat.svg",
+        "file": "apps/electron/src/renderer/assets/messaging-icons/wechat.svg"
+      }
+    ],
+    "foreignNonNodeModuleMappedSources": [],
+    "observedRequiredSourceClosureCount": 26,
+    "observedRequiredSourceClosureAllMatches": true,
+    "trackedMappedCodeSourceCount": 1100,
+    "allTrackedMappedCodeSourceContentExactCheckoutBytes": true,
+    "transformedImageSourceCount": 23,
+    "transformedImageModules": [
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/rox-mark-portrait-18.png",
+        "file": "apps/electron/src/renderer/assets/rox-mark-portrait-18.png",
+        "sourceSha256": "263922878428f4a4fd6bc8ebf526f8ef618daf8dfea6d71a8b869aef9c72c817",
+        "kind": "Vite generated inline PNG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/rox-mark-portrait-36.png",
+        "file": "apps/electron/src/renderer/assets/rox-mark-portrait-36.png",
+        "sourceSha256": "4d125fbbd272cb3f97a38920a60024808d2855fb7281e88c5fe7f29b2bf49a25",
+        "kind": "Vite generated inline PNG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/rox-mark-portrait-54.png",
+        "file": "apps/electron/src/renderer/assets/rox-mark-portrait-54.png",
+        "sourceSha256": "6c5531566dc81725fcdfbc17620dc6ecbcf041d4798fb5a2c68c2f9ea381d9d0",
+        "kind": "Vite emitted image module",
+        "verified": true,
+        "matchingEmittedAssets": [
+          "rox-mark-portrait-54-BU2P6uoW.png"
+        ]
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/aws.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/aws.svg",
+        "sourceSha256": "6013bc16ece32788589aa48fa726298d1262e514171c9540e287c44d5ee5bdb1",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/azure.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/azure.svg",
+        "sourceSha256": "3fcd94c8c5df25515ef6f2fe2c3499314a0e3de245435479c13488f78944dbcc",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/claude.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/claude.svg",
+        "sourceSha256": "270fbd60893027b69eae92a0ef5c24dc50159edc6be9ef0079b905fdcd619515",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/copilot.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/copilot.svg",
+        "sourceSha256": "148a7c62d2866452c00f2ecb96bec0863309a0f80360426f71a4d93ddf0d09b0",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/google.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/google.svg",
+        "sourceSha256": "224aff50219bd0c28922eb04874ce560081ca0de0a9833f3eac231582b150f60",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/huggingface.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/huggingface.svg",
+        "sourceSha256": "237851bd5489bf3518368b2656c1b5a93d756199768b236b24a0e7ffc5e27666",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/kimi.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/kimi.svg",
+        "sourceSha256": "280e2f60b8dd152797d4c49254d3625ba17be5a74174a6cef3e75d1f0f05b3de",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/minimax.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/minimax.svg",
+        "sourceSha256": "e6beb8c6b249a19e796cf9a01412330cfaa1624daf975df0777d836695acff05",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/mistral.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/mistral.svg",
+        "sourceSha256": "28ebd62c758ffa5a7e1a47b46cd84885368c8019dd88d85df01f4c9c01df8b7c",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/ollama.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/ollama.svg",
+        "sourceSha256": "219631b0961ce0414f79d7bddcbc4b8718ab2db166c187ff384ba46e85f597b5",
+        "kind": "Vite emitted image module",
+        "verified": true,
+        "matchingEmittedAssets": [
+          "ollama-D1dqFtP2.svg"
+        ]
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/openai.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/openai.svg",
+        "sourceSha256": "ecdb242ee2642a4999c2107a57e79aeb7466387230797944a1ce83f315152a7c",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/openrouter.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/openrouter.svg",
+        "sourceSha256": "ae00e3df5e8740fa87be12c964e4ce38ec49b8393668a896582181e5a3404238",
+        "kind": "Vite emitted image module",
+        "verified": true,
+        "matchingEmittedAssets": [
+          "openrouter-PqWzhx9M.svg"
+        ]
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/rox.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/rox.svg",
+        "sourceSha256": "c33522e9fefaad7f8127c3e678ee65cbc8df115cf00b9f9243158e558039fd66",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/provider-icons/vercel.svg",
+        "file": "apps/electron/src/renderer/assets/provider-icons/vercel.svg",
+        "sourceSha256": "1c33ec013933b0c87235d84f4c61a638075930e8577e50e6b16f4231a4f4f324",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+        "source": "../../../electron/src/renderer/assets/rox-logo.png",
+        "file": "apps/electron/src/renderer/assets/rox-logo.png",
+        "sourceSha256": "f1ac78e2e73c4de1cf9dd2b1d26e5eae2c835c075e370c1881b2118d016f3197",
+        "kind": "Vite emitted image module",
+        "verified": true,
+        "matchingEmittedAssets": [
+          "rox-logo-BxpI4ZuA.png"
+        ]
+      },
+      {
+        "map": "apps/webui/dist/assets/MessagingPlatformIcon-DN-K5zzJ.js.map",
+        "source": "../../../electron/src/renderer/assets/messaging-icons/telegram.svg",
+        "file": "apps/electron/src/renderer/assets/messaging-icons/telegram.svg",
+        "sourceSha256": "c108255cc447fcafaf7804f7aabd7a91af1c8abff11e9f7f193cbafac9d48e25",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/MessagingPlatformIcon-DN-K5zzJ.js.map",
+        "source": "../../../electron/src/renderer/assets/messaging-icons/whatsapp.svg",
+        "file": "apps/electron/src/renderer/assets/messaging-icons/whatsapp.svg",
+        "sourceSha256": "ba1adf4110acb28f3f6ba9b06656467d35d75d3fcab61fee4534931928dbf774",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/MessagingPlatformIcon-DN-K5zzJ.js.map",
+        "source": "../../../electron/src/renderer/assets/messaging-icons/lark.svg",
+        "file": "apps/electron/src/renderer/assets/messaging-icons/lark.svg",
+        "sourceSha256": "1061ba08e47a11f7a17a280e441cf9f7dc3d62d1be2bce30df81b868e1a05e5d",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/MessagingPlatformIcon-DN-K5zzJ.js.map",
+        "source": "../../../electron/src/renderer/assets/messaging-icons/discord.svg",
+        "file": "apps/electron/src/renderer/assets/messaging-icons/discord.svg",
+        "sourceSha256": "f7f182d259ed70ae196fb4590f581f1be58faebefa3695bfe341c5b547d5d674",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      },
+      {
+        "map": "apps/webui/dist/assets/MessagingPlatformIcon-DN-K5zzJ.js.map",
+        "source": "../../../electron/src/renderer/assets/messaging-icons/wechat.svg",
+        "file": "apps/electron/src/renderer/assets/messaging-icons/wechat.svg",
+        "sourceSha256": "59e90ff380ebe3184e0a367d141378a4107a36b51873f2aa66a6d580bedce051",
+        "kind": "Vite generated inline SVG module",
+        "verified": true
+      }
+    ],
+    "allTransformedImageModuleBytesVerified": true,
+    "unexpectedMappedCodeMismatches": [],
+    "mappedSourceInterpretation": "1100 code/text sources match raw checkout bytes. 23 image sources are Vite generated URL modules; verified exact inline encoding or emitted asset bytes and compiled reference."
+  },
+  "inProgressActualReview": {
+    "snapshotHtmlCount": 24,
+    "htmlEntryVariants": [
+      "./assets/main-C_p8tRWb.js"
+    ],
+    "allCurrentAppSnapshotsBindFreshProductionEntry": true,
+    "screenshotsVisuallyInspected": [
+      "actual-activity-rail-user-expanded.png",
+      "fresh-empty-profile.png"
+    ],
+    "screenshotObservation": "Real Home dashboard beneath 40px top header, seven-mode centered pill and44px activity rail; empty profile shows Connection Failed and no configured workspace."
+  },
+  "supplementalAuthenticationReview": {
+    "status": "PASS",
+    "checksPassed": 11,
+    "checksFailed": 0,
+    "phaseErrors": [],
+    "pageErrors": 0,
+    "observerHasNoRPCOrBrowserMocks": true,
+    "artifactHashesSameFreshDirectProductionBytes": true,
+    "unauthenticatedApiStatus": 401,
+    "unauthenticatedBrowserRedirect": "/login",
+    "badToken": {
+      "status": 401,
+      "actualUrl": "http://127.0.0.1:40953/login",
+      "errorText": "Invalid credentials",
+      "sessionCookiePresent": false,
+      "webSocketCount": 0
+    },
+    "correctAuthentication": {
+      "defaultWorkspaceId": "bec3a5ec-29a8-d365-9bfb-ac6613551f6d",
+      "acknowledgments": [
+        "bec3a5ec-29a8-d365-9bfb-ac6613551f6d"
+      ]
+    },
+    "uniqueObservedSocketCount": 1,
+    "uniqueObservedAckFrameCount": 1,
+    "countMethod": "Flatten page webSockets once; do not count duplicated assertion/result details.",
+    "cleanup": {
+      "browserClosed": true,
+      "childAudits": [],
+      "profilesDeleted": [],
+      "errors": [],
+      "shortBrowserTmpDeleted": true,
+      "remainingChildren": 0,
+      "remainingProfiles": 0
+    },
+    "firstRedPreserved": {
+      "path": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative-first-red",
+      "passedChecks": 8,
+      "assertionFailures": 0,
+      "phaseErrorCount": 1,
+      "cause": "15s observer wait for DOMContentLoaded timed out after actual navigation to root",
+      "soleGreenObserverChange": "login wait timeout15s to45s",
+      "applicationChanges": false
+    },
+    "screenshotsVisuallyInspected": [
+      "bad-token-login-refusal.png"
+    ],
+    "helperSha256": "4129f15b83b90f3c719a633c092ac79e7d0b5d5c7b3f33a5efdaca37e4836abc",
+    "resultSha256": "8767ce862ad471120a1069fee2444723f7d5684b3d7b31d7891800d2253598c3"
+  },
+  "electronTypesIndependentReview": {
+    "status": "PASS",
+    "commandChecks": [
+      {
+        "label": "validate-ci",
+        "exit": 0,
+        "rawLogHashVerified": true,
+        "sourceAndLockInventoryEqual": true,
+        "sourceInventoryKeys": 5
+      },
+      {
+        "label": "webui-typecheck",
+        "exit": 0,
+        "rawLogHashVerified": true,
+        "sourceAndLockInventoryEqual": true,
+        "sourceInventoryKeys": 5
+      },
+      {
+        "label": "electron-build",
+        "exit": 0,
+        "rawLogHashVerified": true,
+        "sourceAndLockInventoryEqual": true,
+        "sourceInventoryKeys": 5
+      },
+      {
+        "label": "compiled-sqlite",
+        "exit": 0,
+        "rawLogHashVerified": true,
+        "sourceAndLockInventoryEqual": true,
+        "sourceInventoryKeys": 5
+      },
+      {
+        "label": "compiled-main-host",
+        "exit": 0,
+        "rawLogHashVerified": true,
+        "sourceAndLockInventoryEqual": true,
+        "sourceInventoryKeys": 5
+      }
+    ],
+    "actualValidateCiLogCounts": {
+      "bunPass": 248,
+      "bunFail": 0,
+      "expect": 708,
+      "pythonTests": 19,
+      "pythonOK": true
+    },
+    "probeAdaptationChecks": [
+      {
+        "helper": "compiled-sqlite.cjs",
+        "exactDeclaredPathOnlyAdaptation": true,
+        "originalHashVerified": true,
+        "adaptedHashVerified": true
+      },
+      {
+        "helper": "compiled-main-host.cjs",
+        "exactDeclaredPathOnlyAdaptation": true,
+        "originalHashVerified": true,
+        "adaptedHashVerified": true
+      }
+    ],
+    "actualCompiledSQLiteInitializer": {
+      "bundleHashVerified": true,
+      "initializerHashVerified": true,
+      "initializerExtractedStartLine": 437408,
+      "assertionCalls": 16,
+      "actualNode": "24.19.0",
+      "DatabaseSyncUsesActualBuiltInitializer": true,
+      "controls": [
+        "rollback",
+        "readonly refusal",
+        "closed refusal",
+        "restart persistence",
+        "missing readonly DB refusal"
+      ],
+      "probeReport": {
+        "actualNode": "24.19.0",
+        "builtInitializerLoaded": true,
+        "fileUrlExact": true,
+        "rows": 1,
+        "rollback": true,
+        "readonlyRefusal": true,
+        "closedRefusal": true,
+        "restartPersistence": true,
+        "assertions": 16,
+        "runtimeAssertions": 14,
+        "extractionAssertions": 2,
+        "bundleSha256": "c18f109ed52c09c5b7cf2b131e4ab3bfd01c116c55a10a8799454fc27cd4f261",
+        "initializerSha256": "325b0b150cc1c33e6f740d86af7c395d4702b52d44e2c5541f76fc6755fb3b75",
+        "compiledStartLine": 437408
+      }
+    },
+    "compiledMainHostScope": "Actual whole main.cjs loaded under explicit constrained Electron host mock with readiness held; no native/Electron/macOS/provider/iOS acceptance.",
+    "independentElectronArtifactClosure": {
+      "artifactFiles": 1618,
+      "allManifestFileBytesAndHashesVerified": true,
+      "mapFiles": 408,
+      "actualTextualEntriesVerified": 1192,
+      "textualMismatches": [],
+      "actualImageWrapperEntriesVerified": 23,
+      "imageWrapperMismatches": []
+    }
+  },
+  "negativeSmokeIndependentReview": {
+    "status": "PASS",
+    "batches": [
+      {
+        "label": "integrated-controls",
+        "exit": 0,
+        "rawLogHashVerified": true,
+        "actualPassLogRows": 198,
+        "cases": 198,
+        "allCaseRowsSourceHashAndDeclarationVerified": true,
+        "uniqueInvocationLogLines": 198,
+        "BunCounts": {
+          "pass": 198,
+          "fail": 0,
+          "expect": 930,
+          "tests": 198,
+          "files": 26
+        }
+      },
+      {
+        "label": "strict-built-smoke",
+        "exit": 0,
+        "rawLogHashVerified": true,
+        "actualPassLogRows": 4,
+        "cases": 4,
+        "allCaseRowsSourceHashAndDeclarationVerified": true,
+        "uniqueInvocationLogLines": 4,
+        "BunCounts": {
+          "pass": 4,
+          "fail": 0,
+          "expect": 37,
+          "tests": 4,
+          "files": 1
+        }
+      }
+    ],
+    "totalExecutedCases": 202,
+    "notesSaveWrongPositionCase": [
+      {
+        "invocation": "integrated-controls",
+        "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "outcome": "pass",
+        "actualName": "native SAVE positional wire rejects source-store string in argument five and shifted operation in argument four without legacy fallback",
+        "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+        "logLine": 233,
+        "sourceDeclarationLine": 196,
+        "sourceNameExpression": "'native SAVE positional wire rejects source-store string in argument five and shifted operation in argument four without legacy fallback'",
+        "sourceDeclarationText": "test('native SAVE positional wire rejects source-store string in argument five and shifted operation in argument four without legacy fallback', async () => {",
+        "sourceSha256": "12f582b513a3e6dfb66222f57fa21ecdd01302c56576ebcf348f81879d2c16b3",
+        "duration": 47.46,
+        "durationUnit": "ms"
+      }
+    ],
+    "notesSaveVerifiedBehavior": "Real authenticated native authority refuses sourceStoreId string in arg5 and shifted operation in arg4; nativeID/revision/content/file unchanged and no .rox-docs alternate writer.",
+    "bootstrapUnitCases": 23,
+    "bootstrapScope": "Unit transport-bootstrap cases exercise malformed/default/ACK/stale/cancel paths with controlled clients. Actual browser HTTPdefault/ACK, missing-bootstrap, URL mismatch and auth refusals are separate live optimized-entry observations.",
+    "fullNativeProviderIOSAccepted": false,
+    "inlineLoopDeclarationRows": [
+      {
+        "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+        "line": 403,
+        "actualName": "durable native creation recovers before-submit through renderer loss and stable authenticated replay",
+        "sourceFullLine": "for (const loss of ['before-submit', 'after-commit'] as const) test(`durable native creation recovers ${loss} through renderer loss and stable authenticated replay`, async () => {",
+        "declarationIsExactSuffixAfterForLoop": true
+      },
+      {
+        "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+        "line": 403,
+        "actualName": "durable native creation recovers after-commit through renderer loss and stable authenticated replay",
+        "sourceFullLine": "for (const loss of ['before-submit', 'after-commit'] as const) test(`durable native creation recovers ${loss} through renderer loss and stable authenticated replay`, async () => {",
+        "declarationIsExactSuffixAfterForLoop": true
+      },
+      {
+        "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+        "line": 581,
+        "actualName": "disposing creation during context-open cannot submit and preserves only already-persisted intent",
+        "sourceFullLine": "for (const boundary of ['context-open', 'ipc-open', 'enqueue'] as const) test(`disposing creation during ${boundary} cannot submit and preserves only already-persisted intent`, async () => {",
+        "declarationIsExactSuffixAfterForLoop": true
+      },
+      {
+        "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+        "line": 581,
+        "actualName": "disposing creation during ipc-open cannot submit and preserves only already-persisted intent",
+        "sourceFullLine": "for (const boundary of ['context-open', 'ipc-open', 'enqueue'] as const) test(`disposing creation during ${boundary} cannot submit and preserves only already-persisted intent`, async () => {",
+        "declarationIsExactSuffixAfterForLoop": true
+      },
+      {
+        "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+        "line": 581,
+        "actualName": "disposing creation during enqueue cannot submit and preserves only already-persisted intent",
+        "sourceFullLine": "for (const boundary of ['context-open', 'ipc-open', 'enqueue'] as const) test(`disposing creation during ${boundary} cannot submit and preserves only already-persisted intent`, async () => {",
+        "declarationIsExactSuffixAfterForLoop": true
+      }
+    ],
+    "inlineLoopExplanation": "Five receipt declarations begin at test(...) within a for(...) source line; exact suffix and loop values independently checked. All 202 executed log rows and source hashes/declaration locations verified."
+  },
+  "reviewedAtMoscow": "2026-10-01 20:19:11 MSK",
+  "frozenInputs": {
+    "main": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "september": "bac082301aed341fe078cb5bd539c4ba074560eb",
+    "compound": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+    "runtime1319": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+  },
+  "clonedBranch": "cloud/all-surfaces-20260930",
+  "clonedBranchHead": "1937be14afd9bd68ce8ec3df5af9b82f0fe3abc1",
+  "finalOwnerReceiptReview": {
+    "receiptSha256": "8891f430377040c3ef465a232e299568e4cd333c3d7e5bd01058dd3eed798df9",
+    "receiptMatchesRawResults": true,
+    "sourceInventoryFiles": 6178,
+    "allFiveSourceInventoriesEqual": true,
+    "browserArtifactFiles": 3,
+    "beforeAfterBrowserArtifactInventoriesEqual": true,
+    "immutableOwnerEvidenceFilesVerified": 356,
+    "allImmutableOwnerEvidenceHashesVerified": true,
+    "ownerManifestIncludesMutableReviewerFiles": "Regenerate publication evidence manifest after this final independent report; owner manifest was generated before final reviewer write.",
+    "exactCheckoutHEAD": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "trackedStatus": "",
+    "cleanupPIDProfilePathsIndependentlyAbsent": true,
+    "originalCheckoutUnchanged": {
+      "revision": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "trackedStatus": ""
+    }
+  },
+  "canonicalDeliveryReview": {
+    "status": "PASS",
+    "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "summaryReceiptSha256": "5140b61687c04d5898d000a5b86df4a23c467baddbb8a06c6ff8d2ad3e97e3cf",
+    "canonicalBuildExit": 0,
+    "retainedRawEvidenceFilesVerified": 43,
+    "retainedRawEvidenceHashFailures": [],
+    "shippedRegularFilesIndependentlyHashVerified": 56505,
+    "shippedActualRegularFilePathsExact": true,
+    "allShippedFileHashFailures": [],
+    "shippedBytes": 1105833914,
+    "internalExistingSymlinksIndependentlyVerified": 9,
+    "symlinkFailures": [],
+    "shipmentBeforeAfterRuntimeManifestsEqual": true,
+    "closureCount": 57,
+    "closureAllChecksPass": true,
+    "closureSourceDeliveryByteComparisonsVerified": true,
+    "components": {
+      "workspace": {
+        "exact": true,
+        "expected_files": 2062,
+        "delivered_files": 2062
+      },
+      "resources": {
+        "exact": true,
+        "expected_files": 113,
+        "delivered_files": 113
+      },
+      "runtime_binaries": {
+        "exact": true,
+        "expected_files": 2,
+        "delivered_files": 2
+      },
+      "webui": {
+        "exact": true,
+        "expected_files": 855,
+        "delivered_files": 855
+      }
+    },
+    "actualLauncher": "sh bin/craft-server",
+    "actualOuterBun": "1.3.14",
+    "actualShippedBun": "1.3.9",
+    "actualLauncherLogCounts": {
+      "pass": 2,
+      "fail": 0,
+      "expect": 56
+    },
+    "actualLauncherCasesLogAndDeclarationVerified": true,
+    "actualLauncherCaseAssertions": 56,
+    "actualLauncherPhasesAllPass": true,
+    "noSmokeAssertionWeakening": true,
+    "onlySmokeHelperChanges": [
+      "checkout path",
+      "delivery output path",
+      "owned profile parent path"
+    ],
+    "sourceBeforeAfterFinalExact": true,
+    "originalBeforeAfterFinalExact": true,
+    "liveWebUIBeforeAfterFinalExact": true,
+    "freshOptimizedHTMLAnd855WebUIFilesExact": true,
+    "mandatoryMessagingRebuilds": {
+      "rebuilt": [
+        "Pi",
+        "cloud-runner",
+        "WhatsApp worker",
+        "Discord worker"
+      ],
+      "PiAndCloudRunnerBeforeAfterExact": true,
+      "exactUnchangedOutputs": [
+        "packages/cloud-runner/dist/stub-runner.js",
+        "packages/pi-agent-server/dist/index.js"
+      ],
+      "changedGeneratedOutputs": [
+        {
+          "path": "packages/messaging-discord-worker/dist/worker.cjs",
+          "before": {
+            "bytes": 3918513,
+            "sha256": "458bfe3e2d8ebace7bf85adb47dd4026b4c4aa7b2e3ea534990bf770a535cc62"
+          },
+          "after": {
+            "bytes": 3918513,
+            "sha256": "1fbeb435b201c412d1a93d655d1c332a84f6c1caaa857bbd0c0566c313deccdf"
+          }
+        },
+        {
+          "path": "packages/messaging-whatsapp-worker/dist/worker.cjs",
+          "before": {
+            "bytes": 6071683,
+            "sha256": "fd4646339d0bc9330610f42b92986958c266eb766377f6c7d7ea280083aaf6b1"
+          },
+          "after": {
+            "bytes": 6071600,
+            "sha256": "3e80684f3525329c0d4e6341dbbfb8396974abaf36576dde352f96e291985f25"
+          }
+        }
+      ],
+      "sourceAndLockChanges": []
+    },
+    "preservedObserverReds": {
+      "missingObserverFileAttempts": 2,
+      "postSuccessCountParserError": {
+        "command": [
+          "python3",
+          "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/complete-verification.py"
+        ],
+        "failedLine": 38,
+        "error": "AssertionError at count parser",
+        "reason": "regex demanded extra whitespace before newline; Bun emits pass/fail lines without trailing whitespace and singular file",
+        "applicationFailure": false,
+        "buildOrSmokeRerun": false,
+        "smokeLogSha256": "62da46d877f7a1f6731311c5fc08b5b3c82ab5ae570fd8b4a103616c79693aaa",
+        "closureAlreadyPassed": true
+      },
+      "buildOrSmokeRerun": false
+    },
+    "cleanup": {
+      "sourceAndLockPreserved": true,
+      "sourceRegularFileCount": 6178,
+      "gitlinkCount": 2,
+      "liveArtifactsPreserved": true,
+      "liveArtifactFileCount": 856,
+      "originalSourceAndStatusPreserved": true,
+      "originalCleanBeforeAndAfter": true,
+      "ownChildProcessesExited": true,
+      "ownProfilesRemovedByUnchangedHelper": true,
+      "privateTemporaryRootRemoved": true,
+      "canonicalOutputRetainedForRootVerification": true,
+      "sharedCheckoutDependenciesAndArtifactsRetained": true,
+      "shipmentFilesAndSymlinksUnchangedDuringRuntime": true
+    },
+    "outputRetained": "/workspace/rox-r15-direct-server-dist-20261001",
+    "boundedScope": "Actual canonical Linux launcher auth/HTTP/WS/lifecycle with source-pinned Bun and exact fresh UI copies; Chromium mount results remain the separately observed direct010 production entry. No provider/native/iOS/full109/full143/PG/security acceptance.",
+    "receiptMetadataFinding": {
+      "field": "source.ownerAdapterSha256",
+      "finding": "Initial canonical receipt identifies secure-storage.ts hash as ownerAdapterSha256; true SQLite adapter sha is8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831.",
+      "rootReported": true,
+      "correctedReceiptRequired": false,
+      "rawRuntimeShipmentVerificationUnaffected": true,
+      "correctedReceiptReviewed": true,
+      "previousFrozenSummarySha256": "847ed783304ca7f694ebd075138aaaf933bc9038eafb25919bf9a532075c81cd",
+      "correctedFrozenSummarySha256": "5140b61687c04d5898d000a5b86df4a23c467baddbb8a06c6ff8d2ad3e97e3cf",
+      "exactDiffOnlyMetadataAndRetainedArtifactReferences": true,
+      "correctedOwnerSourcePaths": [
+        {
+          "path": "packages/shared/src/credentials/backends/secure-storage.ts",
+          "sha256": "5127a51963ccc422b1a2ddec397c5beb4500afde17ba6eb523d89a2658e104fd",
+          "actualBytesVerified": true
+        },
+        {
+          "path": "packages/shared/src/utils/sqlite-runtime.ts",
+          "sha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831",
+          "actualBytesVerified": true
+        }
+      ],
+      "allCurrent6178SourceFileHashesVerified": true,
+      "buildTestSmokeClosureRerun": false
+    }
+  }
+}

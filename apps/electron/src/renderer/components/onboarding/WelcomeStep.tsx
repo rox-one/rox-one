@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { CraftAgentsSymbol } from "@/components/icons/CraftAgentsSymbol"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import * as storage from "@/lib/local-storage"
-import { ONBOARDING_USERNAME_MAX, parseOnboardingUsername } from "./onboarding-username"
+import { ONBOARDING_USERNAME_MAX, parseOnboardingUsername, persistOnboardingUsername } from "./onboarding-username"
 import { createStorageAdapter, rememberLocalProfile } from "./first-result-ui"
 import { StepFormLayout, ContinueButton } from "./primitives"
 
@@ -16,17 +15,6 @@ interface WelcomeStepProps {
   isLoading?: boolean
   /** First run: the default Rox runtime is being applied before the app opens */
   isFinishing?: boolean
-}
-
-function persistOnboardingUsername(username: string): Promise<void> {
-  const api = typeof window !== "undefined" ? window.electronAPI : undefined
-  if (!api?.updateOrgIdentity || !api.identityUpdateProfile) {
-    return Promise.reject(new Error('identity-unavailable'))
-  }
-  return Promise.all([
-    api.updateOrgIdentity({ username, name: username }),
-    api.identityUpdateProfile({ displayName: username }),
-  ]).then(() => undefined)
 }
 
 /**
@@ -46,19 +34,23 @@ export function WelcomeStep({
   const [username, setUsername] = useState("")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const submitInFlight = useRef(false)
 
   useEffect(() => {
-    if (isExistingUser) return
     const api = typeof window !== "undefined" ? window.electronAPI : undefined
-    if (!api?.getOrgIdentity) return
-    void api
-      .getOrgIdentity()
-      .then((identity) => {
-        const existing = identity.username?.trim()
+    if (!api) return
+    void api.getOrgIdentity()
+      .then(async orgIdentity => {
+        // Native callers have their own profile; host-local account data is
+        // read only for a confirmed legacy local identity.
+        const identity = orgIdentity.authority === 'local'
+          ? await api.identityGetState().catch(() => null)
+          : null
+        const existing = orgIdentity.name?.trim() || identity?.profile.displayName?.trim() || orgIdentity.username?.trim()
         if (existing) setUsername(existing)
       })
       .catch(() => {
-        // Local identity read is optional; the username field still gates continue.
+        // Identity reads are optional; a non-empty name is still required to continue.
       })
   }, [isExistingUser])
 
@@ -67,6 +59,7 @@ export function WelcomeStep({
       onContinue()
       return
     }
+    if (submitInFlight.current || saving || isFinishing) return
     const trimmed = username.trim()
     if (trimmed.length === 0) {
       setError(t("onboarding.welcome.usernameRequired"))
@@ -77,12 +70,14 @@ export function WelcomeStep({
       return
     }
     const parsed = parseOnboardingUsername(username)
-    if (!parsed || saving || isFinishing) return
+    if (!parsed) return
+    submitInFlight.current = true
     setSaving(true)
     setError(null)
     try {
-      await persistOnboardingUsername(parsed)
-      storage.set(storage.KEYS.onboardingUsernameConfirmed, true)
+      const api = typeof window !== "undefined" ? window.electronAPI : undefined
+      if (!api) throw new Error('identity-unavailable')
+      await persistOnboardingUsername(api, parsed)
       try {
         if (typeof localStorage !== "undefined") {
           rememberLocalProfile(createStorageAdapter(localStorage), parsed)
@@ -94,6 +89,7 @@ export function WelcomeStep({
     } catch {
       setError(t("onboarding.welcome.usernameSaveFailed"))
     } finally {
+      submitInFlight.current = false
       setSaving(false)
     }
   }

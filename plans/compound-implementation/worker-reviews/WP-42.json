@@ -1,0 +1,438 @@
+{
+  "task_id": "WP-42-preflight",
+  "attempt_id": "bcdcabf0850c74b803960044c7f8669b",
+  "packet_hash": "f3cf28e7f1e4d8e7c67be0b5e2374083d4d46a6cbd09ec5360c32927dd294e4f",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-42",
+  "featureComplete": false,
+  "mode": "source-preflight-only",
+  "workTier": "bounded-workflow: specification inspection, direct-import seam mapping, owned report",
+  "dependencies": ["WP-10", "WP-15"],
+  "dependencyReceiptRequirements": {
+    "WP-10": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "WP-15": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]
+  },
+  "evidenceStatus": {
+    "basis": "Inspected working-tree bytes, not a clean HEAD snapshot. input_revision is dispatch lineage, not proof that current files equal that commit.",
+    "specManifest": "Inspected specification hash matches packet input_manifest: 79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0.",
+    "runtime": "NOT_RUN: builds, tests, UI, network and feature implementation prohibited by dispatch. Proposed verification below is future work, never an observed pass.",
+    "discovery": "Codegraph reported no index; find failed with judge-provider HTTP 402. Continued with concrete normative paths, scoped reads, literal search and direct imports.",
+    "freshness": "Whole-file SHA-256 references identify inspected bytes; lead must reject or re-inspect changed references after wave0 and dependency integration. No accepted dependency receipt was supplied or validated in this preflight.",
+    "absenceScope": "Glob returned no files at packages/shared/src/workspace-domain/pages/*, apps/workspace-service/src/modules/pages/* or apps/workspace-service/migrations/*42*. This is scoped filesystem evidence, not proof about other subsystems."
+  },
+  "foundationGates": [
+    {
+      "gate": "Lead wave0 commit and accepted dependency receipts",
+      "classification": "dispatch start gate, not additional DAG edge",
+      "evidence": "Dispatch instructions require implementation after lead wave0 commit; work-packages.json:38291-38308 lists the three receipts for each dependency.",
+      "requiredArtifact": "Lead integration revision plus accepted WP-10/WP-15 contracts, migration decisions and scenario receipts; rehash all shared seams before contribution.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-49 editor/CRDT binding decision",
+      "classification": "published Page gate and transitive WP-10 dependency",
+      "evidence": "21-implementation-plan.md:5,984-1000; work-packages.json:7944-7951.",
+      "requiredArtifact": "Accepted binding/schema/undo decision used by WP-10. Spreadsheet must use that same document authority; React grid is a content representation, not permission to add a second CRDT engine.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-51 single-writer mode and revocation fence",
+      "classification": "published Page gate and transitive WP-10 dependency",
+      "evidence": "21-implementation-plan.md:5,1020-1036; pages.ts:201-238,273-281 currently dispatch directly to filesystem writers using _ctx.",
+      "requiredArtifact": "Accepted writer-mode resolver and bounded sync policy fence. Shared writes through legacy SET_CONTENT/UPDATE/agent routes must not bypass authority; revoke acknowledgement must fence append and delivery.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Registry, policy, command/outbox, search and mention foundations",
+      "classification": "transitive dependencies and mandatory completeness mechanisms, not new explicit WP-42 edges",
+      "evidence": "WP-10 dependencies at work-packages.json:7944-7951 are WP-05/WP-03/WP-06/WP-09/WP-49/WP-51; WP-15 dependencies at 12410-12413 include WP-08. 21-implementation-plan.md:5 assigns registry/grants/commands to WP-02/03/04; 22-test-plan.md:197-222 requires all mechanisms.",
+      "requiredArtifact": "Accepted typed ports for canonical identity, current ACL, idempotency/transaction outbox, inbox dedup, projections and mentions; cannot declare search/agent requirements N/A because they are missing.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-48 exact artifact and license audit",
+      "classification": "release/license foundation omitted from WP-42 explicit array",
+      "evidence": "work-packages.json:38244-38245,38289; 21-implementation-plan.md:965-982.",
+      "requiredArtifact": "Exact artifact/version/license/origin decision for any formula, workbook or CRDT dependency plus release notices/SBOM. Reimplement behavior; no blind Macro framework/source transplant.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-52 actual shared runtime readiness",
+      "classification": "published deployment prerequisite, not WP-42 explicit edge",
+      "evidence": "21-implementation-plan.md:5,1038-1055; 22-test-plan.md:7-9,34.",
+      "requiredArtifact": "Authenticated two-client shared service, database/migrator and sync endpoint capability receipts before live verification. Spreadsheet requires no outbound media provider; this does not waive WP-52's own acceptance.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Spreadsheet DTO, formula and workbook semantics decisions",
+      "classification": "underspecified domain contract gate",
+      "evidence": "work-packages.json:38197-38198,38319-38345 defines value only as an object; 22-test-plan.md:187 requires range edits, reference errors, stable sheet anchors and stale-mutation rejection.",
+      "requiredArtifact": "Accepted typed scalar/formula/error union, stable sheet/row/column/cell addressing, range behavior, formula grammar/function/numeric semantics and quotas; accepted import/export format and fidelity policy. Cell anchors must integrate WP-15's anchor schema rather than invent incompatible unregistered anchor kinds. CRDT causal frontier plus policy fence must distinguish mergeable offline edits from structurally stale targets.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Common agent access and provenance integration",
+      "classification": "cross-slice completeness gate, not blanket new DAG dependency",
+      "evidence": "work-packages.json:38279-38280; 22-test-plan.md:214-215,247; 21-implementation-plan.md:738-740,1002-1018.",
+      "requiredArtifact": "Accepted WP-36-style domain dispatcher/context port for acting-user ACL; if spreadsheet content enters shared agent transcripts/derived exports, accepted WP-50 provenance policy. Existing Page action MCP executor is not evidence of a spreadsheet domain tool.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/pages/contracts.ts",
+    "apps/workspace-service/src/modules/pages/commands.ts",
+    "apps/workspace-service/src/modules/pages/repository.ts",
+    "tests/macro-integration/wp-42.test.ts",
+    "apps/workspace-service/migrations/42-domain-contract.sql"
+  ],
+  "ownershipInterpretation": "These are exactly normative proposed new paths, not permission for this worker to write them. The first three also belong to WP-10/WP-15 and must be additive contributions to their accepted owner-controlled modules. The migration identifier is provisional; selected migrator assigns the actual filename without a fabricated timestamp. Only this preflight JSON is writable now.",
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageConfig; PageKind",
+      "change": "Extend the accepted WP-10 content discriminator/document reference with spreadsheet representation metadata and schema version. Keep PageKind static/interactive/live as the HTML sandbox capability class; do not overload kind with spreadsheet. Keep Page identity/slug/project association and legacy artifact defaults; canonical document ref comes from the registry, not a new local ID namespace.",
+      "reason": "PageConfig:294-320 has only artifact metadata; PageKind:35 controls sandboxForKind. A shared-types-only edit cannot extend the true renderer-safe type owner."
+    },
+    {
+      "path": "packages/shared/src/pages/types.ts",
+      "symbol": "CreatePageInput; LoadedPage; re-exported PageConfig",
+      "change": "Extend the accepted WP-10 document creation/load DTO branch with spreadsheet contentKind, authorized canonical document ref, supported schema/causal frontier and typed workbook projection. Preserve artifact content/index.html path fields in their branch. Re-export the canonical domain DTO rather than duplicate definitions; leave isPageGrantUsable and hasPathTraversal intact.",
+      "reason": "CreatePageInput:71-81 accepts only HTML content; LoadedPage:86-100 has filesystem paths. Grant usability is source-action authority, not spreadsheet resource ACL."
+    },
+    {
+      "path": "packages/shared/src/pages/validation.ts",
+      "symbol": "PageConfigSchema; PageKindSchema; validatePageConfig",
+      "change": "Mirror the accepted content-kind/reference/schema-version extensions in validate-on-write; validate canonical ref workspace consistency and reject incompatible workbook metadata. Preserve slug safety, digest-bound grants and old artifact records. Add formula/value validation in domain contracts, not this HTML grant schema.",
+      "reason": "PageConfigSchema:199-215 currently pins schemaVersion 1 and has no content-kind/ref; savePageConfig calls validatePageConfig before every filesystem write."
+    },
+    {
+      "path": "packages/shared/src/pages/storage.ts",
+      "symbol": "createPage; updatePage; loadPage; savePageContent; PAGE_STORE_FILENAME",
+      "change": "Use accepted WP-10/WP-51 writer mode: shared spreadsheet mutations route only through domain command ports; local files are projection/import/offline assets, not another authoritative workbook. Protect contentKind/document ref/schema/frontier fields from unrestricted UpdatePagePatch like existing managed fields. Preserve standalone artifact CRUD, page.json-last watcher ordering, safe slug paths, and digest invalidation. Do not reuse data/store.sqlite as shared document storage or implement EditCell as index.html replacement.",
+      "reason": "createPage:281-309 generates page_<id>; updatePage:317-379 spreads metadata patch; savePageContent:445-463 replaces a whole HTML file without causal/frontier checks; store.sqlite:45-46,111-115 is explicitly script-private."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/pages.ts",
+      "symbol": "registerPagesHandlers; HANDLED_CHANNELS; GET_ONE/CREATE/UPDATE/GET_CONTENT/SET_CONTENT/GET_DATA handlers; broadcastChanged",
+      "change": "Use accepted authenticated authority router for shared Page reads/writes and the native domain.spreadsheet.editCell command; derive principal from context, reject actor injection and cross-workspace refs. Dispatch CreateSpreadsheet/EditCell/ImportWorkbook/ExportWorkbook to the same domain gateway as HTTP and agent tools, returning typed receipt/error DTOs. Scope queries/pushes to current ACL. Keep old artifact lease/action/publication behavior only in the artifact branch; prevent legacy SET_CONTENT/UPDATE from mutating shared spreadsheet state. Emit projection updates after committed outbox materialization, not as evidence-free write success.",
+      "reason": "Current handlers:177-289 ignore _ctx and access local files; broadcastChanged:55-59 publishes whole workspace page list; CREATE_LEASE:335-345 is HTML digest authority, not collaborative resource authority. Authentication/gateway transport implementation is a foundation-owned prerequisite, not invented here."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PageView.tsx",
+      "symbol": "PageView; render-lease and snapshot effects; body rendering; SharePageDialog entry",
+      "change": "Add the spreadsheet React representation inside the existing Page destination using accepted contentKind before hasContent/lease-based artifact selection. Bind cell/range editors, formula/error display, import/export and stable sheet anchors to the accepted headless domain projection/commands. Run HTML lease/snapshot effects only for artifact Pages and preserve PageFrame unchanged. Display loading/empty/permission_denied/offline_queued/retryable_error/applied_verified from authorized state/receipts; do not collapse denied or retry failure into notFound/empty. Keep header/project/navigation and use content-aware shared grant versus artifact publication behavior. All new strings go through t() with ten-locale parity; delegate locale/protocol bridge additions to their existing owners.",
+      "reason": "PageView:79-132 and 386-439 currently depend on HTML digest/lease/snapshot; PageFrame:35-57 secures untrusted HTML. Spreadsheet is trusted typed React content, not an HTML table or iframe with elevated privileges."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/pages/contracts.ts",
+      "symbol": "Accepted WP-10/WP-15 pages contracts; proposed spreadsheet.editCell schema and spreadsheet ports",
+      "change": "Add strict request/result DTOs for CreateSpreadsheet/EditCell/ImportWorkbook/ExportWorkbook and authorized paged sheet/range queries. Define stable sheet/cell refs, typed value/formula/error variants, content schema, limits, causal-frontier/policy-fence input and WP-15-compatible anchors. Reject unknown mutation/actor fields; preserve RoxCommand v2 and Rox2CanonicalResult rather than a parallel envelope. Core ports perform no service I/O.",
+      "reason": "Same normative path is listed by WP-10:7977-7982, WP-15:12436-12441 and WP-42:38186-38191; shared owner must extend the accepted module, not overwrite it. This path was absent in scoped inspection, so proposed symbol names are not current declarations."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/pages/commands.ts",
+      "symbol": "Accepted pages command/query dispatcher; proposed spreadsheet.editCell/CreateSpreadsheet/ImportWorkbook/ExportWorkbook handlers",
+      "change": "Register spreadsheet operations in the existing policy/idempotency/revision gateway; validate target schema/current grant, apply per-cell CRDT operations, run bounded deterministic formula materialization, append durable receipt and document.content_materialized through the accepted transaction/WAL coordinator. Re-read ACL for export and referenced cells/documents; reject structurally stale/deleted targets while merging valid independent concurrent cells. Queries expose only authorized typed projections.",
+      "reason": "Normative command implementation:38764-38766; per-cell CRDT updates cannot be scalar whole-workbook CAS or unverified client computed values. Accepted predecessor module/coordinator symbols are missing prerequisites, not current code claims."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/pages/repository.ts",
+      "symbol": "Accepted pages repository transaction/WAL/snapshot/outbox/inbox ports",
+      "change": "Extend collaborative_document/document_revision for spreadsheet schema, stable anchors, typed snapshots and formula materialization. Use existing canonical entity FK, scoped receipts/request hash, outbox/inbox uniqueness, revision/policy/tombstone fencing and coordinator recovery. Check durable operation persistence before receipt/ACK; transaction commit versus CRDT append recovery must be explicit. No duplicate command_receipt/event store or second database authority.",
+      "reason": "WP-42 migration:38713-38756 reuses collaborative_document/document_revision rather than prescribing a spreadsheet-only parallel store. WP-51 explicitly flags DB/CRDT atomicity risk."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-42 section",
+      "change": "After real implementation verification, document accepted formula grammar/functions/error behavior, workbook format/fidelity and quotas, stable cell/range anchor semantics, authority routing and integration receipts. Keep planned status until actual changed-surface/reload/failure evidence exists.",
+      "reason": "Required documentation:work-packages.json:38261-38264; current WP-42 section:846-864 is only a future work plan."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Spreadsheet row; feature completeness checklist; completion evidence",
+      "change": "Bind future spreadsheet scenarios and seeded-control results to implementation SHA/schema/runtime, with exact expected workbook/formula values, concurrency/recovery and permissions evidence. Retain all published gates and distinguish implemented/verified/delivered/journalled.",
+      "reason": "Spreadsheet obligations at 187 exceed five headline acceptance bullets; checklist:197-222 and completion:247 prohibit a fixture-only or HTML-table completeness claim."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Two users edit different cells",
+      "currentEvidence": "savePageContent:445-463 replaces index.html; PageView:386-439 renders one lease-bound HTML frame. No typed cell merge seam in inspected code.",
+      "requiredChange": "Extend WP-10 document adapter with stable sheet/cell CRDT operations and EditCell routing in pages contracts/commands/repository; React PageView displays the same authorized projection for A and B.",
+      "verification": "After implementation, A edits A1=2 while B edits B1=3 in one initial causal frontier; both cells persist and converge on A/B/server after reordered and duplicate delivery. Assert canonical document identity and durable receipts, not text length.",
+      "missingPrerequisite": "Accepted WP-10 WAL/CRDT schema/transport and authenticated two-client runtime; wave0 integration revision.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "formulas recompute consistently",
+      "currentEvidence": "PageDataSnapshot in core page.ts:91-99 is generic kv/series; PageView:124-132 reads script snapshots, not typed formulas.",
+      "requiredChange": "Implement a bounded deterministic parser/evaluator in the accepted headless spreadsheet domain, with dependency graph invalidation, stable reference resolution, documented numeric/function semantics and versioned computed projections derived from authoritative inputs.",
+      "verification": "Use A1=2/B1=3/C1=A1+B1 giving C1=5, then concurrent A1=7/B1=11 giving C1=18 on both clients, server readback and exported/reimported document. Repeat after offline replay/reconnect; a seeded divergent recompute must fail an exact-value assertion.",
+      "missingPrerequisite": "Accepted formula scope/value DTO/schema/evaluation limits and exact dependency license audit; WP-10 materialization frontier.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permission denies writes",
+      "currentEvidence": "pages.ts:201-238,273-281 ignores _ctx and calls local writers; types.ts:isPageGrantUsable:40-46 only checks source-action digest/expiry.",
+      "requiredChange": "Check transport-derived principal, workspace/ref consistency, current read/write/action grant and policy epoch at shared append/commit and delivery. Guard legacy writers; agent allow-all must not override resource ACL.",
+      "verification": "Owner/member edit accepted; viewer and outsider edits/import denied through native RPC, HTTP and agent access; forged actor/workspace rejected; revoke during queued edit/reconnect blocks append/read/export/push. Assert unchanged revision/values and absence of private marker/title in denied outputs.",
+      "missingPrerequisite": "WP-03 authenticated policy port, WP-51 writer guard/revoke fence, shared transport and agent dispatcher receipts.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "reload/export round-trip",
+      "currentEvidence": "storage.ts:204-230 loads filesystem config/paths; 425-463 loads/saves HTML; no typed ImportWorkbook/ExportWorkbook seam in inspected code.",
+      "requiredChange": "Persist workbook CRDT inputs, schema/frontier, snapshots and revision evidence through existing pages repository; implement authorized typed import/export with accepted format and fidelity/limits policy. Preserve canonical Page identity on reload and stable sheet/cell identity within the workbook; imported copy identity follows CreateSpreadsheet contract.",
+      "verification": "Reload both clients and restart service; compare scalar inputs, formulas, computed values, sheet/cell anchors and revisions. Export then import into an explicitly new document and compare workbook semantics; duplicate import retry produces one entity/receipt. Test malformed/unsupported/oversized workbook with explicit error and no partial success.",
+      "missingPrerequisite": "Accepted workbook format/identity/fidelity rules, migration runner and WP-10/WP-15 repository/snapshot ports.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "formula invalid errors explicit",
+      "currentEvidence": "PageView:411-427 offers only generic lease load failure/retry; PageConfigSchema:199-215 validates artifact metadata, not formula/value input.",
+      "requiredChange": "Add typed formula parse/reference/cycle/arithmetic/function/limit errors with precise cell/source revision and translated React error display. Distinguish malformed command rejection from an accepted formula expression whose evaluation has a typed error; never fabricate zero/blank success.",
+      "verification": "Exercise malformed formula, missing sheet/cell ref, cycle, unsupported function, division by zero and evaluation quota. Assert explicit stable error DTO/UI, preserved unrelated cells and correct recovery after valid edit across reload/export according to accepted format policy.",
+      "missingPrerequisite": "Accepted formula error semantics/grammar, strict value union and ten-locale UI keys.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Cell/range edits, stable sheet anchors and stale cell mutation rejection",
+      "currentEvidence": "22-test-plan.md:187 mandates these scenarios; current Page identity is slug/page_<id> and no cell/range/anchor structure appears in inspected Page DTOs.",
+      "requiredChange": "Provide bounded range editing through the same command authority; bind references/comments to stable sheet/row/column/cell identities using WP-15 anchor contract. Reject deleted/moved/incompatible target/schema or stale policy/structural frontier, without rejecting legitimate different-cell offline merges via blanket scalar CAS.",
+      "verification": "Edit a range; insert/reorder rows and sheets; anchor retains intended logical cell; delete target produces explicit orphan state; stale deleted-target mutation rejects without changing another cell. Reconnect and reference evaluation retain intended sheet, not visual offset.",
+      "missingPrerequisite": "WP-15 accepted anchor/history/undo types and specified range operation/structural conflict semantics.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "PageView:244-470 is the existing Pages shell; body is sandboxed PageFrame. PageFrame:35-57 is a security boundary for untrusted HTML.",
+      "requiredChange": "Add actual React sheet/cell/range/formula/import/export interaction within PageView's document content branch, preserving artifact frame behavior and existing design/i18n conventions; do not claim a rendered HTML table is a headless spreadsheet.",
+      "verification": "Observe actual Electron/browser cells being edited by two users; keyboard/focus, hover/click formula help, errors and import/export; screenshots/ARIA and motion/reduced-motion/loaded font evidence on exact implementation revision.",
+      "missingPrerequisite": "Accepted domain DTOs/client bridge and shared runtime; new strings in all ten locales. No UI run authorized in preflight.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "PageView:56-74 fetches by pageSlug, :181 navigates routes.view.pages(); existing Page shell is reusable.",
+      "requiredChange": "Resolve canonical spreadsheet document refs through accepted Page routing while retaining stable slug, project association, history/panels and correct denied/stale/missing distinctions; do not add a separate spreadsheet destination.",
+      "verification": "Open same canonical document ref on A/B after cold load; back/forward and project links reopen intended sheet/cell anchor without duplicate entity or hidden metadata leak.",
+      "missingPrerequisite": "WP-10 registry/ref-to-Page routing contract; route/bridge integration owner must supply accepted API.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "PageConfig:294-320 lacks contentKind; PageKind:35 is runtime capability, not domain type; createPage:290 generates a local page_<id>.",
+      "requiredChange": "Add spreadsheet as accepted Page content subtype with typed schema/stable sheet/cell refs, canonical registry Page/document identity and provenance/aliases for imported legacy assets. Keep artifact kind separate and one content authority.",
+      "verification": "Assert scoped canonical ref, shared Page/document mapping, distinct same-title documents, stable sheet identity and rejection of invalid/workspace-mismatched refs/schema.",
+      "missingPrerequisite": "WP-10 discriminated Page model and registry identity/alias migration receipt.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "storage.ts:176-195 atomically writes page.json; :455-462 separately writes HTML then config. This is not a multi-user receipt/WAL transaction.",
+      "requiredChange": "Extend existing collaborative_document/document_revision with typed spreadsheet snapshots and durable operations through accepted coordinator; add scoped FK/schema/revision constraints and recoverable operation-to-receipt linkage. Retain local artifact writer in explicit standalone mode.",
+      "verification": "Migration/backfill quarantines ambiguous IDs; service restart and fresh reload preserve workbook/revisions; inspect entity/operation/receipt counts and restore readback. ACK cannot precede durable append.",
+      "missingPrerequisite": "WP-10/WP-15 applied schema and WP-51 coordinator recovery contract; selected migrator determines 42 migration filename.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "pages.ts:201-281 calls local storage directly; normative operation:38311-38345 requires spreadsheet.editCell with strict document/sheetId/cellId/value payload.",
+      "requiredChange": "Define strict CreateSpreadsheet/EditCell/ImportWorkbook/ExportWorkbook DTOs and use RoxCommand v2 authenticated/idempotent gateway. Mutable non-CRDT metadata uses expectedRevision; cell content uses causal frontier plus policy fence, not scalar workbook CAS. Receipts preserve commandId/requestHash/entity/revision/verifiedAt truth.",
+      "verification": "Same idempotency key/payload returns same receipt/entity after timeout; changed payload conflicts; unknown fields/actor injection reject; concurrent independent cells merge while stale structural/policy mutation rejects.",
+      "missingPrerequisite": "Accepted command gateway/hash/idempotency/error and CRDT envelope ports.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "pages.ts:177-198 and :261-289 return local list/content/snapshot; broadcastChanged:55-59 sends a workspace page list.",
+      "requiredChange": "Expose bounded authorized workbook/sheet/range/revision queries and export from canonical repository with current ACL; bind cursors to caller/query scope and avoid hidden titles/totals, raw filesystem paths and forbidden cells/refs in shared DTOs.",
+      "verification": "Page/sheet/range queries are stable across pages/frontiers; outsider cannot obtain PRIVATE_WP-42/title/count using known IDs or another actor's cursor; stale watermark explicitly disclosed.",
+      "missingPrerequisite": "Accepted pages query port, authorized cursor and projection watermark mechanisms.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "pages.ts:broadcastChanged:55-59 is a live push without durable outbox receipt; PageView refreshes script snapshots on config stamps:116-132.",
+      "requiredChange": "Use WP-10 WAL/reconnect and policy-fenced authorized subscriptions for spreadsheet CRDT; persist document.content_materialized in existing transaction outbox and dedup consumers by event ID; presence remains separate lossy state.",
+      "verification": "Drop/reorder/duplicate updates and restart consumer; replay closes gaps, clients converge and formula watermark reaches expected frontier; denied/revoked recipients receive no new content. Distinguish operation ACK from projection materialization.",
+      "missingPrerequisite": "Accepted sync/WAL, outbox/inbox, policy fence and delivery audience ports.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "Source grants and render lease in pages.ts:292-368 mediate artifact actions, not authenticated spreadsheet membership; body handlers use _ctx.",
+      "requiredChange": "Apply read/write/action policy to shared workbook, refs, history, import/export and subscriptions, with current policy epoch and linked-ref rechecks; leave artifact source execution grants intact and separate.",
+      "verification": "Viewer read-only, editor cell writes, owner share/manage, outsider denial, revoked/stale-token replay denial; agent allow-all viewer denied; no linked-reference escalation.",
+      "missingPrerequisite": "WP-03/WP-51 accepted policy interface and spreadsheet action capability mapping.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "PageConfig.share:316-317 is Cloudflare publication; PageView:449-457 opens SharePageDialog; pages.ts:378-390 uses PagePublisher.",
+      "requiredChange": "Reuse accepted WP-10 shared resource grant/inheritance model for spreadsheet collaborators; do not treat artifact public publication/password as collaborative write access. Export/public links recheck resource and linked-cell/reference policies and expiry.",
+      "verification": "Owner grants B edit and V read; revoke persists across reload/push/export; expired public link denied; artifact publish flow still functions in its existing mode; private referenced data cannot be widened by workbook sharing.",
+      "missingPrerequisite": "Accepted resource sharing/public export policy and content-aware dialog bridge; publisher internals were not inspected or tested here.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "Mandatory in 22-test-plan.md:210 and WP-42 featureCompleteness; inspected PageView is not a search extractor, and new spreadsheet projection port was not found at normative paths.",
+      "requiredChange": "Register spreadsheet Page/cell text extractor with common accepted projection port; upsert/delete on materialization/tombstone, record source revision/watermark, and recheck ACL before returning titles/snippets.",
+      "verification": "Find known permitted cell phrase and canonical anchor after watermark; edit/delete updates results; outsider/revoked actor cannot see PRIVATE_WP-42/title/snippet/count even with cached index state.",
+      "missingPrerequisite": "WP-06 accepted search projection/extractor ports from WP-10 integration. Exact outside-subsystem registration symbol requires owner handoff; not guessed here.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "Required by 22-test-plan.md:211; WP-15 exposes anchor foundation but current Page DTOs have no spreadsheet cell mention occurrence/ref.",
+      "requiredChange": "Use accepted common mention occurrence/resolution ports for permitted entity references in supported cell/comment content, bound to stable cell/source revision; define literal/formula text versus actual mention syntax and validate target policy.",
+      "verification": "Create/edit/delete supported mention with stable occurrence and cell anchor; concurrent row insertion does not retarget; denied target not revealed or notified; source-revision replacement removes obsolete occurrence.",
+      "missingPrerequisite": "WP-09 mention contract and WP-15 anchors plus accepted spreadsheet mention semantics. No N/A claim for missing integration.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "Required by 22-test-plan.md:212; current pages.ts broadcast is not recipient notification persistence.",
+      "requiredChange": "Route eligible spreadsheet sharing/mention/comment attention through common recipient policy and inbox dedup, using materialized source revision and stable cell deep links; retain recipient seen/done/mute/snooze rather than create a spreadsheet notification store.",
+      "verification": "Eligible recipient gets one semantic notification on retry/duplicate outbox; revoke before delivery removes unauthorized excerpt; read and recipient state survive reload; excluded/self/overlapping reasons follow accepted policy.",
+      "missingPrerequisite": "Accepted common notification ports and event/recipient rules from foundations; their registration symbols were outside scoped source inspection.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "pages.ts:221,257,314 has artifact log messages; no inspected spreadsheet actor/cause/revision event.",
+      "requiredChange": "Publish activity via the shared document.content_materialized event with actor/cause/correlation/revision and policy-safe metadata using existing common activity projection, not a second timeline.",
+      "verification": "Committed edit/import generates expected deduplicated activity with canonical ref and actor; rejected edit creates no successful activity; unauthorized audience sees no cell contents/title.",
+      "missingPrerequisite": "Accepted common event/activity projection and privacy contracts.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "pages.ts:151-167 installs MCP/source action executors for HTML Pages; this does not establish a domain spreadsheet edit/context tool.",
+      "requiredChange": "Expose headless sheet queries/edit/import/export through accepted common domain tools/context with acting-user ACL, canonical ref/revision/provenance and truthful queued/applied receipts. Guard legacy Page tool writers for shared spreadsheet IDs.",
+      "verification": "Agent-A edits and independently reads permitted exact cell/formula; Agent-V allow-all cannot write; denied refs absent from context/export and mixed-audience derived output respects provenance.",
+      "missingPrerequisite": "Accepted WP-36 dispatcher/context port, WP-51 legacy tool guard, WP-50 provenance where shared derived transcripts apply; exact tool registration symbols need owner integration request.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Normative transport:38314-38317 names HTTP POST /v1/workspaces/{workspaceId}/commands/spreadsheet.editCell and native domain.spreadsheet.editCell; inspected HANDLED_CHANNELS:15-38 contains artifact pages channels only.",
+      "requiredChange": "Register strict operation in accepted HTTP/native/common agent-MCP dispatcher and generated client bridge with identical policy/envelope/results; queries are bounded authorized DTOs. Delegate protocol/client generated definitions to foundation owners rather than invent an unrelated bridge.",
+      "verification": "Same mutation through supported transports has same authorization, idempotency/conflict/schema error behavior and canonical state; forged actor/unknown fields reject everywhere; UI observes receipt before applied_verified.",
+      "missingPrerequisite": "Accepted transport/domain registration and generated bridge contracts; actual HTTP/MCP registration files were not inspected outside permitted direct-import scope.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "work-packages.json:38249-38259 requires commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ counters; current pages logs only artifact action identifiers.",
+      "requiredChange": "Attach mandated envelope/revision/policy/watermark fields to existing command/materialization/outbox traces and counters; exclude raw workbook cell/formula/body/token payloads from logs, while showing typed diagnostics via authorized UI.",
+      "verification": "Trace one edit through durable receipt/materialization/projection; induced retry/DLQ shows counters and causal chain; sentinel private cell/token text absent from emitted logs and evidence bundles.",
+      "missingPrerequisite": "Accepted structured event/metrics/privacy foundation port.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative tests:38223-38235 and verification require real integration, seeded boundary failure and recovery; no test was run in preflight.",
+      "requiredChange": "Implement tests/macro-integration/wp-42.test.ts against accepted real domain service/ports with exact behavioral oracles, scoped isolated actors and seed 20260972; preserve all five criteria and extended spreadsheet regression gates; baseline infrastructure errors cannot count as caught controls.",
+      "verification": "Future runner: bun test tests/macro-integration/wp-42.test.ts, relevant existing Pages tests and actual Electron/browser two-client scenario. Capture typed readback, rows/unique counts, receipts, frontiers/watermarks, screenshots/ARIA and reproduction traces bound to exact revision/schema/runtime.",
+      "missingPrerequisite": "Dependency migration/runtime/scenario receipts and independent evaluator holdout. Feature verification forbidden for this preflight worker.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Meaningful negative controls",
+      "currentEvidence": "work-packages.json:38229-38230 requires unauthorized actor or dropped/duplicated event failure; 21-implementation-plan.md:864 names formula divergence after reconnect.",
+      "requiredChange": "Add separately seeded ACL bypass/event delivery defect and reconnect formula divergence controls; independent holdout injects second failure variant. Require successful unmutated baseline before judging each mutant.",
+      "verification": "ACL bypass fails denied-write/private-marker oracle; dropped operation or duplicate materialization fails exact cell/receipt/convergence assertion; recompute mutant fails C1=18 after reconnect. Infrastructure setup failure must be classified separately.",
+      "missingPrerequisite": "Runnable accepted baseline and independent mutation evaluator; no controls executed here.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Persistence-recovery between persisted command and reply",
+      "currentEvidence": "work-packages.json:38232-38234 mandates this failure window; filesystem savePageContent has no command receipt.",
+      "requiredChange": "Use accepted durable operation/receipt/transaction coordinator with deterministic retry and rehydrated formula materialization; return same canonical document identity and request-hash receipt after ambiguous client timeout.",
+      "verification": "Kill service after operation/receipt persistence but before reply, restart and retry same command; exactly one edit/receipt/materialized effect, original canonical ID and C1 value survive. Also kill before append and prove no successful ACK/state; projection resumes after outbox replay.",
+      "missingPrerequisite": "Accepted crash-window hooks, migrator/service runtime and WP-10/WP-51 atomicity/recovery protocol.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:846-864 is planned behavior; 22-test-plan.md:3 explicitly says not PASS.",
+      "requiredChange": "Update existing WP-42 plan/test documentation after implementation with supported formula/functions/errors/import-export fidelity/limits, stable anchors, permissions, recovery/operator procedure and actual receipts; do not create unrelated docs or weaken pending criteria.",
+      "verification": "Cross-check documented operations/errors/limits and recovery against observed UI/API scenarios and revision-bound artifacts; no documented success state before durable proof.",
+      "missingPrerequisite": "Accepted semantic decisions and executed changed-surface/negative/reload evidence.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "PageView:103-105,411-423 has generic leaseError retry; fallback fetch:72 collapses failure to null.",
+      "requiredChange": "Represent typed permission/schema/formula/conflict/retryable/quarantine/revoke-fence states in spreadsheet Page branch; preserve local drafts on failure and do not turn failed fetch into genuine empty/notFound or failed persistence into applied_verified.",
+      "verification": "Induce forbidden, stale structural mutation, malformed input, offline/retry error, storage failure and unsupported schema; observe correct translated state, draft preservation and valid retry without duplicate effect.",
+      "missingPrerequisite": "Typed domain errors, writer/sync fence and client bridge state model.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "PageView:221-237,424-427 has artifact loading branches dependent on digest/lease/snapshot.",
+      "requiredChange": "Use authorized workbook query/replay/materialization readiness for spreadsheet loading/stale refresh, separate from HTML lease readiness; do not show empty sheet before query or verified save before receipt.",
+      "verification": "Delay query/materialization/replay independently and inspect loading/stale indicator and eventual exact values; deny/error is not indefinitely loading and old workbook state is explicitly stale.",
+      "missingPrerequisite": "Accepted projection watermark/readiness and query error state contract.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "PageView:388-410 treats absence of HTML contentDigest as no-content and offers agent HTML design.",
+      "requiredChange": "Render a genuinely empty authorized workbook with real create-sheet/cell/import actions under spreadsheet content kind; do not infer workbook emptiness from HTML digest or denied/unconfigured/unavailable response.",
+      "verification": "Create blank spreadsheet without HTML index and edit first cell through React UI; distinct empty, denied, missing and unavailable states; no forced artifact design or conversion.",
+      "missingPrerequisite": "CreateSpreadsheet default sheet schema and authorized empty-query semantics.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "PageView:86-132 fetches leases/script snapshots; no inspected durable spreadsheet draft/causal replay state.",
+      "requiredChange": "Reuse WP-10 durable-local WAL/draft storage and replay; label offline_queued truthfully, reload pending cell/range edits, enforce schema/structural frontier and policy fences on reconnect, quarantine revoked drafts and recompute formulas deterministically after convergence.",
+      "verification": "A offline edits A1 and reloads while B changes B1; reconnect produces expected A1/B1/C1, durable receipts and equal frontier; revoke while offline blocks replay and leaves private quarantined draft; corrupt/expired queue gives explicit recovery error, not saved.",
+      "missingPrerequisite": "WP-10 offline WAL adapter and WP-51 revocation/quarantine protocol; no second local workbook authority.",
+      "state": "MISSING_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/shared/src/pages/types.ts","symbol":"CreatePageInput; LoadedPage; isPageGrantUsable","lineStart":34,"lineEnd":100,"sha256":"89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"createPage; UpdatePagePatch; updatePage; savePageContent","lineStart":281,"lineEnd":463,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path":"packages/server-core/src/handlers/rpc/pages.ts","symbol":"registerPagesHandlers; broadcastChanged; CREATE/UPDATE/SET_CONTENT/CREATE_LEASE handlers","lineStart":43,"lineEnd":367,"sha256":"c6bc8a9161d21c228dabf55c8406bce2bbfe5419315919cba072e8b6c01c7a04"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView; contentDigest; render-lease and snapshot effects","lineStart":50,"lineEnd":132,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView body; PageFrame; SharePageDialog","lineStart":386,"lineEnd":470,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageKind; PageDataSnapshot; PageConfig","lineStart":29,"lineEnd":320,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"packages/shared/src/pages/validation.ts","symbol":"PageKindSchema; PageConfigSchema; validatePageConfig","lineStart":178,"lineEnd":245,"sha256":"dc9579b3f129baae3d81943a6fc2f5a87212af3aa72ecef1facbd9667deaf3f3"},
+    {"path":"apps/electron/src/renderer/components/pages/PageFrame.tsx","symbol":"PageFrameProps; sandboxForKind; PageFrame security boundary","lineStart":34,"lineEnd":111,"sha256":"7cb551294c720b87443d645041c0514c3b48a6ea04cad668b8c083629c1e3ba1"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"workPackages WP-42 dependencies/DoD/transport","lineStart":38154,"lineEnd":38345,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"workPackages WP-42 migrations/newArtifacts","lineStart":38713,"lineEnd":38776,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"workPackages WP-10 dependency/shared-file contract","lineStart":7938,"lineEnd":7995,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"workPackages WP-15 anchors/shared-file contract","lineStart":12404,"lineEnd":12453,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"Published Page foundations and shared ownership rule","lineStart":1,"lineEnd":7,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-42 implementation plan","lineStart":846,"lineEnd":864,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-48/WP-49/WP-50/WP-51/WP-52 gates","lineStart":965,"lineEnd":1055,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Spreadsheet regression gate; complete capability checklist","lineStart":179,"lineEnd":222,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": "Lead validates this read-only report and retains it as preflight, not feature completion. At implementation start, obtain lead wave0 revision and accepted WP-10/WP-15 typed interfaces/migration/scenario receipts, rehash/re-inspect any changed seam, resolve shared pages module ownership and formula/workbook/range semantics, then contribute strict spreadsheet DTOs to the existing accepted pages contracts before service/repository migration and React integration. No implementation is authorized by this worker packet.",
+  "risks": [
+    "Spreadsheet-specific formula/value/range/workbook format semantics are not fully defined by the generic value object or operation name; framework adoption cannot stand in for accepted behavior and license decisions.",
+    "The first three normative new paths overlap WP-10/WP-15; recreating or overwriting them would destroy the document/anchor foundations and introduce a second authority.",
+    "PageKind is an HTML sandbox capability; adding spreadsheet as a PageKind would mix domain/content representation with untrusted HTML execution privileges.",
+    "Current legacy Page write handlers use local filesystem functions and _ctx; adding a new gateway without WP-51 guard leaves a bypass. Existing source-action grants/render leases are not resource ACL.",
+    "createPage emits local page_<id> while domain Rox2EntityRef uses kind:id; migration must preserve aliases and canonical identity rather than silently rewrite local IDs or merge same-name Pages.",
+    "Separate CRDT append, receipt commit and projection delivery require an accepted coordinator; PostgreSQL transaction alone cannot prove atomic external CRDT durability.",
+    "A whole-workbook expectedRevision CAS would incorrectly reject legitimate different-cell concurrent edits; unconditional CRDT merge would incorrectly accept structurally stale/deleted cell targets or revoked offline operations.",
+    "Formula derivation may diverge through function/numeric ordering, reference moves, cycles or client/server schema differences; bounded deterministic evaluation and reconnect negative controls are essential.",
+    "Workbook export/import can lose formulas, errors, stable anchors, precision or schema information; fidelity requirements and supported format must be explicit and independently round-tripped.",
+    "Generic notification/search/agent completeness remains required even though integration symbols outside allowed direct-import scope were not inspected. Root must supply accepted owner ports, not treat missing prerequisites as N/A.",
+    "Current UI collapses direct-fetch failure into null and derives empty from missing HTML digest; using those branches unchanged would hide permission/error states and make blank spreadsheets appear unimplemented.",
+    "All hashes refer to working-tree bytes inspected during root-owned wave0 activity. Any subsequent shared integration invalidates affected evidence and requires re-inspection; no runtime pass or feature implementation is claimed."
+  ],
+  "preflightVerification": {
+    "kind": "read-only artifact lineage/schema/hash verifier, not product tests",
+    "argv": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/WP-42.json", "${ROX_COMPOUND_PACKET_ROOT}/WP-42/packet.json"],
+    "executionEvidence": "Verifier output is delivered in the worker response; all feature checks listed above remain NOT_RUN."
+  },
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

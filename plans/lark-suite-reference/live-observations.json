@@ -1,0 +1,424 @@
+{
+  "schemaVersion": 1,
+  "observedOn": "2026-09-30",
+  "tool": "Codex Computer Use cua_repl",
+  "privateContentIncluded": false,
+  "captureIndex": "live-capture-index.json",
+  "observations": [
+    {
+      "id": "LO-01",
+      "screen": "Messenger + in-chat search",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Global rail → Chats list → conversation → right search drawer. All/Subscribed; unread badges; Bot/Official/External labels; Messages/Docs/Images & Videos; From/Date/Advanced search",
+      "roxImplication": "Human messaging separate from ROX agent Sessions; common EntityRefs, attachment search and ACL",
+      "captureIds": [
+        "01-messenger-search"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-02",
+      "screen": "Docs Home",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Home/Drive/Wiki rail, pinned Docs/Wiki + library tree. New/Upload/Templates. Recent/Owned by Me/Shared with Me/Favorites, filters/display/list-grid. Location/Owner/Created/Recent columns",
+      "roxImplication": "Extend Notes library; preserve same document identity across Drive/Wiki",
+      "captureIds": [
+        "02-docs-home"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-03",
+      "screen": "Docs New menu",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Docs, Sheets, Slides, Base, Form, MindNotes, Folder. Applications: Board, Flowchart",
+      "roxImplication": "Distinct editor capabilities, not fake routes. MindNotes exists as creation type; deep behavior not live-tested",
+      "captureIds": [
+        "04-docs-new-menu"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-04",
+      "screen": "Existing Docs editor/comment dock",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Left hierarchical ToC, centered cover/title/content. Right comment bubble with anchor; click opens Comments panel with quote, author/time/body/mention. Source anchor visually highlighted",
+      "roxImplication": "Current ROX ToC/comments already exist; upgrade durable anchors/shared discussion; exact dimensions proposed",
+      "captureIds": [
+        "06-docs-loaded",
+        "07-docs-editor",
+        "08-docs-comments"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-05",
+      "screen": "Share menu",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Invite collaborators, Permission settings, Restricted link state, Copy link",
+      "roxImplication": "View-level menu does not establish universal ACL semantics; command rechecks current grants",
+      "captureIds": [
+        "09-docs-share"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-06",
+      "screen": "Base Home/templates",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Base library plus template gallery; categories and multiple editors",
+      "roxImplication": "Templates need capability/schema declaration, not executable content by default",
+      "captureIds": [
+        "10-base-home"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-07",
+      "screen": "Base dashboard",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Total/Completed/Incomplete/Overdue metrics; assignee/section/status charts, WordCloud. Add block/filter/automation/fullscreen/share dashboard",
+      "roxImplication": "Shared query/aggregate authorization, not independent dashboard counts",
+      "captureIds": [
+        "12-base-task-table"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-08",
+      "screen": "Existing task-linked Base",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Grid, Print View–DocuGenius, Calendar, Gantt, Kanban, Gallery. Customize field/View settings/Filter/Group/Sort/Row height/Conditional coloring. Native task-related columns; Add record disabled, zero records",
+      "roxImplication": "Concrete precedent for Base projection of existing task domain; zero data does not prove edit pipeline",
+      "captureIds": [
+        "14-base-grid-ready"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-09",
+      "screen": "Base automation center entry",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Automation center menu reached after coordinate click; deep creation/editor/executor not run",
+      "roxImplication": "Avoid claiming full Base automation test; ROX current engine audited separately",
+      "captureIds": [
+        "16-base-automation-permission"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-10",
+      "screen": "Meetings / Schedule",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Home New Meeting/Join/Schedule/Share Screen/Minutes. Schedule form fully loaded and visually inspected: title, contacts/groups/emails, guest permission, start/end, all-day/timezone/repeat, video meeting settings, rooms/location/check-in/group, description/attachment/alerts/calendar/visibility/Busy; availability panel right",
+      "roxImplication": "CalendarEvent and Meeting relation; availability query; reminder primitive; media start/recording not tested",
+      "captureIds": [
+        "17-meetings-home",
+        "48-meetings-ready",
+        "50-schedule-ready"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-11",
+      "screen": "Calendar Rooms",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Calendar/Rooms/Scheduler/More; date/Today; Building/Floor and Capacity; No meeting rooms",
+      "roxImplication": "Rooms is separate contextual view. Week drag/resize not live-tested; public docs used",
+      "captureIds": [
+        "18-calendar",
+        "56-calendar-ready"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-12",
+      "screen": "Tasks",
+      "evidenceLabel": "OBSERVED",
+      "finding": "All tasks, quick access/task groups; New group/task; Filter/Sort due date/Group/Subtask visibility/Customize. Title/Owner/Start/Due/List/Creator; checkbox/subtask indicators",
+      "roxImplication": "Task/List/group models, owner/assignee semantics and query UX; no new task submitted",
+      "captureIds": [
+        "19-tasks"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-13",
+      "screen": "Contacts",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Organization/External/New/Starred/Email contacts/My groups/Help Desk; selected Email contacts empty, Add email contact",
+      "roxImplication": "Common identity separate personal/external contacts; directory/API definitions in02",
+      "captureIds": [
+        "20-contacts"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-14",
+      "screen": "Wiki spaces",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Pinned/All spaces, search, new Wiki space, space cards/settings/org access",
+      "roxImplication": "Wiki space membership and placement distinct document identity",
+      "captureIds": [
+        "21-wiki"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-15",
+      "screen": "Forms project library",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Create Form, check-in/application/satisfaction/more template launchers, project search, owner/date table",
+      "roxImplication": "Separate Forms project library exists; editor/response processing not live-tested",
+      "captureIds": [
+        "45-forms"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-16",
+      "screen": "Email access gate",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Expired account verification; Relink/Unlink",
+      "roxImplication": "No claim inbox/compose works in this tenant. Provider-neutral Mail/Connection expiry UX required",
+      "captureIds": [
+        "47-email"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-17",
+      "screen": "Approval Reimbursement form",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Required Type and reason, repeated details fee/date/amount currency; images max9/50MB; required approver/CC after approval; Submit/Cancel/autosave notice",
+      "roxImplication": "One Approval engine + business schema. Values/submit unchanged; limits observed tenant-specific, not universal",
+      "captureIds": [
+        "24-approval"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-18",
+      "screen": "Attendance admin",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Overtime rules table and Attendance settings/Reports/Leave management/Overtime/admin; workday/day-off/holiday contexts",
+      "roxImplication": "Attendance/Leave policy service, no clock-in/out result tested",
+      "captureIds": [
+        "25-attendance"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-19",
+      "screen": "Announcement composer",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Department/member recipients, language/title/body counters, creator display, read signoff, buzz/schedule, Preview/Draft/Timed send/Send",
+      "roxImplication": "Broadcast recipient/audience policy, read acknowledgments and scheduling. Existing draft untouched",
+      "captureIds": [
+        "26-announcement"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-20",
+      "screen": "Meegle Automation config",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Work items/permissions/plugins/associations/automations; Activity log/Execution record/New rules; filter notification/type/status/field/relationship/plugin/dynamic-time/invalid/search; existing rules",
+      "roxImplication": "Meegle independent work model vs Approval. Trigger registry/error/history patterns; no rules toggled",
+      "captureIds": [
+        "27-meegle"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-21",
+      "screen": "Tanca HR gate",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Trial/version/welcome and Create password required",
+      "roxImplication": "Only onboarding observed; credential setup not crossed; private HR product documented source only",
+      "captureIds": [
+        "28-tanca"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-22",
+      "screen": "Coze public landing",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Agent/workflow templates/search/English/Get started/Quick start",
+      "roxImplication": "Authenticated authoring/execution not proven; provider adapter option",
+      "captureIds": [
+        "29-coze"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-23",
+      "screen": "Seleam Maintenance",
+      "evidenceLabel": "OBSERVED",
+      "finding": "To-do/initiated/handled/CC, work order lifecycle and report menu; repair table fields including reporter/schedule/department/malfunction/priority",
+      "roxImplication": "EAM domain separate from User/Task; mappings and native request domain necessary",
+      "captureIds": [
+        "30-seleam-maintenance"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-24",
+      "screen": "Seleam Assets",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Asset cards/register, receive/refund/borrow/return/transfer/share/update/subassets/maintenance finance/repair/handover/disposal/audit, inventory reports",
+      "roxImplication": "Distinct typed Asset/WorkOrder/Inventory entities; adapter, no generic UI copy",
+      "captureIds": [
+        "31-seleam-assets"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-25",
+      "screen": "Seleam customization request",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Contact/role/address and module-selection request form",
+      "roxImplication": "This is service request onboarding, not proof of tenant asset form designer",
+      "captureIds": [
+        "32-seleam-requests"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-26",
+      "screen": "Help Desk / Admin",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Miniapp Search/Create/My, inactive desks. Admin Ticket Center/Agent/FAQ/Report/Settings; business hours/assignment/tags/ticket fields/pre-inquiry/triggers/roles; activation review required",
+      "roxImplication": "Activation gate, scoped role/queue/knowledgebase architecture; credentials page not opened",
+      "captureIds": [
+        "33-helpdesk",
+        "52-helpdesk-admin"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-27",
+      "screen": "Workplace",
+      "evidenceLabel": "OBSERVED",
+      "finding": "App categories/cards; Approval/Attendance/Forms/Announcements/OKR/Admin/Subs/Meegle, Tanca/Seleam/Coze/DocuGenius/Report, Recruitment/Leave/OOO/Purchase/Reimbursement launchers",
+      "roxImplication": "Catalog classifies native/templates/external/bot, not one uniform native product",
+      "captureIds": [
+        "35-workplace-ready",
+        "59-workplace"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-28",
+      "screen": "Report",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Member/Summary, Received by me, Weekly report; date/member/unread/display; summary/next week/coordination columns; Report now/Export/pagination",
+      "roxImplication": "Concrete form/report model; no export/submission",
+      "captureIds": [
+        "37-report"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-29",
+      "screen": "Lingo",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Term search/View all; collaboration request; contributor center and Admin/Create entry",
+      "roxImplication": "Glossary terms with contributor/approval/search context; no entries modified",
+      "captureIds": [
+        "41-lingo-current"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-30",
+      "screen": "Subscriptions",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Welcome culture communication feed, All accounts, Assistant, comment count",
+      "roxImplication": "Content distribution feed, not billing subscription; authoring/publish not tested",
+      "captureIds": [
+        "61-subscriptions-ready"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-31",
+      "screen": "OKR",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Goals/Alignment/Reviews, employee search/My OKRs, Objective/Key Results/status/weights, publish disabled and saved indicator",
+      "roxImplication": "Goals/KR/check-in/alignment; existing draft untouched",
+      "captureIds": [
+        "53-okr"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-32",
+      "screen": "Suite Admin",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Organization/external collaboration/rooms/workplace/API usage/billing/storage/security/compliance/reports/customization/settings; member/app/admin permissions/review shortcuts",
+      "roxImplication": "Common membership/admin + integration availability, avoid blanket admin privileges",
+      "captureIds": [
+        "54-suite-admin"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-33",
+      "screen": "Legacy Favorites",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Read-only discontinued feature notice; use Flag for messages",
+      "roxImplication": "Docs Favorites still separate. Historical Messenger Favorites requirements should not be cloned",
+      "captureIds": [
+        "58-favorites-ready"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    },
+    {
+      "id": "LO-34",
+      "screen": "AnyCross install gate",
+      "evidenceLabel": "OBSERVED",
+      "finding": "Integration-solution installation instructions + Next; no workflow canvas in this live tab",
+      "roxImplication": "User screenshot8 demonstrates builder layout reference; current execution/config not inspected beyond gate",
+      "captureIds": [
+        "51-anycross-install-gate"
+      ],
+      "runtimeMutationVerified": false,
+      "limitation": "Read-only tenant UI observation; backend, hover timing and mobile not established."
+    }
+  ]
+}

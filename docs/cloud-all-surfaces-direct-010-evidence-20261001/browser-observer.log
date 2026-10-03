@@ -1,0 +1,52 @@
+artifact and revision verification: completed
+existing Chromium launch: completed
+empty private built server and mounted UI: completed
+empty owned server cleanup: completed
+route home: observed
+route allSessions: observed
+route tasks: observed
+route meetings: observed
+route notes: observed
+route feed: observed
+route inbox: observed
+route projects: observed
+route pages: observed
+route memory: observed
+route sources: observed
+route skills: observed
+route automations: observed
+route connections: observed
+route knowledge: observed
+route search: observed
+route settings: observed
+route dossier: observed
+route radar: observed
+route decisions: observed
+route agents: observed
+route focus: observed
+settings account: observed
+settings privacy: observed
+settings runtime: observed
+settings context: observed
+settings marketplace: observed
+settings knowledge: observed
+settings extensions: observed
+settings import: observed
+settings app: observed
+settings ai: observed
+settings appearance: observed
+settings input: observed
+settings workspace: observed
+settings accounts: observed
+settings permissions: observed
+settings security: observed
+settings labels: observed
+settings organizations: observed
+settings messaging: observed
+settings server: observed
+settings cloudRuns: observed
+settings shortcuts: observed
+shell private built server and mounted UI: completed
+shell owned server cleanup: completed
+source cleanliness and private process cleanup: completed
+UI OBSERVATION DONE: 99 passed checks, 0 failed checks, 0 phase errors

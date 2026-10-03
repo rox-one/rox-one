@@ -1,0 +1,15 @@
+--- /workspace/rox-r15-evidence-20260930/union-validation/canonical-delivery-smoke.test.ts
++++ /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/canonical-delivery-smoke.test.ts
+@@ -4,9 +4,9 @@
+ import { join } from 'node:path'
+ import type { Subprocess } from 'bun'
+ 
+-const CHECKOUT = join(import.meta.dir, '..', 'all-surfaces')
+-const DELIVERY = '/workspace/rox-union-server-dist-final-20260930'
+-const PROFILE_PARENT = join(import.meta.dir, 'tmp')
++const CHECKOUT = '/tmp/rox-r15-exact-ui-20261001/checkout'
++const DELIVERY = '/workspace/rox-r15-direct-server-dist-20261001'
++const PROFILE_PARENT = '/tmp/rox-r15-direct-delivery-private-20261001/profiles'
+ const RESULT = join(import.meta.dir, 'canonical-delivery-phases.json')
+ const LOG = join(import.meta.dir, 'canonical-delivery-child-redacted.log')
+ const WebSocket = createRequire(join(CHECKOUT, 'package.json'))('ws')

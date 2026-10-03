@@ -23,6 +23,7 @@ import {
 import type { McpClientPool } from '../mcp/mcp-pool.ts';
 import { loadPlanFromPath, type SessionConfig as Session } from '../sessions/storage.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
+import { loadProjectRoadmapPromptText } from '../projects/roadmap-storage.ts';
 import type { MemoryPromptBlocks } from '../memory/types.ts';
 import { DEFAULT_MODEL, isClaudeModel, isAdaptiveThinkingAlwaysOnModel, getDefaultSummarizationModel, getModelContextWindow } from '../config/models.ts';
 import { getCredentialManager } from '../credentials/index.ts';
@@ -719,6 +720,7 @@ export class ClaudeAgent extends BaseAgent {
         })),
         memoryPath: getProjectMemoryPath(this.workspaceRootPath, slug),
         memoryContent: loadProjectMemory(this.workspaceRootPath, slug) ?? undefined,
+        roadmapContent: loadProjectRoadmapPromptText(this.workspaceRootPath, slug),
       };
     } catch (error) {
       debug(`[resolveProjectContext] Failed to load project ${projectId}:`, error);

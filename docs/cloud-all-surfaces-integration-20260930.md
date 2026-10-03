@@ -1,0 +1,44 @@
+# Isolated Cloud integration: UI + September + Compound
+
+This branch assembles the published UI, September and scoped Compound source in an isolated managed Cloud checkout. It preserves the active Mac owner branches and the original main checkout. It is an integration delivery; original programme criteria and platform acceptance remain independently applicable.
+
+## Immutable inputs and merge provenance
+
+The machine-readable manifest beside this file records exact remote SHAs, the 28 initial September/Compound conflict paths, all stage blob IDs, resolution owners and programme acceptance state. September `ea083e387e170552ee6102e29c2cf31adc8b6973` is the integration base; Compound `8106f22185fb3b3e9a6a585320d48b1bf5f10fbd` is the first ordinary merge input. SQLite recovery is imported from the separate owner's published normal merge `da78e3e79f5c268a33fc429d2913e8b8d59adeac`; no new SQLite adapter is authored here. Final commit parents and source-bound verification receipts are recorded in the validation delivery receipt.
+
+The one-surface/header source branch is `factory/ship-rox-ui-shell-onesurface-86e136bd` at `55abb1a18b21779ee765bb10e30798301aa424cb`. Its renderer bytes were merged at `6e8daa29fdfc4a8a4e09fdf8f5c194ce1b3a9446` (#1041). The expanded left rail is `9d9c7e90e13777181f84d7e18353de649e9985b4` (#1051); the later layout adjustment is `a3599c1bfaebc00e783e63780556b8e24c05b7f8` (#1054). These are ancestors of the integration base; reapplying the old UI branch would reintroduce older code.
+
+R15 freezes the later published September `bac082301aed341fe078cb5bd539c4ba074560eb`, Compound `3027028c6c8cb420efe3ea4b255ac725747de9e5` and SQLite owner docs head `bdd28272856be5fdead6c7a93ca1b45eb13b17ed`. They are included through ordinary merges with exact parents in the JSON manifest. The two later September documentation conflicts and five later Compound conflicts extend the original map to 35 conflict instances across 31 unique paths; all original stage blobs remain recorded. New remote heads are not additional implicit inputs.
+
+The root-approved Projects scope repair comes from source `260daf5c38d70cd833ae9413123bb03a5900cf61`, parent `4413e4ae352a6844b498b31f239ffc6c3676d7a7`, on `ops/use-projects-scope-repair-20260930` (docs head `3cc2483d61e587fa3e3b54331b1bf623206f16b1`). It is cherry-picked as `65547d788eebdf5d39b8f4180880f5abba580d93`. Hook bytes retain the exact approved after SHA256 `2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac`. This callback/Jotai lease proof is bounded and does not imply native DOM acceptance. Loaded Project RPC projections must use the current trusted registry workspace ID and verified root; a storage basename is not an identity mapping for the renderer.
+
+## Integration requirements
+
+- Preserve September native authority, current-caller and post-await fences, main-owned encrypted durable outbox, observed receipt ACK and custody.
+- Canonical native Note writes pass through the main-owned durable queue and NativeJournal. A native path must never create, recover or activate a parallel legacy Markdown file writer.
+- Preserve Compound scoped project authority, shared projection, repository snapshot, content descriptors/block editor, Quick Task and related surfaces. Read-only projections and explicit legacy contexts retain separate authority boundaries.
+- Preserve September Search, OKR, Mini Session, native budget, stale/retry feed handling and focused-route restore.
+- Integrate published roadmap read/save/flush acknowledgements and CAS without replacing September/Compound ProjectInfo behavior. Failed reads/saves cannot advance provider/export work or discard drafts.
+- Keep immutable SQLite owner source and compare the core, roadmap, hosted CI and strict UTB recovery references. Carry additive reviewed fixes while preserving stronger September identity/calendar/recurrence and voice provenance.
+- Keep both complete original September and Compound spec/plan contracts. UTB reference strictness is a starter boundary gate, not Base persistence, CRUD, renderer or full UTB acceptance.
+
+## Required verification and delivery
+
+Frozen install uses Bun 1.3.14 and Node 24, with private temporary config/caches outside source and existing proxy/TLS trust. Build environments do not forward provider/OAuth credentials or load a checkout `.env`. Run core/shared/server-core/server/WebUI/Electron type gates, the full Electron target, subprocess/WebUI/Bun server builds, scoped domain and canonical negative/restart tests, and the exact built-server smoke revision. Actual browser checks must mount the renderer and inspect header/sidebar/routes/states with screenshots; returning HTML alone is insufficient.
+
+Independent semantic review covers both manually resolved conflicts and automatic merges. The final receipt identifies tested source SHA, commands, actual counts, failure file/line, screenshots/artifact hashes, native availability and infrastructure limits. Commit, push, draft PR and remote readback are part of delivery. Original checkout cleanliness and own-process/profile cleanup are checked after execution.
+
+## Acceptance still pending
+
+The 109 September criteria, 143 Compound criteria, UTB product criteria, DATA/SHARED, installed Mac/native/provider/iOS and full product release DoD remain pending until their owners provide the required real proof. Cloud source/type/build/browser/scoped runtime results are recorded at their actual scope. No issue is closed or full programme marked accepted by this branch.
+
+## Observed repairs during assembly
+
+- Actual authenticated WebUI on the historical recovery revision failed before rendering because the Vite builtin shim redirected bare `buffer` to the same module that imported `buffer`. The integration repairs resolver selection and requires a cold bundle import plus a real browser rerun.
+- Semantic review found Notes channels accidentally becoming local-only and a content service capable of activating a competing Markdown writer. Integration keeps authenticated native routing and fails closed before legacy mutation/recovery on native contexts.
+- Negative tests reproduced inert credential locator and caller-clock defects; reviewed narrow core fixes preserve the newer September account-replica, deterministic-ID, recurrence and timezone behavior.
+- Editor queue CAS must reject foreign identity/revision changes while allowing progression derived only from its own verified observed receipt and main ACK.
+- Notes SAVE retains `(workspaceId, noteId, content, expectedRevision?: string, operation?: NoteMutationOptions)` for native calls. Compound legacy arg5 remains `sourceStoreId: string`; string native arg5 and shifted arg4 are denied without changing canonical files or activating the legacy writer.
+- Production Electron CJS uses a bundle-local file URL at the compiler boundary so the unchanged published SQLite adapter can create its require function. Actual compiled initializer and whole-module loading are distinct gates; a host-stubbed require is not an installed Electron or macOS launch.
+- Authenticated WebUI transport bootstrap is a default workspace and actual WS ACK binding, without desktop identity, provider credential access, grants or a fabricated Workspace. Missing/mismatched/default/ACK inputs fail closed. Local-only and native operations retain their existing backend authorization.
+- I18n coverage keeps missing complete literal-key negatives and skips concatenated dynamic prefixes; locale content and actual missing-key detection remain intact.

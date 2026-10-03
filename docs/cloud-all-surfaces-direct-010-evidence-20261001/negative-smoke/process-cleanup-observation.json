@@ -1,0 +1,20 @@
+{
+  "checkedUtc": "2026-10-01T17:08:48Z",
+  "ownPrivateRootExists": false,
+  "relatedServers": [
+    {
+      "pid": 116395,
+      "executable": "bun",
+      "entryArguments": [
+        "/tmp/rox-r15-exact-ui-20261001/checkout/dist-server/index.js"
+      ],
+      "owner": "r15_exact_candidate_ui",
+      "ownerConfirmed": true,
+      "lifecyclePendingInSeparateBrowserRun": true
+    }
+  ],
+  "smokeTestOwnServerStopAssertionsPassed": true,
+  "smokeSourceAfterEachDeletesAllTestProfiles": true,
+  "ownPrivateRootDeleted": true,
+  "noSharedCheckoutArtifactsDeleted": true
+}

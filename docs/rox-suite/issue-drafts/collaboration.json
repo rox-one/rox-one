@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "sourceBaselineSha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+  "publication": "DRAFTS_NOT_PUBLISHED",
+  "issues": [
+    {
+      "id": "RS-MSG-01",
+      "title": "Messenger: трёхпанельная human collaboration surface в ROX",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-msg-01.md",
+      "dependsOn": [],
+      "relatedIssues": [
+        562,
+        380
+      ],
+      "area": "collaboration"
+    },
+    {
+      "id": "RS-MSG-02",
+      "title": "Human channels, DM, group threads: composer и durable read state",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-msg-02.md",
+      "dependsOn": [
+        "RS-MSG-01"
+      ],
+      "relatedIssues": [
+        562,
+        380
+      ],
+      "area": "collaboration"
+    },
+    {
+      "id": "RS-MSG-03",
+      "title": "Contacts: каталог, профиль и общая CRM identity",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-msg-03.md",
+      "dependsOn": [
+        "RS-MSG-01",
+        "RS-MSG-02"
+      ],
+      "relatedIssues": [
+        381,
+        380
+      ],
+      "area": "collaboration"
+    },
+    {
+      "id": "RS-DRV-01",
+      "title": "Docs / Drive: единая библиотека Recent, Owned, Shared, Favorites и table/grid",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-drv-01.md",
+      "dependsOn": [],
+      "relatedIssues": [
+        570,
+        563
+      ],
+      "area": "collaboration"
+    },
+    {
+      "id": "RS-DOC-01",
+      "title": "Rox Docs: collaborative editor, comments, entity mentions и export",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-doc-01.md",
+      "dependsOn": [
+        "RS-DRV-01",
+        "RS-MSG-02"
+      ],
+      "relatedIssues": [
+        563,
+        570,
+        562
+      ],
+      "area": "collaboration"
+    },
+    {
+      "id": "RS-WIKI-01",
+      "title": "Rox Wiki: spaces, hierarchy, access и history над общими Docs",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-wiki-01.md",
+      "dependsOn": [
+        "RS-DRV-01",
+        "RS-DOC-01"
+      ],
+      "relatedIssues": [
+        563,
+        570
+      ],
+      "area": "collaboration"
+    },
+    {
+      "id": "RS-NOTE-01",
+      "title": "Notes ↔ Drive: personal Markdown и явная миграция в shared Docs",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-note-01.md",
+      "dependsOn": [
+        "RS-DRV-01",
+        "RS-DOC-01"
+      ],
+      "relatedIssues": [
+        563,
+        570
+      ],
+      "area": "collaboration"
+    }
+  ]
+}

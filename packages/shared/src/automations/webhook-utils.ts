@@ -142,11 +142,26 @@ export function createWebhookHistoryEntry(opts: {
   attempts?: number;
   error?: string;
   responseBody?: string;
+  scheduledAt?: string;
+  scheduledTimezone?: string;
+  occurrenceKey?: string;
+  matcherRevision?: string;
+  actionIndex?: number;
+  runId?: string;
+  outcome?: 'success' | 'error' | 'unknown_external_outcome';
 }): Record<string, unknown> {
   return {
     id: opts.matcherId,
     ts: Date.now(),
     ok: opts.ok,
+    ...(opts.scheduledAt ? { scheduledAt: opts.scheduledAt } : {}),
+    ...(opts.scheduledTimezone ? { timezone: opts.scheduledTimezone } : {}),
+    ...(opts.occurrenceKey ? { occurrenceKey: opts.occurrenceKey } : {}),
+    ...(opts.matcherRevision ? { matcherRevision: opts.matcherRevision } : {}),
+    ...(opts.actionIndex !== undefined ? { actionIndex: opts.actionIndex } : {}),
+    ...(opts.runId ? { runId: opts.runId } : {}),
+    ...(opts.attempts ? { attempt: opts.attempts } : {}),
+    outcome: opts.outcome ?? (opts.ok ? 'success' : 'error'),
     webhook: {
       method: opts.method ?? DEFAULT_WEBHOOK_METHOD,
       url: redactUrl(opts.url),
@@ -168,6 +183,14 @@ export function createPromptHistoryEntry(opts: {
   sessionId?: string;
   prompt?: string;
   error?: string;
+  scheduledAt?: string;
+  scheduledTimezone?: string;
+  occurrenceKey?: string;
+  matcherRevision?: string;
+  actionIndex?: number;
+  runId?: string;
+  attempt?: number;
+  outcome?: 'success' | 'error' | 'unknown_external_outcome';
 }): Record<string, unknown> {
   return {
     id: opts.matcherId,
@@ -176,8 +199,17 @@ export function createPromptHistoryEntry(opts: {
     ...(opts.sessionId ? { sessionId: opts.sessionId } : {}),
     ...(opts.prompt ? { prompt: opts.prompt.slice(0, HISTORY_FIELD_MAX_LENGTH) } : {}),
     ...(opts.error ? { error: opts.error.slice(0, HISTORY_FIELD_MAX_LENGTH) } : {}),
+    ...(opts.scheduledAt ? { scheduledAt: opts.scheduledAt } : {}),
+    ...(opts.scheduledTimezone ? { timezone: opts.scheduledTimezone } : {}),
+    ...(opts.occurrenceKey ? { occurrenceKey: opts.occurrenceKey } : {}),
+    ...(opts.matcherRevision ? { matcherRevision: opts.matcherRevision } : {}),
+    ...(opts.actionIndex !== undefined ? { actionIndex: opts.actionIndex } : {}),
+    ...(opts.runId ? { runId: opts.runId } : {}),
+    ...(opts.attempt ? { attempt: opts.attempt } : {}),
+    outcome: opts.outcome ?? (opts.ok ? 'success' : 'error'),
   };
 }
+
 
 /**
  * Return a copy of a WebhookAction with all env-expandable string fields resolved.

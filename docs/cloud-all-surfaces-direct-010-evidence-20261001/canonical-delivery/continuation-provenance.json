@@ -1,0 +1,50 @@
+{
+  "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "initialReceiptSha256": "7ca62dcb598e78831a5ac2473747fdee44106e85ba87165724bf39901b0d9bbe",
+  "initialShipmentManifestSha256": "c7fb4e0b8058191dbed20e40ae3fa0501778645903c6cca877b85b1c426d6c7c",
+  "originalDriverSha256": "0d3669d92138c7939ad3c636bd2de3ca752a31aac9ad834318d058a0335bc96f",
+  "sourceAndOriginalEqualInitialBefore": true,
+  "buildRerun": false,
+  "uiStagingRerun": false,
+  "initialEvidenceOverwritten": false,
+  "initialHarnessFailure": {
+    "command": [
+      "python3",
+      "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/verify-shipment-closure.py"
+    ],
+    "exit": 2,
+    "reason": "observer file was not yet written",
+    "applicationFailure": false,
+    "driverLine": 172,
+    "retainedReceipt": "shipment-closure-receipt.json",
+    "retainedLog": "shipment-closure.log"
+  },
+  "outerBun": "1.3.14",
+  "node": "v24.19.0",
+  "safeEnvironmentKeys": [
+    "BUN_INSTALL_CACHE_DIR",
+    "CRAFT_CONFIG_DIR",
+    "ELECTRON_SKIP_BINARY_DOWNLOAD",
+    "FORCE_COLOR",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LC_ALL",
+    "NODE_COMPILE_CACHE",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_COLOR",
+    "NO_PROXY",
+    "PATH",
+    "REQUESTS_CA_BUNDLE",
+    "ROX_CONFIG_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "XDG_CACHE_HOME",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
+    "npm_config_cache"
+  ],
+  "HOMERepurposed": false
+}

@@ -1,0 +1,255 @@
+{
+  "compilerTestBun": "1.3.14",
+  "observedShippedBun": "1.3.9",
+  "delivery": "/workspace/rox-r15-direct-server-dist-20261001",
+  "launcher": "sh bin/craft-server",
+  "assertions": 56,
+  "phases": [
+    {
+      "name": "canonical launcher/runtime/UI artifacts present",
+      "pass": true
+    },
+    {
+      "name": "shipped Bun runtime is source-pinned 1.3.9",
+      "pass": true
+    },
+    {
+      "name": "shipped launcher bound reserved loopback port",
+      "pass": true
+    },
+    {
+      "name": "first start: health 200/status ok",
+      "pass": true
+    },
+    {
+      "name": "first start: exact staged login HTML",
+      "pass": true
+    },
+    {
+      "name": "first start: unauthorized config rejected",
+      "pass": true
+    },
+    {
+      "name": "first start: unauthorized HTML redirects to login",
+      "pass": true
+    },
+    {
+      "name": "first start: bad authentication rejected",
+      "pass": true
+    },
+    {
+      "name": "first start: valid authentication and HttpOnly cookie",
+      "pass": true
+    },
+    {
+      "name": "first start: authenticated config matches live WS URL",
+      "pass": true
+    },
+    {
+      "name": "first start: exact staged application HTML",
+      "pass": true
+    },
+    {
+      "name": "first start: invalid authenticated WebSocket rejected",
+      "pass": true
+    },
+    {
+      "name": "first stop: child live before requested SIGTERM",
+      "pass": true
+    },
+    {
+      "name": "first stop: authenticated WebSocket open before SIGTERM",
+      "pass": true
+    },
+    {
+      "name": "first stop: graceful exit code zero",
+      "pass": true
+    },
+    {
+      "name": "first stop: SIGTERM sent without SIGKILL fallback",
+      "pass": true
+    },
+    {
+      "name": "first stop: authenticated WebSocket closed",
+      "pass": true
+    },
+    {
+      "name": "first stop: stopped /health refused",
+      "pass": true
+    },
+    {
+      "name": "first stop: stopped /login refused",
+      "pass": true
+    },
+    {
+      "name": "first stop: stopped /api/config refused",
+      "pass": true
+    },
+    {
+      "name": "first stop: stopped / refused",
+      "pass": true
+    },
+    {
+      "name": "first stop: stopped raw WebSocket refused",
+      "pass": true
+    },
+    {
+      "name": "server created isolated persisted config",
+      "pass": true
+    },
+    {
+      "name": "shipped launcher bound reserved loopback port",
+      "pass": true
+    },
+    {
+      "name": "restart: health 200/status ok",
+      "pass": true
+    },
+    {
+      "name": "restart: exact staged login HTML",
+      "pass": true
+    },
+    {
+      "name": "restart: unauthorized config rejected",
+      "pass": true
+    },
+    {
+      "name": "restart: unauthorized HTML redirects to login",
+      "pass": true
+    },
+    {
+      "name": "restart: bad authentication rejected",
+      "pass": true
+    },
+    {
+      "name": "restart: valid authentication and HttpOnly cookie",
+      "pass": true
+    },
+    {
+      "name": "restart: authenticated config matches live WS URL",
+      "pass": true
+    },
+    {
+      "name": "restart: exact staged application HTML",
+      "pass": true
+    },
+    {
+      "name": "restart: invalid authenticated WebSocket rejected",
+      "pass": true
+    },
+    {
+      "name": "restart accepts previous cookie for config",
+      "pass": true
+    },
+    {
+      "name": "restart accepts previous cookie for HTML",
+      "pass": true
+    },
+    {
+      "name": "restart retains persisted config values",
+      "pass": true
+    },
+    {
+      "name": "restart stop: child live before requested SIGTERM",
+      "pass": true
+    },
+    {
+      "name": "restart stop: authenticated WebSocket open before SIGTERM",
+      "pass": true
+    },
+    {
+      "name": "restart stop: graceful exit code zero",
+      "pass": true
+    },
+    {
+      "name": "restart stop: SIGTERM sent without SIGKILL fallback",
+      "pass": true
+    },
+    {
+      "name": "restart stop: authenticated WebSocket closed",
+      "pass": true
+    },
+    {
+      "name": "restart stop: stopped /health refused",
+      "pass": true
+    },
+    {
+      "name": "restart stop: stopped /login refused",
+      "pass": true
+    },
+    {
+      "name": "restart stop: stopped /api/config refused",
+      "pass": true
+    },
+    {
+      "name": "restart stop: stopped / refused",
+      "pass": true
+    },
+    {
+      "name": "restart stop: stopped raw WebSocket refused",
+      "pass": true
+    },
+    {
+      "name": "both complete child logs omit test token",
+      "pass": true
+    },
+    {
+      "name": "short-token launch exits exactly one",
+      "pass": true
+    },
+    {
+      "name": "short-token diagnostic is exact",
+      "pass": true
+    },
+    {
+      "name": "short-token launch never signals readiness",
+      "pass": true
+    },
+    {
+      "name": "short-token child log omits test token",
+      "pass": true
+    },
+    {
+      "name": "short token: stopped /health refused",
+      "pass": true
+    },
+    {
+      "name": "short token: stopped /login refused",
+      "pass": true
+    },
+    {
+      "name": "short token: stopped /api/config refused",
+      "pass": true
+    },
+    {
+      "name": "short token: stopped / refused",
+      "pass": true
+    },
+    {
+      "name": "short token: stopped raw WebSocket refused",
+      "pass": true
+    }
+  ],
+  "servers": [
+    {
+      "exit": 0,
+      "sigtermSent": true,
+      "sigkillFallback": false,
+      "tokenWasLogged": false
+    },
+    {
+      "exit": 0,
+      "sigtermSent": true,
+      "sigkillFallback": false,
+      "tokenWasLogged": false
+    },
+    {
+      "exit": 1,
+      "sigtermSent": false,
+      "sigkillFallback": false,
+      "tokenWasLogged": false
+    }
+  ],
+  "profilesRemoved": true,
+  "nativeOrProviderAcceptance": false
+}

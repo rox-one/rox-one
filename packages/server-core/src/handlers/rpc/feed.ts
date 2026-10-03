@@ -84,6 +84,7 @@ export function registerFeedHandlers(server: RpcServer, deps: HandlerDeps): void
   const log = deps.platform.logger
   const svc = feedService()
   svc.onChange = () => pushTyped(server, RPC_CHANNELS.feed.CHANGED, { to: 'all' }, { at: Date.now() })
+  svc.onStatusChange = svc.onChange
   svc.start()
 
   server.handle(RPC_CHANNELS.feed.LIST, async (_ctx, workspaceId?: string | null): Promise<FeedListResult> => {

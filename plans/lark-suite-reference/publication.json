@@ -1,0 +1,963 @@
+{
+  "schemaVersion": 1,
+  "repository": "rox-one/rox-one",
+  "packageCommit": "242492868a11b4d9af1c1011f20b31a346875f0a",
+  "packageDigest": "9023153c4d6e4a6dac51991c2d82b512ed3df7d7803825845222160224369cb5",
+  "status": "PUBLISHED_VERIFIED",
+  "cloudJobsLaunched": 0,
+  "issues": [
+    {
+      "id": "LSX-WP-001",
+      "number": 1231,
+      "url": "https://github.com/rox-one/rox-one/issues/1231",
+      "title": "[ROX Suite Extension][LSX-WP-001] Page content descriptor и совместимое открытие Notes",
+      "bodySha256": "f18cca7c29c30331f737c09a4831f6f03dc465e0f920845306ccfbbfbc9dc730",
+      "remoteBodySha256": "f18cca7c29c30331f737c09a4831f6f03dc465e0f920845306ccfbbfbc9dc730",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [],
+      "checkedAt": "2026-09-30T04:18:57.693Z"
+    },
+    {
+      "id": "CI-001",
+      "number": 1232,
+      "url": "https://github.com/rox-one/rox-one/issues/1232",
+      "title": "[ROX Code Intelligence][CI-001] Repository binding, snapshot and provider-neutral contracts",
+      "bodySha256": "e3ef9a5f956cf9a9d3a0d5bee95d273325689fc701e2ec1221e14e609e1374cc",
+      "remoteBodySha256": "e3ef9a5f956cf9a9d3a0d5bee95d273325689fc701e2ec1221e14e609e1374cc",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [],
+      "checkedAt": "2026-09-30T04:19:01.829Z"
+    },
+    {
+      "id": "LSX-WP-002",
+      "number": 1233,
+      "url": "https://github.com/rox-one/rox-one/issues/1233",
+      "title": "[ROX Suite Extension][LSX-WP-002] Личные Task source bindings и изолированный picker",
+      "bodySha256": "2e11ab7d91f444060fc6a8764ab063243d9cfaba548d72beac0bc2b514c336a5",
+      "remoteBodySha256": "2e11ab7d91f444060fc6a8764ab063243d9cfaba548d72beac0bc2b514c336a5",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-001"
+      ],
+      "checkedAt": "2026-09-30T04:19:04.967Z"
+    },
+    {
+      "id": "LSX-WP-003",
+      "number": 1234,
+      "url": "https://github.com/rox-one/rox-one/issues/1234",
+      "title": "[ROX Suite Extension][LSX-WP-003] Атомарная запись Markdown с CAS/epoch/receipt",
+      "bodySha256": "6db469a830e591381431240a574829d9a74200fa6b5c4a752d83c98ae9a5193d",
+      "remoteBodySha256": "6db469a830e591381431240a574829d9a74200fa6b5c4a752d83c98ae9a5193d",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-001"
+      ],
+      "checkedAt": "2026-09-30T04:19:08.261Z"
+    },
+    {
+      "id": "LSX-WP-007",
+      "number": 1235,
+      "url": "https://github.com/rox-one/rox-one/issues/1235",
+      "title": "[ROX Suite Extension][LSX-WP-007] Сохраняемая BaseDefinition и private/shared views",
+      "bodySha256": "59a386acacc934e0c0c13db3253bc02800488153dd7f6e1779c0381925497e26",
+      "remoteBodySha256": "59a386acacc934e0c0c13db3253bc02800488153dd7f6e1779c0381925497e26",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-001"
+      ],
+      "checkedAt": "2026-09-30T04:19:11.849Z"
+    },
+    {
+      "id": "CI-002",
+      "number": 1236,
+      "url": "https://github.com/rox-one/rox-one/issues/1236",
+      "title": "[ROX Code Intelligence][CI-002] Repository scope, exclusion and egress policy",
+      "bodySha256": "d2378c3472ef011fa419636142bdf38e36bbc6c16e8db3ac18e79bee8d144d22",
+      "remoteBodySha256": "d2378c3472ef011fa419636142bdf38e36bbc6c16e8db3ac18e79bee8d144d22",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-001"
+      ],
+      "checkedAt": "2026-09-30T04:19:16.797Z"
+    },
+    {
+      "id": "LSX-WP-004",
+      "number": 1237,
+      "url": "https://github.com/rox-one/rox-one/issues/1237",
+      "title": "[ROX Suite Extension][LSX-WP-004] Canonical Task field command с revision и partial receipts",
+      "bodySha256": "5b4158c8a9a842590b70591cf7bcdbc2de79527f40df2bd1c46c208a53fbde66",
+      "remoteBodySha256": "5b4158c8a9a842590b70591cf7bcdbc2de79527f40df2bd1c46c208a53fbde66",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-002"
+      ],
+      "checkedAt": "2026-09-30T04:19:19.976Z"
+    },
+    {
+      "id": "LSX-WP-005",
+      "number": 1238,
+      "url": "https://github.com/rox-one/rox-one/issues/1238",
+      "title": "[ROX Suite Extension][LSX-WP-005] Lossless Markdown/YAML raw-span patch и field readback",
+      "bodySha256": "97d3c16de629b1db0468e28e0776e33d15f8bb3fa436b2ef59d1c22e8a09fe68",
+      "remoteBodySha256": "97d3c16de629b1db0468e28e0776e33d15f8bb3fa436b2ef59d1c22e8a09fe68",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-003"
+      ],
+      "checkedAt": "2026-09-30T04:19:24.416Z"
+    },
+    {
+      "id": "LSX-WP-011",
+      "number": 1239,
+      "url": "https://github.com/rox-one/rox-one/issues/1239",
+      "title": "[ROX Suite Extension][LSX-WP-011] Реестр 18 typed fields и schema inspector",
+      "bodySha256": "50b810dee86b2b8cd5a64b83de0253320ddf57a9f250e9a3fdfcc474b14845a5",
+      "remoteBodySha256": "50b810dee86b2b8cd5a64b83de0253320ddf57a9f250e9a3fdfcc474b14845a5",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-007"
+      ],
+      "checkedAt": "2026-09-30T04:19:27.601Z"
+    },
+    {
+      "id": "CI-003",
+      "number": 1240,
+      "url": "https://github.com/rox-one/rox-one/issues/1240",
+      "title": "[ROX Code Intelligence][CI-003] Local code-search adapter and index status",
+      "bodySha256": "4845abb2acfdbe1197742210df4bb4c0ff0c8083f437b7f02934fc50cb3be05b",
+      "remoteBodySha256": "4845abb2acfdbe1197742210df4bb4c0ff0c8083f437b7f02934fc50cb3be05b",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-001",
+        "CI-002"
+      ],
+      "checkedAt": "2026-09-30T04:19:31.413Z"
+    },
+    {
+      "id": "CI-004",
+      "number": 1241,
+      "url": "https://github.com/rox-one/rox-one/issues/1241",
+      "title": "[ROX Code Intelligence][CI-004] Typed RPC, events and durable intelligence jobs",
+      "bodySha256": "13f73ed8234cca6d0e2c5987e44326a1f784b39a4c606bbf6f0f76efd8ba3ac4",
+      "remoteBodySha256": "13f73ed8234cca6d0e2c5987e44326a1f784b39a4c606bbf6f0f76efd8ba3ac4",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-001",
+        "CI-002"
+      ],
+      "checkedAt": "2026-09-30T04:19:34.539Z"
+    },
+    {
+      "id": "CI-005",
+      "number": 1242,
+      "url": "https://github.com/rox-one/rox-one/issues/1242",
+      "title": "[ROX Code Intelligence][CI-005] Groma read-only importer and scanner capability spike",
+      "bodySha256": "2680dc900cc37d045eb7c592cc3ddb3ce92d102cce0407ccdcc054e1d4771bab",
+      "remoteBodySha256": "2680dc900cc37d045eb7c592cc3ddb3ce92d102cce0407ccdcc054e1d4771bab",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-001",
+        "CI-002"
+      ],
+      "checkedAt": "2026-09-30T04:19:37.594Z"
+    },
+    {
+      "id": "LSX-WP-009",
+      "number": 1243,
+      "url": "https://github.com/rox-one/rox-one/issues/1243",
+      "title": "[ROX Suite Extension][LSX-WP-009] Source adapters Notes/Tasks/Projects/Meetings/Calendar",
+      "bodySha256": "700c3038e147b11c7a666c600956105e1b96168a801c92ee5bb61dab010a62af",
+      "remoteBodySha256": "700c3038e147b11c7a666c600956105e1b96168a801c92ee5bb61dab010a62af",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-002",
+        "LSX-WP-003",
+        "LSX-WP-004",
+        "LSX-WP-007"
+      ],
+      "checkedAt": "2026-09-30T04:19:40.993Z"
+    },
+    {
+      "id": "LSX-WP-040",
+      "number": 1244,
+      "url": "https://github.com/rox-one/rox-one/issues/1244",
+      "title": "[ROX Suite Extension][LSX-WP-040] Docs/Bases domain-outbox→existing automation aliases",
+      "bodySha256": "6dbecb9f0f410f838f30d4655586f83974b7613a3e416badb7fd1363398b03e9",
+      "remoteBodySha256": "6dbecb9f0f410f838f30d4655586f83974b7613a3e416badb7fd1363398b03e9",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-003",
+        "LSX-WP-004",
+        "LSX-WP-007"
+      ],
+      "checkedAt": "2026-09-30T04:19:44.106Z"
+    },
+    {
+      "id": "LSX-WP-006",
+      "number": 1245,
+      "url": "https://github.com/rox-one/rox-one/issues/1245",
+      "title": "[ROX Suite Extension][LSX-WP-006] Stable block/node anchors без переписывания prose",
+      "bodySha256": "90c775b9883004ad833ae2a7fa05ba21d72d20a171576f46e166967aa99819ac",
+      "remoteBodySha256": "90c775b9883004ad833ae2a7fa05ba21d72d20a171576f46e166967aa99819ac",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-005"
+      ],
+      "checkedAt": "2026-09-30T04:19:47.513Z"
+    },
+    {
+      "id": "CI-006",
+      "number": 1246,
+      "url": "https://github.com/rox-one/rox-one/issues/1246",
+      "title": "[ROX Code Intelligence][CI-006] OpenWiki RepoWiki adapter and page-claims import",
+      "bodySha256": "51692e94eea0743655dd2b029fa9049f9a32b964c2ec4304c863db7b6b69c1c6",
+      "remoteBodySha256": "51692e94eea0743655dd2b029fa9049f9a32b964c2ec4304c863db7b6b69c1c6",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-001",
+        "CI-002",
+        "CI-004"
+      ],
+      "checkedAt": "2026-09-30T04:19:51.399Z"
+    },
+    {
+      "id": "CI-007",
+      "number": 1247,
+      "url": "https://github.com/rox-one/rox-one/issues/1247",
+      "title": "[ROX Code Intelligence][CI-007] GitDiagram structured graph adapter and source integrity",
+      "bodySha256": "283834c5503c61bc191727ea4f59aa2272e5bec17079ad305ba92a8c8d507ddf",
+      "remoteBodySha256": "283834c5503c61bc191727ea4f59aa2272e5bec17079ad305ba92a8c8d507ddf",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-001",
+        "CI-002",
+        "CI-004"
+      ],
+      "checkedAt": "2026-09-30T04:19:54.858Z"
+    },
+    {
+      "id": "CI-009",
+      "number": 1248,
+      "url": "https://github.com/rox-one/rox-one/issues/1248",
+      "title": "[ROX Code Intelligence][CI-009] Project/Source navigation and Code Intelligence route shell",
+      "bodySha256": "f9d6cb48b2bc87267987d3d0bc591a0108daf011447d7e601b51c3c3714a7fdc",
+      "remoteBodySha256": "f9d6cb48b2bc87267987d3d0bc591a0108daf011447d7e601b51c3c3714a7fdc",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-001",
+        "CI-003",
+        "CI-004"
+      ],
+      "checkedAt": "2026-09-30T04:19:58.613Z"
+    },
+    {
+      "id": "LSX-WP-010",
+      "number": 1249,
+      "url": "https://github.com/rox-one/rox-one/issues/1249",
+      "title": "[ROX Suite Extension][LSX-WP-010] Permission-aware query snapshot, cursor и totals",
+      "bodySha256": "c5969d6448ea94573dfa5b319cbea24e49cea478a2b97be68c33b32cfd28c941",
+      "remoteBodySha256": "c5969d6448ea94573dfa5b319cbea24e49cea478a2b97be68c33b32cfd28c941",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-009"
+      ],
+      "checkedAt": "2026-09-30T04:20:01.713Z"
+    },
+    {
+      "id": "LSX-WP-008",
+      "number": 1250,
+      "url": "https://github.com/rox-one/rox-one/issues/1250",
+      "title": "[ROX Suite Extension][LSX-WP-008] Миграция NoteBaseView v1 с неизменными legacy formulas",
+      "bodySha256": "1631a68c557f2afa46b3cbbf15b2bb63310ec3548cb798fa52574ab6e2692134",
+      "remoteBodySha256": "1631a68c557f2afa46b3cbbf15b2bb63310ec3548cb798fa52574ab6e2692134",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-006",
+        "LSX-WP-007"
+      ],
+      "checkedAt": "2026-09-30T04:20:05.157Z"
+    },
+    {
+      "id": "LSX-WP-026",
+      "number": 1251,
+      "url": "https://github.com/rox-one/rox-one/issues/1251",
+      "title": "[ROX Suite Extension][LSX-WP-026] Existing Tiptap binding, durable draft и history restore",
+      "bodySha256": "5b7714075ab7ae49266484bcee3ab72ff33756cdf407b55f1c38448dee78d0b3",
+      "remoteBodySha256": "5b7714075ab7ae49266484bcee3ab72ff33756cdf407b55f1c38448dee78d0b3",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-003",
+        "LSX-WP-005",
+        "LSX-WP-006"
+      ],
+      "checkedAt": "2026-09-30T04:20:09.613Z"
+    },
+    {
+      "id": "CI-008",
+      "number": 1252,
+      "url": "https://github.com/rox-one/rox-one/issues/1252",
+      "title": "[ROX Code Intelligence][CI-008] Freshness resolver, watcher and staged artifact ownership",
+      "bodySha256": "8ca2a271d61519ed4c5663b4479f073412b6c25b26ddfce1e028a942d5fc93c8",
+      "remoteBodySha256": "8ca2a271d61519ed4c5663b4479f073412b6c25b26ddfce1e028a942d5fc93c8",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-003",
+        "CI-004",
+        "CI-005",
+        "CI-006",
+        "CI-007",
+        "LSX-WP-001",
+        "LSX-WP-003"
+      ],
+      "checkedAt": "2026-09-30T04:20:13.574Z"
+    },
+    {
+      "id": "LSX-WP-012",
+      "number": 1253,
+      "url": "https://github.com/rox-one/rox-one/issues/1253",
+      "title": "[ROX Suite Extension][LSX-WP-012] Typed scalar cell editors с native write preview",
+      "bodySha256": "3bc947cb4c9fe013c858521068c87e604394aa8853d45e38005d1ce77dafcc43",
+      "remoteBodySha256": "3bc947cb4c9fe013c858521068c87e604394aa8853d45e38005d1ce77dafcc43",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-004",
+        "LSX-WP-005",
+        "LSX-WP-010",
+        "LSX-WP-011"
+      ],
+      "checkedAt": "2026-09-30T04:20:17.142Z"
+    },
+    {
+      "id": "LSX-WP-014",
+      "number": 1254,
+      "url": "https://github.com/rox-one/rox-one/issues/1254",
+      "title": "[ROX Suite Extension][LSX-WP-014] Relations picker, cardinality и inverse recovery",
+      "bodySha256": "4e3355f848072a9756abc7372c8ee611db10d668953235017aa9efabc47a4995",
+      "remoteBodySha256": "4e3355f848072a9756abc7372c8ee611db10d668953235017aa9efabc47a4995",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-002",
+        "LSX-WP-010",
+        "LSX-WP-011"
+      ],
+      "checkedAt": "2026-09-30T04:20:20.656Z"
+    },
+    {
+      "id": "LSX-WP-025",
+      "number": 1255,
+      "url": "https://github.com/rox-one/rox-one/issues/1255",
+      "title": "[ROX Suite Extension][LSX-WP-025] Docs library capability filter и same-ref navigation",
+      "bodySha256": "1cfb5cf2dc7fd653bca024503c2930668cb16a586de6f9ce33dd6b7b1a11bf36",
+      "remoteBodySha256": "1cfb5cf2dc7fd653bca024503c2930668cb16a586de6f9ce33dd6b7b1a11bf36",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-001",
+        "LSX-WP-010"
+      ],
+      "checkedAt": "2026-09-30T04:20:24.149Z"
+    },
+    {
+      "id": "LSX-WP-013",
+      "number": 1256,
+      "url": "https://github.com/rox-one/rox-one/issues/1256",
+      "title": "[ROX Suite Extension][LSX-WP-013] Bounded formula engine и legacy built-ins",
+      "bodySha256": "7152f449441994a0d0549680487bab0afb6d134a091889fb36e2eb7f0e4e0bc4",
+      "remoteBodySha256": "7152f449441994a0d0549680487bab0afb6d134a091889fb36e2eb7f0e4e0bc4",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-008",
+        "LSX-WP-010",
+        "LSX-WP-011"
+      ],
+      "checkedAt": "2026-09-30T04:20:27.960Z"
+    },
+    {
+      "id": "LSX-WP-027",
+      "number": 1257,
+      "url": "https://github.com/rox-one/rox-one/issues/1257",
+      "title": "[ROX Suite Extension][LSX-WP-027] Discussion anchors, orphan state и private-comment migration",
+      "bodySha256": "b84a5c2ccc82d4e07e860b6dfa022ceee779513dede8a2bfa3bdaa467115f363",
+      "remoteBodySha256": "b84a5c2ccc82d4e07e860b6dfa022ceee779513dede8a2bfa3bdaa467115f363",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-006",
+        "LSX-WP-026"
+      ],
+      "checkedAt": "2026-09-30T04:20:31.720Z"
+    },
+    {
+      "id": "LSX-WP-028",
+      "number": 1258,
+      "url": "https://github.com/rox-one/rox-one/issues/1258",
+      "title": "[ROX Suite Extension][LSX-WP-028] Editable Outline structural commands с aggregate CAS",
+      "bodySha256": "520e8342fbc22585484f8edad5812c34a046d337dfe63e377f21e5cb33934139",
+      "remoteBodySha256": "520e8342fbc22585484f8edad5812c34a046d337dfe63e377f21e5cb33934139",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-003",
+        "LSX-WP-006",
+        "LSX-WP-026"
+      ],
+      "checkedAt": "2026-09-30T04:20:35.068Z"
+    },
+    {
+      "id": "LSX-WP-031",
+      "number": 1259,
+      "url": "https://github.com/rox-one/rox-one/issues/1259",
+      "title": "[ROX Suite Extension][LSX-WP-031] Semantic tabs/columns и safe basic Markdown fallback",
+      "bodySha256": "0d081cb83e54ece45152563dba05553b9fa6b3fa87686e50698f06b16a77d90b",
+      "remoteBodySha256": "0d081cb83e54ece45152563dba05553b9fa6b3fa87686e50698f06b16a77d90b",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-006",
+        "LSX-WP-026"
+      ],
+      "checkedAt": "2026-09-30T04:20:38.392Z"
+    },
+    {
+      "id": "LSX-WP-032",
+      "number": 1260,
+      "url": "https://github.com/rox-one/rox-one/issues/1260",
+      "title": "[ROX Suite Extension][LSX-WP-032] Code/highlight presentation без исполнения или false redaction",
+      "bodySha256": "6af8f384d7f93a2ca48f2331a2878f8a8b410ed2c29d1733e56d136ac8defa2b",
+      "remoteBodySha256": "6af8f384d7f93a2ca48f2331a2878f8a8b410ed2c29d1733e56d136ac8defa2b",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-026"
+      ],
+      "checkedAt": "2026-09-30T04:20:41.821Z"
+    },
+    {
+      "id": "LSX-WP-033",
+      "number": 1261,
+      "url": "https://github.com/rox-one/rox-one/issues/1261",
+      "title": "[ROX Suite Extension][LSX-WP-033] Action Buttons typed registry и inert imports",
+      "bodySha256": "44c07a0cff18c434904410cb21863f7d14dce97385f792189a4ea40f922b2999",
+      "remoteBodySha256": "44c07a0cff18c434904410cb21863f7d14dce97385f792189a4ea40f922b2999",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-003",
+        "LSX-WP-004",
+        "LSX-WP-026"
+      ],
+      "checkedAt": "2026-09-30T04:20:45.927Z"
+    },
+    {
+      "id": "CI-010",
+      "number": 1262,
+      "url": "https://github.com/rox-one/rox-one/issues/1262",
+      "title": "[ROX Code Intelligence][CI-010] Search/evidence and accessible graph UI",
+      "bodySha256": "9c4218e92f3cef7511f89b26b9c50e9e16d051b2cd11a3cb31d4396f8cbddc79",
+      "remoteBodySha256": "9c4218e92f3cef7511f89b26b9c50e9e16d051b2cd11a3cb31d4396f8cbddc79",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-007",
+        "CI-008",
+        "CI-009"
+      ],
+      "checkedAt": "2026-09-30T04:20:49.522Z"
+    },
+    {
+      "id": "CI-012",
+      "number": 1263,
+      "url": "https://github.com/rox-one/rox-one/issues/1263",
+      "title": "[ROX Code Intelligence][CI-012] Agent read/stage tools and transport wiring",
+      "bodySha256": "225bef3c5b1f8e9db4eb27b85d4b535ffae8255ae871edc779f3b66a6d476954",
+      "remoteBodySha256": "225bef3c5b1f8e9db4eb27b85d4b535ffae8255ae871edc779f3b66a6d476954",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-003",
+        "CI-004",
+        "CI-005",
+        "CI-006",
+        "CI-008"
+      ],
+      "checkedAt": "2026-09-30T04:20:52.846Z"
+    },
+    {
+      "id": "CI-013",
+      "number": 1264,
+      "url": "https://github.com/rox-one/rox-one/issues/1264",
+      "title": "[ROX Code Intelligence][CI-013] Instruction reconciliation and license/provider notices",
+      "bodySha256": "9b54ae711781807d2546804d91b7b681143d26378230bbabd26f7ea2ab054cd2",
+      "remoteBodySha256": "9b54ae711781807d2546804d91b7b681143d26378230bbabd26f7ea2ab054cd2",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-002",
+        "CI-005",
+        "CI-006",
+        "CI-008"
+      ],
+      "checkedAt": "2026-09-30T04:20:55.970Z"
+    },
+    {
+      "id": "CI-014",
+      "number": 1265,
+      "url": "https://github.com/rox-one/rox-one/issues/1265",
+      "title": "[ROX Code Intelligence][CI-014] Search alternatives capacity and provider contract gate",
+      "bodySha256": "c6f2d496d29f5dd18253e05c7597652d3c0c89de33a9f0da3d16a69b025cb393",
+      "remoteBodySha256": "c6f2d496d29f5dd18253e05c7597652d3c0c89de33a9f0da3d16a69b025cb393",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-003",
+        "CI-008"
+      ],
+      "checkedAt": "2026-09-30T04:20:59.072Z"
+    },
+    {
+      "id": "LSX-WP-018",
+      "number": 1266,
+      "url": "https://github.com/rox-one/rox-one/issues/1266",
+      "title": "[ROX Suite Extension][LSX-WP-018] Board: native status transition и keyboard move",
+      "bodySha256": "13c05efad30666dc7dd47ed40aaf931457fb0206fdc5c7ab186a03c092c69901",
+      "remoteBodySha256": "13c05efad30666dc7dd47ed40aaf931457fb0206fdc5c7ab186a03c092c69901",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-012",
+        "LSX-WP-010"
+      ],
+      "checkedAt": "2026-09-30T04:21:02.190Z"
+    },
+    {
+      "id": "LSX-WP-019",
+      "number": 1267,
+      "url": "https://github.com/rox-one/rox-one/issues/1267",
+      "title": "[ROX Suite Extension][LSX-WP-019] List: native checkbox и eligible bulk actions",
+      "bodySha256": "2789d0c0d144470be419a0a89201d92d339896581820951a51453b8b3bf8a7bc",
+      "remoteBodySha256": "2789d0c0d144470be419a0a89201d92d339896581820951a51453b8b3bf8a7bc",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-012",
+        "LSX-WP-010"
+      ],
+      "checkedAt": "2026-09-30T04:21:05.426Z"
+    },
+    {
+      "id": "LSX-WP-020",
+      "number": 1268,
+      "url": "https://github.com/rox-one/rox-one/issues/1268",
+      "title": "[ROX Suite Extension][LSX-WP-020] Gallery и typed Image/Audio/Video cells с asset ACL",
+      "bodySha256": "a4cbb07b407aa7836c35af881e89c95de707fd2b15e308bc8ef45c98f63ac911",
+      "remoteBodySha256": "a4cbb07b407aa7836c35af881e89c95de707fd2b15e308bc8ef45c98f63ac911",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-011",
+        "LSX-WP-012",
+        "LSX-WP-010"
+      ],
+      "checkedAt": "2026-09-30T04:21:09.132Z"
+    },
+    {
+      "id": "LSX-WP-021",
+      "number": 1269,
+      "url": "https://github.com/rox-one/rox-one/issues/1269",
+      "title": "[ROX Suite Extension][LSX-WP-021] Calendar Base date precision и native/provider capabilities",
+      "bodySha256": "c276744b1f9acbc1ea14b78774d34909a1f9339b0276f05a5d3350f43a52a081",
+      "remoteBodySha256": "c276744b1f9acbc1ea14b78774d34909a1f9339b0276f05a5d3350f43a52a081",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-012",
+        "LSX-WP-009",
+        "LSX-WP-010"
+      ],
+      "checkedAt": "2026-09-30T04:21:12.242Z"
+    },
+    {
+      "id": "CI-011",
+      "number": 1270,
+      "url": "https://github.com/rox-one/rox-one/issues/1270",
+      "title": "[ROX Code Intelligence][CI-011] RepoWiki knowledge navigation and review UI",
+      "bodySha256": "44f24dc53eaeb64003363060d49299855cb01ae39d4592fcec29d0d5ab7657c9",
+      "remoteBodySha256": "44f24dc53eaeb64003363060d49299855cb01ae39d4592fcec29d0d5ab7657c9",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-006",
+        "CI-008",
+        "CI-009",
+        "LSX-WP-025"
+      ],
+      "checkedAt": "2026-09-30T04:21:15.750Z"
+    },
+    {
+      "id": "LSX-WP-015",
+      "number": 1271,
+      "url": "https://github.com/rox-one/rox-one/issues/1271",
+      "title": "[ROX Suite Extension][LSX-WP-015] ACL-filtered Lookup/Rollup и actor-scoped cache",
+      "bodySha256": "e5b6908f601bfde6b07f811fe4d76b01a6c1d1e22f3610b45cbbacd57e80a49e",
+      "remoteBodySha256": "e5b6908f601bfde6b07f811fe4d76b01a6c1d1e22f3610b45cbbacd57e80a49e",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-013",
+        "LSX-WP-014"
+      ],
+      "checkedAt": "2026-09-30T04:21:19.194Z"
+    },
+    {
+      "id": "LSX-WP-016",
+      "number": 1272,
+      "url": "https://github.com/rox-one/rox-one/issues/1272",
+      "title": "[ROX Suite Extension][LSX-WP-016] Schema migration preview/type rename/soft delete",
+      "bodySha256": "1f3c1dee9d330c7b967c8613f09a5f262dae82d71f3bf480c036bf36399e5847",
+      "remoteBodySha256": "1f3c1dee9d330c7b967c8613f09a5f262dae82d71f3bf480c036bf36399e5847",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-012",
+        "LSX-WP-013",
+        "LSX-WP-014"
+      ],
+      "checkedAt": "2026-09-30T04:21:23.208Z"
+    },
+    {
+      "id": "LSX-WP-029",
+      "number": 1273,
+      "url": "https://github.com/rox-one/rox-one/issues/1273",
+      "title": "[ROX Suite Extension][LSX-WP-029] Mind map layout/viewport по тому же tree",
+      "bodySha256": "673afc0dbba8ad2e91687d3f0c638b2370d1d35b38b2c3465972e35672ae93b8",
+      "remoteBodySha256": "673afc0dbba8ad2e91687d3f0c638b2370d1d35b38b2c3465972e35672ae93b8",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-028"
+      ],
+      "checkedAt": "2026-09-30T04:21:27.690Z"
+    },
+    {
+      "id": "LSX-WP-030",
+      "number": 1274,
+      "url": "https://github.com/rox-one/rox-one/issues/1274",
+      "title": "[ROX Suite Extension][LSX-WP-030] Conversion preview copy/inPlace с CAS и rollback",
+      "bodySha256": "6b47532aed7fd1bc9821663c0c2e21b5e3d894aa10ae8e8465e3f98c5721b58a",
+      "remoteBodySha256": "6b47532aed7fd1bc9821663c0c2e21b5e3d894aa10ae8e8465e3f98c5721b58a",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-005",
+        "LSX-WP-006",
+        "LSX-WP-028"
+      ],
+      "checkedAt": "2026-09-30T04:21:31.071Z"
+    },
+    {
+      "id": "LSX-WP-039",
+      "number": 1275,
+      "url": "https://github.com/rox-one/rox-one/issues/1275",
+      "title": "[ROX Suite Extension][LSX-WP-039] Offline structural intents, recovery и revoke fence",
+      "bodySha256": "57b566b8b61204208ead6cd37e5d9de6ae6c4dbfdc473f9ab2eba2c0318916e0",
+      "remoteBodySha256": "57b566b8b61204208ead6cd37e5d9de6ae6c4dbfdc473f9ab2eba2c0318916e0",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-028",
+        "LSX-WP-026"
+      ],
+      "checkedAt": "2026-09-30T04:21:34.175Z"
+    },
+    {
+      "id": "LSX-WP-041",
+      "number": 1276,
+      "url": "https://github.com/rox-one/rox-one/issues/1276",
+      "title": "[ROX Suite Extension][LSX-WP-041] Existing constructor typed Docs/Base nodes и field-ID mappings",
+      "bodySha256": "e7dcfd8f799ea9603a9211c9295d3b481cac5533e8f7920c16595ee5ff2ab770",
+      "remoteBodySha256": "e7dcfd8f799ea9603a9211c9295d3b481cac5533e8f7920c16595ee5ff2ab770",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-010",
+        "LSX-WP-013",
+        "LSX-WP-033",
+        "LSX-WP-040"
+      ],
+      "checkedAt": "2026-09-30T04:21:37.723Z"
+    },
+    {
+      "id": "LSX-WP-022",
+      "number": 1277,
+      "url": "https://github.com/rox-one/rox-one/issues/1277",
+      "title": "[ROX Suite Extension][LSX-WP-022] Timeline interval move/resize с native atomic bounds",
+      "bodySha256": "1b412f9c3cd3157e11b7b8929a903f842d6007eb1587782222609aa6c6a20ffd",
+      "remoteBodySha256": "1b412f9c3cd3157e11b7b8929a903f842d6007eb1587782222609aa6c6a20ffd",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-021"
+      ],
+      "checkedAt": "2026-09-30T04:21:41.050Z"
+    },
+    {
+      "id": "CI-015",
+      "number": 1278,
+      "url": "https://github.com/rox-one/rox-one/issues/1278",
+      "title": "[ROX Code Intelligence][CI-015] End-to-end verification and recovery gates",
+      "bodySha256": "dc789626611bdae305cdf68e0d6b7b261973070c970f7649c8d0b3834d6c9cf2",
+      "remoteBodySha256": "dc789626611bdae305cdf68e0d6b7b261973070c970f7649c8d0b3834d6c9cf2",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "CI-010",
+        "CI-011",
+        "CI-012",
+        "CI-013"
+      ],
+      "checkedAt": "2026-09-30T04:21:44.225Z"
+    },
+    {
+      "id": "LSX-WP-017",
+      "number": 1279,
+      "url": "https://github.com/rox-one/rox-one/issues/1279",
+      "title": "[ROX Suite Extension][LSX-WP-017] Table grid: typed edits, rectangle paste и readback",
+      "bodySha256": "ac7f28b09f609ecce8996d3c22d50f87593cdf385a641d42349addbb02c160a6",
+      "remoteBodySha256": "ac7f28b09f609ecce8996d3c22d50f87593cdf385a641d42349addbb02c160a6",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-012",
+        "LSX-WP-015",
+        "LSX-WP-016"
+      ],
+      "checkedAt": "2026-09-30T04:21:47.409Z"
+    },
+    {
+      "id": "LSX-WP-034",
+      "number": 1280,
+      "url": "https://github.com/rox-one/rox-one/issues/1280",
+      "title": "[ROX Suite Extension][LSX-WP-034] Portable vault import staged identities/attachments",
+      "bodySha256": "1510472c200c6ce414529c567c98019374f4af7440fd59ce32ceae293354db40",
+      "remoteBodySha256": "1510472c200c6ce414529c567c98019374f4af7440fd59ce32ceae293354db40",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-002",
+        "LSX-WP-005",
+        "LSX-WP-006",
+        "LSX-WP-016"
+      ],
+      "checkedAt": "2026-09-30T04:21:51.176Z"
+    },
+    {
+      "id": "LSX-WP-045",
+      "number": 1281,
+      "url": "https://github.com/rox-one/rox-one/issues/1281",
+      "title": "[ROX Suite Extension][LSX-WP-045] Explicit CustomRecord page payload для нового типа данных",
+      "bodySha256": "fc4ad04418c31df7e0acbae2fd4dd80381fece83f47f25e6a2a2c3c788977540",
+      "remoteBodySha256": "fc4ad04418c31df7e0acbae2fd4dd80381fece83f47f25e6a2a2c3c788977540",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-001",
+        "LSX-WP-007",
+        "LSX-WP-010",
+        "LSX-WP-011",
+        "LSX-WP-016"
+      ],
+      "checkedAt": "2026-09-30T04:21:54.920Z"
+    },
+    {
+      "id": "LSX-WP-023",
+      "number": 1282,
+      "url": "https://github.com/rox-one/rox-one/issues/1282",
+      "title": "[ROX Suite Extension][LSX-WP-023] Chart агрегаты и authorized drill-down",
+      "bodySha256": "47fec5b5ed8d7c974c2aab6e01efea30dc9ce2a509b26acea4cfc42b5af16c3f",
+      "remoteBodySha256": "47fec5b5ed8d7c974c2aab6e01efea30dc9ce2a509b26acea4cfc42b5af16c3f",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-015",
+        "LSX-WP-017"
+      ],
+      "checkedAt": "2026-09-30T04:21:57.985Z"
+    },
+    {
+      "id": "LSX-WP-024",
+      "number": 1283,
+      "url": "https://github.com/rox-one/rox-one/issues/1283",
+      "title": "[ROX Suite Extension][LSX-WP-024] Doc Base embed и actor-scoped range context",
+      "bodySha256": "20919eb81fd7a4b28ca03f0326e2d55f12e9aaa39dc077f232ae776b0b8af7ff",
+      "remoteBodySha256": "20919eb81fd7a4b28ca03f0326e2d55f12e9aaa39dc077f232ae776b0b8af7ff",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-010",
+        "LSX-WP-013",
+        "LSX-WP-017"
+      ],
+      "checkedAt": "2026-09-30T04:22:01.252Z"
+    },
+    {
+      "id": "LSX-WP-035",
+      "number": 1284,
+      "url": "https://github.com/rox-one/rox-one/issues/1284",
+      "title": "[ROX Suite Extension][LSX-WP-035] Base export/import .base/CSV/JSON с loss reports",
+      "bodySha256": "0736d360e3411d487d2dd2e2925335598a92291d83025e721b47921d37e22f42",
+      "remoteBodySha256": "0736d360e3411d487d2dd2e2925335598a92291d83025e721b47921d37e22f42",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-013",
+        "LSX-WP-015",
+        "LSX-WP-016",
+        "LSX-WP-034"
+      ],
+      "checkedAt": "2026-09-30T04:22:04.872Z"
+    },
+    {
+      "id": "LSX-WP-036",
+      "number": 1285,
+      "url": "https://github.com/rox-one/rox-one/issues/1285",
+      "title": "[ROX Suite Extension][LSX-WP-036] Map/Outline exports MD/OPML/Canvas/PNG/SVG",
+      "bodySha256": "45cb3d27715e2703b23567be06b7759b1daa0d231ccc25e6c351345b78843d0b",
+      "remoteBodySha256": "45cb3d27715e2703b23567be06b7759b1daa0d231ccc25e6c351345b78843d0b",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-029",
+        "LSX-WP-030",
+        "LSX-WP-034"
+      ],
+      "checkedAt": "2026-09-30T04:22:08.371Z"
+    },
+    {
+      "id": "LSX-WP-037",
+      "number": 1286,
+      "url": "https://github.com/rox-one/rox-one/issues/1286",
+      "title": "[ROX Suite Extension][LSX-WP-037] Checkbox→native Task и TaskNotes origin mapping",
+      "bodySha256": "a74c44400e59169d848d23b089c88975e99c85a350d6c2749d363d886add1742",
+      "remoteBodySha256": "a74c44400e59169d848d23b089c88975e99c85a350d6c2749d363d886add1742",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-004",
+        "LSX-WP-006",
+        "LSX-WP-034"
+      ],
+      "checkedAt": "2026-09-30T04:22:11.692Z"
+    },
+    {
+      "id": "LSX-WP-046",
+      "number": 1287,
+      "url": "https://github.com/rox-one/rox-one/issues/1287",
+      "title": "[ROX Suite Extension][LSX-WP-046] Versioned template gallery с inert actions и bounded creation",
+      "bodySha256": "05a8c1dd3bc477981475bf258c083aaed35ebaf0ea63a8ec3c602148616533a5",
+      "remoteBodySha256": "05a8c1dd3bc477981475bf258c083aaed35ebaf0ea63a8ec3c602148616533a5",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-001",
+        "LSX-WP-026",
+        "LSX-WP-031",
+        "LSX-WP-033",
+        "LSX-WP-034",
+        "LSX-WP-045"
+      ],
+      "checkedAt": "2026-09-30T04:22:15.625Z"
+    },
+    {
+      "id": "LSX-WP-042",
+      "number": 1288,
+      "url": "https://github.com/rox-one/rox-one/issues/1288",
+      "title": "[ROX Suite Extension][LSX-WP-042] Revision-pinned artifact/approval nodes и safe retry receipts",
+      "bodySha256": "b68dc13f5a22fabee7f3c735821f81f675c6574588b3ec6db1507c64d1e205cb",
+      "remoteBodySha256": "b68dc13f5a22fabee7f3c735821f81f675c6574588b3ec6db1507c64d1e205cb",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-033",
+        "LSX-WP-036",
+        "LSX-WP-040",
+        "LSX-WP-041"
+      ],
+      "checkedAt": "2026-09-30T04:22:20.282Z"
+    },
+    {
+      "id": "LSX-WP-038",
+      "number": 1289,
+      "url": "https://github.com/rox-one/rox-one/issues/1289",
+      "title": "[ROX Suite Extension][LSX-WP-038] Docs day-planner binding без нового timer/notification loop",
+      "bodySha256": "2cfab455ac663711ff6206b84234a11f188927a6119fca93d3db4b3d997f6bae",
+      "remoteBodySha256": "2cfab455ac663711ff6206b84234a11f188927a6119fca93d3db4b3d997f6bae",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-021",
+        "LSX-WP-037"
+      ],
+      "checkedAt": "2026-09-30T04:22:23.467Z"
+    },
+    {
+      "id": "LSX-WP-044",
+      "number": 1290,
+      "url": "https://github.com/rox-one/rox-one/issues/1290",
+      "title": "[ROX Suite Extension][LSX-WP-044] Form submission→native Task/Base recipe без второй task DB",
+      "bodySha256": "b5d55d7a52fe76e6f5ac40533811bd0f17f199ba35c18cc43ea43f6eec7e99a5",
+      "remoteBodySha256": "b5d55d7a52fe76e6f5ac40533811bd0f17f199ba35c18cc43ea43f6eec7e99a5",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-004",
+        "LSX-WP-037",
+        "LSX-WP-040",
+        "LSX-WP-041"
+      ],
+      "checkedAt": "2026-09-30T04:22:27.099Z"
+    },
+    {
+      "id": "LSX-WP-043",
+      "number": 1291,
+      "url": "https://github.com/rox-one/rox-one/issues/1291",
+      "title": "[ROX Suite Extension][LSX-WP-043] Weekly Report workflow recipe с scoped draft/owner review",
+      "bodySha256": "2331277b3db7b81c8228e44f5ebe8a9276f0a23c9b7c94a999c6cba30e00b0c2",
+      "remoteBodySha256": "2331277b3db7b81c8228e44f5ebe8a9276f0a23c9b7c94a999c6cba30e00b0c2",
+      "remoteBodyVerified": true,
+      "state": "open",
+      "dependencyIds": [
+        "LSX-WP-024",
+        "LSX-WP-037",
+        "LSX-WP-041",
+        "LSX-WP-042"
+      ],
+      "checkedAt": "2026-09-30T04:22:30.832Z"
+    }
+  ],
+  "completedAt": "2026-09-30T04:22:30.832Z"
+}

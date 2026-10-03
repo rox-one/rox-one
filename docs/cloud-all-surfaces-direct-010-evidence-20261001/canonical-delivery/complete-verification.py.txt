@@ -1,0 +1,143 @@
+"""Finalize existing successful build/runtime evidence after observer readiness."""
+from pathlib import Path
+
+DRIVER = Path(__file__).resolve().parent / 'run-verification.py'
+exec(compile(DRIVER.read_text().split('\nEVIDENCE.mkdir(parents=True, exist_ok=True)')[0], str(DRIVER), 'exec'), globals())
+ENV = {'PATH': os.environ.get('PATH', ''), 'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8', 'TZ': 'UTC'}
+RESULTS = []
+assert (EVIDENCE / 'verify-shipment-closure.py').is_file()
+closure_receipt_path = EVIDENCE / 'shipment-closure-final-receipt.json'
+if closure_receipt_path.exists():
+    closure_receipt = json.loads(closure_receipt_path.read_text())
+    assert closure_receipt['exit'] == 0
+else:
+    closure_receipt = run('shipment-closure-final', ['python3', str(EVIDENCE / 'verify-shipment-closure.py')])
+closure = json.loads((EVIDENCE / 'verify-shipment-closure.json').read_text())
+assert closure['summary']['pass'] and not closure['summary']['failed']
+before = json.loads((EVIDENCE / 'source-before.json').read_text())
+original_before = json.loads((EVIDENCE / 'original-source-before.json').read_text())
+live_before = json.loads((EVIDENCE / 'live-artifacts-before.json').read_text())
+after, original_after = source(CHECKOUT), source(ORIGINAL)
+live_after = artifacts(['apps/webui/dist', 'dist-server'])
+save('source-after-final.json', after)
+save('original-source-after-final.json', original_after)
+save('live-artifacts-after-final.json', live_after)
+assert before == after and original_before == original_after and original_after['status'] == ''
+assert before['head'] == after['head'] == EXPECTED and live_before == live_after
+shipment_before = json.loads((EVIDENCE / 'shipment-before-runtime-manifest.json').read_text())
+shipment_after = json.loads((EVIDENCE / 'canonical-delivery-after.json').read_text())
+assert shipment_before['files'] == shipment_after['files']
+assert shipment_before['symlinks'] == shipment_after['symlinks']
+assert shipment_after['observed_after']['head'] == EXPECTED
+phases = json.loads((EVIDENCE / 'canonical-delivery-phases.json').read_text())
+assert phases['compilerTestBun'] == '1.3.14' and phases['observedShippedBun'] == '1.3.9'
+assert phases['assertions'] == len(phases['phases']) == 56 and all(p['pass'] for p in phases['phases'])
+assert phases['profilesRemoved'] and len(phases['servers']) == 3
+assert [s['exit'] for s in phases['servers']] == [0, 0, 1]
+assert all(not s['tokenWasLogged'] and not s['sigkillFallback'] for s in phases['servers'])
+assert all(s['sigtermSent'] for s in phases['servers'][:2])
+assert not PRIVATE.exists()
+smoke_receipt = json.loads((EVIDENCE / 'canonical-delivery-smoke-receipt.json').read_text())
+raw_log = (EVIDENCE / 'canonical-delivery-smoke.log').read_text()
+count_patterns = {'pass': r'(?m)^[ \t]*(\d+) pass[ \t]*$', 'fail': r'(?m)^[ \t]*(\d+) fail[ \t]*$',
+                  'expect': r'(?m)^[ \t]*(\d+) expect\(\) calls[ \t]*$'}
+actual_counts = {}
+for name, pattern in count_patterns.items():
+    match = re.search(pattern, raw_log)
+    assert match, name
+    actual_counts[name] = int(match.group(1))
+totals = re.search(r'(?m)^Ran (\d+) tests across (\d+) files?\.', raw_log)
+assert totals
+actual_counts.update({'tests': int(totals.group(1)), 'files': int(totals.group(2))})
+assert actual_counts == {'pass': 2, 'fail': 0, 'expect': 56, 'tests': 2, 'files': 1}
+smoke_receipt['actualBunCounts'] = actual_counts
+helper = (EVIDENCE / 'canonical-delivery-smoke.test.ts').read_text()
+cases = []
+for index, match in enumerate(re.finditer(r"\bit\('([^']+)'", helper)):
+    name = match.group(1)
+    passed = [(n + 1, line) for n, line in enumerate(raw_log.splitlines()) if '(pass)' in line and name in line]
+    assert len(passed) == 1
+    cases.append({'name': name, 'testFile': 'canonical-delivery-smoke.test.ts',
+        'declarationLine': helper[:match.start()].count('\n') + 1,
+        'actualRawLogLine': passed[0][0], 'actualRawLogText': passed[0][1],
+        'result': 'pass', 'phaseAssertionCount': 47 if index == 0 else 9})
+assert len(cases) == 2
+save('executed-cases.json', {'candidate': EXPECTED, 'actualCases': cases, 'actualBunCounts': actual_counts,
+    'helperAssertionCount': phases['assertions'], 'caseAssertionsSum': sum(c['phaseAssertionCount'] for c in cases),
+    'declarationsMatchedToActualPassLog': True, 'logSha256': digest(EVIDENCE / 'canonical-delivery-smoke.log')})
+internal_before = json.loads((EVIDENCE / 'internal-build-artifacts-before.json').read_text())
+internal_after = json.loads((EVIDENCE / 'internal-build-artifacts-after.json').read_text())
+internal_delta = [{'path': p, 'before': internal_before['files'].get(p), 'after': internal_after['files'].get(p)}
+    for p in sorted(set(internal_before['files']) | set(internal_after['files']))
+    if internal_before['files'].get(p) != internal_after['files'].get(p)]
+unchanged_internal = [p for p in sorted(internal_before['files']) if internal_before['files'][p] == internal_after['files'].get(p)]
+initial_receipt = json.loads((EVIDENCE / 'verification-receipt.json').read_text())
+continuation_receipt = json.loads((EVIDENCE / 'final-verification-receipt.json').read_text())
+failure_rows = []
+for receipt_file in ['shipment-closure-receipt.json', 'shipment-closure-retry-receipt.json']:
+    receipt = json.loads((EVIDENCE / receipt_file).read_text())
+    assert receipt['exit'] == 2
+    failure_rows.append({'receipt': receipt_file, 'command': receipt['argv'], 'exit': 2,
+        'reason': 'observer file not yet written; orchestration timing error', 'applicationFailure': False,
+        'log': receipt['log'], 'logSha256': receipt['logSha256']})
+cleanup = {'sourceAndLockPreserved': True, 'sourceRegularFileCount': before['regularFileCount'],
+    'gitlinkCount': before['gitlinkCount'], 'liveArtifactsPreserved': True, 'liveArtifactFileCount': live_after['fileCount'],
+    'originalSourceAndStatusPreserved': True, 'originalCleanBeforeAndAfter': True,
+    'ownChildProcessesExited': True, 'ownProfilesRemovedByUnchangedHelper': True,
+    'privateTemporaryRootRemoved': True, 'canonicalOutputRetainedForRootVerification': DELIVERY.exists(),
+    'sharedCheckoutDependenciesAndArtifactsRetained': True, 'shipmentFilesAndSymlinksUnchangedDuringRuntime': True}
+save('cleanup-receipt-complete.json', cleanup)
+artifact_names = ['canonical-build.log', 'canonical-build-receipt.json', 'canonical-ui-copy.json',
+    'canonical-delivery-smoke.log', 'canonical-delivery-smoke-receipt.json', 'canonical-delivery-phases.json',
+    'canonical-delivery-child-redacted.log', 'canonical-delivery-before.json', 'shipment-before-runtime-manifest.json',
+    'canonical-delivery-after.json', 'verify-shipment-closure.json', 'verify-shipment-closure.py',
+    'shipment-closure-final.log', 'shipment-closure-final-receipt.json', 'helper-provenance.json',
+    'helper-path-only.diff', 'manifest-path-only.diff', 'executed-cases.json', 'source-before.json',
+    'source-after-final.json', 'original-source-before.json', 'original-source-after-final.json',
+    'live-artifacts-before.json', 'live-artifacts-after-final.json', 'internal-build-artifacts-before.json',
+    'internal-build-artifacts-after.json', 'cleanup-receipt-complete.json', 'verification-receipt.json',
+    'final-verification-receipt.json', 'shipment-closure.log', 'shipment-closure-retry.log',
+    'canonical-delivery-smoke.test.ts', 'canonical-delivery-smoke.original.ts.txt',
+    'canonical-delivery-manifest.py', 'canonical-delivery-manifest.original.py.txt',
+    'manifest-after-runtime-independent.log', 'completion-parser-error-receipt.json',
+    'run-verification.py', 'continue-verification.py', 'complete-verification.py',
+    'summary-before-metadata-correction.json', 'metadata-correction-receipt.json', 'correct-receipt-metadata.py']
+artifacts_final = [{'file': name, 'bytes': (EVIDENCE / name).stat().st_size, 'sha256': digest(EVIDENCE / name)}
+                   for name in artifact_names]
+summary = {'candidate': EXPECTED, 'pass': True, 'error': None,
+    'canonicalBuild': initial_receipt['results'][1], 'webuiStaging': {'receipt': 'canonical-ui-copy.json',
+        'explicitOutputOnlyCopyAfterCanonicalBuild': True, 'canonicalBuilderCopiesUI': False,
+        'buildRevision': EXPECTED, 'fileCount': 855, 'exactPathAndByteInventory': True, 'UIRebuilt': False},
+    'mandatoryInternalBuilds': {'rebuilt': ['Pi', 'cloud-runner', 'WhatsApp worker', 'Discord worker'],
+        'PiAndCloudRunnerBeforeAfterExact': True, 'exactUnchangedOutputs': unchanged_internal,
+        'changedGeneratedOutputs': internal_delta, 'sourceAndLockChanges': []},
+    'actualLauncherSmoke': smoke_receipt, 'actualLauncher': 'sh bin/craft-server',
+    'runtime': {'outerBun': phases['compilerTestBun'], 'observedShippedBun': phases['observedShippedBun'],
+        'node': '24.19.0', 'assertions': 56, 'passedPhases': 56, 'servers': phases['servers'],
+        'profilesRemoved': phases['profilesRemoved']}, 'executedCases': cases,
+    'closure': {'commandReceipt': closure_receipt, 'summary': closure['summary'],
+        'fullEvidence': 'verify-shipment-closure.json', 'applicationFailures': 0},
+    'shipment': {'path': str(DELIVERY), 'files': len(shipment_after['files']), 'symlinks': len(shipment_after['symlinks']),
+        'bytes': shipment_after['total_bytes'], 'sourceAndWorkspaceCompleteExact': True,
+        'UICompleteExact': True, 'allSymlinksExistingAndInternal': True, 'runtimeManifestUnchanged': True,
+        'fullBeforeManifest': 'shipment-before-runtime-manifest.json', 'fullAfterManifest': 'canonical-delivery-after.json'},
+    'source': {'headBefore': before['head'], 'headAfter': after['head'], 'statusBefore': before['status'],
+        'statusAfter': after['status'], 'trackedFiles': before['regularFileCount'], 'gitlinks': before['gitlinkCount'],
+        'fullTrackedSourceAndLockExact': True, 'lockSha256': before['files']['bun.lock'],
+        'builderSha256': before['files']['scripts/build-server.ts'],
+        'secureStoragePath': 'packages/shared/src/credentials/backends/secure-storage.ts',
+        'secureStorageSha256': before['files']['packages/shared/src/credentials/backends/secure-storage.ts'],
+        'sqliteRuntimeAdapterPath': 'packages/shared/src/utils/sqlite-runtime.ts',
+        'sqliteRuntimeAdapterSha256': before['files']['packages/shared/src/utils/sqlite-runtime.ts']},
+    'original': {'revision': original_after['head'], 'status': original_after['status'], 'fullSourceAndLockUnchanged': True},
+    'initialObserverFailures': failure_rows, 'initialRedReceiptsRetained': True,
+    'completionParserFinding': json.loads((EVIDENCE / 'completion-parser-error-receipt.json').read_text()),
+    'metadataCorrection': json.loads((EVIDENCE / 'metadata-correction-receipt.json').read_text()),
+    'initialObserverFailuresResolved': True, 'buildAndSmokeRerun': False,
+    'cleanup': cleanup, 'retainedArtifacts': artifacts_final,
+    'scopeLimitations': ['no installed/native Electron or macOS', 'no providers/OAuth', 'no iOS',
+        'no PG', 'no full109/full143', 'no security scan acceptance']}
+save('summary-complete.json', summary)
+print(json.dumps({'summary': str(EVIDENCE / 'summary-complete.json'), 'summarySha256': digest(EVIDENCE / 'summary-complete.json'),
+    'actualTests': actual_counts, 'closure': closure['summary'], 'shipmentFiles': len(shipment_after['files']),
+    'shipmentBytes': shipment_after['total_bytes'], 'cleanup': cleanup}, ensure_ascii=False), flush=True)

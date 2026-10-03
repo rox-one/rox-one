@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-30T14:23:31.988Z",
+  "evaluator": "/root/wp01_closure_ultra",
+  "executionSurface": "current-session native subagent; actual Bun child processes",
+  "task": "WP-01 current-source independent second-variant revalidation",
+  "accepted": true,
+  "scope": "Independent second-variant API/privacy/persistence gate only; no native, cold archive or Git delivery claim",
+  "source": {
+    "root": "/Users/t/Projects/rox-one-compound-implementation",
+    "inputHead": "8106f22185fb3b3e9a6a585320d48b1bf5f10fbd",
+    "manifestPath": "current-source-manifest.json",
+    "manifestSha256": "9e6db6e9af347e63068f58be47d4379344a69434997b0ae145c17af22f14513a",
+    "physicalFileCountPerVariant": 3408,
+    "currentSourceDiffs": []
+  },
+  "original": {
+    "reportPath": "/Users/t/.agents/state/rox-compound-70/wp01-holdout-20260930T125031Z/work/report.json",
+    "reportSha256": "f7db97bcba07368dc143e6ef61428974c51fd0a10e0943c9ffb0ca76ec45bbdd",
+    "artifactHashesVerified": 34,
+    "snapshotFileHashesVerified": 1802,
+    "preserved": true
+  },
+  "independence": {
+    "samePreviouslyIndependentlySelectedSecondVariant": true,
+    "rootBodyActorNegativeControlIsDistinct": true,
+    "custodialBlindingClaimed": false,
+    "assertionsUnchanged": true,
+    "oracleSha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+    "productionHooks": false,
+    "testHooks": false,
+    "mocks": false
+  },
+  "mutation": {
+    "path": "apps/workspace-service/src/modules/identity/repository.ts",
+    "line": 244,
+    "original": "        WHERE workspace_id = $1 AND deleted_at IS NULL AND (owner_principal_id = $2 OR visibility = 'members')",
+    "mutated": "        WHERE workspace_id = $1 AND deleted_at IS NULL AND (owner_principal_id = $2 OR visibility IN ('members', 'private'))",
+    "originalSha256": "9899ca80d645ea243e395debcec2fa9405f64e6e3c945ff706a5e533269e0a6d",
+    "mutatedSha256": "d63d7981a36792043bbbe2a7c2bf77fe454ffef1e0854fbd41f75dd3fa9e3908",
+    "identicalSelectedMutation": true
+  },
+  "verification": {
+    "baseline": {
+      "variant": "baseline",
+      "pass": 6,
+      "fail": 0,
+      "assertions": 64,
+      "exitCode": 0,
+      "pid": 17373,
+      "startedAt": "2026-09-30T14:21:05.068Z",
+      "finishedAt": "2026-09-30T14:21:07.452Z",
+      "testSha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+      "executionPath": "baseline.execution.json",
+      "evidencePath": "baseline.evidence.json",
+      "stdoutPath": "baseline.stdout.log",
+      "stderrPath": "baseline.stderr.log",
+      "schema": "holdout_baseline_6881833f997f4534",
+      "seed": "wp01-independent-list-privacy-20260930-7c31e952",
+      "runId": "6881833f-997f-4534-ae07-3f09f7755d21",
+      "counters": {
+        "http": 16,
+        "rpc": 15,
+        "accountsProvisioned": 3,
+        "projectsCreated": 4
+      },
+      "restarts": 1,
+      "cleanup": {
+        "wsClientsDestroyed": true,
+        "listenerCloseRequested": true,
+        "remainingOwnedSchemas": 0,
+        "accountsRemovedWithSchema": 3,
+        "poolClosed": true,
+        "ownedIssuerStateRemoved": true,
+        "listenerAliveAfterClose": false,
+        "processAlive": false,
+        "issuerStateExists": false
+      }
+    },
+    "mutation": {
+      "variant": "mutation",
+      "pass": 4,
+      "fail": 2,
+      "assertions": 41,
+      "exitCode": 1,
+      "pid": 17425,
+      "startedAt": "2026-09-30T14:21:07.455Z",
+      "finishedAt": "2026-09-30T14:21:11.185Z",
+      "testSha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+      "executionPath": "mutation.execution.json",
+      "evidencePath": "mutation.evidence.json",
+      "stdoutPath": "mutation.stdout.log",
+      "stderrPath": "mutation.stderr.log",
+      "schema": "holdout_mutation_5230e0dd6efa4c80",
+      "seed": "wp01-independent-list-privacy-20260930-7c31e952",
+      "runId": "5230e0dd-6efa-4c80-bf6b-ad36c94ff53f",
+      "counters": {
+        "http": 15,
+        "rpc": 14,
+        "accountsProvisioned": 3,
+        "projectsCreated": 4
+      },
+      "restarts": 1,
+      "cleanup": {
+        "wsClientsDestroyed": true,
+        "listenerCloseRequested": true,
+        "remainingOwnedSchemas": 0,
+        "accountsRemovedWithSchema": 3,
+        "poolClosed": true,
+        "ownedIssuerStateRemoved": true,
+        "listenerAliveAfterClose": false,
+        "processAlive": false,
+        "issuerStateExists": false
+      }
+    },
+    "failingAssertionLine": 183,
+    "failingAssertions": [
+      "HTTP list leaked private Project title: expected false, received true",
+      "WS list leaked private Project title: expected false, received true"
+    ],
+    "detailWriteForgeryAndRestartControlsPassed": true
+  },
+  "cleanup": {
+    "path": "cleanup-verification.json",
+    "complete": true
+  },
+  "artifacts": [
+    {
+      "path": "prepare.ts",
+      "sha256": "4f41925baf18e8b0603c1fff178ef055c52635e42e201d5354854a931e7e2e28",
+      "bytes": 7617
+    },
+    {
+      "path": "run.ts",
+      "sha256": "92a21f26bdb90d6e748b6d5f4d58aa18fc8ac2c8448223dc24902ae4adbeab88",
+      "bytes": 2668
+    },
+    {
+      "path": "finalize.ts",
+      "sha256": "35883d069b1c5d09449d5d3205585664d1821bba670db7a25c35bb84eb3beb81",
+      "bytes": 8662
+    },
+    {
+      "path": "holdout.test.ts",
+      "sha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+      "bytes": 18540
+    },
+    {
+      "path": "preparation.json",
+      "sha256": "bb78d6e7524d1071e236cd0c2ecc7910c0beb9711e2f835420910e6ed43c8a37",
+      "bytes": 3020
+    },
+    {
+      "path": "current-source-manifest.json",
+      "sha256": "9e6db6e9af347e63068f58be47d4379344a69434997b0ae145c17af22f14513a",
+      "bytes": 661568
+    },
+    {
+      "path": "original-artifact-verification.json",
+      "sha256": "ad1dbb2fd3bedd72f50744c72245f94c6bb0a8c76e1fdadb4ab63837bd9600df",
+      "bytes": 8178
+    },
+    {
+      "path": "source-verification.json",
+      "sha256": "6148fea1520bd247753e7d9a07e7defbb99e31b99392c93792386fdd72519dcc",
+      "bytes": 792
+    },
+    {
+      "path": "cleanup-verification.json",
+      "sha256": "cbfcf11ae8ca86e9ed2191551bf69a6e01e4b3929ec099f1f97c2d4d04fd7b9f",
+      "bytes": 1127
+    },
+    {
+      "path": "baseline.tsconfig.json",
+      "sha256": "46b6d9e2a658daaa691bd082bf0fe7accd9e92b663ed2df5e8c67c93907636b3",
+      "bytes": 523
+    },
+    {
+      "path": "mutation.tsconfig.json",
+      "sha256": "aa581f69bbfb54e3b8a6ee82440f62718acde63330e5339f6224ed7c662f6bbe",
+      "bytes": 523
+    },
+    {
+      "path": "tsconfig.json",
+      "sha256": "46b6d9e2a658daaa691bd082bf0fe7accd9e92b663ed2df5e8c67c93907636b3",
+      "bytes": 523
+    },
+    {
+      "path": "baseline.execution.json",
+      "sha256": "57dd7be20813ee1b4c7d916032bb10baa2ec83f6b2f3dea44f242bec44ff06e9",
+      "bytes": 1268
+    },
+    {
+      "path": "baseline.evidence.json",
+      "sha256": "913894c0c3946d3ef094f52740baf64c95ddf7e8737a946091961c2940d5e615",
+      "bytes": 8389
+    },
+    {
+      "path": "baseline.stdout.log",
+      "sha256": "0de168bf6b7525064a6a7cdb73fac22086d2e96a546280bf21d6c4d0f347ba8f",
+      "bytes": 28
+    },
+    {
+      "path": "baseline.stderr.log",
+      "sha256": "69ebce79bb4346554d8ef9f3cecd3a229fc409b308159c645bad64f398001b9f",
+      "bytes": 833
+    },
+    {
+      "path": "mutation.execution.json",
+      "sha256": "4919d852f2c965090210f5970fd268f6d6fce33127084aa8f518075c75a0a272",
+      "bytes": 1268
+    },
+    {
+      "path": "mutation.evidence.json",
+      "sha256": "8197148c6f9859a4ab43fe7a005a14537f9020b8dc536a925ffee17607f600db",
+      "bytes": 6893
+    },
+    {
+      "path": "mutation.stdout.log",
+      "sha256": "0de168bf6b7525064a6a7cdb73fac22086d2e96a546280bf21d6c4d0f347ba8f",
+      "bytes": 28
+    },
+    {
+      "path": "mutation.stderr.log",
+      "sha256": "4a785c1d80a0512a02c7ed557bfeb938f770764fa77839d6ab5344acebbcb459",
+      "bytes": 2493
+    }
+  ],
+  "pendingRootGates": [
+    "current native two-profile acceptance and reviewed screenshots",
+    "native durable offline retry/cancel/restart scope acceptance",
+    "current cold archive readback",
+    "source-bound commit/push/readback",
+    "full WP-01 normative closure audit integration"
+  ],
+  "program": {
+    "packageCount": 143,
+    "NOT_STARTED": 130,
+    "noProgressEdits": true
+  }
+}

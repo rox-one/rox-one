@@ -1078,6 +1078,9 @@ export default function ExtensionsSettingsPage() {
                 <p className="opacity-70 text-xs leading-relaxed">
                   {t('extensions.developer.body')}
                 </p>
+                <p className="text-xs leading-relaxed border-l-2 border-amber-500/60 pl-3 text-amber-800 dark:text-amber-200">
+                  {t('extensions.developer.securityBoundary')}
+                </p>
               </div>
 
               <div className="space-y-2">

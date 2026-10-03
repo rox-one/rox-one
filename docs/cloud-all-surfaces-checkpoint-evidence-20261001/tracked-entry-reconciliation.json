@@ -1,0 +1,10 @@
+{
+  "regularFiles": 6178,
+  "trackedGitEntries": 6180,
+  "all6178RegularFileHashesMatchHistorical010": true,
+  "gitlinks": {
+    "vendor/rox-one-assets": "8dca299e26ec2dcb5794a80f8c5970ea0d6c58ad",
+    "vendor/rox-one-website": "7e0cdaf1c9621d8548b23531c7de9e9f11a6584e"
+  },
+  "explanation": "Fresh manifest includes two uninitialized gitlinks as null; prior source manifest counted only regular files. Full Git tree and clean status also cover unchanged gitlink pins. No native/vendor acceptance."
+}

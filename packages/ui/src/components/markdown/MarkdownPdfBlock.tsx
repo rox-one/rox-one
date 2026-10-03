@@ -116,40 +116,57 @@ export function MarkdownPdfBlock({ code, className, onCreateRegionAnnotation: _o
   const [contentCache, setContentCache] = React.useState<Record<string, Uint8Array>>({})
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [loadAttempt, setLoadAttempt] = React.useState(0)
+  const [renderAttempt, setRenderAttempt] = React.useState(0)
 
   const activeItem = items[activeIndex]
   const activePdfData = activeItem ? contentCache[activeItem.src] : undefined
 
   // Load active item's content when it changes
   React.useEffect(() => {
-    if (!activeItem?.src || !onReadFileBinary) return
+    if (!activeItem?.src) return
+    let active = true
     if (contentCache[activeItem.src]) {
       setError(null)
-      return
+      setLoading(false)
+      return () => { active = false }
     }
     setLoading(true)
     setError(null)
+    if (!onReadFileBinary) {
+      setError('File reading is unavailable')
+      setLoading(false)
+      return () => { active = false }
+    }
     onReadFileBinary(activeItem.src)
       .then((data) => {
-        // Store a copy — react-pdf transfers ArrayBuffers to workers, detaching the original
-        setContentCache((prev) => ({ ...prev, [activeItem.src]: new Uint8Array(data) }))
+        if (active) {
+          // react-pdf transfers ArrayBuffers to workers, so retain a master copy.
+          setContentCache((prev) => ({ ...prev, [activeItem.src]: new Uint8Array(data) }))
+        }
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Failed to read PDF file')
+        if (active) setError(err instanceof Error ? err.message : 'Failed to read PDF file')
       })
-      .finally(() => setLoading(false))
-  }, [activeItem?.src, onReadFileBinary, contentCache])
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => { active = false }
+  }, [activeItem?.src, onReadFileBinary, contentCache, loadAttempt])
 
-  // Stable file objects per item (ref ensures Documents don't remount on re-render).
-  // Each Document gets its own Uint8Array copy since react-pdf transfers the ArrayBuffer.
+  // Keep a master copy: react-pdf transfers each Document's ArrayBuffer.
+  // Render retries use a fresh copy so they never reuse a detached buffer.
   const fileObjsRef = React.useRef<Record<string, { data: Uint8Array }>>({})
   for (const [src, data] of Object.entries(contentCache)) {
-    if (!fileObjsRef.current[src]) {
-      fileObjsRef.current[src] = { data: new Uint8Array(data) }
+    const fileObjKey = `${src}:${src === activeItem?.src ? renderAttempt : 0}`
+    if (!fileObjsRef.current[fileObjKey]) {
+      fileObjsRef.current[fileObjKey] = { data: new Uint8Array(data) }
     }
   }
 
-  const activeFileObj = activeItem ? fileObjsRef.current[activeItem.src] : undefined
+  const activeFileObj = activeItem
+    ? fileObjsRef.current[`${activeItem.src}:${renderAttempt}`]
+    : undefined
 
   // Fullscreen overlay: always provide a fresh copy (the overlay's Document will also transfer it)
   const loadPdfData = React.useCallback(async (path: string) => {
@@ -200,9 +217,17 @@ export function MarkdownPdfBlock({ code, className, onCreateRegionAnnotation: _o
           {activeFileObj && (
             <div className="flex items-start justify-center bg-white p-4">
               <Document
+                key={`${activeItem!.src}:${renderAttempt}`}
                 file={activeFileObj}
                 loading={<div className="py-8 text-center text-muted-foreground text-[13px]">{t('common.rendering')}</div>}
-                error={<div className="py-6 text-center text-destructive/70 text-[13px]">{t('preview.failedToRenderPdf')}</div>}
+                error={
+                  <div className="flex flex-col items-center gap-2 py-6 text-destructive/70">
+                    <span className="text-[13px]">{t('preview.failedToRenderPdf')}</span>
+                    <button type="button" onClick={() => setRenderAttempt((attempt) => attempt + 1)} className="rounded border px-3 py-1.5 text-sm hover:bg-muted">
+                      {t('common.retry')}
+                    </button>
+                  </div>
+                }
               >
                 <Page
                   pageNumber={1}
@@ -221,7 +246,12 @@ export function MarkdownPdfBlock({ code, className, onCreateRegionAnnotation: _o
 
           {/* Error state for uncached active item */}
           {!activePdfData && !loading && error && (
-            <div className="py-6 text-center text-destructive/70 text-[13px]">{error}</div>
+            <div className="flex flex-col items-center gap-2 py-6 text-center">
+              <p className="text-[13px] text-destructive/70">{error}</p>
+              <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="rounded border px-3 py-1.5 text-sm hover:bg-muted">
+                {t('common.retry')}
+              </button>
+            </div>
           )}
 
           {/* Bottom fade gradient */}

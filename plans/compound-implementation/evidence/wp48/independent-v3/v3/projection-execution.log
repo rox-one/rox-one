@@ -1,0 +1,9 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-48-projection-adversarial.test.ts:
+(pass) independent coherent current projection evidence cannot become a fake reviewed exact artifact [1420.73ms]
+
+ 1 pass
+ 0 fail
+ 5 expect() calls
+Ran 1 test across 1 file. [1485.00ms]

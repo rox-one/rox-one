@@ -108,6 +108,20 @@ export default function ImportSettingsPage() {
     if (auto.state === 'importing') {
       return t('settings.import.auto.importing', { imported: auto.imported, updated: auto.updated })
     }
+    if (auto.state === 'partial') {
+      const cause =
+        auto.partialReason === 'consent-revoked'
+          ? t('settings.import.auto.partialConsentRevoked')
+          : auto.partialReason === 'scan-truncated'
+            ? t('settings.import.auto.partialScanTruncated')
+            : t('settings.import.auto.partialSourceFailure')
+      return `${t('settings.import.auto.partial', {
+        imported: auto.imported,
+        updated: auto.updated,
+        failed: auto.failed,
+        remaining: auto.remaining,
+      })} ${cause}`
+    }
     if (auto.state === 'error') return t('settings.import.auto.error', { error: auto.error ?? '' })
     if (!auto.lastRunAt) return t('settings.import.auto.pending')
     return t('settings.import.auto.done', {
@@ -186,11 +200,13 @@ export default function ImportSettingsPage() {
         mode: 'skip',
       })
       void refreshAuto()
-      setResults(
-        persisted.results.map((row) =>
-          `${row.action}${row.sessionId ? ` ${row.sessionId}` : ''}${row.reason ? ` (${row.reason})` : ''}`,
-        ),
+      const resultLines = persisted.results.map((row) =>
+        `${row.action}${row.sessionId ? ` ${row.sessionId}` : ''}${row.reason ? ` (${row.reason})` : ''}`,
       )
+      if (persisted.truncated) {
+        resultLines.push(t('settings.import.batchTruncated', { omitted: persisted.omitted }))
+      }
+      setResults(resultLines)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -222,7 +238,7 @@ export default function ImportSettingsPage() {
               <SettingsToggle
                 label={t('settings.import.auto.toggle')}
                 description={t('settings.import.auto.toggleHint')}
-                checked={auto?.enabled ?? true}
+                checked={auto?.enabled ?? false}
                 disabled={!auto}
                 onCheckedChange={(on) => void setAutoEnabled(on)}
               />

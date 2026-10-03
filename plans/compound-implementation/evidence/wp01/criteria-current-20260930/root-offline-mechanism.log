@@ -1,0 +1,40 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-01-server.test.ts:
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > WS creates a canonical private project that the same HTTP authority reads; B and outsider receive no title [990.57ms]
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > outsider/forged handshakes and command actor/workspace injection cannot obtain authority [802.91ms]
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > cross-transport concurrent retries and full listener/pool restart retain key, project, receipt and replay cursor [1082.75ms]
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > durable session revocation denies an existing WS client and HTTP receipt replay after restart [940.53ms]
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > revocation that owns the session row first prevents a waiting HTTP command from committing [740.69ms]
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > revocation that owns the session row first prevents a waiting WS command from committing [733.08ms]
+(pass) WP-01 root review durable data boundaries > persisted receipt JSON cannot substitute scope, canonical identity, title or unknown payload on retry [839.33ms]
+(pass) WP-01 root review durable data boundaries > event replay never advances beyond an earlier transaction whose event sequence exists but is uncommitted [757.16ms]
+(pass) WP-01 root review event privacy > persisted event payload cannot disclose extra title/body fields through replay [733.18ms]
+(pass) WP-01 root review command identity > a command ID already bound to another receipt cannot be reused with an older idempotency key [757.45ms]
+
+tests/macro-integration/wp-01-http.test.ts:
+(pass) WP-01 HTTP facade with real JWT and PostgreSQL authority > credential issuance, public JWKS and command receipt preserve canonical identity on reload and concurrent retry [274.70ms]
+(pass) WP-01 HTTP facade with real JWT and PostgreSQL authority > ACL-filtered list and event replay never disclose private project titles, refs or totals [275.49ms]
+(pass) WP-01 HTTP facade with real JWT and PostgreSQL authority > missing, forged, duplicated and token-selected identities fail without private response fields [281.23ms]
+(pass) WP-01 HTTP facade with real JWT and PostgreSQL authority > unknown body/query fields, forged workspace scope and malformed routes cannot become Actor input [211.00ms]
+(pass) WP-01 HTTP facade with real JWT and PostgreSQL authority > body byte bounds, malformed UTF-8/JSON and content type return concrete safe errors [234.21ms]
+(pass) WP-01 HTTP facade with real JWT and PostgreSQL authority > revocation during body receipt is revalidated before the persisted command [197.71ms]
+(pass) WP-01 HTTP facade with real JWT and PostgreSQL authority > session and membership revocation after a real query suppress already-read private data [314.32ms]
+(pass) WP-01 HTTP facade with real JWT and PostgreSQL authority > internal errors and serialization failures never return DB details or private titles [244.37ms]
+(pass) WP-01 HTTP facade with real JWT and PostgreSQL authority > local credentials are explicitly configured and gated by socket peer, not forwarded headers [107.56ms]
+
+tests/macro-integration/wp-01-offline.test.ts:
+(pass) actual encrypted queue persists before send; SIGKILL/new process/offline reload retain IDs, payload and verified scope; explicit retry applies once [4127.24ms]
+(pass) real accepted WS response cut + main SIGKILL retains uncertain intent; fresh process recovers exact original receipt without duplicate [2939.30ms]
+(pass) offline cancellation survives process restart; conflicting drafts cannot replace immutable pending bytes or IDs [3069.04ms]
+(pass) live session revoke blocks retry durably without send; fresh same-user or other-principal sessions cannot view/replay old intent [4122.34ms]
+(pass) wrong-password replacement remains quiesced with exact durable credential/config retained; foreign local scope/body Actor injection cannot enqueue [3079.95ms]
+(pass) explicit disconnect removes pending/scope before credential; unknown encrypted intent formats are blocked and byte-preserved [6351.02ms]
+(pass) authenticated identity query rejects forged scope/query; current membership removal blocks queued retry and persists hidden terminal state [3668.78ms]
+(pass) unknown encrypted scope proof is preserved and cannot be overwritten by queue/cancel or interpreted as empty [4785.53ms]
+(pass) verified replacement session/principal cannot view or replay a still-queued private draft; explicit discard allows a new request [17192.45ms]
+
+ 28 pass
+ 0 fail
+ 601 expect() calls
+Ran 28 tests across 3 files. [60.37s]

@@ -1,0 +1,391 @@
+{
+  "task_id": "WP-38-preflight",
+  "attempt_id": "1808ebcd861f019002d3384ba9992544",
+  "packet_hash": "3936f70289274d4c0cb221d28c974d44a292c8514d5e4950f5017956e75a5090",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-38",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; not feature implementation",
+  "workTier": "bounded-workflow: one owned report, scoped source inspection, no nested delegation",
+  "dependencies": ["WP-12", "WP-25", "WP-28", "WP-34", "WP-36", "WP-50", "WP-39", "WP-16"],
+  "evidenceBoundary": {
+    "revisionMeaning": "input_revision is the dispatch revision, not a claim that the inspected uncommitted worktree equals that commit",
+    "specManifest": "Inspected work-packages.json whole-file SHA256 matches the supplied 79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "freshness": "Source references identify inspected worktree content by whole-file digest. Root-owned wave0 integration may invalidate any reference; re-read changed files after the lead commit before applying these requests. No current HEAD or clean-tree claim is made.",
+    "inspection": "Only WP-38 entry points, direct imports, its normative records and relevant prerequisite specification excerpts were inspected. Missing scoped paths were observed with glob, not inferred from an index.",
+    "toolLimitations": ["Codegraph reported no index for this checkout; no index was created.", "find failed with an API 402, so explicit filenames and literal searches were used instead."],
+    "execution": "No product implementation, build, test, native UI, Git operation or provider/network operation was performed. Planned verifications below are not passing receipts. Packet verification command was not run."
+  },
+  "foundationGates": [
+    {
+      "gate": "Lead wave0 commit and accepted dependency receipts",
+      "relationship": "Execution prerequisite, not a new explicit DAG edge",
+      "evidence": "Dispatch instruction; WP-38 inputs at work-packages.json:34976-35040 require each producer's accepted typed interface, applied migration or N/A receipt, and scenario verification receipt.",
+      "requiredArtifact": "Lead's committed integration revision and all eight accepted producer receipts. Reconcile file ownership and digest changes before implementing."
+    },
+    {
+      "gate": "Canonical registry and resource authorization",
+      "relationship": "Foundation capabilities, normally satisfied transitively; preserve the explicit dependency array",
+      "evidence": "21-implementation-plan.md:27-50 identifies WP-02 registry/aliases/backlinks and WP-03 grants. platform-contract.ts:218-239 preserves canonical workspace identity; :380-388 restricts relation domain/range; :597-609 explicitly says capability catalogs are not actor authorization.",
+      "requiredArtifact": "Accepted WP-02/WP-03 ports for indexed authorized typed links and current resource policy, including canonical mapping of specification company/contact/mail_thread to accepted ROX kinds. Do not interpret entity.permissions or name matching as resource access."
+    },
+    {
+      "gate": "CRM email context policy is not an explicit WP-38 dependency",
+      "relationship": "Surprising functional gate: WP-26 is absent from the eight explicit edges",
+      "evidence": "WP-38 requires email source consent at work-packages.json:34890-34894; WP-26:22520-22575 specifies hidden records, SetEmailContextVisibility and QueryCompanyContext, with proposed context-policy.ts. 22-test-plan.md:90,103-111 requires private linked mail to remain private and context traversal to recheck ACL.",
+      "requiredArtifact": "An accepted WP-26-compatible policy port/receipt covering hidden team/member records, account/source consent and disabled email-derived context, or a lead-owned equivalent foundation receipt. Do not implement a second visibility policy in WP-38 or mark the requirement N/A."
+    },
+    {
+      "gate": "CRM import identity and retained dossier state",
+      "relationship": "Producer capability required for the existing surface; verify transitive delivery rather than silently adding edges",
+      "evidence": "WP-22:19053-19063 provides Contact/Company provenance and depends on WP-17/WP-18 mail. WP-23:19903-19910 retains notes/promises/brief and forbids name-based merge. DossierEntity:19-30 currently has local IDs and no canonical ref. WP-25:21685-21689 depends on WP-24 and common discussion/mention/attention packages.",
+      "requiredArtifact": "Accepted CRM Company/Contact DTOs, alias/import map and preservation receipt for notes, promises and briefSessionId; mail read port with account namespace and source revisions. Contact must not become a login principal."
+    },
+    {
+      "gate": "Meeting identity and company association",
+      "relationship": "Surprising producer seam: WP-30 is not an explicit WP-38 dependency",
+      "evidence": "WP-28 alone is calendar editing, whereas WP-30:26237-26246,26275-26293 defines calendar-linked company/project context and canonical call aliases with no second Meeting store. use-rox-sources.ts:63-88 currently prefers device-local meetingsLocal and returns title/id rows.",
+      "requiredArtifact": "Accepted event/call occurrence and Company link DTOs from WP-28/WP-34 or the WP-30 port, plus explicit alias handling for retained local meetings. A title-matched calendar event is not proof of a Company meeting link. WP-35's local import capability is relevant when local recordings are included, not a mandatory new runtime provider."
+    },
+    {
+      "gate": "Durable gateway, projection and revoke fence",
+      "relationship": "Foundation capabilities transitively required by explicit WP-36; not separate direct WP-38 edges",
+      "evidence": "WP-36:33175-33179 depends on WP-04/WP-06/WP-09/WP-51. 21-implementation-plan.md:65-90 requires atomic receipt/outbox and persistent replay cursors. WP-51:45952-46010 requires shared writer guard and policy fence. Existing dossier storage is localStorage with DOM events, storage.ts:20-65.",
+      "requiredArtifact": "Transport-derived principal and writer-mode resolver, RoxCommand v2 gateway, durable transaction/receipt/outbox/inbox ports, policy epoch fence and authorized projection replay cursor. No localStorage shared authority fallback."
+    },
+    {
+      "gate": "Provenance before shared or agent-derived context",
+      "relationship": "Explicit WP-50 dependency also mandated as a global foundation gate",
+      "evidence": "21-implementation-plan.md:5 says WP-50 provenance precedes shared transcripts/context; WP-50:45059-45067 requires private-email-derived session share denial/redaction and revocation invalidation. agent-run.ts:7-22 currently only accepts workspace/name/prompt/labels and creates a safe-mode session.",
+      "requiredArtifact": "WP-36/WP-50 context-read and transcript provenance ports carrying source refs/revisions/policy epochs and audience checks; safe permission mode alone is not sufficient."
+    },
+    {
+      "gate": "Wire schema and core contract reconciliation",
+      "relationship": "Compile/schema integration gate, not a dependency package",
+      "evidence": "WP-38 apiChanges at :34885 names filters/depth/budget; requestSchema at :35052-35078 forbids extra properties and permits only entity/depth/limit/purpose, despite transport promising an authorized cursor at :35050. responseSchema at :35247-35293 uses status/receiptId while core Rox2CanonicalResult at platform-contract.ts:158-167 uses executionMode/lifecycle/verification and nested receipt.",
+      "requiredArtifact": "Lead-approved GetEntityContext DTO/schema mapping: pagination/cursor/filter/budget location and status-to-triad adapter with full receipt fields. Do not silently accept fields forbidden by the published schema, invent a second canonical status or claim queued results as verified."
+    },
+    {
+      "gate": "Selected migration runner and live acceptance environment",
+      "relationship": "Operational verification prerequisite, not an unconditional new outbound provider dependency",
+      "evidence": "WP-38 migration :35445-35488 uses PostgreSQL-style types and explicitly delegates filenames to the selected migrator. Scoped glob found no apps/workspace-service/migrations or modules/crm directory. WP-52:46885-46895 defines authenticated service/PostgreSQL/media bootstrap. 22-test-plan.md:3-9 requires actual surface verification on exact implementation/schema revision.",
+      "requiredArtifact": "Accepted foundation migration IDs/entity and receipt keys, DB transaction adapter, HTTP/native RPC registration seams and real service/renderer acceptance environment. WP-38 query itself needs no outbound provider sandbox; use producer receipts for provider-backed source data."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/crm/contracts.ts",
+    "apps/workspace-service/src/modules/crm/commands.ts",
+    "apps/workspace-service/src/modules/crm/repository.ts",
+    "tests/macro-integration/wp-38.test.ts",
+    "apps/workspace-service/migrations/38-domain-contract.sql"
+  ],
+  "newFileOwnershipNote": "These are only the normative WP-38 newFiles, not files created by this preflight. The first three are repeated CRM domain paths shared with other packages and require the lead's single CRM file-area owner. The migration path is a proposed identifier; the selected migrator determines its actual filename. No scaffold or additional store/surface is proposed.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+      "symbol": "DossierEntity / normalizeDossierData / DossierTouch / buildDossierSummary / lastTouchFor / buildBriefPrompt",
+      "change": "Consume the accepted CRM identity/import map and add canonical workspace/entity reference lineage without replacing retained standalone IDs, notes, aliases, promises or briefSessionId. Add a pure conversion from authorized typed GetEntityContext DTOs to company sections/touches, including Contact, mail thread, task, meeting/calendar occurrence, call, Page/file and common Message discussion refs with sourceRevision/provenance. In shared mode derive titles, authorized counts and last touch only from that DTO; do not execute entityTerms/title/alias heuristics. Retain buildDossierSummary's existing personal source behavior solely for explicit standalone mode. Build a citation-bearing brief from authorized refs/revisions rather than only formatted titles; delegate sharing and provenance enforcement to WP-50.",
+      "reason": "Current identity is a local id, summary matching is lexical, TouchKind lacks the new domain categories, and buildBriefPrompt emits no source references (:19-30,71-101,163-225,281-304)."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "symbol": "DossierPage / DossierDetail / generateBrief / openTouch / touchIcon",
+      "change": "Select shared versus standalone through the accepted authority resolver. In shared mode load Company/Contact projections and query domain.entity.getContext with canonical refs; do not aggregate personal hooks or searchNotes and do not persist shared data via saveWorkspaceJson. Preserve retained UI metadata through the accepted CRM writer. Render contacts/email/tasks/meetings/calls/documents/discussion and provenance citations in the existing detail surface, with authorized pagination, sections, counts and existing target navigation. Add explicit loading/empty/permission_denied/offline_queued/retryable_error/applied_verified states; clear prior context on principal, workspace, entity or policy-epoch change and reject stale async responses. Subscribe through the accepted revisioned replay/invalidation port, not DOM storage events. Generate and read the account answer through WP-36/WP-50 with citation/provenance checks; deny/redact revoked derived output. Keep standalone notes/promises/brief and existing destinations functional. Shared edits must route through existing CRM/task command ports, never local optimistic saves or createPersonalTask.",
+      "reason": "DossierPage uses localStorage at :98-120 and local hooks at :122-155; detail searches notes by name at :375-398, passes uncited context to startAgentRun at :418-428, and exposes local counts/navigation at :599-617."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef / Rox2EntityKind / ROX2_RELATION_RULES / Rox2Event / Rox2CanonicalResult / Rox2Receipt",
+      "change": "Reuse accepted WP-02 canonical kinds, workspace/account identity, alias registration and typed relations; request a central kind/relation update only if the accepted Company/Contact or Company membership link is still missing. Do not treat specification company/contact/mail_thread spellings as already accepted parser kinds. Preserve relation cycle rules and existing executionMode/lifecycle/verification semantics. Reconcile command receipt and context event metadata with foundation-owned contracts so commandId/requestHash/receiptId/policyEpoch/projectionWatermark are available without duplicating core types. Keep GetEntityContext domain DTO and policy/I/O in shared/service modules, not core; map operation status to the canonical triad explicitly.",
+      "reason": "Current kinds include crm-company/person/mail-thread/calendar-event, not literal company/contact/mail_thread (:17-38); member-of only targets project (:388). Core receipt/event fields do not provide the full published WP-38 envelope (:99-105,131-167)."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/crm/contracts.ts",
+      "symbol": "Proposed GetEntityContext request/result schemas and CRM context-read port; final names owned by accepted CRM contract",
+      "change": "Extend the single accepted CRM contract with the strict entity/depth/limit/purpose operation, validated canonical refs, discriminated authorized section DTOs, revisioned citation/provenance records, freshness/policy epoch/watermark, canonical receipt and error mapping. Resolve cursor/filters/budget schema gap with the lead before extension. Reuse existing graph/mail/message/task/calendar/call/document/file DTOs through domain read ports; no service/provider I/O or independent CRM message schema.",
+      "reason": "Normative newArtifact at work-packages.json:35491-35495; this path is currently absent in scoped glob and is shared with earlier CRM producers. This is a patch request to the eventual CRM owner, not an observed existing symbol."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/crm/commands.ts",
+      "symbol": "Proposed entity.getContext query handler in the accepted CRM command registry",
+      "change": "Register the query through the foundation gateway; derive principal from transport, reject actor injection and workspace/ref mismatches, evaluate Company and every reachable source resource against current policy/source consent, then fetch authorized typed sections under accepted depth/limit/budget and stable cursor rules. Recheck the policy fence before serialization and on cache hits. Share the same handler for native RPC, HTTP and WP-36/MCP; expose no alternate permissive context path. Use existing durable query receipt semantics for retry after commit-before-reply.",
+      "reason": "Published operation at :35042-35078 and errors/receipt at :35228-35246; path is absent at inspection and shared across CRM packages. Transport registration/composition root symbols are not inspected or fabricated and must be supplied by accepted foundation receipts."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/crm/repository.ts",
+      "symbol": "Proposed context cache/provenance repository methods in the accepted CRM repository",
+      "change": "Query the common typed link indexes rather than scanning whole source collections. Persist only the WP-38 entity_context_cache/context_provenance projection with workspace/entity/principal/policy epoch, source revisions, accepted query-shape key and stable cursor sort; reuse foundation entity/alias/command_receipt/outbox/inbox tables. Record source provenance and invalidate on source/link/policy/tombstone changes through durable deduplicated revisioned events. Cache selection, authorization, receipt and transaction semantics must prevent cross-principal/epoch reuse and stale title/count serialization. Provider adapters are injected only by the existing composition root.",
+      "reason": "Migration constraints at :35445-35488 and newArtifact interface :35500-35503; path is absent at inspection and shared across CRM packages. No second primary entity or discussion store is authorized."
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/extra-screens/agent-run.ts",
+      "symbol": "AgentRunRequest / startAgentRun / readAgentRun",
+      "change": "Request the WP-36/WP-50 owner to provide the accepted context/provenance-aware session invocation/readback interface for generateBrief; if this helper is the selected adapter, extend it to carry canonical context source refs/revisions/audience policy through that interface and preserve all existing standalone callers. Do not present permissionMode safe as an ACL guarantee or convert transport denial into a missing-session success/empty result.",
+      "reason": "Current request contains only workspace/name/prompt/labels (:7-22); readAgentRun catches all errors and returns exists false (:46-60). No second agent surface or session store is needed."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-38 section (:774-789)",
+      "change": "After implementation and actual verification, document accepted GetEntityContext DTO/cursor/budget mapping, authority routing, shared CRM ownership, explicit versus functional foundation gates and receipt-bound scenario results. Keep package unverified until the UI/failure/reload evidence exists.",
+      "reason": "Required documentation currently declares all packages proposed/planned and carries only goal/contracts/acceptance, not implementation receipts."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Acceptance boundary and CRM-INGEST-01 / CRM-DISCUSS-01 (:3-9,84-111)",
+      "change": "Add version-bound Company aggregation/citation assertions, hidden mail title/count/cache/cursor negative controls, recovery and revoke/reconnect artifacts while retaining common Message/search/mention/notification checks. Distinguish fixture preparation, caught mutation, native surface result and live receipt.",
+      "reason": "WP-38 lists this documentation and requires actual changed surface and failure/reload coverage, not fixture-only proof."
+    }
+  ],
+  "localizationIntegrationRequest": {
+    "owner": "Lead's shared i18n owner",
+    "sourceSeam": "DossierPage useTranslation and extraScreens.dossier keys",
+    "paths": ["packages/shared/src/i18n/locales/de.json", "packages/shared/src/i18n/locales/en.json", "packages/shared/src/i18n/locales/es.json", "packages/shared/src/i18n/locales/fr.json", "packages/shared/src/i18n/locales/hu.json", "packages/shared/src/i18n/locales/ja.json", "packages/shared/src/i18n/locales/pl.json", "packages/shared/src/i18n/locales/ru.json", "packages/shared/src/i18n/locales/zh-Hans.json", "packages/shared/src/i18n/locales/zh-Hant.json"],
+    "change": "Add matching ASCII-sorted keys for context source sections, citation actions, authorized pagination and the six context states; Russian plurals one/few/many/other. Key names must be agreed with the Dossier patch. No locale files were inspected or changed in this preflight; paths and parity requirement come from the supplied repository rules.",
+    "verification": "Run the existing i18n parity suite only during lead-owned integrated implementation verification, not this preflight."
+  },
+  "acceptanceMatrix": [
+    {
+      "criterion": "Company shows contacts/emails/tasks/meetings/calls/documents/discussion and agent account answer with citations",
+      "currentEvidence": "DossierSources/TouchKind only cover sessions, messenger, meetings, tasks, notes and feed; buildDossierSummary matches titles/aliases; buildBriefPrompt formats titles without refs. DossierDetail already provides the appropriate existing detail/brief/timeline surface.",
+      "requiredChange": "Extend that surface to consume one authorized typed Company context across all seven source sections and generate the account answer through common agent/provenance ports with navigable source/revision citations. Do not count title matching as a relationship.",
+      "verification": "After watermark, A and B open canonical Company in the actual renderer; each seeded authorized section is present and navigates to the same canonical resource. Invoke the actual agent dispatcher and resolve each answer citation to its authorized source revision. Preserve UI screenshot/ARIA, DTO readback, IDs/revisions and receipt.",
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; NOT_VERIFIED",
+      "missingPrerequisite": "Lead wave0 commit; eight accepted dependency receipts; typed CRM/contact/mail/meeting links and WP-36/WP-50 citation ports."
+    },
+    {
+      "criterion": "unauthorized private mail absent incl title/count",
+      "currentEvidence": "Current dossier has no mail DTO or server-derived actor policy; buildDossierSummary and DossierPage expose supplied touch counts/titles. authorizeRox2Action is an actor grant primitive, not per-resource traversal authorization.",
+      "requiredChange": "Authorize every source/link before DTO serialization, counts, ordering metadata and cache insertion; bind cache/cursors to principal, workspace, policy epoch, query shape and revisions. Enforce mail account ACL and source consent, recheck policy fences and provenance on cache hits and derived answer reads/shares.",
+      "verification": "A seeds PRIVATE_WP-38 linked private mail and shared mail. B/C/agent allow-all must never receive the private marker, title, hidden total or hidden pagination metadata through UI, HTTP/RPC/MCP, search, realtime, cached context or derived answer/share. Compare B's visible count/cursor semantics with an equivalent fixture without the hidden source. Revoke after A cache warm-up and before delayed reply/push; old context must not reappear.",
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; NOT_VERIFIED",
+      "missingPrerequisite": "Current per-resource ACL/source consent port, WP-26-compatible context policy, WP-50 provenance and WP-51 fence."
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "DossierPage and DossierDetail already render cards, brief, promises and touches (:94-315,349-631).",
+      "requiredChange": "Extend existing Company detail with all typed source sections and citations; preserve standalone dossier behavior rather than introduce another workspace screen.",
+      "verification": "Actual renderer inspection and actions for every source section, citation and section pagination; hover/focus and keyboard access; screenshots and ARIA assertions on receipt-bound state.",
+      "state": "EXISTING_SURFACE_ONLY; NOT_VERIFIED_FOR_WP38",
+      "missingPrerequisite": "Accepted Company context DTO, source destinations, i18n patches and renderer integration."
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "DossierPage.select uses routes.view.screen('dossier', id); openTouch only handles existing session/messenger/meeting/task/note/feed destinations (:168-169,328-345). navigate dispatches the common route event.",
+      "requiredChange": "Keep dossier navigation and resolve new canonical source/citation refs through accepted existing domain destinations. Route shared queries through domain.entity.getContext and the common HTTP command endpoint.",
+      "verification": "Direct Company deep link and reload select the same canonical entity; each source/citation click opens its accepted target. Cross-workspace forged ref is denied through both native and HTTP entry paths.",
+      "state": "PARTIAL_LOCAL_ROUTING; NOT_VERIFIED",
+      "missingPrerequisite": "Foundation transport registration symbols and accepted mail/call/document/discussion routes from dependency owners; their implementation was not inspected."
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "DossierEntity has id/name/kind but no workspace canonical ref. Core has crm-company/person/mail-thread/calendar-event/call/page/file and Rox2EntityRef, plus restricted relation rules.",
+      "requiredChange": "Reuse registry/import aliases and source revisions; map accepted domain types to canonical refs; represent meeting occurrence/call lineage without a second Meeting or Contact-principal identity store.",
+      "verification": "Same provider binding and retained dossier import preserve IDs; identical display names do not merge; mixed-account IDs do not collide; typed relations and cross-workspace boundaries are enforced.",
+      "state": "IDENTITY_PRIMITIVES_EXIST; CONTEXT_MODEL_MISSING",
+      "missingPrerequisite": "WP-02 accepted registry and WP-22/WP-23 CRM identity/import receipts plus typed meeting association."
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "Dossier persistence is localStorage JSON and DOM/storage events. Scoped service CRM and migrations paths are absent. Normative migration defines entity_context_cache/context_provenance.",
+      "requiredChange": "Apply selected additive migration for context projection/provenance with composite entity FKs, schema/revision/tombstone fields, source revisions, principal+policy epoch cache and indexed stable sort. Reuse shared receipts/outbox/inbox/aliases, not duplicate tables. Preserve legacy data via accepted CRM import.",
+      "verification": "Inspect migrated rows/keys/indexes; restart service/client after committed query receipt and before reply, retry and read the same receipt/IDs/revisions. Before cutover restore snapshot/writer route; after shared writes verify forward repair or reverse replay preserves recent writes.",
+      "state": "LOCAL_PERSISTENCE_ONLY; MIGRATION_NOT_APPLIED",
+      "missingPrerequisite": "Selected migrator, foundation table/key schema and CRM repository transaction adapter."
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "Published entity.getContext is a query under RoxCommand v2; current dossier save/updateEntity writes local JSON and shared command path is absent.",
+      "requiredChange": "Implement query in the accepted command gateway with transport principal, strict schema, immutable request hash/idempotency receipt and documented query revision semantics. Route existing shared mutation affordances to their accepted CRM/task commands without using local writes.",
+      "verification": "Reject forged actor, malformed ref, workspace mismatch and same idempotency key with changed request; retry lost reply yields identical canonical receipt. Check existing mutable actions reject stale revision. A read query must not fabricate a content mutation/event on each fetch.",
+      "state": "QUERY_HANDLER_MISSING; NOT_VERIFIED",
+      "missingPrerequisite": "RoxCommand v2 and receipt contract, writer-mode guard, accepted query versus mutable expectedRevision policy."
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "buildDossierSummary scans all supplied sources; lastTouchFor repeats summary per row. Published request permits entity/depth/limit/purpose but mentions filters/budget/cursor elsewhere.",
+      "requiredChange": "Use typed indexed link reads and bounded depth/limit/budget with stable authorized pagination; resolve strict wire schema discrepancy before implementation; return only authorized typed DTO and freshness/provenance.",
+      "verification": "Exercise depth=0, limit=0, pagination across authorized mixed types, duplicate/cyclic links, source tombstones and stale/forged/cross-principal cursors. Inspect query behavior on large unrelated graph to ensure no whole-graph/source scan and no missing/duplicated visible rows.",
+      "state": "LOCAL_HEURISTIC_QUERY_ONLY; NOT_VERIFIED",
+      "missingPrerequisite": "Accepted GetEntityContext schema including pagination location, graph read ports and stable cursor indexes."
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "subscribeWorkspaceJson is local notification; useMeetings/feed use independent local/IPC signals. Specification mandates entity.context_changed and revisioned invalidation/replay.",
+      "requiredChange": "Use transaction outbox events for link/source/policy changes, inbox deduplication and projection watermark; resume subscription from durable cursor and fence stale revisions/tombstones. Do not broadcast private titles/counts.",
+      "verification": "Update each linked source and observe refreshed Company context; duplicate/reorder event then disconnect/reconnect/restart consumer and recover exactly the current authorized state. Dropped-event fault must be detected by the watermark/state oracle.",
+      "state": "NO_DOMAIN_CONTEXT_SUBSCRIPTION_IN_INSPECTED_CODE",
+      "missingPrerequisite": "Accepted outbox/inbox/replay and resource-authorized subscription port."
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "Core explicitly separates entity capability catalogs from actor authorization; safe-mode brief helper does not carry resource policy.",
+      "requiredChange": "Use server actor, workspace and source resource ACL with email context consent and policy-epoch fence across traversal, cached serialization and brief retrieval. Execution grants remain separate and allow-all never broadens data access.",
+      "verification": "A/B/C and agent principals exercise Company, each linked source and forged refs over all entry points; revoke while open/cached/in-flight removes future visibility and cannot recover copied private titles.",
+      "state": "PRIMITIVE_EXISTS; FULL_BOUNDARY_NOT_VERIFIED",
+      "missingPrerequisite": "WP-03/WP-51 policy/fence and WP-26-compatible source visibility."
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "Published Company link must not share personal mail; WP-50 covers private-derived session sharing. Existing brief output is ordinary session text.",
+      "requiredChange": "Reuse resource sharing policy and provenance audience intersection for account answer/citations; deny or redact mixed-audience output while retaining authorized owner's private transcript. Company visibility grants no implied source access.",
+      "verification": "A reads private mail then shares account brief to B: denial/redaction with no private title/count/body. Revoke source and retry sharing/export/retrieval; owner's permitted private history is retained under WP-50 policy.",
+      "state": "DERIVED_SHARING_NOT_VERIFIED",
+      "missingPrerequisite": "WP-50 accepted transcript provenance/share receipt and source policy."
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "DossierDetail.searchNotes searches local terms, swallowing errors to []; filterEntities searches local name/org/aliases. Normative CRM scenarios require common search projection.",
+      "requiredChange": "Consume dependency-owned authorized search/projection for Company and source refs; include common Message discussion context and ensure tombstones/epochs prevent title/snippet/count leakage. Do not build another FTS store in CRM.",
+      "verification": "Distinctive Company/discussion/source phrase returns correct authorized ref after watermark; outsider/revoked/private source does not appear even before index catches up; deleted discussion disappears.",
+      "state": "LOCAL_SEARCH_ONLY; NOT_VERIFIED",
+      "missingPrerequisite": "WP-06 projection and WP-25 discussion indexing receipt."
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "Core has mentions relation; WP-25 requires common Message discussion and WP-09 occurrence policy. No typed context mention rendering exists in DossierTouch.",
+      "requiredChange": "Reuse common Message/mention refs in discussion section and citation navigation, with current target ACL and no implicit grant. Keep occurrence updates owned by the common service.",
+      "verification": "Company/teammate mention resolves permitted target; edit/removal updates occurrence/backlink; outsider cannot follow known mention target into hidden context.",
+      "state": "DEPENDENCY_CAPABILITY_REQUIRED; NOT_VERIFIED",
+      "missingPrerequisite": "Accepted WP-25 and transitive WP-09 mention DTO/receipt."
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "22-test-plan.md:103-109 specifies one common notification with Company deep link and current read-policy recheck. Existing dossier unreadSessions are agent-session metadata, not CRM notification authority.",
+      "requiredChange": "Consume existing attention notification/deep links for Company discussion, with one semantic effect and permission-filtered payload. Context read/invalidation must not create repeated user pings.",
+      "verification": "Mention/reply overlap notifies B once across replay/restart; opens Company thread; revoke between enqueue/push omits excerpt and denied target; repeated context reads do not multiply notifications.",
+      "state": "NO_CRM_ATTENTION_IN_INSPECTED_SURFACE; NOT_VERIFIED",
+      "missingPrerequisite": "WP-25/WP-07 accepted notification and recipient-policy receipt."
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Dossier touches are title-matched local activity and feed excludes internal agent tab; specification demands auditable revisioned domain events.",
+      "requiredChange": "Render authorized canonical linked activity/context changes through common event/projection DTOs with source provenance; do not treat news/session name matches as authoritative Company history.",
+      "verification": "Linked update shows same canonical revision in activity and context; reordered duplicate event does not regress history; hidden resource contributes no activity title/count/timestamp-derived disclosure.",
+      "state": "LOCAL_TOUCHES_ONLY; NOT_VERIFIED",
+      "missingPrerequisite": "Common activity event/attention projection, policy and watermark contracts."
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "buildBriefPrompt lacks citations; startAgentRun creates a safe session from free-text prompt, and readAgentRun returns last assistant text without provenance DTO.",
+      "requiredChange": "Invoke same entity.getContext handler through accepted agent port; bind source provenance/revisions and resource policy to account answer and every retrieval/citation. Keep existing Sessions destination, not a new agent account store.",
+      "verification": "Actual agent run produces source-grounded cited account answer; citations resolve; agent allow-all cannot see C's/B's unauthorized mail; source revoke invalidates derived retrieval under accepted provenance policy.",
+      "state": "LOCAL_BRIEF_EXISTS; ACCOUNT_ACCESS_NOT_VERIFIED",
+      "missingPrerequisite": "WP-36/WP-50 context invocation and transcript/readback receipt."
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Normative HTTP POST /v1/workspaces/{workspaceId}/commands/entity.getContext and native domain.entity.getContext exist in specification only; scoped command handler path is absent.",
+      "requiredChange": "Expose strict typed query through the same gateway on HTTP/native RPC and WP-36 agent/MCP dispatcher, including full error/receipt mapping and serialization filter. No adapter may inject actor from request body.",
+      "verification": "Equivalent authorized request yields same canonical data/identity and policy semantics on HTTP/RPC/MCP; forged actor/ref/workspace and unsupported schema are rejected consistently, with no hidden titles/counts in error responses.",
+      "state": "SPECIFIED_ONLY; NOT_VERIFIED",
+      "missingPrerequisite": "Accepted transport/auth and agent registry registration seams; strict schema/status reconciliation."
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Rox2Event has optional causationId/correlationId/aggregateRevision; WP-38 requires commandId, policyEpoch, projectionWatermark and retry/DLQ counters too.",
+      "requiredChange": "Use common gateway/event telemetry with those identifiers/counters and source revision/projection evidence; redact raw email/body/transcript/tokens and private titles from logs. Avoid a separate CRM observability mechanism.",
+      "verification": "Correlate request receipt to event/projection watermark and failure/retry trace. Seed private marker and inspect captured logs/evidence for prohibited content; verify dropped-event recovery counters without treating counters as completeness proof.",
+      "state": "PARTIAL_CORE_METADATA; NOT_VERIFIED",
+      "missingPrerequisite": "Foundation observability port and revision/epoch/watermark contract."
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "tests/macro-integration/wp-38.test.ts is absent in scoped glob; normative scenarios require seed 20260968 and private marker PRIVATE_WP-38.",
+      "requiredChange": "Create normative scenario/recovery regression tests that check seven authorized source categories, citation validity, ACL/title/count/cursor/cache boundaries, source changes and receipts. Seed hidden totals/cached titles mutation, unauthorized actor and dropped/duplicate event failure variants; preserve independent holdout control.",
+      "verification": "Lead runs bun test tests/macro-integration/wp-38.test.ts and relevant existing package/i18n tests after integration; actual Electron/API/agent scenario separately proves the surface. Baseline must pass, seeded mutation must fail the specific assertion rather than infrastructure setup, and holdout must be caught. Not run in this preflight.",
+      "state": "TEST_ARTIFACT_MISSING; NO_TESTS_RUN",
+      "missingPrerequisite": "Runnable integrated service/renderer, accepted producer fixtures/interfaces and independent evaluator."
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md WP-38 and 22-test-plan.md are future plans explicitly not passing results.",
+      "requiredChange": "Update those existing documents with accepted schemas, authority/cache/citation semantics, foundation prerequisites and actual version-bound verification evidence, keeping unobserved claims marked unverified.",
+      "verification": "Trace both acceptance criteria and every completeness row to exact implemented symbols and implementation SHA/schema/runtime artifact; ensure fixture-only pass is not described as live receipt.",
+      "state": "NORMATIVE_PLAN_PRESENT; IMPLEMENTATION_DOCS_NOT_VERIFIED",
+      "missingPrerequisite": "Integrated implementation and observed scenario receipts."
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Detail catches note search failures into [] and readAgentRun catches errors into exists false; briefError displays a raw error. Shared domain errors are only normative.",
+      "requiredChange": "Represent permission_denied and retryable_error distinctly from empty/missing; map unauthenticated/forbidden/workspace mismatch/invalid payload/revision or idempotency conflict/provider unavailable/unknown effect/unsupported schema/revoke fence without claiming success or displaying stale private context.",
+      "verification": "Inject each applicable gateway error and source unavailable/fence-pending state through actual UI/API; check accessible state, permitted retry, no duplicated receipt/effect and no stale titles/counts. Preserve unavailable source truth rather than suppressing errors.",
+      "state": "LOCAL_ERRORS_ONLY; SHARED_FAILURE_STATES_MISSING",
+      "missingPrerequisite": "Accepted error and lifecycle/status-to-triad mapping."
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "Dossier initializes local JSON immediately; sources resolve independently; starting only covers brief creation.",
+      "requiredChange": "Add context loading and freshness state keyed by principal/workspace/entity/policy epoch; cancel/ignore old responses and clear previous authorized data at boundary changes. applied_verified requires actual readback/receipt evidence, not an empty request completion.",
+      "verification": "Delay query, switch Company/workspace/principal and revoke during load; loading appears and old or late private context never renders. Resolve response and observe only correct verified state.",
+      "state": "SHARED_CONTEXT_LOADING_MISSING",
+      "missingPrerequisite": "Accepted query result/freshness DTO and renderer authority lifecycle."
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "Existing empty dossier/noTouches UI is based on local arrays and names (:289-310,600-617).",
+      "requiredChange": "Provide authorized-empty context/section states separately from loading, denied and unavailable. Counts describe only authorized visible data, never hidden source totals.",
+      "verification": "Empty authorized Company shows real empty state; hidden-only mail yields the same authorized-empty mail section as no mail, without hidden count/title; denied/unavailable does not display ordinary empty success.",
+      "state": "LOCAL_EMPTY_EXISTS; AUTHORIZED_EMPTY_NOT_VERIFIED",
+      "missingPrerequisite": "Authorization-filtered section result and explicit context state DTO."
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Local JSON survives a renderer reload, but no shared replay cursor, policy epoch or domain offline queue is present in DossierPage.",
+      "requiredChange": "Use accepted projection/outbox semantics; show offline_queued honestly, persist replay cursor and permitted operations, and reauthorize on reconnect. Never mark a failed query as applied_verified or fall back from shared mode to unrestricted personal sources.",
+      "verification": "Disconnect and restart client/service; preserve queued/unknown status and canonical IDs; reconnect/replay produces one receipt and current watermark. Revoke while offline, reconnect and reject/quarantine queued mutations, invalidate stale context/derived output and never restore private cached titles.",
+      "state": "SHARED_OFFLINE_RECOVERY_MISSING; NOT_VERIFIED",
+      "missingPrerequisite": "WP-05 projection/outbox and WP-51 writer/fence receipts."
+    },
+    {
+      "criterion": "Negative-control: unauthorized actor or dropped/duplicated event must fail acceptance; hidden totals/cached titles mutation and independent holdout",
+      "currentEvidence": "work-packages.json:34916-34919,35574-35577 defines the faults; no WP-38 scenario test exists.",
+      "requiredChange": "Install consumer-visible privacy/state oracles over actual query/UI/agent output and watermark, not source-text checks or nonempty-list assertions. Preserve reproduction seed 20260968 and baseline failure distinction.",
+      "verification": "Clean scenario passes; hidden-count/title mutant and unauthorized/dropped-event mutant fail specific boundary assertions; duplicated event cannot duplicate visible rows/receipts. Independent evaluator's second fault is detected.",
+      "state": "CONTROL_NOT_IMPLEMENTED_OR_RUN",
+      "missingPrerequisite": "Integrated scenario runner and independent holdout evaluator."
+    },
+    {
+      "criterion": "Persistence-recovery: restart between persisted command and reply preserves state/receipt/canonical ID",
+      "currentEvidence": "work-packages.json:34920-34923 requires this boundary; inspected localStorage helpers have no command receipt/outbox transaction.",
+      "requiredChange": "Use the existing durable gateway transaction/receipt and context provenance/cache recovery ports; query retry reconciles the stored request hash and current authorization. Do not mint a new entity/receipt or bypass revoke after restart.",
+      "verification": "Pause after durable commit before reply, kill/restart service and retry same key; assert receiptId/commandId/requestHash and canonical source IDs remain consistent, query authorization is current, and events/projections contain no duplicate effect. Record DB keys/counts, watermark and failure trace.",
+      "state": "RECOVERY_NOT_IMPLEMENTED_OR_RUN",
+      "missingPrerequisite": "Accepted durable query receipt semantics, controllable commit-before-reply boundary and integrated migration."
+    },
+    {
+      "criterion": "Verification gate: real changed surface and relevant failure/reload observed; fixture is not live receipt",
+      "currentEvidence": "work-packages.json:34975 and 22-test-plan.md:3-9 explicitly forbid feature completion from a fixture or standalone test result.",
+      "requiredChange": "Lead must exercise integrated Electron/native RPC and HTTP/MCP paths with actual authenticated actors, failure/reconnect/reload and preserved standalone behavior; bind evidence to committed implementation/schema/environment.",
+      "verification": "Preserve actual UI screenshots/ARIA, typed API readback, canonical IDs/revisions, DB keys/counts, command/provider source receipts, projection watermark and seeded failure trace. FeatureComplete remains false until all required observations are independently accepted.",
+      "state": "NO_RUNTIME_VERIFICATION_AUTHORIZED_IN_PREFLIGHT",
+      "missingPrerequisite": "Lead wave0 and dependency integration, live acceptance environment and authorized implementation verification phase."
+    }
+  ],
+  "sourceReferences": [
+    {"path":"apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts","symbol":"DossierEntity / DossierSources / DossierTouch / buildDossierSummary / buildBriefPrompt","lineStart":19,"lineEnd":305,"sha256":"7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd","inspectedRanges":["19-101","118-180","183-305"]},
+    {"path":"apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx","symbol":"DossierPage / DossierDetail / openTouch / generateBrief","lineStart":94,"lineEnd":631,"sha256":"fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9","inspectedRanges":["1-180","260-315","316-631"]},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef / Rox2CanonicalResult / registerExternalBinding / ROX2_RELATION_RULES / authorizeRox2Action","lineStart":17,"lineEnd":620,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5","inspectedRanges":["17-67","99-167","218-246","335-429","579-620"]},
+    {"path":"apps/electron/src/renderer/lib/extra-screens/storage.ts","symbol":"loadWorkspaceJson / saveWorkspaceJson / subscribeWorkspaceJson / newLocalId","lineStart":20,"lineEnd":71,"sha256":"fa240f1c6737cfb526deb8a19817fc48e42e471b6664def2d2d5408bc25e51ba"},
+    {"path":"apps/electron/src/renderer/lib/extra-screens/agent-run.ts","symbol":"AgentRunRequest / startAgentRun / readAgentRun","lineStart":7,"lineEnd":61,"sha256":"74589220461ca04163fa273a3628ebd8170ef12d9d764f780c54fcab533929fc"},
+    {"path":"apps/electron/src/renderer/lib/extra-screens/use-rox-sources.ts","symbol":"useWorkspaceSessions / usePersonalTasks / useMeetings / loadFeed / useFeedItems","lineStart":14,"lineEnd":162,"sha256":"7fd3d7a1a4b5356c5d63a76d35f75a89a4de675a1eb5404b102c72bcdb8fba34","inspectedRanges":["1-91","130-162"]},
+    {"path":"apps/electron/src/renderer/lib/extra-screens/personal-task-bridge.ts","symbol":"createPersonalTask / createPersonalTaskConfirmed","lineStart":18,"lineEnd":37,"sha256":"6ddefec884971bd335a68d090ca2f2d1bfe3034e60431dd46aa53b3532aff121"},
+    {"path":"apps/electron/src/renderer/lib/navigate.ts","symbol":"navigate / routes import","lineStart":15,"lineEnd":50,"sha256":"fbf258fb42a94c07a2a5db579714706140e75c049e9ccad6125959c2b21a7fac"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-38 dependencies/DoD/operations/migrations/entryPoints/verification","lineStart":34832,"lineEnd":35613,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0","inspectedRanges":["34832-35085","35228-35294","35445-35613"],"additionalSpecificationRanges":["19052-19085","19902-19932","21678-21712","22519-22595","26236-26310","33168-33194","45058-45085","45951-46016","46884-46916"]},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-38 / global foundation gates","lineStart":774,"lineEnd":789,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9","additionalSpecificationRanges":["1-7","27-50","65-90","104-110","123-146","161-170"]},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Acceptance boundary / CRM-INGEST-01 / CRM-DISCUSS-01","lineStart":84,"lineEnd":111,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d","additionalSpecificationRanges":["1-36","84-113"]}
+  ],
+  "nextExecutableAction": "Lead accepts this artifact-only preflight. Once wave0 is committed and all eight producer typed-interface/migration/scenario receipts are accepted, re-read digest-changed seams; obtain the common CRM owner, WP-26-compatible source visibility and meeting association ports; resolve GetEntityContext cursor/filter/budget and status-to-triad contracts. Then extend the single CRM contracts/query/repository and existing dossier surface in dependency order; apply the selected migration and execute the full UI/API/agent privacy/negative-control/restart/reconnect verification before any completion claim.",
+  "risks": [
+    "Root-owned uncommitted integration may change every inspected seam; hashes bind observations to worktree content, not dispatch HEAD.",
+    "The CRM contract/command/repository files are shared across packages; independent creation would overwrite accepted domain interfaces or introduce competing stores.",
+    "Name/alias scans produce false associations, title-based merges and N-by-N work; canonical indexed source links must replace shared aggregation, not merely add mail to DossierSources.",
+    "Company visibility can leak linked private mail through totals, cached titles, last-touch ordering, cursor metadata, search, notifications or generated account answer even when the mail body is removed.",
+    "WP-26 context policy and WP-30 meeting associations are not explicit WP-38 edges; without accepted equivalent ports, the published acceptance cannot be fulfilled by the eight receipts alone.",
+    "Safe-mode agent session is not a resource ACL or derived sharing guarantee; free-text uncited context would bypass WP-50 provenance.",
+    "Published filters/budget/pagination description conflicts with additionalProperties=false request fields; response status differs from the existing canonical triad. Silent schema expansion or status replacement would break consumers.",
+    "Renderer fallback-to-empty and swallowed transport errors could misreport unavailable/denied as authorized empty, or retain stale context after a principal/policy change.",
+    "Local dossier promises/notes/agent brief and local Meetings must remain available in explicit standalone mode; shared-mode fallback to those unrestricted stores is forbidden.",
+    "Migration identifier and foundational tables/transport registration are not yet available in scoped service paths; fabricated timestamps, tables or registry symbols would be unsupported.",
+    "Fixture tests, standalone regressions and provider health receipts cannot substitute for actual Company UI, citations, privacy and recovery observations on the integrated revision."
+  ]
+}

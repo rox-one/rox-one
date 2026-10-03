@@ -21,7 +21,6 @@ function kindFromType(type: CredentialId['type']): CredentialKind {
   if (type.includes('bearer')) return 'bearer_token';
   if (type === 'llm_iam') return 'aws_credential_source';
   if (type === 'llm_service_account') return 'gcp_adc';
-  if (type.includes('basic')) return 'basic_auth';
   return 'api_key';
 }
 
@@ -46,6 +45,7 @@ export class CredentialsEncImporter implements CredentialImporter {
     }
     const out: ImportCandidate[] = [];
     for (const id of ids) {
+      if (id.type === 'account_replica_key') continue;
       const payload = await this.backend.get(id);
       if (!payload) continue;
       const kind = kindFromType(id.type);

@@ -3,19 +3,22 @@
  *
  * OMP reads models from ~/.omp/agent/models.yml and default role from
  * ~/.omp/agent/config.yml. A clean Rox install seeds a `rox-kimi`
- * connection with authType `none`, so craft setup looks complete while
+ * public connection with authType `none`, so craft setup looks complete while
  * OMP still has no models — the first turn dies as OMP_NO_MODELS.
  *
  * This module is the single inspect / provision / copy source for that
  * gap. It never overwrites an existing user models.yml or config.yml
  * (omp-v2-prd: do not rewrite ~/.omp). The raw API key is never written
  * into those files; models.yml pins `apiKey: ROX_API_KEY` (env-var name)
- * and the spawn path injects the value.
+ * and the spawn path injects the value. Public Rox runtime catalogs come from
+ * the declared Rox contract, not a claim of gateway discovery. They use a
+ * private per-run agent directory and retain every original user file.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { OmpStartupErrorCode } from './errors.ts';
+import { ROX_DEFAULT_PARENT_MODEL, ROX_PUBLIC_MODEL_CATALOG } from '../config/rox-public-models.ts';
 
 export const OMP_CREDENTIAL_CODES = [
   'OMP_NO_MODELS',
@@ -26,7 +29,7 @@ export const OMP_CREDENTIAL_CODES = [
 export type OmpCredentialCode = (typeof OMP_CREDENTIAL_CODES)[number];
 
 export const ROX_OMP_PROVIDER_ID = 'rox';
-export const ROX_OMP_MODEL_ID = 'kimi-K3';
+export const ROX_OMP_MODEL_ID = ROX_DEFAULT_PARENT_MODEL;
 export const ROX_OMP_DEFAULT_BASE_URL = 'https://api.rox.one/v1';
 export const ROX_OMP_API_KEY_ENV = 'ROX_API_KEY';
 
@@ -174,10 +177,13 @@ function modelsYmlTemplate(baseUrl: string): string {
     '    api: openai-completions',
     `    apiKey: ${ROX_OMP_API_KEY_ENV}`,
     '    models:',
-    `      - id: ${ROX_OMP_MODEL_ID}`,
-    '        name: Kimi K3',
-    '        contextWindow: 262144',
-    '        maxTokens: 8192',
+    ...ROX_PUBLIC_MODEL_CATALOG.flatMap(model => [
+      `      - id: ${model.id}`,
+      `        name: ${JSON.stringify(model.name)}`,
+      `        contextWindow: ${model.contextWindow}`,
+      `        reasoning: ${model.supportsThinking}`,
+      `        input: ${model.supportsImages ? '[text, image]' : '[text]'}`,
+    ]),
     '',
   ].join('\n');
 }
@@ -234,6 +240,34 @@ export function ensureOmpRoxFirstRun(input: OmpFirstRunInspectInput & { baseUrl?
     ...input,
     env: { ...input.env, [ROX_OMP_API_KEY_ENV]: key },
   });
+}
+
+/** Public Rox runs use a private OMP agent directory; never modify user OMP files. */
+export function prepareOmpRoxRuntimeConfig(input: {
+  runtimeRoot: string;
+  apiKey?: string | null;
+  baseUrl?: string;
+}): { agentDir: string; env: Record<string, string>; dispose: () => void } {
+  mkdirSync(input.runtimeRoot, { recursive: true, mode: 0o700 });
+  const agentDir = mkdtempSync(join(input.runtimeRoot, 'rox-omp-'));
+  try {
+    const baseUrl = (input.baseUrl?.trim() || ROX_OMP_DEFAULT_BASE_URL).replace(/\/$/, '');
+    writeFileSync(join(agentDir, 'models.yml'), modelsYmlTemplate(baseUrl), { mode: 0o600 });
+    writeFileSync(join(agentDir, 'config.yml'), configYmlTemplate(), { mode: 0o600 });
+  } catch (error) {
+    rmSync(agentDir, { recursive: true, force: true });
+    throw error;
+  }
+  return {
+    agentDir,
+    env: {
+      PI_CODING_AGENT_DIR: agentDir,
+      // Named ambient profiles override agent-dir resolution unless default is explicit.
+      OMP_PROFILE: 'default',
+      ROX_API_KEY: input.apiKey?.trim() || '',
+    },
+    dispose: () => rmSync(agentDir, { recursive: true, force: true }),
+  };
 }
 
 export function buildOmpSpawnCredentialEnv(input: {

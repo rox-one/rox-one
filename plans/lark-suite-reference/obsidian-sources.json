@@ -1,0 +1,746 @@
+{
+  "schemaVersion": 1,
+  "auditedOn": "2026-09-30",
+  "auditTimeZone": "Europe/Moscow",
+  "roxBaselineSha": "e953786ba7e30fb5da5dca7e88e20e324d5aebab",
+  "scope": "Reference and future design; no product implementation, plugin installation, account sync or GitHub mutation",
+  "identityAuthority": {
+    "registry": "https://github.com/obsidianmd/obsidian-releases/blob/master/community-plugins.json",
+    "dynamicViews": "churnish/dynamic-views",
+    "tabs": {
+      "selected": "xhuajin/obsidian-tabs",
+      "manifestName": "Markdown Tabs",
+      "alternativeLegacyPanePlugin": "gitobsidiantutorial/obsidian-tabs",
+      "legacyNotAudited": true
+    }
+  },
+  "sourceCount": 11,
+  "sources": [
+    {
+      "name": "Ideascape",
+      "requestedReference": "obsidian-ideascape",
+      "repository": "https://github.com/jonathanmcw/obsidian-ideascape",
+      "repositoryOwner": "jonathanmcw",
+      "headSha": "dd41702444cb3b87d22084036b534323f4b473e0",
+      "headCommitDate": "2026-09-24T17:55:54+08:00",
+      "manifest": {
+        "id": "ideascape",
+        "version": "1.0.0",
+        "minAppVersion": "1.7.2",
+        "isDesktopOnly": false
+      },
+      "license": {
+        "observed": "MIT",
+        "file": "LICENSE",
+        "url": "https://github.com/jonathanmcw/obsidian-ideascape/blob/dd41702444cb3b87d22084036b534323f4b473e0/LICENSE",
+        "sha256": "008db67c4a530b8716e0eaef6b37e8896cab09b764de64aa0dff296710d45742",
+        "bytes": 1070,
+        "packageDeclaration": "MIT",
+        "metadataConflict": false,
+        "reviewScope": "Root license, package metadata, actual source entry points; transitive dependencies not fully audited"
+      },
+      "codeEvidence": [
+        {
+          "path": "src/organiser/model/markdown.ts",
+          "url": "https://github.com/jonathanmcw/obsidian-ideascape/blob/dd41702444cb3b87d22084036b534323f4b473e0/src/organiser/model/markdown.ts",
+          "finding": "fromMarkdownMap,toMarkdownMap,MdExtras: list/block IDs; raw frontmatter; unknown geometry; text outside tree"
+        },
+        {
+          "path": "src/organiser/model/types.ts",
+          "url": "https://github.com/jonathanmcw/obsidian-ideascape/blob/dd41702444cb3b87d22084036b534323f4b473e0/src/organiser/model/types.ts",
+          "finding": "ORG_CHART=false; layout and node types"
+        },
+        {
+          "path": "src/organiser/session.ts",
+          "url": "https://github.com/jonathanmcw/obsidian-ideascape/blob/dd41702444cb3b87d22084036b534323f4b473e0/src/organiser/session.ts",
+          "finding": "reload: draft after external edit, reset history; no CRDT"
+        },
+        {
+          "path": "src/map-view.ts",
+          "url": "https://github.com/jonathanmcw/obsidian-ideascape/blob/dd41702444cb3b87d22084036b534323f4b473e0/src/map-view.ts",
+          "finding": "MapView saveQueue, docSink generation fence"
+        },
+        {
+          "path": "src/organiser/ui/keys.ts",
+          "url": "https://github.com/jonathanmcw/obsidian-ideascape/blob/dd41702444cb3b87d22084036b534323f4b473e0/src/organiser/ui/keys.ts",
+          "finding": "Tab child; Enter sibling; Shift+Enter newline"
+        },
+        {
+          "path": "test/map-file.test.ts",
+          "url": "https://github.com/jonathanmcw/obsidian-ideascape/blob/dd41702444cb3b87d22084036b534323f4b473e0/test/map-file.test.ts",
+          "finding": "35 passing source round-trip tests"
+        }
+      ],
+      "verification": {
+        "repositoryFetched": true,
+        "sourceInspected": true,
+        "pluginRuntimeTested": false,
+        "sourceTests": {
+          "command": "bun test test/map-file.test.ts",
+          "runner": "Bun 1.4.2",
+          "passed": 35,
+          "failed": 0,
+          "dependencyInstall": false
+        }
+      },
+      "roxUse": "Behavior reference and original implementation; no source/assets copied"
+    },
+    {
+      "name": "TaskNotes",
+      "requestedReference": "tasknotes",
+      "repository": "https://github.com/callumalpass/tasknotes",
+      "repositoryOwner": "callumalpass",
+      "headSha": "659b9a0ae3184314f8842804505458cfe1145a3e",
+      "headCommitDate": "2026-09-27T07:06:02+10:00",
+      "manifest": {
+        "id": "tasknotes",
+        "version": "4.13.6",
+        "minAppVersion": "1.12.2",
+        "isDesktopOnly": false
+      },
+      "license": {
+        "observed": "MIT",
+        "file": "LICENSE",
+        "url": "https://github.com/callumalpass/tasknotes/blob/659b9a0ae3184314f8842804505458cfe1145a3e/LICENSE",
+        "sha256": "bb930769ebe6b70a4a5de89f70e2658e6a310b53d207028dbd0a8d20fcd12903",
+        "bytes": 1061,
+        "packageDeclaration": "MIT",
+        "metadataConflict": false,
+        "reviewScope": "Root license, package metadata, actual source entry points; transitive dependencies not fully audited"
+      },
+      "codeEvidence": [
+        {
+          "path": "src/bases/registration.ts",
+          "url": "https://github.com/callumalpass/tasknotes/blob/659b9a0ae3184314f8842804505458cfe1145a3e/src/bases/registration.ts",
+          "finding": "TaskList, Kanban, Calendar, MiniCalendar registration"
+        },
+        {
+          "path": "src/services/task-service/TaskCreationService.ts",
+          "url": "https://github.com/callumalpass/tasknotes/blob/659b9a0ae3184314f8842804505458cfe1145a3e/src/services/task-service/TaskCreationService.ts",
+          "finding": "Markdown/frontmatter task creation"
+        },
+        {
+          "path": "src/services/task-service/TaskUpdateService.ts",
+          "url": "https://github.com/callumalpass/tasknotes/blob/659b9a0ae3184314f8842804505458cfe1145a3e/src/services/task-service/TaskUpdateService.ts",
+          "finding": "Canonical task property mutation"
+        },
+        {
+          "path": "src/core/VaultMutationService.ts",
+          "url": "https://github.com/callumalpass/tasknotes/blob/659b9a0ae3184314f8842804505458cfe1145a3e/src/core/VaultMutationService.ts",
+          "finding": "Per-TFile mutation queues and processFrontMatter"
+        },
+        {
+          "path": "src/services/PomodoroService.ts",
+          "url": "https://github.com/callumalpass/tasknotes/blob/659b9a0ae3184314f8842804505458cfe1145a3e/src/services/PomodoroService.ts",
+          "finding": "Focus timing"
+        },
+        {
+          "path": "src/services/TaskCalendarSyncService.ts",
+          "url": "https://github.com/callumalpass/tasknotes/blob/659b9a0ae3184314f8842804505458cfe1145a3e/src/services/TaskCalendarSyncService.ts",
+          "finding": "Google Calendar sync"
+        },
+        {
+          "path": "src/services/MicrosoftCalendarService.ts",
+          "url": "https://github.com/callumalpass/tasknotes/blob/659b9a0ae3184314f8842804505458cfe1145a3e/src/services/MicrosoftCalendarService.ts",
+          "finding": "Microsoft Calendar service"
+        },
+        {
+          "path": "src/api/WebhookController.ts",
+          "url": "https://github.com/callumalpass/tasknotes/blob/659b9a0ae3184314f8842804505458cfe1145a3e/src/api/WebhookController.ts",
+          "finding": "Webhook API"
+        }
+      ],
+      "verification": {
+        "repositoryFetched": true,
+        "sourceInspected": true,
+        "pluginRuntimeTested": false
+      },
+      "roxUse": "Behavior reference and original implementation; no source/assets copied"
+    },
+    {
+      "name": "Highlightr",
+      "requestedReference": "Highlightr-Plugin",
+      "repository": "https://github.com/chetachiezikeuzor/Highlightr-Plugin",
+      "repositoryOwner": "chetachiezikeuzor",
+      "headSha": "61341a464456cdc868ffa1480341136025ec8389",
+      "headCommitDate": "2022-09-01T09:40:48-05:00",
+      "manifest": {
+        "id": "highlightr-plugin",
+        "version": "1.2.2",
+        "minAppVersion": "0.12.8",
+        "isDesktopOnly": false
+      },
+      "license": {
+        "observed": "MPL-2.0",
+        "file": "LICENSE",
+        "url": "https://github.com/chetachiezikeuzor/Highlightr-Plugin/blob/61341a464456cdc868ffa1480341136025ec8389/LICENSE",
+        "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+        "bytes": 16725,
+        "packageDeclaration": "MIT",
+        "metadataConflict": true,
+        "reviewScope": "Root license, package metadata, actual source entry points; transitive dependencies not fully audited"
+      },
+      "codeEvidence": [
+        {
+          "path": "src/plugin/main.ts",
+          "url": "https://github.com/chetachiezikeuzor/Highlightr-Plugin/blob/61341a464456cdc868ffa1480341136025ec8389/src/plugin/main.ts",
+          "finding": "Generate selection wrapping/removal commands"
+        },
+        {
+          "path": "src/ui/highlighterMenu.ts",
+          "url": "https://github.com/chetachiezikeuzor/Highlightr-Plugin/blob/61341a464456cdc868ffa1480341136025ec8389/src/ui/highlighterMenu.ts",
+          "finding": "Configurable color menu"
+        },
+        {
+          "path": "src/settings/settingsData.ts",
+          "url": "https://github.com/chetachiezikeuzor/Highlightr-Plugin/blob/61341a464456cdc868ffa1480341136025ec8389/src/settings/settingsData.ts",
+          "finding": "Configured highlight syntax"
+        }
+      ],
+      "verification": {
+        "repositoryFetched": true,
+        "sourceInspected": true,
+        "pluginRuntimeTested": false
+      },
+      "roxUse": "Behavior reference and original implementation; no source/assets copied"
+    },
+    {
+      "name": "Buttons",
+      "requestedReference": "buttons",
+      "repository": "https://github.com/shabegom/buttons",
+      "repositoryOwner": "shabegom",
+      "headSha": "0fc70f37ff983353925882f0aebb51cb63e05ac6",
+      "headCommitDate": "2025-08-26T15:26:25-04:00",
+      "manifest": {
+        "id": "buttons",
+        "version": "0.9.13",
+        "minAppVersion": "0.12.8",
+        "isDesktopOnly": false
+      },
+      "license": {
+        "observed": "Unlicense",
+        "file": "LICENSE",
+        "url": "https://github.com/shabegom/buttons/blob/0fc70f37ff983353925882f0aebb51cb63e05ac6/LICENSE",
+        "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+        "bytes": 1211,
+        "packageDeclaration": "MIT",
+        "metadataConflict": true,
+        "reviewScope": "Root license, package metadata, actual source entry points; transitive dependencies not fully audited"
+      },
+      "codeEvidence": [
+        {
+          "path": "src/index.ts",
+          "url": "https://github.com/shabegom/buttons/blob/0fc70f37ff983353925882f0aebb51cb63e05ac6/src/index.ts",
+          "finding": "button codeblock processor"
+        },
+        {
+          "path": "src/buttonTypes/command.ts",
+          "url": "https://github.com/shabegom/buttons/blob/0fc70f37ff983353925882f0aebb51cb63e05ac6/src/buttonTypes/command.ts",
+          "finding": "Command name resolves ID then executeCommandById"
+        },
+        {
+          "path": "src/buttonTypes/chain.ts",
+          "url": "https://github.com/shabegom/buttons/blob/0fc70f37ff983353925882f0aebb51cb63e05ac6/src/buttonTypes/chain.ts",
+          "finding": "Actions loop; errors continue; Templater branch"
+        },
+        {
+          "path": "src/buttonTypes/link.ts",
+          "url": "https://github.com/shabegom/buttons/blob/0fc70f37ff983353925882f0aebb51cb63e05ac6/src/buttonTypes/link.ts",
+          "finding": "Open URL"
+        },
+        {
+          "path": "src/handlers/createNote.ts",
+          "url": "https://github.com/shabegom/buttons/blob/0fc70f37ff983353925882f0aebb51cb63e05ac6/src/handlers/createNote.ts",
+          "finding": "Note creation"
+        }
+      ],
+      "verification": {
+        "repositoryFetched": true,
+        "sourceInspected": true,
+        "pluginRuntimeTested": false
+      },
+      "roxUse": "Behavior reference and original implementation; no source/assets copied"
+    },
+    {
+      "name": "Dragger",
+      "requestedReference": "obsidian-dragger",
+      "repository": "https://github.com/ariestar/obsidian-dragger",
+      "repositoryOwner": "ariestar",
+      "headSha": "8096da6246dd58948553d34892001de3900ee5fa",
+      "headCommitDate": "2026-09-28T00:30:46+08:00",
+      "manifest": {
+        "id": "dragger",
+        "version": "2.0.0",
+        "minAppVersion": "1.13.0",
+        "isDesktopOnly": false
+      },
+      "license": {
+        "observed": "MIT",
+        "file": "LICENSE",
+        "url": "https://github.com/ariestar/obsidian-dragger/blob/8096da6246dd58948553d34892001de3900ee5fa/LICENSE",
+        "sha256": "843329e10478b24bb045c9eaeacbd82508c79388242bf8b674e20c9e87094e97",
+        "bytes": 1065,
+        "packageDeclaration": "MIT",
+        "metadataConflict": false,
+        "reviewScope": "Root license, package metadata, actual source entry points; transitive dependencies not fully audited"
+      },
+      "codeEvidence": [
+        {
+          "path": "src/platform/codemirror/obsidian-dragger.ts",
+          "url": "https://github.com/ariestar/obsidian-dragger/blob/8096da6246dd58948553d34892001de3900ee5fa/src/platform/codemirror/obsidian-dragger.ts",
+          "finding": "md-dragger public domain/runtime/CodeMirror APIs"
+        },
+        {
+          "path": "src/architecture-boundary.spec.ts",
+          "url": "https://github.com/ariestar/obsidian-dragger/blob/8096da6246dd58948553d34892001de3900ee5fa/src/architecture-boundary.spec.ts",
+          "finding": "Guards public engine entry points"
+        },
+        {
+          "path": "package.json",
+          "url": "https://github.com/ariestar/obsidian-dragger/blob/8096da6246dd58948553d34892001de3900ee5fa/package.json",
+          "finding": "md-dragger dependency ^2.0.2"
+        },
+        {
+          "path": "README.md",
+          "url": "https://github.com/ariestar/obsidian-dragger/blob/8096da6246dd58948553d34892001de3900ee5fa/README.md",
+          "finding": "Old /drag import example; verify actual exports"
+        }
+      ],
+      "verification": {
+        "repositoryFetched": true,
+        "sourceInspected": true,
+        "pluginRuntimeTested": false
+      },
+      "roxUse": "Behavior reference and original implementation; no source/assets copied"
+    },
+    {
+      "name": "Dynamic Views",
+      "requestedReference": "dynamic-views",
+      "repository": "https://github.com/churnish/dynamic-views",
+      "repositoryOwner": "churnish",
+      "headSha": "0cd0300bb4d39414ae51513191a4e31d766098de",
+      "headCommitDate": "2026-09-28T22:27:32Z",
+      "manifest": {
+        "id": "dynamic-views",
+        "version": "0.15.0",
+        "minAppVersion": "1.13.0",
+        "isDesktopOnly": false
+      },
+      "license": {
+        "observed": "GPL-3.0-or-later",
+        "file": "LICENSE",
+        "url": "https://github.com/churnish/dynamic-views/blob/0cd0300bb4d39414ae51513191a4e31d766098de/LICENSE",
+        "sha256": "1138efda616f9da15574b8315f464b2a4ce9f9f3b394d530338c086b215504f5",
+        "bytes": 35126,
+        "packageDeclaration": "GPL-3.0-or-later",
+        "metadataConflict": false,
+        "reviewScope": "Root license, package metadata, actual source entry points; transitive dependencies not fully audited"
+      },
+      "codeEvidence": [
+        {
+          "path": "main.ts",
+          "url": "https://github.com/churnish/dynamic-views/blob/0cd0300bb4d39414ae51513191a4e31d766098de/main.ts",
+          "finding": "Registers only Bases Grid/Masonry at audited commit"
+        },
+        {
+          "path": "src/core/virtual-scroll.ts",
+          "url": "https://github.com/churnish/dynamic-views/blob/0cd0300bb4d39414ae51513191a4e31d766098de/src/core/virtual-scroll.ts",
+          "finding": "Virtualized card work"
+        },
+        {
+          "path": "src/core/keyboard-nav.ts",
+          "url": "https://github.com/churnish/dynamic-views/blob/0cd0300bb4d39414ae51513191a4e31d766098de/src/core/keyboard-nav.ts",
+          "finding": "Spatial keyboard movement with virtual items"
+        },
+        {
+          "path": "src/core/image-extraction.ts",
+          "url": "https://github.com/churnish/dynamic-views/blob/0cd0300bb4d39414ae51513191a4e31d766098de/src/core/image-extraction.ts",
+          "finding": "Image extraction"
+        },
+        {
+          "path": "src/core/card-data.ts",
+          "url": "https://github.com/churnish/dynamic-views/blob/0cd0300bb4d39414ae51513191a4e31d766098de/src/core/card-data.ts",
+          "finding": "Card data model"
+        }
+      ],
+      "verification": {
+        "repositoryFetched": true,
+        "sourceInspected": true,
+        "pluginRuntimeTested": false
+      },
+      "roxUse": "Behavior reference and original implementation; no source/assets copied"
+    },
+    {
+      "name": "Charted Roots",
+      "requestedReference": "obsidian-charted-roots",
+      "repository": "https://github.com/banisterious/obsidian-charted-roots",
+      "repositoryOwner": "banisterious",
+      "headSha": "d17bc8ce8b78339bc62afde5624772769aeee2d4",
+      "headCommitDate": "2026-06-25T17:33:53-07:00",
+      "manifest": {
+        "id": "charted-roots",
+        "version": "0.22.76",
+        "minAppVersion": "1.7.2",
+        "isDesktopOnly": false
+      },
+      "license": {
+        "observed": "MIT",
+        "file": "LICENSE.md",
+        "url": "https://github.com/banisterious/obsidian-charted-roots/blob/d17bc8ce8b78339bc62afde5624772769aeee2d4/LICENSE.md",
+        "sha256": "c1208046e236a71b9f013d85ae14f11348134b96e92a94dec1a4fb77e480f94c",
+        "bytes": 1069,
+        "packageDeclaration": "MIT",
+        "metadataConflict": false,
+        "reviewScope": "Root license, package metadata, actual source entry points; transitive dependencies not fully audited"
+      },
+      "codeEvidence": [
+        {
+          "path": "src/gedcom/gedcom-importer-v2.ts",
+          "url": "https://github.com/banisterious/obsidian-charted-roots/blob/d17bc8ce8b78339bc62afde5624772769aeee2d4/src/gedcom/gedcom-importer-v2.ts",
+          "finding": "GedcomImporterV2"
+        },
+        {
+          "path": "src/gramps/gramps-importer.ts",
+          "url": "https://github.com/banisterious/obsidian-charted-roots/blob/d17bc8ce8b78339bc62afde5624772769aeee2d4/src/gramps/gramps-importer.ts",
+          "finding": "GrampsImporter"
+        },
+        {
+          "path": "src/maps/map-view.ts",
+          "url": "https://github.com/banisterious/obsidian-charted-roots/blob/d17bc8ce8b78339bc62afde5624772769aeee2d4/src/maps/map-view.ts",
+          "finding": "Geography MapView"
+        },
+        {
+          "path": "src/sources/services/evidence-service.ts",
+          "url": "https://github.com/banisterious/obsidian-charted-roots/blob/d17bc8ce8b78339bc62afde5624772769aeee2d4/src/sources/services/evidence-service.ts",
+          "finding": "EvidenceService fact-source coverage"
+        },
+        {
+          "path": "src/dates/parser/fictional-date-parser.ts",
+          "url": "https://github.com/banisterious/obsidian-charted-roots/blob/d17bc8ce8b78339bc62afde5624772769aeee2d4/src/dates/parser/fictional-date-parser.ts",
+          "finding": "FictionalDateParser"
+        },
+        {
+          "path": "wiki-content/Roadmap.md",
+          "url": "https://github.com/banisterious/obsidian-charted-roots/blob/d17bc8ce8b78339bc62afde5624772769aeee2d4/wiki-content/Roadmap.md",
+          "finding": "Interactive pan/zoom timeline planning; separate from shipped static timelines"
+        }
+      ],
+      "verification": {
+        "repositoryFetched": true,
+        "sourceInspected": true,
+        "pluginRuntimeTested": false
+      },
+      "roxUse": "Behavior reference and original implementation; no source/assets copied"
+    },
+    {
+      "name": "Codeblock Customizer",
+      "requestedReference": "CodeblockCustomizer",
+      "repository": "https://github.com/mugiwara85/CodeblockCustomizer",
+      "repositoryOwner": "mugiwara85",
+      "headSha": "a5e131dbae4c89cfc8525868620b484227dc2498",
+      "headCommitDate": "2026-05-18T00:54:44+02:00",
+      "manifest": {
+        "id": "codeblock-customizer",
+        "version": "1.4.7",
+        "minAppVersion": "0.15.0",
+        "isDesktopOnly": false
+      },
+      "license": {
+        "observed": "MIT",
+        "file": "LICENSE",
+        "url": "https://github.com/mugiwara85/CodeblockCustomizer/blob/a5e131dbae4c89cfc8525868620b484227dc2498/LICENSE",
+        "sha256": "9f4a8bc9a928bc79a925406e585a315375b9e57d44c8c1bb1178307e8c3f1cb6",
+        "bytes": 1066,
+        "packageDeclaration": "MIT",
+        "metadataConflict": false,
+        "reviewScope": "Root license, package metadata, actual source entry points; transitive dependencies not fully audited"
+      },
+      "codeEvidence": [
+        {
+          "path": "src/main.ts",
+          "url": "https://github.com/mugiwara85/CodeblockCustomizer/blob/a5e131dbae4c89cfc8525868620b484227dc2498/src/main.ts",
+          "finding": "CodeMirror extensions and reading postprocessors"
+        },
+        {
+          "path": "src/Parsing.ts",
+          "url": "https://github.com/mugiwara85/CodeblockCustomizer/blob/a5e131dbae4c89cfc8525868620b484227dc2498/src/Parsing.ts",
+          "finding": "Fence/header/line/highlight parameters"
+        },
+        {
+          "path": "src/EditorView/GroupedCodeBlocks.ts",
+          "url": "https://github.com/mugiwara85/CodeblockCustomizer/blob/a5e131dbae4c89cfc8525868620b484227dc2498/src/EditorView/GroupedCodeBlocks.ts",
+          "finding": "Grouped codeblocks"
+        },
+        {
+          "path": "src/ReadingView/CodeBlockRenderer.ts",
+          "url": "https://github.com/mugiwara85/CodeblockCustomizer/blob/a5e131dbae4c89cfc8525868620b484227dc2498/src/ReadingView/CodeBlockRenderer.ts",
+          "finding": "Reading-mode custom rendering"
+        },
+        {
+          "path": "src/ExecuteCode.ts",
+          "url": "https://github.com/mugiwara85/CodeblockCustomizer/blob/a5e131dbae4c89cfc8525868620b484227dc2498/src/ExecuteCode.ts",
+          "finding": "Coordinates buttons with existing run-code DOM; not independent safe execution service"
+        }
+      ],
+      "verification": {
+        "repositoryFetched": true,
+        "sourceInspected": true,
+        "pluginRuntimeTested": false
+      },
+      "roxUse": "Behavior reference and original implementation; no source/assets copied"
+    },
+    {
+      "name": "Day Planner",
+      "requestedReference": "obsidian-day-planner",
+      "repository": "https://github.com/ivan-lednev/obsidian-day-planner",
+      "repositoryOwner": "ivan-lednev",
+      "headSha": "78672f68d2e96343c0875cd76dd4b7c442e31fd6",
+      "headCommitDate": "2026-07-31T14:24:22+02:00",
+      "manifest": {
+        "id": "obsidian-day-planner",
+        "version": "0.35.1",
+        "minAppVersion": "1.6.0",
+        "isDesktopOnly": false
+      },
+      "license": {
+        "observed": "MIT",
+        "file": "LICENSE",
+        "url": "https://github.com/ivan-lednev/obsidian-day-planner/blob/78672f68d2e96343c0875cd76dd4b7c442e31fd6/LICENSE",
+        "sha256": "c3456e812de09b7d3d6ed80450be7e1a18d7815041f73cf10d2609c2c95da43f",
+        "bytes": 1068,
+        "packageDeclaration": "MIT",
+        "metadataConflict": false,
+        "reviewScope": "Root license, package metadata, actual source entry points; transitive dependencies not fully audited"
+      },
+      "codeEvidence": [
+        {
+          "path": "src/main.ts",
+          "url": "https://github.com/ivan-lednev/obsidian-day-planner/blob/78672f68d2e96343c0875cd76dd4b7c442e31fd6/src/main.ts",
+          "finding": "Timeline/multi-day/time-tracker registrations; clocks/ICS scheduler"
+        },
+        {
+          "path": "src/create-update-handler.ts",
+          "url": "https://github.com/ivan-lednev/obsidian-day-planner/blob/78672f68d2e96343c0875cd76dd4b7c442e31fd6/src/create-update-handler.ts",
+          "finding": "ViewDiff to writes"
+        },
+        {
+          "path": "src/service/diff-writer.ts",
+          "url": "https://github.com/ivan-lednev/obsidian-day-planner/blob/78672f68d2e96343c0875cd76dd4b7c442e31fd6/src/service/diff-writer.ts",
+          "finding": "Scoped range and mdast transaction writing"
+        },
+        {
+          "path": "src/redux/ical/init-ical-listeners.ts",
+          "url": "https://github.com/ivan-lednev/obsidian-day-planner/blob/78672f68d2e96343c0875cd76dd4b7c442e31fd6/src/redux/ical/init-ical-listeners.ts",
+          "finding": "ICS read/update plumbing"
+        },
+        {
+          "path": "src/ui/components/drag-controls.svelte",
+          "url": "https://github.com/ivan-lednev/obsidian-day-planner/blob/78672f68d2e96343c0875cd76dd4b7c442e31fd6/src/ui/components/drag-controls.svelte",
+          "finding": "Timeline drag interaction"
+        }
+      ],
+      "verification": {
+        "repositoryFetched": true,
+        "sourceInspected": true,
+        "pluginRuntimeTested": false
+      },
+      "roxUse": "Behavior reference and original implementation; no source/assets copied"
+    },
+    {
+      "name": "Markdown Tabs",
+      "requestedReference": "obsidian-tabs",
+      "repository": "https://github.com/xhuajin/obsidian-tabs",
+      "repositoryOwner": "xhuajin",
+      "headSha": "d6ab1814196d62aee7f071862b805b7cd58939d4",
+      "headCommitDate": "2026-07-17T16:34:53+08:00",
+      "manifest": {
+        "id": "tabs",
+        "version": "1.2.1",
+        "minAppVersion": "1.8.7",
+        "isDesktopOnly": false
+      },
+      "license": {
+        "observed": "MIT",
+        "file": "LICENSE",
+        "url": "https://github.com/xhuajin/obsidian-tabs/blob/d6ab1814196d62aee7f071862b805b7cd58939d4/LICENSE",
+        "sha256": "86d4b5dd3a9d5ff323766b528628d62990b7344601b61eb791f28d66bfbed216",
+        "bytes": 1062,
+        "packageDeclaration": "MIT",
+        "metadataConflict": false,
+        "reviewScope": "Root license, package metadata, actual source entry points; transitive dependencies not fully audited"
+      },
+      "codeEvidence": [
+        {
+          "path": "src/main.ts",
+          "url": "https://github.com/xhuajin/obsidian-tabs/blob/d6ab1814196d62aee7f071862b805b7cd58939d4/src/main.ts",
+          "finding": "tabs fence processor and convert-to-tabs command"
+        },
+        {
+          "path": "src/components/tabs/tabs.ts",
+          "url": "https://github.com/xhuajin/obsidian-tabs/blob/d6ab1814196d62aee7f071862b805b7cd58939d4/src/components/tabs/tabs.ts",
+          "finding": "Parse tabs and temporary activeTab cache"
+        },
+        {
+          "path": "src/components/tabs/tabs-nav.ts",
+          "url": "https://github.com/xhuajin/obsidian-tabs/blob/d6ab1814196d62aee7f071862b805b7cd58939d4/src/components/tabs/tabs-nav.ts",
+          "finding": "Tab navigation state"
+        }
+      ],
+      "verification": {
+        "repositoryFetched": true,
+        "sourceInspected": true,
+        "pluginRuntimeTested": false
+      },
+      "roxUse": "Behavior reference and original implementation; no source/assets copied"
+    },
+    {
+      "name": "Notion Bases",
+      "requestedReference": "obsidian-notion-bases-plugin",
+      "repository": "https://github.com/bgarciamoura/obsidian-notion-bases-plugin",
+      "repositoryOwner": "bgarciamoura",
+      "headSha": "ae2dd75f21f5fee7dca382325cb48b5ce8dcdd96",
+      "headCommitDate": "2026-09-02T13:13:56-03:00",
+      "manifest": {
+        "id": "notion-bases",
+        "version": "1.13.0",
+        "minAppVersion": "1.8.7",
+        "isDesktopOnly": false
+      },
+      "license": {
+        "observed": "GPL-3.0; only-or-later selection not explicitly customized",
+        "file": "LICENSE",
+        "url": "https://github.com/bgarciamoura/obsidian-notion-bases-plugin/blob/ae2dd75f21f5fee7dca382325cb48b5ce8dcdd96/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+        "bytes": 35149,
+        "packageDeclaration": "0-BSD",
+        "metadataConflict": true,
+        "reviewScope": "Root license, package metadata, actual source entry points; transitive dependencies not fully audited"
+      },
+      "codeEvidence": [
+        {
+          "path": "src/types.ts",
+          "url": "https://github.com/bgarciamoura/obsidian-notion-bases-plugin/blob/ae2dd75f21f5fee7dca382325cb48b5ce8dcdd96/src/types.ts",
+          "finding": "7 ViewConfig variants; 18 ColumnType members"
+        },
+        {
+          "path": "src/database-manager.ts",
+          "url": "https://github.com/bgarciamoura/obsidian-notion-bases-plugin/blob/ae2dd75f21f5fee7dca382325cb48b5ce8dcdd96/src/database-manager.ts",
+          "finding": "_database.md config; note frontmatter; title-based lookup/rollup"
+        },
+        {
+          "path": "src/formula-engine.ts",
+          "url": "https://github.com/bgarciamoura/obsidian-notion-bases-plugin/blob/ae2dd75f21f5fee7dca382325cb48b5ce8dcdd96/src/formula-engine.ts",
+          "finding": "Tokenizer/parser/interpreter"
+        },
+        {
+          "path": "src/components/DatabaseCharts.tsx",
+          "url": "https://github.com/bgarciamoura/obsidian-notion-bases-plugin/blob/ae2dd75f21f5fee7dca382325cb48b5ce8dcdd96/src/components/DatabaseCharts.tsx",
+          "finding": "Chart UI"
+        },
+        {
+          "path": "src/components/DatabaseTimeline.tsx",
+          "url": "https://github.com/bgarciamoura/obsidian-notion-bases-plugin/blob/ae2dd75f21f5fee7dca382325cb48b5ce8dcdd96/src/components/DatabaseTimeline.tsx",
+          "finding": "Timeline UI"
+        },
+        {
+          "path": "README.md",
+          "url": "https://github.com/bgarciamoura/obsidian-notion-bases-plugin/blob/ae2dd75f21f5fee7dca382325cb48b5ce8dcdd96/README.md",
+          "finding": "GPL v3 declaration contradicts package 0-BSD"
+        }
+      ],
+      "verification": {
+        "repositoryFetched": true,
+        "sourceInspected": true,
+        "pluginRuntimeTested": false
+      },
+      "roxUse": "Behavior reference and original implementation; no source/assets copied"
+    }
+  ],
+  "adjacentLibrary": {
+    "name": "md-dragger",
+    "repository": "https://github.com/Ariestar/md-dragger",
+    "headSha": "b41a93c323b890beb5d35c6367a155d08487b498",
+    "sourceVersion": "2.0.3",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/Ariestar/md-dragger/blob/b41a93c323b890beb5d35c6367a155d08487b498/LICENSE",
+    "licenseSha256": "843329e10478b24bb045c9eaeacbd82508c79388242bf8b674e20c9e87094e97",
+    "pluginDependency": "^2.0.2",
+    "registryVersionInspected": "2.0.2",
+    "exports": [
+      ".",
+      "./domain",
+      "./runtime",
+      "./runtime/modules",
+      "./adapter/codemirror"
+    ],
+    "sourceEvidence": [
+      "src/domain/index.ts",
+      "src/runtime/index.ts",
+      "src/adapter/codemirror/index.ts"
+    ],
+    "installed": false,
+    "roxAdapter": "Tiptap adapter not implemented or verified"
+  },
+  "roxFindings": {
+    "contentKindCurrentlyPresent": false,
+    "customRecordCurrentlyPresent": false,
+    "currentEntityKindsInclude": [
+      "note",
+      "task",
+      "page"
+    ],
+    "nativeNotesEngine": {
+      "requiredCAS": true,
+      "rawMarkdownRoundTrip": false,
+      "probe": {
+        "preservesInputBytes": false,
+        "storedStartsFrontmatter": false,
+        "storedStartsBlockComment": true,
+        "goodSave": "ok",
+        "staleSave": "conflict"
+      }
+    },
+    "actualNotesRpc": {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "saveSymbol": "saveNote",
+      "expectedRevisionOptional": true,
+      "usesDirectWriteFile": true
+    },
+    "personalTasks": {
+      "persistPath": "packages/server-core/src/tasks/personal-persist.ts",
+      "persistSymbol": "PersonalTaskPersistStore",
+      "monotonicRevision": true,
+      "rpcExpectedRevision": false
+    },
+    "currentBase": {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "viewVersion": 1,
+      "viewKinds": [
+        "table",
+        "base"
+      ],
+      "fixedFormulas": [
+        "taskCount",
+        "openTaskCount",
+        "backlinkCount",
+        "tagCount"
+      ],
+      "configurationStore": "localStorage notes:views:<workspaceId>"
+    },
+    "pluginBridge": {
+      "path": "packages/server-core/src/handlers/rpc/plugin-bridge.ts",
+      "provider": "SiYuan",
+      "executesThirdPartyCode": false,
+      "obsidianCompatibility": false
+    }
+  },
+  "gaps": [
+    "No installed Obsidian plugin UI inspected; only Ideascape pure source tests executed",
+    "Root licenses do not establish transitive dependency clearance",
+    "Three license metadata conflicts remain; no literal source reuse approved by this audit",
+    "contentKind is proposed additive page subtype; absent at ROX baseline",
+    "Local Notes and personal Tasks mutation concurrency/CAS must be hardened for multiuser Bases",
+    "Seven Bases views, 18-field registry, formula interpreter, ACL-aware aggregates and shared view persistence are future design",
+    "Charted Roots pan/zoom interactive timeline is roadmap, not a proven shipped capability"
+  ]
+}

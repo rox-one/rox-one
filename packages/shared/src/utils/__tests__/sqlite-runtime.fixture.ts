@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict'
+import { DatabaseSync } from '../sqlite-runtime.ts'
+
+const [path, phase] = process.argv.slice(2)
+assert.ok(path && (phase === 'write' || phase === 'read'))
+const db = new DatabaseSync(path)
+db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;')
+if (phase === 'write') {
+  db.exec('CREATE TABLE rows (id INTEGER PRIMARY KEY, content TEXT NOT NULL, payload BLOB);')
+  const insert = db.prepare('INSERT INTO rows(id,content,payload) VALUES(?,?,?)')
+  assert.equal(Number(insert.run(1, 'Привет', new Uint8Array([3, 7, 11])).changes), 1)
+  db.exec('BEGIN IMMEDIATE')
+  insert.run(2, 'rolled back', null)
+  db.exec('ROLLBACK')
+}
+const query = db.prepare('SELECT content,payload FROM rows WHERE id=?')
+assert.equal(query.get(1)?.content, 'Привет')
+assert.deepEqual(Array.from(query.get(1)?.payload as Uint8Array), [3, 7, 11])
+assert.equal(query.get(2), undefined)
+assert.equal(query.get(1)?.content, 'Привет')
+assert.equal(db.prepare('SELECT COUNT(*) AS n FROM rows').get()?.n, 1)
+assert.equal(db.prepare('SELECT ? AS n').get(42n)?.n, 42)
+assert.throws(() => db.prepare('SELECT 9007199254740993 AS n').get())
+assert.throws(() => db.prepare('SELECT 9007199254740993 AS n').all())
+assert.throws(() => db.prepare('SELECT ? AS n').get(2n ** 100n))
+const retained = Array.from({length:64},(_,i) => db.prepare(`SELECT ${i} AS n`))
+for (const [i, statement] of retained.entries()) assert.equal(statement.get()?.n, i)
+// Keep the writable connection open while testing readonly WAL access. Bun's
+// macOS SQLite refuses readonly WAL files whose sidecars another runtime removed.
+const readonly = new DatabaseSync(path, { readOnly: true })
+assert.equal(readonly.prepare('SELECT content FROM rows WHERE id=1').get()?.content, 'Привет')
+assert.throws(() => readonly.exec("INSERT INTO rows(id,content) VALUES(99,'forbidden')"))
+readonly.close()
+db.close()
+assert.throws(() => query.get(1))
+for (const statement of retained) assert.throws(() => statement.get())
+assert.throws(() => db.exec('SELECT 1'))
+assert.throws(() => db.prepare('SELECT 1'))
+assert.throws(() => db.close())
+assert.throws(() => new DatabaseSync(path + '.missing', { readOnly: true }))
+console.log(JSON.stringify({runtime:process.versions.bun ? `Bun ${process.versions.bun}` : `Node ${process.versions.node}`,phase,rows:1,rollback:true,readonly:true,reopen:true}))

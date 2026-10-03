@@ -1,9 +1,8 @@
 /**
  * Встречи — mode screen (navigator → list → detail) over LOCAL meetings:
- * real microphone recording (MediaRecorder → <config>/meetings/<id>/audio.webm),
- * audio import, automatic local transcript (whisper.cpp), decisions (shared
- * «Решения» log), action items → Задачи, attached documents. Nothing is
- * uploaded; live rooms/calendar are not part of this screen.
+ * microphone capture/import and Whisper transcription run on-device. Generated
+ * analysis is a separate, explicitly started ordinary agent session and follows
+ * the configured model/provider. Live rooms and system-audio capture are absent.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -24,6 +23,7 @@ import {
   useListKeys,
 } from '@/components/mode-screen/ModeScreen'
 import { clearRecorderError, meetingsApi, recordedMs, startRecording, useRecorder } from '@/lib/meetings/recorder'
+import { newLocalId } from '@/lib/extra-screens/storage'
 import type { LocalAsrEngine, LocalMeeting } from '../../shared/meetings-local'
 import { LocalMeetingDetail, transcriptTone, type DetailTab } from './meetings/LocalMeetingDetail'
 import {
@@ -44,6 +44,7 @@ import { getAppLocale } from '@craft-agent/shared/i18n'
 const ERROR_KEYS: Record<string, string> = {
   'mic-denied': 'meetings.local.err.micDenied',
   'mic-unavailable': 'meetings.local.err.micUnavailable',
+  'recording-save-failed': 'meetings.local.err.recordingSave',
   'already-recording': 'meetings.local.err.alreadyRecording',
   'meeting-has-audio': 'meetings.local.err.hasAudio',
   'unsupported-format': 'meetings.local.err.format',
@@ -84,6 +85,9 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   const [planTitle, setPlanTitle] = useState('')
   const [planAt, setPlanAt] = useState('')
   const [dropActive, setDropActive] = useState(false)
+  const importRequestRef = useRef<string | null>(null)
+  const [importRequestId, setImportRequestId] = useState<string | null>(null)
+  const [cancelingImport, setCancelingImport] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const [now, setNow] = useState(() => Date.now())
 
@@ -182,17 +186,40 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   }
 
   async function handleImport(path?: string) {
-    if (!api) return
+    if (!api || importRequestRef.current) return
     setBanner(null)
-    const result = await api.importAudio({ workspaceId, path })
-    if (!result) return
-    if (!result.ok) {
-      setBanner(result.code)
-      return
+    const requestId = newLocalId('import')
+    importRequestRef.current = requestId
+    setImportRequestId(requestId)
+    setCancelingImport(false)
+    try {
+      const result = await api.importAudio({ requestId, workspaceId, path })
+      if (!result) return
+      if (!result.ok) {
+        setBanner(result.code)
+        return
+      }
+      upsert(result.value)
+      selectMeeting(result.value.id)
+      setTab('transcript')
+    } catch {
+      setBanner('unavailable')
+    } finally {
+      if (importRequestRef.current === requestId) {
+        importRequestRef.current = null
+        setImportRequestId(null)
+        setCancelingImport(false)
+      }
     }
-    upsert(result.value)
-    selectMeeting(result.value.id)
-    setTab('transcript')
+  }
+
+  async function cancelImport() {
+    if (!api || !importRequestId) return
+    try {
+      if (await api.cancelImport(importRequestId)) setCancelingImport(true)
+    } catch {
+      setBanner('unavailable')
+    }
   }
 
   async function handlePlan() {
@@ -294,7 +321,12 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
         actions={(
           <>
             <Button variant="ghost" data-testid="meetings-plan" aria-label={t('meetings.local.plan')} title={t('meetings.local.plan')} onClick={() => setPlanning((v) => !v)}>+</Button>
-            <Button data-testid="meetings-import" disabled={!api} onClick={() => void handleImport()}>{t('meetings.screen.importAudio')}</Button>
+            <Button data-testid="meetings-import" disabled={!api || !!importRequestId} onClick={() => void handleImport()}>{t('meetings.screen.importAudio')}</Button>
+            {importRequestId ? (
+              <Button data-testid="meetings-cancel-import" disabled={cancelingImport} onClick={() => void cancelImport()}>
+                {t(cancelingImport ? 'meetings.local.importCanceling' : 'meetings.local.importCancel')}
+              </Button>
+            ) : null}
             <Button variant="primary" data-testid="meetings-start" disabled={!api || busyRecording} onClick={() => void handleRecord()}>
               <span aria-hidden className={cn('size-1.5 rounded-full bg-current', busyRecording && 'animate-pulse')} />
               {busyRecording ? t('meetings.local.recordingNow', { time: formatDuration(recordedMs(rec)) }) : t('meetings.screen.startRecording')}

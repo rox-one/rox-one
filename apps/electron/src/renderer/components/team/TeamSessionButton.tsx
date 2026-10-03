@@ -45,21 +45,36 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function Chip({ active, onClick, children, label }: { active?: boolean; onClick: () => void; children: React.ReactNode; label?: string }) {
+function Chip({ active, disabled, onClick, children, label }: { active?: boolean; disabled?: boolean; onClick: () => void; children: React.ReactNode; label?: string }) {
   return (
     <button
       type="button"
       aria-pressed={active}
       aria-label={label}
+      disabled={disabled}
       onClick={onClick}
       className={cn(
-        'px-2 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'px-2 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40',
         active ? 'bg-foreground text-background' : 'bg-foreground/[0.06] text-foreground hover:bg-foreground/[0.12]',
       )}
     >
       {children}
     </button>
   )
+}
+
+export function TeamRevisionChip({
+  revision,
+  active,
+  onClick,
+  children,
+}: {
+  revision?: string
+  active?: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return <Chip disabled={!revision} active={active} onClick={onClick}>{children}</Chip>
 }
 
 function Action({ onClick, disabled, children }: { onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
@@ -151,13 +166,19 @@ export function TeamSessionPanel({
   const selfId = roster.selfUserId
 
   const run = React.useCallback(
-    (fn: Parameters<typeof dispatchTeam>[0], okKey: string) => {
-      if (!selfId) return
+    (fn: Parameters<typeof dispatchTeam>[0]) => {
+      if (!selfId) {
+        toast.error(t('teamCollab.actionFailed'))
+        return false
+      }
       try {
-        dispatchTeam(fn)
-        toast.success(t(okKey), { description: t('teamCollab.sync.savedLocally') })
+        const persisted = dispatchTeam(fn)
+        if (persisted) toast.info(t('teamCollab.sync.savedLocally'))
+        else toast.error(t('teamCollab.actionFailed'))
+        return persisted
       } catch (err) {
         toast.error(t('teamCollab.actionFailed'), { description: err instanceof Error ? err.message : String(err) })
+        return false
       }
     },
     [selfId, t],
@@ -182,6 +203,11 @@ export function TeamSessionPanel({
         <div className="text-base font-semibold">{t('teamCollab.title')}</div>
         {roster.org ? <div className="truncate text-xs text-muted-foreground">{roster.org.name}</div> : null}
       </div>
+      {(flags.commentsOn || flags.handoffOn || flags.approvalsOn) && !target.revision ? (
+        <div role="status" className="bg-foreground/[0.04] px-2.5 py-2 text-xs text-muted-foreground">
+          {t('teamCollab.revisionUnavailable')}
+        </div>
+      ) : null}
 
       {roster.loading ? (
         <div className="text-muted-foreground">{t('teamCollab.loading')}</div>
@@ -218,7 +244,7 @@ export function TeamSessionPanel({
                   <span>{t('teamCollab.assignTo', { name: selectedMember.displayName })}</span>
                   <Action
                     disabled={forTarget.assignment?.assigneeUserId === selectedMember.userId}
-                    onClick={() => run((s) => assign(s, ctx(), { target, assigneeUserId: selectedMember.userId, roster: roster.members }), 'teamCollab.assignedToast')}
+                    onClick={() => run((s) => assign(s, ctx(), { target, assigneeUserId: selectedMember.userId, roster: roster.members }))}
                   >
                     {t('teamCollab.assign')}
                   </Action>
@@ -231,8 +257,9 @@ export function TeamSessionPanel({
                     {ROLES.map((role) => (
                       <Chip
                         key={role}
-                        active={grantFor(selectedMember.userId) === role}
-                        onClick={() => run((s) => grantAccess(s, ctx(), { target, userId: selectedMember.userId, role, roster: roster.members }), 'teamCollab.accessToast')}
+                        disabled={roster.sync.state !== 'connected'}
+                        active={roster.sync.state === 'connected' && grantFor(selectedMember.userId) === role}
+                        onClick={() => run((s) => grantAccess(s, ctx(), { target, userId: selectedMember.userId, role, roster: roster.members }))}
                       >
                         {t(`teamCollab.role.${role}`)}
                       </Chip>
@@ -242,14 +269,14 @@ export function TeamSessionPanel({
               ) : null}
               <div className="flex gap-1.5">
                 {flags.handoffOn ? (
-                  <Chip active={mode === 'handoff'} onClick={() => { setMode(mode === 'handoff' ? 'none' : 'handoff'); setDraft(mode === 'handoff' ? '' : t('teamCollab.handoffDraft', { title: sessionTitle || t('teamCollab.target.session') })) }}>
+                  <TeamRevisionChip revision={target.revision} active={mode === 'handoff'} onClick={() => { setMode(mode === 'handoff' ? 'none' : 'handoff'); setDraft(mode === 'handoff' ? '' : t('teamCollab.handoffDraft', { title: sessionTitle || t('teamCollab.target.session') })) }}>
                     {t('teamCollab.handoff')}
-                  </Chip>
+                  </TeamRevisionChip>
                 ) : null}
                 {flags.approvalsOn ? (
-                  <Chip active={mode === 'approval'} onClick={() => { setMode(mode === 'approval' ? 'none' : 'approval'); setDraft('') }}>
+                  <TeamRevisionChip revision={target.revision} active={mode === 'approval'} onClick={() => { setMode(mode === 'approval' ? 'none' : 'approval'); setDraft('') }}>
                     {t('teamCollab.requestApproval')}
-                  </Chip>
+                  </TeamRevisionChip>
                 ) : null}
               </div>
               {mode !== 'none' ? (
@@ -266,8 +293,10 @@ export function TeamSessionPanel({
                     <Action
                       disabled={mode === 'handoff' && !draft.trim()}
                       onClick={() => {
-                        if (mode === 'handoff') run((s) => handoff(s, ctx(), { target, toUserId: selectedMember.userId, summary: draft, roster: roster.members }), 'teamCollab.handoffToast')
-                        else run((s) => requestApproval(s, ctx(), { target, reviewerUserId: selectedMember.userId, note: draft, roster: roster.members }), 'teamCollab.approvalToast')
+                        const persisted = mode === 'handoff'
+                          ? run((s) => handoff(s, ctx(), { target, toUserId: selectedMember.userId, summary: draft, roster: roster.members }))
+                          : run((s) => requestApproval(s, ctx(), { target, reviewerUserId: selectedMember.userId, note: draft, roster: roster.members }))
+                        if (!persisted) return
                         setMode('none')
                         setDraft('')
                       }}
@@ -313,8 +342,10 @@ export function TeamSessionPanel({
               </div>
               <div>
                 <Action
-                  disabled={!comment.trim()}
-                  onClick={() => { run((s) => addComment(s, ctx(), { target, body: comment, roster: flags.mentionsOn ? roster.members : [] }), 'teamCollab.commentToast'); setComment('') }}
+                  disabled={!target.revision || !comment.trim()}
+                  onClick={() => {
+                    if (run((s) => addComment(s, ctx(), { target, body: comment, roster: flags.mentionsOn ? roster.members : [] }))) setComment('')
+                  }}
                 >
                   {t('teamCollab.commentSend')}
                 </Action>

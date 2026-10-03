@@ -1,0 +1,18 @@
+{
+  "command": [
+    "node",
+    "/tmp/rox-r15-exact-ui-20261001/observe-auth-negative.cjs",
+    "/tmp/rox-r15-exact-ui-20261001/checkout",
+    "010fa8c040e3a84cd40cd8195473f52d8582f159"
+  ],
+  "sourceRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "actualExitCode": 1,
+  "startedAt": "2026-10-01T17:04:05.819Z",
+  "finishedAt": "2026-10-01T17:05:04.538Z",
+  "log": "browser-auth-observer-first-red.log",
+  "results": "browser/auth-negative-first-red/results.json",
+  "assertionsPassed": 8,
+  "assertionsFailed": 0,
+  "phaseErrors": 1,
+  "noApplicationSourceEdits": true
+}

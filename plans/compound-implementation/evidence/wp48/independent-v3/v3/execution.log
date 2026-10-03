@@ -1,0 +1,10 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-48-independent-adversarial.test.ts:
+{"status":"NO_TARGETED_DEFECTS","schema":"wp48_93c1d8cff4e7","port":52734,"defectCount":0,"artifact":"/tmp/rox-wp48-independent-ultra-20260930/v3/observations.json"}
+(pass) independent one-schema actual v2 baseline and retained-row/event corruption controls [2036.21ms]
+
+ 1 pass
+ 0 fail
+ 32 expect() calls
+Ran 1 test across 1 file. [2.13s]

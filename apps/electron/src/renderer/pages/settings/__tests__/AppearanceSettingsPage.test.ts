@@ -8,7 +8,7 @@ const source = readFileSync(appearanceSettingsPath, 'utf8')
 describe('AppearanceSettingsPage zoom default', () => {
   it('renders the fresh-install 90% value before asynchronous config loading resolves', () => {
     expect(source).toContain('const [defaultZoomLevel, setDefaultZoomLevel] = useState(90)')
-    expect(source).toContain('window.electronAPI?.getDefaultZoomLevel?.().then(setDefaultZoomLevel)')
+    // Async capability behavior is exercised by desktop-appearance.test.ts.
   })
 
   it('always mounts workbench and Conation sections so settings is not blank with only shell+inspector on', () => {

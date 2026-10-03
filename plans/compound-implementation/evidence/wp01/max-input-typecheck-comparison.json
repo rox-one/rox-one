@@ -1,0 +1,10 @@
+{
+  "priorUnique": 43,
+  "currentUnique": 43,
+  "new": [],
+  "resolved": [],
+  "logs": {
+    "prior": "/tmp/rox-wp01-journal-electron-ts.log",
+    "current": "/tmp/rox-wp01-max-input-electron-ts.log"
+  }
+}

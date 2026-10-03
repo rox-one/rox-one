@@ -12,7 +12,7 @@
  * Note: Appearance settings (theme, font) have been moved to AppearanceSettingsPage.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -35,6 +35,7 @@ import { useUpdateChecker } from '@/hooks/useUpdateChecker'
 import { EnvironmentSettingsSection } from './EnvironmentSettingsSection'
 import { isClaimableLive } from '@craft-agent/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { toast } from 'sonner'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -91,6 +92,9 @@ function validateProxyUrl(url: string): string | undefined {
   }
 }
 
+type AppPreferenceKey = 'notifications' | 'keepAwake' | 'browserTool'
+type FailedPreference = { value: boolean; message: string }
+
 // ============================================
 // Main Component
 // ============================================
@@ -106,6 +110,22 @@ export default function AppSettingsPage() {
 
   // Tools state
   const [browserToolEnabled, setBrowserToolEnabled] = useState(true)
+  const [failedPreferences, setFailedPreferences] = useState<Partial<Record<AppPreferenceKey, FailedPreference>>>({})
+  const preferenceGeneration = useRef<Record<AppPreferenceKey, number>>({
+    notifications: 0,
+    keepAwake: 0,
+    browserTool: 0,
+  })
+  const persistedPreferences = useRef<Record<AppPreferenceKey, boolean>>({
+    notifications: true,
+    keepAwake: false,
+    browserTool: true,
+  })
+  const preferenceQueues = useRef<Record<AppPreferenceKey, Promise<void>>>({
+    notifications: Promise.resolve(),
+    keepAwake: Promise.resolve(),
+    browserTool: Promise.resolve(),
+  })
 
   // Proxy state
   const [proxyForm, setProxyForm] = useState<ProxyFormState>(EMPTY_PROXY_FORM)
@@ -127,9 +147,22 @@ export default function AppSettingsPage() {
     }
   }, [updateChecker])
 
+  const setPreferenceValue = useCallback((key: AppPreferenceKey, value: boolean) => {
+    if (key === 'notifications') setNotificationsEnabled(value)
+    else if (key === 'keepAwake') setKeepAwakeEnabled(value)
+    else setBrowserToolEnabled(value)
+  }, [])
+
+  const readPreference = useCallback(async (key: AppPreferenceKey): Promise<boolean> => {
+    if (key === 'notifications') return window.electronAPI.getNotificationsEnabled()
+    if (key === 'keepAwake') return window.electronAPI.getKeepAwakeWhileRunning()
+    return window.electronAPI.getBrowserToolEnabled()
+  }, [])
+
   // Load settings on mount
   const loadSettings = useCallback(async () => {
     if (!window.electronAPI) return
+    const loadGeneration = { ...preferenceGeneration.current }
     try {
       const [notificationsOn, keepAwakeOn, browserToolOn, proxySettings] = await Promise.all([
         window.electronAPI.getNotificationsEnabled(),
@@ -137,9 +170,18 @@ export default function AppSettingsPage() {
         window.electronAPI.getBrowserToolEnabled(),
         window.electronAPI.getNetworkProxySettings(),
       ])
-      setNotificationsEnabled(notificationsOn)
-      setKeepAwakeEnabled(keepAwakeOn)
-      setBrowserToolEnabled(browserToolOn)
+      if (preferenceGeneration.current.notifications === loadGeneration.notifications) {
+        persistedPreferences.current.notifications = notificationsOn
+        setNotificationsEnabled(notificationsOn)
+      }
+      if (preferenceGeneration.current.keepAwake === loadGeneration.keepAwake) {
+        persistedPreferences.current.keepAwake = keepAwakeOn
+        setKeepAwakeEnabled(keepAwakeOn)
+      }
+      if (preferenceGeneration.current.browserTool === loadGeneration.browserTool) {
+        persistedPreferences.current.browserTool = browserToolOn
+        setBrowserToolEnabled(browserToolOn)
+      }
       const form = toProxyFormState(proxySettings)
       setProxyForm(form)
       setSavedProxyForm(form)
@@ -148,30 +190,80 @@ export default function AppSettingsPage() {
     }
   }, [])
 
+
   useEffect(() => {
     loadSettings()
   }, [])
 
-  const handleNotificationsEnabledChange = useCallback(async (enabled: boolean) => {
+  const savePreference = useCallback(async (key: AppPreferenceKey, value: boolean) => {
+    if (!window.electronAPI) return
     const gate = settingsPageActionResult({ pageId: 'app', action: 'pref-write', source: 'native' })
     if (!isClaimableLive(gate)) return
-    setNotificationsEnabled(enabled)
-    await window.electronAPI.setNotificationsEnabled(enabled)
-  }, [])
 
-  const handleKeepAwakeEnabledChange = useCallback(async (enabled: boolean) => {
-    const gate = settingsPageActionResult({ pageId: 'app', action: 'pref-write', source: 'native' })
-    if (!isClaimableLive(gate)) return
-    setKeepAwakeEnabled(enabled)
-    await window.electronAPI.setKeepAwakeWhileRunning(enabled)
-  }, [])
+    const generation = ++preferenceGeneration.current[key]
+    setPreferenceValue(key, value)
+    setFailedPreferences((previous) => {
+      const next = { ...previous }
+      delete next[key]
+      return next
+    })
 
-  const handleBrowserToolEnabledChange = useCallback(async (enabled: boolean) => {
-    const gate = settingsPageActionResult({ pageId: 'app', action: 'pref-write', source: 'native' })
-    if (!isClaimableLive(gate)) return
-    setBrowserToolEnabled(enabled)
-    await window.electronAPI.setBrowserToolEnabled(enabled)
-  }, [])
+    const queuedWrite = preferenceQueues.current[key]
+      .catch(() => undefined)
+      .then(async () => {
+        if (key === 'notifications') await window.electronAPI.setNotificationsEnabled(value)
+        else if (key === 'keepAwake') await window.electronAPI.setKeepAwakeWhileRunning(value)
+        else await window.electronAPI.setBrowserToolEnabled(value)
+        persistedPreferences.current[key] = value
+      })
+    preferenceQueues.current[key] = queuedWrite.then(() => undefined, () => undefined)
+
+    try {
+      await queuedWrite
+      if (preferenceGeneration.current[key] === generation) {
+        setFailedPreferences((previous) => {
+          const next = { ...previous }
+          delete next[key]
+          return next
+        })
+      }
+    } catch (error) {
+      if (preferenceGeneration.current[key] !== generation) return
+      let persistedValue = persistedPreferences.current[key]
+      try {
+        persistedValue = await readPreference(key)
+      } catch {
+        // Keep the last confirmed value when a follow-up read is also unavailable.
+      }
+      if (preferenceGeneration.current[key] !== generation) return
+      persistedPreferences.current[key] = persistedValue
+      setPreferenceValue(key, persistedValue)
+
+      const settingLabel = key === 'notifications'
+        ? t('settings.notifications.desktopNotifications')
+        : key === 'keepAwake'
+          ? t('settings.power.keepScreenAwake')
+          : t('settings.tools.builtInBrowser')
+      const message = error instanceof Error ? error.message : t('toast.unknownError')
+      setFailedPreferences((previous) => ({ ...previous, [key]: { value, message } }))
+      toast.error(t('toast.failedToSaveSetting', { setting: settingLabel }), { description: message })
+    }
+  }, [readPreference, setPreferenceValue, t])
+
+  const handleNotificationsEnabledChange = useCallback(
+    (enabled: boolean) => { void savePreference('notifications', enabled) },
+    [savePreference],
+  )
+
+  const handleKeepAwakeEnabledChange = useCallback(
+    (enabled: boolean) => { void savePreference('keepAwake', enabled) },
+    [savePreference],
+  )
+
+  const handleBrowserToolEnabledChange = useCallback(
+    (enabled: boolean) => { void savePreference('browserTool', enabled) },
+    [savePreference],
+  )
 
   // Proxy handlers
   const isProxyDirty = useMemo(() => {
@@ -231,6 +323,19 @@ export default function AppSettingsPage() {
                     checked={notificationsEnabled}
                     onCheckedChange={handleNotificationsEnabledChange}
                   />
+                  {failedPreferences.notifications && (
+                    <div role="alert" className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 text-sm text-destructive">
+                      <span className="min-w-0 whitespace-normal break-words">
+                        {t('toast.failedToSaveSetting', { setting: t('settings.notifications.desktopNotifications') })}: {failedPreferences.notifications.message}
+                      </span>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        const failed = failedPreferences.notifications
+                        if (failed) void savePreference('notifications', failed.value)
+                      }}>
+                        {t('common.retry')}
+                      </Button>
+                    </div>
+                  )}
                 </SettingsCard>
               </SettingsSection>
 
@@ -243,6 +348,19 @@ export default function AppSettingsPage() {
                     checked={keepAwakeEnabled}
                     onCheckedChange={handleKeepAwakeEnabledChange}
                   />
+                  {failedPreferences.keepAwake && (
+                    <div role="alert" className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 text-sm text-destructive">
+                      <span className="min-w-0 whitespace-normal break-words">
+                        {t('toast.failedToSaveSetting', { setting: t('settings.power.keepScreenAwake') })}: {failedPreferences.keepAwake.message}
+                      </span>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        const failed = failedPreferences.keepAwake
+                        if (failed) void savePreference('keepAwake', failed.value)
+                      }}>
+                        {t('common.retry')}
+                      </Button>
+                    </div>
+                  )}
                 </SettingsCard>
               </SettingsSection>
 
@@ -255,6 +373,19 @@ export default function AppSettingsPage() {
                     checked={browserToolEnabled}
                     onCheckedChange={handleBrowserToolEnabledChange}
                   />
+                  {failedPreferences.browserTool && (
+                    <div role="alert" className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 text-sm text-destructive">
+                      <span className="min-w-0 whitespace-normal break-words">
+                        {t('toast.failedToSaveSetting', { setting: t('settings.tools.builtInBrowser') })}: {failedPreferences.browserTool.message}
+                      </span>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        const failed = failedPreferences.browserTool
+                        if (failed) void savePreference('browserTool', failed.value)
+                      }}>
+                        {t('common.retry')}
+                      </Button>
+                    </div>
+                  )}
                 </SettingsCard>
               </SettingsSection>
 

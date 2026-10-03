@@ -1,0 +1,584 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-30T15:40:04.417Z",
+  "evaluator": "independent GPT6.1Sol Ultra",
+  "decision": "NO_IDENTIFIED_SOURCE_INTEGRATION_REGRESSION_IN_BOUNDED_REVIEW",
+  "integratedInputRevision": "665ba43ac1f360b7753a0e939d06794a956f4969",
+  "rootAppliedReceipt": {
+    "path": "/Users/t/Projects/rox-one-compound-implementation/plans/compound-implementation/evidence/wp48/backend-v3-root-applied.json",
+    "sha256": "2f994a1b5799e0b212d0c43b8f5cd034b10e945e5bacbee91ad65aea14d6e4df",
+    "bytes": 7080
+  },
+  "proposal": {
+    "path": "/tmp/rox-wp48-domain/backend-v3/manifest.json",
+    "sha256": "f10780ca51d1c0e8cd781df645bd43841dd4f71b332a82251bb10ccd7f07c267",
+    "bytes": 7148
+  },
+  "independentActualReview": {
+    "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/review-report.json",
+    "sha256": "587e03dba6a1ecc1540b787ec02c56265c8c1d9f0926859c47a9c7d54c1e8e11",
+    "bytes": 54123
+  },
+  "scope": "Read-only integrated root16 source paths plus existing WP01 offline intent / encrypted journal / authentication / project receipt / transport callers. Only this outside review JSON and receipt written; no root tests/build/Git mutations/UI/Electron execution.",
+  "integratedBindings": [
+    {
+      "path": "apps/workspace-service/migrations/48-license-audit.sql",
+      "expected": "57ed39ed25bf89f429fd38e15f5ed1a226b762d71ba0f7653c447a7bc6a69b91",
+      "currentSha256": "57ed39ed25bf89f429fd38e15f5ed1a226b762d71ba0f7653c447a7bc6a69b91",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/configuration.ts",
+      "expected": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+      "currentSha256": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/http.ts",
+      "expected": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+      "currentSha256": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/index.ts",
+      "expected": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+      "currentSha256": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/identity/repository.ts",
+      "expected": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+      "currentSha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/commands.ts",
+      "expected": "0b0971dfb6eb4c68cb16396dae4cd864dbb567cc0e4c3930b9bdfeb5c14a3af7",
+      "currentSha256": "0b0971dfb6eb4c68cb16396dae4cd864dbb567cc0e4c3930b9bdfeb5c14a3af7",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/registry.ts",
+      "expected": "32a0c2ef4b13a098f2606dc9a02551db22e22486d8225586b9636cb583c59b7f",
+      "currentSha256": "32a0c2ef4b13a098f2606dc9a02551db22e22486d8225586b9636cb583c59b7f",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/repository.ts",
+      "expected": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+      "currentSha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/server.ts",
+      "expected": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+      "currentSha256": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+      "match": true
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "expected": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "currentSha256": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "match": true
+    },
+    {
+      "path": "packages/server-core/src/transport/server.ts",
+      "expected": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+      "currentSha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+      "match": true
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "expected": "d7da03384d9511f8b78fb027382bcc5f8d7f7199b69c06ec74d13a26c0ca0697",
+      "currentSha256": "d7da03384d9511f8b78fb027382bcc5f8d7f7199b69c06ec74d13a26c0ca0697",
+      "match": true
+    },
+    {
+      "path": "packages/shared/package.json",
+      "expected": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+      "currentSha256": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+      "match": true
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+      "expected": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+      "currentSha256": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+      "match": true
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/licenses/contracts.ts",
+      "expected": "ccc60719c7f037e6e2f3d30c471497585ff1ff321ade044217ab82ccb8901ae6",
+      "currentSha256": "ccc60719c7f037e6e2f3d30c471497585ff1ff321ade044217ab82ccb8901ae6",
+      "match": true
+    },
+    {
+      "path": "tests/macro-integration/wp-48-domain.test.ts",
+      "expected": "87cc9c549e4ffaf2c88c8b02d9ac49abd96dddc0c3e1e97779423f9b163c1618",
+      "currentSha256": "87cc9c549e4ffaf2c88c8b02d9ac49abd96dddc0c3e1e97779423f9b163c1618",
+      "match": true
+    }
+  ],
+  "preservedSource": [
+    {
+      "path": "apps/electron/src/main/project-create-intent.ts",
+      "currentSha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad",
+      "inputRevisionSha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad",
+      "unchanged": true
+    },
+    {
+      "path": "apps/electron/src/main/project-authority.ts",
+      "currentSha256": "a5317ee286e8383bb0672e12a32383ab71e384f6140b9cb1f403164af0857bd9",
+      "inputRevisionSha256": "a5317ee286e8383bb0672e12a32383ab71e384f6140b9cb1f403164af0857bd9",
+      "unchanged": true
+    },
+    {
+      "path": "apps/electron/src/main/project-authority-journal.ts",
+      "currentSha256": "7751125f2e6c6703d68bdb2d7b48dedf3fc8d68a51ebcd03336b336902d45960",
+      "inputRevisionSha256": "7751125f2e6c6703d68bdb2d7b48dedf3fc8d68a51ebcd03336b336902d45960",
+      "unchanged": true
+    },
+    {
+      "path": "apps/electron/src/main/index.ts",
+      "currentSha256": "d6b5152bfccf22c447623a4c89ac2518d31c873a396daa97872b85d00092a391",
+      "inputRevisionSha256": "d6b5152bfccf22c447623a4c89ac2518d31c873a396daa97872b85d00092a391",
+      "unchanged": true
+    },
+    {
+      "path": "apps/electron/src/shared/project-create-intent.ts",
+      "currentSha256": "b757b80a64b35d32255c0afb71241e7259595652667d8fcde5f11f7332d5d009",
+      "inputRevisionSha256": "b757b80a64b35d32255c0afb71241e7259595652667d8fcde5f11f7332d5d009",
+      "unchanged": true
+    },
+    {
+      "path": "apps/electron/src/shared/project-authority.ts",
+      "currentSha256": "3d597c53babe44264cd5722cbbbd74ae09de25c388a916a1211e3aa6166ef12e",
+      "inputRevisionSha256": "3d597c53babe44264cd5722cbbbd74ae09de25c388a916a1211e3aa6166ef12e",
+      "unchanged": true
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "currentSha256": "0d0de589efc52485d628349c6ff9b2b07282c97504d7a9b484f333fb718498f7",
+      "inputRevisionSha256": "0d0de589efc52485d628349c6ff9b2b07282c97504d7a9b484f333fb718498f7",
+      "unchanged": true
+    },
+    {
+      "path": "apps/electron/src/preload/bootstrap.ts",
+      "currentSha256": "f2be23aa4f69f1126ad79413fcc40ad10e69037ba97e8c4b5aa8a2c8622f3cb5",
+      "inputRevisionSha256": "f2be23aa4f69f1126ad79413fcc40ad10e69037ba97e8c4b5aa8a2c8622f3cb5",
+      "unchanged": true
+    },
+    {
+      "path": "apps/electron/src/transport/project-authority-connection.ts",
+      "currentSha256": "b13a62332d71b83bbd01c39abe1248613426a1749387b6d1794feee1f76a0f39",
+      "inputRevisionSha256": "b13a62332d71b83bbd01c39abe1248613426a1749387b6d1794feee1f76a0f39",
+      "unchanged": true
+    },
+    {
+      "path": "apps/electron/src/transport/routed-client.ts",
+      "currentSha256": "033aece0e542d9f5462fd0258901b23748a34018a2bb005a8a8fd6b05d6641c3",
+      "inputRevisionSha256": "033aece0e542d9f5462fd0258901b23748a34018a2bb005a8a8fd6b05d6641c3",
+      "unchanged": true
+    },
+    {
+      "path": "apps/electron/src/transport/client.ts",
+      "currentSha256": "75f3f5483cfd5709ada5fb2db3a59bb1b47b60bdfc1b2831ee6c6832adc70c81",
+      "inputRevisionSha256": "75f3f5483cfd5709ada5fb2db3a59bb1b47b60bdfc1b2831ee6c6832adc70c81",
+      "unchanged": true
+    },
+    {
+      "path": "apps/electron/src/transport/channel-map.ts",
+      "currentSha256": "ffcc506c73a74d3133432a2f9b943edb06f78852edb8b04fa63b84a636ce71f0",
+      "inputRevisionSha256": "ffcc506c73a74d3133432a2f9b943edb06f78852edb8b04fa63b84a636ce71f0",
+      "unchanged": true
+    },
+    {
+      "path": "packages/shared/src/credentials/manager.ts",
+      "currentSha256": "bf82be76a9fd6a6e8dd3a91270a710d538e47728776129421b98f8386f242434",
+      "inputRevisionSha256": "bf82be76a9fd6a6e8dd3a91270a710d538e47728776129421b98f8386f242434",
+      "unchanged": true
+    },
+    {
+      "path": "packages/shared/src/credentials/backends/secure-storage.ts",
+      "currentSha256": "bda4d5b6f94753850322b379460a3a01595703624ab2f2eda7b637ad73a724b7",
+      "inputRevisionSha256": "bda4d5b6f94753850322b379460a3a01595703624ab2f2eda7b637ad73a724b7",
+      "unchanged": true
+    },
+    {
+      "path": "apps/workspace-service/src/auth/verified-actor.ts",
+      "currentSha256": "637174c864da1e69732d3f33170f63054619721fd91a87a422f7b19f60f62cf4",
+      "inputRevisionSha256": "637174c864da1e69732d3f33170f63054619721fd91a87a422f7b19f60f62cf4",
+      "unchanged": true
+    },
+    {
+      "path": "apps/workspace-service/src/auth/postgres-identity.ts",
+      "currentSha256": "8b8124e55e98d9ef29617e06b107db3643cca205e6af48f9c16cae95f9b2d146",
+      "inputRevisionSha256": "8b8124e55e98d9ef29617e06b107db3643cca205e6af48f9c16cae95f9b2d146",
+      "unchanged": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/command-gateway.ts",
+      "currentSha256": "2dbf30f23d0df9f217a6bfbc338a5467b93fb59b210703631fd298c347bfb171",
+      "inputRevisionSha256": "2dbf30f23d0df9f217a6bfbc338a5467b93fb59b210703631fd298c347bfb171",
+      "unchanged": true
+    },
+    {
+      "path": "tests/macro-integration/wp-01-offline.test.ts",
+      "currentSha256": "262f369ce10429f3419da437935515b5730891e90c2f461495c55301ce46588a",
+      "inputRevisionSha256": "262f369ce10429f3419da437935515b5730891e90c2f461495c55301ce46588a",
+      "unchanged": true
+    },
+    {
+      "path": "tests/macro-integration/wp-01-offline-child.ts",
+      "currentSha256": "bb611b58627df71fb3c6ac3a0b3ec08cb13dbd455b9f600e8272ed753942f5bd",
+      "inputRevisionSha256": "bb611b58627df71fb3c6ac3a0b3ec08cb13dbd455b9f600e8272ed753942f5bd",
+      "unchanged": true
+    },
+    {
+      "path": "tests/macro-integration/wp-01-transport.test.ts",
+      "currentSha256": "cf91993e197f24ac4caec2693a7fe243a89e2e1e4c23e4ca871071733b798fcd",
+      "inputRevisionSha256": "cf91993e197f24ac4caec2693a7fe243a89e2e1e4c23e4ca871071733b798fcd",
+      "unchanged": true
+    },
+    {
+      "path": "tests/macro-integration/wp-01-native-routing.test.ts",
+      "currentSha256": "409ebfc4fcc2b230ef30c6fddb41058bda4e2f11a15304b655fc0923757baabb",
+      "inputRevisionSha256": "409ebfc4fcc2b230ef30c6fddb41058bda4e2f11a15304b655fc0923757baabb",
+      "unchanged": true
+    },
+    {
+      "path": "tests/macro-integration/wp-01-authority-crash.test.ts",
+      "currentSha256": "b1791d90e32ebce8deb10033b2107bad954fd62624d24d9ab2b728b67fcb9e6f",
+      "inputRevisionSha256": "b1791d90e32ebce8deb10033b2107bad954fd62624d24d9ab2b728b67fcb9e6f",
+      "unchanged": true
+    },
+    {
+      "path": "tests/macro-integration/wp-01-service-crash.test.ts",
+      "currentSha256": "88775ff80f721d1becf24f8edf89c103ead84f9eb319c9c3417816bd7db065c6",
+      "inputRevisionSha256": "88775ff80f721d1becf24f8edf89c103ead84f9eb319c9c3417816bd7db065c6",
+      "unchanged": true
+    }
+  ],
+  "projectMethodComparisons": [
+    {
+      "symbol": "retainedReceipt",
+      "path": "apps/workspace-service/src/modules/identity/repository.ts",
+      "inputSha256": "95b7ea8d1266b39a35453a1add64b791726c6f3d4133249ea1154c1dbbdbe1e1",
+      "currentSha256": "95b7ea8d1266b39a35453a1add64b791726c6f3d4133249ea1154c1dbbdbe1e1",
+      "byteIdentical": true
+    },
+    {
+      "symbol": "createSharedProject",
+      "path": "apps/workspace-service/src/modules/identity/repository.ts",
+      "inputSha256": "f2eb9449449ce6b5346e1433acdd93fc4fa3377726b4f4c1ad6cd096675bd76f",
+      "currentSha256": "f2eb9449449ce6b5346e1433acdd93fc4fa3377726b4f4c1ad6cd096675bd76f",
+      "byteIdentical": true
+    },
+    {
+      "symbol": "membership and project mapping",
+      "path": "apps/workspace-service/src/modules/identity/repository.ts",
+      "inputSha256": "cc4d61ec30263fb22e959a655303c127de9e4a250aae973ad6234b5d0169eefd",
+      "currentSha256": "cc4d61ec30263fb22e959a655303c127de9e4a250aae973ad6234b5d0169eefd",
+      "byteIdentical": true
+    },
+    {
+      "symbol": "project query ACL and list cursors",
+      "path": "apps/workspace-service/src/modules/identity/repository.ts",
+      "inputSha256": "7e0a9768ad98aebddc97eda7249d6c7f403343d5403b79e6349bd861454d89f1",
+      "currentSha256": "7e0a9768ad98aebddc97eda7249d6c7f403343d5403b79e6349bd861454d89f1",
+      "byteIdentical": true
+    }
+  ],
+  "checks": [
+    {
+      "id": "OFFLINE_BINDING_ENDPOINT",
+      "status": "SOURCE_REVIEW_PRESERVED",
+      "source": [
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/electron/src/main/project-create-intent.ts",
+          "sha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad",
+          "bytes": 15822,
+          "relativePath": "apps/electron/src/main/project-create-intent.ts",
+          "symbol": "readVerifiedProjectCreateScope authenticated identity endpoint",
+          "line": 179,
+          "sourceLine": "    const response = await fetch(target.url.replace(/^ws/, 'http') + 'v1/workspaces/' + target.workspaceId + '/identity', {"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/workspace-service/src/http.ts",
+          "sha256": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+          "bytes": 13327,
+          "relativePath": "apps/workspace-service/src/http.ts",
+          "symbol": "identity route retained",
+          "line": 198,
+          "sourceLine": "    const identity = routeSegment === 'identity'"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/workspace-service/src/http.ts",
+          "sha256": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+          "bytes": 13327,
+          "relativePath": "apps/workspace-service/src/http.ts",
+          "symbol": "live issuer/session identity response",
+          "line": 228,
+          "sourceLine": "    send(res, 200, identity ? { issuer: bound.identity.issuer, principalId: bound.identity.principalId,"
+        }
+      ],
+      "assessment": "Offline binding is served by existing authenticated GET /identity. Strict method/query/body handling and workspace claim check remain; final actorResolver.revalidate still precedes exact issuer/principal/session/device/workspace/expiry DTO. License response guard only executes on licenseRoute."
+    },
+    {
+      "id": "PRIVATE_ENCRYPTED_CUSTODY",
+      "status": "SOURCE_REVIEW_UNCHANGED",
+      "source": [
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/electron/src/main/project-authority-journal.ts",
+          "sha256": "7751125f2e6c6703d68bdb2d7b48dedf3fc8d68a51ebcd03336b336902d45960",
+          "bytes": 14248,
+          "relativePath": "apps/electron/src/main/project-authority-journal.ts",
+          "symbol": "createAuthorityJournalPorts controlled encrypted backend",
+          "line": 93,
+          "sourceLine": "  const backend = await manager.getMigrationBackend()"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/electron/src/main/project-authority-journal.ts",
+          "sha256": "7751125f2e6c6703d68bdb2d7b48dedf3fc8d68a51ebcd03336b336902d45960",
+          "bytes": 14248,
+          "relativePath": "apps/electron/src/main/project-authority-journal.ts",
+          "symbol": "repair failure is not absence",
+          "line": 98,
+          "sourceLine": "      if (backend.getRepairState().status !== 'ok') return unavailable()"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/electron/src/main/project-create-intent.ts",
+          "sha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad",
+          "bytes": 15822,
+          "relativePath": "apps/electron/src/main/project-create-intent.ts",
+          "symbol": "token fingerprint / configuration / expiry binding",
+          "line": 72,
+          "sourceLine": "function matchesTarget(binding: Binding, target: ProjectAuthorityTarget): boolean {"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/electron/src/main/project-create-intent.ts",
+          "sha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad",
+          "bytes": 15822,
+          "relativePath": "apps/electron/src/main/project-create-intent.ts",
+          "symbol": "different binding hides pending bytes",
+          "line": 104,
+          "sourceLine": "    if (pending && !sameBinding(binding, pending.binding)) return { state: 'blocked', eligible: false, code: 'WORKSPACE_MISMATCH' }"
+        }
+      ],
+      "assessment": "Existing encrypted SecureStorageBackend, bounded versioned records and token/configuration/verified-scope binding remain byte-identical to integration input. New license registry configuration remains host-only and does not replace credentials, journal, private intent or identity authority."
+    },
+    {
+      "id": "DURABLE_CREATE_RECOVERY",
+      "status": "SOURCE_REVIEW_UNCHANGED",
+      "source": [
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/electron/src/main/project-create-intent.ts",
+          "sha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad",
+          "bytes": 15822,
+          "relativePath": "apps/electron/src/main/project-create-intent.ts",
+          "symbol": "persist exact immutable command before send",
+          "line": 122,
+          "sourceLine": "      tokenType: INTENT_TOKEN_TYPE, value: JSON.stringify({ version: 1, binding, command, state: 'queued', code: null }),"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/electron/src/main/project-create-intent.ts",
+          "sha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad",
+          "bytes": 15822,
+          "relativePath": "apps/electron/src/main/project-create-intent.ts",
+          "symbol": "live scope before retry",
+          "line": 133,
+          "sourceLine": "      const live = await readVerifiedProjectCreateScope(target)"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/electron/src/main/project-create-intent.ts",
+          "sha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad",
+          "bytes": 15822,
+          "relativePath": "apps/electron/src/main/project-create-intent.ts",
+          "symbol": "uncertain intent persisted before outbound create",
+          "line": 136,
+          "sourceLine": "        tokenType: INTENT_TOKEN_TYPE, value: JSON.stringify({ ...pending, state: 'uncertain', code: null }),"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/electron/src/main/project-create-intent.ts",
+          "sha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad",
+          "bytes": 15822,
+          "relativePath": "apps/electron/src/main/project-create-intent.ts",
+          "symbol": "outbound session query before deletion",
+          "line": 144,
+          "sourceLine": "      const outbound = await readVerifiedProjectCreateScope(target)"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/electron/src/main/project-authority.ts",
+          "sha256": "a5317ee286e8383bb0672e12a32383ab71e384f6140b9cb1f403164af0857bd9",
+          "bytes": 19507,
+          "relativePath": "apps/electron/src/main/project-authority.ts",
+          "symbol": "existing authority generation serialized custody",
+          "line": 291,
+          "sourceLine": "export async function storedProjectCreateIntent(localWorkspaceId: string, action: ProjectCreateIntentAction,"
+        }
+      ],
+      "assessment": "Exact original command ID/idempotency key/payload survives uncertain transport failure. Retry requires same live session/scope and current window generation; pending record deletion follows verified result plus live post-I/O scope. No v3 mutation of these paths."
+    },
+    {
+      "id": "PROJECT_RECEIPT_IDENTITY_AND_ACL",
+      "status": "SOURCE_REVIEW_BYTE_IDENTICAL_METHODS",
+      "source": [
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/workspace-service/src/modules/identity/repository.ts",
+          "sha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+          "bytes": 21668,
+          "relativePath": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "original retainedReceipt strict independent reconstruction",
+          "line": 70,
+          "sourceLine": "function retainedReceipt(row: ReceiptRow, actor: AuthenticatedActor, command: RoxCommand<CreateSharedProject>): SharedProjectResult {"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/workspace-service/src/modules/identity/repository.ts",
+          "sha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+          "bytes": 21668,
+          "relativePath": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "current read/tombstone policy applied to retained result",
+          "line": 158,
+          "sourceLine": "        await this.readProject(tx, actor, command.workspaceId, receipt.project_id, member)"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/workspace-service/src/modules/identity/repository.ts",
+          "sha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+          "bytes": 21668,
+          "relativePath": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "owner-only write policy",
+          "line": 141,
+          "sourceLine": "      if (member.owner_principal_id !== actor.principalId || member.role !== 'owner') throw new IdentityDomainError('FORBIDDEN')"
+        }
+      ],
+      "assessment": "Original project retained result reconstruction, command/idempotency receipt lookup, owner write policy, session/membership locks, read ACL, CAS and cursor code are byte-identical. New license receipt reconstruction independently retains original audit identity; exact actual restart and epoch advancement evidence is in sealed external review."
+    },
+    {
+      "id": "PROJECT_EVENT_AND_LICENSE_PRIVACY",
+      "status": "SOURCE_REVIEW_SCOPED_WITH_ACTUAL_EXTERNAL_PROOF",
+      "source": [
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/workspace-service/src/modules/identity/repository.ts",
+          "sha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+          "bytes": 21668,
+          "relativePath": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "global project replay allows project.created only",
+          "line": 283,
+          "sourceLine": "          (e.type = 'workspace.member_joined' OR (e.type = 'project.created' AND p.deleted_at IS NULL AND"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/workspace-service/src/modules/identity/repository.ts",
+          "sha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+          "bytes": 21668,
+          "relativePath": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private event cannot enter generic mapping",
+          "line": 262,
+          "sourceLine": "    if (row.type === 'audit.license_reviewed') throw new IdentityDomainError('PROVIDER_UNAVAILABLE')"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/workspace-service/src/modules/identity/repository.ts",
+          "sha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+          "bytes": 21668,
+          "relativePath": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "concrete license event proof before callback",
+          "line": 313,
+          "sourceLine": "      const event = row.type === 'audit.license_reviewed' ? await this.licenseEvents?.verifyEvent(tx,row.event_id) : this.event(row)"
+        }
+      ],
+      "assessment": "Global project replay retains membership/project ACL and explicitly excludes license audit events, whose project_id is null. Inbox uses concrete license verifier before callback/commit; absent verifier denies. External exact-byte actual corrupt event tests leave audit inbox empty and watermark unadvanced."
+    },
+    {
+      "id": "TRANSPORT_CALLER_COMPATIBILITY",
+      "status": "SOURCE_REVIEW_OPTIONAL_GUARD_PRESERVES_EXISTING_CALLERS",
+      "source": [
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/packages/server-core/src/transport/server.ts",
+          "sha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+          "bytes": 46774,
+          "relativePath": "packages/server-core/src/transport/server.ts",
+          "symbol": "handler access policy unchanged",
+          "line": 263,
+          "sourceLine": "    const access = options?.access"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/packages/server-core/src/transport/server.ts",
+          "sha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+          "bytes": 46774,
+          "relativePath": "packages/server-core/src/transport/server.ts",
+          "symbol": "local Electron proof gate",
+          "line": 889,
+          "sourceLine": "    if (!client.localBinding && this.localElectronChannels.has(channel)) {"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/packages/server-core/src/transport/server.ts",
+          "sha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+          "bytes": 46774,
+          "relativePath": "packages/server-core/src/transport/server.ts",
+          "symbol": "authenticatedWorkspace access gate",
+          "line": 273,
+          "sourceLine": "      if (registration.access === 'authenticatedWorkspace' && !client.workspaceSession) return []"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/packages/server-core/src/transport/server.ts",
+          "sha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+          "bytes": 46774,
+          "relativePath": "packages/server-core/src/transport/server.ts",
+          "symbol": "final live identity before optional Resource guard",
+          "line": 950,
+          "sourceLine": "      const outbound = this.workspaceAuthority ? await this.refreshWorkspaceClient(client) : null"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/packages/server-core/src/transport/server.ts",
+          "sha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+          "bytes": 46774,
+          "relativePath": "packages/server-core/src/transport/server.ts",
+          "symbol": "beforeResponse host registration callback",
+          "line": 951,
+          "sourceLine": "      if (registration.beforeResponse) await registration.beforeResponse({ ...ctx, ...(outbound ? { actor: outbound.actor } : {}) }, args ?? [], result)"
+        },
+        {
+          "path": "/Users/t/Projects/rox-one-compound-implementation/apps/workspace-service/src/server.ts",
+          "sha256": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+          "bytes": 10411,
+          "relativePath": "apps/workspace-service/src/server.ts",
+          "symbol": "license-only guard registration",
+          "line": 100,
+          "sourceLine": "  }, { access: 'authenticatedWorkspace', beforeResponse: async (context, arguments_, result) => {"
+        }
+      ],
+      "assessment": "Optional beforeResponse is supplied only by host license registration. Existing project/local/command-gateway callers retain access policy and final identity refresh; standalone mode adds no awaited identity query. License guard uses fresh outbound Actor and runs before serialization; actual SQL READ race proof passes on identical integrated bytes."
+    }
+  ],
+  "dependencyProgram": {
+    "progress": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/plans/compound-implementation/progress.json",
+      "sha256": "4a29c85603fc7d7920b8b858b9ec58d0875443193fd14b652ad59a1a4599c995",
+      "bytes": 101181
+    },
+    "packageCount": 143,
+    "uniqueIds": 143,
+    "stableIdTitleProgramDependencySpecGraphUnchanged": true,
+    "graphSha256": "ce27333f27aa51257d70d52287915a8e9241e985c6160d7ae0e193a829e70401",
+    "unknownEdges": [],
+    "cycleEdges": [],
+    "stateCounts": {
+      "ROOT_INTEGRATION": 7,
+      "NOT_STARTED": 130,
+      "IMPLEMENTATION_RUNNING": 6
+    },
+    "remaining130NotStartedPreserved": true,
+    "normativeSpec": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/plans/macro-integration/work-packages.json",
+      "sha256": "f35f93b138670131da4a0c8a56926974b89f3f477f995e69cbe26106b7cb13c5",
+      "bytes": 1682565
+    },
+    "normativeSpecUnchangedFromInputRevision": true
+  },
+  "runtimeEvidenceBoundary": "51 independent actual assertions are bound to exact integrated16 source hashes. Existing WP01 offline/native/transport root regression runs remain parent-owned; source equality is not a substituted runtime gate.",
+  "confirmedNewDefects": [],
+  "rootRegressionReceipt": "PENDING_PARENT_READBACK",
+  "rootCompile": "PENDING_PARENT_READBACK",
+  "nativeAcceptance": false,
+  "wp48Complete": false,
+  "legalApproval": false,
+  "rootWrites": false
+}

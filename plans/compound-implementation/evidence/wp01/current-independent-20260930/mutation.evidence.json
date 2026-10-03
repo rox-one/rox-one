@@ -1,0 +1,210 @@
+{
+  "variant": "mutation",
+  "seed": "wp01-independent-list-privacy-20260930-7c31e952",
+  "runId": "5230e0dd-6efa-4c80-bf6b-ad36c94ff53f",
+  "schema": "holdout_mutation_5230e0dd6efa4c80",
+  "issuer": "https://holdout.invalid/mutation/5230e0dd-6efa-4c80-bf6b-ad36c94ff53f",
+  "workspaceId": "fb7410fb-37ff-4ed5-8d26-3bb1a4375ee1",
+  "foreignWorkspaceId": "b7ff2030-4662-487d-81bb-353757ae024f",
+  "principalIds": [
+    "20cc21ed-f543-40b8-9b73-60b903575023",
+    "4e0aa6d5-5ffd-4610-be9d-beda4c251980",
+    "d3489914-66f4-48b9-86be-36143d610a72"
+  ],
+  "restarts": 1,
+  "counters": {
+    "http": 15,
+    "rpc": 14,
+    "accountsProvisioned": 3,
+    "projectsCreated": 4
+  },
+  "migrations": [
+    {
+      "name": "01-domain-contract.sql",
+      "sha256": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900"
+    },
+    {
+      "name": "01-local-auth-bootstrap.sql",
+      "sha256": "2412ea8aa4f763d5bb9680f344276a9ed6bcf89486629a4fe9e3d23282cba9bc"
+    }
+  ],
+  "scenarioInputSha256": "ac6204ff51e77bd3f0da4d8ccc2f0de32dc59c59822225b35ff449ea52cc644e",
+  "commandInputs": [
+    {
+      "commandId": "wp01-independent-list-privacy-20260930-7c31e952-create-0",
+      "schemaVersion": 2,
+      "workspaceId": "fb7410fb-37ff-4ed5-8d26-3bb1a4375ee1",
+      "idempotencyKey": "wp01-independent-list-privacy-20260930-7c31e952-idem-0",
+      "expectedRevision": "0",
+      "payload": {
+        "name": "wp01-independent-list-privacy-20260930-7c31e952-private-0",
+        "workspaceName": "Holdout workspace wp01-independent-list-privacy-20260930-7c31e952",
+        "visibility": "private"
+      }
+    },
+    {
+      "commandId": "wp01-independent-list-privacy-20260930-7c31e952-create-1",
+      "schemaVersion": 2,
+      "workspaceId": "fb7410fb-37ff-4ed5-8d26-3bb1a4375ee1",
+      "idempotencyKey": "wp01-independent-list-privacy-20260930-7c31e952-idem-1",
+      "expectedRevision": "0",
+      "payload": {
+        "name": "wp01-independent-list-privacy-20260930-7c31e952-members-1",
+        "workspaceName": "Holdout workspace wp01-independent-list-privacy-20260930-7c31e952",
+        "visibility": "members"
+      }
+    },
+    {
+      "commandId": "wp01-independent-list-privacy-20260930-7c31e952-create-2",
+      "schemaVersion": 2,
+      "workspaceId": "fb7410fb-37ff-4ed5-8d26-3bb1a4375ee1",
+      "idempotencyKey": "wp01-independent-list-privacy-20260930-7c31e952-idem-2",
+      "expectedRevision": "0",
+      "payload": {
+        "name": "wp01-independent-list-privacy-20260930-7c31e952-private-2",
+        "workspaceName": "Holdout workspace wp01-independent-list-privacy-20260930-7c31e952",
+        "visibility": "private"
+      }
+    },
+    {
+      "commandId": "wp01-independent-list-privacy-20260930-7c31e952-create-3",
+      "schemaVersion": 2,
+      "workspaceId": "fb7410fb-37ff-4ed5-8d26-3bb1a4375ee1",
+      "idempotencyKey": "wp01-independent-list-privacy-20260930-7c31e952-idem-3",
+      "expectedRevision": "0",
+      "payload": {
+        "name": "wp01-independent-list-privacy-20260930-7c31e952-members-3",
+        "workspaceName": "Holdout workspace wp01-independent-list-privacy-20260930-7c31e952",
+        "visibility": "members"
+      }
+    }
+  ],
+  "observations": [
+    {
+      "label": "before-restart",
+      "workspaceId": "fb7410fb-37ff-4ed5-8d26-3bb1a4375ee1",
+      "projectIds": [
+        "project:66e74fb3-17fb-466a-b336-a30598708fc4",
+        "project:f180d1ea-822b-4f1a-9f8b-ec27a2e5d868",
+        "project:a52ed9ce-6725-440b-958a-2fe0cc8a37a6",
+        "project:43a517f4-6a27-4f2b-b83a-deb058fe3b8a"
+      ],
+      "receiptIds": [
+        "6873176a-274b-450c-adf8-3376e22c2868",
+        "c69049ee-a08d-452b-a630-c783e11fc923",
+        "6d83ca8a-b872-4335-b24c-1cea2dfe79b2",
+        "15ff7b89-0449-4f81-8fe5-aa5256cd5594"
+      ]
+    },
+    {
+      "label": "after-restart",
+      "retainedMigrations": [
+        "01-domain-contract.sql",
+        "01-local-auth-bootstrap.sql"
+      ]
+    },
+    {
+      "label": "persisted-exact-counts",
+      "projects": 4,
+      "receipts": 4,
+      "created_events": 4
+    },
+    {
+      "label": "HTTP-member-page",
+      "pageIndex": 0,
+      "page": {
+        "items": [
+          {
+            "entity": {
+              "workspaceId": "fb7410fb-37ff-4ed5-8d26-3bb1a4375ee1",
+              "entityId": "project:66e74fb3-17fb-466a-b336-a30598708fc4",
+              "revisionId": "1"
+            },
+            "ownerPrincipalId": "20cc21ed-f543-40b8-9b73-60b903575023",
+            "name": "wp01-independent-list-privacy-20260930-7c31e952-private-0",
+            "visibility": "private",
+            "schemaVersion": 1,
+            "revision": "1",
+            "policyEpoch": "1",
+            "createdAt": "2026-09-30T14:21:09.762Z",
+            "updatedAt": "2026-09-30T14:21:09.762Z"
+          }
+        ],
+        "nextCursor": "f11713c7-f160-46fe-b92e-e57f7867f385"
+      }
+    },
+    {
+      "label": "WS-member-page",
+      "pageIndex": 0,
+      "page": {
+        "items": [
+          {
+            "entity": {
+              "workspaceId": "fb7410fb-37ff-4ed5-8d26-3bb1a4375ee1",
+              "entityId": "project:66e74fb3-17fb-466a-b336-a30598708fc4",
+              "revisionId": "1"
+            },
+            "ownerPrincipalId": "20cc21ed-f543-40b8-9b73-60b903575023",
+            "name": "wp01-independent-list-privacy-20260930-7c31e952-private-0",
+            "visibility": "private",
+            "schemaVersion": 1,
+            "revision": "1",
+            "policyEpoch": "1",
+            "createdAt": "2026-09-30T14:21:09.762Z",
+            "updatedAt": "2026-09-30T14:21:09.762Z"
+          }
+        ],
+        "nextCursor": "bb9aad80-49be-4206-9772-efd357387546"
+      }
+    },
+    {
+      "label": "member-private-detail",
+      "code": "FORBIDDEN",
+      "message": "Request failed"
+    },
+    {
+      "label": "member-create",
+      "code": "FORBIDDEN",
+      "message": "Request failed"
+    },
+    {
+      "label": "forged-owner-body",
+      "code": "INVALID_PAYLOAD",
+      "message": "Request failed"
+    },
+    {
+      "label": "forged-principal-detail",
+      "code": "INVALID_PAYLOAD",
+      "message": "Request failed"
+    },
+    {
+      "label": "nonmember-fresh-handshake",
+      "code": "AUTH_FAILED",
+      "message": "Authentication required"
+    },
+    {
+      "label": "nonmember-established-private-detail",
+      "code": "FORBIDDEN",
+      "message": "Request failed"
+    },
+    {
+      "label": "nonmember-established-list",
+      "code": "FORBIDDEN",
+      "message": "Request failed"
+    },
+    {
+      "label": "forged-workspace-rpc",
+      "code": "WORKSPACE_MISMATCH",
+      "message": "Request failed"
+    }
+  ],
+  "cleanup": {
+    "wsClientsDestroyed": true,
+    "listenerCloseRequested": true,
+    "remainingOwnedSchemas": 0,
+    "accountsRemovedWithSchema": 3,
+    "poolClosed": true,
+    "ownedIssuerStateRemoved": true,
+    "listenerAliveAfterClose": false
+  }
+}

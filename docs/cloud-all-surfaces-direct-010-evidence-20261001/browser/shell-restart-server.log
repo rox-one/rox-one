@@ -1,0 +1,24 @@
+2026-10-01T17:11:30.331Z INFO  [bootstrap] Config artifacts initialized
+2026-10-01T17:11:30.334Z INFO  [bootstrap] Global config found
+2026-10-01T17:11:30.350Z INFO  [session] [browser-pane] setRpcServer called — remote browser bridge is now available
+2026-10-01T17:11:30.383Z INFO  [session] Reinitializing auth for connection: omp (none)
+2026-10-01T17:11:30.383Z INFO  [session] Auth env vars set for connection: omp
+2026-10-01T17:11:30.384Z INFO  [session] Setting up ConfigWatcher for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298 (/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline)
+2026-10-01T17:11:30.401Z INFO  [session] Initialized AutomationSystem for workspace e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:11:30.404Z INFO  [session] Loaded 1 sessions from disk (metadata only)
+2026-10-01T17:11:30.405Z INFO  Rox server listening on ws://127.0.0.1:42223
+[messaging] Disabled via CRAFT_DISABLE_MESSAGING — skipping workspace messaging init
+CRAFT_SERVER_URL=ws://127.0.0.1:42223
+CRAFT_SERVER_TOKEN=[redacted]
+CRAFT_WEBUI_URL=http://0.0.0.0:42223
+2026-10-01T17:11:30.489Z INFO  [bootstrap] Toolchain ensureAll scheduled
+2026-10-01T17:11:37.248Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:11:37.249Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:11:37.255Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:11:37.256Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:11:37.259Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:11:51.290Z INFO  Shutting down...
+2026-10-01T17:11:53.295Z INFO  [session] Cleaning up resources...
+2026-10-01T17:11:53.296Z INFO  [session] Stopped config watcher for /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:11:53.296Z INFO  [session] Disposed AutomationSystem for /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:11:53.297Z INFO  [session] Cleanup complete

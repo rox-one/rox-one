@@ -1,0 +1,510 @@
+{
+  "task_id": "WP-06-preflight",
+  "attempt_id": "ffa06713458e5bb17e48303bb2fe2593",
+  "packet_hash": "3f5a2b129b93c5665ce7b5ac9fa36b184ab499fef7ee096e6b75d2c91c83911a",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-06",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; not feature implementation",
+  "workTier": "bounded-workflow within an already dispatched independent package",
+  "dependencies": ["WP-04"],
+  "inspectionBoundary": {
+    "writtenPaths": ["plans/compound-implementation/worker-reviews/WP-06.json"],
+    "sourceScope": "Six normative affected files, their direct-import contracts/stores/tool runtime, WP-06 specification and its published dependency/completeness clauses. The pool verifier was read only to validate the report contract.",
+    "forbiddenActionsNotPerformed": ["product edits", "test edits", "manifest/progress/shared-file edits", "Git mutations", "builds", "product tests", "native UI", "network operations"],
+    "evidenceBasis": "Working-tree bytes, not an assertion that these bytes equal input HEAD. Root-owned uncommitted wave0 work is preserved. No runtime behavior is claimed verified.",
+    "freshness": "Whole-file hashes identify the inspected versions. The lead must reject or re-inspect references whose hashes change during integration and bind implementation evidence to the wave0 commit. Report verification checks reference hashes, not feature behavior.",
+    "discovery": "Codegraph reported no index for this project; no index was created. Built-in find failed because its judgment backend returned 402; known normative paths were inspected with read/grep instead. No new delegation was needed for this already isolated package preflight."
+  },
+  "dependencyReceiptContract": {
+    "producer": "WP-04",
+    "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "requiredCapabilities": [
+      "Transport-derived principal/workspace authority from the accepted foundation, not a body actor or client-selected workspace",
+      "Atomic command receipt/request hash/idempotency/revision plus transaction outbox",
+      "Durable consumer inbox unique on consumer_id/event_id, leased claim distinct from processed acknowledgement",
+      "Aggregate revision ordering, policy epoch and tombstone fences, plus replay cursor semantics"
+    ],
+    "currentEvidence": "docs/macro-integration/21-implementation-plan.md:65-82 publishes the WP-04 contract and dependencies WP-02/WP-03. Accepted receipts were not supplied or established by this scoped preflight. HandlerDeps.commandGateway currently exposes a PendingCommandsStore, not evidence of an accepted WP-04 transactional domain gateway.",
+    "state": "REQUIRED_RECEIPTS_NOT_ESTABLISHED"
+  },
+  "foundationGates": [
+    {
+      "gate": "Lead wave0 commit and revision-bound accepted dependency handoff",
+      "classification": "execution authorization prerequisite; separate from feature DAG",
+      "evidence": "The dispatch explicitly prohibits implementations before the lead wave0 commit and accepted dependency receipts.",
+      "requiredReceipt": "Lead-provided wave0 revision and WP-04 typed interface/migration/scenario receipts; recheck inspected source hashes against that revision.",
+      "state": "NOT_ESTABLISHED_BY_PREFLIGHT"
+    },
+    {
+      "gate": "WP-02 canonical registry and WP-03 current read authorization/revocation",
+      "classification": "transitive WP-04 foundation capabilities, not additional direct dependencies",
+      "evidence": "21-implementation-plan.md:27-63,65-82; work-packages.json:4937-4962 requires canonical scoped entity FK and policy/tombstone fences. RequestContext:7-11 currently has clientId/workspaceId/webContentsId, no authenticated principal; bindSurfaceContext:31-55 only deduplicates refs/filters a caller-supplied readable set.",
+      "requiredReceipt": "Accepted registry/alias resolver, authenticated acting-principal contract, authoritative read decision and policy epoch/revoke fence usable by WP-06 at read time.",
+      "state": "CAPABILITY_CONTRACT_REQUIRED"
+    },
+    {
+      "gate": "Page/Task producer seams create a completion-order trap",
+      "classification": "hidden integrated-scenario gate; not an added predecessor edge",
+      "evidence": "WP-06 requires new Page/Task search. 21-implementation-plan.md:180-209 places Page production in WP-10, which depends on WP-06 and WP-09; WP-11 Task creation depends on WP-09, which depends on WP-06 at :161-178.",
+      "requiredReceipt": "Lead agrees the typed Page/Task materialization/event extractor ports early, implements WP-06 against real accepted canonical producer interfaces when available, and retains NOT_VERIFIED for the full actual-new-Page/Task scenario until WP-10/WP-11 integration. A synthetic entity fixture cannot replace the live scenario or count as completion.",
+      "state": "INTEGRATION_ORDER_REQUIRES_LEAD_RESOLUTION"
+    },
+    {
+      "gate": "WP-49 editor binding and WP-51 single-writer/revoke fence before Page acceptance",
+      "classification": "published hidden Page foundation gate",
+      "evidence": "21-implementation-plan.md:5 explicitly requires WP-49/WP-51 before Page; :984-1000 and :1020-1036 define their acceptance. WP-06's Page acceptance must not rely on a legacy writer bypass or unfenced materialization.",
+      "requiredReceipt": "Accepted editor/materialized revision interface and single-writer/fenced event semantics before claiming real Page search/revoke acceptance. Do not add WP-10 as a predecessor to WP-06 and create a cycle.",
+      "state": "PAGE_ACCEPTANCE_GATE_PENDING"
+    },
+    {
+      "gate": "WP-50 provenance before shared transcripts/context creates another downstream gate",
+      "classification": "published hidden shared-context gate with cyclic closure risk",
+      "evidence": "21-implementation-plan.md:5 requires WP-50 before shared transcripts/context; :1002-1018 describes source-ref/revision/ACL taint and audience intersection. WP-50 depends on WP-36; WP-36 depends on WP-06 at :736-754. memory.GET_CONTEXT:213-234 falls back to raw whole-file context; knowledge.SNAPSHOT_GET:943-948 returns cached bytes without a source recheck.",
+      "requiredReceipt": "Agree a provenance-compatible source-ref/revision/policy contract now; source-derived reads must always reauthorize. Lead must explicitly sequence shared-context enablement and final acceptance with WP-50, not treat cached files as a safe shortcut or insert a circular dependency.",
+      "state": "SHARED_CONTEXT_ACCEPTANCE_GATE_PENDING"
+    },
+    {
+      "gate": "WP-05 durable offline replay for the mandated offline_queued/reconnect surface",
+      "classification": "sibling capability/integration gate, not direct WP-06 dependency",
+      "evidence": "work-packages.json:4441-4447 requires offline_queued; 21-implementation-plan.md:84-102 assigns durable client queue/rejection/restart behavior to WP-05, also depending on WP-04.",
+      "requiredReceipt": "Use the accepted existing shared queue/cursor adapter; no WP-06-only queue. Actual UI reconnect/revoked replay remains unverified until that capability is integrated.",
+      "state": "OFFLINE_SURFACE_CONTRACT_REQUIRED"
+    },
+    {
+      "gate": "Selected workspace-service database/migrator and composition root",
+      "classification": "runtime/schema foundation gate",
+      "evidence": "WP-06 new-artifact paths were absent in the scoped glob. work-packages.json:4927-4972 specifies uuid/timestamptz, composite FK, additive migration and generated migrator naming. Existing memory/vault indexes use lazy bun:sqlite and disable/fail-soft under Node; this does not establish a shared-service FTS implementation.",
+      "requiredReceipt": "Selected actual database/search dialect, migration runner/order, canonical entity table, shared inbox/outbox schema and service composition registration. PostgreSQL cannot execute SQLite FTS5 DDL; preserve FTS5 only in the explicit standalone adapters.",
+      "state": "SERVICE_FOUNDATION_NOT_ESTABLISHED"
+    },
+    {
+      "gate": "Real changed-surface receipts and cross-cutting completeness integration",
+      "classification": "acceptance gate, separate from implementation start",
+      "evidence": "work-packages.json:4495-4520 and 22-test-plan.md:197-247 require UI/routing/permissions/sharing/mentions/notifications/activity/agent/API/observability/failure/loading/empty/offline coverage, a live surface and caught seeded controls. Mention/notification full behavior is assigned to WP-09/WP-07, not implemented by the search-only files.",
+      "requiredReceipt": "Lead-owned UI/routing and cross-package receipts with matching refs/revisions/ACL; actual runtime/reload/failure observations. If self-host shared runtime is used, obtain its real capability receipt from the service/runtime owner; do not require unrelated LiveKit to implement search.",
+      "state": "FULL_FEATURE_VERIFICATION_PENDING"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/search/contracts.ts",
+    "apps/workspace-service/src/modules/search/commands.ts",
+    "apps/workspace-service/src/modules/search/repository.ts",
+    "tests/macro-integration/wp-06.test.ts",
+    "apps/workspace-service/migrations/06-domain-contract.sql"
+  ],
+  "plannedCodeContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/search/contracts.ts",
+      "proposedSymbols": ["SearchReindexRequestSchema", "SearchQuerySchema", "SearchDocumentDto", "MemoryProvenanceDto", "ProjectionWatermarkDto", "SearchDomainPort", "SearchMaterializationPort"],
+      "change": "Proposed names, not existing symbols. Define strict search.reindex entities array maxItems 1000 and optional minimumRevision string length 1..10000 using the accepted Rox2EntityRef and RoxCommand v2 schemas. Reject unknown actor/body fields. Define bounded actor-scoped query/cursor and watermark DTOs, source refs/revisions/policy epoch and canonical receipt statuses. Ports only, no database/provider I/O. Reuse accepted foundation schemas; do not create competing ref/result types.",
+      "missingPrerequisite": "WP-04 accepted schemas; exact query/watermark shape and comparison semantics require a typed interface decision because WP-06 names these APIs but publishes no detailed domainApiContracts for them."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/search/commands.ts",
+      "proposedSymbols": ["reindex", "search", "getProjectionWatermark", "consumeProjectionEvent"],
+      "change": "Register search.reindex through the accepted policy/idempotency/revision gateway. Derive actor from transport, validate envelope and every entity workspace/namespace, request canonical Page/Task materialization, persist command/job receipt transactionally. Query joins canonical visibility/current policy before returning any title, snippet, ref, count, backlink or memory source. Consume accepted outbox events through the shared durable inbox, with monotonic source revision and tombstone/policy fences. Emit search.indexed/memory.context_updated and report applied_verified only after required projection coverage is observed.",
+      "missingPrerequisite": "WP-04 gateway/inbox/transaction port, WP-03 policy port and Page/Task materialization adapters."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/search/repository.ts",
+      "proposedSymbols": ["upsertProjection", "applyTombstone", "claimEvent", "commitProjectionEvent", "queryAuthorized", "readWatermark"],
+      "change": "Implement derived search_document/search_chunk/memory_provenance/projection_watermark storage using the selected shared database. Reuse foundation command_receipt/outbox/inbox, never duplicate them. Preserve canonical source identity and revision per chunk/provenance ref. Transactionally apply projection plus processed inbox receipt plus contiguous watermark; claims/leases are not processed ACKs. Keep deletion/revision fence even after searchable bytes are removed; duplicate/older updates must not resurrect content. Recover expired leases and expose retry/DLQ state without falsely advancing past a failed event.",
+      "missingPrerequisite": "Selected database/migrator and accepted shared transaction, ordered event cursor and inbox schemas."
+    },
+    {
+      "path": "apps/workspace-service/migrations/06-domain-contract.sql",
+      "proposedSymbols": ["search_document", "search_chunk", "memory_provenance", "projection_watermark"],
+      "change": "Proposed migration identifier only; selected migrator determines the actual filename. Add scoped composite entity FK, schema/revision checks, source revision/policy epoch/deleted_at, chunk/provenance relationships and stable cursor/lookup indexes. Enforce revision/tombstone fences in the repository transaction and reuse UNIQUE(consumer_id,event_id) from the foundation inbox. Backfill only unambiguous aliases/provenance; quarantine ambiguous identity. Choose actual service full-text syntax, not copied SQLite FTS5 DDL. Preserve recent accepted writes on rollback/forward repair.",
+      "missingPrerequisite": "Applied canonical entity/inbox foundation migrations and selected migration tooling."
+    },
+    {
+      "path": "tests/macro-integration/wp-06.test.ts",
+      "proposedSymbols": ["WP-06 authorized Page/Task projection scenarios", "WP-06 tombstone stale-event negative control", "WP-06 crash and receipt recovery scenarios"],
+      "change": "Deterministic fixtures W1, A owner/B member/C outsider, marker PRIVATE_WP-06, seed 20260936. Cover all four criteria, actual trusted-principal boundaries, duplicate/reordered events and process restart before/after projection commit and command reply. Assert canonical IDs/source revisions/receipt uniqueness, current ACL before index update, no denied titles/snippets/counts/provenance, no stale resurrection and contiguous watermark. Keep baseline passing before mutation; stale-update-after-tombstone is the specified control, with an independently injected second variant and unauthorized/dropped/duplicated-event controls.",
+      "missingPrerequisite": "Real service runner/database and accepted producers. Tests and fixture receipts cannot replace live Omnibox/Memory/Knowledge and Page/Task creation/reload evidence."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/server-core/src/handlers/rpc/knowledge.ts",
+      "symbol": "registerKnowledgeHandlers: SEARCH/GET/GET_CONTEXT/GET_BACKLINKS, SNAPSHOT_CREATE/SNAPSHOT_GET, VIEW_RUN and WATCH; registerKnowledgeToolRuntime call",
+      "change": "At :674-702 replace ignored _ctx on shared-domain reads with the accepted trusted principal/authority lookup and delegate canonical Page/Task search/context to the injected SearchDomainPort. Keep explicit standalone provider resolution and credentials. Register domain.search.reindex in the root-owned channel/HTTP composition through the same gateway rather than implementing it as a SiYuan mutation. Recheck source and linked refs on shared snapshot retrieval at :920-948 and view search at :1636-1675; derive provenance server-side rather than accepting args.provenance as authority. WATCH at :1794-1805 must publish authorized revisioned invalidation from accepted outbox/cursor, not treat workspace-wide push as resource authorization. Preserve existing provider error mappings.",
+      "reason": "Current read handlers call provider directly with caller connection/ref, snapshots replay saved bytes, and workspace pushes have no current resource-policy check in this module. Declarations at normative line 98 are not implementation seams.",
+      "integrationOwner": "lead/shared knowledge handler owner",
+      "prerequisite": "WP-04/WP-03 ports; root channel/transport registry and actual renderer ownership must be identified by lead outside this inspection scope."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/memory.ts",
+      "symbol": "registerMemoryHandlers: GET_CONTEXT, GET_PROJECT_MEMORY, LIST_HISTORY, UPDATE_CONTEXT and broadcastChanged",
+      "change": "At :201-236 branch on accepted explicit writer/authority mode before MemoryFileStore reads: shared actor-scoped context comes from provenance-backed authorized projection, never fullBundle on FTS null/zero/error. Preserve current global/personal standalone recency behavior without silently sharing global preferences. At :241-254 and :273-282 apply the same shared source authorization to project/history reads. UPDATE_CONTEXT :258-267 must not become a shared canonical-content writer; use the accepted command boundary for shared IDs. Publish authorized revisioned invalidations/watermark, not unqualified workspace changed events.",
+      "reason": "Raw context/preferences/recent history fallback can leak derived revoked content; current handlers ignore _ctx and have no source-ref/policy information.",
+      "integrationOwner": "lead/shared memory handler owner",
+      "prerequisite": "Trusted principal + explicit standalone/shared authority + provenance/query port; WP-50 sequencing for shared derived artifacts."
+    },
+    {
+      "path": "packages/core/src/rox2/surface-context.ts",
+      "symbol": "SurfaceContextInput, Rox2ContextBinding, bindSurfaceContext, visibleContextEntityRefs, rebaseLiveContext, requiresContextGrant",
+      "change": "Retain pure binding/snapshot/live semantics. Add accepted source provenance/policy epoch/projection watermark fields to the binding contract and mirror them in platform-contract.ts. Binding construction must receive server-authorized scoped refs/revisions; filter denied refs and associated revision/provenance metadata together before serialization. A caller-supplied readable set or requiresContextGrant(read/write)=false is not a resource ACL decision; enforce current policy in domain readers, not by importing service I/O into core. Live rebase cannot retain stale source authorization after revoke/deletion.",
+      "reason": "Current bind only validates nonempty workspace/surface and deduplicates strings; visibleContextEntityRefs filters refs only. Revision metadata can retain denied entity IDs and no epoch/watermark exists.",
+      "integrationOwner": "lead/core contract owner with WP-02/WP-50 owners",
+      "prerequisite": "Accepted canonical context/provenance/policy DTO interface."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2Context.binding and Rox2EntityRef",
+      "change": "Reuse Rox2EntityRef at :233-239, including workspace and account namespace. Extend Rox2Context.binding at :149-155 with agreed typed source provenance, policy epoch and projection coverage; update all relevant pure helpers/callers through the contract owner. Do not equate Rox2CanonicalResult triad at :158 with the operation responseSchema statuses without an explicit accepted mapping.",
+      "reason": "Search/context needs canonical refs and explicit freshness/auth provenance; a second core entity/result model would drift from existing surfaces.",
+      "integrationOwner": "lead/core contract owner",
+      "prerequisite": "WP-04 accepted command/result schema and WP-50 context compatibility decision."
+    },
+    {
+      "path": "packages/server-core/src/services/search.ts",
+      "symbol": "searchSessions and extractSnippetFast",
+      "change": "Preserve session.jsonl ripgrep behavior for explicit standalone sessions. Add an injected shared-domain query adapter/route for Page/Task, using the accepted SearchDomainPort and trusted actor; do not make shared Page/Task search scan arbitrary session directories. For any shared session results, current source authorization must precede title/snippet/count serialization and pagination. Avoid logging raw shared queries/content through ripgrep:start at :205 or command args at :355-356; use correlation/watermark/latency metadata. Keep shared-domain errors distinct from valid empty results.",
+      "reason": "searchSessions :187-390 is session-specific and has no canonical Page/Task extraction, principal, revision, policy or watermark. It materializes snippets/counts before authorization and logs query text. It is not the required search projection.",
+      "integrationOwner": "lead/search service owner",
+      "prerequisite": "Lead-owned Omnibox query route and accepted domain query port; renderer itself was outside allowed source inspection."
+    },
+    {
+      "path": "packages/server-core/src/memory/fts-index.ts",
+      "symbol": "search, openFor, upsertLesson, upsertHistory, upsertContext and removeLesson",
+      "change": "Preserve current rebuildable fail-soft standalone FTS5 and safe MATCH tokenization. Ensure explicit mode dispatch routes shared reads/writes to the accepted durable projection port rather than treating these void/no-op upserts or recency fallback as shared success. Source revision/ACL epoch/provenance must be provided by shared repository DTOs; do not make the local kind/day/rule-key index authoritative or write shared Page/Task text to unqualified context.md.",
+      "reason": "FTS tables :98-101 are keyed by rule/day/kind, not canonical entities; :142-172 returns null on errors and :176-234 silently ignores failures. Those contracts cannot support durable processed ACK/watermark.",
+      "integrationOwner": "lead/memory index owner",
+      "prerequisite": "Explicit authority mode and service projection port."
+    },
+    {
+      "path": "packages/server-core/src/knowledge/vault-index.ts",
+      "symbol": "applySchema, upsertDocument, rebuildInto, queryVaultDocuments, loadSummaries and applyVaultWatchTick",
+      "change": "Preserve local Markdown-as-authority index/recovery. Route shared canonical Page/Task search through the accepted service projection; do not duplicate shared entity rows in the file-path vault authority. Reuse extract/materialization behavior only through a typed adapter with canonical aliases/provenance. All shared summary/title/link/asset/backlink results must authorize source and linked targets before exposure. Local scanner deletion/FTS triggers remain standalone; shared deletion must use accepted monotonic tombstone events and cannot be inferred solely from missing files.",
+      "reason": "Current id is noteIdFromRelativePath(:556-557); schema lacks workspace/revision/policy; rebuildInto removes unseen documents(:624-627), and loadSummaries exposes titles/links/assets(:783-795). VaultTaskHit identifies a Markdown line, not canonical RoxTask.",
+      "integrationOwner": "lead/vault index owner",
+      "prerequisite": "Canonical alias/materialization port and explicit authority mode."
+    },
+    {
+      "path": "packages/server-core/src/knowledge/tool-runtime.ts",
+      "symbol": "KnowledgeToolRuntimeDeps and createKnowledgeToolRuntime.call/search/read/getBacklinks",
+      "change": "Inject the same trusted acting-user/authorized domain query path as RPC for shared search/read/backlinks. Do not resolve shared access solely from first configured global connection or provider credentials. Preserve explicit local provider defaults and KnowledgeError mapping; carry canonical ref/revision/source provenance and watermark in shared responses. No second agent-only retrieval store.",
+      "reason": "Current deps only resolveProvider/listConnections; :60-73 returns provider data without actor/workspace authorization. Fixing RPC alone leaves agent tools bypassing the boundary.",
+      "integrationOwner": "lead/knowledge tool runtime owner with agent integration owner",
+      "prerequisite": "Trusted host session invocation context propagation; an actor field supplied by the model is forbidden."
+    },
+    {
+      "path": "packages/session-tools-core/src/knowledge/runtime.ts",
+      "symbol": "KnowledgeToolRuntime and KnowledgeReadResult",
+      "change": "Agree typed shared domain context/query/receipt DTOs and a trusted host-owned invocation context for search/read/getBacklinks at :46-64. Preserve one process runtime registration for Claude/Pi/OMP; migrate callers via the root owner rather than adding a new per-backend tool runtime. Keep unavailable error behavior when no runtime is registered.",
+      "reason": "Current runtime method args contain no acting principal/workspace policy binding; all backends share this seam so authorization must not be patched in only one backend.",
+      "integrationOwner": "lead/session tool contract owner",
+      "prerequisite": "Agent caller propagation is outside this package's direct-source inspection and must be integrated by the owning worker."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps",
+      "change": "Inject the accepted typed SearchDomainPort and authority/policy lookup through the existing dependency bag. Shared-mode requests must fail unavailable when the service port is missing, not fall through to local stores. Composition root constructs repository/provider adapters. Reuse WP-04 gateway; commandGateway?: PendingCommandsStore at :70-71 is not proof of transaction-outbox acceptance.",
+      "reason": "Handlers currently have no search domain service injection. Direct database construction inside each handler would create inconsistent authority and policy paths.",
+      "integrationOwner": "lead/dependency composition owner",
+      "prerequisite": "Accepted WP-04 service interface and actual root composition location supplied by lead."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext",
+      "change": "Have the foundation owner expose an immutable authenticated principal/authority binding in RequestContext or an accepted trusted lookup keyed by transport context. The transport must construct it; body actor/workspace must never establish authority. WP-06 consumes this contract and checks requested workspace against it. Root owner must update all transport constructors/callers under its ownership.",
+      "reason": "RequestContext currently exposes clientId/workspaceId/webContentsId only; workspace scope is not authenticated resource read permission.",
+      "integrationOwner": "WP-01/WP-03/WP-04 transport foundation owner",
+      "prerequisite": "Accepted authenticated transport contract; no speculative new principal store."
+    },
+    {
+      "path": "packages/server-core/src/knowledge/snapshots-store.ts",
+      "symbol": "KnowledgeContextSnapshotRecord and CreateSnapshotInput",
+      "change": "Extend the existing snapshot envelope with accepted canonical source/provenance revision/policy metadata for shared captures if not already supplied by the WP-50 contract. Keep captured content immutable and owner-private retention; authorization/revalidation occurs before handler/tool serialization on every future retrieval, not by erasing all historic snapshots. Do not create a second snapshot store.",
+      "reason": "Current records identify session/provider/ref/contentHash but get(:119-123) only reads the stored JSON. Cached payload cannot serve as current read permission.",
+      "integrationOwner": "lead/snapshot owner with WP-50 provenance owner",
+      "prerequisite": "WP-50 source-taint/audience contract and alias mapping."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-06 section and foundation ordering paragraph",
+      "change": "After implementation, document exact accepted query/watermark interfaces, authority-mode cutover, producer/event ordering, identified downstream Page/provenance acceptance gates and real receipt links. Keep direct dependencies exactly WP-04 unless lead explicitly revises the normative graph; resolve cycles by distinguishing implementation readiness from integrated completion.",
+      "reason": "Published ordering gives WP-06 Page/context obligations before their downstream producer/provenance packages; declaration discovery is not flow verification.",
+      "integrationOwner": "lead/documentation owner",
+      "prerequisite": "Accepted contract and live integration evidence."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Feature completeness checklist, invariant suites and evidence record",
+      "change": "Attach real WP-06 API/UI/reload/revoke/crash and seeded-control receipts with tested source hashes, schema/actor/ref/policy/watermark details. Document queue/DLQ/reindex recovery and no-unread limitation. Keep infrastructure failures distinct from caught mutations and fixture evidence distinct from runtime receipt.",
+      "reason": "Search/memory privacy and crash acceptance must be independently observable, not inferred from a passing fixture or a report boolean.",
+      "integrationOwner": "lead/test-plan owner",
+      "prerequisite": "Actual post-implementation scenario execution."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "New task/Page searchable and agent-readable after watermark",
+      "currentEvidence": "searchSessions:187-244 searches session.jsonl only; vault queryVaultDocuments:807-811 uses Markdown note IDs; memory.GET_CONTEXT:201-236 reads context/preferences/history. bindSurfaceContext:31-48 carries ref strings/revisions, no source extractor or watermark. No normative WP-06 new files were present in the scoped glob.",
+      "requiredChange": "Implement canonical Page/Task materialization -> durable indexed document/chunks/provenance -> scoped search and agent context -> committed contiguous watermark. Return source refs/revisions/freshness; minimumRevision must mean real coverage, not simply command acceptance. Integrate both existing UI and registered agent tools.",
+      "verification": "Future: create real new Page and Task through authorized ROX, capture canonical IDs/revisions/outbox positions, wait for their projection watermark within the documented isolated ≤10s budget, search distinctive title/body and call deterministic agent context as A/B. Confirm source IDs/revisions and excerpts agree with canonical read-back; C gets no marker/title/count/provenance. Reload surfaces and repeat. Fixture-only is not live acceptance.",
+      "missingPrerequisite": "Wave0 + WP-04 receipts, registry/policy ports, actual Page/Task producer/materialization adapters and live UI/agent routing; downstream sequencing described in foundationGates.",
+      "state": "MISSING_IMPLEMENTATION_AND_LIVE_VERIFICATION"
+    },
+    {
+      "criterion": "revoke before index update prevents snippet leakage",
+      "currentEvidence": "memory.GET_CONTEXT:223-234 falls back to fullBundle; knowledge.SEARCH/GET_CONTEXT:674-693 ignores _ctx; SNAPSHOT_GET:943-948 returns saved bytes; tool runtime:60-73 calls provider without acting user; vault summaries:783-795 expose titles/link metadata without resource-policy inputs. These are scoped code observations, not a runtime exploit claim.",
+      "requiredChange": "Authorize current canonical source and linked refs before any title/snippet/count/cursor/provenance/context serialization, independent of stale index ACL epoch. Fence revoked shared reads/invalidation and exclude denied derived artifacts; no local fallback on shared index failure or no hits. Revalidate cached snapshots/source-tainted context and trusted agent invocation.",
+      "verification": "Future: index PRIVATE_WP-06 for B; pause index consumer; A revokes B and obtains required fence receipt; query before the index processes revoke through Omnibox, Memory, Knowledge, snapshot and agent tool. Assert marker/title/snippet/ref/count/cursor/backlinks/event content absent for B and C, A still reads. Try forged actor/workspace, stale token/socket and allow-all agent. Seed skipped current ACL/cache-only authorization and require this assertion to fail.",
+      "missingPrerequisite": "WP-03 live revoke/policy epoch and trusted principal; WP-51 fence boundary; WP-50 shared artifact provenance enablement contract.",
+      "state": "MISSING_CURRENT_ACL_INTEGRATION_AND_VERIFICATION"
+    },
+    {
+      "criterion": "tombstone disappears",
+      "currentEvidence": "vault documents_ad:328-331 deletes FTS entries after local row deletion; rebuildInto:624-627 removes unseen Markdown files. Memory removeLesson/upsertHistory/upsertContext:195-234 has best-effort deletes. None supplies canonical aggregate tombstone/revision fencing for Page/Task.",
+      "requiredChange": "Consume canonical deletion events atomically, remove searchable chunks/provenance from authorized output, retain monotonic tombstone fence and purge/invalidate live derived context. Reject older replayed upserts and prevent aliases/reindex from resurrecting deleted source content. Check canonical tombstone even before projection catches up.",
+      "verification": "Future: create/index both kinds, delete through real canonical writer, assert absence through search/context/backlinks after watermark and through current-source read gating while lagged; replay older update after tombstone, duplicate delete, restart and reindex, assert still absent and retained deletion revision. Specified mutant: disable fence and apply stale update after tombstone; disappearance assertion must fail.",
+      "missingPrerequisite": "Canonical deletion/materialization events, revision ordering/tombstone state and durable inbox transaction from accepted foundation/producers.",
+      "state": "MISSING_CANONICAL_TOMBSTONE_PROJECTION_AND_VERIFICATION"
+    },
+    {
+      "criterion": "worker crash replay does not lose document",
+      "currentEvidence": "memory FTS upserts:176-234 swallow failure and return void; vault rebuildInto:605-632 uses a local index transaction but no shared inbox/event receipt/watermark. Neither proves post-crash event delivery or persisted command receipt.",
+      "requiredChange": "Lease claims separately from processed status; transactionally commit document/chunks/provenance + inbox processed receipt + gap-free watermark + resulting outbox events. Expired claims replay; duplicates are idempotent; unprocessed failures remain backlog/DLQ and cannot advance verified coverage. Preserve original command receipt on commit-before-reply retry.",
+      "verification": "Future: kill real consumer after claim/before commit, during projection transaction, and after commit/before ACK; restart and replay duplicated/reordered events. Verify all canonical documents and exact revisions remain readable, one consumer receipt per event, no duplicate chunks/provenance, no watermark across a missing event. Also restart command service after receipt commit before reply; same key/payload returns same command/canonical entity/result, altered payload rejects. Seed processed-before-commit or dropped event and require loss/gap assertion to fail.",
+      "missingPrerequisite": "WP-04 transaction/outbox/inbox/idempotency contracts and real restartable service runner/database.",
+      "state": "MISSING_DURABLE_CONSUMER_AND_RECOVERY_VERIFICATION"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "Normative surface is existing Omnibox / Memory / Knowledge (work-packages.json:4438-4448). RPC seams are knowledge.SEARCH/GET_CONTEXT and memory.GET_CONTEXT. Renderer files are not in authorized affected paths/direct imports and were not inspected.",
+      "requiredChange": "Lead UI owner binds the existing surfaces to authorized canonical search/context DTOs and receipts, without creating a second search screen. Preserve Russian t()-based strings, all ten locale keys and existing compact components; render freshness/watermark and all specified states.",
+      "verification": "Future: actual Electron/browser interactions and screenshots/ARIA for Page/Task results, permission removal, loading/empty/error/offline/retry/applied_verified; keyboard navigation and changed visual/font/hover/focus/reduced-motion behavior; reload saved state.",
+      "missingPrerequisite": "Lead identifies actual existing renderer callsites and assigns patch ownership; runtime surface not exercised in preflight.",
+      "state": "MISSING_UI_INTEGRATION_AND_VISUAL_RECEIPTS"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "Rox2EntityRef:233-239 and bindSurfaceContext:31-48 are canonical identity/context seams. searchSessions returns only sessionId; VaultDocumentSummary:59-72 uses local id/path.",
+      "requiredChange": "Return scoped canonical Page/Task refs and revision so existing result navigation/deep links/history/tabs open the correct entity. Resolve aliases through accepted registry, not title/path heuristics; denied targets must not resolve title/content.",
+      "verification": "Future: choose Page/Task hits, verify correct canonical view, deep-link reopen/history/back/reload, two equal titles and cross-workspace aliases; revoked/deleted links fail without metadata leakage.",
+      "missingPrerequisite": "Accepted graph resolver and lead-owned navigation callsites outside scoped source inspection.",
+      "state": "MISSING_CANONICAL_ROUTING_INTEGRATION"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "platform-contract ROX2_ENTITY_KINDS includes page/task; Rox2EntityRef includes workspace/account namespace. VaultTaskHit:82-88 is a document line rather than a canonical task; Memory FTS identity is rule/day/kind.",
+      "requiredChange": "Use accepted registry refs and aliases for all projection/source relationships, composite workspace/entity FK, source revision and schema version. search_document and memory_provenance are derived rows, not new canonical Page/Task stores; quarantine ambiguous imports.",
+      "verification": "Future: identical titles/remote IDs across workspaces/accounts stay distinct; repeat import alias maps to same canonical ID; wrong workspace/ref/kind/schema rejected; source revisions match read-back.",
+      "missingPrerequisite": "WP-02 accepted entity/alias interface and applied migrations.",
+      "state": "EXISTING_REF_SEAM_ONLY_DOMAIN_PROJECTION_MISSING"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "Vault uses SQLite WAL, local transactions and Markdown reconstruction; Memory writes files then best-effort FTS. These preserve local behavior but do not satisfy shared durable command/projection consistency.",
+      "requiredChange": "Apply additive actual migrator-generated schema and shared atomic projection/inbox/watermark transactions. Retain source authority and fences through restart; backfill aliases/provenance and preserve recent accepted writes during repair/rollback.",
+      "verification": "Future: service restart/database reopen, persisted canonical rows/chunks/provenance and same receipt, duplicate unique counts, lagged/deleted/revoked source after recovery; documented additive backfill/quarantine and forward repair read-back.",
+      "missingPrerequisite": "Selected database/migrator and accepted foundation schema.",
+      "state": "MISSING_SHARED_SCHEMA_AND_PERSISTENCE_PROOF"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "WP-06 operation publishes search.reindex HTTP/nativeRpc, strict entities/minimumRevision schema, envelope and errors. Existing knowledge handlers do not contain this domain command; HandlerDeps.commandGateway is a PendingCommandsStore seam only.",
+      "requiredChange": "Use WP-04 gateway for authenticated, idempotent reindex with expectedRevision policy and immutable request hash. Preserve specified queued/reconciling/ambiguous/pending_fence/rejected/unavailable states; never report applied/verified until projection read-back qualifies. Reindex mutates projection, not canonical Page/Task content.",
+      "verification": "Future: same key/payload one receipt/job/result; same key changed payload IDEMPOTENCY_CONFLICT; stale existing aggregate REVISION_CONFLICT; body actor/unknown fields/1001 entities/empty minimumRevision invalid; missing auth, workspace mismatch, unavailable service and pending revoke fence produce defined typed errors.",
+      "missingPrerequisite": "Accepted WP-04 schemas/gateway and root HTTP/RPC registration.",
+      "state": "MISSING_REINDEX_COMMAND_IMPLEMENTATION"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "memory FTS:142-169 caps per-table local results; vault loadSummaries:728-798 loads local metadata; knowledge.SEARCH directly delegates SearchInput. None exposes accepted actor-scoped canonical query/watermark DTOs.",
+      "requiredChange": "Define bounded authorized stable-cursor queries and GetProjectionWatermark in the new contracts; compare canonical source revisions and policy, not cached ACL alone. Filter before pagination/counts, never leak hidden total/title; bind cursor to workspace/query/authorization context and reject forged/stale unauthorized cursors.",
+      "verification": "Future: multiple pages of authorized results, stable order/dedup, limit boundary, empty query semantics, authorized watermark coverage, revoked targets between pages and forged cross-workspace cursor; no denied count or skipped-slot leak.",
+      "missingPrerequisite": "Lead acceptance of detailed query/watermark/cursor interface absent from the published WP-06 operation schema.",
+      "state": "MISSING_TYPED_AUTHORIZED_QUERY_CONTRACT"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "memory.broadcastChanged:77-79 targets workspace/all; knowledge WATCH:1794-1813 pushes changed ref and emits automation event. WP-06 requires transaction outbox, revisioned invalidation and replay cursor.",
+      "requiredChange": "Emit search.indexed/memory.context_updated from accepted outbox only after projection commit; authorized subscriptions carry revision/policy/watermark and resumable cursor. Detect gaps and requery; invalidate revoked/deleted refs immediately at policy boundary, never push copied excerpts to denied audiences.",
+      "verification": "Future: disconnect while updates occur, replay from persisted cursor once, detect skipped event, duplicate event harmless; revoke between enqueue and delivery yields no denied payload; restart subscriber/worker retains coverage.",
+      "missingPrerequisite": "WP-04 outbox/inbox and WP-03 authorized subscription/fence interface.",
+      "state": "MISSING_REVISIONED_AUTHORIZED_REALTIME"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "RequestContext has no principal; handlers often ignore _ctx. requiresContextGrant:93-95 returns false for read/write, which is an execution-grant helper, not canonical resource permission. Normative execution policy says allow-all cannot override ACL.",
+      "requiredChange": "Consume transport-derived authenticated actor and authoritative workspace/resource/action decision for all command/query/context paths, source and linked refs; fail closed on missing actor/port/revoke fence. Retain explicit standalone authority rather than infer sharing from local workspace existence.",
+      "verification": "Future: owner/member/viewer/editor/admin/guest/expired/revoked/outsider matrix, forged body actor/workspace and model-supplied refs, allow-all agent denial and local standalone regression. Permission errors distinct from empty search.",
+      "missingPrerequisite": "WP-01/WP-03 accepted authenticated policy interface through WP-04; shared mode fence.",
+      "state": "MISSING_RESOURCE_ACL_BOUNDARY_INTEGRATION"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "surface binding carries refs/permissionMode, not audience intersection. Knowledge snapshots preserve payload and memory global preferences may be included. Published WP-50 explicitly supplies source taint/audience intersection.",
+      "requiredChange": "Search visibility/context obey explicit grants/inheritance/public-link expiry and every source ref's current policy. Sharing a Page/Task/context/derived snapshot never grants source access implicitly; preserve authorized owner-private historic data without promising retroactive unread.",
+      "verification": "Future: link private source to shared target; B can see permitted target but no source body/title; expired public-link guest and revoked member lose future reads; shared snapshot/summary audience intersection rejects/redacts correctly while A retains private history.",
+      "missingPrerequisite": "WP-03 sharing/public-link policy and WP-50 source-provenance sharing integration.",
+      "state": "MISSING_SHARED_DERIVED_VISIBILITY_INTEGRATION"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "Existing mechanisms are session ripgrep, Memory FTS5 and Vault documents_fts/LIKE with local file identities. SearchUnavailableError exists for missing ripgrep, while Memory/vault commonly return fallback/empty.",
+      "requiredChange": "Use existing standalone mechanisms only in their explicit local mode. Shared Page/Task extractor upsert/delete goes through accepted durable service projection with canonical chunks, source revision, read-time ACL and watermark. Do not build another UI/store or equate backend-unavailable with zero results.",
+      "verification": "Future: title/body/chunk phrases for real Page/Task after watermark, edits remove stale terms, deletion/revoke hide results, no cross-workspace collision, standalone session/vault/memory behavior retained, shared backend outage is typed unavailable.",
+      "missingPrerequisite": "Selected shared search dialect and typed canonical producer materialization ports.",
+      "state": "MISSING_SHARED_SEARCH_PROJECTION"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "vault replaceChildren:507-530 stores parsed local wikilinks/tasks; summaries expose links. The published WP-09 depends on WP-06 and owns canonical source-revision mention extraction/occurrence/recipient behavior.",
+      "requiredChange": "WP-06 exposes authorized canonical refs/source revisions to the existing mention/link resolver and filters linked target metadata. Do not convert a Markdown link or search hit into an implicit grant. Full extraction/edited occurrence/backlink integration remains a WP-09 acceptance handoff, not N/A.",
+      "verification": "Future combined receipt: mention resolution from indexed Page/Task opens authorized canonical target, denied target lacks title/snippet, source revision edit removes stale occurrence/backlink and one target link remains after replay.",
+      "missingPrerequisite": "Accepted WP-02 link adapter and downstream WP-09 scenario receipts; no mention renderer inspection was authorized.",
+      "state": "MISSING_CROSS_PACKAGE_MENTION_RECEIPT"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "WP-06 specifies search.indexed/memory.context_updated, not a standalone notification model. Published WP-07 owns assignment/mention notification dedup and current recipient policy.",
+      "requiredChange": "Projection events integrate with the accepted notification pipeline only under its current audience policy; never create a notification per reindex/chunk or expose copied private snippets. Preserve dedup/seen/done/mute/snooze behavior when Page/Task projection refresh changes linked previews. Full notification behavior requires its owner receipt, not an invented second store.",
+      "verification": "Future combined receipt: duplicate/replayed projection invalidation causes no duplicate attention row; denied/revoked recipient gets no private preview; existing notification seen/done/mute/snooze survives reload while linked result refreshes correctly.",
+      "missingPrerequisite": "WP-07 notification owner interface/receipts and authorized source preview integration.",
+      "state": "MISSING_CROSS_PACKAGE_NOTIFICATION_RECEIPT"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Knowledge WATCH emits provider changes into sessionManager automation. Shared command/outbox causation and aggregate revision belong to WP-04; raw local changed events do not establish canonical activity evidence.",
+      "requiredChange": "Carry commandId/actor/cause/correlation/source revision/policy epoch in shared projection events through existing activity/audit consumers; one logical action on replay, no content copied to unauthorized activity or logs.",
+      "verification": "Future: command -> source event -> index event/context update correlation is traceable with stable refs/revisions; retries do not duplicate activity and C/B after revoke cannot read private excerpts from activity payload.",
+      "missingPrerequisite": "WP-04 event envelope and lead-owned activity/audit consumer receipt.",
+      "state": "MISSING_CANONICAL_ACTIVITY_INTEGRATION"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "registerKnowledgeHandlers:555 registers createKnowledgeToolRuntime. Its search/read/getBacklinks:60-73 share provider resolution across registered host tools but lack an acting user. MemoryFileStore.loadWorkspaceMemory:105-113 assembles raw files for prompts.",
+      "requiredChange": "Use the same authorized query/context DTO and trusted session acting-principal as UI/API, with canonical source refs/revisions/provenance/watermark. Do not inject shared derived bytes via raw file bundle or first global connection fallback. Revalidate on each retrieval/rebase, preserving no-unread limitation for already-delivered owner-private transcripts.",
+      "verification": "Future: deterministic host tool calls in supported backends retrieve the new Page/Task after watermark with source citations; forged actor/allow-all/revoked session cannot retrieve denied data, including cached snapshot/context. No LLM prose judgment substitutes for ref/auth assertions.",
+      "missingPrerequisite": "Trusted host invocation context and WP-50 shared prompt/tool/result taint contract; lead propagates callsites beyond direct import scope.",
+      "state": "MISSING_TRUSTED_AGENT_RETRIEVAL_INTEGRATION"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Normative search.reindex HTTP/native RPC transports are exact. Existing KnowledgeToolRuntime is process-wide for Claude/Pi/OMP per runtime.ts:1-15; its method args are provider-oriented, not authenticated domain DTOs.",
+      "requiredChange": "HTTP POST /v1/workspaces/{workspaceId}/commands/search.reindex and native domain.search.reindex call the identical accepted domain command gateway. Search/watermark/context queries and host/MCP retrieval consume the same policy/result contract; any actor fields in model/client payload are rejected rather than trusted.",
+      "verification": "Future: same logical reindex/query through HTTP/native/registered agent tool yields same canonical entity/revision/receipt/visibility and typed failure codes; subprocess without registered runtime reports unavailable, never fake success; wrong workspace/actor cannot bypass via alternate transport.",
+      "missingPrerequisite": "Lead-owned transport/HTTP/channel registrations and agent/MCP caller propagation outside scoped inspection.",
+      "state": "MISSING_DOMAIN_TRANSPORT_PARITY"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "searchSessions:205 logs query; :355-356 logs ripgrep args; :374-379 logs duration/counts. Normative WP-06 requires commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark, retry/DLQ counters and no raw bodies/transcripts/tokens.",
+      "requiredChange": "Instrument accepted command/consumer/query path with required correlation and revision/epoch/watermark/lag/retry/DLQ metadata. Redact query/content/private refs where necessary; never log raw source bytes/provider tokens. A claimed lease or enqueued job is not a verified indexed watermark.",
+      "verification": "Future: capture command/index/replay/revoke/failure traces with seed and matching IDs; exercise DLQ and verify lag/coverage remain truthful. Assert PRIVATE_WP-06 and raw body/query/transcript/token absent from logs while cause/retry/counters remain observable.",
+      "missingPrerequisite": "Accepted logger/event envelope and actual consumer metrics/DLQ port.",
+      "state": "MISSING_REQUIRED_PRIVACY_SAFE_TELEMETRY"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative tests/macro-integration/wp-06.test.ts absent. work-packages.json:4454-4466,5191-5222 specifies integration, negative-control, persistence-recovery, seed and artifacts; 22-test-plan.md:224-247 defines mutation sensitivity and evidence.",
+      "requiredChange": "Implement all four behavioral scenarios and boundary/ordering/recovery checks; baseline first, specified stale-update-after-tombstone mutant plus unauthorized/dropped/duplicated event controls and independent second variant. Preserve exact seed/smallest failure, source/schema hashes and all attempts; permanent tests must assert consumer-visible invariants.",
+      "verification": "Future runner: bun test tests/macro-integration/wp-06.test.ts; relevant existing package tests; actual browser/Electron scenario harness. Attach typed read-back, IDs/revisions, DB unique row counts, receipts, cursor/watermark, screenshots/ARIA and failure traces. No builds/tests/UI were run by this preflight.",
+      "missingPrerequisite": "Accepted service/producers and runtime runner; real changed-surface receipts after implementation.",
+      "state": "MISSING_TEST_IMPLEMENTATION_AND_RUNTIME_RECEIPTS"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:104-121 publishes scope; 22-test-plan.md:197-247 publishes completeness/evidence. It is not an implemented behavior/runbook receipt.",
+      "requiredChange": "Root documentation owner updates WP-06 plan and test plan with accepted interfaces, source authority, exact watermark semantics/limits, current ACL/no-unread rule, unavailable/error/offline states, reindex/replay/DLQ recovery, migration/cutover and revision-bound evidence. Record downstream completion gates honestly.",
+      "verification": "Future: reconcile documented APIs/states/recovery steps with actual typed read-back and restart/replay/revoke runs; every DoD point links to a real receipt or remains missing.",
+      "missingPrerequisite": "Implemented accepted contracts and scenario evidence; preflight owns no documentation edits.",
+      "state": "MISSING_IMPLEMENTATION_DOCUMENTATION_RECEIPTS"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "SearchUnavailableError exists; session spawn error resolves []; Memory FTS null/empty falls back to fullBundle; vault query returns [] if index unavailable. Normative schema publishes typed domain errors and distinct canonical lifecycle states.",
+      "requiredChange": "Shared paths fail closed with explicit unauthenticated/forbidden/workspace mismatch/payload/revision/idempotency/schema/unavailable/pending-fence errors and retryable/terminal/conflict/reauth/quarantine states. Retain standalone recency fallback only in explicit local mode. Never replace failure with apparent empty/success or raw fallback bytes.",
+      "verification": "Future: stop index/service, corrupt/unavailable projection, pending fence, invalid schema/ref and conflicting command; observe appropriate UI/API/tool states, preserved private draft/receipt and bounded retry/recovery with no denied bytes.",
+      "missingPrerequisite": "Accepted service errors/status adapter and UI failure bindings.",
+      "state": "MISSING_SHARED_FAILURE_STATE_CONTRACT"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "WP-06 requires loading and applied_verified; current query handlers return data/fallback without a projection coverage signal.",
+      "requiredChange": "Expose pending/lagged watermark and refresh/loading separately from valid empty and unavailable. UI can label authorized stale data with source revision; cannot label receipt queued or watermark below minimumRevision as applied_verified.",
+      "verification": "Future: pause consumer after source commit and issue query/reindex; see loading/queued/refresh with real coverage, advance worker and observe authorized result plus applied_verified only after read-back.",
+      "missingPrerequisite": "Accepted watermark comparison/coverage DTO and lead-owned existing surface states.",
+      "state": "MISSING_COVERAGE_AWARE_LOADING"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "Memory.GET_CONTEXT zero matches returns fullBundle, vault unavailable returns [], and session spawn error resolves []. These cannot distinguish valid no matches from denial/unavailable in shared mode.",
+      "requiredChange": "Authorized zero hits is genuinely empty, never a raw bundle fallback. Keep permission_denied/unconfigured/unavailable/pending distinct without leaking denied counts/title; standalone behavior unchanged under explicit local authority.",
+      "verification": "Future: valid no-match query, no entities, forbidden actor, unconfigured service and delayed projection each display/return their own state; no denied metadata/count and no full private context on no hits.",
+      "missingPrerequisite": "Typed query status and surface state integration.",
+      "state": "MISSING_TRUTHFUL_SHARED_EMPTY_STATES"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "WP-06 ui.states includes offline_queued and realtime replay cursor; published WP-05 supplies durable shared client projection/outbox. No such queue is implemented by the six inspected WP-06 source files.",
+      "requiredChange": "Reuse WP-05 accepted durable queue for offline reindex/refresh intent and persisted cursor for projection replay. Shared offline cached content must not acquire current read authorization; revoked queued work rejected/quarantined rather than synced or locally reindexed. No second search-owned queue.",
+      "verification": "Future: disconnect, queue action, restart client, reconnect once, verify same command receipt and projection coverage; revoke while offline, reconnect and confirm rejected/quarantined work plus no future content/snippet. Simulate cursor gap and recover via authorized requery.",
+      "missingPrerequisite": "WP-05 queue/cursor owner integration and current policy/revoke fence.",
+      "state": "MISSING_OFFLINE_AND_RECONNECT_INTEGRATION"
+    },
+    {
+      "criterion": "licensePolicy and verificationGate",
+      "currentEvidence": "work-packages.json:4519-4520 requires BEHAVIOR_REIMPLEMENTATION and no completion without real changed surface/failure/reload. No Macro source/code was copied or network license audit performed.",
+      "requiredChange": "Implement against existing ROX mechanisms/accepted ports; upstream packages only as audited dependencies under exact artifact license policy. Retain implementation/verification/delivery statuses independently and never count this report, declaration list or fixture as feature completion.",
+      "verification": "Future: root license/SBOM owner verifies exact new dependency artifacts if any; all four acceptance and full completeness receipts bind to the delivered code/environment revision with actual live behavior and failure/reload controls.",
+      "missingPrerequisite": "Post-implementation evidence and exact dependency audit if a new dependency is selected.",
+      "state": "PREFLIGHT_ONLY_FULL_GATE_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/server-core/src/services/search.ts", "symbol": "searchSessions", "lineStart": 187, "lineEnd": 390, "sha256": "45e2b553c354df23c719886e2f02c195d66a56977c301fa6cc74b42fa384e259"},
+    {"path": "packages/server-core/src/memory/fts-index.ts", "symbol": "openFor/search/upsertContext", "lineStart": 89, "lineEnd": 235, "sha256": "5636c7684c8dd72252882e2cefac15aa38496a354d9e74713f27a46bce5bcc1b"},
+    {"path": "packages/server-core/src/knowledge/vault-index.ts", "symbol": "applySchema", "lineStart": 213, "lineEnd": 342, "sha256": "7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path": "packages/server-core/src/knowledge/vault-index.ts", "symbol": "rebuildInto", "lineStart": 605, "lineEnd": 632, "sha256": "7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path": "packages/server-core/src/knowledge/vault-index.ts", "symbol": "loadSummaries/queryVaultDocuments", "lineStart": 728, "lineEnd": 812, "sha256": "7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path": "packages/server-core/src/handlers/rpc/memory.ts", "symbol": "registerMemoryHandlers: GET_CONTEXT", "lineStart": 196, "lineEnd": 236, "sha256": "db283eca53a3e1eb63485ed8306847935020cfb1b5bba605803ae1b0db98ca27"},
+    {"path": "packages/server-core/src/handlers/rpc/knowledge.ts", "symbol": "registerKnowledgeHandlers: SEARCH/GET/GET_CONTEXT/GET_BACKLINKS", "lineStart": 673, "lineEnd": 703, "sha256": "31af116347a9189834945bd8d2b4c029eb060416dca73da365096f3a43a9c571"},
+    {"path": "packages/server-core/src/handlers/rpc/knowledge.ts", "symbol": "registerKnowledgeHandlers: SNAPSHOT_CREATE/SNAPSHOT_GET", "lineStart": 919, "lineEnd": 949, "sha256": "31af116347a9189834945bd8d2b4c029eb060416dca73da365096f3a43a9c571"},
+    {"path": "packages/core/src/rox2/surface-context.ts", "symbol": "bindSurfaceContext/visibleContextEntityRefs/rebaseLiveContext/requiresContextGrant", "lineStart": 18, "lineEnd": 96, "sha256": "ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2Context", "lineStart": 143, "lineEnd": 156, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2EntityRef", "lineStart": 232, "lineEnd": 239, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/server-core/src/knowledge/tool-runtime.ts", "symbol": "KnowledgeToolRuntimeDeps/createKnowledgeToolRuntime", "lineStart": 24, "lineEnd": 78, "sha256": "7fb3574194a4f68a60ec61ae37406665674166f4fbb12894c1bfa8e77971cbb3"},
+    {"path": "packages/session-tools-core/src/knowledge/runtime.ts", "symbol": "KnowledgeToolRuntime/registerKnowledgeToolRuntime", "lineStart": 46, "lineEnd": 76, "sha256": "fe52fd5e80775ee0af4c1c945988c44f561549788c8a65621ad8f5131ebf43da"},
+    {"path": "packages/server-core/src/transport/types.ts", "symbol": "RequestContext", "lineStart": 7, "lineEnd": 13, "sha256": "844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path": "packages/server-core/src/handlers/handler-deps.ts", "symbol": "HandlerDeps", "lineStart": 56, "lineEnd": 72, "sha256": "501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path": "packages/server-core/src/memory/MemoryFileStore.ts", "symbol": "MemoryFileStore.writeContext", "lineStart": 54, "lineEnd": 65, "sha256": "9a688e329c5a58a5511fbc97c2aa641b5d752eb6475a795da46cbc4c09628824"},
+    {"path": "packages/server-core/src/memory/MemoryFileStore.ts", "symbol": "MemoryFileStore.loadWorkspaceMemory", "lineStart": 100, "lineEnd": 113, "sha256": "9a688e329c5a58a5511fbc97c2aa641b5d752eb6475a795da46cbc4c09628824"},
+    {"path": "packages/server-core/src/knowledge/snapshots-store.ts", "symbol": "KnowledgeContextSnapshotsStore.create/get", "lineStart": 100, "lineEnd": 124, "sha256": "1bf421b7028f5533a570416a2f5e072e51ffab191ef549d9e3b2e7eefd061caf"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "workPackages[WP-06] dependencies/DoD/transport", "lineStart": 4383, "lineEnd": 4559, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "workPackages[WP-06] migration/newArtifacts", "lineStart": 4927, "lineEnd": 4991, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "foundation ordering", "lineStart": 1, "lineEnd": 7, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-06", "lineStart": 104, "lineEnd": 121, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-09/WP-10/WP-11 producer dependencies", "lineStart": 161, "lineEnd": 218, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-49/WP-50/WP-51/WP-52 foundation gates", "lineStart": 984, "lineEnd": 1055, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "Feature completeness checklist/invariants/evidence decision", "lineStart": 197, "lineEnd": 247, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reads this preflight, retains WP-06 NOT_STARTED/NOT_VERIFIED, and resolves typed query/watermark/materialization/provenance interface handoffs without product edits by this worker.",
+    "implementationStartCondition": "Lead wave0 commit exists and WP-04 accepted typed interface + applied migration/N/A receipt + scenario verification receipt are accepted for the current revision. Re-inspect any changed referenced files before source patches.",
+    "firstCodeActionAfterGate": "Implement the normative search/contracts.ts against accepted canonical ref/command/policy/event interfaces, then additive domain migration and repository transaction/inbox/watermark implementation before command/query adapters. Root owner applies shared patch requests and composition/channel/UI integration, with no second authority/store/surface.",
+    "completionCondition": "All four WP-06 criteria plus every published completeness dimension observed on real authorized Page/Task and Omnibox/Memory/Knowledge/agent paths, current ACL under lag, tombstone stale replay, crash/restart/receipt replay and caught seeded controls. Downstream Page/provenance/mentions/notification receipts remain explicit missing gates until integrated, not N/A or fixture-complete.",
+    "verificationRestrictionForThisWorker": "Only read-only report verifier is allowed now; all described product/API/UI/test scenarios are proposed future verification, not performed."
+  },
+  "risks": [
+    "Root integration can change inspected working-tree bytes; report hashes are not HEAD equality and must be rechecked at acceptance.",
+    "Page production and shared provenance depend downstream on WP-06; adding them as predecessors creates cycles. Lead must distinguish ready implementation contracts from final integrated acceptance, without weakening the Page/Task/agent DoD.",
+    "Memory zero-hit/error recency fallback and immutable cached snapshots can return revoked derived content unless shared reads are separated explicitly and source reauthorization is mandatory.",
+    "Resource IDs/titles/counts/cursors/link previews/provenance can leak even when body snippets are filtered. Authorization must precede metadata serialization and pagination.",
+    "Transport clientId/workspaceId and global provider credentials are not authenticated acting-user authority. RPC-only changes leave process-wide agent tools bypassing ACL.",
+    "The rebuildable SQLite FTS local contracts intentionally swallow failures; using void upsert or claimed lease as processed ACK would lose documents and falsely advance watermark.",
+    "Shared uuid/timestamptz migration semantics and PostgreSQL search dialect differ from existing FTS5. Selected migrator and service schema must be established before SQL is written; no fabricated timestamp filename.",
+    "Raw session search query/args logging and source-derived context export may expose private markers; observability must remain content-free with policy/correlation metadata.",
+    "A watermark based on maximum seen event/revision can hide dropped events. Coverage must be contiguous for the accepted cursor/aggregate semantics and failed events remain pending/DLQ.",
+    "Physical removal of all tombstone evidence permits stale event/reindex resurrection. Retain deletion revision/fence separately from searchable bytes and derived provenance visibility.",
+    "No unread guarantee is possible for bytes already delivered to an authorized owner. Future retrieval/sharing/export must reauthorize; owner-private historical content retention follows accepted provenance policy.",
+    "UI/routing, host invocation propagation and service composition files are outside this worker's authorized source scope; this report requests their integration rather than pretending their actual callsites were inspected.",
+    "The published reindex response status enum and existing Rox2CanonicalResult status triad require an explicit accepted mapping; type names alone do not prove compatibility.",
+    "Full mentions/notifications/sharing/offline acceptance depends on owning packages; a search fixture or this valid preflight cannot certify those capabilities."
+  ]
+}

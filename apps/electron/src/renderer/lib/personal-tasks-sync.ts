@@ -11,11 +11,17 @@ import {
   loadPersonalTaskCache,
   type PersonalTask,
   type PersonalTaskBundle,
+  type PersonalTaskConflict,
+  type PersonalTaskDelete,
+  type PersonalTaskDeleteResult,
   type PersonalTaskKv,
   type PersonalTaskMeta,
   type PersonalTasksMigrateInput,
   type PersonalTasksMigrateResult,
+  type PersonalTaskPutResult,
+  type PersonalTaskWrite,
   type PersonalTasksSnapshot,
+  type VersionedPersonalTask,
 } from '@craft-agent/core/tasks/personal'
 
 /** Verbatim copy of the localStorage blob taken right before the one-time migration. Never deleted. */
@@ -23,8 +29,8 @@ export const PERSONAL_TASKS_PRE_MIGRATION_KEY = 'rox.personal-tasks.v1.pre-migra
 
 export interface PersonalTasksApi {
   personalTasksList(): Promise<PersonalTasksSnapshot>
-  personalTasksPut(tasks: PersonalTask[], meta?: PersonalTaskMeta | null): Promise<{ written: number; rejected: string[] }>
-  personalTasksDelete(ids: string[]): Promise<{ removed: number }>
+  personalTasksPut(writes: PersonalTaskWrite[], meta?: PersonalTaskMeta | null): Promise<PersonalTaskPutResult>
+  personalTasksDelete(deletes: PersonalTaskDelete[]): Promise<PersonalTaskDeleteResult>
   personalTasksMigrate(input: PersonalTasksMigrateInput): Promise<PersonalTasksMigrateResult>
 }
 
@@ -77,6 +83,7 @@ export function isEmptyDiff(diff: PersonalTaskDiff): boolean {
 
 export interface HydrateResult {
   bundle: PersonalTaskBundle
+  revisions: Record<string, number>
   migrated: PersonalTasksMigrateResult | null
   cacheStatus: 'ok' | 'empty' | 'quarantine'
 }
@@ -91,7 +98,7 @@ export interface HydrateResult {
 export async function hydratePersonalTasksFrom(api: PersonalTasksApi, kv: PersonalTaskKv): Promise<HydrateResult> {
   const snapshot = await api.personalTasksList()
   if (snapshot.migration) {
-    return { bundle: bundleFromSnapshot(snapshot), migrated: null, cacheStatus: 'ok' }
+    return { bundle: bundleFromSnapshot(snapshot), revisions: snapshot.revisions, migrated: null, cacheStatus: 'ok' }
   }
   const raw = kv.getItem(PERSONAL_TASKS_STORAGE_KEY)
   const loaded = loadPersonalTaskCache(kv)
@@ -105,16 +112,102 @@ export async function hydratePersonalTasksFrom(api: PersonalTasksApi, kv: Person
     if (parsed?.status === 'ok') bundle = parsed.store.snapshot()
   }
   const migrated = await api.personalTasksMigrate({ bundle, quarantined: loaded.status === 'quarantine' })
-  return { bundle: bundleFromSnapshot(migrated), migrated, cacheStatus: loaded.status }
+  return { bundle: bundleFromSnapshot(migrated), revisions: migrated.revisions, migrated, cacheStatus: loaded.status }
 }
 
-/** Push a diff to the server. Returns false when the RPC failed (the cache still has the change). */
-export async function pushPersonalTaskDiff(api: PersonalTasksApi, diff: PersonalTaskDiff): Promise<boolean> {
+/** An unconfirmed response retains the exact identity and payload for retry. */
+export class PersonalTaskCreationError extends Error {
+  readonly task: PersonalTask
+
+  constructor(task: PersonalTask, cause: unknown) {
+    super('Personal task was not confirmed by native storage', { cause })
+    this.name = 'PersonalTaskCreationError'
+    this.task = structuredClone(task)
+  }
+}
+
+function sameTaskPayload(left: PersonalTask, right: PersonalTask): boolean {
+  const canonical = (task: PersonalTask) => JSON.stringify(task, (_key, value) =>
+    value && typeof value === 'object' && !Array.isArray(value)
+      ? Object.fromEntries(Object.keys(value).sort().map(key => [key, value[key]]))
+      : value)
+  return canonical(left) === canonical(right)
+}
+
+/** Confirm creation against native CAS; an unknown ACK retries the same identity. */
+export async function putPersonalTaskConfirmed(api: PersonalTasksApi, task: PersonalTask): Promise<VersionedPersonalTask> {
   try {
-    if (diff.put.length > 0 || diff.meta) await api.personalTasksPut(diff.put, diff.meta)
-    if (diff.remove.length > 0) await api.personalTasksDelete(diff.remove)
-    return true
+    const receipt = await api.personalTasksPut([{ task, expectedRevision: null }])
+    if (receipt.rejected.length) throw new Error('Native personal task creation was rejected')
+    let record: VersionedPersonalTask | null = null
+    if (receipt.accepted.length === 1 && receipt.conflicts.length === 0) {
+      record = receipt.accepted[0]!
+    } else if (receipt.accepted.length === 0 && receipt.conflicts.length === 1 && receipt.conflicts[0]!.id === task.id) {
+      // Only the identical persisted payload reconciles an unknown create ACK.
+      // A new/different payload never upgrades a stale retry into an overwrite.
+      record = receipt.conflicts[0]!.current
+    }
+    if (!record || record.task.id !== task.id || !Number.isSafeInteger(record.revision) || record.revision < 1
+      || !sameTaskPayload(record.task, task)) {
+      throw new Error('Native personal task creation was not exactly confirmed')
+    }
+    return structuredClone(record)
+  } catch (cause) {
+    throw new PersonalTaskCreationError(task, cause)
+  }
+}
+
+export interface PersonalTaskDiffPushResult {
+  accepted: VersionedPersonalTask[]
+  removed: string[]
+  conflicts: PersonalTaskConflict[]
+  rejected: string[]
+  ok: boolean
+}
+
+/** Apply a snapshot-based diff with the revisions from that exact server snapshot. */
+export async function pushPersonalTaskDiff(
+  api: PersonalTasksApi,
+  diff: PersonalTaskDiff,
+  revisions: Readonly<Record<string, number>>,
+): Promise<PersonalTaskDiffPushResult> {
+  const accepted: VersionedPersonalTask[] = []
+  const removed: string[] = []
+  const conflicts: PersonalTaskConflict[] = []
+  const rejected: string[] = []
+  try {
+    if (diff.put.length > 0 || diff.meta) {
+      const writes: PersonalTaskWrite[] = diff.put.map((task) => ({
+        task,
+        expectedRevision: revisions[task.id] ?? null,
+      }))
+      const result = await api.personalTasksPut(writes, diff.meta)
+      accepted.push(...result.accepted)
+      conflicts.push(...result.conflicts)
+      rejected.push(...result.rejected)
+    }
+    if (diff.remove.length > 0) {
+      const deletes: PersonalTaskDelete[] = []
+      for (const id of diff.remove) {
+        const expectedRevision = revisions[id]
+        if (expectedRevision == null) rejected.push(id)
+        else deletes.push({ id, expectedRevision })
+      }
+      if (deletes.length > 0) {
+        const result: PersonalTaskDeleteResult = await api.personalTasksDelete(deletes)
+        removed.push(...result.removed)
+        conflicts.push(...result.conflicts)
+        rejected.push(...result.rejected)
+      }
+    }
   } catch {
-    return false
+    return { accepted, removed, conflicts, rejected, ok: false }
+  }
+  return {
+    accepted,
+    removed,
+    conflicts,
+    rejected,
+    ok: accepted.length === diff.put.length && removed.length === diff.remove.length && conflicts.length === 0 && rejected.length === 0,
   }
 }

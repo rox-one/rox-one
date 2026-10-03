@@ -1,0 +1,1201 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-30T15:35:37.961Z",
+  "evaluator": "independent GPT6.1Sol Ultra",
+  "decision": "TARGETED_BACKEND_FOUNDATION_VERIFIED",
+  "proposal": {
+    "path": "/tmp/rox-wp48-domain/backend-v3/manifest.json",
+    "sha256": "f10780ca51d1c0e8cd781df645bd43841dd4f71b332a82251bb10ccd7f07c267",
+    "bytes": 7148,
+    "patches": 16
+  },
+  "scope": "Exact WP48 backend v3 foundation bytes in physical outside source fixture. Actual PostgreSQL / protected checker / cryptographic issuer / HTTP / WebSocket; no root source, Git, build or UI writes, no Electron or other active checkouts.",
+  "sourceBindings": [
+    {
+      "path": "apps/workspace-service/migrations/48-license-audit.sql",
+      "expected": "57ed39ed25bf89f429fd38e15f5ed1a226b762d71ba0f7653c447a7bc6a69b91",
+      "fixtureHash": "57ed39ed25bf89f429fd38e15f5ed1a226b762d71ba0f7653c447a7bc6a69b91",
+      "producerHash": "57ed39ed25bf89f429fd38e15f5ed1a226b762d71ba0f7653c447a7bc6a69b91",
+      "patchHash": "37d591b8a556cbf25a30cb1f4a597b69e5992c804d28a434fdacb1629af58903",
+      "expectedPatch": "37d591b8a556cbf25a30cb1f4a597b69e5992c804d28a434fdacb1629af58903",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "57ed39ed25bf89f429fd38e15f5ed1a226b762d71ba0f7653c447a7bc6a69b91",
+        "originalBase": null,
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "apps/workspace-service/src/configuration.ts",
+      "expected": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+      "fixtureHash": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+      "producerHash": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+      "patchHash": "2cdd9cd6187cd902f40e91c6162437ecb97d42a025c46f6b583fb5b90437bc56",
+      "expectedPatch": "2cdd9cd6187cd902f40e91c6162437ecb97d42a025c46f6b583fb5b90437bc56",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+        "originalBase": "fc39c9f4404fbf3b485c47f177a6e3b551933331dc940b73c8d70cc5206a181d",
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "apps/workspace-service/src/http.ts",
+      "expected": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+      "fixtureHash": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+      "producerHash": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+      "patchHash": "5fa7e6d571f6c643187fb2a63c0ae482736c3e03e87aab30b1a1b36fbcd6b5c0",
+      "expectedPatch": "5fa7e6d571f6c643187fb2a63c0ae482736c3e03e87aab30b1a1b36fbcd6b5c0",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+        "originalBase": "461192aff3985fa5c015ce468b08e54cfc1fb60b8d3dabccd016bbdb9cabf57c",
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "apps/workspace-service/src/index.ts",
+      "expected": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+      "fixtureHash": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+      "producerHash": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+      "patchHash": "c309cd8e99adf14996ed6239d91e449b6c6e10fe222d08d7cdec7583cd2bf067",
+      "expectedPatch": "c309cd8e99adf14996ed6239d91e449b6c6e10fe222d08d7cdec7583cd2bf067",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+        "originalBase": "bf390e866e143827ca9e2e67a2e9cf2e514d982e00f3d1d8ddf8a5cdf87b2b96",
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "apps/workspace-service/src/modules/identity/repository.ts",
+      "expected": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+      "fixtureHash": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+      "producerHash": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+      "patchHash": "66a3965fb74c227f1aaeba07788879d854a23dc36e8590673d8ed9cadaa31e26",
+      "expectedPatch": "66a3965fb74c227f1aaeba07788879d854a23dc36e8590673d8ed9cadaa31e26",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+        "originalBase": "9899ca80d645ea243e395debcec2fa9405f64e6e3c945ff706a5e533269e0a6d",
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/commands.ts",
+      "expected": "0b0971dfb6eb4c68cb16396dae4cd864dbb567cc0e4c3930b9bdfeb5c14a3af7",
+      "fixtureHash": "0b0971dfb6eb4c68cb16396dae4cd864dbb567cc0e4c3930b9bdfeb5c14a3af7",
+      "producerHash": "0b0971dfb6eb4c68cb16396dae4cd864dbb567cc0e4c3930b9bdfeb5c14a3af7",
+      "patchHash": "571269e9b0cdc4aa1b994523a4bd0f57c491b44205b323f3586a570889b59da8",
+      "expectedPatch": "571269e9b0cdc4aa1b994523a4bd0f57c491b44205b323f3586a570889b59da8",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "0b0971dfb6eb4c68cb16396dae4cd864dbb567cc0e4c3930b9bdfeb5c14a3af7",
+        "originalBase": null,
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/registry.ts",
+      "expected": "32a0c2ef4b13a098f2606dc9a02551db22e22486d8225586b9636cb583c59b7f",
+      "fixtureHash": "32a0c2ef4b13a098f2606dc9a02551db22e22486d8225586b9636cb583c59b7f",
+      "producerHash": "32a0c2ef4b13a098f2606dc9a02551db22e22486d8225586b9636cb583c59b7f",
+      "patchHash": "ce3273d51e8a1e3f087ade1c0d46b6cf814eec678d5050ea75db8cb4318decdf",
+      "expectedPatch": "ce3273d51e8a1e3f087ade1c0d46b6cf814eec678d5050ea75db8cb4318decdf",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "32a0c2ef4b13a098f2606dc9a02551db22e22486d8225586b9636cb583c59b7f",
+        "originalBase": null,
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/repository.ts",
+      "expected": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+      "fixtureHash": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+      "producerHash": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+      "patchHash": "67228dd52417625ff17a76fe28fa0c3b48e9d9ef298b20fd2bc90a9e8f1f2a64",
+      "expectedPatch": "67228dd52417625ff17a76fe28fa0c3b48e9d9ef298b20fd2bc90a9e8f1f2a64",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+        "originalBase": null,
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "apps/workspace-service/src/server.ts",
+      "expected": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+      "fixtureHash": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+      "producerHash": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+      "patchHash": "9454e3def37ef1441f01b628513362b85bd2b1ca23d94111fcfeef465e952b88",
+      "expectedPatch": "9454e3def37ef1441f01b628513362b85bd2b1ca23d94111fcfeef465e952b88",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+        "originalBase": "b44b1de53867b6d46312e3f350b142ebaa5d1700cc6f7fce3d2e53c875c75621",
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "expected": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "fixtureHash": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "producerHash": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "patchHash": "2595c38ce1ad91d301286d7cec1775f6304402bfa7dc8ef32be76a61e879613d",
+      "expectedPatch": "2595c38ce1ad91d301286d7cec1775f6304402bfa7dc8ef32be76a61e879613d",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+        "originalBase": "cd5c85783eabd35ec0b8963cce2e1ec4fcd87d4d3dce1225bca6a502e9d52ca4",
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "packages/server-core/src/transport/server.ts",
+      "expected": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+      "fixtureHash": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+      "producerHash": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+      "patchHash": "3a70b7ab85ab016bb670e14a275207af0c445739400c9a22c4538538d0289ca4",
+      "expectedPatch": "3a70b7ab85ab016bb670e14a275207af0c445739400c9a22c4538538d0289ca4",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+        "originalBase": "f61389662c1b10024bb8773aaa09b2b6c78c21c3bb136f6b7ed05ffc47e14ea8",
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "expected": "d7da03384d9511f8b78fb027382bcc5f8d7f7199b69c06ec74d13a26c0ca0697",
+      "fixtureHash": "d7da03384d9511f8b78fb027382bcc5f8d7f7199b69c06ec74d13a26c0ca0697",
+      "producerHash": "d7da03384d9511f8b78fb027382bcc5f8d7f7199b69c06ec74d13a26c0ca0697",
+      "patchHash": "ec77304ea18a1c440f1d780c2d12c14e23cd0759bb682cd1b55b3df7dc5d9344",
+      "expectedPatch": "ec77304ea18a1c440f1d780c2d12c14e23cd0759bb682cd1b55b3df7dc5d9344",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "d7da03384d9511f8b78fb027382bcc5f8d7f7199b69c06ec74d13a26c0ca0697",
+        "originalBase": "2c9542094dcb2a8fb4664edf6a597a1e3d7e80eed6a9a84be07671e03c5ec99a",
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "packages/shared/package.json",
+      "expected": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+      "fixtureHash": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+      "producerHash": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+      "patchHash": "e00921f513492e05ca67cc6dd7c09342edc501412ea916597ac7f53a639a3e00",
+      "expectedPatch": "e00921f513492e05ca67cc6dd7c09342edc501412ea916597ac7f53a639a3e00",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+        "originalBase": "ca55daa9dc0ec0342e52b695df2efa247d8fd7e6baab7100434813d9a18a0c09",
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+      "expected": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+      "fixtureHash": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+      "producerHash": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+      "patchHash": "d3e9556c348ce26e2b01358bd98129df3a34cd19306b837de1717593c9512143",
+      "expectedPatch": "d3e9556c348ce26e2b01358bd98129df3a34cd19306b837de1717593c9512143",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+        "originalBase": "7bbbae09fa49763bebddfc57f76b2d43a6c5ca7f32b31772c6c858933b82f265",
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/licenses/contracts.ts",
+      "expected": "ccc60719c7f037e6e2f3d30c471497585ff1ff321ade044217ab82ccb8901ae6",
+      "fixtureHash": "ccc60719c7f037e6e2f3d30c471497585ff1ff321ade044217ab82ccb8901ae6",
+      "producerHash": "ccc60719c7f037e6e2f3d30c471497585ff1ff321ade044217ab82ccb8901ae6",
+      "patchHash": "551f6a003fc4f0b8901684bbd6adb42e786ddb94758a37ba4c3ccd9f266bd56d",
+      "expectedPatch": "551f6a003fc4f0b8901684bbd6adb42e786ddb94758a37ba4c3ccd9f266bd56d",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "ccc60719c7f037e6e2f3d30c471497585ff1ff321ade044217ab82ccb8901ae6",
+        "originalBase": null,
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    },
+    {
+      "path": "tests/macro-integration/wp-48-domain.test.ts",
+      "expected": "87cc9c549e4ffaf2c88c8b02d9ac49abd96dddc0c3e1e97779423f9b163c1618",
+      "fixtureHash": "87cc9c549e4ffaf2c88c8b02d9ac49abd96dddc0c3e1e97779423f9b163c1618",
+      "producerHash": "87cc9c549e4ffaf2c88c8b02d9ac49abd96dddc0c3e1e97779423f9b163c1618",
+      "patchHash": "0ed23d8b4ae33af2682a82c0bdbba9c6ac9631b31927550be94b10b0202038bc",
+      "expectedPatch": "0ed23d8b4ae33af2682a82c0bdbba9c6ac9631b31927550be94b10b0202038bc",
+      "exactCandidateMatch": true,
+      "rootReadback": {
+        "sha256": "87cc9c549e4ffaf2c88c8b02d9ac49abd96dddc0c3e1e97779423f9b163c1618",
+        "originalBase": null,
+        "unchangedBase": false,
+        "exactAppliedCandidate": true
+      }
+    }
+  ],
+  "oracleBindings": [
+    {
+      "name": "wp-48-independent-adversarial.test.ts",
+      "previous": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/tests/macro-integration/wp-48-independent-adversarial.test.ts",
+        "sha256": "cdf8ee20f88d519712fee8389fb749dfd84743226ec90181e3875c154b4686f2",
+        "bytes": 21648
+      },
+      "current": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/tests/macro-integration/wp-48-independent-adversarial.test.ts",
+        "sha256": "9731a0f876f1cadb87e6c36095cc6544c12bdcebc469562f09074396171abd4f",
+        "bytes": 21632
+      },
+      "sameOracleAfterOnlyEvidencePathAndSchemaNormalization": true,
+      "assertionsChanged": false,
+      "assertionSourceLines": [
+        {
+          "line": 85,
+          "source": " expect(identity.status).toBe(200);expect(object(identity.body).principalId).toBe(f.owner.principalId)"
+        },
+        {
+          "line": 86,
+          "source": " const initialList=await f.http(listPath,f.ownerToken);expect(initialList.status).toBe(200)"
+        },
+        {
+          "line": 87,
+          "source": " expect((object(initialList.body).items as unknown[])).toHaveLength(1)"
+        },
+        {
+          "line": 89,
+          "source": " const baseline=await f.http(auditPath,f.ownerToken,command);expect(baseline.status).toBe(200)"
+        },
+        {
+          "line": 90,
+          "source": " const baselineWs=await invoke(DOMAIN_LICENSE_RPC.AUDIT,command);expect(baselineWs.accepted).toBe(true);expect(baselineWs.result).toEqual(baseline.body)"
+        },
+        {
+          "line": 91,
+          "source": " const baselineData=component(object(baseline.body).data);expect(baselineData.evidence?.state).toBe('review_required')"
+        },
+        {
+          "line": 92,
+          "source": " expect(await f.counts()).toEqual({receipts:1,events:1,revision:'1'})"
+        },
+        {
+          "line": 100,
+          "source": "  expect(get.status).toBe(503);expect(wsGet.accepted).toBe(false)"
+        },
+        {
+          "line": 103,
+          "source": "  expect((await f.http(getPath,f.ownerToken)).status).toBe(200)"
+        },
+        {
+          "line": 122,
+          "source": " expect(malformedReplay.status).toBe(503);expect(malformedInbox.code).toBe('PROVIDER_UNAVAILABLE');expect(malformedInbox.persisted?.audit_inbox).toBe(0)"
+        },
+        {
+          "line": 139,
+          "source": " expect(wrongEntityReplay.status).toBe(503)"
+        },
+        {
+          "line": 144,
+          "source": " expect((await f.http(auditPath,f.ownerToken,command)).body).toEqual(baseline.body)"
+        },
+        {
+          "line": 146,
+          "source": " await f.restart();expect((await f.http(f.prefix+'/identity',f.ownerToken)).status).toBe(200)"
+        },
+        {
+          "line": 147,
+          "source": " expect((await f.http(auditPath,f.ownerToken,command)).body).toEqual(baseline.body)"
+        },
+        {
+          "line": 148,
+          "source": " expect(await f.counts()).toEqual({receipts:1,events:1,revision:'1'})"
+        },
+        {
+          "line": 149,
+          "source": " const denied=await f.http(listPath,f.memberToken);expect(denied.status).toBe(403);expect(denied.text).not.toContain('PRIVATE_WP-48')"
+        },
+        {
+          "line": 153,
+          "source": " expect(defects).toEqual([])"
+        }
+      ]
+    },
+    {
+      "name": "wp-48-projection-adversarial.test.ts",
+      "previous": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/tests/macro-integration/wp-48-projection-adversarial.test.ts",
+        "sha256": "ef6daa3a6fb439e970511d30fd245f82ed284e1037cf8a934bee9157da3d2ec8",
+        "bytes": 14044
+      },
+      "current": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/tests/macro-integration/wp-48-projection-adversarial.test.ts",
+        "sha256": "f7963765195a1b3a8dc9a602d93f7ff01de29b001a81d8cd78037643924ed2b6",
+        "bytes": 14047
+      },
+      "sameOracleAfterOnlyEvidencePathAndSchemaNormalization": true,
+      "assertionsChanged": false,
+      "assertionSourceLines": [
+        {
+          "line": 77,
+          "source": " const initial=await f.http(auditPath,f.ownerToken,command);expect(initial.status).toBe(200)"
+        },
+        {
+          "line": 78,
+          "source": " const initialData=component(object(initial.body).data);expect(initialData.evidence?.state).toBe('review_required')"
+        },
+        {
+          "line": 90,
+          "source": " expect(originalReplay.body).toEqual(initial.body)"
+        },
+        {
+          "line": 91,
+          "source": " expect(await f.counts()).toEqual({receipts:1,events:1,revision:'1'})"
+        },
+        {
+          "line": 92,
+          "source": " expect(get.status).toBe(503)"
+        }
+      ]
+    },
+    {
+      "name": "wp-48-resource-independent.test.ts",
+      "previous": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/tests/macro-integration/wp-48-resource-independent.test.ts",
+        "sha256": "ce8aa3fb035d6da1fa0dbecb3d1e5ee90d6724253f3e4c74a6d61a89d56106d3",
+        "bytes": 15316
+      },
+      "current": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/tests/macro-integration/wp-48-resource-independent.test.ts",
+        "sha256": "ce8aa3fb035d6da1fa0dbecb3d1e5ee90d6724253f3e4c74a6d61a89d56106d3",
+        "bytes": 15316
+      },
+      "sameOracleAfterOnlyEvidencePathAndSchemaNormalization": true,
+      "assertionsChanged": false,
+      "assertionSourceLines": [
+        {
+          "line": 79,
+          "source": " const first=await f.http(auditPath,f.ownerToken,command);expect(first.status).toBe(200)"
+        },
+        {
+          "line": 80,
+          "source": " expect(component(object(first.body).data).evidence?.state).toBe('review_required')"
+        },
+        {
+          "line": 103,
+          "source": "  expect(restored.status).toBe(200);expect(restored.body).toEqual(first.body);expect(ws).toEqual(first.body)"
+        },
+        {
+          "line": 104,
+          "source": "  expect(await f.counts()).toEqual({receipts:1,events:1,revision:'1'})"
+        },
+        {
+          "line": 107,
+          "source": "  for(const value of observations.transports){const received=object(value);expect(received.accepted).toBe(false);expect(received.code).toBe('FORBIDDEN');expect(received.privateLabelExposed).toBe(false);expect(received.evidenceExposed).toBe(false)}"
+        }
+      ]
+    }
+  ],
+  "actualRuns": [
+    {
+      "command": "bun test tests/macro-integration/wp-48-independent-adversarial.test.ts",
+      "cwd": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture",
+      "actualExitCode": 0,
+      "passed": 1,
+      "failed": 0,
+      "assertions": 32,
+      "seconds": 2.13,
+      "log": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/execution.log",
+        "sha256": "c156fc4e517135e0f08fff48d1d6c50e9de7c62d294985891cc3ab8f98331d7e",
+        "bytes": 432
+      },
+      "oracle": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/tests/macro-integration/wp-48-independent-adversarial.test.ts",
+        "sha256": "9731a0f876f1cadb87e6c36095cc6544c12bdcebc469562f09074396171abd4f",
+        "bytes": 21632
+      }
+    },
+    {
+      "command": "bun test tests/macro-integration/wp-48-projection-adversarial.test.ts",
+      "cwd": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture",
+      "actualExitCode": 0,
+      "passed": 1,
+      "failed": 0,
+      "assertions": 5,
+      "seconds": 1.485,
+      "log": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/projection-execution.log",
+        "sha256": "e83306d3489b042bdab119471b715b94fddd24f4dadbd17b286582e7572c5ed8",
+        "bytes": 277
+      },
+      "oracle": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/tests/macro-integration/wp-48-projection-adversarial.test.ts",
+        "sha256": "f7963765195a1b3a8dc9a602d93f7ff01de29b001a81d8cd78037643924ed2b6",
+        "bytes": 14047
+      }
+    },
+    {
+      "command": "bun test tests/macro-integration/wp-48-resource-independent.test.ts",
+      "cwd": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture",
+      "actualExitCode": 0,
+      "passed": 1,
+      "failed": 0,
+      "assertions": 14,
+      "seconds": 1.52,
+      "log": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/resource-execution.log",
+        "sha256": "d527876c7e4d30d2b26ba4ca28433725c4e91dc65faf29c683caf47f89d0fbb8",
+        "bytes": 306
+      },
+      "oracle": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/tests/macro-integration/wp-48-resource-independent.test.ts",
+        "sha256": "ce8aa3fb035d6da1fa0dbecb3d1e5ee90d6724253f3e4c74a6d61a89d56106d3",
+        "bytes": 15316
+      }
+    }
+  ],
+  "actualRunSummary": {
+    "separateRuns": 3,
+    "passed": 3,
+    "failed": 0,
+    "assertions": 51,
+    "combinedRunnerNotInvented": true
+  },
+  "defectResolutions": [
+    {
+      "id": "F1",
+      "class": "LIST_TRUST_BINDING_BYPASS",
+      "source": [
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.view",
+          "line": 53,
+          "sourceLine": "  private view(row: ResourceRow, resource: TrustedLicenseResource): LicenseComponent {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.list",
+          "line": 160,
+          "sourceLine": "  async list(actor:AuthenticatedActor,workspaceId:string,limit:number,token?:string) {"
+        }
+      ],
+      "actualVariants": [
+        {
+          "id": "RESOURCE_BINDING_label",
+          "httpGetStatus": 503,
+          "httpListStatus": 503,
+          "wsGetDenied": true,
+          "wsListAccepted": false
+        },
+        {
+          "id": "RESOURCE_BINDING_binding_sha256",
+          "httpGetStatus": 503,
+          "httpListStatus": 503,
+          "wsGetDenied": true,
+          "wsListAccepted": false
+        },
+        {
+          "id": "RESOURCE_BINDING_artifact_digest",
+          "httpGetStatus": 503,
+          "httpListStatus": 503,
+          "wsGetDenied": true,
+          "wsListAccepted": false
+        },
+        {
+          "id": "RESOURCE_BINDING_sbom_digest",
+          "httpGetStatus": 503,
+          "httpListStatus": 503,
+          "wsGetDenied": true,
+          "wsListAccepted": false
+        }
+      ],
+      "status": "VERIFIED_DENY"
+    },
+    {
+      "id": "F2",
+      "class": "DIRECT_EVENTS_INVALID_DIGEST_ACCEPTED",
+      "source": [
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.verifyEvent",
+          "line": 124,
+          "sourceLine": "  async verifyEvent(tx: TransactionSQL, eventId: string): Promise<IdentityDomainEvent> {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.events",
+          "line": 171,
+          "sourceLine": "  async events(actor:AuthenticatedActor,workspaceId:string,resourceId:string,limit:number,token?:string) {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/identity/repository.ts",
+          "sha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+          "bytes": 21668,
+          "relativePath": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "IdentityRepository.consumeNextEvent proof before callback",
+          "line": 313,
+          "sourceLine": "      const event = row.type === 'audit.license_reviewed' ? await this.licenseEvents?.verifyEvent(tx,row.event_id) : this.event(row)"
+        }
+      ],
+      "actual": {
+        "id": "MALFORMED_EVENT_DIGEST",
+        "httpEventStatus": 503,
+        "httpEventBody": {
+          "error": {
+            "code": "PROVIDER_UNAVAILABLE"
+          }
+        },
+        "wsEventsAccepted": false,
+        "wsEventBody": null,
+        "httpReceiptReplayStatus": 503,
+        "inbox": {
+          "code": "PROVIDER_UNAVAILABLE",
+          "observed": [
+            {
+              "type": "workspace.member_joined",
+              "correlationId": "workspace-bootstrap:216a3990-2934-4b44-831b-5bac7fe3e2de",
+              "payload": {
+                "principalId": "f7e72b2a-b233-4df2-8131-cb95a833bd57"
+              }
+            }
+          ],
+          "persisted": {
+            "audit_inbox": 0,
+            "watermark": "1"
+          }
+        }
+      },
+      "status": "VERIFIED_DENY_NO_INBOX_EFFECT"
+    },
+    {
+      "id": "F3",
+      "class": "CORRELATION_NOT_IN_INDEPENDENT_EVENT_PROOF",
+      "source": [
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.retained",
+          "line": 80,
+          "sourceLine": "  private retained(command: RoxCommand<AuditReleaseLicense>, row: ReceiptRow, resource: ResourceRow): LicenseAuditResult {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.verifyEvent",
+          "line": 124,
+          "sourceLine": "  async verifyEvent(tx: TransactionSQL, eventId: string): Promise<IdentityDomainEvent> {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/identity/repository.ts",
+          "sha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+          "bytes": 21668,
+          "relativePath": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "IdentityRepository.consumeNextEvent proof before callback",
+          "line": 313,
+          "sourceLine": "      const event = row.type === 'audit.license_reviewed' ? await this.licenseEvents?.verifyEvent(tx,row.event_id) : this.event(row)"
+        }
+      ],
+      "actual": {
+        "id": "WRONG_VALID_CORRELATION",
+        "originalCommandId": "0f76ea8c-5de9-4e78-923e-4d0a1bdee123",
+        "forgedCorrelation": "6406e7a1-b28b-4420-8943-d85c52611d9c",
+        "httpReceiptReplayStatus": 503,
+        "httpReceiptExact": false,
+        "wsReplayAccepted": false,
+        "wsReceiptExact": false,
+        "httpEventStatus": 503,
+        "httpEventBody": {
+          "error": {
+            "code": "PROVIDER_UNAVAILABLE"
+          }
+        },
+        "inbox": {
+          "code": "PROVIDER_UNAVAILABLE",
+          "observed": [
+            {
+              "type": "workspace.member_joined",
+              "correlationId": "workspace-bootstrap:216a3990-2934-4b44-831b-5bac7fe3e2de",
+              "payload": {
+                "principalId": "f7e72b2a-b233-4df2-8131-cb95a833bd57"
+              }
+            }
+          ],
+          "persisted": {
+            "audit_inbox": 0,
+            "watermark": "1"
+          }
+        }
+      },
+      "status": "VERIFIED_DENY_NO_INBOX_EFFECT"
+    },
+    {
+      "id": "F4",
+      "class": "INBOX_UNBOUND_CANONICAL_RESOURCE_ACCEPTED",
+      "source": [
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.verifyEvent",
+          "line": 124,
+          "sourceLine": "  async verifyEvent(tx: TransactionSQL, eventId: string): Promise<IdentityDomainEvent> {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/identity/repository.ts",
+          "sha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+          "bytes": 21668,
+          "relativePath": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "IdentityRepository.consumeNextEvent proof before callback",
+          "line": 313,
+          "sourceLine": "      const event = row.type === 'audit.license_reviewed' ? await this.licenseEvents?.verifyEvent(tx,row.event_id) : this.event(row)"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/server.ts",
+          "sha256": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+          "bytes": 10411,
+          "relativePath": "apps/workspace-service/src/server.ts",
+          "symbol": "createWorkspaceServer concrete verifier composition",
+          "line": 141,
+          "sourceLine": "  const repository = new IdentityRepository(configuration.database, schema, observability, licenseRepository)"
+        }
+      ],
+      "actual": {
+        "id": "VALID_UUID_UNREGISTERED_RESOURCE",
+        "forgedEntityId": "license-component:00000000-0000-0000-0000-000000000000",
+        "httpReceiptReplayStatus": 503,
+        "inbox": {
+          "code": "PROVIDER_UNAVAILABLE",
+          "observed": [
+            {
+              "type": "workspace.member_joined",
+              "correlationId": "workspace-bootstrap:216a3990-2934-4b44-831b-5bac7fe3e2de",
+              "payload": {
+                "principalId": "f7e72b2a-b233-4df2-8131-cb95a833bd57"
+              }
+            }
+          ],
+          "persisted": {
+            "audit_inbox": 0,
+            "watermark": "1"
+          }
+        }
+      },
+      "status": "VERIFIED_DENY_NO_INBOX_EFFECT"
+    },
+    {
+      "id": "F5",
+      "class": "COHERENT_PROJECTION_EVIDENCE_FORGERY",
+      "source": [
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.readView",
+          "line": 62,
+          "sourceLine": "  private async readView(tx: TransactionSQL, row: ResourceRow, resource: TrustedLicenseResource): Promise<LicenseComponent> {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.retained",
+          "line": 80,
+          "sourceLine": "  private retained(command: RoxCommand<AuditReleaseLicense>, row: ReceiptRow, resource: ResourceRow): LicenseAuditResult {"
+        }
+      ],
+      "actual": {
+        "onlyMutated": [
+          "license_component.evidence",
+          "license_component.audit_digest"
+        ],
+        "httpGetStatus": 503,
+        "httpListStatus": 503,
+        "wsGet": {
+          "deniedCode": "PROVIDER_UNAVAILABLE"
+        },
+        "wsList": {
+          "deniedCode": "PROVIDER_UNAVAILABLE"
+        },
+        "originalReceiptExact": true,
+        "originalReceiptState": "review_required"
+      },
+      "status": "VERIFIED_DENY_ORIGINAL_RECEIPT_PRESERVED"
+    },
+    {
+      "id": "F6",
+      "class": "RESOURCE_READ_REVOKED_DURING_FINAL_IDENTITY_AWAIT_DISCLOSES_PRIVATE_BYTES",
+      "source": [
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/commands.ts",
+          "sha256": "0b0971dfb6eb4c68cb16396dae4cd864dbb567cc0e4c3930b9bdfeb5c14a3af7",
+          "bytes": 6933,
+          "relativePath": "apps/workspace-service/src/modules/licenses/commands.ts",
+          "symbol": "LicenseCommands.assertReadableResponse",
+          "line": 42,
+          "sourceLine": "  async assertReadableResponse(actor: AuthenticatedActor | null | undefined, workspaceId: string, operation: string, body: unknown, result: unknown): Promise<void> {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.assertRead",
+          "line": 144,
+          "sourceLine": "  async assertRead(actor: AuthenticatedActor, workspaceId: string, resourceIds: readonly string[]): Promise<void> {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/http.ts",
+          "sha256": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+          "bytes": 13327,
+          "relativePath": "apps/workspace-service/src/http.ts",
+          "symbol": "HTTP outbound Resource guard",
+          "line": 227,
+          "sourceLine": "    if (licenseRoute && options.licenseResponseGuard) await options.licenseResponseGuard(bound.actor,workspaceId,licenseCommand?'audit':licenseEventSegment?'events':licenseId?'get':'list',body,result)"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/packages/server-core/src/transport/server.ts",
+          "sha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+          "bytes": 46774,
+          "relativePath": "packages/server-core/src/transport/server.ts",
+          "symbol": "WS outbound Resource guard after last identity await",
+          "line": 951,
+          "sourceLine": "      if (registration.beforeResponse) await registration.beforeResponse({ ...ctx, ...(outbound ? { actor: outbound.actor } : {}) }, args ?? [], result)"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/packages/server-core/src/transport/server.ts",
+          "sha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+          "bytes": 46774,
+          "relativePath": "packages/server-core/src/transport/server.ts",
+          "symbol": "WS synchronous serialize after guard",
+          "line": 952,
+          "sourceLine": "      const data = serializeEnvelope(response)"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/server.ts",
+          "sha256": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+          "bytes": 10411,
+          "relativePath": "apps/workspace-service/src/server.ts",
+          "symbol": "registerLicenseHandlers beforeResponse",
+          "line": 100,
+          "sourceLine": "  }, { access: 'authenticatedWorkspace', beforeResponse: async (context, arguments_, result) => {"
+        }
+      ],
+      "actual": [
+        {
+          "transport": "HTTP",
+          "identityRevalidations": 2,
+          "httpStatus": 403,
+          "accepted": false,
+          "code": "FORBIDDEN",
+          "privateLabelExposed": false,
+          "evidenceExposed": false
+        },
+        {
+          "transport": "WS",
+          "identityRevalidations": 2,
+          "accepted": false,
+          "code": "FORBIDDEN",
+          "privateLabelExposed": false,
+          "evidenceExposed": false
+        }
+      ],
+      "originalReceiptAfterReadRestore": {
+        "http": 200,
+        "originalHttpReceiptExact": true,
+        "originalWsReceiptExact": true,
+        "counts": {
+          "receipts": 1,
+          "events": 1,
+          "revision": "1"
+        }
+      },
+      "negativeControl": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v2-resource-revocation-addendum.json",
+        "sha256": "c95db8e9ec907266dc581adf5f01e5a93f6d2ef899de40b33b5054e4f9849112",
+        "bytes": 5151
+      },
+      "status": "VERIFIED_DENY_ORIGINAL_RECEIPT_PRESERVED"
+    }
+  ],
+  "positiveControls": {
+    "baselineAndActualPoolListenerRestart": [
+      {
+        "id": "BASELINE",
+        "identityStatus": 200,
+        "httpAudit": 200,
+        "wsReceiptExact": true,
+        "evidenceState": "review_required",
+        "counts": {
+          "receipts": 1,
+          "events": 1,
+          "revision": "1"
+        }
+      },
+      {
+        "id": "NEGATIVE_CONTROL_DIGEST_RETAINED_AND_INBOX_DENY",
+        "httpReceiptReplayStatus": 503,
+        "inboxCode": "PROVIDER_UNAVAILABLE",
+        "persistedAuditInbox": 0
+      },
+      {
+        "id": "RESTORED_RESTART",
+        "originalReceiptExact": true,
+        "currentIdentityPreserved": true,
+        "counts": {
+          "receipts": 1,
+          "events": 1,
+          "revision": "1"
+        },
+        "memberDenied": 403
+      }
+    ],
+    "projectionReceipt": {
+      "http": 200,
+      "exactOriginalReceipt": true,
+      "evidenceState": "review_required"
+    },
+    "resourceGrantRestoredAtNewPolicyEpoch": {
+      "http": 200,
+      "originalHttpReceiptExact": true,
+      "originalWsReceiptExact": true,
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    }
+  },
+  "sourceReview": {
+    "protectedRegistryCheckerInputBytes": {
+      "source": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/registry.ts",
+        "sha256": "32a0c2ef4b13a098f2606dc9a02551db22e22486d8225586b9636cb583c59b7f",
+        "bytes": 14759,
+        "relativePath": "apps/workspace-service/src/modules/licenses/registry.ts",
+        "symbol": "TrustedLicenseRegistry.evaluate",
+        "line": 120,
+        "sourceLine": "  async evaluate(row: TrustedLicenseResource): Promise<LicenseEvidence> {"
+      },
+      "assessment": "Protected owner-only registry/build receipts; strict bounded references; fixed Bun/checker/module hashes; actual artifact and input hashes before and after checker; no executable or approval payload from client."
+    },
+    "casActorReadWriteAction": {
+      "source": [
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.membership",
+          "line": 38,
+          "sourceLine": "  private async membership(tx: TransactionSQL, actor: AuthenticatedActor, workspaceId: string): Promise<Membership> {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.audit",
+          "line": 90,
+          "sourceLine": "  async audit(actor: AuthenticatedActor, input: RoxCommand<AuditReleaseLicense>): Promise<LicenseAuditResult> {"
+        }
+      ],
+      "assessment": "Live session/member locks; owner Resource READ + WRITE + ACTION; Resource FOR UPDATE; expectedRevision CAS; scoped command/idempotency advisory locks; fresh session and Resource proof after actual checker I/O."
+    },
+    "retainedReceiptIdentity": {
+      "source": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+        "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+        "bytes": 26508,
+        "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+        "symbol": "LicenseRepository.retained",
+        "line": 80,
+        "sourceLine": "  private retained(command: RoxCommand<AuditReleaseLicense>, row: ReceiptRow, resource: ResourceRow): LicenseAuditResult {"
+      },
+      "assessment": "Historical result reconstructed from original audited policy epoch, evidence, timestamp, event and receipt IDs with original canAudit=true; current outbound READ checked separately. Exact retained results verified after actual restart and after READ revoke/restore with newer policy epoch."
+    },
+    "eventInboxPrivacy": {
+      "source": [
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.verifyEvent",
+          "line": 124,
+          "sourceLine": "  async verifyEvent(tx: TransactionSQL, eventId: string): Promise<IdentityDomainEvent> {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+          "sha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+          "bytes": 26508,
+          "relativePath": "apps/workspace-service/src/modules/licenses/repository.ts",
+          "symbol": "LicenseRepository.events",
+          "line": 171,
+          "sourceLine": "  async events(actor:AuthenticatedActor,workspaceId:string,resourceId:string,limit:number,token?:string) {"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/modules/identity/repository.ts",
+          "sha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+          "bytes": 21668,
+          "relativePath": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "IdentityRepository.consumeNextEvent proof before callback",
+          "line": 313,
+          "sourceLine": "      const event = row.type === 'audit.license_reviewed' ? await this.licenseEvents?.verifyEvent(tx,row.event_id) : this.event(row)"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/server.ts",
+          "sha256": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+          "bytes": 10411,
+          "relativePath": "apps/workspace-service/src/server.ts",
+          "symbol": "createWorkspaceServer concrete verifier composition",
+          "line": 141,
+          "sourceLine": "  const repository = new IdentityRepository(configuration.database, schema, observability, licenseRepository)"
+        }
+      ],
+      "assessment": "Shared concrete durable proof before direct event serialization or generic consumer effect. Receipt Resource selection prevents changed payload ref from silently escaping direct event audit. Corrupt event variants commit no audit inbox row and leave membership-only watermark."
+    },
+    "responseBoundary": {
+      "source": [
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/apps/workspace-service/src/http.ts",
+          "sha256": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+          "bytes": 13327,
+          "relativePath": "apps/workspace-service/src/http.ts",
+          "symbol": "HTTP outbound Resource guard",
+          "line": 227,
+          "sourceLine": "    if (licenseRoute && options.licenseResponseGuard) await options.licenseResponseGuard(bound.actor,workspaceId,licenseCommand?'audit':licenseEventSegment?'events':licenseId?'get':'list',body,result)"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/packages/server-core/src/transport/server.ts",
+          "sha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+          "bytes": 46774,
+          "relativePath": "packages/server-core/src/transport/server.ts",
+          "symbol": "WS outbound Resource guard after last identity await",
+          "line": 951,
+          "sourceLine": "      if (registration.beforeResponse) await registration.beforeResponse({ ...ctx, ...(outbound ? { actor: outbound.actor } : {}) }, args ?? [], result)"
+        },
+        {
+          "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/packages/server-core/src/transport/server.ts",
+          "sha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+          "bytes": 46774,
+          "relativePath": "packages/server-core/src/transport/server.ts",
+          "symbol": "WS synchronous serialize after guard",
+          "line": 952,
+          "sourceLine": "      const data = serializeEnvelope(response)"
+        }
+      ],
+      "assessment": "Specific Resource guard occurs after last awaited identity refresh and before synchronous serialization/send; demonstrated by real SQL revocation at that exact await. No claim of a global atomic network/DB policy snapshot."
+    }
+  },
+  "artifacts": [
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/input-receipt.json",
+      "sha256": "ce8eb2b6b18444a10973da977c21d7bead6fe456994f7950a3dcc992ff21d0bc",
+      "bytes": 5194
+    },
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/observations.json",
+      "sha256": "713b2480ce52033b7512b0c3d1523b56c067145da156607b273be061432b8e19",
+      "bytes": 4704
+    },
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/projection-observations.json",
+      "sha256": "04942867833b6af8d0e421a9e6edbe247e0e0dc3c1eab38c663b94e059472fc8",
+      "bytes": 1432
+    },
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/v3/resource-observations.json",
+      "sha256": "1b1bb51c029300c23873edf356836a0cfa524388f74c3d9c3b6a822dda1acb8f",
+      "bytes": 1012
+    },
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/resource-v2-negative-observations.json",
+      "sha256": "6909dd7f67986221095fda811347e0855dceba50a2c9e92aab2dada78c79d453",
+      "bytes": 3877
+    },
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/observations.json",
+      "sha256": "b05223704c18773ad9ea6640127fdafa92ff2d8700bb3d097a4e6f4cb12fcf41",
+      "bytes": 52501
+    },
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/projection-observations.json",
+      "sha256": "b8895514760a78868fc7c1f8f151c9394342aafbfabab4b4c1de681dadf8a0d4",
+      "bytes": 8180
+    }
+  ],
+  "cleanup": {
+    "recordedAt": "2026-09-30T15:35:37.957Z",
+    "schema": "wp48_93c1d8cff4e7",
+    "soleOwnedSchemaReusedSequentially": true,
+    "remainingOwnedSchemas": 0,
+    "listeners": [
+      {
+        "port": 52715,
+        "open": false
+      },
+      {
+        "port": 52734,
+        "open": false
+      },
+      {
+        "port": 52802,
+        "open": false
+      },
+      {
+        "port": 53860,
+        "open": false
+      },
+      {
+        "port": 53980,
+        "open": false
+      },
+      {
+        "port": 63909,
+        "open": false
+      },
+      {
+        "port": 63939,
+        "open": false
+      },
+      {
+        "port": 65134,
+        "open": false
+      }
+    ],
+    "privateDirectories": [
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/v3/observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-ZCE0dI",
+        "removed": true
+      },
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/v3/projection-observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-qyenqu",
+        "removed": true
+      },
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/v3/resource-observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-n92Qab",
+        "removed": true
+      },
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/resource-v2-negative-observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-bUkJ9z",
+        "removed": true
+      },
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-O4TnXV",
+        "removed": true
+      },
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/projection-observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-OWEb7E",
+        "removed": true
+      }
+    ]
+  },
+  "failureHistoryPreserved": [
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/v2-review-report.json",
+      "sha256": "13069b30bb973b67b6caeed39aba9c94320a4ca1cc0ff73ea3e3467617ed9fbc",
+      "bytes": 17542
+    },
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/v2-projection-addendum.json",
+      "sha256": "3459b90860d2bda3ac3cf7ffa09b92b0339a37771fae5c813207564dd2771dff",
+      "bytes": 3526
+    },
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/v2-resource-revocation-addendum.json",
+      "sha256": "c95db8e9ec907266dc581adf5f01e5a93f6d2ef899de40b33b5054e4f9849112",
+      "bytes": 5151
+    }
+  ],
+  "producerEvidence": {
+    "actualTestLog": {
+      "path": "/tmp/rox-wp48-domain/backend-v3-sealed-tests.log",
+      "sha256": "62b35b75b64fd76f20c6d39035e3809320c35b3fd9e788d4f59d5c6c720744ac",
+      "bytes": 2140
+    },
+    "observedLogSummary": {
+      "passed": 17,
+      "failed": 0,
+      "assertions": 146,
+      "seconds": 26.01
+    },
+    "featureTypeScript": {
+      "log": {
+        "path": "/tmp/rox-wp48-domain/backend-v3-feature-ts-final.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "exitZeroReportedByProducer": true,
+      "emptyLogAloneNotExitProof": true
+    }
+  },
+  "dependencyFixture": {
+    "physicalSourceOnly": true,
+    "dependencySymlink": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/node_modules",
+    "target": "/Users/t/Projects/rox-one-compound-implementation/node_modules",
+    "fullToolchainClone": false
+  },
+  "programReadback": {
+    "progress": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/plans/compound-implementation/progress.json",
+      "sha256": "4a29c85603fc7d7920b8b858b9ec58d0875443193fd14b652ad59a1a4599c995",
+      "bytes": 101181
+    },
+    "packageCount": 143,
+    "stateCounts": {
+      "ROOT_INTEGRATION": 7,
+      "NOT_STARTED": 130,
+      "IMPLEMENTATION_RUNNING": 6
+    },
+    "untouchedByEvaluator": true
+  },
+  "remainingAcceptance": "Parent owns root integration and compilation/regression gates against integrated bytes. Native WP48 acceptance and full normative WP48 closure are outside this foundation review.",
+  "legalApproval": false,
+  "wp48Complete": false,
+  "nativeAcceptance": false,
+  "sourceCheckoutWritten": false,
+  "oldArtifactsRewritten": false
+}

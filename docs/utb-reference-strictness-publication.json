@@ -1,0 +1,67 @@
+{
+  "observedAt": "2026-09-30T14:58:51.229Z",
+  "url": "https://github.com/rox-one/rox-one/pull/1318",
+  "number": 1318,
+  "draft": true,
+  "state": "open",
+  "sourceRevision": "4ba5f6d24cac480361fe0f8c3dede73687751ef4",
+  "observedRemoteHead": "4ba5f6d24cac480361fe0f8c3dede73687751ef4",
+  "headBranch": "fix/utb-reference-strictness-20260930",
+  "baseRevision": "a428eb42c5681adb15d97dcacc88ce45cef7e7a4",
+  "baseBranch": "feat/unified-tables-baserow-20260930",
+  "sourceDigest": "c45ecf487a2e2e5998e211de83f8fa9cc68952beb6f952e8172595c4d5274401",
+  "sourceFiles": [
+    {
+      "path": "packages/core/src/bases/table-surface.ts",
+      "sha256": "c168ff3086c9655fb3cbef671c1228c17974eb6a7304a10ee690562ab5b473ad",
+      "githubBlob": "9326f85cb82be14b8ae9433f50a941914c5b8909",
+      "remoteBytesMatch": true
+    },
+    {
+      "path": "packages/core/src/bases/surface-capabilities.ts",
+      "sha256": "b39394e48e09675f61ffc9bd0f075c14bcef16a373a2e31d9a1524d5c44bf982",
+      "githubBlob": "8d5c3a591bc7f6aad74c9491c270430f1f917d92",
+      "remoteBytesMatch": true
+    },
+    {
+      "path": "packages/core/src/bases/__tests__/programmatic-boundary.test.ts",
+      "sha256": "3656336f4eee8af3b9ca41a7a5b978d4997f86fdcc429f56f102c5dbad3432d2",
+      "githubBlob": "e50d98c546ff185f79ba687984db7887810deb55",
+      "remoteBytesMatch": true
+    }
+  ],
+  "remoteGitTreeMatchesLocal": true,
+  "originalFeatureHeadUnchanged": true,
+  "bodyMatchesExactAuthorizedText": true,
+  "bodyNormalizedSha256": "005d39c428e0e30bb2e0c8d6f7b31399a13be626bfe9c4fc368628eb2bdb0e2a",
+  "signedFooterPresent": false,
+  "checks": [
+    {
+      "name": "validate",
+      "workflow": "CI Validate Alias",
+      "status": "QUEUED",
+      "conclusion": ""
+    },
+    {
+      "name": "Vercel",
+      "workflow": null,
+      "status": "FAILURE",
+      "conclusion": null,
+      "description": "Account is blocked."
+    },
+    {
+      "name": "Vercel Agent Review",
+      "workflow": "",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    }
+  ],
+  "acceptance": "delivered bounded strictness repair; no merge/issue closure/full UTB/native acceptance",
+  "nativeProduct": "not run",
+  "fullCoreBaselineDiagnostics": 13,
+  "independentReviewSha256": "3e8dc9bdbd2cbe0412fa2f77d28a464a9d5f1882c84c22f0d998775ed3971021",
+  "publishedAtSourceOnly": true,
+  "automaticFooterRemoved": true,
+  "removedFooterBytes": 1478,
+  "signedFooterArchived": false
+}

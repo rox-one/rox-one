@@ -696,6 +696,36 @@ describe('ROX2 platform contract', () => {
     expect(unsupported).toEqual({ ok: false, code: 'unsupported-version', preserved: future })
     expect(parseRox2TypedRecord({ schemaVersion: 1, kind: 'note', system: { id: 'n1', workspaceId: 'ws', displayName: 'x', updatedAt: Number.NaN } }).ok).toBe(false)
   })
+
+  test('unknown envelope fields survive parse and serialized reload', () => {
+    const parsed = parseRox2TypedRecord({
+      schemaVersion: 1, kind: 'note',
+      system: { id: 'note-1', workspaceId: 'workspace-a', displayName: 'Note', updatedAt: 1 },
+      properties: { body: 'native bytes' },
+      unknownFields: { providerExtension: { id: 'remote-1' } },
+      futurePolicy: { denyExport: true },
+    })
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) throw new Error('expected readable envelope')
+    const reloaded = parseRox2TypedRecord(JSON.parse(JSON.stringify(parsed.record)))
+    expect(reloaded.ok).toBe(true)
+    if (!reloaded.ok) throw new Error('expected reloaded envelope')
+    expect(reloaded.record.unknownFields).toEqual({
+      providerExtension: { id: 'remote-1' },
+      futurePolicy: { denyExport: true },
+    })
+  })
+
+  test('invalid structured fields are quarantined instead of silently replaced', () => {
+    for (const fields of [{ properties: ['do not erase'] }, { unknownFields: 42 }]) {
+      const raw = {
+        schemaVersion: 1, kind: 'note',
+        system: { id: 'note-1', workspaceId: 'workspace-a', displayName: 'Note', updatedAt: 1 },
+        ...fields,
+      }
+      expect(parseRox2TypedRecord(raw)).toEqual({ ok: false, code: 'invalid', preserved: raw })
+    }
+  })
 })
 
 describe('ROX2-078..080 GraphqlSoupDocument list/read/act', () => {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import type { LocalMeeting } from '../../../../shared/meetings-local'
 import {
   activeSegmentIndex,
+  buildSummaryPrompt,
   filterSegments,
   formatDuration,
   groupLocalMeetings,
@@ -59,13 +60,42 @@ describe('local meetings view model', () => {
     expect(formatDuration(3_723_000)).toBe('1:02:03')
   })
 
-  it('parses the generated summary block', () => {
-    expect(parseSummaryExtraction({ summary: 'Итог', decisions: [{ title: 'Делаем', who: ['A', 3] }, { why: 'no title' }], actions: ['Сделать X', { text: 'Y' }, ''] })).toEqual({
+  it('keeps only transcript-backed summary items and rejects unknown or uncited evidence', () => {
+    expect(parseSummaryExtraction({
       summary: 'Итог',
-      decisions: [{ title: 'Делаем', why: '', who: ['A'] }],
-      actions: ['Сделать X', 'Y'],
+      summarySourceSegmentIds: ['s0', 'outside'],
+      decisions: [
+        { title: 'Делаем', who: ['A', 3], sourceSegmentIds: ['s0', 'outside'] },
+        { title: 'Без ссылки', sourceSegmentIds: ['outside'] },
+      ],
+      actions: [
+        { text: 'Сделать X', sourceSegmentIds: ['s1'] },
+        { text: 'Без ссылки', sourceSegmentIds: [] },
+      ],
+      questions: [{ text: 'Что дальше?', sourceSegmentIds: ['s1', 'outside'] }],
+    }, ['s0', 's1'])).toEqual({
+      summary: 'Итог',
+      summarySourceSegmentIds: ['s0'],
+      decisions: [{ title: 'Делаем', why: '', who: ['A'], sourceSegmentIds: ['s0'] }],
+      actions: [{ text: 'Сделать X', sourceSegmentIds: ['s1'] }],
+      questions: [{ text: 'Что дальше?', sourceSegmentIds: ['s1'] }],
     })
-    expect(parseSummaryExtraction({})).toBeNull()
-    expect(parseSummaryExtraction([1])).toBeNull()
+    expect(parseSummaryExtraction({
+      summary: 'Без источника',
+      summarySourceSegmentIds: ['missing'],
+      decisions: [{ title: 'Нет ссылки', sourceSegmentIds: [] }],
+    }, ['s0'])).toBeNull()
+    expect(parseSummaryExtraction({}, ['s0'])).toBeNull()
+    expect(parseSummaryExtraction([1], ['s0'])).toBeNull()
+  })
+
+  it('supplies stable transcript segment IDs and timecodes to summary generation', () => {
+    const prompt = buildSummaryPrompt({
+      title: 'Планирование',
+      participants: [],
+      language: 'ru',
+      segments: [{ id: 'segment-a', startMs: 62_000, endMs: 64_000, text: 'Назначить встречу' }],
+    })
+    expect(prompt).toContain('[segmentId=segment-a 1:02–1:04] Назначить встречу')
   })
 })

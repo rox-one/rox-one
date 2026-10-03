@@ -13,7 +13,7 @@ export type WakeListenDecision =
   | { ok: false; reason: 'disabled' | 'consent-required' }
 
 export function usesCloudStt(engine: SttEngine): boolean {
-  return engine === 'cloud-rox' || engine === 'cloud-deepgram'
+  return engine === 'cloud-rox'
 }
 
 /** Cloud engines upload only after explicit ASR consent. Local never leaves the machine. */

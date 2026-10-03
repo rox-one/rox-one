@@ -41,8 +41,10 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = true }
   const frameRef = useRef(0)
   const trackerRef = useRef(createNativeSurfaceTracker())
   const [removed, setRemoved] = useState(false)
+  const [pageVisible, setPageVisible] = useState(() => document.visibilityState === 'visible')
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
   const isFocused = panelId === undefined || focusedPanelId === panelId
+  const surfaceFocused = isFocused && pageVisible
 
   const syncBounds = useCallback(() => {
     const tracker = trackerRef.current
@@ -83,9 +85,15 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = true }
   }, [])
 
   useEffect(() => {
-    trackerRef.current.setFocused(isFocused)
+    const onVisibilityChange = () => setPageVisible(document.visibilityState === 'visible')
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [])
+
+  useEffect(() => {
+    trackerRef.current.setFocused(surfaceFocused)
     scheduleSync()
-  }, [isFocused, scheduleSync])
+  }, [surfaceFocused, scheduleSync])
 
   useEffect(() => {
     trackerRef.current.setRemoved(removed)

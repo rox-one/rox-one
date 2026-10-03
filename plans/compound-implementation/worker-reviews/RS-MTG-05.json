@@ -1,0 +1,409 @@
+{
+  "task_id": "RS-MTG-05-preflight",
+  "attempt_id": "a522f7d158a4f954598947b68b8f777c",
+  "packet_hash": "877f2d579d27a683572473da6784a71c5ddb3a36362e94921317f4338a4175db",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-MTG-05",
+  "featureComplete": false,
+  "mode": "inspect-only; owned preflight artifact, not feature implementation",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-MTG-01"],
+  "evidenceScope": {
+    "spec": "docs/rox-suite/published/RS-MTG-05.md",
+    "specSha256": "58622d94dbed0985bea4cc57f88f9a9808a0df3b24782a107650803d263a82f8",
+    "record": "plans/rox-suite/issues.json:485-517",
+    "recordFileSha256": "5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c",
+    "snapshot": "Whole-file hashes describe the inspected working-tree files, not an assertion that all bytes equal input HEAD. Root-owned uncommitted wave0 work is not modified. No Git inspection or mutation was performed.",
+    "runtimeVerification": "NOT_RUN: builds, tests, native UI and provider/network operations are prohibited for this preflight. All verification descriptions below are future acceptance procedures, not passing results.",
+    "discoveryLimits": [
+      "Codegraph reported no index for this repository; no indexing or upgrade performed.",
+      "find failed with judge-provider 402/rejected-account errors; absence conclusions are not based on those searches. Scoped literal grep, glob and actual source reads supplied evidence instead.",
+      "Glob of the normative meetings component directory showed only MeetingRecordingIndicator.tsx; the proposed meetings workspace-service module and tests/rox-suite/meetings directories were missing at inspection.",
+      "Shared gateway, Postgres, file-service, search, memory and Task foundation implementations outside package paths/direct imports were not broadly inspected; their readiness is an integration prerequisite, not an inferred absence throughout the repository."
+    ],
+    "stalenessPolicy": "Re-hash references at acceptance and after the lead's wave0 commit. A mismatching hash invalidates that file's evidence and associated patch request until its changed ranges are re-read. No accepted wave0 or dependency receipt was supplied in this dispatch."
+  },
+  "foundationGates": [
+    {
+      "gate": "Wave0 commit and dependency handoff",
+      "explicitDagEdge": false,
+      "source": "Dispatch instructions; RS-MTG-05.md:88-99",
+      "requiredReceipt": "Lead's committed wave0 revision, accepted RS-MTG-01 receipt, shared-file ownership and typed registry allocation. Packet depends_on=[] describes this preflight, not permission to implement before RS-MTG-01.",
+      "affectedCriteria": ["all"],
+      "state": "RECEIPT_NOT_PROVIDED"
+    },
+    {
+      "gate": "Remote Call and independently verified egress capability",
+      "explicitDagEdge": false,
+      "source": "RS-MTG-05.md:28,45,61,72; RS-MTG-02.md:35-39; rooms.ts:12-42",
+      "requiredReceipt": "RS-MTG-02 canonical Call/provider binding, authenticated roster and consent-policy revisions, configured SFU sandbox, separate recording-egress readiness, signed callback validation, object checksum/scan/finalize readback and reconciliation contract. A working room or issued token alone is insufficient.",
+      "affectedCriteria": [3,4,9],
+      "state": "CURRENT_ROOM_CAPABILITY_FALSE; REMOTE_RECEIPT_NOT_PROVIDED"
+    },
+    {
+      "gate": "One canonical entity authority, local device alias and authenticated command envelope",
+      "explicitDagEdge": false,
+      "source": "RS-MTG-05.md:39-49,77-80; model.ts:68-77; rpc.ts:7-58; repository.ts:4-25; journal.ts:43-59",
+      "requiredReceipt": "Existing workspace identity/registered device, Rox2EntityRef alias uniqueness, transport-derived actor and common ACL/policyRevision envelope, Postgres metadata transactions and transactional outbox supplied by the lead/foundation owners. Existing local files remain device-owned; MeetingJournal must not become a competing shared writer.",
+      "affectedCriteria": [1,3,4,5,7,8,9],
+      "state": "LOCAL_TYPES_AND_FILE_JOURNAL_OBSERVED; SHARED_AUTHORITY_RECEIPT_NOT_PROVIDED"
+    },
+    {
+      "gate": "Artifact file port, checksum consent, retention and durable queue",
+      "explicitDagEdge": false,
+      "source": "RS-MTG-05.md:39-47,72; policies.ts:16-62; local-store.ts:233-237,333-428; retention.ts:21-42",
+      "requiredReceipt": "Common S3-compatible object/scan/finalize and fresh grants port, retention/legal-hold semantics, persisted consent.bindLocalUpload receipts and durable job lease/dedup interface keyed by artifact/checksum/processor version. Consent checked on dispatch and every lease retry; provisional handles never authorize upload.",
+      "affectedCriteria": [2,3,4,8,9],
+      "state": "NO_SUCH_RECEIPT_PROVIDED; EXISTING_GRANT_IS_NOT_FINAL_UPLOAD_CONSENT"
+    },
+    {
+      "gate": "Ready, authorized artifact events and retrieval retraction",
+      "explicitDagEdge": false,
+      "source": "RS-MTG-05.md:49,80,83; queries.ts:89-105; query-store.ts:18-30; outbox.ts:21-41",
+      "requiredReceipt": "Shared event taxonomy/outbox consumers for Search, Activity, Notifications, Agents and Memory; ACL/provenance checks at index/read time, source revision keys and revoke/delete retraction with observable readback, plus notification coalescing.",
+      "affectedCriteria": [7,8,9,"integration"],
+      "state": "MEETING_QUERY_AND_MAIL_OUTBOX_SEAMS_ONLY; COMMON_CONSUMER_RECEIPT_NOT_PROVIDED"
+    },
+    {
+      "gate": "Real cited-summary processor and common Task/export workflow",
+      "explicitDagEdge": false,
+      "source": "RS-MTG-05.md:32-33,49,64-65,72; LocalMeetingDetail.tsx:174-227,588-591; agent-run.ts:14-22; personal-task-bridge.ts:18-24",
+      "requiredReceipt": "Verified summary backend with capability, processing location and budget decisions; immutable transcript revision/EvidenceSpan validator and untrusted-content controls; canonical RoxTask create/link/project/assignment/notification and wider-audience export-decision interface. Agent session existence and personal Task creation do not satisfy these requirements.",
+      "affectedCriteria": [3,5,6,7],
+      "state": "AGENT_RUN_AND_PERSONAL_TASK_PRESENT; FOUNDATION_RECEIPTS_NOT_PROVIDED"
+    },
+    {
+      "gate": "Related target contracts and coordinated readers",
+      "explicitDagEdge": false,
+      "source": "RS-MTG-05.md:17,72",
+      "requiredReceipt": "Resolve the cited DF-11/12 and MTG-03/04/06/07/08 target contracts with their owners. RS-MTG-04 reads the same artifacts; RS-MTG-03 is optional context, not a new mandatory DAG dependency. Do not invent extra explicit dependencies or treat all cited target contracts as already implemented.",
+      "affectedCriteria": ["integration",10],
+      "state": "TARGET_REFERENCES_ONLY; CROSS_PACKAGE_INTERFACE_ALLOCATION_REQUIRED"
+    },
+    {
+      "gate": "Native and provider verification lanes",
+      "explicitDagEdge": false,
+      "source": "RS-MTG-05.md:59-68,81-84; local-asr.ts:36-63",
+      "requiredReceipt": "Actual macOS Electron/IPC/device runner with synthetic voice, microphone permissions, ffmpeg/ffprobe and whisper.cpp/model; separate Linux domain/render lane and real multi-user provider sandbox. Retain exact revision, expected/observed, logs, screenshot/ARIA/font and targeted negative-control results.",
+      "affectedCriteria": [1,2,3,6,8,9,10],
+      "state": "NOT_EXERCISED_BY_PREFLIGHT"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/meetings/RecordingConsentDialog.tsx",
+    "apps/electron/src/renderer/components/meetings/TranscriptEvidencePane.tsx",
+    "apps/workspace-service/src/modules/meetings/artifact-jobs.ts",
+    "tests/rox-suite/meetings/consent-artifacts.spec.ts",
+    "tests/rox-suite/meetings/native-capture-recovery.spec.ts"
+  ],
+  "ownedNewFilesQualification": "Exactly the five PROPOSED NEW paths in RS-MTG-05.md:90-94. These are future contribution candidates requiring lead allocation, not files implemented or exclusive ownership granted by this preflight. The sole currently authorized write is this report.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/main/meetings/local-store.ts",
+      "symbol": "ActiveRecording; recStart; recChunk; recState; recStop; recover; stopOwnedBy; finalizeRecording",
+      "change": "Extend the current recording handle with registered device/captureGeneration and persist its provisional identity alongside existing local metadata. Require sender-owner plus generation on renderer-origin chunk/state/stop; reject invalid chunks before append. Keep recovery/stopOwnedBy as explicit trusted-main finalization paths. Compute the finalized checksum from actual remuxed final bytes and expose one immutable manifest; do not upload or grant consent automatically.",
+      "reason": "Owner is recorded at start but not checked on chunk/state/stop; capture generations/checksum are absent. DoD1 and DoD4 require wrong-owner rejection and capture7/capture8 isolation without replacing real device storage."
+    },
+    {
+      "path": "apps/electron/src/main/meetings/local-ipc.ts",
+      "symbol": "registerLocalMeetingsIpc REC_START/REC_CHUNK/REC_STATE/REC_STOP/READ_AUDIO/READ_TRANSCRIPT/TRASH handlers; broadcast",
+      "change": "Derive recording ownership from e.sender for every renderer mutation, validate typed handle and registered workspace/device binding, and obtain fresh common access for canonical shared artifact reads. Bridge explicit reviewed final manifest to the authenticated domain consent command, not raw-upload approval in renderer. Revoke/delete events must invalidate affected read capabilities and scoped subscribers. Preserve native import cancel=null and renderer-crash recovery wiring.",
+      "reason": "Lines100-104 discard sender for chunk/state/stop; lines119-120 read by local id only; CHANGED broadcasts to all windows. Shared recording access cannot be inferred from Call membership."
+    },
+    {
+      "path": "apps/electron/src/shared/meetings-local.ts",
+      "symbol": "LocalMeetingAudio; LocalMeeting; LocalTranscriptSegment; LocalTranscript; LocalMeetingAction; MeetingsLocalApi",
+      "change": "Add main-owned local handle/final manifest/canonical alias fields and revisioned transcript/evidence references; distinguish provisional versus finalized upload-binding inputs. Extend recStart/chunk/state/stop signatures consistently with the one existing recorder and preload callers. Keep editable LocalMeetingPatch from minting canonical receipts/checksums or generated evidence.",
+      "reason": "Current audio has file/mime/bytes only, segment has no revision, action has no evidence/audience/project/assignment reference. Typed bridge must survive reload and prevent renderer-authored authority. Preload callsites must be identified by the integration owner before cutover."
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/meetings/recorder.ts",
+      "symbol": "Session; startRecording; pauseRecording; resumeRecording; stopRecording",
+      "change": "Carry and send the main-issued recording handle/generation through the existing serialized chunk chain, heartbeat and stop, with explicit failed-chunk handling that cannot claim a complete artifact. Retain singleton, device tracks, pause/resume, crash recovery and no-cloud local operation.",
+      "reason": "Current calls carry meetingId only; failedChunks is incremented but not used to qualify finalization. Do not add a second recorder."
+    },
+    {
+      "path": "apps/electron/src/main/meetings/local-model.ts",
+      "symbol": "normalizeMeeting; applyPatch; parseWhisperJson",
+      "change": "Preserve new main-owned manifest/alias and revision fields when reading existing meeting files; leave old files usable without fabricated consent. Stop treating index-only sN IDs as globally stable evidence identities. Build processor-revision segment identity in the publishing boundary, preserve previous raw segment revisions, and record speaker corrections as separate derivative attribution rather than rewriting raw spans.",
+      "reason": "normalizeMeeting reconstructs a fixed set of fields and would drop added metadata. parseWhisperJson emits s${index}; reprocessing can reuse an id for different text/offsets."
+    },
+    {
+      "path": "apps/electron/src/main/meetings/local-store.ts",
+      "symbol": "importAudio; transcribe; resumePending; enqueue; runTranscription; readTranscript",
+      "change": "Preserve the 2GB native import policy and bytes. Reject malformed audio with a distinct processing/import error rather than treating extension alone as valid media. Persist stage identity/checksum/processor version, retain historical raw transcript revisions, and publish ready evidence through the common domain bridge. Deduplicate retry by artifact/checksum/processor version while never recapturing/reuploading; keep existing local sequential recovery queue as the device lane, not the shared durable queue.",
+      "reason": "Import copies by extension/size and probe failure becomes duration0; ASR overwrites transcript.json and current queue dedup is meetingId only."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx",
+      "symbol": "DetailTab; audioUrl effect; transcript effect; generateSummary; summary poll; transcriptTab; actionsTab; documentsTab",
+      "change": "Integrate RecordingConsentDialog and TranscriptEvidencePane into the existing detail, add the separate Итоги tab and artifact stage status/source/asOf/version. Gate summary on ready revision plus verified processor/location/capability/budget, use cited result validation and unavailable reasons, and reject stale completion. Provide speaker derivative preview/save, query<=256, citation seek to immutable revision offsets, and fresh-access playback. Replace direct shared-action personal Task creation with reviewed canonical RoxTask command/export preview and receipt backlink while preserving the existing personal Tasks workflow. Invalidate player Blob URLs, transcript and pending callbacks on revoke/delete; retain local documents and draft on failed/pending save.",
+      "reason": "Current six tabs omit Итоги; summary uses ordinary agent output, player key only file/bytes, action creates personal Task synchronously, and no revoke subscription is present in this detail."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+      "symbol": "MeetingsPage; transcriptText cache; api.onChanged effect; visible/counts; selectMeeting",
+      "change": "Coordinate with RS-MTG-01 to use its one authorized canonical catalog/device-alias projection and hasMinutes filter. Add revision/policy keyed transcript cache invalidation on reprocess, workspace change, revoke/delete and readiness changes; keep current routes.view.meetings and recording/import navigation, selection/focus/scroll. Enforce query<=256 and prevent stale async transcript reads from repopulating revoked entries.",
+      "reason": "Actual routed seam is the root page, not the nested wrapper. transcriptText is cached indefinitely by m.id; current local buckets have no minutes filter. Do not create another catalog/store."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/local-meetings-model.ts",
+      "symbol": "LocalBucket; inLocalBucket; localBucketCounts; filterSegments; SummaryExtraction; buildSummaryPrompt; parseSummaryExtraction",
+      "change": "Consume RS-MTG-01's authorized hasMinutes semantics instead of defining a parallel catalog. Keep pure transcript filtering bounded and revision-scoped. Replace the meeting summary extraction's uncited string result with validated structured claims/actions/decisions carrying exact EvidenceSpan references and processing provenance; present transcript as untrusted data and apply runtime tool/audience policy rather than relying on instructions in a prompt.",
+      "reason": "SummaryExtraction has no citations and prompt clipping to last30000 chars cannot preserve explicit raw revision references; counts/search currently operate on local metadata."
+    },
+    {
+      "path": "packages/core/src/meetings/model.ts",
+      "symbol": "MeetingEntityRef; EvidenceSpan; TranscriptSegment; MeetingProposal; OperationResultV2",
+      "change": "Reuse existing ref/evidence and independent mode/lifecycle/verification types; add allocated artifact/stage/final-manifest/consent-receipt and derivative attribution contracts referencing canonical entity and raw revision, not a new users/Tasks model. Keep domain outcome separate from operation success and processor provenance explicit.",
+      "reason": "EvidenceSpan already contains the required citation identity but local transcript and generated actions do not bridge to it. New contracts require foundation-owner allocation, not unilateral shared model edits."
+    },
+    {
+      "path": "packages/core/src/meetings/schemas.ts",
+      "symbol": "parseEvidenceSpan; parseTranscriptSegment",
+      "change": "Validate finite nonnegative ordered start/end milliseconds, integer positive/appropriate revisions, canonical ref/workspace consistency and exact raw segment revision/quote membership at the authorized publishing boundary. Validate finalized checksum/generation/policy unions in the allocated command schema; reject wildcard/provisional final upload inputs.",
+      "reason": "Current schema checks primitive typeof only for citation ranges and revision; that is insufficient to prove a cited summary refers to actual immutable source."
+    },
+    {
+      "path": "packages/core/src/meetings/rpc.ts",
+      "symbol": "MEETING_RPC_METHODS; MeetingCommitCommand; MeetingJournalEvent; MeetingOutboxEntry",
+      "change": "Request lead allocation of consent.record/bindLocalUpload/revoke, call.startRecording, artifact.retry, transcript/speaker/summary and Task commands plus authorized artifact queries in the existing typed gateway registry. Envelopes must include commandId/idempotencyKey/expectedRevision/policyRevision with transport actor; map ready/revoke/delete artifact events to the common transactional taxonomy. Do not introduce an independent transport or reuse native finalize as media proof.",
+      "reason": "Current method list has no these artifact/consent commands; current commit/outbox shapes are journal/proposal-specific. Shared protocol/gateway implementation locations are outside this inspection and must be supplied by its owner."
+    },
+    {
+      "path": "packages/shared/src/meeting-agents/policies.ts",
+      "symbol": "MeetingGrant; authorizeMeetingAction; canUseCloudFallback",
+      "change": "Compose existing grant checks with the common consent authority's exact principal/Call or finalized artifact/checksum/device/generation/audience/retention-policy revision checks and revocation epoch. Reject missing scope instead of allowing target/hash omission to behave as wildcard, always supply current time for expiry, and recheck authoritative consent on dispatch/retry. Expose summary processing location/capability/budget decision without inferring offline backend from session creation.",
+      "reason": "targetIds/payloadHash checks only run when both optional action values are supplied; expiry only runs with action.now. This grant lacks capture/audience/policy/checksum binding and cannot substitute for consent.bindLocalUpload."
+    },
+    {
+      "path": "packages/server-core/src/meetings/rooms.ts",
+      "symbol": "ROOM_PROVIDER_DECISION; joinRoom; roomCapabilityEnabled",
+      "change": "Integration request to RS-MTG-02 owner: supply the canonical room binding/authenticated participant roster and independent egress capability/provider receipt interfaces for RS-MTG-05. Preserve current fail-closed unavailable behavior until those are observed; do not flip decided or use join consent boolean as final recording consent.",
+      "reason": "Current provider is null and capability always false; multi-user egress DoD cannot be completed by this package alone."
+    },
+    {
+      "path": "packages/server-core/src/meetings/finalize.ts",
+      "symbol": "applyNativeFinalizeIntent",
+      "change": "Preserve the existing native intent as intent-only evidence; bridge actual local final manifest or provider signed-object receipt into the allocated canonical artifact finalize path. Never interpret journal status completed, empty outbox or successful intent as audio/STT/summary readiness.",
+      "reason": "This function writes meeting.status completed without ASR, device bytes, checksum or egress readback."
+    },
+    {
+      "path": "packages/server-core/src/meetings/manual.ts",
+      "symbol": "SegmentCorrectionSpec; applyNativeSegmentCorrection",
+      "change": "Coordinate correction commands with the immutable raw revision model: speaker attribution correction must target explicit segment IDs/revisions, preview and persist a derivative overlay under CAS. Keep the existing manual text-note/correction semantics distinct; do not overwrite original quote/offsets or claim this journal intent updates the local ASR transcript.",
+      "reason": "Current correction is segmentId/replacement only with no source revision or speakerRef."
+    },
+    {
+      "path": "packages/server-core/src/meetings/repository.ts",
+      "symbol": "MeetingRepository; createMeetingRepository; pending",
+      "change": "Foundation-owner request: attach artifact metadata/consent transactions and outbox operations to the accepted canonical Postgres authority while retaining local device files and existing journal compatibility where required. Enforce workspace isolation of pending rows at the authority; remove the unconditional || true predicate from any retained repository pending path. Do not add another artifact writer journal.",
+      "reason": "Observed repository wraps the file journal and pending's workspace predicate always succeeds. Canonical Postgres and outbox receipt is a hidden gate, not code supplied by this preflight."
+    },
+    {
+      "path": "packages/server-core/src/meetings/queries.ts",
+      "symbol": "MeetingQueryRecord; applyMeetingSummary; queryVisibleMeetings; searchMatches; getMeeting; deleteMeeting",
+      "change": "Keep summary and transcript as separate revisioned fields: applyMeetingSummary must not replace transcript. Query authorized ready artifact sources through the common ACL/provenance projection; model revoke/delete as retrieval retraction with per-source revision/policy, not workspace allowed boolean alone. Preserve explicit denied/offline/incomplete/deleted states and manual notes.",
+      "reason": "applyMeetingSummary currently assigns summary into transcript; query actor is only workspaceId+allowed and no player/memory invalidation follows tombstoning."
+    },
+    {
+      "path": "packages/server-core/src/meetings/sharing.ts",
+      "symbol": "audienceRecap; searchVisible; revokeMember; exportMeeting",
+      "change": "Compose the existing meeting-facing share controls with the common grant editor and explicit wider-audience export-decision receipt; publish revoke retraction through the shared authority to open player, Search and Memory. Do not turn nativeExportAvailable into true without actual artifact/export readback, or treat members as recording grants.",
+      "reason": "Current record is a pure member/recap structure; export is unavailable and revoke only filters members and clears links."
+    },
+    {
+      "path": "packages/server-core/src/meetings/retention.ts",
+      "symbol": "deleteOwnedCopies; NativeDeletePayload; nativeDeleteAvailable",
+      "change": "Integrate common retention/legal-hold decisions and deletion/retraction receipts; continue truthful external-retained and owned-copy states. Retract unauthorized retrieval immediately even if legal hold retains protected bytes, and report physical deletion separately. Do not claim deletion from a UI action or tombstone alone.",
+      "reason": "Current native deletion is explicitly unsupported; DoD8 requires real removal of active retrieval and honest retention state."
+    },
+    {
+      "path": "apps/electron/src/main/meetings/__tests__/local-store.test.ts",
+      "symbol": "LocalMeetingStore fs cases; parseWhisperJson case",
+      "change": "After signature cutover update existing consumer-behavior cases; add deterministic foreign-owner/stale-generation/invalid-chunk and immutable-revision preservation assertions in the existing suite where appropriate. Keep native synthetic capture/real ASR recovery coverage in the two normative new entrypoints and do not count fake [1,2,3] media with NO_ENGINE as a native passing result.",
+      "reason": "Current tests prove filesystem append/recovery with NO_ENGINE and arbitrary bytes, not real voice capture, owner rejection, ASR restart or citation offsets. No tests run in this preflight."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "meetings.local.* and new consent/artifact help keys",
+      "change": "Lead/locale-owner request: add Russian stage/consent/failure and full help copy using t(); mirror every new key into de,en,es,fr,hu,ja,pl,zh-Hans,zh-Hant locale files with existing ASCII sort and plural conventions. No raw user-facing strings or force-light theme. Locale files were not inspected or changed by this worker.",
+      "reason": "Repository contract requires ten-locale parity; RS-MTG-05 requires source/units/freshness/example help and truthful engine/provider/unavailable states."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "1. Actual native synthetic voice capture→pause/resume/stop/reload→bytes/duration/transcript; renderer crash recover; wrong owner/chunk rejected.",
+      "currentEvidence": "recorder.ts:126-215 implements actual getUserMedia/MediaRecorder, pause/resume and serialized bytes; local-store.ts:150-261 persists/remuxes/recovers bytes; local-ipc.ts:100-104 does not pass sender to chunk/state/stop, although start records owner. Existing fs test uses arbitrary bytes with NO_ENGINE, not synthetic native voice proof.",
+      "actualSeams": ["startRecording/pauseRecording/resumeRecording/stopRecording", "LocalMeetingStore.recStart/recChunk/recState/recStop/recover", "registerLocalMeetingsIpc"],
+      "requiredChange": "Add main-issued generation handle and sender-owner enforcement to the existing path; reject invalid chunks before disk append; preserve trusted orphan recovery and final bytes/manifest identity. Keep real ASR stage/error semantics across reload.",
+      "verification": "Future macOS native lane: capture controlled synthetic spoken phrases through actual Electron device path, pause/resume/stop, reload, assert final decoded duration and phrase-bearing timed transcript; crash owning renderer mid-capture and assert recovered bytes/flag. Foreign webContents, stale generation and malformed chunk must leave bytes/state unchanged. Negative control removing owner check must fail the foreign-owner assertion.",
+      "missingPrerequisite": "Wave0/RS-MTG-01 receipts and allocated IPC/preload changes; macOS synthetic voice/device runner, permissions, ffmpeg/ffprobe and real whisper model.",
+      "state": "LOCAL_PIPELINE_PRESENT; OWNER_GAP; NATIVE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "2. Import WAV/oversize/invalid и restart ASR queue; исходный audio не теряется.",
+      "currentEvidence": "local-store.ts:46,266-302 rejects unsupported extension/symlink/empty/>2GB and copies source; duration probe failure becomes0. transcribe/resumePending/pump at333-428 restart persisted queued/running meetings and clean temporary ASR files. local-ipc.ts:107-118 returns null on picker cancel.",
+      "actualSeams": ["LocalMeetingStore.importAudio/transcribe/resumePending/runTranscription", "detectEngine/decodeToWav/runWhisper", "IMPORT_AUDIO handler"],
+      "requiredChange": "Keep native cancel and 2GB policy; distinguish corrupt media from unsupported extension and unavailable engine; persist stage checksum/version identity and recover interrupted local jobs without discarding original audio. Add ready canonical artifact publication only after actual stage completion.",
+      "verification": "Future native lane: valid synthetic WAV reaches ready timed transcript; sparse >2GB input rejected without new audio artifact, corrupted WAV yields explicit error and preserves any accepted bytes; cancel creates no meeting. Restart during queued and running ASR, then assert one completed current stage and unchanged input checksum; missing engine stays unavailable, not Ready.",
+      "missingPrerequisite": "Real ASR engine/model and restart runner; canonical artifact/job bridge contract and committed wave0/RS-MTG-01.",
+      "state": "LOCAL_IMPORT_RECOVERY_SEAMS_PRESENT; VALIDATION_AND_RUNTIME_NOT_VERIFIED"
+    },
+    {
+      "criterion": "3. Real multi-user Call→required consent→actual egress object checksum→preview/STT/cited summary; absent egress disabled.",
+      "currentEvidence": "rooms.ts:12-42 provider=null, decided=false and capability=false. finalize.ts:22-70 only marks a native journal intent completed. LocalMeetingDetail.tsx:212-227 sends text to an ordinary agent session; it is not provider/object/summary readback.",
+      "actualSeams": ["ROOM_PROVIDER_DECISION/roomCapabilityEnabled", "applyNativeFinalizeIntent", "generateSummary", "proposed artifact-jobs.ts"],
+      "requiredChange": "Consume RS-MTG-02 live Call/roster and independent egress capability; start recording only with fresh scoped consent; authenticate signed callback, dedup delivery and reconcile out-of-order intent/object, checksum+scan+finalize actual media then independently enqueue preview/STT/speaker/summary. Display active/ready only from receipts and keep disabled reason when egress is absent.",
+      "verification": "Future provider sandbox: two authenticated principals consent, real recording produces object with read-back SHA256, preview playback and transcript timed to controlled speech, validated summary cites exact spans. Missing egress and issued-token/failed-media negative controls must never display active or ready; fixture run cannot count as live PASS.",
+      "missingPrerequisite": "Accepted remote RS-MTG-02/provider-egress handoff, configured SFU/object/scan sandbox, common Postgres/queue and verified summary backend.",
+      "state": "REMOTE_FOUNDATION_BLOCKED; NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "4. Capture7 consent не разрешает capture8; changed hash/audience/revoke queued блокирует любой retry. Seed wildcard consent fails.",
+      "currentEvidence": "LocalMeetingAudio has no checksum/generation (meetings-local.ts:39-46). MeetingGrant fields and authorizeMeetingAction optional target/hash checks at policies.ts:16-62 do not bind final artifact/policy/audience/capture. staleConsent/approveThenRevoke are boolean/TTL helpers only.",
+      "actualSeams": ["LocalMeetingAudio/MeetingsLocalApi", "MeetingGrant/authorizeMeetingAction", "staleConsent/approveThenRevoke", "proposed RecordingConsentDialog/artifact-jobs"],
+      "requiredChange": "Separate room consent, provisional LocalRecordingHandle and final bindLocalUpload receipt. Bind authenticated principal, Call or artifact, final checksum, revision, device/captureGeneration, audience and retention/policy revisions; reset acknowledgement on any change. Dispatch and every leased retry reread consent/revocation. Upload failure leaves local bytes intact; provisional/wildcard inputs cannot authorize upload.",
+      "verification": "Future domain plus device lane: bind generation7 manifest; generation8, changed hash, changed audience/policy and queued revoke each deny initial dispatch and lease retry. Ack reset and explicit preview reacceptance are observable. Assert no object upload and unchanged local checksum on denied/failed attempts. Seed a wildcard grant and bypass-recheck mutation; each must fail its precise assertion.",
+      "missingPrerequisite": "Common consent/revocation/lease interfaces, registered-device identity and final manifest bridge; wave0 and catalog dependency receipts.",
+      "state": "SCOPED_CONSENT_NOT_IMPLEMENTED; NOT_VERIFIED"
+    },
+    {
+      "criterion": "5. Raw segment IDs/revisions сохраняются после speaker correction/reprocessing; citation открывает same offset.",
+      "currentEvidence": "EvidenceSpan and TranscriptSegment at model.ts:68-93 already model exact refs/revisions/offsets. LocalTranscriptSegment has no revision, parseWhisperJson generates index-only sN (local-model.ts:203-221), runTranscription overwrites transcript.json (local-store.ts:403-415). manual.ts:131-154 records text replacement intent, not speaker attribution with source revision.",
+      "actualSeams": ["EvidenceSpan/TranscriptSegment/parseEvidenceSpan", "parseWhisperJson/runTranscription/readTranscript", "applyNativeSegmentCorrection", "LocalMeetingDetail.seek/transcriptTab"],
+      "requiredChange": "Retain immutable raw processor revisions/segment IDs and historical evidence lookup; add speakerRef derivative attribution overlay under expected revision. Validate citation against exact raw segment quote/range/ref and open the authorized same recording offset, even after reprocessing. Do not reuse s0 for a new source while silently changing an old citation.",
+      "verification": "Future domain/native lane: capture cited raw segment identity/quote/offset, save speaker correction, run another processor revision and reload; original tuple and quote remain retrievable and citation seeks the same millisecond offset. Stale correction rejected, fabricated/out-of-range spans rejected; overwriting old spans as negative control must fail.",
+      "missingPrerequisite": "Canonical alias and immutable transcript schema/storage allocation, authorized revision lookup, speaker correction command and real seek runner.",
+      "state": "CORE_EVIDENCE_TYPES_PRESENT; LOCAL_REVISION_PRESERVATION_MISSING"
+    },
+    {
+      "criterion": "6. Unavailable summary backend даёт disabled reason; fixture не PASS local summary.",
+      "currentEvidence": "LocalMeetingDetail.tsx:333-335 disables only for workspace/transcript/run. generateSummary and agent-run.ts:14-22 create an ordinary safe session without backend/location/capability/budget readback. parseSummaryExtraction accepts strings without citations.",
+      "actualSeams": ["generateSummary and summary polling effect", "startAgentRun/readAgentRun", "SummaryExtraction/parseSummaryExtraction"],
+      "requiredChange": "Query the real selected processor's capability/location/budget for a ready immutable transcript revision, show disabled unavailable reason, and enqueue explicit revision-bound summary only when authorized. Validate cited result and provenance before marking ready; stale or fixture completion cannot become verified production/local summary. Safe prompt text alone must not mint tool authority.",
+      "verification": "Future UI/domain lane with unavailable processor: disabled summary and reason visible via focus/help, click cannot create a run. With verified backend, actual output cites exact evidence, processor/location and mode are observable. Fixture success never satisfies native/local summary acceptance; transcript injection cannot invoke tools or broaden audience.",
+      "missingPrerequisite": "Summary backend capability and actual processing receipt, budget/audience policy interfaces and citation validator.",
+      "state": "ORDINARY_AGENT_SUMMARY_EXISTS; REQUIRED_GATE_AND_CITATIONS_MISSING"
+    },
+    {
+      "criterion": "7. Action→RoxTask хранит Meeting/EvidenceSpan backlink, Project и assignee notification once; wider audience требует export decision для source text.",
+      "currentEvidence": "LocalMeetingDetail.tsx:588-591 calls createPersonalTask with title and text notes, then stores only taskId. personal-task-bridge.ts:18-24 persists renderer personal store; LocalMeetingAction lacks evidence, project, assignee and audience.",
+      "actualSeams": ["LocalMeetingDetail.actionsTab", "LocalMeetingAction", "MeetingProposal.sourceSpans", "createPersonalTask (existing personal workflow to preserve)"],
+      "requiredChange": "Provide reviewed authored text/project/assignee/Task-audience preview; invoke the common canonical RoxTask command with idempotency and exact Meeting/EvidenceSpan backlink. Persist task assignment/readback receipt and one coalesced notification event; require explicit export decision before moving private source text to a wider audience. Keep personal Tasks reachable and functional without a second Tasks store.",
+      "verification": "Future domain/UI lane: preview then confirm creates one canonical task with exact backlink, project and assignee; same-intent retry/reload yields same task and one assignee notification. Wider audience denies private autoquote until explicit export receipt; authored text versus source quote distinguished. Existing personal task open/create and local documents still work.",
+      "missingPrerequisite": "Accepted canonical RoxTask, project/assignment, shared notification and export-decision domain interfaces; lead-owned Task bridge allocation.",
+      "state": "PERSONAL_TASK_ONLY; CANONICAL_TASK_WORKFLOW_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "8. Revoke/delete open source purges player/search/agent memory; retention объясняется правдиво.",
+      "currentEvidence": "Detail audioUrl effect at117-134 keys file/bytes and revokes URL only on cleanup; root MeetingsPage transcriptText cache at132-143 is id-only. revokeMember only updates pure members/links; deleteMeeting only tombstones query records. retention.ts:29-42 explicitly reports native delete unavailable and external retention.",
+      "actualSeams": ["LocalMeetingDetail audio/transcript effects", "MeetingsPage transcriptText/onChanged", "revokeMember/deleteMeeting/deleteOwnedCopies"],
+      "requiredChange": "Consume common revoked/deleted source events and fresh ACL: stop/reset player, revoke Blob URL/remote URL capability, clear transcript/search and prevent pending reads from restoring content. Retract common Search/Agents/Memory derived evidence and expose retention/legal hold versus access removal and externally retained copies honestly.",
+      "verification": "Future multi-window native/domain lane: while playing and searching an authorized source with agent memory retrieval open, revoke then delete and assert media stops, inaccessible bytes/URLs, no search hits and no agent-memory retrieval after reload. Delayed pre-revoke fetch must not repopulate UI. Legal hold keeps protected bytes but removes retrieval and displays truthful retained state; mutation skipping one consumer retraction must fail.",
+      "missingPrerequisite": "Common ACL revocation event and authoritative Search/Memory retraction/readback, signed URL policy, retention/legal-hold receipt.",
+      "state": "LOCAL_CLEANUP_AND_TOMBSTONES_ONLY; CROSS_SURFACE_RETRACTION_MISSING"
+    },
+    {
+      "criterion": "9. Retry STT не rerecord/reupload; same tuple один job; out-of-order egress reconciled.",
+      "currentEvidence": "LocalMeetingStore.transcribe/enqueue dedup by meetingId only (333-359), separated from capture/import, and resumePending restarts persisted stage statuses. rooms has no egress adapter. Existing meeting outbox.ts is a fail-closed mail outbox, not a durable artifact worker.",
+      "actualSeams": ["LocalMeetingStore.transcribe/enqueue/resumePending", "proposed artifact-jobs.ts", "room provider handoff", "MEETING_RPC_METHODS"],
+      "requiredChange": "Use common durable queue unique tuple(artifactRef, checksum, processorVersion, stage); accept retry only failed stage with source still present/authorized. Resolve unknown provider intent/callback ordering idempotently before new effects. Separate preview/STT/speaker/summary; STT/summary retry must never trigger recStart/import/upload and revoked jobs must fail reauthorization on lease.",
+      "verification": "Future durable domain/provider lane: concurrent same-tuple requests and restart/lease reclaim produce one job/result; changing processor version creates distinct derivative revision without overwriting audio. Count actual capture/provider/upload effects before/after STT retry and assert unchanged. Deliver callback before intent commit, replay and reorder it; reconcile one canonical object/job. Deleted source gives unavailable retry reason.",
+      "missingPrerequisite": "Shared durable queue/unique-key/lease transaction port, canonical artifact identity and RS-MTG-02 signed egress reconciliation receipts.",
+      "state": "LOCAL_MEETING_ID_DEDUP_ONLY; ARTIFACT_TUPLE_QUEUE_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "10. Wide/narrow/ARIA/player/keyboard/help; existing local documents/personal Tasks не регрессируют.",
+      "currentEvidence": "LocalMeetingDetail has native range/player labels, clickable transcript seek, six tabs and attachment/actions controls; no separate summary tab or consent UI. Root MeetingsPage retains route selection, Cmd/Ctrl+F and list keys. Existing summary title tooltip is not the required detailed help surface.",
+      "actualSeams": ["LocalMeetingDetail header/tabs/transcriptTab/documentsTab", "MeetingsPage/selectMeeting/useListKeys", "proposed RecordingConsentDialog/TranscriptEvidencePane"],
+      "requiredChange": "Seven specified tabs and wide player+transcript/narrow stack in existing detail; ARIA focus/error/status and Space playback/ack, arrows seek, Enter search seek/explicit consent; first-invalid focus and draft-preserving pending save. Detailed hover500ms/focus/click help with bytes/zone/source/asOf/version/example, reduced motion, 28–36px compact desktop controls and >=44px touch targets. Inherit user theme/tokens and actual font; mirror t() keys in all ten locales. Closing drawer does not cancel dispatched intent.",
+      "verification": "Future actual Electron wide/narrow screenshots, ARIA and keyboard interaction; measured loaded font and touch hit areas, hover/focus/click help and reduced motion observed without mutation. Reload/open/close retains selection/draft/focus/scroll; pending save/failure distinguished. Real attach/open/remove local document and personal Task workflows exercised after integration.",
+      "missingPrerequisite": "Lead/RS-MTG-01 layout and shared-file allocation, existing help primitive and locale-owner patch, actual Electron UI runner.",
+      "state": "EXISTING_LOCAL_UI_PRESENT; FULL_ACCESSIBILITY_RESPONSIVENESS_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Integration contract: one Встречи destination/catalog, canonical refs/alias, authenticated commands, Postgres persistence and independent mode/lifecycle/verification/outcome.",
+      "currentEvidence": "Root MeetingsPage.tsx:59-77 selects existing routes.view.meetings; core EvidenceSpan and OperationResultV2 exist. Native repository is MeetingJournal-backed; native finalize's completed status is not recording proof. RS-MTG-01.md:35-37 owns catalog/device-alias integration.",
+      "actualSeams": ["MeetingsPage", "MeetingEntityRef/OperationResultV2", "MEETING_RPC_METHODS", "MeetingRepository/applyNativeFinalizeIntent"],
+      "requiredChange": "Integrate accepted catalog alias and domain envelope with one canonical authority, retain local device files, enforce same-payload intent idempotency/CAS and transport actor. Keep queued/fixture/unverified/unknown outcome separate from observed active/ready and remove obsolete parallel paths only through lead-approved cutover.",
+      "verification": "Future domain/UI lane: one local alias resolves to one canonical entity before/after reload; forged body actor and stale policy/revision rejected; same key+same payload dedup, changed payload cannot reuse intent; DB outage/recovery preserves intent without duplicate artifact or competing writer.",
+      "missingPrerequisite": "Wave0 shared authority/typed registry receipts and accepted RS-MTG-01 catalog handoff; Postgres runner.",
+      "state": "FOUNDATION_INTEGRATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Integration contract: ready+authorized Search/Activity/Notifications/Agents/Memory events, no private cross-source leaks, no per-chunk explosion.",
+      "currentEvidence": "Local store emits per-recording/ASR updates and local-ipc broadcasts them; current queries use workspace/private booleans, and meeting outbox is mail-specific. Existing EvidenceSpan is reusable, but shared consumer readiness was not inspected outside package scope.",
+      "actualSeams": ["LocalMeetingStore.write/runTranscription", "broadcast", "MeetingOutboxEntry", "queryVisibleMeetings/searchMatches"],
+      "requiredChange": "Bridge canonical stage-ready and grant/revoke/delete transitions to the common transactional outbox taxonomy with source ref/revision/provenance. Index only ready authorized sources; source links/mentions/Call membership never grant access. Coalesce notifications by operation/stage instead of chunk updates; agent reads and tool previews use same actor/audience checks.",
+      "verification": "Future domain integration: denied source's title/quote absent in query/count/search/tool/memory and no wider-audience export without decision; queued stage absent in retrieval. Many local chunks yield intended coalesced stage notifications, replay yields no duplicate Activity/notification. Transcript-instruction payload cannot authorize tools or reveal secrets.",
+      "missingPrerequisite": "Shared outbox taxonomy and consumer ACL/provenance/retraction contracts supplied by foundation owners.",
+      "state": "COMMON_CONSUMER_INTEGRATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Integration contract: failure/loading/empty/reload/recovery, observability, tests/documentation and revision-bound evidence with negative controls.",
+      "currentEvidence": "Local detail differentiates queued/running/failed/unavailable; root page loading/error/empty and recover/resumePending exist. Local store logs ASR failures, but no native/provider acceptance runs were performed. Normative new test entrypoints are proposals only.",
+      "actualSeams": ["transcriptTone/transcriptTab", "MeetingsPage loadState/ERROR_KEYS", "LocalMeetingStore.pump/recover/resumePending", "registerLocalMeetingsIpc"],
+      "requiredChange": "Preserve explicit engine/permission/provider/processing errors and pending drafts; add common job/intent correlation with artifact checksum and processor version without private content/token logs. Document command/schema/state/help/recovery and real provider/native limits in lead-owned implementation docs. Update affected existing contracts and two normative test entrypoints; no source-text/fixture-as-live tests.",
+      "verification": "Future separate Linux domain/render, macOS native and media provider lanes: record expected/observed, exact committed revision, logs and screenshot/ARIA per criterion; stale evidence re-run after material changes. Negative control must break the particular assertion; infrastructure errors are NOT caught mutants or PASS. Loading/empty/offline/error and pending-save-reload scenarios exercised.",
+      "missingPrerequisite": "Committed integration revision, real runners/provider credentials and lead documentation/observability/test ownership allocations.",
+      "state": "PREFLIGHT_ONLY; FULL_FEATURE_DOD_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-MTG-05.md","symbol":"Consent contract; E2E / DoD; scope; proposed new files","lineStart":37,"lineEnd":94,"sha256":"58622d94dbed0985bea4cc57f88f9a9808a0df3b24782a107650803d263a82f8"},
+    {"path":"plans/rox-suite/issues.json","symbol":"issues record id RS-MTG-05","lineStart":485,"lineEnd":517,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"docs/rox-suite/published/RS-MTG-01.md","symbol":"one catalog projection/local adapter/device alias contract","lineStart":33,"lineEnd":59,"sha256":"fec41688a5bd49a70e2482955d36b275c9cb44cfdf96839150dac010e1fdd730"},
+    {"path":"docs/rox-suite/published/RS-MTG-02.md","symbol":"API/backend/persistence/realtime; independent egress capability","lineStart":33,"lineEnd":43,"sha256":"1a677b83146d9982d09f9bdd156b6e2792f24251f4feb8ebf23b3d382a189f00"},
+    {"path":"apps/electron/src/main/meetings/local-store.ts","symbol":"LocalMeetingStore.recStart/recChunk/recStop/recover/importAudio/transcribe/runTranscription","lineStart":150,"lineEnd":434,"sha256":"ccbe9826afffdd87caf06a466af15948cefa463c65d07634f8693f483700366b"},
+    {"path":"apps/electron/src/main/meetings/local-ipc.ts","symbol":"registerLocalMeetingsIpc sender handling; read and recovery handlers","lineStart":67,"lineEnd":166,"sha256":"41da18f46fa5f7b35aedc594b80ddb3911d5a683f563b62f9943b6f46c1a5d50"},
+    {"path":"apps/electron/src/main/meetings/local-asr.ts","symbol":"detectEngine; probeDurationMs; decodeToWav; runWhisper","lineStart":36,"lineEnd":134,"sha256":"6fa0cf3a0f50949894024861d40fe957dd8741daf3726287aca10b78fb6ea3e9"},
+    {"path":"apps/electron/src/main/meetings/local-model.ts","symbol":"parseWhisperJson","lineStart":202,"lineEnd":222,"sha256":"cd90c4f46211a956a56bf14d4490c03ca2f07820bf5c9e9f69ee170ad3d89522"},
+    {"path":"apps/electron/src/main/meetings/__tests__/local-store.test.ts","symbol":"NO_ENGINE filesystem recording/recovery/import regression cases","lineStart":80,"lineEnd":160,"sha256":"9716ecaf38223de40f5e53f242cc498aca94219d175f51d0ba61db9f0cf04e92"},
+    {"path":"apps/electron/src/shared/meetings-local.ts","symbol":"LocalMeetingAudio/LocalMeetingAction/LocalTranscriptSegment/MeetingsLocalApi","lineStart":39,"lineEnd":162,"sha256":"577d5de0a91d51483a0c639b82dbe063f3ca1e6f4c2f6c73b1f4edcf1fa2a2a4"},
+    {"path":"apps/electron/src/renderer/lib/meetings/recorder.ts","symbol":"startRecording/pauseRecording/resumeRecording/stopRecording","lineStart":126,"lineEnd":226,"sha256":"086de22cb3db2c0d805e336b6b02bd5e3de6c09d2528eab6d4a25d23685c6a71"},
+    {"path":"apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx","symbol":"audio/transcript effects; summary poll; generateSummary","lineStart":108,"lineEnd":237,"sha256":"2d9f6d62914806164c7ba73a899073f7cfa2b56c6179467ee77198067885b6e1"},
+    {"path":"apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx","symbol":"actionsTab action to createPersonalTask","lineStart":571,"lineEnd":608,"sha256":"2d9f6d62914806164c7ba73a899073f7cfa2b56c6179467ee77198067885b6e1"},
+    {"path":"apps/electron/src/renderer/pages/MeetingsPage.tsx","symbol":"MeetingsPage route selection and transcriptText cache","lineStart":59,"lineEnd":153,"sha256":"85d3159d5c618df80973c650af3e9b85a68acbe3ad90eef595781f17fa6ebfc8"},
+    {"path":"apps/electron/src/renderer/pages/meetings/local-meetings-model.ts","symbol":"SummaryExtraction/buildSummaryPrompt/parseSummaryExtraction","lineStart":136,"lineEnd":186,"sha256":"38308ba67bae82f8273886f6d6db01e62a9d56f3672039e321c1a5e25a71e590"},
+    {"path":"apps/electron/src/renderer/lib/extra-screens/agent-run.ts","symbol":"startAgentRun","lineStart":14,"lineEnd":23,"sha256":"74589220461ca04163fa273a3628ebd8170ef12d9d764f780c54fcab533929fc"},
+    {"path":"apps/electron/src/renderer/lib/extra-screens/personal-task-bridge.ts","symbol":"createPersonalTask/createPersonalTaskConfirmed","lineStart":18,"lineEnd":38,"sha256":"6ddefec884971bd335a68d090ca2f2d1bfe3034e60431dd46aa53b3532aff121"},
+    {"path":"packages/core/src/meetings/model.ts","symbol":"MeetingEntityRef/EvidenceSpan/TranscriptSegment/OperationResultV2","lineStart":68,"lineEnd":157,"sha256":"67b9b6f0f90315eb3cf537a1a3a73762d47427d74989aa8b82e2ca45ad7781d5"},
+    {"path":"packages/core/src/meetings/rpc.ts","symbol":"MEETING_RPC_METHODS/MeetingCommitCommand/MeetingJournalEvent/MeetingOutboxEntry","lineStart":7,"lineEnd":58,"sha256":"6c10c01f90b111e60acc2189ec7ba9f4218e85bbb0534534aa65096d3e900e6d"},
+    {"path":"packages/core/src/meetings/schemas.ts","symbol":"parseEvidenceSpan/parseTranscriptSegment","lineStart":54,"lineEnd":84,"sha256":"14b8e71c967e492b7e8f6306a0a271a8863e10bf813bb13b849947b141484f42"},
+    {"path":"packages/shared/src/meeting-agents/policies.ts","symbol":"MeetingGrant/authorizeMeetingAction/canUseCloudFallback","lineStart":16,"lineEnd":71,"sha256":"f5ab0ed8f26ff63eda1c9da16eb9588ec030231f9cc7c65f2ad471996c4aa2bd"},
+    {"path":"packages/server-core/src/meetings/security-policy.ts","symbol":"actorFromRpc/staleConsent/approveThenRevoke","lineStart":13,"lineEnd":48,"sha256":"463ea4e391b97f30f3c3c42514a6633a460b6ef8ff7715adc7b26f2d93657640"},
+    {"path":"packages/server-core/src/meetings/finalize.ts","symbol":"applyNativeFinalizeIntent","lineStart":22,"lineEnd":78,"sha256":"1b628dcd177f27fecbf1ce1742d88101ac712f78948bba8fb7f6f0d0f1e2eea7"},
+    {"path":"packages/server-core/src/meetings/rooms.ts","symbol":"ROOM_PROVIDER_DECISION/joinRoom/roomCapabilityEnabled","lineStart":12,"lineEnd":43,"sha256":"5bab2a582a2f87ebc2e88bbb769d55fdfbc97e2fddb7e9acb0d6fe517e7cda88"},
+    {"path":"packages/server-core/src/meetings/journal.ts","symbol":"MeetingJournal.commit/applyCommand single writer and event storage","lineStart":112,"lineEnd":190,"sha256":"c5938700403fe6c90c189c6229fd9d9c58fdba63507c542ad71c6122d2d0baf1"},
+    {"path":"packages/server-core/src/meetings/repository.ts","symbol":"MeetingRepository.pending/createMeetingRepository","lineStart":4,"lineEnd":26,"sha256":"56d58884ab24097b7c5853339a2331afc938c1c822c5263b151e0a9c23f2c00b"},
+    {"path":"packages/server-core/src/meetings/manual.ts","symbol":"applyNativeSegmentCorrection","lineStart":131,"lineEnd":156,"sha256":"1b29d9e6adc6d39a88efb1c10267245de4fdf260f1e0afe1c6ec23be9ae96894"},
+    {"path":"packages/server-core/src/meetings/queries.ts","symbol":"applyMeetingSummary/queryVisibleMeetings/searchMatches/getMeeting/deleteMeeting","lineStart":85,"lineEnd":173,"sha256":"103973e225ded18d9bc925ab4ca36367de95337ac0f2f409645694d380f1408f"},
+    {"path":"packages/server-core/src/meetings/query-store.ts","symbol":"loadMeetingQueryIndex/saveMeetingQueryIndex","lineStart":18,"lineEnd":31,"sha256":"a264e12b91ae93b1ace7012d6c6c339617e8f378fecdbb767b3cd6de23eaeca0"},
+    {"path":"packages/server-core/src/meetings/sharing.ts","symbol":"audienceRecap/searchVisible/exportMeeting/revokeMember","lineStart":44,"lineEnd":64,"sha256":"1d9ecf62a485e1b5b708e9fe849051245d33d08c38d7ef27ea179229dbb2b203"},
+    {"path":"packages/server-core/src/meetings/retention.ts","symbol":"nativeDeleteAvailable/deleteOwnedCopies","lineStart":21,"lineEnd":42,"sha256":"d4ff0adc0435b97e3839060e943b3e3824b0181c65927a4d8bafec4b3d64f154"},
+    {"path":"packages/server-core/src/meetings/outbox.ts","symbol":"reserveOutbox/dispatchOutbox (mail only)","lineStart":21,"lineEnd":42,"sha256":"b7c802c2e559eac7d43f6ba96ee221aa161abc598fc40a9f7ce47c2e7d2e110f"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead validates this preflight lineage and whole-file hashes; record the explicit dependency as exactly [RS-MTG-01] and foundation gates separately. No product implementation is authorized by this report.",
+    "afterDependencyReceipts": "After the lead's wave0 commit and accepted RS-MTG-01 receipt, refresh changed source ranges/digests, allocate the five normative new paths and shared requests, and obtain the canonical ref/device alias/envelope/consent/queue interfaces. First implement the existing local bridge owner/generation/final-checksum seam under that allocation, then final consent binding and immutable transcript jobs; remote egress starts only after RS-MTG-02/provider receipts, cited summary after real processor receipt, Task workflow after common Task/export/notification receipt.",
+    "integrationOwner": "Lead retains all shared source, test, manifest, progress and Git integration.",
+    "verificationPolicy": "This preflight may only undergo read-only report lineage/hash validation; native, tests, builds and network acceptance remain future implementation-owner work."
+  },
+  "risks": [
+    "Wave0/shared files may change during inspection or before acceptance; all reference hashes are working-tree snapshots and stale evidence must be re-read rather than silently accepted.",
+    "Explicit DAG only names RS-MTG-01, but full DoD3 cannot pass without independently ready RS-MTG-02 egress, object storage/scan, consent authority, durable queue and real summary processing. Disabled egress is necessary negative behavior, not completion of the live positive criterion.",
+    "Current REC_CHUNK/REC_STATE/REC_STOP omit owner checks; known meetingId is sufficient to reach those handlers. Capture generation must fence stale renderer work, while trusted crash recovery must still finalize orphan bytes.",
+    "Final checksum must be taken after remux/finalization; provisional capture identity cannot bind final upload consent or authorize a changed import/hash/policy.",
+    "MeetingGrant's optional target/hash/time checks can permit under-scoped calls; booleans/TTL helpers do not implement final artifact consent. Do not seed wildcard grants or bypass dispatch/lease revocation checks.",
+    "Local ASR reuses sN IDs and overwrites transcript.json. New processor output may change segmentation, making old citations wrong unless immutable revisions are retained.",
+    "ordinary safe agent session and generated:true are not proof of offline/local processing, trusted cited output, budget authorization or ready summary; untrusted transcript instructions require enforcement outside prompt prose.",
+    "Current action workflow is personal-task-only. Replacing it blindly can regress personal Tasks; shared actions require canonical Task receipt/backlink/project/assignee and explicit source export decision.",
+    "Player Blob URLs and transcriptText cache can outlive access; revocation must fence late async completion as well as clear rendered state and retract all retrieval consumers.",
+    "applyMeetingSummary currently replaces transcript in the query projection, and MeetingRepository.pending currently ignores its workspace filter via || true. Preserve distinct raw/derived sources and workspace-isolated shared outbox processing.",
+    "Native finalize/journal completion does not contain device bytes or ASR; do not bridge both it and local files as independent writers of the same shared artifact.",
+    "An extension-valid corrupt import can be copied and marked local ready with duration0; real media/ASR validation and truthful stage error states must be exercised, without losing source bytes.",
+    "Normative artifact-jobs.ts and tests directories are proposed and absent in the inspected tree. Creating folders alone, a fake queue, synthesized summary or provider fixture does not satisfy any real positive DoD.",
+    "Existing fs tests use NO_ENGINE and arbitrary tiny audio bytes; they cannot close actual native capture, transcript, provider, retention or memory acceptance. No runtime verification occurred in this preflight."
+  ]
+}

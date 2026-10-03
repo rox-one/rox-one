@@ -1,0 +1,27 @@
+{
+  "url": "http://127.0.0.1:40953/login",
+  "title": "Rox — Вход",
+  "bodyText": "Rox\n\nВведите токен сервера, чтобы продолжить\n\nТокен сервера\n Войти\nInvalid credentials",
+  "topBar": null,
+  "modePill": null,
+  "rail": null,
+  "mainNavigation": null,
+  "headers": [
+    "Rox"
+  ],
+  "testIds": [],
+  "modeButtons": [],
+  "railButtons": [],
+  "sourceStates": [],
+  "preferences": {
+    "craft-workbench-enabled": null,
+    "craft-feature-unified-shell": null,
+    "craft-feature-workbench-top-chrome-v2": null,
+    "craft-feature-workbench-mode-registry-v1": null,
+    "craft-activity-rail-collapsed": null,
+    "craft-sidebar-width": null,
+    "craft-session-list-width": null
+  },
+  "screenshot": "bad-token-login-refusal.png",
+  "html": "bad-token-login-refusal.html"
+}

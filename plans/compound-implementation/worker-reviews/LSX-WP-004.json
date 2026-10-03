@@ -1,0 +1,303 @@
+{
+  "task_id": "LSX-WP-004-preflight",
+  "attempt_id": "75d4c49fba9faabb43d1b13faec1c2fc",
+  "packet_hash": "4c113971ce9569f943475e43213dbf94eb946ccd61f7fb676edc820c4b0d4e28",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-004",
+  "featureComplete": false,
+  "mode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow: inspect assigned specifications and direct task dependencies, then deliver one owned JSON artifact",
+  "dependencies": ["LSX-WP-002"],
+  "inspection": {
+    "scope": "Assigned task source files, direct imports, and package specifications only. No product writes, Git operations, builds, tests, native UI or network operations were performed.",
+    "codegraph": "Tool returned no .codegraph index for this project; no indexing attempted. Built-in source inspection used instead.",
+    "findFallback": "Scoped find failed because its judgment provider returned HTTP 402. Inspection continued through exact specification paths, read and literal grep; the failed find is not evidence of absent code.",
+    "revisionBinding": "input_revision is the supplied dispatch revision, not a fresh Git observation. This is a live working-tree source snapshot, not a claim that uncommitted bytes belong to that commit. Whole-file hashes below are the observed source identity; lead must rehash after wave0 and prerequisite integration.",
+    "manifestHashes": {
+      "plans/lark-suite-reference/work-packages.json": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952",
+      "plans/lark-suite-reference/execution-packages.json": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"
+    },
+    "manifestStatus": "Both observed hashes match the dispatch input_manifest.",
+    "staleEvidence": "personal-tasks-sync.ts observed hash 501953889a635bd5bcdc735220d2565336f49db04dbe8f01e40cc518ecf301a3 differs from published product-baseline hash 4d37121ff3f57e46e265d84850ab3c29083f6f49e4440218aee521c032489eca. Its putPersonalTaskConfirmed and receipt checks are inspected live code, not inferred baseline implementation. No attribution of those changes is made. Remaining integration can invalidate any recorded source hash.",
+    "newFilePresence": "Exact-path glob found none of the four normative proposed new files at inspection. This is not a future implementation readiness receipt.",
+    "runtimeEvidence": [],
+    "verificationStatus": "PRODUCT_NOT_RUN_BY_INSTRUCTION"
+  },
+  "foundationGates": [
+    {
+      "id": "EG-IDENTITY",
+      "kind": "explicit external prerequisite, not an LSX-WP-004 DAG edge",
+      "specEvidence": "work-packages.json:74-89,2304-2307; issues/lsx-wp-004.md:152-155; Macro plan WP-01/WP-03:9-63",
+      "requiredProof": "Accepted authenticated actor/source grant and read-time revoke implementation/runtime receipts; composite sourceStoreId/ownerPrincipalId/nativeId resolution and current row/action/field policy on preview/apply/replay.",
+      "currentEvidence": "RequestContext has only clientId/workspaceId/webContentsId (transport/types.ts:7-11). registerPersonalTasksHandlers reads a global config-dir store without actor binding. Optional localElectron handler access exists, but task handlers do not request it. workspaceId alone is not an authenticated task owner.",
+      "state": "NOT_VERIFIED_BLOCKS_AFFECTED_WRITES",
+      "integrationRequest": "Consume accepted LSX-WP-002 bindings and EG-IDENTITY resolver; never manufacture an actor from payload, selected workspace or client capability. Denied/missing grants fail closed without protected title/body/current value. Runtime acceptance must cover revoke between preview and apply, read and replay."
+    },
+    {
+      "id": "EG-EFFECTS",
+      "kind": "explicit external prerequisite hidden by the package's single internal DAG edge",
+      "specEvidence": "work-packages.json:84-89,2304-2307; issues/lsx-wp-004.md:86,155; Macro plan WP-04:65-82; domain model:169-189",
+      "requiredProof": "Accepted native command + durable receipt + outbox recovery boundary, immutable request hash, replay-safe effect keys and deduplicated revision-fenced delivery.",
+      "currentEvidence": "PersonalTaskPersistStore.put reads revision then writes one file; writeRecord uses writeFileSync plus renameSync, without CAS, fsync or a receipt/outbox transaction. RPC changed emits after service return, outside persistence. Revision persistence is not an accepted durable-effects proof.",
+      "state": "NOT_VERIFIED_BLOCKS_DURABLE_ACK",
+      "integrationRequest": "Reuse the approved native effects/journal gateway for this file-backed owner; recover committed task, receipt and event intent together. Do not implement a Base-local journal as a substitute for missing native authority. Confirm real durability/crash semantics before choosing the exact store patch."
+    },
+    {
+      "id": "IMPLEMENTATION_LAUNCH_BINDING",
+      "kind": "dispatch/specification gate, not an extra invented dependency",
+      "specEvidence": "execution-packages.json:320-323,355-365; work-packages.json:2636-2646; user dispatch instruction",
+      "requiredProof": "Lead wave0 commit, accepted LSX-WP-002 artifact and authoritative readback receipts, immutable reference delivery revision/digest and spec-ref hashes, approved prerequisite implementation revisions, and exclusive shared-path leases.",
+      "currentEvidence": "The normative cloud record still contains RESOLVE_FROM_DELIVERY_MANIFEST and older product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab; current dispatch supplies a21aeab1da5a67e56788384ff930945b0f487879 and explicitly describes uncommitted wave0 work. No dependency acceptance receipt was supplied or verified.",
+      "state": "UNRESOLVED_FOR_IMPLEMENTATION",
+      "integrationRequest": "Lead must resolve approved launch revision against wave0 and accepted dependencies; worker must not checkout, reset, commit or pretend the older baseline is the current implementation base."
+    },
+    {
+      "id": "BOUNDARY_AND_UI_PACKET_COVERAGE",
+      "kind": "discovered integration-scope foundation gate, not a declared DAG edge",
+      "specEvidence": "work-packages.json:2514-2517,2562,2566,2646; issues/lsx-wp-004.md:43-58,113,137-142",
+      "requiredProof": "Reviewed ownership/packet amendment or accepted common-host receipts for protocol binding, revision-bearing snapshots, existing Task detail/Base editor integration, localized strings and the actual Electron verification runner.",
+      "currentEvidence": "The four approved shared paths contain persistence, RPC, service and pure sync helpers, not Task detail or Base rendering. channels.ts has only LIST/PUT/DELETE/MIGRATE/CHANGED. core personal/rpc.ts snapshot omits revisions. Task channels occur in REMOTE_ELIGIBLE_CHANNELS despite their local-config-dir comments. No UI source was inspected beyond this package's allowed scope.",
+      "state": "REQUIRES_REVIEWED_PACKET_BEFORE_EXTRA_PATCHES",
+      "integrationRequest": "Assign exact host/UI symbols after authorized discovery; request direct-import protocol/rpc changes listed below. Do not add a second editor, fixture-only UI or raw unregistered RPC strings to evade missing scope. Seven Base views and the whole broad Base epic are not dependencies of this bounded command slice."
+    },
+    {
+      "id": "BOUNDED_NATIVE_TRANSITION_WRITE_SET",
+      "kind": "discovered semantic prerequisite within EG-EFFECTS/EG-IDENTITY, not a new package edge",
+      "specEvidence": "work-packages.json:2557,2570; domain model:157,189; bases design:201-205",
+      "requiredProof": "Per-owner transaction/lease support for every related native task and affected meta item produced by a supported transition; authorization and revision checks over the complete write set.",
+      "currentEvidence": "completeTask creates a next occurrence and clears recurrence on the original; trash/restore mutate children, restore may mutate project metadata, moveTo propagates project/area/heading to children, setWhen changes order. Calling update on one persisted object cannot preserve these behaviors.",
+      "state": "UNVERIFIED_NATIVE_WRITE_SET_BOUNDARY",
+      "integrationRequest": "Preserve native transition methods and commit all their effects with the original command receipt. If an owner capability is missing, expose missingDependency/unsupported; it is a blocker for full acceptance, not permission to silently narrow native semantics."
+    }
+  ],
+  "ownedNewFiles": [
+    {
+      "path": "packages/server-core/src/tasks/personal-task-commands.ts",
+      "status": "NORMATIVE_PROPOSED_NOT_IMPLEMENTED",
+      "proposedContribution": "Export versioned runtime request/result/error schemas and task.patchFields, task.previewBatch, task.applyBatch logical handlers. Resolve scoped refs through accepted source binding and authenticated actor; validate typed fields, dispatch existing native transitions, recheck revision/policy/authority and preview digest on apply. Return exactly one outcome per input target, preserving stable row identity/order and related committed refs; use the native effects boundary for idempotency/receipt/outbox. Preview is pure, never a grant or write. Required discriminants: validation, conflict, denied, deleted, offlineUnsupported, missingDependency, rateLimited, unknownFormat. Classify unsupported row capabilities explicitly as specified, rather than inventing a generic success."
+    },
+    {
+      "path": "packages/core/src/bases/task-field-mapping.ts",
+      "status": "NORMATIVE_PROPOSED_NOT_IMPLEMENTED",
+      "proposedContribution": "Define stable field-ID mappings and portable typed patch/transition values using existing PersonalTask/TaskWhen/native types; title maps to title, status is derived and edited through native completeTask/reopen/cancel/trash/restore, dates explicitly distinguish dueAt from startAt and local-date semantics, relations preserve project/parent/source/link meaning. Derived/system/custom unsupported fields are not spread into task JSON. Explicit clear operations must survive JSON transport; undefined is not a wire-level clear marker. Share portable contracts with the renderer through the existing core boundary, with reviewed export integration if required; no Base task store."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-004.test.ts",
+      "status": "NORMATIVE_PROPOSED_NOT_IMPLEMENTED",
+      "proposedContribution": "Deterministic isolated native-owner fixtures and seeded tests for five classified row outcomes, source collisions, native transitions, simultaneous CAS, preview purity/digest tampering, revoked replay, same-key changed payload, no-op revision, deletion/future schema, exact native ref/revision/hash readback and crash/restart receipt recovery. Include the specified Base-local-copy mutant with named semantic failure assertions; preserve input hashes/seeds and attempts. No product tests run in preflight."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-004.spec.ts",
+      "status": "NORMATIVE_PROPOSED_NOT_IMPLEMENTED",
+      "proposedContribution": "Use the discovered supported actual Electron runner and existing Task/Base surfaces to edit the same scoped task, inspect partial/skipped preview, apply, reload and read back. Verify pointer, keyboard, Enter/Escape, IME composition, focus restoration, reduced motion, 200% zoom, theme preservation, RU/all-locale behavior and loaded Rox Mono. Include durable-ACK versus pending/draft and denied-without-protected-content states. Runner/host and scope receipts remain prerequisites, not an invented passing command."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/server-core/src/tasks/personal-persist.ts",
+      "symbol": "PersonalTaskPersistStore.put/get/writeRecord; parsePersonalTaskPersistFile",
+      "change": "Under the native effects gateway's approved owner lease, add required expectedRevision check+commit on the current record, retaining identical-payload revision behavior only after the precondition is checked. Preserve native per-task file layout/IDs and record unknown future schema as read-only without rewriting bytes. Integrate source-scoped durable command receipt/event intent and recovery with the native task commit, including bounded multi-record transition effects; expose authoritative record revision/hash for authorized readback. Do not implement receipt persistence as a Base-owned copy or claim rename alone supplies a multi-file transaction.",
+      "reason": "put currently has no CAS; parser only checks a minimal shape/revision and cannot identify unknown future format; separate files and post-write events do not provide atomic native receipt recovery.",
+      "authorization": "Listed shared path; integration-owner serial patch only, dependent on accepted EG-EFFECTS design and LSX-WP-002 source binding."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+      "symbol": "registerPersonalTasksHandlers; personalTasksStore; PERSONAL_TASKS_HANDLED_CHANNELS",
+      "change": "Bind registered typed patch/preview/apply operations to personal-task-commands using the accepted authenticated actor and scoped source resolver, not default config-dir plus payload/ctx workspace assumptions. Revalidate source/action/field grants for read, preview, apply and replay. Obtain the durable canonical event envelope from the owner and map it to the existing CHANGED invalidation alias; target only authorized subscribers instead of global all-client broadcast. Preserve the existing native local lifecycle/migration surface while removing existing-task update bypasses. Extend channel ownership list only after reviewed protocol registration.",
+      "reason": "Current LIST ignores ctx, PUT accepts whole task objects, personalTasksStore is one cached root, and CHANGED is a global {at} signal with no entity revision/receipt correlation.",
+      "authorization": "Listed shared path; protocol-list addition and actor resolver interface require lead-reviewed contract/packet and EG-IDENTITY receipt."
+    },
+    {
+      "path": "packages/server-core/src/tasks/personal-tasks-service.ts",
+      "symbol": "putPersonalTasks; migratePersonalTasks; readPersonalTasks",
+      "change": "Route existing-task field updates through the canonical command handler with expectedRevision and per-row results rather than unconditional store.put. Keep create/import-only and migration server-wins behavior explicit, backed by the same native authority where writes occur; do not allow legacy whole-object PUT to overwrite a concurrent committed edit. Preserve backup and migration markers. Provide authorized native revisions/hashes in the approved revision-bearing snapshot/readback contract rather than discarding store.list revisions. Document that task/meta transactions are bounded by owner support, not an all-or-nothing batch guarantee.",
+      "reason": "putPersonalTasks aggregates written/rejected and writes meta separately; migrate preserves already present IDs, but readPersonalTasks strips revision from every record. A command-only CAS path can still lose data if ordinary task sync bypasses it.",
+      "authorization": "putPersonalTasks/migratePersonalTasks are listed seams. readPersonalTasks is on a listed path but is an additional named symbol; requires amended reviewed symbol scope before patch."
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/personal-tasks-sync.ts",
+      "symbol": "diffPersonalTaskBundles; bundleFromSnapshot; PersonalTasksApi; pushPersonalTaskDiff; putPersonalTaskConfirmed; hydratePersonalTasksFrom",
+      "change": "Retain native revisions/source binding from the approved snapshot in read-through sync state without adding a writable Base task cache. Turn existing-task diffs into typed field/native transition commands with the last authoritative expectedRevision; never resubmit the entire optimistic task as an unguarded update. Reconcile per-row committed receipts and readback, retain failed/conflicting drafts and stable idempotency keys, and distinguish pending from committed. Keep explicit native creation/migration semantics and the observed rejected-count checks. Apply duplicate/revision-fenced invalidations through the accepted host subscription path.",
+      "reason": "Current diff compares JSON task objects, bundleFromSnapshot loses any revision metadata, push returns one boolean and count-based creation confirmation is not exact ref/revision/hash proof.",
+      "authorization": "diffPersonalTaskBundles/bundleFromSnapshot are listed seams; the other named helpers/interfaces need a reviewed symbol-scope amendment. Caller/host subscription migration must be assigned by lead; no external callers were guessed or inspected."
+    },
+    {
+      "path": "packages/core/src/tasks/personal/rpc.ts",
+      "symbol": "PersonalTasksSnapshot; PersonalTasksMigrateResult",
+      "change": "Expose an approved source-scoped authoritative record/revision/hash snapshot contract using the portable task command/ref types, while preserving genuine migration result semantics. Choose one shared DTO representation before server/renderer integration; both boundaries must use it.",
+      "reason": "Current snapshot carries PersonalTask[] plus meta/migration only; clients cannot supply an authoritative expectedRevision from this snapshot.",
+      "authorization": "Direct-import discovery request only: path is outside approved sharedPatchPaths; packet amendment and exclusive ownership REQUIRED before any patch."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.personalTasks",
+      "change": "Register the approved patchFields/previewBatch/applyBatch transport operations and receipt/readback query if the effects gateway requires one, using one versioned contract. Preserve CHANGED as a verified alias, not a blind rename.",
+      "reason": "Current personalTasks registry has only LIST/PUT/DELETE/MIGRATE/CHANGED; arbitrary strings in the handler would bypass the existing registry convention.",
+      "authorization": "Direct-import discovery request only: outside approved sharedPatchPaths; update reviewed packet/lease first. Exact wire names must be resolved with transport owner."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "LOCAL_ONLY_CHANNELS; REMOTE_ELIGIBLE_CHANNELS personalTasks entries",
+      "change": "Classify each approved Task operation using the accepted personal-source binding/authority policy. Do not expose a device/config-dir owner remotely merely because a workspace is remote-eligible; either retain explicit verified local ownership or use proven scoped remote authority. Amend classifications together with new channel registration and enforce the appropriate handler gate.",
+      "reason": "Personal task channels are in REMOTE_ELIGIBLE_CHANNELS (514,896-901) despite local storage comments. A comment is not routing enforcement; localElectron access alone is also not per-field ACL.",
+      "authorization": "Direct-import discovery request only: outside approved sharedPatchPaths; reviewed packet/lease and identity readiness required."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "no fake all-or-nothing across mixed owners",
+      "specReference": "work-packages.json:2560; published issue:136",
+      "currentEvidence": "putPersonalTasks:38-54 loops per task and returns aggregate counts/rejected IDs; there is no target-indexed outcome array, preview or owner transaction declaration.",
+      "actualSeam": "putPersonalTasks; PersonalTaskPersistStore; proposed task.previewBatch/task.applyBatch",
+      "requiredChange": "Explicit refs/revisions and patch yield pure eligible/skipped preview plus exactly one classified outcome per input target. Bind digest to refs, revisions, patch, binding/schema and current policy/authority; revalidate on apply. Use per-owner bounded commit receipts, never a synthetic mixed-owner transaction or rollback of previously acknowledged rows.",
+      "verification": "Five targets including denied and stale produce exactly five matching scoped outcomes; assert native values/revisions for accepted rows and unchanged denied/stale rows. Tampered/stale preview cannot silently apply new targets. Repeat after crash/replay with identical effect keys.",
+      "missingPrerequisite": "Accepted LSX-WP-002, EG-IDENTITY and EG-EFFECTS; reviewed typed transport and preview host.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "native validation/transition semantics retained",
+      "specReference": "work-packages.json:2561; bases design:94-105,201-205",
+      "currentEvidence": "PersonalTaskStore.update:207-215 is Object.assign, not comprehensive runtime validation. create:158-205 validates trimmed title. completeTask:434-464, setWhen:467-497, setDeadline:499-504, moveTo:507-540, trash/restore:395-415 have native behavior beyond editing one property. persist isPersonalTask:43-54 validates only minimal shape.",
+      "actualSeam": "PersonalTaskStore native methods, read-only reuse; proposed task-field-mapping.ts and personal-task-commands.ts",
+      "requiredChange": "Runtime typed-field validation at the command boundary followed by existing native methods on an ephemeral owner snapshot, not a second persisted store. Status uses native transitions instead of direct completedAt/cancelledAt flags. Preserve recurrence, child changes, audit/meta, relation semantics and local dates. Commit/authorize every affected native record within the supported owner boundary; explicit unavailable capability is not full acceptance.",
+      "verification": "Native task readback after completion yields one correct next recurrence and no duplicate on replay; when/deadline preserve local-day semantics; move/trash/restore retain child/project behavior. Invalid title/enum/date/derived field patches are rejected without native changes. Existing standalone personal Task behavior remains intact.",
+      "missingPrerequisite": "Full native transition write-set receipts and rights under EG-EFFECTS/EG-IDENTITY; runtime schemas; no changes to read-only core store authorized.",
+      "state": "PARTIAL_NATIVE_MECHANISMS_PRESENT_COMMAND_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "Base edit меняет тот же canonical Task и отражается в native Tasks после reload.",
+      "specReference": "published issue:135; work-packages.json:2286,2516",
+      "currentEvidence": "PersonalTaskPersistStore provides native per-task files/get/list. Existing hydratePersonalTasksFrom reads native snapshot into the cache. None of four normative command files exists; pure task sync helpers are not Base editor integration.",
+      "actualSeam": "PersonalTaskPersistStore.get/put; readPersonalTasks; bundleFromSnapshot/hydratePersonalTasksFrom; proposed field mapping",
+      "requiredChange": "Base field edits resolve the accepted composite source ref and write only native owner records via the canonical command. Update existing Task/Base projections from the durable receipt/event and authorized readback; do not create a Base-local writable task mirror.",
+      "verification": "On actual existing Base editor change a task field, reopen native Task detail and reload both surfaces. Compare exact sourceStoreId/ownerPrincipalId/nativeId, revision and payload hash; restart authority and repeat readback. A second source with the same nativeId remains unchanged.",
+      "missingPrerequisite": "Accepted source-binding receipt and actual host/UI integration owner/scope; not supplied by a fixture UI.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "specReference": "work-packages.json:2562; published issue:137",
+      "currentEvidence": "PersonalTasksApi:24-29 is compile-time interface over aggregate PUT; RequestContext:7-11 lacks principal; RPC handlers accept full objects. RPC_CHANNELS.personalTasks:867-873 does not register command operations. PersonalTasksSnapshot:20-24 has no revisions.",
+      "actualSeam": "registerPersonalTasksHandlers; PersonalTasksApi; direct-import core rpc.ts and protocol registry; proposed command schemas/portable field types",
+      "requiredChange": "One versioned runtime request/result/error contract carries scoped ref, mandatory expectedRevision, operationId/idempotencyKey, typed patch/transition and applicable authority epoch. Implement all eight required error discriminants, per-row unsupported capability and safe conflict metadata. Bind actor to accepted transport authentication; deny forged actor/owner/workspace. Wire schemas at both boundaries rather than only TypeScript casts.",
+      "verification": "After authorized implementation, compile affected server/core/renderer boundaries using supported repository commands; runtime reject malformed/version-unknown requests and actor/workspace forgery. Verify error discrimination and absence of protected title/body/current payload in denied/conflict results for unauthorized viewers.",
+      "missingPrerequisite": "EG-IDENTITY; reviewed protocol/DTO/export scope and typed renderer API binding. No compile executed in preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "specReference": "work-packages.json:2563; published issue:138",
+      "currentEvidence": "put:83-95 increments revision for changed payload. writeRecord:234-239 atomically renames one tmp file. readPersonalTasks:31 strips revision; PUT receipt is counts only. No inspected native command receipt/outbox or hash readback exists.",
+      "actualSeam": "PersonalTaskPersistStore.put/get/writeRecord/cleanupOrphanTmp; readPersonalTasks; proposed command gateway",
+      "requiredChange": "Check expectedRevision and commit native task effects, request hash, durable receipt and outbox intent under one recoverable authority boundary. Return exact scoped ref/revision/hash only after durable acceptance. Replay reauthorizes then retrieves the original logical result without reapplying. No-op must not manufacture a new revision, but stale preconditions must not be accepted merely because payload matches.",
+      "verification": "Two writers with one expectedRevision yield one commit/one conflict, including cross-process owner fencing if supported. Native get/readback verifies bytes/hash before and after restart. Inject crash before commit, after commit before response, and around event delivery; replay yields the same receipt/effects and no loss/duplication.",
+      "missingPrerequisite": "Accepted EG-EFFECTS recovery/durability receipt and source identity/actor; revision-bearing authorized readback contract.",
+      "state": "MONOTONIC_REVISION_PRESENT_CAS_RECEIPT_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "specReference": "work-packages.json:2564,2530-2544; published issue:139",
+      "currentEvidence": "Existing code supports native task operations and per-task files, but the package tests/commands are absent and no runtime evidence was collected by this worker.",
+      "actualSeam": "Normative lsx-wp-004.test.ts; PersonalTaskPersistStore and native methods; task command preview/apply/replay",
+      "requiredChange": "Add deterministic isolated native integration/property cases for mixed five targets, stale revision, deleted row, denied field/source, revoke after preview/on replay, same-key altered payload, duplicate target policy, unsupported/unknown format, no-op and standalone task regression. Retain exact input/source hashes, clock/seed, expected/observed values and every attempt.",
+      "verification": "Future implementation runs bun test tests/lark-suite-extension/lsx-wp-004.test.ts plus native owner readback/restart lanes on integrated bytes. Check each expected row effect and each denied no-effect; results must not be replaced with length/non-empty assertions.",
+      "missingPrerequisite": "Implementation after accepted dependencies/gates, supported recovery fixture and integrated revision. Tests forbidden in this preflight and NOT_RUN.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "specReference": "work-packages.json:2546-2553,2565; published issue:124-131,140",
+      "currentEvidence": "Normative mutant writes patch to Base-local copy instead of PersonalTaskPersistStore. Existing native get/list are independent of renderer cache and provide the necessary oracle seam; no mutant executed.",
+      "actualSeam": "PersonalTaskPersistStore.get/list; authoritative Base-to-native readback; normative package test files",
+      "requiredChange": "Use an isolated source/owner fixture and exact evaluated bytes. Baseline must pass native same-ref value/revision/hash change, absence of Base-owned canonical task rows and complete reconciliation of five accepted/refused outcomes. Mutant switches command persistence to Base-local copy and must fail those named semantic assertions; capture failures separately from infrastructure/dependency failures.",
+      "verification": "Retain green baseline receipt, reproduction seed and input/source SHA256; run broken control and show the native readback/reconciliation assertions fail for the intended semantic cause, not a timeout or missing runner.",
+      "missingPrerequisite": "Real native command path and stable fixture after EG-EFFECTS/source binding acceptance; mutation runner/exact bytes. NOT_RUN here.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "specReference": "work-packages.json:2566; published issue:45-58,141",
+      "currentEvidence": "Only assigned pure personal-tasks-sync.ts was inspected; it contains no render surface. The package nevertheless requires native Task detail plus Base editor and partial/skipped preview. No actual UI/runner evidence exists in this preflight.",
+      "actualSeam": "Proposed task-field-mapping.ts and existing PersonalTasksApi/sync draft reconciliation; exact host rendering symbols require lead's authorized discovery",
+      "requiredChange": "Wire the existing editor/detail hosts, not a new surface. Show revision/freshness/capability, eligible/skipped preview, explicit pending/durable ACK, draft preservation and validation/conflict/denied/offline/unsupported distinctions. Enter commits outside IME composition, Escape cancels/restores focus; help on hover/focus/click has no side effects. Localize through t() in all 10 locales, preserve theme, prove actual Rox Mono loaded and adequate hit areas.",
+      "verification": "Actual Electron runner, native data readback and screenshots/ARIA/computed font evidence at integrated revision. Exercise pointer/keyboard/IME/focus, reduced motion, 200% zoom, light/dark, Russian and locale parity; verify ≥32px desktop/44px touch hit areas where applicable. Denied views show no protected title/body; failed/unknown receipt keeps draft, reload reflects only committed values.",
+      "missingPrerequisite": "Reviewed existing UI/i18n/bridge path and symbol ownership, accepted common host, supported runner. This criterion remains blocked, never N/A because current allowed files lack JSX.",
+      "state": "REQUIRES_SCOPE_INTEGRATION_NOT_RUN"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "specReference": "work-packages.json:2567,2537-2544; published issue:142",
+      "currentEvidence": "This report is source inspection only. Monotonic revisions, static schema plans, existing receipt-count checks and issue publication cannot establish feature completion.",
+      "actualSeam": "Integrated native command/store/readback and actual Task/Base hosts; normative proof lane receipts",
+      "requiredChange": "Collect independent SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI evidence bound to integrated revision/source hashes. Provider/collaboration evidence is additional only if those lanes are actually used; do not claim provider delivery from local task ACK. Preserve attempts and redaction per actor.",
+      "verification": "Lead accepts artifacts and exact native readback on integrated bytes after dependency/lease review. Completion requires all package lanes and assertions, not worker final text or this JSON. Reverify behavior after material integration changes.",
+      "missingPrerequisite": "Implementation and independent integrated acceptance receipts; no product behavior has been run.",
+      "state": "PREFLIGHT_ONLY_FEATURE_NOT_COMPLETE"
+    },
+    {
+      "criterion": "Canonical task event invalidates Tasks and Base; optimistic cell pending is not commit.",
+      "specReference": "work-packages.json:2505-2508,2519-2522; published issue:78-86",
+      "currentEvidence": "registerPersonalTasksHandlers.changed:40-41 emits personalTasks.CHANGED to all clients with {at}; current calls exclude initiating client, and include PUT even if rows were rejected. No canonical envelope, outbox replay or revision fence in this seam.",
+      "actualSeam": "registerPersonalTasksHandlers.changed; canonical owner receipt/outbox; renderer sync and accepted host subscriptions",
+      "requiredChange": "Verified alias from task.updated to existing CHANGED carries eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId or resolves through the accepted envelope adapter. Publish from recoverable native commit intent, not speculative preview. Consumers dedup/fence by revision and fetch current authorized data, including the committing client's receipt path.",
+      "verification": "One successful native mutation refreshes both surfaces; duplicate/out-of-order event does not regress revision; restart recovers missed delivery. Denied row emits no content-bearing committed event. Revoke stops further unauthorized read/subscription without leaking counts/titles.",
+      "missingPrerequisite": "EG-EFFECTS outbox and EG-IDENTITY subscriptions; approved host consumer integration.",
+      "state": "LEGACY_INVALIDATION_PRESENT_CANONICAL_CONSISTENCY_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "Personal binding/current action/field rights on each row and replay; batch scope digest revalidated.",
+      "specReference": "work-packages.json:2510-2512; published issue:68,88-92",
+      "currentEvidence": "Task handlers do not authorize scoped refs/fields. RequestContext is not a principal. Current default personalTasksStore root does not distinguish sourceStoreId/ownerPrincipalId/nativeId, and local task routing comments do not enforce private ownership.",
+      "actualSeam": "registerPersonalTasksHandlers; personalTasksStore; accepted LSX-WP-002 source resolver; proposed preview/apply commands",
+      "requiredChange": "Current transport actor resolves each personal binding and field/action policy at every read/preview/apply/replay. Digest pins explicit scoped targets, revisions, patch and policy/schema/authority state but is not a grant. Validate linked transition effects separately. Fail closed for missing binding/owner/offline unsupported capability and redact forbidden results.",
+      "verification": "Two stores with same nativeId cannot cross-write; forged owner/workspace cannot authorize; revoked field/source after preview or saved receipt prevents unauthorized apply/replay/read/subscription. Test authorized fields alongside denied fields and ensure no protected payload/current value leaks.",
+      "missingPrerequisite": "Accepted LSX-WP-002 source-binding and EG-IDENTITY runtime receipts; no mock actor adapter can satisfy it.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/server-core/src/tasks/personal-persist.ts","symbol":"parsePersonalTaskPersistFile","lineStart":57,"lineEnd":68,"sha256":"024688ed60a4795ff0d25d080a98e45b47690abdb74077314734ce830443e49a"},
+    {"path":"packages/server-core/src/tasks/personal-persist.ts","symbol":"PersonalTaskPersistStore.put/get/list","lineStart":74,"lineEnd":105,"sha256":"024688ed60a4795ff0d25d080a98e45b47690abdb74077314734ce830443e49a"},
+    {"path":"packages/server-core/src/tasks/personal-persist.ts","symbol":"PersonalTaskPersistStore.writeRecord/cleanupOrphanTmp","lineStart":234,"lineEnd":253,"sha256":"024688ed60a4795ff0d25d080a98e45b47690abdb74077314734ce830443e49a"},
+    {"path":"packages/server-core/src/handlers/rpc/personal-tasks.ts","symbol":"personalTasksStore/registerPersonalTasksHandlers","lineStart":29,"lineEnd":69,"sha256":"bfb9080767d6a349c5d09a0cbe29190bccf6b8d70a88b4dd1bbfa6c0932d758f"},
+    {"path":"packages/server-core/src/tasks/personal-tasks-service.ts","symbol":"readPersonalTasks/putPersonalTasks/migratePersonalTasks","lineStart":25,"lineEnd":105,"sha256":"a4b41cbdfaa663872b5a70f2c81a51ce81c761973c8dd955eb89285de3f2429e"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.create/update/complete/reopen/cancel","lineStart":158,"lineEnd":238,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.trash/restore/completeTask/setWhen/setDeadline/moveTo","lineStart":395,"lineEnd":540,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"apps/electron/src/renderer/lib/personal-tasks-sync.ts","symbol":"PersonalTasksApi/bundleFromSnapshot/diffPersonalTaskBundles","lineStart":24,"lineEnd":72,"sha256":"501953889a635bd5bcdc735220d2565336f49db04dbe8f01e40cc518ecf301a3"},
+    {"path":"apps/electron/src/renderer/lib/personal-tasks-sync.ts","symbol":"hydratePersonalTasksFrom/putPersonalTaskConfirmed/pushPersonalTaskDiff","lineStart":91,"lineEnd":146,"sha256":"501953889a635bd5bcdc735220d2565336f49db04dbe8f01e40cc518ecf301a3"},
+    {"path":"packages/core/src/tasks/personal/types.ts","symbol":"PersonalTask/Recurrence/ChecklistItem","lineStart":24,"lineEnd":75,"sha256":"4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path":"packages/core/src/tasks/personal/rpc.ts","symbol":"PersonalTasksSnapshot/PersonalTasksMigrateResult","lineStart":20,"lineEnd":35,"sha256":"0077c76f097d4d5f6b89ae21d0bea3703a8cd9b7fe374859b41df7f32ed5e395"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext/RpcHandlerOptions/RpcServer","lineStart":7,"lineEnd":33,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/server-core/src/transport/server.ts","symbol":"localElectron/LOCAL_ONLY dispatch gates and RequestContext construction","lineStart":751,"lineEnd":795,"sha256":"16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.personalTasks","lineStart":866,"lineEnd":873,"sha256":"89177712f430183f89657f08f985ea50861c8d774652dbb56471d5eb7cca0aaa"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"REMOTE_ELIGIBLE_CHANNELS declaration","lineStart":510,"lineEnd":514,"sha256":"c8fb48dde141d0ebcc20eec69e8386797d31a8b2b84dfbbd93afcad883b670c2"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"REMOTE_ELIGIBLE_CHANNELS personalTasks entries","lineStart":896,"lineEnd":901,"sha256":"c8fb48dde141d0ebcc20eec69e8386797d31a8b2b84dfbbd93afcad883b670c2"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"external_prerequisite_gates EG-IDENTITY/EG-EFFECTS","lineStart":74,"lineEnd":89,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[3] LSX-WP-004","lineStart":2283,"lineEnd":2648,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-004 allowedWritePaths/sharedPatchPaths/cloudPacket","lineStart":276,"lineEnd":367,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/issues/lsx-wp-004.md","symbol":"Published local package contract, DoD and external gates","lineStart":1,"lineEnd":175,"sha256":"ceb46e78e942c343d8dd9336dd9f0fe9fc8fbcb09af2224408c60d91544b61b2"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"Native field mapping","lineStart":94,"lineEnd":105,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"9.2 Edit и bulk","lineStart":201,"lineEnd":205,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"Source-scoped personal task identity","lineStart":24,"lineEnd":33,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"Events and consistency","lineStart":169,"lineEnd":189,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-01/WP-03/WP-04 foundation contracts","lineStart":9,"lineEnd":82,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reads this preflight report; this worker does not implement or modify any shared path.",
+    "implementationAfterGates": "After lead wave0 commit and accepted LSX-WP-002 plus EG-IDENTITY/EG-EFFECTS receipts, rehash the concrete source references against the approved integrated base, resolve reference manifest, approve protocol/DTO/UI and extra-symbol scope requests, and acquire shared leases. Then author the two normative command/mapping files against the accepted actor/source/effects contracts; integration-owner applies serial shared patches, followed by normative tests and actual native/UI readback on integrated bytes.",
+    "resumeCondition": "Exact implementation revision, reference digest, accepted prerequisite receipts, actor/source/effects API and reviewed host/protocol scope are available. No feature completion can be inferred from this artifact."
+  },
+  "risks": [
+    "Live working tree may change during lead integration. Published source hashes/line numbers are not current proof; rehash before any implementation patch.",
+    "Monotonic put is not CAS and single-file rename is not a durable task+receipt+outbox transaction. No-op detection must not bypass expectedRevision.",
+    "Existing whole-task PUT and boolean renderer diff acknowledgement can bypass a newly added CAS command or hide partial success; callsite migration must be complete under reviewed scope.",
+    "Task channels are remote-eligible in actual routing, contrary to local-only comments; contextless config-root handlers must not be treated as an authenticated personal owner.",
+    "Task completion recurrence, move and trash/restore can affect other tasks and metadata. Per-target receipts need bounded native write sets, not one-object patches or mixed-owner atomic claims.",
+    "Future schema handling is fail-soft rather than explicit read-only preservation in the current parser; unrecognized valid-looking task payloads must not be silently rewritten by the new command.",
+    "Preview digest is not an authorization grant. Policy/schema/revision changes and revoke must be checked at apply and replay; unauthorized conflict/readback results must not leak protected content.",
+    "Current global CHANGED signal lacks event identity/revision fences and can leak mutation activity/counts to inappropriate viewers if reused without identity-aware targeting.",
+    "Allowed package shared files do not cover real Base/Task rendering, localization, protocol and all caller bindings. Extra source seams require an updated reviewed packet, never an unauthorized broad edit or fixture surface.",
+    "Explicit DAG dependencies remain exactly [LSX-WP-002]. Foundation/readiness gates are separate and neither a published issue nor a worker statement satisfies them.",
+    "Runtime, recovery, mutation and actual Electron UI verification are deliberately NOT_RUN in this preflight; all feature DoD remains unverified."
+  ]
+}

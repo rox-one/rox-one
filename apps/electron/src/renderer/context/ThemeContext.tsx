@@ -383,11 +383,16 @@ export function ThemeProvider({
       delete root.dataset.scenic
       root.style.removeProperty('--background-image')
     }
+    if (presetTheme?.mode === 'blurred') {
+      root.dataset.blurred = 'true'
+    } else {
+      delete root.dataset.blurred
+    }
 
   }, [presetTheme, resolvedMode, systemPreference, isScenic, resolvedTheme, isDarkFromMode])
 
   // Inject CSS variables
-  useEffect(() => {
+  useLayoutEffect(() => {
     const styleId = 'craft-theme-overrides'
     let styleEl = document.getElementById(styleId) as HTMLStyleElement | null
 

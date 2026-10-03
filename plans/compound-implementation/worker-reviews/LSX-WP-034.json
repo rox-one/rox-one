@@ -1,0 +1,269 @@
+{
+  "task_id": "LSX-WP-034-preflight",
+  "attempt_id": "86a58a5764df56f571b6e82ebb26104d",
+  "packet_hash": "4f6c29368bc022d563cccc68ab6a0bc763fea5118901f8880b728183a50580de",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-034",
+  "featureComplete": false,
+  "reportKind": "SOURCE_BACKED_PREFLIGHT_NOT_IMPLEMENTATION",
+  "workTier": "bounded-workflow; single owned research artifact, no nested workers or product execution",
+  "dependencies": ["LSX-WP-002", "LSX-WP-005", "LSX-WP-006", "LSX-WP-016"],
+  "dependencyAcceptance": {
+    "state": "NOT_ESTABLISHED",
+    "required": "Lead wave0 commit followed by artifact and exact native readback acceptance for all four explicit dependencies, including their own predecessors. Do not treat the dispatch packet's empty depends_on scheduler array as the product DAG.",
+    "contractsNeeded": [
+      "LSX-WP-002: sourceStoreId/ownerPrincipalId/nativeId binding and source-scoped canonical Task resolution; no imported workspace inference",
+      "LSX-WP-005: retained raw-span Markdown/YAML changes and byte-preserving owner writes",
+      "LSX-WP-006: imported ^abc and ROX block marker mapping with duplicate-ID diagnostics",
+      "LSX-WP-016: field/property-key/type/timezone mapping, schema+row CAS, unknown/future values and resumable repair"
+    ],
+    "specEvidence": "work-packages.json:12219-12224; dependency records at 1599-1622, 2649-2672, 2987-3008, 6285-6310"
+  },
+  "foundationGates": [
+    {
+      "id": "EG-FILES",
+      "kind": "EXPLICIT_EXTERNAL_PREREQUISITE_NOT_INTERNAL_DAG_EDGE",
+      "evidence": ["plans/lark-suite-reference/work-packages.json:108-114", "plans/lark-suite-reference/work-packages.json:12225-12227"],
+      "required": "Accepted Common FileRef/assets ownership, export and revocation receipt; validate source attachment ownership and current destination audience before materialization. Reuse that owner, not a new import attachment store.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "RS-DRV-01",
+      "kind": "HIDDEN_PUBLISHED_FOUNDATION",
+      "evidence": ["docs/rox-suite/published/RS-NOTE-01.md:79-86", "docs/rox-suite/published/RS-BASE-01.md:107-113"],
+      "required": "Both linked published specifications require RS-DRV-01 #1109. Personal Note projection, stable refs and File grants must be ready; a folder or bundle grant must never establish authority. This is separate from the four LSX edges and overlaps the EG-FILES evidence requirement.",
+      "state": "IMPLEMENTATION_RECEIPT_NOT_INSPECTED"
+    },
+    {
+      "id": "RS-DOC-01",
+      "kind": "HIDDEN_PUBLISHED_FOUNDATION",
+      "evidence": ["docs/rox-suite/published/RS-NOTE-01.md:37", "docs/rox-suite/published/RS-NOTE-01.md:52-59", "docs/rox-suite/published/RS-NOTE-01.md:81-82"],
+      "required": "RS-NOTE-01 also requires RS-DOC-01 #1110. Verify authority/epoch fencing and native/shared aliases before importing into any shared destination. Current inspected ContentOwner fixes authority to markdown and epoch to 1; it is not evidence of shared CRDT readiness. Preserve raw bytes but never activate a second writer. If affected shared capability is absent, return missingDependency, not simulated success.",
+      "state": "SHARED_AUTHORITY_NOT_ESTABLISHED"
+    },
+    {
+      "id": "COMMON_IDENTITY_EFFECTS_POLICY_EVENTS",
+      "kind": "PUBLISHED_BEHAVIORAL_FOUNDATION_NOT_NEW_DAG_EDGE",
+      "evidence": ["docs/rox-suite/published/RS-NOTE-01.md:37,74", "docs/rox-suite/published/RS-BASE-01.md:44-56", "docs/lark-suite-reference/07-domain-entity-model.md:193-199"],
+      "required": "Native owner commands, grants, revisioned aliases, common outbox and ACL-filtered index must supply real receipts. EG-IDENTITY and EG-EFFECTS are also prerequisites of explicit LSX dependencies. document.imported and task.created/updated are proposed aliases, not current proven event families; verify registry mapping and required envelope without inventing a notification engine.",
+      "state": "SOURCE_ONLY_PARTIAL_NATIVE_FOUNDATION"
+    },
+    {
+      "id": "NATIVE_TASK_CAS_DURABLE_RECEIPT",
+      "kind": "SOURCE_DISCOVERED_FOUNDATION_GAP",
+      "evidence": ["packages/server-core/src/tasks/personal-tasks-service.ts:38-54,63-105", "packages/server-core/src/tasks/personal-persist.ts:83-101,234-239"],
+      "required": "PersonalTaskPersistStore.put currently has no expectedRevision, no owner-level operation receipt and no fsync in writeRecord. A read-then-put in import is not atomic CAS or durable ACK. Accepted task mutation authority must provide those guarantees, or the lead must update the reviewed scope for the persistence owner; do not add a parallel Task store in vault-import.ts.",
+      "state": "BLOCKING_UNLESS_ACCEPTED_DEPENDENCY_REPLACES_THIS_SEAM"
+    },
+    {
+      "id": "BOUNDED_PACKET_AND_UI_PROTOCOL_WIRING",
+      "kind": "SOURCE_DISCOVERED_INTEGRATION_AUTHORIZATION_GATE",
+      "evidence": ["plans/lark-suite-reference/execution-packages.json:2987", "packages/shared/src/protocol/channels.ts:214-284", "packages/shared/src/protocol/routing.ts:18-37", "docs/lark-suite-reference/06-rox-docs-design.md:51-68", "docs/rox-suite/published/RS-NOTE-01.md:41-43"],
+      "required": "Only notes.ts and personal-tasks-service.ts are approved shared patches. knowledge.previewVaultImport/applyVaultImport/resumeVaultImport channels are absent in the inspected knowledge channel object. A new ImportStaging component alone does not mount RD-12. Lead must approve protocol/routing, existing Notes/library entry-point and all-ten-locale integration seams or deliver accepted dependency-owned wiring before implementation. Do not use existing notesImport names or knowledge migration as an unreviewed alias.",
+      "state": "REVIEWED_PACKET_EXTENSION_OR_DEPENDENCY_WIRING_REQUIRED"
+    },
+    {
+      "id": "IMMUTABLE_SPEC_BASE_AND_PATH_LEASES",
+      "kind": "EXPLICIT_LAUNCH_GATE_NOT_PRODUCT_DAG_EDGE",
+      "evidence": ["plans/lark-suite-reference/work-packages.json:7-11", "plans/lark-suite-reference/execution-packages.json:2977-2987"],
+      "required": "Resolve delivery reference revision/digest and each spec_ref hash; reconcile normative e953786 baseline with requested a21aeab input and lead wave0 commit; reject unexpected base/dirty state for implementation; acquire shared path leases and rebase requests on accepted dependency hashes. Dirty work was intentionally inspected read-only in this preflight, not accepted as an implementation baseline.",
+      "state": "LEAD_RECEIPTS_REQUIRED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/docs/vault-import.ts",
+    "apps/electron/src/renderer/pages/docs/ImportStaging.tsx",
+    "tests/lark-suite-extension/lsx-wp-034.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-034.spec.ts"
+  ],
+  "newFileContributions": [
+    {
+      "path": "packages/server-core/src/docs/vault-import.ts",
+      "proposedSymbols": ["ImportOrigin", "AttachmentMap", "ImportReceipt", "decodeVaultImportInput", "previewVaultImport", "applyVaultImport", "resumeVaultImport"],
+      "change": "Provide runtime-validated versioned requests/results/error union for the eight specified discriminants. Compose trusted owner ports for Notes, Tasks, Files, schema/anchor mapping, policy and recovery. Preview computes a digest over exact raw source hashes, source-scoped origin map, attachment manifest, mapping policy, schema and destination revisions/epoch; it returns per-file raw-span diff, unknowns and collision/privacy/path/type diagnostics without filesystem/owner mutation. Apply accepts only the reviewed digest, revalidates actor/current source/destination revisions and performs owner commands with stable operation IDs. Persist only source-scoped origin mappings, original raw artifacts and import coordination/checkpoints under the approved owner journal, never copied Tasks or a second document authority. Resume reauthorizes and resolves native operation receipts before replay. Receipt success requires durable owner ACK and exact authorized ref/revision/hash readback; failures and indeterminate outcomes remain separate from imported count.",
+      "prerequisites": "Accepted dependency contracts, journal/raw-artifact ownership, EG-FILES, task CAS owner and reviewed transport integration. Concrete exports are proposed, not observed implemented APIs."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/ImportStaging.tsx",
+      "proposedSymbols": ["ImportStaging"],
+      "change": "Embed one RD-12 staging surface in existing Notes/library shell: explicit field/key/timezone/audience/collision mapping, per-file diff/unknowns/security findings, source-scoped origins and attachment visibility. Confirm submits only reviewed digest; changed preview conflicts instead of overwriting. Cancel calls no mutation; per-file receipts/errors and checkpoint/resume states distinguish pending, committed, verified, failed and unknown. Retain source/draft on failures, clear denied private preview according to policy, preserve focus/IME/theme and use existing i18n/design/help mechanisms.",
+      "prerequisites": "Approved mount/transport/i18n integration outside currently listed shared paths and actual supported Electron runner discovery."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-034.test.ts",
+      "change": "Behavioral/property fixtures for raw BOM/CRLF/comments/unknown YAML/markers/link/asset preservation, duplicate origins/titles, namespace isolation, source and destination CAS races, unsafe path/symlink/MIME/size rejection, preview/cancel nonmutation, partial errors not counted, unauthorized bundle grants, concurrent/repeat Task import idempotency, interrupted ACK recovery and future schema retention. Keep exact seed/input hashes and mutation assertion outcomes; do not test source text or mock echo forwarding."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-034.spec.ts",
+      "change": "Exercise integrated RD-12 on real Electron with actual owner-backed inputs: review collisions/private attachments, cancel, confirm, mixed per-file error, stale preview, resume after restart and focus restoration. Capture pointer/keyboard/IME/reduced-motion/200% zoom/light+dark/Russian+locale and actual computed+loaded Rox font evidence; fixture UI is not final native proof. Runner must be discovered, not invented."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "registerNotesHandlers / HANDLED_CHANNELS",
+      "change": "After approved protocol wiring, register the three knowledge vault import handlers using runtime decoders from vault-import.ts. Derive actor from the existing nativeContent authenticated scope, capture current workspace notes root/source binding server-side, and supply trusted Notes/Files/task/schema ports. Restrict native filesystem entry to verified localElectron access as existing content commit does. Never accept payload actor/owner/workspace as a grant. Preview must not call ensureNotesDirs, createNote, readNote initialization or importAsset. Return discriminated per-file results with no success on denied/unknown/recovery-pending rows.",
+      "reason": "Existing registerNotesHandlers composes nativeContent at lines 909-930; the package's target import API is not registered there and must not be renderer-only. Additional channel/routing changes require an updated reviewed packet.",
+      "prerequisite": "Lead path lease; accepted dependencies and approved protocol integration"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "registerNotesHandlers notes.SAVE / notes.UPDATE_PROPERTIES callbacks (replaces obsolete saveNote/updateNoteProperties specification names)",
+      "change": "Reuse nativeContent.commit and previewPropertyDictionary/accepted lossless primitives for existing-note imports, supplying reviewed expectedRevision, sourceStoreId, epoch and stable import operationId rather than an independently generated retry ID. New notes use accepted native create authority with expectedRevision null and recoverable stable operation ID. Perform authorized exact readback before activating the import projection; do not serialize all frontmatter with stringifyNoteContent. Keep normal Notes editing unchanged.",
+      "reason": "Actual SAVE is at 948-973 and UPDATE_PROPERTIES at 1131-1144; the baseline's saveNote/updateNoteProperties functions no longer exist in inspected declarations. Current nativeContent.writeNative wrapper generates a random ID and does not expose native receipt lookup, so repeat/resume creation needs dependency-owned or separately reviewed owner port, not an unsafe wrapper replay.",
+      "prerequisite": "Reviewed symbol correction plus accepted owner port for stable creation operation IDs/readback"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "registerNotesHandlers notes.IMPORT_ASSET callback / importAsset integration boundary",
+      "change": "For vault import, pass AttachmentMap through the accepted Files owner rather than invoking the legacy suffix-copy helper. Enforce server-side byte hash, canonical containment, no symlink traversal, filename validation, MIME and size limits, actual source ownership and explicit destination audience. Bind authorized native FileRef only after durable asset receipt/readback and preserve original reference mapping on replay; do not widen permissions from bundle metadata. Any direct importAsset helper rewrite must first be added to named approved symbols.",
+      "reason": "importAsset at 678-724 blindly allocates -2/-3 filenames on repeated imports, accepts provided MIME and uses lexical path containment plus readFile. IMPORT_ASSET at 1102-1109 uses _ctx without nativeContent.assertScope. It cannot by itself establish EG-FILES security or idempotency.",
+      "prerequisite": "EG-FILES readiness and explicit helper symbol authorization if changing legacy behavior"
+    },
+    {
+      "path": "packages/server-core/src/tasks/personal-tasks-service.ts",
+      "symbol": "putPersonalTasks",
+      "change": "Expose an import-facing native mutation adapter composed with the accepted source-binding/CAS authority: resolve composite origin to existing Task owner/ref; validate field mapping and current revision; apply stable operation ID once; return per-file Task ref/revision/hash/receipt or typed conflict/denied/error. Preserve the public legacy put count API for existing callers unless a separately approved owner migration changes it. Do not implement CAS as get followed by store.put and do not count a caught failure or indeterminate write as imported.",
+      "reason": "Current loop at 45-52 catches all errors as rejected id and discards store.put revision. It has no actor, source binding or atomic revision check. Task idempotency by raw id alone cannot distinguish same nativeId from two owners/stores.",
+      "prerequisite": "LSX-WP-002 owner mapping and accepted Task CAS/durable receipt owner; extra persistence modifications require reviewed scope"
+    },
+    {
+      "path": "packages/server-core/src/tasks/personal-tasks-service.ts",
+      "symbol": "migratePersonalTasks",
+      "change": "Keep one-time localStorage migration semantics isolated. Do not use its global marker or skip-existing-id loop for vault imports. Wire import source-scoped mappings/checkpoints to the same accepted native owner mutation adapter, with independent per-origin resumability and current-policy readback, without changing/removing the existing localStorage marker.",
+      "reason": "Lines 68-70 return already-migrated globally and lines 77-85 skip by task.id, suppress write failures, then write one localStorage marker at 97-103. Those semantics cannot support multi-origin import/replay/CAS.",
+      "prerequisite": "Approved source-scoped coordination journal and native owner ports"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "portable bytes and identities recoverable",
+      "currentEvidence": "parseVaultMarkdown (115-226) is a structure projection: gray-matter errors silently fall back, Task hits carry text/line only, and ^block IDs are extracted. noteIdFromRelativePath (77-79) is path-based. hashVaultMarkdownFiles (938-950) hashes decoded UTF-8 and omits skipped/unreadable files; it is not an original binary manifest. Notes read preserves BOM with fatal UTF-8 decoding (454-469). Task store uses raw task.id (83-101).",
+      "actualSymbolSeam": ["parseVaultMarkdown", "noteIdFromRelativePath", "hashVaultMarkdownFiles", "readNote", "PersonalTaskPersistStore.put"],
+      "requiredChange": "Capture raw file and asset bytes/hash before parsing; explicit source/owner/native origin map, stable aliases and anchors; accepted retained-span parser for changes; quarantine malformed/future/unknown values without dropping raw; preserve wikilinks, embeds, comments, footnotes and unknown extension blocks. Import TaskNotes fields through configurable owner mappings with declared date-only/timezone semantics, never copy native Tasks by title. Store recoverable origin/asset mappings and rollback metadata under existing authority ownership.",
+      "verification": "Raw binary hashes, nonedited span equality, typed field/relationship and exact origin/ref readback before and after process restart. Two same-origin imports yield the same Task ref; same nativeId from another source/owner stays distinct. Rename/title collision does not remap identity. Unknown malformed YAML and invalid UTF-8 remain recoverable originals with diagnostic, not silent imported success.",
+      "missingPrerequisite": "LSX-WP-002/005/006/016 accepted receipts, authoritative raw-artifact/origin journal and EG-FILES",
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "per-file failures never counted imported success",
+      "currentEvidence": "putPersonalTasks returns written/rejected and catches all store failures; migratePersonalTasks aggregates skipped for both existing IDs and write exceptions. importAsset returns a successful asset after writeFile, without per-file staged receipt or readback verification.",
+      "actualSymbolSeam": ["putPersonalTasks:38-54", "migratePersonalTasks:63-105", "importAsset:678-724"],
+      "requiredChange": "ImportReceipt must carry per-file source hash/origin/destination ref, status, native operation receipt, revision/hash readback and discriminated error. Compute imported only from durable verified rows; preserve failed and indeterminate outcomes separately. Replay-reused receipts cannot inflate newly imported count. Never catch conflict/denied and convert to imported or harmless skip.",
+      "verification": "Mixed batch with valid, denied, collision, malformed and uncertain-ACK files reports exact outcomes; imported count equals independently read-back successful owner mutations; no failed file has an imported flag; restart reconciliation resolves pending without duplicate mutation.",
+      "missingPrerequisite": "Native Task/File durable receipt owners and approved per-file result boundary",
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "content.localContentPrincipal (27-32) verifies clientId/webContentsId/workspace/window. content.commit (196-227) decodes command, checks sourceStoreId, maps six Markdown errors and performs readback. notes.SAVE/UPDATE_PROPERTIES use it. RPC_CHANNELS.knowledge (222-284) has no target three vault operations. PersonalTask type (42-75) has no composite origin fields and encodes due/start as numeric timestamps.",
+      "actualSymbolSeam": ["localContentPrincipal", "registerNotesHandlers", "RPC_CHANNELS.knowledge", "PersonalTask"],
+      "requiredChange": "Runtime validated schemaVersioned preview/apply/resume inputs and all validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat outcomes in vault-import.ts, with reviewed renderer-safe exposure and typed transport registration. Keep actor outside payload authority, derive local owner scope from authenticated context, recheck source binding/current access on apply and resume, and use accepted mapping for dates and native Task identities.",
+      "verification": "After authorized implementation, compile real server+renderer boundary and exercise malformed request, spoofed actor/owner/workspace, stale digest/source, denied ref, unknown format and absent owner. Denied responses disclose no protected paths/body/attachment URLs. Tests use actual RPC authorization, not mock echo.",
+      "missingPrerequisite": "Reviewed protocol/routing and renderer API seam extension, accepted identity authority; no compilation permitted during this preflight",
+      "state": "PARTIAL_NATIVE_PATTERN_ONLY_TARGET_API_MISSING"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "MarkdownCommitStore.commit/writeNative/getReceipt/getNativeWriteReceipt persist journals and stable operation IDs; receipt fields at 10-22 and 68-78. content.commit validates returned note revision and marks uncertain readback as DOCUMENT_RESULT_UNAVAILABLE. writeNative wrapper at 264-280 generates randomUUID, and its return object has no native receipt lookup. Task writeRecord at 234-239 performs tmp+rename without fsync or expectedRevision.",
+      "actualSymbolSeam": ["MarkdownCommitStore.commit", "MarkdownCommitStore.writeNative", "MarkdownCommitStore.getReceipt", "MarkdownCommitStore.getNativeWriteReceipt", "nativeContent.commit", "PersonalTaskPersistStore.writeRecord"],
+      "requiredChange": "Reuse Notes journal/native owner with stable IDs and source binding; retrieve owner receipt after lost ACK before any retry; read exact mapped ref/revision/hash and ACL-filtered attachments before marking verified or enabling import projection. Source-scoped import checkpoint records coordination only. Task/File owner must supply durable recoverable command receipts; no imitation durability via import-side copied records. Event envelopes/aliases require registry proof.",
+      "verification": "Fault before/after journal sync, content publication and receipt delivery; restart/resume each point; compare actual owner refs/revisions/hashes and exact raw assets; acknowledged writes survive restart and replay once, changed destination returns conflict, changed source binding denies. Index activation occurs after revision-fenced verified owner readback.",
+      "missingPrerequisite": "Accepted Task/File receipt authority, stable new-note creation port and source-scoped journal ownership; shared authority receipt for affected shared destinations",
+      "state": "NOT_VERIFIED_NATIVE_NOTES_FOUNDATION_PRESENT"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "All four normative new paths are absent in the inspected working tree. Existing Markdown CAS rejects different command inputs for the same operation ID (136-145), and native creation validates expectedRevision including null (268-273). Existing importAsset performs suffix allocation and lexical path checks. The package specifies path traversal/symlink/duplicate-origin, byte/asset-map, repeated Task and wrong-namespace cases at work-packages.json:12427-12441.",
+      "actualSymbolSeam": ["MarkdownCommitStore.commitLocked", "MarkdownCommitStore.writeNative", "importAsset", "proposed lsx-wp-034.test.ts"],
+      "requiredChange": "Implement the specified permanent behavioral/property cases and exercise actual integrated owner paths. Validate safe filenames, canonical source/destination path and parents, byte hash, MIME/size, duplicate origin and field/date/type/collision policy. Preview/cancel leave owner/raw/index state untouched. Staging source or destination edits invalidate digest/CAS; crash recovery reauthorizes before reconciliation.",
+      "verification": "Planned command: bun test tests/lark-suite-extension/lsx-wp-034.test.ts after dependencies/integration. Separately run native-domain/readback and restart scenarios on the delivered revision, including concurrent imports and forbidden paths; retain seed, exact input hash, expected/observed and all failed attempts. No tests/build/native/network run was made in preflight.",
+      "missingPrerequisite": "Implementation and accepted prerequisites, isolated owned fixtures and owner runtime discovery",
+      "state": "PLANNED_NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:12443-12451 names trust-imported-grant or filename/title-merge mutations, with outside destination no writes, private assets not shared, same origin reused/conflicts explicit. Current note IDs are derived from paths and legacy task migration skips raw IDs; those are not valid origin-resolution or grant controls.",
+      "actualSymbolSeam": ["proposed origin resolution and policy in vault-import.ts", "notes.IMPORT_ASSET", "putPersonalTasks", "migratePersonalTasks"],
+      "requiredChange": "Use seeded isolated two-owner/two-source and duplicate-title inputs. Intentionally break import actor/grant validation or origin resolution in separately evaluated candidate bytes, not production. Assertions must observe outside-destination bytes unchanged, protected attachment unreadability and same-origin ref preservation/explicit stale conflict; keep baseline and mutant artifact hashes.",
+      "verification": "Green real baseline then each named mutant fails the semantic assertion, not setup, parsing or timeout. Retain reproduction seed, input SHA256, changed mutant bytes/hash and failure assertion receipt. Do not count a unit fixture-only grant test as actual server ACL proof.",
+      "missingPrerequisite": "Implemented policy/origin paths and isolated owner-backed mutation verification harness",
+      "state": "PLANNED_NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "ImportStaging.tsx is absent. RD-12 is proposed at Docs design:68, and common UI contract is work-packages.json:12411-12415. Published RS-NOTE-01:41-43 requires extending existing Notes import flows, not another editor. Native #563 focus/IME and #570 Page regressions are explicitly separate gates at lines 58,65-66.",
+      "actualSymbolSeam": ["proposed ImportStaging", "existing NotesPage/saveCurrentNote import entry-point named in published specification (not opened under this bounded source scope)"],
+      "requiredChange": "Mount one staging component through approved existing Notes/library route; accessible per-file review/confirm/cancel/resume and loading/empty/denied/conflict/error states. All visible labels use t() and keys across ten locales; Russian default, actual Rox Mono, retained user theme, hover/focus/click help, keyboard and focus/IME continuity, reduced motion and 200% zoom. Existing editor remains mounted where appropriate; no duplicate UI shell.",
+      "verification": "Discover supported real Electron runner; use integrated native data to capture pointer hit-target, keyboard/IME/focus return after cancel/conflict/resume, motion preferences, zoom, light/dark, Russian and locale parity, screenshots/ARIA and actual loaded/computed font proof. tests/lark-suite-extension/ui/lsx-wp-034.spec.ts is planned, no invented runner command or screenshot. UI must prove cancel no mutation and mixed-file errors with real receipts.",
+      "missingPrerequisite": "Approved existing route/mount/renderer transport/all-locale patch scope and real Electron verification capability; native #563/#570 evidence",
+      "state": "NOT_IMPLEMENTED_NOT_RENDERED_NOT_RUN"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Normative proof lanes are SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI at 12434-12441. Publication is explicitly not implementation readiness in package linked issues. This report is source inspection, not any product proof lane.",
+      "actualSymbolSeam": ["knowledge.previewVaultImport/applyVaultImport/resumeVaultImport target contract", "ImportReceipt target result", "nativeContent.commit readback"],
+      "requiredChange": "Lead collects independent revision-bound schema, generated/behavioral, native owner readback, restart, negative ACL and actual Electron receipts and integrates reviewed patch serially. Provider/collaboration proofs apply only when actually exercised, and absence of an affected owner is missingDependency rather than N/A. Do not promote featureComplete from this preflight or aggregate counts/toast.",
+      "verification": "Acceptance receipt maps every criterion to delivered commit and artifact SHA256/input seed plus native readback. Repeat authoritative readback after integration. Preserve failures and separate unsupported/not-run lanes from successful observed evidence.",
+      "missingPrerequisite": "All implementation and independent integrated verification receipts",
+      "state": "NOT_VERIFIED_FEATURE_COMPLETE_FALSE"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/server-core/src/knowledge/vault-markdown.ts","symbol":"parseVaultMarkdown / ParsedVaultNote / noteIdFromRelativePath","lineStart":54,"lineEnd":226,"sha256":"6de9e4357c4607dd773b7418dc8cac7646e5686940074480da65951e69119765"},
+    {"path":"packages/server-core/src/knowledge/vault-index.ts","symbol":"walkMarkdownFiles / upsertDocument","lineStart":410,"lineEnd":603,"sha256":"7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path":"packages/server-core/src/knowledge/vault-index.ts","symbol":"hashVaultMarkdownFiles","lineStart":938,"lineEnd":950,"sha256":"7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path":"packages/server-core/src/handlers/rpc/notes.ts","symbol":"registerNotesHandlers / nativeContent / notes.SAVE","lineStart":909,"lineEnd":973,"sha256":"6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97"},
+    {"path":"packages/server-core/src/handlers/rpc/notes.ts","symbol":"readNote / stringifyNoteContent","lineStart":454,"lineEnd":489,"sha256":"6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97"},
+    {"path":"packages/server-core/src/handlers/rpc/notes.ts","symbol":"importAsset","lineStart":678,"lineEnd":724,"sha256":"6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97"},
+    {"path":"packages/server-core/src/tasks/personal-tasks-service.ts","symbol":"putPersonalTasks / migratePersonalTasks","lineStart":38,"lineEnd":105,"sha256":"a4b41cbdfaa663872b5a70f2c81a51ce81c761973c8dd955eb89285de3f2429e"},
+    {"path":"packages/server-core/src/tasks/personal-persist.ts","symbol":"PersonalTaskPersistStore.put/get","lineStart":83,"lineEnd":101,"sha256":"024688ed60a4795ff0d25d080a98e45b47690abdb74077314734ce830443e49a"},
+    {"path":"packages/server-core/src/tasks/personal-persist.ts","symbol":"PersonalTaskPersistStore.writeRecord","lineStart":234,"lineEnd":239,"sha256":"024688ed60a4795ff0d25d080a98e45b47690abdb74077314734ce830443e49a"},
+    {"path":"packages/server-core/src/handlers/rpc/content.ts","symbol":"localContentPrincipal / services / commit / returned native ports","lineStart":27,"lineEnd":290,"sha256":"d5189c2e79c4f479b8b907177e1b6a8f560e054dc1efd26f371198d6b7680acd"},
+    {"path":"packages/server-core/src/docs/markdown-commit.ts","symbol":"MarkdownCommitStore.commit/getReceipt","lineStart":113,"lineEnd":189,"sha256":"0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"},
+    {"path":"packages/server-core/src/docs/markdown-commit.ts","symbol":"MarkdownCommitStore.writeNative/getNativeWriteReceipt","lineStart":244,"lineEnd":320,"sha256":"0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.content / notes / notesImport / knowledge","lineStart":170,"lineEnd":284,"sha256":"89177712f430183f89657f08f985ea50861c8d774652dbb56471d5eb7cca0aaa"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"LOCAL_ONLY_CHANNELS","lineStart":18,"lineEnd":37,"sha256":"c8fb48dde141d0ebcc20eec69e8386797d31a8b2b84dfbbd93afcad883b670c2"},
+    {"path":"packages/core/src/tasks/personal/types.ts","symbol":"PersonalTask / Recurrence / TaskLink","lineStart":17,"lineEnd":75,"sha256":"4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[33] LSX-WP-034","lineStart":12201,"lineEnd":12540,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-034 execution/launch scope","lineStart":2900,"lineEnd":2988,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/rox-suite/published/RS-NOTE-01.md","symbol":"Domain/DoD/native gates/GitHub normative dependencies","lineStart":35,"lineEnd":86,"sha256":"48915bdf82194df2ade2c05b2b7db346e4f4f01be854b3aa0756da08fe24c002"},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"authority/policy/DoD/GitHub normative dependencies","lineStart":44,"lineEnd":113,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"sections 10-11 migrations/portable import","lineStart":218,"lineEnd":244,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/06-rox-docs-design.md","symbol":"RD-12 logical route","lineStart":51,"lineEnd":68,"sha256":"a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"section 9 migration rules","lineStart":191,"lineEnd":201,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"}
+  ],
+  "evidenceFreshness": {
+    "basis": "Whole-file SHA256 of inspected working-tree files, not a claim that dirty contents equal input HEAD",
+    "hashMethod": "Read-only shasum -a 256 of concrete inspected paths",
+    "specInputDigestsMatchPacket": true,
+    "observedBaselineDrift": "vault-markdown.ts, vault-index.ts and personal-tasks-service.ts match normative blob hashes; notes.ts is 6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97 rather than normative 1e7fe211593c4475dd14888942208e1bc8736c76cabeb6e8dea8a831c5a19d0d. Obsolete normative saveNote/updateNoteProperties must be remapped to actual callbacks. Lead-owned integration may change all these files after inspection.",
+    "invalidationRule": "Rehash referenced files and re-read changed seams after wave0/dependency integration; stale hashes invalidate applicability, not historical observations. Do not apply this report as a patch against e953786 or input HEAD without reconciliation.",
+    "gitState": "No Git commands or mutations were performed; input_revision is dispatch identity, not independently reverified HEAD."
+  },
+  "inspectionLimits": {
+    "codegraph": "Query attempted first; no .codegraph index for repository. Continued with scoped read/grep/glob; no indexing or upgrades.",
+    "find": "Scoped knowledge find failed with backend 402 insufficient credits; used exact packet-named paths and direct imports instead. No product conclusion rests on the failed find.",
+    "sourceScope": "Only packet-named source paths and their direct imports inspected. Published/spec records inspected for normative gates. Existing renderer mount and Files/outbox implementations intentionally not explored beyond scope.",
+    "executed": "Read-only inspection and whole-file hashing, plus owned report creation; report-only structural/source digest validation follows.",
+    "notExecuted": "No source/test/manifest/progress/shared-file edits, Git state changes, builds, product tests, native UI or network operations. Packet launch-worker-pool verifier is reserved for lead validation: its outside-report side effects are not established within this worker's sole-write scope."
+  },
+  "nextExecutableAction": {
+    "owner": "integration-owner/lead",
+    "action": "Validate and accept this preflight artifact; finish wave0 commit, then collect accepted LSX-WP-002/005/006/016 and EG-FILES receipts. Reconcile inspected hashes and obsolete symbols, resolve reference delivery revision/digest and approve missing task/native-create/protocol/UI/i18n owner seams under exclusive leases before dispatching implementation in dependency order.",
+    "firstImplementationStepWhenReady": "Author runtime contract and previewVaultImport in the normative vault-import.ts using accepted native/source/schema/anchor/File owner ports; prove preview/cancel no mutation before enabling apply/resume. Implementation remains blocked on exact owner and wiring contracts, not an invitation to create parallel stores.",
+    "workerDeliverable": "plans/compound-implementation/worker-reviews/LSX-WP-034.json only"
+  },
+  "risks": [
+    "Root-owned uncommitted wave0 work and later accepted dependencies can invalidate line/symbol/hash evidence; do not overwrite or reset it.",
+    "Spec baseline e953786 and linked published baseline 249b3b4 are not current requested input; publication receipts are not feature readiness.",
+    "Current task persistence lacks atomic expectedRevision and fsynced durable owner receipt. Import-side locks not shared by normal task writers cannot fix that guarantee.",
+    "Markdown store preserves native CAS/replay but current writeNative composition uses random IDs and private recovery services; create/resume cannot safely reuse it without approved owner port.",
+    "Current markdownRevision hashes UTF-8 strings and index excludes hidden/provenance paths; raw byte/attachment preservation and unknown-format diagnostics need dedicated source manifest, not index-as-authority.",
+    "Legacy importAsset lexical containment, symlink reads, suffix naming and provided MIME are insufficient for secured idempotent attachment mapping. Attachment licenses require a separate source/license audit.",
+    "Task dueAt/startAt numeric timestamps do not by themselves encode date-only/IANA timezone import meaning. Unknown mappings must remain raw/repairable; do not silently coerce.",
+    "A component with no existing route and typed transport integration is not the RD-12 feature. Normative shared path list is insufficient for known channel/mount/i18n integration without lead approval.",
+    "Native invalidation can occur before import-level readback in current composition. Accepted revision-fenced index activation must be reconciled with owner changed delivery, not suppressed or replaced by a second index.",
+    "Common Files/Drive/shared-authority/grants/outbox readiness cannot be inferred from this source-only packet; fail closed per affected capability, retain required proof lanes and do not mark criteria N/A."
+  ]
+}

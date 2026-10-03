@@ -198,7 +198,7 @@ describe('conation atom source defaults stay false', () => {
     expect(bootstrap).toContain('migrateConationFlagsDefaultOff')
     expect(bootstrap).toContain("from './lib/migrate-conation-flags-default-off'")
     const migrateCall = bootstrap.indexOf('migrateConationFlagsDefaultOff(')
-    const mainImport = bootstrap.indexOf("import('./main')")
+    const mainImport = bootstrap.indexOf("void import('./main')")
     expect(migrateCall).toBeGreaterThanOrEqual(0)
     expect(mainImport).toBeGreaterThan(migrateCall)
   })

@@ -5,6 +5,7 @@
  * Prompts are queued and delivered via callback for the caller to execute.
  */
 
+import { createHash } from 'node:crypto';
 import { createLogger } from '../../utils/debug.ts';
 import type { EventBus, BaseEventPayload } from '../event-bus.ts';
 import type { AutomationHandler, PromptHandlerOptions, AutomationsConfigProvider } from './types.ts';
@@ -54,26 +55,32 @@ export class PromptHandler implements AutomationHandler {
 
     // Group prompt actions by matcher for per-matcher history
     const matcherPrompts: Array<{
-      matcherId: string | undefined;
+      matcherId: string;
+      matcherRevision: string;
       automationName: string;
+      timezone: string | undefined;
       telegramTopic: string | undefined;
-      prompts: Array<{ prompt: PromptAction; labels?: string[]; permissionMode?: PermissionMode }>;
+      prompts: Array<{ prompt: PromptAction; actionIndex: number; labels?: string[]; permissionMode?: PermissionMode }>;
     }> = [];
 
-    for (const matcher of matchers) {
+    for (const [matcherIndex, matcher] of matchers.entries()) {
       if (!matcherMatches(matcher, event, payload as unknown as Record<string, unknown>)) continue;
 
-      const prompts: Array<{ prompt: PromptAction; labels?: string[]; permissionMode?: PermissionMode }> = [];
-      for (const action of matcher.actions) {
+      const prompts: Array<{ prompt: PromptAction; actionIndex: number; labels?: string[]; permissionMode?: PermissionMode }> = [];
+      matcher.actions.forEach((action, actionIndex) => {
         if (action.type === 'prompt') {
-          prompts.push({ prompt: action, labels: matcher.labels, permissionMode: matcher.permissionMode });
+          prompts.push({ prompt: action, actionIndex, labels: matcher.labels, permissionMode: matcher.permissionMode });
         }
-      }
+      });
       if (prompts.length > 0) {
         const telegramTopic = matcher.telegramTopic?.trim();
+        const matcherRevision = createHash('sha256').update(JSON.stringify(matcher)).digest('hex');
+        const matcherId = matcher.id ?? `legacy-${matcherIndex}-${matcherRevision.slice(0, 16)}`;
         matcherPrompts.push({
-          matcherId: matcher.id,
+          matcherId,
+          matcherRevision,
           automationName: deriveAutomationName(event, matcher),
+          timezone: matcher.timezone,
           telegramTopic: telegramTopic && telegramTopic.length > 0 ? telegramTopic : undefined,
           prompts,
         });
@@ -91,13 +98,16 @@ export class PromptHandler implements AutomationHandler {
     // Process prompts per matcher
     const pendingPrompts: PendingPrompt[] = [];
 
-    for (const { matcherId, automationName, telegramTopic, prompts } of matcherPrompts) {
-      // Topic name accepts env-var expansion so users can route by event payload
-      // (e.g. telegramTopic: "Label: $LABEL"). Empty after expansion → drop it.
+    const utcTime = 'utcTime' in payload ? payload.utcTime : undefined;
+    const scheduledAt = event === 'SchedulerTick' && typeof utcTime === 'string' && Number.isFinite(Date.parse(utcTime))
+      ? new Date(utcTime).toISOString()
+      : undefined;
+    for (const { matcherId, matcherRevision, automationName, timezone, telegramTopic, prompts } of matcherPrompts) {
+      // Topic name accepts env-var expansion so users can route by event payload.
       const expandedTopic = telegramTopic ? expandEnvVars(telegramTopic, env).trim() : undefined;
       const finalTopic = expandedTopic && expandedTopic.length > 0 ? expandedTopic : undefined;
 
-      for (const { prompt, labels, permissionMode } of prompts) {
+      for (const { prompt, actionIndex, labels, permissionMode } of prompts) {
         // Expand environment variables in the prompt
         const expandedPrompt = expandEnvVars(prompt.prompt, env);
 
@@ -118,6 +128,12 @@ export class PromptHandler implements AutomationHandler {
           llmConnection: prompt.llmConnection,
           model: prompt.model,
           thinkingLevel: prompt.thinkingLevel,
+          scheduledAt,
+          scheduledTimezone: scheduledAt ? timezone : undefined,
+          occurrenceKey: scheduledAt ? `${matcherId}:${scheduledAt}:${actionIndex}` : undefined,
+          matcherRevision: scheduledAt ? matcherRevision : undefined,
+          actionIndex: scheduledAt ? actionIndex : undefined,
+          attempt: scheduledAt ? 1 : undefined,
           telegramTopic: finalTopic,
         });
       }

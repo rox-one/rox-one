@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'bun:test'
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, statSync } from 'fs'
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, statSync } from 'fs'
 import { join } from 'path'
 import { homedir, tmpdir } from 'os'
 import { pathToFileURL } from 'url'
-
 /**
  * ROX-BOOT: portable `~/...` workspace roots must not force saveConfig on every
  * loadStoredConfig call (that re-fired ConfigWatcher and flaked ws-rpc).
@@ -80,5 +79,54 @@ describe('loadStoredConfig portable rootPath', () => {
     const afterMtime = statSync(configPath).mtimeMs
     expect(after).toBe(before)
     expect(afterMtime).toBe(beforeMtime)
+  })
+
+  it('rejects a stale loaded config instead of replacing a newer snapshot', () => {
+    const configDir = mkdtempSync(join(tmpdir(), 'craft-stale-config-'))
+    const configPath = join(configDir, 'config.json')
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        workspaces: [],
+        activeWorkspaceId: null,
+        activeSessionId: null,
+        cloudRuns: { enabled: false, provider: 'local' },
+      }),
+      'utf-8',
+    )
+
+    const storageUrl = pathToFileURL(join(import.meta.dir, '..', 'storage.ts')).href
+    const run = Bun.spawnSync(
+      [
+        process.execPath,
+        '--eval',
+        `import { loadStoredConfig, saveConfig } from '${storageUrl}';
+         const stale = loadStoredConfig();
+         const latest = loadStoredConfig();
+         if (!latest || !stale) throw new Error('config load failed');
+         latest.notificationsEnabled = false;
+         stale.keepAwakeWhileRunning = true;
+         saveConfig(latest);
+         try { saveConfig(stale); throw new Error('stale save unexpectedly succeeded'); }
+         catch (error) {
+           if (!(error instanceof Error) || !error.message.includes('conflict')) throw error;
+         }`,
+      ],
+      {
+        env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir },
+        stdout: 'pipe',
+        stderr: 'pipe',
+      },
+    )
+    try {
+      if (run.exitCode !== 0) {
+        throw new Error(run.stderr.toString() || `exit ${run.exitCode}`)
+      }
+      const saved = JSON.parse(readFileSync(configPath, 'utf-8'))
+      expect(saved.notificationsEnabled).toBe(false)
+      expect(saved.keepAwakeWhileRunning).toBeUndefined()
+    } finally {
+      rmSync(configDir, { recursive: true, force: true })
+    }
   })
 })

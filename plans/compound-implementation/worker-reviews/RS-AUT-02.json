@@ -1,0 +1,355 @@
+{
+  "task_id": "RS-AUT-02-preflight",
+  "attempt_id": "d95da365ec7b33c63da6ed0b7c8a46fa",
+  "packet_hash": "e1200c3c50afbabb7267cfb1ef212b8589d3e048bc3bb3e6738f28b1da6dbc7b",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-AUT-02",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; sole owned report is not implementation",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-AUT-01", "RS-MCP-01"],
+  "evidencePolicy": {
+    "basis": "Actual scoped working-tree reads and whole-file shasum -a 256 outputs. input_revision is the dispatch input, not a claim that inspected uncommitted files equal that commit.",
+    "specManifest": "RS-AUT-02 published spec and issues.json hashes match both packet input-manifest hashes.",
+    "freshness": "Concurrent root integration can invalidate these snapshots. No subsequent root commit or dependency acceptance receipt was inspected. Lead must compare every relevant source hash, re-read changed seams, and bind implementation evidence to the wave0/dependency integration revision.",
+    "inspectionLimits": "Package automations paths, direct imports and explicitly referenced normative dependency specifications only. No product source, tests, manifests, progress, shared files or Git state changed. No build, tests, native UI or network operation performed.",
+    "discovery": "Codegraph reported no index. Scoped find failed because its judgment provider returned HTTP 402; literal grep/read and glob were used instead. Failed find is not absence evidence.",
+    "newPathEvidence": "Literal glob reported missing paths; wildcard glob returned no connector-contracts/ConnectorInspector or workspace-service/rox-suite automations directory matches. These are proposed artifacts, not existing implementations.",
+    "verification": "All behavioral verification below is a future acceptance plan, not executed proof. The dispatch verification_argv is left for the lead; only artifact readback is performed by this worker."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-DRAFT-PUBLISHED-CUTOVER",
+      "explicitDagEdge": false,
+      "source": "docs/rox-suite/published/RS-AUT-01.md:23,45-51,76-78",
+      "gate": "Accepted RS-AUT-01 must include non-executing Draft, immutable PublishedRevision, CAS/policy/checksum publish, legacy writer fence and migration/readback, not merely the canvas.",
+      "currentEvidence": "graph.ts buildAutomationGraphSave:538-561 writes compiled actions into automations and graph together; AutomationGraphEditor save:96-107 calls the supplied onSave after compile. This alone is not draft isolation.",
+      "missingPrerequisite": "Lead wave0 commit and accepted RS-AUT-01 authority/publish/cutover receipt with exact gateway and persistence interfaces."
+    },
+    {
+      "id": "FG-EXECUTABLE-CONNECTOR-RUNTIME",
+      "explicitDagEdge": false,
+      "source": "docs/rox-suite/published/RS-AUT-01.md:23,45; docs/rox-suite/published/RS-AUT-02.md:23,33-34,50,78-80",
+      "gate": "RS-AUT-01 explicitly gates new executable kinds on verified RS-AUT-03, although RS-AUT-03 is not an explicit RS-AUT-02 DAG edge. Connector execution and Error branch policy cannot bypass that gate.",
+      "currentEvidence": "graph.ts ActionNode:80 and isActionNode:220-226 allow only prompt/webhook; compileGraph:426-451 rejects branches and non-linear inputs. AutomationSystem createHandlers:298-371 uses independent per-action handlers; WebhookHandler handleEvent:144-193 collects webhooks and executes them concurrently, not a typed previous-node chain.",
+      "missingPrerequisite": "Lead acceptance of RS-AUT-03 runtime contributions/interfaces (including typed result context and error branches) before enabling connector execution. Keep this separate from the exact explicit dependencies; unavailable must not count as full DoD."
+    },
+    {
+      "id": "FG-SHARED-CAPABILITY-AUTHORITY",
+      "explicitDagEdge": false,
+      "source": "docs/rox-suite/published/RS-MCP-01.md:11-13,52-58,71-79,99; docs/rox-suite/published/RS-AUT-02.md:28,46,50-56",
+      "gate": "MCP dependency is more than tool discovery: it requires ProviderConnection/CapabilityVersion/ConsumerBinding, scoped credential broker, server actor/resource gateway, grants, operation ledger and outbox. Its published architectural prerequisites are WP-01/02/03/07/36/37 and remote identity/resource gateway; its own explicit edge is RS-ADM-01. These are inherited foundation gates, not additional direct RS-AUT-02 edges.",
+      "currentEvidence": "RS-MCP-01 names Revision2 authority contracts and NEW workspace-service contracts/modules. No apps/workspace-service directory matched inspection. Legacy WebhookAuth:88-108 embeds secrets in action data and is not the required credentialRef mechanism.",
+      "missingPrerequisite": "Accepted RS-MCP-01 receipt plus lead-provided exact authenticated command registry, credential resolver, capability revision, policy/revoke and outbox interfaces. Broker/grant source code was not inspected outside allowed scope."
+    },
+    {
+      "id": "FG-TYPED-EVENT-SENDER",
+      "explicitDagEdge": false,
+      "source": "docs/rox-suite/published/RS-AUT-02.md:23,28-29,78",
+      "gate": "Mail createDraft binding to Event sender requires an authoritative event/entity schema, sender value provenance and sensitivity/ACL metadata; a generic map or $VAR expansion is not typed validation.",
+      "currentEvidence": "event-bus.ts BaseEventPayload:25-31 has workspace/session/timestamp/labels; GenericEventPayload:67-69 exposes data:Record<string,unknown>; EventPayloadMap:134-164 has no typed Mail sender. No provider Mail adapter is imported by the inspected runtime registration.",
+      "missingPrerequisite": "Accepted dependency/runtime schema for the actual event sender and Mail createDraft capability input/output; real provider adapter, version and authorized account for the external lane. Do not invent a sender field or label fixture readback as real."
+    },
+    {
+      "id": "FG-EXTERNAL-OUTCOME-RECONCILIATION",
+      "explicitDagEdge": false,
+      "source": "docs/rox-suite/published/RS-AUT-02.md:34,50-52,80; docs/rox-suite/published/RS-MCP-01.md:54-58,103-115",
+      "gate": "Writes need operationId/expectedRevision, durable outcome/receipt and provider revision/readback. Timeout after possible effect remains unknown until reconciliation; no generic duplicate retry.",
+      "currentEvidence": "webhook-utils.ts catch:396-412 collapses timeout to failed statusCode 0; isTransientFailure:426-431 retries that outcome. WebhookHandler:189-193 automatically retries twice and :242-249 enqueues expanded action. retry-scheduler.ts:18-25 explicitly states at-least-once across restart; RetryQueueEntry:53-62 contains full WebhookAction.",
+      "missingPrerequisite": "Accepted shared ledger/provider reconciliation API and durable runtime ownership. Connector dispatch must not route through legacy webhook automatic retry or persist ephemeral credentials in its retry queue."
+    },
+    {
+      "id": "FG-ACCEPTANCE-LANES",
+      "explicitDagEdge": false,
+      "source": "docs/rox-suite/published/RS-AUT-02.md:42,84-93",
+      "gate": "Linux domain/renderer, native Electron ARIA/theme/font/screenshots and genuine external provider proof are independent mandatory lanes. Fixture-only execution cannot close the Mail readback requirement.",
+      "currentEvidence": "No behavioral lane was run under this read-only packet; missing proposed workspace-service and tests/rox-suite/automations paths do not establish lane availability.",
+      "missingPrerequisite": "Root-integrated source revision, scheduler-approved RS packet, real Linux/native/provider runners and independent reviewer."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/automations/connector-contracts.ts",
+    "apps/workspace-service/src/modules/automations/connector-registry.ts",
+    "apps/electron/src/renderer/components/automations/ConnectorInspector.tsx",
+    "tests/rox-suite/automations/connectors.spec.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/shared/src/automations/connector-contracts.ts",
+      "symbols": ["ConnectorDefinition", "ConnectorAction", "ConnectorMapping", "ConnectorDiagnostic", "ConnectorActionResult", "ConnectorActionSchema", "validateConnectorMappings"],
+      "change": "Proposed new symbols, not existing APIs: define versioned capability/action identifiers, input/output/error JSONSchemas, scopes and field help/sensitivity metadata. Strict mapping AST distinguishes literals from event/entity/previous-node JSONPointer references with source identity/revision. Persist only workspace/account-scoped credentialRef; forbid raw auth/token payload and hidden sensitive samples. Validate pointer escaping/existence, accessible upstream dominance, mapping cycles, literal and output-to-input assignability before dispatch. Outcome distinguishes read probe, effect preview, confirmed dispatch, readback and reconcile-required using the dependency's canonical result/status contract, not a new parallel enum registry."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/automations/connector-registry.ts",
+      "symbols": ["connector registry adapter", "connection.describeCapabilities", "workflow.validateMappings", "connector.testAction"],
+      "change": "Consume accepted MCP capability authority; do not create a second registry/store or MCP pool. Describe only authorized descriptors/version/scopes/account status; validate mappings server-side. Separate read connection probe from policy-confirmed action test. Resolve credentials ephemerally in the existing execution service; delegate authorized typed writes through the common gateway/provider adapter, bind operation/revision/approval to exact effect, emit canonical receipt/outbox, require readback/provider revision, and reconcile unknown results without a new queue. Names above are normative PROPOSED commands and must be registered by the lead in the actual shared authority."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/ConnectorInspector.tsx",
+      "symbols": ["ConnectorInspector"],
+      "change": "Controlled selected-node inspector mounted in accepted RS-AUT-01 canvas, using its draft and authenticated transport. Five translated tabs Действие/Авторизация/Вход/Выход/Ошибка; grouped/searchable catalog; account/expiry/reconnect with no raw token; typed fields and accessible variable picker with source/sensitivity, literal mode, synthetic output/error schema tree, runtime-supported retry/error-branch policy. Help shows type/units/example/provider/source/version on hover/focus/click. Preserve draft/prior connection on cancelled auth, invalidate identity-bound mappings on account switch; explicit loading/empty/denied/stale/error/retry. Reuse shell responsive drawer/pane rules, theme/font and reduced-motion tokens. No renderer credential or provider I/O."
+    },
+    {
+      "path": "tests/rox-suite/automations/connectors.spec.ts",
+      "symbols": ["connector acceptance scenarios"],
+      "change": "Use lead-approved existing suite conventions once the test harness is available. Cover event sender→createDraft→same draft readback; unavailable/hidden/cyclic/wrong-type mapping rejection before provider; missing/revoked auth, insufficient scope and blocked URL; redaction of graph/export/log/sample; cancel/reconnect/account switch; draft/reload/CAS/revoke/replay; unknown timeout/reconcile and duplicate operation exactly one provider effect. Seed broken mapping/resource guard/timeout retry controls and require the expected oracle to reject each. Label fixture outcomes explicitly and keep real provider/native evidence separate."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/automations/types.ts",
+      "symbol": "AutomationAction; AutomationGraphNodeKind; AutomationGraphNode; ActionExecutionResult",
+      "change": "Import ConnectorAction/ConnectorActionResult from the sole new connector contract; add connector discriminant/node data and typed result member after runtime acceptance. Keep graph authoring a projection of accepted draft/published authority, preserve stable node IDs/version migration, and persist credentialRef only for connector actions.",
+      "reason": "Current action union:219-225 and graph kinds:316-405 lack connector. Inline WebhookAuth is not a reusable connector credential model. Shared changes must be integrated by the type/runtime owner."
+    },
+    {
+      "path": "packages/shared/src/automations/schemas.ts",
+      "symbol": "ActionDefinitionSchema; AutomationGraphNodeSchema; AutomationsConfigSchema",
+      "change": "Add strict ConnectorActionSchema and connector node data schema. Ensure malformed known connector actions cannot fall through z.object({type:z.string()}).passthrough() at :165; preserve unknown legacy config load and explicit graph rejection without making invalid connector payload executable. Validate mapping structure and reject embedded credentials before draft save/export or dispatch.",
+      "reason": "Known strict schemas can currently be bypassed through the generic legacy arm; connector shape must not become arbitrary JSON. Graph discriminated union:312-341 otherwise rejects connector."
+    },
+    {
+      "path": "packages/shared/src/automations/graph.ts",
+      "symbol": "ActionNode; narrowRuntimeAction; isFlowNode; isActionNode; asAction; graphFromRuntimeConfig; compileGraph; buildAutomationGraphSave",
+      "change": "Extend all discriminant/projection paths coherently for connector, preserving unsupported legacy rejection and layout roundtrip. Delegate schema/JSONPointer/source identity/sensitivity/dominance checks to validateConnectorMappings before producing runtime actions. Compile only runtime-supported control/error edges after RS-AUT-03 acceptance. Integrate with RS-AUT-01 saveDraft/publish instead of activating connectors through current buildAutomationGraphSave; do not change metadata decision into executable fallback.",
+      "reason": "Updating only narrowRuntimeAction is insufficient: graphFromRuntimeConfig:254-260 still rejects connector, asAction:224-226 defaults to webhook, and compileGraph:426-451 restricts linear prompt/webhook paths. Existing save writes live runtime config."
+    },
+    {
+      "path": "packages/shared/src/automations/index.ts",
+      "symbol": "type/schema/graph public exports",
+      "change": "Export the canonical connector contracts/schema/validator needed by existing consumers alongside graph exports. Do not duplicate renderer contract declarations or export a second connector execution engine.",
+      "reason": "The public automations API currently exports legacy action/graph contracts and handlers, not connector contracts."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx",
+      "symbol": "AutomationGraphEditor; NODE_ACCENT; NODE_ICON; nodeKindLabels; updateNode; selected-node aside",
+      "change": "After accepted RS-AUT-01 integration, add connector palette/selection kind and display metadata; mount ConnectorInspector in its existing selected-node inspector seam (:241-286 in inspected baseline), propagate controlled node edits into the same draft. Save/preview/help must be non-effectful; use accepted saveDraft/publish and the single authorized transport. Re-read after dependency edits rather than applying baseline line numbers blindly.",
+      "reason": "This is the actual canvas selection seam; AutomationEditor alone is not the specified canvas→+→Connector interaction. Current kind records are exhaustive and require coordinated extension."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationEditor.tsx",
+      "symbol": "Draft; draftFrom; buildActions; validate; save; runNow; Step n=3",
+      "change": "Migrate any surviving list/editor caller to canonical connector action and accepted draft/publish transport. Replace :116 prompt-or-webhook validation with action-specific validation so connector does not require prompt. Preserve non-prompt actions without silently dropping connector mappings; direct :503 updateAutomation and runNow effect path must not bypass publish/current policy. Mount shared ConnectorInspector only if this editor remains an accepted entry to the same workflow, never as a second canvas/store.",
+      "reason": "Current buildActions returns all non-prompt actions unchanged, validate treats every non-webhook as a prompt, and :750-752 shows all non-prompt actions as webhookReadOnly. Existing raw runNow is not connector preview/confirmed dispatch."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/types.ts",
+      "symbol": "AutomationAction; WebhookAction; PromptAction",
+      "change": "Make action types use the canonical shared action/connector contract rather than inventing another connector mirror. Update surviving action-specific labels/result consumers under lead-owned migration manifest; do not change unrelated event/condition declarations in this preflight scope.",
+      "reason": "Renderer AutomationAction:91 includes only prompt/webhook; adding only a server union leaves UI contracts inconsistent."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/graph-fit-layout.ts",
+      "symbol": "GraphLabelNode; nodeDisplayLabel",
+      "change": "Add non-sensitive connector action summary/provider/version display metadata and a connector-specific label fallback before generic kind fallback. Resolve display metadata from authorized descriptors, not credentials or input payload. Keep existing geometry unchanged.",
+      "reason": "GraphEditor directly imports this helper; :113-150 has trigger/matcher/webhook/prompt/decision labels only. Connector nodes need usable names without leaking input values."
+    },
+    {
+      "path": "packages/shared/src/automations/automation-system.ts",
+      "symbol": "AutomationSystemOptions; createHandlers; executeAgentEvent; dispose",
+      "change": "Runtime owner integrates connector execution through accepted published workflow runtime and common typed command gateway, using the existing injected-executor ownership pattern (:62-67,:343-371) where appropriate. Define exactly one execution owner and result context for previous-node mappings; release/cancel subscriptions on dispose/revoke. Do not bolt on an independent subscriber per connector if that loses sequence/branch semantics. Route actual agent use to the same authority; executeAgentEvent's match-only result must not be reported as executed connector success.",
+      "reason": "Current registration has no connector executor; executeAgentEvent:597-603 explicitly performs no execution and buildSdkHooks:617-619 is empty. Exact runtime patch must wait for RS-AUT-03 acceptance."
+    },
+    {
+      "path": "packages/shared/src/automations/event-bus.ts",
+      "symbol": "EventPayloadMap; BaseEventPayload; GenericEventPayload",
+      "change": "Integrate the accepted event/entity schema descriptor and source identity/sensitivity metadata into the existing event pipeline so the variable picker and validator can bind actual Event sender. Add a concrete typed sender event only from the accepted authoritative provider contract, not by guessing a property on every event or creating a second event bus.",
+      "reason": "Existing shared payload has no sender and generic data is untyped. The named Mail acceptance cannot be established by string expansion."
+    },
+    {
+      "path": "packages/shared/src/automations/webhook-utils.ts",
+      "symbol": "blockedWebhookDestination; blockedWebhookResolvedAddresses; executeWebhookRequest; isTransientFailure; executeWithRetry",
+      "change": "Reuse hostname/IP/DNS fail-closed checks and redirect:'manual' policy at connector provider HTTP boundary. Do not weaken existing checks or send new connector writes through isTransientFailure/executeWithRetry; map ambiguous writes into the shared reconciliation outcome instead. Any adapter transport extension must retain those safety properties and document DNS check/connect-time pinning behavior. No unrelated change to legacy webhook retry is requested.",
+      "reason": "Normative SSRF preservation is mandatory; existing statusCode 0 retry classification conflicts with connector write timeout contract. Prelookup then separate fetch is not proof of connect-time DNS pinning."
+    },
+    {
+      "path": "packages/shared/src/automations/handlers/webhook-handler.ts",
+      "symbol": "WebhookHandler.handleEvent",
+      "change": "Maintain exact webhook type filter; never downgrade connector action to webhook for execution. During accepted publish/runtime cutover use only the canonical published config provider; connector ephemeral credentials/results must not enter expanded webhook retry rows. Do not add a second concurrent connector path beside the accepted runtime.",
+      "reason": "Current :189-193 immediate retries, :220 raw result URL logging and :247-248 full expanded-action queue are not safe connector write/reconcile or secret handling seams."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/automations.css",
+      "symbol": ".rox-autom-editor; .rox-autom-input; .rox-autom-btn; inspector responsive and reduced-motion styles",
+      "change": "Extend only connector-specific inspector rules using existing tokens/focus treatment. Preserve selected font/theme, implement <1100 drawer and <800 active-pane/back rules with the shared canvas owner, use only 120-160ms opacity/transform transitions for new inspector motion and disable under reduced motion. Do not apply a global font reset or restyle unrelated controls.",
+      "reason": "Current token inheritance is reusable; existing :32 background-color transition does not prove the new inspector's mandated motion or responsive behavior."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "new automations.connector.* translation keys",
+      "change": "Lead i18n owner adds Russian labels/help/actionable diagnostics and identical ASCII-sorted key set to de.json, en.json, es.json, fr.json, hu.json, ja.json, pl.json, zh-Hans.json and zh-Hant.json in the same directory; Russian plural forms follow repository convention. All ConnectorInspector user-facing strings call t().",
+      "reason": "Published RS-AUT-02:42 and injected repository AGENTS.md require Russian default and all ten locales. Locale source files were not inspected because this packet limits source reads to package paths/direct imports; no existing key collision or wording claim is made."
+    },
+    {
+      "path": "packages/shared/src/automations/graph.test.ts",
+      "symbol": "automation graph compiler regression scenarios",
+      "change": "Runtime/type owner adds connector roundtrip, wrong/hidden/unavailable output mapping and invalid known connector payload negatives while retaining scheduler roundtrip, unknown legacy projection rejection and dangling/cyclic path behavior. Revise only behavior assertions made obsolete by accepted draft/publish cutover, not incidental text assertions.",
+      "reason": "Actual regressions :32-35,:70-81,:84-120,:123-139 already protect legacy preservation and rejection. Proposed connector suite does not replace existing graph regressions."
+    }
+  ],
+  "authorityIntegrationRequest": {
+    "source": "docs/rox-suite/published/RS-AUT-02.md:46,50-56; RS-MCP-01.md:54-58,99",
+    "requestedSymbols": ["connection.describeCapabilities", "workflow.validateMappings", "connector.testAction", "authorized provider dispatch", "operationId/expectedRevision receipt", "policy revoke invalidation", "shared EntityRef/index/outbox hooks"],
+    "change": "Lead must supply and own exact existing registry/transport/client/migration paths from accepted wave0 and dependency receipts, then register schemas/commands and projections there. The new normative connector-registry module must consume those contracts. This report does not invent uninspected shared file paths or mark proposed endpoints as existing.",
+    "reason": "Inspection did not locate apps/workspace-service and packet forbids broader foundation-source inspection. Missing path/symbol interfaces are a prerequisite, not authority to implement a substitute gateway or second persistence system."
+  },
+  "acceptanceMatrix": [
+    {
+      "criterion": "AC1 — Select Mail createDraft action → bind Event sender → schema validates → readback same draft; fixture explicitly fixture (spec:78)",
+      "symbolSeam": "AutomationGraphEditor selectedNode/updateNode; graph compileGraph; EventPayloadMap; normative new connector registry/inspector/contracts",
+      "currentEvidence": "Graph supports only prompt/webhook; inspector edits labels/metadata; renderer legacy action editor is read-only for webhook; event sender and Mail adapter are not established by inspected runtime.",
+      "requiredChange": "Authorized catalog must expose actual versioned Mail createDraft; typed sender pointer validates before dispatch. Explicit confirmed action returns durable operation/object receipt and provider revision, then authoritative readback yields the same draft ID and recipient/sender-mapped field value. Fixture sample/run visibly marked fixture; no real-effect PASS inferred from it.",
+      "verification": "After dependency integration: in real canvas choose Mail/createDraft, bind actual Event sender, saveDraft/reload, publish as required, preview and confirm; compare provider readback ID and fields to receipt. Independently run deterministic fixture and prove its labeling. No sends instead of drafts.",
+      "missingPrerequisite": ["FG-DRAFT-PUBLISHED-CUTOVER", "FG-EXECUTABLE-CONNECTOR-RUNTIME", "FG-TYPED-EVENT-SENDER", "FG-SHARED-CAPABILITY-AUTHORITY", "real Mail account/adapter/provider lane"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "AC2 — Revoked credential / insufficient scopes / blocked URL fail safely; no token in logs/graph/export (spec:79)",
+      "symbolSeam": "WebhookAuth; WebhookActionSchema; blockedWebhookResolvedAddresses; WebhookHandler.handleEvent; RetryQueueEntry; proposed connector registry credential resolution",
+      "currentEvidence": "Existing URL/DNS checks and manual redirects exist. Webhook auth data embeds token/password; expanded retry rows retain whole action. No connector-specific credential or scope enforcement established.",
+      "requiredChange": "Persist only credentialRef, resolve ephemerally, intersect current resource grants with capability/connection scopes at every dispatch/replay. Revocation blocks new writes, cancels supported calls/subscriptions and removes forbidden caches. Redact diagnostics/samples/logs/export and guard provider HTTP endpoints with existing SSRF rules.",
+      "verification": "Negative controls revoke before and during run/reconnect, remove required Mail scope, inject literal/private-DNS/redirect destination, forge inaccessible credentialRef; assert zero unauthorized provider effects and typed reason. Plant sentinel token/password in broker and inspect persisted graph/export/queue/log/sample artifacts for absence; no credential returned to renderer.",
+      "missingPrerequisite": ["FG-SHARED-CAPABILITY-AUTHORITY", "FG-EXTERNAL-OUTCOME-RECONCILIATION", "accepted revoke/cache cleanup interfaces"],
+      "state": "PARTIAL_SSRF_SEAM_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "AC3 — Wrong output type refused before run; ambiguous provider timeout yields reconcile-required, not duplicate retry (spec:80)",
+      "symbolSeam": "compileGraph; ConnectorMapping/validateConnectorMappings proposed; executeWebhookRequest/isTransientFailure/executeWithRetry; RetryScheduler",
+      "currentEvidence": "Graph checks topology but has no typed mappings; webhook statusCode 0 gets automatic retry and deferred at-least-once replay.",
+      "requiredChange": "Reject invalid pointer/source/output assignability before provider; carry exact capability/schema/account revision. Unknown write outcome enters shared reconciliation with same operationId; repeated dispatch, restart and retry UI cannot automatically duplicate effects. Error branch/retry selection obeys accepted runtime and effect policy.",
+      "verification": "Wire synthetic numeric output into a Mail recipient/string field and assert field diagnostic plus zero provider calls. Delay response after provider created draft, restart/reconnect and repeat same operation; remain unknown then reconcile the same draft with one effect and one final receipt. Seed removal of validator and seed legacy timeout auto-retry: both controls must be rejected.",
+      "missingPrerequisite": ["FG-EXECUTABLE-CONNECTOR-RUNTIME", "FG-EXTERNAL-OUTCOME-RECONCILIATION", "typed source/output schemas"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD1 — UI/routing/input/output/help/keyboard/state contracts; loading/empty/error/denied/retry accessible and checked (spec:84)",
+      "symbolSeam": "AutomationGraphEditor selected-node aside; AutomationEditor Step n=3; ConnectorInspector proposed",
+      "currentEvidence": "Existing selected-node and controlled graph edits are reusable; no connector tabs/catalog/typed fields/auth state. Editor uses t(), but no new connector UI was run.",
+      "requiredChange": "Implement canvas +→Connector plus all five inspector tabs, grouped searchable catalog summaries/scopes, typed fields with literal and variable modes, output/error schemas, policy controls, auth account/expiry/reconnect, hover/focus/click versioned help. Preserve selected node and sensible focus; expose loading/genuine empty/filtered empty/denied/error/retry distinctly, with no effect from help/preview/navigation.",
+      "verification": "Keyboard and pointer complete same action/mapping; Tab/ShiftTab traverse fields, arrows only tablist/menu, Esc restores focus, help opens versioned spec. Exercise every named state with authoritative denial and failure injection, preserving draft. Observe actual route/selection and ARIA roles in native Electron.",
+      "missingPrerequisite": ["accepted RS-AUT-01 canvas palette/inspector/route contract", "accepted authenticated catalog transport", "FG-ACCEPTANCE-LANES"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD2 — Persistence/reload; meaningful negative; concurrency/reconnect where applicable; N/A justified (spec:85)",
+      "symbolSeam": "automationGraphRevision; buildAutomationGraphSave; AutomationGraphEditor.onSave; AutomationEditor dirty draft/auth migration",
+      "currentEvidence": "Baseline graph has optimistic baseRevision stale-write rejection, preserves existing root fields, and persists graph/runtime together. It has no established connector version/mapping/account-bound draft persistence.",
+      "requiredChange": "Use accepted Draft/PublishedRevision store and CAS with operationId/expectedRevision; persist node/version/mapping/credentialRef without secrets, serialize publish and legacy writer cutover, preserve failed/cancelled drafts, revalidate on reconnect and account switch. No N/A for domain persistence/concurrency/auth in this package.",
+      "verification": "Reload draft and published revision with equal connector/node/pointer/version fields; two clients edit same revision and reject stale save/publish without clobber. Cancel auth retains draft/prior connection, account switch invalidates bound mapping, revoke while offline prevents replay. Scheduler never reads draft.",
+      "missingPrerequisite": ["FG-DRAFT-PUBLISHED-CUTOVER", "FG-SHARED-CAPABILITY-AUTHORITY", "FG-EXECUTABLE-CONNECTOR-RUNTIME"],
+      "state": "PARTIAL_CAS_SEAM_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD3 — Common grants, links, search, mentions, activity, notification and agent policy integrated for new domain entity (spec:86)",
+      "symbolSeam": "normative connector registry→ProviderConnection/AgentTool capability gateway; AutomationSystemOptions injected-executor seam",
+      "currentEvidence": "Specification mandates shared registry/grants/EntityRef/index/outbox. Inspected automation runtime supplies workspace/config and event handlers; it does not prove unified connector resource authorization, index or notification integration.",
+      "requiredChange": "Reference existing capability/connection/workflow EntityRefs; authorized link/mention/search projections and current grants, commit-bound activity/outbox→deduped notifications, agent read/write via same typed command/policy/preview path. Revoke invalidates subscriptions/projections/caches and denies background/IPC/RPC/MCP/provider writes. Do not manufacture separate connector entity/index/notification engine.",
+      "verification": "Two principals get permitted versus denied catalog/title/count/link/mention/search projections; UI, IPC/RPC, agent/MCP and background invoke agree. Grant→invoke→revoke while screen open/replay denies all paths; exactly one canonical activity/outbox notification per completed command. Preview makes no effect; changed effect invalidates approval.",
+      "missingPrerequisite": ["FG-SHARED-CAPABILITY-AUTHORITY", "exact shared EntityRef/index/outbox/agent hook interfaces from lead"],
+      "state": "REQUIRED_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD4 — Targeted tests + seeded broken control rejected; regression existing route/authority passes (spec:87)",
+      "symbolSeam": "normative tests/rox-suite/automations/connectors.spec.ts; graph.test.ts; webhook-utils.test.ts",
+      "currentEvidence": "Existing graph tests protect scheduler roundtrip, legacy rejection and invalid executable topology; webhook tests cover literal/private DNS and fail-closed lookup. Read only, never executed here. Proposed suite directory absent in inspection.",
+      "requiredChange": "Add consumer-visible connector mapping/security/outcome/persistence scenarios, deterministic isolated provider fixtures and independent broken controls. Preserve existing route/authority/SSRF regressions and accepted dependency tests; do not use source-text/wiring/mock-echo tests as proof.",
+      "verification": "Lead runs targeted suite in approved harness and existing graph/webhook plus route/authority regressions on exact integrated revision. Broken resource guard, type validator and timeout retry each fail for the intended oracle; record seed and failed-before/passed-after results. Actual UI/provider scenarios still required separately.",
+      "missingPrerequisite": ["integrated source and runnable rox-suite harness", "FG-ACCEPTANCE-LANES"],
+      "state": "VERIFICATION_NOT_RUN_BY_READ_ONLY_WORKER"
+    },
+    {
+      "criterion": "DoD5 — Linux domain/renderer; real Electron screenshots/ARIA/theme/font; real external provider lane (spec:88)",
+      "symbolSeam": "ConnectorInspector in AutomationGraphEditor; automations.css token inheritance; provider registry adapter",
+      "currentEvidence": "Baseline css inherits --font-sans/--font-mono; graph UI has a fixed-width aside. No actual Linux/native/provider observations exist from this packet.",
+      "requiredChange": "Supply all lanes on integrated bytes: compact translated UI, theme/font inheritance without global reset, native computed font evidence, visible focus/non-color status, <1100 drawer and <800 one pane/back, 120-160ms opacity/transform motion and reduced-motion off. Genuine Mail write/readback belongs to provider lane, not fixture simulation.",
+      "verification": "Observe Linux domain and renderer scenario; capture actual Electron screenshots, computed font/theme and ARIA for tabs/help/fields at wide, 1099 and 799px, keyboard flow and reduced motion. Capture genuine provider operation ID/draft ID/revision/readback without secrets. Record separate PASS/FAIL per lane, never a screenshot-only product PASS.",
+      "missingPrerequisite": ["FG-ACCEPTANCE-LANES", "real authorized Mail provider account and adapter"],
+      "state": "VERIFICATION_NOT_RUN_BY_READ_ONLY_WORKER"
+    },
+    {
+      "criterion": "DoD6 — Source commit/exact diff/logs/hashes/expected-observed/migration/rollback/independent review attached; no screen without mechanism (spec:89)",
+      "symbolSeam": "graph migration/save/publish integration; connector version/credentialRef persistence; lead receipt artifacts",
+      "currentEvidence": "This report records source snapshots and intended changes only. It is not a code commit/diff, migration receipt, runtime log or independent implementation review.",
+      "requiredChange": "Lead binds proofs to wave0 plus accepted dependencies and final source commit/diff. Document existing-config snapshot/readback, schema/version migration, credentialRef handling, writer fence, rollback without replaying unknown effects, and independent review of policy/type/timeout/SSRF/redaction paths. Hash observed artifacts and preserve failures/negative controls.",
+      "verification": "Review receipt reconciles every criterion with exact expected/observed values, source/artifact hashes and real lane outputs; execute migration/reload/rollback on seeded existing workflow without enabling disabled matchers or duplicating write effects. Reviewer checks the mechanism, not only screen.",
+      "missingPrerequisite": ["lead integration commit/diff", "accepted dependency receipts", "observed migration/rollback results", "independent reviewer"],
+      "state": "PREFLIGHT_ONLY_NOT_FEATURE_RECEIPT"
+    },
+    {
+      "criterion": "Typed mappings validate unavailable node outputs, cycles and hidden values; JSONPointer/constant contracts (spec:23,28-29,33)",
+      "symbolSeam": "ensureUniqueIds/detectCycles/compileGraph; proposed validateConnectorMappings",
+      "currentEvidence": "Current graph validates dangling node/edge IDs and flow cycles, not pointer existence, schema assignability, data-dependency cycles or authorization/sensitivity.",
+      "requiredChange": "Validate mapping AST structurally and against capability input/output/error schemas with source node identity/revision, topological availability and current field visibility. Reject inaccessible, future/non-dominating or cyclic references and incompatible literals/output types; diagnostics attach to exact field/node and redact hidden values.",
+      "verification": "Boundary cases missing/escaped JSONPointer, future/deleted node, hidden field, mapping cycle, null/array/object mismatch and changed schema version all fail before dispatch with no hidden value disclosed; valid upstream sender mapping survives reload.",
+      "missingPrerequisite": ["FG-TYPED-EVENT-SENDER", "FG-EXECUTABLE-CONNECTOR-RUNTIME", "authorized field metadata"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Auth cancellation retains draft/prior connection; account switch invalidates identity mapping; probe/test separate (spec:38-40)",
+      "symbolSeam": "ConnectorInspector proposed; accepted connection gateway; AutomationEditor draft preservation pattern:460-471",
+      "currentEvidence": "Local editor preserves dirty draft on same-ID refresh, but its LLM connection list is not connector authorization; no connector account/expiry/reconnect workflow exists.",
+      "requiredChange": "Auth UI displays redacted account/expiry/reconnect only, preserves prior ref until success, cancellation leaves mapping draft intact. Successful account switch explicitly invalidates bound identity references and approvals. Connection probe is read-only; action test shows exact effect preview and policy-required confirmation.",
+      "verification": "Cancel reconnect and assert prior account/ref/mappings unchanged. Switch account and refuse stale mapping/preview until revalidation; probe makes no draft/write effect, action test cannot write without required confirmation and returns only redacted result.",
+      "missingPrerequisite": ["FG-SHARED-CAPABILITY-AUTHORITY", "approved auth lifecycle/preview binding APIs"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed common command authority; actor/workspace from session; mutations operationId/expectedRevision; renderer no credentials/queue I/O (spec:46,50-56)",
+      "symbolSeam": "new connector-registry module consuming accepted common gateway; legacy updateAutomation/runAutomation callers require migration",
+      "currentEvidence": "Normative commands are explicitly PROPOSED, not current endpoints. Current editor passes workspaceId into electronAPI and no inspected connector command derives authenticated actor/resource policy.",
+      "requiredChange": "Lead registers all command/result schemas in existing authenticated authority and transports. Reject forged actor/workspace/resource and stale capability/policy/effect revision; server resolves trusted session and credentialRef, queues only references/operations in shared runtime, not secrets or raw action copies.",
+      "verification": "Direct RPC/IPC/MCP forged workspace/actor, duplicate/stale operation/revision and revoked capability attempts fail consistently before effect. Check exported graph/operation records and renderer payloads contain no secret. Changed preview args/version/account invalidate approval.",
+      "missingPrerequisite": ["FG-SHARED-CAPABILITY-AUTHORITY", "FG-DRAFT-PUBLISHED-CUTOVER", "lead exact authority/transport interfaces"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-AUT-02.md","symbol":"full normative requirements and DoD","lineStart":20,"lineEnd":110,"sha256":"35dde92068f8b92b7ba034a62709d8c4e9617c7415c293659d89532b2cb550ab"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-AUT-02 record / dependsOn","lineStart":226,"lineEnd":258,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"docs/rox-suite/published/RS-AUT-01.md","symbol":"executable runtime gate / Draft PublishedRevision cutover","lineStart":21,"lineEnd":51,"sha256":"2e5fccefa265389b9d927ed9779f5e2641ae1e10346ebd914326b54912208f3b"},
+    {"path":"docs/rox-suite/published/RS-MCP-01.md","symbol":"architecture prerequisites","lineStart":11,"lineEnd":23,"sha256":"7e0e4f01c7ab1230e9befeec9e93fdb360eb17ee0a441ec24863f27f99446d50"},
+    {"path":"docs/rox-suite/published/RS-MCP-01.md","symbol":"capability authority / ledger / scope / Revision2 reuse","lineStart":50,"lineEnd":99,"sha256":"7e0e4f01c7ab1230e9befeec9e93fdb360eb17ee0a441ec24863f27f99446d50"},
+    {"path":"packages/shared/src/automations/types.ts","symbol":"WebhookAuth / WebhookAction / AutomationAction","lineStart":88,"lineEnd":225,"sha256":"c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path":"packages/shared/src/automations/types.ts","symbol":"AutomationGraphNodeKind / AutomationGraphNode / AutomationsConfig","lineStart":314,"lineEnd":432,"sha256":"c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path":"packages/shared/src/automations/schemas.ts","symbol":"ActionDefinitionSchema legacy passthrough","lineStart":152,"lineEnd":166,"sha256":"232547920900c0fb134ade7e7cdd7bdd793cde4901f230c04048011802511530"},
+    {"path":"packages/shared/src/automations/schemas.ts","symbol":"AutomationGraphNodeSchema / SaveAutomationGraphPayloadSchema","lineStart":294,"lineEnd":360,"sha256":"232547920900c0fb134ade7e7cdd7bdd793cde4901f230c04048011802511530"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"narrowRuntimeAction","lineStart":107,"lineEnd":138,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"isActionNode / asAction / graphFromRuntimeConfig","lineStart":216,"lineEnd":318,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"compileGraph / compileAutomationGraph","lineStart":385,"lineEnd":494,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"buildAutomationGraphSave","lineStart":538,"lineEnd":562,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/webhook-utils.ts","symbol":"blockedWebhookDestination / blockedWebhookResolvedAddresses","lineStart":38,"lineEnd":114,"sha256":"43d36bfcbbdeb846dbcdb1b6f4a1ea40b28a1d0f71ca0991c9fce164ab51768e"},
+    {"path":"packages/shared/src/automations/webhook-utils.ts","symbol":"executeWebhookRequest manual redirect / ambiguous timeout / isTransientFailure / executeWithRetry","lineStart":362,"lineEnd":488,"sha256":"43d36bfcbbdeb846dbcdb1b6f4a1ea40b28a1d0f71ca0991c9fce164ab51768e"},
+    {"path":"packages/shared/src/automations/retry-scheduler.ts","symbol":"single-process at-least-once invariant / RetryQueueEntry","lineStart":18,"lineEnd":62,"sha256":"c6a88847a789eeeee3734770c3d307b8869cfc17a1d23db0931df41a8d7bf1d9"},
+    {"path":"packages/shared/src/automations/handlers/webhook-handler.ts","symbol":"WebhookHandler.handleEvent concurrent retry / logging / expanded queue","lineStart":135,"lineEnd":258,"sha256":"3ca701d9b2b5f1cf81f55cf49981306eb170eeca06e0a41a7cc311c4cdc2890f"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystemOptions injected executor interfaces","lineStart":41,"lineEnd":72,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"createHandlers","lineStart":298,"lineEnd":371,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"executeAgentEvent / buildSdkHooks","lineStart":584,"lineEnd":619,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/event-bus.ts","symbol":"BaseEventPayload / GenericEventPayload","lineStart":24,"lineEnd":69,"sha256":"1878c95dd48fdba1a9ffb165051e2e944a47c4151e8c54461fb3501c4de69ecb"},
+    {"path":"packages/shared/src/automations/event-bus.ts","symbol":"EventPayloadMap","lineStart":134,"lineEnd":164,"sha256":"1878c95dd48fdba1a9ffb165051e2e944a47c4151e8c54461fb3501c4de69ecb"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx","symbol":"selectedNode / updateNode / save","lineStart":39,"lineEnd":107,"sha256":"a4323fc00bd9bb5548f94c88c35900c0755b090dcd2b54790c6ab826e3471d94"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx","symbol":"selected-node inspector aside","lineStart":241,"lineEnd":286,"sha256":"a4323fc00bd9bb5548f94c88c35900c0755b090dcd2b54790c6ab826e3471d94"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationEditor.tsx","symbol":"draftFrom / buildActions / validate","lineStart":49,"lineEnd":123,"sha256":"299dda071efd6e066007e6974a816461e0de5fe45da4182bd9ec07ef7e5c6911"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationEditor.tsx","symbol":"save / updateAutomation","lineStart":497,"lineEnd":516,"sha256":"299dda071efd6e066007e6974a816461e0de5fe45da4182bd9ec07ef7e5c6911"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationEditor.tsx","symbol":"action Step / webhookReadOnly","lineStart":717,"lineEnd":752,"sha256":"299dda071efd6e066007e6974a816461e0de5fe45da4182bd9ec07ef7e5c6911"},
+    {"path":"apps/electron/src/renderer/components/automations/types.ts","symbol":"renderer mirrored AutomationAction","lineStart":69,"lineEnd":91,"sha256":"2210ed9b9adcd74f958d30fb5bcfbf009ffd1b4ca8ce3742bb49121065e73f59"},
+    {"path":"apps/electron/src/renderer/components/automations/graph-fit-layout.ts","symbol":"nodeDisplayLabel","lineStart":113,"lineEnd":150,"sha256":"395a36ce3816e96eed57287b161508c859af555e639f4e680c371fa411f550f5"},
+    {"path":"apps/electron/src/renderer/components/automations/automations.css","symbol":"theme/font tokens / control focus / transitions","lineStart":9,"lineEnd":79,"sha256":"1ba980cd5b3d657c596e13c8e3678f60c548eccc206d6f71ad993856589fc783"},
+    {"path":"packages/shared/src/automations/graph.test.ts","symbol":"scheduler roundtrip / legacy rejection / invalid topology regressions","lineStart":31,"lineEnd":139,"sha256":"62f28211cd8b9518209cdbf8a84ec7f62909876924f203d54bcd2cd999114f6d"},
+    {"path":"packages/shared/src/automations/webhook-utils.test.ts","symbol":"private host / DNS / fail-closed regression scenarios","lineStart":92,"lineEnd":148,"sha256":"04b74721da87379f988574ef5a571d7107f1a2a0919c5bbfdb88c1d7f2092de4"}
+  ],
+  "nextExecutableAction": "Lead reads this preflight artifact and validates it with the dispatch verification_argv. Before any product implementation: commit wave0, accept RS-AUT-01 and RS-MCP-01 receipts in dependency order, resolve inherited RS-AUT-03 execution gate and authority/provider interfaces, compare inspected source hashes and re-read changed seams. Then assign one owner per shared patch, implement the canonical connector contracts/registry/inspector and full vertical acceptance scenario; worker owns no source changes under this packet.",
+  "risks": [
+    "Hidden RS-AUT-03 gate can leave a convincing connector inspector without an executable feature; do not count disabled executable kinds as full acceptance.",
+    "Generic ActionDefinitionSchema legacy arm can accept malformed known action shapes; strict connector validation must not fall through it.",
+    "Only updating narrowRuntimeAction leaves graph projection/type predicates/asAction/renderer records inconsistent; default asAction presently yields webhook for every non-prompt action.",
+    "Legacy independent per-action subscribers do not provide previous-node output ordering or error-branch semantics; adding a connector subscriber is not a runtime integration solution.",
+    "Existing expanded webhook actions and retry queue can contain token/password, and failed-result URL logging is not a proof of connector redaction; ephemeral credentials must never enter graph/export/queue/projections.",
+    "Legacy timeout immediate/deferred retries and at-least-once restart can duplicate Mail drafts; retain unknown outcome and reconcile before any write repeat.",
+    "SSRF pre-DNS validation and manual redirects must be preserved; separate DNS check and fetch do not demonstrate pinning against answer changes between lookup and connect.",
+    "Event sender schema/provenance, genuine Mail adapter/account/provider revision and readback are missing evidence, not fixtures that can silently replace the named acceptance.",
+    "Accepted dependency UI does not alone prove common grants/index/outbox/agent gateway or inherited foundation prerequisites; request exact accepted interfaces from lead rather than inventing parallel stores.",
+    "Root integration may stale every baseline hash/line reference; this report is source-backed preflight, not final implementation review or observed runtime proof.",
+    "Connector definitions can drift in version/schema/scopes/licence; bind descriptor provenance/version and revalidate account, approval and mappings after change.",
+    "No broader caller sweep was authorized. Lead must finish migration of all surviving source/runtime/transport/i18n callers using accepted interfaces and inspect any remaining shared paths before patching."
+  ]
+}

@@ -1,0 +1,329 @@
+{
+  "kind": "direct-exact010-production-build-and-browser",
+  "sourceCandidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "isolatedCheckout": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "clonedBranch": "cloud/all-surfaces-20260930",
+  "clonedBranchHead": "1937be14afd9bd68ce8ec3df5af9b82f0fe3abc1",
+  "detachedSourceHead": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "frozenInputs": {
+    "main": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "september": "bac082301aed341fe078cb5bd539c4ba074560eb",
+    "compound": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+    "runtime1319": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+  },
+  "builds": {
+    "frozen-install": {
+      "label": "frozen-install",
+      "command": [
+        "/workspace/.onboarding-tools/node_modules/.bin/bun",
+        "--no-env-file",
+        "install",
+        "--frozen-lockfile"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "exit": 0,
+      "seconds": 18.187,
+      "log": "frozen-install.log",
+      "logSha256": "7fd6470ef8569f2c809a330f71d4cce2a43989b07e5f9ec8202469e3b6861cf9",
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvDisabled": true,
+      "minimalChildEnvironment": true,
+      "HOMERepurposed": false
+    },
+    "server-subprocess-build": {
+      "label": "server-subprocess-build",
+      "command": [
+        "/workspace/.onboarding-tools/node_modules/.bin/bun",
+        "--no-env-file",
+        "run",
+        "server:build:subprocess"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "exit": 0,
+      "seconds": 1.229,
+      "log": "server-subprocess-build.log",
+      "logSha256": "d7fdc5517739d17803bf11b58e66b2c4123ed29b48003ecb298194381e2f2393",
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvDisabled": true,
+      "minimalChildEnvironment": true,
+      "HOMERepurposed": false
+    },
+    "webui-production-build": {
+      "label": "webui-production-build",
+      "command": [
+        "/workspace/.onboarding-tools/node_modules/.bin/bun",
+        "--no-env-file",
+        "run",
+        "webui:build"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "exit": 0,
+      "seconds": 71.331,
+      "log": "webui-production-build.log",
+      "logSha256": "b0102977bfddeb20f653649435448ba8e164a3d300bff0ac5bbd5b8b8b4e8af2",
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvDisabled": true,
+      "minimalChildEnvironment": true,
+      "HOMERepurposed": false
+    },
+    "bun-server-build": {
+      "label": "bun-server-build",
+      "command": [
+        "/workspace/.onboarding-tools/node_modules/.bin/bun",
+        "--no-env-file",
+        "build",
+        "packages/server/src/index.ts",
+        "--target",
+        "bun",
+        "--outdir",
+        "dist-server",
+        "--external",
+        "xlsx"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "exit": 0,
+      "seconds": 0.744,
+      "log": "bun-server-build.log",
+      "logSha256": "ea5802ed995bffe3b894c51e99618ac050e0718383010f2712e3bdafdef69626",
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvDisabled": true,
+      "minimalChildEnvironment": true,
+      "HOMERepurposed": false
+    }
+  },
+  "optimizedEntry": {
+    "path": "apps/webui/dist/assets/main-C_p8tRWb.js",
+    "sha256": "42c107212df162cea09f9d1ef136fe5ab7bf108eb9b44ba47c495e715c202d96",
+    "bytes": 32945
+  },
+  "actualBuildInputRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "actualBrowserInputRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "executionEquivalenceRequired": false,
+  "browser": {
+    "pass": 99,
+    "fail": 0,
+    "phaseErrors": 0,
+    "lifetimePageErrors": 0,
+    "rootRoutes": 22,
+    "settingsRoutes": 22,
+    "scopedModes": 7,
+    "screenshots": 64,
+    "chromium": "151.0.7922.173",
+    "playwright": "1.49.1",
+    "webSocketObservationCountedOnce": {
+      "observedSockets": 53,
+      "observedAckCount": 53
+    },
+    "freshRestartAcknowledgments": {
+      "newSocketCount": 1,
+      "actualWorkspaceIds": [
+        "e0fbee7a-45ae-f362-0248-d9ceb67a3298"
+      ]
+    },
+    "cleanup": {
+      "browserClosed": true,
+      "childAudits": [],
+      "profilesDeleted": [],
+      "errors": [],
+      "shortBrowserTmpDeleted": true,
+      "remainingChildren": 0,
+      "remainingProfiles": 0
+    }
+  },
+  "supplementalAuth": {
+    "pass": 11,
+    "fail": 0,
+    "phaseErrors": 0,
+    "lifetimePageErrors": 0,
+    "actualBadAuthentication": {
+      "status": 401,
+      "actualUrl": "http://127.0.0.1:40953/login",
+      "errorText": "Invalid credentials",
+      "sessionCookiePresent": false,
+      "webSocketCount": 0
+    },
+    "actualCorrectAuthentication": {
+      "defaultWorkspaceId": "bec3a5ec-29a8-d365-9bfb-ac6613551f6d",
+      "acknowledgments": [
+        "bec3a5ec-29a8-d365-9bfb-ac6613551f6d"
+      ]
+    },
+    "webSocketObservationCountedOnce": {
+      "observedSockets": 1,
+      "observedAckCount": 1
+    },
+    "cleanup": {
+      "browserClosed": true,
+      "childAudits": [],
+      "profilesDeleted": [],
+      "errors": [],
+      "shortBrowserTmpDeleted": true,
+      "remainingChildren": 0,
+      "remainingProfiles": 0
+    }
+  },
+  "preservedFirstAuthTimingRed": {
+    "actualExitCode": 1,
+    "pass": 8,
+    "fail": 0,
+    "phaseErrors": 1,
+    "observedFailure": "15s DOMContentLoaded observer wait timed out after genuine correct-login navigation to /",
+    "rerunChange": "only supplemental observer navigation wait 15s to45s; no application edits"
+  },
+  "preservation": {
+    "trackedFilesHashed": 6178,
+    "beforeInstallAfterInstallBeforeBuildAfterBuildAfterBrowserAllEqual": true,
+    "buildArtifactsBeforeAfterBrowserEqual": true,
+    "trackedStatusAfter": "",
+    "originalRevision": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "originalStatusUnchanged": true,
+    "originalStatusAfter": "",
+    "applicationOrLockfileEdits": false
+  },
+  "nativeLimitations": [
+    {
+      "surface": "genuine-project-roadmap",
+      "status": "NOT EXECUTED: actual unavailable UI observed",
+      "reason": "HTTP/ACK proves workspace ID; no trusted local Workspace metadata or native project context is invented",
+      "note": "Unavailable rendering is not functional native/Project/Roadmap/RepositorySnapshot acceptance"
+    },
+    {
+      "surface": "pre-existing-private-note",
+      "status": "NOT EXECUTED: actual unavailable UI observed",
+      "reason": "Real nativeReplica/nativeData preload is absent; native editor/controller not mounted",
+      "note": "Unavailable rendering is not functional native/Project/Roadmap/RepositorySnapshot acceptance"
+    }
+  ],
+  "contextRequiredUnexecuted": [
+    {
+      "surface": "browser",
+      "required": "real browser instanceId/backend",
+      "source": "MainContentPanel.tsx:354"
+    },
+    {
+      "surface": "terminal",
+      "required": "real terminalId/native terminal backend",
+      "source": "MainContentPanel.tsx:403"
+    },
+    {
+      "surface": "cloud-run",
+      "required": "real runId/cloud provider",
+      "source": "MainContentPanel.tsx:414"
+    },
+    {
+      "surface": "extension",
+      "required": "installed extensionId/viewId",
+      "source": "MainContentPanel.tsx:383"
+    },
+    {
+      "surface": "diff",
+      "required": "real write proposalId",
+      "source": "MainContentPanel.tsx:425"
+    }
+  ],
+  "acceptance": {
+    "boundedWebUIOnly": true,
+    "full109": false,
+    "full143": false,
+    "nativeInstalledHosts": false,
+    "providerOAuth": false,
+    "iOS": false,
+    "postgresProtectedGates": false,
+    "securityAcceptance": false,
+    "nativePrincipalFabricated": false,
+    "notesNativeFunctionalAcceptance": false
+  },
+  "modelEffortAttestation": {
+    "toolAttestationAvailable": false,
+    "requested": "GPT-6.1 Sol Ultra",
+    "noRuntimeModelAttestationInvented": true
+  }
+}

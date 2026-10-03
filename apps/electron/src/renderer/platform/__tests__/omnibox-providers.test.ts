@@ -8,6 +8,8 @@ import {
   createKnowledgeProvider,
 } from '../omnibox-providers'
 import type { ResourceSearchContext } from '@craft-agent/core/platform'
+import { parseRoute } from '../../../shared/route-parser'
+import { searchHitRoute } from '@/knowledge/KnowledgeHome'
 
 function ctx(partial: Partial<ResourceSearchContext> = {}): ResourceSearchContext {
   return { query: '', prefix: '', keys: {}, ...partial }
@@ -98,7 +100,7 @@ describe('omnibox providers', () => {
       calls.push(q)
       return [
         {
-          ref: { kind: 'document', id: 'doc1' },
+          ref: { scheme: 'siyuan', kind: 'document', id: 'doc1' },
           title: 'Agent Memory.md',
           snippet: 'episodic',
           score: 0.9,
@@ -112,7 +114,36 @@ describe('omnibox providers', () => {
     expect(calls).toEqual(['agent'])
     expect(hits).toHaveLength(1)
     expect(hits[0]?.kind).toBe('knowledge')
-    expect(hits[0]?.route).toBe('knowledge/document/doc1')
+    expect(parseRoute(hits[0]?.route ?? '')).toEqual({
+      type: 'view',
+      name: 'notes',
+      params: {},
+    })
+  })
+  it('knowledge go-to opens a resolvable Rox note and falls back to Notes for opaque refs', async () => {
+    const provider = createKnowledgeProvider(async () => [
+      {
+        ref: { scheme: 'siyuan', kind: 'document', id: 'research/Agent Memory.md' },
+        title: 'Agent Memory.md',
+      },
+      {
+        ref: { scheme: 'siyuan', kind: 'document', id: 'opaque-document-id' },
+        title: 'Imported document',
+      },
+    ], searchHitRoute)
+    const hits = await provider.search(ctx({ query: 'document' }))
+
+    expect(parseRoute(hits.find((hit) => hit.id.endsWith('research/Agent Memory.md'))?.route ?? '')).toEqual({
+      type: 'view',
+      name: 'note-info',
+      id: 'research/Agent Memory.md',
+      params: {},
+    })
+    expect(parseRoute(hits.find((hit) => hit.id.endsWith('opaque-document-id'))?.route ?? '')).toEqual({
+      type: 'view',
+      name: 'notes',
+      params: {},
+    })
   })
 
   it('knowledge: returns empty when search fn yields null (disconnected)', async () => {

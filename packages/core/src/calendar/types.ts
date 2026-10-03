@@ -6,7 +6,7 @@
 export type CalendarProvider = 'google' | 'outlook' | 'yandex' | 'mailru' | 'appleReminders'
 export type AccountStatus = 'disconnected' | 'pending' | 'connected' | 'revoked'
 export type SyncConflictKind = 'update' | 'delete' | 'timezone'
-export type CalendarUiStatus = 'none' | 'pending' | 'connected' | 'conflict' | 'timezone'
+export type CalendarUiStatus = 'none' | 'pending' | 'connected' | 'conflict' | 'timezone' | 'localChanges'
 
 export interface CalendarAccount {
   id: string
@@ -30,6 +30,10 @@ export interface CalendarEvent {
   allDay: boolean
   timeZone: string
   recurrence?: string
+  /** Provider-specific stable instance key; recurrence is the series rule. */
+  occurrenceId?: string
+  /** Latest remote revision explicitly reviewed while retaining a local draft. */
+  acknowledgedRemoteRevision?: string
   deleted: boolean
   etag?: string
   /** Local unsynced edits. Remote-only etag changes are not conflicts. */
@@ -51,6 +55,8 @@ export interface ReminderProposal {
   title: string
   dueAt: number
   sourceEventId?: string
+  /** Stable account/calendar/event tuple for provider-backed proposals. */
+  sourceEventIdentity?: string
   accepted: boolean
   dismissed: boolean
 }
@@ -59,7 +65,12 @@ export interface SyncConflict {
   id: string
   kind: SyncConflictKind
   eventId: string
+  /** Stable account/calendar/event tuple; old serialized conflicts may omit it. */
+  eventIdentity?: string
+  /** Exact latest provider row seen while retaining the local draft. */
+  remoteEvent?: CalendarEvent
 }
+
 
 export interface SyncJournal {
   accountId: string
@@ -99,11 +110,11 @@ export function emptyCalendarBundle(): CalendarBundle {
   return { version: CALENDAR_BUNDLE_VERSION, accounts: [], events: [], journals: [], proposals: [] }
 }
 
-/** Account-scoped event identity. Remote ids collide across accounts. */
+/** Collision-safe account/calendar/event identity for remote IDs that are not global. */
 export function calendarEventIdentity(
   event: Pick<CalendarEvent, 'accountId' | 'calendarId' | 'id'>,
 ): string {
-  return `${event.accountId}/${event.calendarId}/${event.id}`
+  return JSON.stringify([event.accountId, event.calendarId, event.id])
 }
 
 export function sameCalendarEvent(

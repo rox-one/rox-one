@@ -22,6 +22,7 @@ import {
   StyledContextMenuContent,
 } from '@/components/ui/styled-context-menu'
 import type { LoadedProject } from '@craft-agent/shared/projects/types'
+import { SharedProjectsSection } from '@/components/projects/SharedProjectProjection'
 
 export interface ProjectsListPanelProps {
   projects: LoadedProject[]
@@ -61,6 +62,7 @@ export function ProjectsListPanel({
   if (projects.length === 0) {
     return (
       <div className={cn('flex flex-col flex-1 min-h-0', className)}>
+        <SharedProjectsSection workspaceId={workspaceId} />
         <EntityListEmptyScreen
           icon={<FolderKanban />}
           title={t('projectsList.empty')}
@@ -83,6 +85,8 @@ export function ProjectsListPanel({
 
   return (
     <div className={cn('flex flex-col flex-1 min-h-0', className)}>
+      <SharedProjectsSection workspaceId={workspaceId} />
+      <div className="px-4 pt-3 text-xs font-semibold">{t('sharedProjects.localHeading')}</div>
       <ScrollArea className="flex-1">
         <div className="pb-2" data-list-role="projects">
           <div className="pt-1">

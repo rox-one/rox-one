@@ -155,7 +155,7 @@ describe('action labels are i18n', () => {
     expect(i18n.t('shortcuts.action.omnibox')).toBe('Палитра команд')
     expect(i18n.t('shortcuts.action.advisorReview')).toBe('Проверка советника')
     expect(i18n.t('shortcuts.action.sessionWorkflow')).toBe('Рабочий процесс сессии')
-    expect(i18n.t('shortcuts.action.simplifyDiff')).toBe('Упростить diff')
+    expect(i18n.t('shortcuts.action.simplifyDiff')).toBe('Упростить разницу')
     expect(i18n.t('shortcuts.action.newChat')).not.toBe('New Session')
   })
 

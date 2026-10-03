@@ -8,6 +8,15 @@ import {
 } from '../meeting-conation-shell.ts'
 
 describe('meeting Conation shells fail-closed (Mail/CRM/calendar/room)', () => {
+  test('queued shells reject both canonical verified states without claiming live', () => {
+    for (const verification of ['receipt_verified', 'readback_verified'] as const) {
+      const result = { executionMode: 'live' as const, lifecycle: 'queued' as const, verification, ok: false }
+      expect(isClaimableLive(result)).toBe(false)
+      expect(() => assertMeetingConationShellNotLive(result)).toThrow('queued meeting Conation shell must not report verified')
+    }
+    expect(() => assertMeetingConationShellNotLive({ executionMode: 'live', lifecycle: 'queued', verification: 'unverified', ok: false })).not.toThrow()
+  })
+
   test('isClaimableLive is false for native, fixture, and Conation on every shell', () => {
     for (const shell of MEETING_CONATION_SHELLS) {
       expect(isClaimableLive(meetingConationShellResult({ source: 'native', shell }))).toBe(false)

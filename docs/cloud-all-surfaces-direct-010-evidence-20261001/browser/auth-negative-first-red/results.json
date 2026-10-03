@@ -1,0 +1,196 @@
+{
+  "kind": "actual-optimized-browser-authentication-negatives",
+  "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "checkout": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "startedAt": "2026-10-01T17:04:05.819Z",
+  "phases": [],
+  "assertions": [
+    {
+      "name": "Authentication observer exact source revision",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "name": "Authentication observer tracked source clean",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "name": "Actual config utility provisioning exited 0",
+      "pass": true,
+      "detail": {
+        "code": 0
+      }
+    },
+    {
+      "name": "Actual unauthenticated config API returns401",
+      "pass": true,
+      "detail": {
+        "status": 401
+      }
+    },
+    {
+      "name": "Actual unauthenticated browser redirects to login without shell",
+      "pass": true,
+      "detail": {
+        "actualUrl": "http://127.0.0.1:43523/login"
+      }
+    },
+    {
+      "name": "Actual bad-token login UI refuses authentication without session cookie or WebSocket",
+      "pass": true,
+      "detail": {
+        "status": 401,
+        "actualUrl": "http://127.0.0.1:43523/login",
+        "errorText": "Invalid credentials",
+        "sessionCookiePresent": false,
+        "webSocketCount": 0
+      }
+    },
+    {
+      "name": "Authentication owned server SIGTERM exit0 without SIGKILL",
+      "pass": true,
+      "detail": {
+        "label": "auth-negative",
+        "pid": 117228,
+        "profile": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-P3Sa4H",
+        "origin": "http://127.0.0.1:43523",
+        "sentSigterm": true,
+        "usedSigkill": false,
+        "preStopExitCode": null,
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullEphemeralTokenLogged": false
+      }
+    },
+    {
+      "name": "Authentication server logs do not contain full ephemeral token",
+      "pass": true,
+      "detail": {}
+    }
+  ],
+  "servers": [
+    {
+      "label": "auth-negative",
+      "pid": 117228,
+      "profile": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-P3Sa4H",
+      "origin": "http://127.0.0.1:43523",
+      "sentSigterm": true,
+      "usedSigkill": false,
+      "preStopExitCode": null,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "fullEphemeralTokenLogged": false
+    }
+  ],
+  "pages": [
+    {
+      "label": "real-unauth-and-bad-auth",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+      ],
+      "consoleWarnings": [],
+      "failedRequests": [
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap",
+          "method": "GET",
+          "error": "net::ERR_NAME_NOT_RESOLVED"
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap",
+          "method": "GET",
+          "error": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      ],
+      "badResponses": [
+        {
+          "url": "http://127.0.0.1:43523/api/auth",
+          "status": 401
+        }
+      ],
+      "webSockets": []
+    }
+  ],
+  "limitations": [],
+  "errors": [
+    {
+      "phase": "runner",
+      "error": "page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"domcontentloaded\"\n  navigated to \"http://127.0.0.1:43523/\"\n============================================================\n    at login (/tmp/rox-r15-exact-ui-20261001/observe-auth-negative.cjs:174:27)\n    at async main (/tmp/rox-r15-exact-ui-20261001/observe-auth-negative.cjs:220:5)"
+    }
+  ],
+  "command": [
+    "node",
+    "/tmp/rox-r15-exact-ui-20261001/observe-auth-negative.cjs",
+    "/tmp/rox-r15-exact-ui-20261001/checkout",
+    "010fa8c040e3a84cd40cd8195473f52d8582f159"
+  ],
+  "helperSha256": "1f15094d935009f3375290f2c66e84da0b5d153e7618ba7455b4b2fe5459074e",
+  "artifacts": {
+    "dist-server/index.js": {
+      "sha256": "18c10e1f93660543dd9c6d474ab010b182e17d25562feefd7f622eb7684a360a",
+      "bytes": 36851872
+    },
+    "apps/webui/dist/index.html": {
+      "sha256": "55dea0ec3407bc8c3c04614ccdf19c9031aa9c34b8a0728c38ba7db24d8c4766",
+      "bytes": 1767
+    },
+    "apps/webui/dist/login.html": {
+      "sha256": "e2b5ff3b6797dd07fea6edfe32051d8db3461c78ce6244ed00d42669615c5cfa",
+      "bytes": 9998
+    }
+  },
+  "browserVersion": "151.0.7922.173",
+  "unauthenticated": {
+    "url": "http://127.0.0.1:43523/login",
+    "title": "Rox — Вход",
+    "bodyText": "Rox\n\nВведите токен сервера, чтобы продолжить\n\nТокен сервера\n Войти",
+    "topBar": null,
+    "modePill": null,
+    "rail": null,
+    "mainNavigation": null,
+    "headers": [
+      "Rox"
+    ],
+    "testIds": [],
+    "modeButtons": [],
+    "railButtons": [],
+    "sourceStates": [],
+    "preferences": {
+      "craft-workbench-enabled": null,
+      "craft-feature-unified-shell": null,
+      "craft-feature-workbench-top-chrome-v2": null,
+      "craft-feature-workbench-mode-registry-v1": null,
+      "craft-activity-rail-collapsed": null,
+      "craft-sidebar-width": null,
+      "craft-session-list-width": null
+    },
+    "screenshot": "unauthenticated-login-redirect.png",
+    "html": "unauthenticated-login-redirect.html"
+  },
+  "badAuthentication": {
+    "status": 401,
+    "actualUrl": "http://127.0.0.1:43523/login",
+    "errorText": "Invalid credentials",
+    "sessionCookiePresent": false,
+    "webSocketCount": 0
+  },
+  "finalCleanup": {
+    "browserClosed": true,
+    "childAudits": [],
+    "profilesDeleted": [],
+    "errors": [],
+    "shortBrowserTmpDeleted": true,
+    "remainingChildren": 0,
+    "remainingProfiles": 0
+  },
+  "finishedAt": "2026-10-01T17:05:04.538Z",
+  "assertionsPassed": 8,
+  "assertionsFailed": 0
+}

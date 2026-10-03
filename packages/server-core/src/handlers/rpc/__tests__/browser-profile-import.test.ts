@@ -11,7 +11,7 @@ mock.module('@craft-agent/shared/config', () => ({
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown
 
 describe('browser profile import RPC', () => {
-  it('discovers profiles as an array and refuses a missing workspace', async () => {
+  it('does not discover browser profiles before explicit consent and requires exact cookie domains', async () => {
     const { registerBrowserProfileImportHandlers } = await import('../browser-profile-import')
     const handlers = new Map<string, Handler>()
     const server = {
@@ -22,8 +22,7 @@ describe('browser profile import RPC', () => {
     registerBrowserProfileImportHandlers(server, {} as HandlerDeps)
 
     const discovered = handlers.get(RPC_CHANNELS.browserProfile.DISCOVER)!({}, undefined)
-    expect(Array.isArray(discovered)).toBe(true)
-    expect(summaryLeaksSecrets(discovered, ['cookie-secret-value-DO-NOT-LEAK', 'hunter2-password-DO-NOT-LEAK'])).toBe(false)
+    expect(discovered).toEqual([])
 
     expect(() =>
       handlers.get(RPC_CHANNELS.browserProfile.IMPORT)!({}, {
@@ -31,11 +30,12 @@ describe('browser profile import RPC', () => {
         profileId: 'chromium:none',
         consent: {
           historyBookmarks: true,
-          cookies: false,
+          cookies: true,
           credentials: false,
           osCredentialsApproved: false,
+          domains: [],
         },
       }),
-    ).toThrow('Workspace not found')
+    ).toThrow('Choose exact domains before importing cookies')
   })
 })

@@ -26,6 +26,11 @@ import {
 const enLocale = JSON.parse(
   readFileSync(join(import.meta.dir, '../../i18n/locales/en.json'), 'utf8'),
 ) as Record<string, string>
+function requireLocale(key: string): string {
+  const value = enLocale[key]
+  if (typeof value !== 'string') throw new Error(`Missing workflow locale ${key}`)
+  return value
+}
 const editorSource = readFileSync(
   join(
     import.meta.dir,
@@ -200,12 +205,12 @@ describe('session WorkflowSpec', () => {
 
     expect(enLocale['entityView.mapRunComplete']).toBe('Run complete')
     expect(enLocale['entityView.mapRunSimulated']).toMatch(/simulat/i)
-    expect(enLocale['entityView.mapRunSimulated'].toLowerCase()).not.toMatch(/\b(complete|success)\b/)
+    expect(requireLocale('entityView.mapRunSimulated').toLowerCase()).not.toMatch(/\b(complete|success)\b/)
     expect(enLocale['entityView.mapRunWaitingApproval']).toMatch(/waiting|approval/i)
-    expect(enLocale['entityView.mapRunWaitingApproval'].toLowerCase()).not.toMatch(/\b(complete|done)\b/)
+    expect(requireLocale('entityView.mapRunWaitingApproval').toLowerCase()).not.toMatch(/\b(complete|done)\b/)
     expect(enLocale['entityView.mapRunStatus.simulated']).toMatch(/simulat/i)
     expect(enLocale['entityView.mapRunStatus.waiting_approval']).toMatch(/waiting|approval/i)
-    expect(enLocale['entityView.mapRunStatus.waiting_approval'].toLowerCase()).not.toMatch(/\b(done|complete)\b/)
+    expect(requireLocale('entityView.mapRunStatus.waiting_approval').toLowerCase()).not.toMatch(/\b(done|complete)\b/)
 
     expect(editorSource).toContain('function notifyWorkflowRun')
     expect(editorSource).toContain('isProductionWorkflowSuccess')

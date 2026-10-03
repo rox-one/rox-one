@@ -90,11 +90,20 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
   const windowManager = deps.windowManager
 
   // Get workspaces (LOCAL_ONLY — includes rootPath for local Electron renderer)
-  server.handle(RPC_CHANNELS.workspaces.GET, async () => {
+  server.handle(RPC_CHANNELS.workspaces.GET, async (ctx) => {
+    if (ctx.principal) {
+      if (!ctx.workspaceId || !deps.nativeData?.authority.authorize(ctx.principal, ctx.workspaceId, 'read')) {
+        throw new Error('Workspace permission denied')
+      }
+      // The authenticated window observes its own workspace metadata; host
+      // roster entries and remote connection credentials never enter this projection.
+      return sessionManager.getWorkspaces().filter(workspace => workspace.id === ctx.workspaceId)
+        .map(({ id, name, rootPath, createdAt }) => ({ id, name, rootPath, createdAt }))
+    }
     const listed = rpcWorkspaceListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
     return sessionManager.getWorkspaces()
-  })
+  }, { access: 'localElectron', nativeAction: 'read' })
 
   // Create a workspace at a folder path (Obsidian-style: folder IS the
   // workspace). Local creation uses the durable create/bind/activate lifecycle.
@@ -189,6 +198,12 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
   // usable active workspace before a window mapping exists; select it locally
   // rather than forcing the renderer into a picker.
   server.handle(RPC_CHANNELS.window.GET_WORKSPACE, (ctx) => {
+    if (ctx.principal) {
+      if (!ctx.workspaceId || !deps.nativeData?.authority.authorize(ctx.principal, ctx.workspaceId, 'read')) {
+        throw new Error('Workspace permission denied')
+      }
+      return ctx.workspaceId
+    }
     const requestedWorkspaceId =
       ctx.workspaceId ??
       (ctx.webContentsId !== null
@@ -223,7 +238,7 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     }
     server.updateClientWorkspace?.(ctx.clientId, workspace.id)
     return workspace.id
-  })
+  }, { access: 'localElectron', nativeAction: 'read' })
 
   // Get mode for the calling window (always 'main' now)
   server.handle(RPC_CHANNELS.window.GET_MODE, () => {

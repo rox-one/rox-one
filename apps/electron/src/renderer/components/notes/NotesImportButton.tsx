@@ -39,40 +39,55 @@ export interface NotesImportButtonProps {
 export function NotesImportButton({ workspaceId, onImported }: NotesImportButtonProps): React.JSX.Element | null {
   const { t } = useTranslation()
   const [preview, setPreview] = useState<ScanResult | null>(null)
+  const [previewWorkspaceId, setPreviewWorkspaceId] = useState<string | null>(null)
   const [consent, setConsent] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [result, setResult] = useState<MaterializeResult | null>(null)
+  const previewRequestRef = React.useRef(0)
+  React.useEffect(() => {
+    previewRequestRef.current += 1
+    setPreview(null)
+    setPreviewWorkspaceId(null)
+    setConsent(false)
+    setBusy(false)
+  }, [workspaceId])
 
   const api = window.electronAPI
   const available = Boolean(api?.isChannelAvailable?.(RPC_CHANNELS.notesImport.PREVIEW))
 
   const runPreview = React.useCallback(async (path: string) => {
-    if (!api) return
+    if (!api || !workspaceId) return
+    const request = ++previewRequestRef.current
+    setPreview(null)
+    setPreviewWorkspaceId(null)
+    setConsent(false)
     setBusy(true)
     try {
       const scan = (await (api as unknown as {
         previewNotesImport: (i: { workspaceId: string; sourcePath: string }) => Promise<ScanResult>
-      }).previewNotesImport({ workspaceId: workspaceId ?? '', sourcePath: path })) as ScanResult
+      }).previewNotesImport({ workspaceId, sourcePath: path })) as ScanResult
+      if (request !== previewRequestRef.current) return
       setPreview(scan)
+      setPreviewWorkspaceId(workspaceId)
       setConsent(false)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
+      if (request === previewRequestRef.current) toast.error(err instanceof Error ? err.message : String(err))
     } finally {
-      setBusy(false)
+      if (request === previewRequestRef.current) setBusy(false)
     }
   }, [api, workspaceId])
 
   const picker = useDirectoryPicker((path) => void runPreview(path))
 
   const execute = async () => {
-    if (!preview || !workspaceId || !api) return
+    if (!preview || !workspaceId || previewWorkspaceId !== workspaceId || !api) return
     setBusy(true)
     try {
       const res = await (api as unknown as {
         executeNotesImport: (i: { workspaceId: string; sourcePath: string }) => Promise<MaterializeResult>
       }).executeNotesImport({ workspaceId, sourcePath: preview.root })
-      setResult(res)
       setPreview(null)
+      setPreviewWorkspaceId(null)
+      setConsent(false)
       onImported?.()
       toast.success(
         t('settings.notesImport.doneToast', {
@@ -91,12 +106,20 @@ export function NotesImportButton({ workspaceId, onImported }: NotesImportButton
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={picker.pickDirectory} disabled={busy}>
+      <Button variant="outline" size="sm" onClick={picker.pickDirectory} disabled={busy || !workspaceId}>
         {busy ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <FolderInput className="mr-1 h-3 w-3" />}
         {t('settings.notesImport.importButton')}
       </Button>
-
-      <Dialog open={preview !== null} onOpenChange={(open) => !open && setPreview(null)}>
+      <Dialog
+        open={preview !== null && previewWorkspaceId === workspaceId}
+        onOpenChange={(open) => {
+          if (open) return
+          previewRequestRef.current += 1
+          setPreview(null)
+          setPreviewWorkspaceId(null)
+          setConsent(false)
+        }}
+      >
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>{t('settings.notesImport.previewTitle')}</DialogTitle>
@@ -127,7 +150,14 @@ export function NotesImportButton({ workspaceId, onImported }: NotesImportButton
           </div>
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setPreview(null)}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setPreview(null)
+                setPreviewWorkspaceId(null)
+                setConsent(false)
+              }}
+            >
               {t('common.cancel')}
             </Button>
             <Button disabled={!consent || busy} onClick={() => void execute()}>
@@ -138,8 +168,7 @@ export function NotesImportButton({ workspaceId, onImported }: NotesImportButton
         </DialogContent>
       </Dialog>
 
-      {/* Result toast is shown via sonner; result state kept for potential inline display */}
-      {result ? null : null}
+
     </>
   )
 }

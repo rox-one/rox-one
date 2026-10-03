@@ -28,6 +28,7 @@ function memoryFs(seed: Record<string, string | null> = {}): ProfileFs & { reads
   return {
     files,
     reads,
+    listPaths: prefix => [...files.keys()].filter(path => path.startsWith(prefix)),
     exists(path) {
       return [...files.keys()].some((key) => key === path || key.startsWith(`${path}/`))
     },
@@ -177,6 +178,7 @@ describe('Issue 15 privileged profile import', () => {
         credentials: false,
         osCredentialsApproved: false,
       },
+      authorizedScopes: { cookies: false, credentials: false },
       fs,
       indexPath: '/ws/browser-index.json',
       vaultPath: '/ws/cookie-vault.json',
@@ -214,7 +216,9 @@ describe('Issue 15 privileged profile import', () => {
         cookies: true,
         credentials: true,
         osCredentialsApproved: false,
+        domains: ['login.example'],
       },
+      authorizedScopes: { cookies: false, credentials: false },
       fs,
       indexPath: '/ws/browser-index.json',
       vaultPath: '/ws/cookie-vault.json',
@@ -237,6 +241,15 @@ describe('Issue 15 privileged profile import', () => {
         cookies: true,
         credentials: true,
         osCredentialsApproved: true,
+        domains: ['login.example'],
+      },
+      authorizedScopes: { cookies: true, credentials: true },
+      protectedCookies: {
+        read: (_profile, domains) => {
+          expect(domains).toEqual(['login.example'])
+          return JSON.stringify([{ host: 'login.example', name: 'SID' }])
+        },
+        storeKey: () => 'protected-key-ref',
       },
       fs,
       indexPath: '/ws/browser-index.json',
@@ -251,6 +264,8 @@ describe('Issue 15 privileged profile import', () => {
     expect(vault).toContain('aes-256-gcm')
     expect(vault.includes(COOKIE_SECRET)).toBe(false)
     expect(summaryLeaksSecrets(summary, [COOKIE_SECRET, PASSWORD_SECRET])).toBe(false)
+    expect(fs.files.has('/ws/cookie-vault.json.key')).toBe(false)
+    expect(fs.files.get('/ws/browser-index.json')).toContain('protected-key-ref')
   })
 
   it('supports dry run, rollback, deletion receipts, and locked/corrupt/running states', () => {
@@ -273,6 +288,7 @@ describe('Issue 15 privileged profile import', () => {
         osCredentialsApproved: false,
       },
       fs,
+      authorizedScopes: { cookies: false, credentials: false },
       indexPath: '/ws/browser-index.json',
       vaultPath: '/ws/cookie-vault.json',
       dryRun: true,
@@ -294,6 +310,7 @@ describe('Issue 15 privileged profile import', () => {
         osCredentialsApproved: false,
       },
       fs,
+      authorizedScopes: { cookies: false, credentials: false },
       indexPath: '/ws/browser-index.json',
       vaultPath: '/ws/cookie-vault.json',
       dryRun: false,
@@ -313,6 +330,85 @@ describe('Issue 15 privileged profile import', () => {
     })
     expect(deleted.deletionReceipt.itemCount).toBeGreaterThan(0)
     expect(deleted.deletionReceipt.categories).toContain('history_bookmarks')
+  })
+
+  it('rolls back cookie custody without deleting a preexisting key and retries a failed deletion', () => {
+    const fs = memoryFs({ ...chromeSeed(), '/ws/index': JSON.stringify({ bookmarks: [], history: [], cookieKeyRef: 'prior-key' }), '/ws/vault': 'prior-ciphertext' })
+    const profile = discoverBrowserProfiles({ home: '/home/user', platform: 'linux', fs }).find(p => p.path === defaultPath)!
+    const keys = new Set(['prior-key'])
+    let refuse = true
+    const protectedCookies = {
+      read: () => JSON.stringify([{ name: 'fixture', value: 'test' }]),
+      storeKey: () => { keys.add('new-key'); return 'new-key' },
+      deleteKey: (ref: string) => refuse ? false : keys.delete(ref),
+    }
+    const originalIndex = fs.readText('/ws/index')
+    const result = importProfile({ profile, consent: { historyBookmarks: false, cookies: true, credentials: false, osCredentialsApproved: false, domains: ['example.com'] },
+      authorizedScopes: { cookies: true, credentials: false }, protectedCookies, fs, indexPath: '/ws/index', vaultPath: '/ws/vault', dryRun: false })
+    const importedVault = fs.readText('/ws/vault')
+    expect(importedVault).not.toBe('prior-ciphertext')
+    const custody = { vaultPath: '/ws/vault', deleteKey: protectedCookies.deleteKey }
+    expect(() => rollbackImport(fs, '/ws/index', result.rollbackToken!, custody)).toThrow('delete-failed')
+    expect(fs.readText('/ws/vault')).toBe(importedVault)
+    expect(fs.files.has(`/ws/index.${result.rollbackToken}`)).toBe(true)
+    refuse = false
+    expect(rollbackImport(fs, '/ws/index', result.rollbackToken!, custody)).toBe(true)
+    expect(fs.readText('/ws/vault')).toBe('prior-ciphertext')
+    expect(fs.readText('/ws/index')).toBe(originalIndex)
+    expect([...keys]).toEqual(['prior-key'])
+  })
+
+  it('first cookie import rollback removes its key and vault before subsequent deletion receipt', () => {
+    const fs = memoryFs(chromeSeed())
+    const profile = discoverBrowserProfiles({ home: '/home/user', platform: 'linux', fs }).find(p => p.path === defaultPath)!
+    const keys = new Set<string>()
+    const protectedCookies = { read: () => 'fixture-cookie', storeKey: () => { keys.add('unique-key'); return 'unique-key' }, deleteKey: (ref: string) => keys.delete(ref) }
+    const result = importProfile({ profile, consent: { historyBookmarks: false, cookies: true, credentials: false, osCredentialsApproved: false, domains: ['example.com'] },
+      authorizedScopes: { cookies: true, credentials: false }, protectedCookies, fs, indexPath: '/ws/index', vaultPath: '/ws/vault', dryRun: false })
+    expect(() => rollbackImport(fs, '/ws/index', result.rollbackToken!)).toThrow('custody-required')
+    expect(rollbackImport(fs, '/ws/index', result.rollbackToken!, { vaultPath: '/ws/vault', deleteKey: protectedCookies.deleteKey })).toBe(true)
+    expect(keys.size).toBe(0)
+    expect(fs.files.has('/ws/vault')).toBe(false)
+    expect(deleteImportedProfile({ fs, indexPath: '/ws/index', vaultPath: '/ws/vault', protectedCookies }).deletionReceipt.categories).toEqual([])
+  })
+
+  it('deletion purges only owned rollback files and resumes partially deleted key custody', () => {
+    const fs = memoryFs({ '/ws/index': JSON.stringify({ cookieKeyRef: 'current-key' }), '/ws/vault': 'encrypted',
+      '/ws/index.rb-owned': JSON.stringify({ cookieKeyRef: 'preexisting-key' }),
+      '/ws/index.rb-owned.cookies': JSON.stringify({ vaultPath: '/ws/vault', previousVault: 'old-ciphertext', currentKeyRef: 'owned-key', keyDeleted: false }),
+      '/ws/index.rb-unrelated.txt': 'keep', '/other/index.rb-owned': 'keep' })
+    const keys = new Set(['current-key', 'owned-key', 'preexisting-key'])
+    let refuse = true
+    const protectedCookies = { read: () => null, storeKey: () => null,
+      deleteKey: (ref: string) => ref === 'owned-key' && refuse ? false : keys.delete(ref) }
+    const input = { fs, indexPath: '/ws/index', vaultPath: '/ws/vault', protectedCookies }
+    expect(() => deleteImportedProfile(input)).toThrow('delete-failed')
+    expect(fs.files.has('/ws/index.rb-owned')).toBe(true)
+    expect(keys.has('current-key')).toBe(false)
+    refuse = false
+    deleteImportedProfile(input)
+    expect([...keys]).toEqual(['preexisting-key'])
+    expect(fs.files.has('/ws/index.rb-owned')).toBe(false)
+    expect(fs.files.has('/ws/index.rb-owned.cookies')).toBe(false)
+    expect(fs.files.get('/ws/index.rb-unrelated.txt')).toBe('keep')
+    expect(fs.files.get('/other/index.rb-owned')).toBe('keep')
+  })
+
+  it('retries interrupted vault restoration without deleting the same protected key twice', () => {
+    const fs = memoryFs({ '/ws/index': JSON.stringify({ cookieKeyRef: 'new-key' }), '/ws/vault': 'new-ciphertext',
+      '/ws/index.rb-retry': JSON.stringify({ cookieKeyRef: 'prior-key' }),
+      '/ws/index.rb-retry.cookies': JSON.stringify({ vaultPath: '/ws/vault', previousVault: 'prior-ciphertext', currentKeyRef: 'new-key', keyDeleted: false }) })
+    const originalWrite = fs.writeText
+    let fail = true
+    let deletes = 0
+    fs.writeText = (path, value) => { if (path === '/ws/vault' && fail) throw Error('fixture-write-failed'); originalWrite(path, value) }
+    const custody = { vaultPath: '/ws/vault', deleteKey: () => { deletes++; return true } }
+    expect(() => rollbackImport(fs, '/ws/index', 'rb-retry', custody)).toThrow('fixture-write-failed')
+    expect(fs.files.has('/ws/index.rb-retry.cookies')).toBe(true)
+    fail = false
+    expect(rollbackImport(fs, '/ws/index', 'rb-retry', custody)).toBe(true)
+    expect(deletes).toBe(1)
+    expect(fs.readText('/ws/vault')).toBe('prior-ciphertext')
   })
 
   it('parses Netscape and Chrome bookmark fixtures', () => {

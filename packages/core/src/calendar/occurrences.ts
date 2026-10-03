@@ -55,7 +55,7 @@ export function occurrenceFromCalendarEvent(
     allDayDate: event.allDay ? civilDateInZone(event.startAt, event.timeZone) : undefined,
     timeZone: event.timeZone,
     timing: 'planned',
-    recurrenceInstance: event.recurrence,
+    recurrenceInstance: event.occurrenceId,
     editable: true,
     permission: 'write',
   }
@@ -81,7 +81,7 @@ export function occurrenceFromTaskDue(
 }
 
 export function occurrenceKey(item: TemporalOccurrence): string {
-  return `${item.sourceRef}::${item.recurrenceInstance ?? 'master'}`
+  return JSON.stringify([item.sourceRef, item.recurrenceInstance ?? 'master'])
 }
 
 export function dedupeOccurrences(items: readonly TemporalOccurrence[]): TemporalOccurrence[] {

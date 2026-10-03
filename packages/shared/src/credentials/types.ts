@@ -40,7 +40,8 @@ export type CredentialType =
   | 'openclaw_gateway_token'
   // Identity Center service OAuth (SiYuan Cloud, etc.) — key service_oauth::{workspaceId}::{name}
   | 'service_oauth'
-  // Page publication admin token (keyed by workspaceId + pageId)
+  | 'native_transport_credential' // Enrolled local native authority credential, scoped by workspace
+  | 'account_replica_key' // Local encrypted account/device/outbox key material
   | 'page_publish_token'; // Secret capability that authorizes publication update/unpublish
 
 /** Valid credential types for validation */
@@ -61,6 +62,8 @@ const VALID_CREDENTIAL_TYPES: readonly CredentialType[] = [
   'openclaw_gateway_token',
   'service_oauth',
   'page_publish_token',
+  'account_replica_key',
+  'native_transport_credential',
 ] as const;
 
 /** Check if a string is a valid CredentialType */
@@ -176,7 +179,12 @@ function isMessagingCredential(type: CredentialType): boolean {
   return (MESSAGING_CREDENTIAL_TYPES as readonly string[]).includes(type);
 }
 
-/** Check if type is a page publication credential (workspaceId + pageId via `name`) */
+/** Check if type is a local replica key credential. */
+function isAccountReplicaKey(type: CredentialType): boolean {
+  return type === 'account_replica_key';
+}
+
+/** Check if type is a page publication credential (workspaceId + pageId via `name`). */
 function isPageCredential(type: CredentialType): boolean {
   return type === 'page_publish_token';
 }
@@ -225,6 +233,13 @@ export function credentialIdToAccount(id: CredentialId): string {
     return parts.join(CREDENTIAL_DELIMITER);
   }
 
+  if (id.type === 'native_transport_credential') {
+    if (!id.workspaceId || !/^[a-zA-Z0-9._-]{1,128}$/.test(id.workspaceId)) {
+      throw new Error('native transport credential requires a valid workspace');
+    }
+    return [id.type, id.workspaceId].join(CREDENTIAL_DELIMITER);
+  }
+
   // Workspace-scoped format (no source):
   // workspace_oauth::{workspaceId}
   if (id.type === 'workspace_oauth' && id.workspaceId) {
@@ -253,6 +268,14 @@ export function credentialIdToAccount(id: CredentialId): string {
   if (id.type === 'service_oauth' && id.workspaceId && id.name) {
     parts.push(id.workspaceId);
     parts.push(id.name);
+    return parts.join(CREDENTIAL_DELIMITER);
+  }
+  // Account replica key material is scoped by workspace and an opaque identity hash.
+  if (isAccountReplicaKey(id.type)) {
+    if (!id.workspaceId || !/^[a-f0-9]{64}$/.test(id.name ?? '')) {
+      throw new Error('account replica credential requires a workspace and SHA-256 identity key');
+    }
+    parts.push(id.workspaceId, id.name!);
     return parts.join(CREDENTIAL_DELIMITER);
   }
 
@@ -326,6 +349,11 @@ export function accountToCredentialId(account: string): CredentialId | null {
     return { type, runtimeId: parts[1] };
   }
 
+  if (type === 'native_transport_credential') {
+    return parts.length === 2 && /^[a-zA-Z0-9._-]{1,128}$/.test(parts[1] ?? '')
+      ? { type, workspaceId: parts[1] } : null;
+  }
+
   // Workspace-scoped format (no source):
   // workspace_oauth::{workspaceId}
   if (type === 'workspace_oauth' && parts.length === 2) {
@@ -355,8 +383,11 @@ export function accountToCredentialId(account: string): CredentialId | null {
   if (isPageCredential(type) && parts.length === 3) {
     return { type, workspaceId: parts[1], name: parts[2] };
   }
+  if (isAccountReplicaKey(type) && parts.length === 3 && parts[1] && /^[a-f0-9]{64}$/.test(parts[2]!)) {
+    return { type, workspaceId: parts[1], name: parts[2] };
+  }
 
-  if (parts.length === 2 && parts[1] === 'global') {
+  if (!isAccountReplicaKey(type) && parts.length === 2 && parts[1] === 'global') {
     return { type };
   }
 

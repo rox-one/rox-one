@@ -1,0 +1,14 @@
+{
+  "ownProcessesActive": [],
+  "removedOwnPrivateDirectories": [
+    "/tmp/rox-r15-exact-ui-20261001/electron-types-private/private-config",
+    "/tmp/rox-r15-exact-ui-20261001/electron-types-private/cache",
+    "/tmp/rox-r15-exact-ui-20261001/electron-types-private/tmp"
+  ],
+  "sharedCheckoutDependenciesAndDistRetained": true,
+  "originalUnchangedAndClean": {
+    "revision": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "status": ""
+  },
+  "helpersRetainedAndCopiedToEvidence": true
+}

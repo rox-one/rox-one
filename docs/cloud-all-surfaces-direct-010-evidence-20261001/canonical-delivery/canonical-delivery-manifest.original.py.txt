@@ -1,0 +1,100 @@
+"""TEMP evidence tool. Run only after the coordinator freezes and validates artifacts."""
+from pathlib import Path
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parent
+CHECKOUT = ROOT.parent / 'all-surfaces'
+DELIVERY = Path('/workspace/rox-union-server-dist-final-20260930')
+
+
+def digest(path):
+    h = hashlib.sha256()
+    with path.open('rb') as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def snapshot():
+    tracked = subprocess.check_output(['git', 'ls-files', '-z'], cwd=CHECKOUT, text=True)
+    hashes = {}
+    for name in tracked.split('\0'):
+        if not name:
+            continue
+        path = CHECKOUT / name
+        if path.is_symlink():
+            hashes[name] = hashlib.sha256(('symlink:' + os.readlink(path)).encode()).hexdigest()
+        elif path.is_file():
+            hashes[name] = digest(path)
+    return {'head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=CHECKOUT, text=True).strip(),
+            'status': subprocess.check_output(['git', 'status', '--porcelain'], cwd=CHECKOUT, text=True),
+            'dotenv_absent': not (CHECKOUT / '.env').exists(), 'tracked_hashes': hashes}
+
+
+phase, expected_sha = sys.argv[1:]
+observation = snapshot()
+assert observation['dotenv_absent']
+if phase == 'before':
+    assert observation['head'] == expected_sha
+    result = observation
+else:
+    assert phase == 'after'
+    before = json.loads((ROOT / 'canonical-delivery-before.json').read_text())
+    assert before['head'] == expected_sha
+    changes = [{'path': name, 'before': before['tracked_hashes'].get(name),
+                'after': observation['tracked_hashes'].get(name)}
+               for name in sorted(set(before['tracked_hashes']) | set(observation['tracked_hashes']))
+               if before['tracked_hashes'].get(name) != observation['tracked_hashes'].get(name)]
+    production_changes = [row for row in changes if not re.search(r'(^|/)(__tests__|tests|test)/|\.(test|spec)\.', row['path'])]
+    files, links, bytes_total = [], [], 0
+    for directory, names, leaves in os.walk(DELIVERY, followlinks=False):
+        for name in sorted(names + leaves):
+            path = Path(directory) / name
+            relative = str(path.relative_to(DELIVERY))
+            if path.is_symlink():
+                target = os.readlink(path)
+                resolved = (path.parent / target).resolve()
+                links.append({'path': relative, 'target': target,
+                              'target_exists': path.exists(),
+                              'resolved_inside_delivery': resolved == DELIVERY or DELIVERY in resolved.parents})
+            elif path.is_file():
+                size = path.stat().st_size
+                bytes_total += size
+                files.append({'path': relative, 'bytes': size, 'sha256': digest(path)})
+    built_ui = CHECKOUT / 'apps/webui/dist'
+    source_ui = {str(p.relative_to(built_ui)): digest(p) for p in built_ui.rglob('*') if p.is_file()}
+    staged_ui = {str(p.relative_to(DELIVERY / 'webui')): digest(p) for p in (DELIVERY / 'webui').rglob('*') if p.is_file()}
+    copied_source = []
+    for file in files:
+        parts = Path(file['path']).parts
+        if len(parts) < 3 or parts[0] != 'packages' or not (parts[2] == 'src' or parts[2] in {'package.json', 'tsconfig.json'}):
+            continue
+        source = CHECKOUT / file['path']
+        source_hash = digest(source) if source.is_file() else None
+        copied_source.append({'path': file['path'], 'delivery_sha256': file['sha256'],
+                              'source_sha256': source_hash, 'exact_match': source_hash == file['sha256']})
+    result = {'build_input_revision': before['head'], 'observed_after': observation,
+              'tracked_changes': changes, 'tracked_content_unchanged': not changes,
+              'production_or_config_changes': production_changes,
+              'production_content_unchanged': not production_changes,
+              'same_observed_revision': before['head'] == observation['head'],
+              'delivery': str(DELIVERY), 'total_bytes': bytes_total, 'files': files, 'symlinks': links,
+              'generated_webui_source_files': source_ui, 'staged_webui_files': staged_ui,
+              'staged_webui_exact': bool(source_ui) and source_ui == staged_ui,
+              'copied_workspace_source_comparison': copied_source,
+              'copied_workspace_source_exact': bool(copied_source) and all(row['exact_match'] for row in copied_source),
+              'executor_bun_version': '1.3.14', 'source_pinned_shipped_bun_version': '1.3.9',
+              'install_or_service_setup_performed': False, 'installed_electron_or_macos_acceptance': False}
+target = ROOT / f'canonical-delivery-{phase}.json'
+target.write_text(json.dumps(result, indent=2) + '\n')
+print(json.dumps({'path': str(target), 'sha256': digest(target),
+                  'head': observation['head'], 'status': observation['status'],
+                  'tracked_count': len(observation['tracked_hashes']),
+                  'delivery_bytes': result.get('total_bytes'),
+                  'staged_webui_exact': result.get('staged_webui_exact'),
+                  'tracked_content_unchanged': result.get('tracked_content_unchanged')}))

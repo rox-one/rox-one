@@ -1,0 +1,23 @@
+packages/core/src/calendar/calendar.test.ts(71,75): error TS2367: This comparison appears to be unintentional because the types '"event"' and '"task"' have no overlap.
+packages/core/src/rox2/__tests__/platform-contract.test.ts(706,31): error TS2339: Property 'verification' does not exist on type 'Rox2Result'.
+  Property 'verification' does not exist on type 'Rox2LegacyOkResult'.
+packages/core/src/rox2/__tests__/platform-contract.test.ts(752,31): error TS2339: Property 'verification' does not exist on type 'Rox2Result'.
+  Property 'verification' does not exist on type 'Rox2LegacyOkResult'.
+packages/core/src/rox2/__tests__/platform-contract.test.ts(819,31): error TS2339: Property 'verification' does not exist on type 'Rox2Result'.
+  Property 'verification' does not exist on type 'Rox2LegacyOkResult'.
+packages/core/src/rox2/__tests__/platform-contract.test.ts(920,31): error TS2339: Property 'verification' does not exist on type 'Rox2Result'.
+  Property 'verification' does not exist on type 'Rox2LegacyOkResult'.
+packages/core/src/rox2/__tests__/platform-contract.test.ts(1047,31): error TS2339: Property 'verification' does not exist on type 'Rox2Result'.
+  Property 'verification' does not exist on type 'Rox2LegacyOkResult'.
+packages/core/src/rox2/__tests__/platform-contract.test.ts(1146,31): error TS2339: Property 'verification' does not exist on type 'Rox2Result'.
+  Property 'verification' does not exist on type 'Rox2LegacyOkResult'.
+packages/core/src/rox2/__tests__/platform-contract.test.ts(1245,31): error TS2339: Property 'verification' does not exist on type 'Rox2Result'.
+  Property 'verification' does not exist on type 'Rox2LegacyOkResult'.
+packages/core/src/rox2/__tests__/platform-contract.test.ts(1344,31): error TS2339: Property 'verification' does not exist on type 'Rox2Result'.
+  Property 'verification' does not exist on type 'Rox2LegacyOkResult'.
+packages/core/src/rox2/__tests__/platform-contract.test.ts(1447,31): error TS2339: Property 'verification' does not exist on type 'Rox2Result'.
+  Property 'verification' does not exist on type 'Rox2LegacyOkResult'.
+packages/core/src/rox2/__tests__/platform-contract.test.ts(1554,31): error TS2339: Property 'verification' does not exist on type 'Rox2Result'.
+  Property 'verification' does not exist on type 'Rox2LegacyOkResult'.
+packages/core/src/rox2/__tests__/platform-contract.test.ts(1661,31): error TS2339: Property 'verification' does not exist on type 'Rox2Result'.
+  Property 'verification' does not exist on type 'Rox2LegacyOkResult'.

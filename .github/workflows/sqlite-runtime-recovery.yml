@@ -1,0 +1,132 @@
+name: SQLite Runtime Recovery
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/sqlite-runtime-recovery.yml'
+      - 'packages/shared/src/utils/sqlite-runtime.ts'
+      - 'packages/shared/src/utils/__tests__/sqlite-runtime*'
+      - 'packages/shared/src/account-replica/**'
+      - 'packages/shared/src/agent/core/agent-budget*'
+      - 'packages/shared/src/agent/core/__tests__/agent-budget*'
+      - 'packages/shared/src/automations/occurrence-ledger*'
+      - 'packages/server-core/src/authority/**'
+      - 'packages/server-core/src/handlers/rpc/browser-profile-import.ts'
+      - 'packages/server/src/__tests__/smoke.test.ts'
+      - 'packages/server-core/src/handlers/rpc/content.ts'
+      - 'packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts'
+      - 'apps/webui/**'
+      - 'apps/electron/src/renderer/**'
+      - 'apps/electron/src/main/native-replica.ts'
+      - 'apps/electron/src/main/__tests__/native-notes-runtime.test.ts'
+  push:
+    branches: [fix/september-sqlite-runtime-20260930, cloud/all-surfaces-20260930]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sqlite-runtime-recovery-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  durable-runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+      - name: Confirm tested source and runtimes
+        run: |
+          git rev-parse HEAD
+          bun --version
+          node --version
+      - name: Install exact lockfile
+        run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check SQLite consumers and WebUI types
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: |
+          set -euo pipefail
+          for package in core shared server-core server; do
+            bun x tsc --noEmit -p "packages/$package/tsconfig.json"
+          done
+          bun run webui:typecheck
+      - name: Verify real SQLite durability, authorization and adverse controls
+        run: |
+          bun test packages/core packages/server-core/src/webui \
+            packages/shared/src/utils/__tests__/sqlite-runtime.test.ts \
+            packages/server-core/src/authority/__tests__/native-authority.test.ts \
+            packages/server-core/src/authority/__tests__/native-journal.test.ts \
+            packages/shared/src/account-replica/__tests__/account-replica.test.ts \
+            packages/shared/src/agent/core/__tests__/agent-budget.test.ts \
+            packages/shared/src/automations/occurrence-ledger.test.ts \
+            packages/server-core/src/handlers/rpc/native-data.test.ts \
+            packages/server-core/src/handlers/rpc/__tests__/native-create.test.ts \
+            packages/server-core/src/handlers/rpc/__tests__/native-self-profile.test.ts \
+            packages/server-core/src/handlers/rpc/__tests__/native-workspace-startup.test.ts \
+            packages/server-core/src/handlers/rpc/__tests__/native-startup-runtime.test.ts \
+            apps/electron/src/preload/openclaw-host-control.test.ts \
+            apps/electron/src/transport/__tests__/channel-map-parity.test.ts \
+            packages/server-core/src/handlers/rpc/__tests__/browser-protected-cookie-key.test.ts \
+            packages/server-core/src/handlers/rpc/__tests__/memory-native-acceptance.test.ts \
+            packages/shared/src/agent/core/__tests__/budget-process-loss-acceptance.test.ts \
+            packages/shared/src/browser/__tests__/profile-import-key-custody-recovery.test.ts \
+            apps/electron/src/renderer/lib/__tests__/caller-session-loading.test.ts
+      - name: Verify integrated single writer, caller ACK and browser builtin boundaries
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: |
+          bun test packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts \
+            packages/server-core/src/transport/__tests__/before-response-authority.test.ts \
+            packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts \
+            packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts \
+            packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts \
+            scripts/electron-main-cjs.test.ts \
+            scripts/__tests__/check-i18n-coverage.test.ts \
+            packages/pi-agent-server/src/custom-endpoint-registration.test.ts \
+            apps/electron/src/main/__tests__/native-notes-runtime.test.ts \
+            apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts \
+            apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts \
+            apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts \
+            apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts \
+            apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts \
+            apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts \
+            apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts \
+            apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts \
+            packages/shared/src/projects/__tests__ \
+            apps/webui/__tests__
+      - name: Verify published September process-loss recovery
+        run: |
+          bun test packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts \
+            packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts \
+            packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts \
+            packages/server-core/src/transport/__tests__/native-authorization.test.ts
+      - name: Build actual subprocess, WebUI and server
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: |
+          bun run server:build:subprocess
+          bun run webui:build
+          bun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx
+      - name: Verify built HTTP, WebSocket auth, graceful stop and persistent restart
+        run: bun test packages/server/src/__tests__/smoke.test.ts
+        env:
+          ROX_SERVER_SMOKE_ENTRY: dist-server/index.js
+          ROX_SERVER_SMOKE_WEBUI_DIR: apps/webui/dist
+      - name: Verify tracked source and lockfile stayed unchanged
+        run: git diff --exit-code

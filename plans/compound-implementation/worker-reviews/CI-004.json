@@ -1,0 +1,255 @@
+{
+  "task_id": "CI-004-preflight",
+  "attempt_id": "ba18159d225755bd30e97e3aedca82fe",
+  "packet_hash": "8c0fb66821e00c89adb4a8a7c515dd39b2cd34af98906afa3023a5fab2ba3a68",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-004",
+  "featureComplete": false,
+  "mode": "read-only source preflight with one owned report",
+  "workTier": "bounded-workflow; independent preflight worker, root retains implementation and integration",
+  "dependencies": ["CI-001", "CI-002"],
+  "inspection": {
+    "revisionMeaning": "input_revision is the dispatch revision, not a claim that the inspected dirty working-copy bytes are committed at it. No Git operations were performed.",
+    "specManifestVerified": true,
+    "evidenceFreshness": "Source references describe the working files read and whole-file hashes sampled during this preflight. Root wave0 integration may subsequently change them; rehash and reread affected ranges before implementation. No accepted dependency or wave0 commit receipt was inspected.",
+    "codegraph": "Attempted per-project exploration; tool reported no .codegraph index. No indexing performed.",
+    "findFallback": "Scoped find in handlers/rpc failed because its judgment provider returned HTTP 402; continued with known normative paths, literal searches and direct imports.",
+    "execution": "No builds, tests, native UI, provider execution, network operations, source edits, manifest edits, progress edits or Git mutations performed. Verification entries below are proposed future acceptance procedures, not observed passes."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-BASELINE-AND-RECEIPTS",
+      "basis": "execution-packages.json:4385-4416 and dispatch implementation-order instruction",
+      "gate": "Root wave0 commit, accepted CI-001/CI-002 artifact plus authoritative readback receipts, resolved reference-package revision/digest and approved implementation base are required. Published cloud baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab is different from dispatch input_revision; do not silently substitute either.",
+      "state": "RECEIPTS_NOT_INSPECTED; implementation must wait"
+    },
+    {
+      "id": "FG-EXISTING-PATH-OWNERSHIP",
+      "basis": "execution-packages.json:4372-4414; existing code-intelligence.ts:1-286",
+      "gate": "A file classified as proposed/new in the normative package already exists: packages/server-core/src/handlers/rpc/code-intelligence.ts. It contains root-owned local repository receipts and cannot be overwritten or concurrently treated as worker-new. Root must explicitly own its extension or assign an exclusive post-wave0 lease; preserve all seven existing operations.",
+      "state": "OWNERSHIP_COLLISION_REQUIRES_LEAD_INTEGRATION"
+    },
+    {
+      "id": "FG-TYPED-CONTRACT-SCOPE",
+      "basis": "code-intelligence.json:2782-2790; transport/push.ts:5-14; protocol/events.ts:52-88; code-intelligence/types.ts:1-67; protocol/index.ts:1-6",
+      "gate": "Channel names alone do not deliver typed RPC/events. BroadcastEventMap is in events.ts, outside the four normative sharedPatchPaths. Canonical public run/artifact/request/result/error DTOs and exports are also absent from the inspected shared types.ts/index.ts. Root must accept explicit additional shared patch requests before implementation; no casts to bypass pushTyped and no server-core imports into shared.",
+      "state": "ADDITIONAL_SHARED_SCOPE_REQUIRED"
+    },
+    {
+      "id": "FG-IDENTITY-AND-EVENT-RECIPIENTS",
+      "basis": "execution-packages.json:4426-4430; code-intelligence.json:148-156,2792-2794; transport/types.ts:7-11; code-intelligence.ts:72-81; protocol/types.ts:185-188",
+      "gate": "EG-IDENTITY readiness is a published gate, not an explicit CI-004 DAG edge. RequestContext exposes client/workspace/webContents identity but no actor or repository grants. Existing assertWindow proves local Electron workspace association, not per-repository authorization. CI-002's current resolver must bind authenticated actor/source access for every operation and event. Workspace broadcast is safe only when every recipient is authorized for that repository; otherwise use authorized client targets and recheck grants before emission.",
+      "state": "IDENTITY_RECEIPT_AND_CI002_RESOLVER_REQUIRED"
+    },
+    {
+      "id": "FG-PROVIDER-EXECUTION-READINESS",
+      "basis": "execution-packages.json:4426-4430; provider.ts:19-38,87-109; types.ts:38-42",
+      "gate": "Existing registry describes capabilities/readiness and exposes an optional synchronous CodeIntelAdapter; it does not supply a cancellable checkpoint/resume executor for search/wiki/diagram. Preserve off-by-default registration. Use the real existing local-fs-symbols adapter for the reachable symbols lane, and require an actual pinned executable provider with version/license/runtime receipts for other enabled kinds. Do not represent requires-runtime-probe as ready or an absent executor as completed. Native agent transport receipt is required when tools are used, not inferred from in-process registry availability.",
+      "state": "LOCAL_ADAPTER_SOURCE_PRESENT; EXECUTION_RECEIPTS_NOT_INSPECTED"
+    },
+    {
+      "id": "FG-SEARCH-SEAM",
+      "basis": "code-intelligence.json:660-678,2746-2749,2782-2784; sources.ts:386-421; source-index.ts:1-35; provider.ts:17-29",
+      "gate": "CI-003 is not an explicit dependency. Nevertheless exact bounded code search requires a real scoped search capability, not workspace FTS results relabeled with a snapshot. The current sources RPC directly imports source-index, returns path/snippet rows and can fail-soft under Node. Coordinate a real search provider seam (with CI-003 owner if that package implements it); retain this as a capability prerequisite rather than silently adding a DAG edge or a second index. Missing provider must be explicit unavailable.",
+      "state": "EXACT_SEARCH_EXECUTOR_NOT_FOUND_IN_INSPECTED_SEAMS"
+    },
+    {
+      "id": "FG-STORAGE-RECOVERY-AND-COMPOSITION",
+      "basis": "code-intelligence.json:2814-2818; code-intelligence.ts:88-118; refs.ts:598-665; handler-deps.ts:56-72",
+      "gate": "Reuse the existing project/code-intelligence/binding/policy-hash storage and immutable snapshot receipts. Atomic rename alone does not provide status compare-and-set or a crash-safe namespace lock. Root must bind a single job service/recovery lifecycle to the actual host so recovery does not depend on opening a UI; HandlerDeps currently has no intelligence job dependency. Host composition/registration and shutdown wiring were outside this scoped inspection and are not claimed present. Any additional shared patch requires owner acceptance.",
+      "state": "JOURNAL_LOCK_AND_HOST_LIFECYCLE_NOT_IMPLEMENTED_IN_INSPECTED_SEAMS"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/code-intelligence/jobs.ts",
+    "packages/server-core/src/code-intelligence/job-store.ts",
+    "packages/server-core/src/code-intelligence/__tests__/jobs-recovery.test.ts",
+    "packages/server-core/src/handlers/rpc/__tests__/code-intelligence.test.ts"
+  ],
+  "normativePathCollision": {
+    "path": "packages/server-core/src/handlers/rpc/code-intelligence.ts",
+    "normativeClassification": "proposedFiles / allowedWritePaths",
+    "actualClassification": "existing inspected root-owned implementation; excluded from ownedNewFiles",
+    "resolution": "Lead-integrated shared extension requested below, never file replacement. The other four normative proposed files were not found by scoped glob at inspection time."
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.codeIntelligence",
+      "change": "Extend the existing namespace with START='codeIntelligence:start', STATUS='codeIntelligence:status', RESUME='codeIntelligence:resume', SEARCH='codeIntelligence:search', READ='codeIntelligence:read' and RUN_STARTED/RUN_PROGRESS/RUN_CANCELLED/RUN_FAILED/RUN_COMPLETED carrying the exact published intelligence.run.started/progress/cancelled/failed/completed wire names. Keep PREVIEW/BIND/CAPTURE/LIST/READ_SPAN/FRESHNESS and current request CANCEL semantics. Add a distinct CANCEL_RUN='codeIntelligence:cancelRun' for durable run cancellation rather than silently changing the existing requestId cancellation contract. Document the distinction in the compiled schema receipt.",
+      "reason": "Existing namespace already belongs to wave0 receipts. CI-004 must add jobs/read/search and five events without creating a parallel surface or breaking active receipt cancellation.",
+      "scope": "NORMATIVE_SHARED_PATH; lead must approve exact durable cancellation wire naming"
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "LOCAL_ONLY_CHANNELS and REMOTE_ELIGIBLE_CHANNELS",
+      "change": "Classify each new code-intelligence invocation and event exactly once. For the presently implemented local-owned Electron binding, place them with the seven existing LOCAL_ONLY code-intelligence entries. Do not mark remote/headless execution eligible until CI-002 identity, policy and storage ownership have real receipts; extend classification only with that supported contract.",
+      "reason": "Existing repository operations require localElectron and an actual window. Exhaustiveness and source authority must agree; merely routing a job remotely would bypass the existing principal/storage gate.",
+      "scope": "NORMATIVE_SHARED_PATH"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/sources.ts",
+      "symbol": "registerSourcesHandlers: sources.SEARCH / sources.REINDEX",
+      "change": "At the repository-specific integration branch, resolve caller/source/current policy through the accepted CI-002 resolver before any search/reindex; delegate repository exact-snapshot search to the same CI-004 job/read service used by codeIntelligence.SEARCH, not a second store. Preserve ordinary non-repository source behavior. Replace repository retrieval's direct source-index coupling with the existing source-index facade as specified by CI-R-04 once its accepted integration seam is available; never fabricate snapshot identity from current FTS rows.",
+      "reason": "Current callbacks ignore _ctx and accept a workspaceId; workspace path/snippet search is not an authorized snapshot-pinned code search contract. Reuse the existing retrieval mechanism while keeping repository scope explicit.",
+      "scope": "NORMATIVE_SHARED_PATH; coordinate CI-002/CI-003 contracts"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/projects.ts",
+      "symbol": "registerProjectsHandlers: projects.UPDATE / projects.DELETE and broadcastChanged",
+      "change": "For repository-affecting project updates, validate through the CI-002 resolver and existing RepositoryConnection parser; workingDirectory, binding or policy changes invalidate affected queued/running checkpoints. Project deletion cancels affected jobs and fences further publication before deleting metadata. Persist binding/settings through existing project config only. Push only authorized metadata; do not embed run source bodies or credential data in projects.CHANGED.",
+      "reason": "UPDATE currently passes a broad project config patch directly to updateProject and DELETE only unbinds sessions/pages. Durable jobs must not publish into a changed/deleted project or create a competing project settings store.",
+      "scope": "NORMATIVE_SHARED_PATH"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/code-intelligence.ts",
+      "symbol": "registerCodeIntelligenceHandlers, HANDLED_CHANNELS, projectContext, assertCurrent, operation and CANCEL",
+      "change": "Lead extends rather than replaces this existing file. Inject one jobs service, register strict unknown-input validation and typed DTO returns for start/status/cancelRun/resume/search/read. Reuse projectContext/storedBinding/assertCurrent and immutable loadRepositorySnapshot/readFileSpan; add the accepted CI-002 read/job resolver at every boundary. Durable operations use server-issued runId and scoped records, not the transient requests Map. Keep requestId CANCEL for preview/capture/read requests. Status of cancelled/completed/stale runs must remain readable without recapturing a live repo first, after current authorization; expose sanitized metadata even if the provider is disconnected. Produce the five typed events only after committed journal transitions and authorized recipient selection.",
+      "reason": "This normative new path already exists, and the current operation wrapper always resolves the live root/branch. Reusing it blindly for durable status would make provider/root-unavailable jobs disappear instead of reporting their persistent state.",
+      "scope": "EXISTING-NORMATIVE-PROPOSED-PATH; exclusive lead integration required"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/types.ts",
+      "symbol": "canonical Code Intelligence public DTOs alongside CodeGraph / CodeIntelAdapter",
+      "change": "Add IntelligenceRun, GeneratedArtifact, versioned checkpoint metadata, typed Start/Status/CancelRun/Resume/Search/Read requests/results, sanitized error union and run-event discriminated payloads. Include workspace/project/binding/repository/snapshot identity, exact source and policy fingerprint, pinned provider/version, budget, checkpoint version, monotonic run revision and separate reviewStatus. Model queued/running/cancelling/cancelled/failed/completed/stale explicitly. Artifact idempotency uses source connection + canonical repository + exact snapshot digest + tool version + artifact digest; do not reuse provider-local IDs as global keys. Keep existing synchronous adapter and CodeGraph contracts intact.",
+      "reason": "The actual canonical type file has only symbols/graph/adapter/pack types; channels do not define request/result/error schemas. Shared cannot import server-core jobs.ts for DTOs.",
+      "scope": "ADDITIONAL_SHARED_PATH_NOT_IN_CI004_MANIFEST; lead/CI-001 owner scope acceptance required"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/index.ts",
+      "symbol": "public type exports from ./types.ts",
+      "change": "Export the accepted run/artifact/job RPC/event DTO types from the existing canonical entrypoint. Preserve existing refs/provider/repository-connection and adapter exports; no alternative package entrypoint.",
+      "reason": "Current explicit type-export list does not export future run/artifact DTOs. All consumers must share the same contract.",
+      "scope": "ADDITIONAL_SHARED_PATH_NOT_IN_CI004_MANIFEST; lead owner acceptance required"
+    },
+    {
+      "path": "packages/shared/src/protocol/events.ts",
+      "symbol": "BroadcastEventMap",
+      "change": "Import the accepted canonical run-event DTO and add exact tuples for RUN_STARTED/RUN_PROGRESS/RUN_CANCELLED/RUN_FAILED/RUN_COMPLETED. Payloads contain scoped refs and monotonic revision, not raw source, absolute paths, credentials, provider stderr or foreign repository IDs. Keep pushTyped's compile-time constraint intact.",
+      "reason": "pushTyped is constrained by BroadcastEventMap; this file is absent from CI-004's normative sharedPatchPaths even though typed events are mandatory.",
+      "scope": "ADDITIONAL_SHARED_PATH_NOT_IN_CI004_MANIFEST; lead owner acceptance required"
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps",
+      "change": "Add a typed intelligence jobs service dependency, composed once by the actual host with the accepted CI-002 authorization and provider executor. Register recovery/shutdown at the host lifecycle through an owner-supplied integration patch. Do not instantiate a new durable store per RPC or an independently booted daemon.",
+      "reason": "HandlerDeps currently has no intelligence runtime seam; durable restart recovery must have a real composition owner. The actual host registration file was not inspected and no guessed host path is requested here.",
+      "scope": "ADDITIONAL_SHARED_PATH_NOT_IN_CI004_MANIFEST; host owner must supply exact lifecycle path before implementation"
+    }
+  ],
+  "newFileContributions": [
+    {
+      "path": "packages/server-core/src/code-intelligence/job-store.ts",
+      "proposedSymbols": ["IntelligenceJobStore", "acquireArtifactNamespace", "transitionRun", "saveCheckpoint", "readRun", "recoverRuns"],
+      "change": "Use bounded versioned run/checkpoint/artifact records under the existing project's code-intelligence metadata, referencing existing immutable snapshots rather than copying source into a second database. Follow refs.ts O_NOFOLLOW/0600/temp-write/fsync/rename conventions, adding validated revisions and a durable transition journal. Namespace exclusion spans the canonical repository/output kind even across policy-hash histories; lock at the common repository metadata parent, not only within a per-run or per-policy directory. Use atomic exclusive acquisition, persisted owner/fencing token and serialized compare-and-set transitions; publication must prove the current fence. Crash takeover requires proof the prior owner can no longer publish, never TTL-only expiry. Validate identity/schema/size/paths on recovery, reconcile committed checkpoints and incomplete transitions, and retain completed/cancelled/stale/error records. Root must accept the chosen lock primitive's Node/Electron behavior before implementation."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/jobs.ts",
+      "proposedSymbols": ["IntelligenceJobs", "start", "status", "cancel", "resume", "search", "read", "recover"],
+      "change": "Coordinate the existing provider registry/real executor, CI-002 authorization and one IntelligenceJobStore. Start persists queued before execution. Cancellation persists intent before abort and has one terminal race winner; repeated cancellation returns the persisted terminal outcome. Save versioned provider checkpoints and source/policy/provider fingerprints. Recovery resumes only exact matching source plus compatible executor/checkpoint, marks source drift stale and unavailable providers explicit. Reauthorize before resume/read/publication/event emission. Completed output is a staged GeneratedArtifact with reviewStatus pending and exact hash/idempotency key; never invokes project/source/note application. Real local symbols execution can reuse localFsSymbolsAdapter/indexVerifiedSnapshotFiles, keeping its clean-commit-only limitation visible; do not falsely cite dirty bytes as parent commit. All provider failure messages are sanitized and journaled, and namespace locks released or fenced on every terminal path."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/__tests__/jobs-recovery.test.ts",
+      "change": "Use isolated temporary project metadata and deterministic provider barriers, revisions and clock where needed. Exercise cancellation before/during/after completion; crash after checkpoint/intent/publication preparation and a fresh service/process readback; two writers in the same namespace including different policy-hash histories; fingerprint changes to dirty bytes/policy/provider version; lost provider after restart; corrupted checkpoint; old fenced writer late publication; staged-completion-without-application. Assertions inspect authoritative records/hashes and user-file preservation, not forwarding mocks. Keep actual provider/runtime smoke proof separate from controllable failure fixtures."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/__tests__/code-intelligence.test.ts",
+      "change": "Use RequestContext/RpcServer and local window/project injection conventions plus isolated real snapshot/job records. Assert authorization before lookup/provider work, same-workspace foreign-project and cross-workspace denial, forged actor/root/runId rejection, bounded snapshot reads/search, durable cancellation versus request cancellation, status while provider is unavailable, and all five event payload/recipient denials with foreign-ID/secret sentinels. Verify revision ordering and fail-closed lease/reconnect behavior through the accepted CI-002 resolver. Avoid global mock.module leakage described by knowledge.test.ts and do not add source-string or registration-only assertions."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-004-AC-1",
+      "criterion": "Idempotent cancellation and one writer per artifact namespace",
+      "currentEvidence": "code-intelligence.ts:71 keeps active requests only in memory; :277-285 returns false after request removal and aborts the matching client/request/project controller. refs.ts:620-637 atomically writes individual receipts but has no run transition or output namespace lock. Durable jobs.ts/job-store.ts were not found.",
+      "actualSeam": "registerCodeIntelligenceHandlers.CANCEL and requests; refs.writeRecord; proposed IntelligenceJobs.cancel / IntelligenceJobStore.transitionRun / acquireArtifactNamespace",
+      "requiredChange": "Preserve active-request cancellation while introducing scoped durable run cancellation. Persist cancelling before abort, make terminal CAS choose exactly one cancel/complete winner, and return the same persisted outcome for repeated cancels. Hold one recoverable fenced writer for the repository output namespace across retries, runs and policy-history directories; late provider completion cannot publish after losing its fence.",
+      "verification": ["Cancel queued before executor starts, cancel while provider is blocked, cancel after completed, and repeat each call; assert terminal state, artifact hash and unchanged source rather than booleans alone.", "Run two services/processes against the same namespace and different policy-hash histories; only the current lock owner may commit an artifact. Inject a crash and let an old owner attempt late publication after takeover; it must be rejected.", "Restart from a saved checkpoint, introduce fingerprint drift, and inject provider failure; in every scenario assert lock release/fencing and no stale publication."],
+      "missingPrerequisites": ["Accepted CI-001 identities and CI-002 authorizeRepositoryJob resolver", "Lead wave0 commit and ownership/cancellation DTO patch acceptance", "Real executor cancellation contract and proven lock/recovery primitive"],
+      "state": "GAP_BLOCKS_COMPLETION; NOT_IMPLEMENTED_OR_RUNTIME_VERIFIED"
+    },
+    {
+      "id": "CI-004-AC-2",
+      "criterion": "restart resumes same source fingerprint or marks stale",
+      "currentEvidence": "refs.ts:519-528 compares a captured snapshot.id and returns current/stale/unavailable; :643-665 loads scoped immutable binding/snapshot receipts. code-intelligence.ts:110 stores history by binding and policy hash. No durable run/checkpoint recovery path is present in inspected package seams.",
+      "actualSeam": "assessSnapshotFreshness, loadRepositorySnapshot, assertRepositorySnapshotScope, projectContext.store; proposed IntelligenceJobs.resume/recover and IntelligenceJobStore.recoverRuns",
+      "requiredChange": "Persist exact snapshot/source/policy fingerprints, provider version, checkpoint version and run revision. Recover durable cancellation intent first; for resumable runs reauthorize and compare live source with the pinned receipt without replacing it. Resume only exact matching bytes/policy and compatible provider checkpoint. Mark drift stale durably; report unavailable provider explicitly and never phantom complete. Status reads authorized stored state even when recapture/provider is unavailable.",
+      "verification": ["Kill the service/process after a known checkpoint, create a fresh instance and read the same run/checkpoint/source hash; execute to a semantic output through a real supported provider.", "Change a dirty file without changing parent commit, then separately change exclusions, branch/binding and provider version. Restart and assert stale or explicit incompatible/unavailable state, no output application and no source retargeting.", "Cover cancellation before/during/after completion, concurrent lock recovery and provider failure across restart; verify authoritative records and hashes before/after, not just a restart response."],
+      "missingPrerequisites": ["Accepted CI-001 exact dirty snapshot contract and CI-002 current/offline authorization", "Compatible actual executor checkpoints", "Lead-composed host recovery lifecycle and accepted persistence format/rollback"],
+      "state": "GAP_BLOCKS_COMPLETION; SNAPSHOT_PRIMITIVES_PRESENT_ONLY"
+    },
+    {
+      "id": "CI-004-AC-3",
+      "criterion": "completion separated from application",
+      "currentEvidence": "code-intelligence.json:1195-1232 explicitly separates run states from reviewStatus and exact artifact identity. Current code-intelligence.ts only binds/captures/reads local repository receipts; it has no generated artifact review record. CodeGraph and synchronous adapter exist in types.ts:25-42; no generated-output apply transition is implemented in the inspected job scope.",
+      "actualSeam": "CodeGraph/CodeIntelAdapter and CodeIntelligenceProviderRegistry.resolve; proposed IntelligenceJobs completion transition and GeneratedArtifact record",
+      "requiredChange": "On successful provider execution persist a completed run and staged immutable artifact/hash with reviewStatus pending. Do not auto-write user repository/wiki/project source or call an application pipeline. Deduplicate exact artifacts with the normative source-connection/repository/snapshot/tool-version/artifact-digest key. Keep run completion, artifact review and eventual owner-authorized application as different records/transitions, including after restart or retry.",
+      "verification": ["Execute the actual local symbols provider against a controlled clean Git snapshot, inspect expected symbol/citation semantics and the staged artifact hash, and compare user-file hashes before/after completion and restart.", "Complete duplicate retries and an alias-equivalent repository request; assert the same exact artifact identity, distinct run history where appropriate and still-pending reviewStatus, not implicit application.", "Exercise cancel/complete race, concurrent namespace writers, changed fingerprint, provider failure and restart checkpoint; none may set applied/reviewed status or mutate user content."],
+      "missingPrerequisites": ["Lead-accepted canonical GeneratedArtifact/run DTO and identity schema", "Real enabled provider/version/runtime receipt and CI-002 egress authorization", "Existing downstream application owner contract if application is later exercised; CI-004 itself must not simulate it"],
+      "state": "GAP_BLOCKS_COMPLETION; NO_ARTIFACT_REVIEW_DURABILITY_IMPLEMENTED"
+    },
+    {
+      "id": "CI-004-AC-4",
+      "criterion": "events never leak foreign repository IDs",
+      "currentEvidence": "projects.ts:30-34 and sources.ts:150-152 demonstrate workspace-targeted pushTyped. BroadcastEventMap:52-88 has no intelligence run entries. RequestContext has workspace/client/window only, and code-intelligence.ts currently emits no run events. Workspace-scoped transport alone does not prove per-repository authorization.",
+      "actualSeam": "pushTyped, BroadcastEventMap, PushTarget, assertWindow/current policy, accepted CI-002 resolver; proposed IntelligenceJobs persisted event projection",
+      "requiredChange": "Declare the five exact typed run events and construct payloads from authorized scoped record projections only after committed transitions. Recheck actor/workspace/repository scope before status/read and each event recipient; client-target where workspace membership is broader than repo permission. Include monotonic run revision and safe error category; exclude foreign refs, raw source, absolute roots, secret sentinels and provider stderr. Reconnect invalidates remote authorization; leases fail closed.",
+      "verification": ["Two workspaces and two differently authorized projects/repos in one workspace: observe started/progress/cancelled/failed/completed and assert foreign recipients receive no foreign repository/run/artifact IDs.", "Forge workspace/project/run inputs; revoke authorization during a blocked provider operation and reconnect with an expired lease. Assert denial occurs before lookup/provider/event projection and no leaked error details.", "Repeat cancellation before/during/after completion, checkpoint restart, concurrent namespace write, fingerprint drift and provider-failure paths; assert payload redaction, recipient scope and monotonic committed revisions in every emitted event."],
+      "missingPrerequisites": ["EG-IDENTITY readiness and CI-002 actor/source resolver receipt", "Root acceptance of protocol/events.ts additional shared patch", "Actual authorized recipient resolution; no unaudited workspace-wide broadcast assumption"],
+      "state": "GAP_BLOCKS_COMPLETION; NO_TYPED_RUN_EVENTS_OR_RECIPIENT_PROOF"
+    },
+    {
+      "id": "CI-004-OUTPUT-RPC",
+      "criterion": "Typed code-intelligence search/read/start/status/cancel/resume RPC and events; no undocumented upstream endpoint",
+      "currentEvidence": "Existing RPC_CHANNELS.codeIntelligence has only PREVIEW/BIND/CAPTURE/LIST/READ_SPAN/FRESHNESS/CANCEL. RpcServer.handle uses any arguments/results. provider.ts lists operations and optional adapter but no search executor. The existing source index is workspace retrieval, not snapshot-pinned job output.",
+      "actualSeam": "RPC_CHANNELS.codeIntelligence, registerCodeIntelligenceHandlers, canonical shared types/exports, BroadcastEventMap, provider registry and current snapshot readers",
+      "requiredChange": "Deliver all six requested capabilities with strict validated inputs and shared request/result/error DTOs, including explicit durable versus active-request cancellation identity. Search/read use accepted exact snapshot/provider capability and CI-002 resolver, not arbitrary renderer paths or undocumented upstream endpoints. Capture compiled schema plus integrated RPC runtime receipts; unavailable executor is not completion.",
+      "verification": ["Compile the canonical shared/client/server schemas after accepted integration and run all six operations through the actual RPC transport against a real authorized project/provider.", "Negative cases: unknown keys/provider/operation, foreign run/ref/root, secret/excluded path, oversize search/read and unavailable provider; preserve typed error categories and no unauthorized bytes.", "Read back stored run/artifact/source revisions and hashes after process restart. If RC-04/RC-12 UI surfaces change, require actual UI screenshots/ARIA/computed font receipts; this preflight ran no UI."],
+      "missingPrerequisites": ["All shared scope/ownership requests accepted by lead", "Real bounded search executor/capability (coordinate CI-003 without rewriting explicit dependencies)", "Accepted provider/identity/source/egress receipts and integrated runtime environment"],
+      "state": "GAP_BLOCKS_COMPLETION; FUTURE_VERIFICATION_ONLY"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "plans/lark-suite-reference/code-intelligence.json", "symbol": "/workPackages/3 including definitionOfDone and observableAcceptance", "lineStart": 2731, "lineEnd": 2915, "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path": "plans/lark-suite-reference/code-intelligence.json", "symbol": "IntelligenceRun / GeneratedArtifact conceptual fields and semantics", "lineStart": 1195, "lineEnd": 1232, "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "CI-004 normative ownership, paths and cloud gates", "lineStart": 4344, "lineEnd": 4433, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "packages/server-core/src/handlers/rpc/code-intelligence.ts", "symbol": "registerCodeIntelligenceHandlers / projectContext / operation / CANCEL", "lineStart": 68, "lineEnd": 286, "sha256": "3c42bd55a1b724f42f95ae3fe2b26bab53cc53aea05b61cf624728f53addd6f5"},
+    {"path": "packages/shared/src/protocol/channels.ts", "symbol": "RPC_CHANNELS.codeIntelligence", "lineStart": 180, "lineEnd": 188, "sha256": "89177712f430183f89657f08f985ea50861c8d774652dbb56471d5eb7cca0aaa"},
+    {"path": "packages/shared/src/protocol/routing.ts", "symbol": "LOCAL_ONLY_CHANNELS codeIntelligence classification", "lineStart": 18, "lineEnd": 37, "sha256": "c8fb48dde141d0ebcc20eec69e8386797d31a8b2b84dfbbd93afcad883b670c2"},
+    {"path": "packages/shared/src/protocol/events.ts", "symbol": "BroadcastEventMap existing workspace source/project events", "lineStart": 52, "lineEnd": 88, "sha256": "2c488ef99e2bf5e9600c20b9795dd70360901e8a378e478df2410728b44fee62"},
+    {"path": "packages/server-core/src/transport/push.ts", "symbol": "pushTyped", "lineStart": 5, "lineEnd": 15, "sha256": "36fd9f2e75a463dbfdcd691eb975005612953cfac559d0e76bdd7ba84f0a131d"},
+    {"path": "packages/server-core/src/transport/types.ts", "symbol": "RequestContext / RpcServer / RpcHandlerOptions", "lineStart": 7, "lineEnd": 34, "sha256": "844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path": "packages/shared/src/protocol/types.ts", "symbol": "CodedError / PushTarget", "lineStart": 165, "lineEnd": 188, "sha256": "ba2d2070819ca69ea0ffa63b1c5ab97152bc9136f89254ef87d91a19c5688395"},
+    {"path": "packages/shared/src/code-intelligence/refs.ts", "symbol": "assessSnapshotFreshness", "lineStart": 519, "lineEnd": 529, "sha256": "432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path": "packages/shared/src/code-intelligence/refs.ts", "symbol": "writeRecord / saveRepositorySnapshot / loadRepositorySnapshot", "lineStart": 620, "lineEnd": 665, "sha256": "432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path": "packages/shared/src/code-intelligence/provider.ts", "symbol": "CodeIntelligenceProviderRegistry.resolve / indexVerifiedSnapshotFiles", "lineStart": 87, "lineEnd": 109, "sha256": "df76cab98d98e3562f28efe2aed1b86e47ef43f595b7d8ec96a7cc3a42afc404"},
+    {"path": "packages/shared/src/code-intelligence/types.ts", "symbol": "CodeGraph / CodeIntelAdapter / CODE_INTEL_PACK", "lineStart": 25, "lineEnd": 58, "sha256": "48b33cd382fb91825e79964724e102b7167d5f830e5a082432ec59ca3d9ca61e"},
+    {"path": "packages/shared/src/code-intelligence/local-adapter.ts", "symbol": "indexSourceFiles / localFsSymbolsAdapter", "lineStart": 41, "lineEnd": 84, "sha256": "9d805685a6fc19e2487ed57e28550d4211339326157ef871febe2d7dd1b2fb35"},
+    {"path": "packages/shared/src/code-intelligence/index.ts", "symbol": "canonical public exports", "lineStart": 1, "lineEnd": 27, "sha256": "ba83e46a3fa8348701bddda97acefa176bdc4938a51c7a70338f9a376b464e39"},
+    {"path": "packages/server-core/src/handlers/rpc/sources.ts", "symbol": "registerSourcesHandlers sources.REINDEX / sources.SEARCH", "lineStart": 386, "lineEnd": 423, "sha256": "d3c1140ca210a61e2fddfd222a9cc21771955c2c88b1a3a3b88a51a4068882f8"},
+    {"path": "packages/server-core/src/handlers/rpc/projects.ts", "symbol": "registerProjectsHandlers projects.UPDATE / projects.DELETE", "lineStart": 93, "lineEnd": 130, "sha256": "baa907c847103a2fb1a9f39be6170f5a89ad9bebb899a11ba769fc48d6736df4"},
+    {"path": "packages/server-core/src/handlers/handler-deps.ts", "symbol": "HandlerDeps", "lineStart": 56, "lineEnd": 72, "sha256": "501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path": "packages/server-core/src/sources/source-index.ts", "symbol": "isSourceIndexFtsAvailable / SOURCE_INDEX_REL", "lineStart": 8, "lineEnd": 35, "sha256": "abc66d7199da6f3e23566de07188dd8c0f99da438dda8c63d192e1cf55f0c288"}
+  ],
+  "nextExecutableAction": {
+    "now": "Root reads this owned report and accepts/revises the exact integration requests. Worker preflight is complete; no feature execution is authorized by this report.",
+    "implementationAfterGates": "After root wave0 commit and accepted CI-001/CI-002 receipts, pin the approved integrated base, rehash/reread changed seams, resolve the existing handler-file collision and additional DTO/event/lifecycle ownership. Start with canonical shared schemas and job-store transition/namespace recovery contract, then jobs service and lead-integrated RPC. Prove all four DoD criteria plus six RPC capabilities through the integrated runtime and authoritative restart readback before claiming featureComplete.",
+    "verificationCommand": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/CI-004.json", "${ROX_COMPOUND_PACKET_ROOT}/CI-004/packet.json"],
+    "verificationCommandState": "Provided packet command recorded for root acceptance; not executed during this restricted read/write-artifact preflight."
+  },
+  "risks": [
+    "Root wave0 may change inspected bytes after hashes were sampled; this is working-copy source evidence, not revision-bound feature proof.",
+    "Overwriting the already-existing normative handler path destroys local repository receipt functionality and conflicts with integration ownership.",
+    "Reusing transient request cancellation for durable runs makes repeated/after-restart cancellation non-idempotent; changing the wire contract without coordinated consumers breaks wave0.",
+    "Per-run/per-policy locks permit duplicate writers in the same canonical output namespace; TTL-only takeover permits stale writers to publish.",
+    "Routing through current operation() for all status calls demands a live branch/root and can hide persistent failure/stale state when disconnected.",
+    "Workspace-only pushes can leak repository identifiers to unauthorized peers in the same workspace; no actor/source grants are exposed directly by current RequestContext.",
+    "Published shared paths omit typed event and public DTO/export/lifecycle seams; a compile-clean job implementation is insufficient without owner-approved shared integration.",
+    "Registry readiness metadata is not an executor/runtime/license receipt; search capability and checkpoint/resume behavior cannot be simulated to satisfy full DoD.",
+    "indexVerifiedSnapshotFiles only processes commit-backed files. Dirty snapshot bytes must not gain a false parent-commit citation or silently lose coverage.",
+    "Generic source FTS records are not exact code-snapshot results and may be unavailable under Electron Node; do not add a second index or call undocumented upstream endpoints.",
+    "Project policy/root changes and deletion can race with job publication; reauthorization plus journal fence is required before commit and event projection.",
+    "All five published verification scenarios apply to every DoD row; source inspection alone leaves fullFeatureDoD NOT_VERIFIED."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

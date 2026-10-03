@@ -1,0 +1,288 @@
+{
+  "task_id": "LSX-WP-040-preflight",
+  "attempt_id": "5080f6bf1488e0b8c35ea273ebf47da6",
+  "packet_hash": "af3e8f8a6d158e8e0b41b01de4ba63d0d59beb3d23aa56293bc40c643b5c9818",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-040",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; proposed changes are not implemented",
+  "workTier": "bounded-workflow: one source-backed package report, no product execution",
+  "dependencies": ["LSX-WP-003", "LSX-WP-004", "LSX-WP-007"],
+  "inspectionBoundary": {
+    "sourceGeneration": "Working-tree bytes inspected during root integration, not a claim that all bytes belong to input HEAD. Exact whole-file hashes below bind the evidence. No Git operations were performed.",
+    "inputManifestMatch": "Both normative JSON SHA256 values match the dispatch input_manifest at inspection.",
+    "productBaseline": "The specification cites e953786ba7e30fb5da5dca7e88e20e324d5aebab; the dispatch input_revision remains a21aeab1da5a67e56788384ff930945b0f487879. The lead must resolve this baseline relationship in the implementation packet after wave0; do not checkout either revision in this preflight.",
+    "notRun": ["product builds", "product tests", "native UI", "network operations", "runtime reproduction", "Git state changes"],
+    "discovery": "Codegraph reported no index. Two bounded find calls failed with an API 402; literal grep and read supplied direct-import boundary evidence instead.",
+    "freshnessRule": "If any referenced whole-file digest changes, affected seam evidence is stale and must be reread/rehashed; report identity and original input_revision must not be rewritten to hide drift. No dependency readiness receipts were inspected or inferred."
+  },
+  "foundationGates": [
+    {
+      "id": "WAVE0_AND_ACCEPTED_RECEIPTS",
+      "kind": "implementation launch prerequisite, not an explicit DAG edge",
+      "evidence": "Dispatch instruction requires implementation only after lead wave0 commit and accepted dependency receipts; execution-packages.json:3517-3524 requires revision/digest resolution, dependency receipts, path leases and integrated readback.",
+      "required": "Lead supplies wave0 commit, approved prerequisite commits and artifact/readback receipts for all three explicit dependencies, resolved reference_package_revision/reference_package_digest and spec_ref hashes, and a reviewed implementation packet pinned to accepted bytes.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "EG-EFFECTS",
+      "kind": "explicit external prerequisite, separate from dependencies",
+      "evidence": "work-packages.json:84-89,14382-14385; 07-domain-entity-model.md:180-189 requires atomic content + receipt + outbox intent or recoverable file journal.",
+      "required": "Native owner atomic commit/outbox authority with stable event identity, durable read cursor, consumer inbox/checkpoint, native receipt lookup and restart recovery. Do not substitute file-watcher emissions, history JSONL, or a new adapter-owned generic store.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "EG-AUTOMATION",
+      "kind": "explicit external prerequisite with hidden published foundations",
+      "evidence": "work-packages.json:156-161 requires immutable run/version/step executor; RS-AUT-01.md:45-49 requires Draft/PublishedRevision foundation and serial legacy-writer cutover; RS-AUT-03.md:29-35,47-53 requires fenced durable run/attempt/effect receipts.",
+      "required": "Accepted existing-runtime receipt interface for durable TriggerOccurrence keyed by source event and immutable published workflow version; native step idempotency/readback and restart resume, scoped principal reauthorization, lease/revision fencing. WorkspaceEventBus.emit returning Promise<void> is not that interface.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "PUBLISHED_AUTOMATION_TRANSITIVE_GATES",
+      "kind": "surprising hidden foundations, NOT additions to LSX-WP-040 dependencies",
+      "evidence": "RS-AUT-01.md:23,45,78 blocks new executable kinds on RS-AUT-03 while requiring nonexecuting drafts first. RS-AUT-03.md:99,109-110 depends on RS-AUT-01 and RS-AUT-02. RS-AUT-02.md:98,109-110 depends on RS-AUT-01 and RS-MCP-01.",
+      "required": "Lead stages RS-AUT-01 draft/publish authority before activation, RS-AUT-02 shared capability/credential foundation where connector effects are used, and RS-AUT-03 durable execution before new event-driven effects. Resolve the capability-level reciprocal AUT-01/AUT-03 activation gate without treating publication as implementation. RS-MCP-01 readiness belongs to the linked connector foundation; do not demand unused provider execution or implement a connector catalogue in this adapter.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "AUTHENTICATED_PRINCIPAL_BOUNDARY",
+      "kind": "hidden direct-import foundation",
+      "evidence": "transport/types.ts:7-13 exposes clientId/workspaceId/webContentsId, not an actor or grants. HandlerDeps:62-71 has no domain-outbox/actor service. registerAutomationsHandlers callbacks use _ctx and caller workspace arguments. Work package actor_rule explicitly forbids trusting payload actor/owner/workspace.",
+      "required": "Accepted transport-to-current-principal resolver and owner command/query authorization interface. Match ctx workspace binding, bind consumer/workflow principal server-side, and reauthorize every body resolution and resumed effect; no invented actor from event.actorRef or workspace membership.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "ALIAS_AND_PRODUCER_CONTRACTS",
+      "kind": "hidden event coverage foundation",
+      "evidence": "types.ts:15-54 and event-bus.ts:134-164 register Knowledge aliases but no Task event. work-packages.json:2505-2508 names task.updated alias personalTasks.CHANGED, a different surface from AutomationEvent. LSX-WP-007:3530-3533 produces base.viewChanged/base.schemaChanged, whereas WP-040:14580 requires base.fieldChanged.",
+      "required": "Dependency receipts establish canonical Task and field-change producer envelopes, source revision/hash authority and stable event identity. Lead resolves the Task notification-to-automation alias registration and Base field-change producer gap through a reviewed packet/owner, never casts an unregistered event or maps Task to session/TodoStateChange.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "SCOPE_COMPLETENESS_FOR_BOUNDARIES_AND_UI",
+      "kind": "scope gate discovered from required DoD",
+      "evidence": "Only four normative new files and three shared files are writable in execution package. protocol/channels.ts:811-825 has no readDomainEvents/ackDomainEvent channel; protocol/dto.ts:1121-1144 has no adapter request/result/error DTO. Existing run-history UI is required at work-packages.json:14587-14590 but no renderer/i18n path is authorized.",
+      "required": "Lead approves exact protocol/transport/composition and existing history-renderer/i18n patch owners before implementation. Inspect those renderer seams only under an updated packet; preserve existing history surface and all ten locale files. This is an unresolved prerequisite, not N/A and not permission to write extra files now.",
+      "state": "REQUIRES_REVIEWED_PACKET"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/bases/automation-outbox-adapter.ts",
+    "packages/core/src/bases/event-aliases.ts",
+    "tests/lark-suite-extension/lsx-wp-040.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-040.spec.ts"
+  ],
+  "ownedNewFileProposals": [
+    {
+      "path": "packages/core/src/bases/event-aliases.ts",
+      "observed": "Missing in bounded glob during inspection.",
+      "change": "Define a pure, versioned domain-family-to-registered-alias descriptor and typed success/unknownFormat/missingDependency mapping result. Preserve stable eventId/ref/revision/actor provenance/schema/correlation/causation/sourceCommandId. Map document.revisionCommitted to KnowledgeDocumentUpdated only when the source commit semantics prove update; do not synthesize KnowledgeDocumentCreated. Consider base.fieldChanged to KnowledgeAttributeChanged only with stable field-ID binding and authorized value projection; record row-level semantics separately. Require an accepted Task alias registration before enabling task.updated. Fail closed on unsupported family/schema rather than blind renames. Keep core definitions independent of server I/O and shared-package dependency inversion; the server adapter binds descriptors to the actual AutomationEvent registry."
+    },
+    {
+      "path": "packages/server-core/src/bases/automation-outbox-adapter.ts",
+      "observed": "Missing in bounded glob during inspection.",
+      "change": "Implement the proposed readDomainEvents(cursor) and ackDomainEvent(eventId,consumerId) contracts with runtime validation and typed results/errors validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Receive authenticated principal and existing owner/runtime capabilities from composition, never the payload. Consume existing atomic outbox authority; dedup source event + consumer + published workflow occurrence through existing durable inbox/runtime authority. Pin ref/revision/hash; resolve sensitive input per workflow principal per attempt; enforce revision fences and causation/per-entity budgets. Await durable native receipt/readback before ack; retry pending/unknown delivery with the same event/effect keys, persist actionable dead-letter reason/manual repair ref in existing authority. Export redacted source/delivery history projection and lifecycle start/stop/drain hooks. No new executor, generic store, provider I/O or history-as-checkpoint."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-040.test.ts",
+      "observed": "Missing in bounded glob during inspection.",
+      "change": "Add deterministic behavioral/property cases for committed Doc/Base/Task events, supported alias semantics, missing registration/schema, duplicate watcher/outbox replay, stale revisions, causation budget, native effect-before-ack crash/restart, failed/rate-limited dispatch, per-consumer checkpoint conflicts and forged actor/workspace. Verify native ref/revision/hash and one logical occurrence/effect receipt; revoke principal before replay and assert protected body absent from bus/log/history. Add the specified early-ack/fresh-eventId seeded mutation oracles, not source-text or wiring assertions. Native restart lane requires accepted real authorities; isolated fakes cannot close that lane."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-040.spec.ts",
+      "observed": "Missing in bounded glob during inspection.",
+      "change": "Use the discovered supported actual Electron runner after lead grants existing-history UI scope. Exercise source event/ref/revision/alias and pending/delivered/dead-letter/repair status with redacted authorized details; pointer/keyboard/help, IME input where a filter exists, retained focus/selection on refresh, reduced motion, 200% zoom, existing themes, Russian default/locale coverage and loaded Rox Mono font. Reload/restart and ACL revocation must update actual existing history, not a fixture-only screen."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/automations/event-bus.ts",
+      "symbol": "WorkspaceEventBus.emit / WorkspaceEventBus; EventPayloadMap; KnowledgeDocumentEventPayload",
+      "change": "At the named payload seams add optional safe source-envelope metadata (eventId, entityRef, entityRevision, actor provenance, schemaVersion, correlationId, causationId, sourceCommandId and immutable source hash reference) without protected bodies or changing existing Knowledge alias names. Bind the accepted durable-runtime delivery route to explicit outcome/error propagation: disposed/rateLimited/missing durable consumer/handler failure cannot appear as delivered. Preserve legacy best-effort emit semantics for unrelated callers; introduce a narrowly scoped durable-dispatch entry on the same bus only if required by the accepted runtime contract. That entry must not itself claim a native effect receipt merely because void handlers completed. Adapter ack uses the existing runtime receipt authority, not emit().",
+      "reason": "emit currently returns normally for disposal/rate limit and catches handler failures at lines 240-285. It has no durable acknowledgement contract or envelope revision/dedup metadata. A naive await emit then ack loses events and duplicates effects on restart.",
+      "owner": "integration-owner under exclusive path lease",
+      "baseSha256": "1878c95dd48fdba1a9ffb165051e2e944a47c4151e8c54461fb3501c4de69ecb"
+    },
+    {
+      "path": "packages/shared/src/automations/automation-system.ts",
+      "symbol": "AutomationSystemOptions; AutomationSystem.constructor/createHandlers/emit/dispose",
+      "change": "Accept an injected domain-outbox lifecycle/durable-delivery capability supplied by server composition, so shared code does not import server-core. Start consumption only after existing handlers and the accepted published-version runtime are ready; stop/drain adapter before disposing handlers/bus. Forward safe source identity and occurrence context into the accepted existing runtime, and do not mark onPromptsReady/onWebhookResults/void bus completion as durable receipt. Retain legacy scheduler/matcher behavior and published-version fence established by EG-AUTOMATION; never enable disabled matchers or draft execution.",
+      "reason": "Constructor creates bus/config/handlers/scheduler with no domain-outbox consumer; dispose currently stops scheduler then handlers and bus. Native receipt ownership and replay lifecycle cannot be inferred from existing event emission.",
+      "owner": "integration-owner under exclusive path lease",
+      "baseSha256": "94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations.ts",
+      "symbol": "registerAutomationsHandlers (GET_HISTORY and proposed domain read/ack integration); withConfigMutex",
+      "change": "Register validated readDomainEvents/ackDomainEvent through the approved existing protocol/owner command boundary once channels/types and actor resolver are supplied. Use ctx/client binding plus current workflow/consumer policy, never payload actor or arbitrary workspaceId. Return all eight required typed error discriminants; verify durable receipt before ack and consumer identity ownership. Project source event/ref/revision/alias/delivery/dead-letter/repair fields into existing GET_HISTORY, reauthorize/redact for the requesting viewer and avoid trusting raw JSONL detail. Preserve withConfigMutex for config mutations only; it is process-local config serialization, not owner outbox transaction or distributed lease. Route source repair to the same existing durable runtime, not the existing webhook-only REPLAY implementation.",
+      "reason": "Existing handlers ignore _ctx; GET_HISTORY returns parsed rows without source metadata authorization at 506-522; REPLAY at 529-578 invokes only webhooks. No domain read/ack channels or consumer receipt checking exists in this file.",
+      "owner": "integration-owner under exclusive path lease; protocol/composition prerequisites require reviewed packet",
+      "baseSha256": "aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"
+    }
+  ],
+  "additionalIntegrationRequests": [
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations.ts",
+      "symbol": "KNOWN_EVENTS / parseEditPayload",
+      "change": "Request explicit helper-symbol scope approval and derive the allowable event set from the accepted registry, preserving current valid events while including registered Knowledge aliases. Register Task only after its source-to-runtime contract is approved; TodoStateChange is not a Task alias.",
+      "reason": "KNOWN_EVENTS at 75-81 lacks KnowledgeDocument*/KnowledgeAttributeChanged/KnowledgeDatabaseRowChanged and includes TodoStateChange absent in AppEvent. CREATE/UPDATE reject Knowledge alias editing despite bus/type registration. Helper symbols are not listed in the normative shared-symbol request.",
+      "state": "REQUIRES_REVIEWED_SYMBOL_SCOPE"
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.automations",
+      "change": "If the proposed operations are exposed as RPC, add readDomainEvents/ackDomainEvent channels to existing automations namespace and bind typed contracts and workspace routing; do not invent unregistered string channels inside the adapter.",
+      "reason": "Required API operations are not present at 811-825. This path is read evidence, not currently writable.",
+      "state": "REQUIRES_REVIEWED_PACKET"
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "symbol": "Automation types section at 1118-1144",
+      "change": "Lead supplies renderer-safe contract export/binding for adapter requests/results/errors and redacted source/delivery history DTO; renderer must not import server-core implementation. Include corresponding existing protocol routing registration at packages/shared/src/protocol/routing.ts automations section.",
+      "reason": "Server-only contract_file cannot alone prove compilation at renderer boundary. Exact generated/request-map and renderer callsites must be discovered by integration owner under expanded scope.",
+      "state": "REQUIRES_REVIEWED_PACKET"
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps",
+      "change": "Request approved injection/composition seam for authenticated principal resolver, existing domain outbox authority and durable automation runtime. Do not graft a second owner onto commandGateway PendingCommandsStore.",
+      "reason": "The inspected dependency bag has no corresponding service; the exact accepted foundation API must determine this patch rather than speculative implementation.",
+      "state": "REQUIRES_FOUNDATION_CONTRACT_AND_REVIEWED_PACKET"
+    },
+    {
+      "path": "packages/shared/src/automations/types.ts",
+      "symbol": "AppEvent / APP_EVENTS",
+      "change": "Lead resolves and, if needed, registers the accepted Task runtime alias consistently with EventPayloadMap, validation and RPC registry under expanded scope. Do not pretend personalTasks.CHANGED is already an AutomationEvent.",
+      "reason": "task.updated is in package event families, but no Task alias exists in AppEvent at 15-54.",
+      "state": "REQUIRES_REVIEWED_PACKET"
+    },
+    {
+      "path": null,
+      "symbol": "Existing run-history renderer and locale keys, exact symbols not inspected because outside package/direct-import scope",
+      "change": "Lead discovers and authorizes the existing source/alias/revision/delivery detail rendering, same history surface, help and repair action; assign all-ten-locale i18n patches and supported Electron runner. No new UI surface.",
+      "reason": "The required UI cannot be implemented solely in the four allowed new files and three shared patch files. Unknown exact renderer location is honestly a scope prerequisite, not an invented patch path.",
+      "state": "REQUIRES_SEAM_DISCOVERY_AND_REVIEWED_PACKET"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "existing aliases preserved; no blind event renames",
+      "seam": "EventPayloadMap:134-164; AppEvent/APP_EVENTS:15-54; RPC KNOWN_EVENTS:75-90; proposed core event-aliases.ts",
+      "currentEvidence": "KnowledgeDocumentCreated/Updated/Stale, KnowledgeAttributeChanged and KnowledgeDatabaseRowChanged are registered. No Task AutomationEvent; RPC edit registry omits Knowledge aliases. Dependency WP-004 names personalTasks.CHANGED but does not establish a runtime alias.",
+      "requiredChange": "Versioned explicit mapping with semantic source checks, stable event metadata and field-ID resolution; preserve legacy config keys and matcher meaning. Fail missingDependency/unknownFormat for unregistered/unsupported family. Obtain reviewed alias registration for Task and clarify Base field-change producer.",
+      "verification": "Future package tests run real committed Doc/Task/Base inputs and legacy config readback, compare same aliases and matcher outcomes after reload, reject unknown schemas and prove duplicate watcher replay yields one logical occurrence/effect receipt.",
+      "missingPrerequisites": ["accepted WP-003/004/007 receipts", "Task alias registration", "Base field-change producer contract", "registry helper scope approval"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "RetryScheduler recognized webhook-only/single-process; no assumed workflow durability",
+      "seam": "RetryScheduler/RetryQueueEntry:1-25,53-99,135-223; registerAutomationsHandlers REPLAY:529-578",
+      "currentEvidence": "Scheduler persists failed webhooks, has a single-process queue lock and in-memory pendingAcks lost on restart, explicitly no multiprocess leases or DLQ. REPLAY filters webhook actions. enqueue generates a new random/time ID, not a source occurrence key.",
+      "requiredChange": "Leave this mechanism as webhook retry; use accepted existing owner inbox/checkpoint and immutable run/step/effect receipt authority. Do not use retry queue IDs/history ok:true as trigger/effect proof or add a parallel executor.",
+      "verification": "Future native restart smoke kills after domain effect before consumer ack and verifies same effect/occurrence receipt and resumed checkpoint; separate webhook regression preserves existing semantics and makes no exactly-once provider guarantee.",
+      "missingPrerequisites": ["EG-EFFECTS atomic outbox/inbox readback", "EG-AUTOMATION durable runtime receipt interface"],
+      "state": "LIMIT_SOURCE_VERIFIED_RUNTIME_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "seam": "Proposed automation-outbox-adapter.ts contract; registerAutomationsHandlers; RequestContext:7-13; protocol channels:811-825 and DTO:1118-1144",
+      "currentEvidence": "Required readDomainEvents/ackDomainEvent are proposed only. RequestContext has no actor/grants; callbacks ignore _ctx; relevant new protocol channels/contracts are absent. A typed server-only file is insufficient for renderer compilation.",
+      "requiredChange": "Validate input/cursor/event/consumer schema at boundary; export typed success/error unions for all eight normative discriminants and safe history metadata. Resolve actor and workspace from authenticated client binding, reauthorize workflow/consumer, reject spoofed workspace/actor and unauthorized ack. Use approved common authority and renderer-safe exports.",
+      "verification": "Future server/renderer typechecks on integrated commit plus actual RPC calls for validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat, malformed cursors and forged actor/workspace/consumer; deny with no checkpoint/effect mutation. Commands intentionally NOT_RUN in preflight.",
+      "missingPrerequisites": ["authenticated-principal resolver", "approved protocol/composition patches", "accepted native command/error contracts"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "seam": "WorkspaceEventBus.emit:240-291; AutomationSystem.emit:563-565; history append/compaction:57-73,98-113; proposed adapter ack",
+      "currentEvidence": "Bus completion may mean rate-limit drop, disposal or swallowed failure. History appends arbitrary records and compacts retained entries; neither is durable command/inbox authority. No ref/revision/effect receipt checkpoint is present in inspected automation seams.",
+      "requiredChange": "Use owner outbox cursor and existing runtime dedup/occurrence receipt; execute through native command with stable side-effect key, pin ref/revision/hash, reconcile unknown result by authoritative receipt lookup, ack only after verified native effect/delivery receipt. Cursor CAS must not skip an unacknowledged earlier event. Persist terminal dead-letter/repair state in existing authority, distinct from success.",
+      "verification": "Future actual native command readback compares exact ref/revision/hash, kill before effect/after effect/before ack/after ack, restart owner/runtime, reread checkpoint and same native receipt; duplicate event/watcher never produces a second logical effect. Rate-limit/disposed/handler-error must leave recoverable pending delivery.",
+      "missingPrerequisites": ["atomic native outbox authority", "durable receipt/readback and checkpoint CAS APIs", "existing runtime reconciliation/lifecycle"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "seam": "Proposed lsx-wp-040.test.ts; registered aliases and owner/runtime adapter; tests cases work-packages.json:14603-14607",
+      "currentEvidence": "Both normative test files are absent. Existing bus rate window is volatile and event-wide, not durable dedup/revision fence or causation-depth/per-entity budget. No runtime scenario was executed in this preflight.",
+      "requiredChange": "Implement happy committed Doc/Task/Base delivery; stale revision and checkpoint CAS conflicts; duplicate source/watcher replay and crash recovery; bounded causation/self-trigger loops; current-principal body resolution with revoked principal before resumed attempt. Preserve all failed/successful attempts and deterministic seeds without logging protected bodies.",
+      "verification": "Future bun test tests/lark-suite-extension/lsx-wp-040.test.ts plus distinct native command/readback/restart and ACL-negative lanes. Seeded records assert one effect receipt, unfinished recovery, no stale rollback, no protected payload/title/value in bus/history/error output, and no unauthorized writes. Retain argv/exit/log hashes/input hashes/seeds.",
+      "missingPrerequisites": ["all explicit dependency receipts", "accepted causation/revision policy", "real isolated native owner fixture and current policy evaluator"],
+      "state": "NOT_RUN_PRELIGHT_READ_ONLY"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "seam": "Proposed lsx-wp-040.test.ts; work-packages.json:14619-14627",
+      "currentEvidence": "Normative mutants are mark consumed before effect or generate fresh eventID on replay; required assertions are one logical trigger/effect receipt, unfinished delivery recovered, protected body absent history. No mutant/baseline was run.",
+      "requiredChange": "Add deterministic behavioral crash/replay and ACL oracles in the normative test file. Evaluate exact green baseline then each specified early-ack/fresh-ID mutation with retained seed/input SHA256. Keep protected-body absence oracle in baseline/revocation scenarios; do not claim these identity/ack mutations necessarily exercise redaction sensitivity.",
+      "verification": "Future green baseline and early-ack mutant must fail unfinished-delivery recovery, fresh-eventId mutant must fail one logical trigger/effect receipt. Capture exact failing assertion, evaluated source/test hashes and successful fixture setup; timeout/startup failure does not count. Protected-body absence remains required in all evaluated delivery histories.",
+      "missingPrerequisites": ["implemented adapter and behavior suite", "accepted native receipt/restart harness", "isolated mutation evaluation"],
+      "state": "NOT_RUN_PRELIGHT_READ_ONLY"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "seam": "registerAutomationsHandlers GET_HISTORY:506-526; proposed UI lsx-wp-040.spec.ts; existing history renderer exact symbol awaiting authorized discovery",
+      "currentEvidence": "Spec explicitly requires existing run history source event/ref/revision/alias/delivery state and redacted detail. HistoryEntry at RPC line 23 has none of that domain metadata. Renderer/i18n paths are outside current write/inspection scope; actual UI was not run.",
+      "requiredChange": "Add authorized safe history projection and extend existing history surface only after lead supplies approved exact renderer/locale patch seams. Show delivery pending/committed/dead-letter and manual repair ref without protected body; keep selection on refresh, localized help and existing theme/font/motion behavior. No substitute isolated UI or toast.",
+      "verification": "Future supported actual Electron runner exercises pointer and keyboard source details/repair, focus during refresh/reload, IME on actual search/filter when present, reduced motion, 200% zoom, inherited light/dark theme, Russian default and ten-locale key parity; capture screenshots/ARIA/computed loaded Rox Mono font bound to integrated revision and actor. Revoke denies source detail after reload.",
+      "missingPrerequisites": ["reviewed renderer/protocol/i18n scope", "discovered supported actual Electron runner", "desktop/UI proof ownership", "native source history data"],
+      "state": "REQUIRED_NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "seam": "work-packages.json:14610-14617,14641,14708-14725; EG-AUTOMATION existing runtime boundary",
+      "currentEvidence": "This is exclusively a source-backed preflight report. No product behavior, source/schema compilation, unit/property, native domain readback, restart recovery, ACL negative or actual Electron UI proof has been performed.",
+      "requiredChange": "Lead integrates reviewed patches in dependency order on accepted exact bytes, independently verifies every required lane, records artifact/commit/input hashes and actual outcomes. Keep implemented/verified/integrated states distinct. Provider/collaboration evidence is required only if actually exercised; queued provider intent cannot prove external effect completion.",
+      "verification": "Future separate SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI receipts, then integrated native readback/restart proof and independent review. Preflight verifier proves report lineage/hash structure only, never feature readiness.",
+      "missingPrerequisites": ["accepted foundation and dependency receipts", "wave0 integration revision", "completed implementation and integrated proof lanes"],
+      "state": "FEATURE_INCOMPLETE"
+    },
+    {
+      "criterion": "Committed events use durable owner cursor, dedup receipt/checkpoint, dead-letter reason/manual repair reference and stable revision/causation envelope.",
+      "seam": "WP-040 inputs/outputs/domain_entities:14539-14552; proposed adapter; event-bus BaseEventPayload:25-31",
+      "currentEvidence": "Base payload currently has workspace/timestamp/session/labels only; Knowledge payload allows attrs/title but has no stable event identity/revision or consumer checkpoint. Event-bus memory rate counts cannot serve source revision fences.",
+      "requiredChange": "Validate immutable envelope fields and schema version; keep eventId stable on all retries; bind checkpoint consumer identity server-side; dedup by occurrence identity in existing authority; fence stale entity revisions and enforce declared causation budgets. Provide durable delivery/repair references without storing sensitive payload in bus/log.",
+      "verification": "Future reorder/interleave/duplicate source events across consumers, concurrent cursor ack conflict, stale revision, unsupported envelope, loop-budget exhaustion and dead-letter repair/restart scenarios with exact source/effect/checkpoint readback and preserved eventId.",
+      "missingPrerequisites": ["durable owner consumer contract", "canonical field producer", "accepted causation budget/revision comparison rules"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/shared/src/automations/event-bus.ts","symbol":"BaseEventPayload / KnowledgeDocumentEventPayload / EventPayloadMap / WorkspaceEventBus.emit","lineStart":25,"lineEnd":291,"sha256":"1878c95dd48fdba1a9ffb165051e2e944a47c4151e8c54461fb3501c4de69ecb"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystemOptions / AutomationSystem.constructor / createHandlers","lineStart":41,"lineEnd":374,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystem.emit / executeAgentEvent / dispose","lineStart":563,"lineEnd":658,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/retry-scheduler.ts","symbol":"RetryQueueEntry / RetryScheduler / tick","lineStart":1,"lineEnd":223,"sha256":"c6a88847a789eeeee3734770c3d307b8869cfc17a1d23db0931df41a8d7bf1d9"},
+    {"path":"packages/shared/src/automations/history-store.ts","symbol":"appendAutomationHistoryEntry / compactAutomationHistorySync","lineStart":50,"lineEnd":113,"sha256":"8b9140ff67ddecc119259288b5c5c5ea29c3ee0f7fcf66252a13d2b13d3730df"},
+    {"path":"packages/server-core/src/handlers/rpc/automations.ts","symbol":"withConfigMutex / KNOWN_EVENTS / parseEditPayload / registerAutomationsHandlers","lineStart":23,"lineEnd":162,"sha256":"aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path":"packages/server-core/src/handlers/rpc/automations.ts","symbol":"registerAutomationsHandlers GET_HISTORY / REPLAY","lineStart":505,"lineEnd":578,"sha256":"aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path":"packages/shared/src/automations/types.ts","symbol":"AppEvent / AutomationEvent / APP_EVENTS","lineStart":15,"lineEnd":54,"sha256":"c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path":"packages/shared/src/automations/handlers/index.ts","symbol":"PromptHandler / KnowledgeHandler export seam","lineStart":5,"lineEnd":33,"sha256":"192ed9b2624f7d773338db3e678cb2a399715ed5248fba89f325bebe3e880907"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext / HandlerFn / RpcServer","lineStart":7,"lineEnd":33,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/shared/src/protocol/dto.ts","symbol":"TestAutomationPayload / TestAutomationResult","lineStart":1118,"lineEnd":1144,"sha256":"b4c6e49e9135b778456f769133ce822dab433e9ca7238a06b8c4dafded3c3e57"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.automations","lineStart":811,"lineEnd":825,"sha256":"89177712f430183f89657f08f985ea50861c8d774652dbb56471d5eb7cca0aaa"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"automations workspace routing section","lineStart":841,"lineEnd":854,"sha256":"c8fb48dde141d0ebcc20eec69e8386797d31a8b2b84dfbbd93afcad883b670c2"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[39] LSX-WP-040","lineStart":14359,"lineEnd":14729,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-040 normative execution record","lineStart":3438,"lineEnd":3529,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"8. Events and consistency","lineStart":169,"lineEnd":189,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/lark-suite-reference/08-automation-integration.md","symbol":"1. Existing engine / 3. Node semantics / 5. Failure, cancellation and security","lineStart":5,"lineEnd":84,"sha256":"32b1ffb806b8dab6be2ffe38f3144b1a5601e0695620b5a8f7bbed9b4f345a68"},
+    {"path":"docs/rox-suite/published/RS-AUT-01.md","symbol":"Draft/PublishedRevision foundation and RS-AUT-03 activation gate","lineStart":21,"lineEnd":49,"sha256":"2e5fccefa265389b9d927ed9779f5e2641ae1e10346ebd914326b54912208f3b"},
+    {"path":"docs/rox-suite/published/RS-AUT-02.md","symbol":"Capabilities registry foundation / normative dependencies","lineStart":44,"lineEnd":110,"sha256":"35dde92068f8b92b7ba034a62709d8c4e9617c7415c293659d89532b2cb550ab"},
+    {"path":"docs/rox-suite/published/RS-AUT-03.md","symbol":"Durable run/attempt/effect contracts and normative dependencies","lineStart":27,"lineEnd":110,"sha256":"0d42c0105cecb110427e045272de9237e996f4ee29bf0a2981ce316f7b76b1a8"}
+  ],
+  "nextExecutableAction": "Lead verifies this preflight's lineage/source hashes, commits wave0 and obtains accepted artifact plus native readback/restart receipts for LSX-WP-003/004/007 and EG-EFFECTS/EG-AUTOMATION. Resolve Task alias/Base field producer and authenticated principal interfaces, authorize exact missing protocol/composition/history-renderer/i18n seams, and resolve reference revision/digest in the implementation packet. Then reread changed source generations, lease the three shared paths, and implement the pure alias contract plus owner-backed adapter in the four normative new files; shared patches remain serial integration-owner requests. No product implementation is executable under the present read-only dispatch.",
+  "risks": [
+    "A fulfilled Promise<void> from emit can represent silently dropped or failed delivery; acking it loses committed domain events.",
+    "Crash after effect before ack duplicates native effects unless existing command/occurrence receipts use stable event/effect identity; RetryScheduler does not supply this guarantee.",
+    "Bus onAny handlers receive payloads too; title/attrs/oldValue/newValue must be policy-safe before dispatch, not merely redacted when UI reads history.",
+    "History JSONL compaction and process-local mutex are presentation/serialization mechanisms, not durable dedup/lease/receipt authorities.",
+    "Task alias and Base field event are not proved by the three explicit DAG dependencies alone; casting to AutomationEvent or mapping to session status would conceal missing foundation.",
+    "Published RS-AUT-01 requires draft/published cutover in its first slice and depends on RS-AUT-03 for activation; coarse issue-level scheduling hides this staged capability dependency.",
+    "Current RPC client/workspace context is not by itself a current workflow principal. Event actorRef is provenance, never authorization; resume must reauthorize after revoke.",
+    "Required renderer-facing contracts/history UI cannot be completed inside currently listed writable seams. Packet expansion must precede extra source edits, not retrospective justification.",
+    "Working tree may change during wave0. Whole-file hashes bind evidence; lineage validation success is only momentary report compatibility, not feature correctness or accepted dependency readiness.",
+    "Core event aliases must not introduce a core-to-shared/server implementation dependency inversion; use pure descriptor contracts and bind to the existing registry at the adapter seam.",
+    "No runtime/UI/provider evidence is claimed. All full-feature DoD items remain open despite completion of this preflight artifact."
+  ]
+}

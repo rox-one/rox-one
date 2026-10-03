@@ -69,6 +69,8 @@ export default function OrganizationsSettingsPage() {
   const [usernameDraft, setUsernameDraft] = useState('')
   const [emailDraft, setEmailDraft] = useState('')
   const [savingIdentity, setSavingIdentity] = useState(false)
+  const [membershipAction, setMembershipAction] = useState<string | null>(null)
+  const [identityAuthority, setIdentityAuthority] = useState<'native' | 'local'>('local')
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -80,6 +82,7 @@ export default function OrganizationsSettingsPage() {
       ])
       setOrgs(list)
       setWorkspaces(availableWorkspaces)
+      setIdentityAuthority(identity.authority)
       setUsernameDraft(identity.username ?? '')
       setEmailDraft(identity.email ?? '')
       setSelectedOrgId((previous) => {
@@ -101,6 +104,13 @@ export default function OrganizationsSettingsPage() {
   }, [refresh])
 
   const selected = orgs.find((organization) => organization.id === selectedOrgId) ?? null
+  const viewerRole = selected?.members.find((member) => member.userId === selected.viewerUserId)?.role ?? null
+  const canManageMembers = selected?.viewerAuthority === 'native' && viewerRole === 'owner'
+  const canManageInvites = selected?.viewerAuthority === 'native'
+    && (viewerRole === 'owner' || viewerRole === 'admin')
+  const inviteTargetIsValid = identityAuthority === 'native'
+    ? /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(inviteTarget.trim())
+    : Boolean(inviteTarget.trim())
   const teamSpaces = useMemo(
     () => getTeamSpacesForOrganization(workspaces, selected?.id ?? null),
     [selected?.id, workspaces],
@@ -132,7 +142,7 @@ export default function OrganizationsSettingsPage() {
   }, [creating, newOrgName, t])
 
   const handleInvite = useCallback(async () => {
-    if (!selected || !inviteTarget.trim() || inviting) return
+    if (!selected || !inviteTargetIsValid || inviting) return
 
     setInviting(true)
     try {
@@ -170,7 +180,7 @@ export default function OrganizationsSettingsPage() {
             : organization,
         ),
       )
-      toast.success(t('settings.orgs.inviteSent', { target: invite.emailOrUsername }), {
+      toast.success(t('settings.orgs.inviteCreated'), {
         description: copied ? t('toast.inviteCopied') : t('settings.orgs.inviteNoMailer'),
       })
     } catch (error) {
@@ -179,7 +189,7 @@ export default function OrganizationsSettingsPage() {
     } finally {
       setInviting(false)
     }
-  }, [inviting, inviteRole, inviteTarget, selected, t])
+  }, [identityAuthority, inviteTargetIsValid, inviting, inviteRole, inviteTarget, selected, t])
 
   const handleAccept = useCallback(async () => {
     const token = acceptToken.trim()
@@ -230,6 +240,57 @@ export default function OrganizationsSettingsPage() {
       setSavingIdentity(false)
     }
   }, [emailDraft, savingIdentity, t, usernameDraft])
+
+  const handleChangeMemberRole = useCallback(async (userId: string, role: OrgRole) => {
+    if (!selected || !canManageMembers || membershipAction) return
+    setMembershipAction(`role:${userId}`)
+    try {
+      const gate = settingsPageActionResult({ pageId: 'organizations', action: 'org-invite', source: 'native', granted: true })
+      if (!isClaimableLive(gate)) return
+      await window.electronAPI.updateOrganizationMemberRole(selected.id, userId, role)
+      await refresh()
+      toast.success(t('settings.orgs.roleUpdated'))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      toast.error(t('settings.orgs.roleUpdateFailed'), { description: message })
+    } finally {
+      setMembershipAction(null)
+    }
+  }, [canManageMembers, membershipAction, refresh, selected, t])
+
+  const handleRemoveMember = useCallback(async (userId: string) => {
+    if (!selected || !canManageMembers || membershipAction || !window.confirm(t('settings.orgs.removeMemberConfirm'))) return
+    setMembershipAction(`remove:${userId}`)
+    try {
+      const gate = settingsPageActionResult({ pageId: 'organizations', action: 'org-invite', source: 'native', granted: true })
+      if (!isClaimableLive(gate)) return
+      await window.electronAPI.removeOrganizationMember(selected.id, userId)
+      await refresh()
+      toast.success(t('settings.orgs.memberRemoved'))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      toast.error(t('settings.orgs.memberRemoveFailed'), { description: message })
+    } finally {
+      setMembershipAction(null)
+    }
+  }, [canManageMembers, membershipAction, refresh, selected, t])
+
+  const handleRevokeInvite = useCallback(async (inviteId: string) => {
+    if (!selected || !canManageInvites || membershipAction || !window.confirm(t('settings.orgs.revokeInviteConfirm'))) return
+    setMembershipAction(`revoke:${inviteId}`)
+    try {
+      const gate = settingsPageActionResult({ pageId: 'organizations', action: 'org-invite', source: 'native', granted: true })
+      if (!isClaimableLive(gate)) return
+      await window.electronAPI.revokeOrganizationInvite(selected.id, inviteId)
+      await refresh()
+      toast.success(t('settings.orgs.inviteRevoked'))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      toast.error(t('settings.orgs.inviteRevokeFailed'), { description: message })
+    } finally {
+      setMembershipAction(null)
+    }
+  }, [canManageInvites, membershipAction, refresh, selected, t])
 
   if (loading) {
     return (
@@ -380,9 +441,35 @@ export default function OrganizationsSettingsPage() {
                                 </div>
                               </dl>
                             </div>
-                            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                              {roleLabel(member.role, t)}
-                            </span>
+                            {canManageMembers ? (
+                              <div className="flex shrink-0 items-center gap-2">
+                                <SettingsSelect
+                                  label={t('settings.orgs.changeRole')}
+                                  value={member.role}
+                                  onValueChange={(value) => {
+                                    if (value === 'owner' || value === 'admin' || value === 'member') {
+                                      void handleChangeMemberRole(member.userId, value)
+                                    }
+                                  }}
+                                  options={[
+                                    { value: 'owner', label: roleLabel('owner', t) },
+                                    { value: 'admin', label: roleLabel('admin', t) },
+                                    { value: 'member', label: roleLabel('member', t) },
+                                  ]}
+                                />
+                                <Button
+                                  size="sm"
+                                  disabled={membershipAction !== null}
+                                  onClick={() => void handleRemoveMember(member.userId)}
+                                >
+                                  {t('settings.orgs.removeMember')}
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                                {roleLabel(member.role, t)}
+                              </span>
+                            )}
                           </div>
                         )
                       })}
@@ -392,9 +479,20 @@ export default function OrganizationsSettingsPage() {
                           label={invite.emailOrUsername}
                           description={t('settings.orgs.pendingInvite')}
                           action={
-                            <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-600 dark:text-amber-400">
-                              {roleLabel(invite.role, t)} · {t('settings.orgs.pending')}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-600 dark:text-amber-400">
+                                {roleLabel(invite.role, t)} · {t('settings.orgs.pending')}
+                              </span>
+                              {canManageInvites ? (
+                                <Button
+                                  size="sm"
+                                  disabled={membershipAction !== null}
+                                  onClick={() => void handleRevokeInvite(invite.id)}
+                                >
+                                  {t('settings.orgs.revokeInvite')}
+                                </Button>
+                              ) : null}
+                            </div>
                           }
                         />
                       ))}
@@ -419,11 +517,16 @@ export default function OrganizationsSettingsPage() {
                   <SettingsCard>
                     <div className="grid gap-3 p-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:items-end">
                       <SettingsInput
-                        label={t('settings.orgs.inviteTarget')}
+                        label={t(identityAuthority === 'native' ? 'settings.orgs.inviteSubjectLabel' : 'settings.orgs.inviteTarget')}
                         value={inviteTarget}
                         onChange={setInviteTarget}
-                        placeholder={t('settings.orgs.inviteTargetPlaceholder')}
+                        placeholder={t(identityAuthority === 'native' ? 'settings.orgs.inviteSubjectPlaceholder' : 'settings.orgs.inviteTargetPlaceholder')}
                       />
+                      {identityAuthority === 'native' ? (
+                        <p className="text-xs text-muted-foreground sm:col-span-3">
+                          {t('settings.orgs.inviteSubjectHint')}
+                        </p>
+                      ) : null}
                       <SettingsSelect
                         label={t('settings.orgs.role')}
                         value={inviteRole}
@@ -438,7 +541,7 @@ export default function OrganizationsSettingsPage() {
                       <Button
                         size="sm"
                         onClick={() => void handleInvite()}
-                        disabled={!inviteTarget.trim() || inviting}
+                        disabled={!inviteTargetIsValid || inviting}
                         className="shrink-0"
                       >
                         {inviting ? t('common.sending') : t('settings.orgs.sendInvite')}
@@ -475,6 +578,7 @@ export default function OrganizationsSettingsPage() {
             </SettingsCard>
           </SettingsSection>
 
+          {identityAuthority === 'local' ? (
           <SettingsSection
             title={t('settings.orgs.identity')}
             description={t('settings.orgs.identityDesc')}
@@ -506,6 +610,7 @@ export default function OrganizationsSettingsPage() {
               </div>
             </SettingsCard>
           </SettingsSection>
+          ) : null}
 
           <TeamOrgSettingsSection />
         </div>

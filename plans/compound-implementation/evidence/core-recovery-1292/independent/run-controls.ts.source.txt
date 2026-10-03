@@ -1,0 +1,105 @@
+import { readFileSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+
+const fixtureRoot = '/tmp/rox-core-integration-gate-ultra-20260930'
+const testRuntime = process.env.ROX_CORE_GATE_BUN ?? `${fixtureRoot}/toolchain/package/bin/bun`
+const sha256 = (bytes: Uint8Array | string) => createHash('sha256').update(bytes).digest('hex')
+const records: object[] = []
+
+function run(fixture: string, name: string, paths: string[], testName?: string) {
+  const argv = [testRuntime, 'test', ...paths, ...(testName ? ['--test-name-pattern', testName] : [])]
+  const result = Bun.spawnSync(argv, { cwd: `${fixtureRoot}/${fixture}`, stdout: 'pipe', stderr: 'pipe' })
+  const log = Buffer.concat([result.stdout, result.stderr])
+  const logPath = `${fixtureRoot}/evidence/${name}.log`
+  writeFileSync(logPath, log)
+  const record = { fixture, name, argv, exitCode: result.exitCode, logPath, logSha256: sha256(log) }
+  records.push(record)
+  return record
+}
+
+function mutant(fixture: string, name: string, path: string, before: string, after: string,
+  expectedCount: number, testPaths: string[], testName: string, expectedExit: 'fail' | 'pass') {
+  const filePath = `${fixtureRoot}/${fixture}/${path}`
+  const original = readFileSync(filePath)
+  const text = original.toString()
+  if (text.split(before).length - 1 !== expectedCount) throw new Error(`${name}: unexpected source match count`)
+  const changed = text.replaceAll(before, after)
+  let record: ReturnType<typeof run>
+  try {
+    writeFileSync(filePath, changed)
+    record = run(fixture, name, testPaths, testName)
+  } finally {
+    writeFileSync(filePath, original)
+    if (sha256(readFileSync(filePath)) !== sha256(original)) throw new Error(`${name}: restore mismatch`)
+  }
+  if ((record.exitCode === 0) !== (expectedExit === 'pass')) throw new Error(`${name}: unexpected oracle outcome`)
+  records.push({ name, mutationPath: path, originalSha256: sha256(original), mutationSha256: sha256(changed), restoredSha256: sha256(readFileSync(filePath)), expectedExit })
+}
+
+const focusedPaths = [
+  'packages/core/src/calendar/calendar.test.ts',
+  'packages/core/src/rox2/__tests__/platform-contract.test.ts',
+  'packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts',
+  'packages/core/src/rox2/__tests__/notes-repository.test.ts',
+  'packages/core/src/rox2/__tests__/project-membership.test.ts',
+  'packages/core/src/platform/identity/credential-types.test.ts',
+  'packages/core/src/platform/identity/attach-credential-ref.test.ts',
+  'packages/core/src/tasks/personal/things.test.ts',
+]
+if (run('proposed', 'focused-core-acl-receipt', focusedPaths).exitCode !== 0) throw new Error('focused tests failed')
+if (run('proposed', 'independent-private-acl-receipt', ['../evidence/canonical-acl-private.test.ts']).exitCode !== 0) throw new Error('independent boundaries failed')
+
+const calendarPath = 'packages/core/src/calendar/merge.ts'
+const calendarTestPath = ['packages/core/src/calendar/calendar.test.ts']
+const calendarPattern = 'merges events with Today/Upcoming without converting them into tasks'
+mutant('baseline', 'calendar-id-contamination-original-oracle', calendarPath,
+  "items.push({ kind: 'event', id: event.id,", "items.push({ kind: 'event', id: 't1',", 2,
+  calendarTestPath, calendarPattern, 'pass')
+mutant('proposed', 'calendar-id-contamination-strengthened-oracle', calendarPath,
+  "items.push({ kind: 'event', id: event.id,", "items.push({ kind: 'event', id: 't1',", 2,
+  calendarTestPath, calendarPattern, 'fail')
+mutant('proposed', 'queued-guard-original-mutant', 'packages/core/src/rox2/meeting-conation-shell.ts',
+  "status.lifecycle === 'queued' && status.verification !== 'unverified'",
+  "status.lifecycle === 'queued' && status.verification === 'verified'", 1,
+  ['packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts'],
+  'queued shells reject both canonical verified states', 'fail')
+mutant('proposed', 'legacy-live-promoted-without-receipt-mutant', 'packages/core/src/rox2/platform-contract.ts',
+  "return { executionMode: 'live', lifecycle: 'succeeded', verification: 'unverified' }",
+  "return { executionMode: 'live', lifecycle: 'succeeded', verification: 'receipt_verified' }", 1,
+  ['packages/core/src/rox2/__tests__/platform-contract.test.ts'],
+  'legacy overloaded run state still type-checks and maps through the adapter', 'fail')
+mutant('proposed', 'actor-acl-grant-substitution-mutant', 'packages/core/src/rox2/platform-contract.ts',
+  'grant.actorId === input.actorId && grant.permission === input.permission',
+  'grant.permission === input.permission', 1,
+  ['../evidence/canonical-acl-private.test.ts'],
+  'actor grants never transfer to another actor', 'fail')
+mutant('proposed', 'private-note-read-revoke-mutant', 'packages/core/src/rox2/notes-repository.ts',
+  "if (opts?.readable === false) return { status: 'denied' }",
+  "if (opts?.readable === false && opts?.online !== false) return { status: 'denied' }", 1,
+  ['../evidence/canonical-acl-private.test.ts'],
+  'denied cached Notes disclose no title, body or revision', 'fail')
+mutant('proposed', 'locator-prototype-boundary-mutant', 'packages/core/src/platform/identity/credential-types.ts',
+  ' || Object.getPrototypeOf(locator) !== Object.prototype', '', 1,
+  ['packages/core/src/platform/identity/credential-types.test.ts'],
+  'rejects locator prototype-derived fields before registration or provider replacement', 'fail')
+mutant('proposed', 'locator-enumerability-boundary-mutant', 'packages/core/src/platform/identity/credential-types.ts',
+  "typeof key !== 'string' || !descriptor?.enumerable || !('value' in descriptor)",
+  "typeof key !== 'string' || !descriptor || !('value' in descriptor)", 1,
+  ['packages/core/src/platform/identity/credential-types.test.ts'],
+  'rejects locator non-enumerable fields before registration or provider replacement', 'fail')
+mutant('proposed', 'locator-accessor-boundary-mutant', 'packages/core/src/platform/identity/credential-types.ts',
+  "typeof key !== 'string' || !descriptor?.enumerable || !('value' in descriptor)",
+  "typeof key !== 'string' || !descriptor?.enumerable", 1,
+  ['packages/core/src/platform/identity/credential-types.test.ts'],
+  'rejects locator (type|key) accessors without executing them', 'fail')
+mutant('proposed', 'task-explicit-clock-mutant', 'packages/core/src/tasks/personal/store.ts',
+  'const isToday = at === startOfLocalDay(now)',
+  'const isToday = at === startOfLocalDay(Date.now())', 1,
+  ['packages/core/src/tasks/personal/things.test.ts'],
+  'setWhen classifies calendar dates against the supplied clock', 'fail')
+
+writeFileSync(`${fixtureRoot}/evidence/negative-controls.json`, JSON.stringify({
+  runtime: testRuntime, runtimeVersion: Bun.spawnSync([testRuntime, '--version']).stdout.toString().trim(),
+  records, sourceRestorationVerified: true,
+}, null, 2) + '\n')
+console.log(JSON.stringify({ controls: 10, focused: 'pass', sourceRestorationVerified: true }))

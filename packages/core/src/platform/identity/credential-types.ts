@@ -20,7 +20,8 @@ export type CredentialKind =
   | 'ssh_agent_identity'
   | 'x509_identity'
   | 'opaque_bundle'
-  | 'browser_session';
+  | 'browser_session'
+  | 'account_replica_key';
 
 export type CredentialRefId = `cred_${string}`;
 
@@ -111,6 +112,7 @@ const CREDENTIAL_KINDS: readonly CredentialKind[] = [
   'x509_identity',
   'opaque_bundle',
   'browser_session',
+  'account_replica_key',
 ];
 
 const VERSION_STATUSES: readonly CredentialVersionStatus[] = [
@@ -232,7 +234,7 @@ function validateLocator(locator: ProviderLocator): ProviderLocator {
     throw new Error('Invalid credential metadata: locator');
   }
 
-  // Check descriptors before reading type or values so accessors cannot run.
+  // Keep locator metadata inert: inspect descriptors before type/values.
   // Readonly/frozen data properties remain valid metadata.
   for (const key of Reflect.ownKeys(locator)) {
     const descriptor = Object.getOwnPropertyDescriptor(locator, key);

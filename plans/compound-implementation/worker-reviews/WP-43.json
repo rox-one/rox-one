@@ -1,0 +1,464 @@
+{
+  "task_id": "WP-43-preflight",
+  "attempt_id": "fcab403f0d5b7f7852fab5ed1d38113f",
+  "packet_hash": "bcb7ad1c2ae6422f82e683281d9cc62716e7280bb8852122be0cc47e840ce3a0",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-43",
+  "featureComplete": false,
+  "mode": "preflight-only",
+  "workTier": "bounded-workflow; one source-backed package report, no implementation",
+  "dependencies": ["WP-10", "WP-39"],
+  "dependencyReceiptsRequired": {
+    "WP-10": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "WP-39": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]
+  },
+  "evidenceBoundary": {
+    "specManifestMatchesPacket": true,
+    "manifestSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "sourceBasis": "Inspected working-tree bytes, not asserted to be clean input_revision bytes. Whole-file hashes below bind evidence; root must rebase this preflight against its wave0 commit and accepted dependency changes.",
+    "freshness": "No source change detected in displayed read snapshots; read and shasum are separate operations, not an atomic snapshot. Evidence becomes stale on any referenced file hash change.",
+    "inspectionLimits": "WP-43 normative specification/documentation, affected Pages paths and direct imports only. No upstream Macro implementation or unrelated subsystems inspected.",
+    "toolLimits": ["Codegraph reported no project index; no index created.", "find failed with judge API 402; known symbols and direct imports were inspected with read/grep/glob instead."],
+    "missingPathsObserved": ["apps/workspace-service/", "packages/shared/src/workspace-domain/", "tests/macro-integration/wp-43.test.ts"],
+    "runtimeVerification": "NOT_RUN: builds, tests, native UI, network and Git operations are prohibited for this preflight.",
+    "ownership": "Only this report is writable. All code edits below are requests for the root/domain owner, not applied patches. No feature implementation or runtime receipt is claimed."
+  },
+  "foundationGates": [
+    {
+      "gate": "Lead wave0 commit and explicit accepted predecessors",
+      "classification": "dispatch sequencing gate",
+      "evidence": "Worker instruction; work-packages.json:39111-39127",
+      "requiredBefore": "Any implementation: accept WP-10 and WP-39 typed interface, migration and scenario receipts; refresh changed source hashes after wave0 commit.",
+      "state": "not established in this inspection"
+    },
+    {
+      "gate": "Page content-kind discrimination and common Pages module ownership",
+      "classification": "explicit predecessor output with surprising shared-file collision",
+      "evidence": "21-implementation-plan.md:186-188,872-874; core/types/page.ts:35,294-320",
+      "requiredBefore": "WP-10 must supply contentKind and canonical Page/document ref. Its contracts.ts, commands.ts and repository.ts are the same normative paths as WP-43; extend accepted files through their owner, never create a competing Pages module. PageKind remains a sandbox capability, not a content representation.",
+      "state": "missing in inspected baseline"
+    },
+    {
+      "gate": "Canonical identity, resource grants, durable command/outbox and client replay",
+      "classification": "transitive foundations, not added direct DAG edges",
+      "evidence": "21-implementation-plan.md:27-119,182,793; work-packages.json:39133-39138,39315-39327,39543-39569",
+      "requiredBefore": "Accepted WP-02/03/04/05 mechanisms through WP-10/WP-39: kind:id aliases, transport principal, policy epoch/fence, scoped idempotency key/hash, transactional CAS and outbox/inbox, existing durable projection/draft queue. The current savePageContent and RPC SET_CONTENT do not provide these mechanisms.",
+      "state": "accepted interface/receipt not inspected or established"
+    },
+    {
+      "gate": "WP-49 editor decision and WP-51 single-writer/revoke fence",
+      "classification": "published mandatory Page foundations, transitively explicit through WP-10",
+      "evidence": "21-implementation-plan.md:5,182,984-1000,1020-1036",
+      "requiredBefore": "Accepted Page representation dispatch/editor decision and writer-mode guard. Do not infer that Loro rich-text support makes spatial canvas collaborative. Shared canvas writes must not bypass via legacy page content/config calls; revoke must fence append and delivery.",
+      "state": "not established"
+    },
+    {
+      "gate": "Search, mentions, attention and activity integrations",
+      "classification": "full-DoD obligations reached through transitive WP-06/07/08/09; absent from direct WP-43 dependency array",
+      "evidence": "21-implementation-plan.md:104-178,182,793; 22-test-plan.md:199-216; work-packages.json:39085-39107",
+      "requiredBefore": "Accepted materialization-event extractor/backlink and policy-filtered query ports; stable node occurrence/revision mention ports; durable recipient dedup/activity consumers. WP-43 must integrate these for canvas rather than label them N/A or defer them to release WP-41.",
+      "state": "canvas integration missing; foundation implementation outside inspected scope"
+    },
+    {
+      "gate": "WP-52 real shared runtime and migrator",
+      "classification": "published runtime foundation without a direct WP-43 edge",
+      "evidence": "21-implementation-plan.md:5,1038-1055; 22-test-plan.md:7-9; glob reported apps/workspace-service missing",
+      "requiredBefore": "Root supplies actual service composition, authenticated HTTP/native connection, PostgreSQL and object-storage readiness plus selected migrator. No fabricated migration timestamp or fixture-as-live receipt. Canvas itself does not require a media provider; WP-52 broader health is not proof of canvas behavior.",
+      "state": "service path missing in inspected tree; deployment readiness unverified"
+    },
+    {
+      "gate": "Agent access and derived-context provenance",
+      "classification": "full-DoD integration gate; WP-36/50 are not explicit WP-43 edges",
+      "evidence": "work-packages.json:39099-39100; 22-test-plan.md:214-215; 21-implementation-plan.md:5,1002-1018; PageView.tsx:174-179",
+      "requiredBefore": "Root exposes canvas commands/queries through common acting-user agent dispatcher. If canvas content enters persisted/shared transcripts or context, consume WP-50 source revision/ACL provenance before sharing it; opening a new agent session from PageView is not canvas tool acceptance.",
+      "state": "not established; no claim of audited agent internals"
+    },
+    {
+      "gate": "Canvas-specific obligations beyond the four headline criteria",
+      "classification": "published hidden acceptance gate, not another dependency",
+      "evidence": "22-test-plan.md:188,197-222; work-packages.json:39031-39037,39526-39569,39727-39782",
+      "requiredBefore": "Both conflicting drafts preserved, malformed graph recovery, bounds/connectors persist reload, all six UI states, schema/attachment validation, replay-safe durable receipts/events, full 22-item checklist and live failure/reload proof.",
+      "state": "missing"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/pages/contracts.ts",
+    "apps/workspace-service/src/modules/pages/commands.ts",
+    "apps/workspace-service/src/modules/pages/repository.ts",
+    "tests/macro-integration/wp-43.test.ts",
+    "apps/workspace-service/migrations/43-domain-contract.sql"
+  ],
+  "newFileOwnershipNote": "Normative future artifacts only, not permission to write them in preflight. The first three paths are also WP-10 artifacts and must become owner-reviewed extensions after WP-10 acceptance. Migration 43-domain-contract.sql is a proposed identifier; selected migrator determines the actual filename. Reuse document_revision from WP-10 if supplied; never redefine its table independently.",
+  "proposedContributions": {
+    "contracts": "Extend the accepted Pages contentKind union with canvas. Define strict versioned Canvas DTO: stable node IDs, finite spatial bounds, typed connector endpoints referring to existing node IDs, canonical linked entity/attachment refs and source-revision occurrence IDs. Keep validation and domain ports renderer-safe, no service I/O. SaveCanvas requires the RoxCommand v2 envelope expectedRevision/idempotencyKey and body document/canvas/schemaVersion. LinkCanvasNode modifies this same aggregate under CAS; ExportCanvas reads an authorized canonical revision, not a second canvas store.",
+    "commands": "Register canvas.save in accepted command gateway. Validate principal/workspace, document contentKind, schema and all linked refs before commit; recheck policy/fence at transactional write. Duplicate identical actor/workspace/idempotency key returns persisted receipt; changed hash rejects before mutation. Existing aggregate requires CAS revision, with explicit REVISION_CONFLICT retaining original draft. LinkCanvasNode and export use the same policy/results and canonical IDs; exact secondary transport names must be accepted by root since record specifies only the primary transport.",
+    "repository": "Within foundation transaction perform scoped CAS update of canvas_document, append document_revision, update typed links/attachment relationships, persist command receipt and document.content_materialized outbox event together. Increment revision exactly once; zero CAS rows cannot produce success. Use shared command_receipt/outbox/inbox/entity/alias tables and existing WP-10 document_revision, not local duplicates. Materialization consumers enforce event dedup, aggregate/policy/tombstone fences and projection watermark. Preserve node geometry/connectors in canonical JSON across reload/export.",
+    "migration": "Add canvas_document with workspace/entity composite FK, positive schema version, nonnegative revision, JSON validation consistent with domain DTO, retained timestamps and workspace/entity lookup. Extend existing document_revision compatibly. Reference foundation command/inbox uniqueness, canonical node link target/type indexes and WP-39 attachment refs. Quarantine ambiguous legacy aliases. Before cutover preserve snapshot/writer route; after accepted shared writes use forward repair or verified reverse replay without deleting recent writes.",
+    "tests": "Use bun:test conventions already present in pages/storage.test.ts. New normative wp-43.test.ts must cover actual shared command/API behavior, two-client conflict preserving both drafts, malformed graph and schema rejection, geometry/connectors reload, target ACL search, attachment revoke, duplicate/reordered events, command crash-after-commit retry, legacy shared-write rejection and sensitive seeded overwrite mutation. Keep live renderer/reload scenario as additional evidence, not simulated fixture proof."
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageKind / PageConfig",
+      "change": "After WP-10 content-kind cutover extend its renderer-safe representation discriminant/DTO reference for canvas and canonical revision. Keep PageKind static|interactive|live unchanged as a sandbox capability; retain artifact metadata/grants/share fields. Do not treat contentDigest or updatedAt as aggregateRevision.",
+      "reason": "Shared types.ts only re-exports PageConfig; adding canvas there alone cannot make its authoritative core shape support a representation."
+    },
+    {
+      "path": "packages/shared/src/pages/types.ts",
+      "symbol": "CreatePageInput / LoadedPage / isPageGrantUsable / hasPathTraversal",
+      "change": "Consume/re-export accepted contentKind, Canvas DTO and canonical revision/ref from WP-10 + domain contracts. Existing aggregate save callers carry expectedRevision via the common command envelope. Preserve existing grant digest and traversal validators verbatim; do not use source-action grants as resource ACL.",
+      "reason": "Current input content is index.html, and LoadedPage consists of file paths rather than a canvas representation."
+    },
+    {
+      "path": "packages/shared/src/pages/validation.ts",
+      "symbol": "PageConfigSchema / PageKindSchema / validatePageConfig",
+      "change": "Mirror accepted content-kind discriminant and versioned canvas metadata consistently with core types. Apply strict canvas DTO validation from shared contracts before writing, including unknown mutation fields, unsupported version, duplicate node IDs, dangling connector endpoints and nonfinite bounds; old artifact configuration remains valid.",
+      "reason": "Current schema admits only legacy Page fields and would discard unrecognized representation fields; canvas data must not be validated as arbitrary HTML."
+    },
+    {
+      "path": "packages/shared/src/pages/storage.ts",
+      "symbol": "createPage / loadPage / savePageContent / savePageConfig / updatePage",
+      "change": "Extend the WP-10 single authority adapter, not a new store. Preserve standalone file operations only in explicit standalone mode; guard every legacy write for shared identity before any filesystem mutation. Load shared canvas as a canonical authorized projection. CAS belongs in service transaction, not a digest comparison before rename. Add accepted representation metadata to protected managed fields in UpdatePagePatch/updatePage so generic metadata patches cannot rewrite canvas revision or contentKind.",
+      "reason": "savePageContent currently independently writes index.html and page.json without expectedRevision; single-file atomicity neither prevents lost updates nor makes those writes transactional."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/pages.ts",
+      "symbol": "registerPagesHandlers / HANDLED_CHANNELS / broadcastChanged / pages.SET_CONTENT / pages.GET_CONTENT / pages.PUBLISH",
+      "change": "Use WP-10 authenticated actor/authority routing for shared Page reads and commands; dispatch domain.canvas.save through the common gateway. Reject body actor and mismatched route/body/link workspaces, require expectedRevision and return typed canonical statuses/errors/receipts. Guard legacy SET_CONTENT/UPDATE/DELETE and grants/publication for shared IDs. Derive authorized canvas invalidation from durable materialization event and audience/policy fence, not broadcastChanged's unfenced filesystem scan. Recheck node/attachment targets for read/export/share.",
+      "reason": "Inspected handlers discard _ctx and SET_CONTENT directly calls filesystem storage; CHANGED is a process push with no durable event or policy watermark."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps",
+      "change": "Consume the root/WP-10 common Pages domain gateway port and authenticated policy context through host injection. Concrete service/repository construction stays in composition root; do not overload optional PendingCommandsStore with canvas persistence or instantiate a database in RPC handlers.",
+      "reason": "Current dependency bag supplies only optional commandGateway PendingCommandsStore; no accepted shared Pages command/query port is visible. Exact injected port name must follow accepted wave0 interface."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.pages",
+      "change": "Coordinate registration of the normative domain.canvas.save native route with the root's generic domain dispatcher; add a typed channel only if that dispatcher needs an explicit channel declaration. Keep existing Pages channel values for artifact workflows. Root must migrate desktop/native method signatures and actual channel registry together; this preflight has not inspected downstream bridge definitions beyond direct imports.",
+      "reason": "Current pages channel group includes content/leases/sharing but no canvas route; merely adding a constant is not transport implementation."
+    },
+    {
+      "path": "packages/shared/src/pages/index.ts",
+      "symbol": "Page types and storage export lists",
+      "change": "Export accepted renderer-safe canvas types/authority adapter functions needed by existing @craft-agent/shared/pages callers. Do not export workspace-service repository I/O into renderer imports or preserve obsolete shared write shims.",
+      "reason": "RPC dynamically imports this existing barrel; isolated declarations not exposed to consumers would leave integration incomplete."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PageView.tsx",
+      "symbol": "PageView / contentDigest / hasContent / render-lease effect / body conditional / SharePageDialog",
+      "change": "Dispatch by WP-10 contentKind within this PageView. Artifact branch alone keeps digest-bound createPageLease and PageFrame; do not unconditionally fetch HTML lease/snapshot for canvas. Canvas branch reads typed canonical content/revision, edits stable nodes/bounds/connectors, saves expectedRevision and retains conflicting private draft alongside latest authorized server revision. Reuse common durable draft/replay adapter; render all six normative states and reload/reconnect/conflict recovery. Add authorized link/attachment open/export/share controls and ARIA assertions. All new strings use t() and all ten locale files through the locale owner.",
+      "reason": "Current hasContent is only Boolean(contentDigest), and successful body always renders PageFrame; canvas cannot safely be an HTML-only surrogate or a new destination."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PageFrame.tsx",
+      "symbol": "PageFrame / sandboxForKind / PageFrameProps",
+      "change": "Preserve the artifact implementation and opaque-origin exact-content lease contract; ensure PageView does not pass canvas DTOs into this HTML frame or loosen its sandbox. No canvas CRDT channel in the artifact action bridge.",
+      "reason": "The frame is an existing sandboxed HTML renderer, not a spatial editor; preserving this seam avoids breaking artifact grants/refresh."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/SharePageDialog.tsx",
+      "symbol": "usePageShareCapabilities / publishPage / getPageShareDataScan",
+      "change": "Coordinate with accepted Pages sharing port to gate canvas share/export by current actor and both endpoint grants; use canonical revision/attachment read policy rather than assuming file-backed publication handles canvas. Preserve existing feature flag and unpublish behavior for artifacts; display typed unavailable/denied state rather than fabricate publication support.",
+      "reason": "Current dialog uses generic page publication/snapshot scan; linked targets and signed file URLs must not leak via canvas publication."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-43 section",
+      "change": "Record accepted canvas schema, whole-file CAS/conflict UX, inherited foundation interfaces, actual secondary API names, one-writer authority and no-CRDT limit once implemented; do not replace planned state with completion from this report.",
+      "reason": "Normative documentation is part of feature DoD, while this packet authorizes preflight only."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Canvas WP-43 row / feature completeness checklist",
+      "change": "Bind observed canvas concurrency, malformed graph recovery, geometry reload, permission/event negative controls and crash/reply recovery evidence to tested implementation SHA/schema/environment when root verifies it.",
+      "reason": "Published acceptance includes more than the four summary bullets; fixtures alone cannot close it."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Concurrent canvas save detects conflict instead of silent overwrite",
+      "currentEvidence": "storage.ts:445-464 savePageContent has no revision argument; pages.ts:272-282 SET_CONTENT writes directly. No canvas command implementation at normative new paths.",
+      "requiredChange": "In accepted Pages repository CAS workspace/entity/revision and atomically persist new canvas/revision/receipt/event; PageView retains loser draft and renders conflict without automatic overwrite.",
+      "verification": "A/B open revision r, create disjoint drafts, race saves with distinct idempotency keys. Exactly one applied r+1 and one REVISION_CONFLICT; winning canonical nodes and losing private draft survive reload. Repeat with CAS check intentionally removed; oracle must fail specifically on lost draft/overwrite.",
+      "missingPrerequisite": "WP-10 receipt plus WP-04 transaction gateway and WP-05 durable draft port",
+      "state": "missing"
+    },
+    {
+      "criterion": "node entity links searchable",
+      "currentEvidence": "types.ts:71-100 and core PageConfig:294-320 have no canvas node refs. Normative event is document.content_materialized (work-packages.json:39020-39022).",
+      "requiredChange": "Canvas contracts define stable node canonical refs/occurrences. Repository updates typed backlinks; materialization extractor integrates WP-06 current-ACL search with source revision, tombstone and watermark.",
+      "verification": "Link authorized node to existing entity, await event watermark and query through authorized search; canonical Page/node/target opens on same Pages route. Remove link and replay events: no stale backlink. Revoke target before projection update; denied title/snippet/private marker never appears.",
+      "missingPrerequisite": "Accepted WP-02/WP-06 graph/search ports through dependencies",
+      "state": "missing"
+    },
+    {
+      "criterion": "existing Pages route",
+      "currentEvidence": "PageView:31-74 resolves slug through pagesAtom/getPage; :181 uses routes.view.pages(); :386-439 only renders HTML frame. navigate.ts:15-19 re-exports existing routes.",
+      "requiredChange": "Add canvas contentKind branch in same PageView, resolve accepted canonical Page aliases to existing slug route and preserve pagesAtom list authority. No second sidebar/destination/store.",
+      "verification": "Open canvas from Pages list and canonical entity deep link, use back/history/panel reopening and reload, then open legacy HTML artifact with grants/data refresh still working.",
+      "missingPrerequisite": "WP-10 canonical Page/contentKind routing and host bridge",
+      "state": "missing"
+    },
+    {
+      "criterion": "no unsupported CRDT promise",
+      "currentEvidence": "work-packages.json:39064-39066 explicitly says Macro canvas simpleSave is whole-file; core PageKind is sandbox capability, not collaboration model.",
+      "requiredChange": "Canvas uses scalar aggregate CAS and explicit conflict UX; use document CRDT only for content kinds accepted by WP-10/49. Docs/UI/export must state whole-file revision semantics, not simultaneous spatial merge.",
+      "verification": "Two-client overlap produces visible conflict and both drafts, never silent spatial merge; review actual canvas status/help/export against behavior and verify rich-text document regression separately.",
+      "missingPrerequisite": "Accepted WP-10 representation contract and WP-49 boundary",
+      "state": "missing"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "PageView:386-439 renders artifact frame, not canvas editing controls.",
+      "requiredChange": "Within PageView canvas branch provide node editing, geometry/connectors, links/attachments, save/conflict/reload/export and accessible Russian controls through t(); preserve existing design conventions.",
+      "verification": "Actual Electron/browser interaction, hover/focus/keyboard and visual screenshots of edit/save/conflict; verify loaded font and reduced-motion behavior on changed controls.",
+      "missingPrerequisite": "Accepted canvas DTO, native adapter and root locale-owner patches to all ten locales",
+      "state": "missing"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "PageView:58-74,181 retains slug resolution and existing Pages navigation.",
+      "requiredChange": "Resolve canonical canvas/Page IDs through WP-10 alias route without replacing stable slug, history or panels; missing/denied targets have distinct states.",
+      "verification": "Canonical link and existing slug open same Page; back/forward/reload preserve focus/representation; forged workspace and revoked link reveal no title/content.",
+      "missingPrerequisite": "Accepted canonical resolver/routing interface from WP-10",
+      "state": "missing"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "storage.ts:288-299 creates page_ IDs; core PageConfig:294-320 has no canvas discriminant. Normative refs use kind:id (work-packages.json:39160-39183).",
+      "requiredChange": "Use one canonical Page identity and canvas_document representation with registry aliases; strict schema, stable node IDs, typed connectors, canonical linked refs and attachments.",
+      "verification": "Reload/edit/export preserve Page and node IDs; duplicate node IDs, dangling connectors, unknown fields, bad bounds, foreign refs and unsupported schema reject without changing prior revision.",
+      "missingPrerequisite": "WP-10 contentKind and WP-02 alias registry",
+      "state": "missing"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "savePageContent:455-462 writes content then config; atomicWriteFileSync:37-50 is one-file rename, not multi-file/DB transaction.",
+      "requiredChange": "Accepted service repository owns canonical canvas/revisions and atomic receipt/outbox; explicit standalone adapter keeps existing filesystem contract without becoming shared writer.",
+      "verification": "Persist nontrivial bounds/connectors/attachments, kill after commit before response, restart and independently read exact DTO/revision/receipt plus one event/row set; retry same key does not increment.",
+      "missingPrerequisite": "WP-04 transaction layer, WP-10 document_revision and applied migration",
+      "state": "missing"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "pages.ts:273 SET_CONTENT only accepts workspaceId/pageSlug/content; normative SaveCanvas/LinkCanvasNode/ExportCanvas at spec:39018.",
+      "requiredChange": "Implement SaveCanvas and LinkCanvasNode through same principal/policy/idempotency/CAS gateway; ExportCanvas uses authorized read. Missing expectedRevision on existing aggregate is rejected; hash includes normalized envelope/body per accepted gateway.",
+      "verification": "Identical retry returns original receipt, changed payload same key rejects, stale/missing revision fails, concurrent keys cannot both overwrite; LinkCanvasNode enforces same CAS and endpoint ACL.",
+      "missingPrerequisite": "Accepted command envelope/gateway and secondary operation transport contract",
+      "state": "missing"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "pages.ts:176-198,261-270 returns local page/content; no typed canvas query or authorized cursor.",
+      "requiredChange": "Extend accepted Pages query/export ports with canonical canvas DTO/revision and policy-filtered node/link queries; bounded pagination with authorized cursor, no hidden totals/title.",
+      "verification": "Authorized read/export matches saved canonical revision; denied and cross-workspace cursor/ref requests leak no metadata; stable paging handles same-sort entries and deletion.",
+      "missingPrerequisite": "WP-10 Pages query port and foundation authorized cursor contract",
+      "state": "missing"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "pages.ts:55-59 broadcasts local page list; broker Map:46-53 is process-local, no durable outbox/replay proof.",
+      "requiredChange": "Consume document.content_materialized transaction outbox for authorized canvas revision invalidation and search/backlink updates; dedup with shared inbox and fence old revisions/policies/tombstones. Keep optional presence lossy and never imply CRDT canvas convergence.",
+      "verification": "Drop/reorder/duplicate event and restart consumer; canonical update becomes visible once after replay/watermark; revoked subscriber receives no new canvas or linked content.",
+      "missingPrerequisite": "WP-04 outbox/inbox and WP-51 fenced delivery",
+      "state": "missing"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "pages.ts mutations/read handlers ignore _ctx; isPageGrantUsable:40-46 is source-action digest/expiry checking, not resource policy.",
+      "requiredChange": "Transport principal plus workspace/resource read/write/action grants, target and attachment ACL recheck and policy fence; reject forged body actor/workspace. Agent allow-all remains subordinate to ACL.",
+      "verification": "Owner/editor allowed, viewer/outsider/forged principal rejected; revoke during pending save/read/export/subscription prevents write/leak. Shared legacy SET_CONTENT fails before filesystem change; standalone artifact succeeds in explicit mode.",
+      "missingPrerequisite": "WP-03 authenticated grants and WP-51 authority fence",
+      "state": "missing"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "PageView:449-457 uses SharePageDialog; pages.ts:393-451 implements feature-gated local publication/password/unpublish, not proven shared canvas ACL.",
+      "requiredChange": "Reuse WP-10 explicit sharing/inheritance port and WP-39 signed downloads; canvas links do not grant access. Canonical export/publication filters target/attachment data and expiry; retain artifact unpublish behavior.",
+      "verification": "Viewer cannot share; denied target/private marker absent from canvas preview/export/shared publication. Signed attachment URL expires/revokes; page share never broadens endpoint ACL.",
+      "missingPrerequisite": "WP-10 sharing interface, WP-03 grants, WP-39 file capability receipts",
+      "state": "missing"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "No canvas extractor in inspected Page representation; required search integration published in spec:39095 and test plan:210.",
+      "requiredChange": "Publish revisioned canvas node text and typed links through WP-06 materialization extractor, authorized upsert/delete and watermark; no parallel search store.",
+      "verification": "Save/edit/delete/revoke canvas and node links, await watermark, verify search results/snippets and agent retrieval respect current ACL even while projector is stale.",
+      "missingPrerequisite": "WP-06 accepted search/Memory consumer ports",
+      "state": "missing"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "Current PageConfig lacks canvas occurrence data; plan:163-178 supplies cross-entity occurrence/revision policy contract.",
+      "requiredChange": "Canvas node entity mentions use WP-09 stable occurrence identity and source revision; LinkCanvasNode/remove node updates typed backlinks without implicit sharing.",
+      "verification": "Authorized mention opens target; move node preserves occurrence, edit/remove deletes old backlink, replay does not duplicate; denied target mention leaks nothing and grants no rights.",
+      "missingPrerequisite": "WP-09 graph/mention port through WP-10",
+      "state": "missing"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "Canvas notification integration absent in inspected paths; spec:39097 and test plan:212 require recipient policy/dedup/attention state.",
+      "requiredChange": "Integrate canvas mention/materialization causes with WP-07 existing attention service; policy selects authorized recipients and semantic reason. Preserve existing seen/done/mute/snooze behavior, no per-save duplicate pings.",
+      "verification": "Mention teammate then replay/edit repeatedly: one policy-selected notification, no outsider delivery; recipient state survives restart and mute/snooze is honored.",
+      "missingPrerequisite": "WP-07 attention and WP-09 occurrence integration through WP-10",
+      "state": "missing"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "pages.ts:221/257 logs local create/delete strings; no canvas actor/cause/revision activity evidence. Plan:140 declares activity.recorded foundation event.",
+      "requiredChange": "Use existing durable activity consumer for canvas command actor/cause/revision and link changes with policy-filtered audit projection; no raw canvas content in logs.",
+      "verification": "One committed save/link change creates one actor/revision/correlation activity after replay; rejected conflict creates no applied activity; unauthorized audience sees no private marker.",
+      "missingPrerequisite": "WP-04 events and accepted attention/activity consumer",
+      "state": "missing"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "PageView:174-179 only opens new session with translated design prompt; this is not authorized canvas read/write/tool support.",
+      "requiredChange": "Root dispatcher exposes same SaveCanvas/LinkCanvasNode/read/export contracts to acting-user agent with resource ACL and source revision/provenance; all legacy shared Page tool writes route/deny through WP-51.",
+      "verification": "Real native agent invocation edits/reads authorized canvas and receives same canonical receipt; allow-all viewer agent denied; revoked source invalidates cached context and unsafe derived sharing.",
+      "missingPrerequisite": "Accepted agent domain dispatch port; WP-50 when content enters shared transcript/context",
+      "state": "missing"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "RPC_CHANNELS.pages:840-864 lacks canvas route; spec:39133-39138 mandates HTTP canvas.save and native domain.canvas.save.",
+      "requiredChange": "Root registers both normative primary transports and typed native adapter on shared handler; route MCP/agent exposure through the same domain port where supported, not a filesystem shortcut. Agree exact LinkCanvasNode/ExportCanvas wire contract before coding adapters.",
+      "verification": "HTTP and native RPC accept same schema/results and reject forged actor/workspace/stale revision; actual mounted MCP/agent tool, when exposed, enforces identical ACL/idempotency and readback.",
+      "missingPrerequisite": "Wave0 authenticated dispatch/composition and accepted secondary operation contracts",
+      "state": "missing"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Spec:39069-39079 requires commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ counters; local Pages log strings provide none of this canvas evidence.",
+      "requiredChange": "Attach required correlation/revision/policy fields to command/receipt/outbox/projection diagnostics and use common retry/DLQ metrics; omit canvas bodies/email/transcripts/tokens.",
+      "verification": "Trace a save and retried event through commandId to watermark; inject consumer failure and observe retry/DLQ counters, then recover; private marker/token absent from collected logs.",
+      "missingPrerequisite": "Foundation command/event/projection observability contracts",
+      "state": "missing"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "storage.test.ts:5-46 uses bun:test isolated workspace fixtures; normative wp-43.test.ts path missing. Tests were not executed.",
+      "requiredChange": "Implement normative integration, meaningful overwrite and unauthorized/dropped-duplicated-event negative controls, independent holdout, persistence/recovery plus existing Page regressions. Do not count mocks or fixture receipts as live acceptance.",
+      "verification": "Later run bun test tests/macro-integration/wp-43.test.ts and relevant packages/shared/src/pages tests on exact implementation revision; baseline must pass before mutants, and each mutation must fail its intended assertion rather than infrastructure setup.",
+      "missingPrerequisite": "Implemented dependencies, isolated shared runtime, root verification authorization",
+      "state": "missing"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:866-883 is proposed; 22-test-plan.md:188 has extra canvas obligations and :199-222 full checklist.",
+      "requiredChange": "Update named WP-43/test-plan sections with schema, whole-file conflict/draft semantics, accepted APIs, ACL/attachment/search behavior, recovery, migration and no-CRDT limit once real evidence exists.",
+      "verification": "Root reviews documentation against exercised APIs/UI/failure/reload receipts and tested SHA/schema; preflight never changes status to complete.",
+      "missingPrerequisite": "Final implemented interfaces and observed scenarios",
+      "state": "missing"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "PageView:83-111,411-423 displays leaseError/retry for artifacts, not typed canvas conflict/ACL/fence/schema failure.",
+      "requiredChange": "Canvas branch maps canonical rejected/unavailable/pending_fence/queued/reconciling/ambiguous statuses and normative errors to denied, conflict, retryable/terminal/schema/quarantine UX without discarding draft or reporting saved prematurely.",
+      "verification": "Inject stale revision, forbidden target, unsupported schema, service loss and pending revoke fence; verify specific UI state and recovery retain draft/canonical revision and no false applied_verified.",
+      "missingPrerequisite": "Accepted typed result/error adapter and durable draft interface",
+      "state": "missing"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "PageView:221-239 fallback loading and :424-427 lease/snapshot loading are artifact-oriented; fetch rejection currently becomes null fallback.",
+      "requiredChange": "Separate canvas loading/stale refresh from loaded empty/denied/unavailable; representation branch must not wait for an HTML snapshot or lease.",
+      "verification": "Delay canvas read/refresh and switch Pages during request: stale responses cannot paint wrong document, and no empty/not-found flash for loading or permission error.",
+      "missingPrerequisite": "WP-10 canvas-aware query readiness model",
+      "state": "missing"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "PageView:79-81,388-410 treats absent HTML digest as no content; this does not distinguish empty canvas from unavailable/denied.",
+      "requiredChange": "Use successful authorized Canvas DTO with empty nodes as genuine empty state and offer initial edit; deny/loading/unconfigured/service failure remain distinct.",
+      "verification": "Open canonical empty canvas then add first node/save/reload; contrast denied and stopped service with no empty editor or fake success shown.",
+      "missingPrerequisite": "Accepted contentKind and canonical read/status contract",
+      "state": "missing"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "PageView local React state holds lease/error only; no durable canvas draft or queue in inspected code. Spec:39035 explicitly requires offline_queued.",
+      "requiredChange": "Reuse WP-05 client durable draft/command projection queue; persist canvas draft, expectedRevision/idempotency key and source policy context. Reconnect retries once, surfaces CAS conflict or revoked-draft quarantine; no new store or speculative server-acked status.",
+      "verification": "A offline edit/restart while B saves; A draft remains queued after reload then reconnect conflicts preserving both drafts. Repeat with revoked A: rejection/quarantine and no unauthorized publish. Repeated reconnect returns original receipt once.",
+      "missingPrerequisite": "WP-05 offline port through WP-10 and WP-51 policy fence",
+      "state": "missing"
+    },
+    {
+      "criterion": "Malformed graph recovery and bounds/connectors persist reload",
+      "currentEvidence": "22-test-plan.md:188 explicitly requires these; current content is arbitrary index.html without spatial schema.",
+      "requiredChange": "Strict graph/schema validation before any canonical write; on invalid/corrupt canvas keep last valid canonical revision and recoverable private input rather than replace with empty graph. Persist finite geometry and typed stable connector endpoints in canvas JSON and export.",
+      "verification": "Save nodes with nontrivial coordinates/sizes/connectors, restart/reload/export and compare exact semantic graph. Submit duplicate IDs/dangling connectors/nonfinite bounds/corrupt version: no canonical mutation, visible error and retained recoverable draft; repair and save succeeds.",
+      "missingPrerequisite": "Accepted Canvas DTO/version policy, repository and common draft recovery port",
+      "state": "missing"
+    },
+    {
+      "criterion": "Attachments, migration constraints and retained references",
+      "currentEvidence": "Spec:39019,39526-39569 requires canvas_document/document_revision, stable node IDs/attachments, FK/uniqueness/fences; WP-39 plan:795-808 defines same file identity and signed ACL.",
+      "requiredChange": "Canvas attachment nodes reference WP-39 canonical file entity, not raw paths/permanent signed URL. Migration extends existing entity/revision schema with scoped lookup/backlink indexes and uses shared receipt/event/alias uniqueness. Retained deletion and quarantine rules preserve auditable references.",
+      "verification": "Attach one existing file identity across canvas/Page/task, open authorized preview and test bad MIME/oversize/foreign private upload, URL revoke/expiry and retained deletion; inspect migrated composite keys and ambiguous alias quarantine. Forward repair retains accepted recent writes.",
+      "missingPrerequisite": "WP-39 accepted file API and applied migration; selected migrator and WP-10 revision table",
+      "state": "missing"
+    },
+    {
+      "criterion": "Negative-control pages boundary and independent holdout",
+      "currentEvidence": "Spec:39049-39051 requires unauthorized actor or dropped/duplicated event failure; :39746-39749 also specifies silent whole-file overwrite mutation and independent second variant.",
+      "requiredChange": "Add consumer-visible permission/event/revision oracles, not wiring/source text checks. Root/evaluator injects independent second failure variant and records specific assertion failure versus setup error.",
+      "verification": "After positive baseline, disable CAS and catch overwritten concurrent graph; separately bypass target ACL or drop/duplicate materialization delivery and catch leak/stale projection/duplicate effect. Holdout cannot reuse identical failure path; record seed 20260973 and failure trace.",
+      "missingPrerequisite": "Working isolated implementation plus root-controlled mutation/evaluator harness",
+      "state": "missing"
+    },
+    {
+      "criterion": "Restart between persisted command and reply; state/receipt/canonical ID consistent",
+      "currentEvidence": "Spec:39054-39055 mandates crash/reply recovery; savePageContent has no receipt/outbox transaction.",
+      "requiredChange": "Commit canonical canvas/document_revision/receipt/outbox atomically, then reply; replay same actor/key/hash returns stored result and event processing dedups, including linked entities/attachments.",
+      "verification": "Kill service after commit before reply, restart, retry identical command through real API, compare canonical entity ID/revision/content/receipt and unique row/event counts; changed payload key rejects. Crash projector after lease but before effect then recover exactly once.",
+      "missingPrerequisite": "WP-04 durable transaction receipt/inbox and real shared runtime",
+      "state": "missing"
+    },
+    {
+      "criterion": "License policy and live verification gate",
+      "currentEvidence": "Spec:39109-39110 requires behavior reimplementation and actual changed surface/failure/reload proof; no upstream source was inspected or copied here.",
+      "requiredChange": "Implement behavior on existing ROX mechanisms; any upstream dependency requires exact license audit. Root records tested SHA, schema revision/environment, canonical readback/receipt/watermark, screenshots/ARIA and sensitive failure evidence before any featureComplete claim.",
+      "verification": "Actual UI canvas edit/save/conflict/link/attachment/export/reload plus HTTP/native/agent checks and failure/recovery evidence, not fixture-only receipt; audit imported dependency licenses if any.",
+      "missingPrerequisite": "Implementation and root runtime verification authorization; license receipt only if upstream dependency chosen",
+      "state": "missing"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/shared/src/pages/types.ts","symbol":"CreatePageInput / LoadedPage / isPageGrantUsable / hasPathTraversal","lineStart":34,"lineEnd":100,"sha256":"89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"createPage / savePageContent / updatePage / getPagePath","lineStart":445,"lineEnd":464,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7","additionalInspectedRanges":[[39,114],[152,195],[204,249],[278,379]]},
+    {"path":"packages/server-core/src/handlers/rpc/pages.ts","symbol":"registerPagesHandlers / SET_CONTENT / CREATE_LEASE","lineStart":261,"lineEnd":345,"sha256":"c6bc8a9161d21c228dabf55c8406bce2bbfe5419315919cba072e8b6c01c7a04","additionalInspectedRanges":[[1,59],[176,258],[356,375],[378,453]]},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView / render lease / body conditional","lineStart":386,"lineEnd":470,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6","additionalInspectedRanges":[[1,239]]},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageKind / PageConfig","lineStart":294,"lineEnd":320,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e","additionalInspectedRanges":[[1,110]]},
+    {"path":"packages/shared/src/pages/validation.ts","symbol":"PageKindSchema / PageConfigSchema / validatePageConfig","lineStart":178,"lineEnd":245,"sha256":"dc9579b3f129baae3d81943a6fc2f5a87212af3aa72ecef1facbd9667deaf3f3","additionalInspectedRanges":[[17,51]]},
+    {"path":"packages/shared/src/pages/index.ts","symbol":"types and storage export lists","lineStart":11,"lineEnd":94,"sha256":"bd7827f5ee8687ab999dd7f10c852795213d42b176ec0768abc32b923412a632","inspection":"grep-displayed export declarations; source not read contiguously"},
+    {"path":"packages/shared/src/utils/files.ts","symbol":"atomicWriteFileSync","lineStart":32,"lineEnd":50,"sha256":"5e8d95f2b41b8ecf3d919fc17b84875c1109cddce36d58210b1ff1b217a7e3b3"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps","lineStart":46,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"apps/electron/src/renderer/components/pages/PageFrame.tsx","symbol":"PageFrameProps / sandboxForKind / PageFrame","lineStart":34,"lineEnd":111,"sha256":"7cb551294c720b87443d645041c0514c3b48a6ea04cad668b8c083629c1e3ba1"},
+    {"path":"apps/electron/src/renderer/components/pages/SharePageDialog.tsx","symbol":"usePageShareCapabilities / publishPage / unpublishPage","lineStart":59,"lineEnd":188,"sha256":"a06d7bf806cdac1c044c01ba2a75fb7103d04e7cbd82ee4136c69577f38bb5e0","inspection":"grep-displayed call sites only; intervening code not asserted inspected"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.pages","lineStart":840,"lineEnd":864,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"apps/electron/src/renderer/lib/navigate.ts","symbol":"routes re-export / navigate","lineStart":15,"lineEnd":50,"sha256":"fbf258fb42a94c07a2a5db579714706140e75c049e9ccad6125959c2b21a7fac"},
+    {"path":"apps/electron/src/renderer/atoms/pages.ts","symbol":"pagesAtom","lineStart":1,"lineEnd":23,"sha256":"d429fb649961031ab860ce7c107c69f121aee46cf61648f26962de9d6ff18ff2"},
+    {"path":"packages/shared/src/pages/storage.test.ts","symbol":"pages/storage fixtures and slug validation cases","lineStart":1,"lineEnd":83,"sha256":"5f44d7de626de32d68f797ca930552a34c0caf36826128fb49c6e754d352931b"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-43 normative record","lineStart":38974,"lineEnd":39138,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0","additionalInspectedRanges":[[39139,39185],[39309,39375],[39526,39595],[39727,39785]]},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-43 / WP-10 / WP-39 / foundation gates","lineStart":866,"lineEnd":883,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9","additionalInspectedRanges":[[1,8],[123,199],[791,808],[984,1055]]},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Canvas WP-43 acceptance / feature completeness checklist","lineStart":179,"lineEnd":222,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d","additionalInspectedRanges":[[1,58]]}
+  ],
+  "nextExecutableAction": "Root first commits wave0 and accepts WP-10/WP-39 typed interface, migration and scenario receipts. Refresh any changed source hashes, confirm WP-10 contentKind and shared Pages module owner, foundation gateway/replay/search/mention/attention ports and real runtime/migrator. Then apply owner-reviewed Canvas DTO + transactional CAS/receipt/outbox extensions and the PageView representation branch in dependency order, followed by normative wp-43 integration/mutation/recovery and actual UI/API/agent verification. This worker's next/delivered action is report-only; no implementation is started.",
+  "risks": [
+    "WP-10 and WP-43 name identical Pages contract/command/repository paths; independent file creation would overwrite accepted prerequisite behavior.",
+    "Atomic file rename or SHA256 contentDigest does not provide revision CAS, durable receipt/outbox or consistent content/config transaction.",
+    "Existing handlers and standalone source-action grants cannot be assumed authenticated shared resource ACL; direct legacy writers need WP-51 guard before filesystem changes.",
+    "PageKind denotes sandbox capabilities; changing it to canvas would conflate security and representation, potentially weakening artifact sandbox behavior.",
+    "Current PageView starts HTML lease/snapshot effects for any digest-bearing page; adding only a body branch can still execute the wrong transport for canvas.",
+    "Canonical node links, mentions, attachment URLs, export and search snippets can leak revoked target content if checked only at save time.",
+    "The published four headline acceptance bullets understate full DoD: malformed graph recovery, geometry/connectors reload, six UI states and all 22 completeness items remain required.",
+    "Request schema allows schemaVersion minimum 0 but migration requires positive stored version; accepted version policy must reject unsupported wire version with SCHEMA_VERSION_UNSUPPORTED rather than silently coerce or violate DB constraints.",
+    "Spec names LinkCanvasNode/ExportCanvas without exact secondary route/schema; root must accept their typed transport contracts before adapter implementation, not infer nonexistent current endpoints.",
+    "apps/workspace-service and shared workspace-domain paths were missing at inspection; wave0/dependency integration may invalidate these observations. Hashes bind current evidence, not a claim about future committed code.",
+    "No upstream canvas code/license audit inspected: simpleSave whole-file limitation comes from normative specification, not an independently reviewed Macro implementation.",
+    "No builds/tests/UI/network were run; this report cannot prove any canvas feature or acceptance scenario is implemented, verified, delivered or complete."
+  ]
+}

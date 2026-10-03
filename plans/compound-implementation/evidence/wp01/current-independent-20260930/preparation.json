@@ -1,0 +1,69 @@
+{
+  "recordedAt": "2026-09-30T14:20:50.675Z",
+  "head": "8106f22185fb3b3e9a6a585320d48b1bf5f10fbd",
+  "sourceManifestSha256": "9e6db6e9af347e63068f58be47d4379344a69434997b0ae145c17af22f14513a",
+  "fileCount": 3408,
+  "oracleSha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+  "dependencies": [
+    {
+      "variant": "baseline",
+      "dependency": "ws",
+      "target": "/Users/t/Projects/rox-one-compound-implementation/node_modules/ws",
+      "version": "8.21.0",
+      "packageJsonSha256": "584ce6e7516587ba249dc910b0c04e2753f6b3f451fc3a5bc324f7735bdacc71",
+      "access": "external dependency read-only symlink"
+    },
+    {
+      "variant": "baseline",
+      "dependency": "jose",
+      "target": "/Users/t/Projects/rox-one-compound-implementation/node_modules/jose",
+      "version": "6.1.3",
+      "packageJsonSha256": "77d4d459a5f2f4b740a390697a5b51f00fe5f5dcc96e45b1a6638578b1f2e3f7",
+      "access": "external dependency read-only symlink"
+    },
+    {
+      "variant": "baseline",
+      "dependency": "shell-quote",
+      "target": "/Users/t/Projects/rox-one-compound-implementation/node_modules/shell-quote",
+      "version": "1.8.3",
+      "packageJsonSha256": "56b971af0367ec2e347a747106bdcc5f9ac49aaf0ce07f485b2afee2635c8308",
+      "access": "external dependency read-only symlink"
+    },
+    {
+      "variant": "mutation",
+      "dependency": "ws",
+      "target": "/Users/t/Projects/rox-one-compound-implementation/node_modules/ws",
+      "version": "8.21.0",
+      "packageJsonSha256": "584ce6e7516587ba249dc910b0c04e2753f6b3f451fc3a5bc324f7735bdacc71",
+      "access": "external dependency read-only symlink"
+    },
+    {
+      "variant": "mutation",
+      "dependency": "jose",
+      "target": "/Users/t/Projects/rox-one-compound-implementation/node_modules/jose",
+      "version": "6.1.3",
+      "packageJsonSha256": "77d4d459a5f2f4b740a390697a5b51f00fe5f5dcc96e45b1a6638578b1f2e3f7",
+      "access": "external dependency read-only symlink"
+    },
+    {
+      "variant": "mutation",
+      "dependency": "shell-quote",
+      "target": "/Users/t/Projects/rox-one-compound-implementation/node_modules/shell-quote",
+      "version": "1.8.3",
+      "packageJsonSha256": "56b971af0367ec2e347a747106bdcc5f9ac49aaf0ce07f485b2afee2635c8308",
+      "access": "external dependency read-only symlink"
+    }
+  ],
+  "mutation": {
+    "path": "apps/workspace-service/src/modules/identity/repository.ts",
+    "line": 244,
+    "original": "        WHERE workspace_id = $1 AND deleted_at IS NULL AND (owner_principal_id = $2 OR visibility = 'members')",
+    "mutated": "        WHERE workspace_id = $1 AND deleted_at IS NULL AND (owner_principal_id = $2 OR visibility IN ('members', 'private'))",
+    "originalSha256": "9899ca80d645ea243e395debcec2fa9405f64e6e3c945ff706a5e533269e0a6d",
+    "mutatedSha256": "d63d7981a36792043bbbe2a7c2bf77fe454ffef1e0854fbd41f75dd3fa9e3908",
+    "identicalSelectedMutation": true
+  },
+  "productionHooks": false,
+  "testHooks": false,
+  "mocks": false
+}

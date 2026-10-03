@@ -1,0 +1,296 @@
+{
+  "task_id": "LSX-WP-046-preflight",
+  "attempt_id": "74f9171d8dea15e83ef65a114702dd6b",
+  "packet_hash": "a1c9b98e6e06b460bcb945725069abd33f68803543ea119dc0a8050953a8245e",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-046",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_NOT_STARTED",
+  "scope": {
+    "mode": "inspect-and-write-owned-report",
+    "tier": "bounded-workflow",
+    "ownedArtifact": "plans/compound-implementation/worker-reviews/LSX-WP-046.json",
+    "productSourceChanged": false,
+    "testsBuildsNativeUiNetworkRun": false,
+    "gitStateChanged": false,
+    "runtimeEvidence": "NOT_RUN by explicit preflight boundary; proposed verification below is not a passing result.",
+    "inspectionLimit": "Normative records, referenced design/published specifications, five listed source seams and their direct imports; no broad repository survey.",
+    "codegraph": "Unavailable: tool reported no project .codegraph index. No indexing attempted. Scoped find failed with judge API 402; inspection continued with literal grep and read.",
+    "promptEvolution": "No canonical prompt/skill mutation: no justified durable improvement established by this bounded preflight; only report writing is authorized."
+  },
+  "dependencies": ["LSX-WP-001", "LSX-WP-026", "LSX-WP-031", "LSX-WP-033", "LSX-WP-034", "LSX-WP-045"],
+  "dependencyReadiness": [
+    {"id": "LSX-WP-001", "title": "Page content descriptor и совместимое открытие Notes", "requiredReceipt": "Canonical Page/legacy Note alias, source binding, current-policy resolution and durable native identity readback. Resolver code is present, but its receipt acceptance was not established here."},
+    {"id": "LSX-WP-026", "title": "Existing Tiptap binding, durable draft и history restore", "requiredReceipt": "One existing editor writer with durable draft/recovery and revision-bound post-restart readback; gallery must not introduce a second editor authority."},
+    {"id": "LSX-WP-031", "title": "Semantic tabs/columns и safe basic Markdown fallback", "requiredReceipt": "Template structured blocks preserve semantic content and safe Markdown fallback, including unknown-format behavior."},
+    {"id": "LSX-WP-033", "title": "Action Buttons typed registry и inert imports", "requiredReceipt": "Reviewed typed action schema, inert imported fences and server command dispatch/authorization. CommandRegistry is not itself that authority."},
+    {"id": "LSX-WP-034", "title": "Portable vault import staged identities/attachments", "requiredReceipt": "Staged template source/assets, stable identity mappings, licensing/source hash and authorized asset handling; no preview-time import/adoption."},
+    {"id": "LSX-WP-045", "title": "Explicit CustomRecord page payload для нового типа данных", "requiredReceipt": "Explicit new entity type/schema and canonical owner creation receipts for declared CustomRecord children; no empty pretend editor or parallel row store."}
+  ],
+  "foundationGates": [
+    {
+      "gate": "Published document foundation is more than Markdown Notes",
+      "separateFromExplicitDag": true,
+      "specEvidence": ["docs/rox-suite/published/RS-DOC-01.md:3,35-44,79-87", "plans/lark-suite-reference/work-packages.json:16875-16884"],
+      "requirements": ["RS-DRV-01 (#1109)", "RS-MSG-02 (#1107)", "Existing Page/library collaborative_document representation and one React editor binding where that content kind is selected"],
+      "why": "The linked published refinement requires existing Drive/library identity and common EntityDiscussion, not a second document/comments store. Its normative dependency links are not listed as LSX-WP-046 direct DAG edges.",
+      "missingPrerequisite": "Lead must map and accept the relevant foundation receipts, or establish exact accepted transitive coverage. No published issue text proves implementation. Do not expand this package into implementing Drive, Discussion or CRDT."
+    },
+    {
+      "gate": "Published automation lifecycle and execution foundation",
+      "separateFromExplicitDag": true,
+      "specEvidence": ["docs/rox-suite/published/RS-AUT-05.md:44-56,94-111", "docs/lark-suite-reference/08-automation-integration.md:78-84"],
+      "requirements": ["RS-AUT-01 (#1096)", "RS-AUT-02 (#1097)", "RS-AUT-03 (#1098)", "RS-AUT-04 (#1099)", "Existing durable bounded workflow/domain-step receipt authority"],
+      "why": "RS-AUT-05 explicitly reuses RS-AUT-01 Draft/PublishedRevision authority and lists four normative predecessors. graph.ts only compiles authoring metadata into current runtime config; buildAutomationGraphSave replaces canonical automations and does not prove draft/publish separation or restart-safe child execution.",
+      "missingPrerequisite": "Accepted immutable-version/current-authorization/idempotent-step/restart receipts and supported typed child handlers, with transitive ownership mapping. Never use compileAutomationGraph or config save as template preview execution, nor create a new scheduler/table."
+    },
+    {
+      "gate": "Launch generation, reference delivery and leases",
+      "separateFromExplicitDag": true,
+      "specEvidence": ["plans/lark-suite-reference/execution-packages.json:4033-4079"],
+      "requirements": ["Lead wave0 commit", "Accepted receipts for all six explicit predecessors", "Resolved reference_package_revision/reference_package_digest and spec_ref hashes", "Approved reconciled product base plus prerequisite commits", "Exclusive integration-owner path leases"],
+      "why": "Specification base e953786ba7e30fb5da5dca7e88e20e324d5aebab differs from this preflight packet input a21aeab1da5a67e56788384ff930945b0f487879. Dirty wave0 bytes must not be treated as a committed implementation base.",
+      "missingPrerequisite": "Root supplies the committed approved implementation packet and accepted generations. This worker must not checkout, commit or modify progress."
+    },
+    {
+      "gate": "Transport, owner creation and localization seams exceed the two leased shared paths",
+      "separateFromExplicitDag": true,
+      "specEvidence": ["packages/shared/src/protocol/channels.ts:170-196", "packages/core/src/docs/index.ts:1-7", "plans/lark-suite-reference/execution-packages.json:4079", "plans/lark-suite-reference/work-packages.json:16768-16809"],
+      "requirements": ["Authenticated doc.previewTemplate/doc.createFromTemplate routing", "Durable canonical owner create and derivedFrom metadata", "Shared bounded creation receipts and outbox aliases", "RU default and all ten locale keys"],
+      "why": "Inspected content/notes channel group has resolve/commit/receipt/create but no template operations; docs index has no template export. Five new files and two existing UI patches cannot alone establish IPC/RPC registration, durable owner creation, events or ten-locale changes.",
+      "missingPrerequisite": "Integration owner identifies real transport/owner/outbox/localization registration symbols in the accepted foundations and obtains reviewed scope extension when edits beyond the listed shared paths are necessary. Paths beyond direct imports were not surveyed here; no guessed handler is authorized."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/docs/template-manifest.ts",
+    "packages/server-core/src/docs/template-create.ts",
+    "apps/electron/src/renderer/pages/docs/TemplateGallery.tsx",
+    "tests/lark-suite-extension/lsx-wp-046.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-046.spec.ts"
+  ],
+  "newFileContributions": [
+    {
+      "path": "packages/core/src/docs/template-manifest.ts",
+      "presence": "Not found by exact normative-path glob during inspection",
+      "proposedSymbols": ["TemplateVersion", "CreationPlan", "DomainReceipt", "decodeTemplateManifest", "decodeTemplatePreviewRequest", "decodeTemplateCreateRequest", "decodeTemplateResult", "templatePreviewDigest"],
+      "change": "Follow existing decodeMarkdownCommitCommand/decode descriptor conventions with runtime-validated wire schemas, not TS-only interfaces. Immutable manifest binds version/schemaVersion/source hash/license, retained content, required capabilities, context/source refs, assets, explicit child action ids and bounded effects. Digest binds reviewed version/hash/context/source revisions/audience/selected effects and their schemas; use existing retainedSourceHash with deterministic wire serialization, not automationGraphRevision's FNV token. Result includes safe preview/missing capabilities, canonical Doc receipt and per-child committed/failed/unconfirmed/not-started results; expose all eight normative error discriminants. Idempotency key cannot substitute for actor authorization. Names in this entry are proposed, not existing exports."
+    },
+    {
+      "path": "packages/server-core/src/docs/template-create.ts",
+      "presence": "Not found by exact normative-path glob during inspection",
+      "proposedSymbols": ["createTemplateService", "previewTemplate", "createFromTemplate"],
+      "change": "Use accepted existing domain owners and bounded workflow authority. previewTemplate is read/validate/render only: no adoptDescriptor, create, save graph, publish, source grants, install, execute or external fetch. createFromTemplate resolves the reviewed digest using authenticated context and stable idempotency key, revalidates manifest/context/source revision/current capabilities/audience/asset policy, and atomically reserves one logical Doc origin in existing durable authority. Create one canonical Doc with derivedFrom version/hash and execute only explicitly reviewed child commands through current ACL; retain per-origin durable receipts/unknown results and recover by reconciliation rather than new side-effect keys. Commit document.created/template.instantiated through existing outbox only after owner durability. Missing real owner/workflow authority returns missingDependency, never an in-memory successful simulation."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/TemplateGallery.tsx",
+      "presence": "Not found by exact normative-path glob during inspection",
+      "proposedSymbols": ["TemplateGallery"],
+      "change": "RD-11 within existing Notes destination: authorized categories/search, selected immutable version and schema/hash/license/effects review, required and missing capabilities, safe preview, audience/assets review, accessible disabled Create reason, loading/empty/error/denied/offline/conflict/unconfirmed/partial states. Only explicit confirm calls createFromTemplate with the same plan key on uncertain retry. Show canonical Doc and individual child receipts without false all-created status. On version/binding/audience change discard stale review and request a new digest. No gallery-local content/catalog authority and no action execution from open/hover/focus/preview. Follow current theme, existing font and shared i18n."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-046.test.ts",
+      "presence": "Not found by exact normative-path glob during inspection",
+      "proposedSymbols": ["template manifest/creation behavior scenarios"],
+      "change": "Behavior tests for immutable review digest; zero preview/open effects; authenticated actor spoof denial; stale manifest/source/audience conflict; private asset exclusion/denial; concurrent/duplicate confirm one Doc and child per origin; partial/unknown child results; revoked retry; crash-after-effect/restart same receipts and exact native hashes. Include reproduction seeds and semantic mutant controls (preview workflow execution and child retry with new origin). Exercise accepted native owners rather than asserting mocked forwarding/source text."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-046.spec.ts",
+      "presence": "Not found by exact normative-path glob during inspection",
+      "proposedSymbols": ["actual Electron template gallery scenarios"],
+      "change": "Use discovered supported real Electron runner, not an invented command. Navigate existing Notes/Templates, search/select with pointer and keyboard/IME, review version/effects/assets and capability blockers, cancel with restored focus, explicitly create and reopen canonical Doc, inspect partial receipts, retry/reload after uncertainty. Capture ARIA, theme/locale/font/200% zoom/reduced-motion and native domain readback separately. No runtime launched in preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "saveCurrentNote (existing orchestration seam; adjacent gallery mount and confirmation wiring require reviewed symbol expansion)",
+      "baseSha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba",
+      "change": "Preserve saveCurrentNote lines 1023-1099, pendingCommitsRef replay, saveQueueRef and content/source/revision guards. Mount TemplateGallery under this existing Notes surface only after approved adjacent NotesPage/flushBeforeAction wiring (1101-1104) is added to the lease: opening/previewing gallery must not call saveCurrentNote or handleCreate; confirmation must flush the existing dirty document once and block if flush fails, then call authenticated template creation rather than createNote+saveNote. After durable confirmed receipt refreshNotes and navigate via routes.view.notes using server-issued canonical alias, preserving existing note identity/sourceStoreId and preventing late workspace response from changing the active view. Gallery uses its own creation-plan state, never writes preview into contentRef/activeNote or sets dirty. Do not hardcode authority epoch or reuse current note's revision as new-template ownership.",
+      "reason": "Current save path is already root-modified durable CAS/replay orchestration; current handleCreate at 1225-1233 is unreviewed simple note creation, not template instantiation. Preview must have zero mutations, while navigation after confirm must not lose a dirty draft.",
+      "missingPrerequisite": "Accepted LSX-WP-001/026/033/034/045 seams, real template transport methods and reviewed NotesPage symbol scope beyond saveCurrentNote. Apply serially by integration owner only."
+    },
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "TiptapMarkdownEditor; preprocessMarkdownForOfficial; postprocessMarkdownFromOfficial",
+      "baseSha256": "8c8b658c506988c210389a239ada69743d7f9a5efc4ccaa2c1c6116d0b161724",
+      "change": "At TiptapMarkdownEditor use existing LSX-WP-031/033 semantic/action extensions to render imported action/workflow fences as inert bounded content; preview uses editable=false with no persistence onUpdate or activating wiki/tag callbacks. Do not register executable CommandContribution objects from parsed content. In preprocessMarkdownForOfficial, restrict math/currency normalization to eligible prose so fenced actions/code/unknown blocks remain verbatim; postprocess must reverse only transformations owned by that parse (not arbitrary currency-marker bytes inside fences). Reuse accepted retained-source/fallback bridge, not a second parser/store; legacy/official serialization must preserve inert fence payload/version/hash. Retain emitUpdate:false on programmatic content/authority updates and hide editable menus in preview. Use authorized asset derivatives or placeholders, not raw template private image URLs. Exact action-extension names must come from accepted dependency receipt; absent dependency is a blocker, not guessed code.",
+      "reason": "Current official preprocessing globally rewrites math/currency through code fences and postprocessing replaces every currency marker. Current editor has generic image loading and onUpdate serialization but no template trust manifest; readOnly alone does not authorize assets. Existing command registry is a pure UI store, not an authorization boundary. Root added LegacyMixedTaskLists during preflight (import line 14, extension line 330); preserve that mechanism and do not overwrite concurrent root work.",
+      "missingPrerequisite": "Accepted semantic Markdown fallback and inert action extension schemas, authorized asset preview policy, lossless editor bridge, and approved prop/type additions if needed. Apply serially under existing editor lease."
+    }
+  ],
+  "integrationScopeGaps": [
+    {"path": "packages/shared/src/protocol/channels.ts", "symbol": "RPC_CHANNELS.content / RPC_CHANNELS.notes", "changeNeeded": "Integration-owned authenticated routing and typed schemas for doc.previewTemplate/doc.createFromTemplate, including receipt reconciliation. Electron adapter/handler symbols must be discovered by the lead and added to a reviewed packet.", "authorization": "READ_ONLY_DIRECT_IMPORT; not an authorized shared patch in this packet"},
+    {"path": "packages/core/src/docs/index.ts", "symbol": "docs barrel exports", "changeNeeded": "If the approved package import path requires a barrel export, integration owner adds template-manifest export in an expanded packet; otherwise use an already supported direct module import. No manifest/export mutation by this worker.", "authorization": "READ_ONLY_DIRECT_IMPORT; not an authorized shared patch in this packet"},
+    {"path": "packages/shared/src/i18n/locales/*.json", "symbol": "template-gallery labels/help/errors", "changeNeeded": "Allocate integration-owner locale edits across de,en,es,fr,hu,ja,pl,ru,zh-Hans,zh-Hant; ASCII sorted keys and locale parity, Russian plural conventions. Normative requirement comes from loaded repository rules and UI contract, not inspection of these files.", "authorization": "Requires reviewed shared scope; locale files not inspected"},
+    {"path": "Existing native document/workflow/outbox authorities (exact paths unresolved within bounded inspection)", "symbol": "canonical create / derivedFrom / durable creation plan / step receipts / event aliases", "changeNeeded": "Lead maps exact accepted dependency-owned APIs. Descriptor resolver is a read/adoption service, not a Doc creator; no new plan/content database is authorized merely because its interface accepts injected dependencies.", "authorization": "Foundation owner responsibility; reject implementation until actual seams and scope are bound"}
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "version/digest/capabilities and effects reviewable",
+      "currentEvidence": "work-packages.json:16843-16849 requires this twice (acceptance and DoD). TemplateGallery/template-manifest absent. CommandRegistry.query filters when/text/source but permissions are merely metadata; graph revision is FNV, explicitly not a security token.",
+      "actualSeam": "createCommandRegistry/CommandRegistryImpl.query (registry.ts:38-47); automationGraphRevision (graph.ts:208-214); retainedSourceHash (retained-source.ts:48-81)",
+      "requiredChange": "Proposed TemplateVersion/CreationPlan wire decoders and templatePreviewDigest in template-manifest.ts; TemplateGallery visibly reviews immutable version/hash/schema/license/bindings/audience/assets/selected effects and missing capabilities; changing any reviewed input invalidates digest. Only inspect command definitions, never execute during review.",
+      "verification": "After dependency acceptance: mutate each version/hash/binding/audience/action field and assert stale confirmation conflict; verify actual UI displays exact plan and disables unsupported creation with accessible reason.",
+      "missingPrerequisite": "All explicit predecessor receipts; typed action/capability registry and real authorized preview transport.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "partial results not falsely all created",
+      "currentEvidence": "work-packages.json:16844-16849 and 16819 require partial child report; existing Notes handleCreate returns a note and navigates, with no child receipt model. graph.ts:1-6 explicitly is not a graph executor.",
+      "actualSeam": "NotesPage.handleCreate (1225-1233); buildAutomationGraphSave (graph.ts:538-562)",
+      "requiredChange": "Proposed createFromTemplate returns one Doc receipt plus stable per-child committed/failed/unconfirmed/notStarted results and explicit bounded retry origin; TemplateGallery renders those statuses and committed effects, never summarizes all created unless every requested child has a durable native receipt. Stop dangerous chain by default.",
+      "verification": "Fail a later child after earlier Doc/child commit, cancel unstarted steps and lose a response after effect: inspect real native refs plus UI partial report; retry must not recreate successful origins or claim unknown effect succeeded.",
+      "missingPrerequisite": "Existing bounded workflow, cancellation/reconciliation and durable child handler receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "decodeMarkdownCommitCommand performs actual runtime validation; AuthenticatedContentContext.actorPrincipalId is adapter-set; descriptor resolver denies invalid context. Existing ContentFailure lacks rateLimited and MarkdownCommitError lacks offlineUnsupported/missingDependency, so neither alone satisfies the eight template error kinds. No template channels found in scoped channel search.",
+      "actualSeam": "decodeMarkdownCommitCommand (command-envelope.ts:22-46); AuthenticatedContentContext (descriptor-resolver.ts:15-16); createDescriptorResolver.authorize (345-349); RPC_CHANNELS.content (channels.ts:170-179)",
+      "requiredChange": "Proposed template-manifest runtime request/result/error decoders include validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Service derives actor/workspace policy/source owner from transport and rejects spoofed ownership; integration owner wires compiled boundary schemas.",
+      "verification": "Future source/schema lane compiles server and renderer consumers; malformed/oversized/unknown schemas and payload actor/owner/workspace spoof attempts fail typed and return no protected content. Build/test not run in preflight.",
+      "missingPrerequisite": "Reviewed transport/schema registration scope and authenticated adapter; no new method may be invented on window.electronAPI.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "DescriptorStore.transaction groups descriptor/origin/aliases/idempotency metadata but resolver has no content writer. resolveContent returns canonicalRef, ownerRef, contentHash, revision and policyRevision. Notes saveCurrentNote awaits commitMarkdown and retains uncertain pending operation. None proves durable template creation.",
+      "actualSeam": "DescriptorStore.transaction (descriptor-resolver.ts:78-82); resolveContent (395-426); saveCurrentNote (NotesPage.tsx:1043-1057)",
+      "requiredChange": "Proposed createFromTemplate uses accepted native create authority and durable logical plan/child receipts; retain derivedFrom version/hash without duplicating content store; reconcile unknown result with same identity. Return committed only after native owner durability; reopen through canonical resolver and current authorization.",
+      "verification": "Future native lane records actual ref/revision/content hash and derivedFrom before service/app restart, then reads exact same refs/hashes and replays same confirm; crash before ACK and crash after effect must not lose acknowledged entity or duplicate Doc/child.",
+      "missingPrerequisite": "Accepted native creation and workflow persistence/recovery APIs; resolver readback is available source-only, runtime acceptance unknown.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:16817-16831,16852 requires happy/denied/conflict/replay/recovery and separate proof lanes; scoped template tests absent. Existing resolver rechecks alias/source ACL and source revision but no template plan.",
+      "actualSeam": "createDescriptorResolver.load (descriptor-resolver.ts:352-392); pendingCommitsRef replay (NotesPage.tsx:1043-1057)",
+      "requiredChange": "Normative test files cover current capability/audience/asset authorization, stale digest/version/source/policy/epoch, duplicate concurrent confirmation, child failure/unknown effects, revoked retry and restart. Exact same logical origin survives every attempt. Preserve input hashes/seeds and expected/observed receipts.",
+      "verification": "Future command: bun test tests/lark-suite-extension/lsx-wp-046.test.ts. Separately run actual native creation/readback/restart scenario and UI scenario via discovered runner; record every attempt, including rejected/transport failures.",
+      "missingPrerequisite": "Accepted fixtures isolated by owner/source, real service registration, supported restart/readback harness and actual Electron runner discovery.",
+      "state": "NOT_RUN_IMPLEMENTATION_PENDING"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:16833-16841 names preview workflow execution OR child retry with new origin, and assertions zero preview effects / one Doc+child per origin / private source not auto-shared. No controls executed in preflight.",
+      "actualSeam": "Proposed previewTemplate/createFromTemplate; existing buildAutomationGraphSave is unsafe to call from preview because it creates runtime config actions",
+      "requiredChange": "In normative source test, seed real isolated owner/source fixture and capture exact input+evaluated code hashes; inject preview-time effect and/or retry-key drift into production path under a bounded mutation run. Establish green baseline and assertion-failing mutant, not mocked echo counts alone.",
+      "verification": "Assert native entity/receipt/grant changes are zero after preview and exactly one per logical origin after retry; private source grants remain unchanged. Mutant must fail the named semantic assertion, not setup, timeout, compile or runner error.",
+      "missingPrerequisite": "Real native owner and workflow receipts plus reproducible isolated mutation runner; controls remain required, never N/A.",
+      "state": "NOT_RUN_IMPLEMENTATION_PENDING"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "RD-11 is specified at 06-rox-docs-design.md:67; UI common contract work-packages.json:16801-16805; existing Notes uses useTranslation and existing Tiptap editor. TemplateGallery absent; no visual/native proof collected.",
+      "actualSeam": "NotesPage/TemplateGallery mount (NotesPage.tsx:563 and 2242-2290); TiptapMarkdownEditor (227-453)",
+      "requiredChange": "Implement real Notes-contained gallery, search/category/preview/capability/audience/effects and partial receipt states; disabled reason accessible independently of disabled button; hover/focus/click help, visible focus, Escape restore and IME-safe keyboard handling. Preserve user theme; use actual Rox Mono, locale keys all ten languages, reduced motion and readable 200% zoom.",
+      "verification": "Future actual Electron scenario: pointer hit target, keyboard navigate/search with Russian IME, cancel/confirm/focus restore, capability denial, partial outcome, theme switch, 200% zoom, reduced motion; screenshots plus ARIA/computed font/actual loaded-font evidence tied to exact integrated revision. Discover supported runner, no invented passing argv.",
+      "missingPrerequisite": "Approved gallery mount symbols, locale allocation, dependency editor/fallback receipts and actual Electron execution authority after preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Definition_of_done final item work-packages.json:16855 and proof_lanes 16824-16831; current preflight has source inspection/hashes only.",
+      "actualSeam": "Required source/schema, unit/property, native-domain-readback, restart-recovery, ACL-negative, actual-Electron-UI proof lanes",
+      "requiredChange": "Integration owner binds independent receipts for all six lanes to approved implementation and integrated commit. Provider/collaboration receipts additionally required if those lanes are actually exercised; no claim from graph validation, queue ACK or screenshots alone.",
+      "verification": "Review exact commit/diff, compiled wire boundaries, seeded baseline/mutant semantic assertions, authoritative refs/hashes before/after restart, ACL-negative results and actual UI artifacts. Preflight report verifier proves report lineage/source freshness only.",
+      "missingPrerequisite": "Implementation, root integration and independent lane verification; external_prerequisites explicit array is empty, not permission to simulate absent internal foundations.",
+      "state": "FULL_DOD_NOT_VERIFIED"
+    },
+    {
+      "criterion": "template preview/open causes zero mutations; unreviewed action fences remain inert",
+      "currentEvidence": "work-packages.json:16593-16594,16763-16766,16817-16820; editor currently has no imported executable action extension. Programmatic setContent and setEditable suppress update, but official preprocessing rewrites all math/currency matches without fence awareness.",
+      "actualSeam": "TiptapMarkdownEditor.onUpdate/content sync (386-445); preprocessMarkdownForOfficial (76-100); CommandContribution.execute (commands/types.ts:13-23)",
+      "requiredChange": "previewTemplate never installs/publishes/grants/executes or materializes children; TemplateGallery must not feed active Notes dirty state. Reuse LSX-WP-033 inert action fence semantics and LSX-WP-031 lossless fallback in both markdown engines, preserve original fenced payload bytes and exclude unsafe external/private asset fetching.",
+      "verification": "Open, hover, focus, search, preview, close and reopen imported command/workflow-bearing template in real gallery; assert no native commits, source grants, workflow activation or external transmission. Roundtrip both editor engines on fenced currency/math/action content and unknown fields without changing inert payload.",
+      "missingPrerequisite": "Accepted inert action/fallback/import mechanisms and authorized asset renderer; readOnly editor is not by itself a safe trust boundary.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "duplicate confirm one Doc; child failure partial report",
+      "currentEvidence": "work-packages.json:16819; existing save operation replay handles one existing note but no durable creation-plan origin. Simple handleCreate lacks template idempotency contract.",
+      "actualSeam": "NotesPage.saveCurrentNote replay (1043-1057) and handleCreate (1225-1233)",
+      "requiredChange": "Stable logical plan idempotency and child origin keys in accepted durable workflow; simultaneous confirms and recovery return the same canonical Doc and existing child receipts under current authorization. Unknown effect first reconciled; no fresh child key on retry.",
+      "verification": "Concurrent confirm, duplicate network delivery and restart re-confirm yield identical Doc ref and per-child origin/ref; induced second-child failure reports exact partial set and only missing eligible step retries.",
+      "missingPrerequisite": "Native idempotent create and durable origin/step ownership receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "private embedded source/asset excluded or denied; preview does not grant/install/execute",
+      "currentEvidence": "work-packages.json:16797-16799,16820; ResourceProviderRegistry.search isolates provider errors and has no authenticated principal in its search context. Resolver authorizes ref AND source before reading, then rechecks current policy.",
+      "actualSeam": "ResourceProviderRegistryImpl.search (resources/registry.ts:50-80); ResourceSearchContext (resources/types.ts:36-42); createDescriptorResolver.load (352-392)",
+      "requiredChange": "Resolve every embedded source/asset through current authenticated source policy, sanitize safe preview and output per actor/audience, explicitly list omitted or denied assets without leaking contents/IDs. Reauthorize assets/actions/audience separately on confirm and retry, and purge revoked UI projections by policy. Search results are not grants.",
+      "verification": "Two actors with differing source/asset access: unauthorized preview/create denied or visibly excludes forbidden payload; source grant unchanged; revoked confirm/retry denied; inspect UI, emitted receipts and logs for private text leak. No raw private image request.",
+      "missingPrerequisite": "Real grants/source-asset policy and import staging plus integration-managed protected preview cache behavior.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Immutable template manifest/source license/hash; created Doc retains derivedFrom; events carry normative envelope",
+      "currentEvidence": "work-packages.json:16788-16795; descriptor metadata contains origin/aliases, not a demonstrated template version/license/provenance or template event authority. graph save is authoring config, not immutable publication.",
+      "actualSeam": "StoredDescriptor/DescriptorStore (descriptor-resolver.ts:67-82); retainedSourceHash (retained-source.ts:48-81); buildAutomationGraphSave (graph.ts:538-562)",
+      "requiredChange": "TemplateVersion stores immutable manifest/version/source license and exact hash using accepted existing storage owner; Doc derivedFrom links to that version/hash. Emit document.created/template.instantiated via verified existing event aliases after commit with eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId. Avoid duplicate events on replay and redact for recipient authorization.",
+      "verification": "Native readback of manifest/provenance after restart, tampering rejected, no imported unlicensed/private content auto-shared; replay preserves entity and event identity/correlation, publication or queued events do not precede durable ownership.",
+      "missingPrerequisite": "Existing durable manifest/provenance and outbox/event alias owner mapping; broader shared storage/event changes require reviewed scope.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Existing canonical Notes/Pages mechanisms remain one authority; no second stores or surfaces",
+      "currentEvidence": "06-rox-docs-design.md:7,53,57,67 and RS-DOC-01.md:3,35-43; actual resolver uses canonicalPageRef and legacyNoteAlias and reads owner content. Existing Notes save queue has root wave0 additions.",
+      "actualSeam": "createDescriptorResolver.resolveContent (395-425); NotesPage.saveCurrentNote (1023-1104); TiptapMarkdownEditor (227-453)",
+      "requiredChange": "Create through existing accepted Page/native owner; mount gallery in existing Notes destination and open server-issued alias on receipt; reuse existing semantic editor/action/workflow authorities and current source bindings. Do not create gallery-local document catalog, scheduler, receipt database, comments engine or separate production Markdown master.",
+      "verification": "Future existing Notes/Page route regression plus gallery create/open/reload readback verifies same canonical ref/content/source owner and no duplicate content authority; unsaved current draft remains intact after gallery cancel or failed flush.",
+      "missingPrerequisite": "Accepted canonical identity/editor foundation and expanded approved integration symbol allocation where required.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "apps/electron/src/renderer/pages/NotesPage.tsx", "symbol": "saveCurrentNote / flushBeforeAction", "lineStart": 1023, "lineEnd": 1104, "sha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path": "apps/electron/src/renderer/pages/NotesPage.tsx", "symbol": "handleCreate / TiptapMarkdownEditor mount", "lineStart": 1225, "lineEnd": 1233, "sha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba", "additionalRange": {"lineStart": 2609, "lineEnd": 2624}},
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "preprocessMarkdownForOfficial / postprocessMarkdownFromOfficial", "lineStart": 76, "lineEnd": 105, "sha256": "8c8b658c506988c210389a239ada69743d7f9a5efc4ccaa2c1c6116d0b161724"},
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "TiptapMarkdownEditor", "lineStart": 227, "lineEnd": 453, "sha256": "8c8b658c506988c210389a239ada69743d7f9a5efc4ccaa2c1c6116d0b161724"},
+    {"path": "packages/core/src/platform/commands/registry.ts", "symbol": "CommandRegistryImpl.query / createCommandRegistry", "lineStart": 38, "lineEnd": 66, "sha256": "832ae183641c47c28502469a9f8d77dd8a530fab80e958b8060406e610cf6f6f"},
+    {"path": "packages/core/src/platform/commands/types.ts", "symbol": "CommandContribution / CommandContext", "lineStart": 13, "lineEnd": 34, "sha256": "471524b041e4322bc7512ae93833794f45c14f2d2d6d029ab2fb65967f7ebdc3"},
+    {"path": "packages/core/src/platform/resources/registry.ts", "symbol": "ResourceProviderRegistryImpl.search / createResourceProviderRegistry", "lineStart": 50, "lineEnd": 90, "sha256": "dbbe1bddb349ebb2922e7605d5b300e9973519144b26077596d03f339a054d94"},
+    {"path": "packages/shared/src/automations/graph.ts", "symbol": "automationGraphRevision", "lineStart": 208, "lineEnd": 214, "sha256": "976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path": "packages/shared/src/automations/graph.ts", "symbol": "compileAutomationGraph / buildAutomationGraphSave", "lineStart": 492, "lineEnd": 562, "sha256": "976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path": "packages/core/src/docs/command-envelope.ts", "symbol": "decodeMarkdownCommitCommand", "lineStart": 22, "lineEnd": 46, "sha256": "39e55e808796e48fee16ff0ee40c345886af9264bbc776c91657ce1ea2286817"},
+    {"path": "packages/core/src/docs/retained-source.ts", "symbol": "retainedSourceHash / rawSpanPreviewDigest", "lineStart": 48, "lineEnd": 81, "sha256": "eafb42712b3e5d349c370c733484867be2db3d390cd973556ac8b44d2abea4e5", "additionalRange": {"lineStart": 138, "lineEnd": 144}},
+    {"path": "packages/server-core/src/docs/descriptor-resolver.ts", "symbol": "AuthenticatedContentContext / DescriptorStore", "lineStart": 15, "lineEnd": 82, "sha256": "c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790"},
+    {"path": "packages/server-core/src/docs/descriptor-resolver.ts", "symbol": "createDescriptorResolver.load / resolveContent", "lineStart": 343, "lineEnd": 426, "sha256": "c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790"},
+    {"path": "packages/shared/src/protocol/channels.ts", "symbol": "RPC_CHANNELS.content / notes", "lineStart": 170, "lineEnd": 196, "sha256": "89177712f430183f89657f08f985ea50861c8d774652dbb56471d5eb7cca0aaa"},
+    {"path": "packages/core/src/docs/index.ts", "symbol": "docs module export declarations", "lineStart": 1, "lineEnd": 7, "sha256": "8b5e0db083c582f579b2aaf591f6c0f0430e102b27025612df4a5ca051b377e9"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "work_packages[45] LSX-WP-046 full DoD", "lineStart": 16590, "lineEnd": 16944, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-046 normative execution scope", "lineStart": 3987, "lineEnd": 4081, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/rox-suite/published/RS-DOC-01.md", "symbol": "Domain authority and normative dependency links", "lineStart": 35, "lineEnd": 87, "sha256": "b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path": "docs/rox-suite/published/RS-AUT-05.md", "symbol": "Draft/PublishedRevision authority and normative dependency links", "lineStart": 44, "lineEnd": 115, "sha256": "d744861d35de4c46df3de25d7649341414f1d22a5cd111ec19736682bce8aa75"},
+    {"path": "docs/lark-suite-reference/06-rox-docs-design.md", "symbol": "RD-11 / inert Buttons / Docs DoD", "lineStart": 51, "lineEnd": 68, "sha256": "a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68", "additionalRanges": [{"lineStart": 142, "lineEnd": 156}, {"lineStart": 222, "lineEnd": 231}]},
+    {"path": "docs/lark-suite-reference/08-automation-integration.md", "symbol": "Failure cancellation security and durable workflow DoD", "lineStart": 78, "lineEnd": 84, "sha256": "32b1ffb806b8dab6be2ffe38f3144b1a5601e0695620b5a8f7bbed9b4f345a68"}
+  ],
+  "sourceGeneration": {
+    "hashKind": "SHA256 of whole inspected file bytes using shasum -a 256, not symbol snippets",
+    "manifestMatch": "Both packet specification hashes matched actual inspected files.",
+    "sourceDrift": "NotesPage hash 872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba differs from spec baseline 0266d999906c17b5c7d9d69945495f9584b276e46c5ccf76537f40dc801d356b; refreshed editor hash 8c8b658c506988c210389a239ada69743d7f9a5efc4ccaa2c1c6116d0b161724 differs from spec baseline 8e919184dda7d4e7b632dc204b313c74aea8ba9feeaca9beeaa44577b926d3c1. Existing registry and graph whole-file hashes match their normative baseline records. Working-tree source evidence is not attributed to input HEAD.",
+    "freshnessRule": "Report is a working-tree inspection snapshot, not proof of committed wave0 or accepted dependencies. Any referenced whole-file change invalidates its evidence generation. Reread affected exact seams and recompute hashes before integration; keep packet lineage unchanged and mark historical preflight evidence explicitly.",
+    "inspectionAttempts": [{"attempt": 1, "result": "Preflight verifier exited 2: Source changed after inspection: packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "staleEditorSha256": "5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"}, {"attempt": 2, "action": "Reread changed editor imports, normalization, extension list, update/read-only/content synchronization and closing ranges; refreshed references/base hash to 8c8b658c506988c210389a239ada69743d7f9a5efc4ccaa2c1c6116d0b161724 and shifted lines. Observed concurrent root addition LegacyMixedTaskLists; product file untouched by worker."}],
+    "headChecked": false
+  },
+  "nextExecutableAction": {
+    "now": "Validate only this JSON against the supplied preflight packet using its --verify argv; this is report/source-lineage validation, not feature tests or implementation.",
+    "implementation": "After lead wave0 commit and all six accepted dependency artifact+readback receipts: bind a fresh approved implementation generation, resolve reference delivery hashes, map hidden RS foundations and real template transport/native create/workflow/outbox/localization owners, obtain expanded symbol/path scope and leases where required, reread changed seams, then implement manifest schemas and inert preview first, durable bounded creation second, existing Notes/gallery/editor integration third.",
+    "blockingPrerequisites": ["Lead committed approved wave0 generation", "Accepted LSX-WP-001/026/031/033/034/045 receipts", "Hidden published foundation coverage and existing durable creation/workflow APIs", "Reference delivery manifest revision/digests", "Transport/locale/outbox/owner registration and reviewed symbol/path leases"],
+    "verificationAfterImplementation": "Execute source/schema and specified Bun behavior scenarios, semantic seeded controls, actual native canonical readback and restart recovery, ACL negative cases, then real Electron UI lane on exact integrated revision. No implementation or runtime completion claim in this preflight."
+  },
+  "risks": [
+    "Five new files plus two shared UI seams are insufficient unless foundation owners provide authenticated transport, durable native create, workflow receipts, provenance and event registration. Silent scope expansion or simulation would violate packet.",
+    "Published RS-DOC-01 expects collaborative Page/Drive/Discussion and RS-AUT-05 relies on earlier automation foundations; six LSX edges must not be mistaken for proof those hidden gates are accepted.",
+    "Existing command permissions/context gating and ResourceProviderRegistry search are not server ACL. Never treat a visible command or search result as an execution/share grant.",
+    "automationGraphRevision is an optimistic FNV token, not manifest integrity; compile/save graph can alter canonical runtime actions and cannot implement inert preview or immutable workflow publication.",
+    "Tiptap official preprocessing globally changes math/currency in code/action fences; postprocess replaces arbitrary currency markers. Fix through accepted lossless bridge and precise shared patch, not stripping unrecognized blocks.",
+    "Read-only Tiptap still includes Image and render extensions; unreviewed templates require policy-safe asset rendering and no unapproved external/private fetches, not merely editable=false.",
+    "A UI createNote then saveNote sequence is not one durable template receipt. Crash/replay may duplicate documents or children unless logical origins are persisted by existing owners.",
+    "Flushing a dirty current note while merely opening or previewing gallery violates zero-mutation acceptance. Flush only on explicit confirmation/navigation and preserve unsaved draft on cancel/failure.",
+    "Root integration can change inspected lines and bytes. Recorded Notes/editor generation already differs from published baseline; do not overwrite root work or reuse stale hashes as committed evidence.",
+    "Template licenses and private assets need explicit current audience authorization; manifest declarations cannot install capabilities, grant access or publish workflows.",
+    "Full DoD includes six independent proof lanes and seeded semantic failure sensitivity. Report verification, source-only tests, screenshots or queued/provider receipts alone are not feature completion."
+  ]
+}

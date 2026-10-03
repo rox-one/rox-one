@@ -1,6 +1,6 @@
 /**
  * Persist voice prefs to `~/.craft-agent/voice.json`.
- * v1 → v2 is idempotent. Explicit local/none users are not silently moved to cloud.
+ * v1/v2 consent and TTS choices migrate conservatively; cloud consent is never inferred.
  */
 
 import { existsSync, mkdirSync } from 'node:fs'
@@ -10,6 +10,7 @@ import { resolveConfigDir } from '../config/paths.ts'
 import { withWakeWordConsent } from './policy.ts'
 import {
   DEFAULT_WAKE_PHRASE,
+  VOICE_PREFS_VERSION,
   getDefaultVoicePrefs,
   isAudioRetention,
   isLocalArchivePolicy,
@@ -54,7 +55,7 @@ export function normalizeVoicePrefs(raw: unknown, now: number = Date.now()): Voi
   const base = getDefaultVoicePrefs(now)
   if (!raw || typeof raw !== 'object') return base
   const obj = raw as Record<string, unknown>
-  const version = obj.version === 2 ? 2 : typeof obj.version === 'number' ? obj.version : 1
+  const version = obj.version === 3 ? 3 : typeof obj.version === 'number' ? obj.version : 1
   const sttEngine = isSttEngine(obj.sttEngine) ? obj.sttEngine : base.sttEngine
   const ttsEngine = isTtsEngine(obj.ttsEngine) ? obj.ttsEngine : base.ttsEngine
   const audioRetention = isAudioRetention(obj.audioRetention)
@@ -81,10 +82,10 @@ export function normalizeVoicePrefs(raw: unknown, now: number = Date.now()): Voi
   const explicitLocal = version < 2 && sttEngine === 'local-whisper'
   const privacyMigrationPending = explicitLocal
     ? obj.privacyMigrationPending !== false
-    : obj.privacyMigrationPending === true
+    : version < 3 || obj.privacyMigrationPending === true
 
   const prefs: VoicePrefs = {
-    version: 2,
+    version: VOICE_PREFS_VERSION,
     sttEngine: explicitLocal ? 'local-whisper' : sttEngine,
     ttsEngine,
     audioRetention,
@@ -94,7 +95,7 @@ export function normalizeVoicePrefs(raw: unknown, now: number = Date.now()): Voi
     asrModelId: typeof obj.asrModelId === 'string' ? obj.asrModelId : (explicitLocal ? 'whisper-large-v3-turbo' : base.asrModelId),
     recognitionLanguage: asLanguage(obj.recognitionLanguage),
     timestamps: obj.timestamps === 'word' || obj.timestamps === 'none' || obj.timestamps === 'segment' ? obj.timestamps : 'segment',
-    cloudAsrConsent: explicitLocal ? false : obj.cloudAsrConsent !== false,
+    cloudAsrConsent: version >= 3 && obj.cloudAsrConsent === true,
     cloudEnhancementConsent: obj.cloudEnhancementConsent === true,
     webEnrichmentConsent: obj.webEnrichmentConsent === true,
     privacyMigrationPending,

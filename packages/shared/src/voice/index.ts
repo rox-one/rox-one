@@ -20,11 +20,8 @@ export {
   type VoicePrefs,
   type VoiceHealth,
   type TranscribeInput,
-  type TranscribeResult,
-  type SpeakInput,
-  type SpeakResult,
   type TranscribeAdapter,
-  type SpeakAdapter,
+  type TranscribeResult,
   type EnhancementMode,
   type HotkeyMode,
   type OverlayPosition,
@@ -45,7 +42,6 @@ export {
 export {
   VoicePrivacyError,
   transcribeWithPolicy,
-  speakWithPolicy,
   assertEditableTranscript,
 } from './transcribe.ts'
 

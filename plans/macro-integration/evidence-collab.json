@@ -1,0 +1,702 @@
+[
+  {
+    "id": "C01",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/collaboration/src/collab/manager.ts",
+    "symbol": "LoroManager / SnapshotIngest / importStatusToResult",
+    "lineStart": 53,
+    "lineEnd": 104,
+    "claim": "Loro CRDT mirror, snapshot sources and causal pending imports."
+  },
+  {
+    "id": "C02",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/collaboration/src/collab/engine.ts",
+    "symbol": "SyncEngine.start / handleLocalUpdates / persistSnapshot",
+    "lineStart": 132,
+    "lineEnd": 175,
+    "claim": "Engine starts after initialization and wires local operations, transport and snapshots."
+  },
+  {
+    "id": "C03",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/collaboration/src/collab/engine.ts",
+    "symbol": "handleLocalUpdates / persistSnapshot / handleSourceEvent / convergeFromServer",
+    "lineStart": 275,
+    "lineEnd": 465,
+    "claim": "WAL append, five-second snapshot cycle, pending-causal recovery and reconnect anti-entropy."
+  },
+  {
+    "id": "C04",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/collaboration/src/collab/wal.ts",
+    "symbol": "WALEntry / WAL_TTL_MS / WALSyncer.flush",
+    "lineStart": 8,
+    "lineEnd": 45,
+    "claim": "Undelivered WAL entries expire after seven days; delivery status is independent of snapshot pruning."
+  },
+  {
+    "id": "C05",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/collaboration/src/collab/wal.ts",
+    "symbol": "WALSyncer.flush",
+    "lineStart": 325,
+    "lineEnd": 373,
+    "claim": "Flush batches undelivered operations and marks delivered only when push returns acknowledgement."
+  },
+  {
+    "id": "C06",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/collaboration/src/collab/snapshot-store.ts",
+    "symbol": "IDBSnapshotStore / loadCachedState",
+    "lineStart": 14,
+    "lineEnd": 121,
+    "claim": "IndexedDB snapshots and WAL replay seed offline documents."
+  },
+  {
+    "id": "C07",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/collaboration/src/collab/awareness.ts",
+    "symbol": "createAwareness / PeerAwareness / SelectionCodec",
+    "lineStart": 11,
+    "lineEnd": 140,
+    "claim": "Awareness defaults to ten seconds and exposes remote peers with nonempty selection."
+  },
+  {
+    "id": "C08",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/collaboration/src/sync-service/socket.ts",
+    "symbol": "createSyncSocket",
+    "lineStart": 40,
+    "lineEnd": 66,
+    "claim": "Typed socket uses capped exponential reconnect backoff."
+  },
+  {
+    "id": "C09",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/collaboration/src/sync-service/generated/schema.bop",
+    "symbol": "FromPeer / FromRemote",
+    "lineStart": 1,
+    "lineEnd": 44,
+    "claim": "Bebop protocol carries operations, peer id, awareness, snapshot, update ack and version-vector catchup."
+  },
+  {
+    "id": "C10",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/sync-service/src/socket/protocol.rs",
+    "symbol": "process_message",
+    "lineStart": 163,
+    "lineEnd": 315,
+    "claim": "Server checks grant, persists before ACK, broadcasts operations and serves version-vector differences."
+  },
+  {
+    "id": "C11",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/sync-service/src/auth.rs",
+    "symbol": "AccessLevel.can_edit_for / socket_access / document_access",
+    "lineStart": 10,
+    "lineEnd": 29,
+    "claim": "Document sockets permit Comment writes while Surface sockets require Edit."
+  },
+  {
+    "id": "C12",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/sync-service/src/durable_object/surface_api.rs",
+    "symbol": "SurfaceLifecycle / grant_active / validate_surface_sockets / active_websockets",
+    "lineStart": 36,
+    "lineEnd": 59,
+    "claim": "Surface lifecycle and expiry are separate from legacy document grants."
+  },
+  {
+    "id": "C13",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/sync-service/src/durable_object/surface_api.rs",
+    "symbol": "revoke_surface / validate_surface_sockets / active_websockets",
+    "lineStart": 238,
+    "lineEnd": 311,
+    "claim": "Surface revocation closes sockets 1008; validation skips legacy document sessions."
+  },
+  {
+    "id": "C14",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/sync-service/src/storage.rs",
+    "symbol": "SessionStorage.load_document_state / append_pending_operation / get_snapshot_storage",
+    "lineStart": 51,
+    "lineEnd": 163,
+    "claim": "Server reconstructs snapshot plus pending operation log and supports selectable snapshot backends."
+  },
+  {
+    "id": "C15",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/sync-service/Cargo.toml",
+    "symbol": "features / dependencies",
+    "lineStart": 9,
+    "lineEnd": 53,
+    "claim": "Default Cloudflare worker uses durable SQLite snapshot storage and Loro 1.16.2."
+  },
+  {
+    "id": "C16",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/lib/core/component/LexicalMarkdown/collaboration/CollabProvider.tsx",
+    "symbol": "CollabProvider / syncStateToLexical / lexicalStateSyncPlugin",
+    "lineStart": 128,
+    "lineEnd": 239,
+    "claim": "Solid Lexical provider binds shared state and preserves local selection via CRDT cursor."
+  },
+  {
+    "id": "C17",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/lib/core/component/LexicalMarkdown/collaboration/cursor.ts",
+    "symbol": "$convertLexicalSelectionToCursors / $cursorToLexicalPoint",
+    "lineStart": 82,
+    "lineEnd": 208,
+    "claim": "Lexical selections become stable Loro cursors rather than remote DOM offsets."
+  },
+  {
+    "id": "C18",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/lib/core/component/LexicalMarkdown/collaboration/undo.ts",
+    "symbol": "registerLoroHistory",
+    "lineStart": 200,
+    "lineEnd": 230,
+    "claim": "Lexical merge semantics use Loro UndoManager."
+  },
+  {
+    "id": "C19",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/lib/core/component/LexicalMarkdown/collaboration/remote-cursor.tsx",
+    "symbol": "useRemoteCursors / RemoteCursorsOverlay",
+    "lineStart": 203,
+    "lineEnd": 330,
+    "claim": "Remote selections render as DOM range overlays and user labels."
+  },
+  {
+    "id": "C20",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/messages/src/domain/models.rs",
+    "symbol": "MessageParent / ThreadAnchor",
+    "lineStart": 38,
+    "lineEnd": 159,
+    "claim": "Messages share channel, document, initiative and CRM parents plus Markdown/PDF/spreadsheet anchors."
+  },
+  {
+    "id": "C21",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/messages/src/domain/models.rs",
+    "symbol": "SimpleMention / Message / root_id",
+    "lineStart": 362,
+    "lineEnd": 432,
+    "claim": "Shared message has sender, bot profile, mentions, timestamps, tombstone, attachments and reactions."
+  },
+  {
+    "id": "C22",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/messages/src/domain/service.rs",
+    "symbol": "MessageView / MessageWrite / MessageService.post",
+    "lineStart": 13,
+    "lineEnd": 31,
+    "claim": "Common service requires parent view or comment/channel-member receipt."
+  },
+  {
+    "id": "C23",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/messages/src/domain/service.rs",
+    "symbol": "post / validate_references",
+    "lineStart": 180,
+    "lineEnd": 220,
+    "claim": "Post validates parent, anchors, thread and referenced entities before creation."
+  },
+  {
+    "id": "C24",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/messages/src/domain/service.rs",
+    "symbol": "validate_references",
+    "lineStart": 580,
+    "lineEnd": 657,
+    "claim": "Known entity references require view access; display chips, automation and static media have exceptions."
+  },
+  {
+    "id": "C25",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/messages/src/inbound/axum_router.rs",
+    "symbol": "router / timeline / create / patch_thread",
+    "lineStart": 44,
+    "lineEnd": 79,
+    "claim": "Parent-aware REST APIs expose message CRUD, reactions, threads and typing."
+  },
+  {
+    "id": "C26",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/messages/src/domain/notification.rs",
+    "symbol": "comment_recipients",
+    "lineStart": 7,
+    "lineEnd": 76,
+    "claim": "Discussion recipient reasons deduplicate with mention/reply/assignee/owner priority after current access."
+  },
+  {
+    "id": "C27",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/messages/src/domain/delivery.rs",
+    "symbol": "MessageAudienceAccess / MessageRealtime / DiscussionNotifier / DiscussionMentionSharing",
+    "lineStart": 45,
+    "lineEnd": 103,
+    "claim": "Subscribers are candidates; delivery rechecks view rights; discussion sharing is a distinct port."
+  },
+  {
+    "id": "C28",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/channels/src/domain/models.rs",
+    "symbol": "ChannelType",
+    "lineStart": 485,
+    "lineEnd": 510,
+    "claim": "Public, private, direct-message and team channels are distinct modes of channel domain."
+  },
+  {
+    "id": "C29",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/channels/src/domain/dm.rs",
+    "symbol": "DmPair",
+    "lineStart": 14,
+    "lineEnd": 35,
+    "claim": "DM identity is an unordered distinct user pair."
+  },
+  {
+    "id": "C30",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/channels/src/domain/reference_sharing.rs",
+    "symbol": "grant_level",
+    "lineStart": 6,
+    "lineEnd": 26,
+    "claim": "Agent-session sharing is owner-only and view-only; calendar resharing requires edit ownership path."
+  },
+  {
+    "id": "C31",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/macro_db_client/migrations/20260917175816_messages_parent_aware_schema.sql",
+    "symbol": "comms_messages / comms_message_threads / transition triggers",
+    "lineStart": 1,
+    "lineEnd": 127,
+    "claim": "Additive migration retains legacy channel_id and enforces reply parent consistency."
+  },
+  {
+    "id": "C32",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/lib/queries/messages/subscription.ts",
+    "symbol": "useMessageSubscription",
+    "lineStart": 1,
+    "lineEnd": 27,
+    "claim": "Entity subscription invalidates parent timeline, ids and reply queries."
+  },
+  {
+    "id": "C33",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/lib/queries/messages/timeline.ts",
+    "symbol": "fetchResolvedChannelMessage / MessageTimelineData",
+    "lineStart": 1,
+    "lineEnd": 99,
+    "claim": "Solid Query caches paginated messages and resolves roots/replies for navigation."
+  },
+  {
+    "id": "C34",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/documents/src/domain/create.rs",
+    "symbol": "RepoDocumentSubtype / MarkdownSubtype / NewMarkdownTextDocument",
+    "lineStart": 131,
+    "lineEnd": 205,
+    "claim": "Tasks are Markdown document subtypes with properties and CRDT initialization."
+  },
+  {
+    "id": "C35",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/system_properties/src/domain/model/constants/system_property_key.rs",
+    "symbol": "SystemPropertyKey / required_property_ids_for_entity",
+    "lineStart": 79,
+    "lineEnd": 139,
+    "claim": "Task properties include assignees/status/priority/due date/parent/subtasks/dependencies/effort/story points/docs."
+  },
+  {
+    "id": "C36",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/properties/src/domain/service_impl/task_properties.rs",
+    "symbol": "task relationship handlers / task assignment notification",
+    "lineStart": 63,
+    "lineEnd": 145,
+    "claim": "Parent/subtask relationship mutation checks edit permission on affected task."
+  },
+  {
+    "id": "C37",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/initiative/src/domain/models.rs",
+    "symbol": "InitiativeId / InitiativeDetail",
+    "lineStart": 33,
+    "lineEnd": 169,
+    "claim": "Initiative is app Project with UUIDv7, description doc, members, tasks and sharing."
+  },
+  {
+    "id": "C38",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/entity_access/src/domain/models.rs",
+    "symbol": "BotAccessScope / CrmEntityAccess / EntityPermission",
+    "lineStart": 27,
+    "lineEnd": 144,
+    "claim": "Entity access retains acting user or team scope and CRM owning-team role."
+  },
+  {
+    "id": "C39",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/entity_access/src/domain/service.rs",
+    "symbol": "get_optimized_access / get_crm_company_access / get_crm_contact_access",
+    "lineStart": 40,
+    "lineEnd": 145,
+    "claim": "Authorization delegates per-type queries and preserves a unified service boundary."
+  },
+  {
+    "id": "C40",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/models_search/src/unified.rs",
+    "symbol": "UnifiedSearchIndex / entity_filters_from_include",
+    "lineStart": 25,
+    "lineEnd": 83,
+    "claim": "OpenSearch unified index vocabulary covers docs/chats/mail/channels/projects/calls/calendar/agent sessions."
+  },
+  {
+    "id": "C41",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/search_service/src/api/search/crm_company.rs",
+    "symbol": "resolve_crm_team_receipt / search_company_names",
+    "lineStart": 1,
+    "lineEnd": 74,
+    "claim": "CRM company search is Postgres-backed opt-in with team capability and hidden-record gating."
+  },
+  {
+    "id": "C42",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/search_service/src/api/search/unified.rs",
+    "symbol": "handler",
+    "lineStart": 40,
+    "lineEnd": 83,
+    "claim": "Unified search includes separate authorized CRM company results."
+  },
+  {
+    "id": "C43",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/search_processing_service/src/inbound/kafka_consumer.rs",
+    "symbol": "DeclaredMacroEvent / WORKER_COUNT / MAX_PROCESSING_ATTEMPTS",
+    "lineStart": 1,
+    "lineEnd": 112,
+    "claim": "Search Kafka commits at worker handoff; failures exhaust retries and drop already-committed events."
+  },
+  {
+    "id": "C44",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/model_notifications/src/lib.rs",
+    "symbol": "NotifEvent",
+    "lineStart": 166,
+    "lineEnd": 267,
+    "claim": "Notification taxonomy covers channels/documents/CRM/initiative/tasks/mail/calendar/calls/agents/GitHub."
+  },
+  {
+    "id": "C45",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/notification/src/domain/models.rs",
+    "symbol": "NotificationStatusPatch / UserNotificationRow",
+    "lineStart": 51,
+    "lineEnd": 179,
+    "claim": "Notification row tracks owner/entity/state/viewed/deleted/metadata separately."
+  },
+  {
+    "id": "C46",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/ai_tools/src/lib.rs",
+    "symbol": "AiHost / tools_for / subagent_toolset",
+    "lineStart": 94,
+    "lineEnd": 180,
+    "claim": "Tools are composed per host; Mail and Calendar review semantics differ between chat/session/bot/MCP."
+  },
+  {
+    "id": "C47",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/mcp_service/src/tool_service.rs",
+    "symbol": "AuthenticatedToolService / authenticated_user_id / call_tool",
+    "lineStart": 60,
+    "lineEnd": 85,
+    "claim": "MCP extracts authenticated identity from HTTP parts rather than accepting an argument identity."
+  },
+  {
+    "id": "C48",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/ai_tools/src/user_tool_review.rs",
+    "symbol": "ReviewRequest / UserToolReviewer",
+    "lineStart": 1,
+    "lineEnd": 18,
+    "claim": "Deferred user tools are reviewed and executed by host, not counted as successful pending writes."
+  },
+  {
+    "id": "C49",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/mcp_toolset/src/toolset.rs",
+    "symbol": "RemoteMcpToolSet / searchable_catalog",
+    "lineStart": 42,
+    "lineEnd": 75,
+    "claim": "External MCP servers are name-mangled and discovery failure is isolated per server."
+  },
+  {
+    "id": "C50",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/messages/src/outbound/broker.rs",
+    "symbol": "MessageMacroEvent / BrokerMessagePublisher",
+    "lineStart": 45,
+    "lineEnd": 140,
+    "claim": "Committed message facts are ordered by root and published separately from notification delivery."
+  },
+  {
+    "id": "C51",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/messages/src/domain/mentions.rs",
+    "symbol": "MessageReferenceKind / bot_mention_ids",
+    "lineStart": 7,
+    "lineEnd": 95,
+    "claim": "Mention vocabulary spans bots and cross-product entities; recognizing type never grants access."
+  },
+  {
+    "id": "R01",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/types/page.ts",
+    "symbol": "PageKind / PageConfig domain",
+    "lineStart": 1,
+    "lineEnd": 35,
+    "claim": "ROX Pages are HTML dashboard artifacts with sandbox and snapshots, not shared rich-text docs."
+  },
+  {
+    "id": "R02",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/tasks/personal/types.ts",
+    "symbol": "PersonalTask / TaskLink / Recurrence / TaskProject",
+    "lineStart": 8,
+    "lineEnd": 109,
+    "claim": "Personal tasks already have recurrence, links, project, dates, checklist and audit; TaskProject is distinct model."
+  },
+  {
+    "id": "R03",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/tasks/personal-persist.ts",
+    "symbol": "PersonalTaskPersistStore / put",
+    "lineStart": 1,
+    "lineEnd": 16,
+    "claim": "Personal task canonical files use numeric revisions and atomic file writes."
+  },
+  {
+    "id": "R04",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/handlers/rpc/tasks.ts",
+    "symbol": "registerTasksHandlers / TaskRunner",
+    "lineStart": 1,
+    "lineEnd": 47,
+    "claim": "Tasks Conductor is YAML agent workflow execution, distinct from human personal tasks."
+  },
+  {
+    "id": "R05",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/projects/types.ts",
+    "symbol": "ProjectConfig / ProjectPromptContext",
+    "lineStart": 35,
+    "lineEnd": 113,
+    "claim": "ROX projects already carry stable id, working directory, assets, Kanban columns and agent context."
+  },
+  {
+    "id": "R06",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+    "symbol": "SessionPresenceAvatars",
+    "lineStart": 9,
+    "lineEnd": 28,
+    "claim": "Existing session presence view performs one listBroPresence query per session change."
+  },
+  {
+    "id": "R07",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/agent/permissions-config.ts",
+    "symbol": "Safe Mode Configuration / permissions loading",
+    "lineStart": 1,
+    "lineEnd": 12,
+    "claim": "Agent tool safety permissions are additive execution policy, not workspace entity ACL."
+  },
+  {
+    "id": "R08",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/memory/fts-index.ts",
+    "symbol": "fts-index / getDatabaseCtor",
+    "lineStart": 1,
+    "lineEnd": 41,
+    "claim": "Memory FTS5 indexes lessons/history/context and falls back under unavailable SQLite runtime."
+  },
+  {
+    "id": "R09",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/sessions/types.ts",
+    "symbol": "SessionConfig / StoredSession",
+    "lineStart": 118,
+    "lineEnd": 135,
+    "claim": "Agent session configuration carries execution permission mode."
+  },
+  {
+    "id": "C52",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/memory/src/domain/service.rs",
+    "symbol": "MemoryServiceImpl.get_or_generate_memory / generate_memory",
+    "lineStart": 100,
+    "lineEnd": 177,
+    "claim": "Memory is per-user generated profile with 24h refresh; async regeneration disabled in Local environment."
+  },
+  {
+    "id": "C53",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/memory/src/outbound/pg_memory_repo.rs",
+    "symbol": "PgMemoryRepo.save_memory / get_latest_memory",
+    "lineStart": 20,
+    "lineEnd": 59,
+    "claim": "Memory persistence upserts one profile per user and timestamps, not an arbitrary entity fact graph."
+  },
+  {
+    "id": "C54",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/agent_trigger/src/outbound/message_thread_history.rs",
+    "symbol": "MessageThreadHistory.authorize_invocation / thread_messages",
+    "lineStart": 30,
+    "lineEnd": 104,
+    "claim": "Agent trigger reads parent-aware channel/document/initiative/CRM discussion with current invoking-user capability."
+  },
+  {
+    "id": "C55",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/macro_db_client/migrations/20260928152757_crm_discussion_parents.sql",
+    "symbol": "comms_messages CRM parent constraints",
+    "lineStart": 5,
+    "lineEnd": 26,
+    "claim": "Current SQL extends message parents to CRM company/contact and cascaded generated foreign keys."
+  },
+  {
+    "id": "C56",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/lib/core/messages/MessageThread.tsx",
+    "symbol": "MessageThread",
+    "lineStart": 53,
+    "lineEnd": 123,
+    "claim": "Shared document/source-channel thread composes channel thread and action controls."
+  },
+  {
+    "id": "R10",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/rox2/platform-contract.ts",
+    "symbol": "Rox2Status / Rox2Entity / Rox2Relation / Rox2Event",
+    "lineStart": 107,
+    "lineEnd": 141,
+    "claim": "Existing ROX unified contract already declares relation/event/result seam; this is typed boundary without I/O."
+  },
+  {
+    "id": "R11",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/rox2/platform-contract.ts",
+    "symbol": "Rox2EntityRef / formatRox2EntityId / parseRox2EntityId",
+    "lineStart": 218,
+    "lineEnd": 239,
+    "claim": "Existing workspace-scoped ref uses entityId encoded kind:id and optional revision/accountNamespace."
+  },
+  {
+    "id": "R12",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/collaboration/bro-invite-service.ts",
+    "symbol": "BroInviteService / resolveRoxAccountFromCredentials",
+    "lineStart": 18,
+    "lineEnd": 62,
+    "claim": "Session Bro invites/join/revoke use server-resolved account identity; existing collaboration must be adapted."
+  },
+  {
+    "id": "R13",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/package.json",
+    "symbol": "dependencies",
+    "lineStart": 69,
+    "lineEnd": 83,
+    "claim": "ROX renderer React 18 and react-simple-code-editor; no Lexical dependency in this manifest slice."
+  },
+  {
+    "id": "R14",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/collaboration/store.ts",
+    "symbol": "BroInviteStore / revoke / listPresence",
+    "lineStart": 23,
+    "lineEnd": 86,
+    "claim": "Bro invite/presence authority is process-local Maps; revoke marks invite but does not evict existing presence."
+  }
+]

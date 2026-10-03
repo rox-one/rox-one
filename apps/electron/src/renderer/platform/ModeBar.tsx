@@ -7,9 +7,9 @@
  * Modes with `rootRoute: null` render disabled with a tooltip. They are not
  * empty pages.
  *
- * Styling lives in `components/app-shell/titlebar-mode-pill.css` (plain CSS:
- * this folder is outside the Tailwind @source globs). The pill itself is
- * `-webkit-app-region: no-drag`; the titlebar around it stays draggable.
+ * Styling lives in `components/app-shell/titlebar-mode-pill.css` (plain CSS);
+ * Tailwind utility classes in this component are covered by the renderer scan.
+ * The pill uses `-webkit-app-region: no-drag`; the surrounding titlebar stays draggable.
  */
 import { useCallback, useLayoutEffect, useRef, useState, type MutableRefObject } from 'react'
 import {

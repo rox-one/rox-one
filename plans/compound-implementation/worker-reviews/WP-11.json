@@ -1,0 +1,532 @@
+{
+  "task_id": "WP-11-preflight",
+  "attempt_id": "2e743c60cac8141410afce7cc758799d",
+  "packet_hash": "4d8e1db7939f74e55f37e0fd104762ea4921ea9c4af2794d7bd0e4c8b769b50c",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-11",
+  "featureComplete": false,
+  "mode": "inspect-only; write owned report",
+  "workTier": "bounded-workflow",
+  "dependencies": ["WP-08", "WP-09", "WP-07", "WP-04"],
+  "dependencyReceiptRequirements": {
+    "eachExplicitDependency": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "implementationStartBoundary": "Lead wave0 commit plus accepted dependency receipts, in dependency order. No feature implementation is performed by this preflight.",
+    "dispatchDependsOn": [],
+    "distinction": "The preflight packet has no scheduling dependencies; that does not remove the four normative implementation dependencies."
+  },
+  "inspection": {
+    "scope": "WP-11 affected files, personal task package/store, renderer task helpers, directly imported protocol and HandlerDeps, and the published package/test specifications",
+    "manifestSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "manifestMatchesDispatch": true,
+    "evidenceVersion": "Whole-file hashes of the inspected working-tree snapshots; not a claim that dirty source equals input HEAD. Root integration may invalidate any source reference independently.",
+    "freshnessRule": "Before applying any patch, compare its file hash and re-read changed symbols against the lead's committed revision. Preserve this report as historical preflight evidence; it is not a live acceptance receipt.",
+    "toolLimitations": ["Codegraph reports no project index; no index was created.", "find returned provider 402 failures, not evidence of absent implementation; inspection continued through literal symbol grep and read.", "Normative task artifact glob queries returned Path not found; wp-11.test.ts was also queried individually and was not found. No broader service implementation was inspected."],
+    "executedFeatureChecks": [],
+    "prohibitedOperationsNotPerformed": ["product edits", "test edits", "manifest/progress edits", "Git mutations", "builds", "tests", "native UI", "network operations initiated as shell commands"]
+  },
+  "foundationGates": [
+    {
+      "gate": "Authenticated service composition and canonical registry/policy",
+      "producers": ["WP-01", "WP-02", "WP-03"],
+      "relationship": "Transitive through WP-04/WP-08/WP-07, not new explicit WP-11 DAG edges",
+      "evidence": ["docs/macro-integration/21-implementation-plan.md:5,27-69", "plans/macro-integration/work-packages.json:8928-8931,9475-9490", "packages/server-core/src/handlers/rpc/personal-tasks.ts:27-48"],
+      "requiredReceipt": "Principal derived from transport, explicit standalone/shared authority selection, entity registry composite keys, current read/write/action policy and revoke fence accepted in the service composition.",
+      "whyBlocking": "The current handler obtains a root-global store; it cannot itself establish workspace/resource identity or authorization."
+    },
+    {
+      "gate": "Durable client projection, draft and command replay",
+      "producers": ["WP-05"],
+      "relationship": "Not in the explicit WP-11 dependency array; WP-05 independently depends on WP-04",
+      "evidence": ["plans/macro-integration/work-packages.json:3457-3502,8936-8947", "docs/macro-integration/22-test-plan.md:69,72,222", "packages/shared/src/protocol/events.ts:81"],
+      "requiredReceipt": "Accepted replay/cursor/projection interface plus restart-persistent queue, policy rejection and standalone regression proof; reuse that interface for task creation rather than a second queue.",
+      "whyBlocking": "A timestamp-only push cannot prove offline_queued, replay gaps or restart/reconnect correctness."
+    },
+    {
+      "gate": "Task search and Memory projection registration",
+      "producers": ["WP-06"],
+      "relationship": "Transitive through WP-09, but task extractor/consumer registration is still a WP-11 integration obligation",
+      "evidence": ["plans/macro-integration/work-packages.json:4383-4431,7206-7209,9000-9005", "docs/macro-integration/22-test-plan.md:199,210,237"],
+      "requiredReceipt": "Accepted typed Task projection adapter, watermark and current-ACL query/revoke/tombstone behavior.",
+      "whyBlocking": "Existing local title/notes helpers do not establish authorized shared search or agent retrieval."
+    },
+    {
+      "gate": "Real agent/MCP dispatcher using the domain gateway",
+      "producers": ["WP-36", "WP-51"],
+      "relationship": "WP-36 is outside explicit WP-11 dependencies; its own record depends on WP-04/WP-06/WP-09/WP-51",
+      "evidence": ["plans/macro-integration/work-packages.json:33169-33209", "docs/macro-integration/22-test-plan.md:7,62,68,214-215", "apps/electron/src/renderer/pages/tasks/task-model.ts:96-109"],
+      "requiredReceipt": "Accepted acting-user/service-principal dispatcher and source-context tool registration with resource ACL, revision and fence semantics; prove an actual native tool invocation.",
+      "whyBlocking": "buildDelegationPrompt copies title/notes/subtasks only and does not retrieve authorized conversation history. HTTP-only fixture proof cannot fulfill agent acceptance."
+    },
+    {
+      "gate": "Provenance before shared transcript/context exposure",
+      "producers": ["WP-50"],
+      "relationship": "Published implementation-plan foundation, not a listed WP-11 edge; WP-50 depends on WP-36 and WP-03",
+      "evidence": ["docs/macro-integration/21-implementation-plan.md:5", "plans/macro-integration/work-packages.json:45059-45108", "docs/macro-integration/22-test-plan.md:68,214"],
+      "requiredReceipt": "Source ref/revision/ACL provenance and revalidation for derived agent prompt/tool/result context; private session material is not promoted to a human Message store.",
+      "whyBlocking": "The plan explicitly requires WP-50 before shared transcripts/context. If WP-11 uses only human Message retrieval, the lead must document that boundary and its provenance proof; copied agent transcript is not an alternative."
+    },
+    {
+      "gate": "Project lists task without a WP-12 dependency cycle",
+      "producers": ["WP-01", "WP-02", "WP-12"],
+      "relationship": "WP-12 depends on WP-11, so adding WP-12 as a prerequisite would create a cycle; foundation contract/owner handoff is required instead",
+      "evidence": ["docs/macro-integration/21-implementation-plan.md:203-237", "packages/core/src/tasks/personal/types.ts:47,77-88", "packages/core/src/tasks/personal/store.ts:272-276"],
+      "requiredReceipt": "Lead assigns minimal typed task membership/query and existing Project listing integration to WP-11 using the accepted Project/registry foundation; WP-12 subsequently generalizes memberships. Legacy TaskProject IDs use explicit aliases, never name matching.",
+      "whyBlocking": "The WP-11 criterion already requires a Project listing. A personal projectId filter alone or deferring the whole surface to WP-12 does not satisfy it."
+    },
+    {
+      "gate": "Shared graph table and migration ownership",
+      "producers": ["WP-02", "WP-09", "WP-04"],
+      "relationship": "Transitive/shared integration gate",
+      "evidence": ["plans/macro-integration/work-packages.json:9457-9515", "docs/macro-integration/21-implementation-plan.md:7"],
+      "requiredReceipt": "Selected migrator, accepted entity_link relation kinds and one graph-table owner; receipt/outbox/inbox reuse agreed before applying the proposed migration identifier.",
+      "whyBlocking": "WP-11 must not recreate entity_link, command_receipt or event consumers independently just because they appear in its migration constraints."
+    },
+    {
+      "gate": "Additional API contracts need accepted shapes",
+      "producers": ["lead", "WP-11 tasks owner"],
+      "relationship": "Specification detail gap, not an explicit DAG edge",
+      "evidence": ["plans/macro-integration/work-packages.json:8921,9051-9059,9820-9821", "docs/macro-integration/21-implementation-plan.md:207"],
+      "requiredReceipt": "Accept AssignTask and GetSourceContext request/result/error schemas and native/HTTP/tool route names. The record defines only task.createFromMessage in operations and names the other APIs without detailed operation schemas.",
+      "whyBlocking": "Do not fabricate already accepted API types or drop assignment/context requirements; propose bounded schemas through the normative contracts.ts artifact."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/tasks/contracts.ts",
+    "apps/workspace-service/src/modules/tasks/commands.ts",
+    "apps/workspace-service/src/modules/tasks/repository.ts",
+    "tests/macro-integration/wp-11.test.ts",
+    "apps/workspace-service/migrations/11-domain-contract.sql"
+  ],
+  "ownedNewFilesMeaning": "Normative future implementation ownership only. This preflight creates none of them. The migration path is a proposed identifier; use the selected migrator's real name, not a fabricated timestamp.",
+  "proposedContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/tasks/contracts.ts",
+      "change": "Export pure strict task.createFromMessage request/result schemas using accepted RoxCommand/Rox2EntityRef types; sourceMessage required, project optional, title length 1..10000, assigneePrincipalIds required array with maximum 1000 and nonempty bounded IDs, reject extra fields including actor. Define RoxTask DTO with canonical identity/revision, description, typed source refs and assignees separate from per-principal placement. Propose AssignTask(taskRef, assigneePrincipalIds, expectedRevision) and GetSourceContext(taskRef, authorized cursor/limit) typed DTOs; source history contains human Message refs/revisions/provenance and bounded root/preceding/reply results. These latter shapes require lead acceptance; no service I/O in contracts."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/tasks/commands.ts",
+      "change": "Implement CreateTaskFromMessage, AssignTask and GetSourceContext through accepted policy/idempotency/revision gateway. Derive principal from authenticated transport; validate source workspace, source readability, task creation action, optional Project membership/link permission and assignee eligibility before writing. Create registry task, source derived-from edge, optional membership, assignments, command result/receipt and task.created/task.assigned/entity.linked outbox records in one transaction. Receipt replay returns original entity/result and altered-payload replay conflicts; current policy is still enforced. AssignTask uses existing aggregate revision CAS. Context reads current task AND message/thread ACL, bounded history and provenance; links/assignment never imply grants."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/tasks/repository.ts",
+      "change": "Use accepted transaction/registry/graph ports, scoped task rows and per-principal task_personal_placement; persist description/source/assignee data and aggregate revision. Reuse command_receipt/outbox/inbox and entity_link rather than creating parallel stores. Expose bounded authorized task/Project/source queries. Import legacy task IDs via scoped aliases/provenance, quarantine ambiguous mappings, and preserve standalone file authority separately. Provider adapters remain composition-root-owned."
+    },
+    {
+      "path": "apps/workspace-service/migrations/11-domain-contract.sql",
+      "change": "Proposed additive domain migration: task and task_personal_placement with workspace/entity identity, schema/revision constraints, retained tombstones, per-principal placement identity and query indexes. Extend/reuse the accepted entity_link schema for task source and Project membership with reverse lookup indexes; do not issue a competing CREATE TABLE for an existing shared graph. Reuse accepted scoped command idempotency uniqueness, aliases and event delivery uniqueness. Backfill by scoped alias/provenance with ambiguity quarantine; pre-cutover snapshot/writer rollback, post-cutover forward repair or verified reverse replay, no recent-write deletion."
+    },
+    {
+      "path": "tests/macro-integration/wp-11.test.ts",
+      "change": "Exercise real command/query boundary with W1, A owner, B member, C outsider, PRIVATE_WP-11 and seed 20260941. Assert same-key sequential/concurrent/crash retries return one canonical task, receipt, source edge, membership and recipient effect; changed hash conflicts; revoked/forged/cross-workspace refs fail without metadata disclosure. Verify root and reply context, Project read-back, assignee attention replay, source deletion fallback and separate personal placement. Seed duplicate-on-retry and source-link/ACL/event mutants and require criterion-specific failures, distinguish infrastructure failures; independent evaluator supplies holdout. Electron/browser/native-tool scenario proof remains additional to this test, not replaced by fixtures."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/tasks/personal/types.ts",
+      "symbol": "PersonalTask / TaskLink / TaskProject / PersonalTaskBundle",
+      "change": "Add an explicit shared canonical identity/source-ref/revision/assignee mapping using accepted domain DTOs or core-safe identity types; preserve legacy TaskLink.kind/id and standalone bundles through a deliberate import/projection adapter, not a second shared authority. Map notes to domain description and projectId to explicit Project aliases. Keep personal list/order/heading/Today placement per principal rather than on the shared task aggregate. Do not substitute DAG TaskSpec.",
+      "reason": "Current TaskLink lacks workspace/revision and PersonalTask has no assignee; task and project IDs are unscoped strings."
+    },
+    {
+      "path": "packages/server-core/src/tasks/personal-tasks-service.ts",
+      "symbol": "readPersonalTasks / putPersonalTasks / deletePersonalTasks / migratePersonalTasks",
+      "change": "Introduce explicit authority selection through the accepted domain port: shared operations use authenticated canonical commands/queries and read-back; standalone retains current file behavior. Carry shared refs/revisions/receipts and current policy; never feed shared tasks into a root-global put loop. Import legacy records with namespace/alias/provenance, quarantine ambiguous IDs, preserve backup and local one-time migration semantics.",
+      "reason": "readPersonalTasks drops persistence revisions; put loops can partially write and have no scoped command receipt or transaction."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+      "symbol": "registerPersonalTasksHandlers / personalTasksStore / PERSONAL_TASKS_HANDLED_CHANNELS",
+      "change": "Register domain.task.createFromMessage and accepted assignment/context routes using the same service gateway as HTTP, strict payload validation and transport-derived principal/workspace. Gate existing personalTasks operations by explicit standalone/shared mode so shared writes cannot bypass the gateway. Keep personalTasksStore for standalone only. Replace shared all-client timestamp broadcast with authorized revisioned invalidation/replay cursor through the accepted realtime port, excluding sender only if its receipt/projection state is safe.",
+      "reason": "LIST ignores ctx; PUT/DELETE/MIGRATE use ctx only for clientId. The cached store key is rootDir, and changed sends to all without entity/workspace policy."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+      "symbol": "TaskDetailProps / TaskDetail / renderLink / source field / history tab",
+      "change": "Reuse task-source and links controls for canonical authorized Message refs; accept resolved source state and canonical navigation callback, hide denied labels and show tombstone/unavailable fallback. Add current assignee display/action through accepted AssignTask, canonical Project membership display, command receipt state and permission-aware controls. Route shared link/unlink/mutations through the gateway instead of raw store edits, render domain activity for shared tasks while preserving standalone audit. Add loading/empty/denied/queued/retry/conflict/applied_verified states via t() with all ten locales patched by their owner.",
+      "reason": "The existing source UI is reusable, but cached link.label/id and local mutate are not authorized resolution; no assignee or command-state contract exists in props."
+    },
+    {
+      "path": "packages/server-core/src/tasks/personal-persist.ts",
+      "symbol": "TASK_ID_RE / PersonalTaskPersistStore.put / parsePersonalTaskPersistFile / ensureSchemaBackup",
+      "change": "Keep path-safe standalone persistence, backup and corrupt-record behavior. Do not relax TASK_ID_RE to write task:... refs as filenames or pretend put-by-ID is command idempotency. Route shared authority elsewhere; map/import legacy file IDs through the canonical registry and retain alias/provenance. If a shared projection is persisted locally, use the accepted WP-05 projection adapter rather than making this store another canonical writer.",
+      "reason": "Colon canonical IDs fail TASK_ID_RE; current file revision and tmp+rename are per record, not cross-task/link/receipt/outbox transactional durability."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/tasks/atoms.ts",
+      "symbol": "tasksViewAtom",
+      "change": "Keep this atom navigation-only. Scope/restorably migrate shared selected Project navigation by workspace and canonical Project identity using the accepted projection/navigation boundary; preserve existing standalone selection. Do not store task rows, command receipts or a second offline queue in this atom. Actual Tasks view-owner integration is required outside this atom and must be assigned by the lead.",
+      "reason": "The sole current atom uses one global rox.tasks.view.v1 key; it cannot provide domain persistence or command delivery."
+    },
+    {
+      "path": "packages/core/src/tasks/personal/rpc.ts",
+      "symbol": "PersonalTasksSnapshot / PersonalTaskMeta / PersonalTasksMigrateInput / PersonalTasksMigrateResult",
+      "change": "Define explicit standalone DTO versus canonical shared Task projection DTO with workspace/entity refs, revisions and projection cursor/policy freshness. Reference accepted task domain request/result contracts at the shared boundary, preserve the legacy localStorage migration DTO for standalone, and require typed alias/import receipts for shared migration rather than unscoped bundle upsert.",
+      "reason": "Snapshot contains only tasks/meta/migration and cannot convey aggregate revisions, receipt status or current workspace policy."
+    },
+    {
+      "path": "packages/core/src/tasks/personal/store.ts",
+      "symbol": "PersonalTaskStore.create / update / link / unlink / moveTo / uniqueId",
+      "change": "Coordinate with WP-05 owner: retain local standalone minting and personal operations, hydrate shared canonical projections without reminting IDs or treating this store as the shared writer. Separate per-principal placement updates from shared description/source/assignment/membership commands. Shared source-link mutation must use graph ACL/revision ports; one receipt replay must not call create again.",
+      "reason": "create always mints another task; link/unlink only edit local arrays, and moveTo writes projectId directly."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/tasks/task-model.ts",
+      "symbol": "deriveTaskSource / buildDelegationPrompt / TasksView",
+      "change": "Keep pure helper design: derive shared source from authorized typed projection, not hidden notes markers or cached unauthorized labels. Pass canonical task/source refs to the accepted agent context operation and render its bounded policy-checked provenance; do not make this helper fetch data or append arbitrary full transcripts. Extend navigation identity only as needed by the accepted workspace/Project contract, preserve standalone helpers.",
+      "reason": "deriveTaskSource reads local source/links; buildDelegationPrompt has no message history or ACL checks."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.personalTasks and new domain task channel registration",
+      "change": "Composition/protocol owner registers exact domain.task.createFromMessage channel plus accepted assignment/context channels, typed arguments/results referencing the normative task contracts. Retain personalTasks channels only for explicit standalone behavior; do not invent unaccepted names for the additional APIs.",
+      "reason": "Current channels expose only list/put/delete/migrate/changed. Native contract requires a domain command seam."
+    },
+    {
+      "path": "packages/shared/src/protocol/events.ts",
+      "symbol": "EventMap entry for RPC_CHANNELS.personalTasks.CHANGED",
+      "change": "Use accepted shared invalidation event payload including workspace/entity/revision/policy epoch and replay cursor/watermark, with current authorization enforced before delivery. Preserve standalone timestamp event if that adapter still consumes it; no competing task event store.",
+      "reason": "Current payload is only {at:number}, so it cannot identify a task, detect event gaps or fence stale policy."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "LOCAL_ONLY_CHANNELS / REMOTE_ELIGIBLE_CHANNELS / isRemoteEligible",
+      "change": "Classify new domain task routes with the accepted workspace-authority routing policy and verify hybrid forwarding never lands shared writes in personalTasksStore. Resolve the observed contradiction: personalTasks:* comments/handler say LOCAL_ONLY, but current entries at 895-900 are in REMOTE_ELIGIBLE_CHANNELS. Preserve authorized standalone/remote-local behavior explicitly instead of changing classification blindly.",
+      "reason": "Actual table classification, not comments, determines the transport path. This exposes a hidden authority/routing integration risk."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps",
+      "change": "Composition owner injects the accepted authenticated task/domain gateway port and authority mode into handlers using the established typed dependency-bag pattern; reuse an accepted general domain gateway if supplied by wave0/WP-04. Do not create service/provider instances in handlers or conflate PendingCommandsStore with a verified canonical transaction service.",
+      "reason": "Inspected HandlerDeps currently has optional commandGateway: PendingCommandsStore but no task/domain authority port."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-11 section and foundation note",
+      "change": "Lead records accepted additional API shapes, task/placement migration mapping, single-writer routes, minimal Project listing owner without WP-12 cycle, and WP-05/WP-36/WP-50 completion gates. Keep planned status until revision-bound scenario evidence exists.",
+      "reason": "Published WP-11 list omits several foundation interfaces needed by its own full DoD."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "CHAT-TASK-01 and feature completeness checklist",
+      "change": "Record implemented test markers and actual supported UI/tool routes, recovery and deny states, current evidence identifiers, source/schema hashes and observed results after integration; retain separate implemented/verified/delivered/journalled states and seeded failure requirements.",
+      "reason": "The document explicitly describes future checks, not runtime PASS evidence."
+    }
+  ],
+  "integrationRequestsOutsideInspectedCode": [
+    {
+      "owner": "WP-08 messaging/UI owner",
+      "pathFromNormativeRecord": "apps/electron/src/renderer/pages/ChatPage.tsx",
+      "proposedSeam": "Message action task-create-from-message; actual component symbol must be inspected by its owner",
+      "change": "Expose Create Task on an authorized persisted human Message, preview source, choose permitted existing Project and valid assignees, persist/reuse the intent idempotency key through offline/retry/reload, and render reverse derived-from link. Use the accepted task gateway rather than PersonalTaskStore.create.",
+      "evidence": "plans/macro-integration/work-packages.json:6251; docs/macro-integration/22-test-plan.md:62-74",
+      "inspectionState": "Specification-backed request only; ChatPage source is outside this preflight's direct-import scope and was not inspected."
+    },
+    {
+      "owner": "Project surface/registry integration owner",
+      "pathFromNormativeRecord": "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx",
+      "proposedSeam": "Existing Project task membership listing; actual component/query symbols must be inspected by its owner",
+      "change": "Integrate minimal typed task membership/read-back within WP-11 using canonical Project foundation and current ACL; do not defer the criterion to WP-12 or merge TaskProjects by name.",
+      "evidence": "docs/macro-integration/21-implementation-plan.md:223-237",
+      "inspectionState": "Specification-backed request only; no unobserved existing Project listing implementation is claimed."
+    },
+    {
+      "owner": "WP-36/WP-50 agent integration owner",
+      "pathFromNormativeRecord": "packages/shared/src/agent/session-tool-defs.ts",
+      "proposedSeam": "Accepted task context/action tool registration; actual builder registration must be inspected by its owner",
+      "change": "Register the accepted GetSourceContext domain query and task commands for native agent/MCP with acting-user identity, policy recheck, bounded results and provenance; retain human/agent transcript separation.",
+      "evidence": "plans/macro-integration/work-packages.json:33169-33209,45059-45108",
+      "inspectionState": "Specification-backed request only, not a verified current registration."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Create from message twice with same key yields one task",
+      "currentEvidence": "PersonalTaskStore.create (store.ts:158-204) mints each call; PersonalTaskPersistStore.put (personal-persist.ts:83-95) deduplicates identical ID/payload only. No command key/hash/receipt is present at the inspected task boundary.",
+      "requiredChange": "task commands.ts CreateTaskFromMessage + repository.ts accepted transaction: scoped actor/idempotency key and request hash, one registry task, source edge, membership, assignments, receipt and outbox; replay original result, altered payload IDEMPOTENCY_CONFLICT. UI must preserve the same intent key.",
+      "verification": "Real UI/API intent twice and concurrent/reply-loss retries: identical canonical task ID/revision/receipt and exactly one task/source link/membership/assignment recipient effect; same key different payload rejected without any mutation.",
+      "missingPrerequisite": "WP-04 accepted gateway/transaction/idempotency receipt; WP-08 persisted source Message; lead wave0 commit and all dependency receipts.",
+      "state": "missing"
+    },
+    {
+      "criterion": "source backlink visible",
+      "currentEvidence": "TaskLink kind message/source exist (types.ts:14-22,69-70); deriveTaskSource (task-model.ts:136-142) and TaskDetail task-source (TaskDetail.tsx:500-506) already render local source. store.link at 256-262 is a one-sided array edit, not canonical symmetric graph retrieval.",
+      "requiredChange": "Persist typed derived-from edge through accepted graph in task transaction; current-ACL resolve canonical source for existing TaskDetail and reverse message backlink; tombstone fallback without copied private label leakage.",
+      "verification": "Actual task-source click opens m1 in the existing Message surface and m1 backlink opens t1; typed graph query/read-back proves both directions; delete source/revoke read shows fallback/denial without body/title.",
+      "missingPrerequisite": "WP-02 graph identity/link contract via WP-04, WP-09 relation policy and WP-08 message navigation/revisions; messaging surface owner patch.",
+      "state": "missing"
+    },
+    {
+      "criterion": "assignee notified",
+      "currentEvidence": "PersonalTask has no assignee field (types.ts:42-75); changed in personal-tasks.ts:40-41 emits only a timestamp to all clients, not assignment attention.",
+      "requiredChange": "Validate and persist canonical assignee principal IDs; emit task.assigned transaction outbox records through WP-07 recipient policy/consumer dedup; overlapping mention/owner/assignment reasons yield one attention item and never implicit access.",
+      "verification": "B sees one durable notification on actual Inbox/native surface after assignment, restart and duplicate/reordered replay; recipient state remains B-only; invalid/revoked B and unauthorized recipients receive no private excerpt or silent grant.",
+      "missingPrerequisite": "WP-07 accepted attention contract/migration/scenario receipt plus WP-03 current assignment/share policy and WP-04 outbox.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Project lists task",
+      "currentEvidence": "PersonalTask.projectId and TaskProject are local strings (types.ts:47,77-88); PersonalTaskStore.addProject/moveTo manage bundle projects (store.ts:272-276,507-539). No canonical Project listing implementation was inspected.",
+      "requiredChange": "Create optional typed Project membership using registry graph and current endpoint rights; canonical Project read model/surface lists t1. Explicitly map legacy TaskProject aliases, retain existing Project cwd/assets/details and keep personal placements separate.",
+      "verification": "Create from m1 selecting existing P1; existing Project P1 and Tasks show identical canonical t1 after reload and replay; distinct same-name Projects remain distinct; denied Project leaks neither title nor count.",
+      "missingPrerequisite": "Accepted WP-01/02 Project registry foundation and assigned minimal Project listing patch; WP-12 is downstream and cannot be used to defer or block all WP-11 implementation cyclically.",
+      "state": "missing"
+    },
+    {
+      "criterion": "agent retrieves authorized conversation",
+      "currentEvidence": "buildDelegationPrompt (task-model.ts:100-109) includes title/notes/open subtasks only; TaskDetail.onDelegate (TaskDetail.tsx:509-524) is a local delegation UI seam, not current-ACL history retrieval.",
+      "requiredChange": "GetSourceContext in task commands.ts resolves task/source/current message-thread ACL under acting user, returns bounded root/preceding/reply canonical refs/revisions/provenance, keeps private cached/transcript data out; register the real native agent/MCP query through the accepted dispatcher.",
+      "verification": "Actual Agent-A tool fetch includes authorized m1/m2 and source revisions, excludes PRIVATE_WP-11/M-private; outsider and allow-all viewer remain denied; revoke after caching removes access; agent execution messages do not appear as human channel Messages.",
+      "missingPrerequisite": "WP-08 history/query port, WP-03/06 policy/projection via dependencies, accepted GetSourceContext DTO, WP-36 dispatcher and published WP-50 provenance gate.",
+      "state": "missing"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "TaskDetail/source/links/delegation are existing Tasks surface seams (TaskDetail.tsx:129-147,500-558). Published CHAT-TASK-01 proposes a Message Create Task action (22-test-plan.md:62-64), not observed functionality.",
+      "requiredChange": "Reuse Tasks and messaging surfaces; wire source preview, permitted Project/assignee choice, canonical result read-back and state-aware details with translated labels. Do not create another Tasks destination.",
+      "verification": "After integration, observe real Create Task interaction and Tasks/Project/source/assignee rendering, keyboard/focus and reload with screenshots plus ARIA/state assertions on the exact revision.",
+      "missingPrerequisite": "WP-08 UI owner and accepted domain/projection wiring; no native UI may run in this preflight.",
+      "state": "missing"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "Handlers describe LOCAL_ONLY (personal-tasks.ts:1-4), but routing.ts REMOTE_ELIGIBLE_CHANNELS at 513 contains personalTasks channels at 895-900. TaskDetail.onOpenSource has only a TaskLink callback (33-50).",
+      "requiredChange": "Resolve actual hybrid authority routing explicitly; add canonical task/message/Project navigation through accepted resolver and assign shared native routes to workspace authority without file-store fallback.",
+      "verification": "Actual local and remote workspace navigation opens canonical t1/m1/P1 with history/back/focus; denied/stale refs show correct states and shared command executes only in authenticated service.",
+      "missingPrerequisite": "Protocol/composition and navigation owner acceptance; WP-01/02 authoritative identity and transport.",
+      "state": "missing"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "types.ts PersonalTask/TaskLink/TaskProject use unscoped IDs; PERSONAL_TASK_BUNDLE_VERSION is 1; TASK_ID_RE excludes canonical colon refs (personal-persist.ts:21).",
+      "requiredChange": "Canonical task: identity/revision with typed source and Project refs; strict domain schemas; aliases/provenance for legacy personal task and project IDs; separate assignment from personal placement and DAG tasks.",
+      "verification": "Typed schema rejects wrong kind/workspace/extra actor fields; identical local IDs in different namespaces do not collide, ambiguous import quarantines and accepted alias resolves the same canonical task.",
+      "missingPrerequisite": "WP-02 registry/import contract and accepted core/shared type layering.",
+      "state": "missing"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "personal-persist.ts:83-95,204-208 writes per-record JSON via tmp+rename; service.ts:45-54 writes multiple tasks then meta; readPersonalTasks:31 drops revisions.",
+      "requiredChange": "Shared task/placement/graph/receipt/outbox atomic transaction and restart-durable read model; preserve standalone file adapter/backup/import, never dual-write shared canonical state.",
+      "verification": "Kill after commit before reply, reopen service and reload UI: same task/revision/source/membership/receipt and one attention effect; rollback before commit leaves no ghost task.",
+      "missingPrerequisite": "WP-04 transaction/outbox and applied task migration; WP-05 client projection.",
+      "state": "missing"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "registerPersonalTasksHandlers PUT accepts raw task arrays, no command envelope (personal-tasks.ts:45-53); only primary create operation has detailed published schema.",
+      "requiredChange": "Strict authenticated CreateTaskFromMessage and AssignTask use RoxCommand v2, required create idempotency, assignment expectedRevision, request hash and canonical result/receipt; explicit errors and no optimistic success for queued states.",
+      "verification": "Native RPC and HTTP return matching canonical results; malformed/forged workspace, altered-key payload and stale assignment revision are rejected with no partial writes.",
+      "missingPrerequisite": "WP-04 gateway and lead acceptance of AssignTask shape/route.",
+      "state": "missing"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "LIST returns store.list-derived snapshot globally without ctx (personal-tasks.ts:43; personal-tasks-service.ts:25-34). No bounded authorized conversation DTO exists at the inspected boundary.",
+      "requiredChange": "Canonical task/Project/context queries enforce current ACL, endpoint rights, bounded pagination and actor-bound cursor; DTO serialization omits hidden body/title/count.",
+      "verification": "A/B authorized queries return expected canonical t1/history; C and revoked principal cannot fetch by known raw ID, replay another actor's cursor or infer hidden totals/snippets.",
+      "missingPrerequisite": "WP-03 policy, WP-08 history and accepted query DTO/cursor interfaces.",
+      "state": "missing"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "Task changed is pushTyped to all with {at:Date.now()} (personal-tasks.ts:40-41; events.ts:81).",
+      "requiredChange": "Publish task.created/task.assigned/entity.linked from transaction outbox, authorized revisioned invalidation, replay cursor/gap repair and consumer inbox uniqueness; reject stale policy/tombstone revisions.",
+      "verification": "Two clients observe task/assignment/membership; drop/reorder/duplicate event and restart consumer, then replay converges to canonical revision with one notification and recorded watermark; revoke stops authorized delivery.",
+      "missingPrerequisite": "WP-04 outbox and WP-05 projection/replay plus WP-07 attention consumers.",
+      "state": "missing"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "Current task handlers do not use transport actor/workspace for reads/writes; published permissions require resource grants and allow-all not overriding ACL (work-packages.json:8928-8931).",
+      "requiredChange": "Check authenticated actor, task action/write, source read, Project link/read and assignment eligibility under current policy; reject body actor and workspace mismatch; fence revoked state on command/query/subscription/tool path.",
+      "verification": "Owner/member/viewer/outsider and revoked actor matrix; forged principal/workspace, known IDs and allow-all agent remain denied; no unauthorized metadata or outbox effects.",
+      "missingPrerequisite": "WP-01/03 authenticated resource policy via accepted explicit dependencies and revoke fence.",
+      "state": "missing"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "TaskLink and projectId store relationships but no grant semantics (types.ts:17-22,47). Test plan explicitly forbids reassignment/link from silently restoring revoked access (22-test-plan.md:70).",
+      "requiredChange": "Use explicit policy for task sharing/assignment and Project membership; intersect source-context rights; preserve private source/Project visibility and inherited grants only where accepted. Public-link expiry follows the accepted policy rather than a new task token mechanism.",
+      "verification": "B assignment cannot disclose unreadable source; revoked B cannot be silently restored by link/reassignment; Project link does not broaden private conversation; expired grant cannot fetch task/context.",
+      "missingPrerequisite": "WP-03 explicit sharing/assignment policy and WP-02 graph endpoint policy.",
+      "state": "missing"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "task-model.ts imports matchesTaskSearch, but published WP-06 requires shared Task projection with ACL epoch/watermark (work-packages.json:4383-4428); local helpers are not this service.",
+      "requiredChange": "Register canonical task extractor/event consumer in accepted WP-06 projection, index only policy-approved fields/source provenance and honor tombstones/revoke before returning snippets.",
+      "verification": "Create task through product then search unique phrase after watermark; C/revoked source yields no title/body/count leakage, delete removes hit; consumer crash replay recovers one correct revision.",
+      "missingPrerequisite": "WP-06 accepted projection through WP-09 plus task adapter registration owner.",
+      "state": "missing"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "parseAgentMention (task-model.ts:119-123) only detects @agent delegation; it is not canonical principal/entity occurrence linking. WP-09 is an explicit dependency.",
+      "requiredChange": "Reuse WP-09 typed mention occurrence/source-revision/target-policy ports for relevant description/message mentions; link deltas and attention reasons share WP-07 dedup, no text mention implies grants.",
+      "verification": "Mention B overlapping assignment yields one notification; edited occurrence removes only that backlink/reason, denied target reveals no label and text cannot grant source access.",
+      "missingPrerequisite": "WP-09 accepted extractor/link/recipient contract and WP-07 attention integration.",
+      "state": "missing"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "No assignee notification mechanism occurs in the inspected task types/service/handlers. WP-07 accepted behavior is separately specified (21-implementation-plan.md:125-127).",
+      "requiredChange": "Integrate WP-07 durable attention and recipient state, permission-filtered payload and dedup for assignment/mention overlap; delegate seen/done/mute/snooze to that store, not task metadata.",
+      "verification": "Actual B attention item once after restart/replay; seen/done persist to B's second device and do not alter A; recipient policy rechecked at delivery.",
+      "missingPrerequisite": "WP-07 scenario/migration/interface receipts and attention surface integration.",
+      "state": "missing"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "TaskAuditEvent is at/action/taskId/detail (types.ts:105-110); TaskDetail history reads local store.auditLog (TaskDetail.tsx:554-563); writeMeta bounds audit (personal-persist.ts:129-136).",
+      "requiredChange": "Project shared activity from canonical task events with actor/cause/revision and privacy-filtered fields, reuse WP-07 activity; keep local audit for standalone only.",
+      "verification": "Task creation/assignment/link history shows actor/cause/revision once after duplicate replay; unauthorized source content is absent from activity and logs.",
+      "missingPrerequisite": "WP-07 activity and WP-04 event context.",
+      "state": "missing"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "TaskDetail has canDelegate/onDelegate but no acting-user domain retrieval proof; buildDelegationPrompt is a content-copy helper (task-model.ts:100-109).",
+      "requiredChange": "Reuse common GetSourceContext/command ports via real agent tool with acting user, bounded graph traversal, source revision/provenance and current policy; permissionMode is not an ACL override.",
+      "verification": "Native agent retrieves t1/m1/m2 under A, viewer/outsider denied where required, revoke removes cached access; source refs and tool receipt trace to domain query.",
+      "missingPrerequisite": "WP-36 actual dispatcher and WP-50 provenance foundation; no fixture-only substitution.",
+      "state": "missing"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Task native channels currently expose personalTasks CRUD only (channels.ts:866-872); normative transport names domain.task.createFromMessage and workspace HTTP command (work-packages.json:9053-9059).",
+      "requiredChange": "Register normative HTTP/native create route and accepted additional task APIs; agent/MCP delegates to same authenticated command/query service, strict schemas and canonical error/result contract, no parallel business logic.",
+      "verification": "Equivalent authorized calls across HTTP/native/tool return identical task/receipt/current-ACL context; forged fields and stale revisions denied through every transport.",
+      "missingPrerequisite": "Transport/composition owner, accepted additional API shapes and WP-36 registration.",
+      "state": "missing"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Task handlers log rejected IDs/migration counts (personal-tasks.ts:49,64), while normative fields include commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ counters (work-packages.json:8975-8985).",
+      "requiredChange": "Attach accepted command/event correlation context, aggregate/policy revisions and projection watermarks to task spans/receipts/consumer metrics; record retry/DLQ counts without raw email/body/transcript/tokens.",
+      "verification": "One command traces to task events, B attention and Project/search watermark across crash/replay; inject failed consumer and inspect retry/DLQ counter/readiness; scan captured logs for PRIVATE_WP-11/body/token leakage.",
+      "missingPrerequisite": "WP-04 event/receipt instrumentation plus shared consumer telemetry ports.",
+      "state": "missing"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative tests/macro-integration/wp-11.test.ts not found by individual glob; current persistence/service test files were discovered by grep, not executed and not accepted as shared proof.",
+      "requiredChange": "Implement normative scenario, meaningful negative controls and recovery test through real boundary; preserve relevant standalone regression coverage, do not test forwarding/mock echoes or replace live UI/tool acceptance with fixture counts.",
+      "verification": "After authorized implementation run bun test tests/macro-integration/wp-11.test.ts and relevant package tests, plus real Electron/browser/native tool CHAT-TASK-01; retain seeded failing-mutant versus passing baseline evidence.",
+      "missingPrerequisite": "Implementation/dependency receipts, real service scenario environment and user-authorized later verification phase; current preflight prohibits test execution.",
+      "state": "missing"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:3 and 22-test-plan.md:3 explicitly mark proposed future work; WP-11 section states goal but not implemented receipts.",
+      "requiredChange": "Update existing WP-11 implementation/test sections with accepted API shapes, authority/placement/import semantics, failure and recovery/operator limits, hidden gates, real route/test markers and version-bound evidence after implementation.",
+      "verification": "Lead compares docs against actual runtime APIs/states and delivered revision; completion state remains distinct from this source-backed preflight.",
+      "missingPrerequisite": "Accepted implementation and observed scenario evidence; documentation file owner patch.",
+      "state": "missing"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "TaskDetail has delegateError (524), but no domain command failure state; service put catches all failures as rejected IDs (service.ts:45-51). Normative UI/errors require denied/offline/retryable/revision/idempotency/fence outcomes.",
+      "requiredChange": "Render typed terminal/retryable/conflict/revoke-fence/auth/unavailable/quarantine states without false applied success; source tombstone fallback, invalid assignee and denied Project suppress private labels; failed source post creates no task.",
+      "verification": "Exercise malformed actor/ref/assignee, denied Project, stale revision, same-key changed payload, source delete, offline reply loss and rejected replay on actual UI/API; recover using original receipt/key, not fresh duplicate intent.",
+      "missingPrerequisite": "Accepted gateway error contract, WP-05 replay and WP-08 source states.",
+      "state": "missing"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "TaskDetail requires a task prop (33-37) and only has delegating state; it does not distinguish domain loading/stale refresh at its boundary.",
+      "requiredChange": "Expose projection/command/source-resolution loading and refresh state through existing task surface owner; disable unsafe actions while preserving visible stale authorized state until policy invalidation, do not present loading as empty.",
+      "verification": "Delay command/read-model/source resolver on actual surface; observe loading, eventual canonical receipt state and correct revoked/refresh transition without duplicate submit.",
+      "missingPrerequisite": "WP-05 projection state and parent Tasks surface integration assigned by lead.",
+      "state": "missing"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "TaskDetail links tab has local links.empty (538); source absent simply hides field (500-506). No domain empty/denied/unconfigured/unavailable distinction is provided.",
+      "requiredChange": "Typed query/source/Project results distinguish genuinely no tasks/links/context from loading, denied, tombstoned, unconfigured or unavailable service; translated states in existing surfaces.",
+      "verification": "Observe empty authorized Project, absent optional source history, denied P1, deleted source and unavailable service separately; no hidden title/count inferred from UI.",
+      "missingPrerequisite": "Canonical query/state DTOs and Task/Project surface owner.",
+      "state": "missing"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "tasksViewAtom is navigation-only global storage; changed carries no replay cursor. WP-05 separately specifies durable queue/projection (work-packages.json:3457-3502).",
+      "requiredChange": "Reuse WP-05 durable draft/intent queue, persist key and command status, canonical receipt reconciliation after reconnect/restart, rejected revoked mutation quarantine and projection gap recovery. Do not label queued as applied_verified.",
+      "verification": "Offline Create Task draft/reload then reconnect creates once; crash after server commit reconciles original receipt; revoke during offline rejects on replay, retains/quarantines draft and hides stale protected data.",
+      "missingPrerequisite": "WP-05 accepted applied durable client projection/outbox and WP-08 composer state.",
+      "state": "missing"
+    },
+    {
+      "criterion": "integration scenario and real-surface verification gate",
+      "currentEvidence": "Published goal and CHAT-TASK-01 are future acceptance plans (work-packages.json:8950-8953,9016; 22-test-plan.md:60-74); no runtime behavior was exercised by this preflight.",
+      "requiredChange": "Complete all five criteria jointly through existing UI/API and native agent dispatcher with actual persistence and read-back, not a disconnected fixture implementation.",
+      "verification": "Retain screenshot/ARIA proof, typed read-back, canonical ID+revision, unique DB counts, receipts, event/projection watermarks and reproduction seed; bind source/dirty patch/schema/build evidence to exact tested revision.",
+      "missingPrerequisite": "Lead integration of accepted dependencies and all shared patches plus actual scenario runner; featureComplete remains false until gate met.",
+      "state": "missing"
+    },
+    {
+      "criterion": "negative control and independent holdout",
+      "currentEvidence": "Spec requires unauthorized actor or dropped/duplicated-event failure, explicit duplicate-on-retried-message mutant and independent second variant (work-packages.json:8955-8956,9782-9785).",
+      "requiredChange": "Provide failure injection for create-on-every-retry, removed source relation, duplicate attention delivery or bypassed actor policy; assert consumer-visible invariant rather than incidental wiring and preserve independent evaluator holdout.",
+      "verification": "Healthy baseline passes; each seeded mutation causes its named task count/backlink/notification/privacy assertion to fail; infrastructure startup error is not counted as caught mutation; holdout receipt retained.",
+      "missingPrerequisite": "Real boundary test implementation and independent evaluation setup after lead integration.",
+      "state": "missing"
+    },
+    {
+      "criterion": "persistence-recovery between command commit and reply",
+      "currentEvidence": "File put idempotency and local migration markers do not atomically couple task+link+receipt+event (personal-persist.ts:83-95; service.ts:75-104); normative crash boundary is explicit (work-packages.json:8959-8960).",
+      "requiredChange": "Persist canonical result/receipt and task/outbox together, resume consumers by durable inbox/lease semantics; client queries/replays the original command after ambiguous reply loss.",
+      "verification": "Terminate at committed-before-reply fault point, restart service/client and submit same key: original task ID/revision/receipt, one source edge, one Project membership and one B attention item, no double creation or ACK-before-persistence loss.",
+      "missingPrerequisite": "WP-04 durable transaction receipt/outbox, WP-05 replay, WP-07 recipient inbox and applied task migration.",
+      "state": "missing"
+    },
+    {
+      "criterion": "migration and canonical legacy mapping",
+      "currentEvidence": "Spec requires task/task_personal_placement/entity_link, composite entity FK, aliases, idempotency and event-delivery uniqueness, additive backfill/quarantine (work-packages.json:9457-9501). Existing task IDs cannot be canonical colon refs in file paths.",
+      "requiredChange": "Apply selected-migrator task migration with canonical composite identity, per-principal placement uniqueness, description/source/assignee data, lookup/backlink indexes; reuse shared graph/receipt/alias/inbox tables. Import provenance and aliases, quarantine ambiguous task/project mappings; preserve snapshot/forward-repair rollback policy.",
+      "verification": "Migration applies to real selected DB and restart reads canonical data; same-ID different namespace import stays distinct, same alias retry stays one, ambiguous mapping quarantines; rollback/recovery never removes recent accepted writes and standalone records survive.",
+      "missingPrerequisite": "Lead selected migrator, accepted registry/graph/command schema and applied migration receipt; no migration runs in preflight.",
+      "state": "missing"
+    },
+    {
+      "criterion": "license and preservation boundary",
+      "currentEvidence": "Normative licensePolicy is BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact audit (work-packages.json:9015). Personal task header distinguishes DAG Conductor (types.ts:1-4), and test plan disallows accidental YAML runner execution (22-test-plan.md:72).",
+      "requiredChange": "Reimplement behavior using current ROX mechanisms, do not copy Macro source or install unaudited dependencies. Retain standalone Things tasks, source/notes/checklist/date/recurrence behavior and human-versus-agent/DAG separation during canonical cutover.",
+      "verification": "Review contribution provenance/dependency audit if any; later standalone regression and actual task creation show no Conductor workflow launches, personal Today A/B remains separate and existing task details work.",
+      "missingPrerequisite": "Lead provenance/license review for any new dependency and authorized regression verification after implementation.",
+      "state": "missing"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-11 normative record","lineStart":8872,"lineEnd":9821,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0","inspection":"Relevant ranges read; record identity/criteria/transport/migration verified against supplied normative packet; repeated schema definition ranges not exhaustively reread."},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"Foundation note / WP-11 / WP-12","lineStart":201,"lineEnd":237,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9","additionalInspectedRanges":[[1,7],[27,69]]},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"CHAT-TASK-01 / mandatory completeness checklist","lineStart":60,"lineEnd":74,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d","additionalInspectedRanges":[[1,10],[197,222]]},
+    {"path":"packages/core/src/tasks/personal/types.ts","symbol":"TaskLink / PersonalTask / TaskProject / PersonalTaskBundle","lineStart":14,"lineEnd":119,"sha256":"4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.create / link / unlink / moveTo / uniqueId","lineStart":158,"lineEnd":204,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c","additionalInspectedRanges":[[207,245],[256,277],[507,539],[646,653]]},
+    {"path":"packages/core/src/tasks/personal/rpc.ts","symbol":"PersonalTasksSnapshot / migration DTOs","lineStart":8,"lineEnd":35,"sha256":"0077c76f097d4d5f6b89ae21d0bea3703a8cd9b7fe374859b41df7f32ed5e395"},
+    {"path":"packages/server-core/src/tasks/personal-persist.ts","symbol":"TASK_ID_RE / parsePersonalTaskPersistFile / PersonalTaskPersistStore.put / ensureSchemaBackup","lineStart":21,"lineEnd":105,"sha256":"024688ed60a4795ff0d25d080a98e45b47690abdb74077314734ce830443e49a","additionalInspectedRanges":[[116,180],[204,239]]},
+    {"path":"packages/server-core/src/tasks/personal-tasks-service.ts","symbol":"readPersonalTasks / putPersonalTasks / deletePersonalTasks / migratePersonalTasks","lineStart":23,"lineEnd":105,"sha256":"a4b41cbdfaa663872b5a70f2c81a51ce81c761973c8dd955eb89285de3f2429e"},
+    {"path":"packages/server-core/src/handlers/rpc/personal-tasks.ts","symbol":"personalTasksStore / registerPersonalTasksHandlers","lineStart":20,"lineEnd":69,"sha256":"bfb9080767d6a349c5d09a0cbe29190bccf6b8d70a88b4dd1bbfa6c0932d758f"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"apps/electron/src/renderer/pages/tasks/TaskDetail.tsx","symbol":"TaskDetailProps / TaskDetail / source and history UI","lineStart":33,"lineEnd":90,"sha256":"bbd9f8c868ea69b62942584e196cc8c21b825d83e3684a5c3573b23ef662c687","additionalInspectedRanges":[[129,147],[500,563]]},
+    {"path":"apps/electron/src/renderer/pages/tasks/atoms.ts","symbol":"tasksViewAtom","lineStart":1,"lineEnd":5,"sha256":"f2d6b10527652fdede0bb6b41a61671b5b52c583a88d0c44fc469fee6362222b"},
+    {"path":"apps/electron/src/renderer/pages/tasks/task-model.ts","symbol":"TasksView / buildDelegationPrompt / parseAgentMention / deriveTaskSource","lineStart":96,"lineEnd":153,"sha256":"fb44399f73a91c67f8beea55c61e947fe8f0cb0b907a854fc7fcd207686927ce","additionalInspectedRanges":[[1,24]]},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.personalTasks","lineStart":865,"lineEnd":872,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/protocol/events.ts","symbol":"personalTasks.CHANGED event declaration","lineStart":78,"lineEnd":82,"sha256":"2c488ef99e2bf5e9600c20b9795dd70360901e8a378e478df2410728b44fee62"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"REMOTE_ELIGIBLE_CHANNELS personalTasks entries","lineStart":895,"lineEnd":900,"sha256":"f9a3ffeef82eb6edfcd7435de78814db3f1c2b7a1ef0d4f7ef1df007ee399d6e","additionalInspectedRanges":[[1,18],[503,520]]}
+  ],
+  "nextExecutableAction": "Lead reviews this artifact now, accepts/assigns exact shared patch requests and resolves the Project/WP-12 and WP-05/WP-36/WP-50 foundation contracts. After the lead wave0 commit and accepted WP-08/WP-09/WP-07/WP-04 typed-interface/migration/scenario receipts, implementation owner rehashes and rereads changed seams, accepts AssignTask/GetSourceContext schemas, then starts normative tasks contracts.ts followed by transactional repository/migration/commands in dependency order. No source implementation is authorized to this preflight worker.",
+  "risks": [
+    {"risk":"Root wave0 work may change inspected files before integration","mitigation":"Hashes bind this report to working-tree snapshots only; invalidate/re-read changed references against committed integration input."},
+    {"risk":"Global personal task namespace versus workspace canonical task and DAG TaskSpec","mitigation":"Explicit standalone/shared authority and alias/provenance mapping; no name/ID-only merge or Conductor execution."},
+    {"risk":"Routing comment versus actual table mismatch","mitigation":"personalTasks are semantically local file tasks and handler comment says LOCAL_ONLY, but actual table places them REMOTE_ELIGIBLE. Lead must resolve transport authority explicitly; do not assert comments are executable classification."},
+    {"risk":"Canonical task:... IDs are rejected by file TASK_ID_RE","mitigation":"Do not relax filename safety; use registry alias/import or accepted shared projection adapter, not canonical refs as local filenames."},
+    {"risk":"File idempotency mistaken for command idempotency","mitigation":"Use scoped persisted command receipt/request hash and one task/link/assignment/outbox transaction; no calling create on intent retry."},
+    {"risk":"Project requirement deferred to downstream WP-12 creates false acceptance or cycle","mitigation":"Assign minimal canonical task membership/listing to WP-11 on existing Project foundation; WP-12 generalizes afterward."},
+    {"risk":"Offline and native agent requirements omitted because not explicit DAG edges","mitigation":"Keep WP-05/WP-36/WP-50 as separate foundation gates; no N/A or featureComplete claim for missing behavior."},
+    {"risk":"Duplicate graph, queue, task or notification stores","mitigation":"Reuse WP-02 graph, WP-04 receipt/outbox, WP-05 projection/outbox, WP-07 attention and WP-08 Message store; one owner per shared file/table."},
+    {"risk":"Cached source.label, copied notes or agent prompts disclose revoked/private context","mitigation":"Current endpoint ACL and policy epoch on resolution, retrieval, projection and recipient delivery; bounded provenance-tagged context and no raw content logs."},
+    {"risk":"Assignment versus sharing semantics unclear","mitigation":"Lead accepts explicit eligibility/share policy and additional API schemas; link/mention/assignment does not silently grant source access."},
+    {"risk":"Per-user Today/order becomes shared mutation","mitigation":"Store personal placement under workspace/task/principal identity, keep shared task description/assignee/membership in the canonical aggregate."},
+    {"risk":"Fixtures or existing local persistence tests passed off as live shared proof","mitigation":"Separate report validity from feature evidence; later observe actual UI/API/native tool and crash/replay/deny paths on a revision-bound implementation with seeded controls."}
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "acknowledgedAt": "2026-09-30T14:13:05.593310+00:00",
+  "owner": "/root compound implementation",
+  "checkout": "/Users/t/Projects/rox-one-compound-implementation",
+  "branch": "feat/rox-compound-workspace-20260930",
+  "revision": "8106f22185fb3b3e9a6a585320d48b1bf5f10fbd",
+  "programPackageCount": 143,
+  "notStartedReported": 130,
+  "fullDoDClosed": 0,
+  "preflightReported": 137,
+  "implementationWorkersReported": 7,
+  "preflightIsCompletion": false,
+  "futureIndependentWorkers": {
+    "model": "gpt-6.1-sol",
+    "reasoning": "ultra where supported"
+  },
+  "externalOwnership": [
+    {
+      "checkout": "/Users/t/Projects/rox-cloud-core-fixes-20260930",
+      "owner": "recovery root",
+      "branch": "fix/cloud-core-baseline-20260930",
+      "reportedRevision": "f8982a04",
+      "scope": "core baseline failures and type guards",
+      "access": "do not read or write"
+    },
+    {
+      "checkout": "/Users/t/Projects/rox-roadmap-recovery-20260930",
+      "owner": "recovery worker",
+      "branch": "fix/roadmap-recovery-20260930",
+      "base": "40391c08",
+      "scope": "orphan roadmap hardening",
+      "access": "do not read or write"
+    }
+  ],
+  "reportedMain": {
+    "revision": "f632",
+    "coreTestFailures": 3,
+    "coreTypeErrors": 13,
+    "webUiTypeErrors": 52,
+    "serverTypeErrors": 8,
+    "liveVerificationInThisCheckout": false
+  },
+  "reportedExternalDeliveryGates": [
+    "selfhost macos-toolchain runners offline; recovery root isolates CI repair",
+    "Vercel Account is blocked; not a compound implementation completion"
+  ],
+  "nextAction": "Complete current WP01 offline/primary native lanes and exact54criteria delivery, independently integrate WP48 v2 after rejecting identity regression, then schedule real dependency-ready packages.",
+  "updatedAt": "2026-09-30T15:02:40.797041+00:00",
+  "safeRegistry": "/Users/t/Projects/rox-session-recovery-20260930/docs/session-recovery-20260930.md",
+  "latestInstructionAcknowledged": true,
+  "deliveredRecoveryReferences": [
+    {
+      "pr": 1292,
+      "requestedRevision": "01889b4a43a2ce4f730d3109b49750a0fbde4db8",
+      "observedCurrentHead": "01889b4a43a2ce4f730d3109b49750a0fbde4db8"
+    },
+    {
+      "pr": 1313,
+      "requestedRevision": "5a9bf9cafd7df367f6ac32102b80e777377da162",
+      "observedCurrentHead": "5a9bf9cafd7df367f6ac32102b80e777377da162"
+    },
+    {
+      "pr": 1317,
+      "requestedRevision": "6cf191dd6abae67631e019f890498f19a83e6ea3",
+      "observedCurrentHead": "bbb30156a0758d1c00510e97eb6dc715c6b64fbe",
+      "newerHeadAutomaticallyAccepted": false
+    },
+    {
+      "pr": 1315,
+      "requestedRevision": "4504549086016dc3b892d17e9855a71afc1925d8",
+      "observedCurrentHead": "4504549086016dc3b892d17e9855a71afc1925d8"
+    }
+  ],
+  "recoveryHunksIntegrated": false,
+  "integrationGate": "Exact remote object audit then independently verify scoped hunks against current source/private custody/ACL/original receipt; no blanket merge. Do not copy old 0cc snapshot or read active recovery checkouts."
+}

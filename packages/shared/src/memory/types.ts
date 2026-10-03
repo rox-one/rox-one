@@ -9,7 +9,15 @@ export type LessonCategory = 'preference' | 'workflow' | 'knowledge' | 'correcti
 export type LessonScope = 'global' | 'workspace'
 export type LessonTrigger = 'explicit' | 'branch' | 'interrupted' | 'error' | 'distillation'
 
+/** Server-authenticated identity for a personal lesson; never supplied by the renderer. */
+export interface LessonOwner {
+  issuer: string
+  subject: string
+}
+
 export interface Lesson {
+  /** Optional personal owner; absent lessons remain machine-private legacy data. */
+  owner?: LessonOwner
   /** ISO timestamp */
   ts: string
   /** The durable rule the agent must follow, e.g. "always run frontend checks before calling a change done" */
@@ -46,6 +54,13 @@ export interface Lesson {
   tags?: string[]
   /** Rules folded into this one by a user merge (provenance). */
   mergedFrom?: string[]
+  /** Source lesson retained but excluded from context after a reversible merge. */
+  mergedInto?: string
+  /** Complete pre-merge source records used by the explicit restore action. */
+  mergeHistory?: {
+    version: 1
+    lessons: Lesson[]
+  }
   /** ISO timestamps of the most recent prompt inclusions (capped, newest last). */
   usedAt?: string[]
   /** ISO timestamp of the last user edit of the rule text. */

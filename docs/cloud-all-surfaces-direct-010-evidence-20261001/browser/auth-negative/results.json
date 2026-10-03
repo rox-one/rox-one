@@ -1,0 +1,439 @@
+{
+  "kind": "actual-optimized-browser-authentication-negatives",
+  "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "checkout": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "startedAt": "2026-10-01T17:06:07.775Z",
+  "phases": [],
+  "assertions": [
+    {
+      "name": "Authentication observer exact source revision",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "name": "Authentication observer tracked source clean",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "name": "Actual config utility provisioning exited 0",
+      "pass": true,
+      "detail": {
+        "code": 0
+      }
+    },
+    {
+      "name": "Actual unauthenticated config API returns401",
+      "pass": true,
+      "detail": {
+        "status": 401
+      }
+    },
+    {
+      "name": "Actual unauthenticated browser redirects to login without shell",
+      "pass": true,
+      "detail": {
+        "actualUrl": "http://127.0.0.1:40953/login"
+      }
+    },
+    {
+      "name": "Actual bad-token login UI refuses authentication without session cookie or WebSocket",
+      "pass": true,
+      "detail": {
+        "status": 401,
+        "actualUrl": "http://127.0.0.1:40953/login",
+        "errorText": "Invalid credentials",
+        "sessionCookiePresent": false,
+        "webSocketCount": 0
+      }
+    },
+    {
+      "name": "Real login stores HttpOnly cookie",
+      "pass": true,
+      "detail": {
+        "present": true,
+        "httpOnly": true
+      }
+    },
+    {
+      "name": "Actual correct browser login gets real default workspace ACK",
+      "pass": true,
+      "detail": {
+        "defaultWorkspaceId": "bec3a5ec-29a8-d365-9bfb-ac6613551f6d",
+        "acknowledgments": [
+          "bec3a5ec-29a8-d365-9bfb-ac6613551f6d"
+        ]
+      }
+    },
+    {
+      "name": "Authentication browser has zero page exceptions",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "Authentication owned server SIGTERM exit0 without SIGKILL",
+      "pass": true,
+      "detail": {
+        "label": "auth-negative",
+        "pid": 118038,
+        "profile": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-sJFiM2",
+        "origin": "http://127.0.0.1:40953",
+        "sentSigterm": true,
+        "usedSigkill": false,
+        "preStopExitCode": null,
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullEphemeralTokenLogged": false
+      }
+    },
+    {
+      "name": "Authentication server logs do not contain full ephemeral token",
+      "pass": true,
+      "detail": {}
+    }
+  ],
+  "servers": [
+    {
+      "label": "auth-negative",
+      "pid": 118038,
+      "profile": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-sJFiM2",
+      "origin": "http://127.0.0.1:40953",
+      "sentSigterm": true,
+      "usedSigkill": false,
+      "preStopExitCode": null,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "fullEphemeralTokenLogged": false
+    }
+  ],
+  "pages": [
+    {
+      "label": "real-unauth-and-bad-auth",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+        "[useToolchainStatus] Failed to load status: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}",
+        "Failed to load profile strip: {code: LOCAL_ONLY_DENIED, message: Channel is only available to the local desktop client}"
+      ],
+      "consoleWarnings": [
+        "[ThemeContext] electronAPI.loadPresetTheme is unavailable for \"pierre\". Falling back to bundled theme: pierre"
+      ],
+      "failedRequests": [
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap",
+          "method": "GET",
+          "error": "net::ERR_NAME_NOT_RESOLVED"
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap",
+          "method": "GET",
+          "error": "net::ERR_NAME_NOT_RESOLVED"
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+          "method": "GET",
+          "error": "net::ERR_NAME_NOT_RESOLVED"
+        }
+      ],
+      "badResponses": [
+        {
+          "url": "http://127.0.0.1:40953/api/auth",
+          "status": 401
+        }
+      ],
+      "webSockets": [
+        {
+          "url": "ws://127.0.0.1:40953/",
+          "sentChannels": [
+            "personalTasks:list",
+            "pluginBridge:listPlugins",
+            "toolchain:status",
+            "browserProfile:cookieAutoStatus",
+            "views:list",
+            "collection:getDisplay",
+            "collection:getFilters",
+            "browser-pane:list",
+            "memory:insights",
+            "memory:insights",
+            "identity:getState",
+            "gamification:get",
+            "onboarding:getRoxBalance",
+            "automations:get",
+            "projects:get",
+            "pages:get",
+            "workspaceSettings:get",
+            "sources:get",
+            "skills:get",
+            "sessions:getUnreadSummary",
+            "labels:list",
+            "theme:getWorkspaceColorTheme",
+            "personalTasks:migrate",
+            "browser-pane:list",
+            "automations:getLastExecuted",
+            "memory:markOnboarded"
+          ],
+          "receivedTypes": [
+            "handshake_ack",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response",
+            "response"
+          ],
+          "rpcRefusals": [
+            {
+              "channel": "pluginBridge:listPlugins",
+              "code": "LOCAL_ONLY_DENIED",
+              "message": "Channel is only available to the local desktop client"
+            },
+            {
+              "channel": "toolchain:status",
+              "code": "LOCAL_ONLY_DENIED",
+              "message": "Channel is only available to the local desktop client"
+            },
+            {
+              "channel": "browserProfile:cookieAutoStatus",
+              "code": "CHANNEL_NOT_FOUND",
+              "message": "No handler for: browserProfile:cookieAutoStatus"
+            },
+            {
+              "channel": "browser-pane:list",
+              "code": "CHANNEL_NOT_FOUND",
+              "message": "No handler for: browser-pane:list"
+            },
+            {
+              "channel": "identity:getState",
+              "code": "LOCAL_ONLY_DENIED",
+              "message": "Channel is only available to the local desktop client"
+            },
+            {
+              "channel": "gamification:get",
+              "code": "LOCAL_ONLY_DENIED",
+              "message": "Channel is only available to the local desktop client"
+            },
+            {
+              "channel": "onboarding:getRoxBalance",
+              "code": "LOCAL_ONLY_DENIED",
+              "message": "Channel is only available to the local desktop client"
+            },
+            {
+              "channel": "theme:getWorkspaceColorTheme",
+              "code": "LOCAL_ONLY_DENIED",
+              "message": "Channel is only available to the local desktop client"
+            },
+            {
+              "channel": "browser-pane:list",
+              "code": "CHANNEL_NOT_FOUND",
+              "message": "No handler for: browser-pane:list"
+            }
+          ],
+          "acknowledgedWorkspaceIds": [
+            "bec3a5ec-29a8-d365-9bfb-ac6613551f6d"
+          ],
+          "errors": [],
+          "closed": false
+        }
+      ]
+    }
+  ],
+  "limitations": [],
+  "errors": [],
+  "command": [
+    "node",
+    "/tmp/rox-r15-exact-ui-20261001/observe-auth-negative.cjs",
+    "/tmp/rox-r15-exact-ui-20261001/checkout",
+    "010fa8c040e3a84cd40cd8195473f52d8582f159"
+  ],
+  "helperSha256": "4129f15b83b90f3c719a633c092ac79e7d0b5d5c7b3f33a5efdaca37e4836abc",
+  "artifacts": {
+    "dist-server/index.js": {
+      "sha256": "18c10e1f93660543dd9c6d474ab010b182e17d25562feefd7f622eb7684a360a",
+      "bytes": 36851872
+    },
+    "apps/webui/dist/index.html": {
+      "sha256": "55dea0ec3407bc8c3c04614ccdf19c9031aa9c34b8a0728c38ba7db24d8c4766",
+      "bytes": 1767
+    },
+    "apps/webui/dist/login.html": {
+      "sha256": "e2b5ff3b6797dd07fea6edfe32051d8db3461c78ce6244ed00d42669615c5cfa",
+      "bytes": 9998
+    }
+  },
+  "browserVersion": "151.0.7922.173",
+  "unauthenticated": {
+    "url": "http://127.0.0.1:40953/login",
+    "title": "Rox — Вход",
+    "bodyText": "Rox\n\nВведите токен сервера, чтобы продолжить\n\nТокен сервера\n Войти",
+    "topBar": null,
+    "modePill": null,
+    "rail": null,
+    "mainNavigation": null,
+    "headers": [
+      "Rox"
+    ],
+    "testIds": [],
+    "modeButtons": [],
+    "railButtons": [],
+    "sourceStates": [],
+    "preferences": {
+      "craft-workbench-enabled": null,
+      "craft-feature-unified-shell": null,
+      "craft-feature-workbench-top-chrome-v2": null,
+      "craft-feature-workbench-mode-registry-v1": null,
+      "craft-activity-rail-collapsed": null,
+      "craft-sidebar-width": null,
+      "craft-session-list-width": null
+    },
+    "screenshot": "unauthenticated-login-redirect.png",
+    "html": "unauthenticated-login-redirect.html"
+  },
+  "badAuthentication": {
+    "status": 401,
+    "actualUrl": "http://127.0.0.1:40953/login",
+    "errorText": "Invalid credentials",
+    "sessionCookiePresent": false,
+    "webSocketCount": 0
+  },
+  "firstRunMemoryDialog": {
+    "url": "http://127.0.0.1:40953/?ws=bec3a5ec-29a8-d365-9bfb-ac6613551f6d&route=allSessions",
+    "title": "Rox",
+    "bodyText": "Sessions: Unavailable\nNew Session\nSessions\n0\nFavorites\n0\nArchive\nLabels\nProjects\n1\nCloud UI Genuine Project\nPages\n0\nMemory\nTasks\nMeetings\nSources\n10\nAPIs\n2\nMCPs\n0\nLocal Folders\n8\nSkills\n0\nNotes\nAutomations\n30\nScheduled\n10\nEvent-based\n10\nAgentic\n10\nSettings\nSet up memory\n\nAdd a few memory lessons so Rox can learn how you work.\n\nOpen memory\nUser\nStandard · Balance —\nSessions\nNo sessions yet\nSessions with your agent appear here. Start one to get going.\nNew Session\n\nNo session selected\n\nFiles\nTeach the agent your rules\n\nMemory stores lessons the agent follows between sessions. Add a few basics now — or skip and write your own later.\n\nRun the tests before the final answer\nNever commit secrets into code\nmust not\nAnswer briefly and to the point\nSkip\nAdd selected",
+    "appRootChildren": 2,
+    "topBar": {
+      "visible": true,
+      "tag": "DIV",
+      "text": "",
+      "ariaLabel": null,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 40
+      }
+    },
+    "modePill": null,
+    "rail": null,
+    "mainNavigation": {
+      "visible": true,
+      "tag": "NAV",
+      "text": "Sessions\n0\nFavorites\n0\nArchive\nLabels\nProjects\n1\nCloud UI Genuine Project\nPages\n0\nMemory\nTasks\nMeetings\nSources\n10\nAPIs\n2\nMCPs\n0\nLocal Folders\n8\nSkills\n0\nNotes\nAutomations\n30\nScheduled\n10\nEvent-based\n10\nAgentic\n10\nSettings",
+      "ariaLabel": "Main navigation",
+      "rect": {
+        "x": 0,
+        "y": 119.75,
+        "width": 320,
+        "height": 718.75
+      }
+    },
+    "headers": [
+      "Sessions",
+      "Teach the agent your rules"
+    ],
+    "testIds": [
+      "bottom-terminal-toggle",
+      "profile-strip-balance"
+    ],
+    "modeButtons": [],
+    "railButtons": [],
+    "sourceStates": [
+      {
+        "tag": "DIV",
+        "testId": null,
+        "authority": null,
+        "source": null,
+        "error": null,
+        "role": "status",
+        "text": "Sessions: Unavailable",
+        "disabled": null,
+        "failed": null
+      },
+      {
+        "tag": "SPAN",
+        "testId": null,
+        "authority": null,
+        "source": null,
+        "error": null,
+        "role": "status",
+        "text": "",
+        "disabled": null,
+        "failed": null
+      },
+      {
+        "tag": "DIV",
+        "testId": null,
+        "authority": null,
+        "source": null,
+        "error": null,
+        "role": "status",
+        "text": "",
+        "disabled": null,
+        "failed": null
+      }
+    ],
+    "preferences": {
+      "craft-workbench-enabled": null,
+      "craft-feature-unified-shell": null,
+      "craft-feature-workbench-top-chrome-v2": null,
+      "craft-feature-workbench-mode-registry-v1": null,
+      "craft-activity-rail-collapsed": null,
+      "craft-sidebar-width": "320",
+      "craft-session-list-width": "300"
+    },
+    "screenshot": "genuine-first-run-memory-dialog.png",
+    "html": "genuine-first-run-memory-dialog.html"
+  },
+  "firstRunMemoryDialogDismissals": [
+    {
+      "realUiClick": "Skip",
+      "noSeedLessonsRequested": true,
+      "markerMayPersistInOwnProfile": true,
+      "at": "2026-10-01T17:07:07.527Z"
+    }
+  ],
+  "correctAuthentication": {
+    "defaultWorkspaceId": "bec3a5ec-29a8-d365-9bfb-ac6613551f6d",
+    "acknowledgments": [
+      "bec3a5ec-29a8-d365-9bfb-ac6613551f6d"
+    ]
+  },
+  "finalCleanup": {
+    "browserClosed": true,
+    "childAudits": [],
+    "profilesDeleted": [],
+    "errors": [],
+    "shortBrowserTmpDeleted": true,
+    "remainingChildren": 0,
+    "remainingProfiles": 0
+  },
+  "finishedAt": "2026-10-01T17:07:10.012Z",
+  "assertionsPassed": 11,
+  "assertionsFailed": 0
+}

@@ -1,0 +1,273 @@
+{
+  "task_id": "LSX-WP-011-preflight",
+  "attempt_id": "b4334b610b2cff0358df6ea1e31e9b3d",
+  "packet_hash": "dca3268169c347fc36bd17c1d05b995d88b84251d1bdd9cf8c482bbc3c2af72f",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-011",
+  "featureComplete": false,
+  "mode": "SOURCE_ONLY_PREFLIGHT",
+  "workTier": "bounded-workflow",
+  "dependencies": ["LSX-WP-007"],
+  "externalPrerequisites": [],
+  "scope": {
+    "ownedArtifact": "plans/compound-implementation/worker-reviews/LSX-WP-011.json",
+    "productWritesPerformed": false,
+    "gitOperationsPerformed": false,
+    "buildTestsNativeUiNetworkPerformed": false,
+    "inspection": "Only package specifications, three explicitly named source files and their import declarations were inspected. Those three source files have no import/re-export dependencies. Codegraph was queried first but reported no project index; no index was created.",
+    "implementationAuthority": "This worker has no authority to implement. Future implementation owns only the four normative new files, with shared patches applied serially by integration-owner under lease. Additional integration seams require an amended reviewed packet."
+  },
+  "evidenceFreshness": {
+    "revisionBinding": "input_revision is the dispatch input, not a freshly verified HEAD. No Git state command was run. Source hashes describe the live inspected files, not a clean committed tree.",
+    "sourceBaselineComparison": "All three source SHA256 values equal the published product-baseline blob hashes. Both input manifest hashes also match the inspected files. This does not prove runtime readiness, accepted prerequisites or absence of concurrent changes.",
+    "recheckTrigger": "After lead wave0 commit and accepted LSX-WP-007 receipt, rehash and reread any changed source before implementing; invalidate changed line anchors and regenerate requests. No source-only observation is a feature pass.",
+    "manifest": {
+      "path": "plans/lark-suite-reference/delivery.json",
+      "sha256": "055647b0d2c3ee3ba9b3526b5b30a6ad6d0900050dc4787cfa750696a7965462",
+      "declaredPackageCommit": "242492868a11b4d9af1c1011f20b31a346875f0a",
+      "declaredPackageDigest": "9023153c4d6e4a6dac51991c2d82b512ed3df7d7803825845222160224369cb5",
+      "state": "LOCAL_MANIFEST_READ; the two spec_ref hashes and package issue file hash match their local manifest values. Immutable commit contents and aggregate digest were not independently verified. Resolve execution placeholders from this manifest through lead acceptance, not a guessed revision."
+    }
+  },
+  "ownedNewFiles": [
+    "packages/core/src/bases/field-registry.ts",
+    "apps/electron/src/renderer/pages/bases/FieldSchemaInspector.tsx",
+    "tests/lark-suite-extension/lsx-wp-011.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-011.spec.ts"
+  ],
+  "newFilePresence": "The glob lookup for all four exact normative paths reported Path not found. No implementation or tests were created.",
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/bases/field-registry.ts",
+      "symbols": "Proposed, not existing: FieldDefinition, TypedCellValue, FieldCapability, runtime schema validators, registry lookup, pure field-definition preview and codec functions",
+      "change": "Implement one versioned runtime-validated descriptor registry used by both boundaries. Exactly the 18 named core types; never add Person or system columns. Descriptor carries immutable fieldId, portableKey, localized label, schemaVersion, nullable/unit/precision/options/cardinality configuration, typed storage/editor validation, allowed operators/comparison/sort, formatter, portable import/export codecs and intrinsic writable/derived status. Intersect intrinsic status with canonical source capabilities and current actor policy; unsupported is not writable empty. Separate cell missing/null/empty/value/error/redacted/unsupported branches; redacted branches contain no protected value or metadata. Preserve future payloads as unsupported/read-only instead of silently filtering them away. Export compiled request/result/error contracts for base.previewFieldDefinition and base.addField; command envelope must carry canonical source ref, expectedRevision, idempotency/operation identity, applicable authorityEpoch and preview digest. Pure preview must not issue a grant or perform writes. Do not implement a new store or pretend pure functions are an authenticated endpoint."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/FieldSchemaInspector.tsx",
+      "symbols": "Proposed, not existing: FieldSchemaInspector",
+      "change": "Render the existing Base host's field-schema editor, accepting owner-supplied ref/revision/freshness/capabilities and authenticated preview/apply bindings. Use stable field and option IDs independently of labels. Type/config help and examples explain units, precision, storage/import semantics, operators, source and freshness on hover/focus/click. Retain input draft through validation/conflict/pending and clear only after durable receipt plus owner readback. Show loading/source-empty/filtered-empty/error/retry/stale/offline/denied/read-only/unsupported and missingDependency distinctly. No localStorage schema writer, fake save or substitute standalone surface. Russian-default t() keys in all 10 existing locales must be integrated by the lead through amended scope. Preserve theme, actual Rox Mono, keyboard and IME, visible focus, accessible hit targets, Escape focus return and reduced motion."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-011.test.ts",
+      "symbols": "Proposed generated codec/schema and command-boundary cases",
+      "change": "Deterministic seeded properties for all 18 type codecs and explicit semantic boundaries; stable label/option renames; false string rejection; finite exact decimal; phone original bytes; date-only versus zoned timestamp and DST; derived writer rejection; redacted metadata and unsupported retention. Owner integration scenarios must verify durable ref/revision/hash, conflict, replay, revoke and restart rather than mock forwarding. Retain exact baseline/fixture hashes, seeds, attempts and semantic mutation receipts."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-011.spec.ts",
+      "symbols": "Proposed actual Electron inspector acceptance scenarios",
+      "change": "Use the repository-supported real Electron runner after lead discovery. Exercise mounted inspector against canonical owner: Add field/type selection, stable option rename, preview/apply, draft retention on failure, readback/reload/restart, pointer/keyboard/IME/focus/Escape, help without writes, reduced motion, 200% zoom, Russian and locale keys, light/dark theme and computed loaded font. Fixture-only UI is insufficient."
+    }
+  ],
+  "typeSemantics": {
+    "source": "docs/lark-suite-reference/05-rox-bases-design.md:107-132; docs/lark-suite-reference/07-domain-entity-model.md:151-157",
+    "coreTypes": ["Title", "Text", "Number", "Select", "Multi-select", "Checkbox", "Date", "URL", "Email", "Phone", "Status", "Formula", "Relation", "Lookup", "Rollup", "Image", "Audio", "Video"],
+    "idRule": "Names above are normative type names. Machine IDs must be pinned in the reviewed registry contract; no existing 18-type machine-ID enum was observed in scoped code. Labels are never field/option/ref identity.",
+    "contracts": [
+      {"type": "Title", "semantics": "Unicode string, required only by schema, never identity; CSV string/Markdown title mapping; contains/locale sort/open entity."},
+      {"type": "Text", "semantics": "Plain string or explicit rich-document ref, never infer HTML; multiline quoted CSV; contains/empty/starts/ends."},
+      {"type": "Number", "semantics": "Finite decimal/numeric input; NaN/Infinity rejected; exact large monetary values retain decimal/minor-unit representation; display locale separate; unit/currency metadata; equality/range and typed aggregate eligibility."},
+      {"type": "Select", "semantics": "Stable option ID; labels/color editable; unknown imported option stays pending mapping; equality/any-of/grouping."},
+      {"type": "Multi-select", "semantics": "Ordered deduplicated option-ID set; empty set distinct from null; YAML/JSON and declared CSV-list encoding; contains/all/none."},
+      {"type": "Checkbox", "semantics": "Only boolean or schema-permitted null; string false rejected, no truthiness conversion; checked/unchecked/empty."},
+      {"type": "Date", "semantics": "Explicit date-only YYYY-MM-DD or instant+IANA zone and precision; DST gap/ambiguity explicit; display must not change stored day; before/after/range."},
+      {"type": "URL", "semantics": "Allowlisted schemes; attachment refs separate; reject javascript/data HTML actions; open through host only."},
+      {"type": "Email", "semantics": "Pragmatic syntax validation with original string preserved; composer action never automatic sending."},
+      {"type": "Phone", "semantics": "Original string plus optional normalization with explicit country context; preserve leading zeros/+; never numeric coercion."},
+      {"type": "Status", "semantics": "Stable workflow option ID/category/order; source-owner state-machine mapping and transition validation; not a universal task completion field."},
+      {"type": "Formula", "semantics": "Versioned typed expression/config, deterministic bounded evaluation, read-only typed result/error; expression portable, cache not truth. Evaluation engine readiness must be supplied, not invented inside registry."},
+      {"type": "Relation", "semantics": "Canonical source-scoped EntityRef/list; target kind/schema/cardinality validated; actor-readable picker; unresolved imports retained, no label matching."},
+      {"type": "Lookup", "semantics": "Relation field ID plus target field ID; derived read-only typed scalar/list with explicit cardinality and type-supported operations."},
+      {"type": "Rollup", "semantics": "Relation+target field+typed aggregate; derived read-only; authorized targets only; unit/type and empty/error rules explicit; denied never zero."},
+      {"type": "Image", "semantics": "Canonical asset refs, alt/caption, MIME/size/dimensions; existing attachment mapping and denied/broken placeholders."},
+      {"type": "Audio", "semantics": "Canonical file refs with duration/metadata; permission/disclosure, no autoplay, explicit unsupported codec."},
+      {"type": "Video", "semantics": "Canonical file refs/poster/duration; lazy metadata, no autoplay, denied stream URL never exposed."}
+    ],
+    "writability": "Formula/Lookup/Rollup intrinsically derived. Other types are editable only where canonical source mapping, source capability, schema and actor policy allow; Status uses owner transition commands. Descriptor/config editing rights and cell-value write rights are distinct. createdAt/source/revision/assignee are bindings, not extra core types."
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView",
+      "change": "After LSX-WP-007 migration is accepted, bind columns/filter/formula references to its canonical BaseDefinition field IDs and the registry descriptors rather than a second page schema inside view config. Retain existing view kind/private-shared semantics and portable keys; do not infer identity from label. Keep unsupported future definitions read-only via the accepted owner contract. Reconcile exact shape with dependency receipt before patching.",
+      "reason": "Current lines 24-34 expose v:1 and string columns/filter/sort fields, not validated FieldDefinitions. Page-owned schema must remain authoritative."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "projectNoteRows",
+      "change": "Consume accepted canonical field mappings/descriptors when producing typed read projections, preserving note id and provenance.noteId and existing checkbox/backlink counts. Validate property values through the registry and retain distinct null/empty/error/redacted/unsupported outcomes without storing schema or data in this projection. Policy-filtered source input must be supplied by the owner; renderer projection is not an ACL boundary.",
+      "reason": "Current lines 133-158 copy Record<string, unknown> properties and derive counts from Markdown tasks; raw value truthiness/string coercion must not become typed storage validation."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "formulaValue",
+      "change": "Expose the existing four formulas as read-only derived Number capability mappings without changing their results. In the accepted legacy migration, taskCount/openTaskCount bind to legacy.markdownTaskCount.v1/legacy.markdownOpenTaskCount.v1; native task counts remain separate. Formula evaluation beyond those legacy functions is delegated to the accepted bounded engine, never eval or hidden substitution.",
+      "reason": "Current lines 188-203 use row.tasks/openTasks/backlinks/tags.length. Published entity model lines 155-157 explicitly forbids silently changing Markdown checkbox counts to native Task counts. Coordinate migration with LSX-WP-008 rather than implementing it twice."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "notesViewsStorageKey",
+      "change": "Use this existing namespace only for the personal view migration/cache contract accepted in LSX-WP-007; never persist FieldDefinitions or claim native addField ACK from a notes:views key. Keep durable canonical schema writes and receipts in the Page owner. If dependency already removed obsolete writable use, no duplicate persistence path is introduced.",
+      "reason": "Current lines 96-102 only construct notes:views:<workspaceId>; this is not a durable schema receipt or page-owned transaction."
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "FG-01-delivery-and-wave0",
+      "explicitDagEdge": false,
+      "evidence": "work-packages.json:5011-5021; delivery.json:6-8; dispatch instruction requires lead wave0 commit",
+      "requirement": "Lead commits wave0, accepts predecessor implementation/readback receipts, pins approved implementation base, verifies immutable reference package commit/digest and spec_ref hashes, assigns owner and path lease. Product baseline e953... is not this worker's a21... dispatch revision.",
+      "missingPrerequisite": "Approved wave0/integration revision and accepted LSX-WP-007 artifact+readback receipt were not provided in this packet.",
+      "state": "BLOCKED_FOR_IMPLEMENTATION"
+    },
+    {
+      "id": "FG-02-authenticated-server-command-boundary",
+      "explicitDagEdge": false,
+      "evidence": "published issue:60-69,87-91; scoped note-views.ts has no imports or endpoint handler",
+      "requirement": "Owner binds compiled preview/addField contracts to authenticated server transport, schema-editor ACL and canonical source refs. Enforce validation/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat/conflict, mandatory revision, idempotency, applicable epoch and preview-digest revalidation. Hidden metadata redacted on read/preview/apply/replay and revoke.",
+      "missingPrerequisite": "No authenticated handler or server registration seam is in the inspected source or authorized patch symbols. Lead must supply accepted owner/transport/policy binding and an amended packet for any additional path; core schemas alone cannot meet this gate.",
+      "state": "UNVERIFIED_OWNER_BINDING"
+    },
+    {
+      "id": "FG-03-durable-page-owner-recovery-outbox",
+      "explicitDagEdge": false,
+      "evidence": "published issue:27-29,67,73-85,135-139; note-views.ts:100-102,129-130,534-543",
+      "requirement": "Page-owned field schema transaction provides durable native receipt, authoritative exact ref/revision/hash readback, restart recovery and recoverable commit/receipt/outbox boundary. base.fieldChanged carries normative envelope, dedup/event revision fences and refreshes editor capability without rowRevision changes.",
+      "missingPrerequisite": "Accepted LSX-WP-007 durable Base owner APIs plus mutation/receipt/event runtime binding are needed. LSX-WP-003's Markdown CAS foundation is related by implementation plan, but not an extra explicit LSX-WP-011 dependency and not automatically a schema-write capability.",
+      "state": "UNVERIFIED_NATIVE_RUNTIME"
+    },
+    {
+      "id": "FG-04-typed-filter-sort-consumers",
+      "explicitDagEdge": false,
+      "evidence": "note-views.ts:160-169,545-549,580-618; design05:109; package patch symbols:4831-4843",
+      "requirement": "Registry comparator/operator definitions must be used by typed consumers; String(actual) equality, Number(actual) relational comparison and null-to-empty sort collapse are not the new type semantics. Retain legacy view behavior through explicit migration rather than silently changing v1 results.",
+      "missingPrerequisite": "applyNoteBaseView/readField/matchesFilter/compareUnknown/isFilter are not among the four authorized integration symbols. Lead must extend reviewed symbol scope or use accepted query integration. A dead registry with old coercing execution is insufficient.",
+      "state": "REQUIRES_REVIEWED_SCOPE_EXTENSION"
+    },
+    {
+      "id": "FG-05-real-inspector-host-and-locales",
+      "explicitDagEdge": false,
+      "evidence": "published issue:43-58,103-110,138; repo i18n rule; four new files absent",
+      "requirement": "Mount FieldSchemaInspector in the existing Base host; connect actual preview/apply/readback/subscription. Supply t() keys in de/en/es/fr/hu/ja/pl/ru/zh-Hans/zh-Hant, actual loaded Rox Mono and real Electron runner. No standalone demo surface substitutes for host integration.",
+      "missingPrerequisite": "Permitted shared path note-views.ts is a non-React module; no inspector mounting, translation or transport registration path is authorized. Host/locales/runner must be supplied by lead and additional paths reviewed before implementation. No guessed host files were inspected.",
+      "state": "REQUIRES_REVIEWED_SCOPE_EXTENSION"
+    },
+    {
+      "id": "FG-06-source-computation-and-asset-capabilities",
+      "explicitDagEdge": false,
+      "evidence": "design05:94-105,124-130; entity-model07:153-157; PersonalTask:42-75; CalendarEvent:22-38,103-113",
+      "requirement": "Compile all 18 descriptor/codec contracts without fabricating formula/relation/rollup evaluation, status transitions or asset/provider writes. Derived results require actor-filtered typed computation; relation uses canonical scoped refs; media resolves through existing asset owner. Task/Calendar mappings preserve native semantics.",
+      "missingPrerequisite": "Supply accepted computation, link and asset contracts where exercised. LSX-WP-013/014 consume this registry per DAG; do not create a reverse dependency cycle by requiring their complete implementation to author descriptors. Keep absent runtime capabilities explicitly missingDependency/read-only, while leaving full acceptance unverified. Task writes and provider operations need their own accepted owner receipts if used.",
+      "state": "CONTRACTS_REQUIRED_NOT_AN_EXTRA_DAG_EDGE"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Title/Text/Number/Select/Multi-select/Checkbox/Date/URL/Email/Phone/Status/Formula/Relation/Lookup/Rollup/Image/Audio/Video; published clarification: exactly18 core types and operators/codec/validation for each",
+      "currentEvidence": "No field-registry.ts exists. NoteViewFilterOp:7 only eq/includes/exists/gt/lt; NoteProjectionRow.properties:78 is unknown-valued; helpers:598-617 coerce strings/numbers. design05:113-132 supplies exact 18-type semantics.",
+      "actualSeam": "NoteBaseView:24-34; projectNoteRows:133-158; matchesFilter:593-613; compareUnknown:615-618",
+      "requiredChange": "Build runtime-validated descriptor/codec registry as specified in typeSemantics, exact membership/count, complete type capabilities and portable precision-safe values. Bind accepted owner fields through named projection seams; request additional reviewed symbols for typed comparator/filter execution. Reject Person/unknown core IDs and forbidden coercions.",
+      "verification": "Future bun test tests/lark-suite-extension/lsx-wp-011.test.ts: exact set not just count; seeded parse/serialize properties per type; finite decimals and large exact amounts; false string validation; phone +/leading0 bytes; date-only/zoned/DST; stable select IDs, URL scheme rejection, relation refs/cardinality, media denied/unsupported; actual owner field create/readback and inspector type selection. NOT_RUN in preflight.",
+      "missingPrerequisite": "Accepted LSX-WP-007 field-schema/ref contract and reviewed typed-consumer integration scope (FG-01/04).",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "writable vs derived explicit for every type; published clarification: distinct null/empty/error/redacted/unsupported and stable IDs under label rename",
+      "currentEvidence": "Four fixed formulaValue branches return numbers. Existing row.properties has no typed cell-state union, capability policy or stable option model. PersonalTask.Status derives from lifecycle fields; CalendarEvent retains provider-specific allDay/timeZone/etag semantics.",
+      "actualSeam": "formulaValue:188-203; projectNoteRows:133-158; PersonalTask:42-75; CalendarEvent:22-38; calendarEventIdentity:103-113",
+      "requiredChange": "Declare intrinsic writability for all 18 descriptors, derived Formula/Lookup/Rollup; intersect with source/actor rights, not generic writable defaults. Separate value/null/empty/error/redacted/unsupported and missing states with safe payloads; labels/portable keys distinct from immutable field/option identity. Preserve legacy Markdown counts. Display unavailable owner capability without success claims.",
+      "verification": "Future tests reject derived writes at owner, distinguish null from empty set/string/missing, retain future payload read-only, no denied-to-zero aggregate; option and field label rename keeps stored IDs and formula references; Tasks/Calendar identity and status/date mapping remain source-correct. Actual inspector exposes derived/read-only and redacted state without protected metadata. NOT_RUN.",
+      "missingPrerequisite": "Accepted source mapping/ACL/computation contracts and legacy-migration coordination (FG-02/06).",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "parseNoteBaseView:108-127 is permissive renderer parsing, not a command API. No authenticated transport or endpoint imports in the three inspected source files. Normative operations and eight errors are proposed in work-packages.json:4860-4879.",
+      "actualSeam": "parseNoteBaseView:108-127; proposed field-registry.ts contract consumed by future owner preview/addField boundary",
+      "requiredChange": "Export runtime schemas for preview/addField input, validated versioned descriptor, result and all eight errors. Bind both actual boundaries to same schemas; reject fabricated payload actor/owner/workspace grants, enforce expectedRevision/idempotency/authorityEpoch and preview digest. Keep denied metadata safe and queries version/freshness-bearing.",
+      "verification": "Future server+renderer contract compile report plus actual authenticated requests: forged actor, field-editor denied, deleted ref, unsupported future format, missing owner, offlineUnsupported, rate limit and conflict/current-revision outputs; preview cannot mutate or grant. Compile alone is not runtime proof. NOT_RUN.",
+      "missingPrerequisite": "Lead-supplied authenticated handler/registration and ACL evaluator seam; outside current allowed patches (FG-02).",
+      "state": "BLOCKED_NATIVE_BINDING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "notesViewsStorageKey:100-102 is only a key constructor; serializeNoteBaseView:129-130 is JSON.stringify; restoreSavedViews:534-543 parses arrays and discards invalid entries. None demonstrates durable field-schema commit/receipt or restart readback.",
+      "actualSeam": "notesViewsStorageKey:100-102; LSX-WP-007 canonical BaseDefinition owner (receipt not supplied); proposed inspector apply/readback binding",
+      "requiredChange": "Route addField to Page owner transaction, preserve draft pending durable native ACK, compare exact ref/revision/hash after apply and restart. Keep schema/view revisions independent from rowRevision. Persist receipt/idempotency/outbox recoverably, no local view JSON success substitute.",
+      "verification": "Future native field create -> receipt -> authoritative same-ref revision/hash -> process restart -> same schema/readback; crash before/after commit and receipt delivery must reconcile without duplicate fields. Store exact integrated commit, inputs and readback artifacts. NOT_RUN.",
+      "missingPrerequisite": "Accepted LSX-WP-007 owner storage contract, mutation/recovery/event implementation and lead restart lane (FG-03).",
+      "state": "BLOCKED_NATIVE_BINDING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "Existing named seams are pure projection/view functions. Published issue:67-91 requires preview revalidation, owner ACL on read/query/preview/apply/replay, revocation and deduplicated revision-fenced events.",
+      "actualSeam": "projectNoteRows:133-158; proposed base.previewFieldDefinition/base.addField owner bindings; formulaValue:188-203",
+      "requiredChange": "Implement native schema mutation with conditional revision, digest recheck, authenticated replay, safe error discriminants and stable operation identity. Handle option rename and concurrent addField conflict; refresh capability on base.fieldChanged without touching rowRevision. Preserve draft on denied/conflict/offline and reauthorize after revoke/reconnect.",
+      "verification": "Future exact-byte scenarios: successful preview/add/readback; unauthorized hidden-field preview/apply and forged actor; stale expectedRevision; changed preview/policy; repeated same operation returns same receipt/no duplicate; same key/different payload rejects; crash/restart replay; revoked read/write/subscription; stale/duplicate events ignored and schema event leaves rowRevision unchanged. Retain expected/observed, seeds, failure history and hashes. NOT_RUN.",
+      "missingPrerequisite": "Authenticated owner, durable receipt/event binding and actual runtime test lane (FG-02/03).",
+      "state": "NOT_RUN_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:4925-4933 and published issue:121-128 name Person-as19th-type and false-string truthy coercion, exact18/state/precision semantic oracles. The normative test paths are absent.",
+      "actualSeam": "Proposed registry exact type-set validator and Checkbox codec in field-registry.ts; proposed lsx-wp-011.test.ts",
+      "requiredChange": "Create deterministic baseline semantic tests and isolated seeded mutants for adding Person and boolean truthiness; preserve exact fixture/source/input SHA256, seeds and all attempts. Use named behavioral assertions, not source-text or count-growth checks. Include precision/phone preservation oracle.",
+      "verification": "Future green exact-byte baseline; Person mutant fails exact18/membership oracle; false string mutant fails validation-not-true assertion; record exit/semantic output separately from infrastructure failures. Codec preservation assertions remain necessary, not inferred from a caught count mutant. NOT_RUN.",
+      "missingPrerequisite": "Actual implementation, meaningful deterministic tests and lead-authorized mutation run after integration; preflight cannot execute tests.",
+      "state": "NOT_RUN_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "FieldSchemaInspector.tsx and UI spec absent; allowed shared source is not React. Published issue:43-58 and138 require actual hosted Electron interaction and loaded font, not isolated fixture UI.",
+      "actualSeam": "Proposed FieldSchemaInspector.tsx; actual mounting/transport/locales host not present in inspected or authorized source scope",
+      "requiredChange": "Integrate inspector into existing Base host with owner capability and freshness, 18-type keyboard picker and editable stable option labels, preview/apply state machine, detailed help and preserved draft. Use all 10 locale keys, Russian default, user theme and actually loaded Rox Mono. Escape restores focus; controls meet 32px desktop/44px touch; reduced motion disabled; help has no side effects.",
+      "verification": "Future supported real Electron runner: pointer plus arrows/Enter/Escape/Tab/IME, focus-visible and focus return, help hover/focus/click, zoom200%, reduced motion, light/dark, RU+i18n keys, computed font/loading proof, safe denied/error states and owner readback after reload. Hash screenshots/ARIA/computed-font artifacts and bind exact commit. NOT_RUN.",
+      "missingPrerequisite": "Amended reviewed host/locales/transport paths and supported actual Electron runner discovery by lead (FG-05).",
+      "state": "BLOCKED_HOST_INTEGRATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:4916-4923 requires SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI. This artifact records source inspection only; no lane result is asserted.",
+      "actualSeam": "Future integrated field-registry/inspector plus accepted Page owner and authenticated runtime",
+      "requiredChange": "Lead integrates reviewed changes and separately captures every required lane on exact integrated revision; provider/collaboration evidence when actually used, per-actor redacted. Do not convert unavailable native authority into fake adapters or N/A criteria. featureComplete stays false until whole DoD observed.",
+      "verification": "Future six independent evidence receipts including exact implementation revision/artifact hashes, semantic tests and controls, owner readback/restart, ACL negative cases and hosted UI. Validate receipts themselves against original inputs; launch text/plan validation are not proof. NOT_RUN.",
+      "missingPrerequisite": "All prior foundation gates and accepted integrated evidence; this is intentionally a preflight-only deliverable.",
+      "state": "FULL_FEATURE_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "NoteBaseView", "lineStart": 24, "lineEnd": 34, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "projectNoteRows", "lineStart": 133, "lineEnd": 158, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "formulaValue", "lineStart": 188, "lineEnd": 203, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "notesViewsStorageKey", "lineStart": 100, "lineEnd": 102, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "matchesFilter / compareUnknown", "lineStart": 593, "lineEnd": 618, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "packages/core/src/tasks/personal/types.ts", "symbol": "TaskLink", "lineStart": 17, "lineEnd": 22, "sha256": "4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path": "packages/core/src/tasks/personal/types.ts", "symbol": "PersonalTask", "lineStart": 42, "lineEnd": 75, "sha256": "4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path": "packages/core/src/calendar/types.ts", "symbol": "CalendarEvent", "lineStart": 22, "lineEnd": 38, "sha256": "3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path": "packages/core/src/calendar/types.ts", "symbol": "calendarEventIdentity / sameCalendarEvent", "lineStart": 103, "lineEnd": 113, "sha256": "3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "/work_packages/10", "lineStart": 4712, "lineEnd": 5023, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-011", "lineStart": 892, "lineEnd": 975, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/lark-suite-reference/issues/lsx-wp-011.md", "symbol": "Acceptance / Definition of Done", "lineStart": 130, "lineEnd": 155, "sha256": "4689c95e99e22bfd07205c8e7f3d260020a1ffaa4258798881a0a5d16932bae1"},
+    {"path": "docs/lark-suite-reference/05-rox-bases-design.md", "symbol": "5. Реестр ровно 18 типов полей", "lineStart": 107, "lineEnd": 132, "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path": "docs/lark-suite-reference/07-domain-entity-model.md", "symbol": "6. Bases types and computation", "lineStart": 151, "lineEnd": 157, "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"}
+  ],
+  "verification": {
+    "sourceInspection": "Performed read/grep/glob plus read-only shasum -a 256 for concrete files. Spec/input hashes and source baseline hashes matched. No runtime readiness claim.",
+    "productTests": "NOT_RUN_BY_EXPLICIT_PREFLIGHT_SCOPE",
+    "build": "NOT_RUN_BY_EXPLICIT_PREFLIGHT_SCOPE",
+    "nativeUi": "NOT_RUN_BY_EXPLICIT_PREFLIGHT_SCOPE",
+    "network": "NOT_RUN_BY_EXPLICIT_PREFLIGHT_SCOPE"
+  },
+  "nextExecutableAction": "Lead receives this preflight and first resolves the scoped integration gaps without implementing out-of-scope seams. Only after wave0 is committed and LSX-WP-007 artifact+authoritative-readback receipt is accepted, pin approved base/manifest, rehash these source references, obtain lease and amended handler/typed-consumer/host/locales scope as needed. Then implement the four new files against accepted owner contracts and apply reviewed shared patches serially, followed by all six proof lanes. This worker's immediate authorized action is artifact-only validation and delivery.",
+  "risks": [
+    "Explicit dependency array is exactly [LSX-WP-007]; dispatch depends_on=[] is preflight scheduling, not product implementation readiness. Do not substitute it for the normative edge.",
+    "Live source can change during root wave0 integration. Whole-file hashes and line anchors must be refreshed on change; report is source evidence, not revision-bound runtime proof.",
+    "New registry and unmounted inspector can compile while native addField, ACL, durable receipt and recovery remain absent. Current allowed patch scope cannot on its own establish those boundaries.",
+    "Existing String/Number coercing filter helpers collapse typed semantics; they are outside authorized named patch symbols. Extending scope needs lead review, not silent edits.",
+    "Formula/Lookup/Rollup capabilities must not imply an implemented computation engine, nor introduce reverse cycles with downstream LSX-WP-013/014. Absent runtime capability leaves acceptance unverified, not waived.",
+    "Option IDs and precision-safe decimals need runtime API validation, not TS-only declarations; display locale, dates and phone formatting must not alter portable bytes.",
+    "Source-specific Task/Calendar IDs, lifecycle status and timestamps must retain canonical owner meaning. No copied Task store, guessed workspace ownership or label-based relations.",
+    "Legacy taskCount/openTaskCount are Markdown checkbox counts. Changing them to native Task counts would break existing saved formulas; coordinate stable legacy IDs with LSX-WP-008.",
+    "Hidden field metadata, derived aggregates and stream URLs can leak through previews/events/UI unless owner authorization and safe error/value payloads cover every lane.",
+    "Local manifest identities were read and selected artifact hashes matched, but immutable package commit/digest and prerequisite receipts remain lead launch gates, not claims established by this report."
+  ]
+}

@@ -4,8 +4,8 @@
  * A layout is an ordered list of widgets, each at most once, with a size
  * S/M/L. Sizes map to grid column spans per container width (see
  * `widgetSpan`), so the dashboard uses the full width at 1280/1440/1728
- * without horizontal overflow. Persisted in localStorage (the same app-local
- * store as the other workbench.* settings), key `rox.home-dashboard.v1:default`.
+ * without horizontal overflow. Saved in the existing workspace-scoped JSON
+ * store with owner and revision metadata; it is deliberately local, not team-synchronized state.
  */
 
 export const HOME_WIDGET_IDS = [
@@ -44,7 +44,10 @@ export interface HomeDashboardLayout {
   version: 2
   widgets: HomeWidgetPlacement[]
 }
-
+export interface PersistedHomeLayout extends HomeDashboardLayout {
+  ownerId: string
+  revision: string
+}
 /** Picker groups (order = picker order). */
 export const HOME_WIDGET_GROUPS: readonly { id: string; widgets: readonly HomeWidgetId[] }[] = [
   { id: 'overview', widgets: ['summary', 'quickActions', 'calendar', 'focus'] },
@@ -120,6 +123,37 @@ export function isHomeWidgetId(value: unknown): value is HomeWidgetId {
 
 function isSize(value: unknown): value is HomeWidgetSize {
   return value === 'S' || value === 'M' || value === 'L'
+}
+
+/** Future or structurally corrupt layouts stay read-only until explicitly recovered. */
+export function isSupportedHomeLayout(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false
+  const value = raw as { version?: unknown; widgets?: unknown; ownerId?: unknown; revision?: unknown }
+  if (value.version !== 1 && value.version !== 2) return false
+  if (Object.keys(value).some((key) => !['version', 'widgets', 'ownerId', 'revision'].includes(key))) return false
+  if (value.ownerId !== undefined && (typeof value.ownerId !== 'string' || !value.ownerId)) return false
+  if (value.revision !== undefined && (typeof value.revision !== 'string' || !value.revision)) return false
+  if (!Array.isArray(value.widgets)) return false
+  const seen = new Set<string>()
+  for (const item of value.widgets) {
+    if (!item || typeof item !== 'object') return false
+    const placement = item as { id?: unknown; size?: unknown }
+    if (Object.keys(placement).some((key) => key !== 'id' && key !== 'size')) return false
+    if (!isHomeWidgetId(placement.id) || seen.has(placement.id)) return false
+    if (placement.size !== undefined && !isSize(placement.size)) return false
+    seen.add(placement.id)
+  }
+  return true
+}
+/** Legacy layouts without owner metadata remain readable during migration. */
+export function canReadHomeLayout(raw: unknown, ownerId: string): boolean {
+  if (!isSupportedHomeLayout(raw)) return false
+  const storedOwner = (raw as { ownerId?: unknown } | null)?.ownerId
+  return storedOwner === undefined || storedOwner === ownerId
+}
+/** Attach durable scope/revision metadata without changing the widget schema. */
+export function persistHomeLayout(layout: HomeDashboardLayout, ownerId: string, revision: string): PersistedHomeLayout {
+  return { ...cloneLayout(layout), ownerId, revision }
 }
 
 export function cloneLayout(layout: HomeDashboardLayout): HomeDashboardLayout {

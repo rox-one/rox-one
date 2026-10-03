@@ -1,0 +1,29 @@
+{
+  "smokeRetainedPath": "/workspace/rox-r15-evidence-20260930/union-validation/canonical-delivery-smoke.test.ts",
+  "smokeRetainedSha256": "28c12dba8e84c22c2137683ea80ce3efba6b6b7de31952d5d62a6056fc276fc1",
+  "smokeOriginalCopySha256": "28c12dba8e84c22c2137683ea80ce3efba6b6b7de31952d5d62a6056fc276fc1",
+  "smokeAdaptedSha256": "cbe44ec9f255d90f9918f80d31fa1da281070ccfd59af3bdcc069859ccde26e4",
+  "smokeChangesOnly": [
+    "CHECKOUT",
+    "DELIVERY",
+    "PROFILE_PARENT"
+  ],
+  "assertionsOrTimeoutsChanged": false,
+  "manifestRetainedPath": "/workspace/rox-r15-evidence-20260930/union-validation/canonical-delivery-manifest.py",
+  "manifestRetainedSha256": "6984c7c30dd89b0272bbe82304ed80781fe2f4150825dfffdaf2d1f3f829195e",
+  "manifestAdaptedSha256": "4d108b3c3d1f4bdc4fefed59cc2b374ab5e75fbcde0f02fbad6f560421602f7e",
+  "manifestChangesOnly": [
+    "CHECKOUT",
+    "DELIVERY"
+  ],
+  "sourceCandidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "outerBun": "1.3.14",
+  "shippedBunPin": "1.3.9",
+  "node": "v24.19.0",
+  "internalMandatoryPiCloudRunnerBuildAuthorized": true,
+  "noHOMERepurpose": true,
+  "originalSourceNeverModified": true,
+  "sourceApplicationFixesAllowed": false,
+  "expectedBuildOutputArgument": "../../../workspace/rox-r15-direct-server-dist-20261001",
+  "relativeOutputReason": "scripts/build-server.ts:837 uses join(rootDir, values.output); absolute output misjoins"
+}

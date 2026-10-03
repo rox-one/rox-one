@@ -20,7 +20,10 @@ import { RPC_CHANNELS } from '../../../shared/types'
 // Electron mock (needed by transitive imports)
 // ---------------------------------------------------------------------------
 
+import { electronMockExports } from '../../__tests__/electron-mock-exports'
+
 mock.module('electron', () => ({
+  ...electronMockExports,
   app: { isPackaged: false, getAppPath: () => '/', quit: () => {}, dock: { setIcon: () => {}, setBadge: () => {} } },
   nativeTheme: { shouldUseDarkColors: false },
   nativeImage: { createFromPath: () => ({ isEmpty: () => true }), createFromDataURL: () => ({}) },
@@ -108,6 +111,21 @@ async function waitUntil(pred: () => boolean, timeoutMs = 8000, stepMs = 25): Pr
     setTimeout(resolve, stepMs)
     await promise
   }
+  throw new Error(`Session file watcher did not produce its expected event within ${timeoutMs}ms`)
+}
+
+/** fs.watch has no readiness handshake. Exercise real changes until its native
+ * backend delivers, without extending the deadline or faking a notification. */
+async function probeWatcherReadiness(path: string, content: string, delivered: () => boolean): Promise<void> {
+  let nextChange = 0
+  await waitUntil(() => {
+    if (delivered()) return true
+    if (Date.now() >= nextChange) {
+      writeFileSync(path, content)
+      nextChange = Date.now() + 250
+    }
+    return false
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -115,7 +133,10 @@ async function waitUntil(pred: () => boolean, timeoutMs = 8000, stepMs = 25): Pr
 // ---------------------------------------------------------------------------
 
 describe('session file watcher isolation', () => {
-  afterEach(() => {
+  afterEach(async () => {
+    const { cleanupSessionFileWatchForClient } = await import('@craft-agent/server-core/handlers/rpc')
+    cleanupSessionFileWatchForClient('client-a')
+    cleanupSessionFileWatchForClient('client-b')
     for (const dir of tempDirs) {
       try { rmSync(dir, { recursive: true, force: true }) } catch {}
     }
@@ -138,10 +159,17 @@ describe('session file watcher isolation', () => {
     await watchHandler(makeCtx('client-a'), 's1')
     await watchHandler(makeCtx('client-b'), 's2')
 
+    // Separate canaries establish native backend readiness. The payload changes
+    // below stay one-shot; no notification is synthesized by the test.
+    await probeWatcherReadiness(join(dir1, 'watcher-ready.txt'), 'ready',
+      () => pushCalls.some(p => p.target?.clientId === 'client-a'))
+    await probeWatcherReadiness(join(dir2, 'watcher-ready.txt'), 'ready',
+      () => pushCalls.some(p => p.target?.clientId === 'client-b'))
+    await new Promise(resolve => setTimeout(resolve, 250))
+    pushCalls.length = 0
+
     // Trigger a change in s1
     writeFileSync(join(dir1, 'output.txt'), 'hello')
-
-    // Дождаться доставки push (debounce + fs.watch latency), не фиксированный sleep
     await waitUntil(() => pushCalls.some(p => p.target?.clientId === 'client-a'))
 
     // Only client-a should have received the notification
@@ -173,7 +201,7 @@ describe('session file watcher isolation', () => {
 
     // Double cleanup is a no-op (doesn't throw)
     cleanupSessionFileWatchForClient('client-b')
-  })
+  }, 20_000) // Two real FSEvents waits have an 8s bound each.
 
   it('cleans up previous watcher when same client watches a different session', async () => {
     const dir1 = makeTempSessionDir()

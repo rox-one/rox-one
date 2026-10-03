@@ -1,7 +1,7 @@
-export type CustomEndpointInput = 'text' | 'image'
+import type { CustomEndpointApi } from '@craft-agent/shared/config'
+export type { CustomEndpointApi } from '@craft-agent/shared/config'
 
-/** Custom endpoint protocol — determines which streaming adapter Pi SDK uses. */
-export type CustomEndpointApi = 'openai-completions' | 'anthropic-messages'
+export type CustomEndpointInput = 'text' | 'image'
 
 export interface CustomEndpointModelDefaults {
   supportsImages?: boolean

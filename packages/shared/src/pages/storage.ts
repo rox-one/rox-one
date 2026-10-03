@@ -19,7 +19,7 @@ import {
   readFileSync,
   rmSync,
 } from 'fs';
-import { basename, join } from 'path';
+import { join } from 'path';
 import { createHash, randomUUID } from 'crypto';
 import type {
   PageActionDescriptor,
@@ -204,6 +204,7 @@ export function savePageConfig(workspaceRootPath: string, config: PageConfig): v
 export function loadPage(
   workspaceRootPath: string,
   pageSlug: string,
+  workspaceId?: string,
 ): LoadedPage | null {
   const config = loadPageConfig(workspaceRootPath, pageSlug);
   if (!config) return null;
@@ -215,7 +216,7 @@ export function loadPage(
     dataPath: getPageDataPath(workspaceRootPath, pageSlug),
     snapshotPath: getPageSnapshotPath(workspaceRootPath, pageSlug),
     workspaceRootPath,
-    workspaceId: basename(workspaceRootPath),
+    ...(workspaceId ? { workspaceId } : {}),
   };
 }
 
@@ -225,15 +226,16 @@ export function loadPage(
 export function loadPageById(
   workspaceRootPath: string,
   pageId: string,
+  workspaceId?: string,
 ): LoadedPage | null {
-  const pages = loadWorkspacePages(workspaceRootPath);
+  const pages = loadWorkspacePages(workspaceRootPath, workspaceId);
   return pages.find((p) => p.config.id === pageId) ?? null;
 }
 
 /**
  * Load all pages for a workspace.
  */
-export function loadWorkspacePages(workspaceRootPath: string): LoadedPage[] {
+export function loadWorkspacePages(workspaceRootPath: string, workspaceId?: string): LoadedPage[] {
   const pages: LoadedPage[] = [];
   const pagesDir = getWorkspacePagesPath(workspaceRootPath);
 
@@ -242,7 +244,7 @@ export function loadWorkspacePages(workspaceRootPath: string): LoadedPage[] {
   const entries = readdirSync(pagesDir, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    const page = loadPage(workspaceRootPath, entry.name);
+    const page = loadPage(workspaceRootPath, entry.name, workspaceId);
     if (page) pages.push(page);
   }
 

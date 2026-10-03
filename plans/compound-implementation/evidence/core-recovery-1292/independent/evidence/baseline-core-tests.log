@@ -1,0 +1,1051 @@
+bun test v1.4.2 (43848b5a7)
+
+packages/core/src/calendar/calendar.test.ts:
+(pass) calendar connectors (issue 18) > declares capability gaps for every provider [0.06ms]
+(pass) calendar connectors (issue 18) > stores OAuth as credential refs and never tokens [0.76ms]
+(pass) calendar connectors (issue 18) > revokes OAuth without deleting local tasks [0.34ms]
+(pass) calendar connectors (issue 18) > merges events with Today/Upcoming without converting them into tasks [0.17ms]
+(pass) calendar connectors (issue 18) > creates editable reminder proposals and never auto-spams tasks [0.18ms]
+(pass) calendar connectors (issue 18) > records incremental sync conflicts only when the local event is dirty [0.14ms]
+(pass) calendar connectors (issue 18) > keeps same remote event ids from two accounts and delete is scoped [0.12ms]
+(pass) calendar connectors (issue 18) > applies remote-only etag updates without a false conflict [0.07ms]
+(pass) calendar connectors (issue 18) > restores mint seq fromJson so later creates do not collide [0.22ms]
+(pass) calendar connectors (issue 18) > does not apply a delayed fetch after revoke [0.10ms]
+(pass) calendar connectors (issue 18) > flags timezone mismatch as a visible warning [0.06ms]
+(pass) calendar connectors (issue 18) > stores local reminders without a connected calendar [0.06ms]
+(pass) calendar connectors (issue 18) > does not treat unwired optional connectors as connected [0.04ms]
+(pass) calendar connectors (issue 18) > production factory never returns fixture adapters [0.04ms]
+(pass) calendar connectors (issue 18) > env credentials are not live evidence for production adapters [0.04ms]
+(pass) calendar connectors (issue 18) > availableFlag cannot be true when listEvents is unavailable [0.08ms]
+(pass) calendar connectors (issue 18) > Apple helper presence is not live evidence for production adapters [0.10ms]
+(pass) calendar connectors (issue 18) > live google account test skips without a verified adapter [0.04ms]
+(pass) calendar connectors (issue 18) > live outlook account test skips without a verified adapter
+(pass) calendar connectors (issue 18) > live yandex account test skips without a verified adapter
+(pass) calendar connectors (issue 18) > live mailru account test skips without a verified adapter
+(pass) calendar connectors (issue 18) > live appleReminders account test skips without a verified adapter [0.01ms]
+
+packages/core/src/research/__tests__/cost-cap.test.ts:
+(pass) research cost / time caps > does not execute more cost units than the plan allows [1.43ms]
+(pass) research cost / time caps > clamps per-query results and preserves query provenance [0.19ms]
+(pass) research cost / time caps > marks timeout when the search exceeds the cap [22.08ms]
+
+packages/core/src/research/__tests__/planner.test.ts:
+(pass) planEvidenceSearch > prioritizes referenced URLs as primary sources [0.07ms]
+(pass) planEvidenceSearch > adds bounded multilingual, domain, and dork queries [0.07ms]
+(pass) planEvidenceSearch > never fans out to 10–15×50 [0.14ms]
+(pass) clampResearchCaps > uses defaults when omitted [0.02ms]
+(pass) extractReferencedUrls / inferTopicLanguage > dedupes URLs and infers ru/zh [0.05ms]
+
+packages/core/src/research/__tests__/cache-policy.test.ts:
+(pass) research cache policy > stores locally only when search-cache consent is explicit [0.04ms]
+
+packages/core/src/research/__tests__/rank.test.ts:
+(pass) canonicalUrl > strips tracking params, hash, www, and trailing slash [0.06ms]
+(pass) dedupeAndRank > dedupes aliases and keeps primary first with provenance [0.19ms]
+(pass) dedupeAndRank > flags year contradictions across overlapping sources [0.05ms]
+(pass) sourceReliability > treats http as low and missing URL as unknown [0.04ms]
+
+packages/core/src/research/__tests__/citations.test.ts:
+(pass) citation spans > marks sourced statements that cite title or URL [0.06ms]
+(pass) citation spans > looks up hover-card citations by canonical URL [0.06ms]
+
+packages/core/src/tasks/personal/personal.test.ts:
+(pass) personal tasks (issue 17) > parses natural-language dates [0.25ms]
+(pass) personal tasks (issue 17) > quick-enters a titled task with a date token stripped [0.10ms]
+(pass) personal tasks (issue 17) > projects Inbox/Today/Upcoming/Anytime/Someday/Logbook [0.40ms]
+(pass) personal tasks (issue 17) > keeps provenance links when completing a task [0.06ms]
+(pass) personal tasks (issue 17) > builds a today plan grouped by time and project [0.17ms]
+(pass) personal tasks (issue 17) > round-trips import/export and records audit history [0.15ms]
+(pass) personal tasks (issue 17) > quarantines corrupt JSON and never overwrites the original cache key [0.24ms]
+(pass) personal tasks (issue 17) > supports areas, headings, subtasks, tags, priority and recurrence [0.98ms]
+(pass) personal tasks (issue 17) > reorders within a list without dropping fields [0.09ms]
+(pass) personal tasks (issue 17) > lists every open task and filters/sorts by workspace project id [0.19ms]
+(pass) personal task ids after reload > never re-mints an id that is already in the bundle [0.06ms]
+(pass) personal task ids after reload > remove() drops the task together with its subtasks [0.08ms]
+
+packages/core/src/tasks/personal/things.test.ts:
+(pass) quick entry (RU/EN natural language) > parses завтра / послезавтра / через неделю [6.82ms]
+(pass) quick entry (RU/EN natural language) > parses weekdays: в пт / во вторник / fri [1.56ms]
+(pass) quick entry (RU/EN natural language) > parses сегодня, вечером, когда-нибудь, в любое время [0.09ms]
+(pass) quick entry (RU/EN natural language) > parses tags, deadlines and reminder times [0.25ms]
+(pass) quick entry (RU/EN natural language) > parses repeat rules [0.15ms]
+(pass) quick entry (RU/EN natural language) > leaves plain titles untouched [0.05ms]
+(pass) quick entry (RU/EN natural language) > parses numeric dates [0.07ms]
+(pass) repeat rules > computes the next fixed / after-completion date [0.24ms]
+(pass) repeat rules > completeTask spawns the next occurrence with a fresh checklist [0.21ms]
+(pass) Things lists > trash / restore / emptyTrash [0.14ms]
+(pass) Things lists > start dates: future → Планы, reached → Сегодня; deadline today pulls into Сегодня [0.10ms]
+114 |     store.setWhen(a.id, { kind: 'date', at: day(1) })
+115 |     const b = store.create({ title: 'B', now })
+116 |     store.setWhen(b.id, { kind: 'date', at: day(40) })
+117 |     const plan = upcomingByDay(store.list(), now, 7)
+118 |     expect(plan.days).toHaveLength(7)
+119 |     expect(plan.days[0]!.tasks.map((x) => x.title)).toEqual(['A'])
+                                                          ^
+error: expect(received).toEqual(expected)
+
+- [
+-   "A",
+- ]
++ []
+
+- Expected  - 3
++ Received  + 1
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/baseline/packages/core/src/tasks/personal/things.test.ts:119:53)
+(fail) Things lists > upcomingByDay keeps 7 calendar days and groups later by month [0.39ms]
+(pass) Things lists > projects with headings, move and progress [0.20ms]
+(pass) Things lists > create keeps a source link and inserts after an anchor [0.14ms]
+
+packages/core/src/types/__tests__/error-code-omp.test.ts:
+(pass) agent ErrorCode union — OMP startup codes > lists all six OMP startup codes as ErrorCode members [0.06ms]
+(pass) agent ErrorCode union — OMP startup codes > rejects an unknown code (not silently a generic string) [0.01ms]
+(pass) agent ErrorCode union — OMP startup codes > AGENT_ERROR_CODES is exhaustive for the ErrorCode union [0.01ms]
+
+packages/core/src/calendar/__tests__/occurrences.test.ts:
+(pass) TemporalOccurrence > calendar events and tasks map without becoming each other [0.12ms]
+(pass) TemporalOccurrence > all-day civil date stays on the event timezone day [1.69ms]
+(pass) TemporalOccurrence > dedupes the same source and filters a range [0.15ms]
+(pass) TemporalOccurrence > deleted events and completed tasks are not occurrences [0.02ms]
+
+packages/core/src/platform/identity/infisical-fabric-provider.test.ts:
+(pass) CF-8 InfisicalFabricProvider > write + inspect exposes hasMaterial without token material [0.47ms]
+(pass) CF-8 InfisicalFabricProvider > health fails closed on 401 [0.38ms]
+(pass) CF-8 InfisicalFabricProvider > discoverAccount reports connected without leaking the token [0.10ms]
+(pass) CF-8 InfisicalFabricProvider > rotate without fetch fails closed; revoke without fetch clears local metadata [0.25ms]
+(pass) CF-8 InfisicalFabricProvider > rotate with stub fetch succeeds and still returns no raw secret [0.16ms]
+(pass) createInfisicalImporter > discovers locator metadata from env and never returns the token [0.23ms]
+
+packages/core/src/platform/identity/store.test.ts:
+(pass) IdentityStore > creates default local profile on first load [1.09ms]
+(pass) IdentityStore > createDefaultProfile matches store default shape [0.22ms]
+(pass) IdentityStore > defaults plan to standard [3.79ms]
+(pass) IdentityStore > persists profile updates across reload [4.55ms]
+(pass) IdentityStore > persists email, plan, and valid avatar [3.53ms]
+(pass) IdentityStore > rejects svg avatars [3.47ms]
+(pass) IdentityStore > rejects oversized avatars [0.90ms]
+(pass) IdentityStore > rejects bad email [2.91ms]
+(pass) IdentityStore > rejects unknown plan [0.89ms]
+(pass) IdentityStore > empty email clears stored email [4.37ms]
+(pass) IdentityStore > connect upserts a connection without writing secrets [1.73ms]
+(pass) IdentityStore > disconnect only one connection and clears its credentialRef [1.27ms]
+(pass) IdentityStore > refuses disconnect of read-only reflections [0.79ms]
+(pass) IdentityStore > getIdentityStore caches per configDir [0.72ms]
+(pass) IdentityStore > filters connections by workspaceId [0.94ms]
+(pass) IdentityStore > clear wipes connections and entitlements and resets profile [1.51ms]
+
+packages/core/src/platform/identity/attach-credential-ref.test.ts:
+(pass) attachCredentialRef > writes a cred uuid and does not accept a raw value [0.45ms]
+(pass) attachCredentialRef > rejects raw fields and a fake registry before mutation [0.14ms]
+(pass) attachCredentialRef > leaves the input connection unchanged when registry validation fails [0.04ms]
+127 |       status: 'connected',
+128 |     }, registry, {
+129 |       kind: 'bearer_token',
+130 |       providerId: 'local',
+131 |       locator: locator as never,
+132 |     })).toThrow();
+              ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  id: "svc-github",
+  workspaceId: "ws",
+  provider: "github",
+  status: "connected",
+  credentialRef: "cred_31019158-a26c-4608-9d95-912ae0766e62",
+}
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/baseline/packages/core/src/platform/identity/attach-credential-ref.test.ts:132:9)
+(fail) attachCredentialRef > rejects non-enumerable declared fields before registration [0.18ms]
+143 |       status: 'connected',
+144 |     }, registry, {
+145 |       kind: 'bearer_token',
+146 |       providerId: 'local',
+147 |       locator,
+148 |     } as never)).toThrow();
+                       ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  id: "svc-github",
+  workspaceId: "ws",
+  provider: "github",
+  status: "connected",
+  credentialRef: "cred_3435c77b-2d8d-448a-a7b2-1ada4031e111",
+}
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/baseline/packages/core/src/platform/identity/attach-credential-ref.test.ts:148:18)
+(fail) attachCredentialRef > rejects prototype-derived locators before registry mutation [0.08ms]
+
+packages/core/src/platform/identity/import-service.test.ts:
+(pass) ImportService > denies renderer, remote, and headless before importer dispatch [0.31ms]
+(pass) ImportService > commits a copy import on main and stores metadata only [1.46ms]
+(pass) ImportService > reuses an existing same-fingerprint reference [0.24ms]
+(pass) ImportService > fails closed on a different fingerprint [0.23ms]
+(pass) ImportService > rolls back when the provider write fails [0.27ms]
+
+packages/core/src/platform/identity/workgraph.test.ts:
+(pass) CF-5 ConnectionWorkGraph > creates a metadata-only connection and rejects secret fields [0.29ms]
+(pass) CF-5 ConnectionWorkGraph > binds consumers and closes over one workspace only [0.20ms]
+(pass) CF-5 ConnectionWorkGraph > appends an immutable metadata-only audit ledger with readable fields [0.26ms]
+(pass) CF-5 ConnectionWorkGraph > rolls back a failed transaction [0.12ms]
+(pass) CF-5 ConnectionWorkGraph persistence > persists connections, bindings, and audit then reloads [4.92ms]
+(pass) CF-5 ConnectionWorkGraph persistence > rolls back persisted files when a transaction fails [3.00ms]
+(pass) CF-5 ConnectionWorkGraph persistence > keeps workspace isolation across reload [3.39ms]
+
+packages/core/src/platform/identity/os-discovery-host.test.ts:
+(pass) createOsDiscoveryHost > lists dotenv files from cwd and home without traversal [22.50ms]
+(pass) createOsDiscoveryHost > reads git/docker/aws config text from the fixture home only [8.10ms]
+(pass) createOsDiscoveryHost > returns GCP ADC metadata without private_key [9.42ms]
+(pass) createOsDiscoveryHost > prefers GOOGLE_APPLICATION_CREDENTIALS when set [4.08ms]
+(pass) createOsDiscoveryHost > fail-softs ssh identities without SSH_AUTH_SOCK [3.66ms]
+(pass) createOsDiscoveryHost > returns empty keychain unless items are injected [3.46ms]
+(pass) createOsDiscoveryHost > approveCopy seals dotenv values and never leaks them via inspect/preview [6.44ms]
+(pass) createOsDiscoveryHost > fail-softs missing home config files [1.42ms]
+
+packages/core/src/platform/identity/github-vertical.test.ts:
+(pass) CF-7 GitHub vertical > importGithubFromEnv commits dotenv candidate without storing the token [0.62ms]
+(pass) CF-7 GitHub vertical > importGithubFromEnv accepts injectedToken when no env candidate exists [0.12ms]
+(pass) CF-7 GitHub vertical > runGithubVertical sends Authorization Bearer and returns metadata only [1.12ms]
+(pass) CF-7 GitHub vertical > denies when AccessGrant is missing [0.17ms]
+(pass) CF-7 GitHub vertical > fails closed when GitHub returns 401 [0.13ms]
+
+packages/core/src/platform/identity/credential-types.test.ts:
+(pass) CredentialRefRegistry > creates opaque stable refs and stores metadata only [0.13ms]
+(pass) CredentialRefRegistry > keeps the ref identity while replacing provider metadata [0.10ms]
+(pass) CredentialRefRegistry > tracks versions as metadata and clears the current version on revoke [0.14ms]
+(pass) CredentialRefRegistry > rejects an invalid version status at runtime [0.05ms]
+(pass) CredentialRefRegistry > rejects malformed metadata instead of accepting a secret payload [0.10ms]
+(pass) CredentialRefRegistry > rejects hidden and nested secret fields at the registry boundary [0.09ms]
+(pass) CredentialRefRegistry > rejects a duplicate CredentialRef id and keeps the first record [0.05ms]
+(pass) CredentialRefRegistry > rejects register with an orphan currentVersionId [0.02ms]
+(pass) CredentialRefRegistry > rejects reviving a revoked version to active [0.04ms]
+(pass) CredentialRefRegistry > rejects reviving an invalid version to active [0.03ms]
+(pass) CredentialRefRegistry > keeps terminal version statuses irreversible [0.03ms]
+(pass) CredentialRefRegistry > makes a reactivated superseded version the sole current active version [0.03ms]
+(pass) CredentialRefRegistry > leaves version state unchanged when reactivation cannot read the clock [0.06ms]
+(pass) CredentialRefRegistry > rejects a version fingerprint that is not 64 hex characters [0.07ms]
+(pass) CredentialRefRegistry > rejects infisical locators with empty projectId or secretKey [0.06ms]
+(pass) CredentialRefRegistry > rejects unknown version payload fields [0.31ms]
+(pass) CredentialRefRegistry > generates browser-safe cred UUID identifiers [0.01ms]
+(pass) CredentialRefRegistry > returns clones instead of mutable registry state [0.03ms]
+(pass) CredentialRefRegistry > accepts P0 locators and still rejects unknown locator types [0.07ms]
+(pass) CredentialRefRegistry > rejects an expiry before creation [0.03ms]
+(pass) CredentialRefRegistry > does not silently replace the current version with an older active version [0.05ms]
+(pass) CredentialRefRegistry > keeps ref timestamps monotonic by clamping instead of blocking revocation [0.03ms]
+(pass) CredentialRefRegistry > revokes a version whose createdAt is far in the future [0.03ms]
+(pass) CredentialRefRegistry > moves ref updatedAt forward only when provider metadata changes [0.03ms]
+(pass) CredentialRefRegistry > does not let an untrimmed id overwrite an existing version [0.06ms]
+(pass) CredentialRefRegistry > treats credential ref ids as case-sensitive [0.03ms]
+(pass) CredentialRefRegistry > bounds caller-controlled text interpolated into errors [0.08ms]
+(pass) CredentialRefRegistry > lists versions deterministically by creation time and id [0.05ms]
+
+packages/core/src/platform/identity/grants.test.ts:
+(pass) JsonAccessGrantStore > lists grants for a consumer within one workspace [0.10ms]
+(pass) JsonAccessGrantStore > lists all grants without a workspace filter [0.06ms]
+(pass) JsonAccessGrantStore > lists all grants filtered by workspace [0.04ms]
+(pass) JsonAccessGrantStore persistence > persists grants as JSON and reloads them [0.75ms]
+(pass) JsonAccessGrantStore persistence > keeps workspace isolation after reload [0.79ms]
+
+packages/core/src/platform/identity/revalidation.test.ts:
+(pass) CF-5 revoke, closure, revalidate > invalidates leases, audits, and revalidates only the same workspace [0.94ms]
+(pass) CF-5 revoke, closure, revalidate > rejects an unknown connection without touching the broker [0.08ms]
+
+packages/core/src/platform/identity/import-session.test.ts:
+(pass) ImportSession > walks discover → access → preview → validate → commit [0.09ms]
+(pass) ImportSession > denies preview before OS/provider access [0.05ms]
+(pass) ImportSession > denies access from the access_requested phase [0.04ms]
+(pass) ImportSession > rejects unknown candidates and illegal transitions [0.08ms]
+(pass) ImportSession > fails closed on a different fingerprint without an explicit decision [0.03ms]
+(pass) ImportSession > keeps same-fingerprint conflicts and explicit decisions open [0.04ms]
+(pass) ImportSession > returns clones so callers cannot mutate session state [0.02ms]
+
+packages/core/src/platform/identity/p0-adapters.test.ts:
+(pass) P0 discovery parsers > extracts dotenv keys without values or shell expansion [0.03ms]
+(pass) P0 discovery parsers > parses git helpers from config text only [0.13ms]
+(pass) P0 discovery parsers > parses docker credsStore and per-registry helpers [0.16ms]
+(pass) P0 discovery parsers > parses named AWS profiles without inventing a default section [0.12ms]
+(pass) P0 discovery parsers > redacts ADC JSON so private_key never appears [0.03ms]
+(pass) P0 discovery parsers > builds stable metadata fingerprints [0.04ms]
+(pass) P0 importers > discovers metadata-only candidates for every P0 source [0.66ms]
+(pass) P0 importers > masks preview and never returns helper or env values [0.10ms]
+(pass) P0 importers > rejects dotenv traversal and ssh copy mode [0.26ms]
+(pass) P0 importers > commits copy material as a sealed handle and rolls it back [0.33ms]
+(pass) P0 importers > round-trips sealed secrets without exposing plaintext on the handle brand alone [0.02ms]
+
+packages/core/src/platform/identity/broker.test.ts:
+(pass) InProcessCredentialBroker > denies by default when no grant exists [0.27ms]
+(pass) InProcessCredentialBroker > denies wrong workspace, action, or resource even with a grant [0.25ms]
+(pass) InProcessCredentialBroker > issues a metadata-only lease and never returns payload [0.15ms]
+(pass) InProcessCredentialBroker > rejects env-legacy unless the consumer declares it [0.12ms]
+(pass) InProcessCredentialBroker > revokes an active lease so a later acquire cannot reuse it [0.10ms]
+(pass) InProcessCredentialBroker > executeTrustedHttp injects Authorization from sealed copy and never returns the secret [0.17ms]
+(pass) InProcessCredentialBroker > executeTrustedHttp denies a revoked lease before fetch [0.12ms]
+
+packages/core/src/platform/session-apply/link-agent-teams.test.ts:
+(pass) recordSessionApplyOnTeam > writes a session-apply pointer on HTTP 202 without marking the task completed [2.27ms]
+(pass) recordSessionApplyOnTeam > marks the team task completed only when businessCompleted is true [2.02ms]
+(pass) recordSessionApplyOnTeam > promotes a 202 in-flight task to completed on a later businessCompleted apply [2.03ms]
+(pass) recordSessionApplyOnTeam > keeps an in-flight task incomplete when a later apply is still not businessCompleted [2.69ms]
+
+packages/core/src/platform/session-apply/client.test.ts:
+(pass) SessionApplyClient > fails closed without calling fetch when flag is off [0.25ms]
+(pass) SessionApplyClient > GETs operator origin read path when flag is on [0.19ms]
+(pass) SessionApplyClient > POSTs apply and returns a pointer for 202 accepted transport [0.08ms]
+(pass) SessionApplyClient > treats HTTP 200 as transport accepted and business completed [0.08ms]
+(pass) SessionApplyClient > treats 204 as transport success with a null body [0.06ms]
+(pass) SessionApplyClient > throws SessionApplyHttpError on 401 without parsing the body [3.52ms]
+(pass) SessionApplyClient > throws SessionApplyHttpError on 403 without parsing the body [0.04ms]
+(pass) SessionApplyClient > throws SessionApplyHttpError on 404 without parsing the body [0.03ms]
+(pass) SessionApplyClient > throws SessionApplyHttpError on 429 without parsing the body [0.02ms]
+(pass) SessionApplyClient > throws SessionApplyHttpError on 500 without parsing the body [0.05ms]
+(pass) SessionApplyClient > throws SessionApplyHttpError on 503 without parsing the body [0.03ms]
+(pass) SessionApplyClient > still throws HTTP error when body cancel fails [0.14ms]
+
+packages/core/src/platform/agent-teams/store.test.ts:
+(pass) AgentTeamsStore > uses workspace .agent-teams as state root [0.29ms]
+(pass) AgentTeamsStore > sanitizes unicode and punctuation keys without collapsing CJK [0.68ms]
+(pass) AgentTeamsStore > creates team.json + captain/member mailbox pointers [1.40ms]
+(pass) AgentTeamsStore > persists roster session ids and finds by captain/participant [3.25ms]
+(pass) AgentTeamsStore > enforces task dependency + status transitions [4.41ms]
+(pass) AgentTeamsStore > appends and reads JSONL mailbox messages [2.33ms]
+(pass) AgentTeamsStore > archives team under .agent-teams/archive/ [2.41ms]
+(pass) AgentTeamsStore > rejects duplicate team create [1.74ms]
+
+packages/core/src/platform/__tests__/workbench-layout.test.ts:
+(pass) migrateLegacyLayout > maps each panel-stack entry to a one-tab group and preserves focus [0.52ms]
+(pass) migrateLegacyLayout > keeps legacy navigator routes as legacy-route tabs [0.05ms]
+(pass) migrateLegacyLayout > round-trips active routes back to panel-stack entries [0.05ms]
+(pass) openSurface / preview / split / move / close > adds a pinned tab to the active group and activates it [0.17ms]
+(pass) openSurface / preview / split / move / close > replaces a non-dirty preview tab instead of stacking another preview [0.10ms]
+(pass) openSurface / preview / split / move / close > does not replace a dirty preview [0.05ms]
+(pass) openSurface / preview / split / move / close > dedups by durable ref inside a group [0.03ms]
+(pass) openSurface / preview / split / move / close > open to the side inserts after the active group [0.07ms]
+(pass) openSurface / preview / split / move / close > split clones the active tab into a new group [0.07ms]
+(pass) openSurface / preview / split / move / close > move transfers a tab and drops an emptied group [0.27ms]
+(pass) openSurface / preview / split / move / close > closing the last tab in a group removes the group [0.11ms]
+(pass) openSurface / preview / split / move / close > closing the last tab of the active middle group focuses the neighbor at the vacated index [0.07ms]
+(pass) openSurface / preview / split / move / close > refuses to close a dirty tab without force and keeps the same layout object [0.06ms]
+(pass) openSurface / preview / split / move / close > reports NOT_FOUND without changing the layout [0.02ms]
+(pass) openSurface / preview / split / move / close > activateTab updates focus timestamps [0.07ms]
+(pass) openSurface / preview / split / move / close > pinSurface clears preview [0.06ms]
+(pass) openSurface / preview / split / move / close > flatten keeps every tab while live panel entries stay one-per-group [0.06ms]
+
+packages/core/src/platform/__tests__/workbench-flags.test.ts:
+(pass) resolveEnabledFlags > enables independent flags that were requested [0.14ms]
+(pass) resolveEnabledFlags > keeps top-chrome off unless its mode-registry dependency is also requested [0.06ms]
+(pass) resolveEnabledFlags > skips unknown ids and honors incompatibleWith [0.04ms]
+(pass) resolveEnabledFlags > terminal flags default on [0.06ms]
+(pass) resolveEnabledFlags > harness flags default on and agent-intel needs inspector [0.10ms]
+(pass) resolveEnabledFlags > keeps every renderer Conation flag canonical, default off, and rollback-safe [0.24ms]
+
+packages/core/src/platform/__tests__/workbench-migrate.test.ts:
+(pass) parseWorkbenchTab > accepts SurfaceTab kinds and the legacy-route wrapper [0.11ms]
+(pass) parseWorkbenchTab > rejects unknown kinds and empty ids [0.02ms]
+(pass) parseWorkbenchLayout > round-trips a migrated layout through JSON [0.21ms]
+(pass) parseWorkbenchLayout > rejects v1 snapshots — migration must be explicit [0.02ms]
+(pass) parseWorkbenchLayout > rejects a layout whose activeTabId is not in the group [0.04ms]
+(pass) parseWorkbenchLayout > rejects missing route [0.02ms]
+(pass) parseWorkbenchLayout > coerces first-increment layouts that still carry pinned; preview wins [0.03ms]
+(pass) parseWorkbenchLayout > treats pinned:true without preview as a pinned tab [0.02ms]
+(pass) parseWorkbenchLayout > rejects garbage without throwing [0.02ms]
+(pass) flattenWorkbenchLayoutToLegacyEntries > splits a multi-tab group share equally across its tabs [0.05ms]
+
+packages/core/src/platform/__tests__/workbench-memory-host.test.ts:
+(pass) createInMemoryWorkbenchLayoutHost > restore/serialize round-trips a WorkbenchLayout [0.33ms]
+(pass) createInMemoryWorkbenchLayoutHost > close of a dirty tab without force is DIRTY_SURFACE [0.12ms]
+(pass) createInMemoryWorkbenchLayoutHost > restore and serialize copy the layout so callers cannot mutate host state [0.07ms]
+(pass) createInMemoryWorkbenchLayoutHost > restore of invalid JSON leaves the current layout [0.03ms]
+
+packages/core/src/platform/__tests__/harness-skip-list.test.ts:
+(pass) H6 harness skip-list > freezes session-buddy, mnemon, cordis HMR and agent-teams as not-installed [0.10ms]
+
+packages/core/src/platform/__tests__/resources-registry.test.ts:
+(pass) ResourceProviderRegistry > registers providers and returns them by id [0.11ms]
+[ResourceProviderRegistry] duplicate provider id: dup
+(pass) ResourceProviderRegistry > throws on duplicate provider id [0.07ms]
+(pass) ResourceProviderRegistry > filters providers by prefix [0.37ms]
+(pass) ResourceProviderRegistry > merges results and sorts by score descending [0.09ms]
+(pass) ResourceProviderRegistry > respects limit after merge [0.07ms]
+[ResourceProviderRegistry] provider "bad" search failed: 92 | 
+93 |   it('isolates provider failures', async () => {
+94 |     const registry = createResourceProviderRegistry()
+95 |     registry.register(
+96 |       provider('bad', [''], async () => {
+97 |         throw new Error('boom')
+                       ^
+error: boom
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/baseline/packages/core/src/platform/__tests__/resources-registry.test.ts:97:19)
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/baseline/packages/core/src/platform/resources/registry.ts:62:40)
+      at map (1:11)
+      at search (/private/tmp/rox-core-integration-gate-ultra-20260930/baseline/packages/core/src/platform/resources/registry.ts:59:16)
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/baseline/packages/core/src/platform/__tests__/resources-registry.test.ts:103:36)
+
+(pass) ResourceProviderRegistry > isolates provider failures [0.22ms]
+(pass) ResourceProviderRegistry > returns empty when signal is already aborted [0.06ms]
+(pass) ResourceProviderRegistry > dispose unregisters provider; onDidChange fires [0.07ms]
+(pass) ResourceProviderRegistry > stamps providerId into item data [0.06ms]
+
+packages/core/src/platform/__tests__/m3-ac-coverage.test.ts:
+(pass) M3 AC-1..AC-14 coverage > spec contains all ACs and evaluator can point to a test for each [4.14ms]
+(pass) M3 AC-1..AC-14 coverage > serializeEnvelope not widened with TerminalFrame [1.22ms]
+(pass) M3 AC-1..AC-14 coverage > twin kinds differ fails — 8 vs 8 [0.04ms]
+(pass) M3 AC-1..AC-14 coverage > flags default false — G1 not assumed [3.53ms]
+
+packages/core/src/platform/__tests__/surfaces-registry.test.ts:
+(pass) surfaceTabToDescriptor (S-02 §3.2 downgrade rules) > maps all eight tab kinds [0.07ms]
+(pass) surfaceTabToDescriptor (S-02 §3.2 downgrade rules) > maps terminal tabs to a null descriptor (FR-3) [0.86ms]
+(pass) surfaceTabToDescriptor (S-02 §3.2 downgrade rules) > downgrades database tabs to knowledge descriptors with ref.kind database [0.10ms]
+(pass) surfaceTabToDescriptor (S-02 §3.2 downgrade rules) > extension tabs are not host descriptors (sandbox bridge, S-02 §3.2) [0.02ms]
+(pass) surfaceTabDurableKey (S-02 §3.7 durable refs) > is stable per durable ref and distinct across refs [0.03ms]
+(pass) surfaceTabDurableKey (S-02 §3.7 durable refs) > distinguishes kinds that share an id shape [0.06ms]
+(pass) SurfaceRegistry > registers, gets, lists, and unregisters contributions [0.15ms]
+[SurfaceRegistry] duplicate contribution kind: knowledge
+(pass) SurfaceRegistry > throws on duplicate kind [0.06ms]
+(pass) SurfaceRegistry > resolves the first matching contribution; null is the legacy fallback (S-02 §3.3) [0.07ms]
+(pass) SurfaceRegistry > dispose of a registration removes it from resolution [0.74ms]
+(pass) SurfaceRegistry > onDidChange fires on register and unregister [0.54ms]
+(pass) SurfaceLayoutSnapshot (S-02 §3.10) > serializes durable refs only and survives a JSON round-trip [0.48ms]
+
+packages/core/src/platform/__tests__/modes-registry.test.ts:
+(pass) ModeRegistry > registers modes and lists them by order then id [0.34ms]
+(pass) ModeRegistry > throws on duplicate id [0.08ms]
+(pass) ModeRegistry > filters by when expressions [0.47ms]
+(pass) ModeRegistry > dispose removes the mode [0.04ms]
+(pass) isModeNavigable / listPinnedModes > treats a null route as not navigable [0.04ms]
+(pass) isModeNavigable / listPinnedModes > requires declared capabilities [0.04ms]
+(pass) isModeNavigable / listPinnedModes > splits pinned and overflow modes [0.09ms]
+(pass) isModeNavigable / listPinnedModes > keeps non-navigable modes in overflow even when defaultPinned [0.03ms]
+(pass) isModeNavigable / listPinnedModes > pins a capability-gated mode only when the capability is present [0.03ms]
+
+packages/core/src/platform/__tests__/commands-registry.test.ts:
+(pass) CommandRegistry > registers commands and returns them by id [0.12ms]
+[CommandRegistry] duplicate contribution id: app.newChat
+(pass) CommandRegistry > throws on duplicate id; the first registration wins [0.13ms]
+(pass) CommandRegistry > query returns everything in registration order when no filters apply [0.08ms]
+(pass) CommandRegistry > filters commands through the when-language (spec-verbatim expression) [0.20ms]
+(pass) CommandRegistry > matches query text against title, category and keywords case-insensitively [0.12ms]
+(pass) CommandRegistry > filters by source [0.05ms]
+(pass) CommandRegistry > accepts source siyuan-plugin [0.02ms]
+(pass) CommandRegistry > passes a CommandContext with the keys snapshot to execute() [0.14ms]
+(pass) CommandRegistry > onDidChange fires on register and dispose [0.09ms]
+
+packages/core/src/platform/__tests__/panels-registry.test.ts:
+(pass) PanelRegistry > registers contributions and returns them by id [0.25ms]
+[PanelRegistry] duplicate contribution id: insp.backlinks
+(pass) PanelRegistry > throws on duplicate id; the first registration wins (S-03 §3.4) [0.42ms]
+(pass) PanelRegistry > lists only contributions of the requested slot [0.11ms]
+(pass) PanelRegistry > orders by defaultOrder; ties break by id; unordered contributions sort last [0.05ms]
+(pass) PanelRegistry > contributions without when are always listed; when expressions filter by context (S-03 §3.9) [0.11ms]
+(pass) PanelRegistry > disposing a registration removes the contribution and stays idempotent [0.03ms]
+(pass) PanelRegistry > onDidChange fires on register, dispose, and stops after unsubscribe [0.04ms]
+(pass) layout profiles (S-03 §3.7) > LayoutProfile and PanelRegistryState round-trip through JSON [0.08ms]
+
+packages/core/src/platform/__tests__/context-keys.test.ts:
+(pass) evaluateWhen > treats undefined and empty expressions as always true [0.04ms]
+(pass) evaluateWhen > evaluates string equality (spec: activeSurface=='knowledge') [0.07ms]
+(pass) evaluateWhen > evaluates boolean equality (spec: agent.available==true) [0.04ms]
+(pass) evaluateWhen > evaluates numeric comparisons on flat dotted keys (spec: selectedBlocks.count>0) [0.06ms]
+(pass) evaluateWhen > derives .count over array-valued keys (S-04 §3.5 counter suffix) [0.03ms]
+(pass) evaluateWhen > walks nested objects for dotted paths [0.03ms]
+(pass) evaluateWhen > evaluates && chains (spec command when, verbatim) [0.04ms]
+(pass) evaluateWhen > evaluates || chains (spec inspector when: knowledge or session) [0.03ms]
+(pass) evaluateWhen > evaluates negation [0.04ms]
+(pass) evaluateWhen > binds && tighter than || [0.03ms]
+(pass) evaluateWhen > honours parentheses [0.03ms]
+(pass) evaluateWhen > treats a bare unknown key as false [0.01ms]
+[evaluateWhen] malformed expression "activeSurface==": unexpected end of expression
+[evaluateWhen] malformed expression "(activeSurface=='knowledge'": missing closing parenthesis
+[evaluateWhen] malformed expression "&&": unexpected token kind: op
+[evaluateWhen] malformed expression "activeSurface='unterminated": unexpected character: =
+(pass) evaluateWhen > never throws on malformed expressions: they are false [0.12ms]
+(pass) ContextKeyService > sets, gets, and notifies subscribers with the changed key [0.11ms]
+(pass) ContextKeyService > merges provider pulls into the snapshot; providers win over stored values [0.18ms]
+(pass) ContextKeyService > evaluates when-expressions against its own snapshot by default [0.06ms]
+
+packages/core/src/env/__tests__/blocked-subprocess-env.test.ts:
+(pass) blocked-subprocess-env > blocks exact credential keys and the ROX_SECRET_ prefix [0.07ms]
+(pass) blocked-subprocess-env > MCP client and sandbox-env do not keep a local BLOCKED_ENV_VARS copy [6.94ms]
+
+packages/core/src/rox2/__tests__/map-reduce.test.ts:
+(pass) ROX-AUD-054 Map → Outcomes → Reduce > snapshot coverage is not claimed complete when a selected id is missing [0.15ms]
+(pass) ROX-AUD-054 Map → Outcomes → Reduce > local excerpt map/reduce is not claimable live without receipt or readback [0.50ms]
+(pass) ROX-AUD-054 Map → Outcomes → Reduce > cancel stops remaining jobs and does not claim full coverage [0.22ms]
+(pass) ROX-AUD-054 Map → Outcomes → Reduce > source revision change is stale; gateway mapper is fail-closed [0.16ms]
+(pass) ROX-AUD-054 Map → Outcomes → Reduce > omitted mapper is fail-closed and is not live success [0.08ms]
+(pass) ROX-AUD-054 Map → Outcomes → Reduce > stale revision yields a stale job and does not invoke the mapper [0.07ms]
+(pass) ROX-AUD-054 Map → Outcomes → Reduce > map-reduce does not invoke the simulated canvas runWorkflow runner [0.58ms]
+
+packages/core/src/rox2/__tests__/onboarding-first-result.test.ts:
+(pass) ROX-AUD-151 onboarding first result > restart resumes the checkpoint and skip still completes [0.11ms]
+(pass) ROX-AUD-151 onboarding first result > local profile name is not account registration [0.02ms]
+(pass) ROX-AUD-151 onboarding first result > offline seed creates a Note→session→Outcome→Task chain that round-trips [0.03ms]
+
+packages/core/src/rox2/__tests__/project-membership.test.ts:
+(pass) ROX2 project membership > member-of allows session→project and forbids project→session [0.05ms]
+(pass) ROX2 project membership > one session can belong to two projects without copying history [0.23ms]
+(pass) ROX2 project membership > unlink removes the edge and keeps the entity pointer for remaining projects [0.06ms]
+(pass) ROX2 project membership > archived project is not disclosed through a shared session [0.05ms]
+(pass) ROX2 project membership > unknown schema versions keep the original payload [7.74ms]
+
+packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts:
+(pass) meeting Conation shells fail-closed (Mail/CRM/calendar/room) > queued shells reject both canonical verified states without claiming live [0.14ms]
+(pass) meeting Conation shells fail-closed (Mail/CRM/calendar/room) > isClaimableLive is false for native, fixture, and Conation on every shell [0.09ms]
+(pass) meeting Conation shells fail-closed (Mail/CRM/calendar/room) > queued shells never report verified or ok success [0.03ms]
+(pass) meeting Conation shells fail-closed (Mail/CRM/calendar/room) > gate attaches Rox2 without making a DTO claim live [0.06ms]
+
+packages/core/src/rox2/__tests__/notes-repository.test.ts:
+(pass) ROX2 notes repository > local notes never report a Conation origin [0.10ms]
+(pass) ROX2 notes repository > offline conation rows are cached stale; denied stays denied [0.06ms]
+
+packages/core/src/rox2/__tests__/conation-api.test.ts:
+(pass) ROX-AUD-012 Conation API catalog > pins a versioned confirmed read set and does not claim writes as live [0.14ms]
+(pass) ROX-AUD-012 Conation API catalog > ingest keeps unknown fields and refuses incompatible versions without mutating the store [0.20ms]
+(pass) ROX-AUD-012 Conation API catalog > write adapter is fail-closed even for confirmed read ids [0.09ms]
+
+packages/core/src/rox2/__tests__/surface-context.test.ts:
+(pass) ROX2 surface context > binds notes/project/task refs with revisions and hides unreadable sources [0.09ms]
+(pass) ROX2 surface context > snapshot policy does not silently follow a document revision [0.10ms]
+(pass) ROX2 surface context > repeated bind of the same snapshot is identical [0.02ms]
+
+packages/core/src/rox2/__tests__/platform-contract.test.ts:
+(pass) ROX2 platform contract > maps every Soup concrete type onto a Rox2 entity kind [0.07ms]
+(pass) ROX2 platform contract > round-trips entity refs [0.03ms]
+(pass) ROX2 platform contract > rejects empty or unknown refs [0.03ms]
+(pass) ROX2 platform contract > does not treat queued, simulated, or fixture results as live [0.06ms]
+(pass) ROX2 platform contract > live plus failed is not success [0.04ms]
+(pass) ROX2 platform contract > queued is not an error and is not claimable [0.02ms]
+(pass) ROX2 platform contract > fixture and queued results are non-success for ok [0.02ms]
+(pass) ROX2 platform contract > succeeded without receipt stays unverified and is not claimable [0.04ms]
+(pass) ROX2 platform contract > fixture and simulated are never claimable even when succeeded [0.04ms]
+(pass) ROX2 platform contract > live succeeded is claimable only when policy-verified [0.04ms]
+(pass) ROX2 platform contract > legacy overloaded run state still type-checks and maps through the adapter [0.09ms]
+(pass) ROX2 platform contract > entity permission catalogs are not actor-scoped authorization [0.05ms]
+(pass) ROX2 platform contract > mutating refs and audit events require revision, account, and causation [0.03ms]
+(pass) ROX2 platform contract > sensitive actions require an explicit grant [0.02ms]
+(pass) ROX2 platform contract > external bindings namespace remote ids by account [0.18ms]
+(pass) ROX2 platform contract > legacy unencoded four-slot key finds the existing entity after encoded write without forking [0.05ms]
+(pass) ROX2 platform contract > legacy unencoded four-slot workspace mismatch quarantines without encoded write [0.04ms]
+(pass) ROX2 platform contract > encodes binding slots so colons in account cannot shift parse [0.22ms]
+(pass) ROX2 platform contract > round-trips colons in every binding slot [0.03ms]
+(pass) ROX2 platform contract > rejects invalid percent-encoding and empty slots on read [0.08ms]
+(pass) ROX2 platform contract > quarantines re-register when workspaceId differs [0.06ms]
+(pass) ROX2 platform contract > writes returned revisionId into the index on same-key update [0.04ms]
+(pass) ROX2 platform contract > relation dictionary allows note→person and forbids task-dependency cycles [0.09ms]
+(pass) ROX2 platform contract > versioned records preserve unknown versions and round-trip properties [0.05ms]
+(pass) ROX2-078..080 GraphqlSoupDocument list/read/act > list names live vs fixture; Soup list is not claimable [0.09ms]
+(pass) ROX2-078..080 GraphqlSoupDocument list/read/act > read names live vs fixture; missing entity is not a fake record [0.21ms]
+(pass) ROX2-078..080 GraphqlSoupDocument list/read/act > act is live for native write; Soup, fixture, ungranted destroy, and spend are not [0.10ms]
+(pass) ROX2-081..083 GraphqlSoupChat list/read/act > list names live vs fixture; Soup chat list is not claimable [0.09ms]
+(pass) ROX2-081..083 GraphqlSoupChat list/read/act > read names live vs fixture; missing session is not a fake record [0.08ms]
+(pass) ROX2-081..083 GraphqlSoupChat list/read/act > act is live for native write; Soup, fixture, ungranted destroy, and spend are not [0.08ms]
+(pass) ROX2-084..086 GraphqlSoupProject list/read/act > list names live vs fixture; Soup project list is not claimable [0.03ms]
+(pass) ROX2-084..086 GraphqlSoupProject list/read/act > read names live vs fixture; missing project is not a fake record [0.03ms]
+(pass) ROX2-084..086 GraphqlSoupProject list/read/act > act is live for native write; Soup, fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-139 RPC auth.ts list/read/act > list names live vs fixture; Conation auth list is not claimable [0.08ms]
+(pass) ROX2-139 RPC auth.ts list/read/act > read names live vs fixture; missing credential is not a fake record [0.06ms]
+(pass) ROX2-139 RPC auth.ts list/read/act > act is live for native write; DTO, fixture, ungranted destroy, and spend are not [0.15ms]
+(pass) ROX2-140 RPC automations.ts list/read/act > list names live vs fixture; Conation automations list is not claimable [0.07ms]
+(pass) ROX2-140 RPC automations.ts list/read/act > read names live vs fixture; missing automation is not a fake record [0.05ms]
+(pass) ROX2-140 RPC automations.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.06ms]
+(pass) ROX2-141 RPC browser-pane.ts list/read/act > list names live vs fixture; Conation browser-pane list is not claimable [0.07ms]
+(pass) ROX2-141 RPC browser-pane.ts list/read/act > read names live vs fixture; missing pane is not a fake record [0.03ms]
+(pass) ROX2-141 RPC browser-pane.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.06ms]
+(pass) ROX2-142 RPC browser-profile-import.ts list/read/act > list names live vs fixture; Conation profile list is not claimable [0.03ms]
+(pass) ROX2-142 RPC browser-profile-import.ts list/read/act > read names live vs fixture; missing profile is not a fake record [0.05ms]
+(pass) ROX2-142 RPC browser-profile-import.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.05ms]
+(pass) ROX2-143 RPC bundled-skills.ts list/read/act > list names live vs fixture; Conation skills list is not claimable [0.04ms]
+(pass) ROX2-143 RPC bundled-skills.ts list/read/act > read names live vs fixture; missing skill is not a fake record [0.03ms]
+(pass) ROX2-143 RPC bundled-skills.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-144 RPC cloud-runs.ts list/read/act > list names live vs fixture; Conation cloud-runs list is not claimable [0.03ms]
+(pass) ROX2-144 RPC cloud-runs.ts list/read/act > read names live vs fixture; missing run is not a fake record [0.03ms]
+(pass) ROX2-144 RPC cloud-runs.ts list/read/act > act is live for native write; fixture, ungranted destroy, and ungranted spend are not [0.07ms]
+(pass) ROX2-191 cloud-runs SUBMIT is native spend, not Conation > granted native spend is claimable; ungranted, fixture, and Conation are not [0.04ms]
+(pass) ROX2-191 cloud-runs SUBMIT is native spend, not Conation > granted spend on other native RPC stores stays queued [0.01ms]
+(pass) ROX2-145 RPC collection.ts list/read/act > list names live vs fixture; Conation collection list is not claimable [0.18ms]
+(pass) ROX2-145 RPC collection.ts list/read/act > read names live vs fixture; missing collection is not a fake record [0.04ms]
+(pass) ROX2-145 RPC collection.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.05ms]
+(pass) ROX2-146 RPC command-gateway.ts list/read/act > list names live vs fixture; Conation command-gateway list is not claimable [0.03ms]
+(pass) ROX2-146 RPC command-gateway.ts list/read/act > read names live vs fixture; missing command is not a fake record [0.03ms]
+(pass) ROX2-146 RPC command-gateway.ts list/read/act > act is live for native write; DTO ok, fixture, ungranted destroy, and spend are not [0.06ms]
+(pass) ROX2-147 RPC context-docs.ts list/read/act > list names live vs fixture; Conation context-docs list is not claimable [0.09ms]
+(pass) ROX2-147 RPC context-docs.ts list/read/act > read names live vs fixture; missing doc is not a fake record [0.10ms]
+(pass) ROX2-147 RPC context-docs.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.07ms]
+(pass) ROX2-148 RPC environment.ts list/read/act > list names live vs fixture; Conation environment list is not claimable [0.05ms]
+(pass) ROX2-148 RPC environment.ts list/read/act > read names live vs fixture; missing prefs is not a fake record [0.04ms]
+(pass) ROX2-148 RPC environment.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.06ms]
+(pass) ROX2-149 RPC extensions.ts list/read/act > list names live vs fixture; Conation extensions list is not claimable [0.04ms]
+(pass) ROX2-149 RPC extensions.ts list/read/act > read names live vs fixture; missing extension is not a fake record [0.08ms]
+(pass) ROX2-149 RPC extensions.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.05ms]
+(pass) ROX2-150 RPC fabric-runtime.ts list/read/act > list names live vs fixture; Conation fabric-runtime list is not claimable [0.06ms]
+(pass) ROX2-150 RPC fabric-runtime.ts list/read/act > read names live vs fixture; missing runtime is not a fake record [0.04ms]
+(pass) ROX2-150 RPC fabric-runtime.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-151 RPC fabric.ts list/read/act > list names live vs fixture; Conation fabric list is not claimable [0.03ms]
+(pass) ROX2-151 RPC fabric.ts list/read/act > read names live vs fixture; missing connection is not a fake record [0.03ms]
+(pass) ROX2-151 RPC fabric.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-152 RPC files.ts list/read/act > list names live vs fixture; Conation files list is not claimable [0.03ms]
+(pass) ROX2-152 RPC files.ts list/read/act > read names live vs fixture; missing file is not a fake record [0.03ms]
+(pass) ROX2-152 RPC files.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-153 RPC gamification.ts list/read/act > list names live vs fixture; Conation gamification list is not claimable [0.03ms]
+(pass) ROX2-153 RPC gamification.ts list/read/act > read names live vs fixture; missing profile is not a fake record [0.14ms]
+(pass) ROX2-153 RPC gamification.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-154 RPC identity.ts list/read/act > list names live vs fixture; Conation identity list is not claimable [0.03ms]
+(pass) ROX2-154 RPC identity.ts list/read/act > read names live vs fixture; missing profile is not a fake record [0.08ms]
+(pass) ROX2-154 RPC identity.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-155 RPC kanban.ts list/read/act > list names live vs fixture; Conation kanban list is not claimable [0.04ms]
+(pass) ROX2-155 RPC kanban.ts list/read/act > read names live vs fixture; missing board is not a fake record [0.03ms]
+(pass) ROX2-155 RPC kanban.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-156 RPC knowledge.ts list/read/act > list names live vs fixture; Conation knowledge list is not claimable [0.03ms]
+(pass) ROX2-156 RPC knowledge.ts list/read/act > read names live vs fixture; missing connection is not a fake record [0.03ms]
+(pass) ROX2-156 RPC knowledge.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-157 RPC labels.ts list/read/act > list names live vs fixture; Conation labels list is not claimable [0.03ms]
+(pass) ROX2-157 RPC labels.ts list/read/act > read names live vs fixture; missing label is not a fake record [0.03ms]
+(pass) ROX2-157 RPC labels.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-158 RPC llm-connections.ts list/read/act > list names live vs fixture; Conation llm-connections list is not claimable [0.03ms]
+(pass) ROX2-158 RPC llm-connections.ts list/read/act > read names live vs fixture; missing slug is not a fake record [0.03ms]
+(pass) ROX2-158 RPC llm-connections.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-159 RPC marketplace.ts list/read/act > list names live vs fixture; Conation marketplace list is not claimable [0.03ms]
+(pass) ROX2-159 RPC marketplace.ts list/read/act > read names live vs fixture; missing entry is not a fake record [0.03ms]
+(pass) ROX2-159 RPC marketplace.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-160 RPC memory-insights.ts list/read/act > list names live vs fixture; Conation memory-insights list is not claimable [0.04ms]
+(pass) ROX2-160 RPC memory-insights.ts list/read/act > read names live vs fixture; missing insights is not a fake record [0.03ms]
+(pass) ROX2-160 RPC memory-insights.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-161 RPC memory-io.ts list/read/act > list names live vs fixture; Conation memory-io list is not claimable [0.04ms]
+(pass) ROX2-161 RPC memory-io.ts list/read/act > read names live vs fixture; missing bundle is not a fake record [0.27ms]
+(pass) ROX2-161 RPC memory-io.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-162 RPC memory-proposals.ts list/read/act > list names live vs fixture; Conation memory-proposals list is not claimable [0.04ms]
+(pass) ROX2-162 RPC memory-proposals.ts list/read/act > read names live vs fixture; missing proposal is not a fake record [0.03ms]
+(pass) ROX2-162 RPC memory-proposals.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-163 RPC memory.ts list/read/act > list names live vs fixture; Conation memory list is not claimable [0.03ms]
+(pass) ROX2-163 RPC memory.ts list/read/act > read names live vs fixture; missing context is not a fake record [0.04ms]
+(pass) ROX2-163 RPC memory.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-164 RPC messaging.ts list/read/act > list names live vs fixture; Conation messaging list is not claimable [0.03ms]
+(pass) ROX2-164 RPC messaging.ts list/read/act > read names live vs fixture; missing bindings is not a fake record [0.03ms]
+(pass) ROX2-164 RPC messaging.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-165 RPC mindmap.ts list/read/act > list names live vs fixture; Conation mindmap list is not claimable [0.04ms]
+(pass) ROX2-165 RPC mindmap.ts list/read/act > read names live vs fixture; missing pin is not a fake record [0.03ms]
+(pass) ROX2-165 RPC mindmap.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-166 RPC notes-import.ts list/read/act > list names live vs fixture; Conation notes-import list is not claimable [0.03ms]
+(pass) ROX2-166 RPC notes-import.ts list/read/act > read names live vs fixture; missing scan is not a fake record [0.03ms]
+(pass) ROX2-166 RPC notes-import.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-167 RPC notes.ts list/read/act > list names live vs fixture; Conation notes list is not claimable [0.03ms]
+(pass) ROX2-167 RPC notes.ts list/read/act > read names live vs fixture; missing note is not a fake record [0.03ms]
+(pass) ROX2-167 RPC notes.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-168 RPC oauth.ts list/read/act > list names live vs fixture; Conation oauth list is not claimable [0.03ms]
+(pass) ROX2-168 RPC oauth.ts list/read/act > read names live vs fixture; missing flow is not a fake record [0.03ms]
+(pass) ROX2-168 RPC oauth.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-169 RPC onboarding.ts list/read/act > list names live vs fixture; Conation onboarding list is not claimable [0.03ms]
+(pass) ROX2-169 RPC onboarding.ts list/read/act > read names live vs fixture; missing oauth state is not a fake record [0.03ms]
+(pass) ROX2-169 RPC onboarding.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-170 RPC openclaw.ts list/read/act > list names live vs fixture; Conation openclaw list is not claimable [0.03ms]
+(pass) ROX2-170 RPC openclaw.ts list/read/act > read names live vs fixture; missing audit is not a fake record [0.03ms]
+(pass) ROX2-170 RPC openclaw.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-171 RPC orgs.ts list/read/act > list names live vs fixture; Conation orgs list is not claimable [0.03ms]
+(pass) ROX2-171 RPC orgs.ts list/read/act > read names live vs fixture; missing identity is not a fake record [0.03ms]
+(pass) ROX2-171 RPC orgs.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-172 RPC pages.ts list/read/act > list names live vs fixture; Conation pages list is not claimable [0.03ms]
+(pass) ROX2-172 RPC pages.ts list/read/act > read names live vs fixture; missing page is not a fake record [0.03ms]
+(pass) ROX2-172 RPC pages.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-173 RPC plugin-bridge.ts list/read/act > list names live vs fixture; Conation plugin-bridge list is not claimable [0.03ms]
+(pass) ROX2-173 RPC plugin-bridge.ts list/read/act > read names live vs fixture; missing plugin is not a fake record [0.03ms]
+(pass) ROX2-173 RPC plugin-bridge.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.10ms]
+(pass) ROX2-174 RPC privacy.ts list/read/act > list names live vs fixture; Conation privacy list is not claimable [0.04ms]
+(pass) ROX2-174 RPC privacy.ts list/read/act > read names live vs fixture; missing ledger is not a fake record [0.15ms]
+(pass) ROX2-174 RPC privacy.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.05ms]
+(pass) ROX2-175 RPC projects.ts list/read/act > list names live vs fixture; Conation projects list is not claimable [0.04ms]
+(pass) ROX2-175 RPC projects.ts list/read/act > read names live vs fixture; missing project is not a fake record [0.03ms]
+(pass) ROX2-175 RPC projects.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-176 RPC resources.ts list/read/act > list names live vs fixture; Conation resources list is not claimable [0.03ms]
+(pass) ROX2-176 RPC resources.ts list/read/act > read names live vs fixture; missing bundle is not a fake record [0.03ms]
+(pass) ROX2-176 RPC resources.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-177 RPC server.ts list/read/act > list names live vs fixture; Conation server list is not claimable [0.03ms]
+(pass) ROX2-177 RPC server.ts list/read/act > read names live vs fixture; missing status is not a fake record [0.04ms]
+(pass) ROX2-177 RPC server.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.07ms]
+(pass) ROX2-178 RPC session-foreign-import.ts list/read/act > list names live vs fixture; Conation foreign-import list is not claimable [0.04ms]
+(pass) ROX2-178 RPC session-foreign-import.ts list/read/act > read names live vs fixture; missing transcript is not a fake record [0.03ms]
+(pass) ROX2-178 RPC session-foreign-import.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-179 RPC sessions.ts list/read/act > list names live vs fixture; Conation sessions list is not claimable [0.04ms]
+(pass) ROX2-179 RPC sessions.ts list/read/act > read names live vs fixture; missing session is not a fake record [0.03ms]
+(pass) ROX2-179 RPC sessions.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-180 RPC settings.ts list/read/act > list names live vs fixture; Conation settings list is not claimable [0.03ms]
+(pass) ROX2-180 RPC settings.ts list/read/act > read names live vs fixture; missing prefs is not a fake record [0.04ms]
+(pass) ROX2-180 RPC settings.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.07ms]
+(pass) ROX2-181 RPC skills-pending.ts list/read/act > list names live vs fixture; Conation skills-pending list is not claimable [0.06ms]
+(pass) ROX2-181 RPC skills-pending.ts list/read/act > read names live vs fixture; missing candidate is not a fake record [0.06ms]
+(pass) ROX2-181 RPC skills-pending.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-182 RPC skills.ts list/read/act > list names live vs fixture; Conation skills list is not claimable [0.03ms]
+(pass) ROX2-182 RPC skills.ts list/read/act > read names live vs fixture; missing skill is not a fake record [0.03ms]
+(pass) ROX2-182 RPC skills.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-183 RPC sources.ts list/read/act > list names live vs fixture; Conation sources list is not claimable [0.03ms]
+(pass) ROX2-183 RPC sources.ts list/read/act > read names live vs fixture; missing source is not a fake record [0.04ms]
+(pass) ROX2-183 RPC sources.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-184 RPC statuses.ts list/read/act > list names live vs fixture; Conation statuses list is not claimable [0.03ms]
+(pass) ROX2-184 RPC statuses.ts list/read/act > read names live vs fixture; missing status catalog is not a fake record [0.03ms]
+(pass) ROX2-184 RPC statuses.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-185 RPC system.ts list/read/act > list names live vs fixture; Conation system list is not claimable [0.03ms]
+(pass) ROX2-185 RPC system.ts list/read/act > read names live vs fixture; missing path is not a fake record [0.03ms]
+(pass) ROX2-185 RPC system.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-186 RPC tasks.ts list/read/act > list names live vs fixture; Conation tasks list is not claimable [0.56ms]
+(pass) ROX2-186 RPC tasks.ts list/read/act > read names live vs fixture; missing task is not a fake record [0.04ms]
+(pass) ROX2-186 RPC tasks.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.04ms]
+(pass) ROX2-187 RPC toolchain.ts list/read/act > list names live vs fixture; Conation toolchain list is not claimable [0.03ms]
+(pass) ROX2-187 RPC toolchain.ts list/read/act > read names live vs fixture; missing tool is not a fake record [0.03ms]
+(pass) ROX2-187 RPC toolchain.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-188 RPC transfer.ts list/read/act > list names live vs fixture; Conation transfer list is not claimable [0.03ms]
+(pass) ROX2-188 RPC transfer.ts list/read/act > read names live vs fixture; missing transfer is not a fake record [0.03ms]
+(pass) ROX2-188 RPC transfer.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.05ms]
+(pass) ROX2-189 RPC voice.ts list/read/act > list names live vs fixture; Conation voice list is not claimable [0.04ms]
+(pass) ROX2-189 RPC voice.ts list/read/act > read names live vs fixture; missing recording is not a fake record [0.04ms]
+(pass) ROX2-189 RPC voice.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+(pass) ROX2-190 RPC workspace.ts list/read/act > list names live vs fixture; Conation workspace list is not claimable [0.03ms]
+(pass) ROX2-190 RPC workspace.ts list/read/act > read names live vs fixture; missing image is not a fake record [0.03ms]
+(pass) ROX2-190 RPC workspace.ts list/read/act > act is live for native write; fixture, ungranted destroy, and spend are not [0.03ms]
+
+packages/core/src/rox2/__tests__/notes-engine.test.ts:
+(pass) ROX-AUD-031 native notes engine > CRUD and restart work without SiYuan [0.67ms]
+(pass) ROX-AUD-031 native notes engine > rename keeps block ids and rewrites wikilinks [0.26ms]
+(pass) ROX-AUD-031 native notes engine > concurrent save without current revision is not a silent overwrite [0.08ms]
+(pass) ROX-AUD-031 native notes engine > save without expectedRevision is rejected; stale conflicts; matching succeeds [0.08ms]
+(pass) ROX-AUD-031 native notes engine > list() seed reconstructs heads from the tip and keeps the revision chain [0.11ms]
+(pass) ROX-AUD-031 native notes engine > export/import is lossless for fields, attachments, and extra [0.32ms]
+(pass) ROX-AUD-031 native notes engine > multi-revision export/import restores full parent chain and tip [0.24ms]
+(pass) ROX-AUD-031 native notes engine > invalid or throwing mid-import leaves original notes and history intact [0.31ms]
+(pass) ROX-AUD-031 native notes engine > import rejects head extra or sidecar that does not match the tip [0.15ms]
+(pass) ROX-AUD-031 native notes engine > block and wikilink helpers are lossless [0.03ms]
+(pass) ROX-AUD-031 native notes engine > unlabeled paragraph insert keeps existing block ids [0.09ms]
+(pass) ROX-AUD-031 native notes engine > inserting a duplicate unlabeled paragraph does not remap existing suffix ids [0.09ms]
+(pass) ROX-AUD-031 native notes engine > same markdown with different extra yields a new revision id and CAS conflict [0.06ms]
+(pass) ROX-AUD-031 native notes engine > isNativeNotesEngine distinguishes the engine from NotesRepository [0.03ms]
+
+packages/core/src/knowledge/__tests__/errors.test.ts:
+(pass) KnowledgeError > carries code, message, details and a stable name [0.06ms]
+(pass) KnowledgeError > details are optional [0.02ms]
+(pass) KnowledgeError > every KnowledgeErrorCode is constructible (P1 read-only set, mutations excluded) [0.03ms]
+(pass) validateKnowledgeRef > throws a typed INVALID_REF for null [0.07ms]
+(pass) validateKnowledgeRef > throws a typed INVALID_REF for non-object
+(pass) validateKnowledgeRef > throws a typed INVALID_REF for empty object
+(pass) validateKnowledgeRef > throws a typed INVALID_REF for wrong scheme
+(pass) validateKnowledgeRef > throws a typed INVALID_REF for unknown kind [0.01ms]
+(pass) validateKnowledgeRef > throws a typed INVALID_REF for empty id
+(pass) validateKnowledgeRef > throws a typed INVALID_REF for non-string id
+(pass) validateKnowledgeRef > throws a typed INVALID_REF for bad provider segment [0.03ms]
+(pass) validateKnowledgeRef > throws a typed INVALID_REF for non-string connectionId
+(pass) validateKnowledgeRef > accepts canonical refs and returns them unchanged [0.03ms]
+
+packages/core/src/knowledge/__tests__/refs.test.ts:
+(pass) serialize/parse KnowledgeRef round-trip > canonical form serializes as siyuan/<kind>/<id> [0.02ms]
+(pass) serialize/parse KnowledgeRef round-trip > serialize → parse round-trips for every knowledge kind [0.12ms]
+(pass) serialize/parse KnowledgeRef round-trip > custom provider round-trips through the provider segment [0.03ms]
+(pass) serialize/parse KnowledgeRef round-trip > compact form resolves to the default provider siyuan [0.05ms]
+(pass) serialize/parse KnowledgeRef round-trip > ids may contain slashes [0.03ms]
+(pass) serialize/parse KnowledgeRef round-trip > invalid shapes return null instead of throwing [0.02ms]
+(pass) serialize/parse CraftRef round-trip > craft/<kind>/<id> round-trips [0.09ms]
+(pass) serialize/parse CraftRef round-trip > invalid craft refs return null [0.02ms]
+(pass) KNOWLEDGE_MENTION_PATTERN and mention helpers > regex matches full and compact tokens in message text [0.51ms]
+(pass) KNOWLEDGE_MENTION_PATTERN and mention helpers > parseKnowledgeMentions extracts refs in order [0.08ms]
+(pass) KNOWLEDGE_MENTION_PATTERN and mention helpers > compact mention serializes back under the default provider [0.02ms]
+(pass) KNOWLEDGE_MENTION_PATTERN and mention helpers > non-knowledge tokens and plain text yield no refs [0.01ms]
+(pass) KNOWLEDGE_MENTION_PATTERN and mention helpers > formatKnowledgeMention produces parseable tokens (full + compact) [0.05ms]
+(pass) KNOWLEDGE_MENTION_PATTERN and mention helpers > display form is @-prefixed serialization [0.01ms]
+(pass) siyuan:// deep links > document/block refs emit the native siyuan://blocks/<id> grammar [0.23ms]
+(pass) siyuan:// deep links > block refs round-trip through the native blocks grammar [0.05ms]
+(pass) siyuan:// deep links > parse keeps legacy document/block hostnames resolvable [0.03ms]
+(pass) canonicalKnowledgeRef / toProviderForm > provider form with default provider collapses to canonical without provider [0.04ms]
+(pass) canonicalKnowledgeRef / toProviderForm > provider form with a non-default provider keeps it [0.01ms]
+(pass) canonicalKnowledgeRef / toProviderForm > canonical input passes through [0.01ms]
+(pass) canonicalKnowledgeRef / toProviderForm > toProviderForm maps absent provider to siyuan and keeps explicit providers [0.02ms]
+(pass) canonicalKnowledgeRef / toProviderForm > canonicalKnowledgeRef throws on invalid shapes [0.03ms]
+
+packages/core/src/knowledge/__tests__/publications.test.ts:
+(pass) distillFromMessages > builds draft from assistant content with sourceMessages and stable contentHash [1.00ms]
+(pass) distillFromMessages > excludes credential-like fragments from markdown and records excerptHash only [0.07ms]
+(pass) distillFromMessages > excludes PEM blocks as credential-like [0.04ms]
+(pass) distillFromMessages > excludes raw tool-call dumps and large JSON blobs [0.04ms]
+(pass) distillFromMessages > refuses empty messages and messages with no surviving sources [0.07ms]
+(pass) distillFromMessages > enforces size-cap and records size-cap exclusion [9.85ms]
+(pass) distillFromMessages > hashExcerpt is stable sha256 hex [0.04ms]
+(pass) provenance helpers > buildProvenanceYaml and buildBodyWithProvenance prepend craft front-matter [0.27ms]
+
+packages/core/src/knowledge/__tests__/inmemory-provider.test.ts:
+(pass) hashKnowledgeContent > is stable, 64-char sha256 hex, and normalizes line endings [0.49ms]
+(pass) InMemoryKnowledgeProvider.search > defaults to document+block kinds and sorts by updatedAt desc [3.04ms]
+(pass) InMemoryKnowledgeProvider.search > query filters on title+markdown and snippet carries the match context [0.47ms]
+(pass) InMemoryKnowledgeProvider.search > kinds filter includes notebooks on request [0.36ms]
+(pass) InMemoryKnowledgeProvider.search > notebookId filter scopes to a single notebook tree [2.89ms]
+(pass) InMemoryKnowledgeProvider.search > pathPrefix filter scopes by path [0.20ms]
+(pass) InMemoryKnowledgeProvider.search > attributes filter requires every key/value to match [0.16ms]
+(pass) InMemoryKnowledgeProvider.search > limit + cursor paginate through the full ordered result set [0.21ms]
+(pass) InMemoryKnowledgeProvider.get > returns the node with a computed blockCount for documents [0.17ms]
+(pass) InMemoryKnowledgeProvider.get > unknown node → typed NOT_FOUND [0.20ms]
+(pass) InMemoryKnowledgeProvider.get > invalid ref → typed INVALID_REF [0.14ms]
+(pass) InMemoryKnowledgeProvider.getContext > snapshot payload carries content, children, backlinks, attributes, and hash [0.32ms]
+(pass) InMemoryKnowledgeProvider.getContext > backlinks relation: a node referenced by a block lists that block [0.13ms]
+(pass) InMemoryKnowledgeProvider.getContext > live-reference mode is honored when the capability is on, rejected when off [0.32ms]
+(pass) InMemoryKnowledgeProvider mutations (documented choice: full in-memory P3 semantics) > updateBlock: propose → pending_review with diff, apply mutates the node [2.48ms]
+(pass) InMemoryKnowledgeProvider mutations (documented choice: full in-memory P3 semantics) > hash race: second proposal apply reports conflicted with the current hash [0.79ms]
+(pass) InMemoryKnowledgeProvider mutations (documented choice: full in-memory P3 semantics) > appendBlock creates a child under the target document [0.52ms]
+(pass) InMemoryKnowledgeProvider mutations (documented choice: full in-memory P3 semantics) > createDocument targets the notebook (wire contract); apply returns createdRef and the doc is searchable [1.00ms]
+(pass) InMemoryKnowledgeProvider mutations (documented choice: full in-memory P3 semantics) > createDocument against a missing notebook → typed NOT_FOUND [0.29ms]
+(pass) InMemoryKnowledgeProvider mutations (documented choice: full in-memory P3 semantics) > setAttribute updates the node attribute [0.27ms]
+(pass) InMemoryKnowledgeProvider mutations (documented choice: full in-memory P3 semantics) > missing targetRef → INVALID_REF; op/target mismatch → INVALID_REF [0.18ms]
+(pass) InMemoryKnowledgeProvider mutations (documented choice: full in-memory P3 semantics) > applying an unknown or already-applied proposal → typed error [0.25ms]
+(pass) InMemoryKnowledgeProvider mutations (documented choice: full in-memory P3 semantics) > multi-op proposal rejected when transactions capability is off [0.15ms]
+(pass) InMemoryKnowledgeProvider.open > records the siyuan:// deep link for existing refs [0.16ms]
+(pass) InMemoryKnowledgeProvider.open > unknown ref → NOT_FOUND; invalid ref → INVALID_REF [0.12ms]
+(pass) createKnowledgeRegistry with InMemoryKnowledgeProvider > empty registry: no default, resolve throws CONNECTION_UNAVAILABLE [0.14ms]
+(pass) createKnowledgeRegistry with InMemoryKnowledgeProvider > connect caches by connectionId; resolve honors connectionId, provider, then default [0.12ms]
+(pass) createKnowledgeRegistry with InMemoryKnowledgeProvider > connecting an unregistered scheme → typed UNSUPPORTED_OPERATION [0.07ms]
+
+packages/core/src/knowledge/__tests__/mutations.test.ts:
+(pass) mutation engine: §3.2 transition table T1–T11 on the InMemory substrate > T1 create → T2 buildDiff → T3 approve computes inverseOps from preState [1.40ms]
+(pass) mutation engine: §3.2 transition table T1–T11 on the InMemory substrate > T4 reject discards with delete-file + audit effects [0.54ms]
+(pass) mutation engine: §3.2 transition table T1–T11 on the InMemory substrate > T5→T6 happy path: beginApply emits read-target, hash match emits execute-ops, success lands applied [0.32ms]
+(pass) mutation engine: §3.2 transition table T1–T11 on the InMemory substrate > T7 hash drift between READ and APPLY → conflict, nothing written (no execute-ops plan) [0.23ms]
+(pass) mutation engine: §3.2 transition table T1–T11 on the InMemory substrate > T8 transient failure → applying again (retry exactly once), second retry throws [0.19ms]
+(pass) mutation engine: §3.2 transition table T1–T11 on the InMemory substrate > T9 rebase: conflict → superseded with a fresh read-target plan [0.09ms]
+(pass) mutation engine: §3.2 transition table T1–T11 on the InMemory substrate > T11 closed table: every off-table (status, action) pair throws ProposalTransitionError [0.14ms]
+(pass) mutation engine: acceptance criteria > #2 apply initiation (beginApply) is rejected from EVERY status except approved [0.84ms]
+(pass) mutation engine: acceptance criteria > #4 updateBlock without a selection proof is rejected at T1 with reason=missing-selection-proof [0.32ms]
+(pass) mutation engine: acceptance criteria > #4/#5 ops guards: path traversal, empty title, size cap, attribute prefix allowlist [0.52ms]
+(pass) mutation engine: acceptance criteria > #5 assertSelectOnly: allows SELECT (any case/indent), rejects update/insert/delete/drop before the network [0.14ms]
+(pass) mutation engine: acceptance criteria > #8 rollback flow: applied → rolled_back, final content hash equals preState hash, chain complete [0.54ms]
+(pass) mutation engine: acceptance criteria > #9 partial apply at op 2/3 → conflict, reason=partial-apply-rolled-back, compensation = inverse of op 1 [0.23ms]
+(pass) mutation engine: acceptance criteria > TTL helpers and lazy expiry: draft 7d → expire, approved 24h → approval-expired back to pending_review [0.23ms]
+(pass) mutation engine: diff + inverse ops > buildProposalDiff: LCS line diff with context/added/removed [0.05ms]
+(pass) mutation engine: diff + inverse ops > computeInverseOps: spec §3.8 shapes; inserted ids bind post-apply; compensation slices prefix reversed [0.07ms]
+(pass) mutation engine: P1-4a block-accurate inverse (child updateBlock) > computeInverseOps: children capture wins for child ops; whole-target fallback only for the target itself [0.02ms]
+(pass) mutation engine: P1-4a block-accurate inverse (child updateBlock) > documented LIMIT: child op without capture falls back to whole content (conflict-prone; rollback hash check catches drift) [0.02ms]
+(pass) mutation engine: P1-4a block-accurate inverse (child updateBlock) > approve (T3) computes child inverse from persisted preStateChildren, not whole-target preState [0.08ms]
+(pass) mutation engine: P1-4b op↔targetRef scope guard (fail closed) > updateBlock on a child block WITHOUT child-chain capture → unknown-containment (scope unprovable) [0.16ms]
+(pass) mutation engine: P1-4b op↔targetRef scope guard (fail closed) > updateBlock/setAttribute on a block OUTSIDE the captured child chain → op-target-mismatch [0.08ms]
+(pass) mutation engine: P1-4b op↔targetRef scope guard (fail closed) > appendBlock into a document other than targetRef → op-target-mismatch [0.07ms]
+(pass) mutation engine: P1-4b op↔targetRef scope guard (fail closed) > guard allows: whole-target ops, captured child ops with fresh proof, createDocument (exempt by design) [0.09ms]
+(pass) mutation engine: P1-4b op↔targetRef scope guard (fail closed) > enforceSelectionProofs:false skips the guard — provider-internal inverse batches target kernel-created ids [0.09ms]
+(pass) mutation engine: P1-4 append multi-binding ($insertedBlockId[N] per op index) > 2+ appends to different docs: created ids bind per op index, tombstones address the right block [0.06ms]
+(pass) mutation engine: P1-4 append multi-binding ($insertedBlockId[N] per op index) > engine flow: approve of 2 appends emits per-index placeholders ready for post-apply binding [0.07ms]
+(pass) mutation engine: P1-6b T8 transient contract + stuck-apply sweep evacuation > isTransientProviderFailure: network timeout ONLY (TimeoutError/AbortError), everything else is not retryable [0.06ms]
+(pass) mutation engine: P1-6b T8 transient contract + stuck-apply sweep evacuation > isApplyStuck: applying older than APPLY_STUCK_TIMEOUT_MS only; T8 retry refreshes the clock [0.18ms]
+(pass) mutation engine: P1-6b T8 transient contract + stuck-apply sweep evacuation > expire evacuates stuck applying → conflict apply-stalled (file kept, §3.5 actions live); fresh applying still refused [0.14ms]
+(pass) mutation engine: P1-4a acceptance — child-block rollback restores CHILD exactly (e2e, hash equality) > updateBlock on child: rollback restores child content byte-exact, doc hash drift check passes, sibling untouched [0.32ms]
+
+packages/core/src/mindmap/__tests__/derive-session.test.ts:
+(pass) deriveSessionMindMap > builds turn tree with user, assistant, tools [1.12ms]
+(pass) deriveSessionMindMap > truncates to last maxTurns and sets meta.truncated [0.14ms]
+(pass) deriveSessionMindMap > stable ids across re-derive [0.22ms]
+
+packages/core/src/mindmap/__tests__/pinned-edit.test.ts:
+(pass) pinned custom mind map edits > builds an editable source-less starter pipeline without changing live history [1.12ms]
+(pass) pinned custom mind map edits > round-trips a source-less custom node through a pinned map [0.85ms]
+(pass) pinned custom mind map edits > validates edits and never mutates the live source graph [0.73ms]
+(pass) pinned custom mind map edits > keeps custom structure for stale Keep and discards it for Rebuild [0.15ms]
+(pass) pinned custom mind map edits > reparents and deletes custom nodes without deleting their children [0.27ms]
+
+packages/core/src/mindmap/__tests__/enrich.test.ts:
+(pass) parseEnrichedOutlineJson > parses bare array [0.34ms]
+(pass) parseEnrichedOutlineJson > parses fenced { outline } [0.02ms]
+(pass) parseEnrichedOutlineJson > rejects garbage [0.05ms]
+(pass) applyEnrichedOutline > builds enriched graph and drops old ids [0.71ms]
+(pass) heuristicEnrichOutline > collapses single-child same label [0.14ms]
+(pass) buildEnrichPrompt > includes labels [0.29ms]
+
+packages/core/src/mindmap/__tests__/outline.test.ts:
+(pass) parseOutlineHeadings > parses nested H1/H2/H3 [0.05ms]
+(pass) parseOutlineHeadings > ignores headings inside fenced code blocks [0.03ms]
+(pass) parseOutlineHeadings > strips trailing hash run [0.01ms]
+(pass) parseOutlineHeadings > skips empty title headings
+(pass) headingsToTree > nests by level stack with heading:<line> ids [0.13ms]
+
+packages/core/src/mindmap/__tests__/session-digest.test.ts:
+(pass) buildDigestItems > write tool is an artifact; trailing user is open [0.43ms]
+(pass) buildDigestItems > pins come from overlay key, not the transcript [0.09ms]
+
+packages/core/src/mindmap/__tests__/derive-note.test.ts:
+(pass) deriveNoteMindMap > builds outline tree from headings [0.24ms]
+(pass) deriveNoteMindMap > no headings → section:body truncated [0.10ms]
+(pass) deriveNoteMindMap > backlinks as backlink:<id> under root with backlink edge [0.30ms]
+
+packages/core/src/mindmap/__tests__/pin.test.ts:
+(pass) pin helpers > entityPinKey and filename sanitize [0.05ms]
+(pass) pin helpers > serialize/parse round-trip [0.13ms]
+(pass) pin helpers > load/save with in-memory io [0.25ms]
+(pass) pin helpers > isStale compares sourceContentHash [0.04ms]
+(pass) sourceContentHash override tracks live hash separately [0.05ms]
+
+packages/core/src/mindmap/__tests__/session-scene-graph.test.ts:
+(pass) projectSessionScenes > empty transcript [0.03ms]
+(pass) projectSessionScenes > nests tools under the user scene and does not drop them [0.07ms]
+(pass) projectSessionScenes > linear scenes chain as continue [0.04ms]
+(pass) projectSessionScenes > skips status chrome [0.02ms]
+(pass) projectSessionScenes > orphan assistant before first user keeps tools [0.03ms]
+(pass) projectSessionScenes > fork via parentToolUseId does not drop tools [0.07ms]
+(pass) projectSessionScenes > cycle via parentToolUseId is broken as orphaned [0.09ms]
+(pass) planFanOutJobs > caps at 32 and parallel 8 [0.20ms]
+
+packages/core/src/mindmap/__tests__/hash.test.ts:
+(pass) hashMindMapSource > same inputs produce same hash [0.09ms]
+(pass) hashMindMapSource > matches SHA-256 for a known payload [0.02ms]
+(pass) hashMindMapSource > matches SHA-256 across UTF-8 and multiple blocks [0.09ms]
+(pass) hashMindMapSource > order of parts affects hash [0.02ms]
+(pass) hashMindMapSource > label change affects hash [0.03ms]
+(pass) hashMindMapSource > normalizes CRLF to LF before hashing [0.02ms]
+(pass) hashMindMapSource > empty parts stay unambiguous via NUL join [0.03ms]
+(pass) normalizeMindMapPart > converts bare CR and CRLF to LF
+
+packages/core/src/mindmap/__tests__/materialize.test.ts:
+(pass) graphToMarkdown > emits H1 root and nested headings with frontmatter [0.30ms]
+(pass) graphToMarkdown > can omit frontmatter [0.06ms]
+(pass) materializeNoteTitle > prefixes Map: [0.07ms]
+
+packages/core/src/mindmap/__tests__/layout.test.ts:
+(pass) autoLayout > places root and children with increasing x by depth [0.41ms]
+(pass) autoLayout > siblings get distinct y [0.07ms]
+(pass) autoLayout > collapsed parent hides descendants from positions [0.08ms]
+(pass) autoLayout > extra collapsed option works without mutating nodes [0.17ms]
+(pass) autoLayout > subtreeLeafCount and visibleChildren [0.08ms]
+(pass) autoLayout > layoutBounds [0.24ms]
+
+packages/core/src/mindmap/__tests__/derive-knowledge.test.ts:
+(pass) deriveKnowledgeMindMap > prefers children tree when non-empty [0.24ms]
+(pass) deriveKnowledgeMindMap > falls back to outline(content) when no children [0.05ms]
+(pass) deriveKnowledgeMindMap > no children and no headings → section:body [0.05ms]
+(pass) deriveKnowledgeMindMap > backlinks secondary under root [0.07ms]
+
+packages/core/src/mindmap/__tests__/session-map-pin.test.ts:
+(pass) sessionMapPinStorageKey > uses rox.sessionMap.layout prefix [0.02ms]
+(pass) parseSessionMapPin > returns null for missing or empty raw [0.07ms]
+(pass) parseSessionMapPin > returns null for non-JSON [0.05ms]
+(pass) parseSessionMapPin > returns null for array [0.03ms]
+(pass) parseSessionMapPin > returns null for wrong version [0.02ms]
+(pass) parseSessionMapPin > returns null when sessionId is missing [0.01ms]
+(pass) parseSessionMapPin > returns null on sessionId mismatch [0.02ms]
+(pass) parseSessionMapPin > returns null when nodes is not an object [0.07ms]
+(pass) serializeSessionMapPin / parseSessionMapPin > valid pin round-trips and keeps optional viewport [0.06ms]
+(pass) serializeSessionMapPin / parseSessionMapPin > round-trips without viewport [0.02ms]
+(pass) pruneSessionMapPin > drops unknown node ids and keeps known nodes, viewport, camera, sessionId [0.05ms]
+
+packages/core/src/mindmap/__tests__/session-variables.test.ts:
+(pass) extractSessionVariables > pulls mustache, dollar, and ASSIGN forms [0.17ms]
+
+packages/core/src/mindmap/__tests__/barrel-renderer-exports.test.ts:
+(pass) mindmap barrel re-exports renderer symbols > session map, variables, starter graph, and pinned edit are value exports [0.02ms]
+
+packages/core/src/meetings/__tests__/model.test.ts:
+(pass) meeting model (RMA-I001) > meeting is a call entity, not a session [0.07ms]
+(pass) meeting model (RMA-I001) > two accounts with the same remoteId stay distinct [0.03ms]
+(pass) meeting model (RMA-I001) > legacy live does not become verified [0.04ms]
+(pass) meeting model (RMA-I001) > legacy {ok:true, state:live} does not stamp mode production [0.21ms]
+(pass) meeting model (RMA-I001) > unknown schema blocks writes [0.17ms]
+(pass) meeting model (RMA-I001) > proposal and v2 result codecs reject invalid envelopes [0.08ms]
+
+packages/core/src/conation/shell/__tests__/flags.test.ts:
+(pass) conation shell flags > uses locked ids under workbench.conation / skills.conation [0.02ms]
+(pass) conation shell flags > defaults all flags false and rollback-safe [0.07ms]
+(pass) conation shell flags > surfaces skill gate stays off unless explicitly requested [0.05ms]
+
+packages/core/src/conation/dss/__tests__/dss-client.test.ts:
+(pass) createDssClient > returns null when flag/enabled is false [0.05ms]
+(pass) createDssClient > lists projects with mocked fetch when enabled [0.36ms]
+(pass) createDssClient > lists entries and fetches content bytes with mocked fetch [0.33ms]
+(pass) createDssClient > surfaces HTTP errors without hitting live network defaults in assert path [0.11ms]
+
+packages/core/src/conation/notes/__tests__/bridge.test.ts:
+(pass) notes flag > is locked default false [0.02ms]
+(pass) createNotesBridge > returns null when flag/enabled is false [0.07ms]
+(pass) createNotesBridge > returns null when Soup client is missing [0.02ms]
+(pass) createNotesBridge > fail-closes to empty list without claim locker [0.33ms]
+(pass) createNotesBridge > filters out denied claims and non-documents [0.07ms]
+(pass) createNotesBridge > getNote returns null when claim denies [0.13ms]
+(pass) createNotesBridge > getNote returns document when claim and ACL allow [0.06ms]
+(pass) createNotesBridge > getNote finds a document past the first Soup page [0.12ms]
+(pass) createNotesBridge > listNotes forwards cursor and limit [0.07ms]
+(pass) createNotesBridge > lookupNote distinguishes denied, not_found, and unavailable [0.60ms]
+(pass) createNotesBridge > lookupNote is incomplete when pagination is capped [0.24ms]
+(pass) createNotesBridge > exposes no write helpers [0.03ms]
+
+packages/core/src/conation/soup/__tests__/soup-client.test.ts:
+(pass) createSoupClient > returns null when flag/enabled is false [0.05ms]
+(pass) createSoupClient > pings SoupQueryRoot with mocked fetch when enabled [0.23ms]
+(pass) createSoupClient > maps user.soup page items from mocked fetch [0.17ms]
+
+packages/core/src/knowledge/providers/siyuan/__tests__/mutation-adapter.test.ts:
+(pass) executeMutationOps — happy path per op (endpoint + payload parity with docs/API.zh-CN.md) > createDocument → /api/filetree/createDocWithMd {notebook,path,markdown} → doc id [0.55ms]
+(pass) executeMutationOps — happy path per op (endpoint + payload parity with docs/API.zh-CN.md) > appendBlock → /api/block/appendBlock {dataType:"markdown",data,parentID} → created block id [0.15ms]
+(pass) executeMutationOps — happy path per op (endpoint + payload parity with docs/API.zh-CN.md) > updateBlock → /api/block/updateBlock {dataType:"markdown",data,id} [0.10ms]
+(pass) executeMutationOps — happy path per op (endpoint + payload parity with docs/API.zh-CN.md) > setAttribute → /api/attr/setBlockAttrs {id,attrs} with custom- kernel key mapping [0.09ms]
+(pass) executeMutationOps — happy path per op (endpoint + payload parity with docs/API.zh-CN.md) > kernelAttrName keeps an already custom- prefixed name (idempotent) [0.01ms]
+(pass) executeMutationOps — happy path per op (endpoint + payload parity with docs/API.zh-CN.md) > ops execute strictly sequentially in input order [0.12ms]
+(pass) executeMutationOps — happy path per op (endpoint + payload parity with docs/API.zh-CN.md) > createdIdsByOpIndex keys TWO creation ops to their own indices (not one shared id) [0.09ms]
+(pass) executeMutationOps — partial apply compensation (§3.8 soft rollback) > op 2 of 3 fails → op 1 compensated best-effort, PartialApplyError carries audit fields [0.46ms]
+(pass) executeMutationOps — partial apply compensation (§3.8 soft rollback) > failed compensation never masks the original failure (best-effort) [0.16ms]
+(pass) executeMutationOps — partial apply compensation (§3.8 soft rollback) > op 1 (first) failing is rethrown untouched — nothing applied, no compensation [0.11ms]
+(pass) client write endpoints — error mapping matches read methods > HTTP 401 on a write endpoint → PROVIDER_ERROR naming the token (needs_auth surface) [0.09ms]
+(pass) client write endpoints — error mapping matches read methods > appendBlock without a created id in the envelope → typed PROVIDER_ERROR [0.15ms]
+(pass) read-only invariant (§3.4.2) > client exposes exactly the §3.4.1 write methods and NOTHING destructive [0.09ms]
+(pass) sql() SELECT-only guard (§3.4.2 — throw before any network I/O) > SELECT passes through with mode: readonly [0.07ms]
+(pass) sql() SELECT-only guard (§3.4.2 — throw before any network I/O) > lowercase select with leading whitespace passes [0.04ms]
+(pass) sql() SELECT-only guard (§3.4.2 — throw before any network I/O) > non-SELECT UPDATE blocks SET content = 'x' throws reason sql-not-select before the network [0.06ms]
+(pass) sql() SELECT-only guard (§3.4.2 — throw before any network I/O) > non-SELECT INSERT INTO blocks (id) VALUES ('x') throws reason sql-not-select before the network
+(pass) sql() SELECT-only guard (§3.4.2 — throw before any network I/O) > non-SELECT DELETE FROM blocks throws reason sql-not-select before the network
+(pass) sql() SELECT-only guard (§3.4.2 — throw before any network I/O) > non-SELECT DROP TABLE blocks throws reason sql-not-select before the network
+(pass) sql() SELECT-only guard (§3.4.2 — throw before any network I/O) > non-SELECT WITH x AS (SELECT 1) SELECT * FROM x throws reason sql-not-select before the network
+(pass) plugin/petal soft endpoints (bridge feed) > getInstalledPlugin normalizes array and packages wrapper [0.14ms]
+(pass) plugin/petal soft endpoints (bridge feed) > loadPetals normalizes array and map forms [0.16ms]
+(pass) plugin/petal soft endpoints (bridge feed) > setPetalEnabled posts packageName + enabled [0.06ms]
+(pass) plugin/petal soft endpoints (bridge feed) > soft petal methods are present and still no destructive knowledge writes [0.04ms]
+(pass) plugin/petal soft endpoints (bridge feed) > getBazaarPlugin normalizes array and packages wrapper [1.26ms]
+(pass) plugin/petal soft endpoints (bridge feed) > installBazaarPlugin posts kernel install body (no Craft-side download) [0.23ms]
+(pass) plugin/petal soft endpoints (bridge feed) > uninstallBazaarPlugin posts packageName [0.09ms]
+
+packages/core/src/knowledge/providers/siyuan/__tests__/adapter.test.ts:
+(pass) capabilities > reports kernel version, the P1 feature matrix, and the P3 mutation matrix [0.52ms]
+(pass) search > maps full-text blocks to SearchHit and honors limit/offset pagination [0.58ms]
+(pass) search > cursor advances kernel pages; nextCursor stops at pageCount [0.16ms]
+(pass) search > kind filters map to the kernel types map; notebookId maps to paths [0.12ms]
+(pass) search > notebook/asset-only kinds are not full-text searchable → empty page, no kernel call [0.04ms]
+(pass) search > attribute filter routes through read-only SQL with COUNT + LIMIT/OFFSET and quoting [0.54ms]
+(pass) get > document → exportMdContent + getDocInfo + attrs; custom-* attributes, stripped prefix [0.65ms]
+(pass) get > block → getBlockKramdown + getBlockInfo (+hPath of the root doc) [0.31ms]
+(pass) get > notebook → lsNotebooks entry; missing notebook → NOT_FOUND [0.27ms]
+(pass) get > missing document/block → NOT_FOUND via checkBlockExist preflight [0.07ms]
+(pass) get > database/asset refs are outside the P1 read scope → UNSUPPORTED_OPERATION [0.05ms]
+(pass) get > contentHash is stable across line-ending variants (normalization reuse) [0.13ms]
+(pass) getContext > snapshot aggregates content+children+backlinks+attributes with mandatory k/mk arguments [0.62ms]
+(pass) getContext > live-reference mode re-reads and echoes the mode [0.31ms]
+(pass) typed error mapping > kernel envelope code != 0 → PROVIDER_ERROR with kernelCode/kernelMsg/retryable details [0.17ms]
+(pass) typed error mapping > HTTP 401/403 → PROVIDER_ERROR keyed by httpStatus (needs_auth surface is the connection record) [0.07ms]
+(pass) P1 read-only contract remnants > applyMutation rejects an unknown proposal id with NOT_FOUND [0.23ms]
+(pass) P1 read-only contract remnants > open() is Electron-side navigation: canonical error with deepLink + canOpenNatively [0.10ms]
+(pass) client parse check > injects Authorization Token header and joins baseUrl+endpoint [0.06ms]
+(pass) proposeMutation (P3) — validation before any network I/O > ops whitelist / structural guards reject with typed MutationValidationError [0.55ms]
+(pass) proposeMutation (P3) — validation before any network I/O > missing targetRef / createDocument notebook mismatch → typed INVALID_REF [0.12ms]
+(pass) proposeMutation (P3) — draft capture through the get() reader > draft carries preState/baseHash/diff preview; status stays draft; NO write endpoint is called [1.07ms]
+(pass) applyMutation (P3) > updateBlock happy path: applies via kernel, returns applied + postHash + createdRef-free result [0.60ms]
+(pass) applyMutation (P3) > hash drift after propose → conflicted result with reason+currentHash; NOTHING written [0.37ms]
+(pass) applyMutation (P3) > kernel typed error on the FIRST op propagates verbatim (no wrapping, no compensation) [0.27ms]
+(pass) applyMutation (P3) > mid-batch failure → PartialApplyError verbatim; op 1 soft-compensated to preState [0.29ms]
+(pass) IAL convention (§4.3 regression) > built-in SiYuan IAL keys never leak as domain attributes; custom-* only, prefix stripped [0.12ms]
+
+packages/core/src/knowledge/providers/siyuan/__tests__/adapter-mutations.integration.test.ts:
+(pass) executeViaProvider bridge pass — InMemory-equivalent scenarios over the real adapter > updateBlock pass: apply mutates the node; per-op rollback pass restores the original [1.32ms]
+(pass) executeViaProvider bridge pass — InMemory-equivalent scenarios over the real adapter > appendBlock pass: createdRef is the kernel-assigned child id; rollback tombstones it [0.74ms]
+(pass) executeViaProvider bridge pass — InMemory-equivalent scenarios over the real adapter > createDocument pass: createdRef is the new document; verify hash covers its content [0.30ms]
+(pass) executeViaProvider bridge pass — InMemory-equivalent scenarios over the real adapter > setAttribute pass: writes custom-* IAL through the kernel mapping [0.23ms]
+(pass) executeViaProvider bridge pass — InMemory-equivalent scenarios over the real adapter > provider-side RE-READ+HASH CHECK: drift between propose and apply conflicts the pass [0.37ms]
+(pass) executeViaProvider bridge pass — InMemory-equivalent scenarios over the real adapter > publish batch: createDocument + setAttribute($insertedBlockId[0]) multi-op applies attrs on created doc [0.41ms]
+
+packages/core/src/knowledge/providers/siyuan/__tests__/client-tree.test.ts:
+(pass) SiyuanKernelClient.listDocTree > maps folders and documents from listDocsByPath [0.41ms]
+(pass) SiyuanKernelClient.listDocTree > merges av rows as kind: 'database' [0.11ms]
+(pass) SiyuanKernelClient.listDocTree > querySql rejects non-SELECT before post [0.12ms]
+
+3 tests failed:
+(fail) Things lists > upcomingByDay keeps 7 calendar days and groups later by month [0.39ms]
+(fail) attachCredentialRef > rejects non-enumerable declared fields before registration [0.18ms]
+(fail) attachCredentialRef > rejects prototype-derived locators before registry mutation [0.08ms]
+
+ 805 pass
+ 3 fail
+ 3471 expect() calls
+Ran 808 tests across 77 files. [1122.00ms]

@@ -119,6 +119,8 @@ export interface ExtensionManifest {
   runtime: ExtensionRuntime
   activationEvents?: string[]
   permissions: ExtensionPermission[]
+  /** Main-process approved method → required capability contract. */
+  operations?: Record<string, ExtensionPermission[]>
   /** Known contribute keys only — validated at parse. */
   contributes?: ExtensionContributes
   engines?: { craft?: string }

@@ -1,0 +1,20 @@
+{
+  "actual_electron_build_input": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+  "final_packaging_revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "all_tracked_delta": [
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "a4ca": "5dfa7b7008b2596eca0307e448ac775549609003ab9627e30509565d71b38c07",
+      "p010": "13759cfe24b4075ec87935ef4d488d27f7b19a8b58a1a57c67fd9435bfff8b49"
+    },
+    {
+      "path": "scripts/build-server.ts",
+      "a4ca": "4af971974a41a509f1a3c4149e6c53f2d7bfd923bbb93266eaca1f5b4d9cd60e",
+      "p010": "d737fe594be9b0f20c1e42f39852ddd52245e9c86ac8481dc837b8ac8005b36a"
+    }
+  ],
+  "all_other_tracked_files_exact": true,
+  "renderer_textual_source_entries_exact": 1192,
+  "all_renderer_textual_source_entries_exact": true,
+  "build_sha_relabelled": false
+}

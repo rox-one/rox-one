@@ -1,0 +1,13 @@
+--- /workspace/rox-r15-evidence-20260930/union-validation/canonical-delivery-manifest.py
++++ /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/canonical-delivery-manifest.py
+@@ -8,8 +8,8 @@
+ import sys
+ 
+ ROOT = Path(__file__).resolve().parent
+-CHECKOUT = ROOT.parent / 'all-surfaces'
+-DELIVERY = Path('/workspace/rox-union-server-dist-final-20260930')
++CHECKOUT = Path('/tmp/rox-r15-exact-ui-20261001/checkout')
++DELIVERY = Path('/workspace/rox-r15-direct-server-dist-20261001')
+ 
+ 
+ def digest(path):

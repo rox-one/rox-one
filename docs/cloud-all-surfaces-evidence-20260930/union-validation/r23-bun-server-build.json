@@ -1,0 +1,43 @@
+{
+  "label": "r23-bun-server-build",
+  "command": [
+    "bun",
+    "--no-env-file",
+    "build",
+    "packages/server/src/index.ts",
+    "--target",
+    "bun",
+    "--outdir",
+    "dist-server",
+    "--external",
+    "xlsx"
+  ],
+  "reproduce": "bun --no-env-file build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx",
+  "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+  "exit": 0,
+  "seconds": 1.231,
+  "envKeys": [
+    "BUN_INSTALL_CACHE_DIR",
+    "CRAFT_CONFIG_DIR",
+    "ELECTRON_SKIP_BINARY_DOWNLOAD",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LC_ALL",
+    "NODE_EXTRA_CA_CERTS",
+    "NODE_OPTIONS",
+    "NO_PROXY",
+    "PATH",
+    "REQUESTS_CA_BUNDLE",
+    "ROX_CONFIG_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
+    "npm_config_cache"
+  ],
+  "dotenvAbsent": true
+}

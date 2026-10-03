@@ -18,7 +18,7 @@ export type CalendarOccurrence = {
 }
 
 export function occurrenceKey(row: CalendarOccurrence): string {
-  return `${row.accountId}:${row.calendarId}:${row.eventId}:${row.occurrenceId}`
+  return JSON.stringify([row.accountId, row.calendarId, row.eventId, row.occurrenceId])
 }
 
 export function applyCalendarWrite(row: CalendarOccurrence): MeetingOpResult {

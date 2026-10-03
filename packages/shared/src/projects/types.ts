@@ -7,6 +7,8 @@
  * File structure:
  * {workspaceRootPath}/projects/{projectSlug}/
  *   ├── config.json   - Project settings
+ *   ├── roadmap.json  - Goal, definition of done, milestones, requirements, inputs (see roadmap.ts)
+ *   ├── roadmap.md    - Human-readable mirror of roadmap.json
  *   └── assets/       - Uploaded files (PDFs, images, text)
  */
 
@@ -33,6 +35,10 @@ export interface KanbanColumnDef {
  * Main project configuration (stored in config.json)
  */
 export interface ProjectConfig {
+  /** Active bounded local repository authorization; absent on legacy projects. */
+  repositoryConnection?: import('../code-intelligence/repository-connection.ts').RepositoryConnection;
+  /** Repository identities preserve historical policy receipts. */
+  repositoryBindings?: import('../code-intelligence/refs.ts').RepositoryBinding[];
   id: string;
   slug: string;
   name: string;
@@ -54,6 +60,88 @@ export interface ProjectConfig {
   archivedAt?: number;
   /** Per-project Kanban columns. Absent → the board uses the default 3 columns. */
   kanbanColumns?: KanbanColumnDef[];
+}
+/**
+ * Project-scoped OKR data. Weights are raw nonnegative values; each objective
+ * and the objective collection are normalized independently for calculation.
+ */
+export type OkrCycleStatus = 'draft' | 'published' | 'archived';
+
+export interface OkrEvidence {
+  id: string;
+  label: string;
+  source?: string;
+  uri?: string;
+  observedAt?: string;
+}
+
+export type OkrMeasurement =
+  | {
+      kind: 'numeric';
+      direction: 'increase' | 'decrease';
+      baseline: number;
+      target: number;
+      current: number | null;
+      unit: string;
+      evidence?: OkrEvidence[];
+      source?: string;
+      measuredAt?: string;
+      freshness?: 'fresh' | 'stale' | 'unknown';
+      freshnessCheckedAt?: string;
+    }
+  | {
+      kind: 'binary';
+      achieved: boolean | null;
+      evidence: OkrEvidence[];
+      source?: string;
+      measuredAt?: string;
+      freshness?: 'fresh' | 'stale' | 'unknown';
+      freshnessCheckedAt?: string;
+    };
+
+export interface OkrKeyResult {
+  id: string;
+  title: string;
+  weight: number;
+  measurement: OkrMeasurement;
+  owner?: string;
+  status?: string;
+}
+
+export interface OkrObjective {
+  id: string;
+  title: string;
+  description?: string;
+  weight: number;
+  owner?: string;
+  keyResults: OkrKeyResult[];
+}
+
+export interface OkrCycle {
+  id: string;
+  projectId: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  timezone: string;
+  status: OkrCycleStatus;
+  revision: number;
+  objectives: OkrObjective[];
+  publishedAt?: string;
+  archivedAt?: string;
+}
+
+export interface ProjectOkrDocument {
+  projectId: string;
+  revision: number;
+  cycles: OkrCycle[];
+}
+
+/** A missing score is deliberately distinct from zero progress. */
+export interface OkrProgress {
+  knownContribution: number;
+  coverage: number;
+  score: number | null;
 }
 
 /**
@@ -110,4 +198,6 @@ export interface ProjectPromptContext {
   memoryPath: string;
   /** MEMORY.md content, already capped by loadProjectMemory. */
   memoryContent?: string;
+  /** Compact roadmap (goal, definition of done, milestones, requirements) from roadmap.json. */
+  roadmapContent?: string;
 }

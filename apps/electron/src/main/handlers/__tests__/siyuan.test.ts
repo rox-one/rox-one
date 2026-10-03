@@ -15,7 +15,10 @@ import type { HandlerDeps } from '../handler-deps'
 
 const cookieSetCalls: Array<{ partition: string; cookie: Record<string, unknown> }> = []
 
+import { electronMockExports } from '../../__tests__/electron-mock-exports'
+
 mock.module('electron', () => ({
+  ...electronMockExports,
   ipcMain: { handle: () => {}, on: () => {} },
   session: {
     fromPartition: (partition: string) => ({

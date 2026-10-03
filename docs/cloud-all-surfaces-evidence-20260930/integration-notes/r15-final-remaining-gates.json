@@ -1,0 +1,615 @@
+{
+  "kind": "R15 final source-vs-infrastructure appendix",
+  "compiledAt": "2026-09-30T20:42:15.620157+00:00",
+  "sourceCommit": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "evidenceOnly": true,
+  "sourceDefects": [
+    {
+      "id": "absolute-output-join",
+      "file": "scripts/build-server.ts",
+      "line": 837,
+      "expression": "join(rootDir, values.output!)",
+      "classification": "Tooling/source defect; relative canonical delivery is already accepted in bounded runtime scope",
+      "historicalObservedSource": "1ae23caf828d1354eb32808d5fc51e8d0293ae8a",
+      "historicalLine": 836,
+      "observedBehavior": "Absolute --output appended beneath checkout",
+      "reproduce": "bun --no-env-file run server:build --output=/tmp/rox-absolute-output-repro",
+      "repeatAt010Executed": false,
+      "expressionConfirmedReadOnlyAt010": true,
+      "finalRelativeCanonicalBuildExit": 0,
+      "finalRelativeLauncherCounts": {
+        "pass": 2,
+        "fail": 0,
+        "expect": 56
+      }
+    }
+  ],
+  "infrastructure": {
+    "protectedPostgres": {
+      "status": "BLOCKED_PREREQUISITE",
+      "loader": {
+        "file": "apps/workspace-service/src/auth/postgres-identity.ts",
+        "line": 41,
+        "message": "Protected workspace PostgreSQL configuration unavailable"
+      },
+      "historicalAttempt": {
+        "label": "compound302-wp48-domain",
+        "command": "bun --no-env-file test tests/macro-integration/wp-48-domain.test.ts",
+        "exit": 1,
+        "pass": 0,
+        "fail": 17,
+        "assertions": 0,
+        "tests": 17,
+        "files": 1,
+        "caller": {
+          "file": "tests/macro-integration/wp-48-domain.test.ts",
+          "line": 27
+        },
+        "qualification": "All17 failed while initializing the same unavailable protected configuration; no license/domain SQL/HTTP/WS/checker effects exercised. Final runner deliberately did not repeat this known prerequisite failure.",
+        "evidence": "union-validation/compound302-wp48-domain.log"
+      },
+      "notExecuted": [
+        {
+          "file": "tests/macro-integration/wp-01-offline.test.ts",
+          "status": "NOT_EXECUTED_IN_FINAL_LOCAL_RUN",
+          "classification": "Infrastructure prerequisite; no domain assertions evaluated",
+          "prerequisiteLines": [
+            27
+          ],
+          "testCallsites": [
+            {
+              "line": 154,
+              "declaration": "test('actual encrypted queue persists before send; SIGKILL/new process/offline reload retain IDs, payload and verified scope; explicit retry applies once', async () => {"
+            },
+            {
+              "line": 185,
+              "declaration": "test('real accepted WS response cut + main SIGKILL retains uncertain intent; fresh process recovers exact original receipt without duplicate', async () => {"
+            },
+            {
+              "line": 203,
+              "declaration": "test('offline cancellation survives process restart; conflicting drafts cannot replace immutable pending bytes or IDs', async () => {"
+            },
+            {
+              "line": 215,
+              "declaration": "test('live session revoke blocks retry durably without send; fresh same-user or other-principal sessions cannot view/replay old intent', async () => {"
+            },
+            {
+              "line": 228,
+              "declaration": "test('wrong-password replacement remains quiesced with exact durable credential/config retained; foreign local scope/body Actor injection cannot enqueue', async () => {"
+            },
+            {
+              "line": 244,
+              "declaration": "test('explicit disconnect removes pending/scope before credential; unknown encrypted intent formats are blocked and byte-preserved', async () => {"
+            },
+            {
+              "line": 257,
+              "declaration": "test('authenticated identity query rejects forged scope/query; current membership removal blocks queued retry and persists hidden terminal state', async () => {"
+            },
+            {
+              "line": 273,
+              "declaration": "test('unknown encrypted scope proof is preserved and cannot be overwritten by queue/cancel or interpreted as empty', async () => {"
+            },
+            {
+              "line": 282,
+              "declaration": "test('verified replacement session/principal cannot view or replay a still-queued private draft; explicit discard allows a new request', async () => {"
+            }
+          ],
+          "testCallsiteCount": 9,
+          "countQualification": "Static test callsites, not runtime cases; loop-generated cases are not inferred.",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "tests/macro-integration/wp-01-offline.test.ts"
+          ],
+          "sourceSha256": "262f369ce10429f3419da437935515b5730891e90c2f461495c55301ce46588a",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "finalSource": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "finalSourceSha256": "262f369ce10429f3419da437935515b5730891e90c2f461495c55301ce46588a",
+          "unchangedFromRecordedRevision": true
+        },
+        {
+          "file": "tests/macro-integration/wp-01-response-schema.test.ts",
+          "status": "NOT_EXECUTED_IN_FINAL_LOCAL_RUN",
+          "classification": "Infrastructure prerequisite; no domain assertions evaluated",
+          "prerequisiteLines": [
+            110
+          ],
+          "testCallsites": [
+            {
+              "line": 143,
+              "declaration": "test('strict amended WP01 schema compiles and real HTTP/WS preserve complete typed canonical result and one receipt', async () => {"
+            },
+            {
+              "line": 158,
+              "declaration": "test('complete canonical wire result survives real service/pool restart without schema relaxation', async () => {"
+            },
+            {
+              "line": 197,
+              "declaration": "test('full wire contract rejects ' + corruption.name + '; real HTTP/WS deny the corrupted retained receipt', async () => {"
+            },
+            {
+              "line": 217,
+              "declaration": "test('negative control restoring the omitted-metadata schema rejects the actual canonical HTTP/WS response', async () => {"
+            }
+          ],
+          "testCallsiteCount": 4,
+          "countQualification": "Static test callsites, not runtime cases; loop-generated cases are not inferred.",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "tests/macro-integration/wp-01-response-schema.test.ts"
+          ],
+          "sourceSha256": "b024d963607c17baf6e3ca2f47c0bfabed698df07d7e6abd53a252e4b1136da6",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "finalSource": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "finalSourceSha256": "b024d963607c17baf6e3ca2f47c0bfabed698df07d7e6abd53a252e4b1136da6",
+          "unchangedFromRecordedRevision": true
+        },
+        {
+          "file": "tests/macro-integration/wp-01-archive.test.ts",
+          "status": "NOT_EXECUTED_IN_FINAL_LOCAL_RUN",
+          "classification": "Infrastructure prerequisite; no domain assertions evaluated",
+          "prerequisiteLines": [
+            209,
+            241,
+            387
+          ],
+          "testCallsites": [
+            {
+              "line": 237,
+              "declaration": "test('exact six-member archive runs cold; real two users, HTTP/WS private403, original receipt/counts/issuer survive restart', async () => {"
+            },
+            {
+              "line": 355,
+              "declaration": "test('tampered real bundle archive is denied before cold launch; direct negative control executes changed bytes', async () => {"
+            },
+            {
+              "line": 374,
+              "declaration": "test('missing migration archive is denied; actual cold runtime cannot fall back to checkout migrations', async () => {"
+            }
+          ],
+          "testCallsiteCount": 3,
+          "countQualification": "Static test callsites, not runtime cases; loop-generated cases are not inferred.",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "tests/macro-integration/wp-01-archive.test.ts"
+          ],
+          "sourceSha256": "b50edc60292e9bcdc7d8f39df5cca925118f6b8d4c7dc04fe0e3e350f200825c",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "requiredOwnerOptInNotSet": {
+            "flag": "ROX_WP01_ARCHIVE_E2E",
+            "value": "1",
+            "line": 23,
+            "additionalRequiredFields": [
+              {
+                "name": "ROX_WP01_ARCHIVE_PATH",
+                "line": 24,
+                "requirement": "Explicit absolute owner-provided archive path"
+              }
+            ],
+            "optionalDigestPin": {
+              "name": "ROX_WP01_ARCHIVE_EXPECTED_SHA256",
+              "line": 217,
+              "requirement": "Optional owner-declared archive digest, checked only if supplied"
+            }
+          },
+          "finalSource": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "finalSourceSha256": "b50edc60292e9bcdc7d8f39df5cca925118f6b8d4c7dc04fe0e3e350f200825c",
+          "unchangedFromRecordedRevision": true
+        },
+        {
+          "file": "tests/macro-integration/ui/wp-01-offline-electron.test.ts",
+          "status": "NOT_EXECUTED_IN_FINAL_LOCAL_RUN",
+          "classification": "Infrastructure prerequisite; no domain assertions evaluated",
+          "prerequisiteLines": [
+            150,
+            181
+          ],
+          "testCallsites": [
+            {
+              "line": 151,
+              "declaration": "test('two real profiles: outage draft, queued/uncertain restart, explicit same-key retry, cancel and revoked/new-session privacy fences', async () => {"
+            }
+          ],
+          "testCallsiteCount": 1,
+          "countQualification": "Static test callsites, not runtime cases; loop-generated cases are not inferred.",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "tests/macro-integration/ui/wp-01-offline-electron.test.ts"
+          ],
+          "sourceSha256": "07467aa7313f3c557b38be6dd340c11353e8b30dd6ca47a993e9b5023ff94512",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "requiredOwnerOptInNotSet": {
+            "flag": "ROX_WP01_OFFLINE_PRODUCT_E2E",
+            "value": "1",
+            "line": 150
+          },
+          "finalSource": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "finalSourceSha256": "07467aa7313f3c557b38be6dd340c11353e8b30dd6ca47a993e9b5023ff94512",
+          "unchangedFromRecordedRevision": true
+        },
+        {
+          "file": "tests/macro-integration/ui/wp-01-electron.test.ts",
+          "status": "NOT_EXECUTED_IN_FINAL_LOCAL_RUN",
+          "classification": "Infrastructure prerequisite; no domain assertions evaluated",
+          "prerequisiteLines": [
+            290,
+            325
+          ],
+          "testCallsites": [
+            {
+              "line": 291,
+              "declaration": "test('two native profiles: canonical private projects, no disclosure, persistence/restart/revocation, host folders and visual consumers', async () => {"
+            }
+          ],
+          "testCallsiteCount": 1,
+          "countQualification": "Static test callsites, not runtime cases; loop-generated cases are not inferred.",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "tests/macro-integration/ui/wp-01-electron.test.ts"
+          ],
+          "sourceSha256": "2b1b2584ec244d63c1c7a0db570726c631dc3a4996a3600a4eb20606559a0111",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "requiredOwnerOptInNotSet": {
+            "flag": "ROX_WP01_PRODUCT_E2E",
+            "value": "1",
+            "line": 290
+          },
+          "finalSource": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "finalSourceSha256": "2b1b2584ec244d63c1c7a0db570726c631dc3a4996a3600a4eb20606559a0111",
+          "unchangedFromRecordedRevision": true
+        },
+        {
+          "file": "tests/macro-integration/wp-48-domain.test.ts",
+          "status": "NOT_EXECUTED_IN_FINAL_LOCAL_RUN",
+          "classification": "Infrastructure prerequisite; no domain assertions evaluated",
+          "prerequisiteLines": [
+            27
+          ],
+          "testCallsites": [
+            {
+              "line": 75,
+              "declaration": "test('actual checker persists review_required through canonical HTTP/WS, receipt and atomic reference event',async()=>{"
+            },
+            {
+              "line": 84,
+              "declaration": "test('real member/outsider and forged actor/workspace/approval/path cannot cross Resource boundary',async()=>{"
+            },
+            {
+              "line": 90,
+              "declaration": "test('concurrent idempotency, full listener restart and authorized event cursor recover one original receipt',async()=>{"
+            },
+            {
+              "line": 98,
+              "declaration": "test('server-side read/write/action grants independently deny audit and retract evidence',async()=>{"
+            },
+            {
+              "line": 102,
+              "declaration": "test('actual immutable review byte tamper yields genuine error with no aggregate/receipt/event effect',async()=>{"
+            },
+            {
+              "line": 105,
+              "declaration": "test('stored receipt and independent event binding corruption are rejected instead of replayed as verification',async()=>{"
+            },
+            {
+              "line": 110,
+              "declaration": "test('live persisted session expiry after checker admission rolls back all canonical effects',async()=>{"
+            },
+            {
+              "line": 120,
+              "declaration": "test('schema downgrade and tampered independent event references cannot produce verified replay',async()=>{"
+            },
+            {
+              "line": 125,
+              "declaration": "test('actual registered final archive mutation fails before any canonical effect',async()=>{"
+            },
+            {
+              "line": 129,
+              "declaration": "test('coherently changed receipt timestamp and JSON still fail independent immutable event binding',async()=>{"
+            },
+            {
+              "line": 135,
+              "declaration": "test('license integration preserves authenticated identity scope and rejects body/query additions',async()=>{"
+            },
+            {
+              "line": 141,
+              "declaration": "test('private audit events never enter global project replay for owner or member while inbox delivery remains atomic',async()=>{"
+            },
+            {
+              "line": 151,
+              "declaration": "test('malformed persisted license event UUID fails inbox effect and watermark transaction',async()=>{"
+            },
+            {
+              "line": 160,
+              "declaration": "test('GET and LIST both reject each forged immutable Resource column over HTTP and WS',async()=>{"
+            },
+            {
+              "line": 174,
+              "declaration": "test('strict common audit event proof rejects invalid digest, correlation and absent Resource across event/readback/receipt/inbox paths',async()=>{"
+            },
+            {
+              "line": 194,
+              "declaration": "test('coherent projection evidence plus digest cannot invent reviewed clearance on GET or LIST',async()=>{"
+            },
+            {
+              "line": 204,
+              "declaration": "test('actual Resource READ revoke after domain result and before HTTP/WS serialization retracts outbound private bytes',async()=>{"
+            }
+          ],
+          "testCallsiteCount": 17,
+          "countQualification": "Static test callsites, not runtime cases; loop-generated cases are not inferred.",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "tests/macro-integration/wp-48-domain.test.ts"
+          ],
+          "sourceSha256": "3e3e65c75dffe74af561949ff69281c86b702274e171b2a0156c826d6f779279",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "finalSource": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "finalSourceSha256": "3e3e65c75dffe74af561949ff69281c86b702274e171b2a0156c826d6f779279",
+          "unchangedFromRecordedRevision": true
+        }
+      ],
+      "nextStep": "Existing authorized PostgreSQL/native owner supplies protected test environment and required real Electron/archive context, then runs the listed tests. No credentials or environment were provisioned for this audit."
+    },
+    "codeQL": {
+      "classification": "Raw scanner findings pendingtriage, not confirmed source vulnerabilities",
+      "status": "FAILURE",
+      "checkId": 110078183669,
+      "annotations": 96,
+      "reportedSeverity": {
+        "high": 64,
+        "medium": 32
+      },
+      "validationPerformed": false,
+      "newScanPerformed": false,
+      "latestConfigurationWarning": false,
+      "exactFileLineReceipt": "union-validation/r24-daa7-final/hosted/codeql-review-pending-010.json"
+    },
+    "vercel": {
+      "status": "FAILURE",
+      "reason": "Account is blocked.",
+      "classification": "External account infrastructure"
+    },
+    "hostedPrintedAttestation": {
+      "status": "UNVERIFIED",
+      "printedSourceSha": null,
+      "printedRuntimeTestCounts": null,
+      "newLogRedirectRequests": false,
+      "prior403LogEvidence": "r15 hosted official run/job redirect routes denied; no new logredirect attempt. Metadata jobs/head_sha cannot supply printed checkout or exact test assertions.",
+      "qualification": "Local198/0/930 and4/0/37 are deliberately excluded from hosted counts."
+    },
+    "hostedNative": {
+      "status": "QUEUED",
+      "executionVerified": false,
+      "jobs": [
+        {
+          "id": 110077982764,
+          "name": "native (self-hosted, linux-toolchain)",
+          "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "status": "queued",
+          "conclusion": null,
+          "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265837/job/110077982764"
+        },
+        {
+          "id": 110077982348,
+          "name": "native (self-hosted, macos-toolchain)",
+          "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "status": "queued",
+          "conclusion": null,
+          "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265837/job/110077982348"
+        },
+        {
+          "id": 110077972240,
+          "name": "budgets",
+          "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "status": "queued",
+          "conclusion": null,
+          "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265860/job/110077972240"
+        }
+      ]
+    },
+    "fontDns": {
+      "classification": "External Google fonts name resolution failure",
+      "observedRecords": 2,
+      "applicationPageExceptionCount": 0,
+      "networkPolicyChanged": false
+    }
+  },
+  "notExecuted": {
+    "pagesWorker": {
+      "classification": "Absent OSS source surface; explicit skip",
+      "status": "SKIPPED_NOT_PASS",
+      "file": "package.json",
+      "line": 46,
+      "command": "bun --no-env-file run typecheck:pages-worker",
+      "observed": "workers/pages not present (OSS export) - skipping",
+      "executedWithin": "bun --no-env-file run validate:ci",
+      "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+      "evidence": "union-validation/r19-frozen-final/r19-validate-ci.log:7",
+      "sourceTestsExecuted": 0,
+      "nextStep": "Owner-provided worker source/runtime is required for worker acceptance; no worker was reconstructed or deployed."
+    },
+    "contextualSurfaces": {
+      "classification": "Genuine-context availability boundary",
+      "notExecuted": [
+        {
+          "surface": "browser",
+          "status": "NOT_EXECUTED_WITH_REAL_CONTEXT",
+          "required": "Real browser instanceId and browser backend",
+          "file": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+          "line": 355,
+          "revision": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+          "classification": "Unavailable genuine context/backend in isolated browser fixture, not accepted product surface"
+        },
+        {
+          "surface": "terminal",
+          "status": "NOT_EXECUTED_WITH_REAL_CONTEXT",
+          "required": "Real terminalId and native terminal backend",
+          "file": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+          "line": 408,
+          "revision": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+          "classification": "Unavailable genuine context/backend in isolated browser fixture, not accepted product surface"
+        },
+        {
+          "surface": "cloud-run",
+          "status": "NOT_EXECUTED_WITH_REAL_CONTEXT",
+          "required": "Real runId and cloud provider",
+          "file": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+          "line": 417,
+          "revision": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+          "classification": "Unavailable genuine context/backend in isolated browser fixture, not accepted product surface"
+        },
+        {
+          "surface": "extension",
+          "status": "NOT_EXECUTED_WITH_REAL_CONTEXT",
+          "required": "Installed extensionId/viewId",
+          "file": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+          "line": 389,
+          "revision": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+          "classification": "Unavailable genuine context/backend in isolated browser fixture, not accepted product surface"
+        },
+        {
+          "surface": "diff",
+          "status": "NOT_EXECUTED_WITH_REAL_CONTEXT",
+          "required": "Real write proposalId",
+          "file": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+          "line": 426,
+          "revision": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+          "classification": "Unavailable genuine context/backend in isolated browser fixture, not accepted product surface"
+        }
+      ],
+      "browserEvidenceCommand": [
+        "node",
+        "/tmp/rox-ui-surface-discovery-20260930/ui-runtime/mounted-ui-union.cjs",
+        "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+        "b8416534b6cf571ac6b18c38b3845bb92218a1a5"
+      ],
+      "qualification": "The historical observer mounted22root routes and22settings pages; rendering/picker/refusal observations do not prove real contextual backend functionality.",
+      "evidence": "ui-runtime/run-union-b841-surface-red/results.json"
+    },
+    "programAcceptance": {
+      "status": "PENDING_NOT_ACCEPTED",
+      "septemberTasks": 109,
+      "compoundPackages": 143,
+      "fullDoDCompleted": false,
+      "nativeInstalledLaunchAndOSCustody": "NOT_EXECUTED_ON_CURRENT_INTEGRATION_IN_THIS_CLOUD_RUN",
+      "macOSWindowsNative": "PENDING_OWNER_PLATFORM_PROOF",
+      "providerOAuthCloudEffects": "NOT_EXECUTED_WITH_AUTHORIZED_PROVIDER_CONTEXT",
+      "nativeIOSConationSharing": "PENDING_ACTUAL_SUPPORTED_TARGET_DEVICE_RECEIVER_RETURN_CANCEL_REVOKE_PROOF",
+      "dataShared": "FULL_FREEZE_NOT_ACCEPTED; bounded Notes/identity/durability tests do not accept allentities/twoconsumers",
+      "utb": "STRICT_REFERENCE_GATE_ONLY; BaseDefinition persistence/CRUD/hostCAS/native table/twoclient/UTB02-andlater not accepted",
+      "remainingUTBPackages": 16,
+      "references": [
+        {
+          "file": "docs/cloud-all-surfaces-integration-20260930.md",
+          "line": 33
+        },
+        {
+          "file": "docs/september-program/PRD.md",
+          "line": 101
+        },
+        {
+          "file": "docs/september-program/PRD.md",
+          "line": 130
+        },
+        {
+          "file": "docs/compound-implementation.md",
+          "line": 5
+        },
+        {
+          "file": "docs/utb-reference-strictness-recovery.md",
+          "line": 47
+        },
+        {
+          "file": "docs/utb-reference-strictness-recovery.md",
+          "line": 51
+        }
+      ],
+      "nextStep": "Keep existing programme owners and criterion-specific real platform/provider/native and data/consumer receipts. No tasks/issues/143/109/UTB are marked complete by this appendix."
+    },
+    "nativeFunctionalBrowser": [
+      {
+        "surface": "genuine-project-roadmap",
+        "status": "NOT EXECUTED: actual unavailable UI observed",
+        "reason": "HTTP/ACK proves workspace ID; no trusted local Workspace metadata or native project context is invented",
+        "note": "Unavailable rendering is not functional native/Project/Roadmap/RepositorySnapshot acceptance"
+      },
+      {
+        "surface": "pre-existing-private-note",
+        "status": "NOT EXECUTED: actual unavailable UI observed",
+        "reason": "Real nativeReplica/nativeData preload is absent; native editor/controller not mounted",
+        "note": "Unavailable rendering is not functional native/Project/Roadmap/RepositorySnapshot acceptance"
+      },
+      {
+        "surface": "browser",
+        "required": "real browser instanceId/backend",
+        "source": "MainContentPanel.tsx:354"
+      },
+      {
+        "surface": "terminal",
+        "required": "real terminalId/native terminal backend",
+        "source": "MainContentPanel.tsx:403"
+      },
+      {
+        "surface": "cloud-run",
+        "required": "real runId/cloud provider",
+        "source": "MainContentPanel.tsx:414"
+      },
+      {
+        "surface": "extension",
+        "required": "installed extensionId/viewId",
+        "source": "MainContentPanel.tsx:383"
+      },
+      {
+        "surface": "diff",
+        "required": "real write proposalId",
+        "source": "MainContentPanel.tsx:425"
+      }
+    ]
+  },
+  "closedHistoricalSourceFindings": [
+    {
+      "source": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+      "receipt": "ui-runtime/run-union-b841-surface-red/revision-bound-red-findings.json",
+      "counts": {
+        "pass": 87,
+        "fail": 12
+      },
+      "resolution": "Bounded read/error/capability UI repair; actuala4browser99/0/0; no fullnativeacceptance"
+    },
+    {
+      "source": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "line": 226,
+      "column": 78,
+      "classification": "Typed fixture DTO source defect",
+      "resolution": "daa7 fixture-only change; finalvalidateCI0 and exact010all4hostedSQLiteSUCCESS"
+    },
+    {
+      "source": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+      "file": "packages/server-core/src/handlers/rpc/cloud-runs.ts",
+      "line": 49,
+      "classification": "Source packaging omission",
+      "historicalCounts": {
+        "pass": 0,
+        "fail": 2,
+        "expect": 4
+      },
+      "resolution": "010 seedbuild-server384/copy487; actualcanonical2/0/56"
+    }
+  ],
+  "supersedes": [
+    "integration-notes/r15-remaining-gates.json currentpendingUI/distribution fields only; historical evidence retained"
+  ],
+  "noFullDoDAcceptance": true
+}

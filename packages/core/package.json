@@ -1,43 +1,49 @@
 {
-  "name": "@craft-agent/core",
-  "version": "0.11.5",
-  "license": "Apache-2.0",
+  "dependencies": {
+    "yaml": "^2.8.2"
+  },
   "description": "Core types, storage, and agent logic for Craft Agents",
-  "type": "module",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "devDependencies": {
+    "@types/uuid": "^11.0.0"
+  },
   "exports": {
     ".": "./src/index.ts",
-    "./types": "./src/types/index.ts",
-    "./env": "./src/env/blocked-subprocess-env.ts",
-    "./utils": "./src/utils/index.ts",
-    "./platform": "./src/platform/index.ts",
-    "./platform/identity/store": "./src/platform/identity/store.ts",
-    "./platform/identity/types": "./src/platform/identity/types.ts",
-    "./knowledge": "./src/knowledge/index.ts",
-    "./knowledge/providers/siyuan": "./src/knowledge/providers/siyuan/index.ts",
-    "./knowledge/*": "./src/knowledge/*",
-    "./tasks/personal": "./src/tasks/personal/index.ts",
+    "./bases": "./src/bases/index.ts",
     "./calendar": "./src/calendar/index.ts",
+    "./conation/dss": "./src/conation/dss/index.ts",
+    "./conation/notes": "./src/conation/notes/index.ts",
+    "./conation/shell": "./src/conation/shell/index.ts",
+    "./conation/soup": "./src/conation/soup/index.ts",
+    "./docs": "./src/docs/index.ts",
+    "./docs/*": "./src/docs/*",
+    "./env": "./src/env/blocked-subprocess-env.ts",
+    "./knowledge": "./src/knowledge/index.ts",
+    "./knowledge/*": "./src/knowledge/*",
+    "./knowledge/providers/siyuan": "./src/knowledge/providers/siyuan/index.ts",
+    "./meetings": "./src/meetings/index.ts",
     "./mindmap": "./src/mindmap/index.ts",
     "./mindmap/*": "./src/mindmap/*",
+    "./platform": "./src/platform/index.ts",
     "./platform/agent-teams": "./src/platform/agent-teams/index.ts",
     "./platform/agent-teams/store": "./src/platform/agent-teams/store.ts",
     "./platform/agent-teams/types": "./src/platform/agent-teams/types.ts",
-    "./conation/shell": "./src/conation/shell/index.ts",
-    "./conation/soup": "./src/conation/soup/index.ts",
-    "./conation/notes": "./src/conation/notes/index.ts",
-    "./conation/dss": "./src/conation/dss/index.ts",
+    "./platform/identity/store": "./src/platform/identity/store.ts",
+    "./platform/identity/types": "./src/platform/identity/types.ts",
     "./platform/session-apply": "./src/platform/session-apply/index.ts",
     "./research": "./src/research/index.ts",
     "./rox2": "./src/rox2/index.ts",
-    "./meetings": "./src/meetings/index.ts"
+    "./tasks/personal": "./src/tasks/personal/index.ts",
+    "./types": "./src/types/index.ts",
+    "./utils": "./src/utils/index.ts"
   },
+  "license": "Apache-2.0",
+  "main": "src/index.ts",
+  "name": "@craft-agent/core",
   "peerDependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.3.258",
     "@modelcontextprotocol/sdk": ">=1.29.0"
   },
-  "devDependencies": {
-    "@types/uuid": "^11.0.0"
-  }
+  "type": "module",
+  "types": "src/index.ts",
+  "version": "0.11.5"
 }

@@ -38,7 +38,7 @@ import {
   validateAllPermissions,
   validateToolIcons,
 } from '../config/validators.ts';
-import { validateAutomations } from '../automations/index.ts';
+import { validateAutomations } from '../automations/validation.ts';
 import {
   validateMcpConnection as validateMcpConnectionImpl,
   validateStdioMcpConnection as validateStdioMcpConnectionImpl,

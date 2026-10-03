@@ -106,11 +106,17 @@ export function PanelSlot({
       {sash}
       <div
         onPointerDown={handlePointerDown}
+        onFocusCapture={() => {
+          if (!isFocusedPanel) setFocusedPanel(entry.id)
+        }}
         data-panel-role="content"
+        data-panel-id={entry.id}
         data-shell-role="content"
         data-compact={isCompact || undefined}
+        tabIndex={-1}
         className={cn(
           'h-full overflow-hidden relative @container/panel',
+          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring',
           // One-surface shell: flush pane on the shared background. Split view
           // keeps a hairline between panels and a thin focus accent (no boxes).
           'rox-shell-pane',

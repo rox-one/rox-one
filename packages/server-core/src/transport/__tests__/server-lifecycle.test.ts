@@ -7,6 +7,10 @@
 
 import { describe, it, expect, afterEach } from 'bun:test'
 import WebSocket from 'ws'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { WsRpcServer } from '../server'
 import { PROTOCOL_VERSION } from '@craft-agent/shared/protocol'
 
@@ -354,3 +358,53 @@ describe('WsRpcServer lifecycle', () => {
     expect(server.getConnectedClientCount()).toBe(0)
   })
 })
+
+
+it('a completed real WS request followed by server.close exits a Bun child naturally without late reconnect timers', async () => {
+  const configDir = mkdtempSync(join(tmpdir(), 'ws-natural-shutdown-'))
+  const serverUrl = pathToFileURL(join(import.meta.dir, '../server.ts')).href
+  const protocolUrl = pathToFileURL(join(import.meta.dir, '../../../../shared/src/protocol/index.ts')).href
+  let deadline: ReturnType<typeof setTimeout> | undefined
+  const child = Bun.spawn(['bun', '-e', `
+const {WsRpcServer}=await import(${JSON.stringify(serverUrl)});
+const {default:WebSocket}=await import('ws');
+const {once}=await import('node:events');
+const {PROTOCOL_VERSION}=await import(${JSON.stringify(protocolUrl)});
+const token=crypto.randomUUID();
+let observedDisconnect;const disconnected=new Promise(resolve=>{observedDisconnect=resolve});
+const server=new WsRpcServer({host:'127.0.0.1',port:0,requireAuth:true,validateToken:async provided=>provided===token,onClientDisconnected:()=>observedDisconnect()});
+server.handle('fixture:completed-request',()=>({completed:true}));
+await server.listen();
+const socket=new WebSocket('ws://127.0.0.1:'+server.port);
+await once(socket,'open');
+const reply=id=>new Promise(resolve=>{const listener=data=>{const message=JSON.parse(data.toString());if(message.id!==id)return;socket.off('message',listener);resolve(message)};socket.on('message',listener)});
+const handshake=reply('handshake');socket.send(JSON.stringify({id:'handshake',type:'handshake',protocolVersion:PROTOCOL_VERSION,token}));
+const acknowledged=await handshake;if(acknowledged.type!=='handshake_ack')throw Error('real auth handshake failed');
+const request=reply('request');socket.send(JSON.stringify({id:'request',type:'request',channel:'fixture:completed-request'}));
+const result=await request;if(result.result?.completed!==true)throw Error('real request did not complete');
+const closed=once(socket,'close');
+socket.close(); // A real client close is in flight when the host shuts down.
+server.close();
+await closed;
+await disconnected;
+console.log('real-request-completed; server-closed; natural-exit');
+// No process.exit(), unref(), timer clearing or server internals in this child.
+`], { env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir }, stdout: 'pipe', stderr: 'pipe' })
+  try {
+    const exitedNaturally = await Promise.race([
+      child.exited.then(() => true),
+      new Promise<false>(resolve => { deadline = setTimeout(() => resolve(false), 3000) }),
+    ])
+    if (!exitedNaturally) child.kill()
+    const [exit, stdout, stderr] = await Promise.all([
+      child.exited, new Response(child.stdout).text(), new Response(child.stderr).text(),
+    ])
+    expect(stdout).toBe('real-request-completed; server-closed; natural-exit\n')
+    expect(stderr).toBe('')
+    expect({ exitedNaturally, exit }).toEqual({ exitedNaturally: true, exit: 0 })
+  } finally {
+    if (deadline) clearTimeout(deadline)
+    if (child.exitCode === null) { child.kill(); await child.exited }
+    rmSync(configDir, { recursive: true, force: true })
+  }
+}, 10000)

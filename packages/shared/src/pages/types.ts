@@ -93,8 +93,8 @@ export interface LoadedPage {
   dataPath: string;
   /** Absolute path to data/snapshot.json (may not exist yet) */
   snapshotPath: string;
-  /** Absolute path to workspace folder */
+  /** Absolute path to workspace folder (local storage locator, not its identity). */
   workspaceRootPath: string;
-  /** Workspace this page belongs to (derived from basename of workspaceRootPath) */
-  workspaceId: string;
+  /** Canonical workspace identity, only when supplied by the workspace registry. */
+  workspaceId?: string;
 }

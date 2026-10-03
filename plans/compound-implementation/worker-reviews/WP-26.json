@@ -1,0 +1,518 @@
+{
+  "task_id": "WP-26-preflight",
+  "attempt_id": "65cf65cef959b80b28f14d56bb92f69a",
+  "packet_hash": "0c70be5a65cc1eb0360d2d26b3afdeb8432d0c47e6d4df85c50f1a2be0891ff2",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-26",
+  "featureComplete": false,
+  "mode": "preflight-only",
+  "dependencies": ["WP-22", "WP-25"],
+  "inspection": {
+    "scope": "WP-26 normative specification, named Dossier/platform files, and direct Dossier imports storage.ts, use-rox-sources.ts and agent-run.ts; dependency/foundation descriptions in the package implementation plan. No unrelated subsystem inspection.",
+    "workingTree": "Inspected live working-tree bytes, not an isolated checkout of input_revision. Root-owned uncommitted wave0 work was not modified. input_revision is the dispatch binding, not a claim that all observed files are committed at that SHA.",
+    "manifestMatch": "Whole-file SHA-256 for plans/macro-integration/work-packages.json matches dispatch input_manifest: 79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0.",
+    "freshness": "Source references bind the inspected snapshot to whole-file hashes. No staleness was observed during inspection; no Git state comparison was performed. Root/dependency integration can invalidate these references; compare hashes and reread changed seams after wave0 before applying patches.",
+    "discovery": "Codegraph reported no project index. Scoped find calls failed with judge API 402, so their no-hit output was not used as absence evidence. Literal known-symbol grep and read supplied code evidence.",
+    "absentPathsObserved": ["packages/shared/src/workspace-domain/crm", "apps/workspace-service/src/modules/crm", "tests/macro-integration"],
+    "absenceQualification": "Each listed directory returned Path not found on direct read. This establishes absence at inspection time, not absence of every possible CRM implementation elsewhere.",
+    "runtimeVerification": "NOT_RUN: explicitly prohibited builds, tests, native UI and network operations. Proposed scenarios below are future acceptance obligations, not passing receipts.",
+    "mutationBoundary": "Only this report is an owned repository output. No source, tests, manifests, progress, shared files or Git state were changed. SHA-256 collection was read-only."
+  },
+  "dependencyReceiptsRequired": [
+    {"producer": "WP-22", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "neededInterface": "Canonical Company/Contact refs, provenance/interaction storage, participant-ingestion consent hook, source revocation projection behavior and account identity. None supplied in this packet; target CRM directory currently absent."},
+    {"producer": "WP-25", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "neededInterface": "Common Message-backed discussion/context query, search/mention/attention integration and authorized Company context resolver. None supplied in this packet; do not introduce a CRM message store."}
+  ],
+  "foundationGates": [
+    {
+      "id": "F0-wave0-cutover",
+      "explicitDagEdge": false,
+      "evidence": "Worker instruction requires lead wave0 commit and accepted dependency receipts before implementation; work-packages.json:22662-22679 defines WP-22/WP-25 receipts.",
+      "required": "Lead commits wave0, supplies selected authority/migrator/command interfaces and accepted WP-22/WP-25 receipts, then refreshes this preflight against that integrated revision.",
+      "state": "WAITING_FOR_LEAD_AND_DEPENDENCIES"
+    },
+    {
+      "id": "F1-visibility-wire-contract",
+      "explicitDagEdge": false,
+      "evidence": "work-packages.json:22690-22712 requires record/hidden/emailContextVisibility with private|team; :23298-23324 instead specifies entityRef/scope personal|team/optional emailContextEnabled/baseRevision. Neither operation request exposes account ingestion opt-out. platform-contract.ts:158-167 is the canonical triad, whereas :22881-22927 describes a different status/receiptId wire shape.",
+      "required": "Contract owner publishes one typed boundary and strict validator, documented translations between domain DTO, RoxCommand v2 and existing triad, and an explicit disabled-context state distinct from private/team audience. Publish the account-scoped ingestion-consent mutation separately from record presentation and from OAuth grants, including authorization and in-flight fence semantics. Do not silently map disabled to private or put actor in payload.",
+      "state": "CONTRACT_RECONCILIATION_REQUIRED"
+    },
+    {
+      "id": "F2-common-auth-identity-policy",
+      "explicitDagEdge": false,
+      "evidence": "WP-26 permissions and domain constraints at work-packages.json:22572-22576,23114-23117. 21-implementation-plan.md:9-63 describes WP-01 transport principal, WP-02 canonical registry, WP-03 resource grants/revocation. Existing authorizeRox2Action at platform-contract.ts:597-610 is only an actor/permission grant check, not a workspace/resource/source-consent resolver.",
+      "required": "Accepted shared authority from WP-01/02/03, reached transitively through producers but not removable from WP-26 verification: transport-derived actor, resource/action check, principal versus CRM Contact separation, source grants, team-management capability and policy epoch/fence. Decide personal/team preference precedence and Company/Contact cascade explicitly; recommendation is retained child identities and no implicit source-grant changes.",
+      "state": "FOUNDATION_RECEIPT_REQUIRED"
+    },
+    {
+      "id": "F3-durable-commands-and-offline",
+      "explicitDagEdge": false,
+      "evidence": "work-packages.json:22589-22605,22880,23096-23112 requires transactional outbox, crash receipts and dedup. 21-implementation-plan.md:65-102 assigns command CAS/idempotency/outbox to WP-04 and durable projection/replay to WP-05. DossierPage.tsx:98-120 uses local optimistic JSON writes, not these facilities.",
+      "required": "Use shared command gateway/transaction/receipt/outbox/inbox and accepted client replay adapter; no private WP-26 command receipt store or localStorage queue. Fence future context reads synchronously on disable/revoke, and replay projection invalidation with monotonic revisions and policy epochs.",
+      "state": "FOUNDATION_RECEIPT_REQUIRED"
+    },
+    {
+      "id": "F4-mail-consent-and-sync",
+      "explicitDagEdge": false,
+      "evidence": "Acceptance :22610-22612 separates opt-out from context-off during sync; :23115 requires connection ingest switch and source grants separately. 21-implementation-plan.md:314-357 defines WP-17 account/body authority and WP-18 sync cursor/recovery; WP-22 depends on them at :425.",
+      "required": "WP-22 must expose ingestion policy evaluation at its participant-ingestion transaction and accepted mail-account source/grant interface from WP-17/18. Specify target ingestion (CRM derivation versus provider mail capture), opt-out commit linearization, treatment of queued events, consent revision and re-enable/backfill. Context-off alone must not stop still-authorized mail/provenance writes; OAuth revocation must stop unauthorized work independently.",
+      "state": "CONSENT_CONTRACT_AND_PRODUCER_HOOK_REQUIRED"
+    },
+    {
+      "id": "F5-search-agent-and-derived-output",
+      "explicitDagEdge": false,
+      "evidence": "work-packages.json:22613 requires aggregate/search cache non-bypass; 21-implementation-plan.md:104-121 assigns actor/epoch search to WP-06, :736-754 assigns native agent/MCP boundary to WP-36, :774-789 assigns account resolver/cache to WP-38. 22-test-plan.md:101-111,159-177 requires discussion/notification and aggregated context privacy. DossierPage.tsx:401-416,573-594 displays a saved brief without a context-policy fence.",
+      "required": "Do not add WP-36/WP-38 to the explicit dependency array or defer this acceptance to them. Obtain their owner-approved resolver/dispatcher contracts or exercise the same real agent path through an accepted earlier boundary. Current actor/source/policy checks must precede serialization of snippets, titles, totals, cursors, cached aggregate bodies, brief results and notification excerpts; invalidate derived context and persisted brief presentations when policy changes.",
+      "state": "CROSS_OWNER_INTEGRATION_GATE"
+    },
+    {
+      "id": "F6-shared-crm-files-and-migrator",
+      "explicitDagEdge": false,
+      "evidence": "21-implementation-plan.md:431,454,476,499,521,782 repeats CRM contracts.ts/commands.ts/repository.ts across WP-22/23/24/25/26/38. WP-26 lists both 026_crm_visibility_preferences.sql and proposed 26-domain-contract.sql; work-packages.json:23081-23082 says actual filename comes from selected migrator.",
+      "required": "Root retains one integration owner for common CRM files; WP-26 supplies patch requests against accepted producer interfaces. Root allocates the selected migrator's actual artifact(s), consolidates overlapping schema declarations, and applies once with version/checksum receipt. Do not create both filenames as duplicate migrations or invent a timestamp.",
+      "state": "OWNERSHIP_AND_MIGRATOR_SELECTION_REQUIRED"
+    },
+    {
+      "id": "F7-existing-dossier-preservation",
+      "explicitDagEdge": false,
+      "evidence": "DossierEntity at dossier-model.ts:19-30 holds notes/promises/briefSessionId under local dos-* IDs created at DossierPage.tsx:171-189. Canonical refs are workspace/kind scoped at platform-contract.ts:218-239. 21-implementation-plan.md:446-466 assigns identity-preserving Dossier import to WP-23, which is not an explicit WP-26 dependency.",
+      "required": "Accepted WP-22 projection must state how existing standalone cards and canonical Company/Contact records coexist in the same Dossier surface. If wave0/producer does not supply a safe canonical alias bridge, request that bridge from the import owner before toggling shared policies on local IDs. Do not fabricate Company membership from org/name or require a destructive rewrite. Full WP-23 feature completion is not silently made an explicit edge.",
+      "state": "CANONICAL_REF_BRIDGE_REQUIRED"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/workspace-service/src/modules/crm/visibility.ts",
+    "apps/workspace-service/src/modules/crm/context-policy.ts",
+    "apps/workspace-service/migrations/026_crm_visibility_preferences.sql",
+    "apps/workspace-service/migrations/26-domain-contract.sql",
+    "tests/macro-integration/wp-26.test.ts",
+    "tests/macro-integration/crm-context-visibility.test.ts"
+  ],
+  "ownedNewFilesQualification": "Normative candidate implementation artifacts only; none created by this preflight. The two migration paths are published identifiers subject to F6, not instructions to duplicate schema. The normative contracts.ts/commands.ts/repository.ts paths are shared producer/root patch targets rather than independently owned new copies.",
+  "proposedContribution": {
+    "visibility.ts": "Proposed set/read visibility functions use accepted authenticated context and canonical record ref. Keep actor-personal hidden preference and authorized team hidden preference independent of email-context enablement/audience; record selected cascade/precedence policy, increment aggregate revision and policy epoch as appropriate, and return the common durable receipt. Unhide changes only hidden state.",
+    "context-policy.ts": "Proposed policy evaluator composes current workspace/resource authorization, source mail grants, context enablement/audience and consent policy. Apply before following or serializing each context link, including inherited discussions, snippets, source titles, counts, agent briefs and cached results. Return authorized refs/revisions plus non-sensitive unavailable kind states; never assume a Company relation grants source-body access.",
+    "migrations": "Use common entity/principal/team/account keys. Add crm_visibility for scoped hidden preferences and context policy, crm_source_policy for account/source target-ingestion consent with separate revision/epoch; do not duplicate mail grants or connection credentials. Entity-owned rows use composite workspace/entity FK, positive schema version, nonnegative revision, retained identity and indexed scoped stable pagination. Reuse common receipt/outbox/inbox constraints. Exact keys/types and DDL follow accepted producer schema and chosen migrator, not guessed foreign tables.",
+    "tests": "wp-26.test.ts covers authentic transport/UI command path, scopes, authorization, CAS/idempotency, persisted crash retry and event replay. crm-context-visibility.test.ts covers private marker exclusion, context-off/inbound race, true ingestion opt-out, unhide/revoked OAuth separation, stale search/cache/agent/brief and notification leakage. Use seeded broken boundary and independent holdout; fixtures prepare data but are not live command receipts."
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+      "symbol": "DossierEntity / DossierSources / DossierSummary / normalizeDossierData / filterEntities / buildDossierSummary / buildBriefPrompt",
+      "change": "Extend accepted WP-22 projection with canonical ref/revision and actor-visible visibility metadata, preserving standalone notes/promises/briefSessionId. Shared list consumes an authorized normal/hidden query rather than unrestricted data.entities. Keep filterEntities for text/kind presentation over authorized rows. Replace shared-mode name matching with accepted authorized context links; represent loading/denied/unavailable/stale kinds explicitly and use that metadata in summary and brief. Preserve feed:null unavailable distinction; never treat source absence or lookup failure as permission success. Do not add a second CRM store or infer identity from aliases.",
+      "reason": "Current model lines 19-100 has no CRM hidden/context policy; lines 163-219 derives touches by names and flattens feed null for traversal; lines 236-243 only filters kind/text; lines 281-304 copies context into a prompt. These are presentation seams, not authority."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "symbol": "DossierPage data/save/rows/selected; DossierDetail context search/generateBrief/brief display",
+      "change": "Route shared CRM reads and visibility commands through the accepted producer query/common command adapter; retain explicit standalone authority using the existing storage mechanism. Add separate hide/unhide, authorized hidden-list filter, email-context enablement/audience and account target-ingestion controls in the same Company/Contact detail; publish personal/team scope and contact cascade effects. Hide must not call onDelete (303-307,491). Use authorized totals, selection/deep-link refetch, all required command states and revision-aware rollback/refetch. Use GetCompanyContext for shared summary/search rather than api.searchNotes(...).catch(()=>[]). Gate generation and saved brief rendering/reopen against current policy/source revisions, refetch on durable invalidation/reconnect and clear unauthorized cached state.",
+      "reason": "Rows and subtitle currently expose the full local list (157-168,222); mutations save renderer JSON immediately (111-120); deletion physically removes the card; notes errors are coerced to empty at 375-394; existing brief remains displayed independently of policy at 401-416,573-594."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef / Rox2CanonicalResult / Rox2Receipt / Rox2Event / authorizeRox2Action / registerExternalBinding",
+      "change": "Reuse existing kind-prefixed identity, account namespaces, binding collision quarantine and result triad. Request shared contract owner to extend receipt/event metadata once for commandId/requestHash/receiptId/policyEpoch/projectionWatermark and canonical wire-result conversion, rather than adding a WP-26 result store. CRM DTOs belong in shared CRM contracts. Keep authorizeRox2Action's documented capability-versus-authorization boundary; server CRM command requires authenticated workspace/resource/source policy in addition. Use the producer-approved Contact kind instead of inventing another person/contact identity.",
+      "reason": "The ref and stable binding seams already exist (218-239,316-371); current receipts/events lack required fencing/command fields (99-141), the transport's status enum is not the existing triad (158-167), and generic actor grants lack resource scoping (597-610). This shared file must remain root-owned."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/crm/contracts.ts",
+      "symbol": "Producer-owned CRM contract surface; proposed SetCrmVisibility / GetCompanyContext",
+      "change": "After accepted WP-22/WP-25 interface, add one strict SetCrmVisibility/authorized context DTO, reconcile record versus entityRef, scope versus audience, expectedRevision versus baseRevision, explicit disabled context versus private audience, common receipt and unavailable kinds. Account ingestion consent is a separate accepted account/source policy contract. Reject unknown/body actor fields and namespace mismatch. Export through the existing producer surface only.",
+      "reason": "This normative new path is currently absent and is also listed in WP-22/23/24/25/38. Ownership and contradictory WP-26 request schemas require a root-coordinated additive patch, not a second file/interface convention."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/crm/commands.ts",
+      "symbol": "Producer-owned command registry/dispatch; proposed crm.setVisibility handler",
+      "change": "Register crm.setVisibility and accepted account-consent operation with the existing authenticated command gateway, strict validators, revision CAS and scoped idempotency hash. Commit visibility/source policy, audit, receipt and crm.visibility_changed outbox atomically; invoke shared policy-fence protocol and return queued/pending_fence honestly until verified. Add matching domain.crm.setVisibility native route and POST /v1/workspaces/{workspaceId}/commands/crm.setVisibility HTTP registration through the selected transport owner, not a parallel transport.",
+      "reason": "Currently absent at inspected normative location, shared with producers, and WP-26 explicitly requires both routes, authenticated actor, outbox/recovery and common receipt. Exact transport registry path/symbol is a producer receipt prerequisite; not inspected or guessed outside scope."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/crm/repository.ts",
+      "symbol": "Producer-owned Company/Contact queries, policy transaction and authorized context projection",
+      "change": "Extend accepted repository with scoped visibility/source-policy reads/writes, normal and explicit hidden-list filtering before pagination/totals, per-link source ACL, context policy epoch and stable actor-authorized cursor. Recompute interaction/search projection after source revocation without deleting canonical Company/Contact or unrelated sources. Attach shared read fence so stale projected snippets cannot serialize while asynchronous consumers catch up.",
+      "reason": "This common normative file is absent now and must be extended rather than shadowed; hidden exclusion and actor filtering cannot be safely implemented only in renderer filterEntities."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/crm/ingestion.ts",
+      "symbol": "WP-22 IngestExternalParticipant / crm.ingestParticipant transaction seam (proposed, not present code)",
+      "change": "Producer owner exposes a context-policy/source-consent callback at participant-ingestion commit. Read current target-ingestion consent revision and source grant; opt-out fences CRM target writes including queued/replayed events after the accepted linearization point. Email-context disabled does not alter authorized mail ingestion/provenance. Record source consent revision for replay/reconciliation.",
+      "reason": "This is a WP-22 proposed path in 21-implementation-plan.md:431; the current CRM directory is absent. WP-26 cannot implement opt-out by a presentation flag. No ingestion symbol implementation is claimed."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/crm/context-query.ts",
+      "symbol": "WP-25 Company discussion/context resolver (proposed, not present code)",
+      "change": "Producer owner composes WP-26 context policy on every authorized source/discussion link, including cached aggregate output. Forward principal/source policy epoch and watermark to search/agent consumers; relation traversal must not broaden mail grants. Reauthorize notification/activity excerpts at delivery using the same source fence.",
+      "reason": "This is a WP-25 normative context seam in 21-implementation-plan.md:499; unauthorized aggregate and discussion/snippet leakage are explicit acceptance. Exact search/attention/agent registrations must be supplied by their accepted owners, not guessed from uninspected files."
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/extra-screens/use-rox-sources.ts",
+      "symbol": "useFeedItems / useMeetings source availability consumed by DossierPage",
+      "change": "Prefer retaining the hook API and consuming feed.loaded and meetings.available in DossierSources state mapping. If common shared-source DTO needs richer denial/retry status, request an additive source-state change from hook owner; do not collapse failures into authorized empty results or reinterpret these general feed hooks as the mail context authority.",
+      "reason": "Feed begins available:true/loaded:false (142-149), but DossierPage uses only available (152-154); meetings.available (63-89) is discarded by the caller. Loading currently appears as empty authorized context."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "extraScreens.dossier visibility/context/ingestion/status translation keys",
+      "change": "Translation owner adds the same ASCII-sorted keys to all ten locales for scope, hidden records, context-off versus private/team audience, source-ingestion consent, preserved grants, conflict/retry/queued/pending-fence/applied state and help. DossierPage uses t() as it already does. Do not claim locale source inspection; this request follows the injected repository rule and existing useTranslation/t calls.",
+      "reason": "All new user-facing controls must reuse existing i18n convention; WP-26 owns no locale files."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-26 section",
+      "change": "Lead records accepted visibility/audience/disabled-context and target-ingestion semantics, personal/team precedence, contact cascade, shared ownership and selected migration artifact, and links revision-bound implementation receipts without marking planned work complete.",
+      "reason": "Current section 513-532 documents obligations but not the contradictory wire/domain translation or explicit target consent contract."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "CRM-INGEST-01 / CRM-DISCUSS-01 / ACCOUNT-01",
+      "change": "Extend steps 76-113 and 159-177 with two independent controls (context disable versus source target-ingestion opt-out), in-flight synchronization barrier, hide/unhide retaining disabled context and revoked OAuth, stale snippet/aggregate/brief/notification delivery rejection, CAS/idempotent crash recovery and offline replay policy conflict. Keep real UI/API/native-agent evidence distinct from fixtures.",
+      "reason": "Published suite demands privacy across CRM discussion/search/account aggregation and actual surface receipts; acceptance cannot be reduced to a fixture predicate test."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Hidden Company excludes normal lists, not destructive delete",
+      "currentEvidence": "DossierEntity has no hidden state (dossier-model.ts:19-30); filterEntities filters kind/text only (236-243). DossierPage rows read all local entities (157-161); onDelete removes the object (303-307).",
+      "seam": "DossierPage.rows/onDelete; filterEntities; accepted WP-22 repository query; proposed visibility.ts",
+      "requiredChange": "Persist scoped hidden preference, filter authorized normal query before totals/pagination, provide explicit hidden-list/unhide in the same surface, retain canonical record/provenance/history and keep destructive delete separate. Publish Company/Contact cascade rule.",
+      "verification": "A hides Acme through actual Dossier command. Normal list/board query and UI omit Acme; explicit authorized hidden view returns the same canonical ref. DB identity/provenance/discussion counts unchanged; reload and second device retain preference. Unhide restores record without creating a new ID; C gets neither hidden title nor total.",
+      "missingPrerequisite": "F0/F2/F3/F6/F7; accepted producer model/query and scope/cascade semantics.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "disabled email context hides bodies from team/agents",
+      "currentEvidence": "DossierSources has sessions/tasks/notes/feed but no email-context policy (71-78); buildBriefPrompt serializes local summary (281-304). startAgentRun only selects safe mode (agent-run.ts:14-22), not source ACL.",
+      "seam": "buildDossierSummary/buildBriefPrompt; DossierDetail.generateBrief; proposed context-policy.ts; WP-25 context-query",
+      "requiredChange": "Represent disabled separately from private/team audience; require current source/resource grant and enabled derived context before serialization to team or agents. Gate old briefs/derived results too; safe or allow-all does not grant body access.",
+      "verification": "Seed PRIVATE_WP-26 in source body and derived summary. B and acting Agent-A/Agent-B query via actual aggregate/search/MCP paths after disable: marker, body snippets and unauthorized metadata absent. Company identity remains accessible under its own grant; directly authorized mail access follows its separate contract.",
+      "missingPrerequisite": "F1/F2/F5 and accepted mail/body/context query contracts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "opted-out account stops target ingestion as defined",
+      "currentEvidence": "WP-26 schema exposes record/hidden/audience only (work-packages.json:22690-22712), while domain constraint requires separate connection ingest switch and source grants (23115); target CRM service path is absent.",
+      "seam": "WP-22 proposed ingestion.ts participant commit; proposed crm_source_policy/context-policy.ts",
+      "requiredChange": "Publish account-scoped target consent and persist independently from context/hidden/OAuth. Evaluate current consent at ingestion commit and queued-event replay; define cutoff, targeted writes and re-enable/backfill without suppressing unrelated authorized mail/provenance.",
+      "verification": "Opt out account A at a controlled commit barrier, then deliver new, queued and duplicate inbound events. After cutoff, forbidden target CRM entities/interactions/enrichment writes stay absent and unrelated authorized ingestion is unchanged. Restart retains policy, and opted-in account B still ingests. Evidence includes consent revision, target row counts and source cursor/receipts.",
+      "missingPrerequisite": "F1/F4: explicit target definition, account-consent operation and accepted ingestion hook are not supplied.",
+      "state": "CONTRACT_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Toggle email-context off while sync receives message: ingestion/provenance continues as authorized but visible context excluded.",
+      "currentEvidence": "Specification explicitly separates source ingestion/presentation (23115); current local model/source aggregation contains no commit fence or consent revision.",
+      "seam": "WP-22 ingestion transaction and context-policy evaluation; common command policy fence/outbox",
+      "requiredChange": "Serialize visibility-policy commit with policy epoch read/recheck. Continue authorized message/provenance ingestion regardless of presentation disable; future shared/agent context reads fence immediately and stale projections cannot emit body.",
+      "verification": "Use deterministic barriers before ingest commit and before context serialization in both interleavings, disable through command, resume sync and crash/replay. One authorized mail/provenance result persists; post-disable team/agent reads omit PRIVATE_WP-26 even with lagging index. Observe revisions, receipt and watermark.",
+      "missingPrerequisite": "F3/F4/F5 and accepted in-flight source-policy semantics.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Unhide company does not restore disabled email-context or revoked OAuth grant.",
+      "currentEvidence": "Wire request currently requires emailContextVisibility on every hidden change, while domain DTO makes emailContextEnabled optional. Source grant is a distinct mandated policy (work-packages.json:22708-22712,23301,23115-23117).",
+      "seam": "Proposed visibility.ts command update; DossierDetail visibility controls; producer account grant adapter",
+      "requiredChange": "A hidden-only change preserves enabled/audience/consent and provider grant revisions. Resolve mandatory wire-field semantics so the UI cannot re-enable context with a stale default. Unhide has no OAuth reconnect or source-consent side effect.",
+      "verification": "Disable context, hide, revoke account OAuth, then unhide/retry/reload. Same Company becomes normally visible, context remains disabled, source consent/grant revision is unchanged and provider access remains denied. No reconnect task or token renewal is triggered by unhide.",
+      "missingPrerequisite": "F1/F2/F4 and account-grant readback seam.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Actor filtering cannot be bypassed by agent aggregated query or search index cached snippets.",
+      "currentEvidence": "authorizeRox2Action only checks actor permission (601-610); DossierDetail searches names and maps titles without policy epoch (375-394), and persisted brief is displayed (573-594). Published ACCOUNT-01 requires principal+epoch cache and stale-memory negative control.",
+      "seam": "DossierDetail context/brief read; WP-25 context-query; common search/agent resolver contracts",
+      "requiredChange": "Apply current actor/resource/source policy before every item/title/snippet/count/cursor serialization. Key caches by workspace, principal/delegation, revision and policy epoch; a fence rejects or recomputes stale cache/index results, including saved derived briefs and real-time/attention excerpts.",
+      "verification": "Warm search, aggregate and brief caches as A/B, disable/revoke while index consumer is paused, query as B/C and allow-all agent through real routes. No marker, title, hidden count or body returns; alternate workspace/forged cursor denied. Resume replay and verify permitted sources still resolve.",
+      "missingPrerequisite": "F2/F3/F5: owner-approved search/agent/cache/attention hooks and current source fence.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "Existing DossierPage and DossierDetail provide list/detail and t()-based controls (94-315,349-631); no visibility controls exist in inspected code.",
+      "seam": "DossierPage / DossierDetail",
+      "requiredChange": "Add separate scoped hide, context and target-ingestion controls with explanations and honest states inside the existing surface; retain notes/promises/brief behavior under explicit standalone authority.",
+      "verification": "Actual Electron interaction, keyboard/focus/hover and screenshots/ARIA before/after disable/hide/unhide; observe saved state after reload and absence of covered or denied controls.",
+      "missingPrerequisite": "F0/F1/F7; translated keys across all ten locales and accepted shared client adapter.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "DossierPage.select uses routes.view.screen('dossier',id) (168-169); openTouch uses existing surface routes (328-347). Transport paths are specified at work-packages.json:22684-22688.",
+      "seam": "DossierPage.select/selected/openTouch; proposed commands.ts route registration",
+      "requiredChange": "Preserve Dossier/deep links with canonical mapping and authenticated resolve; register HTTP and native RPC through common gateway and refetch selected hidden/denied records rather than resolving from unrestricted local list.",
+      "verification": "Open normal/hidden/denied canonical Company links after rename/reload; exercise both HTTP and native RPC, unknown operation, workspace mismatch and forged actor payload.",
+      "missingPrerequisite": "F1/F3/F7 and transport owner registration interface.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "Dossier cards are person/company with string IDs (19-30) and dos-* IDs (DossierPage:175-183); Rox2 has crm-company/person, canonical refs and external bindings (platform-contract:17-38,218-239,316-371).",
+      "seam": "DossierEntity and accepted WP-22 Company/Contact identity; Rox2EntityRef/registerExternalBinding",
+      "requiredChange": "Reuse producer canonical identity and alias/provenance mapping, separate visibility/source policy rows, and never turn Contact email into login principal or merge by display name.",
+      "verification": "Visibility mutations/restart retain exact Company/Contact ref and alias cardinality; same-name Contacts remain distinct; no extra Principal or duplicate entity is created.",
+      "missingPrerequisite": "F2/F7 and accepted producer Contact kind/alias schema.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "Dossier uses load/saveWorkspaceJson; storage.ts:35-44 sets renderer localStorage and dispatches local event, not shared transaction. Normative migrations define crm_visibility/crm_source_policy (23079-23128).",
+      "seam": "Accepted CRM repository/common transaction; normative visibility migrations",
+      "requiredChange": "Apply additive common-migrator DDL once, retained entity FK/scoped preference keys and source policy revision; store command result/audit/event atomically using common receipt infrastructure. Keep local writer only in explicit standalone mode.",
+      "verification": "Migration on selected DB, duplicate/scoped-key negative checks, restart and second-client readback; snapshot/forward-repair rehearsal preserves subsequent accepted writes and unrelated entities.",
+      "missingPrerequisite": "F0/F3/F6 accepted DB schema/migrator and applied migration receipt.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "updateEntity/save optimistically mutate local JSON (DossierPage:111-120); crm.setVisibility schema and command envelope are normative only.",
+      "seam": "Proposed visibility.ts, shared commands.ts and command gateway",
+      "requiredChange": "Authenticated command, strict payload, expected revision CAS, scoped idempotency/request hash, policy fence, transactional receipt/outbox and common triad conversion.",
+      "verification": "Same key/payload returns same receipt/revision; changed payload same key conflicts; stale revision conflicts; actor injection and mismatched ref denied; crash after commit returns original result on retry.",
+      "missingPrerequisite": "F1/F2/F3 and accepted command registration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "filterEntities is a local name/kind filter; buildDossierSummary is text-matched aggregation. Normative GetCompanyContext returns authorizedLinks/unavailableKinds (23305-23309).",
+      "seam": "Accepted CRM repository/query and context-query; Dossier sources",
+      "requiredChange": "Provide authorized normal/hidden list plus context query with stable scoped pagination, no hidden total/title, current policy and source provenance/ref/revision metadata.",
+      "verification": "Read through authentic list/context APIs as A/B/C with filtered pages and cursors; no unauthorized item/count or cursor crossing policy/workspace; permitted discussion/source refs remain navigable.",
+      "missingPrerequisite": "F1/F2/F5 and accepted query/cursor schema.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "subscribeWorkspaceJson is a local DOM/storage event (storage.ts:47-65); normative crm.visibility_changed requires transaction outbox and revisioned replay cursor (22569-22591).",
+      "seam": "Common outbox/consumer inbox/projection subscriber; Dossier shared state",
+      "requiredChange": "Emit one revisioned policy event atomically and invalidate authorized subscribers; replay cursor/revision/epoch fencing rejects stale or duplicate resurrection. Policy denial must not wait for lossy UI event.",
+      "verification": "Two clients observe toggle; drop delivery then reconnect/replay converges; duplicate/out-of-order event produces one effect; revoke denies reads even while projection consumer is paused.",
+      "missingPrerequisite": "F3/F5 and common durable subscription interface.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "Entity.permissions is explicitly not actor authority (platform-contract:597-610); normative WP-26 requires team/member/source/admin policy and allow-all non-override (22572-22576).",
+      "seam": "Accepted authenticated command/query context; proposed context-policy.ts",
+      "requiredChange": "Check resource/action/workspace/source grant and policy epoch for reads/writes/subscriptions; restrict team visibility and ingestion consent mutation to accepted capabilities. Missing actor or body actor never grants access.",
+      "verification": "Owner/member/viewer/outsider matrix, body forgery, cross-workspace ref and allow-all agent negative paths, including error payload metadata and subscribe denial.",
+      "missingPrerequisite": "F1/F2 and exact team/source capability vocabulary.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "Published CRM-INGEST-01 requires B to see team Company but not M-private through relation (22-test-plan:90); hidden preference is not destructive grant revocation.",
+      "seam": "Context source-policy composition and common resource grants",
+      "requiredChange": "Separate Company read grant, hidden presentation, email enablement/audience, target-ingestion consent and OAuth/source grants. A link or team audience alone does not authorize private mail bodies; publish personal/team precedence.",
+      "verification": "B reads shared Company/discussion but not personal email; team/private/context-off transitions alter only the specified projection and grants stay unchanged; unhide cannot widen sharing.",
+      "missingPrerequisite": "F1/F2/F4.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "DossierDetail api.searchNotes errors become [] (375-394), not an authorized CRM search mechanism. WP-06 and ACCOUNT-01 specify actor/epoch snippets and watermark.",
+      "seam": "Accepted common search projection and read fence; shared context query",
+      "requiredChange": "Update/rematerialize authorized interactions/snippets on policy changes, recheck current actor/source policy at result serialization, preserve stable cursors without hidden totals, and separate search failure from empty.",
+      "verification": "Warm old PRIVATE_WP-26 snippets, pause consumer, toggle/revoke and query multiple actors; zero leaked private metadata before and after replay; permitted Company/discussion remains searchable after watermark.",
+      "missingPrerequisite": "F5 and accepted search adapter/consumer registration supplied by producer owner.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "WP-25 depends on common mention primitives; CRM-INGEST-01:87 and CRM-DISCUSS-01:103-111 require authorized autocomplete/backlinks and no implicit access.",
+      "seam": "WP-25 context/mention integration with proposed context-policy.ts",
+      "requiredChange": "Ensure hidden-policy normal discovery and source-private metadata are filtered during mention lookup/resolve; retain common occurrence records/backlinks without turning mentions into grants or deleting identity on hide.",
+      "verification": "Mention/lookup hidden Company as allowed/denied actors, then disable source context and replay events; no private body/title in autocomplete/resolution and existing permitted discussion link stays canonical.",
+      "missingPrerequisite": "Accepted WP-25 mention receipt and F2/F5.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "CRM-DISCUSS-01:109 requires current read permission recheck between enqueue and push; WP-26 changes source visibility that can invalidate copied excerpts.",
+      "seam": "WP-25 common notification delivery and current source-policy fence",
+      "requiredChange": "Use existing attention store/dedup; queued delivery rechecks current context/source permissions, strips unauthorized excerpts and retains permitted semantic notification according to accepted policy.",
+      "verification": "Enqueue Company mention notification, disable/revoke before delivery, restart/replay; recipient never receives PRIVATE_WP-26 or unauthorized title and one permitted notification remains one.",
+      "missingPrerequisite": "Accepted WP-25 attention integration and F5 delivery hook.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event has optional causation/correlation/revision (131-141); WP-26 requires crm.visibility_changed with audit and privacy metadata.",
+      "seam": "Common transaction outbox/activity projection; Rox2Event",
+      "requiredChange": "Record actor/scoped policy change as auditable revisioned event, reauthorize activity excerpts/relations, avoid body or token logging and dedup replay in common activity channel.",
+      "verification": "Toggle/duplicate/replay generates one policy activity effect per command, authorized actors see correct ref/revision, outsider receives no title/excerpt; required IDs available without raw email.",
+      "missingPrerequisite": "F2/F3/F5 and accepted event/activity schema.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "buildBriefPrompt copies entity notes/tasks/touch titles; startAgentRun creates safe session; readAgentRun returns saved assistant text without a CRM policy parameter.",
+      "seam": "DossierDetail.generateBrief/brief loading; common native agent context resolver",
+      "requiredChange": "Obtain actor-authorized current context at generation and retrieval, track derived source refs/epochs and block stale saved brief display/open when access changes. Native aggregate/search tools enforce identical policy independently of UI safe mode.",
+      "verification": "Generate a brief, disable/revoke and reload/open saved result; unauthorized derived content not shown. Run real native tool calls for B/C and allow-all agent: no private marker; authorized remaining source citations correct.",
+      "missingPrerequisite": "F5 and accepted agent delegation/context/derived-result contract.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Normative routes and GetCompanyContext contract exist only in specification; scoped normative service directory is absent.",
+      "seam": "Common HTTP/native RPC registry and accepted native agent/MCP domain dispatcher",
+      "requiredChange": "Expose crm.setVisibility and authorized company context through shared authority; query DTO field filtering precedes serialization, strict schemas reject body actor and unsupported schema. No independent MCP CRM store or agent bypass.",
+      "verification": "Native RPC, HTTP and real agent/MCP readback agree on canonical ref/revision and authorized omissions; all documented error mappings exercised, not source-text wiring tests.",
+      "missingPrerequisite": "F1/F3/F5 and owner-provided registry symbols beyond this inspection scope.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "work-packages.json:22620-22630 requires commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ and forbids raw email/body/transcript/tokens; current Rox2Receipt/Event lack several fields.",
+      "seam": "Common command/event metadata and CRM consumer counters",
+      "requiredChange": "Emit required identifiers/revision/fence/watermark and bounded retry/DLQ metrics using existing telemetry/audit plumbing, redact sensitive values and report pending fences honestly.",
+      "verification": "Observe successful toggle, retry, paused consumer, rejected actor and replay/DLQ traces; correlate receipt to event/watermark; negative log scan of synthetic private marker/token verifies no raw content.",
+      "missingPrerequisite": "F3/F5 and shared metadata/telemetry schema.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "tests/macro-integration directory directly returned Path not found. WP-26 specifies integration, negative-control and persistence-recovery tests at :22593-22605.",
+      "seam": "Normative wp-26.test.ts / crm-context-visibility.test.ts and actual changed-surface runner",
+      "requiredChange": "Add deterministic consumer-visible scenarios with explicit actors, canonical refs, private marker and seed 20260956; test policy boundaries/transitions/races/crash recovery rather than copies/mock echoes. Use actual routes, UI and native agent runtime for acceptance.",
+      "verification": "Future run bun test tests/macro-integration/wp-26.test.ts tests/macro-integration/crm-context-visibility.test.ts, relevant existing tests, and actual UI/API/agent scenarios. Preserve revision/schema/environment, independent evaluator holdout, rows/receipts/watermarks and failing-control evidence.",
+      "missingPrerequisite": "F0 and accepted executable scenario infrastructure plus producers; no tests permitted in this preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:513-532 and 22-test-plan.md:76-113,159-177 publish obligations and explicitly do not claim PASS.",
+      "seam": "Published WP-26 implementation and CRM/account test-plan sections",
+      "requiredChange": "Root updates actual accepted policy/contract/cascade/ingestion semantics, migration and common authority integration; add revision-bound implemented/verified/delivered evidence only after observation.",
+      "verification": "Review documentation against accepted schema and actual receipts; all six original criteria and remaining completeness dimensions retain their acceptance, no fixture-to-live or N/A substitution.",
+      "missingPrerequisite": "F1/F6 and eventual observed implementation receipts.",
+      "state": "PLANNED_DOCUMENTATION_PRESENT_IMPLEMENTATION_UNVERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Dossier notes search .catch(()=>[]) masks errors as empty; briefError has a string display (DossierPage:375-394,429-430,587). No CRM error-state controller exists.",
+      "seam": "DossierPage/DossierDetail command/query result presentation",
+      "requiredChange": "Distinguish permission_denied, offline_queued, retryable_error, conflicts, unavailable/reconciling/ambiguous/pending_fence and applied_verified; render documented transport errors without hidden metadata, refetch after CAS conflict, retry with same idempotency key.",
+      "verification": "Force denied actor, stale revision, idempotency conflict, provider/source unavailable, schema unsupported, pending fence and connection failure; UI never shows successful apply or authorized empty on failure; retry does not duplicate mutation.",
+      "missingPrerequisite": "F1/F3 and accepted error/result mapping.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "useFeedItems initial available:true/loaded:false (142-143) becomes empty feed in Dossier sources (152-154); meetings availability is dropped (124,143).",
+      "seam": "DossierSources state mapping and DossierDetail rendering",
+      "requiredChange": "Consume loaded/available status and accepted context query pending state explicitly; do not present no-touch/no-email success or enable stale context-dependent actions before readiness.",
+      "verification": "Delay source/context response; actual UI shows loading and disabled policy-dependent actions, then correct authorized content. Missing source is unavailable, not loaded empty; focus/ARIA reflects state.",
+      "missingPrerequisite": "F1 and source/query readiness DTO.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "DossierPage uses global data.entities length for empty/detail and subtitle; summary uses touches length, feedAvailable separately (289-310,599-617).",
+      "seam": "DossierPage rows/subtitle/EmptyState and DossierDetail source-state rendering",
+      "requiredChange": "Differentiate authorized empty list, hidden-only filtered view, disabled email context, denied/unavailable source and no search matches. Counts/title cannot include actor-invisible records; explicit hidden view is authorized only.",
+      "verification": "Exercise zero authorized rows, hidden-only records, disabled context, permission denied and unavailable feed; exact state/ARIA and totals match permitted query without revealing existence/title of denied records.",
+      "missingPrerequisite": "F1/F2 accepted query status/count contract and i18n patch.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "saveWorkspaceJson is immediate local write, no durable shared command/replay/fence; normative UI states include offline_queued and realtime replay cursor.",
+      "seam": "Common WP-05 replay adapter; Dossier visibility command state",
+      "requiredChange": "Queue through accepted durable shared client mechanism, retain local intent as queued not verified, refetch/reject stale or revoked replay, keep standalone local behavior explicit, never cache-authorize an old source body on reconnect.",
+      "verification": "Toggle offline, restart client, concurrently revoke/change policy, reconnect. Accepted command replays once or conflicts/denies honestly; receipt readback and canonical revision agree, disabled context not resurrected and standalone notes remain intact.",
+      "missingPrerequisite": "F3 common offline projection/outbox and policy replay interface.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Negative-control: unauthorized actor or dropped/duplicated event must fail WP-26 acceptance; hidden record leaks email body to agent",
+      "currentEvidence": "work-packages.json:22599-22600 and WP-26 verification require mutation hidden record leaks email body to agent and independent second failure variant; plan :532 repeats control.",
+      "seam": "Context policy serializer/read fence and durable event consumer",
+      "requiredChange": "Retain explicit private-marker exclusion and current-epoch convergence assertions capable of detecting authorization bypass, stale cache/body leak, lost event and duplicate effect separately from infrastructure failures.",
+      "verification": "Baseline scenario passes on exact implementation revision, then one seeded bypass emits PRIVATE_WP-26 to agent and fails the specific privacy assertion. Drop invalidation must fail convergence/read-fence assertion; duplicate delivery must fail if duplicate effects occur. Independent evaluator injects an additional variant and records caught mutation with seed and trace.",
+      "missingPrerequisite": "Implemented baseline, real changed-surface runner and independent holdout evaluator; not runnable in preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Persistence-recovery: restart between persisted command and reply; state/receipt/canonical ID remain consistent",
+      "currentEvidence": "Normative test at work-packages.json:22602-22604 and unique receipt/event constraints at :23096-23112; current renderer JSON saves have no command receipt.",
+      "seam": "Common command transaction commit/reply boundary, CRM repository and outbox",
+      "requiredChange": "Mutation, common receipt and visibility event commit together; same idempotency hash retry reads saved canonical result without duplicate revision/event; recovery consumer uses durable inbox/fence.",
+      "verification": "Kill service after durable commit before reply, restart/retry original command. Identical receipt/requestHash/Company ID/revision; one mutation and one outbox event/consumer effect, stable query readback and disabled-context policy. Altered same-key payload is rejected.",
+      "missingPrerequisite": "F3 common transaction/failure-injection hook and applied migration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Migration integrity, backfill and safe repair",
+      "currentEvidence": "WP-26 migration record :23079-23128 requires composite entity FK, positive schema version, nonnegative revisions, scoped aliases/idempotency/delivery, indexes, additive backfill/quarantine and no deletion of recent shared writes on rollback.",
+      "seam": "Normative selected visibility/source-policy migration and producer alias/provenance repository",
+      "requiredChange": "Consolidate two proposed names under selected migrator, reference canonical entity/principal/account types, add scoped unique keys/stable query indexes, quarantine ambiguous IDs, preserve unrelated CRM identity and follow common receipt/event tables rather than duplicate them.",
+      "verification": "Applied migration/version checksum receipt; cross-workspace FK/duplicate preference/invalid version/revision rejection; backfill rerun stable aliases; ambiguous IDs quarantined; snapshot or verified forward repair/reverse replay retains writes accepted after cutover.",
+      "missingPrerequisite": "F2/F6/F7 and accepted producer schema/migrator/backfill mapping.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "License policy: behavior reimplementation; upstream dependency only after exact license audit",
+      "currentEvidence": "work-packages.json:22660 specifies BEHAVIOR_REIMPLEMENTATION; no upstream source was inspected/copied by this worker.",
+      "seam": "Owned visibility/context-policy implementations and dependency selection",
+      "requiredChange": "Implement ROX behavior against accepted internal contracts, do not copy Macro implementation or introduce upstream source/package without exact license receipt.",
+      "verification": "Root review of implementation provenance and any dependency license artifact; accepted source references remain ROX/spec evidence.",
+      "missingPrerequisite": "Implementation review; exact license audit if any upstream dependency is proposed.",
+      "state": "IMPLEMENTATION_NOT_STARTED_NO_UPSTREAM_COPY"
+    },
+    {
+      "criterion": "Verification gate: actual changed surface and relevant failure/reload observed; fixture is not live receipt",
+      "currentEvidence": "work-packages.json:22661 and 22-test-plan.md:3-9,30-34,247 explicitly distinguish plan/fixtures from implementation acceptance.",
+      "seam": "Existing Dossier UI, real authenticated API/native-agent paths and shared persistence recovery",
+      "requiredChange": "Lead binds screenshots/ARIA, real API readback, entity/revision, DB uniqueness, command/provider receipt, event/watermark and seeded failure trace to integrated implementation revision/environment/schema. Keep featureComplete false until all required evidence exists.",
+      "verification": "Observe changed Dossier, source context toggle race, true opt-out, denied agent/search cache, unhide/OAuth independence and reload/crash/reconnect on real runtime. Record separate implemented/verified/delivered states, with no fixture-only or planned acceptance promoted to PASS.",
+      "missingPrerequisite": "Wave0/dependency integration and implemented runnable surface; this preflight does not run these checks.",
+      "state": "NOT_VERIFIED_FEATURE_COMPLETE_FALSE"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts", "symbol": "DossierEntity / DossierSources / DossierSummary", "lineStart": 19, "lineEnd": 101, "sha256": "7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts", "symbol": "buildDossierSummary / lastTouchFor", "lineStart": 163, "lineEnd": 225, "sha256": "7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts", "symbol": "filterEntities", "lineStart": 236, "lineEnd": 243, "sha256": "7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts", "symbol": "buildBriefPrompt", "lineStart": 281, "lineEnd": 305, "sha256": "7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx", "symbol": "DossierPage data/save/sources/rows/selected", "lineStart": 94, "lineEnd": 189, "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx", "symbol": "DossierPage list totals and onDelete", "lineStart": 217, "lineEnd": 308, "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx", "symbol": "DossierDetail searchNotes/summary/brief loading/generateBrief", "lineStart": 349, "lineEnd": 434, "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx", "symbol": "DossierDetail stored brief rendering / touches / feedUnavailable", "lineStart": 573, "lineEnd": 618, "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2Receipt / Rox2Status / Rox2Entity / Rox2Event / Rox2CanonicalResult", "lineStart": 99, "lineEnd": 167, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "formatRox2EntityId / parseRox2EntityId / Rox2EntityRef", "lineStart": 218, "lineEnd": 239, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "entityRefFromBinding / registerExternalBinding", "lineStart": 316, "lineEnd": 371, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "authorizeRox2Action / isRevisionedEntityRef / isAuditableRox2Event", "lineStart": 597, "lineEnd": 620, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "apps/electron/src/renderer/lib/extra-screens/storage.ts", "symbol": "saveWorkspaceJson / subscribeWorkspaceJson / newLocalId", "lineStart": 35, "lineEnd": 71, "sha256": "fa240f1c6737cfb526deb8a19817fc48e42e471b6664def2d2d5408bc25e51ba"},
+    {"path": "apps/electron/src/renderer/lib/extra-screens/use-rox-sources.ts", "symbol": "useMeetings", "lineStart": 63, "lineEnd": 90, "sha256": "7fd3d7a1a4b5356c5d63a76d35f75a89a4de675a1eb5404b102c72bcdb8fba34"},
+    {"path": "apps/electron/src/renderer/lib/extra-screens/use-rox-sources.ts", "symbol": "FeedState / loadFeed / useFeedItems / externalFeedItems", "lineStart": 119, "lineEnd": 162, "sha256": "7fd3d7a1a4b5356c5d63a76d35f75a89a4de675a1eb5404b102c72bcdb8fba34"},
+    {"path": "apps/electron/src/renderer/lib/extra-screens/agent-run.ts", "symbol": "startAgentRun / readAgentRun", "lineStart": 14, "lineEnd": 62, "sha256": "74589220461ca04163fa273a3628ebd8170ef12d9d764f780c54fcab533929fc"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-26 explicit dependencies, acceptance, completeness and producer receipts", "lineStart": 22520, "lineEnd": 22679, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-26 crm.setVisibility request transport/schema", "lineStart": 22680, "lineEnd": 22736, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-26 canonical response, errors and expectedRevision", "lineStart": 22862, "lineEnd": 22927, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-26 migration tables/constraints/repair", "lineStart": 23079, "lineEnd": 23128, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-26 domainApiContracts / domainConstraints", "lineStart": 23298, "lineEnd": 23329, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-01 through WP-06 foundation descriptions", "lineStart": 9, "lineEnd": 121, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-17 / WP-18 mail foundation", "lineStart": 314, "lineEnd": 357, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-22 through WP-26 dependencies/shared files/acceptance", "lineStart": 423, "lineEnd": 532, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-36 agent/MCP and WP-38 account context descriptions", "lineStart": 736, "lineEnd": 789, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "CRM-INGEST-01 / CRM-DISCUSS-01", "lineStart": 76, "lineEnd": 113, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "ACCOUNT-01 authorized aggregation and stale cache controls", "lineStart": 159, "lineEnd": 177, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reads and validates this owned preflight report against the dispatch packet; resolves F1 typed contract and F6 ownership/migrator decisions while wave0/producers finish. No product implementation is authorized for this worker.",
+    "implementationStartCondition": "Lead wave0 commit plus accepted WP-22 and WP-25 typed interfaces, applied migration or truthful N/A dependency receipts, and scenario verification receipts; selected shared authority/migrator and clarified disabled-context/target-ingestion/cascade semantics.",
+    "then": "Compare referenced file hashes to integrated working tree and reread changed seams. Root patches common contracts/repository/command registration in dependency order, then assigns WP-26 visibility/context-policy and chosen migration contributions; wire existing Dossier through accepted projection/query adapter, integrate producer ingestion/context/search/agent hooks and execute full criteria/race/crash/reload/negative-control scenarios before completion."
+  },
+  "risks": [
+    "private is an audience restriction, not the disabled-context state required by acceptance; silently equating them can leak to owner's delegated agent or misrepresent the UI.",
+    "Mandatory emailContextVisibility on hide/unhide conflicts with optional emailContextEnabled update semantics and can re-enable disabled context if a default or stale snapshot is sent.",
+    "Target ingestion opt-out is underspecified and absent from published crm.setVisibility payload; presentation disable must not be used as a fake ingestion stop or OAuth revocation.",
+    "Name-matched Dossier touches are not entity links or authorization. Unknown/unavailable feed and failed notes search must not become authorized empty context.",
+    "Saved briefSessionId/assistant text and aggregate/search/notification caches can retain source bodies after disable/revoke; deleting raw source or merely hiding a Company row does not fix current read authorization.",
+    "Common contracts.ts/commands.ts/repository.ts and two proposed migration filenames have overlapping package ownership; independently writing them would introduce conflict/duplicate migrations.",
+    "Existing local dos-* cards do not carry canonical refs or server revisions. Shared visibility cutover requires accepted alias projection while retaining notes/promises/briefs and explicit standalone behavior.",
+    "Personal/team hidden precedence and Company-to-Contact cascade are normative decision points, not permission to delete children or change source grants.",
+    "Atomic command commit alone cannot protect stale snippets while asynchronous projections lag; synchronous current-policy read fence plus replay/epoch checks is required.",
+    "WP-36/WP-38 are not explicit WP-26 dependencies, but full native-agent/cache non-bypass acceptance still needs owner-approved real dispatcher/resolver integration; it cannot be deferred or marked N/A.",
+    "Working-tree integration is concurrent. Hash-bound evidence may become stale after wave0/dependency commits; this report is preflight only and no feature PASS or runtime receipt exists."
+  ]
+}

@@ -5,7 +5,7 @@
  */
 import type { PersonalTask } from '@craft-agent/core/tasks/personal'
 import { PersonalTaskStore } from '@craft-agent/core/tasks/personal'
-import { loadPersonalTaskStore, persistPersonalTaskStore } from '@/lib/personal-tasks'
+import { loadPersonalTaskStore, persistPersonalTaskStore, persistPersonalTaskConfirmed } from '../personal-tasks'
 
 export function listPersonalTasks(): PersonalTask[] {
   try {
@@ -21,6 +21,20 @@ export function createPersonalTask(input: { title: string; notes?: string; list?
   const withNotes = input.notes ? store.update(task.id, { notes: input.notes }) : task
   persistPersonalTaskStore(store)
   return withNotes
+}
+
+/** Await the native receipt; reuse the attempted ID when its result was unknown. */
+export async function createPersonalTaskConfirmed(
+  input: { title: string; notes?: string; list?: 'inbox' | 'today' },
+  previousAttempt?: PersonalTask,
+): Promise<PersonalTask> {
+  const title = input.title.trim()
+  if (!title) throw new Error('Task title is required')
+  const task = previousAttempt
+    ? { ...previousAttempt, title, notes: input.notes ?? previousAttempt.notes, list: input.list ?? previousAttempt.list }
+    : loadPersonalTaskStore().create({ title, notes: input.notes, list: input.list ?? 'inbox' })
+  await persistPersonalTaskConfirmed(task)
+  return task
 }
 
 export function isTaskOpen(task: PersonalTask): boolean {

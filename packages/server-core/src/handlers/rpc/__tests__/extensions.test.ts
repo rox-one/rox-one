@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
@@ -41,54 +41,30 @@ describe('extensions RPC', () => {
     resetPluginBridgeFixture()
     __setPluginBridgeKernelClientForTests(null)
     __setSiyuanDataDirCandidatesForTests([])
-    // Minimal marketplace cache so catalog load does not hit network hard-fail.
+    // Use the exact shipped signed body. Unsigned arbitrary cache entries are
+    // deliberately rejected by the marketplace trust boundary.
+    const bundled = join(import.meta.dir, '../../../../../../apps/electron/resources/marketplace')
+    const body = readFileSync(join(bundled, 'catalog.json'), 'utf8')
+    const signature = readFileSync(join(bundled, 'catalog.json.sig'), 'utf8')
+    const catalog = JSON.parse(body)
+    const entry = catalog.entries.find((item: { id: string }) => item.id === 'superpowers')
     const mp = join(dir, 'marketplace')
     mkdirSync(mp, { recursive: true })
-    writeFileSync(
-      join(mp, 'catalog.cache.json'),
-      JSON.stringify({
-        fetchedAt: Date.now(),
-        catalog: {
-          catalogVersion: 1,
-          entries: [
-            {
-              id: 'demo-pack',
-              kind: 'skillpack',
-              title: 'Demo Pack',
-              descriptionRu: 'demo',
-              source: {
-                type: 'github',
-                repo: 'acme/demo',
-                ref: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-              },
-              skills: ['a'],
-              expectedContentSha256: {
-                a: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-              },
-            },
-          ],
+    writeFileSync(join(mp, 'catalog.cache.json'), JSON.stringify({ fetchedAt: Date.now(), body, signature }), 'utf8')
+    writeFileSync(join(mp, 'lock.json'), JSON.stringify({
+      version: 1,
+      entries: {
+        superpowers: {
+          id: entry.id,
+          kind: entry.kind,
+          repo: entry.source.repo,
+          ref: entry.source.ref,
+          installedAt: Date.now(),
+          status: 'installed',
+          targets: [join(dir, 'skills', 'brainstorming')],
         },
-      }),
-      'utf8',
-    )
-    writeFileSync(
-      join(mp, 'lock.json'),
-      JSON.stringify({
-        version: 1,
-        entries: {
-          'demo-pack': {
-            id: 'demo-pack',
-            kind: 'skillpack',
-            repo: 'acme/demo',
-            ref: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            installedAt: Date.now(),
-            status: 'installed',
-            targets: [join(dir, 'skills', 'a')],
-          },
-        },
-      }),
-      'utf8',
-    )
+      },
+    }), 'utf8')
   })
 
   afterEach(() => {
@@ -145,8 +121,8 @@ describe('extensions RPC', () => {
     expect(result.providers.find((p) => p.id === 'craft-curated')?.label).toBe('Rox Kiro')
     expect(result.providers.find((p) => p.id === 'community-openclaw')?.community).toBe(true)
     expect(result.providers.find((p) => p.id === 'community-openclaw')?.docsUrl).toMatch(/^https:\/\//)
-    expect(result.entries.some((e) => e.id === 'marketplace:demo-pack')).toBe(true)
-    expect(result.entries.find((e) => e.id === 'marketplace:demo-pack')?.runtime).toBe('skill-pack')
+    expect(result.entries.some((e) => e.id === 'marketplace:superpowers')).toBe(true)
+    expect(result.entries.find((e) => e.id === 'marketplace:superpowers')?.runtime).toBe('skill-pack')
   })
 
   it('listInstalled projects marketplace lock + setEnabled persists', async () => {
@@ -161,20 +137,33 @@ describe('extensions RPC', () => {
     const before = (await listInstalled({}, {})) as {
       records: Array<{ id: string; status: string }>
     }
-    expect(before.records.some((r) => r.id === 'marketplace:demo-pack')).toBe(true)
-    expect(before.records.find((r) => r.id === 'marketplace:demo-pack')?.status).toBe('enabled')
+    expect(before.records.some((r) => r.id === 'marketplace:superpowers')).toBe(true)
+    expect(before.records.find((r) => r.id === 'marketplace:superpowers')?.status).toBe('enabled')
 
-    await setEnabled({}, { id: 'marketplace:demo-pack', enabled: false })
+    await setEnabled({}, { id: 'marketplace:superpowers', enabled: false })
     const state = (await getState({})) as { state: { enabled: Record<string, boolean> } }
-    expect(state.state.enabled['marketplace:demo-pack']).toBe(false)
+    expect(state.state.enabled['marketplace:superpowers']).toBe(false)
 
     const after = (await listInstalled({}, {})) as {
       records: Array<{ id: string; status: string }>
     }
-    expect(after.records.find((r) => r.id === 'marketplace:demo-pack')?.status).toBe('disabled')
+    expect(after.records.find((r) => r.id === 'marketplace:superpowers')?.status).toBe('disabled')
   })
 
-  it('listInstalled default-installs shipped catalog entries and keeps disabled records', async () => {
+  it('never projects an unsigned cache entry into the trusted catalog', async () => {
+    writeFileSync(join(dir, 'marketplace', 'catalog.cache.json'), JSON.stringify({
+      fetchedAt: Date.now(),
+      catalog: { catalogVersion: 1, entries: [{ id: 'unsigned-demo-pack', kind: 'skillpack', title: 'Untrusted' }] },
+    }), 'utf8')
+    const server = createMockServer()
+    registerExtensionsHandlers(server as never, {
+      platform: { logger: { info() {}, error() {}, warn() {}, debug() {} } },
+    } as never)
+    const result = await server.handlers.get(RPC_CHANNELS.extensions.LIST_CATALOG)!({}, {}) as { entries: Array<{ id: string }> }
+    expect(result.entries.some((entry) => entry.id === 'marketplace:unsigned-demo-pack')).toBe(false)
+  })
+
+  it('catalog suggestions do not fabricate installations and preserve explicit disabled state', async () => {
     writeFileSync(join(dir, 'marketplace', 'lock.json'), JSON.stringify({ version: 1, entries: {} }), 'utf8')
     const server = createMockServer()
     registerExtensionsHandlers(server as never, {
@@ -184,17 +173,21 @@ describe('extensions RPC', () => {
     const first = (await listInstalled({}, {})) as {
       records: Array<{ id: string; status: string }>
     }
-    const pack = first.records.find((r) => r.id === 'marketplace:demo-pack')
-    expect(pack).toBeTruthy()
-    expect(pack?.status).toBe('enabled')
+    const pack = first.records.find((r) => r.id === 'marketplace:superpowers')
+    expect(pack).toBeUndefined()
+    expect(JSON.parse(readFileSync(join(dir, 'marketplace', 'lock.json'), 'utf8')).entries).toEqual({})
+    const catalog = await server.handlers.get(RPC_CHANNELS.extensions.LIST_CATALOG)!({}, {}) as { entries: Array<{ id: string }> }
+    expect(catalog.entries.some((entry) => entry.id === 'marketplace:superpowers')).toBe(true)
 
     const setEnabled = server.handlers.get(RPC_CHANNELS.extensions.SET_ENABLED)!
-    await setEnabled({}, { id: 'marketplace:demo-pack', enabled: false })
+    await setEnabled({}, { id: 'marketplace:superpowers', enabled: false })
     const after = (await listInstalled({}, {})) as {
       records: Array<{ id: string; status: string }>
     }
-    expect(after.records.find((r) => r.id === 'marketplace:demo-pack')?.status).toBe('disabled')
-    expect(after.records.some((r) => r.id === 'marketplace:demo-pack')).toBe(true)
+    expect(after.records.some((r) => r.id === 'marketplace:superpowers')).toBe(false)
+    const state = await server.handlers.get(RPC_CHANNELS.extensions.GET_STATE)!({}) as { state: { enabled: Record<string, boolean> } }
+    expect(state.state.enabled['marketplace:superpowers']).toBe(false)
+    expect(JSON.parse(readFileSync(join(dir, 'marketplace', 'lock.json'), 'utf8')).entries).toEqual({})
   })
 
   it('listInstalled projects siyuan-plugin from kernel-aware feed after mock install', async () => {

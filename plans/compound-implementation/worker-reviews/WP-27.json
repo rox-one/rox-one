@@ -1,0 +1,513 @@
+{
+  "task_id": "WP-27-preflight",
+  "attempt_id": "b190d29ed8a06241dd03d9aa332fdd75",
+  "packet_hash": "fb5940c8ce99d473782c73ac38c5a0048b973cba6e70de9c7b9d475b9b12462c",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-27",
+  "featureComplete": false,
+  "mode": "inspect-only; owned report artifact only",
+  "workTier": "bounded-workflow",
+  "dependencies": ["WP-04", "WP-03", "WP-02"],
+  "dependencyReceiptRequirements": {
+    "eachExplicitDependency": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "implementationOrder": "Lead wave0 commit first; WP-02 then WP-03 then WP-04 accepted interfaces/receipts before WP-27 implementation. The explicit WP-27 dependency array remains in its published order.",
+    "currentState": "No dependency acceptance or wave0 commit was supplied as verified implementation authority in this packet. This report does not inspect or change another package's implementation."
+  },
+  "evidenceBoundary": {
+    "kind": "Static working-tree inspection, not runtime evidence and not an assertion that inspected bytes are committed at input_revision.",
+    "specManifestSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "actualSurfaceObservedInSource": "TasksPage.tsx:45,1210 mounts CalendarStatusStrip in Today/Upcoming. Meetings linkage is a published target, not demonstrated by this inspected UI consumer.",
+    "missingNormativePaths": "Glob reported no packages/shared/src/workspace-domain/calendar, apps/workspace-service/src/modules/calendar, calendar-sync job, calendar migrations or WP-27 integration tests. A subsequent exact directory glob also reported apps/workspace-service/src and packages/shared/src/workspace-domain absent at inspection time; no claim about later root integration.",
+    "toolFallback": "Codegraph returned no .codegraph index; descriptive find failed with a 402 judgment-provider error. Continued with exact-symbol grep and reads in calendar files and direct consumers/imports. No index initialization, network probe, build, product test or UI launch performed.",
+    "stalenessPolicy": "Every source reference contains the inspected whole-file SHA-256. Any mismatch invalidates that reference and its dependent conclusions; root must re-read changed files and rebase patch requests after wave0/dependency integration. Never silently replace hashes without reinspection.",
+    "verificationScope": "Only the dispatch report verifier is authorized here. All product scenarios below are future required verification, not passing receipts."
+  },
+  "foundationGates": [
+    {
+      "id": "WAVE0_ACCEPTED_FOUNDATION",
+      "classification": "Dispatch gate, not an extra DAG edge",
+      "evidence": "Worker prompt requires implementation after the lead's wave0 commit and accepted dependency receipts; normative calendar module directories were absent during inspection.",
+      "requiredArtifact": "Committed wave0 service/runtime skeleton and accepted common transport, principal, command receipt, outbox, projection and migration interfaces.",
+      "reason": "Do not implement calendar against guessed service registration APIs or invent a second command/credential/authority store.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "WP-52_PROVIDER_RUNTIME",
+      "classification": "Published operational foundation omitted from WP-27 explicit edges",
+      "evidence": "21-implementation-plan.md:5,1038-1055 names WP-52 deployment/provider prerequisites. work-packages.json:46885-46938 describes real capability receipts and shared service. 22-test-plan.md:7,28 requires an isolated real account and independent provider read-back.",
+      "requiredArtifact": "Isolated Google OAuth test account with actual calendar scopes, server-side credential-reference/refresh adapter, authenticated deployed workspace/PostgreSQL, reachable validated watch endpoint and independent Google read-back client; actual connection capability receipts.",
+      "reason": "Fixtures and ROX_CALENDAR_GOOGLE_LIVE cannot establish production availability. WP-52 media probes alone do not prove Google calendar scope/readback.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "WP-05_PROJECTION_OFFLINE_AND_WP-51_AUTHORITY",
+      "classification": "Cross-surface completeness prerequisite, not an explicit WP-27 DAG edge",
+      "evidence": "22-test-plan.md:9 requires workspace-service-only shared writes and local projection/outbox. 21-implementation-plan.md:84-102 specifies SyncSince/ReplayCommand/GetCommandReceipt; :1020-1036 specifies ResolveWriterMode/revoke fence. CalendarStatusStrip:39-47 currently directly writes localStorage and CalendarStore:120-158 mutates bundle.",
+      "requiredArtifact": "Accepted projection cursor/offline receipt API and shared-versus-standalone writer-mode/policy fence contract. Root must decide and verify calendar participation rather than assuming WP-51's listed Notes/Page/Task/Project cases already cover calendar.",
+      "reason": "A new HTTP handler alone leaves a renderer writer and stale connected state; delayed provider work must recheck grants/generation before apply.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "WP-06_WP-09_WP-07_WP-36_CROSS_SURFACE",
+      "classification": "Hidden acceptance integration gates inferred from published full completeness, not new explicit edges",
+      "evidence": "WP-27 featureCompleteness at work-packages.json:23458-23480 includes search, mentions, notifications, activity, agent/API/MCP. 12-calendar.md:43-46,60-64 requires authorized master/occurrence lookup. 21-implementation-plan.md:104-119,123-140,161-178,738-753 defines common contracts.",
+      "requiredArtifact": "Accepted search/watermark, mention-resolution, attention/activity and delegated agent domain interfaces; calendar handlers registered with those owners and scenario receipts. Exact consumer implementation symbols must come from accepted owner receipts; those unrelated source subsystems were not opened here.",
+      "reason": "Calendar events cannot be declared complete solely because the status strip lists them; no parallel index, notification ledger, entity resolver or MCP calendar store.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "CANONICAL_ACCOUNT_KIND_AND_CONTRACT_ALIGNMENT",
+      "classification": "Typed contract/schema foundation gap",
+      "evidence": "platform-contract.ts:17-38 has connection and calendar-event but no calendar/account kind. WP-27 declares calendar_account/calendar/calendar_event tables; public command uses account Rox2EntityRef while domain SyncCalendar uses connectionId/calendarId/cursor. CalendarAdapter:4-15 has only events/cursor and synchronous available().",
+      "requiredArtifact": "WP-02-approved mapping of calendar account to connection ref and calendar source identity (or registry kind extension), common RoxCommand v2/result contract and a typed mapping from command account/syncToken/watchEventKey to scoped calendar jobs and provider page tokens.",
+      "reason": "Do not confuse OAuth expiry, Google syncToken410 and pagination pageToken, or expose renderer-owned watch proof via an unvalidated watchEventKey.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "MIGRATION_AND_FILE_OWNERSHIP",
+      "classification": "Published integration ambiguity",
+      "evidence": "WP-27 newFiles lists both 027_calendar_accounts_sources_occurrences.sql and 27-domain-contract.sql; only the former is in newArtifacts, and migrations:23909-23910 calls the latter a proposed migrator-generated identifier. 21-implementation-plan.md:7,564,586 repeats calendar contracts/commands/repository for WP-28/29.",
+      "requiredArtifact": "Lead-selected migrator and accepted migration identity/sequence; one calendar domain-area integration owner shared with WP-28/29/30.",
+      "reason": "Preserve both normative names in this preflight inventory, but resolve whether they are a split schema/contract migration or one logical migration before authoring; never create duplicate tables or competing writers.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/calendar/contracts.ts",
+    "apps/workspace-service/src/modules/calendar/commands.ts",
+    "apps/workspace-service/src/modules/calendar/repository.ts",
+    "tests/macro-integration/wp-27.test.ts",
+    "apps/workspace-service/src/modules/calendar/adapters/google-adapter.ts",
+    "apps/workspace-service/src/modules/calendar/sync.ts",
+    "apps/workspace-service/src/modules/calendar/webhooks.ts",
+    "apps/workspace-service/src/jobs/calendar-sync.ts",
+    "packages/shared/src/workspace-domain/calendar/provider-contract.ts",
+    "apps/workspace-service/migrations/027_calendar_accounts_sources_occurrences.sql",
+    "tests/macro-integration/google-calendar-sync-recovery.test.ts",
+    "apps/workspace-service/migrations/27-domain-contract.sql"
+  ],
+  "ownedNewFilesMeaning": "Normative implementation inventory only. This preflight owns none of these files and creates only worker-reviews/WP-27.json. Earlier illustrative paths in 12-calendar.md:58 are not added as extra owned files.",
+  "proposedContributions": [
+    {
+      "paths": ["packages/shared/src/workspace-domain/calendar/contracts.ts", "packages/shared/src/workspace-domain/calendar/provider-contract.ts"],
+      "change": "Define strict calendar.sync payload account/syncToken/watchEventKey, accepted common envelope/result/error types; ConnectCalendar, SyncCalendar, ListDelta, HandleWatch and GetEvent contracts. Provider port distinguishes pagination from committed per-calendar syncToken, 410 rebuild, OAuth reauth/scope denial, watch channel/resource proof/expiry and verified connectivity receipt. Include canonical refs, source ownership, master/instance keys, revision/etag and date-only exclusive end. These are proposed symbols, not existing declarations."
+    },
+    {
+      "paths": ["apps/workspace-service/src/modules/calendar/commands.ts", "apps/workspace-service/src/modules/calendar/repository.ts"],
+      "change": "Implement authenticated handlers on accepted WP-04 command framework, WP-03 policy and WP-02 entity/alias repository. Reject body actor/workspace forgery, enforce expectedRevision and idempotency hash, authorize account/calendar and linked refs. Persist account/calendar/event/source/occurrence/job rows, committed cursors, tombstones and source aliases transactionally with receipt/outbox; queries authorize before serialization and stable cursor totals/titles. Never hold DB transaction over Google calls."
+    },
+    {
+      "paths": ["apps/workspace-service/src/modules/calendar/adapters/google-adapter.ts"],
+      "change": "Real server-side Google OAuth reference resolution and refresh; narrow-scope calendar list/events delta/get readback and watch creation/renewal. Normalize provider source IDs/iCalUID/etag, canceled exceptions, timeZone and all-day dates. Reauth/revocation invalidates capability; no fixture or env-only success path. Provider API must be reconciled against live documented behavior during authorized implementation, not claimed exercised here."
+    },
+    {
+      "paths": ["apps/workspace-service/src/modules/calendar/sync.ts", "apps/workspace-service/src/modules/calendar/webhooks.ts", "apps/workspace-service/src/jobs/calendar-sync.ts"],
+      "change": "Durable per-calendar sync generation/job lease, validated watch dedup and watch renewal recovery. Collect all full-sync pages into a staged generation; atomically publish reconciled snapshot and final nextSyncToken only when complete; retain canonical source identity, tombstone unseen sources, reject superseded/late pages. 410 invalidates incremental token and schedules full rebuild; revoked OAuth does not trigger endless unauthorized rebuild. Recheck policy/account/generation before apply; retry renewal crash and reconcile external unknown results without accepting forged headers."
+    },
+    {
+      "paths": ["apps/workspace-service/migrations/027_calendar_accounts_sources_occurrences.sql", "apps/workspace-service/migrations/27-domain-contract.sql"],
+      "change": "After lead resolves proposed filenames, apply one nonduplicated additive schema for normative six tables with workspace/entity composite FKs, schema_version>0/revision>=0, canonical alias/source uniqueness, recurrence source keys, sync generation/token/watch expiry/proof references and durable tombstones/job leases. Reuse common receipt/event-inbox tables. Backfill aliases/provenance and quarantine ambiguous IDs; rollback cannot delete accepted recent shared writes."
+    },
+    {
+      "paths": ["tests/macro-integration/wp-27.test.ts", "tests/macro-integration/google-calendar-sync-recovery.test.ts"],
+      "change": "Exercise real transport/principal, DB transaction/job replay and canonical source projection. Cover real isolated Google readback separately from deterministic adapter/410/watch/recovery cases. Assert exact canonical ID/revision/content/tombstone/receipt/outbox outcomes, seeded resurrection negative control and independent holdout; never accept skipped live branch as feature PASS."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/calendar/types.ts",
+      "symbol": "CalendarAccount, CalendarEvent, SyncJournal, CalendarUiStatus, calendarEventIdentity, sameCalendarEvent",
+      "change": "Keep account/calendar/remote event identity; add canonical ref/revision, immutable provider source binding, iCalUID, master/originalStart occurrence key, recurrence lines/exceptions and date-only exclusive end fields to authorized DTO projection. Introduce per-calendar sync state/generation and typed receipt/connectivity/error projection instead of account-wide cursor. Decode persisted v1 bundle under explicit standalone/projection mode; resolve alias mapping with WP-02 rather than replacing identity by iCalUID.",
+      "reason": "types.ts:22-37 cannot retain recurrence exceptions or canonical revision; :64-69 only has one cursor per account. Current slash identity protects basic account ownership but cannot itself be the shared canonical alias registry."
+    },
+    {
+      "path": "packages/core/src/calendar/adapters.ts",
+      "symbol": "CalendarAdapter, CalendarListPage, createProductionAdapter, createProviderAdapter, isCalendarConnectorWired",
+      "change": "Provide the Google production branch through an accepted authorized service/provider port; do not import workspace-service implementation into core/renderer. Update factory and every caller together for account-scoped verified capability state. Distinguish pageToken/final syncToken and full-reset semantics in page contract. Keep non-Google disconnected adapters unavailable and fixtures test-only. Synchronous available() reflects actual current verified receipt, not OAuth/env presence; asynchronous probes live behind server/main.",
+      "reason": "adapters.ts:112-118 unconditionally creates unavailable; :136-138 is synchronous provider-only wiring. Credentials flag is not a live receipt and connect availability must be distinct from per-account connected status."
+    },
+    {
+      "path": "packages/core/src/calendar/store.ts",
+      "symbol": "CalendarStore.fromJson, markConnected, revoke, markLocalDirty, sync, proposeReminder, uiStatus",
+      "change": "Preserve standalone reminders/proposals, etag versus localDirty conflicts and post-await revoke check. Shared IDs consume authenticated canonical projection/receipts only; connected requires verified account receipt. Route shared sync through service, project complete per-calendar generations/cursors and tombstones, and reject delayed superseded work. Use full account+calendar+event/occurrence identity for markLocalDirty/proposeReminder/conflict references; do not resurrect revoked provider views or merge copies on iCalUID.",
+      "reason": "store.ts:98-102 sets connected without proof; :120-158 only upserts one page and never removes absent full-snapshot events; :111-117/:160-173 omit calendar scope. :67-68 hides deleted but not revoked account events, so revoke alone leaves stale content visible."
+    },
+    {
+      "path": "packages/core/src/calendar/occurrences.ts",
+      "symbol": "TemporalOccurrence, occurrenceFromCalendarEvent, occurrenceKey, dedupeOccurrences",
+      "change": "Use canonical sourceRef/revision from authorized DTO and a true original-start/instance anchor rather than RRULE string for recurrenceInstance. Preserve all-day date semantics. Derive shared editable/permission from resource/provider grants instead of constant write; prevent older projections winning over newer revision/tombstone. Retain explicit standalone behavior through the same occurrence module.",
+      "reason": "occurrences.ts:50-60 derives local handle/etag, copies event.recurrence into occurrence key and grants write universally; dedupe keeps first arrival (:87-93) without revision precedence."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/calendar/CalendarStatusStrip.tsx",
+      "symbol": "loadStore, persist, mutate, connect, revoke, events.map",
+      "change": "Remove FixtureCalendarAdapter and demo event construction from production connect. Use accepted authenticated ConnectCalendar/calendar.sync/query/projection APIs with credential secrets outside renderer. Keep local reminder form in standalone authority; localStorage bundle is a cache/projection, not shared writer. Consume current account receipts and projection watermark, surface required loading/empty/denied/offline/retry/verified states and revoke from authority. Use scoped canonical event identity for key and reminder target; open existing authorized event context rather than a new calendar surface.",
+      "reason": "CalendarStatusStrip.tsx:58-75 becomes a live fixture path immediately if Google chip is enabled; :39-47 directly persists local authority. :118/:123 use raw remote id, risking collisions across calendars/accounts. Existing direct mount is Today/Upcoming TasksPage, not proof of Meetings linkage."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/calendar/CalendarConnectorChips.tsx",
+      "symbol": "CalendarConnectorChips, wired calculation and disabled/onClick branches",
+      "change": "Consume accepted asynchronous runtime/account capability projection: permit actual supported OAuth connect flow while not labelling an unverified account connected. Render revoked/scope-missing/unavailable distinctly and keep unsupported providers disabled with reason. Do not query process.env/provider-only synchronous factory from renderer as live account proof.",
+      "reason": "CalendarConnectorChips.tsx:21-39 uses synchronous provider wiring both to permit connect and label ready; a simple bool flip exposes the demo handler and cannot represent per-account revocation."
+    },
+    {
+      "path": "packages/core/src/calendar/calendar.test.ts",
+      "symbol": "production factory tests, live provider loop, cursor/etag/account/revoke regressions",
+      "change": "Retain meaningful disconnected/env-only/revocation/localDirty/identity tests under accepted typed context. Replace implementation-instance assertions that force every production adapter to UnavailableCalendarAdapter with behavior outcomes for authorized live versus disconnected accounts. Remove fake live loop whose available branch still expects listEvents to throw; real Google acceptance must require exact provider/event readback, not skip. Delete incidental capability-note length/source wording assertions rather than re-pin them.",
+      "reason": "calendar.test.ts:194-201 pins factory class and :245-255 expects unavailable even when adapter.available() is true; these contradict the new live contract. Existing regressions were read, not run."
+    },
+    {
+      "path": "packages/core/src/calendar/__tests__/occurrences.test.ts",
+      "symbol": "TemporalOccurrence identity, all-day, dedupe/deleted tests",
+      "change": "Migrate changed canonical ref contract assertions without losing account isolation; add true recurrence exception/cancel instance, all-day exclusive-end and viewer/revoked projection boundaries where consumer-visible uncertainty remains. Do not re-pin a local slash-format expectation as shared canonical identity.",
+      "reason": "occurrences.test.ts:30-37 asserts local handle shape; current tests do not exercise master/exceptions, server permission or stale replay. Shared file also appears in WP-29; one integration owner required."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/calendar/__tests__/calendar-status-strip.test.ts",
+      "symbol": "Issue 18 calendar strip source-text tests",
+      "change": "Delete source-text/wiring tests, not re-pin their string assertions after UI patch. Validate actual authorized connect/event/status/revoke surface in the approved scenario harness; permanent replacements only for consumer-visible state/identity/privacy transitions.",
+      "reason": "File :5-38 reads TSX text and tests literal implementation strings; it cannot detect demo fixture displayed as live or stale revoked data."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS, Rox2EntityRef, Rox2ExternalBinding, entityRefFromBinding",
+      "change": "Request WP-02 owner decision on account/calendar mapping to existing connection kind and source aliases; add kinds only if its accepted registry requires them. Calendar source binding must encode calendar as well as provider/account/event, not collide on remote event id or iCalUID. Return accepted canonical refs to occurrence mapper, using existing encoded external binding machinery and no second in-memory identity registry.",
+      "reason": "platform-contract.ts:17-38 lacks calendar/account kinds and :241-246 binding has four slots; source calendar scope must be represented explicitly within accepted remoteType/remoteId or registry metadata."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-27 section and common foundation preamble",
+      "change": "After observed implementation, document actual accepted provider/command/query/projection contracts, migrator-selected filenames, dependency receipts, account authority/capability and 410/watch/revoke recovery. Preserve planned/unverified status until exact scenarios pass; identify hidden runtime/cross-surface prerequisites without rewriting explicit dependencies unilaterally.",
+      "reason": "Current :534-554 describes future work; it is not an implementation or verification receipt."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "CALENDAR-01 and provider verification boundary",
+      "change": "Add revision/environment-bound WP-27 read-sync/410/watch/ICS/revoke/restart receipts and negative controls to existing scenario contract. Preserve WP-28 create/move/RSVP and WP-29/30 deeper recurrence/Meeting criteria as later packages; WP-27 must retain their data and integration seams, not claim their runtime complete. Record isolated provider IDs, seed 20260957, artifacts, screenshots/ARIA and independent readback without secrets.",
+      "reason": ":7,115-132 separates live provider proof and multi-package calendar scenarios; fixtures/local tests cannot close provider acceptance."
+    }
+  ],
+  "integrationRequests": [
+    {
+      "owner": "Lead / WP-04 transport owner",
+      "request": "Supply exact post-wave0 HTTP/nativeRPC registration symbols for POST /v1/workspaces/{workspaceId}/commands/calendar.sync and domain.calendar.sync, strict body schema and authorized query/read APIs. Register proposed calendar commands on existing gateway; no guessed new registry file authored here.",
+      "evidence": "WP-27 operations.transport at work-packages.json:23514-23518; calendar service skeleton absent in inspected paths."
+    },
+    {
+      "owner": "Lead / calendar-area owner across WP-27/28/29/30",
+      "request": "Sequence contracts/types/commands/repository changes through one writer; accept provider master/exception/source identity now so later mutation/recurrence packages reuse it. Existing meeting/call route resolution requires an accepted root-owned seam; current direct UI consumer establishes only the status strip.",
+      "evidence": "21-implementation-plan.md:7,542,564,586,603-620."
+    },
+    {
+      "owner": "Locale owner",
+      "request": "Use t() for all added calendar status/error/help labels and update existing ten locale files at packages/shared/src/i18n/locales/*.json with ASCII-sorted parity. Exact key names follow accepted UI status contract; no translations written in preflight.",
+      "evidence": "Injected repository AGENTS.md i18n contract; CalendarStatusStrip.tsx:34,96,104,109 already uses react-i18next."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Real sandbox event appears in existing ROX meeting/calendar context",
+      "currentEvidence": "createProductionAdapter:112-114 always unavailable; CalendarStatusStrip.connect:58-75 constructs a demo fixture. TasksPage:1210 is an actual current CalendarStatusStrip mount, not a verified Meetings event route.",
+      "requiredChange": "Implement real Google list/get normalization and canonical repository projection; replace demo handler with authenticated ConnectCalendar/calendar.sync. Render provider title/time/source/canonical ref in existing calendar context and use accepted Meeting/context resolver without a second surface/store.",
+      "verification": "In isolated Google account create a uniquely prefixed event via independent provider client; sync through actual ROX transport/UI and assert exact Google id/calendar/account/title/time and canonical ref/revision, screenshot/ARIA; reload and second client agree.",
+      "missingPrerequisite": "Wave0 and explicit dependency receipts; Google sandbox/readback; root-approved existing event/Meeting route seam.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "token expiry full sync",
+      "currentEvidence": "SyncJournal:64-69 is account-wide cursor; CalendarStore.sync:126 only lists once and :155 commits returned cursor. CalendarAdapter exposes no OAuth expiry or cursor reset contract.",
+      "requiredChange": "Distinguish refreshable OAuth access expiry, revoked/invalid refresh grant and expired Google sync token. Refresh OAuth legitimately; sync token expiry schedules complete per-calendar staged generation rebuild retaining identity/tombstones. Revocation stays unavailable rather than unauthorized full sync.",
+      "verification": "Expire provider access token and observe refresh/re-read; inject genuine expired sync-token 410 and assert every page fetched, surviving exact IDs preserved, removed sources tombstoned and only final token committed. Invalid refresh grant yields reauth/unavailable, not connected.",
+      "missingPrerequisite": "Accepted server credential adapter and provider typed error contract; applied generation/source migration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "duplicate watch dedup",
+      "currentEvidence": "CalendarStore sameCalendarEvent upsert prevents some duplicate bundle rows but no watch validation, delivery inbox, job lease or outbox exists in inspected calendar module.",
+      "requiredChange": "webhooks.ts validates persisted channel/resource/token binding and stores watch identity scoped to connection/calendar/channel/message; repository enforces dedup and jobs coalesce/reconcile. Advance receipt/outbox only for actual canonical change; use WP-04 inbox/lease semantics.",
+      "verification": "Replay/concurrently submit same valid delivery before/after crash; assert one canonical event/revision effect and one consumer effect/receipt as defined by idempotency, exact unique row counts and watermark; independent different event is not dropped.",
+      "missingPrerequisite": "WP-04 durable inbox/job primitives, real watch endpoint and channel receipt.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "disconnected provider remains unavailable",
+      "currentEvidence": "UnavailableCalendarAdapter.available false and listEvents throws (:75-92); env/helper does not wire connector (:128-138). CalendarStore.markConnected and UI fixture branch can manufacture connected state.",
+      "requiredChange": "Keep unavailable behavior without verified connection, preserve unsupported providers, remove renderer fixture and manual shared connected transition. Capability can allow OAuth connect independently but never claim connected/readback_verified until receipt.",
+      "verification": "No OAuth, env flag alone, missing scope, revoked token and unsupported providers cannot produce real events/connected green; list/sync returns typed unavailable and local reminders remain usable.",
+      "missingPrerequisite": "Accepted per-account connectivity state and changed UI path.",
+      "state": "EXISTING_FAIL_CLOSED_MECHANISM_INCOMPLETE_CUTOVER_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Real Google fixture-free readback establishes live capability; OAuth revoked makes adapter unavailable not connected green.",
+      "currentEvidence": "CalendarStatusStrip:64 uses FixtureCalendarAdapter; factory :112 never live. store.revoke:105-109 marks account only; events():67-68 continues returning its nondeleted events.",
+      "requiredChange": "Server live probe/get receipt bound to connection/calendar/principal; invalidate on revoked OAuth, cancel/fence in-flight jobs and filter revoked source projections/query/search/agent access while retaining independently authorized sources. UI derives verified state from receipt, not capability table or token reference.",
+      "verification": "Independent Google events.get matches exact native shown event; revoke grant at Google, resync/reload both clients and prove unavailable/not green, no revoked private marker through UI/query/search/agent. Evidence contains secret references only.",
+      "missingPrerequisite": "Real test OAuth consent/revocation and independent Google client, projection/search/agent interfaces.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "syncToken410 requires complete rebuild with no resurrection; watch forged delivery rejected; renewal crash retried.",
+      "currentEvidence": "CalendarStore.sync:128-158 only upserts incoming rows; omitted full-snapshot rows persist. No 410 generation/watch/proof/renewal seam in current module; new sync/webhooks/job files absent.",
+      "requiredChange": "410 clears incremental cursor under new persisted generation, stages all pages and publishes only complete snapshot; tombstone missing sources and fence late old pages. Reject mismatched/expired channel/resource/token/workspace proof before job insertion. Persist renewal intent/lease/provider channel response and recover interrupted renewal without blind green success.",
+      "verification": "Delete provider event, force 410 and replay stale pre-delete delta across restart: event stays absent. Forge each channel proof dimension: no row/job/outbox change. Kill renewal before/after provider response and DB commit; retry/reconcile yields usable persisted watch and catches subsequent real edit. Seed resurrection mutation must fail a specific assertion; holdout second variant independent.",
+      "missingPrerequisite": "Applied generation/tombstone/watch tables and durable job contract; authenticated callback endpoint and real channel sandbox.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Mailbox ICS not mistaken for authoritative Google event or new auto-calendar ingestion (Macro email ICS tables removed).",
+      "currentEvidence": "12-calendar.md:7,94 explicitly documents removed ICS sources; core capabilities google.notes excludes Google Tasks/reminders. Current calendar adapter accepts arbitrary fixture seeds but has no ICS parser/source contract.",
+      "requiredChange": "Google adapter/repository only accept authenticated Google connection/calendar/event provenance; never turn mail iCal UID/ICS metadata into Google binding or auto-ingest mail as a new source. Same UID across calendars/accounts remains separate authorized source identity.",
+      "verification": "Deliver mailbox ICS with UID/title matching real Google sandbox event and a new UID; Google sync retains correct source counts/IDs and creates no ICS-authoritative event. Two real accounts/calendars with same UID keep ownership/ACL distinct.",
+      "missingPrerequisite": "Google-source schema and integration fixture able to present mailbox ICS through existing mail boundary; no new mail ingestion authorized.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "CalendarStatusStrip:93-145 shows status/events/proposals; CalendarConnectorChips:21-39 gates on factory, and status strips are currently Tasks Today/Upcoming.",
+      "requiredChange": "Patch these existing components with live authorized projection and full required states; remove fixture handler; preserve local reminder/proposal UI and use accepted existing event/context route. All strings t(), ten-locale parity.",
+      "verification": "Actual Electron/browser UI connect/sync/readback/revoke/reload, keyboard/hover/focus and status/error/empty screenshot/ARIA assertions at tested revision.",
+      "missingPrerequisite": "Accepted runtime/UI bridge, live sandbox and locale-owner patches.",
+      "state": "PARTIAL_LOCAL_SURFACE_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "TasksPage:45,1210 imports/mounts strip; occurrenceFromCalendarEvent:50 emits local calendar-event ref. Published command transport :23515-23516 is not implemented in inspected calendar files.",
+      "requiredChange": "Root registers calendar.sync HTTP/nativeRPC and authorized event get/list/domain context resolver on accepted gateway; canonical event click/deep-link resolves actual authorized context, not a second Calendar surface.",
+      "verification": "Invoke same account sync via UI nativeRPC and authenticated HTTP with same canonical ref/result; reopen event link after reload; outsider gets denial, not title/total leakage.",
+      "missingPrerequisite": "Exact root-owned transport/resolver registration symbols from dependency receipts, not inspected or invented here.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "CalendarEvent:22-37 has scoped remote id/title/time/recurrence string/etag; calendarEventIdentity:103-106 scopes account/calendar/id. Rox2EntityRef:233-239 and binding machinery already exist.",
+      "requiredChange": "Reuse accepted registry/aliases for account/calendar/event sources, canonical revisions, recurrence master+exceptions/original instance key, iCalUID provenance and time semantics. No global UID merge or duplicate meeting identity.",
+      "verification": "Retry import and cross-account/calendar same remote id/UID assert exact stable canonical ids, separate sources/ACL and exception keys; ambiguous legacy aliases quarantine.",
+      "missingPrerequisite": "WP-02 accepted account/calendar kind mapping and alias/interface migration receipt.",
+      "state": "PARTIAL_LOCAL_MODEL_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "CalendarStore.exportJson/fromJson:47-60 and renderer localStorage:39-42 are current persistence; normative repository/migrations absent at inspection.",
+      "requiredChange": "Author six normative tables through accepted migrator, canonical source uniqueness, workspace/entity FKs, revision/schema checks, per-calendar cursors/generations/watch/expiry, durable tombstones/job leases; common receipts/outbox not duplicated. Local bundle becomes shared projection or explicit standalone state.",
+      "verification": "Restart service/client across sync transaction boundaries, assert exact canonical rows/receipt/cursor/outbox survive, unique counts, no recent-write loss; additive alias backfill quarantines ambiguous identity.",
+      "missingPrerequisite": "WP-02/03/04 migrations and lead resolution of two proposed WP-27 migration filenames.",
+      "state": "LOCAL_SERIALIZATION_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "CalendarStore.sync:120-158 returns void; connect/revoke directly mutate bundle, with no actor/revision/idempotency receipt.",
+      "requiredChange": "Implement calendar.sync and ConnectCalendar on WP-04 RoxCommand v2 with strict payload, transport actor, resource/execution grants, expectedRevision, request hash and stable receipt; provider unknown stays reconciling/ambiguous until verified.",
+      "verification": "Same key/same payload returns original effect/receipt after lost reply; changed payload conflicts, stale revision conflicts, malformed/schema-version/body-actor/workspace forgery rejected; no duplicate provider/job/domain effect.",
+      "missingPrerequisite": "Accepted common command transaction/result/error contract and policy hooks.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "CalendarAdapter.listEvents:14 only account/cursor; CalendarStore.accounts/events are local unfiltered arrays and no GetEvent.",
+      "requiredChange": "Authorized typed ListDelta/GetEvent and window/source query DTOs on proposed contracts/repository; stable authorized pagination and coverage, no hidden count/title. Map SyncCalendar connectionId/calendarId/cursor to canonical command account/per-calendar state.",
+      "verification": "Read exact synchronized event/ref/revision through API, multi-page stable cursor without duplicates; wrong account/workspace and revoked refs do not disclose private marker or total; uncovered range explicit.",
+      "missingPrerequisite": "Accepted query registration/policy interface and typed command/domain API reconciliation.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "CalendarStore only mutates bundle; CalendarStatusStrip.useState does not subscribe to durable domain events. WP-27 requires calendar.event_created/updated and cursor/watch verified changes (:23389-23412).",
+      "requiredChange": "Publish canonical changes with receipt in common transaction outbox, replay/inbox dedup and revision/policy/tombstone fences; subscribe existing projection to authorized invalidation/watermark. Treat watch as sync trigger, not authoritative event body.",
+      "verification": "Provider edit becomes exact revision in two clients; drop/double/reorder delivery then reconnect catches up exactly once, stale update cannot revive tombstone and outsider receives no private payload.",
+      "missingPrerequisite": "WP-04 accepted event outbox/inbox and WP-05 authorized projection subscription contracts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "CalendarStore only checks account status; occurrenceFromCalendarEvent:59-60 hardcodes editable/write. No principal/workspace resource policy in inspected module.",
+      "requiredChange": "WP-03 authorizes resource read/write/action and linked refs on transport principal; explicit outbound execution grant for connect/watch provider calls, recheck after await/policy changes. Projection exposes granted permissions, agent allow-all does not override.",
+      "verification": "A owner/B member/C outsider and viewer/allow-all agent tests: forged actor/workspace/ref and missing execution/resource grant deny without DB/provider side effect; revoke while provider response pending cannot apply/broadcast unauthorized data.",
+      "missingPrerequisite": "WP-03 policy epoch and revoke fence receipts plus accepted principal/execution grant mapping.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "CalendarAccount has credentialRef and scopedCalendarIds but no shared grant model; audit :60 says links do not grant access.",
+      "requiredChange": "Reuse WP-03 grants/source ownership for calendar/event shared visibility; link to context does not reveal private account data or extend permissions. Keep provider credentials out of DTOs; independently authorized sources survive another source revoke.",
+      "verification": "B reads only explicitly shared source/event; C cannot read via known ID, context backlink or API; revoke one source removes its private content but preserves permitted source and canonical referential consistency.",
+      "missingPrerequisite": "Accepted source/resource sharing policy and registry linkage API.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "Audit 12-calendar.md:43,64 requires authorized master search; no index consumer in current calendar imports. Full completeness and CALENDAR-01:126 require searchable title/date.",
+      "requiredChange": "Provide WP-06 canonical master/source/revision/policy projection from calendar outbox; query chooses permitted occurrence metadata without title leakage, applies tombstone/revoke before snippet. Reuse common search index.",
+      "verification": "Search exact synchronized marker after watermark, open actual event context; delete/revoke before consumer catch-up immediately hides snippet/title; replay after restart no duplicate/stale document.",
+      "missingPrerequisite": "WP-06 accepted consumer/authorized search contract and registration symbols; no separate calendar FTS store.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "occurrenceFromCalendarEvent:50 emits sourceRef; no occurrence-aware mention resolver in inspected files. Audit :44 requires EntityMention event ref+anchor.",
+      "requiredChange": "Supply accepted WP-09 resolver with canonical event/master ref, recurrence anchor and authorized preview/get; use shared relation/mention store and do not implicit-share when mentioned.",
+      "verification": "Mention synchronized event/exception resolves correct existing event context and date; outsider and revoked viewer see no title/attendee details; edit/remove occurrence updates backlinks without creating another master.",
+      "missingPrerequisite": "WP-09/WP-02 mention/link registration receipt and root-owned existing event detail resolver.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "CalendarStore proposals are local manual bridges, not durable attention; WP-27 featureCompleteness includes notifications and audit :52 requires occurrence/recipient dedup for due delivery intents.",
+      "requiredChange": "Route authorized calendar sync/mention attention through accepted WP-07 recipient/event/reason dedup contract; source changes/watch retries cannot fan out duplicate notifications. Preserve manually accepted local reminder proposals, not auto-task or ICS ingestion. Obtain owner-defined recipient semantics rather than inventing attendee spam.",
+      "verification": "Replay one qualifying calendar change/mention through restart and observe exactly one correct recipient notification, no unauthorized body/title and no notifications for unchanged upsert or duplicate watch.",
+      "missingPrerequisite": "WP-07 accepted calendar attention recipient/reason policy and durable consumer receipt.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "No calendar activity log in current module; normative calendar.created/updated must flow through common outbox, WP-07 plan defines SubscribeActivity/activity.recorded.",
+      "requiredChange": "Emit authorized activity facts from canonical changed revisions using common event/attention consumers, not UI timers or duplicate ledger; retain causation/correlation and no provider tokens/raw private payload logs.",
+      "verification": "Changed provider event yields one correct actor/source/ref/revision activity; duplicate delivery produces no second effect; revoked/private event absent to unauthorized subscriber.",
+      "missingPrerequisite": "WP-04 event contract and WP-07 authorized activity consumer registration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Audit :45-46 requires same domain API/GetEvent; no agent registration in scoped calendar code. Plan WP-36 defines delegated common domain commands.",
+      "requiredChange": "Expose authorized calendar read/sync via accepted delegated domain API and context refs; no raw CalendarBundle tool writer or separate calendar agent store. Agent resource permissions and explicit outbound execution grant remain enforced despite allow-all.",
+      "verification": "Native agent retrieves exact authorized synchronized event/ref/revision; viewer/outsider/allow-all cannot sync unauthorized account or access revoked marker; receipt matches human API and no provider side effect on denied action.",
+      "missingPrerequisite": "WP-36 accepted tool/delegation contract and root registration seam; user/agent actor mapping from WP-03.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Published calendar.sync nativeRpc/HTTP and ListDelta/HandleWatch/GetEvent contracts are applicable; current CalendarAdapter is only a local list port.",
+      "requiredChange": "Typed schema validation/common result for public command/query endpoints; root registers existing native/MCP domain dispatcher entries using transport principal and same policy/receipts. Webhook proof is separate from normal user auth and cannot be fabricated by passing watchEventKey alone.",
+      "verification": "HTTP/nativeRPC/native agent-MCP return canonical matching DTOs, strict unknown-field rejection, expected typed errors and no private data under forged/ref/revoked calls; unauthorized watch cannot enqueue.",
+      "missingPrerequisite": "Accepted transport/tool registries and canonical schema/errors from WP-04/36.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "SyncJournal only lastSyncAt/lastSyncedRevision/conflicts; WP-27 :23442-23452 requires commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark, retry/DLQ counters and privacy.",
+      "requiredChange": "Attach those accepted common fields to command/job/provider reconciliation/event/projection traces and receipts; account/channel references not raw tokens, titles, email/body/transcript. Distinguish reauth, 410 rebuild, unknown provider outcome and retry/DLQ.",
+      "verification": "Collect exact end-to-end correlated traces for sync, duplicate watch, 410 and crash recovery; counters reflect actual effects/backlog; secret/private marker scan is clean while receipts identify canonical outcome.",
+      "missingPrerequisite": "Common observability/receipt schema and root-approved privacy-safe sink.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Existing fixture calendar/occurrence tests are static evidence only. calendar.test.ts:245-255 never succeeds live; UI test asserts source strings instead of behavior. New integration/recovery paths absent.",
+      "requiredChange": "Implement normative wp-27 and google-calendar-sync-recovery suites after dependencies; migrate meaningful local regressions and delete implementation/source-text pinning. Keep deterministic failure cases isolated and live acceptance separately mandatory.",
+      "verification": "Future bun test tests/macro-integration/wp-27.test.ts tests/macro-integration/google-calendar-sync-recovery.test.ts plus relevant calendar/occurrence/i18n tests and actual UI/provider scenarios. Require passing exact assertions and caught mutation, not no-throw/nonempty/skipped live branch.",
+      "missingPrerequisite": "Runnable committed workspace service/DB interfaces, real sandbox credentials, approved scenario harness; tests forbidden during this preflight.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan WP-27 and 22-test-plan explicitly planned/not PASS; audit :66,71 explicitly static/no live runtime.",
+      "requiredChange": "Shared patch requests update actual contracts/migration/state/recovery/provider receipts and per-package boundary after proof; no completion flag or fake live evidence. Lead-owned progress only changes after acceptance.",
+      "verification": "Review docs against exact exercised revision/image/schema/provider environment and artifact references, explicit remaining later-package behavior; no secret values.",
+      "missingPrerequisite": "Implementation scenario receipts and lead documentation integration, not authorized report-worker edits.",
+      "state": "PLANNED_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "UnavailableCalendarAdapter throws; CalendarStatusStrip.connect:72-74 swallows errors. CalendarUiStatus:9 lacks denied/offline/retryable/verified outcomes.",
+      "requiredChange": "Map normative auth/workspace/payload/revision/idempotency/provider/unknown/schema/fence errors into honest UI states and actionable retry/reauth without fixture or connected-green fallback. Handle scope denial, rate limit/backoff and provider timeout distinctly.",
+      "verification": "Exercise unavailable, revoked scope, 429, timeout/unknown, stale revision, forbidden actor, 410 and fence pending; exact UI+receipt state matches and no falsely verified display or lost retry intent.",
+      "missingPrerequisite": "Accepted typed result/error/status contract, account capabilities and scenario harness.",
+      "state": "INCOMPLETE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "Current UI status pending only covers account; mutate asynchronously clones bundle without explicit sync loading/generation state.",
+      "requiredChange": "Expose connect/sync/rebuild loading with command/job receipt and coverage, never label complete before final snapshot/cursor verified. Keep previous authorized data marked stale/pending rather than publishing a partial rebuild as fresh.",
+      "verification": "Delay OAuth/list pages/readback and assert loading/pending remains until complete generation; crash on partial page retains last committed projection and retryable state.",
+      "missingPrerequisite": "Per-command/per-calendar projection state DTO and UI integration.",
+      "state": "INCOMPLETE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "CalendarStatusStrip:115-130 renders no event list when empty; none status conflates no account with disconnected/empty verified account.",
+      "requiredChange": "Distinguish verified empty synced calendar, no account, permission denied, unavailable, not-yet-covered range and pending rebuild using existing strip/context and localized help; no false fully-free or synchronized state.",
+      "verification": "Real empty sandbox after verified full sync versus disconnected/no-grant/unloaded range produces distinct expected state; deleting last provider event yields verified empty after tombstone/watermark, surviving local reminders unaffected.",
+      "missingPrerequisite": "Authorized query coverage and verified receipt projection; ten-locale labels.",
+      "state": "INCOMPLETE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Only renderer localStorage persistence exists; no calendar command outbox/replay. store.sync checks status after await but not policy epoch or shared writer mode.",
+      "requiredChange": "Use common WP-05 queue/cursor for calendar sync intent and projection; offline remains queued/not verified, restart restores pending receipt, reconnect reauthorizes before provider call/apply, revoked intent denied/quarantined. Preserve explicit standalone reminders.",
+      "verification": "Disconnect client/service before command and between commit/reply, restart/reconnect and assert one canonical effect/receipt/projection; revoke while queued causes no outbound call or leaked result, not green success.",
+      "missingPrerequisite": "WP-05 replay/projection and WP-03/WP-51 revoke/authority contract.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Restart between persisted command and reply; state/receipt/canonical ID remain consistent",
+      "currentEvidence": "CalendarStore serialized bundle can restore ids, but has no command receipt/transaction/outbox and no service job persistence.",
+      "requiredChange": "Persist calendar command intent/common receipt and canonical effects atomically; job/provider readback reconciliation uses same immutable source identity. Separate claimed lease from processed effect and recover from lost reply without new canonical IDs.",
+      "verification": "Kill after intent persist, after provider response, after canonical/outbox commit before reply and after inbox claim; resend identical command and compare exact receiptId/requestHash/ID/revision/source/tombstone counts and provider outcome. New key with different effect remains independent.",
+      "missingPrerequisite": "WP-04 recovery transaction interfaces, actual service/DB and controlled process-crash harness.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Negative control: unauthorized actor or dropped/duplicated event; expired token resurrects deleted event; independent holdout",
+      "currentEvidence": "Normative negative controls at :23419-23422,24231-24234; fixture local tests do not test durable delivery/real authorization/410 resurrection.",
+      "requiredChange": "Create deterministic seed 20260957 traces with deleted event and stale delta; evaluator mutation removing tombstone/generation/policy check must fail consumer-visible assertion. Independently inject second failure variant and distinguish infra failure from caught mutation.",
+      "verification": "Baseline real scenario passes; resurrection/forged-actor/dropped-or-duplicated-effect mutant fails named ID/revision/absence/ACL assertion; holdout catches distinct variant and retains trace, DB count, receipt and watermark artifacts.",
+      "missingPrerequisite": "Applied schema/full recovery implementation and independent evaluator/scenario runner, not source-text tests.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Preserve cursor/etag/localDirty, recurrence source ownership, all-day/timezone and standalone capabilities",
+      "currentEvidence": "store.sync:135-150 has useful dirty-only conflict behavior and :127 post-await revoke check; types identity scopes account/calendar; occurrences maps date by zone but uses RRULE as instance; tests cover local reminders and two-account deletion.",
+      "requiredChange": "Preserve those local behaviors through explicit authority mode while adopting per-calendar final cursor/generation and canonical aliases. Sync retains provider recurrence masters/exceptions and date-only exclusive end without implementing WP-28/29 mutations early; hardcoded write permission removed for shared DTO.",
+      "verification": "Relevant existing consumer-visible regressions plus exact remote-only etag update/no false conflict, dirty update/delete conflict, same remote id in two calendars, cancel exception/late page, DST Europe/Berlin and all-day end; offline standalone reminders survive provider revoke.",
+      "missingPrerequisite": "Accepted shared DTO mapping/backfill and calendar-area owner alignment with WP-28/29.",
+      "state": "PARTIAL_EXISTING_MECHANISMS_NOT_VERIFIED"
+    },
+    {
+      "criterion": "License policy and no feature completion until real changed surface/failure/reload evidence",
+      "currentEvidence": "WP-27 licensePolicy/verificationGate at :23482-23483 and test plan :7 demand behavior reimplementation and actual surface/provider proof; upstream links in audit are static evidence only.",
+      "requiredChange": "Reimplement observed behavior without copying upstream source; any upstream runtime dependency needs exact license audit. Bind delivery evidence to integrated revision/environment/schema and maintain featureComplete=false until all criteria including hidden gates verified.",
+      "verification": "Lead reviews dependency/license provenance and complete acceptance matrix with native UI, real Google independent readback, failure/reload/caught control receipts; fixtures or report-validator success never substitute.",
+      "missingPrerequisite": "Integrated implementation and complete observed acceptance evidence; no live/product operations authorized in preflight.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"apps/electron/src/renderer/pages/TasksPage.tsx","symbol":"TasksPage CalendarStatusStrip Today/Upcoming mount","lineStart":1210,"lineEnd":1210,"sha256":"f11b2be0c5c3c6655118ae883c34f9d289f96a61e6868f256e6c7f6eb51cafa9"},
+    {"path":"packages/core/src/calendar/types.ts","symbol":"CalendarAccount / CalendarEvent / SyncJournal / calendarEventIdentity","lineStart":11,"lineEnd":114,"sha256":"3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path":"packages/core/src/calendar/adapters.ts","symbol":"CalendarAdapter / createProductionAdapter / isCalendarConnectorWired","lineStart":4,"lineEnd":139,"sha256":"c762334baa96ea8685eeae5ce87179fb15ff1f24018b2dc1ffb05e48eb729997"},
+    {"path":"packages/core/src/calendar/store.ts","symbol":"CalendarStore.sync / markConnected / revoke / uiStatus","lineStart":98,"lineEnd":218,"sha256":"d6cb1872ea20c9068e9c7765c3c32dae8c3498497856ef7d46f5ad6692872038"},
+    {"path":"packages/core/src/calendar/occurrences.ts","symbol":"occurrenceFromCalendarEvent / occurrenceKey / dedupeOccurrences","lineStart":44,"lineEnd":94,"sha256":"2729411c6d3ffc7946ecda00ebdba3517ecd03679317243d5544ec88e498a1c7"},
+    {"path":"packages/core/src/calendar/calendar.test.ts","symbol":"production factory tests / live provider loop","lineStart":186,"lineEnd":255,"sha256":"3a330a32efb89454ff69084e4e508ad9abbea60948d397bd5252f3998ea8dc89"},
+    {"path":"packages/core/src/calendar/capabilities.ts","symbol":"CALENDAR_CAPABILITIES / capabilityFor","lineStart":3,"lineEnd":48,"sha256":"a7951b3aeec51c8a8dcc2b724e9313a26c01d7808b1bd7396c7f61c2939dbb94"},
+    {"path":"packages/core/src/calendar/merge.ts","symbol":"eventOverlapsLocalDay / mergeTodayUpcoming","lineStart":15,"lineEnd":44,"sha256":"1401f058fe868919d614a65d4a2baf0814932125230632855a8b8457006e4e52"},
+    {"path":"packages/core/src/calendar/__tests__/occurrences.test.ts","symbol":"TemporalOccurrence tests","lineStart":28,"lineEnd":65,"sha256":"d15bca4b636bfa7b345b7f71466bf2e91824b4fd730d1effe4d226e7bbd7fa68"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_ENTITY_KINDS","lineStart":17,"lineEnd":38,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef / Rox2ExternalBinding / entityRefFromBinding","lineStart":232,"lineEnd":329,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"apps/electron/src/renderer/components/calendar/CalendarStatusStrip.tsx","symbol":"loadStore / persist / connect / revoke / events.map","lineStart":13,"lineEnd":130,"sha256":"947c24f62f3d4ca6ea9c4c45fedf1ad37c36e3ee6539f65a875c2b1911dbefec"},
+    {"path":"apps/electron/src/renderer/components/calendar/CalendarConnectorChips.tsx","symbol":"CalendarConnectorChips","lineStart":8,"lineEnd":52,"sha256":"e3bfe51ba87da998f2b389cf81ca149f46e96ca58734fe985db51621027493d8"},
+    {"path":"apps/electron/src/renderer/components/calendar/__tests__/calendar-status-strip.test.ts","symbol":"Issue 18 calendar strip source-text tests","lineStart":5,"lineEnd":38,"sha256":"544ae86c9b266e832669f0dcb065c1d27252fde8ad9cbace5b1bb1dc77f7ec7b"},
+    {"path":"docs/macro-integration/12-calendar.md","symbol":"Target ROX calendar / authority and provider source audit","lineStart":3,"lineEnd":66,"sha256":"4a81b44f3d365143ad9cd6e92496671a7112b914aa1ea3cc16e6df35a97104ed"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-27 / foundation preamble / WP-05,06,07,09,36,51,52","lineStart":534,"lineEnd":554,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"CALENDAR-01 / shared authority and provider acceptance boundary","lineStart":115,"lineEnd":132,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"workPackages[WP-27]","lineStart":23334,"lineEnd":24327,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"workPackages[WP-52] operational prerequisite","lineStart":46885,"lineEnd":46938,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"}
+  ],
+  "nextExecutableAction": "Lead accepts this preflight, commits wave0 and supplies WP-02/03/04 accepted typed interface, migration and scenario receipts. Revalidate listed source hashes; re-read any drifted source, resolve account/calendar canonical kind mapping and the two proposed migration names, and obtain exact root transport/projection/credential registration seams. Then calendar-area owner implements normative contracts/provider/repository/generation sync in dependency order and requests the listed shared UI/core patches before enabling Google capability. Obtain real isolated Google readback/watch sandbox and cross-surface foundation receipts before running full acceptance; preflight verifier PASS is not feature completion.",
+  "risks": [
+    "Enabling Google connector without simultaneously removing CalendarStatusStrip demo path displays a fixture as a connected event.",
+    "CalendarStore.revoke leaves events visible; uiStatus connected can be forged by markConnected independent of actual OAuth receipt.",
+    "Only account-wide cursor exists; advancing after one page or mixing pageToken/syncToken loses pages, and upsert-only full refresh resurrects or retains deleted sources.",
+    "OAuth access expiry can be refreshed; revoked grant must stay unavailable. Treating all token errors as full sync conceals revoked scopes and can retry unauthorized work.",
+    "Current recurrenceInstance is RRULE text and occurrence permission is always write; recurrence anchors and ACL must become provider/authority-derived before shared use.",
+    "Same remote id across calendars/accounts and same iCalUID across inboxes cannot identity-merge. Current raw UI event keys/reminder lookup and dirty lookup omit complete scope.",
+    "Duplicate watch delivery prevention requires durable inbox and actual changed-revision checks, not just local event-array upsert; forged proof cannot enqueue even a deduped job.",
+    "Crash during watch renewal has external unknown outcome; persist and reconcile renewal state rather than claim connected from intended channel creation.",
+    "Existing production factory class assertions and fake live tests would reject legitimate live adapter; source-text UI tests can pass while showing demo events as live.",
+    "Published operational/cross-surface prerequisites exceed explicit WP-27 DAG; preserve exact edges but do not waive search/mentions/attention/agent/offline/single-writer acceptance.",
+    "WP-28/29 reuse owned normative calendar contract/command/repository paths; uncoordinated implementations create incompatible shared file edits. Root owns integration.",
+    "Two normative migration names and older audit's different illustrative paths require lead reconciliation, not duplicate domain tables or unapproved new owned files.",
+    "Inspecting working-tree files does not prove committed input_revision or deployment behavior; lead's ongoing integration can stale every source-backed request.",
+    "No live Google API/OAuth/UI/product test executed by authorization. Sandbox availability and all verification described here remain missing prerequisites, not reported failures or passes.",
+    "Calendar.status labels currently omit the full required states; all new user-facing strings need ten-locale parity under repository i18n rules.",
+    "WP-27 sync must preserve future mutation/recurrence/Meeting data contracts, but must not claim WP-28/29/30 create/drag/RSVP/Call implementation from this preflight."
+  ]
+}

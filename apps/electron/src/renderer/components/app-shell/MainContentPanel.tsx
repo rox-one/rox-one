@@ -50,6 +50,7 @@ import {
   knowledgeHomeViewAtom,
 } from '../../knowledge/KnowledgeHome'
 
+const SearchPage = React.lazy(() => import('@/pages/SearchPage'))
 const NotesPage = React.lazy(() => import('@/pages/NotesPage'))
 const ConnectionsPage = React.lazy(() => import('@/pages/ConnectionsPage'))
 const ExtraScreenHost = React.lazy(() => import('@/pages/extra-screens/ExtraScreenHost'))
@@ -108,6 +109,7 @@ export function MainContentPanel({
     workspaces,
     sessionStatuses,
     projects,
+    loadedProjects,
     labels,
     activeSessionWorkingDirectory,
   } = useAppShellContext()
@@ -345,7 +347,7 @@ export function MainContentPanel({
     }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <ProjectsHomeInMain projects={projects} workspaceId={activeWorkspaceId || ''} />
+        <ProjectsHomeInMain projects={loadedProjects ?? []} workspaceId={activeWorkspaceId || ''} />
       </Panel>
     )
   }
@@ -482,6 +484,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <ConnectionsPage />
+      </Panel>
+    )
+  }
+
+  if (navState.navigator === 'search') {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <SearchPage initialQuery={navState.query} />
       </Panel>
     )
   }

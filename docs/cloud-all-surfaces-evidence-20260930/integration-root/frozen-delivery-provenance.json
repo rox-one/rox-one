@@ -1,0 +1,713 @@
+{
+  "capturedAt": "2026-09-30T18:10:56.041319+00:00",
+  "branch": "cloud/all-surfaces-20260930",
+  "sourceCandidate": "500d5ab2d8f850a2b61346a281653522422d6fe5",
+  "frozenInputs": {
+    "main": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "september": "bac082301aed341fe078cb5bd539c4ba074560eb",
+    "compound": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+    "sqlitePublishedOwner": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+  },
+  "ordinaryMerges": [
+    {
+      "commit": "b30b4c67e00ca43d945076f471809278ced33363",
+      "parents": [
+        "ea083e387e170552ee6102e29c2cf31adc8b6973",
+        "8106f22185fb3b3e9a6a585320d48b1bf5f10fbd"
+      ],
+      "subject": "feat(integration): assemble September authority and scoped Compound surfaces"
+    },
+    {
+      "commit": "8851e8f9bd7ede447524dbe4e77c4234bee31da5",
+      "parents": [
+        "b30b4c67e00ca43d945076f471809278ced33363",
+        "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+      ],
+      "subject": "merge: include published September SQLite recovery owner result"
+    },
+    {
+      "commit": "19ee83bf4ef52140d6478395ccb984eef7eaf96f",
+      "parents": [
+        "8851e8f9bd7ede447524dbe4e77c4234bee31da5",
+        "8c1b8d95944cc21c4745484ba45edd0cf0afbb73"
+      ],
+      "subject": "merge: retain published UTB strict V1 starter and pending criteria"
+    },
+    {
+      "commit": "04246ceffee0b54819a6c9bf170c8fbf4169b04e",
+      "parents": [
+        "ff75a6421607efc18c165cac578216ef8808e449",
+        "bac082301aed341fe078cb5bd539c4ba074560eb"
+      ],
+      "subject": "merge: include published September scheduler and budget recovery"
+    },
+    {
+      "commit": "944662346b87020349f085a0a4d72d007db7ae44",
+      "parents": [
+        "04246ceffee0b54819a6c9bf170c8fbf4169b04e",
+        "3027028c6c8cb420efe3ea4b255ac725747de9e5"
+      ],
+      "subject": "merge: include published Compound project intents and licensed resources"
+    }
+  ],
+  "initialConflicts": [
+    {
+      "path": "apps/electron/src/preload/bootstrap.ts",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "ad5b3e5d35921abc836c8b44127a913d8cb9f242"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "b6febe1a45fc9f4d2a21453e1a58856c18556459"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "a3018e0621fce105a544bcea25434ef03d1df583"
+        }
+      },
+      "owner": "tests",
+      "resolution": "preserve native authority/caller fences/custody; additive Compound actor/contract integration"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "b6aec0ee45becfc14bb7586ab958a456ea3517d5"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "3c9e56178aaacfa767d49d18bbb254492afb5d72"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "671679a045f389466df4fc62d069498590fef955"
+        }
+      },
+      "owner": "sqlite_build_types",
+      "resolution": "preserve September Search/OKR/caller contracts; add Compound project/repository surfaces"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "cdd7d2919b47944002d65ba2bde0da6fb22104f3"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "59c4f7be0c4f35954d07be753951c74da0ef8326"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "a77b9dce37d12e2747401a05b14e8f5d566d76ac"
+        }
+      },
+      "owner": "sqlite_build_types",
+      "resolution": "preserve September Search/OKR/caller contracts; add Compound project/repository surfaces"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/personal-tasks-sync.ts",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "347f6bd8275a89d48d7d4c559fb7aea657dc9b78"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "735e7d373636939228c74a423fce5b03f2f80d23"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "1ec930eef7123c2622630a1415b75231a9420177"
+        }
+      },
+      "owner": "sqlite_tests",
+      "resolution": "native canonical writer/receipt/CAS plus scoped Compound descriptor/editor surfaces"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "cdd82d2cff3397934e661f8d5b86b413d7b3c680"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "3689658bc298b0f41e18218a665c064060e757bf"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "6fd89ea2e1302f8909a7a19871bdefb3bd556088"
+        }
+      },
+      "owner": "sqlite_tests",
+      "resolution": "native canonical writer/receipt/CAS plus scoped Compound descriptor/editor surfaces"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "d3cd3186fb2ad3f2c10420ee0d7ad0cdf36f70cd"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "ed3224436cccd6c616cc2335f1086b81162f3845"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "caa1d1d5ad6fff824f12722c2115ea6fbe5e87b3"
+        }
+      },
+      "owner": "sqlite_build_types",
+      "resolution": "preserve September Search/OKR/caller contracts; add Compound project/repository surfaces"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "bf3bb62808e1965cdc626aa39760550512ac015b"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "f2efed0773599f1d528b6788563a3230ae1ea28c"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "5fcdcaff86b9392b3beafb6c28bea26a10b7f5b7"
+        }
+      },
+      "owner": "sqlite_tests",
+      "resolution": "native canonical writer/receipt/CAS plus scoped Compound descriptor/editor surfaces"
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "90dc09619b19b007bbe24b0abb8c99d780f3c8b2"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "0e8d00388fddcc69f03142962e8511123a4f64ab"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "3844cd19805ea5574df5d33c5a98236549fc31f8"
+        }
+      },
+      "owner": "tests",
+      "resolution": "preserve native authority/caller fences/custody; additive Compound actor/contract integration"
+    },
+    {
+      "path": "docs/plan.md",
+      "stageBlobs": {
+        "2": {
+          "mode": "100644",
+          "blob": "0e1633492d0a5da6dc76189e63fd6c7ee708f331"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "a6d1094120121dd9a0a97c1f6383cf611cbcf873"
+        }
+      },
+      "owner": "root",
+      "resolution": "retain both complete original programme contracts; pending gates stay explicit"
+    },
+    {
+      "path": "docs/spec.md",
+      "stageBlobs": {
+        "2": {
+          "mode": "100644",
+          "blob": "637fdb3d124f344b9bb769c1eefca2c6d725520e"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "040e8007b418d2ab8224712b3029ac977f40cdd9"
+        }
+      },
+      "owner": "root",
+      "resolution": "retain both complete original programme contracts; pending gates stay explicit"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "0b8e29ddbd0f7cee9a992f977bc64abc004cd08d"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "d60c6a8df5645adc126d340264cfa5662dbdad20"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "617cce59bf647ea877451914b210e505cfeddbc8"
+        }
+      },
+      "owner": "tests",
+      "resolution": "preserve native authority/caller fences/custody; additive Compound actor/contract integration"
+    },
+    {
+      "path": "packages/server-core/src/transport/server.ts",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "56a0d1119a0dbd78ddee5a0f3522506080d93231"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "285eda37d64de65b082becef9b664a767c74c96a"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "d8d7da55c12fe971b7fb917a40f75dfd8bf9dcbb"
+        }
+      },
+      "owner": "tests",
+      "resolution": "preserve native authority/caller fences/custody; additive Compound actor/contract integration"
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "0f4ac98350961c721c2eb856c3a2c1fc4af1ea4c"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "83b013cffbb6d00d44e8537cab6478a8b290bc7a"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "9d2025e8e22463af7886bfd7b38970d8aa66dec9"
+        }
+      },
+      "owner": "tests",
+      "resolution": "preserve native authority/caller fences/custody; additive Compound actor/contract integration"
+    },
+    {
+      "path": "packages/shared/src/config/storage.ts",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "00b38a48330161d0d98a63b56ca941fb50d5aa35"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "3006b0f76b2e31356ed84b378dd59bfa2b9e7be6"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "1ad6ef521d8600ba52e78577c26494719de08de1"
+        }
+      },
+      "owner": "tests",
+      "resolution": "preserve native authority/caller fences/custody; additive Compound actor/contract integration"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ar.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "3515b2562c10abeb4678a8be6012c1d60608373a"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "db5b45e53804aeae28432f6d28daa787372068de"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "ee05877b572f1ef29ebc57ebed8f2ebe452c89df"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "851696ffee872ff709883f8bbd0a0389bd3cf97f"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "d72a2d254e457e93037c0fb85780f0b8b68ba8e3"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "6fdad8d598763ce1b475931323aad98ceb2dd8ae"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "e01f908925d757b54e1fc998c3936cb4f7391e83"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "c3bd3c45a802063d2e9a7ccf53f7d3ae88bac72d"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "3fcf16f8075444a5c40203b952b03a8fd68165f0"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "585cf54699a39e6f00cc8aeefaf3a53be3f60dc6"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "97f53a858846376fbcba41502cae5f54f8efbbd1"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "202061c2ae29a12332d05ef16f617c3a9a360a9e"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/fr.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "39a55330cd1801df5670ad0ec09de69be8952f5b"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "91476b49f60b9f12785e13ff1d2fef9c5c9739ad"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "887261fad4f86c3edd41d1f831cfd7ccf681b84e"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "58809915fff6bf3aa2ab77fa4dfa9e5f42679761"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "263559e6ad30d7d19965da8bddc9fbe8c56f3c86"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "ca724351a049a8180f843532dc2ce09c6b3a44c4"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "9324f1e2344be006b139d119690a4aa2f75d3f85"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "dae7ef6d9cd35331092e5318fc9664c7b509bc06"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "34f5e316997e1a285915869c6937109a3b8ba08e"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ko.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "518963b9b6ee9eaf5d29ebaded1146b1636f716a"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "50def4ff7fd422f05017239a8f91d13f346e3aab"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "25b37989dab69b99d656dca64410224ce76a5a8e"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "5e21dd4302f25478ab6ec1db0bd62b8e9cbabd27"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "9ec253017503b3d0ed7c6abe3439515ac31f96ed"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "d6f9585120f59ffda3240a22466a7a907439ff3d"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "60f32ea0681ad4247eaeb93685ca73b59b93d5d9"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "6965b90c4bc577dbe451eac8d0614ccbffced142"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "ac11aeea8ea0ee594613176b06bf53ef1625ebb5"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "30fa6e0c8c72ee1b1169e55b7be53dc7c2ad1b75"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "8f64efc8648b5c49d6808ed72a5b3f9e58ea198b"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "1f50212a689f404bf3f5d85cb37112b8ac650078"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "e0493898e414eee4633ef21bc4b7527ec920c4d3"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "7e3ea0942db5a6800953aecf602951b3a0f3f74e"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "f7bb69a1f55a39ccb58955e656592da226f96b80"
+        }
+      },
+      "owner": "root",
+      "resolution": "recursive semantic JSON union; zero divergent value conflicts"
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "9b43d0d54a797965b24750c44a47abf65d0a909f"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "366d010043a429a8b372f95a1aa5a296a47690e5"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "fbd62c4ef8ad028654a1e4e88393bcac818beba5"
+        }
+      },
+      "owner": "tests",
+      "resolution": "preserve native authority/caller fences/custody; additive Compound actor/contract integration"
+    },
+    {
+      "path": "packages/shared/src/utils/files.ts",
+      "stageBlobs": {
+        "1": {
+          "mode": "100644",
+          "blob": "fa2218d781b1eae9a899eca106f2fbb23b21e1f5"
+        },
+        "2": {
+          "mode": "100644",
+          "blob": "679a9a67ed7ee423286be1b0ae8720571131328c"
+        },
+        "3": {
+          "mode": "100644",
+          "blob": "6157559071eb2f54fad1dee7b61ee33f6fa40c48"
+        }
+      },
+      "owner": "tests",
+      "resolution": "preserve native authority/caller fences/custody; additive Compound actor/contract integration"
+    }
+  ],
+  "additionalConflictStages": [
+    {
+      "stage": "new-september",
+      "ours": "ff75a6421607efc18c165cac578216ef8808e449",
+      "theirs": "bac082301aed341fe078cb5bd539c4ba074560eb",
+      "conflicts": {
+        "docs/plan.md": {
+          "1": {
+            "mode": "100644",
+            "blob": "0e1633492d0a5da6dc76189e63fd6c7ee708f331"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "31ae88591de3741ecfefe96cb60d792ec30f4795"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "5ab2df07ef7fec91c6a993e18736e84fccfdd26b"
+          }
+        },
+        "docs/spec.md": {
+          "1": {
+            "mode": "100644",
+            "blob": "637fdb3d124f344b9bb769c1eefca2c6d725520e"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "1c9b06234c6c903cb2838e09ec6ba71d22e2cd68"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "05aba89a6d1c81cde0f75f39c35ac60d0b4285db"
+          }
+        }
+      }
+    },
+    {
+      "stage": "new-compound",
+      "ours": "04246ceffee0b54819a6c9bf170c8fbf4169b04e",
+      "theirs": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+      "conflicts": {
+        "packages/core/src/platform/identity/credential-types.ts": {
+          "1": {
+            "mode": "100644",
+            "blob": "ec964accaa4ec321d3345e6d8e44da70ce61cc22"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "7ab8134e08fb2e5e0f0381eee817862486bca65e"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "e87306826b2bbdd4b49363e901bb9d90476fa75b"
+          }
+        },
+        "packages/core/src/tasks/personal/things.test.ts": {
+          "1": {
+            "mode": "100644",
+            "blob": "48055167d5efce6507f9197dbe5ac25ae2984244"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "c6522a5d069d57457609d34b347bd4d5076f0ac3"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "30d09c2715e144cda8cea139412215e18e894be9"
+          }
+        },
+        "packages/server-core/src/transport/server.ts": {
+          "1": {
+            "mode": "100644",
+            "blob": "d8d7da55c12fe971b7fb917a40f75dfd8bf9dcbb"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "66c794602b12ed3633453062bf5551bd82197c32"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "3a923bac776a2e382f1642710b099628a964bedb"
+          }
+        },
+        "packages/server-core/src/transport/types.ts": {
+          "1": {
+            "mode": "100644",
+            "blob": "9d2025e8e22463af7886bfd7b38970d8aa66dec9"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "400f0630978a34248e866ca9fe38f9354373716a"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "b311bfc6462563a259e48184c403aa77142daa12"
+          }
+        },
+        "packages/shared/package.json": {
+          "1": {
+            "mode": "100644",
+            "blob": "8aef9290daf5eadbf0310340ee48c347b460e305"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "3ab345a488a31d7874446c407d033d40db2c78ac"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "0003aec8802eb7358d09e5fc2f12aa70dd1ddeec"
+          }
+        }
+      }
+    }
+  ],
+  "conflictInstances": 35,
+  "uniqueConflictPaths": 31,
+  "noBulkAuthorityOursTheirs": true,
+  "draftPR": 1322,
+  "acceptance": {
+    "UI": false,
+    "workspaceHookGuard": false,
+    "full109": false,
+    "full143": false,
+    "UTB": false,
+    "nativeMac": false,
+    "provider": false,
+    "iOS": false
+  },
+  "original": {
+    "head": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "status": [],
+    "lockSha256": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b"
+  },
+  "isolatedLockSha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1"
+}

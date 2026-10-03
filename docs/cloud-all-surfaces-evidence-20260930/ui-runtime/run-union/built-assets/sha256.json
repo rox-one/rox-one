@@ -1,0 +1,42 @@
+{
+  "apps/webui/dist/assets/main-CdNrFgjS.js": {
+    "sha256": "1edc630af4a8a6cbd878602eaa1a7d0b5c7d538f8ce970808917a3b68200e9a6",
+    "bytes": 32945
+  },
+  "apps/webui/dist/assets/main-CdNrFgjS.js.map": {
+    "sha256": "398d5519d437a63098515fb0f1baf653a853363606877d230c68da4643b8aa79",
+    "bytes": 119561
+  },
+  "apps/webui/dist/assets/browser-main-IINMPDA2.js": {
+    "sha256": "f27f93fc7961a2b240d111b159340824d6f75f3de77ea74395c577e9d34ca844",
+    "bytes": 10368966
+  },
+  "apps/webui/dist/assets/browser-main-IINMPDA2.js.map": {
+    "sha256": "b7166a52c22e2e630348bf9d720e454a3a30a5539210ff3732e9d0d7e4cb89f8",
+    "bytes": 18438238
+  },
+  "apps/webui/dist/assets/App-DWPMZl3t.js": {
+    "sha256": "002125dfaa66ca5f3aefa03859c5167a606c947f9ef4bfb2b6573dac523de042",
+    "bytes": 4425525
+  },
+  "apps/webui/dist/assets/App-DWPMZl3t.js.map": {
+    "sha256": "b244da9e2d50e697e844957720f85abe2a42cceea8a498b7003e72132cdc4226",
+    "bytes": 12097682
+  },
+  "apps/webui/dist/assets/NotesPage-BJ7j43ps.js": {
+    "sha256": "70f524bf0cffb202b306a40d33e658e28acbee8aeb3a16e34daa58b8439c490b",
+    "bytes": 281415
+  },
+  "apps/webui/dist/assets/NotesPage-BJ7j43ps.js.map": {
+    "sha256": "fc7c4254b9e45a2fb1659d33339950115ff88bd3b2f1e3d2fa422868e984446d",
+    "bytes": 1047201
+  },
+  "apps/webui/dist/assets/AppearanceSettingsPage-CCDYk9iv.js": {
+    "sha256": "66069be46e9a5e13c156ee44a6470a4c7d3bdf5d36148e17efa8f537d987d3c1",
+    "bytes": 23602
+  },
+  "apps/webui/dist/assets/AppearanceSettingsPage-CCDYk9iv.js.map": {
+    "sha256": "536df4b955bd041f91aabd5c142f588c1fa78e4433ae3dc77d4c2579794ae49b",
+    "bytes": 90492
+  }
+}

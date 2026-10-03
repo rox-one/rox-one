@@ -28,6 +28,7 @@ import type {
 } from '@craft-agent/shared/protocol'
 import type { SessionBundle, DispatchMode } from '@craft-agent/shared/sessions'
 import type { SessionProvenance } from '@craft-agent/shared/memory/types'
+import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
 import type { EventSink } from '../transport'
 
 export interface ISessionManager {
@@ -44,6 +45,9 @@ export interface ISessionManager {
   // ---------------------------------------------------------------------------
   // Session CRUD
   // ---------------------------------------------------------------------------
+
+  getAgentBudget(workspaceId: string, now?: number): AgentBudgetSnapshot
+  setAgentDailyBudget(workspaceId: string, limitUsd: number | null): AgentBudgetSnapshot
 
   getSessions(workspaceId?: string): Session[]
   getSession(sessionId: string): Promise<Session | null>
@@ -254,6 +258,14 @@ export interface ISessionManager {
   runDistillOneShot(workspaceId: string, prompt: string): Promise<string>
   refreshTitle(sessionId: string): Promise<{ success: boolean; title?: string; error?: string }>
   improveDraft(sessionId: string, text: string): Promise<{ success: boolean; text?: string; error?: string }>
+  /** Connection/model a sessionless one-shot on this workspace would use (Project screen AI). */
+  describeWorkspaceLlm?(workspaceId: string): { available: boolean; connectionName?: string; model?: string; reason?: string }
+  /** Sessionless one-shot on the workspace's default connection/model; throws the real provider error. */
+  queryWorkspaceLlm?(
+    workspaceId: string,
+    request: { prompt: string; systemPrompt?: string; maxTokens?: number; temperature?: number },
+    options?: { timeoutMs?: number },
+  ): Promise<{ text: string; model?: string; warning?: string }>
   /** One-shot LLM query on the session's connection/model; throws the real provider error. */
   querySessionLlm?(
     sessionId: string,

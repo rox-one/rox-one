@@ -1,0 +1,10 @@
+bun test v1.3.14 (0d9b296a)
+
+../../../workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/canonical-delivery-smoke.test.ts:
+(pass) actual canonical standalone distribution > runs shipped source/runtime, enforces auth, and restarts the same isolated profile [8194.36ms]
+(pass) actual canonical standalone distribution > refuses a short token before readiness without leaving listening endpoints [1450.66ms]
+
+ 2 pass
+ 0 fail
+ 56 expect() calls
+Ran 2 tests across 1 file. [9.70s]

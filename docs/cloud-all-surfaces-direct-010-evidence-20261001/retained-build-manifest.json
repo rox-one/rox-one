@@ -1,0 +1,244 @@
+{
+  "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "retainedAssetPaths": [
+    "apps/webui/dist/assets/App-BMOtAGvG.js",
+    "apps/webui/dist/assets/App-BMOtAGvG.js.map",
+    "apps/webui/dist/assets/AppSettingsPage-Bv03uDBM.js.map",
+    "apps/webui/dist/assets/AppearanceSettingsPage-DBtIkxjf.js.map",
+    "apps/webui/dist/assets/ConnectionsPage-EwawgRYb.js.map",
+    "apps/webui/dist/assets/InputSettingsPage-CliGm31Q.js.map",
+    "apps/webui/dist/assets/MessagingSettingsPage-jQAjkFXl.js.map",
+    "apps/webui/dist/assets/NotesPage-C609emN1.js.map",
+    "apps/webui/dist/assets/ProjectInfoPage-Cy_FrEyc.js.map",
+    "apps/webui/dist/assets/browser-main-DhhaAVnS.js",
+    "apps/webui/dist/assets/browser-main-DhhaAVnS.js.map",
+    "apps/webui/dist/assets/desktop-settings-session-BQdzCqF0.js.map",
+    "apps/webui/dist/assets/main-C_p8tRWb.js",
+    "apps/webui/dist/assets/main-C_p8tRWb.js.map",
+    "apps/webui/dist/index.html",
+    "apps/webui/dist/login.html",
+    "dist-server/index.js"
+  ],
+  "retainedSourcePaths": [
+    "apps/electron/src/renderer/App.tsx",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+    "apps/electron/src/renderer/components/app-shell/TopBar.tsx",
+    "apps/electron/src/renderer/components/projects/ProjectAuthorityConnectionPanel.tsx",
+    "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+    "apps/electron/src/renderer/hooks/useShellAppearance.ts",
+    "apps/electron/src/renderer/lib/authenticated-web-bootstrap.ts",
+    "apps/electron/src/renderer/lib/desktop-appearance.ts",
+    "apps/electron/src/renderer/lib/notes-capability.ts",
+    "apps/electron/src/renderer/lib/scoped-capability-read.ts",
+    "apps/electron/src/renderer/pages/NotesPage.tsx",
+    "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+    "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx",
+    "apps/electron/src/renderer/pages/settings/EnvironmentSettingsSection.tsx",
+    "apps/electron/src/renderer/pages/settings/MessagingSettingsPage.tsx",
+    "apps/electron/src/renderer/pages/settings/VoiceSettingsSection.tsx",
+    "apps/electron/src/renderer/pages/settings/ZenShellSettings.tsx",
+    "apps/electron/src/renderer/pages/settings/desktop-settings-session.ts",
+    "apps/electron/src/renderer/platform/ActivityRail.tsx",
+    "apps/electron/src/renderer/platform/ModeBar.tsx",
+    "apps/electron/src/renderer/shims/node-stub.ts",
+    "apps/webui/src/App.tsx",
+    "apps/webui/src/adapter/transport-bootstrap.ts",
+    "apps/webui/src/adapter/web-api.ts",
+    "apps/webui/src/browser-globals.ts",
+    "apps/webui/src/browser-main.tsx",
+    "apps/webui/src/main.tsx",
+    "apps/webui/vite.config.ts",
+    "packages/server-core/src/transport/client.ts",
+    "packages/shared/src/credentials/backends/secure-storage.ts"
+  ],
+  "files": {
+    "apps/electron/src/renderer/App.tsx": {
+      "sha256": "0166637fac1a74e75a0c3941a10cf3472e3dad74e6cabab394cb4a147616ecc5",
+      "bytes": 107896
+    },
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
+      "sha256": "93bdb6b27bb4d77e74fb94add93541aecd44311936be3c19444a6f36f26c7ba8",
+      "bytes": 153483
+    },
+    "apps/electron/src/renderer/components/app-shell/TopBar.tsx": {
+      "sha256": "9dda7a2054bbf81c425e1fdb57ba93906f9d2af08e603426a81936636626fead",
+      "bytes": 22853
+    },
+    "apps/electron/src/renderer/components/projects/ProjectAuthorityConnectionPanel.tsx": {
+      "sha256": "ea14d9f66b7bbae379d3da4b7963699933e0f227977a4a323fd8d2973b94c722",
+      "bytes": 8022
+    },
+    "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx": {
+      "sha256": "51c8ea4966db34a69fcbba373fb7adfaeac5e774d83c5c1355da1f0786e7e762",
+      "bytes": 17871
+    },
+    "apps/electron/src/renderer/hooks/useShellAppearance.ts": {
+      "sha256": "f4921754446af822323ccb82931d6c58796c58929c98bc914704103d08ec3514",
+      "bytes": 1433
+    },
+    "apps/electron/src/renderer/lib/authenticated-web-bootstrap.ts": {
+      "sha256": "a4b5ef761589b01c84b1ebbd3c3752c4c6e2d5f861b0ef80befa690a0118cc39",
+      "bytes": 1655
+    },
+    "apps/electron/src/renderer/lib/desktop-appearance.ts": {
+      "sha256": "2349c1b88d4816e67c5e618ecde3d9a68703bf8c9b862289549c0d9b57ad3cdd",
+      "bytes": 1434
+    },
+    "apps/electron/src/renderer/lib/notes-capability.ts": {
+      "sha256": "916fb784149b44f49747b19e465817a34414de59b4ab5008f8086db1297e68f6",
+      "bytes": 739
+    },
+    "apps/electron/src/renderer/lib/scoped-capability-read.ts": {
+      "sha256": "9fccbd0405966eec11c3af1ab3ad34f51d4d544e28e4f25adac10da2738fcb7c",
+      "bytes": 1823
+    },
+    "apps/electron/src/renderer/pages/NotesPage.tsx": {
+      "sha256": "89c3c2cb84a1ca7179a113d19ddaf0f3f5603f5bce18dfb28e325691a223dd21",
+      "bytes": 150196
+    },
+    "apps/electron/src/renderer/pages/ProjectInfoPage.tsx": {
+      "sha256": "b83429bf5f71889a88cf7ff037f6c9719391f6415038aeae8ef1642b78cad53f",
+      "bytes": 93087
+    },
+    "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx": {
+      "sha256": "0ff8b8d515db7ac909aa793ab453921b1749dd3d55bffd8689a35a7b5a6451d5",
+      "bytes": 37415
+    },
+    "apps/electron/src/renderer/pages/settings/EnvironmentSettingsSection.tsx": {
+      "sha256": "9bdf37f867d98e716a636fde00a2ecf7d474c30bd1a325c8e41bfb56acc225c7",
+      "bytes": 2475
+    },
+    "apps/electron/src/renderer/pages/settings/MessagingSettingsPage.tsx": {
+      "sha256": "21bd613afab305987037b1e46971b64b3587b86d9c44ef270d0a129d73c8b5b1",
+      "bytes": 38144
+    },
+    "apps/electron/src/renderer/pages/settings/VoiceSettingsSection.tsx": {
+      "sha256": "776e6554a8b2d3fb5b2498e10dcbdbc603eb22c1da8bf6d08d387d4ea3f9183b",
+      "bytes": 11965
+    },
+    "apps/electron/src/renderer/pages/settings/ZenShellSettings.tsx": {
+      "sha256": "9f94ccef93cf9114ee82eb6ec20721b1212b8175efbe753b9ab8b0a8340847a1",
+      "bytes": 3598
+    },
+    "apps/electron/src/renderer/pages/settings/desktop-settings-session.ts": {
+      "sha256": "44d27a47dbf603d8651e85dfddba7fe07633507c165f075918aef4e1f701ccbc",
+      "bytes": 4121
+    },
+    "apps/electron/src/renderer/platform/ActivityRail.tsx": {
+      "sha256": "91051d98844d2dcc568e88d22f0675082587d074f1bd2e25538ae69f7e359b93",
+      "bytes": 5127
+    },
+    "apps/electron/src/renderer/platform/ModeBar.tsx": {
+      "sha256": "0e32a53a4de5c54aecf7175803a1481434624df85b067994502acdfef4c2ea9c",
+      "bytes": 8456
+    },
+    "apps/electron/src/renderer/shims/node-stub.ts": {
+      "sha256": "c035a62e7608eae17c84c5a70f090f4e6f8d915e8167ae456b6fcfadafbffa89",
+      "bytes": 7690
+    },
+    "apps/webui/dist/assets/App-BMOtAGvG.js": {
+      "sha256": "e0d8023a866f7b04ce80f9a8e8f47dfa9023ba7bb7471d6548c36f674328e002",
+      "bytes": 4424217
+    },
+    "apps/webui/dist/assets/App-BMOtAGvG.js.map": {
+      "sha256": "ac18e11804a7847822ac8a0c377b29aef8f4a0eb3763b14c3e5e84d88e7f5f3f",
+      "bytes": 12097682
+    },
+    "apps/webui/dist/assets/AppSettingsPage-Bv03uDBM.js.map": {
+      "sha256": "8cd18cf309bada1567808fcc0682533e844709ae6c4d6e6160532a1146560f18",
+      "bytes": 37922
+    },
+    "apps/webui/dist/assets/AppearanceSettingsPage-DBtIkxjf.js.map": {
+      "sha256": "c7184a293b7b2ad00bb0206b56baba0d7df608237aea50d72137af56725f15cd",
+      "bytes": 90492
+    },
+    "apps/webui/dist/assets/ConnectionsPage-EwawgRYb.js.map": {
+      "sha256": "201f2f2ac1a3094385c9070fd347bb3ad47a01cb8df713abea50c7dfaaa9c8a1",
+      "bytes": 110926
+    },
+    "apps/webui/dist/assets/InputSettingsPage-CliGm31Q.js.map": {
+      "sha256": "39d9023786fa6e942e5ece5badc3bbef457056e3b0d2f4007d3f7da2f264dc42",
+      "bytes": 29904
+    },
+    "apps/webui/dist/assets/MessagingSettingsPage-jQAjkFXl.js.map": {
+      "sha256": "1aad1bfc1b555441e83fa4193d0389eb1e049532040b6e8fa2614b6bef8fb3e9",
+      "bytes": 143587
+    },
+    "apps/webui/dist/assets/NotesPage-C609emN1.js.map": {
+      "sha256": "cd1edf9a017eecb9128e2cfc47d0148cf3f6bc5ba5351ec095ca2e9c2ea40469",
+      "bytes": 1047201
+    },
+    "apps/webui/dist/assets/ProjectInfoPage-Cy_FrEyc.js.map": {
+      "sha256": "1661c4f73f678cfe118966a9d8910ef6ea7e3f280ef6250ae502f63d4ceaf79c",
+      "bytes": 404649
+    },
+    "apps/webui/dist/assets/browser-main-DhhaAVnS.js": {
+      "sha256": "c80807a25b27a817aa00dea4a70db39c83323f1d6b95c30d58e0382645efa70a",
+      "bytes": 10368726
+    },
+    "apps/webui/dist/assets/browser-main-DhhaAVnS.js.map": {
+      "sha256": "ecc9cc95efd28ed7c4847e9c9cf47476a4f9679914b4f653de1aefa8c688e160",
+      "bytes": 18438238
+    },
+    "apps/webui/dist/assets/desktop-settings-session-BQdzCqF0.js.map": {
+      "sha256": "5b0b01e3dd77e9a68d7ce49c0a6e93fa36c94ed238a2b181f4dfccf62b8e2332",
+      "bytes": 7241
+    },
+    "apps/webui/dist/assets/main-C_p8tRWb.js": {
+      "sha256": "42c107212df162cea09f9d1ef136fe5ab7bf108eb9b44ba47c495e715c202d96",
+      "bytes": 32945
+    },
+    "apps/webui/dist/assets/main-C_p8tRWb.js.map": {
+      "sha256": "7ecc43950ad2838a1092448d8778d40e8a304002897c329b092f9515e4e17c39",
+      "bytes": 119561
+    },
+    "apps/webui/dist/index.html": {
+      "sha256": "55dea0ec3407bc8c3c04614ccdf19c9031aa9c34b8a0728c38ba7db24d8c4766",
+      "bytes": 1767
+    },
+    "apps/webui/dist/login.html": {
+      "sha256": "e2b5ff3b6797dd07fea6edfe32051d8db3461c78ce6244ed00d42669615c5cfa",
+      "bytes": 9998
+    },
+    "apps/webui/src/App.tsx": {
+      "sha256": "c93437c66512b832546c83702c2b9b2a7f9efef331f3db106d31864eb1626fcc",
+      "bytes": 4970
+    },
+    "apps/webui/src/adapter/transport-bootstrap.ts": {
+      "sha256": "0981891835ea47464a5199db85acb48d9a669a2097c8cfe1504ce3ac468b9677",
+      "bytes": 4455
+    },
+    "apps/webui/src/adapter/web-api.ts": {
+      "sha256": "e992b324aa4e5e3afd214394c9ef653eb08efcde0d41e1be3452630541809e67",
+      "bytes": 14980
+    },
+    "apps/webui/src/browser-globals.ts": {
+      "sha256": "c114404ac1f9d85605fa6babb6c4805208a5ae9cfdcc90486c54212ddc0fcfc9",
+      "bytes": 467
+    },
+    "apps/webui/src/browser-main.tsx": {
+      "sha256": "5a028ac0426cb369e4724767c25044fbf9cab08945fc0514894285862ba0ece9",
+      "bytes": 1811
+    },
+    "apps/webui/src/main.tsx": {
+      "sha256": "548b1f13fbc2ae3cc6c381650a5b4529454111c1a647729690293126999a2f29",
+      "bytes": 199
+    },
+    "apps/webui/vite.config.ts": {
+      "sha256": "78e56c32f33c8caae4f7a7c3a0f7ee31b2a23a3d2b3f211a52ca714de6474923",
+      "bytes": 7548
+    },
+    "dist-server/index.js": {
+      "sha256": "18c10e1f93660543dd9c6d474ab010b182e17d25562feefd7f622eb7684a360a",
+      "bytes": 36851872
+    },
+    "packages/server-core/src/transport/client.ts": {
+      "sha256": "946b92dc1bdd11b2685b32cdfef24de0d010d0dc193df307221941c622dac342",
+      "bytes": 38276
+    },
+    "packages/shared/src/credentials/backends/secure-storage.ts": {
+      "sha256": "5127a51963ccc422b1a2ddec397c5beb4500afde17ba6eb523d89a2658e104fd",
+      "bytes": 35440
+    }
+  }
+}

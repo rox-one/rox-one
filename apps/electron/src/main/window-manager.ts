@@ -1,4 +1,4 @@
-import { BrowserWindow, shell, nativeTheme, Menu, app } from 'electron'
+import { BrowserWindow, shell, nativeTheme, Menu, app, ipcMain } from 'electron'
 import { windowLog } from './logger'
 import { join, resolve, sep } from 'path'
 import { existsSync } from 'fs'
@@ -58,12 +58,15 @@ export interface CreateWindowOptions {
 export class WindowManager {
   private windows: Map<number, ManagedWindow> = new Map()  // webContents.id → ManagedWindow
   private focusedModeWindows: Set<number> = new Set()  // webContents.id of windows in focused mode
-  private pendingCloseTimeouts: Map<number, NodeJS.Timeout> = new Map()  // Fallback timeouts for window close
+  private lastActiveWindowId: number | null = null
   private eventSink: ((channel: string, target: import('@craft-agent/shared/protocol').PushTarget, ...args: any[]) => void) | null = null
   private clientResolver: ((wcId: number) => string | undefined) | null = null
   private keyboardCloseIntents: Set<number> = new Set()  // webContents.id flagged by Cmd/Ctrl+W before close
   private keyboardCloseIntentTimeouts: Map<number, NodeJS.Timeout> = new Map()  // Auto-clear stale keyboard-close intents
+  private pendingCloseTimeouts: Map<number, NodeJS.Timeout> = new Map()
   private isAppQuitting = false  // Skip layered close interception during app quit
+  private miniWindows: Map<number, { bounds: Electron.Rectangle; alwaysOnTop: boolean }> = new Map()
+  private miniExitHandlerRegistered = false
 
   /**
    * Set the event sink and client resolver for pushing events via the RPC server
@@ -196,6 +199,7 @@ export class WindowManager {
    */
   createWindow(options: CreateWindowOptions): BrowserWindow {
     const { workspaceId, focused = false, initialDeepLink, restoreUrl } = options
+    this.registerMiniWindowExitHandler()
 
     // Load platform-specific app icon
     // In packaged app, resources are at dist/resources/ (same level as __dirname)
@@ -358,6 +362,7 @@ export class WindowManager {
     // __get-workspace-id (via sendSync) which reads this map during eval.
     const webContentsId = window.webContents.id
     this.windows.set(webContentsId, { window, workspaceId })
+    this.lastActiveWindowId = webContentsId
 
     // Apply window-title policy now that the map size reflects this window —
     // covers both the new window and any existing windows that should switch
@@ -443,6 +448,7 @@ export class WindowManager {
         failLoadRetries++
         windowLog.info(`Retrying Vite dev server (attempt ${failLoadRetries}/5)...`)
         setTimeout(() => {
+          if (window.isDestroyed()) return
           const params = new URLSearchParams({ workspaceId }).toString()
           window.loadURL(`${VITE_DEV_SERVER_URL}?${params}`)
         }, 1000)
@@ -477,8 +483,16 @@ export class WindowManager {
     }
     nativeTheme.on('updated', themeHandler)
 
+    // On macOS, minimize into a compact, in-place session surface rather than
+    // hiding the app. Other platforms retain native minimize behavior.
+    window.on('minimize', () => {
+      if (process.platform !== 'darwin' || this.isAppQuitting || this.miniWindows.has(webContentsId)) return
+      window.restore()
+      this.enterMiniWindow(window, webContentsId)
+    })
     // Handle focus/blur to broadcast window focus state
     window.on('focus', () => {
+      this.lastActiveWindowId = webContentsId
       this.pushToWindow(window, RPC_CHANNELS.window.FOCUS_STATE, true)
     })
     window.on('blur', () => {
@@ -568,7 +582,9 @@ export class WindowManager {
 
       nativeTheme.removeListener('updated', themeHandler)
       this.windows.delete(webContentsId)
+      if (this.lastActiveWindowId === webContentsId) this.lastActiveWindowId = null
       this.focusedModeWindows.delete(webContentsId)
+      this.miniWindows.delete(webContentsId)
       // Re-apply window-title policy — surviving windows revert from workspace
       // name back to app name when the count drops from 2 → 1.
       this.refreshWindowTitles()
@@ -592,6 +608,56 @@ export class WindowManager {
 
     return window
   }
+
+  private registerMiniWindowExitHandler(): void {
+    if (this.miniExitHandlerRegistered) return
+    this.miniExitHandlerRegistered = true
+    ipcMain.handle('window:exit-mini', (event) => {
+      const managed = this.windows.get(event.sender.id)
+      if (!managed || managed.window.isDestroyed() || !this.miniWindows.has(event.sender.id)) return false
+      this.exitMiniWindow(managed.window, event.sender.id)
+      return true
+    })
+  }
+
+  private setMiniRoute(window: BrowserWindow, mini: boolean): void {
+    try {
+      const url = new URL(window.webContents.getURL())
+      if (mini) url.searchParams.set('mini', 'true')
+      else url.searchParams.delete('mini')
+      void window.webContents.executeJavaScript(`history.replaceState(history.state, '', ${JSON.stringify(url.toString())}); window.dispatchEvent(new Event('resize'))`)
+        .catch((error) => windowLog.warn(`Failed to ${mini ? 'enter' : 'exit'} mini session route:`, error))
+    } catch (error) {
+      windowLog.warn(`Failed to ${mini ? 'enter' : 'exit'} mini session route:`, error)
+    }
+  }
+
+  private enterMiniWindow(window: BrowserWindow, webContentsId: number): void {
+    if (window.isDestroyed() || this.miniWindows.has(webContentsId)) return
+    this.miniWindows.set(webContentsId, {
+      bounds: window.getBounds(),
+      alwaysOnTop: window.isAlwaysOnTop(),
+    })
+    this.setMiniRoute(window, true)
+    window.setMinimumSize(320, 100)
+    window.setSize(420, 150, true)
+    window.setAlwaysOnTop(true, 'floating')
+    window.show()
+    window.focus()
+  }
+
+  private exitMiniWindow(window: BrowserWindow, webContentsId: number): void {
+    const previous = this.miniWindows.get(webContentsId)
+    if (!previous || window.isDestroyed()) return
+    this.miniWindows.delete(webContentsId)
+    window.setAlwaysOnTop(previous.alwaysOnTop)
+    window.setMinimumSize(800, 600)
+    window.setBounds(previous.bounds, true)
+    this.setMiniRoute(window, false)
+    window.show()
+    window.focus()
+  }
+
 
   /**
    * Get window by webContents.id (used by IPC handlers instead of BrowserWindow.fromId)
@@ -731,6 +797,7 @@ export class WindowManager {
   registerWindow(window: BrowserWindow, workspaceId: string): void {
     const webContentsId = window.webContents.id
     this.windows.set(webContentsId, { window, workspaceId })
+    if (window.isFocused()) this.lastActiveWindowId = webContentsId
     // Re-apply window-title policy after re-registration (e.g. post-refresh).
     this.refreshWindowTitles()
     windowLog.info(`Registered window ${webContentsId} for workspace ${workspaceId}`)
@@ -766,11 +833,18 @@ export class WindowManager {
     return this.getAllWindows().map(managed => {
       const webContentsId = managed.window.webContents.id
       const isFocused = this.focusedModeWindows.has(webContentsId)
-      const url = managed.window.webContents.getURL()
+      let url = managed.window.webContents.getURL()
+      try {
+        const parsed = new URL(url)
+        parsed.searchParams.delete('mini')
+        url = parsed.toString()
+      } catch {
+        // Keep malformed/empty URLs absent from restore state.
+      }
       return {
         type: 'main' as const,
         workspaceId: managed.workspaceId,
-        bounds: managed.window.getBounds(),
+        bounds: this.miniWindows.get(webContentsId)?.bounds ?? managed.window.getNormalBounds(),
         ...(isFocused && { focused: true }),
         ...(url && { url }),
       }
@@ -789,7 +863,8 @@ export class WindowManager {
    */
   getFocusedWindow(): BrowserWindow | null {
     const focused = BrowserWindow.getFocusedWindow()
-    if (focused && !focused.isDestroyed()) {
+    if (focused && !focused.isDestroyed() && this.windows.has(focused.webContents.id)) {
+      this.lastActiveWindowId = focused.webContents.id
       return focused
     }
     return null
@@ -800,19 +875,21 @@ export class WindowManager {
    * Falls back to any available window if none focused
    */
   getLastActiveWindow(): BrowserWindow | null {
-    // First try focused window
     const focused = this.getFocusedWindow()
-    if (focused) {
-      return focused
+    if (focused) return focused
+
+    if (this.lastActiveWindowId !== null) {
+      const lastActive = this.windows.get(this.lastActiveWindowId)?.window
+      if (lastActive && !lastActive.isDestroyed()) return lastActive
+      this.lastActiveWindowId = null
     }
 
-    // Fall back to any available window
     const allWindows = this.getAllWindows()
-    if (allWindows.length > 0) {
-      return allWindows[0].window
-    }
+    if (allWindows.length === 0) return null
+    const fallback = allWindows[0].window
+    this.lastActiveWindowId = fallback.webContents.id
+    return fallback
 
-    return null
   }
 
   /**

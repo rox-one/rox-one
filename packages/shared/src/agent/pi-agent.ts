@@ -49,6 +49,7 @@ import { EventQueue } from './backend/event-queue.ts';
 import { getSystemPrompt } from '../prompts/system.ts';
 import { getCoAuthorPreference } from '../config/preferences.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
+import { loadProjectRoadmapPromptText } from '../projects/roadmap-storage.ts';
 import type { ProjectPromptContext } from '../projects/types.ts';
 
 // Credential manager for token storage
@@ -228,6 +229,7 @@ export class PiAgent extends BaseAgent {
         })),
         memoryPath: getProjectMemoryPath(root, slug),
         memoryContent: loadProjectMemory(root, slug) ?? undefined,
+        roadmapContent: loadProjectRoadmapPromptText(root, slug),
       };
     } catch (error) {
       this.debug(`[resolveProjectContext] Failed to load project ${projectId}: ${error instanceof Error ? error.message : error}`);

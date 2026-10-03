@@ -79,6 +79,13 @@ describe('cron-matcher', () => {
     expect(matchesCron('0 12 * * 3')).toBe(false);
   });
 
+  it('uses named-zone instants for both fall-back occurrences and skips spring-forward gaps', () => {
+    expect(matchesCron('30 1 * * *', 'America/New_York', '2026-11-01T05:30:00Z')).toBe(true);
+    expect(matchesCron('30 1 * * *', 'America/New_York', '2026-11-01T06:30:00Z')).toBe(true);
+    expect(matchesCron('30 1 * * *', 'UTC', '2026-11-01T05:30:00Z')).toBe(false);
+    expect(matchesCron('30 2 * * *', 'America/New_York', '2026-03-08T07:30:00Z')).toBe(false);
+    expect(matchesCron('30 2 * * *', 'America/New_York', '2026-03-09T06:30:00Z')).toBe(true);
+  });
   it('should return false for invalid cron expression', () => {
     const errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     expect(matchesCron('invalid cron')).toBe(false);

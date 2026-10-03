@@ -1,0 +1,463 @@
+{
+  "task_id": "WP-41-preflight",
+  "attempt_id": "4e2d149b3cbdcb63732e96263453d2d2",
+  "packet_hash": "4f82e3e0b7f9b9cd58b12b538e1f579576838a5a9b3534b9c962b35dc3edd226",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-41",
+  "featureComplete": false,
+  "mode": "inspect-only; owned report artifact only",
+  "workTier": "bounded-workflow",
+  "evidenceStatus": {
+    "basis": "Actual working-tree source and published specifications, not a claim that inspected bytes equal the input Git revision. Root-owned wave0 changes were not touched. No Git commands were run.",
+    "specManifestSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "freshness": "Whole-file hashes identify inspected source snapshots. Concurrent integration may invalidate them; the supplied report verifier checks current hashes. Re-read changed seams after the wave0 commit before implementation.",
+    "runtime": "NOT_RUN: builds, tests, native UI and network operations prohibited for this preflight. All future verification below is proposed, not observed.",
+    "capabilities": "Codegraph returned no index for this repository; used read/grep/glob instead without initializing an index.",
+    "artifactPresence": "Directory reads of packages/shared/src, apps and tests show no workspace-domain directory, workspace-service app or macro-integration test directory at inspection. The five normative artifacts are proposed, not existing implementations.",
+    "ownership": "Only plans/compound-implementation/worker-reviews/WP-41.json is writable by this worker; ownedNewFiles below describes normative future artifacts, not current write authorization. Repeated command-module paths require a shared integration owner."
+  },
+  "dependencies": ["WP-10", "WP-15", "WP-16", "WP-21", "WP-26", "WP-29", "WP-34", "WP-35", "WP-37", "WP-38", "WP-39", "WP-40", "WP-50", "WP-51"],
+  "dependencyReceiptContract": {
+    "requiredForEveryExplicitDependency": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "state": "No accepted dependency receipts supplied or established by this preflight. The dispatch packet depends_on=[] describes preflight scheduling, not permission to start feature implementation.",
+    "implementationStart": "Lead wave0 commit followed by accepted dependency receipts in dependency order. Domain interfaces must be re-inspected on that committed revision."
+  },
+  "foundationGates": [
+    {
+      "gate": "Authenticated principal and resource authorization foundation",
+      "packages": ["WP-01", "WP-02", "WP-03", "WP-04"],
+      "relationship": "Transitive foundation, not additional explicit WP-41 edges",
+      "evidence": "docs/macro-integration/21-implementation-plan.md:5,15-25; RequestContext:7-11 has only clientId/workspaceId/webContentsId; authorizeWorkspace:38-55 checks workspace equality, not membership/resource ACL; gateway decisions hard-code owner at 89-94 and 110.",
+      "requiredReceipt": "Transport-derived principal, canonical registry, current resource grants and durable v2 command/outbox contracts. Do not implement shared audit on local PendingCommandsStore."
+    },
+    {
+      "gate": "Real editor binding and CRDT causal durability",
+      "packages": ["WP-49", "WP-05", "WP-10", "WP-15", "WP-51"],
+      "relationship": "WP-49/05 are hidden/transitive gates; WP-10/15/51 remain explicit dependencies",
+      "evidence": "Implementation plan:5 requires WP-49 and WP-51 before Page; test plan:36-58 and 233 require concurrent/offline/selective-undo/anchor behavior, durable ACK and revoke fencing.",
+      "requiredReceipt": "Accepted editor-binding decision and real CRDT WAL/frontier/snapshot/fence interfaces; broken CRDT controls cannot be tested with fixed text fixtures."
+    },
+    {
+      "gate": "Cold isolated runtime and provider/media sandbox",
+      "packages": ["WP-52"],
+      "relationship": "Not in direct WP-41 dependency array; operational readiness is required by seven-scenario acceptance",
+      "evidence": "Implementation plan:1038-1055 requires PostgreSQL/object/LiveKit probes and fail-closed capabilities. Test plan:7,28,115-157 requires actual provider accounts, independent read-back, remote media and finalized recording objects.",
+      "requiredReceipt": "Authenticated multi-client runtime; isolated mail/calendar accounts, SFU/TURN/egress/object/STT capability receipts and credential references, not secrets. The WP-41 fixture phrase 'not needed unless operation outbound' cannot waive outbound scenarios."
+    },
+    {
+      "gate": "Shared command-module ownership and selected migrator",
+      "packages": ["WP-04", "WP-06", "WP-51"],
+      "relationship": "Shared file integration gate, not a new store or alternative service",
+      "evidence": "Implementation plan:7,90,1028 repeats command module paths; work-packages.json:37926-37966 defines proposed migration identifier and common constraints.",
+      "requiredReceipt": "One accepted owner/interface for commands/contracts.ts, commands.ts and repository.ts, selected migration naming/tooling and additive test_receipt migration. Existing file-based local approval persistence is not shared command/outbox persistence."
+    },
+    {
+      "gate": "Disaster-restore operations interface and end-to-end retention evidence",
+      "packages": ["WP-47", "WP-52"],
+      "relationship": "Published restore integration requirement absent from WP-41 direct edges; obtain operations interface without inventing a DAG edge or cycle",
+      "evidence": "Implementation plan:5 calls WP-47 final restore/retention E2E; test plan:193 requires backup-to-fresh-restore E2E and DLQ replay; :247 makes disaster restore a WP-41 release gate. WP-41 lists RestoreSnapshot/ReplayOutbox but no detailed schemas for those names in the inspected specification.",
+      "requiredReceipt": "Lead-coordinated snapshot/restore/replay interface, object manifest, migration receipts and projection checkpoints. Do not mark restore N/A or accept a copied fixture as recovery."
+    },
+    {
+      "gate": "Real UI/scenario harness and independent negative-control evaluator",
+      "packages": ["WP-41", "WP-46"],
+      "relationship": "Harness readiness gate; WP-46 is a downstream consumer, not an implementation prerequisite to add as an edge",
+      "evidence": "Test plan:32 defines proposed markers, not existing selectors; :36-177 specifies seven actual UI scenarios; :239 requires baseline-first mutations and independent evaluator; implementation plan:925 lists WP-46 dependency WP-41.",
+      "requiredReceipt": "Runnable existing-surface Electron/web/agent drivers with owned actor profiles, domain-based readiness, seeded failure injection and independent holdout. Request selectors from surface owners; do not wait for a downstream WP-46 completion receipt."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/commands/contracts.ts",
+    "apps/workspace-service/src/modules/commands/commands.ts",
+    "apps/workspace-service/src/modules/commands/repository.ts",
+    "tests/macro-integration/wp-41.test.ts",
+    "apps/workspace-service/migrations/41-domain-contract.sql"
+  ],
+  "normativeArtifactContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/commands/contracts.ts",
+      "change": "Extend the accepted common commands contract with audit.validateScenario request schema: scenarioId and fixtureId required strings length 1..10000; seed required integer >=0; additionalProperties false. Use accepted RoxCommand v2 envelope and typed result/ports for conformance, snapshot restore and outbox replay. Reject body actor; no provider/service I/O. Compile/schema-check the seven-value response status against the preserved triad; do not define a second canonical result model.",
+      "ownership": "Shared with foundation command packages; submit through common owner after accepted interface. New proposed names are not existing symbols."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/commands/commands.ts",
+      "change": "Add the audit.validateScenario implementation to accepted command dispatch. Resolve fixture/scenario in the isolated workspace; derive actor from transport, check resource/operator and execution grants, validate idempotency/request hash and mutable expected revision. Persist pending receipt before work; only record verified outcomes after actual scenario evidence and independent read-back. Reuse accepted restore/replay ports and preserve queued/ambiguous/pending_fence/unavailable results.",
+      "ownership": "Shared common command module; no replacement of WP-04/06/51 implementation."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/commands/repository.ts",
+      "change": "Add test_receipt access to the existing transaction/repository boundary; atomically persist audit validation receipt and audit.validation_recorded outbox event. Reuse common command_receipt, inbox and lease/revision/policy fences. Persist seed, fixture and artifact hashes, canonical refs/revisions, watermarks and failure history without raw content. Restore uses accepted operations ports, not another domain store.",
+      "ownership": "Shared common repository module; composition root alone constructs provider adapters."
+    },
+    {
+      "path": "tests/macro-integration/wp-41.test.ts",
+      "change": "Implement release-gate orchestration/assertions for COLLAB-01, CHAT-TASK-01, CRM-INGEST-01, CRM-DISCUSS-01, CALENDAR-01, CALL-01 and ACCOUNT-01 using accepted surface drivers. Add deterministic ACL, event drop/duplicate, CRDT and dependency-removal controls plus independent second variant; test fresh restore and crash-after-commit-before-reply consistency. Preserve attempts and fixture seed 20260971; baseline infrastructure errors cannot count as caught controls.",
+      "ownership": "WP-41-specific normative test; tests are not run during preflight."
+    },
+    {
+      "path": "apps/workspace-service/migrations/41-domain-contract.sql",
+      "change": "Add isolated test_receipt table with typed receipt key, workspace UUID, schema_version >0, revision >=0, timestamps and accepted receipt/evidence references. Reuse existing command idempotency, alias uniqueness and consumer/event uniqueness constraints; do not recreate common tables. Record migration and backup receipts, restored checkpoints and watermark verification. Actual filename comes from selected migrator; never fabricate a timestamp or delete recent shared writes on rollback.",
+      "ownership": "Proposed normative identifier; migrator and schema owner gate final naming/DDL."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2Status / Rox2CanonicalResult / Rox2Receipt / liveResult / isClaimableLive",
+      "change": "Preserve executionMode/lifecycle/verification and existing claimability; add only the accepted typed audit receipt metadata/result adapter needed to carry commandId/requestHash/receiptId/observedRevision/verifiedAt and map the operation's seven response states. Never label fixture, queued, unknown provider or receipt-only checks as readback_verified. Core remains I/O-free.",
+      "reason": "The current triad is reusable, but Rox2Receipt lacks audit command/request/receipt identifiers and the normative response is not the current Rox2CanonicalResult shape. Common owner must resolve that contract mismatch."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2Event / isAuditableRox2Event / Rox2EntityRef / registerExternalBinding / ROX2_RELATION_RULES / wouldCreateRelationCycle",
+      "change": "Use existing refs, namespace binding and relation rules as conformance oracles, not an audit-only graph. Add accepted scoped durable-event metadata for audit.validation_recorded including command/cause/correlation, aggregate revision, policy epoch and projection checkpoint; validate required fields at the domain boundary. Reuse foundation event extensions if already integrated.",
+      "reason": "Current Rox2Event causation/correlation/revision are optional and no policyEpoch/watermark appears in this inspected type; WP-41 observability and restore assertions require stronger durable-event evidence."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext / RpcHandlerOptions",
+      "change": "Consume WP-01's accepted server-derived authenticated principal/acting-user and explicit authority-mode context. Keep renderer/workspace identity separate; require authenticated resource policy for shared audit operations, explicit local standalone mode for old local approvals. Request any missing context typing from the transport owner rather than trusting actor in payload or using localElectron restriction as shared ACL.",
+      "reason": "RequestContext currently has no principal or resource authority. RpcHandlerOptions.access currently only supports localElectron, which is not multi-user resource authorization."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/command-gateway.ts",
+      "symbol": "HANDLED_CHANNELS / registerCommandGatewayHandlers / authorizeWorkspace / requireStore",
+      "change": "Register native channel domain.audit.validateScenario and route validated RoxCommand v2 to the accepted workspace command service under transport-derived actor, resource ACL, expected revision and idempotency. Expose accepted restore/replay contracts through their coordinated authority boundary. Reject actor/workspace forgery and serialize authorized DTOs only. Preserve existing LIST/APPROVE/DENY local PendingCommandsStore path and its explicit standalone routing.",
+      "reason": "Current three-channel handler checks only workspace equality, collapses invalid inputs to INVALID_REF and hard-codes owner decisions; it does not implement shared audit/conformance or durable domain replay."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps.commandGateway / HandlerDeps",
+      "change": "Consume the common typed workspace-domain command-service dependency/port selected by WP-04/51; if absent, request its declaration and host composition from the owner. Keep commandGateway typed to PendingCommandsStore for legacy local approvals, not for audit receipts.",
+      "reason": "Direct import exposes only a local pending-command store. The new route needs a typed service seam without conflating local approval with shared command execution. Host composition beyond direct imports was not inspected."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.commandGateway / RPC_CHANNELS",
+      "change": "Add the agreed constant for literal channel domain.audit.validateScenario within the existing central channel catalog; reuse a foundation domain namespace if integrated. Do not repurpose command:approve or create a second registry.",
+      "reason": "The direct imported catalog currently contains only command:list, command:approve and command:deny for this gateway. Native routing needs a declared audit channel."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "Command Gateway route entries at lines 818-821",
+      "change": "Classify the new audit channel for the accepted workspace-authority host route, matching foundation routing rules; do not route shared writes to the local file store. Integrate beside the central catalog through the shared protocol owner.",
+      "reason": "Current command gateway routing enumerates only the three local decision channels. Channel declaration alone would not establish canonical authority routing."
+    },
+    {
+      "path": "packages/shared/src/protocol/types.ts",
+      "symbol": "ErrorCode / KNOWN_ERROR_CODES / CodedError / isErrorCode",
+      "change": "Add or reuse accepted domain codes UNAUTHENTICATED, FORBIDDEN, WORKSPACE_MISMATCH, INVALID_PAYLOAD, REVISION_CONFLICT, IDEMPOTENCY_CONFLICT, PROVIDER_UNAVAILABLE, UNKNOWN_EXTERNAL_EFFECT, SCHEMA_VERSION_UNSUPPORTED and REVOKE_FENCE_PENDING consistently in the type union and runtime known-code set; preserve .code across transport.",
+      "reason": "Inspected direct import's domain error catalog lacks the normative operation codes. INVALID_REF or HANDLER_ERROR cannot substitute for all required domain failures."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-41 section (828-844)",
+      "change": "After implementation, document actual accepted command/restore/replay seams, migrator artifact, dependency/foundation readiness and revision-bound verification receipts. Preserve planned/not-verified wording until real release evidence exists.",
+      "reason": "Normative documentation requirement; this preflight is not authorization for this worker to update shared progress or docs."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Sections 2-8, 10-12",
+      "change": "Bind actual surface selectors/runner interfaces, restore/replay procedure and seven-scenario evidence to exact implementation/environment revisions. Keep seeded controls, failures and local regressions; clarify required real provider sandbox despite generic WP-41 fixture wording.",
+      "reason": "Current test markers are explicitly proposed. A documentation-only fixture PASS is disallowed. Surface owners must add markers to their existing components; those indirect implementation files were outside this preflight's inspection scope."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "All seven required scenarios pass actual ROX UI and provider sandbox",
+      "currentEvidence": "Test plan sections 2-8 name exactly COLLAB-01, CHAT-TASK-01, CRM-INGEST-01, CRM-DISCUSS-01, CALENDAR-01, CALL-01, ACCOUNT-01. Existing entry seam is registerCommandGatewayHandlers:75-114; it contains no audit route. Test plan:7 requires actual surfaces and independent provider read-back.",
+      "requiredChange": "Normative wp-41.test.ts orchestrates every scenario using accepted domain/UI/provider interfaces and persists isolated results through audit.validateScenario, common commands repository and test_receipt. No eighth substitute scenario or mock-only shortcut.",
+      "verification": "Future bun test tests/macro-integration/wp-41.test.ts plus actual Electron/web/native-agent scenario harness, real provider sandbox and independent read-back; assert exact seven scenario IDs passed with complete receipts on one integrated revision.",
+      "missingPrerequisite": "Wave0 commit, every explicit dependency receipt, real surface drivers and WP-52 runtime/provider capabilities.",
+      "state": "missing"
+    },
+    {
+      "criterion": "deliberate ACL bypass/drop-event/broken CRDT detected",
+      "currentEvidence": "authorizeWorkspace:38-55 is only workspace equality; authorizeRox2Action:601-609 denies missing grants; test plan:56,74,111,224-239 specifies semantic controls and baseline-first independent holdout.",
+      "requiredChange": "Seed ACL actor injection/revoke-delivery bypass, event drop/duplicate and CRDT lost WAL/selective-undo faults independently. Remove a declared dependency against hidden fixture implementation as specified; distinguish bypassed implementation from simply unavailable infrastructure.",
+      "verification": "Baseline must pass; each mutation must fail its specific unauthorized-content, convergence, notification cardinality or watermark oracle. Preserve mutation IDs/seed/minimal failing input and independent evaluator second failure variant; infrastructure errors do not count.",
+      "missingPrerequisite": "Accepted policy/fence, CRDT and outbox seams with real fault injection; independent evaluator contract.",
+      "state": "missing"
+    },
+    {
+      "criterion": "restore replays with no duplicates",
+      "currentEvidence": "PendingCommandsStore:84-110 persists only local pending.json; create:129-147 always creates random command ID. This is not a shared backup/outbox mechanism. Specification:37946-37966 requires idempotency/inbox uniqueness, checkpoints and safe rollback; test plan:193,247 requires fresh restore E2E.",
+      "requiredChange": "Use accepted RestoreSnapshot/ReplayOutbox ports to restore isolated DB/object/CRDT state and schema/migration receipts to fresh runtime, recover leases and replay pending/duplicate/reordered events through the same consumer fences. Audit repository records verified before/after watermarks and canonical IDs, not another snapshot store.",
+      "verification": "Back up populated seven-scenario workspace, restore fresh instance, replay twice and reload UI/API/provider read-back. Assert one command receipt per scoped key, one consumer row per event, exact entity/link/notification/provider-object counts, matching refs/revisions/CRDT digests, no stale policy/tombstone resurrection and projection convergence.",
+      "missingPrerequisite": "Lead-selected operations ports coordinated with WP-47/52, selected migrator, common outbox/inbox/replay and object/CRDT manifests.",
+      "state": "missing"
+    },
+    {
+      "criterion": "COLLAB-01 full scenario and failure paths",
+      "currentEvidence": "Test plan:36-58 requires shared Page identity, multi-profile convergence, anchored cursor, selective undo/redo, offline restart/WAL replay, revoke quarantine and preserved artifact Page. Actual inspected reuse seams: Rox2EntityRef:233-239 and triad/isClaimableLive:540-551.",
+      "requiredChange": "Drive accepted WP-10/15 editor/CRDT surfaces; compare logical digests on both clients/server, not local timestamps. Include A1/A2 same principal, viewer/outsider, causal frontier and revoke fence; no second Page/editor surface.",
+      "verification": "Execute all eleven steps and quota/corrupt snapshot/missing causal op/append-before-ACK restart/pruning/expiry/unsupported schema failures; seed premature ACK, fixed cursor offset and disabled revoke invalidation.",
+      "missingPrerequisite": "WP-49 editor decision, WP-05 causal interfaces and accepted WP-10/15/51 receipts; existing Page UI selectors from its owner.",
+      "state": "missing"
+    },
+    {
+      "criterion": "CHAT-TASK-01 full scenario and failure paths",
+      "currentEvidence": "Test plan:60-74 defines Message->Task->Project->agent context, one assignment notification, retry/conflict and crash recovery. Reuse platform relation rules derived-from/member-of/assigned:380-389 and cycle helper:404-429.",
+      "requiredChange": "Drive existing message action and Tasks/Project surfaces; assert one canonical task, source link/backlink and recipient effect. Agent reads bounded human history separately from tool transcript and excludes private mail.",
+      "verification": "All seven steps; same-key changed-payload rejection; commit-before-reply crash returns same ID/receipt; offline/deleted source/denied Project/invalid assignee failures; suppress relation, duplicate consume and forged actor mutations.",
+      "missingPrerequisite": "Accepted common messages/tasks/notifications/agent contracts from dependency closure; canonical UI and native-agent drivers.",
+      "state": "missing"
+    },
+    {
+      "criterion": "CRM-INGEST-01 full scenario and failure paths",
+      "currentEvidence": "Test plan:76-97 requires provider-origin mail ingestion, distinct CRM contact/principal, provenance, generic-domain filtering, multi-account idempotency and ACL search. Reuse registerExternalBinding:336-370 and accountNamespace in Rox2EntityRef.",
+      "requiredChange": "Deliver isolated MIME provider-side, then exercise existing Company/Dossier/search surfaces. Assert stable account-scoped aliases, interaction min/max, common refs, enrichment failure without fabricated values and personal mail isolation.",
+      "verification": "Independent provider message read-back, duplicate webhook/full refresh/restart, account collision and out-of-order timestamps; seed generic-domain/principal-merge/account-namespace and linked-private-mail leakage faults.",
+      "missingPrerequisite": "Accepted WP-21/26/39 receipts, provider credentials via references and indexed search watermark interface.",
+      "state": "missing"
+    },
+    {
+      "criterion": "CRM-DISCUSS-01 full scenario and failure paths",
+      "currentEvidence": "Test plan:99-113 requires one Message service across CRM/channel/document, semantic recipient dedup, current ACL on query/search/subscription and revoke before push. Existing Rox2Event:131-141 is reusable but not a durable consumer receipt.",
+      "requiredChange": "Use common discussion and notification contracts; drive Company thread/mention/reaction/resolve/edit/delete UI, query search and native agent context, then revoke after enqueue before delivery.",
+      "verification": "Seven steps and reload; common timeline counts and canonical parent refs; X gets no title/body/attachment/event; seeded parallel store, omitted index, unauthorized notification and relation-ACL bypass each fail relevant oracle.",
+      "missingPrerequisite": "Common Message/mention/notification/search/agent ports and accepted WP-26/38 plus WP-50 policy/provenance receipts.",
+      "state": "missing"
+    },
+    {
+      "criterion": "CALENDAR-01 full scenario and failure paths",
+      "currentEvidence": "Test plan:115-136 requires create, drag, resize, attendee RSVP, reload/device, search, provider edits, recurrence and DST/all-day capability checks. Reuse canonical calendar-event kind and namespace binding, not provider title identity.",
+      "requiredChange": "Drive existing Calendar surface through accepted WP-29 commands with real adapter and readonly provider client; preserve entity ID and show queued/unknown/conflict honestly.",
+      "verification": "Remote ID/start/end/attendee/etag read-back; move 10:00->11:00, resize to end 11:45, recurring-instance isolation, DST semantics; expired grant/429/unknown timeout/offline/token expiry failures and premature-success/timezone/series/blind-resend controls.",
+      "missingPrerequisite": "Accepted WP-29 and its recurrence/attendee dependency closure plus isolated provider account/read-back client.",
+      "state": "missing"
+    },
+    {
+      "criterion": "CALL-01 full scenario and failure paths",
+      "currentEvidence": "Test plan:138-157 requires remote media frames/audio, scoped guest, recording consent, finalized object, archive, transcript/summary provenance and local Meetings regression. Core has call kind and sensitive device-read/cloud-send grants:579-609, not a media runtime.",
+      "requiredChange": "Use accepted Call/media/WP-34/35 surfaces and isolated known streams; assert provider room/egress receipts, actual received media and validated recording objects; transcript/summary stages remain separate and source-bound.",
+      "verification": "All ten steps; frame/audio-energy and screen-pattern evidence, consent decline, checksum/playability/duration, known transcript phrase/time spans, exact summary revision, signed URL expiry and worker restarts. Seed dummy URL, unrelated transcript, lost source revision, broadened guest ACL and queued-as-ready faults.",
+      "missingPrerequisite": "WP-52 SFU/TURN/egress/object/STT capabilities and accepted WP-34/35/39/50 receipts; provider-specific quality tolerances from their interfaces.",
+      "state": "missing"
+    },
+    {
+      "criterion": "ACCOUNT-01 full scenario and failure paths",
+      "currentEvidence": "Test plan:159-177 requires one Company graph spanning contact/email/task/calendar/call/Page/discussion, source-bounded agent context, current ACL and registered-kind probe. Reuse Rox2EntityRef and ROX2_RELATION_RULES; no audit-only account model.",
+      "requiredChange": "Traverse accepted registry/adapters through existing Company panels; compare identical canonical refs across deep links and native agent; synthetic registered kind receives common capabilities without Company-specific N-by-N imports.",
+      "verification": "All nine panel/action rows, update/reload/device and distinctive denied marker checks; seed independent panel model, ACL-skipping graph resolver, same-title merge and stale revoked memory faults; deterministic context assertions rather than LLM prose grading.",
+      "missingPrerequisite": "All seven domain scenario data, accepted context/provenance/search/navigation interfaces and typed registry extensibility probe.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Restart between persisted command and reply preserves state/receipt/canonical ID",
+      "currentEvidence": "WP-41 specification:37353-37355 and test plan:69 require this failure cut. Local PendingCommandsStore survives file restart but has no domain requestHash/idempotency receipt or atomic outbox.",
+      "requiredChange": "Add deterministic kill/restart cut after accepted command transaction commits and before HTTP/RPC reply; query receipt and retry same v2 envelope via canonical service.",
+      "verification": "Same receiptId/commandId/requestHash/entity/ref/revision returned; one event and consumer effect; changed payload with same key rejected; no invented provider success after unknown outcome.",
+      "missingPrerequisite": "Accepted WP-04 durability/idempotency and WP-51 writer/fence contracts, runnable isolated service process control.",
+      "state": "missing"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "Existing-surface requirement and six states in specification:37328-37338; test plan:201. Only gateway/core seams were inspected, not indirect UI components.",
+      "requiredChange": "Use scenario-owned existing native Project/entity surfaces; request semantic selectors from surface owners. Expose audit result only through accepted existing actions; do not build another dashboard.",
+      "verification": "Actual interactions plus initial/final/error screenshots and concurrency/reconnect video for all seven scenarios; assert state from domain receipt, not network-idle.",
+      "missingPrerequisite": "Accepted renderer/host drivers and owner-provided selectors; no native UI was run in preflight.",
+      "state": "missing"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "Core format/parse refs:218-239 and protocol gateway routes:818-821; test plan:202 and ACCOUNT-01 Tasks/Call/Page navigation.",
+      "requiredChange": "Audit native channel uses canonical workspace-authority routing; scenarios validate existing deep links, history/back, tabs/panels and WP-40 favorites.",
+      "verification": "Navigate canonical refs across reload/device; denied/missing/stale targets reveal no private metadata and no fallback local shared write.",
+      "missingPrerequisite": "Accepted WP-40 and foundation routing port; shared protocol owner patch.",
+      "state": "missing"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "Rox2EntityRef:233-239, namespace binding:336-370 and relation rules:380-429 are existing mechanisms; test plan:203.",
+      "requiredChange": "Reuse canonical registered kinds and account-scoped aliases in scenario evidence; test typed validation, relation cycles and both endpoint ACLs against accepted registry.",
+      "verification": "Same identity through UI/API/provider retries/restore; account/workspace collision quarantine, no display-name/principal merge; registered-kind probe gains standard capabilities.",
+      "missingPrerequisite": "Accepted WP-02 registry and domain typed interfaces, not a new WP-41 entity table.",
+      "state": "missing"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "PendingCommandsStore:84-110 is local JSON; spec test_receipt migration:37924-37966 and test plan:204 require authoritative DB/revision recovery.",
+      "requiredChange": "Integrate additive test_receipt repository into accepted DB transaction; record backup/migration and snapshot/object/CRDT checkpoint receipts; preserve single writer.",
+      "verification": "Client reload, process restart and fresh restore maintain receipts, refs/revisions and draft/WAL state; post-cutover rollback never drops accepted recent writes.",
+      "missingPrerequisite": "Selected migrator, accepted shared repository/operations interfaces and writer-mode gate.",
+      "state": "missing"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "registerCommandGatewayHandlers handles local list/approve/deny only; WP-41 operation has RoxCommand v2 envelope and strict audit payload; test plan:205.",
+      "requiredChange": "Implement audit.validateScenario in common commands contract/service with actor from transport, exact schema, scoped idempotency hash, expectedRevision for mutable aggregate and causal frontier/fence for CRDT.",
+      "verification": "HTTP and native RPC same authorized behavior; forged actor, extra properties, negative seed, overlong strings, stale revision and mismatched idempotency payload fail correct codes.",
+      "missingPrerequisite": "Accepted authenticated command authority and typed operation schema/result mapping.",
+      "state": "missing"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "Gateway currently returns pending array; specification requires authorized typed DTO/query cursor; test plan:206.",
+      "requiredChange": "Use accepted canonical receipt/query ports; bound evidence and scenario query pages by workspace/current actor, authorized cursor and schema. Do not expose hidden totals/titles.",
+      "verification": "Viewer/outsider/revoked actor query and forged cross-workspace cursor denied; bounded pagination stable across restore/revisions; authorized read-back returns expected canonical data only.",
+      "missingPrerequisite": "Accepted query DTO and cursor authorization interfaces.",
+      "state": "missing"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "Rox2Event has optional lineage at 131-141; spec:37340-37342 requires outbox durability/revisioned invalidation/replay cursor; test plan:207,231.",
+      "requiredChange": "Persist audit.validation_recorded atomically and verify accepted domain consumer replay, aggregate/policy/tombstone fences; keep lossy presence separate.",
+      "verification": "Drop/duplicate/reorder/crash events; gap recovery catches missing effect and converges once; denied/revoked subscriptions receive no private body or stale resurrection.",
+      "missingPrerequisite": "Accepted outbox/inbox delivery and cursor/watermark interfaces.",
+      "state": "missing"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "RequestContext lacks principal; authorizeWorkspace lacks resource ACL; authorizeRox2Action denies absent grants; test plan:208.",
+      "requiredChange": "Consume server-derived identity and current resource/operator grants; deny forged actor/workspace and recheck linked refs. Agent allow-all never overrides viewer ACL; execution grants separate.",
+      "verification": "Owner/editor/viewer/outsider/guest/revoked actor matrix across HTTP/RPC/agent/search/subscription/asset and pending replay; deliberate bypass yields specific failed negative assertion.",
+      "missingPrerequisite": "WP-01/03/51 accepted identity, policy epoch and revoke fence receipts.",
+      "state": "missing"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "Sensitive share/publish grants at 579-609; test plan:209,90,144-149,175.",
+      "requiredChange": "Exercise existing explicit grants/inheritance/guest expiry and derived-artifact audience intersection through accepted WP-50 provenance, not by link-based widening.",
+      "verification": "B sees Company/shared mail but not personal mail; guest room does not confer transcript/recording; session share after private source denied/redacted and revoke invalidates exports.",
+      "missingPrerequisite": "Accepted sharing/guest/signed URL and WP-50 provenance policies.",
+      "state": "missing"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "Test plan:87,105,126,149,210 requires current-ACL search and watermark; existing core refs provide identity, not an index implementation.",
+      "requiredChange": "Query accepted common search projection for CRM/message/calendar/transcript/Page and registered-kind data; validate upsert/delete/revoke checkpoints without a WP-41 index.",
+      "verification": "Distinctive phrases return exact canonical refs after watermark; outsider/private/deleted/revoked content and cached snippets absent; dropped indexing control fails.",
+      "missingPrerequisite": "Accepted common extractor/projection/current ACL query contracts and WP-39 evidence.",
+      "state": "missing"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "mentions relation exists at 42-51; test plan:101-111,211 requires occurrence/source-revision/target policy.",
+      "requiredChange": "Exercise common teammate/entity mention extraction and occurrence updates in existing discussion/calendar/message surfaces; no parallel CRM mention mechanism.",
+      "verification": "B->V mention edit updates effects per accepted policy; denied targets never leak metadata or receive unauthorized excerpt; reload retains source revision.",
+      "missingPrerequisite": "Accepted common mention occurrence and notification policy contracts.",
+      "state": "missing"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "Test plan:67,104,109,212,232 requires semantic recipient dedup and delivery ACL.",
+      "requiredChange": "Assert accepted notification service effect and per-recipient seen/done/mute/snooze state through existing surfaces; reuse consumer dedup and current grants.",
+      "verification": "One notification despite mention/assignee/owner overlap; recipient-only state changes; duplicate consume no duplicate attention; revoke-before-push strips delivery.",
+      "missingPrerequisite": "Accepted WP-38 notification and consumer policy/receipt interfaces.",
+      "state": "missing"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event/isAuditableRox2Event:131-141,618-620; spec audit.validation_recorded and test plan:213.",
+      "requiredChange": "Emit audit.validation_recorded via same transaction outbox with actor/cause/correlation/revision; preserve policy epochs and privacy in common activity stream.",
+      "verification": "Read activity after watermark/reload/restore; same event identity, correct actor/cause/revision, one effect and no raw sensitive body/token.",
+      "missingPrerequisite": "Accepted activity projection and durable audit event extension.",
+      "state": "missing"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Rox2Context:143-156 distinguishes permissionMode; test plan:68,106,171,177,214 requires provenance-bound tools.",
+      "requiredChange": "Invoke accepted native agent domain tools as acting user and verify canonical refs/revisions/source citations, bounded context and current ACL; no test-only hidden resolver.",
+      "verification": "Agent-A sees allowed history; Agent-V allow-all cannot write; denied private/stale/revoked source never retrieved; missing/pending providers disclosed by deterministic context assertions.",
+      "missingPrerequisite": "Accepted WP-36 closure and explicit WP-50 transcript/context provenance receipt.",
+      "state": "missing"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "WP-41 specifies HTTP POST command endpoint and native domain.audit.validateScenario; test plan:7,215 includes native agent/MCP dispatcher.",
+      "requiredChange": "HTTP/native RPC/MCP callers use the same accepted domain checks/results; request bridge wiring from foundation owner instead of bypassing gateway with test DB calls.",
+      "verification": "Same scoped command key returns same receipt across supported entry points; denied actor/linked refs fail identically. Exercise real agent dispatcher in context scenarios.",
+      "missingPrerequisite": "Accepted HTTP/native/agent bridge ports; actual applicable MCP exposure determined by those contracts, not waived because unfinished.",
+      "state": "missing"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Spec:37368-37378 requires commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ counters; test plan:243-245 details run binding and budgets.",
+      "requiredChange": "Persist run/session/source/dirty-patch/image/schema/lockfile/SBOM/fixture seed and hashes, expected-observed values and every attempt; collect common queue/provider/permission metrics with secret refs only.",
+      "verification": "Trace audit command->event->consumer->provider/read-back and restore checkpoint with all required IDs; validate private marker/raw email/body/transcript/token absence from logs and evidence exports; budget convergence/search/media against domain assertions.",
+      "missingPrerequisite": "Accepted common trace/metric/privacy and evidence artifact interfaces.",
+      "state": "missing"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative wp-41.test.ts absent at inspection; spec integration/negative-control/persistence tests and test plan:217,224-239.",
+      "requiredChange": "Implement meaningful behavior/invariant tests and actual surface harness orchestration; retain deterministic seeded controls, minimal failing cases and holdout. Preserve existing standalone regressions.",
+      "verification": "Run future WP-41 test plus relevant existing package tests and UI/provider scenarios on exact integrated revision. Infrastructure failure is distinct; no static/source-text/wiring-only PASS.",
+      "missingPrerequisite": "Wave0 and dependency receipts, running harness/fault-injection adapters and independent evaluator.",
+      "state": "missing"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "Implementation plan WP-41 and test plan are planned acceptance, explicitly not results; spec docs entries:37380-37383 and test plan:218.",
+      "requiredChange": "Shared documentation owner records implemented behavior, provider limits, restore/replay operator recovery and exact revision-bound receipts; preserve four statuses implemented/verified/delivered/journalled.",
+      "verification": "Documented runner/actions correspond to actual observed seven-scenario/failure/restore results and receipt artifact hashes; no completion language before runtime acceptance.",
+      "missingPrerequisite": "Actual implementation and runtime evidence; this preflight writes only its report.",
+      "state": "missing"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Spec response status/error enums and test plan:54,72,93,132,153,219 define failures. Current gateway invalidRequest emits INVALID_REF for most invalid requests.",
+      "requiredChange": "Use accepted typed domain errors/status mapping for retryable, terminal, conflict, reauth, quarantine, unknown external effect, unsupported schema and pending revoke fence; never suppress failure as empty/success.",
+      "verification": "Inject relevant failures in every scenario and audit/restore operation; UI and receipt agree, retry is idempotent and raw private data absent.",
+      "missingPrerequisite": "Accepted common error catalog, seven-state-to-triad adapter and existing-surface error rendering.",
+      "state": "missing"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "Spec lists loading and test plan:32,93,220 distinguishes readiness from network-idle/stale empty.",
+      "requiredChange": "Wait on accepted entity revision, provider receipt and projection watermark; scenario harness checks current existing surface loading/stale/refresh states before ready.",
+      "verification": "Delay provider/projection/document load; loading never becomes false empty or applied_verified before actual receipt/read-back.",
+      "missingPrerequisite": "Owner-provided readiness selectors/domain state drivers and latency controls.",
+      "state": "missing"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "Spec lists empty and test plan:221 distinguishes genuine emptiness from denial/unconfigured/unavailable; local store load:91-102 treats corruption as empty only for local approvals.",
+      "requiredChange": "Audit/common DTO and existing UI distinguish zero authorized results from permission_denied/provider unavailable/corrupt restore. Do not reuse local approval store empty-on-corrupt semantics for shared audit/domain recovery.",
+      "verification": "Empty isolated fixture, denied workspace, unavailable provider and corrupt snapshot produce distinct expected states with no private totals/title.",
+      "missingPrerequisite": "Accepted query/result and surface-state contracts.",
+      "state": "missing"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Spec offline_queued state and test plan:46-51,72,132,150,222 require durable drafts/replay/revoke rejection.",
+      "requiredChange": "Exercise accepted local projection/outbox and CRDT WAL; preserve draft through client restart, reconnect once, quarantine revoked pending bytes; no dual writable authority or false synced badge.",
+      "verification": "Partition/reload/reconnect during Page/message/calendar/task work; one accepted effect, exact refs/revisions and denied revoked replay; client durable-local never mistaken for server receipt.",
+      "missingPrerequisite": "Accepted offline command replay/CRDT frontier and explicit WP-51 writer-mode/fence contracts.",
+      "state": "missing"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2Status / Rox2CanonicalResult / Rox2EntityRef / registerExternalBinding / ROX2_RELATION_RULES / wouldCreateRelationCycle / isClaimableLive / authorizeRox2Action / isAuditableRox2Event","lineStart":99,"lineEnd":620,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5","inspectedRanges":[[1,165],[218,252],[316,430],[515,620]]},
+    {"path":"packages/server-core/src/handlers/rpc/command-gateway.ts","symbol":"parseWorkspaceInput / authorizeWorkspace / requireStore / HANDLED_CHANNELS / registerCommandGatewayHandlers / parseAndAuthorizeDecision","lineStart":20,"lineEnd":131,"sha256":"2dbf30f23d0df9f217a6bfbc338a5467b93fb59b210703631fd298c347bfb171"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext / RpcHandlerOptions / RpcServer","lineStart":7,"lineEnd":34,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps.commandGateway","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"packages/server-core/src/command-gateway/pending-commands.ts","symbol":"PendingCommandsStore / load / save / create / listPending / decide / takeApproved","lineStart":84,"lineEnd":185,"sha256":"f92bb1201eac36d1dd4e020ee633fbc13d90e22fdfae47a87a1f874b9e3c1228"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.commandGateway","lineStart":679,"lineEnd":683,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"Command Gateway route entries","lineStart":818,"lineEnd":821,"sha256":"f9a3ffeef82eb6edfcd7435de78814db3f1c2b7a1ef0d4f7ef1df007ee399d6e"},
+    {"path":"packages/shared/src/protocol/types.ts","symbol":"ErrorCode / KNOWN_ERROR_CODES / isErrorCode / CodedError","lineStart":95,"lineEnd":179,"sha256":"ba2d2070819ca69ea0ffa63b1c5ab97152bc9136f89254ef87d91a19c5688395"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"workPackages WP-41 normative record","lineStart":37264,"lineEnd":38152,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0","inspectedRanges":[[37264,37410],[37430,37485],[37820,38162]],"note":"Exact full operation record also supplied in dispatch prompt; inspected file record and manifest match."},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"Foundation gates / WP-41 / WP-49-52","lineStart":828,"lineEnd":844,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9","inspectedRanges":[[1,30],[828,845],[998,1055]]},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Seven required scenarios / feature completeness / seeded controls / evidence release gate","lineStart":1,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": {
+    "preflight": "Run the supplied read-only report verifier with bytecode writes disabled; deliver only this report. No product tests/build/UI/network/Git operations.",
+    "leadIntegration": "After wave0 commit, validate this report's source hashes against that revision and obtain all fourteen explicit dependency receipts. Confirm command-module owner and identity/outbox/CRDT/provider/restore ports, then integrate strict audit.validateScenario schema and route through the existing authenticated command authority before enabling the seven-scenario release gate.",
+    "blockedFeatureStart": "Feature implementation is not authorized or claimed in this preflight; accepted wave0/dependency/foundation receipts are prerequisites. No substitute mock implementation."
+  },
+  "risks": [
+    "Published WP-41 entrypoint verification was baseline declaration evidence, not current authenticated runtime behavior; the inspected gateway is owner-only local pending approvals.",
+    "Rox2CanonicalResult uses a triad while normative responseSchema uses seven status strings and receiptId; common owner must supply precise mapping without losing queued/ambiguous/fence states.",
+    "RestoreSnapshot and ReplayOutbox are named API changes without detailed schemas in the inspected specification. Resolve real accepted ports with operations owners rather than fabricate current symbols or a new persistence layer.",
+    "Shared new command paths overlap foundation WP-04/06/51 and other packages. Independent whole-file creation would overwrite integration work; one owner must merge contributions.",
+    "Generic fixture text saying provider sandbox is not needed unless outbound contradicts any waiver for the integrated mail/calendar/media scenarios; those scenarios require real isolated providers and independent read-back.",
+    "Proposed UI markers are not verified selectors. UI implementation files are indirect and outside this preflight's allowed inspection; existing-surface owners must provide precise selectors/patches during integration.",
+    "WP-47 restore and WP-52 readiness are hidden operational gates; WP-46 is downstream of WP-41. Do not add circular waiting edges or silently waive restore/mobile-capability evidence.",
+    "Passing baseline docs/static fixtures/local approval persistence is not shared feature completeness; every acceptanceMatrix row remains missing until observed runtime proof.",
+    "Seeded controls must break domain invariants, not merely make infrastructure unavailable. Retain first failures, independent holdout and exact reproduction seed.",
+    "Root integration may change protocol files while this report is prepared; sourceReferences hashes scope validity and verifier must reject stale bytes instead of blessing a later revision.",
+    "Migration 41-domain-contract.sql is a proposed identifier. Recreating command_receipt/outbox/inbox or unconditional snapshot rollback after accepted writes would violate one-authority and retention constraints.",
+    "Evidence privacy must exclude raw email/body/transcript/token values even for failed assertions; use isolated private marker checks, hashes and credential references."
+  ]
+}

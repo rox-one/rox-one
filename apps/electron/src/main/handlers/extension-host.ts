@@ -12,6 +12,10 @@
  * cannot self-supply grantedPermissions.
  */
 
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { parseExtensionManifest } from '@craft-agent/shared/extensions'
+import { assertPathAllowlisted, resolveSandboxRoots } from '../extension-host/path-allowlist'
 import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 import { RPC_CHANNELS } from '../../shared/types'
 import type { RpcServer } from '@craft-agent/server-core/transport'
@@ -127,12 +131,25 @@ export function registerExtensionHostHandlers(
       if (!args || typeof args.extensionId !== 'string' || typeof args.entryPath !== 'string') {
         throw new Error('extensionHost.load requires { extensionId, entryPath }')
       }
-      // Never trust renderer-supplied grantedPermissions.
+      const roots = resolveSandboxRoots({ configDir: resolveConfigDir() })
+      const manifestPath = assertPathAllowlisted(join(dirname(args.entryPath), 'manifest.json'), roots)
+      const manifest = parseExtensionManifest(JSON.parse(readFileSync(manifestPath, 'utf8')))
+      if (manifest.id !== args.extensionId || manifest.runtime !== 'craft-sandbox') {
+        throw new Error('Extension manifest identity/runtime does not match the loaded package')
+      }
       const grants = resolveExtensionGrantsFromPermissions(args.workspaceId, args.extensionId)
+      const declared = new Set(manifest.permissions)
+      const operations = manifest.operations ?? {}
+      for (const [method, permissions] of Object.entries(operations)) {
+        if (permissions.some((permission) => !declared.has(permission))) {
+          throw new Error(`Extension operation '${method}' requires a capability absent from its manifest`)
+        }
+      }
       await getExtensionHostManager(args.workspaceId).loadExtension(
         args.extensionId,
         args.entryPath,
         grants,
+        operations,
       )
       return { ok: true }
     },
@@ -147,7 +164,6 @@ export function registerExtensionHostHandlers(
         extensionId: string
         method: string
         args?: unknown[]
-        permissions?: string[]
         workspaceId?: string | null
       },
     ): Promise<unknown> => {
@@ -158,7 +174,6 @@ export function registerExtensionHostHandlers(
         args.extensionId,
         args.method,
         args.args,
-        args.permissions,
       )
     },
   )

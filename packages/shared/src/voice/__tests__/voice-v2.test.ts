@@ -121,6 +121,7 @@ describe('rox transcription adapter', () => {
     expect(result.durationMs).toBe(1500)
     expect(result.segments[0]?.endMs).toBe(1500)
     expect(result.requestedModelId).toBe('rocks-t1')
+    expect(result.resolvedModelId).toBe('whisper-large-v3-turbo')
     const form = requests[0]?.body
     expect(form?.get('model')).toBe('rocks-t1')
     expect(form?.get('language')).toBeNull()

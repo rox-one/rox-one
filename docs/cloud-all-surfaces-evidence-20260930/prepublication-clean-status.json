@@ -1,0 +1,17 @@
+{
+  "capturedAt": "2026-09-30T20:46:37.551864+00:00",
+  "sourceCandidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "isolatedStatusBeforeReport": "",
+  "isolatedLockSha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+  "original": {
+    "head": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "status": "",
+    "lockSha256": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b"
+  },
+  "ownRuntimeProcessesRemaining": 0,
+  "removedGeneratedDeliveryAndBundle": [
+    "/tmp/rox-ui-surface-discovery-20260930/all-surfaces/dist-server",
+    "/workspace/rox-union-server-dist-final-20260930"
+  ],
+  "temporaryCheckoutDisposition": "remove after docs publication/readback; retained report evidence copied outside checkout"
+}

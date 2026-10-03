@@ -1,0 +1,383 @@
+{
+  "task_id": "RS-ADM-01-preflight",
+  "attempt_id": "e26c83369073a434cb6957bbcf9e6a29",
+  "packet_hash": "0686a4a42acb3ef95ed13a4a1216b687650765515315fad71fd71b02c603ecf8",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-ADM-01",
+  "featureComplete": false,
+  "mode": "read-only preflight; sole output is this report; no feature implementation",
+  "workTier": "bounded-workflow within an already dispatched independent worker",
+  "dependencies": [],
+  "dependencyEvidence": "plans/rox-suite/issues.json:742-763 has dependsOn=[] and dependencyIssueNumbers=[]; published specification:11-13,141-144 distinguishes foundation prerequisites and related RS-MCP-01 from service DAG edges.",
+  "evidenceStatus": {
+    "basis": "Working-tree source inspection, not a claim that inspected files are identical to input HEAD. Root-owned uncommitted wave0 work was not modified.",
+    "manifestHashes": "Published spec and issues.json whole-file SHA-256 exactly match the dispatch input_manifest.",
+    "sourceHashes": "Hashes were obtained by read-only shasum -a 256 after reading concrete files. They pin inspected working-tree bytes; no Git operation was performed.",
+    "freshness": "No intervening change was reported by reads. A filesystem read and a later hash are not an atomic snapshot; root integration can invalidate these observations. Lead must compare hashes and reread changed seams after its wave0 commit before applying requests.",
+    "runtime": "NOT_RUN: builds, tests, native UI and network were explicitly prohibited. All verification below is proposed future acceptance, not observed feature proof.",
+    "codegraph": "Unavailable for this checkout: tool reported no .codegraph index. No index or upgrade was attempted.",
+    "searchFallback": "Descriptive find failed because its judgment provider returned HTTP 402. Known specification paths and literal/symbol grep plus read/glob supplied the evidence; a failed search is not absence proof.",
+    "inspectionLimit": "Package implementation paths, published/normative records and direct import/bridge/route dependencies only. Foundation implementations and cross-product consumers were not broadly inspected; their readiness is unverified. Existing test source was read but never executed."
+  },
+  "foundationGates": [
+    {
+      "ids": ["WP-01", "WP-02", "WP-03", "WP-04", "WP-06", "WP-07", "WP-36", "WP-46"],
+      "source": "docs/rox-suite/published/RS-ADM-01.md:13,52-79,98",
+      "gate": "Accepted Revision2 foundation authority/primitives before shared membership management",
+      "currentEvidence": "Spec names these architecture prerequisites without per-WP titles in this record. No individual WP implementation or accepted receipt was inspected. Normative packages/shared/src/workspace-domain/admin/contracts.ts and apps/workspace-service/src/modules/admin paths are absent in the scoped glob. Existing org handlers use CONFIG_DIR local identity/storage.",
+      "requiredReceipt": "Lead supplies committed canonical EntityRef/Principal aliases, authenticated Actor/resource-policy gateway, revision/idempotency/receipt contracts, migration ownership and commit-bound event/outbox plus projection/revoke interfaces. Map each WP receipt to its actual implemented contract; do not infer titles or completion from IDs.",
+      "state": "REQUIRES_ACCEPTED_FOUNDATION_RECEIPTS_NOT_AN_EXPLICIT_RS_EDGE"
+    },
+    {
+      "gate": "Trusted actor and authenticated shared transport are prerequisites, not a renderer guard",
+      "source": "spec:23,54,75-79; packages/server-core/src/transport/types.ts:7-20; packages/server-core/src/transport/server.ts:767-795; packages/shared/src/protocol/routing.ts:474-482",
+      "currentEvidence": "RequestContext contains clientId/workspaceId/webContentsId, not a canonical Actor. registerOrgsHandlers ignores _ctx for local operations. Org channels are LOCAL_ONLY. The transport desktop gate accepts localBinding or CLIENT_OPEN_FILE_DIALOG in the shown fallback; neither establishes org entitlement.",
+      "requiredReceipt": "Shared authority owner provides server-resolved actor and current policy evaluation usable by authenticated API, RPC, MCP, jobs and replay. Do not merely remove LOCAL_ONLY or trust request-supplied actor/userId/granted/capability advertisement.",
+      "state": "BLOCKS_SHARED_READ_AND_WRITE"
+    },
+    {
+      "gate": "Canonical identity migration across products",
+      "source": "spec:52,54,71,111; packages/shared/src/config/preferences.ts:148-177; packages/shared/src/orgs/storage.ts:124-144,250-278,361-406",
+      "currentEvidence": "Local UUID is persisted once in preferences; members use orgId/userId, and acceptInvite permits an optional local userId override. This proves a local seam only, not Tasks/Chat/CRM canonical identity parity.",
+      "requiredReceipt": "Foundation migration owner supplies stable alias-to-canonical Principal mapping and cross-product readback fixtures. Shared invite redemption binds recipient to authenticated principal; local override remains only explicitly local behavior.",
+      "state": "BLOCKS_CROSS_PRODUCT_IDENTITY_ACCEPTANCE"
+    },
+    {
+      "gate": "Commit-bound events, policyEpoch retraction and authorized projections",
+      "source": "spec:58-79,125-127",
+      "currentEvidence": "Scoped local store uses atomic JSON file replacement, without commandId/expectedRevision/event outbox in the inspected functions. Connections has credential-oriented audit metadata, not a complete membership/policy audit projection.",
+      "requiredReceipt": "Foundation owners supply event delivery/dedup, current policyEpoch, revoke invalidation, authenticated subscriptions/reconnect and authorized search/Inbox/activity/agent-memory projection APIs. RS-ADM-01 adds domain producers/consumers, not a second notification/search engine.",
+      "state": "BLOCKS_REVOKE_AND_PROJECTION_DOD"
+    },
+    {
+      "gate": "Real authorized aggregation and provider outcomes",
+      "source": "spec:31,42,54-56,104,129",
+      "currentEvidence": "Existing memberCount derives from organization.members.length. No authoritative telemetry aggregation or mail adapter was observed within these paths. CRAFT_SERVER_URL branch explicitly still creates/redeems local tokens.",
+      "requiredReceipt": "Aggregation supplies source/asOf/range/timezone/eligible denominator and audience-filtered data, or honest unavailable_metrics with hidden unauthorized metrics. Real email mode needs durable hashed expiring recipient-bound tokens and actual mail adapter/provider-live evidence; local tokens stay labelled local.",
+      "state": "REQUIRED_FOR_RELEVANT_METRICS_AND_EMAIL_BEHAVIOR"
+    },
+    {
+      "gate": "Implementation scheduling and acceptance lanes",
+      "source": "dispatch prompt; spec:118,129-131,138",
+      "currentEvidence": "This is a preflight receipt only, not an accepted implementation dependency receipt. No lane was run.",
+      "requiredReceipt": "Lead commits wave0, accepts relevant foundation contracts, assigns shared-file owners and serializes overlap. Full acceptance needs Linux domain/renderer, source-pinned macOS native IPC/font/device, provider-live for actual adapters, independent review and meaningful negative controls.",
+      "state": "IMPLEMENTATION_MUST_WAIT_FOR_LEAD_CUTOVER"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/settings/OrganizationAdminHub.tsx",
+    "packages/shared/src/workspace-domain/admin/contracts.ts",
+    "apps/workspace-service/src/modules/admin/queries.ts",
+    "apps/workspace-service/src/modules/admin/membership-commands.ts",
+    "apps/workspace-service/migrations/admin-capabilities.sql",
+    "tests/rox-suite/admin-hub.spec.ts"
+  ],
+  "newFileContract": {
+    "status": "All six normative NEW paths were absent in scoped existence inspection. This list is a future contribution proposal, not current write authorization; worker currently owns only this JSON. Shared contracts and migrations must be integrated by their single lead-designated owner.",
+    "OrganizationAdminHub.tsx": "Compose Overview/Members/Capabilities/Audit inside current Organizations Settings using existing settings primitives/selected preferences; typed orgRef/view context, authorized query state, preview/Apply receipt flow, capability Configure native destination, help and responsive keyboard behavior. Preserve existing local create/invite/accept/profile/team-space mechanisms in the same surface.",
+    "contracts.ts": "Consume foundation EntityRef/Principal/Actor/PolicyRevision/receipt/status types; define organizationSummary and capabilityAvailability, membership preview/changeRole/invite/revoke inputs with commandId and expectedRevision, bounded audit query/export, range/timezone/asOf/source/denominator, explicit local/shared/unavailable states. Actor is server-derived, not a trusted caller field. Do not create a parallel admin-user model or novel Rox2Status enums.",
+    "queries.ts": "Implement audience-filtered authenticated organizationSummary/capabilityAvailability/audit query and bounded redacted export initiation/readback on canonical store; redact before aggregation. Emit pending/completed export domain events via existing outbox/job mechanisms, preserve explicit recovery and provider outcome.",
+    "membership-commands.ts": "Implement shared guarded preview/Apply role change, invite/redeem/revoke and policy change using existing domain transaction/receipt/idempotency interfaces. Serialize last-owner/self-removal invariant and expectedRevision; canonical principal references; increment policyEpoch and publish membership/invite/policy/capability events commit-bound. External mail is reconciled outside fake distributed transactions.",
+    "admin-capabilities.sql": "Create only normative organization_capability_policy on existing organization authority, with scoped key and policy revision; rely on foundation migration owner for principal aliases, membership/invite schema and journal/outbox. No second organizations/admin-user database.",
+    "admin-hub.spec.ts": "Real synthetic two-org/multiple-actor acceptance scenarios covering persistent reload, cross-product principal identity, last-owner concurrency, stale drafts, authorized counts, forged actor/renderer mutant, role revoke mid-view/reconnect/replay, API/MCP parity, native routes/history, accessibility and neighboring Settings/Connections behavior. Tests require real committed authority, not mock-only rendered cards."
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/shared/settings-registry.ts",
+      "symbol": "SettingsPageDefinition / SETTINGS_PAGES / SettingsSubpage",
+      "change": "Extend the existing organizations definition with canonical typed admin subview metadata for overview/members/capabilities/audit (optional metadata for other settings entries). Keep organizations as the top-level destination; derive valid admin view IDs from the registry and add translated labels/help keys. Do not create Suite Admin shell or a second organization navigator.",
+      "reason": "Spec:29,83-98; current registry defines only top-level IDs (19-26,37-60), with organizations already at line55. Subview metadata must share the canonical registration seam."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/settings-pages.ts",
+      "symbol": "OrganizationsSettingsPage lazy import / SETTINGS_PAGE_COMPONENTS.organizations",
+      "change": "Preserve organizations -> OrganizationsSettingsPage lazy mapping and Suspense contract. Integrate OrganizationAdminHub as a lazily loaded child of that existing page; if registry owner introduces subview component mapping, resolve all four views under this same page rather than replacing unrelated pages or adding a shell.",
+      "reason": "37,48-74 already provide correct existing page ownership and lazy composition. Required integration must not eager-load charts/admin UI into cold renderer."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/OrganizationsSettingsPage.tsx",
+      "symbol": "OrganizationsSettingsPage / refresh / handleInvite / handleAccept / selectedOrgId",
+      "change": "Mount OrganizationAdminHub within current PanelHeader/ScrollArea composition, consume typed navigation org/view scope and authoritative summary. Retain local forms with explicit local_only labels. Replace shared-mode direct local RPC mutations and hardcoded granted:true with preview -> guarded command -> actual receipt -> readback. Keep scoped form drafts separate from query refresh so refresh cannot overwrite dirty identity drafts; preserve drafts on error/conflict/navigation within current grants, clear incompatible selection on org switch and sensitive state on revoke.",
+      "reason": "refresh(73-97) overwrites usernameDraft/emailDraft; selectedOrgId is only React state; handleInvite/handleAccept hardcode granted:true at143/194; current layout and native local flow must remain."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.settings / routes.view.connections / toQueryString",
+      "change": "Add typed organization-admin context and native connection detail/tab context builders, preserving settings('organizations') and connections() roots. Proposed route grammar: settings/organizations/org/{encodedOrgId}/{overview|members|capabilities|audit} and connections/connection/{encodedConnectionId}/{services|policies|audit}; validate/decode via existing parser rather than passing arbitrary strings. Authority validates org/connection relationship independently of navigation.",
+      "reason": "settings builder208-211 takes only subpage; connections254 returns bare root. Configure requires same native detail destination and org-scoped history. Exact grammar is a proposed owner request, not existing behavior."
+    },
+    {
+      "path": "apps/electron/src/shared/route-parser.ts",
+      "symbol": "parseCompoundRoute / buildCompoundRoute / convertCompoundToNavigationState / navigationStateToCompoundRoute / parseRouteToNavigationState",
+      "change": "Parse/build the agreed organization-admin and Connections detail/tab segments strictly and losslessly; carry typed context through compound/state/legacy view conversion without accepting extra malformed segments or dropping IDs. Retain legacy settings redirects. Pair buildRouteFromNavigationState with restored org/view/connection context.",
+      "reason": "132-136 strip query tails;175-195 use only settings subpage;290-291 collapse Connections to root;560-563 and974-980 drop richer org context. A registry entry alone cannot satisfy contextual deep links/history."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "SettingsNavigationState / navigation state key serialization and parseNavigationStateKey / ElectronAPI organization methods",
+      "change": "Extend settings state with typed orgRef/adminView and Connections state with native detail/tab context; preserve these fields in persisted navigation keys and roundtrip parsing. Add typed authenticated admin query/preview/command/export/subscription bridge backed by canonical contracts; retain explicitly local identity APIs without conflating them with shared authority. IPC/preload/generated client counterpart must be assigned and mapped by transport owner before integration.",
+      "reason": "2415-2418 stores only subpage;2754-2756 and2908-2917 persist only settings:subpage.1883-1893 exposes only legacy local org methods. Concrete preload implementation was not established in the scoped reads, so no guessed preload patch path is asserted."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/orgs.ts",
+      "symbol": "registerOrgsHandlers / HANDLED_CHANNELS / serverModeEnabled",
+      "change": "Adapt org shared read/write routes to accepted authority client/domain gateway with actor resolved from trusted request/session context, org scope and current policy. Keep explicitly local path using existing orgs storage; distinguish unavailable shared backend instead of falling through to local. Add typed summary/capability/membership preview/change/revoke/audit/export handlers once transport owner registers channels. No logs of invite tokens, private bodies or organization names; use bounded correlation IDs and actionable codes.",
+      "reason": "LIST/READ use no actor (55-59,95-99); CREATE logs org.name at65; ACCEPT supplies token as nativeId at85; serverModeEnabled only logs local behavior (69-92). Shared result needs real receipts, not rpcOrgsActResult live gate as authority."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.orgs",
+      "change": "Register typed admin.organizationSummary/admin.capabilityAvailability/membership preview-change-invite-revoke/audit query-export and policy change transport channel names through the canonical authority contract owner; preserve local org identity operations as explicitly local channels. Match channels to shared DTOs and host bridge implementations atomically.",
+      "reason": "691-700 lists only legacy list/create/invite/accept/listMembers/identity/workspace binding; no admin summary, role command or export contract."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "LOCAL_ONLY organization channel entries",
+      "change": "Retain local-only identity/store bookkeeping classification at474-482. Route new authenticated authority-backed admin channels through shared service policy; migrate every shared caller via owner-approved split rather than simply exposing legacy local methods remotely. Recheck capability/backend availability per operation.",
+      "reason": "A CRAFT_SERVER_URL branch does not bypass LOCAL_ONLY or make local identities remote. Removing restrictions without actor gateway would expose host-local data."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext / HandlerFn / RpcHandlerOptions",
+      "change": "Consume foundation trusted actor/session resolver in RequestContext or the existing trusted server dependency boundary; never parse a client-supplied Actor as authority. Preserve desktop host-control restrictions. The transport owner must map authenticated API/MCP/background actors into the same guarded command and current policy evaluator.",
+      "reason": "Context7-11 has no Principal/Actor; access19-20 only expresses localElectron. Shared domain authorization cannot be implemented solely in the page or channel advertisement."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps",
+      "change": "Inject accepted canonical admin/domain authority service and trusted actor-resolution interfaces following existing host-composed dependency style; do not construct a new admin store per handler. Compose actual authenticated generated client/native authority in host integration, with unavailable errors when absent.",
+      "reason": "56-72 exposes session/platform and pending command store but no shared admin authority; registration currently imports local org functions directly. Owner must select actual committed foundation interface rather than inventing one here."
+    },
+    {
+      "path": "packages/shared/src/orgs/storage.ts",
+      "symbol": "hydrateMemberIdentity / listOrganizations / listOrgMembers / acceptInvite / updateMemberRole / saveOrgsStore",
+      "change": "Keep local single-device behavior and token stripping distinct. Use foundation migration's alias-to-canonical Principal bridge at the shared adapter, preserving existing userId and contact identity. Do not implement shared CAS/last-owner/revoke in a parallel JSON store: shared role/revoke invariants must live in accepted authority transaction. Explicitly label optional acceptInvite.userId override as local-only and do not expose it to authenticated shared redemption.",
+      "reason": "Existing updateMemberRole421-433 protects sole-owner demotion, but lacks expectedRevision, command receipt, transactional concurrency and revocation. listOrganizations218-226 returns all local orgs/members. Preserve real local safeguards; they are not shared enforcement proof."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+      "symbol": "ConnectionsPage / tab / selectedConnectionAtom / listConnections effect / audit effect",
+      "change": "Consume native typed route connectionId/tab and select only an authorized returned metadata row in the active workspace. Rehydrate selection after list read; honor newPanel/Shift+Enter through native navigate. Clear stale selection on org/workspace/revoke and redact immediately. Retain current Services/Credentials/Imports/Policies/Audit and sanitizer boundaries. Represent audit unavailable/error separately from genuine empty instead of catch -> [] for the new hub-linked path.",
+      "reason": "tab70 is local state; selection727 uses metadata atom; cleanup123 clears selection on unmount; audit132-150 collapses failures to empty. Capability Configure must open this existing inspector, not duplicate connection configuration or expose host credential values."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "settings.orgs.* / organization admin help, views, states and capability unavailable reasons",
+      "change": "Lead i18n owner adds matching ASCII-sorted keys in de/en/es/fr/hu/ja/pl/ru/zh-Hans/zh-Hant for all new user-facing controls and help. Russian plural counts use one/few/many and required other parity. No hardcoded user-facing strings or global font reset.",
+      "reason": "Repository rules require all ten locales; current OrganizationsSettingsPage already uses useTranslation/t throughout. This is a shared-owner integration request, not an assertion that locale source files were inspected."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD 1: UI и typed routes/history/contextual deep links работают в существующем ROX.",
+      "currentEvidence": "SETTINGS_PAGES.organizations at settings-registry.ts:55 and lazy mapping settings-pages.ts:37,68 exist. OrganizationsSettingsPage:57 stores selection only in React; routes.ts:208-211,254 and route-parser.ts:175-195,290-291 currently encode no org/subview/connection scope.",
+      "symbolOrSeam": ["SETTINGS_PAGES", "SETTINGS_PAGE_COMPONENTS.organizations", "routes.view.settings/connections", "parseCompoundRoute", "SettingsNavigationState", "selectedConnectionAtom"],
+      "requiredChange": "Implement hub as Organizations child plus canonical subview registry, typed route grammar, navigation state/key roundtrips and existing Connections inspector contextual links. Preserve local organizations/settings and Sources destinations; no second shell.",
+      "verification": "Future real renderer/native scenario: open each direct org/view link, switch org, Configure to authorized connection detail with Enter/Shift+Enter, Back/Forward and reload restore same allowed context. Invalid view/ID rejected, other-org detail denied. Check neighboring Settings/Connections flows and selected scope cleanup.",
+      "missingPrerequisite": "Lead wave0 commit, shared routing owner agreement and authenticated summary/capability read contracts.",
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "DoD 2: Entity model, persistence/migration aliases, queries/commands/receipts и required background processing реализованы.",
+      "currentEvidence": "Org types.ts:12-51 uses local orgId/userId/version1/token. storage.ts:89-98 atomically writes JSON; create250-278, invite297-335, accept345-419 and role421-433 are local. registerOrgsHandlers:69-92 explicitly never redeems remotely. Six normative NEW paths absent.",
+      "symbolOrSeam": ["OrgsStoreFile", "ensureLocalUserIdentity", "registerOrgsHandlers", "updateMemberRole", "NEW admin/contracts.ts", "NEW admin/queries.ts", "NEW admin/membership-commands.ts", "NEW admin-capabilities.sql"],
+      "requiredChange": "Consume canonical authority/model migration; implement real summary, capability, membership/policy and bounded audit/export commands with expectedRevision, commandId/idempotency, receipts and readback. Persist organization_capability_policy revision. Use existing outbox/background processing for events, export and mail reconciliation, hashing/expiry/recipient-binding for shared invites. Distinguish local_durable/provider_accepted/readback without inventing status enums.",
+      "verification": "Future synthetic API/native command -> durable receipt -> process reload -> identical principal/policy; repeat commandId yields same result, stale revision no mutation; crash after commit and before publish yields one recovered event/effect. Export durable pending/completed and bounded redaction, token expiry/replay/recipient rejection, provider failure preserves actionable state.",
+      "missingPrerequisite": "Accepted authority/migration/Actor/receipt/outbox contracts and actual export/mail adapters where used; no authority replacement in this issue.",
+      "state": "LOCAL_SEAMS_ONLY_SHARED_FEATURE_INCOMPLETE"
+    },
+    {
+      "criterion": "DoD 3: Source/entity links и mentions используют общие IDs; source audience не расширяется автоматически.",
+      "currentEvidence": "OrgMember.userId/types.ts:20-29 and hydrateMemberIdentity/storage.ts:124-144 preserve local UUID; organization-member-identity.ts:16-28 renders it; organization-team-spaces.ts:6-15 filters linked team workspaces. No canonical EntityRef/mention authority is demonstrated by these local helpers.",
+      "symbolOrSeam": ["OrgMember", "hydrateMemberIdentity", "formatOrgMemberIdentity", "getTeamSpacesForOrganization", "NEW admin/contracts.ts"],
+      "requiredChange": "Resolve aliases through foundation canonical Principal/EntityRef without generating admin IDs. Use same refs for member detail, capability source links, agent preview, mentions and audit. Link/mention resolution checks both current org policy and source audience; workspace binding or membership must not confer source grants.",
+      "verification": "Future role change/reload has same principalRef in Tasks/Chat/CRM; authorized mention/link resolves same entity. Denied source linked from authorized org remains redacted/not resolvable, with no leaked title/count/body or grant widening.",
+      "missingPrerequisite": "Canonical alias migration and common links/mentions/grants contracts plus source-pinned cross-product fixtures, not inspected here.",
+      "state": "CANONICAL_IDENTITY_AND_AUDIENCE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 4: Shared authorization/sharing/revoke покрывают UI/API/MCP/jobs/offline replay.",
+      "currentEvidence": "OrganizationsSettingsPage.handleInvite/Accept pass granted:true (143,194); orgs.ts uses ignored _ctx and local identity. storage.ts:287-309 has a genuine local admin invite role check and421-429 last-owner demotion guard. RequestContext only identifies transport client/workspace (types.ts:7-11); org channels local-only (routing.ts:474-482).",
+      "symbolOrSeam": ["registerOrgsHandlers", "RequestContext", "requireMemberRole", "updateMemberRole", "NEW membership-commands.ts"],
+      "requiredChange": "Server-derived Actor, current org.read/admin/member.manage/capability.manage/audit.export on same gateway. Guard last owner, self-removal, cross-org IDs, policy revision and replay; revoke increments policyEpoch and invalidates open grants/search/agent caches. Disabled controls are advisory only. Reject caller Actor/userId/granted as authority.",
+      "verification": "Future UI/API/MCP/job parity for allowed/denied actions, forged actor/capability/renderer guard negative controls, two-org access, concurrent last-owner race. Revoke during open view immediately blocks write/redacts read; offline forbidden mutation not queued, allowed queue rechecks current grants at replay and denies after revoke.",
+      "missingPrerequisite": "Accepted authenticated gateway, trusted actor resolver, MCP/jobs/replay adapters and revoke policyEpoch primitives. Related RS-MCP-01 is not changed into an explicit dependency.",
+      "state": "SHARED_AUTHORIZATION_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "DoD 5: Search/notification/activity/agent/memory projections сохраняют policy и provenance; dedup/retraction проверены.",
+      "currentEvidence": "Spec:58-79 defines NEW membership/invite/policy/capability/audit export events and existing Inbox/search engines. Scoped local saveOrgsStore:89-98 has no event/outbox; Connections audit uses sanitizeConnectionAuditRows and listConnectionAudit, not a membership activity/search projection.",
+      "symbolOrSeam": ["saveOrgsStore", "NEW membership-commands.ts event producers", "NEW queries.ts authorized search/audit projection", "sanitizeConnectionAuditRows"],
+      "requiredChange": "Publish named domain events via canonical commit-bound outbox; wire authorized org settings/features/principals search and existing Inbox/activity/agent/memory consumers with source/ref/revision/policyEpoch/provenance. Dedup by canonical event/receipt identity, retract/redact on revoke; no private titles/bodies/counts in logs/push/memory.",
+      "verification": "Future duplicate delivery/reconnect yields one projection, not duplicate notifications; revoke removes old searchable hits and live Inbox/agent-memory content without leaking denied rows. Exercise search/agent preview after policy change, audit who/what/when/from/to with redaction and event provenance.",
+      "missingPrerequisite": "Foundation outbox/search/notification/activity/agent-memory consumer contracts and accepted retraction receipt; actual consumer symbols were outside scoped direct imports, so lead must map them before integration.",
+      "state": "PROJECTION_INTEGRATION_AND_RETRACTION_UNVERIFIED"
+    },
+    {
+      "criterion": "DoD 6: Required realtime/reconnect/persistence concurrency сценарии из tests пройдены; unavailable capability честно disabled.",
+      "currentEvidence": "Organizations refresh runs on mount (73-101); local atomic file write has no expectedRevision. updateMemberRole421-433 is read-modify-write. Connections classifies unavailable errors (43-47,101-129), but audit132-150 collapses failure to empty. Normative admin-hub.spec.ts absent.",
+      "symbolOrSeam": ["OrganizationsSettingsPage.refresh", "updateMemberRole", "ConnectionsPage.classifyFailClosed", "NEW admin-hub.spec.ts", "NEW admin queries/commands"],
+      "requiredChange": "Subscribe via existing authenticated realtime contract, invalidate on policyEpoch, reconcile on reconnect with persisted revisions and command receipts; transactional membership/policy CAS and serialized last-owner guard. Preserve all domain/common states including local_only/shared_authenticated/unavailable_metrics/loading/forbidden/membership_conflict/policy_pending/audit_export_pending and degraded/stale/offline/cancelled/unknown. Available/degraded/not_configured capability evidence controls Configure and visible unavailable reason, not fictional enabled booleans.",
+      "verification": "Future concurrent role/policy edits, last-owner race, restart after commit, reconnect duplicate/reordered events, failed provider and offline replay; drafts survive stale revision but denied data retracts. Unavailable backend/product/telemetry differs from genuine empty and actual zero; disabled destinations stay truthful.",
+      "missingPrerequisite": "Accepted realtime/reconnect/event/receipt persistence and policy replay contracts; real backend/capability fixtures and future executable acceptance lane.",
+      "state": "NOT_RUN_FEATURE_INCOMPLETE"
+    },
+    {
+      "criterion": "DoD 7: Hover/focus/click help, keyboard, loading/empty/error/offline, narrow390px, zoom200%, reduced-motion verified.",
+      "currentEvidence": "Existing OrganizationsSettingsPage uses settings primitives, responsive classes (250,287,420), loading spinner234-239 and list buttons with aria-pressed269. No full help interactions or admin tabs are implemented. Connections tabs474-486 use role/aria-selected but shown handlers only click, no roving key behavior.",
+      "symbolOrSeam": ["OrganizationAdminHub.tsx proposed child", "OrganizationsSettingsPage settings primitives", "ConnectionsPage TABS", "useTranslation/t"],
+      "requiredChange": "Reuse native controls/theme/semantic tokens/selected font. Russian labels through all-ten-locale i18n; each non-obvious control has 500ms hover and focus definition plus separate What-is-this popover with meaning/units/formula-or-not-applicable/source/asOf/example/role/disabled reason. Escape/focus return, visible focus, tab traversal and scoped roving arrows/Home/End/Esc. Single-column at390px/200%, no whole-shell horizontal overflow; reduced-motion disables spatial transitions, stable keys and policy-safe drafts.",
+      "verification": "Future actual renderer/native screenshot+ARIA+interaction assertions: hover timing, keyboard focus/popover Escape, click help never mutates; org selector Arrows/Enter, member Enter/Space/Apply, Configure Enter/Shift+Enter, product menu roving keys, export preview. Inspect all loading/empty/filtered-empty/forbidden/error/conflict/offline states,390px/200% zoom, reduced-motion and font inheritance.",
+      "missingPrerequisite": "Real authorized data/state fixtures, agreed typed navigation, shared i18n integration and source-pinned native UI lane.",
+      "state": "UI_ACCEPTANCE_NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "DoD 8: Linux domain/renderer lane; source-pinned macOS native для IPC/font/device; provider-live где actual adapter действует. Pending required lane оставляет feature incomplete.",
+      "currentEvidence": "This preflight executed no product/tests/UI/network. Existing local storage test source uses isolated CRAFT_CONFIG_DIR/ROX_CONFIG_DIR and subprocesses (storage.test.ts:15-40), providing a future local test pattern only.",
+      "symbolOrSeam": ["NEW tests/rox-suite/admin-hub.spec.ts", "packages/shared/src/orgs/__tests__/storage.test.ts", "ElectronAPI org bridge", "registerOrgsHandlers"],
+      "requiredChange": "Lead binds test/environment/adapter evidence to integrated commit and runs Linux domain/renderer, macOS native IPC/font/device and real provider-live where mail/export/provider adapter acts. Treat pending lane as incomplete, distinguish baseline failure from environment failure.",
+      "verification": "Future captured real command/readback and native routes plus isolated regression run; provider response then authoritative readback/receipt reconciliation. Record exact commit/build/environment, assertions, failure history and expected/observed artifacts for each required lane.",
+      "missingPrerequisite": "Committed integrated implementation, executable Linux/macOS runners, authorized provider configuration and accepted foundation receipts.",
+      "state": "REQUIRED_LANES_NOT_RUN"
+    },
+    {
+      "criterion": "DoD 9: Screenshots/ARIA и logs/hash/expected-observed предоставлены с synthetic data и exact tested commit.",
+      "currentEvidence": "This report includes whole-file source hashes, not runtime screenshots/ARIA/log evidence. Spec snapshot249b3b4 differs from supplied input revision; working tree can change during integration.",
+      "symbolOrSeam": ["OrganizationAdminHub proposed screen", "registerOrgsHandlers logger", "sourceReferences"],
+      "requiredChange": "Produce privacy-safe synthetic scenario artifacts pinned to exact integrated tested commit; log workspace/entity/command/receipt/event/policy revision and latency/retries/denied/reconcile/projection lag with source/denominator, no token/secret/body. Include screenshot/ARIA artifacts, hashes and expected-observed records, not just success labels.",
+      "verification": "Future independent reader checks artifact hashes and commit, matches screenshots/ARIA to scenario and durable/API output; secret/body scan proves logs and export contain no private values. Baseline/mutant/environment outcomes separately identified.",
+      "missingPrerequisite": "Complete integrated feature and observed acceptance lanes; no artifacts may be fabricated during preflight.",
+      "state": "SOURCE_PINS_ONLY_RUNTIME_EVIDENCE_MISSING"
+    },
+    {
+      "criterion": "DoD 10: Independent review, meaningful negative controls, runbook, source licensing/dependencies и user docs готовы.",
+      "currentEvidence": "Existing storage tests cover local persistence, identity and invite token omission (55-192) and corrupt-file preservation194-222. Their source is not independent review or shared feature proof. No product documentation/runbook was changed, as requested.",
+      "symbolOrSeam": ["NEW admin-hub.spec.ts", "registerOrgsHandlers", "NEW admin contracts/queries/commands", "spec:106,118,131"],
+      "requiredChange": "Independent integrated review checks identity/authority/concurrency/redaction/route preservation. Negative controls must catch renderer-only guards, forged actor, cross-org counts and last-owner race against a green baseline. Lead supplies user docs defining local/shared modes, metric source/formula/asOf/unknown and export/invite permissions; on-call runbook covers reconciliation, stale permissions/search/cache cleanup and durable provider outcome. Verify dependency/source licensing; use hierarchy inspiration only, no Lark assets/logos/code copying.",
+      "verification": "Future reviewers reproduce allowed and denied scenarios, demonstrate intended assertion failures under each seeded mutant, and review documented recovery against real failure/restart. License/dependency provenance review and docs readback tied to same commit.",
+      "missingPrerequisite": "Integrated feature/test baseline, separate reviewer, actual adapter recovery contract and lead-owned docs/license inventory.",
+      "state": "REVIEW_NEGATIVE_CONTROLS_AND_DELIVERY_DOCS_PENDING"
+    },
+    {
+      "criterion": "DoD 11: GitHub completion связывает implementation commit/PR и доказательства, а не только rendered screen.",
+      "currentEvidence": "issues.json:752-763 records issue1114 OPEN, PLANNED_NOT_IMPLEMENTED and NOT_LAUNCHED; this worker performed no network or Git operations and featureComplete=false.",
+      "symbolOrSeam": ["plans/rox-suite/issues.json RS-ADM-01 normative record", "GitHub issue #1114 completion evidence"],
+      "requiredChange": "Lead alone links integrated implementation commit/PR and all acceptance artifacts/review/lane receipts to issue1114, then updates authorized completion only if every gate passes. Never close from this preflight/schema validation or a rendered screen.",
+      "verification": "Future authorized GitHub readback confirms exact implementation commit/PR and evidence links; independently verify tested revision and all DoD gates. Pending lane or missing authority keeps issue incomplete.",
+      "missingPrerequisite": "All prior implementation/verification criteria and lead-authorized GitHub delivery; no network operation allowed for this worker.",
+      "state": "NOT_READY_FOR_COMPLETION"
+    },
+    {
+      "criterion": "Scenario 1: Local/native identity path labelled local; authenticated shared org summary reads actual server.",
+      "currentEvidence": "orgs.ts:43-49,69-92 documents CRAFT_SERVER_URL as local bookkeeping only; local identity GET101-105 uses getLocalIdentity. Existing page displays inviteNoMailer411-413 but has no shared summary implementation.",
+      "symbolOrSeam": ["serverModeEnabled", "registerOrgsHandlers", "OrganizationsSettingsPage", "NEW admin.organizationSummary"],
+      "requiredChange": "Explicit local_only vs shared_authenticated mode derived from authoritative outcome; actual shared authenticated summary query with source/asOf, no automatic local fallback when server unreachable.",
+      "verification": "Future local fixture labels device-local identity/token; real authenticated server summary reload matches server record. Missing backend/server timeout yields unavailable/retryable state, not a remote-success toast or local data masquerading as remote.",
+      "missingPrerequisite": "Shared actor/query transport and committed local/shared mode contract.",
+      "state": "LOCAL_SOURCE_CONFIRMED_SHARED_UNIMPLEMENTED"
+    },
+    {
+      "criterion": "Scenario 2: Admin changes role -> reload -> same principal identity across Tasks/Chat/CRM; other org denied.",
+      "currentEvidence": "updateMemberRole421-433 exists locally, is exported from orgs/index.ts:31, but HANDLED_CHANNELS orgs.ts:31-40 has no role command. OrgMember uses local userId; no Tasks/Chat/CRM identity parity was inspected or proven.",
+      "symbolOrSeam": ["updateMemberRole", "HANDLED_CHANNELS", "NEW membership.changeRole", "OrgMember.userId"],
+      "requiredChange": "Expose preview/Apply shared role command with stable canonical principalRef, expectedRevision and actual receipt; persist/read back canonical role and re-evaluate cross-org access.",
+      "verification": "Future admin changes synthetic principal role and restarts; Tasks/Chat/CRM show same canonical principal mapping, old role cache invalidates; second-org read/write denied via API and MCP with no identity/count leak.",
+      "missingPrerequisite": "Authority alias migration, cross-product canonical consumer fixtures and MCP gateway adapter.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Scenario 3: Last owner cannot revoke own final owner grant; stale role revision conflict preserves draft.",
+      "currentEvidence": "storage.updateMemberRole427-429 guards sole-owner demotion locally. There is no shown revoke command, expectedRevision or role edit draft; page refresh83-84 resets identity drafts.",
+      "symbolOrSeam": ["updateMemberRole", "OrganizationsSettingsPage.refresh", "NEW membership-commands.ts", "OrganizationAdminHub draft state"],
+      "requiredChange": "Extend shared transactional last-owner/self-removal protection to revoke/demotion and concurrent writes. Return structured stale revision conflict plus current authorized revision; preserve unsent role/identity draft on conflict/query failure without retaining forbidden sensitive content.",
+      "verification": "Future last owner revoke/demote denied with no persistence/event delta; race two owner removals permits at most one invariant-preserving commit. Stale revision returns conflict, leaves draft intact, explicit re-preview/Apply uses current policy and never shows success before receipt.",
+      "missingPrerequisite": "Canonical transaction/CAS/invariant and structured conflict receipt contract.",
+      "state": "LOCAL_DEMOTION_GUARD_ONLY"
+    },
+    {
+      "criterion": "Scenario 4: Metrics missing telemetry unknown, zero only actual sample; hidden memberships don't leak counts.",
+      "currentEvidence": "OrganizationsSettingsPage278-280 renders count from organization.members.length; storage.listOrganizations218-226 hydrates all members per local org. Capability/metric aggregate queries are absent in normative new paths.",
+      "symbolOrSeam": ["listOrganizations", "OrganizationsSettingsPage memberCount", "NEW admin.organizationSummary"],
+      "requiredChange": "Filter unauthorized memberships before aggregates/counts. Active rate uses authorized active principals / eligible members with time range/timezone/source/asOf and missing-vs-zero distinction; absent authorized aggregation hides metrics or returns explicit unknown/unavailable, never synthetic0. No department analytics unless real authorized optional data slice exists.",
+      "verification": "Future telemetry-absent fixture renders unknown, authorized sampled zero renders0 with source/asOf/denominator, hidden member fixture exposes neither count/title/body in summary/UI/search/push/audit. Keyboard metric table/help exposes formula and freshness.",
+      "missingPrerequisite": "Authorized aggregation/telemetry and policy-filtered query contract with explicit unavailable_metrics.",
+      "state": "METRICS_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "Scenario 5: Seed renderer-only admin guard/server Actor supplied request must fail denied API/MCP path.",
+      "currentEvidence": "Page granted:true is a client source gate; org RPC ignores context; transport RequestContext has no canonical actor and capability advertisement is separate from authority. This is a source-backed risk, not a runtime exploit claim.",
+      "symbolOrSeam": ["settingsPageActionResult", "registerOrgsHandlers", "RequestContext", "NEW membership-commands.ts gateway"],
+      "requiredChange": "Resolve authenticated Actor server-side; strip/reject conflicting caller actor/userId inputs; validate current policy in shared command independent of renderer, channel availability or role labels. Preserve trusted local desktop host restrictions separately.",
+      "verification": "Future non-admin calls direct API/MCP with forged owner Actor, alternate orgId and renderer grant enabled; intended denial assertion passes, no store/event/receipt-success delta. Seed server trust-of-caller and renderer-only mutant; each must fail that assertion with green real baseline.",
+      "missingPrerequisite": "Actual authenticated shared API/MCP command execution and trusted Actor foundation.",
+      "state": "NEGATIVE_CONTROL_NOT_RUN"
+    },
+    {
+      "criterion": "User acceptance: hub -> members -> capability detail -> policy change -> audit; loses role while open -> write blocked/query redacted; Settings/Connections retained and route history/back works.",
+      "currentEvidence": "Organizations and Connections surfaces exist; Connections native inspector selection uses selectedConnectionAtom at727 and has policies/audit tabs32,132-171. Neither current source establishes organization policy command/audit export or revoke-aware open hub.",
+      "symbolOrSeam": ["OrganizationsSettingsPage", "OrganizationAdminHub proposed child", "ConnectionsPage", "selectedConnectionAtom", "NEW admin queries/commands", "typed route/history seams"],
+      "requiredChange": "Complete one integrated synthetic vertical slice across native routes, canonical authority, membership/capability policy receipt, audit event projection and live revoke. Preserve local flows and context-sensitive Connections configuration; no duplicated credential/org store or settings shell.",
+      "verification": "Future real admin journey observes saved/reloaded outputs and matching API/tool equivalents; second actor revokes role mid-view, next write denied and query/count/body redacted, cached search/memory retracts. Back/Forward and reload preserve only still-authorized context; separate failure/conflict/provider/offline cases and neighboring existing flows are exercised.",
+      "missingPrerequisite": "All foundation contracts, implemented slices, authorized realtime/projection consumers and required Linux/native/provider lanes with exact commit evidence.",
+      "state": "END_TO_END_FEATURE_INCOMPLETE"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-ADM-01.md","symbol":"Architecture prerequisites / NEW paths / tests / Definition of Done","lineStart":11,"lineEnd":138,"sha256":"f73a235f0c1b8890007baa1eef855c7c86e26a7f2f243555eb2e41ed63babd85"},
+    {"path":"plans/rox-suite/issues.json","symbol":"issues[RS-ADM-01]","lineStart":742,"lineEnd":763,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/shared/settings-registry.ts","symbol":"SettingsPageDefinition / SETTINGS_PAGES / SettingsSubpage","lineStart":19,"lineEnd":80,"sha256":"be5ff42801376dc2eca2b23ed3fe5d3fd0544862e38a97698c3bfeefd955bf25"},
+    {"path":"apps/electron/src/renderer/pages/settings/settings-pages.ts","symbol":"OrganizationsSettingsPage / SETTINGS_PAGE_COMPONENTS","lineStart":18,"lineEnd":81,"sha256":"4d5b0724a91560c84ffcfcd4fc134793d4818f49ff96c8c50952b20980406bd1"},
+    {"path":"apps/electron/src/renderer/pages/settings/OrganizationsSettingsPage.tsx","symbol":"OrganizationsSettingsPage / refresh / handleInvite / handleAccept / layout and member rows","lineStart":51,"lineEnd":516,"sha256":"8d0028f00cb4afcd723a46a24527b061ef12705ebb5d207296b2b7fe4563e318"},
+    {"path":"packages/server-core/src/handlers/rpc/orgs.ts","symbol":"HANDLED_CHANNELS / serverModeEnabled / registerOrgsHandlers","lineStart":31,"lineEnd":153,"sha256":"43f029edf8012be91460091379a295b6dbd7e74a9954689f508959560d2d2c18"},
+    {"path":"apps/electron/src/renderer/pages/ConnectionsPage.tsx","symbol":"ConnectionsPage / local tab/selection / list and audit loading / native detail button","lineStart":67,"lineEnd":171,"sha256":"3a11d3f6b27d8ced54fb8312bd2256842997a8594744b1230e2d01a5a39c0591"},
+    {"path":"apps/electron/src/renderer/pages/ConnectionsPage.tsx","symbol":"TABS tablist / selectedConnectionAtom native detail selection","lineStart":474,"lineEnd":487,"sha256":"3a11d3f6b27d8ced54fb8312bd2256842997a8594744b1230e2d01a5a39c0591"},
+    {"path":"apps/electron/src/renderer/pages/ConnectionsPage.tsx","symbol":"services.map / Connections detail setSelected(row)","lineStart":701,"lineEnd":733,"sha256":"3a11d3f6b27d8ced54fb8312bd2256842997a8594744b1230e2d01a5a39c0591"},
+    {"path":"packages/shared/src/orgs/storage.ts","symbol":"saveOrgsStore / hydrateMemberIdentity / membership checks / listOrganizations / local invite/role mutations","lineStart":89,"lineEnd":433,"sha256":"4bac23818cb65e0fe4faa49bbed92de81587faba49bc2128fb2b4732ccd0a5db"},
+    {"path":"packages/shared/src/orgs/types.ts","symbol":"Organization / OrgMember / OrgInvite / OrgsStoreFile / AcceptInviteInput","lineStart":10,"lineEnd":74,"sha256":"87613c82032323bb03ea31e11cc71b05bcc55d4e22c7bdbc125f4ab29cd42ae2"},
+    {"path":"packages/shared/src/orgs/index.ts","symbol":"public local organization API exports","lineStart":1,"lineEnd":32,"sha256":"7e563e0df5e266a8df3afa90cdb4c41e34c75b6b367be824db06c169edcd20dc"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.orgs","lineStart":691,"lineEnd":700,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"LOCAL_ONLY orgs channels","lineStart":474,"lineEnd":482,"sha256":"f9a3ffeef82eb6edfcd7435de78814db3f1c2b7a1ef0d4f7ef1df007ee399d6e"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.settings","lineStart":207,"lineEnd":211,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.connections","lineStart":245,"lineEnd":254,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"apps/electron/src/shared/route-parser.ts","symbol":"parseCompoundRoute settings branch","lineStart":175,"lineEnd":195,"sha256":"1334b7d91ea07d66a32544a31e410201652ae29a7ac512d73fe95769fb9c2b3a"},
+    {"path":"apps/electron/src/shared/route-parser.ts","symbol":"convertCompoundToNavigationState","lineStart":974,"lineEnd":981,"sha256":"1334b7d91ea07d66a32544a31e410201652ae29a7ac512d73fe95769fb9c2b3a"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"ElectronAPI organization bridge","lineStart":1882,"lineEnd":1893,"sha256":"3c864407da637347a5359d39bbe30f211dd9d43812ce624edfcfb34438b3858c"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"SettingsNavigationState","lineStart":2408,"lineEnd":2419,"sha256":"3c864407da637347a5359d39bbe30f211dd9d43812ce624edfcfb34438b3858c"},
+    {"path":"apps/electron/src/renderer/lib/navigate.ts","symbol":"navigate / routes import / NavigateOptions.newPanel","lineStart":15,"lineEnd":50,"sha256":"fbf258fb42a94c07a2a5db579714706140e75c049e9ccad6125959c2b21a7fac"},
+    {"path":"apps/electron/src/renderer/atoms/connections.ts","symbol":"selectedConnectionAtom","lineStart":1,"lineEnd":5,"sha256":"e869b26402bec11a54c3cea7b91470ba8ecc1ea8ec19f2a4672e644c911f1bd4"},
+    {"path":"apps/electron/src/renderer/pages/connections-list.ts","symbol":"ConnectionListRow / ConnectionAuditRow / sanitizeConnectionRows","lineStart":1,"lineEnd":112,"sha256":"091ce7d083850d53b782e1e36a2dcbb69d028bcca87f18cdf90d256bfe0cc006"},
+    {"path":"packages/shared/src/config/preferences.ts","symbol":"ensureLocalUserIdentity","lineStart":143,"lineEnd":178,"sha256":"e051b3d8cb55c67a28b978e2d831e255bc4f8cd48d06b04a9e909713f6e2b647"},
+    {"path":"packages/shared/src/orgs/__tests__/storage.test.ts","symbol":"isolated local persistence/identity/invite/token/corrupt-file test cases (source only)","lineStart":15,"lineEnd":222,"sha256":"07096eb3ee7219cb19b7c63748c3cb7d8298f3d188e1fcbbb6d1e940d15c2b5c"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext / HandlerFn / RpcHandlerOptions / RpcServer","lineStart":7,"lineEnd":34,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/server-core/src/transport/server.ts","symbol":"WsRpcServer.onRequest local-only gate and ctx construction","lineStart":743,"lineEnd":810,"sha256":"16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"},
+    {"path":"apps/electron/src/renderer/pages/settings/settings-rox2-surface.ts","symbol":"settingsPageActionResult","lineStart":167,"lineEnd":200,"sha256":"18b77d3e127321e9abcae8e04bb773b06fa06bfedcf33923089f119b10f98ec4"},
+    {"path":"packages/core/src/rox2/rpc-native-actions.ts","symbol":"rpcOrgsListResult / rpcOrgsReadResult / rpcOrgsActResult","lineStart":1044,"lineEnd":1059,"sha256":"692630527926522d5a3989a2650a595e5f04a932dcc1ab821bc28cc801482d6a"},
+    {"path":"apps/electron/src/renderer/pages/settings/organization-team-spaces.ts","symbol":"getTeamSpacesForOrganization","lineStart":6,"lineEnd":16,"sha256":"835dba4565de7c845b99479cca03d51d9c4b55e23f2839fcd06e33fca043e846"},
+    {"path":"apps/electron/src/renderer/pages/settings/organization-member-identity.ts","symbol":"formatOrgMemberIdentity","lineStart":16,"lineEnd":29,"sha256":"244873135202756f58ed935517ce751a72b08ecc50b9a88ff86d0393f9ab97cc"}
+  ],
+  "nextExecutableAction": {
+    "owner": "lead integration owner",
+    "action": "After committing wave0, validate this owned report against the dispatch packet; compare source hashes and reread changed seams. Accept/map the WP-01/02/03/04/06/07/36/46 foundation receipts, then assign single owners for routing, authority/transport, migrations/contracts and i18n. Begin the first vertical slice with authenticated organizationSummary + explicitly local path + canonical settings subview and real allowed/denied query/readback. Only then implement shared membership/policy/export slices on those accepted contracts; explicit RS dependency list remains [].",
+    "implementationStartCondition": "Lead wave0 committed and relevant foundation receipts accepted; normative new-file ownership and shared patch interfaces acknowledged.",
+    "reportVerification": "Dispatch verification_argv is a proposed lead-side artifact validator, not feature E2E proof. This worker does not execute product checks or mutate Git/runtime.",
+    "remainingConcreteIntegrationDiscovery": "Transport owner maps actual preload/generated client counterparts and accepted foundation projection/job/replay consumers after cutover; this scoped preflight does not guess their implementation paths."
+  },
+  "risks": [
+    "Empty explicit dependencies can make the scheduler incorrectly launch writes before hidden architecture gates are accepted; foundation receipts must be a separate start condition.",
+    "CRAFT_SERVER_URL currently only changes logging; treating that branch or native live gates as authenticated multi-user enforcement would misrepresent local tokens/identity as remote authority.",
+    "Org channels are currently LOCAL_ONLY. Removing that gate without canonical Actor/org policy exposes local bookkeeping rather than implementing authenticated shared mode.",
+    "Current RequestContext and handler dependencies do not expose a demonstrated canonical Actor. Client Actor/userId/granted/capability advertisement must never become org authority.",
+    "Existing sole-owner demotion guard is valuable but read-modify-write JSON has no shared CAS/transaction guarantee, no revoke operation and no revision conflict receipt.",
+    "Local acceptInvite deliberately supports userId override and soft recipient match, and tokens are stored plaintext without shared expiry. Preserve explicit local semantics; shared redemption requires different authenticated recipient/token protection on canonical authority.",
+    "listOrganizations returns all local members; renderer memberCount exposes their array size. Authorization must filter before aggregation, including denied count/title/body in search/push/memory.",
+    "Settings and Connections routes collapse to page roots, and persisted settings keys lose org/view context; a new component alone cannot satisfy deep links, Back/Forward or same Connections detail route.",
+    "refresh overwrites identity drafts; local React-only org selection/forms lose state across navigation. Policy-safe draft preservation and revoke cleanup need deliberate shared retention, not unconditional persistence of sensitive fields.",
+    "Connections audit failure currently becomes [], which can look like genuine empty. Hub audit/metric states must distinguish unavailable/forbidden/timeout from empty and actual sampled zero.",
+    "Native source gates synthesize receipt_verified states before domain command execution; they are not actual persisted command receipts or authorization. Shared success must follow real command receipt/readback.",
+    "Membership activity/search/Inbox/agent-memory retraction, cross-product identity and provider-live evidence cannot be established from local page/helper source. These gates remain required, not N/A.",
+    "All normative NEW admin paths are absent; no workspace-service foundation was broadly inspected. Do not silently create a parallel store/service to compensate for an unavailable accepted contract.",
+    "Shared files may change while root integrates wave0. Hash-pinned observations are working-tree evidence, not input-HEAD source proof; root must invalidate changed seams and keep completion tied to tested integrated commit.",
+    "Provider failure/export recovery and source-pinned Linux/macOS/native accessibility lanes remain unrun. No schema validator, report, screenshot inspiration or local storage test source can complete this feature."
+  ]
+}

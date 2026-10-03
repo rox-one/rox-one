@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { run } from '../local-asr'
 import { LocalMeetingStore } from '../local-store'
 import {
   applyPatch,
@@ -68,10 +69,21 @@ describe('local meeting model', () => {
     expect(pickWhisperModel(['ggml-large-v3-turbo.bin.part'])).toBeNull()
   })
 
+  it('terminates an active ASR child when its signal is aborted', async () => {
+    const controller = new AbortController()
+    const result = await run(process.execPath, ['-e', 'process.stdout.write("ready"); setInterval(() => {}, 1000)'], {
+      signal: controller.signal,
+      onOutput: (chunk) => {
+        if (chunk.includes('ready')) controller.abort()
+      },
+    })
+    expect(result.code).toBeNull()
+  })
+
   it('makes unique document names and readable markdown', () => {
     expect(uniqueName('a.pdf', new Set(['a.pdf', 'a (2).pdf']))).toBe('a (3).pdf')
     expect(uniqueName('../x', new Set())).toBe('__x')
-    const md = transcriptMarkdown({ title: 'T', createdAt: 0, durationMs: 61000 }, { engine: 'whisper.cpp', model: 'small', language: 'ru', createdAt: 0, elapsedMs: 1, segments: [{ id: 's0', startMs: 65000, endMs: 66000, text: 'Привет' }] })
+    const md = transcriptMarkdown({ title: 'T', createdAt: 0, durationMs: 61000 }, { revision: 1, engine: 'whisper.cpp', model: 'small', language: 'ru', createdAt: 0, elapsedMs: 1, segments: [{ id: 's0', startMs: 65000, endMs: 66000, text: 'Привет' }] })
     expect(md).toContain('[01:05] Привет')
     expect(md).toContain('duration: 01:01')
   })
@@ -130,13 +142,15 @@ describe('LocalMeetingStore (fs)', () => {
     writeFileSync(src, new Uint8Array([1, 2, 3]))
     const bad = join(root, 'in.txt')
     writeFileSync(bad, 'x')
-    expect(await store.importAudio({ path: bad, workspaceId: 'w1' })).toEqual({ ok: false, code: 'unsupported-format' })
-    const imported = await store.importAudio({ path: src, workspaceId: 'w1' })
+    expect(await store.importAudio({ requestId: 'bad-import', path: bad, workspaceId: 'w1' })).toEqual({ ok: false, code: 'unsupported-format' })
+    const imported = await store.importAudio({ requestId: 'valid-import', path: src, workspaceId: 'w1' })
     if (!imported.ok) throw new Error(imported.code)
     expect(imported.value.title).toBe('in')
     expect(imported.value.source).toBe('import')
     expect(imported.value.audio?.mimeType).toBe('audio/mp4')
-    expect(await store.importAudio({ path: src, meetingId: imported.value.id, workspaceId: 'w1' })).toEqual({ ok: false, code: 'meeting-has-audio' })
+    expect(imported.value.audio?.sourceHash).toBe('039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81')
+    expect(await store.importAudio({ requestId: 'duplicate-import', path: src, meetingId: imported.value.id, workspaceId: 'w1' })).toEqual({ ok: false, code: 'meeting-has-audio' })
+
 
     const doc = join(root, 'agenda.pdf')
     writeFileSync(doc, 'pdf')
@@ -149,6 +163,89 @@ describe('LocalMeetingStore (fs)', () => {
     store.create({ title: 'other ws', workspaceId: 'w2' })
     expect(store.list('w1').map((m) => m.title)).toEqual(['in'])
     expect(store.list(null)).toHaveLength(2)
+  })
+
+  it('cancels an in-flight import and removes its staging transaction', async () => {
+    const source = join(root, 'cancel-import.m4a')
+    writeFileSync(source, new Uint8Array([7, 8, 9]))
+    const importing = store.importAudio({ requestId: 'cancel-import', path: source, workspaceId: 'w' })
+    expect(store.cancelImport('cancel-import')).toBe(true)
+    expect(await importing).toEqual({ ok: false, code: 'import-cancelled' })
+    expect(store.list(null)).toEqual([])
+    expect(readdirSync(root).filter((name) => name.startsWith('.importing-'))).toEqual([])
+  })
+  it('rejects stale transcript edits and persists accepted corrections as a new revision', async () => {
+    const source = join(root, 'revision.m4a')
+    writeFileSync(source, new Uint8Array([1, 2]))
+    const imported = await store.importAudio({ requestId: 'revision-import', path: source, workspaceId: 'w' })
+    if (!imported.ok) throw new Error(imported.code)
+    const meetingId = imported.value.id
+    const metadataPath = join(root, meetingId, 'meeting.json')
+    const metadata = JSON.parse(readFileSync(metadataPath, 'utf8')) as { durationMs: number }
+    metadata.durationMs = 5000
+    writeFileSync(metadataPath, JSON.stringify(metadata))
+    writeFileSync(join(root, meetingId, 'transcript.json'), JSON.stringify({
+      engine: 'whisper.cpp',
+      model: 'small',
+      language: 'ru',
+      createdAt: 10,
+      elapsedMs: 2,
+      revision: 1,
+      segments: [{ id: 's0', startMs: 1000, endMs: 2000, text: 'Привет' }],
+    }))
+
+    const corrected = await store.updateTranscriptSegment(meetingId, {
+      expectedRevision: 1,
+      segmentId: 's0',
+      patch: { startMs: 1250, endMs: 2250 },
+    })
+    expect(corrected.ok).toBe(true)
+    if (!corrected.ok) return
+    expect(corrected.value.revision).toBe(2)
+    expect(corrected.value.segments[0]).toMatchObject({ startMs: 1250, endMs: 2250, text: 'Привет' })
+    expect(readFileSync(join(root, meetingId, 'transcript.md'), 'utf8')).toContain('[00:01] Привет')
+    expect(existsSync(join(root, meetingId, 'transcript.revision-1.json'))).toBe(true)
+    expect(store.readTranscriptRevision(meetingId, 1)?.segments[0]?.startMs).toBe(1000)
+
+    expect(await store.updateTranscriptSegment(meetingId, {
+      expectedRevision: 2,
+      segmentId: 's0',
+      patch: { startMs: -1 },
+    })).toEqual({ ok: false, code: 'invalid-transcript-timecode' })
+    expect(store.readTranscript(meetingId)?.revision).toBe(2)
+
+    expect(await store.updateTranscriptSegment(meetingId, {
+      expectedRevision: 1,
+      segmentId: 's0',
+      patch: { startMs: 1500 },
+    })).toEqual({ ok: false, code: 'transcript-conflict' })
+    const restored = store.restoreTranscriptRevision(meetingId, { expectedRevision: 2, restoreRevision: 1 })
+    expect(restored.ok).toBe(true)
+    if (!restored.ok) return
+    expect(restored.value.revision).toBe(3)
+    expect(restored.value.segments[0]).toMatchObject({ startMs: 1000, endMs: 2000 })
+    expect(restored.value.history?.at(-1)).toMatchObject({ revision: 3, reason: 'restored' })
+    expect(restored.value.history?.map(({ revision, reason }) => [revision, reason])).toEqual([
+      [2, 'corrected'],
+      [3, 'restored'],
+    ])
+    expect(existsSync(join(root, meetingId, 'transcript.revision-2.json'))).toBe(true)
+    expect(store.restoreTranscriptRevision(meetingId, { expectedRevision: 2, restoreRevision: 1 })).toEqual({ ok: false, code: 'transcript-conflict' })
+  })
+
+  it('removes an interrupted new-meeting import instead of exposing a dangling meeting', () => {
+    const pending = store.create({ title: 'Import pending', workspaceId: 'w' })
+    writeFileSync(join(root, pending.id, `.audio.importing-${pending.id}`), new Uint8Array([1]))
+    writeFileSync(join(root, `.importing-${pending.id}.json`), JSON.stringify({
+      meetingId: pending.id,
+      createdMeeting: true,
+      fileName: 'audio.m4a',
+    }))
+
+    const restarted = new LocalMeetingStore({ root, detectEngine: () => NO_ENGINE, emit: () => {} })
+    expect(restarted.read(pending.id)).toBeNull()
+    expect(existsSync(join(root, pending.id))).toBe(false)
+    expect(existsSync(join(root, `.importing-${pending.id}.json`))).toBe(false)
   })
 
   it('planned meetings keep their schedule; record into a planned meeting', async () => {

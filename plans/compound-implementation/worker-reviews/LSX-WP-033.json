@@ -1,0 +1,320 @@
+{
+  "task_id": "LSX-WP-033-preflight",
+  "attempt_id": "fcf661c88beee9853ca069d0e506fb88",
+  "packet_hash": "7386c86c6d993da2a5595f39c0cb4b9e4b9671e9612f92691a4053ed6b1014fd",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-033",
+  "featureComplete": false,
+  "mode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow: inspect normative package and direct imports; root retains implementation and integration",
+  "dependencies": ["LSX-WP-003", "LSX-WP-004", "LSX-WP-026"],
+  "dependencyContracts": [
+    {
+      "packageId": "LSX-WP-003",
+      "requiredContribution": "doc.commitMarkdown(envelope)/doc.getCommitReceipt(commandId): mandatory revision and epoch, stable operation key, recoverable native document receipt/content/outbox boundary. AppendBlock and persisted review/config must consume this owner rather than write Markdown independently.",
+      "evidence": "plans/lark-suite-reference/work-packages.json:2092-2148",
+      "state": "ACCEPTED_IMPLEMENTATION_RECEIPT_NOT_INSPECTED"
+    },
+    {
+      "packageId": "LSX-WP-004",
+      "requiredContribution": "task.patchFields/task.previewBatch/task.applyBatch with native per-target receipts and current field rights; Command actions targeting Tasks reuse these handlers, not whole-bundle writes or action-owned Task rows.",
+      "evidence": "plans/lark-suite-reference/work-packages.json:2465-2522",
+      "state": "ACCEPTED_IMPLEMENTATION_RECEIPT_NOT_INSPECTED"
+    },
+    {
+      "packageId": "LSX-WP-026",
+      "requiredContribution": "Existing editor binding, durable actor/source-scoped draft and acknowledged revisions. Mount RD-09 in the existing document host and retain one editor/content authority.",
+      "evidence": "plans/lark-suite-reference/work-packages.json:9624-9714",
+      "state": "ACCEPTED_IMPLEMENTATION_RECEIPT_NOT_INSPECTED"
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "EG-COMMANDS",
+      "relationship": "Explicit external prerequisite; not an explicit LSX DAG edge",
+      "evidence": ["plans/lark-suite-reference/work-packages.json:140-145", "plans/lark-suite-reference/work-packages.json:11894-11896", "docs/rox-suite/published/RS-MCP-01.md:54-79"],
+      "requiredReceipt": "Registered command validator, authenticated actor/resource policy and common MCP dispatcher; typed descriptors/results, preview digest and native receipt contract at an exact implementation commit.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "PUBLISHED_COMMAND_AUTHORITY_FOUNDATIONS",
+      "relationship": "Hidden transitive foundation gates in published EG-COMMANDS specification, not new LSX dependencies",
+      "evidence": ["docs/rox-suite/published/RS-MCP-01.md:11-13", "docs/rox-suite/published/RS-MCP-01.md:75-99"],
+      "requiredReceipt": "RS-ADM-01 and architecture WP-01/02/03/07/36/37; remote identity/resource gateway before shared enablement. Same scoped guard for UI, authenticated RPC/IPC, MCP and jobs. Pure CommandRegistry eligibility is not this authority.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "EG-AUTOMATION_WORKFLOW_ACTION",
+      "relationship": "Hidden affected-scope runtime gate, omitted from this package's external_prerequisites array but expressly required by its risk and linked RS-AUT-03",
+      "evidence": ["plans/lark-suite-reference/work-packages.json:156-161", "plans/lark-suite-reference/work-packages.json:12114-12116", "docs/rox-suite/published/RS-AUT-03.md:11-19", "docs/rox-suite/published/RS-AUT-03.md:45-57", "docs/rox-suite/published/RS-AUT-03.md:99-111"],
+      "requiredReceipt": "RS-AUT-03 durable immutable run/node/effect executor plus RS-AUT-01 and RS-AUT-02 prerequisites. workflow.start/resume/reconcile are proposed names, not demonstrated callable endpoints. No parallel action-chain workflow store or fake execution through graph UI.",
+      "state": "READINESS_NOT_VERIFIED; Workflow must be disabled with missingDependency until ready, which does not satisfy full six-type execution acceptance"
+    },
+    {
+      "id": "DOCUMENT_AUTHORITY_COLLABORATION_FOUNDATIONS",
+      "relationship": "Hidden transitive requirements of LSX-WP-026 and its linked RS-DOC-01; not additional direct DAG edges",
+      "evidence": ["plans/lark-suite-reference/work-packages.json:9506-9513", "docs/rox-suite/published/RS-DOC-01.md:3-14", "docs/rox-suite/published/RS-DOC-01.md:35-44", "docs/rox-suite/published/RS-DOC-01.md:79-87"],
+      "requiredReceipt": "LSX-WP-026's LSX-WP-003/005/006 and EG-COLLABORATION receipts; published RS-DRV-01 and RS-MSG-02 foundations where collaborative Page representation is used. Preserve Page artifact runtime and one document writer; no rename of HTML Page into collaborative document.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "DIGEST_BOUND_REVIEW_OWNER",
+      "relationship": "Affected-scope approval foundation; not automatically a new direct dependency",
+      "evidence": ["docs/lark-suite-reference/06-rox-docs-design.md:65", "docs/lark-suite-reference/06-rox-docs-design.md:146", "docs/lark-suite-reference/08-automation-integration.md:45", "plans/lark-suite-reference/work-packages.json:164-169"],
+      "requiredReceipt": "Command-owned confirmation policy and authenticated digest-bound review of immutable mapped payload, refs/revisions and capability version. If existing approval/signature owner is selected, verify its exact digest/revoke receipt (EG-APPROVAL); do not turn an imported reviewed flag into execution authority.",
+      "state": "OWNER_AND_IMPLEMENTATION_CONTRACT_NOT_VERIFIED"
+    },
+    {
+      "id": "SIX_TYPED_OWNER_CONTRACTS",
+      "relationship": "Implementation foundation missing from the inspected registry; no invented prerequisite IDs",
+      "evidence": ["packages/core/src/platform/commands/types.ts:13-34", "packages/core/src/platform/resources/types.ts:23-49", "docs/lark-suite-reference/06-rox-docs-design.md:146", "docs/lark-suite-reference/08-automation-integration.md:42-51"],
+      "requiredReceipt": "Registered typed Command validator/receipt; authorized EntityLink resolver; versioned Template handler; native AppendBlock schema/commit; bounded SafeFormula language and validation semantics; immutable WorkflowRef runtime. Current resource data/route and untyped service handles are not these contracts.",
+      "state": "EXACT_OWNER_APIS_NOT_VERIFIED"
+    },
+    {
+      "id": "IMPLEMENTATION_LAUNCH_AND_SCOPE",
+      "relationship": "Launch gates independent of feature DAG",
+      "evidence": ["plans/lark-suite-reference/execution-packages.json:2853-2857", "plans/lark-suite-reference/execution-packages.json:2887-2897"],
+      "requiredReceipt": "Lead wave0 commit and accepted prerequisite artifact/readback receipts; resolve delivery-manifest revision/digest and every spec_ref hash; approved implementation base reconciling dispatch input a21aeab1 with normative product baseline e953786b; exclusive shared-path leases; reviewed packet extensions for missing transport/UI/i18n wiring.",
+      "state": "NOT_READY_FOR_FEATURE_IMPLEMENTATION; dirty wave0 tree is inspection evidence only"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/docs/action-spec.ts",
+    "packages/server-core/src/docs/action-dispatch.ts",
+    "apps/electron/src/renderer/pages/docs/ActionBuilder.tsx",
+    "tests/lark-suite-extension/lsx-wp-033.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-033.spec.ts"
+  ],
+  "plannedContributions": [
+    {
+      "path": "packages/core/src/docs/action-spec.ts",
+      "change": "Define runtime-validated, schema-versioned ActionSpec discriminated union for Command/EntityLink/Template/AppendBlock/SafeFormula/Workflow; typed mapped inputs, affected refs, payloadDigest, command-owned confirmation and stopOnError default. Define doc.validateAction, doc.previewAction, doc.executeAction request/result/error schemas, CommandPreview and StepReceipt. Preserve imported/unreviewed provenance; reject raw script/shell and arbitrary HTML labels. Errors must include validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat.",
+      "missingPrerequisite": "Accepted authority EntityRef/receipt/status and typed descriptor schemas; approved imported Buttons compatibility grammar and SafeFormula semantics. Proposed symbol names here are implementation requests, not existing exports."
+    },
+    {
+      "path": "packages/server-core/src/docs/action-dispatch.ts",
+      "change": "Consume authenticated transport context and accepted command/domain/workflow owner adapters. Validation/preview perform no effects. Execution checks current policy/epoch, target revision and digest before each step, dispatches only registered typed operations, obtains native receipt, then advances. Keep the same logical step idempotency key across duplicate clicks/restarts/retries; read/reconcile owner receipts on ambiguous outcomes. Return durable completed effects alongside failed/unstarted steps; continue only when explicitly safe and registered. Persist declarative config through the document owner and receipts/checkpoints through existing effect/workflow owners, not a new store.",
+      "missingPrerequisite": "EG-COMMANDS, LSX-WP-003/004 receipt interfaces and durable workflow continuation owner; authorized API registration seam is outside current sharedPatchPaths."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/ActionBuilder.tsx",
+      "change": "Implement RD-09 existing-host modal: label/icon/token style, six registered action choices, schema-derived input mapping, policy, affected-ref/effect preview, explicit review/execute and per-step native statuses. Preserve drafts on denial/conflict; show capability/offline/missingDependency reasons, not fake success. Use common UI/i18n/theme/font/help and keyboard contracts; never attach execution to parsing/mount/hover.",
+      "missingPrerequisite": "Accepted LSX-WP-026 host mount and authenticated client; ten locale keys need integration-owner scope extension, not worker writes."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-033.test.ts",
+      "change": "Behavioral coverage of all six discriminants/capabilities, unknown format/raw script rejection, pure preview/open, digest invalidation, forged actor, denied/stale refs, duplicate logical operation, step2 failure preventing step3, safe explicit continuation, crash-after-effect replay and per-step authoritative receipts. Use native owner lanes for persistence, not mocked echoes. Retain deterministic seeds and input hashes; seeded mutants must fail zero-effects-on-open, one-effect/receipt-for-replay and digest-invalidates-approval assertions.",
+      "missingPrerequisite": "Dependency/native fixtures and runtime owner readiness; these tests are planned and were not run."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-033.spec.ts",
+      "change": "Exercise actual integrated Electron document ActionBuilder/open-import flow, preview/review/execute and failures; assert native persisted readback, pointer/keyboard/IME/focus/zoom/reduced-motion/theme/locale/font behavior. Keep screenshots/ARIA/computed font and exact environment/revision; fixture-only UI is not completion proof.",
+      "missingPrerequisite": "Discover supported actual Electron runner after integration authorization; no runner command or passing screenshot is invented here."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/platform/commands/registry.ts",
+      "symbol": "createCommandRegistry / CommandRegistryImpl.register/query/get",
+      "change": "At this existing registry seam, add an exported typed action-descriptor adapter backed by the supplied CommandRegistry instance and the action-spec contract, consuming accepted EG-COMMANDS descriptor metadata. Do not add a second contributions Map. Expose only registered, schema-validated action-capable contributions; query eligibility remains a UI filter, never an ACL grant. Use get(id) to resolve the registered command, then the authenticated server dispatcher for typed validation/preview/native receipt, not CommandContribution.execute as a receipt-producing handler. Preserve duplicate-id/disposable/listener behavior and the existing generic CommandRegistry interface; do not silently expand commands/types.ts write scope.",
+      "reason": "The current map is the canonical registration mechanism, but contributions return Promise<void>, have no input/output schema or preview/durable result, and get bypasses when filtering. Safe Buttons cannot infer authorization from membership/permissions strings.",
+      "prerequisite": "Integration-owner lease plus accepted EG-COMMANDS typed descriptor contract; if changing CommandContribution is necessary, review an explicit additional-path packet first."
+    },
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "TiptapMarkdownEditor (including TiptapMarkdownEditorProps and extensions/useEditor configuration)",
+      "change": "Wire a host-supplied typed action review/preview/execute integration into the existing editor and RD-09 modal, with stable document/block refs from LSX-WP-026. Keep imported Buttons as unreviewed inert content until explicit server-validated review; render only safe labels and current capability reasons. No effects in extension parsing, onCreate, content setContent, paste/drop, hover or onUpdate. Provide the host callback/control seam without importing the Electron page into packages/ui. Preserve controlled echo/caret, emitUpdate:false synchronization, existing editable semantics and both markdown engines.",
+      "reason": "The editor has only wiki/tag callbacks and no action host contract; useMemo builds the single existing extension set. A standalone ActionBuilder file would not implement the existing document surface.",
+      "prerequisite": "LSX-WP-026 integrated host, reviewed modal mount/API scope and shared-path lease. A separate action-node module is not an allowed normative new file; if required, request scope amendment rather than inventing ownership."
+    },
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "preprocessMarkdownForOfficial / postprocessMarkdownFromOfficial",
+      "change": "Make existing official-parser math/currency normalization skip recognized imported action fences so raw declarative/script text is not rewritten before review or digest computation. Preserve fence source/provenance through serialization; never encode authorization into portable text. Define review invalidation when normalized input changes. Leave unrelated math/currency behavior intact and implement the same inert import policy for the legacy engine at its existing configuration seam.",
+      "reason": "preprocessMarkdownForOfficial currently applies $$ and currency replacements across the entire Markdown string, including fenced content; postprocess globally replaces the currency marker. A future action payload digest cannot safely use these transformed bytes as the original imported payload.",
+      "prerequisite": "Exact Buttons compatibility grammar/report and agreed canonical digest bytes, validated roundtrip with both engines. This is a source-based risk, not a reproduced runtime bug."
+    }
+  ],
+  "integrationScopeGaps": [
+    {
+      "gap": "Authenticated API registration/client exposure",
+      "evidence": "Package requires doc.validateAction/doc.previewAction/doc.executeAction at server and renderer boundaries (work-packages.json:12024-12043), but allowed shared files contain no transport registration/client seam.",
+      "request": "Lead must allocate reviewed transport registration/client symbols after inspecting accepted EG-COMMANDS/dependency integration. Do not invent an endpoint or modify unlisted RPC/protocol files in this slice."
+    },
+    {
+      "gap": "Actual RD-09 host mount",
+      "evidence": "ActionBuilder is a proposed NEW Electron page; TiptapMarkdownEditor has no existing action callback. LSX-WP-026 proposes DocumentEditorBinding.tsx and patches NotesPage; these paths are not LSX-WP-033 sharedPatchPaths.",
+      "request": "Ask the accepted LSX-WP-026 owner to expose/mount the typed RD-09 host callback under its reviewed scope, or amend LSX-WP-033 integration packet. A disconnected component is not acceptance."
+    },
+    {
+      "gap": "Ten-locale user-facing strings",
+      "evidence": "Repository AGENTS.md requires t() and matching keys in all ten packages/shared/src/i18n/locales/*.json; package mandates RU+i18n (work-packages.json:12059-12061). Locale files are not allowed sharedPatchPaths.",
+      "request": "Allocate integration-owner locale patches with sorted keys after UI copy is defined; no hardcoded RU or fallback-only shortcut."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "all6 action types declared and capability gated",
+      "currentEvidence": "work-packages.json:12105 and docs design:146 name all six. CommandContribution at commands/types.ts:13-34 has optional permissions strings and execute Promise<void>, not runtime input/output schemas. ResourceItem at resources/types.ts:23-33 has untyped data/route, not authoritative EntityRef.",
+      "symbolOrSeam": "createCommandRegistry; proposed ActionSpec and doc.validateAction/doc.previewAction",
+      "requiredChange": "Declare all six tagged runtime schemas; Command resolves typed registered command, EntityLink resolves permitted ref without granting access, Template resolves version/required capabilities and native create handler, AppendBlock validates typed block and document CAS, SafeFormula evaluates only an approved bounded language without eval/shell/network, Workflow resolves immutable version and current scoped runtime. Validate mapping/schema version and capability before preview/execute; unavailable owners explicitly disable that type without claiming completion.",
+      "verification": "SOURCE_SCHEMA compile/decode at both boundaries; UNIT_PROPERTY valid/invalid cases for all six and current capability matrix; NATIVE_DOMAIN_READBACK demonstrates actual permitted operation and denied counterpart for each available owner.",
+      "missingPrerequisite": "All six owner contracts, EG-COMMANDS and Workflow runtime receipt; SafeFormula grammar and Template versioned handler are not supplied by inspected code.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "per-step partial receipts; no simulated success presented live",
+      "currentEvidence": "work-packages.json:12106 and automation design:42-47,80 require native per-step outcomes. CommandContribution.execute returns void. Existing editor only emits Markdown changes.",
+      "symbolOrSeam": "proposed action-dispatch.ts StepReceipt producer and ActionBuilder.tsx status renderer",
+      "requiredChange": "Collect existing owner's durable receipt/ref/revision/hash for every completed mutation and native outcome for read-only actions. Return completed/failed/unstarted steps distinctly; stop dangerous chain on failure by default. Allow explicit continuation only when owner policy declares it safe. Preserve partial committed effects; never translate queue/provider acceptance/simulation into native success.",
+      "verification": "Step1 commits, step2 fails, step3 produces zero effects; UI shows original native receipt and failure. Explicit safe continuation test and cancellation/unknown outcome readback where owner exposes them.",
+      "missingPrerequisite": "Durable owner receipt/checkpoint contract and actual integrated UI client.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "work-packages.json:12028-12043,12107 lists APIs/eight errors. commands/types.ts:29-34 only supplies context keys and unknown host service handles; those cannot authenticate payload actor/workspace.",
+      "symbolOrSeam": "proposed action-spec.ts schemas; action-dispatch.ts authenticated context; existing command registry adapter",
+      "requiredChange": "Share runtime request/result/error validators at doc.validateAction/previewAction/executeAction boundaries; reject malformed/schema-version inputs before effects. Carry documentRef/expectedRevision/authorityEpoch/logical key/digest without trusting caller actor/owner/workspace authorization. Obtain actor and scope from authenticated transport and revalidate every target.",
+      "verification": "Compile accepted server+renderer contracts, decode all eight discriminants and test forged payload identity against a different authenticated principal; denied output must not contain protected title/body/ref details.",
+      "missingPrerequisite": "Authenticated transport/common authorization contracts and reviewed API registration/client patches beyond current two shared paths.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "work-packages.json:12108; LSX-WP-003:2102-2105 defines committed revision/hash/replay; LSX-WP-004:2475-2478 native Tasks readback. CommandRegistry itself persists nothing and only executes host callbacks.",
+      "symbolOrSeam": "proposed action-dispatch.ts delegating to accepted doc.commitMarkdown/task.patchFields/workflow owners",
+      "requiredChange": "Advance step only once native durable receipt exists; retain the same step key and reconcile crash-after-effect via existing owner's receipt. Read authoritative target ref/revision/hash before reporting and after service/app restart. Declarative action config goes through document authority; do not create receipt/task/document stores.",
+      "verification": "Native readback of affected document/Task/workflow refs and exact hashes; restart after commit/before returned result, replay original logical key, observe same receipt and one effect with no lost acknowledged step.",
+      "missingPrerequisite": "Accepted LSX-WP-003/004 and durable Workflow ownership; exact native runner environment.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:12074-12088,12109 requires open import/duplicate click/step2 failure/denied/ref change and six separate proof lanes. Normative test files were absent in presence lookup.",
+      "symbolOrSeam": "proposed lsx-wp-033.test.ts and ui/lsx-wp-033.spec.ts",
+      "requiredChange": "Cover allowed execution, capability missing/offline, current denial/revoke after preview, changed revision or digest, forged actor, duplicate simultaneous clicks, stopped step3 and restart recovery. Keep deterministic input/seed/attempt receipts; tests must exercise consumer-visible effects, not wiring or mock forwarding.",
+      "verification": "Planned source command: bun test tests/lark-suite-extension/lsx-wp-033.test.ts. Separately execute actual native scenarios and discovered supported Electron runner; bind expected/observed receipts, seeds and failures to implementation commit.",
+      "missingPrerequisite": "Implementation/dependency receipts, native owner fixtures and approved test/runtime phase; no tests or runtime operations performed in this preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:12090-12098,12110 specifies execute-imported-script/change-retry-key mutants and three semantic assertions.",
+      "symbolOrSeam": "proposed lsx-wp-033.test.ts; editor import guard and action-dispatch.ts replay/digest guard",
+      "requiredChange": "With green baseline, seed import-time script execution and changed logical retry key after side effect; separately bypass digest approval invalidation if needed to exercise third named oracle. Keep exact baseline/mutant bytes, input SHA and seed; isolate mutations from live workspace data.",
+      "verification": "Mutants must fail zero write/send on document open, one effect/receipt for replay and changed digest invalidates preview approval. Record intended assertion failure; build/timeout/runner failure does not count.",
+      "missingPrerequisite": "Implemented native assertions and isolated fixture environment; mutation run prohibited during preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "work-packages.json:12059-12061,12111; RD-09 at docs design:65. TiptapMarkdownEditor:202-223 exposes editor callbacks but no action builder. Its extension config uses i18n.t at line268; codeblock uses useTranslation at line104.",
+      "symbolOrSeam": "proposed ActionBuilder.tsx; existing TiptapMarkdownEditor host callback/extensions",
+      "requiredChange": "Integrated existing-host modal and inert block/review control with six types, typed inputs, preview and per-step statuses. Include pending/success/failure/offline/denied/missing capability states, safe text/token styles, help on hover/focus/click, visible focus and Escape return. Use t() across all ten locales, preserve user theme and actual Rox Mono loading; protect IME/caret/draft during failures and capability refresh.",
+      "verification": "Actual Electron pointer and Enter/Space/Tab/Escape interactions; IME in label/input, modal focus return, 200% zoom, narrow layout, reduced motion, light/dark, RU and locale keys, computed loaded font/cyrillic; screenshots/ARIA plus actual effect readback, not toast-only proof.",
+      "missingPrerequisite": "Accepted LSX-WP-026 mount, authenticated client, locale patch lease/scope and discovered real Electron runner.",
+      "state": "NOT_RENDERED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:12112 and 12081-12088; published RS-DOC-01:74-76 and RS-AUT-03:83-94 separate native/domain/provider evidence.",
+      "symbolOrSeam": "LSX-WP-033 integration acceptance receipts",
+      "requiredChange": "Require SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI evidence independently at integrated implementation revision. Where effects use providers or collaboration, obtain affected-lane authoritative receipt/readback and actor-redacted artifacts; queued provider result is not confirmed effect.",
+      "verification": "Lead independently validates exact diff/commit, schema report, native refs/revisions/hashes before/after restart, semantic mutants and screenshots/ARIA/font. Reverify changed material after integration.",
+      "missingPrerequisite": "All implementation/evidence lanes; preflight is neither feature proof nor permission to start implementation before dependency acceptance.",
+      "state": "FEATURE_INCOMPLETE"
+    },
+    {
+      "criterion": "Opening imported Buttons fence executes nothing and remains inert until reviewed.",
+      "currentEvidence": "docs design:146; work-packages.json:11874-11875,12047,12075. TiptapCodeBlockView:289-308 makes generic codeBlock text from non-math/non-Mermaid fences; view:126-128,175-184,206-280 only changes language/copies/renders code in inspected file. No action execution seam is present there; runtime zero-effect proof is absent.",
+      "symbolOrSeam": "TiptapMarkdownEditor extensions/useEditor/onCreate/setContent; existing generic fenced code renderer",
+      "requiredChange": "Keep original imported text and unreviewed provenance; parsing, opening, paste and reload cannot execute or authorize. Review explicitly validates typed registered spec and capabilities server-side; unknown/raw script fences remain inert with diagnostics. Never trust portable reviewed flags or script labels.",
+      "verification": "Import/open/reload scripted and declarative Buttons in both legacy/official engines, including read-only mode; native write/send ledger must show zero effects. Review does not execute; only subsequent authorized explicit action can mutate.",
+      "missingPrerequisite": "Exact imported syntax compatibility report, trusted review receipt and native effect oracle.",
+      "state": "GENERIC_INERT_SOURCE_SEAM_EXISTS; PACKAGE_BEHAVIOR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Preview affected refs/payloadDigest; changed payload or refs invalidates approval; command policy owns confirmation.",
+      "currentEvidence": "work-packages.json:12014-12022,12077,12096; docs design:146; automation design:45. Editor preprocess:75-99 globally normalizes math/currency; postprocess:102-103 globally rewrites marker.",
+      "symbolOrSeam": "proposed CommandPreview/doc.previewAction and action-dispatch.ts digest check; preprocessMarkdownForOfficial/postprocessMarkdownFromOfficial",
+      "requiredChange": "Bind preview/review to canonical typed mapped values, affected stable refs/revisions, action/command/schema version and scoped policy context; recompute before execution and after relevant edits. Reject stale payload rather than silently reapprove/rebase. Protect imported fence bytes from math normalization and do not use renderer-provided actor as digest authority.",
+      "verification": "Change mapped field, target revision, command/schema version and payload after preview; each requires fresh preview/review and produces zero effects. Preview/open/help remain effect-free; malformed fences roundtrip inert in both engines.",
+      "missingPrerequisite": "Canonical payload digest and confirmation-owner contract; grammar-specific fence protection and compatibility fixtures.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Each step uses current scoped actor policy; no raw JS/shell; sanitizer is not ACL or execution grant.",
+      "currentEvidence": "work-packages.json:12054-12056; sanitizeForShell at security.ts:19-29 only escapes characters; registry.get at registry.ts:50-52 does not evaluate eligibility; query at38-47 only checks when/text/source.",
+      "symbolOrSeam": "proposed action-dispatch.ts policy/typed dispatch and action-spec.ts validation",
+      "requiredChange": "Whitelist registered typed action handlers; disallow eval/shell/script payloads even if sanitized. Recheck actor/resource/capability/epoch before every effect and replay; revocation between steps stops later writes and does not expose protected receipt details. Do not equate get/query eligibility or permissions labels with server ACL.",
+      "verification": "Forbidden raw script, forged principal, revoke after preview/between steps, cross-workspace ref and unsafe label tests; no mutation/send or private body/title leakage under denial.",
+      "missingPrerequisite": "EG-COMMANDS current scoped authority and accepted document/task/workflow owners.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Committed steps advance once; next attempt retains logical idempotency key; stopOnError default and safe explicit continue policy.",
+      "currentEvidence": "work-packages.json:12017,12063-12065; automation design:80-82 and RS-AUT-03:29-35,41,51-53.",
+      "symbolOrSeam": "proposed action-dispatch.ts step cursor/replay using existing workflow/effect owner",
+      "requiredChange": "Derive stable logical step operation IDs once from accepted action execution context; attempts retain IDs and immutable payload. Persist cursor/receipt using existing durable owner, reconcile unknown effects before advancing/retrying; no whole-chain blind replay or arbitrary compensation.",
+      "verification": "Concurrent duplicate click plus crash-after-effect/before response results in one native mutation/receipt; resumed denied step cannot run; failed step2 leaves step3 unstarted, explicit safe continuation retains earlier receipts.",
+      "missingPrerequisite": "Existing durable chain checkpoint/effect reconciliation owner; local ActionBuilder state is insufficient.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Declarative config only; receipts from existing domain/workflow owners; command.completed/action.reviewed events are verified aliases with canonical envelope.",
+      "currentEvidence": "work-packages.json:12045-12052 marks DB/events PROPOSED; command registry map has no persistence/event outbox; resource registry search isolates provider failures as empty results at resources/registry.ts:69-75.",
+      "symbolOrSeam": "proposed action-dispatch.ts consuming accepted receipt/outbox owner; existing command/resource registries",
+      "requiredChange": "Persist config/review via existing document authority and native receipts via owner journals; use commit-bound existing event/outbox adapter with eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId. Verify family aliases before emitting; preserve affected refs and redacted provenance. Resource search empty contribution cannot be treated as authorized missing target or successful action.",
+      "verification": "Native config/receipt reload and event dedup/ref correlation readback; denied audience receives no protected output; replay does not produce duplicate completion/review event. Verify actual event registry aliases, not string existence.",
+      "missingPrerequisite": "Accepted document/effect/workflow event authority and verified alias registration; not present in the inspected pure registries.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/platform/commands/registry.ts","symbol":"CommandRegistryImpl.register/query/get; createCommandRegistry","lineStart":20,"lineEnd":66,"sha256":"832ae183641c47c28502469a9f8d77dd8a530fab80e958b8060406e610cf6f6f"},
+    {"path":"packages/core/src/platform/commands/types.ts","symbol":"CommandContribution; CommandContext; CommandRegistry","lineStart":13,"lineEnd":53,"sha256":"471524b041e4322bc7512ae93833794f45c14f2d2d6d029ab2fb65967f7ebdc3"},
+    {"path":"packages/core/src/platform/resources/registry.ts","symbol":"ResourceProviderRegistryImpl.search; createResourceProviderRegistry","lineStart":50,"lineEnd":90,"sha256":"dbbe1bddb349ebb2922e7605d5b300e9973519144b26077596d03f339a054d94"},
+    {"path":"packages/core/src/platform/resources/types.ts","symbol":"ResourceItem; ResourceSearchContext; ResourceProvider","lineStart":23,"lineEnd":50,"sha256":"2e95bc0416269082a13f386045222755fe265cc7b61bca218d9c18ef0841862d"},
+    {"path":"packages/core/src/platform/context-keys/evaluate-when.ts","symbol":"when semantics; tokenize; resolvePath","lineStart":15,"lineEnd":149,"sha256":"1a27b1aca7af0f1b1d1c56acadc52e91ffebe075b72124cd4ec52f9ea6fa9441"},
+    {"path":"packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx","symbol":"preprocessMarkdownForOfficial; postprocessMarkdownFromOfficial","lineStart":75,"lineEnd":104,"sha256":"5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path":"packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx","symbol":"TiptapMarkdownEditorProps; TiptapMarkdownEditor","lineStart":202,"lineEnd":451,"sha256":"5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path":"packages/ui/src/components/markdown/TiptapCodeBlockView.tsx","symbol":"TiptapCodeBlockView; tiptapCodeBlock.parseMarkdown/renderMarkdown","lineStart":103,"lineEnd":325,"sha256":"47e2871c3252e61e6dbb17c270bec29f82a01643b5e51463dcf49f04d14cfa45"},
+    {"path":"packages/shared/src/automations/security.ts","symbol":"sanitizeForShell","lineStart":19,"lineEnd":30,"sha256":"59f5b41a923542016705d14339786776eb827b3758705c8db09a85c75cbe8464"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[32] LSX-WP-033","lineStart":11871,"lineEnd":12199,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-033 execution record","lineStart":2809,"lineEnd":2899,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/06-rox-docs-design.md","symbol":"RD-09; Buttons; command envelope and CAS policy","lineStart":142,"lineEnd":178,"sha256":"a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path":"docs/lark-suite-reference/08-automation-integration.md","symbol":"node typed I/O; failure/security","lineStart":34,"lineEnd":84,"sha256":"32b1ffb806b8dab6be2ffe38f3144b1a5601e0695620b5a8f7bbed9b4f345a68"},
+    {"path":"docs/rox-suite/published/RS-DOC-01.md","symbol":"document authority; foundation dependency links","lineStart":35,"lineEnd":87,"sha256":"b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path":"docs/rox-suite/published/RS-AUT-03.md","symbol":"durable workflow authority and normative prerequisites","lineStart":45,"lineEnd":113,"sha256":"0d42c0105cecb110427e045272de9237e996f4ee29bf0a2981ce316f7b76b1a8"},
+    {"path":"docs/rox-suite/published/RS-MCP-01.md","symbol":"architecture prerequisites; typed authenticated invocation and shared policy","lineStart":11,"lineEnd":99,"sha256":"7e0e4f01c7ab1230e9befeec9e93fdb360eb17ee0a441ec24863f27f99446d50"}
+  ],
+  "evidenceFreshness": {
+    "basis": "Actual local working-file reads and read-only whole-file shasum -a 256, not git show at input_revision. Dispatch input_revision is preserved as supplied; no Git state commands were run.",
+    "manifestHashes": "Both inspected normative JSON files match the packet input_manifest SHA256 values.",
+    "baselineDifference": "TiptapMarkdownEditor inspected whole-file hash 5d299132... differs from package's historical e953786b blob hash 8e919184...; historical source lines/hash are not fresh evidence for this file. Other historical registry/security hashes match the inspected files.",
+    "stalenessRule": "Root wave0/integration may change inspected files. Re-read/re-hash all affected references at wave0/dependency integration before patching; this report does not assert clean working tree or final HEAD freshness.",
+    "newFilePresence": "Exact normative five-path presence lookup returned Path not found at inspection time; absence is local snapshot evidence, not a promise about later integration."
+  },
+  "inspectionLimits": {
+    "codegraph": "Read schema and attempted scoped exploration; unavailable because this checkout has no .codegraph index. No index or upgrade performed.",
+    "find": "Initial scoped descriptive find failed its judgment backend with HTTP 402. Continued with exact normative paths and direct imports; no absence inference was drawn from the failed find.",
+    "scope": "Only package specifications, four normative read-only source paths, direct imports and workflow rule documents were inspected for product evidence. No product source, tests, manifests, progress or Git state were changed.",
+    "runtimeVerification": "NOT_RUN by explicit preflight contract: no builds, tests, native UI or network operations. Artifact-only JSON validation is separate from feature verification.",
+    "launcherVerification": "The provided launch-worker-pool.py --verify command is reserved for the lead; not executed because this worker owns only the JSON output and no verifier side-effect contract was inspected."
+  },
+  "nextExecutableAction": "Lead can validate this preflight JSON now. For implementation: first commit wave0, accept LSX-WP-003/004/026 artifact+native-readback receipts in dependency order, resolve delivery-manifest/base and EG-COMMANDS/Workflow readiness, then re-read/re-hash changed seams and approve transport/UI/i18n scope gaps plus shared-path leases. Only then implement the five normative new files and apply the reviewed registry/editor patches serially; full feature remains incomplete until all required proof lanes pass on the integrated revision.",
+  "risks": [
+    "Pure frontend registry membership, when expressions, optional permissions strings and Promise<void> execute cannot establish typed server authorization or durable receipt.",
+    "All six types are mandatory. Missing Workflow, SafeFormula or Template owner semantics cannot be silently marked N/A or simulated; disabled missingDependency is honest interim behavior, not feature completion.",
+    "Published RS-AUT-03 requires a real durable workflow executor and transitive RS-AUT-01/02; its presence and existing graph UI do not prove readiness.",
+    "Current normative scope omits transport/client registration, actual modal host mounting and ten-locale files. Implementation needs accepted dependency contributions or an amended reviewed integration packet, not unauthorized additional writes.",
+    "Official Markdown preprocessor operates globally over fences and may change action text/digest; this is an inspected source risk, with runtime reproduction deferred by contract.",
+    "Portable reviewed flags, HTML labels, shell sanitizer or forged actor/workspace payload must never grant execution. Review has to remain scoped and digest-bound.",
+    "Duplicate clicks/crash-after-effect cannot be fixed only with a disabled UI button or local step counter; native owner idempotency and durable cursor/reconciliation are required.",
+    "Resource search provider failure becomes an empty contribution; using it as an authoritative missing/authorized target result can mask capability outage or policy failure.",
+    "Root-owned uncommitted wave0 work and shared Tiptap edits can stale this report; inspected hash differs from historical editor baseline and must be rebound before integration.",
+    "No feature tests/runtime/native UI were executed; all proposed verification remains NOT_RUN and featureComplete is false."
+  ]
+}

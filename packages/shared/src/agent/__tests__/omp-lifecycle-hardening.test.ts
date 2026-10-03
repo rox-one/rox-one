@@ -12,11 +12,12 @@
  *   A6  a mid-turn subprocess crash must end the stream with a terminal
  *       `complete` event and report the failure exactly once.
  */
-import { afterEach, describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it, spyOn } from 'bun:test';
 import { mkdtempSync, writeFileSync, chmodSync, mkdirSync, readFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
+import * as childProcess from 'node:child_process';
 import type { AgentEvent } from '@craft-agent/core/types';
 import { OmpAgent } from '../omp-agent.ts';
 import {
@@ -87,11 +88,6 @@ function configFor(fake: { workspaceRoot: string }) {
   } as any;
 }
 
-function spawnCount(log: string): number {
-  if (!existsSync(log)) return 0;
-  return readFileSync(log, 'utf8').split('\n').filter((l) => l.trim()).length;
-}
-
 function spawnPids(log: string): number[] {
   if (!existsSync(log)) return [];
   return readFileSync(log, 'utf8').split('\n').filter((l) => l.trim()).map((l) => Number(l));
@@ -147,11 +143,34 @@ describe('A2: ready-timeout with a SIGTERM-immune child', () => {
   it('escalates to SIGKILL and the retry spawns fresh', async () => {
     const fake = makeCustomFakeOmp(`
 const fs = require('node:fs');
-fs.appendFileSync(process.env.SPAWN_LOG, process.pid + '\\n');
+// Model bounded cold-start lag beyond the artificial 80ms ready deadline.
+Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 120);
 process.on('SIGTERM', () => {}); // SIGTERM-immune
+fs.appendFileSync(process.env.SPAWN_LOG, process.pid + '\\n'); // immunity installed
 setInterval(() => {}, 60000); // never ready, never exits on its own
 `);
     envFor(fake.binPath, { SPAWN_LOG: fake.spawnLog });
+    const parentPids: number[] = [];
+    const originalSpawn = childProcess.spawn;
+    const fixtureSpawn = ((...args: Parameters<typeof childProcess.spawn>) => {
+      const child = originalSpawn(...args);
+      if (args[0] === fake.binPath) {
+        if (child.pid == null) throw new Error('Owned fixture did not spawn');
+        parentPids.push(child.pid);
+        // Bound fixture readiness separately from the production ready handshake.
+        // The child's marker is written only after its SIGTERM handler is installed.
+        // Blocking this test wrapper leaves the child running while ensuring the
+        // unchanged 80ms handshake deadline begins against an actually immune child.
+        const deadline = Date.now() + 4_000;
+        while (!spawnPids(fake.spawnLog).includes(child.pid) && Date.now() < deadline) {
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+        }
+        if (!spawnPids(fake.spawnLog).includes(child.pid)) throw new Error('Owned immune fixture readiness timed out');
+      }
+      return child;
+    }) as typeof childProcess.spawn; // All overloads forward unchanged to the real spawn.
+    const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(fixtureSpawn);
+    cleanups.push(() => spawnSpy.mockRestore());
     const agent = track(new OmpAgent(configFor(fake)));
     shrinkReadyTimeout(80);
 
@@ -167,10 +186,12 @@ setInterval(() => {}, 60000); // never ready, never exits on its own
     const second = await chatEvents(agent, 'retry', 8_000);
     const secondTyped = second.find((e) => e.type === 'typed_error') as any;
     expect(String(secondTyped?.error?.code)).toBe('OMP_READY_TIMEOUT');
-    expect(spawnCount(fake.spawnLog)).toBe(2);
+    expect(parentPids).toHaveLength(2);
+    expect(new Set(parentPids).size).toBe(2);
+    expect(spawnPids(fake.spawnLog)).toEqual(parentPids);
 
     // SIGTERM → SIGKILL escalation: the wedged first child must be reaped.
-    const wedgedPid = spawnPids(fake.spawnLog)[0];
+    const wedgedPid = parentPids[0];
     expect(wedgedPid).toBeDefined();
     const deadline = Date.now() + 4_000;
     let reaped = false;

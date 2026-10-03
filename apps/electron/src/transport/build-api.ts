@@ -6,6 +6,7 @@
  */
 
 import type { RpcClient } from '@craft-agent/server-core/transport'
+import { isErrorCode } from '@craft-agent/shared/protocol'
 import type { ElectronAPI } from '../shared/types'
 
 // ---------------------------------------------------------------------------
@@ -34,11 +35,24 @@ export function buildClientApi(
     let fn: (...a: any[]) => any
     if (entry.type === 'listener') {
       fn = (cb: (...args: any[]) => void) => client.on(entry.channel, cb)
-    } else if (entry.transform) {
-      const t = entry.transform
-      fn = async (...args: any[]) => t(await client.invoke(entry.channel, ...args))
     } else {
-      fn = (...args: any[]) => client.invoke(entry.channel, ...args)
+      fn = async (...args: unknown[]) => {
+        try {
+          const result = await client.invoke(entry.channel, ...args)
+          return entry.transform ? entry.transform(result) : result
+        } catch (error) {
+          // contextBridge drops custom Error properties. Plain rejection data
+          // preserves the server's validated code for recovery in the renderer.
+          if (typeof error === 'object' && error !== null && 'code' in error && isErrorCode(error.code)) {
+            throw {
+              code: error.code,
+              message: 'message' in error && typeof error.message === 'string' ? error.message : error.code,
+              ...('data' in error && error.data !== undefined ? { data: error.data } : {}),
+            }
+          }
+          throw error
+        }
+      }
     }
 
     // Dotted keys like "browserPane.create" become nested: api.browserPane.create

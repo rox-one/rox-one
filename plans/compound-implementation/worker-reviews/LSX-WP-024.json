@@ -1,0 +1,308 @@
+{
+  "task_id": "LSX-WP-024-preflight",
+  "attempt_id": "6f0af66b2a048ac726e85c48cdccd399",
+  "packet_hash": "1b28fb1d83e9ccbcc1aeca3e601852a5e4bf03a67aa056117ffc2c1044fcb5ea",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-024",
+  "featureComplete": false,
+  "reportMode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "scope": {
+    "tier": "bounded-workflow",
+    "reason": "One package preflight: specification, source seams, hashes and one owned report; no nested delegation or product implementation.",
+    "onlyWrittenPath": "plans/compound-implementation/worker-reviews/LSX-WP-024.json",
+    "inspectedScope": "Package specifications, four named read-only source files, and directly imported context/resource/editor/notes contracts and extension patterns.",
+    "productChanges": false,
+    "gitOperations": false,
+    "buildsTestsNativeUiNetwork": "NOT_RUN_BY_INSTRUCTION",
+    "evidenceLimit": "Source inspection is not proof of server enforcement, persistence, transport registration or actual Electron behavior. Dependency runtime receipts were not supplied or established."
+  },
+  "dependencies": ["LSX-WP-010", "LSX-WP-013", "LSX-WP-017"],
+  "dependencyContracts": [
+    {
+      "id": "LSX-WP-010",
+      "specLines": [4385, 4587],
+      "requiredContribution": "Accepted base.query/base.getQueryWatermark contract from packages/server-core/src/bases/query-service.ts and packages/core/src/bases/query-contract.ts: actor-scoped authorized snapshot, queryRevision, permissionEpoch, freshness, row/field filtering before computation and pinned cursor/evaluationTime/timezone.",
+      "acceptancePrerequisite": "Exact implementation commit plus artifact and authoritative readback receipts; planned operation names are not usable endpoints."
+    },
+    {
+      "id": "LSX-WP-013",
+      "specLines": [5360, 5542],
+      "requiredContribution": "Accepted bounded formula evaluation from packages/core/src/bases/formula-parser.ts and packages/server-core/src/bases/formula-evaluator.ts; consume results tied to the same queryRef and evaluation context. Do not recalculate formulas inside Doc embed or silently change legacy checkbox-count meaning.",
+      "acceptancePrerequisite": "Deterministic typed errors, bounded evaluation and accepted formula/query equivalence receipts."
+    },
+    {
+      "id": "LSX-WP-017",
+      "specLines": [6598, 6785],
+      "requiredContribution": "Reuse the accepted apps/electron/src/renderer/pages/bases/BaseTable.tsx renderer, EntityRef selection, field descriptors, native command edits, pending/conflict handling and per-cell durable receipts. Never fork NotesTableView into a second embed grid.",
+      "acceptancePrerequisite": "Exact accepted renderer interface and native Task/Note readback including restart; serialize overlapping NotesViewHost patches under integration-owner lease."
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "LEAD_WAVE0_COMMIT",
+      "classification": "dispatch_gate_not_DAG_edge",
+      "source": "User dispatch instruction; execution-packages.json:2089-2099",
+      "requiredProof": "Lead's completed wave0 commit, approved prerequisite commits and fresh file hashes before implementation. Preserve root-owned dirty work; do not checkout or stage from this preflight.",
+      "state": "NOT_ESTABLISHED_IN_PREFLIGHT"
+    },
+    {
+      "id": "REFERENCE_DELIVERY_AND_LEASES",
+      "classification": "explicit_launch_gate_not_DAG_edge",
+      "source": "work-packages.json:9156-9166; execution-packages.json:2089-2099",
+      "requiredProof": "Resolve reference_package_revision and reference_package_digest from delivery manifest, verify spec_ref hashes, reconcile specified product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab with dispatch input a21aeab1da5a67e56788384ff930945b0f487879 through approved commits, acquire exclusive shared-path leases, and rerun readback on integrated commit.",
+      "state": "UNRESOLVED_IN_NORMATIVE_PACKET"
+    },
+    {
+      "id": "EG-SEARCH-AGENTS",
+      "classification": "explicit_external_prerequisite_not_DAG_edge",
+      "source": "work-packages.json:148-153,8839-8841,9070-9072",
+      "requiredProof": "Real existing Sessions/tool context owner provides authenticated scoped extraction, authorized index/tool readback and no hidden source leakage. Required gate is READINESS_NOT_VERIFIED in the specification, not accepted by publication.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "RS-DRV-01",
+      "classification": "published_hidden_foundation_dependency",
+      "source": "docs/rox-suite/published/RS-DOC-01.md:60-65,79-87; docs/rox-suite/published/RS-BASE-01.md:95-113",
+      "requiredProof": "Accepted existing Page/library placement, lifecycle and canonical reference authority from RS-DRV-01 (#1109), required by both published Doc and Base specs. No new Doc catalogue or embed dataset.",
+      "state": "NO_READINESS_RECEIPT_INSPECTED"
+    },
+    {
+      "id": "RS-MSG-02",
+      "classification": "published_hidden_foundation_dependency",
+      "source": "docs/rox-suite/published/RS-DOC-01.md:37-44,60-66,79-87",
+      "requiredProof": "Published Doc spec requires common EntityDiscussion from RS-MSG-02 (#1107). Embed must preserve Page/block/range identity and existing discussion/agent distinction; do not add a comments engine. This is a parent Doc foundation gate, not an added LSX dependency and not authorization to implement messaging in LSX-WP-024.",
+      "state": "NO_READINESS_RECEIPT_INSPECTED"
+    },
+    {
+      "id": "RS-ADM-01_AND_REVISION2_AUTHORITY",
+      "classification": "published_hidden_foundation_dependency",
+      "source": "docs/rox-suite/published/RS-MCP-01.md:11-13,73-79,99,142-146",
+      "requiredProof": "RS-MCP-01 requires RS-ADM-01 (#1114) plus architecture prerequisites WP-01/02/03/07/36/37; remote identity/resource gateway must precede shared enablement. Tool invocation uses actor intersection with resource grants, connection scopes and capability constraints. Lead must supply affected-scope accepted receipts, not a second MCP pool or renderer grant simulation.",
+      "state": "NO_READINESS_RECEIPT_INSPECTED",
+      "namingCaution": "WP-01/02/03/07/36/37 are the published architecture identifiers; they are not LSX-WP identifiers and must not be substituted into the explicit dependencies array."
+    },
+    {
+      "id": "DOC_CONTENT_AUTHORITY_AND_EXPORT_SEARCH_GATE",
+      "classification": "published_hidden_mechanism_gate",
+      "source": "docs/rox-suite/published/RS-DOC-01.md:3,35-44,52-58,74-76; docs/rox-suite/published/RS-BASE-01.md:44-56,78-89; docs/lark-suite-reference/07-domain-entity-model.md:159-167",
+      "requiredProof": "An accepted single document writer/content representation, durable receipt/revision authority, authenticated dual-ACL enforcement and permitted export/search pipeline. Collaborative documents require the chosen editor/CRDT/WAL binding and fences; Markdown remains its existing representation, not a parallel master. The package's two shared UI patches cannot independently deliver this server foundation.",
+      "state": "NOT_ESTABLISHED_BY_INSPECTED_UI_OR_CONTEXT_HELPERS"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/docs/BaseEmbed.tsx",
+    "packages/core/src/docs/embed-context.ts",
+    "tests/lark-suite-extension/lsx-wp-024.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-024.spec.ts"
+  ],
+  "ownedNewFilePlan": [
+    {
+      "path": "apps/electron/src/renderer/pages/docs/BaseEmbed.tsx",
+      "observedPresence": "NOT_FOUND_BY_EXACT_PATH_LOOKUP",
+      "proposedSymbols": ["BaseEmbed", "createBaseEmbedExtension"],
+      "change": "Render the accepted BaseTable using resolved Base/View refs and authorized queryRef; keep presentation override separate from canonical row values. Expose source/record open and selected-range-to-existing-Session actions through host callbacks, show loading/empty/stale/conflict/deleted/restricted states with no denied title. An app-owned Tiptap extension factory may supply the atom/node view to the generic UI editor via injection; do not import Electron pages from packages/ui. Persist only the versioned reference/presentation/snapshot binding representation, never a raw Base dataset. Extension API/format must be aligned with accepted Doc block registry before implementation.",
+      "prerequisite": "Accepted BaseTable interface, document block representation and authenticated resolver client; this is a proposed factory, not an existing symbol."
+    },
+    {
+      "path": "packages/core/src/docs/embed-context.ts",
+      "observedPresence": "NOT_FOUND_BY_EXACT_PATH_LOOKUP",
+      "proposedSymbols": ["BaseEmbedReference", "ResolveBaseEmbedRequest", "ResolveBaseEmbedResult", "BindRangeContextRequest", "BindRangeContextResult", "DocEmbedError", "bindBaseRangeContext"],
+      "change": "Define reusable runtime-validated request/result/error schemas and reference codec here so a server does not import TSX. Include Doc ref, Base/View ref, queryRef, selected row refs/field IDs or stable block-range selection, expected revisions, snapshot/live policy and explicit bounds. Actor is not an authoritative payload field. Success includes source/query/policy revisions, freshness, scoped permitted result and export reference/snapshot-loss information. Error union contains validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Compose bindSurfaceContext only after server extraction has authorized the Doc and selected rows/fields; pass pruned revision maps and existing selection. Rebase live contexts only after current policy/query revalidation; never rely on rebaseLiveContext as a permission check.",
+      "prerequisite": "Accepted LSX-WP-010 types and server/context-owner contract for doc.resolveBaseEmbed/doc.bindRangeContext. Core file is not a server endpoint, store or trusted extraction service."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-024.test.ts",
+      "observedPresence": "NOT_FOUND_BY_EXACT_PATH_LOOKUP",
+      "change": "Add deterministic behavioral/property coverage for exact row identity, selected permitted range, rejected cross-workspace/forged queryRef/actor input, denied field/title/body exclusion, pruned revision metadata, snapshot pinning versus permission-aware live rebase, stale selection/conflict, replay and recovery. Keep semantic negative-control receipts for the specified unrestricted-dataset serialization mutant. Verify actual native receipts/readback via supported integration lane rather than treating a mock echo as authority.",
+      "prerequisite": "Accepted domain/runtime harness and isolated synthetic canonical-owner fixture. Planned command is bun test tests/lark-suite-extension/lsx-wp-024.test.ts; not run during preflight."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-024.spec.ts",
+      "observedPresence": "NOT_FOUND_BY_EXACT_PATH_LOOKUP",
+      "change": "Exercise real Electron Doc embed insertion/edit/source open, same Task edit in Tasks and reload, restricted viewer without Base title, range transfer to an existing Session, stale/conflict/revoke states, keyboard/pointer/IME/focus and presentation accessibility. Bind screenshots/ARIA/font/theme/zoom/reduced-motion receipts to integrated commit and synthetic fixture.",
+      "prerequisite": "Lead discovers supported actual Electron runner; do not invent a command or accept isolated fixture UI as native proof."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "TiptapMarkdownEditor",
+      "lineStart": 202,
+      "lineEnd": 451,
+      "change": "Extend the existing props with a host-supplied typed embed extension contribution, and install it once in the common extensions array (253-299) before both Markdown engines. Keep the node view app-owned and context callbacks current without recreating the editor on selection changes. Extend both official and legacy parse/serialize behavior through the accepted contribution; preserve onUpdate serialization (384-390), controlled-echo selection handling (416-420), host content synchronization with emitUpdate:false (423-434), editable authority changes without saves (401-407), and onEditorReady lifecycle (396-399). No second editor or Electron import in packages/ui.",
+      "reason": "Existing extensions do not include a Base-ref node; common extension assembly is the actual reusable insertion seam. The editor has no actor/query/policy inputs and must not authorize embeds itself.",
+      "owner": "integration-owner",
+      "requiredPrerequisite": "Approved Doc block format and BaseEmbed extension contract, host caller wiring and exclusive file lease."
+    },
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "preprocessMarkdownForOfficial / postprocessMarkdownFromOfficial",
+      "lineStart": 75,
+      "lineEnd": 104,
+      "change": "Once the accepted embed reference codec is available, protect structured embed reference tokens from math/currency normalization and restore them exactly on output; do not regex-rewrite payload JSON or replace refs with fetched rows. Keep existing inline-math/currency behavior outside the embed span. Unknown embed versions must retain original bytes and surface read-only/unknownFormat diagnostics through the host rather than disappear. If a proper registered Markdown tokenizer fully isolates these tokens, retain these functions unchanged and provide roundtrip evidence instead of adding a second escaping protocol.",
+      "reason": "Current preprocessing scans the whole Markdown string for dollars; official and legacy serialization paths differ. Reference-only embed roundtrip must not mutate presentation/IDs or lose unknown versions.",
+      "owner": "integration-owner",
+      "requiredPrerequisite": "Chosen versioned embed syntax and retained-block registry; neither is established by this package preflight."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote / NotesViewHost",
+      "lineStart": 48,
+      "lineEnd": 117,
+      "change": "Rebase this request after LSX-WP-017's accepted patch. Add only optional canonical Doc/Base reference/binding metadata and typed host callbacks needed for source/record open and selected-range Session binding; keep NotesViewNote.id as the existing note identity and do not put row bodies in this note model. If this host receives a resolved embedded Base/table projection, route its existing table rendering to the same accepted BaseTable/BaseEmbed composition with queryRef/field descriptors instead of re-projecting Notes into synthetic Task records. Preserve ordinary Notes table/canvas/outline/graph behavior, including wave0 blockTree/onOpenBlock additions. Do not persist embed authority in NotesTableView localStorage.",
+      "reason": "Current host only dispatches table/canvas/outline/graph and computes Markdown checkbox projections; it does not mount TiptapMarkdownEditor or own a Session context transport. It cannot by itself connect the Doc editor to BaseEmbed. Caller wiring requires an integration-owner receipt or reviewed packet extension, not an invented new view.",
+      "owner": "integration-owner",
+      "requiredPrerequisite": "Accepted LSX-WP-017 host patch, canonical ref/query interface, real Session binding callback and exclusive file lease; caller/editor wiring outside the two named shared files remains unresolved."
+    }
+  ],
+  "additionalIntegrationPrerequisites": [
+    {
+      "requirement": "Authenticated server operation registration and export/search integration",
+      "reason": "Normative operations doc.resolveBaseEmbed/doc.bindRangeContext require server and renderer boundary schemas and server dual ACL. None of the four new files or two shared UI paths is an authenticated server handler/transport registration. SurfaceContextInput has no authenticated actor, and ResourceSearchContext contains keys, not an actor-scoped authorization contract.",
+      "requestedLeadAction": "Obtain existing authority/context/export/search owners' exact path/symbol interface and accepted implementation receipts; amend the reviewed integration packet before any additional source edit. No guessed server patch path and no client-only substitute."
+    },
+    {
+      "requirement": "Doc editor caller and existing Session navigation/context handoff",
+      "reason": "NotesViewHost imports no TiptapMarkdownEditor and its callbacks are onOpenNote/onCreateNote/onConvert/onOpenBlock. Adding editor props alone does not deliver embed insertion or agent button behavior.",
+      "requestedLeadAction": "Identify the actual caller seam under expanded reviewed scope or have the existing Doc/Session owner provide a wired extension/context callback receipt. Do not create a standalone Docs screen or duplicate Session."
+    },
+    {
+      "requirement": "Shared i18n and package/transport exports",
+      "reason": "Repo policy requires t() plus all ten locales. New localized restricted/freshness/range/export-loss labels and any public core export or generated transport registration may need shared files not included in this packet.",
+      "requestedLeadAction": "Integration owner supplies existing keys or approves exact new keys across all ten locale files and any required export/registration changes under a revised lease/packet. Do not weaken acceptance with hardcoded RU/English or write manifests here."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "embed/query/source equality",
+      "currentEvidence": "NotesViewHost:79-99 projects note.markdown checkbox items into NotesTableView. note-views.ts:143-156 keeps note.id/provenance and counts Markdown checkboxes; it is not native Task identity. TiptapMarkdownEditor:253-335 has no Base node. All four normative new paths were not found.",
+      "actualSymbolOrSeam": "NotesViewHost / NotesViewNote; TiptapMarkdownEditor extension assembly; direct import projectNoteRows/formulaValue",
+      "requiredChange": "BaseEmbed consumes accepted LSX-WP-010 queryRef and LSX-WP-017 BaseTable with canonical row refs/revisions and LSX-WP-013 evaluated fields. Doc persists reference/presentation only. Edits call canonical Task/Note owners and update the same entity through durable receipt/readback; do not convert embed rows to new Tasks or reuse checkbox counts as native Task counts.",
+      "verification": "Same authorized query snapshot yields identical ordered refs/typed values in source Base and Doc. Edit a Task through embed; read exact canonical Task ref/revision/value in Tasks, reload Doc and restart runtime and compare. Record owner IDs before/after and show view/presentation changes did not create/copy records.",
+      "missingPrerequisite": "Wave0 commit; accepted LSX-WP-010/013/017 receipts and interfaces; caller/editor wiring; canonical native write/readback authority.",
+      "state": "NOT_IMPLEMENTED_OR_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "dual ACL preserved through export/search",
+      "currentEvidence": "visibleContextEntityRefs:51-55 only filters supplied IDs against a supplied readable set. ResourceProviderRegistryImpl.search:50-80 merges provider results including titles/data without resource-policy filtering. ResourceSearchContext:36-42 has no authenticated actor field. TiptapMarkdownEditor has no Doc/source ACL gate.",
+      "actualSymbolOrSeam": "visibleContextEntityRefs; ResourceProviderRegistryImpl.search; ResourceSearchContext; NotesViewHost",
+      "requiredChange": "Server resolver verifies current Doc read independently from Base/View/row/field/linked-content read and export rights. Query/extraction, search results, export references/snapshots and loss report use that permitted scope; purge denied titles/body/refs/metadata and stale cached revisions. Reauthorize on revoke/reconnect. Use existing search/export owners; the registry is not an authorization boundary and is read-only in this packet.",
+      "verification": "Share Doc to viewer denied Base: neutral restricted placeholder, no Base title/body/hidden row or count in DOM, ARIA, API, search, export or agent context. Owner-visible A=10/B=20 and hidden C=900 produce only permitted records; revoke B and verify query/export/search/context retract it. Check denied field/filter and private linked lookup/rollup; Doc share must not grant Base access.",
+      "missingPrerequisite": "Accepted authenticated common policy/query foundation, EG-SEARCH-AGENTS extraction/index receipt, export/search owner seam and scope approval, policy invalidation/readback.",
+      "state": "BLOCKED_ON_AUTHORITY_AND_EXPORT_SEARCH_INTEGRATION"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "SurfaceContextInput:18-29 is a TS input with workspace/session/refs and permissionMode, not a decoded authenticated request. bindSurfaceContext:31-48 validates only nonempty workspace/surface, deduplicates refs and copies revisions. authorizeRox2Action:601-610 checks supplied actor/grants only. work-packages.json:8982-8999 names proposed operations and all eight error discriminants.",
+      "actualSymbolOrSeam": "SurfaceContextInput / bindSurfaceContext; Rox2EntityRef / authorizeRox2Action; proposed doc.resolveBaseEmbed/doc.bindRangeContext",
+      "requiredChange": "Put portable runtime schemas in core docs/embed-context.ts; BaseEmbed consumes typed client results rather than server importing TSX. Validate queryRef, canonical workspace/ref scope, row/field or stable block range, schema/query/source revisions, policy and bounds; distinguish all eight normative errors. Bind actor and allowed workspace server-side from transport and do not trust payload owner/workspace/permissionMode as authorization. Register real handlers/client through approved authority owner.",
+      "verification": "Compile schemas at both boundaries on accepted integrated revision; exercise malformed ranges/refs, forged actor/owner/workspace/queryRef, denied/deleted target, conflict, offlineUnsupported, missingDependency, rateLimited and unknownFormat. Verify denied paths reject before data extraction/provider effects. Schema compilation is one proof lane, not feature completion.",
+      "missingPrerequisite": "Accepted query/ref/runtime schema convention and real authenticated registration seam outside current writable paths; revised integration packet if new shared files are necessary.",
+      "state": "BLOCKED_ON_SERVER_TRANSPORT_CONTRACT"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "TiptapMarkdownEditor:384-390 emits a Markdown callback only, not a durable commit. NotesTableView:133-155 writes view preferences to localStorage. Rox2Receipt:99-105 supplies requestId/observedRevision, while isClaimableLive:540-552 requires live+succeeded+verified. None of these source facts is a native persistence receipt for embed binding.",
+      "actualSymbolOrSeam": "TiptapMarkdownEditor.onUpdate; NotesTableView.persistViews; Rox2Receipt / isClaimableLive",
+      "requiredChange": "Store reference/presentation and selected query/range snapshot through the accepted canonical Doc owner; source cell edits remain canonical-owner commands. Surface pending/local/queued/committed distinctions and expose success only after durable native receipt. Persist/recover context selection and pinned revisions via existing owner, not localStorage authority or a second store.",
+      "verification": "Record exact Doc/Base/Task refs, expected/observed revisions and authoritative content hashes, issue edit/bind once, read canonical state, restart supported runtime, read again and compare. Inject crash between local change and ACK and prove no acknowledged data lost or duplicate effect. A toast/onUpdate or queued receipt is not acceptance.",
+      "missingPrerequisite": "Durable Doc/context/Task receipt and storage interfaces, restart-capable native readback lane and accepted dependency commits.",
+      "state": "NO_DURABLE_RUNTIME_EVIDENCE"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "bindSurfaceContext:34-46 accepts refs/revisions; rebaseLiveContext:76-90 only replaces revisionByEntityId for live policy and retains all entityRefs. sameContextSnapshot:58-72 compares workspace/surface/session/refs/revisions but not policy or selection. document-ia.ts:680-696 extracts embed strings, not authorized Base query selections. Normative tests are work-packages.json:9030-9044.",
+      "actualSymbolOrSeam": "bindSurfaceContext / rebaseLiveContext / sameContextSnapshot; parseNoteDocument; future bindBaseRangeContext",
+      "requiredChange": "Intersect explicit selected row/field/block refs with authenticated permitted query snapshot before binding; prune revision keys as well as refs. Preserve snapshot query/range/source revisions and reject drift/conflicts rather than silently re-targeting by title/DOM position. For live policy resolve current permitted selection after policy/query invalidation, then compose existing binding helpers. Reconnect revalidates grants before reads/replay. Keep idempotent binding/native write receipts through the existing owner.",
+      "verification": "Happy path binds selected permitted rows only to existing Session. Add mixed permitted/hidden selection, out-of-query and cross-workspace refs, empty/stale/deleted selection, stale query/row/schema conflict, duplicate command replay, live update followed by revoke, pinned snapshot versus new source revision, reconnect and restart recovery. Verify both output refs/body and revision metadata; preserve deterministic seeds, exact inputs, all failed and successful attempts.",
+      "missingPrerequisite": "EG-SEARCH-AGENTS real extraction gate, LSX-WP-010 policy/query invalidation contract, Session/context persistence and native replay/CAS mechanisms.",
+      "state": "PLANNED_NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:9046-9054 specifies mutation Serialize whole unrestricted Base dataset into Doc block/agent prompt and must-fail assertions no hidden refs/body in embed/context/export; same row owner IDs; selected range bound snapshot not entire source. Existing context filter helper alone does not exercise serialization or export.",
+      "actualSymbolOrSeam": "Future BaseEmbed reference codec and bindBaseRangeContext at extraction/serialization boundary; bindSurfaceContext / visibleContextEntityRefs",
+      "requiredChange": "Implement behavioral oracles in normative package test file against synthetic canonical owner fixture, including permitted rows outside selection and hidden rows/fields. Inject the specified unrestricted-serialization mutant on exact evaluated bytes and separately assert canonical owner IDs and selected snapshot. Do not substitute source-text tests, mock echoes or failure-by-infrastructure.",
+      "verification": "Green baseline, retained fixture seed/input SHA256/mutation digest, then semantic assertion failure with hidden refs/body and out-of-range permitted rows detected in embed/context/export. Record exactly which named assertions fail; do not claim every invariant is killed by a mutation that leaves owner IDs unchanged. Replay the caught case on the integrated revision.",
+      "missingPrerequisite": "Real resolved embed/context/export path and isolated native fixture after dependencies; no tests or mutation run in this preflight.",
+      "state": "NEGATIVE_CONTROL_NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "TiptapMarkdownEditor:445-449 mounts existing EditorContent and bubble menus. MermaidBlock:8-45 demonstrates atom/selectable node with ReactNodeViewRenderer and Markdown parse/render hooks. NotesViewHost:132-177 uses t() and existing compact controls. BaseEmbed path is absent; no actual surface observed by instruction.",
+      "actualSymbolOrSeam": "TiptapMarkdownEditor common extensions / EditorContent; MermaidBlock Node.create pattern; NotesViewHost existing table dispatch",
+      "requiredChange": "Inject app-owned Base-ref node/view into the existing editor and reuse accepted BaseTable. Provide open-record/source, freshness/source/policy/range help on hover/focus/click, restricted/error/offline/conflict states and existing Session handoff. Keep focused selection through controlled echoes and authority changes, don't intercept IME, preserve user theme, use t() in all ten locales, and verify actual Rox Mono loaded Cyrillic font. Respect reduced motion, keyboard focus return and 200% zoom.",
+      "verification": "On actual integrated Electron UI: insert/open/edit embed with pointer and keyboard, Tab/arrows/Enter/Escape, IME adjacent to/embed controls, selected-range handoff, focus continuity through live/revoke updates, reduced-motion, 200% zoom, light/dark, RU default and locale parity. Capture synthetic screenshot/ARIA/computed-font/viewport receipts at exact commit and prove restricted title absent. Discover supported runner rather than inventing invocation.",
+      "missingPrerequisite": "Actual caller wiring, accepted BaseTable, integration-owner i18n changes outside packet as needed, supported Electron runner and source-bound font/UI lane.",
+      "state": "ACTUAL_UI_NOT_RUN"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:9037-9044 lists SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI. isClaimableLive:540-552 excludes unverified/queued/fixture outcomes from claimable success. This report contains source proposals only.",
+      "actualSymbolOrSeam": "Rox2Status / Rox2Receipt / isClaimableLive; package proof_lanes and launch_gates",
+      "requiredChange": "Lead assembles independent schema, behavioral/property, authoritative native readback, restart, ACL-negative and actual Electron UI receipts on the integrated implementation commit, with source hashes/inputs/seeds and independent review. Provider/collaboration lane receipts are additionally required when those mechanisms are actually used; pending required lanes leave feature incomplete.",
+      "verification": "Receipt audit checks each required lane has exact version/environment, observed input/action/output and semantic assertions rather than plan status or agent final text. Re-run integrated authoritative readback after material integration. Preflight JSON validation, if performed by lead, validates this report only.",
+      "missingPrerequisite": "Implementation and integration commit plus all six proof-lane receipts; no runtime/provider/collaboration completion evidence established here.",
+      "state": "FEATURE_INCOMPLETE_PREFLIGHT_ONLY"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "TiptapMarkdownEditor", "lineStart": 202, "lineEnd": 451, "sha256": "5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "preprocessMarkdownForOfficial / postprocessMarkdownFromOfficial", "lineStart": 75, "lineEnd": 104, "sha256": "5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path": "packages/core/src/rox2/surface-context.ts", "symbol": "SurfaceContextInput / bindSurfaceContext / visibleContextEntityRefs / sameContextSnapshot / rebaseLiveContext", "lineStart": 10, "lineEnd": 91, "sha256": "ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path": "packages/core/src/platform/resources/registry.ts", "symbol": "ResourceProviderRegistryImpl.search / createResourceProviderRegistry", "lineStart": 50, "lineEnd": 90, "sha256": "dbbe1bddb349ebb2922e7605d5b300e9973519144b26077596d03f339a054d94"},
+    {"path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx", "symbol": "NotesViewNote / NotesViewHost", "lineStart": 48, "lineEnd": 117, "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx", "symbol": "NotesTableView / persistViews", "lineStart": 119, "lineEnd": 177, "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2Context / Rox2EntityRef", "lineStart": 143, "lineEnd": 239, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5", "inspectedRanges": [[143,167],[218,239]]},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "isClaimableLive", "lineStart": 539, "lineEnd": 552, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2ActorGrant / authorizeRox2Action", "lineStart": 592, "lineEnd": 610, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/platform/resources/types.ts", "symbol": "ResourceItem / ResourceSearchContext / ResourceProvider", "lineStart": 23, "lineEnd": 58, "sha256": "2e95bc0416269082a13f386045222755fe265cc7b61bca218d9c18ef0841862d"},
+    {"path": "packages/ui/src/components/markdown/extensions/MermaidBlock.tsx", "symbol": "MermaidBlock", "lineStart": 8, "lineEnd": 78, "sha256": "33fe6c3ccc4f16155848e99589820a01f407e195c5e1005b55483073bfc6dedd"},
+    {"path": "packages/ui/src/components/markdown/extensions/MarkdownComment.ts", "symbol": "MarkdownComment", "lineStart": 92, "lineEnd": 135, "sha256": "6f7f62facde4811af64ab31910c088a117182ffeb8f1b158037341623dfecc30"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "projectNoteRows / applyNoteBaseView / formulaValue", "lineStart": 143, "lineEnd": 202, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "apps/electron/src/renderer/pages/notes/document-ia.ts", "symbol": "parseNoteDocument", "lineStart": 655, "lineEnd": 700, "sha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "work_packages[23] LSX-WP-024", "lineStart": 8816, "lineEnd": 9168, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-024 normative execution record", "lineStart": 2013, "lineEnd": 2101, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/rox-suite/published/RS-DOC-01.md", "symbol": "Domain / API / storage; GitHub dependency links", "lineStart": 35, "lineEnd": 87, "sha256": "b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path": "docs/rox-suite/published/RS-BASE-01.md", "symbol": "Authority / permissions; GitHub dependency links", "lineStart": 44, "lineEnd": 113, "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5", "inspectedRanges": [[44,104],[105,113]]},
+    {"path": "docs/rox-suite/published/RS-MCP-01.md", "symbol": "Architecture prerequisites; Permissions; normative dependency links", "lineStart": 11, "lineEnd": 146, "sha256": "7e0e4f01c7ab1230e9befeec9e93fdb360eb17ee0a441ec24863f27f99446d50", "inspectedRanges": [[1,14],[50,59],[73,99],[109,133],[141,146]]},
+    {"path": "docs/lark-suite-reference/05-rox-bases-design.md", "symbol": "7 Query ACL / 9.4 Docs and links", "lineStart": 158, "lineEnd": 216, "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c", "inspectedRanges": [[158,177],[195,216]]},
+    {"path": "docs/lark-suite-reference/06-rox-docs-design.md", "symbol": "6 RD-02 editor and entity embed block", "lineStart": 80, "lineEnd": 102, "sha256": "a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68", "inspection": "Relevant lines returned by literal grep, not full chapter read."},
+    {"path": "docs/lark-suite-reference/07-domain-entity-model.md", "symbol": "7 Permissions sharing agents", "lineStart": 159, "lineEnd": 167, "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"}
+  ],
+  "evidenceFreshness": {
+    "hashMethod": "Read-only shasum -a 256 over concrete whole files; ranges above refer to inspected working-tree content, not assumed committed blobs.",
+    "inputManifests": "Observed execution/work-package hashes equal the two hashes in the dispatch packet.",
+    "changedFromNormativeBaseline": [
+      {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "normativeBaselineSha256": "8e919184dda7d4e7b632dc204b313c74aea8ba9feeaca9beeaa44577b926d3c1", "observedSha256": "5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747", "consequence": "Baseline blob evidence is stale for this checkout; observed content includes controlled echo and authority-toggle protections that must survive integration."},
+      {"path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx", "normativeBaselineSha256": "2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358", "observedSha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a", "consequence": "Baseline blob evidence is stale for this checkout; current ListTreeProjection/blockTree/onOpenBlock support is root-owned and must be preserved."}
+    ],
+    "stableDuringInspection": "Editor and NotesViewHost hashes were unchanged across both read-only hash calls. This is only the inspection window, not a guarantee against future integration edits.",
+    "recheckTrigger": "Any root integration or dependency change invalidates the affected line/hash evidence; reread latest leased files before designing/applying implementation patches. Git HEAD was not probed; input_revision is the dispatch revision, not a claim that working-tree files are committed there."
+  },
+  "nextExecutableAction": {
+    "now": "Lead reviews this preflight report and requests the exact authenticated Doc/query/range/Session/export/search interfaces plus caller/i18n scope amendments while wave0 finishes. No product action is authorized for this worker.",
+    "implementationAfterGates": "After lead wave0 commit and accepted LSX-WP-010, LSX-WP-013 and LSX-WP-017 artifact+readback receipts, resolve external/published foundation gates and reference manifest, refresh inspected hashes under shared-file leases, align BaseTable and Doc block/transport contracts, then implement only the four normative new files and submit the named serial shared patch requests. Exercise all six required proof lanes on the integrated commit before changing featureComplete."
+  },
+  "risks": [
+    "The writable packet has no server handler, IPC/generated client registration, export/search writer, actual editor caller or locale ownership. End-to-end dual ACL and agent extraction cannot be truthfully delivered by a TSX component and pure helper alone. Additional seam discovery requires a revised reviewed packet, not extra unleased edits.",
+    "NotesViewHost is not the Markdown editor host; merely adding an optional callback/prop there does not wire Doc embed insertion or Sessions. Do not create a second surface to hide this missing caller seam.",
+    "bindSurfaceContext copies the entire supplied revision map; visibleContextEntityRefs removes IDs only, not revision metadata or extracted body. rebaseLiveContext retains entityRefs and replaces revisions without policy checks. Every extraction/rebase must first prune selected permitted refs, fields, bodies and revisions at authenticated authority.",
+    "sameContextSnapshot does not compare snapshotPolicy, block selection or authorization/query epoch. Do not use it alone to prove range/policy equality; preserve helper semantics and perform full package binding checks separately.",
+    "Resource registry source proves fan-out and sorting only. A provider that returns hidden titles/data leaks them through the merge unless its real query/owner enforces policy. No registry rewrite is authorized in this packet.",
+    "Legacy and official Markdown engines use different parsing/serialization hooks. Legacy html:false and currency/math preprocessing can lose or modify structured embed tokens without an accepted retained-reference codec; unknown versions must not be normalized away.",
+    "Native Task rows must keep canonical IDs and owner commands; Notes projections currently count Markdown checkboxes. No dataset copy, parallel done field or recalculation fork is permitted.",
+    "Snapshot pinning does not grant indefinite cached read after revoke. Live rebase cannot enlarge selected context silently; remote-private offline access requires accepted bounded lease policy and fails closed otherwise.",
+    "Published RS-BASE-01 proposes a CustomRecord entity kind while the later Lark entity model uses existing page kind plus additive contentKind/aliases. Published RS-DOC-01 collaborative_document and Lark document descriptors also need accepted mapping. Consume approved foundation descriptors, do not pick a new kind by string replacement in this package.",
+    "Published specifications identify additional Drive/message/admin/Revision2 foundations but publication is not an implementation receipt. These gates are kept separate from exact explicit LSX DAG edges.",
+    "Codegraph is unavailable for this repository (no index). Descriptive find failed because its judge account returned HTTP 402; exact named paths and literal grep/read supplied the evidence instead. Neither failure establishes absence of a server mechanism elsewhere in the repository.",
+    "Only report authoring is complete here. No feature implementation, compilation, test, native UI, mutation, restart, provider effect or network proof was run; none is reported as passing."
+  ],
+  "verificationStatus": {
+    "sourceInspection": "OBSERVED",
+    "wholeFileHashes": "OBSERVED",
+    "inputManifestHashes": "MATCHED",
+    "artifactVerifier": "NOT_RUN_IN_PREFLIGHT_READ_WRITE_ONLY_SCOPE; lead owns packet return verification",
+    "implementationVerification": "NOT_RUN_BY_INSTRUCTION"
+  }
+}

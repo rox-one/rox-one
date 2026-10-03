@@ -249,6 +249,26 @@ describe('createNotesBridge', () => {
     expect(await bridge!.lookupNote('never')).toEqual({ status: 'incomplete' })
   })
 
+  it('lookupNote stops when Soup repeats a cursor before reaching the target', async () => {
+    let requests = 0
+    const bridge = createNotesBridge({
+      enabled: true,
+      soup: {
+        async queryUserSoupPage() {
+          requests += 1
+          return {
+            items: docs,
+            nextCursor: 'same-cursor',
+          }
+        },
+      },
+      claimLocker: { canRead: () => 'allow' },
+      importsAcl: { canView: () => true },
+    })
+    expect(await bridge!.lookupNote('missing')).toEqual({ status: 'incomplete' })
+    expect(requests).toBe(2)
+  })
+
   it('exposes no write helpers', () => {
     const bridge = createNotesBridge({
       enabled: true,

@@ -1,0 +1,302 @@
+{
+  "task_id": "CI-008-preflight",
+  "attempt_id": "6521ac334a0a52dd6d332bb101e5331a",
+  "packet_hash": "e0780f1801309466142f60390658e12259b7896d2e86739fab0914a640110f9f",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-008",
+  "featureComplete": false,
+  "mode": "SOURCE_PREFLIGHT_ONLY",
+  "dependencies": ["CI-003", "CI-004", "CI-005", "CI-006", "CI-007", "LSX-WP-001", "LSX-WP-003"],
+  "dependencyEvidence": {
+    "routingSource": "plans/lark-suite-reference/execution-packages.json:4709-4716",
+    "sourceRecord": "plans/lark-suite-reference/code-intelligence.json#/workPackages/7",
+    "difference": "Source workPackages/7 dependsOn lists CI-003 through CI-007 only; the execution package and dispatched progress add LSX-WP-001 and LSX-WP-003. Preserve the exact seven-element dispatched array, not the shorter source-record array.",
+    "receipts": "No accepted implementation/readback dependency receipts were supplied or verified in this preflight. Specification status is design-only, not proof of current dependency acceptance."
+  },
+  "inspection": {
+    "scope": "CI-008 normative specification, existing source-index-watch.ts, its direct source-index-facade.ts dependency and that facade's source-index.ts import, plus the explicitly referenced watcher test. Provided report-verifier code was inspected solely to establish its read-only --verify branch.",
+    "observedFoundation": "The scoped packages/server-core/src/code-intelligence directory was absent when globbed. Proposed CI-008 functions below are design requests, not actual symbols or implementation claims.",
+    "codegraph": "Per-project query returned no .codegraph index; no indexing was attempted.",
+    "searchFallback": "Descriptive find in the scoped sources directory failed because its judgment backend returned HTTP 402. Inspection continued through the exact normative watcher path, literal searches and direct imports; the failed find is not absence evidence.",
+    "revisionCaveat": "input_revision is immutable dispatch lineage, not a claim that root-owned working-tree bytes equal that commit. Whole-file hashes below identify the inspected bytes. Root integration may change them; re-read and rehash affected seams before implementation and invalidate this evidence on drift.",
+    "productVerification": "NOT_RUN: builds, tests, native UI and network operations prohibited for this preflight. Listed verification scenarios are future obligations, not results."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-SNAPSHOT-IDENTITY",
+      "notAnAdditionalExplicitEdge": true,
+      "source": "code-intelligence.json:1060-1074,143-144,2536-2539,2737-2739",
+      "requirement": "CI-001 is a transitive foundation: canonical repository/source connection identity, exact snapshot digest including commit, dirty bytes, included paths and policy hash, and local content receipts. These must exist before freshness or artifact-key code is connected.",
+      "missingPrerequisite": "Accepted CI-001 DTO/ref and snapshot contracts with exact exports and receipt-bound implementation revision; aliases must resolve to canonical identity rather than display slug.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "id": "FG-SHARED-AUTHORIZATION",
+      "notAnAdditionalExplicitEdge": true,
+      "source": "code-intelligence.json:146,152-155,2336-2389,3658-3667",
+      "requirement": "CI-002 is a transitive foundation: reuse the same authorizeRepositoryRead/Write/Job resolver for content and manifest queries. A freshness status, visible manifest or cached artifact is not a content permission. Remote-private offline reads default deny; leases expire fail closed; reconnect invalidates authorization.",
+      "missingPrerequisite": "Actor/workspace/source policy and lease resolver receipts, reconnect invalidation integration, and canonical path/symlink/exclusion policy. No new ACL cache or authorization store may be substituted.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "id": "FG-DURABLE-OWNER-CAS",
+      "notAnAdditionalExplicitEdge": true,
+      "source": "code-intelligence.json:153,2765-2768,3684-3688; execution-packages.json:206-214",
+      "requirement": "CI-004's durable run journal and single-writer namespace mechanism must be shared with CI-008 artifact identity, ownership and supersession. LSX-WP-003 is already an explicit edge, but its expectedRevision/authorityEpoch/operationId and replay receipt must actually protect the final application boundary; an in-memory lock or fs write alone is insufficient.",
+      "missingPrerequisite": "Accepted job-store persistence/migration/rollback seam, transaction or durable lease/fencing API, monotonically ordered revisions, and accepted Markdown commit contract. Exact method names must be read after those dependencies land.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "id": "FG-WATCH-ACTIVATION-AND-METADATA",
+      "notAnAdditionalExplicitEdge": true,
+      "source": "source-index-watch.ts:3-5,18-29,95-108,128-147; source-index-watch.test.ts:159-163; code-intelligence.json:3667",
+      "requirement": "The existing watcher is off unless CRAFT_FEATURE_NATIVE_INDEX_WATCH is enabled, ignores .git paths, drops event kind/root identity, and watches only existing limited roots. Commit-only and policy-only changes require bounded canonical Git-metadata and policy invalidation inputs owned by the same lifecycle. Reconcile on startup/reconnect even when events were missed.",
+      "missingPrerequisite": "Lead-owned runtime binding supplying authorized repository identity, Git metadata location (including worktree metadata outside the root), policy changes, and the CI-008 callback under the existing off-by-default activation policy. Do not globally make .git contents indexable or introduce a parallel watcher service.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "id": "FG-ALIAS-CONNECTION-SEMANTICS",
+      "notAnAdditionalExplicitEdge": true,
+      "source": "code-intelligence.json:144,1230,3631; source-index.ts:302-303,317,338-344",
+      "requirement": "The normative key includes sourceConnectionId while aliases/retries must deduplicate. Existing FTS paths are display-slug-prefixed, so they cannot supply canonical connection identity. Two aliases of one connection must resolve to the same canonical sourceConnectionId. Do not drop the required connection field to force cross-connection deduplication.",
+      "missingPrerequisite": "CI-001/CI-006 identity receipt defining aliases versus genuinely distinct source connections, with a two-alias fixture. If the published two-alias scenario creates two genuinely distinct connection IDs, lead must reconcile that identity contract before acceptance.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "id": "FG-DELIVERY-PROVIDER-AND-SURFACE",
+      "notAnAdditionalExplicitEdge": true,
+      "source": "execution-packages.json:4747-4788; code-intelligence.json:3791-3801",
+      "requirement": "Implementation starts only after the lead's committed wave0 and accepted dependencies. The cloud packet's older product baseline and unresolved reference-package revision/digest are not permission to run against the dispatch revision. Resolve delivery artifact hashes, assign writer/path leases and obtain EG-IDENTITY, scoped repository/egress policy and relevant pinned provider readiness. CI-008 does not own a new UI: existing surfaces must receive its statuses through dependency contracts.",
+      "missingPrerequisite": "Baseline-specific implementation packet and dependency receipts; OpenWiki/Groma/GitDiagram version/license/runtime readiness for exercised lanes; native agent transport if tools are exercised; lead-owned readback/restart and actual UI acceptance for changed surfaces.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/code-intelligence/freshness.ts",
+    "packages/server-core/src/code-intelligence/artifacts.ts",
+    "packages/server-core/src/code-intelligence/output-ownership.ts",
+    "packages/server-core/src/code-intelligence/__tests__/freshness-idempotency.test.ts"
+  ],
+  "proposedOwnedContributions": [
+    {
+      "path": "packages/server-core/src/code-intelligence/freshness.ts",
+      "proposedSymbols": ["resolveEvidenceFreshness", "reconcileRepositorySnapshot", "listAffectedArtifacts"],
+      "change": "Compare CI-001 exact snapshot and per-file receipts, not mtime or FTS counters. Resolve current/stale/missing with reasons; retain immutable evidence references when current bytes disappear. Persist status revisions via the accepted CI-004 store. Return authorized affected page/graph refs and invoke shared scope/lease checks independently of status. Reconcile on restart/reconnect and publish through the accepted event seam."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/artifacts.ts",
+      "proposedSymbols": ["artifactIdempotencyKey", "registerStagedArtifact", "readArtifactManifest"],
+      "change": "Use a versioned, unambiguous encoding of canonical source connection, canonical repository, exact snapshot digest, tool version and artifact digest; retain artifact kind/provider/format namespace without replacing those mandatory identity components. Enforce uniqueness and same-key replay in the shared durable store. Verify complete staged content hashes before registering an immutable manifest; reject same identity with conflicting bytes. Run/review/application statuses remain distinct."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/output-ownership.ts",
+      "proposedSymbols": ["resolveOutputNamespace", "reserveOutputOwnership", "commitStagedArtifact"],
+      "change": "Use canonical provider/kind-specific generated namespaces and shared durable ownership/fencing, rejecting same, nested or symlink-equivalent roots and authored targets. Stage then publish only after source fingerprint, fencing token, expected output revision and authority epoch checks at the atomic commit boundary. Reuse CI-004 and LSX-WP-003 mechanisms rather than another lock/store. Older completion may retain its immutable manifest marked superseded but cannot move the current-output pointer."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/__tests__/freshness-idempotency.test.ts",
+      "proposedSymbols": ["freshness, artifact replay and fenced application behavioral cases"],
+      "change": "After prerequisites exist, exercise exact bytes and persisted status/manifests with deterministic fixtures and controlled interleavings. Include every normative verification scenario, tombstone readback, graph-kind coexistence, root collisions, denied/expired lease, restart, interrupted stage and replay. Do not substitute mock echoes or only counter assertions for consumer-visible behavior."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/server-core/src/sources/source-index-watch.ts",
+      "symbol": "SourceIndexWatchDeps; startSourceIndexWatch.schedule; root watch listener",
+      "change": "Add an optional typed CI invalidation/reconciliation hook supplied by the integration owner. Accumulate bounded root-scoped change hints including slug, event kind and relative path before debounce; null filenames mean root-wide uncertainty. Feed canonical identity through the dependency resolver, never use slug as artifact identity. Keep SourceIndexChangedPayload's index-count purpose and reindexWorkspaceSources facade unchanged.",
+      "reason": "Existing listener discards _event/root context; schedule only accepts filename; push exposes indexed/written/unchanged/truncated, not source identity or evidence revisions. This is the actual CI-R-05 integration seam.",
+      "baseSha256": "9aa0f2e0310618d0568e93899449472d1ac0fe3fbe2f694243196577dc9b886e"
+    },
+    {
+      "path": "packages/server-core/src/sources/source-index-watch.ts",
+      "symbol": "startSourceIndexWatch.flush; startSourceIndexWatch.schedule; SourceIndexWatchHandle.close",
+      "change": "Serialize/coalesce reconciliation passes with a pending generation so events during an awaited flush cannot publish an older revision as current. Mark affected evidence stale independently of successful FTS reindex, then reconcile from exact snapshot receipts. Check lifecycle generation after awaits; close cancels queued work and prevents late callbacks. Publish typed failures/status through the accepted CI event seam, not an unhandled detached rejection.",
+      "reason": "flush awaits reindex then pushes unconditionally; subsequent timers can overlap and close only cancels the timer/watchers. A stale flush or failed index cannot be an authoritative freshness result.",
+      "baseSha256": "9aa0f2e0310618d0568e93899449472d1ac0fe3fbe2f694243196577dc9b886e"
+    },
+    {
+      "path": "packages/server-core/src/sources/source-index-watch.ts",
+      "symbol": "isWatchedSourcePath; startSourceIndexWatch watch setup and close lifecycle",
+      "change": "Preserve .git exclusion for source indexing. Accept bounded authorized canonical Git-metadata invalidation inputs separately from indexable source filenames and subscribe/close them in the same lifecycle; relevant HEAD/ref/index and exclusion-policy changes trigger root reconciliation even without text-file changes. Root disappearance, dropped watches or missing event paths remain explicit uncertainty until authoritative reconciliation. Worktree metadata outside the repository must be resolved by CI-001/CI-002, not accepted as arbitrary renderer paths.",
+      "reason": "SKIP_DIRS includes .git and the existing test explicitly expects .git/HEAD to be ignored. Commit-only transitions cannot currently trigger CI freshness. Root existence filtering also cannot itself preserve deleted evidence.",
+      "baseSha256": "9aa0f2e0310618d0568e93899449472d1ac0fe3fbe2f694243196577dc9b886e"
+    }
+  ],
+  "integrationRequestsToDependencyOwners": [
+    {
+      "owner": "CI-004 / integration-owner",
+      "normativePaths": ["packages/server-core/src/code-intelligence/jobs.ts", "packages/server-core/src/code-intelligence/job-store.ts", "packages/server-core/src/handlers/rpc/code-intelligence.ts"],
+      "request": "Supply actual accepted store transaction, namespace fencing and typed event/query seams; bind freshness/affected-artifacts queries and staged artifact registration/application into the existing code-intelligence RPC/job path. CI-008 has no owned RPC, channel or bootstrap path. These are prerequisite interface requests, not patches against inspected existing symbols."
+    },
+    {
+      "owner": "CI-003, CI-005, CI-006, CI-007 / integration-owner",
+      "normativePaths": ["packages/server-core/src/code-intelligence/index-status.ts", "packages/server-core/src/code-intelligence/providers/groma.ts", "packages/server-core/src/code-intelligence/providers/openwiki.ts", "packages/server-core/src/code-intelligence/providers/gitdiagram.ts"],
+      "request": "Provide canonical snapshot-bound source/evidence/artifact descriptors and actual graph-kind/provider/output-root identities. Bind producer completion through the shared registry/ownership resolver, and read freshness through the same resolver rather than per-provider caches. No claimed existing export names: inspect accepted files before coding."
+    },
+    {
+      "owner": "LSX-WP-001 and LSX-WP-003 / integration-owner",
+      "normativePaths": ["packages/core/src/docs/content-descriptor.ts", "packages/server-core/src/docs/descriptor-resolver.ts", "packages/server-core/src/docs/markdown-commit.ts", "packages/core/src/docs/command-envelope.ts"],
+      "request": "Provide canonical page ref/alias/format capabilities and the atomic expectedRevision/authorityEpoch/operationId receipt boundary. Generated outputs must stay separate from authored Notes; staged review is not application. Consume actual accepted APIs, not another content store."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-008-AC-1",
+      "criterion": "Commit/dirty/exclusion change invalidates affected evidence",
+      "currentEvidence": "source-index-watch.ts startSourceIndexWatch/flush/schedule (95-147) debounces text-source changes and reindexes through the facade, but ignores .git metadata (18-29,87-92) and reports counters only (63-68). source-index.ts hashText (155-156) hashes index text after body truncation (290-294), so its hash is not an exact file/snapshot receipt.",
+      "requiredChange": "Proposed freshness.ts reconcileRepositorySnapshot and resolveEvidenceFreshness must compare exact CI-001 commit/dirty/includedPaths/policy fingerprints and file hashes; watcher requests provide metadata/policy hints. Persist affected evidence revisions; changed dirty bytes require local exact-source receipts, never parent-commit exact links. mtime changes alone do not alter artifact identity; commit/policy changes still trigger reconciliation even when a given file's bytes remain equal.",
+      "verification": ["Rename/delete/edit fixtures assert affected refs, statuses and reason; unchanged unrelated evidence is not incorrectly lost.", "Commit-only and ignore-policy-only changes trigger reconciliation despite absent source-text edits.", "Changed bytes with unchanged mtime are detected; identical bytes with a new timestamp do not create a duplicate artifact.", "Dirty changed bytes resolve to a local content receipt and reject parent commit as an exact citation.", "Hash conflict, older/newer completion, partial recovery and alias/retry fixtures participate in the full normative proof suite."],
+      "missingPrerequisite": "CI-001/CI-002 exact snapshot and shared policy resolver; accepted CI-003/CI-004 interfaces and runtime watcher hook; all seven dependency receipts before implementation.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-008-AC-2",
+      "criterion": "different graph kinds coexist",
+      "currentEvidence": "source-index.ts openDb (181-217) stores flat file/FTS rows, not graph-kind artifacts. CI-005/CI-007 normative outputs describe C4 and structured graph evidence respectively; no server-core code-intelligence directory existed during this inspection.",
+      "requiredChange": "Proposed artifacts.ts registerStagedArtifact/readArtifactManifest and output-ownership.ts resolveOutputNamespace keep provider, graph kind and format version explicit. C4, source-symbol/contains, structured/AI graph and wiki-link graph remain distinct artifacts; updating one cannot overwrite/retype another or collapse C4 lifecycle into evidence trust.",
+      "verification": ["Register multiple graph kinds for one repository/snapshot and independently read back IDs, kind, evidence and status after restart.", "Supersede one kind without changing another's active manifest/root.", "Assert immutable hash conflicts fail and each kind participates in rename/delete/edit/ignore, mtime-only, concurrent completion, partial recovery and alias replay proof lanes."],
+      "missingPrerequisite": "Accepted CI-001 graph/artifact DTOs; actual CI-003/CI-005/CI-007 kind descriptors; CI-004 durable registry/namespace contract.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-008-AC-3",
+      "criterion": "OpenWiki and Groma output roots never collide",
+      "currentEvidence": "Existing watcher has no output-root ownership symbol; it indexes allowed roots only. Normative GeneratedArtifact semantics (1230) require one writer per namespace and OpenWiki limitations (262) prohibit replacement of authored documents.",
+      "requiredChange": "Proposed output-ownership.ts resolveOutputNamespace/reserveOutputOwnership must reserve separate canonical generated roots for OpenWiki and Groma, check equal/nested/symlink-equivalent paths under CI-002 scope, reject authored-page targets, and use CI-004 durable ownership/fencing. No silent redirection of wiki output to user documents. Generation/import remains staged; actual application uses approved descriptor and CAS/epoch receipt.",
+      "verification": ["Equal, ancestor/descendant and symlink-equivalent root requests fail before any write; foreign-root requests deny without protected path/body leakage.", "Concurrent OpenWiki/Groma jobs retain disjoint roots across retry/restart; authored sentinel document bytes stay unchanged.", "Apply the normative hash-conflict, older/newer, partial generation, two-alias replay and snapshot-change proof scenarios to ownership."],
+      "missingPrerequisite": "CI-005/CI-006 actual provider output root semantics; CI-002 canonical write scope; CI-004 ownership; LSX-WP-001/003 accepted descriptor and atomic application seams.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-008-AC-4",
+      "criterion": "deleted evidence remains visible as missing",
+      "currentEvidence": "source-index.ts reindexWorkspaceSources (372-400) deletes all existing file rows before rebuilding; that ephemeral search index cannot retain a removed EvidenceRef. The watcher drops nonexistent roots at setup (105-108) and its payload has no missing status.",
+      "requiredChange": "Proposed freshness.ts resolveEvidenceFreshness persists missing receipts referencing original snapshot/file evidence and reason rather than deleting historical refs with FTS rows. Return authorized affected page/graph refs; retain stale/missing semantic support receipts without retaining or returning unauthorized protected bytes. Missing versus excluded/policy-denied must have distinct reasons; truncation or failed scans do not prove deletion.",
+      "verification": ["Delete referenced file or root, reconcile, then read the original evidence as missing with its original hash/ref after restart.", "Rename produces missing old-path evidence and snapshot-bound new-path evidence, not a silently retargeted citation.", "Ignored/unreadable/truncated sources are not falsely certified deleted/current; authorization remains independently enforced.", "Retain missing state through partial generation, concurrent supersession, hash-conflict, same-content timestamp and alias/retry scenarios."],
+      "missingPrerequisite": "CI-001 immutable evidence refs; CI-004 persisted receipt store; CI-006 page claims and CI-007 graph evidence refs; shared authorization resolver.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-008-AC-5",
+      "criterion": "stale run cannot overwrite newer output",
+      "currentEvidence": "source-index-watch.ts flush (117-126) has no revision/fencing check and overlapping timer-triggered calls can complete out of order; close (150-166) does not fence an already awaited flush. There is no inspected staged artifact application mechanism.",
+      "requiredChange": "Proposed output-ownership.ts commitStagedArtifact checks exact source fingerprint, monotonic output/run revision, durable namespace ownership fencing, expected base hash/revision and authority epoch at commit, not merely before asynchronous work. Keep stale/older manifests immutable and mark superseded; newer active pointer/output bytes remain unchanged. Reuse CI-004 and LSX-WP-003 transaction/receipt mechanisms, separating completed generation from explicit review/application.",
+      "verification": ["Controlled older/newer completions in both orders assert the newer output bytes/hash and active revision survive, and the stale run is visibly superseded.", "Changed base hash or source fingerprint returns typed conflict with no write; cancellation/ownership loss and close during flush cannot publish current state.", "Interrupt partial stage and restart: previous output stays intact, checkpoint recovery revalidates fingerprint, then replay returns the original committed receipt.", "Run rename/delete/ignore, timestamp-only and two-alias repeat scenarios around the commit boundary."],
+      "missingPrerequisite": "CI-004 durable fencing, recovery and ordered revisions; CI-001 exact snapshot; accepted LSX-WP-003 expectedRevision/authorityEpoch/idempotency receipt; explicit review/application integration.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-008-AC-6",
+      "criterion": "Artifact idempotency key includes source connection, canonical repository, snapshot, tool version and artifact digest; alias/retry does not duplicate wiki",
+      "currentEvidence": "source-index.ts indexSourceTree stores files under sourceSlug/relPath (317,338-344) and hashes truncated body text; SourceReindexResult contains counters/dbPath/fts, not canonical artifact identity. Normative exact key is specified at code-intelligence.json:144,1230,3631.",
+      "requiredChange": "Proposed artifacts.ts artifactIdempotencyKey uses canonical sourceConnectionId, canonicalRepositoryId, exactSnapshotDigest, toolVersion and artifactDigest in a versioned unambiguous tuple. Resolve display aliases before identity. Enforce durable uniqueness/replay and immutable content-hash validation through CI-004 store; retain provider/kind/format discriminants. Retry/run IDs, aliases and timestamps are provenance, not identity. Do not weaken the source connection component.",
+      "verification": ["Two display aliases of the same canonical connection/repository and repeated run/restart return one artifact/page identity and the original replay receipt, with no duplicate wiki output.", "Independently change each mandatory identity component and prove distinct identity; tuple-boundary/encoding collisions must not alias.", "Same key with conflicting manifest/content bytes is a visible hash conflict and cannot mutate existing immutable data.", "New timestamp with unchanged exact source/artifact bytes does not duplicate; dirty/commit/policy changes and stale concurrent completion still obey the source/fencing rules.", "Partial generation interruption cannot reserve a falsely complete artifact; recovery finalizes once after digest verification."],
+      "missingPrerequisite": "Canonical alias/connection contract from CI-001/CI-006; actual provider tool versions/digests; CI-004 durable uniqueness and replay transaction.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-008-CONTRACT-AUTH-OFFLINE",
+      "criterion": "Freshness never extends authority; shared resolver gates content independently of manifest visibility; restart/reconnect reconcile snapshot and authorization; expired lease denies protected bytes",
+      "currentEvidence": "source-index-watch.ts receives only workspaceRoot, root slug/path and dependency callbacks; no actor/lease check exists in this seam. This absence does not prove other source subsystems lack authorization. CI-008 permissions/realtimeOffline are normative at 3658-3667.",
+      "requiredChange": "Integrate freshness/manifest reads and artifact application with CI-002's shared actor/workspace/source resolver, not an ACL added to watcher state. Rehydrate persisted freshness on startup, revalidate snapshots, and invalidate/recheck remote authorization on reconnect. Denied/expired lease may expose only authorized manifest metadata, never protected source/page bodies.",
+      "verification": ["Foreign workspace and unauthorized content deny even with a visible/current manifest.", "Remote-private offline read denies without a valid scoped lease; expiration fails closed; reconnect invalidates cached authorization.", "Persist stale/missing state through restart and distinguish source status from content authorization; record disconnected revocation exposure window."],
+      "missingPrerequisite": "Accepted CI-002 authorization/lease contracts and actor identity readiness; CI-004 restart events plus dependency-owner bindings to existing consumers.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-008-CONTRACT-API-EVENTS-PERSISTENCE",
+      "criterion": "Freshness/affected-artifacts query and idempotent artifact registry contract; immutable manifest and ownership persistence; repository.snapshot.changed, artifact.freshness.changed, artifact.superseded and artifact.deduplicated events",
+      "currentEvidence": "SourceIndexChangedPayload (63-68) and SourceIndexStatus in the facade (176-208) expose index statistics only; no CI freshness/query/event contract exists in these inspected symbols. Specification defines API/events at 3649-3656 and proposed persistence at 3684-3688.",
+      "requiredChange": "Expose proposed owned resolver/registry through the accepted CI-004 RPC/query/event contract. Persist identity uniqueness, statuses and ownership in its workspace-scoped store with migration/rollback, not in the FTS files table or a second store. Events carry authorized refs and monotonic revisions, not raw source/secrets; no deduplicated or completed event may claim application occurred.",
+      "verification": ["Query exact authorized affected refs/status and immutable manifest hashes before/after restart; compare registry replay receipts.", "Concurrent idempotency/ownership cases preserve a single active revision; event ordering and ref authorization agree with persisted state.", "Seed a protected sentinel and ensure it never appears in unauthorized query/event payloads; assert superseded/deduplicated transitions correspond to actual persisted operations."],
+      "missingPrerequisite": "CI-004 actual exported handler/store/event schemas and root integration request; CI-001 DTOs; accepted storage migration/rollback and actor resolver.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-008-CONTRACT-EXISTING-SURFACES",
+      "criterion": "Existing RC-02/RC-05/RC-11/RC-12 consumers expose source/graph/wiki/affected-artifact freshness without a second surface",
+      "currentEvidence": "CI-008 screenRefs and ui contract name these consumers at 3661-3665 and 3690-3697; no UI code was inspected or run because this preflight owns only backend-scoped evidence and the report.",
+      "requiredChange": "Supply authorized DTO/status/reason/affected refs to dependency owners for existing views and proposal review. Retain generated versus authored distinctions and completed/staged/applied states. No new UI files are owned by CI-008; actual consumer bindings and screenshots are root/dependent-package integration acceptance, not grounds to mark requirements N/A.",
+      "verification": ["Root observes changed existing surfaces showing current/stale/missing, graph-kind coexistence, missing original citations and superseded results; reload verifies persistence.", "Protected preview clears after lease expiry/reconnect denial, and stale-base application returns a visible recoverable conflict.", "Capture actual UI/ARIA/font evidence when the surface changes, as required by the package launch gate."],
+      "missingPrerequisite": "Accepted backend dependencies and existing-surface integration owned by lead/downstream UI packages; native/UI proof remains outside this preflight authorization.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    }
+  ],
+  "normativeVerificationCoverage": {
+    "source": "code-intelligence.json:3633-3640,3699-3788",
+    "note": "Each of the six observableAcceptance records repeats the entire proof set. Narrow criterion-specific assertions above complement, not replace, the full suite for each criterion.",
+    "requiredScenarios": ["rename/delete/change/ignore policy", "concurrent older/newer completion", "hash conflict", "same content new timestamp", "partial generation recovery", "same repository under two aliases and repeated run deduplicate artifact", "dirty changed bytes never cite parent commit as exact source"],
+    "futureScopedTestCommand": "bun test packages/server-core/src/code-intelligence/__tests__/freshness-idempotency.test.ts packages/server-core/src/sources/__tests__/source-index-watch.test.ts",
+    "runtimeReadback": "After accepted integration, exercise real source-change and staged-output flows with controlled races, then authoritative snapshot/status/manifest/hash readback before and after restart on the exact delivered revision. Tests alone are not full package proof.",
+    "state": "NOT_RUN_PREFLIGHT_ONLY"
+  },
+  "sourceReferences": [
+    {
+      "path": "packages/server-core/src/sources/source-index-watch.ts",
+      "symbol": "SourceIndexChangedPayload; SourceIndexWatchDeps; startSourceIndexWatch",
+      "lineStart": 63,
+      "lineEnd": 170,
+      "sha256": "9aa0f2e0310618d0568e93899449472d1ac0fe3fbe2f694243196577dc9b886e"
+    },
+    {
+      "path": "packages/server-core/src/sources/source-index-watch.ts",
+      "symbol": "SKIP_DIRS; isWatchedSourcePath",
+      "lineStart": 18,
+      "lineEnd": 92,
+      "sha256": "9aa0f2e0310618d0568e93899449472d1ac0fe3fbe2f694243196577dc9b886e"
+    },
+    {
+      "path": "packages/server-core/src/sources/source-index-facade.ts",
+      "symbol": "reindexWorkspaceSources",
+      "lineStart": 92,
+      "lineEnd": 112,
+      "sha256": "0eb4d8dea566a86c97f3a3ea2b610c4ac15b61803ee1a0b1de0ec5a3da37bbc2"
+    },
+    {
+      "path": "packages/server-core/src/sources/source-index.ts",
+      "symbol": "hashText; walkSourceTree; indexSourceTree; reindexWorkspaceSources",
+      "lineStart": 155,
+      "lineEnd": 401,
+      "sha256": "abc66d7199da6f3e23566de07188dd8c0f99da438dda8c63d192e1cf55f0c288"
+    },
+    {
+      "path": "packages/server-core/src/sources/__tests__/source-index-watch.test.ts",
+      "symbol": "source-index folder watch: ignores node_modules and binary files",
+      "lineStart": 120,
+      "lineEnd": 165,
+      "sha256": "9370b0a216b926307b989849fc2a472179f33747b2e58bfe4ab2a04929a13f99"
+    },
+    {
+      "path": "plans/lark-suite-reference/code-intelligence.json",
+      "symbol": "workPackages[7] CI-008 definitionOfDone, verification, observableAcceptance and ownership",
+      "lineStart": 3593,
+      "lineEnd": 3821,
+      "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"
+    },
+    {
+      "path": "plans/lark-suite-reference/execution-packages.json",
+      "symbol": "packages CI-008 dependencies, ownership and cloudPacket",
+      "lineStart": 4705,
+      "lineEnd": 4790,
+      "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"
+    }
+  ],
+  "nextExecutableAction": {
+    "owner": "integration-owner",
+    "action": "Validate this report against the supplied dispatch packet and inspected hashes. Commit wave0 and collect accepted artifact/readback receipts for all seven explicit dependencies. Resolve CI-001/CI-002 transitive identity/snapshot/authorization contracts and the shared durable fencing/CAS seam; bind actual dependency exports and runtime watcher hook. Issue a revision-bound implementation packet with only the four normative new files owned by CI-008 and exclusive lead ownership of source-index-watch.ts patches; re-inspect source on drift before executing implementation.",
+    "implementationOrder": ["Bind accepted snapshot/identity/authorization/store interfaces", "Implement exact freshness and persistent missing/stale receipts", "Implement immutable idempotent manifests and shared output ownership/fencing", "Lead applies watcher changes and dependency consumer bindings", "Run full normative behavioral proof and integrated restart/readback/UI lanes"],
+    "workerBoundary": "This worker produces no implementation, source patch application, Git state change or product verification."
+  },
+  "risks": [
+    "Git metadata is excluded by the current watcher, so commit-only changes are invisible without a dedicated bounded invalidation input in the same lifecycle.",
+    "Native index result comments describe mtime-based incremental unchanged detection, while TS index hashes truncated decoded text. Neither is sufficient for exact-source freshness; use accepted full-byte snapshot receipts.",
+    "Whole-file and root deletion removes FTS rows or drops watcher setup, but historical evidence must remain missing rather than disappear; truncated/unreadable coverage must not falsely imply deletion.",
+    "Timers can overlap async flushes and close cannot currently fence late publication. Artifact application additionally needs durable commit-time fencing and CAS, not just debounce serialization.",
+    "Alias display slugs currently prefix index paths. Canonical source connection/repository identities must reconcile deduplication without omitting required identity components.",
+    "Canonical root overlap includes nested and symlink-equivalent OpenWiki/Groma roots; accidentally reusing authored Notes as output would violate staged ownership.",
+    "Ownership/registry work overlaps CI-004. A second SQLite store, independent lock map or parallel ACL/freshness cache would split authority and fail restart/race guarantees.",
+    "CI-008 owns no RPC/bootstrap/channel/UI files. Implementing only its four modules without root consumer wiring would be disconnected and cannot satisfy full DoD.",
+    "All runtime, negative-control, persistence/recovery and UI proof is still unverified. Preflight validity is not feature completion or accepted dependency evidence.",
+    "Root-owned integration can change inspected files during or after report creation. The verifier rejects changed hashes; unchanged dispatch lineage alone does not make stale source evidence valid."
+  ]
+}

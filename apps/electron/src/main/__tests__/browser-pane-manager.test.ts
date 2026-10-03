@@ -154,7 +154,10 @@ function createMockWindow(opts?: { width?: number; height?: number; minWidth?: n
   return win
 }
 
+import { electronMockExports } from './electron-mock-exports'
+
 mock.module('electron', () => ({
+  ...electronMockExports,
   app: {
     getPath: mock((name: string) => name === 'downloads' ? '/tmp/mock-downloads' : `/tmp/mock-${name}`),
   },
@@ -279,6 +282,47 @@ describe('BrowserPaneManager', () => {
     expect(list).toHaveLength(1)
     expect(list[0].id).toBe('test-1')
     expect(list[0].agentControlActive).toBe(false)
+  })
+
+  it('isolates explicitly consent-bound cookie panes and closes them on revocation', () => {
+    manager.setCookieImportConsent(true)
+    manager.createInstance('user-managed')
+    manager.createInstance('cookie-import', { useImportedCookies: true })
+
+    expect(manager.getInstance('user-managed')?.partition).toBe('persist:browser-pane')
+    expect(manager.getInstance('cookie-import')?.partition).toBe('persist:browser-cookie-import')
+
+    manager.setCookieImportConsent(false)
+
+    expect(manager.listInstances().map((instance) => instance.id)).toEqual(['user-managed'])
+  })
+
+  it('routes panel-focus shortcuts only to the embedded pane host', () => {
+    const host = createMockWindow()
+    const hostWebContents = host.webContents as unknown as { id: number; send: (channel: string, direction: string) => void }
+    hostWebContents.id = 991
+    const windowManager = {
+      getWindowByWebContentsId: (id: number) => id === hostWebContents.id ? host : null,
+      getWorkspaceForWindow: () => null,
+    } as unknown as Parameters<typeof manager.setWindowManager>[0]
+    manager.setWindowManager(windowManager)
+
+    const id = manager.createEmbeddedInstance()
+    manager.syncEmbeddedBounds(id, { x: 0, y: 0, width: 400, height: 500 }, hostWebContents.id)
+    const instance = manager.getInstance(id)
+    if (!instance) throw new Error('Expected embedded browser instance')
+    const handlers = (instance.pageView.webContents as unknown as {
+      _listeners: Record<string, Array<(event: { preventDefault(): void }, input: Record<string, unknown>) => void>>
+    })._listeners['before-input-event'] ?? []
+    const preventDefault = mock(() => {})
+    const input = process.platform === 'darwin'
+      ? { type: 'keyDown', key: 'ArrowRight', meta: true, alt: true }
+      : { type: 'keyDown', key: 'ArrowRight', control: true, alt: true }
+
+    handlers[0]?.({ preventDefault }, input)
+
+    expect(hostWebContents.send).toHaveBeenCalledWith('window:panel-focus-direction', 'right')
+    expect(preventDefault).toHaveBeenCalledTimes(1)
   })
 
   it('attaches toolbar/page/overlay via contentView.addChildView', () => {

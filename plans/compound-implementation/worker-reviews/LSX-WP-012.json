@@ -1,0 +1,242 @@
+{
+  "task_id": "LSX-WP-012-preflight",
+  "attempt_id": "2f91aa48dc54d654500045f2932dc6ca",
+  "packet_hash": "a21bb2105187d00efc726b7bfe4ccd9c74dd5a1698cd6c5c3990990e1fd6dabb",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-012",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_NOT_STARTED",
+  "scope": {
+    "mode": "inspect",
+    "tier": "bounded-workflow",
+    "onlyWritablePath": "plans/compound-implementation/worker-reviews/LSX-WP-012.json",
+    "productSourcesChanged": false,
+    "productTestsBuildsNativeUiNetworkOperationsRun": false,
+    "evidenceKind": "SOURCE_AND_SPECIFICATION_ONLY",
+    "codegraph": "Unavailable: tool reported no .codegraph index. No index created.",
+    "inspectionRecovery": "find returned judgment API 402, not absence evidence; continued with read/grep of normative source paths.",
+    "baselineRule": "input_revision is dispatch lineage, not a claim that inspected dirty working-tree bytes belong to HEAD. The normative product baseline is e953786ba7e30fb5da5dca7e88e20e324d5aebab. Implementation must be rebound after lead wave0 commit and accepted dependency receipts."
+  },
+  "dependencies": ["LSX-WP-004", "LSX-WP-005", "LSX-WP-010", "LSX-WP-011"],
+  "dependencyContracts": [
+    {
+      "packageId": "LSX-WP-004",
+      "requiredInterface": "task.patchFields(envelope), task.previewBatch(targets,patch), task.applyBatch(previewDigest); scoped native ref, expectedRevision, typed patch/native transition, idempotency and one native receipt per target.",
+      "source": "plans/lark-suite-reference/work-packages.json:2470-2521",
+      "consumerChange": "cell-edit-command delegates Task fields to the accepted task-field mapping and native command. Status dispatches complete/reopen/cancel rather than assigning a Base status copy.",
+      "missingPrerequisite": "Accepted native task command/validator/persistence/readback receipt. PersonalTaskStore.update currently Object.assigns arbitrary typed patches in memory."
+    },
+    {
+      "packageId": "LSX-WP-005",
+      "requiredInterface": "doc.previewPropertyPatch(ref,fieldId,value), doc.applyPropertyPatch(envelope); retained source hash, expectedRevision, lossless changed spans and doc.commitMarkdown.",
+      "source": "plans/lark-suite-reference/work-packages.json:2776-2849",
+      "consumerChange": "Use the accepted retained-source/frontmatter-patches path for Note scalar writes, not Tiptap whole-document serialization or local projection mutation.",
+      "missingPrerequisite": "Accepted integration into native Notes commit and authoritative property readback; lossless helpers alone are insufficient."
+    },
+    {
+      "packageId": "LSX-WP-010",
+      "requiredInterface": "base.query(input), base.getQueryWatermark(queryRef); authorized rows/fields, schema/query revisions, permissionEpoch and freshness.",
+      "source": "plans/lark-suite-reference/work-packages.json:4532-4578",
+      "consumerChange": "Editor binds rowRef/rowRevision/schemaRevision and current field/action grants from authorized query output; discard protected cached value on revocation.",
+      "missingPrerequisite": "Accepted query service plus revocation/invalidation integration. Existing NoteProjectionRow has no such revision/grant envelope."
+    },
+    {
+      "packageId": "LSX-WP-011",
+      "requiredInterface": "FieldDefinition/TypedCellValue/FieldCapability from packages/core/src/bases/field-registry.ts; exact18 types, stable IDs, codecs and null/empty/error/redacted/unsupported variants.",
+      "source": "plans/lark-suite-reference/work-packages.json:4845-4900",
+      "consumerChange": "Reuse registry validation and formatting for scalar10 plus Status. Do not create a second scalar codec registry or permit derived writers.",
+      "missingPrerequisite": "Accepted registry and schema-revision integration. packages/core/src/bases and renderer/pages/bases were absent when inspected."
+    }
+  ],
+  "foundationGates": [
+    {
+      "gate": "PUBLISHED_RS_DRV_01",
+      "classification": "Hidden published foundation dependency; not an addition to dependencies array",
+      "source": "docs/rox-suite/published/RS-BASE-01.md:95-113",
+      "requirement": "Published RS-BASE-01 explicitly requires RS-DRV-01/#1109. Verify its affected-scope authoritative resource/ref/permission receipt before invoking the published Base authority; do not assume the LSX explicit array satisfies this gate.",
+      "state": "RECEIPT_NOT_INSPECTED_OR_ACCEPTED"
+    },
+    {
+      "gate": "COMMON_AUTHORITY_ENTITY_MODEL_RECONCILIATION",
+      "classification": "Hidden published foundation contract",
+      "source": "docs/rox-suite/published/RS-BASE-01.md:44-56; docs/lark-suite-reference/05-rox-bases-design.md:38-52",
+      "requirement": "Published RS-BASE-01 proposes registered CustomRecord kind and Postgres payload, while the later LSX design bounds records to kind=page/contentKind=record until separate migration. Lead must select the approved authority contract and accepted Page/schema service, preserving native Task/CRM identities. LSX-WP-012 must not implement either storage model or invent a second Base store.",
+      "state": "OWNER_DECISION_AND_BOUND_CONTRACT_REQUIRED"
+    },
+    {
+      "gate": "SERVER_COMMAND_AUTHENTICATION_EFFECTS_AND_EVENTS",
+      "classification": "Hidden published mechanism gate plus inherited prerequisite",
+      "source": "docs/rox-suite/published/RS-BASE-01.md:48-56,84-89; plans/lark-suite-reference/work-packages.json:2301-2307,2667-2672,4402-4407",
+      "requirement": "Server derives actor/workspace/policy from transport; common authority registers mutations with operationId/expectedRevision, common outbox/activity/agent policy and revoke cleanup. LSX-WP-004 inherits LSX-WP-002 + EG-IDENTITY/EG-EFFECTS; LSX-WP-005 inherits LSX-WP-003 + EG-EFFECTS; LSX-WP-010 inherits LSX-WP-009 + EG-IDENTITY. A CommandContribution.permissions array or evaluateWhen is not server authorization.",
+      "state": "ACCEPTED_FOUNDATION_RECEIPTS_REQUIRED"
+    },
+    {
+      "gate": "REAL_HOST_TRANSPORT_AND_SHARED_PATH_LEASES",
+      "classification": "Integration scope hole",
+      "source": "plans/lark-suite-reference/execution-packages.json:1008-1058; packages/core/src/platform/commands/types.ts:13-34; apps/electron/src/renderer/pages/notes/NotesViewHost.tsx:58-98",
+      "requirement": "Four new files alone cannot mount a table/inspector editor and server handlers. sharedPatchPaths is empty. Approve an amended reviewed packet for exact integration requests before any shared source edit; locate real authenticated handler/host-service registration under the lead's expanded inspection scope. Existing registry execute returns Promise<void> and services is untyped, so do not misrepresent registry.get/register as a typed durable RPC implementation.",
+      "state": "REVIEWED_PACKET_AMENDMENT_REQUIRED"
+    },
+    {
+      "gate": "SCOPED_DURABLE_DRAFT_AND_OFFLINE_OWNER_SUPPORT",
+      "classification": "Unassigned mechanism prerequisite, not a new canonical store",
+      "source": "plans/lark-suite-reference/work-packages.json:5215-5235; docs/lark-suite-reference/05-rox-bases-design.md:201-205; docs/lark-suite-reference/06-rox-docs-design.md:84-86",
+      "requirement": "Resolve the existing durable draft/outbox owner and its actor/base/ref/field key, crash recovery, ACK clearing and protected-value purge. Editor local React state is insufficient. Unsupported offline owner must return offlineUnsupported/read-only, not simulate queued success.",
+      "state": "OWNER_AND_INTERFACE_NOT_ESTABLISHED_BY_INSPECTED_SOURCE"
+    },
+    {
+      "gate": "DELIVERY_BASELINE_AND_PROOF_LANES",
+      "classification": "Normative launch and published acceptance gate",
+      "source": "plans/lark-suite-reference/work-packages.json:5238-5282,5346-5356; docs/rox-suite/published/RS-BASE-01.md:84-93",
+      "requirement": "Resolve delivery manifest reference revision/digest and spec hashes; wait for wave0 commit and accepted dependencies; bind implementation to reviewed exact revision. Source/schema, unit/property, native readback, restart, ACL negative and actual Electron UI remain separate lanes; published specification also requires Linux domain/renderer proof and independent review. Provider/collaboration receipts only for lanes actually exercised, never fabricated.",
+      "state": "NOT_RUN_PREFLIGHT_ONLY"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/bases/ScalarCellEditor.tsx",
+    "packages/core/src/bases/cell-edit-command.ts",
+    "tests/lark-suite-extension/lsx-wp-012.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-012.spec.ts"
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost / NotesTableView",
+      "change": "After approved query/schema integration, pass authorized typed row envelopes and existing host preview/apply/draft services into NotesTableView; mount ScalarCellEditor at editable scalar cells in the existing table path (current cell loop lines 266-282). Retain canonical title open action, conversion actions and read-only derived formula cells. Do not add an alternate route/table or put editable row data into localStorage.",
+      "reason": "Current props only expose opening/creation/conversion; cells render strings and formula values. Without this amendment the new editor remains unreachable. sharedPatchPaths is currently empty: REQUEST_ONLY_NOT_AUTHORIZED.",
+      "baseSha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a",
+      "prerequisite": "Lead amends packet and acquires path lease; consume accepted query and field contracts rather than guessing signatures."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteProjectionRow / projectNoteRows",
+      "change": "Coordinate with the LSX-WP-011 integration patch: preserve native id/provenance and forward the accepted authorized rowRef, rowRevision, schemaRevision, typed cell-state and field/action-capability envelope into the existing Notes projection. Do not mint ref/revision from title/path or add a writable mirror; keep formulaValue derived read-only.",
+      "reason": "Current projection contains untyped properties and noteId provenance only; scalar writes cannot safely use it as a revisioned authorized row. This is a request to the existing integration owner, not an independent second patch convention.",
+      "baseSha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8",
+      "prerequisite": "Accepted LSX-WP-010/011 envelopes and revised shared-path packet."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/{de,en,es,fr,hu,ja,pl,ru,zh-Hans,zh-Hant}.json",
+      "symbol": "Proposed bases.scalarCell translation namespace",
+      "change": "Integration owner expands this explicit locale set into leased paths and adds ASCII-sorted matching keys for edit/save/cancel/pending/committed/localDraft, unsupported/empty/denied/readOnly, validation/conflict current/local/reconcile, the eight required error discriminants and type help with units/date precision/examples. Every new ScalarCellEditor label/help/error uses t(); no hardcoded Russian-only strings.",
+      "reason": "Repository AGENTS requires all user-facing additions in all 10 locales. No locale files are in LSX-WP-012 allowedWritePaths, so complete UI copy requires a reviewed scope amendment. Locale contents were not inspected and no existing-key availability is asserted.",
+      "prerequisite": "Root checks existing keys, approves exact key inventory and leases concrete locale paths."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "all scalar editors preserve typed semantics",
+      "currentEvidence": "05-rox-bases-design.md lines 113-123 specifies scalar10 plus Status. PersonalTask types expose limited native fields, not generic scalar extensions; NoteProjectionRow.properties is Record<string,unknown>. No packages/core/src/bases or renderer/pages/bases directory was found.",
+      "requiredChange": "Implement ScalarCellEditor and cell-edit-command using accepted LSX-WP-011 codecs and native field mapping. Cover Title, Text, Number, Select, Multi-select, Checkbox, Date, URL, Email, Phone, and Status. Status routes native transition commands; optional Task extensions require owner migration, not ad-hoc assignment.",
+      "verification": "Future bun test tests/lark-suite-extension/lsx-wp-012.test.ts: typed encode/edit/preview/apply/readback oracle for all scalar cases below, native Task and Note owner outcomes plus schema-change conflicts. Actual locale/IME UI proof separately.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted LSX-WP-004/005/010/011 contracts, owner mappings and required extension migration."
+    },
+    {
+      "criterion": "owner unsupported distinct from empty writable cell",
+      "currentEvidence": "Design lines 105,109 distinguishes unsupported/null/empty/error/redacted. Existing Notes table uses em-dash for absent folder/tags at lines 276-277, without capability state.",
+      "requiredChange": "Render registry cell-state discriminants. Show distinct localized unsupported versus empty; unsupported/denied/derived cells have no writer. Empty writable cell may open the typed editor. Never turn missing capability into null value or a write fallback.",
+      "verification": "Future domain assertions: unsupported and denied fields dispatch zero owner writes; nullable/empty writable values preview/apply correctly. Real mixed-owner table verifies labels, focus behavior and error announcements.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted capability query and mounted mixed-owner table/inspector."
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "Package declares base.previewCellEdit/input and base.applyCellEdit/envelope with eight errors. Registry is a context-filtered metadata store; CommandContribution.execute returns Promise<void>, services is Record<string,unknown>.",
+      "requiredChange": "Define shared typed preview/apply request/result/error contracts in cell-edit-command and consume them at renderer and real server boundary. Bind canonical ref, row/schema revisions, typed field patch and stable operation/idempotency identity; derive actor/grants from authenticated transport at preview and apply. Reuse accepted owner validators. Preserve validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat distinctly.",
+      "verification": "Future compile server and renderer consumers; malformed discriminant/payload rejection, spoofed actor/workspace rejection, denied tool/RPC invocation and side-effect-free preview tests. No source-text or forwarding-only tests.",
+      "state": "BLOCKED_ON_ACCEPTED_TRANSPORT_INTEGRATION",
+      "missingPrerequisite": "Approved authenticated dispatch seam and amended scope; renderer contract file alone cannot implement server enforcement."
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "PersonalTaskStore.update/complete/reopen/cancel mutate in-memory bundle and audit. Tiptap onUpdate only emits Markdown; setContent uses emitUpdate:false. Neither is durable save evidence. Design 9.2 requires committed receipt/event/readback.",
+      "requiredChange": "Maintain draft/pending distinct from committed. Delegate to native task/doc commands; display success and clear scoped draft only after matching durable native ACK. Match operation/ref/revision; obtain normalized typed value and authoritative source hash, then refresh existing projections through native events. Do not infer ACK from optimistic echo/toast/event alone.",
+      "verification": "Future real Task completion and Note frontmatter edits: compare cell receipt with native ref/revision/hash and normalized value, restart actual owner service/app, read same Task/Note again, and prove unknown Markdown/YAML bytes remain unchanged. Delay/loss of ACK leaves recoverable draft.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted native persisted command/readback/event receipts plus existing durable draft service."
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "Package tests list scalar10+Status, Task/Note same native value after restart, and failed save retains draft; design checks both row and schema revisions. Existing store update has no revision precondition.",
+      "requiredChange": "On validation/conflict keep durable local draft and inline error; show current/local on conflict. Reconciliation previews with fresh row/schema revisions before apply. Replay uses native operation identity without duplicate effects. Recheck rights at apply and replay; revoked access disables apply and purges protected cached values. Offline queues only through supported existing owner outbox.",
+      "verification": "Future scenarios: valid save; validation failure; stale row; stale schema; deleted row; denied preview; grant revoked between preview/apply; duplicate apply; ACK loss and restart draft recovery; unsupported offline owner; typed missingDependency/rateLimited/unknownFormat. Preserve attempted inputs, expected/observed, exact hashes/seeds and receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "CAS/idempotency/revoke/native draft interfaces from accepted foundations; no runtime scenarios executed in preflight."
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "Package lines 5260-5268 names mutation: optimistic value treated as committed and draft cleared before ACK. Named oracles: failed save leaves recoverable draft, native readback equals cell receipt revision, denied field sends no write.",
+      "requiredChange": "Create deterministic isolated synthetic-owner fixture in normative test file, preserve reproduction seed and baseline input hash. Run a green baseline, then evaluate exact mutated bytes that prematurely commit/clear draft; require the affected named semantic oracle to reject them, and independently exercise all three named invariants. Do not count infrastructure errors as detected mutations.",
+      "verification": "Future retained baseline/mutant command results, input/artifact hashes and assertion identities; native readback verifies actual ref/revision rather than an echoed mock. Denied write counters alone supplement, not replace, unchanged native state evidence.",
+      "state": "NOT_RUN_PREFLIGHT_ONLY",
+      "missingPrerequisite": "Runnable integrated implementation, deterministic fixture and root-authorized mutation execution."
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "NotesViewHost uses existing i18n/theme tokens and read-only cell rendering. Tiptap authority change uses setEditable(editable,false), a useful preserve-without-save pattern. No actual Electron/UI verification was permitted or performed.",
+      "requiredChange": "Mount in existing table and inspector; F2/Enter edit/save, Escape cancels local edit, Tab preserves grid navigation, composition owns Enter during IME. Keep focus through validation/conflict/readback. Provide hover/focus/click type/help and inline live error states; preserve theme, support reduced motion and actual Rox Mono. Integrate all 10 locale keys through reviewed shared patches.",
+      "verification": "Discover supported actual Electron runner; future tests/lark-suite-extension/ui/lsx-wp-012.spec.ts drives real mounted native-backed surface, pointer and keyboard/dropdowns, IME composition, focus, 200% zoom, light/dark and Russian/locale decimal/date input. Capture screenshots/ARIA/computed font plus loaded font proof. Published responsive widths <1100/<800 also checked for affected inspector.",
+      "state": "NOT_RENDERED_NOT_VERIFIED",
+      "missingPrerequisite": "Approved host/inspector mounting seam, durable service, translations and actual Electron runner."
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Package requires SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI. Published specification also requires Linux domain/renderer evidence and source commit/diff/logs/rollback/independent review.",
+      "requiredChange": "Root retains featureComplete=false until reviewed integrated revision satisfies each lane. Bind exact test bytes, accepted dependency receipts and authoritative readbacks to implementation/integration revisions; redact actor-specific artifacts. Keep implementation readiness separate from native/UI/provider execution results.",
+      "verification": "Future integration acceptance checks each required lane receipt independently, checks native identity/persistence/negative outcomes, runs existing Notes authority/route regressions and records rollback/review. Current preflight JSON verifier proves report lineage/source hashes only, never feature behavior.",
+      "state": "NOT_VERIFIED_PREFLIGHT_ONLY",
+      "missingPrerequisite": "Integrated implementation and all required observed proof receipts; manifest reference revision/digest resolution."
+    }
+  ],
+  "scalarCases": [
+    {"type":"Title","change":"Unicode string; schema-specific required rule; preserve canonical identity independently of display title.","verification":"Unicode/IME, empty required rejection, title edit does not change ref."},
+    {"type":"Text","change":"Plain string or explicit rich document ref; do not infer HTML from string.","verification":"Multiline and literal HTML-looking text roundtrip without unintended rich conversion."},
+    {"type":"Number","change":"Locale parser/display separate from canonical finite decimal representation; preserve large exact decimals and units.","verification":"Russian decimal input, zero/null separation, NaN/Infinity rejection, large decimal precision."},
+    {"type":"Select","change":"Persist option ID not localized label.","verification":"Label rename/localization keeps ID; unknown option requires mapping, not silent creation."},
+    {"type":"Multi-select","change":"Ordered/deduplicated option-ID set; distinguish empty array and null.","verification":"Stable order, duplicate handling, empty/null roundtrip and option rename."},
+    {"type":"Checkbox","change":"boolean/null with explicit nullable schema.","verification":"false stays false; string false not coerced true; null allowed only when nullable."},
+    {"type":"Date","change":"date-only versus zoned timestamp plus precision; native dueAt/startAt mapping explicit.","verification":"Stored date independent of display locale/timezone; DST gap/ambiguity; required mapping rejection."},
+    {"type":"URL","change":"Allowlisted schemes; host action routing, relative attachment refs separate.","verification":"Reject javascript/data HTML actions; preserve allowed value; edit never launches network effect."},
+    {"type":"Email","change":"Pragmatic syntax validation preserving original string; no automatic send.","verification":"Original string preserved after valid save; invalid input inline; zero mail-send effects."},
+    {"type":"Phone","change":"Original string plus optional normalization with explicit country; never numeric coercion.","verification":"Leading +/zeros and Unicode input preserved; normalization does not replace original."},
+    {"type":"Status","change":"Owner workflow option ID/category/order; task derived completion mapped to complete/reopen/cancel.","verification":"Native completion/reopen/cancel matches Base readback after restart; invalid transition and unsupported owner rejected."}
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.update / complete / reopen / cancel","lineStart":207,"lineEnd":238,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/types.ts","symbol":"PersonalTask","lineStart":42,"lineEnd":75,"sha256":"4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"NoteProjectionRow / projectNoteRows","lineStart":73,"lineEnd":158,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesViewHost / NotesTableView","lineStart":58,"lineEnd":301,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx","symbol":"TiptapMarkdownEditor","lineStart":386,"lineEnd":445,"sha256":"8c8b658c506988c210389a239ada69743d7f9a5efc4ccaa2c1c6116d0b161724"},
+    {"path":"packages/core/src/platform/commands/registry.ts","symbol":"CommandRegistryImpl / createCommandRegistry","lineStart":20,"lineEnd":66,"sha256":"832ae183641c47c28502469a9f8d77dd8a530fab80e958b8060406e610cf6f6f"},
+    {"path":"packages/core/src/platform/commands/types.ts","symbol":"CommandContribution / CommandContext","lineStart":13,"lineEnd":34,"sha256":"471524b041e4322bc7512ae93833794f45c14f2d2d6d029ab2fb65967f7ebdc3"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[11] / LSX-WP-012 definition_of_done","lineStart":5024,"lineEnd":5358,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-012 allowedWritePaths / cloudPacket","lineStart":976,"lineEnd":1060,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"sections 4.3, 5 and 9.2 native mapping / scalar editors / receipts","lineStart":94,"lineEnd":205,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/06-rox-docs-design.md","symbol":"section 6 RD-02 save states / draft / IME","lineStart":80,"lineEnd":102,"sha256":"a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"domain authority / commands / policy / DoD / RS-DRV-01 dependency","lineStart":44,"lineEnd":113,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"}
+  ],
+  "evidenceFreshness": {
+    "hashScope": "sha256 of complete concrete file, not a snippet",
+    "workingTreeEvidence": true,
+    "baselineDifference": "Reinspected TiptapMarkdownEditor digest 8c8b658c... differs from normative baseline 8e919184...; source still includes authority/echo handling not to be erased. Initial observed digest 5d299132... became stale during concurrent integration. This is working-tree evidence, not a fabricated baseline match.",
+    "stalenessRule": "Any whole-file hash drift invalidates that reference and associated proposed shared patch; re-read changed sections and rebind only after lead integration. Do not substitute a new hash without reinspection.",
+    "productVerification": "NOT_RUN_BY_AUTHORIZED_PREFLIGHT_BOUNDARY",
+    "verificationHistory": [
+      {"attempt":1,"command":"launch-worker-pool.py --verify owned report and dispatch packet","exitCode":2,"observed":"Source changed after inspection: packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx","recovery":"Re-read props and complete onUpdate/editable/content synchronization sections; behavior remains as described, lines shift to 386-445; rebound whole-file hash to 8c8b658c506988c210389a239ada69743d7f9a5efc4ccaa2c1c6116d0b161724. All feature verification remains NOT_RUN."}
+    ]
+  },
+  "nextExecutableAction": "Lead completes and commits wave0, then obtains accepted LSX-WP-004/005/010/011 artifact+native-readback receipts. Resolve manifest/spec hashes and published/inherited foundation readiness, reconcile authority model, and amend packet for existing table/projection/locales plus discovered authenticated transport/durable draft/inspector seams. Re-read drifted sources and bind fresh hashes before dispatching implementation of the four normative new files in dependency order. No product edit is authorized by this report.",
+  "risks": [
+    "Empty sharedPatchPaths conflicts with necessary real table/inspector, transport and translation integration; shipping four isolated new files cannot satisfy full DoD.",
+    "Published CustomRecord/new-kind/Postgres foundation and later page/contentKind LSX design differ; unreviewed mixing would create duplicate authority.",
+    "Native Task model lacks generic scalar extension fields; preserve unsupported states until accepted owner migration instead of coercing into arbitrary PersonalTask keys.",
+    "Local React state and notes:views localStorage are not actor/ref-scoped crash-safe drafts or durable row authority.",
+    "Timestamp/decimal/option-label shortcuts corrupt semantics; locale/DST/IME must be exercised on actual UI, not inferred from unit success.",
+    "CommandRegistry context filtering and permissions metadata are not ACL enforcement or durable mutation receipt dispatch.",
+    "Whole-document Markdown serialization for a property edit threatens unknown YAML/body bytes; use accepted lossless property owner path.",
+    "Revocation must disable draft apply and remove protected cached value without exposing conflict/current values to a now-denied actor.",
+    "Concurrent lead integration can invalidate inspected hashes; preflight lineage remains historical until source generations are rebound.",
+    "No builds/tests/UI/network operations were run; all feature mechanisms and proof lanes remain unverified. Only the owned report is deliverable."
+  ]
+}

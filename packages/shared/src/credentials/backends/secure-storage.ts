@@ -365,12 +365,41 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
   }
 
   getRepairState(): RepairState {
+    // A process restart must not turn quarantined unreadable credentials into a new empty store.
+    if (this.repairState.status === 'ok' && !existsSync(this.file) && existsSync(this.directory)) {
+      const name = readdirSync(this.directory).filter(item => item.startsWith(`${STORE_NAME}.quarantine.`)).sort().at(-1);
+      if (name) {
+        const quarantinePath = join(this.directory, name);
+        this.repairState = { status: 'repair_required', code: 'decrypt_failed',
+          sourceDigest: sha256Hex(readFileSync(quarantinePath)), quarantinePath };
+      }
+    }
     return this.repairState.status === 'ok' ? { status: 'ok' } : { ...this.repairState };
   }
 
   async isAvailable(): Promise<boolean> {
     // File backend is always available - we can always write to filesystem
     return true;
+  }
+
+  /** Security-sensitive callers distinguish a missing store from unreadable/corrupt ciphertext. */
+  async getStrict(id: CredentialId): Promise<StoredCredential | null> {
+    try {
+      // Read first: existsSync alone can report false for an inaccessible parent.
+      readFileSync(this.file);
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+        if (this.repairState.status !== 'ok') throw new CredentialStoreError('WRITE_BLOCKED', this.repairState.code);
+        return null;
+      }
+      throw new CredentialStoreError('PROVIDER_UNAVAILABLE');
+    }
+    // Re-read current disk state on reconnect, rather than trust a previously cached enrollment.
+    this.cachedStore = null;
+    const store = this.loadStoreSync();
+    if (!store || this.repairState.status !== 'ok') throw new CredentialStoreError('PROVIDER_UNAVAILABLE');
+    const key = credentialIdToAccount(id);
+    return store.credentials[key] ?? null;
   }
 
   async get(id: CredentialId): Promise<StoredCredential | null> {
@@ -565,10 +594,9 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
     // Combine all parts
     const fileData = Buffer.concat([header, iv, authTag, ciphertext]);
 
-    const tmp = `${this.file}.tmp`;
-    writeFileSync(tmp, fileData, { mode: 0o600 });
-    renameSync(tmp, this.file);
-    copyFileSync(this.file, this.backupFile);
+    // The existing private-file primitive fsyncs contents and the containing directory.
+    this.writePrivateFile(this.file, fileData);
+    this.writePrivateFile(this.backupFile, fileData);
     // Бэкап содержит те же секреты, что и основной файл — режим обязателен (RX-TSK-0301).
     try {
       chmodSync(this.backupFile, 0o600);
@@ -649,8 +677,9 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
   }
 
   private assertWritable(): void {
-    if (this.repairState.status === 'repair_required') {
-      throw new CredentialStoreError('WRITE_BLOCKED', this.repairState.code);
+    const repair = this.getRepairState();
+    if (repair.status === 'repair_required') {
+      throw new CredentialStoreError('WRITE_BLOCKED', repair.code);
     }
   }
 

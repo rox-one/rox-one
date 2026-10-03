@@ -41,6 +41,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return true
     case 'memory':
     case 'connections':
+    case 'search':
       return false
     case 'inbox':
     case 'feed':

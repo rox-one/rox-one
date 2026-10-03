@@ -1,0 +1,428 @@
+{
+  "task_id": "LSX-WP-013-preflight",
+  "attempt_id": "bb1a7b12c733842125ba2bfbf7c76f35",
+  "packet_hash": "896906dd9c856e6b8651ac4ce95cc2b14ce9f7f4eccf77ac82c169ab1bfa21e5",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-013",
+  "featureComplete": false,
+  "mode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow; independent dispatched preflight, one report writer, no product implementation",
+  "dependencies": ["LSX-WP-008", "LSX-WP-010", "LSX-WP-011"],
+  "dependencyContracts": [
+    {
+      "packageId": "LSX-WP-008",
+      "evidence": "work-packages.json:3672-3692,3773-3828,3880-3882",
+      "requiredReceipt": "Accepted legacy-view-migration.ts and view-migration-journal.ts implementation and canonical readback/rollback receipts; stable built-in IDs and personal BaseDefinition ref. Fixture with 3 checkboxes, 2 open, and 1 linked native task must still report 3/2.",
+      "consumerContribution": "Use that migration's IDs and source mapping; do not implement another migration journal or reinterpret Markdown tasks as PersonalTasks. Four existing expressions must retain their individual meanings. Only the two Markdown built-in IDs are spelled out normatively; reuse the accepted backlink/tag IDs rather than inventing competing identifiers.",
+      "state": "RECEIPT_NOT_INSPECTED; specification says PLANNED_NOT_EXECUTED"
+    },
+    {
+      "packageId": "LSX-WP-010",
+      "evidence": "work-packages.json:4385-4407,4501-4553",
+      "requiredReceipt": "Accepted query-contract.ts/query-service.ts with server-authorized rows/fields, queryRevision, permissionEpoch, schema revision, cursor and pinned evaluationTime/timezone; denied-field rejection. Its explicit external prerequisite is EG-IDENTITY.",
+      "consumerContribution": "Evaluate on the authorized snapshot before typed filter/sort/group/aggregate, not on a renderer's raw Notes collection. Supply a formula computation hook to its integration owner; reuse its snapshot and cursor rather than create a formula query store.",
+      "state": "RECEIPT_NOT_INSPECTED; specification says PLANNED_NOT_EXECUTED"
+    },
+    {
+      "packageId": "LSX-WP-011",
+      "evidence": "work-packages.json:4713-4733,4813-4821,4845-4900",
+      "requiredReceipt": "Accepted field-registry.ts contract for stable fieldId, typed value states, nullable/unit/precision/cardinality, derived read-only capability and Page-owned schema revision.",
+      "consumerContribution": "Use the registry's value union and signatures in AST typing and results; render labels but retain fieldId references. Do not add a nineteenth field type or a separate schema store.",
+      "state": "RECEIPT_NOT_INSPECTED; specification says PLANNED_NOT_EXECUTED"
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "PUBLISHED_DRIVE_DEPENDENCY",
+      "kind": "HIDDEN_PUBLISHED_DEPENDENCY_NOT_LSX_DAG_EDGE",
+      "evidence": "docs/rox-suite/published/RS-BASE-01.md:95-113 explicitly requires RS-DRV-01 / issue #1109; LSX-WP-013 has no explicit external_prerequisites at work-packages.json:5382",
+      "requiredPrerequisite": "Lead must reconcile the published RS-BASE-01 → RS-DRV-01 dependency with the LSX implementation graph and obtain the relevant Drive/Page authority readiness receipt. Issue publication is not implementation acceptance. Drive source was not inspected outside this package scope.",
+      "state": "UNRESOLVED; do not add RS-DRV-01 to the exact dependencies array or silently waive it"
+    },
+    {
+      "id": "NATIVE_SCHEMA_COMMAND_AUTHORITY",
+      "kind": "FOUNDATION_CONTRACT_AND_TRANSITIVE_DEPENDENCY",
+      "evidence": "RS-BASE-01.md:44-56; 05-rox-bases-design.md:92,203,218-227,263-266; LSX-WP-008 depends on 006/007 and LSX-WP-011 on 007",
+      "requiredPrerequisite": "Existing Page/schema authority must durably persist expression + functionVersion via revisioned authenticated command, operationId/expectedRevision, shared outbox and authoritative readback. Preview must have no effect. No second formula store. Validate/preview definitions alone cannot satisfy save/replay/restart DoD.",
+      "state": "NOT_VERIFIED; transitive receipts and exact integration endpoints required"
+    },
+    {
+      "id": "IDENTITY_POLICY_AND_REVOKE",
+      "kind": "TRANSITIVE_EXTERNAL_FOUNDATION",
+      "evidence": "work-packages.json:4402-4407; RS-BASE-01.md:52-56; 05-rox-bases-design.md:162-169; 07-domain-entity-model.md:157",
+      "requiredPrerequisite": "Accepted EG-IDENTITY/query transport principal binding and field-level policy semantics; queryRef must be resolved under current actor, not treated as a bearer permission. Denied dependencies cannot be read even by a filter; revocation purges actor/policy-scoped computed caches and subscriptions.",
+      "state": "NOT_VERIFIED; consume LSX-WP-010 receipts, not simulated readable flags"
+    },
+    {
+      "id": "REFERENCE_VERSION_AND_BASELINE_RECONCILIATION",
+      "kind": "LAUNCH_GATE",
+      "evidence": "work-packages.json:5365-5368,5665-5675; execution-packages.json:1136-1146; RS-BASE-01.md:13,113",
+      "requiredPrerequisite": "Wait for lead wave0 commit and accepted dependency implementation receipts. Resolve reference_package_revision/digest and spec_ref artifact hashes from delivery manifest. Reconcile packet input a21aeab1da5a67e56788384ff930945b0f487879 with normative product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab and older published RS source 249b3b44220bcfbd7d467de9cfc18f76e1c37807. Do not checkout or alter Git during preflight.",
+      "state": "WAITING_FOR_LEAD; inspected spec hashes match packet input_manifest"
+    },
+    {
+      "id": "SCOPE_CANNOT_MOUNT_FULL_VERTICAL_SLICE",
+      "kind": "INTEGRATION_SCOPE_GAP",
+      "evidence": "execution-packages.json:1092-1101,1146; work-packages.json:5514-5554,5675; 05-rox-bases-design.md:266-271; RS-BASE-01.md:60; repository AGENTS i18n requirement",
+      "requiredPrerequisite": "A reviewed updated packet/path lease or an accepted prerequisite-owner contribution must expose authenticated base.validateFormula/base.previewFormula, formula schema commit/events, query computation hook, actual Base UI editor mount, and all ten locale keys. Current shared permission covers only note-views.ts and four named seams; it does not authorize RPC registration, NotesViewHost.tsx mount, query-service.ts edits, package export/manifests or locale edits. A standalone FormulaEditor fixture is not delivery.",
+      "state": "BLOCKS_FULL_FEATURE_IMPLEMENTATION_UNTIL_RESOLVED; no extra paths written"
+    },
+    {
+      "id": "PUBLISHED_RECORD_KIND_DESIGN_DIVERGENCE",
+      "kind": "SPECIFICATION_RECONCILIATION",
+      "evidence": "RS-BASE-01.md:46,62-67 proposes registered CustomRecord kind and different new paths; 05-rox-bases-design.md:41,48 and 07-domain-entity-model.md:62 propose initial page + contentKind=record",
+      "requiredPrerequisite": "Lead must align the accepted schema/sourceBinding/ref authority with the current LSX design. Formula package consumes canonical refs and typed rows only; it must not resolve this divergence by introducing the older published base store or new entity registry.",
+      "state": "UNRESOLVED_FOUNDATION_DESIGN; normative ownedNewFiles remain the five LSX files"
+    },
+    {
+      "id": "REAL_CONSUMERS_AND_NATIVE_PROOF",
+      "kind": "ACCEPTANCE_FOUNDATION_NOT_EXPLICIT_DAG_EDGE",
+      "evidence": "work-packages.json:5511,5563-5575,5596-5600; 05-rox-bases-design.md:140,166,280,288-290; RS-BASE-01.md:88-89",
+      "requiredPrerequisite": "Accepted real table/chart/export consumers of the same authorized EvaluationSnapshot and a supported Electron UI runner/domain restart readback lane. No command is asserted for undiscovered runner. Separate UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI evidence is mandatory; helper-only equality does not prove the consumers.",
+      "state": "NOT_VERIFIED; consumer source inspection intentionally outside preflight scope"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/bases/formula-parser.ts",
+    "packages/server-core/src/bases/formula-evaluator.ts",
+    "apps/electron/src/renderer/pages/bases/FormulaEditor.tsx",
+    "tests/lark-suite-extension/lsx-wp-013.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-013.spec.ts"
+  ],
+  "ownedNewFilePresence": "Exact scoped glob returned Path not found for the three bases directories and both normative test paths. No formula implementation was inspected or created.",
+  "proposedCodeContributions": [
+    {
+      "path": "packages/core/src/bases/formula-parser.ts",
+      "symbols": "PROPOSED: FormulaDefinition, FormulaAST, FormulaDependencyGraph, FormulaResult, FormulaError, validateFormula, compileFormulaDependencies, request/result runtime validators",
+      "change": "Define version-discriminated expression/AST with fieldId nodes and explicit literal/unary/binary/function/list nodes. Use bounded tokenization and iterative/bounded parsing; reject arbitrary property access, globals, dynamic function calls and unknown versions. Resolve named labels to stable field IDs only at editor insertion/validation, never during evaluation. Infer types via accepted field registry and versioned allowlisted signatures for arithmetic/comparison/boolean/text/date/if/coalesce/list. Validate full cross-field DAG before schema commit and return ordered cycle fieldId chain; cap schema graph as well as AST. Keep evaluation codes DIV_ZERO/TYPE/UNRESOLVED_REF/CYCLE/BUDGET separate from null/denied/missing. Boundary errors are validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat; do not merge the two error layers.",
+      "prerequisite": "Accepted field-registry value union and schema version/field definition contract; concrete proposed export names aligned with those receipts before coding"
+    },
+    {
+      "path": "packages/server-core/src/bases/formula-evaluator.ts",
+      "symbols": "PROPOSED: evaluateFormula, evaluateFormulaSnapshot, formula evaluation service methods",
+      "change": "Evaluate only validated AST/DAG against authenticated server-resolved authorized typed rows. Use one immutable query snapshot evaluationTime/IANA timezone across rows and consumers; now/today never consult per-row wall clock. Enforce service-config token/AST/depth/row/fanout/operation and elapsed-time limits before expensive work; deadlines use resource clock, not semantic time. Bound intermediate strings/lists and DAG traversal under the evaluation budget. Type-check date-only versus instant and exact decimal/unit operations; never Number-coerce denied/null/error values. Memoize derived values only within actor/policy/schema/query/source-revision scope and return typed per-cell errors. Reuse canonical schema persistence/event/query authorities; this module owns no data store and no independent event bus.",
+      "prerequisite": "Accepted LSX-WP-008/010/011, configured budget limits/version signatures, authenticated registration and invalidation hooks from integration owner"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/FormulaEditor.tsx",
+      "symbols": "PROPOSED: FormulaEditor",
+      "change": "Mount in accepted Base field/schema editor, not a second formula surface. Draft uses labels for accessible suggestions but submits fieldId-based expression + functionVersion/schemaRef; use authenticated validate/preview operations. Display typed preview/null/error/denied/stale states, cycle chain, units, source/freshness/snapshot help. Preserve draft on schema conflict and IME composition; Enter commit only outside composition, Escape cancels draft. Validation/preview do not acknowledge persistence; save uses the existing schema command and durable receipt/readback. Use t() all locales, actual inherited theme/Rox Mono, keyboard and hover/focus/click help, reduced motion and 200% zoom.",
+      "prerequisite": "Accepted editor host/mount and schema command binding, runtime request schemas, reviewed locale path scope and actual Electron proof lane"
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-013.test.ts",
+      "symbols": "PROPOSED behavior/property/negative-control cases",
+      "change": "Seed parser/type/DAG generated cases and retain seed/input digest. Assert semantic outputs including rename identity, diamond/self/multi-field cycles with chains, DIV_ZERO/TYPE/UNRESOLVED_REF, bounded deep/large AST and wide relation fanout, denied-field filter rejection, decimal precision, DST/date-only and one snapshot across actual consumers. Assert four legacy count meanings using checkbox/native relation disambiguation. Exercise schema CAS/replay/durable restart via accepted native authority fixture, not a parallel fake database. Run isolated eval/per-row-now mutants against named semantic assertions; retain baseline and mutant bytes/hashes separately.",
+      "prerequisite": "Accepted dependencies/native fixture and integration hooks. Normative future command: bun test tests/lark-suite-extension/lsx-wp-013.test.ts; NOT run during preflight"
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-013.spec.ts",
+      "symbols": "PROPOSED actual Electron FormulaEditor acceptance cases",
+      "change": "Use discovered supported actual Electron runner with canonical Base/schema authority. Exercise label insertion, rename/reload, typed errors/cycle help, denied field, stale schema conflict/draft retention, pointer/keyboard/IME, focus, reduced motion, 200% zoom, current theme and Russian/all-locale copy. Attach exact revision screenshots/ARIA/computed and loaded font proof. Do not substitute an isolated web fixture for native acceptance.",
+      "prerequisite": "Supported runner and mounted editor in integrated product; no invented runner invocation"
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView (24-34), with dependency-approved NoteViewFormula/NOTE_FORMULA_EXPRS contract alignment",
+      "change": "After LSX-WP-008/011 cutover, consume their canonical versioned BaseDefinition/field definitions. Formula identity must be stable fieldId plus functionVersion/expression AST or versioned built-in ID, never name/label. Keep v1 decoding exclusively as the accepted migration input; retain original bytes/rollback receipt rather than make the old client view the authoritative expression store.",
+      "reason": "Current v:1 schema and enum/name cannot represent arbitrary typed formula dependencies or label-safe identity; migration must preserve four legacy built-ins.",
+      "owner": "integration-owner",
+      "precondition": "Accepted LSX-WP-008/011 revision and exclusive lease. Adjacent type/parser changes must be included explicitly in updated named-symbol scope if not already delivered by those owners."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "projectNoteRows (133-158)",
+      "change": "Keep mapping source Markdown checkbox count = tasks.length and open count = !checked exactly as migration inputs; obtain typed authorized source projection from the accepted Notes/query adapter for canonical formula computation. Do not count linked native tasks here. Canonical derived values must carry source/schema/query revision and pinned evaluation context from the query authority rather than be recalculated from raw renderer properties.",
+      "reason": "Current row contains raw properties and numeric local counters but no EntityRef/schema/policy/snapshot typing. Simply adding formula arithmetic here would bypass server ACL and snapshot consistency.",
+      "owner": "integration-owner",
+      "precondition": "Accepted LSX-WP-010 authorized projection contract and LSX-WP-008 count mapping; no new row mirror/store"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "formulaValue (188-203)",
+      "change": "For canonical migrated views, read the authorized typed computed cell by rowRef/fieldId from the EvaluationSnapshot produced by formula-evaluator; do not import server code or run JS expressions in renderer. Preserve existing taskCount/openTaskCount/backlinkCount/tagCount numeric behavior solely through accepted versioned migration/built-in definitions. Expose typed errors/null without default-zero coercion and migrate every affected consumer through the lead's approved integration patch.",
+      "reason": "Current switch returns number only; no validation, version, cycle, budget, actor or snapshot. Silent numeric fallback would destroy both error semantics and legacy checkbox meaning.",
+      "owner": "integration-owner",
+      "precondition": "Snapshot transport and all affected callers updated; current packet does not authorize unseen callers"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "notesViewsStorageKey (100-102)",
+      "change": "Reuse LSX-WP-008 migration receipt and preserve notes:views:<workspaceId> until canonical config readback/rollback is established. Formula definitions belong to Page-owned schema, not a new localStorage key. Any personal preferences use the accepted namespace including workspace/page/view/schemaVersion, and contain no actor-visible computed cache reused across users.",
+      "reason": "Current key is workspace-only; it cannot be authoritative multi-user formula persistence. LSX-WP-013 must not implement another migration or clear original keys.",
+      "owner": "integration-owner",
+      "precondition": "Do not re-patch a completed migration if LSX-WP-008 already removes this legacy runtime path; re-read exact accepted bytes"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "formulaForField/readField/matchesFilter/compareUnknown (576-618), applyNoteBaseView (160-169), groupNoteRows (172-185), parseNoteBaseView/isFormula (108-127,551-555)",
+      "change": "Explicit additional named-seam request, not current edit authorization: route canonical views through LSX-WP-010 typed snapshot filtering/sorting/grouping and LSX-WP-011 comparators instead of expr-string lookup and String/Number coercion. Restrict current v1 helpers to accepted migration decoding/equivalence proofs or remove obsolete runtime consumers at cutover. Update parser together with canonical type change so it does not discard new formulas as invalid enum entries. Do not force typed errors into numbers/strings or let hidden properties reach filter predicates.",
+      "reason": "These actual consumers call formulaValue dynamically, match formula.expr to a field string, Number-coerce values and silently filter unknown formulas; patching only the four permitted symbols cannot complete the typed cutover safely.",
+      "owner": "integration-owner",
+      "requiresPacketAmendment": true,
+      "precondition": "Lead extends reviewed symbol scope or verifies accepted prerequisite owners already migrated these helpers/callers; never apply under present four-symbol lease"
+    }
+  ],
+  "integrationRequests": [
+    {
+      "request": "Obtain exact accepted authenticated command/query registry seam for base.validateFormula/schemaRef and base.previewFormula/queryRef plus existing schema commit command. Register shared runtime validators there; derive principal/workspace/policy from transport. Forward durable receipts and formulaDefinitionChanged through canonical outbox only after native commit.",
+      "scopeStatus": "Required but no inspected registry symbol or writable path in this packet. Lead must locate and authorize it; not claimed implemented.",
+      "evidence": "work-packages.json:5514-5544; RS-BASE-01.md:48-56"
+    },
+    {
+      "request": "LSX-WP-010 owner must expose and integrate bounded formula computation and cache invalidation against pinned AuthorizedQuerySnapshot, schema/source revisions and permissionEpoch. Table/chart/export must consume identical typed result/snapshot values.",
+      "scopeStatus": "Proposed dependency path packages/server-core/src/bases/query-service.ts is absent from this package's write scope; exact future symbol needs accepted dependency receipt.",
+      "evidence": "work-packages.json:4501-4553,5503-5511; 05-rox-bases-design.md:140,156-167"
+    },
+    {
+      "request": "Mount FormulaEditor in the accepted existing Base/Notes view host and bind schema command/durable readback. Add all ten locale keys sorted under the existing i18n convention; no separate editor route/demo surface.",
+      "scopeStatus": "NotesViewHost.tsx / NotesViewHost is named by package specification but not source-inspected here; it and packages/shared/src/i18n/locales/*.json need reviewed ownership/path authorization. An exact source-backed mount patch must be prepared by lead after scope expansion.",
+      "evidence": "05-rox-bases-design.md:266-271; RS-BASE-01.md:42,60; repository AGENTS i18n contract"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "versioned deterministic interpreter with bounded resources",
+      "currentEvidence": "note-views.ts:15-22,188-203 implements four enum counters only. graph.ts:359-383 has recursive automation cycle detection, not a formula engine or bounded interpreter. Normative requirements: work-packages.json:5593; 05-rox-bases-design.md:138-140.",
+      "actualSymbolOrSeam": "formulaValue; compileAutomationGraph/detectCycles as validation precedent only",
+      "requiredChange": "Implement formula-parser.ts typed versioned AST/function signatures and complete dependency DAG validation with chain; formula-evaluator.ts deterministic allowlisted interpreter on authorized typed rows, configured AST/depth/row/fanout/operation/time bounds, DIV_ZERO/TYPE/UNRESOLVED_REF/CYCLE/BUDGET distinct from null. Reject globals/network/files/property traversal and unknown versions. Do not import automation executor or reuse its unbounded recursion.",
+      "verification": "Future seeded parser/type/property cases; assert expected numeric/text/date/boolean/list outputs, deterministic repeated snapshot result, explicit cycle chain, huge AST/deep graph/wide fanout bounded errors and forbidden expression rejection. Normative bun test command plus actual domain preview and SOURCE_SCHEMA/UNIT_PROPERTY evidence on integrated revision.",
+      "missingPrerequisite": "Accepted typed field/query contracts, agreed functionVersion grammar/signatures and service budget config; actual server registration",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "field label rename leaves expression identity valid",
+      "currentEvidence": "NoteViewFormula stores name+enum expr at note-views.ts:19-22; formulaForField matches expr string at 576-577. FieldId/label separation required by 05-rox-bases-design.md:109,138,222 and work-packages.json:5594.",
+      "actualSymbolOrSeam": "NoteBaseView/NoteViewFormula; formulaForField; accepted LSX-WP-011 FieldDefinition seam",
+      "requiredChange": "Persist only stable fieldId references in validated expression/AST and dependency graph. FormulaEditor displays current localized labels without changing IDs. Rename uses existing schema command with revision and preserves expression identity; delete/type changes must diagnose unresolved/type dependencies instead of silently rewriting label matches.",
+      "verification": "Create dependent formula, record AST/field IDs and result; rename Unicode/Cyrillic label via canonical schema command, read back/restart and assert IDs/expression/result unchanged in table/chart/export. Ambiguous labels must never bind to a different field; delete yields explicit unresolved diagnostic.",
+      "missingPrerequisite": "Accepted field-registry/schema authority and actual rename command/readback; mounted editor and consumers",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "work-packages.json:5514-5531,5595 enumerates two proposed operations and eight transport discriminants. note-views.ts:108-127 is permissive renderer v1 decoding, not authenticated boundary validation. graph.ts:40-77,82-88 demonstrates request/result/error structures only.",
+      "actualSymbolOrSeam": "parseNoteBaseView; SaveAutomationGraphPayload/AutomationGraphError precedent; proposed formula-parser boundary schemas",
+      "requiredChange": "Define runtime validators/shared request and response unions for validate(schemaRef,expression,functionVersion) and preview(queryRef,expression,functionVersion); align actual envelope shapes with accepted query/schema contracts. Separate transport validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat from typed evaluation errors. Renderer never supplies authoritative actor/owner/workspace/policy, and forged queryRef cannot bypass actor authorization.",
+      "verification": "Future compile checks at actual server/renderer boundaries; exercise malformed payload, unknown version, forged actor/workspace/queryRef, denied field and expired/deleted refs through authenticated RPC and assert exact discriminants without leaked field data.",
+      "missingPrerequisite": "Accepted transport envelope, registry/bridge integration path authorization, dependency error schemas and exact exports",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "notesViewsStorageKey/serializeNoteBaseView at note-views.ts:100-102,129-130 only name/serialize local configuration. graph.ts:538-561 builds validated next config but does not itself commit it. work-packages.json:5533-5539,5596 requires Page-owned expressions/version and durable receipts.",
+      "actualSymbolOrSeam": "notesViewsStorageKey; serializeNoteBaseView; buildAutomationGraphSave as precommit validation precedent",
+      "requiredChange": "Validate expression/DAG before existing revisioned schema commit; persist expression/functionVersion in native schema only. UI pending/preview is not success; acknowledge native operation receipt then read exact schemaRef/revision/hash. Derived result cache is rebuildable and never persistence truth. Definition change event emitted through existing commit/outbox path, not by parser or editor.",
+      "verification": "Save formula via canonical command; assert receipt/ref/revision/content hash and expression readback, restart actual owner, read same schema and recompute authorized results. Interrupt before durable commit must not acknowledge; failed migration/readback retains v1 originals. Preserve exact attempts/logs/hashes.",
+      "missingPrerequisite": "Lead wave0/native schema/CAS/outbox authority and LSX-WP-008 migration journal receipts; schema command integration path",
+      "state": "BLOCKED_ON_NATIVE_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "note-views.ts:133-169,580-611 receives raw properties and coerces comparisons with no authorization/revision/snapshot boundary. graph.ts:538-545 rejects stale config revisions but is not formula command integration. work-packages.json:5597 and RS-BASE-01.md:52-56,79-89 require server authority/concurrency.",
+      "actualSymbolOrSeam": "projectNoteRows/applyNoteBaseView/readField/matchesFilter; buildAutomationGraphSave baseRevision check precedent",
+      "requiredChange": "Use authenticated querying actor and current field/row policy before dependency resolution/filtering/computation. Schema saves use native CAS/idempotency, reuse receipt on replay; distinguish stale schema/query and denied/offline errors. Recover committed expression after crash without duplicate version/event and revalidate permissions on next query. Retain seeds and failures rather than rerun-away history.",
+      "verification": "Future real native happy path; two simultaneous schema saves at same revision produce one commit/one conflict; replay operation produces same receipt and no duplicate event; preview no effects; interrupted save/restart recovery; denied dependency filter cannot reveal matching rows. A=10/B=20/hidden C=900 yields 30/2/15 then revoke B yields 10/1/10 across authorized consumers.",
+      "missingPrerequisite": "Native CAS/idempotency/recovery authority, EG-IDENTITY/field policy and accepted query cache invalidation",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:5578-5586,5598 requires eval or per-row/view-now mutation and named rejection/equality/legacy-budget assertions; 05-rox-bases-design.md:280,290. No tests run or mutation result exists in this preflight.",
+      "actualSymbolOrSeam": "formulaValue legacy control and proposed parser/evaluator functions",
+      "requiredChange": "Add isolated seeded behavior cases and mutation harness using exact baseline/mutant artifacts. Mutant enabling eval must fail forbidden global/network expression rejection; per-row/view-now mutation must fail pinned snapshot equality; lost checkbox semantics or removed budget guard must fail corresponding count/bounded-error assertion. Use synthetic fixture without real external side effects.",
+      "verification": "Baseline green first; apply each isolated intentional mutant and record named assertion failure/expected versus observed/seed/input and code SHA256. A hang/time-out, parser crash or infrastructure failure is not accepted as caught mutation. No mutation of shared production checkout during this preflight.",
+      "missingPrerequisite": "Accepted implementation/native fixtures and supported isolated mutation runner; reproducible snapshot/clock controls",
+      "state": "NOT_RUN_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "FormulaEditor.tsx and bases directory were not found. formulaI18nKey at note-views.ts:205-219 only maps four existing keys. work-packages.json:5546-5549,5599 and RS-BASE-01.md:36-42,88 require real UI.",
+      "actualSymbolOrSeam": "formulaI18nKey; proposed FormulaEditor; specification-named NotesViewHost mount (not source-inspected)",
+      "requiredChange": "Implement and mount FormulaEditor in existing Base schema UI; accessible label/fieldId suggestions, cycle-chain and units/source/freshness help, typed state/error announcements, preserved stale draft, keyboard/IME-safe commit/cancel. t() every user-facing string in all ten locales with RU default; inherit user theme/font and verify loaded Rox Mono rather than CSS declaration. Honor reduced motion and zoom.",
+      "verification": "Future actual Electron pointer/hover/focus/click help and keyboard/IME composition; 200% zoom, narrow panes, preserved draft under schema conflict, reload of saved expression, reduced-motion computed/observed transitions, theme and locale switching. Screenshots/ARIA/computed font + document loaded-font proof tied to integrated revision and environment.",
+      "missingPrerequisite": "Approved host/locale shared paths, supported native runner, mounted actual editor and functioning commands; not N/A",
+      "state": "BLOCKED_ON_UI_INTEGRATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:5569-5575,5600 lists SOURCE_SCHEMA/UNIT_PROPERTY/NATIVE_DOMAIN_READBACK/RESTART_RECOVERY/ACL_NEGATIVE/ACTUAL_ELECTRON_UI. Existing code is only source evidence; no runtime lane exercised here.",
+      "actualSymbolOrSeam": "Whole package vertical slice: parser/evaluator/native schema/query/FormulaEditor integration",
+      "requiredChange": "Integration owner collects separate revision-bound lane receipts after dependency integration and exact final artifact readback. Provider/collaboration proof is additional when actually exercised, not a substitute for native formula acceptance. Keep featureComplete false until every required lane and criterion is accepted.",
+      "verification": "Audit lane matrix with exact commit, artifacts/digests, commands/attempts/seeds, expected/observed readbacks and independent review. Reverify materially changed integrated bytes. This report and JSON validity are not product verification.",
+      "missingPrerequisite": "All implementation/integration prerequisites and separately observed required lane receipts",
+      "state": "PREFLIGHT_ONLY_FEATURE_INCOMPLETE"
+    },
+    {
+      "criterion": "Same typed snapshot values in formula filters/table/chart/export; pinned today()/now()",
+      "currentEvidence": "projections.ts:13-14,207-217 explicitly receives now, a useful time-passing pattern; dates.ts:5-16 uses host-local Date and cannot provide arbitrary IANA timezone. note-views.ts has no snapshot. 05-rox-bases-design.md:140,166,280 mandates common context.",
+      "actualSymbolOrSeam": "projectTasks/buildTodayPlan; direct import localDayKey/startOfLocalDay; projectNoteRows/formulaValue",
+      "requiredChange": "Take evaluationTime/timezone once from accepted query snapshot, pass to all date functions and rows/consumers, and preserve it through cursor/export/chart. Reuse typed date contract; do not call Date.now() per row or copy host-local helpers as zoned-date semantics. Semantic time differs from timeout clock. Export expression+functionVersion and optional evaluated result/snapshot time.",
+      "verification": "Future actual table/chart/export/query match across page boundaries while wall clock crosses midnight; non-host IANA zone and DST/date-only cases remain correct. Per-row-now mutant fails equality. Source/schema changes produce a new snapshot; stale/denied snapshot cannot be reused.",
+      "missingPrerequisite": "Accepted query snapshot/cursor and typed date registry, integrated actual consumers/portable export metadata",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "All four legacy built-ins retain checkbox/backlink/tag semantics without native Task double counting",
+      "currentEvidence": "note-views.ts:133-157 computes tasks.length and unchecked count; 188-197 returns those counts, backlink count and tags.length. 07-domain-entity-model.md:155 explicitly names legacy.markdownTaskCount.v1 / legacy.markdownOpenTaskCount.v1, separate relation.nativeTaskCount.v1; LSX-WP-008 fixture is 3/2 despite 1 linked native Task.",
+      "actualSymbolOrSeam": "NOTE_FORMULA_EXPRS/projectNoteRows/formulaValue",
+      "requiredChange": "Evaluate accepted LSX-WP-008 built-in IDs against original source semantics under current authorization. Native Task relation count is a different function/capability, never a replacement for old counters. Keep backlink/tag mapping and order/count policy consistent with accepted migration; do not invent a second promotion workflow or count mirrored native rows.",
+      "verification": "Future migrate/restart same v1 fixture with 3 checkboxes/2 open/1 native Task; assert 3/2, exact backlinks and tags counts before/after. Toggle source checkbox and separately native Task status to show only the intended count changes. Broken native-count substitution fails legacy assertion.",
+      "missingPrerequisite": "Accepted LSX-WP-008 migration/built-in catalog and source projection authorization receipts",
+      "state": "LEGACY_SOURCE_MEANING_VERIFIED_ONLY; MIGRATED_RUNTIME_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Derived results invalidate on source/schema/policy change; denied/missing/null/error and numeric/date precision remain distinct",
+      "currentEvidence": "note-views.ts:601-611 uses String/Number coercion and has no policy epoch cache. 07-domain-entity-model.md:153,157 requires exact money and IANA date typing; 05-rox-bases-design.md:156-167 requires source/target revisions and permissionEpoch invalidation; work-packages.json:5533-5553 requires scoped rebuildable caches/events.",
+      "actualSymbolOrSeam": "matchesFilter/readField/compareUnknown; accepted typed row and query snapshot seams",
+      "requiredChange": "Reuse field registry's typed value/units/date/decimal contract and preserve errors/redaction without zero coercion. Include actor/policy fingerprint, schema/function version, query/source/target revisions and pinned context in derived cache identity; integrate canonical events/revoke invalidation before next query/render. Denied dependency query is rejected, not filtered after computation; editor cannot disclose hidden field metadata.",
+      "verification": "Future authorized aggregate negative fixture and revoke; schema version/type/unit change invalidates cache; exact decimal and local-date/instant boundaries; null dueAt returns null dateDiff, DIV_ZERO remains error. Observe real events/requery/restart, not just a local memoizer assertion.",
+      "missingPrerequisite": "Accepted LSX-WP-010/011, policy/event invalidation and authorized relation traversal hooks where exercised",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NOTE_FORMULA_EXPRS / NoteViewFormula / NoteBaseView",
+      "lineStart": 15,
+      "lineEnd": 34,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "notesViewsStorageKey / parseNoteBaseView / projectNoteRows / applyNoteBaseView / formulaValue",
+      "lineStart": 100,
+      "lineEnd": 203,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "formulaForField / readField / matchesFilter / compareUnknown",
+      "lineStart": 576,
+      "lineEnd": 618,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "packages/shared/src/automations/graph.ts",
+      "symbol": "detectCycles / compileGraph",
+      "lineStart": 359,
+      "lineEnd": 456,
+      "sha256": "976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"
+    },
+    {
+      "path": "packages/shared/src/automations/graph.ts",
+      "symbol": "compileAutomationGraph / buildAutomationGraphSave",
+      "lineStart": 491,
+      "lineEnd": 561,
+      "sha256": "976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"
+    },
+    {
+      "path": "packages/core/src/tasks/personal/projections.ts",
+      "symbol": "projectTasks / endOfLocalToday / taskCalendarAt",
+      "lineStart": 13,
+      "lineEnd": 103,
+      "sha256": "d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"
+    },
+    {
+      "path": "packages/core/src/tasks/personal/projections.ts",
+      "symbol": "buildTodayPlan",
+      "lineStart": 207,
+      "lineEnd": 259,
+      "sha256": "d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"
+    },
+    {
+      "path": "packages/core/src/tasks/personal/dates.ts",
+      "symbol": "localDayKey / startOfLocalDay (direct imports of projections.ts)",
+      "lineStart": 5,
+      "lineEnd": 17,
+      "sha256": "6b8ac9696b55c5f5e9406664c947eec59fdd7946264c450bd57209d8a9afaa87"
+    },
+    {
+      "path": "plans/lark-suite-reference/work-packages.json",
+      "symbol": "/work_packages/12: LSX-WP-013 specification, full DoD and launch gates",
+      "lineStart": 5359,
+      "lineEnd": 5676,
+      "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"
+    },
+    {
+      "path": "plans/lark-suite-reference/execution-packages.json",
+      "symbol": "LSX-WP-013 normative dependencies / allowedWritePaths / sharedPatchPaths / launch gates",
+      "lineStart": 1061,
+      "lineEnd": 1147,
+      "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"
+    },
+    {
+      "path": "docs/lark-suite-reference/05-rox-bases-design.md",
+      "symbol": "sections 5-6: field identity, typed bounded formula and snapshot semantics",
+      "lineStart": 107,
+      "lineEnd": 156,
+      "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"
+    },
+    {
+      "path": "docs/lark-suite-reference/05-rox-bases-design.md",
+      "symbol": "section 10: migrations and version/CAS preservation",
+      "lineStart": 218,
+      "lineEnd": 227,
+      "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"
+    },
+    {
+      "path": "docs/lark-suite-reference/05-rox-bases-design.md",
+      "symbol": "sections 13-15: owner integration seams / proof lanes / missing foundations",
+      "lineStart": 257,
+      "lineEnd": 298,
+      "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"
+    },
+    {
+      "path": "docs/lark-suite-reference/07-domain-entity-model.md",
+      "symbol": "section 6: typed computation and legacy Markdown count IDs",
+      "lineStart": 151,
+      "lineEnd": 157,
+      "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-BASE-01.md",
+      "symbol": "published shared command authority and full DoD",
+      "lineStart": 44,
+      "lineEnd": 89,
+      "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-BASE-01.md",
+      "symbol": "Dependencies / normative handoff: RS-DRV-01 #1109",
+      "lineStart": 95,
+      "lineEnd": 113,
+      "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"
+    }
+  ],
+  "inspectionEvidence": {
+    "sourceHashMethod": "Read-only shasum -a 256 on the nine concrete inspected source/specification files; hashes are whole-file SHA256, not snippets or Git blob IDs.",
+    "sourceStatus": "All three normative existing_code file hashes equal their recorded baseline blob_sha256. Both specification input hashes equal dispatch input_manifest. This does not establish current Git HEAD/clean state or wave0 acceptance; those were not queried or changed.",
+    "stalenessPolicy": "Evidence describes bytes read and hashed during this preflight, not future integrated bytes. Root-owned wave0 work and dependency integration may change seams or hashes. Re-read affected ranges and recompute whole-file digests after lead's commit/accepted receipts before preparing or applying exact source patches; invalidate stale line/symbol requests rather than assume they still fit.",
+    "toolLimitations": [
+      "codegraph_explore returned no .codegraph index for this project; continued with scoped built-in reads/searches, did not initialize index.",
+      "One scoped find request failed with judge OpenRouter 402; recovered via literal symbol grep and direct reads of specification-known paths. No product absence conclusion depends on failed find.",
+      "No builds/tests/native UI/network/product runtime commands were run. No product/test/manifest/progress/shared/Git file was changed. Only the owned JSON artifact was created."
+    ],
+    "verificationStatus": "Source-backed mapping only. Future verification instructions in acceptanceMatrix are not observed results. Report JSON/readback checks do not establish implementation acceptance."
+  },
+  "nextExecutableAction": {
+    "now": "Integration owner reviews this report, resolves published foundation/scope gaps and keeps implementation gated; this preflight makes no product contribution or completion claim.",
+    "afterLeadWave0CommitAndAcceptedDependencies": "Obtain wave0 exact revision, resolved reference delivery manifest and accepted LSX-WP-008/010/011 artifact/native readback receipts; reconcile RS-DRV-01/authority and acquire serial note-views lease plus amended integration paths. Re-read/hash changed seams, lock concrete shared schemas/hook signatures, then implement bounded parser/evaluator against accepted field/query contracts before wiring canonical schema/editor/consumers. Do not start on dirty pre-wave0 bytes or invent missing foundations.",
+    "firstCodeContribution": "packages/core/src/bases/formula-parser.ts: versioned AST/fieldId references, typed validators/function signatures and bounded full dependency DAG diagnostics; exact exported names depend on accepted contract receipts."
+  },
+  "risks": [
+    "Current renderer Number/String coercion and raw property access bypass typed error/ACL semantics unless all canonical consumers are migrated, not only formulaValue.",
+    "Automation graph DFS is private, recursive and automation-specific; importing it or extending it as a formula runtime introduces an unsafe second execution path. Preserve its validate-before-save pattern only; leave graph.ts untouched.",
+    "Personal task date helpers use host-local Date and fixed 24h day arithmetic; directly reusing them for arbitrary snapshot IANA timezone would risk DST/day drift. Pass pinned time and use the accepted typed date contract; projections.ts/dates.ts remain read-only here.",
+    "Legacy taskCount/openTaskCount are checkbox counts. Relation-native counts, promoted tasks or deduplicated tag policies must not silently change legacy values. Backlink/tag IDs must come from accepted migration catalog.",
+    "Typed parser/evaluator alone is insufficient: missing native schema commit/authenticated registry/editor mount/i18n/consumer scope blocks full acceptance. Do not turn those requirements into N/A.",
+    "A preview queryRef cannot authorize access itself; field dependency diagnostics, result caches and error chains must not leak denied metadata across actors or permission epochs.",
+    "Unbounded tokenization, DAG recursion, intermediate string/list growth and relation traversal can exceed a nominal AST budget before interpreter checks; budget checks must precede expensive work.",
+    "Published RS-BASE-01 uses an older revision, different proposed file layout and CustomRecord kind; LSX design requires ref/authority reconciliation rather than duplicating that store or broadening this worker's five owned paths.",
+    "Root integration may make current hashes/line ranges stale; no inspected baseline source or published issue receipt proves accepted dependencies or runtime readiness.",
+    "Wall-time timeout is separate from deterministic semantic time and operation budgets. A timeout or hung negative control is infrastructure/resource failure, not proof that forbidden execution or inconsistent-now mutation was caught."
+  ]
+}

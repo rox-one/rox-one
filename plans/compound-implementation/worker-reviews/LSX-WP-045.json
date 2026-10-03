@@ -1,0 +1,415 @@
+{
+  "task_id": "LSX-WP-045-preflight",
+  "attempt_id": "d85d50eef94f73674e3d03106fd228ba",
+  "packet_hash": "9ee22076fab922cc14ef2d1add1a9376d7bb0e8a7be458bc58786c1875f85303",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-045",
+  "featureComplete": false,
+  "reportState": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "scope": {
+    "mode": "inspect",
+    "tier": "bounded-workflow",
+    "ownedArtifact": "plans/compound-implementation/worker-reviews/LSX-WP-045.json",
+    "productSourceChanged": false,
+    "testsBuildsNativeUiNetworkRun": false,
+    "gitStateChanged": false,
+    "implementationAuthorization": "None in this attempt. Root integration owns product changes; implementation must follow the wave0 commit and accepted prerequisite implementation/readback receipts.",
+    "inspectionBoundary": "Product source inspection restricted to the package's three normative existing source paths. Dependency file names and their proposed interfaces were inspected in the normative manifest; file presence was checked without treating present staged files as accepted implementations. No dependency implementation body or unrelated subsystem was opened."
+  },
+  "dependencies": [
+    "LSX-WP-001",
+    "LSX-WP-007",
+    "LSX-WP-010",
+    "LSX-WP-011",
+    "LSX-WP-016"
+  ],
+  "dependencyInterfaces": [
+    {
+      "packageId": "LSX-WP-001",
+      "requiredContribution": "Canonical page descriptor with contentKind=record, one selected content authority, stable Rox2EntityRef, unknown-version read-only decoding and legacy Note/Page preservation.",
+      "normativePaths": ["packages/core/src/docs/content-descriptor.ts", "packages/server-core/src/docs/descriptor-resolver.ts"],
+      "normativeOperations": ["content.resolve(ref)", "content.describe(ref)", "content.adoptDescriptor(ref,expectedRevision,descriptor)"],
+      "observedState": "Both proposed files are present in the working tree; their implementation bodies and acceptance receipts were not inspected. PageConfig and platform-contract inspected below still have their baseline hashes. Presence is not acceptance.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:1348-1431,1501-1504"
+    },
+    {
+      "packageId": "LSX-WP-007",
+      "requiredContribution": "Persisted BaseDefinition, SourceSelector and schema/config revision, with private/shared configuration distinct from personal viewport preferences.",
+      "normativePaths": ["packages/core/src/bases/definition.ts", "packages/server-core/src/bases/definition-store.ts"],
+      "observedState": "No files were returned by scoped core/server Bases directory globs. This is a missing implementation at inspection, not a runtime test result.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:3448-3503"
+    },
+    {
+      "packageId": "LSX-WP-010",
+      "requiredContribution": "Authorized BaseQueryResult carrying row refs/revisions, queryRevision, permissionEpoch and freshness; row/field policy before filters or aggregation; CustomRecord reads must feed this same query pipeline.",
+      "normativePaths": ["packages/server-core/src/bases/query-service.ts", "packages/core/src/bases/query-contract.ts"],
+      "normativeOperations": ["base.query(input)", "base.getQueryWatermark(queryRef)"],
+      "observedState": "No scoped Bases files found; accepted query service and registration interface are missing. Manifest also gives LSX-WP-010 a transitive dependency on LSX-WP-009; this is not an additional direct LSX-WP-045 edge.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:4402-4407,4501-4565"
+    },
+    {
+      "packageId": "LSX-WP-011",
+      "requiredContribution": "FieldDefinition, TypedCellValue and FieldCapability for all 18 core types; reuse validation/editor capabilities and null/empty/error/redacted/unsupported distinctions, never a record-local field-type registry.",
+      "normativePaths": ["packages/core/src/bases/field-registry.ts", "apps/electron/src/renderer/pages/bases/FieldSchemaInspector.tsx"],
+      "observedState": "No scoped Bases files found; accepted field registry exports and renderer-safe codecs are missing.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:4813-4867"
+    },
+    {
+      "packageId": "LSX-WP-016",
+      "requiredContribution": "Joint schema/row CAS, source snapshot hashes, migration checkpoints and reversible field rename/type-change/soft-delete mappings that retain invalid/unknown historical values and later acknowledged writes.",
+      "normativePaths": ["packages/server-core/src/bases/schema-migrations.ts", "apps/electron/src/renderer/pages/bases/SchemaMigrationPreview.tsx"],
+      "normativeOperations": ["base.previewSchemaMigration(input)", "base.applySchemaMigration(digest)", "base.resumeSchemaMigration(checkpoint)"],
+      "observedState": "No scoped Bases files found; accepted migration/CAS contract is missing. LSX-WP-012/013/014 are this dependency's transitive DAG edges, not direct LSX-WP-045 edges.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:6303-6309,6385-6440"
+    }
+  ],
+  "foundationGates": [
+    {
+      "gate": "EG-EFFECTS",
+      "classification": "EXPLICIT_EXTERNAL_PREREQUISITE_NOT_INTERNAL_DAG_EDGE",
+      "source": "plans/lark-suite-reference/work-packages.json:83-89,16303-16305; docs/lark-suite-reference/07-domain-entity-model.md:169-189",
+      "requiredProof": "Accepted Macro WP-04 implementation/runtime receipt for atomic native payload + command receipt + outbox intent, replay/idempotency and crash recovery. File-backed storage requires journal/atomic recovery, not write-then-emit.",
+      "state": "READINESS_NOT_VERIFIED",
+      "effectOnPackage": "record.create/patchFields cannot acknowledge a durable mutation without this foundation; return missingDependency rather than simulate commits."
+    },
+    {
+      "gate": "RS-DRV-01 / common library and identity authority",
+      "classification": "HIDDEN_PUBLISHED_SPEC_DEPENDENCY",
+      "source": "docs/rox-suite/published/RS-BASE-01.md:95-113; docs/rox-suite/published/RS-DRV-01.md:21-38,60-62,69-75",
+      "requiredProof": "Published RS-BASE-01 requires RS-DRV-01 (#1109), although LSX-WP-045's explicit dependency array does not list it. Obtain accepted canonical Page/Note/File routing/library and common identity/ACL/command receipts for the affected record entry/open path; publication is not readiness.",
+      "state": "READINESS_NOT_VERIFIED",
+      "effectOnPackage": "Do not invent a parallel record library or claim a detached adapter is the actual Create/Open flow. Root must reconcile this foundation with the bounded LSX packet, without silently adding or deleting explicit DAG edges."
+    },
+    {
+      "gate": "EG-IDENTITY / authenticated entity-and-field authorization",
+      "classification": "TRANSITIVE_AND_PUBLISHED_FOUNDATION",
+      "source": "plans/lark-suite-reference/work-packages.json:75-81,1266-1269,3351-3354,4405-4407; docs/rox-suite/published/RS-BASE-01.md:52-56,79-86; packages/core/src/rox2/platform-contract.ts:592-610",
+      "requiredProof": "Server obtains actor from authenticated transport and resolves entity/field grants against canonical workspace/source scope. Revoke must stop writes/subscriptions and evict denied cached values. authorizeRox2Action checks only actorId/permission grants and is not an entity/field resolver by itself.",
+      "state": "READINESS_NOT_VERIFIED",
+      "effectOnPackage": "Neither PageConfig.grants nor renderer-provided actor/owner/workspace supplies record authorization; viewer RPC/tool and linked-field denial need real server proof."
+    },
+    {
+      "gate": "Registered commands, events and shared consumers",
+      "classification": "HIDDEN_PUBLISHED_FULL_DOMAIN_GATE",
+      "source": "docs/rox-suite/published/RS-BASE-01.md:46-56,82-89; docs/lark-suite-reference/07-domain-entity-model.md:7,143-147,169-189; packages/core/src/rox2/platform-contract.ts:131-141,617-620",
+      "requiredProof": "record.create/patchFields/get must be registered on authenticated host transport and common agent/tool authority; record event aliases must reach existing outbox, query invalidation, links/search/mentions/activity/notifications with policy and revision fencing. Existing Rox2Event is a smaller generic contract, not proof of the proposed event envelope or durable delivery.",
+      "state": "MISSING_INTEGRATION_RECEIPTS_AND_REVIEWED_SEAMS",
+      "effectOnPackage": "The packet permits only page.ts as an existing-file patch. Transport registration, query-source registration, detail routing and consumer wiring must be supplied by accepted dependencies or added through a reviewed packet amendment; no unapproved source edits."
+    },
+    {
+      "gate": "Single page payload authority and descriptor adoption",
+      "classification": "EXPLICIT_DEPENDENCY_FOUNDATION_WITH_BASELINE_MODEL_MISMATCH",
+      "source": "packages/core/src/types/page.ts:1-22,294-320; docs/lark-suite-reference/05-rox-bases-design.md:41-52,92; docs/lark-suite-reference/07-domain-entity-model.md:60-62,100",
+      "requiredProof": "Accepted LSX-WP-001 authority must store a versioned record payload and native revision history without treating the HTML snapshot or generic discovery metadata as a record DB. Optional body links resolve the same authorized content owner.",
+      "state": "NOT_ESTABLISHED_BY_INSPECTED_SOURCE",
+      "effectOnPackage": "PageConfig currently models sandboxed HTML dashboards; its schemaVersion:1 and contentDigest of index.html are not a typed record revision/hash. Do not create record JSON, Notes frontmatter and SQL mirrors as independently writable stores."
+    },
+    {
+      "gate": "EG-FILES / optional body and attachment ownership",
+      "classification": "CONDITIONAL_PUBLISHED_FOUNDATION_NOT_DIRECT_DAG_EDGE",
+      "source": "plans/lark-suite-reference/work-packages.json:107-113,16420-16423; docs/rox-suite/published/RS-BASE-01.md:27,34,56; docs/lark-suite-reference/07-domain-entity-model.md:143-146",
+      "requiredProof": "Where fields/body refer to files or attachments, use common FileRef/content authority, binding grant intersection, safe previews and revoke cleanup. Validate record/body deletion and history ownership before enabling body mutation.",
+      "state": "READINESS_NOT_VERIFIED_FOR_AFFECTED_SCOPE",
+      "effectOnPackage": "Optional body may be absent on a particular record, but an implemented body/attachment path cannot use a fake owner or be waived as N/A. Provider/collaboration evidence is required if those lanes are actually exercised."
+    },
+    {
+      "gate": "Delivery lineage, integration lease and actual Electron proof",
+      "classification": "EXPLICIT_LAUNCH_AND_ACCEPTANCE_FOUNDATION",
+      "source": "plans/lark-suite-reference/work-packages.json:7-11,16505-16513,16545-16587",
+      "requiredProof": "Resolve immutable reference delivery revision/digest; verify spec hashes; wait for root wave0 commit and all five accepted dependency receipts. Obtain exclusive page.ts lease and actual supported Electron runner. Exact integrated commit must have source/schema, unit/property, native readback, restart, ACL and Electron receipts.",
+      "state": "NOT_READY_FOR_IMPLEMENTATION_IN_THIS_ATTEMPT",
+      "effectOnPackage": "Preflight input is a21aeab1da5a67e56788384ff930945b0f487879 while normative product baseline is e953786ba7e30fb5da5dca7e88e20e324d5aebab. Root must issue a revision-bound implementation packet resolving this lineage and concurrent wave0 changes, not reuse this preflight as dependency acceptance."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/bases/record-owner.ts",
+    "apps/electron/src/renderer/pages/bases/RecordDetailAdapter.tsx",
+    "tests/lark-suite-extension/lsx-wp-045.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-045.spec.ts"
+  ],
+  "ownedFileContributions": [
+    {
+      "path": "packages/server-core/src/bases/record-owner.ts",
+      "observedState": "Not present at inspection",
+      "proposedSymbols": ["record.create", "record.patchFields", "record.get", "CustomRecord", "TypedPropertySet", "RecordRevision"],
+      "change": "Implement the three normative operations using accepted descriptor/page authority, BaseDefinition, field-registry validators, query-source capability and schema-migration CAS interfaces. create accepts explicit new-record source choice, table/schema ref and revision, typed properties and optional body ref. patchFields accepts ref, expected row AND schema revisions, operationId/idempotencyKey and typed field patches. Actor is separate authenticated context, never a trusted payload field. Validate refs as kind page plus descriptor contentKind record; native Task sources reject conversion. Persist one payload and native immutable history through the existing authority, atomically with receipt/outbox. get returns the authorized ref/revision/schema/values and read-only preserved future payload diagnostics. Expose the required eight typed errors and only acknowledge actual durable native commits. Exact exported symbol names beyond normative operation names must align with accepted dependency contracts rather than invent parallel interfaces.",
+      "requiredIntegration": "Authenticated transport registration, common tool access, query-source registration and lifecycle/history delivery must come from accepted seams or reviewed root scope amendments. Do not runtime-import server persistence into renderer."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/RecordDetailAdapter.tsx",
+      "observedState": "Not present at inspection",
+      "proposedSymbols": ["RecordDetailAdapter"],
+      "change": "Render authorized typed values/editors using the accepted field registry; consume record.get/patchFields through authenticated host transport. Keep source rowRef stable across detail and every Base view; show current schema/row revision, pending versus committed state, field validation, stale conflict with retained draft, denied/deleted/offline/future-version read-only states, optional canonical body and owner-provided history/soft-delete actions. Create source must be explicitly labelled through t() as «Новый тип записей» and cannot silently choose records for Tasks. Integrate into the existing Base detail/open path, not a second record surface.",
+      "requiredIntegration": "Existing detail dispatcher and source chooser are not listed as WP045 shared patches; root must provide an accepted registration point. New locale keys require all 10 locale files under reviewed ownership; current packet does not authorize those edits."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-045.test.ts",
+      "observedState": "Not present at inspection",
+      "change": "Add consumer-visible tests for explicit source choice, typed create/get/patch, identical canonical refs across query/detail/views, zero CustomRecords from Task Base creation, all typed errors, actor spoof/field/link denial, stale row and stale schema CAS, same-operation replay, unknown future payload preservation, durable native receipt and restart recovery, plus reproducible mutant assertions. Isolated fixtures must exercise the accepted real owner; runtime native readback and recovery receipts remain separate proof lanes."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-045.spec.ts",
+      "observedState": "Not present at inspection",
+      "change": "Use the discovered supported actual Electron runner to exercise source choice, typed record detail/body/history, validation/conflict/read-only states, keyboard/IME/focus/help, reduced motion, 200% zoom and light/dark theme. Record same native ref/revision/values after reload; attach actual screenshots/ARIA/computed-font evidence. No invented passing runner or isolated fixture acceptance."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageKind",
+      "change": "Preserve exactly 'static' | 'interactive' | 'live' and its sandbox runtime meaning. At the adjacent content descriptor seam, reuse the accepted LSX-WP-001 contentKind discriminator with record as a page subtype; never add 'record' to PageKind or to ROX2_ENTITY_KINDS. This is an invariant/coordination request, not a required textual edit to the existing union.",
+      "reason": "PageKind at line 35 classifies HTML JavaScript/CSP behavior. The normative Bases design explicitly separates it from contentKind and prohibits initial global record-kind migration.",
+      "owner": "integration-owner",
+      "mode": "REVIEWED_SERIAL_PATCH_ONLY",
+      "sourceLines": [29, 35],
+      "missingPrerequisite": "Accepted LSX-WP-001 descriptor contract and exclusive page.ts integration lease."
+    },
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageConfig",
+      "change": "After LSX-WP-001 integration, extend its agreed versioned content-payload/descriptor branch to describe contentKind=record and schemaVersion, canonical table/schema ref plus schema revision, typed fieldId properties from LSX-WP-011, and optional body ref. Reuse one canonical payload locator/owner; do not duplicate authoritative properties in PageConfig and an independent records store. Preserve existing schemaVersion:1 dashboard decoding, HTML kind/refresh/grants/share/thumbnail behavior and index.html contentDigest semantics. Record row revision/payload hash must come from the accepted content authority, not be fabricated from updatedAt or HTML digest. Future payloads must remain preserved/read-only. Exact field spelling and discriminated branch placement are pending the accepted WP001 contract and must be rebased before application.",
+      "reason": "Inspected PageConfig lines 294-320 contain dashboard metadata only, with no contentKind, table/schema binding, row CAS or typed values. A record subtype needs additive typing without breaking existing dashboard readers or creating another authority.",
+      "owner": "integration-owner",
+      "mode": "REVIEWED_SERIAL_PATCH_ONLY",
+      "sourceLines": [294, 320],
+      "missingPrerequisite": "Accepted LSX-WP-001/007/011 definitions; root-approved treatment of payload versus descriptor storage; exclusive page.ts lease. No speculative broad PageConfig rewrite."
+    }
+  ],
+  "integrationScopeGaps": [
+    {
+      "seam": "Authenticated server/renderer command transport and renderer-safe codecs",
+      "evidence": "work-packages.json:16428-16445 requires APIs and authenticated actor; inspected source paths expose no record transport endpoint.",
+      "request": "Root must identify the existing registration symbols in accepted dependency receipts and supply a callable registration interface or approve exact extra patch paths. Renderer may import safe core codecs/type-only contracts, not record-owner filesystem/runtime code.",
+      "state": "MISSING_REVIEWED_REGISTRATION_SEAM"
+    },
+    {
+      "seam": "Source chooser, query adapter registration and existing record-detail dispatcher",
+      "evidence": "work-packages.json:16415-16423,16459-16466; note-views.ts:73-83,133-169 only projects note IDs and local values; dependency query-service.ts is currently absent.",
+      "request": "Have WP007/WP010 expose bounded registrations for explicit record source, read/write capabilities and RecordDetailAdapter. If shared source edits are required, amend the packet with observed path/symbol ownership; do not patch note-views.ts or NotesViewHost under WP045's current lease.",
+      "state": "MISSING_ACCEPTED_DEPENDENCY_INTERFACE"
+    },
+    {
+      "seam": "All-locale user-facing text and actual Electron runner",
+      "evidence": "Injected repository rules require t() and all 10 locales; work-packages.json:16461-16463,16481,16512 requires actual localized UI evidence.",
+      "request": "Root must allocate locale patch ownership and provide existing source-choice/record labels or approve new ASCII-sorted keys in all locale files. Discover and record the real Electron runner at implementation, without treating a proposed spec filename as an executable runner.",
+      "state": "NOT_VERIFIED_AND_OUTSIDE_CURRENT_SHARED_PATCH_SCOPE"
+    },
+    {
+      "seam": "Soft-delete/history and optional body operations",
+      "evidence": "work-packages.json:16420-16423,16448,16452-16457,16461,16515-16516 requires lifecycle/history but the operations list names only create/patchFields/get.",
+      "request": "Reuse accepted page/native lifecycle and revision-history APIs with the same record ref and permissions; root must identify their public callable symbols and commit boundaries. Do not invent extra record.delete/history stores or silently omit the UI contract.",
+      "state": "OWNER_AND_CALLABLE_LIFECYCLE_API_NOT_ESTABLISHED"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "optional A+B architecture explicit source choice",
+      "currentEvidence": "AD-BASE in work-packages.json:18-25 and Bases design:35-41 require projections A plus optional explicit B. note-views.ts:133-158 projects native note IDs; it does not create CustomRecords. Neither normative WP045 implementation file exists.",
+      "actualSymbolSeams": ["projectNoteRows", "PageKind", "Rox2EntityRef", "proposed record.create", "proposed RecordDetailAdapter"],
+      "requiredChange": "Make new custom-schema/source selection an explicit authenticated record.create input and UI choice «Новый тип записей». Existing Task/Notes/CRM source selections retain native owners and refs; no Task-to-record copy on Base creation.",
+      "verification": "Create a Base over an isolated native Task source; compare native Task refs/revisions before and after and assert zero CustomRecords created. Separately select the explicit new-record source and create one page:... record descriptor. Verify the actual source chooser and detail opening in Electron.",
+      "missingPrerequisites": ["Accepted WP001 and WP007 source/descriptor interfaces", "Reviewed source-chooser/detail registration", "All-locale labels and actual Electron runner"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "single authoritative typed payload; no mirror entities",
+      "currentEvidence": "PageConfig:294-320 is an HTML dashboard config with schemaVersion:1 and contentDigest for index.html. Rox2EntityRef:233-239 provides the canonical identity; ROX2_ENTITY_KINDS:17-38 already includes page but not record. Rox2TypedRecord:631-637 has unvalidated Record<string,unknown> properties, not a typed record owner. Bases design:47-52,92 prohibits mirror rows.",
+      "actualSymbolSeams": ["PageConfig", "Rox2EntityRef", "formatRox2EntityId", "parseRox2EntityId", "Rox2TypedRecord", "proposed record.get"],
+      "requiredChange": "Persist one page-kind record payload through the accepted content owner with versioned schema binding, typed field IDs/values and optional body ref. All Base/query/detail paths resolve the same ref/revision. Keep views and indexes derived; use native history rather than mirrored snapshots as another write authority.",
+      "verification": "Create/read/reload exact schema and values; obtain native ref/revision/payload hash and compare in detail, Base and authorized query results, including view changes. Verify Task/native IDs are not replaced and no alternate authority holds independent writable values. Optional body and history must resolve their declared canonical owner.",
+      "missingPrerequisites": ["Accepted WP001 single-authority persistence/readback", "WP007 table/schema binding", "WP010 canonical query adapter", "WP011 typed cells", "WP016 compatible migration/history"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "authorizeRox2Action:601-610 denies absent actor/grant but does not bind entity/field/workspace. PageActionGrant belongs to the HTML source-action model, not CustomRecord ACL. Normative record.create/patchFields/get and eight errors are in work-packages.json:16428-16445; no record transport/schema implementation was found.",
+      "actualSymbolSeams": ["authorizeRox2Action", "Rox2ActorGrant", "Rox2EntityRef", "proposed record.create", "proposed record.patchFields", "proposed record.get"],
+      "requiredChange": "Compile and runtime-validate shared boundary contracts using accepted descriptor/field schemas. Require expected schema and row revisions on field mutation and operationId/idempotencyKey for writes. Return distinct validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat errors. Derive actor and authority scope from authenticated transport, validating ref/workspace instead of trusting actor/owner/workspace payloads. Reject writes to derived/unsupported fields; no renderer raw storage access.",
+      "verification": "Compile server and renderer contracts with accepted package tooling. Exercise real authenticated RPC/tool paths: spoofed actor/owner/workspace, cross-workspace ref, denied field/link, unsupported future format, deleted record and missing dependency. Assert typed outcomes and unchanged authoritative bytes/revision on rejection; renderer-safe codecs must not load Node persistence code.",
+      "missingPrerequisites": ["EG-IDENTITY entity/field evaluator and authenticated transport", "Accepted WP001/WP011 types/codecs", "Reviewed transport and tool registration", "Rate-limit/offline owner capability contracts"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "Rox2CanonicalResult:158-167 and derivedOk:435-440 distinguish verified live success from queued/fixture states. Rox2Receipt:99-105 alone lacks a record payload hash and is not a storage transaction. PageConfig updatedAt and HTML contentDigest cannot prove durable record commit; EG-EFFECTS is READINESS_NOT_VERIFIED.",
+      "actualSymbolSeams": ["Rox2Receipt", "Rox2CanonicalResult", "derivedOk", "PageConfig", "proposed record.create", "proposed record.patchFields", "proposed record.get"],
+      "requiredChange": "Commit typed payload, revision, command receipt and event intent through the accepted native transaction/journal. Return committed native ref/revision and expose authoritative hash readback; distinguish pending/queued from durable ACK. Optional body/history must follow declared commit boundaries and not be reported committed based on a toast or emitted event.",
+      "verification": "Read exact committed ref/revision/hash after create and patch through the authority, restart the native service, then reread and compare schema/values/hash. Interrupt around payload/receipt/outbox durability and recover without lost acknowledged writes or duplicate logical records/events. Record implementation commit, artifact hashes and every attempt.",
+      "missingPrerequisites": ["EG-EFFECTS accepted atomic commit/recovery receipts", "WP001 native payload authority", "Root-provided authoritative hash/readback seam", "Optional body/history owner boundary"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:16475-16479 names exact schema reload, zero Task copies, future-payload retention and stale-patch rejection. Bases design:203-205,226-229 requires CAS and explicit offline/recovery behavior. Existing parseRox2TypedRecord:658-690 preserves future raw input but is not typed field validation or durable preservation.",
+      "actualSymbolSeams": ["parseRox2TypedRecord", "proposed record.create", "proposed record.patchFields", "proposed record.get", "proposed base.query", "proposed base.applySchemaMigration"],
+      "requiredChange": "Implement joint schema/row revision fencing using WP016; preserve draft and unknown/future payload; replay an identical operation using its original durable receipt, not a second create. Reauthorize replay at canonical owner. Offline support must follow the accepted existing outbox capability; otherwise return offlineUnsupported explicitly. Soft-deleted records and history retain ownership and revisions.",
+      "verification": "Happy typed create/get/update/reload; two writers with stale row and stale schema tokens; denied viewer and forbidden field/link; same operation replay and mismatched payload under reused operation identity; crash/reconnect recovery; exact future raw bytes/hash retained and edits rejected; migration repair preserves prior values and later ACKs. Preserve seeds/input hashes, expected/observed values and unsuccessful attempts.",
+      "missingPrerequisites": ["Accepted WP010/WP011/WP016", "Authenticated ACL and durable idempotency/recovery foundation", "Callable lifecycle/history APIs"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:16491-16499 defines mutation 'Auto-copy Tasks to CustomRecord or introduce unversioned new kind' and three named assertions. No WP045 tests or seeded-control receipt exists at inspection.",
+      "actualSymbolSeams": ["projectNoteRows", "ROX2_ENTITY_KINDS", "parseRox2EntityId", "proposed record.create", "proposed RecordDetailAdapter"],
+      "requiredChange": "Add reproducible synthetic owner/source fixtures using the real accepted record path. Mutate Task-source dispatch to auto-copy records or change the initial record discriminator/kind/version. Keep semantic identity assertions, not source-text or test-wiring assertions.",
+      "verification": "Green baseline, then mutated exact bytes must fail the named assertions: 'Task projection preserves native task owner', 'record initial kind page/contentKind record', and 'same record ref in detail/all views'. Retain seed, input SHA256, mutant diff/hash and actual assertion failure. A timeout, build error or unavailable service is recorded separately and cannot count as mutant detection.",
+      "missingPrerequisites": ["Real accepted Task-source/query interfaces and record owner", "Root-approved mutation/proof runner on integrated version"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "RecordDetailAdapter.tsx is absent. work-packages.json:16459-16463 requires explicit source choice, typed fields/body, soft-delete/history and read-only future payload; RS-BASE-01:36-42 requires keyboard draft behavior, help and theme/font continuity. No native UI was run by this preflight.",
+      "actualSymbolSeams": ["proposed RecordDetailAdapter", "proposed FieldSchemaInspector", "PageKind"],
+      "requiredChange": "Mount the adapter in the existing Base detail flow; reuse typed editors and authenticated commands. Provide loading/empty/error/denied/conflict/retry/deleted/offline/future states, retained drafts and body/history lifecycle. Localize via t() in all 10 locales, RU default, preserve chosen theme/semantic fonts and prove actual Rox Mono loading. Help must work on hover/focus/click; keyboard and IME commits must not prematurely submit; reduced motion and 200% zoom remain usable.",
+      "verification": "Actual Electron pointer and keyboard source-create/open/edit/save/cancel flow, IME composition, focus return and field errors, body/history/soft-delete, viewer and future-version read-only state. Reload native data. Capture screenshots, ARIA/focus and computed loaded-font evidence for RU plus locale parity, light/dark themes, reduced motion, 200% zoom and responsive drawer behavior; log exact viewport/revision. Discover supported runner before execution.",
+      "missingPrerequisites": ["Accepted typed editor and existing detail/source routing", "All-locale patch allocation", "Real Electron runner and native domain service", "Body/history APIs"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:16482-16489 requires SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI. This report contains source inspection only and featureComplete=false.",
+      "actualSymbolSeams": ["Rox2Status", "Rox2CanonicalResult", "derivedOk", "proposed record owner", "proposed RecordDetailAdapter"],
+      "requiredChange": "Root accepts each proof lane independently on the integrated implementation commit; include diff/commit, compiled schemas, tests/seeds/control assertion, authority readback before/after restart and actual UI artifacts. Wire common search/links/mentions/activity/notification/agent policy for the new domain payload as required by the published spec. Retain failures; queued provider receipt never proves external success.",
+      "verification": "Collect each of the six required lane receipts with exact commit/environment/ref/revision/input/artifact hashes, then independent root review and integrated authoritative readback. Provider/collaboration receipts are additionally required when exercised; they do not replace native or UI receipts. Preflight schema/hash verification validates this artifact only, never the feature.",
+      "missingPrerequisites": ["Root wave0 commit and accepted dependency receipts", "Resolved delivery revision/digest", "Approved integration seams and lease", "All mandatory runtime/UI proof lanes"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Record events update shared Base snapshots; config changes do not duplicate rows.",
+      "currentEvidence": "work-packages.json:16450-16466 proposes record.created/updated/deleted and the complete event envelope. Existing Rox2Event:131-141 uses id/entityId/type/at/actor and optional correlation/causation/aggregateRevision; isAuditableRox2Event:617-620 is a predicate, not durable publication or consumer registration.",
+      "actualSymbolSeams": ["Rox2Event", "isAuditableRox2Event", "proposed record.create", "proposed record.patchFields", "proposed base.query"],
+      "requiredChange": "Use the accepted common event registry aliases and atomic outbox. Carry eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId through its agreed adapter. Invalidate/refetch shared Base snapshots with permission and revision fencing, deduplicate event IDs, and leave row identity unchanged when view/config changes.",
+      "verification": "Create/update/delete a record and observe the same permitted row ref across shared snapshots. Replay/out-of-order events and reconnect without duplicate rows or stale regression. Change Base/view config and verify authoritative record values/ref/revision are unchanged; revoke removes inaccessible row/field data before subsequent rendering.",
+      "missingPrerequisites": ["EG-EFFECTS event/outbox recovery", "Accepted WP010 snapshot invalidation/subscription registration", "Reviewed registry/consumer alias seam"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Optional body ref, soft-delete/history, unknown future payload preservation and schema migration retain one owner.",
+      "currentEvidence": "work-packages.json:16420-16423,16448,16461,16515-16516 requires body/history and flags commit-boundary risk. parseRox2TypedRecord:665-666 retains raw future-version input in memory; PageConfig has only literal schemaVersion:1 and no record lifecycle authority.",
+      "actualSymbolSeams": ["PageConfig", "parseRox2TypedRecord", "proposed record.get", "proposed record.patchFields", "proposed RecordDetailAdapter"],
+      "requiredChange": "Bind optional body by authorized canonical ref; obtain lifecycle/history from the native page/record owner rather than another body store. Preserve unknown payload bytes and fields in native storage and future versions as read-only, refusing edits with typed unknownFormat. Schema rename/type-change/field soft-delete use WP016 with retained historical values and explicit repair, not destructive defaults.",
+      "verification": "Read/reload an opaque future-version payload and compare original native bytes/hash; a patch must fail without modification. Edit typed fields while body remains canonical, inspect revision history, soft-delete and restore through accepted owner APIs, and recover at declared body/record commit boundaries. Schema migration conflict and rollback must preserve later acknowledged record changes.",
+      "missingPrerequisites": ["WP001 native lifecycle/body/history authority", "Accepted WP016 migration implementation", "EG-FILES if file/body attachments are used", "Approved lifecycle API integration"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageKind",
+      "lineStart": 29,
+      "lineEnd": 35,
+      "sha256": "9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"
+    },
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageConfig",
+      "lineStart": 294,
+      "lineEnd": 320,
+      "sha256": "9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "formatRox2EntityId / parseRox2EntityId / Rox2EntityRef",
+      "lineStart": 218,
+      "lineEnd": 239,
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "authorizeRox2Action",
+      "lineStart": 592,
+      "lineEnd": 610,
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2TypedRecord / parseRox2TypedRecord",
+      "lineStart": 631,
+      "lineEnd": 690,
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2Event",
+      "lineStart": 131,
+      "lineEnd": 141,
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView / NoteProjectionRow",
+      "lineStart": 24,
+      "lineEnd": 83,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "notesViewsStorageKey / projectNoteRows / formulaValue",
+      "lineStart": 100,
+      "lineEnd": 203,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "plans/lark-suite-reference/work-packages.json",
+      "symbol": "work_packages[44] LSX-WP-045",
+      "lineStart": 16278,
+      "lineEnd": 16588,
+      "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"
+    },
+    {
+      "path": "plans/lark-suite-reference/execution-packages.json",
+      "symbol": "LSX-WP-045 execution ownership/launch gates",
+      "lineStart": 3899,
+      "lineEnd": 3985,
+      "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"
+    },
+    {
+      "path": "docs/lark-suite-reference/05-rox-bases-design.md",
+      "symbol": "Sections 3-4 A+B architecture and canonical ownership",
+      "lineStart": 33,
+      "lineEnd": 105,
+      "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"
+    },
+    {
+      "path": "docs/lark-suite-reference/07-domain-entity-model.md",
+      "symbol": "Sections 3-5 page subtype and domain ownership",
+      "lineStart": 35,
+      "lineEnd": 149,
+      "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-BASE-01.md",
+      "symbol": "Published domain/full DoD and RS-DRV-01 dependency",
+      "lineStart": 44,
+      "lineEnd": 113,
+      "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-DRV-01.md",
+      "symbol": "Canonical library routing and common identity/ACL authority gates",
+      "lineStart": 19,
+      "lineEnd": 75,
+      "sha256": "ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"
+    }
+  ],
+  "evidenceFreshness": {
+    "basis": "Whole-file SHA256 from read-only shasum calls on concrete inspected files, not Git blob names or source-line hashes. Normative input manifest hashes match the packet. The three product source files match the baseline digests embedded in the package.",
+    "stagedDependencyPresence": "WP001 descriptor/resolver files exist but are not accepted implementation evidence. Bases files were not found at inspection.",
+    "concurrentIntegration": "Root-owned wave0 changes may land during/after inspection. No assertion is made that the complete working tree equals input_revision. Recompare every recorded whole-file digest and re-read changed seams before implementation; do not relabel changed evidence as current without inspection.",
+    "codegraph": "Unavailable: no .codegraph index for this project. Built-in read/grep/glob used instead. A descriptive find attempt failed due to its judging provider returning HTTP 402; this supplied no evidence of code absence.",
+    "runtimeEvidence": "None produced or claimed; forbidden in this preflight. Artifact validation is not product proof."
+  },
+  "nextExecutableAction": "Root reviews this preflight, commits its wave0 work, resolves immutable reference delivery hashes and issues a clean revision-bound implementation packet only after LSX-WP-001/007/010/011/016 have accepted implementation and readback receipts plus affected EG-EFFECTS/identity/Drive foundations. Before worker dispatch, identify approved transport/query/detail/lifecycle/i18n registration seams and acquire the page.ts lease; re-hash/re-read changed sources. The worker then implements only the four normative new files against those accepted interfaces, sends the PageConfig/descriptor patch request to the integration owner, and executes all six separate proof lanes on the integrated version.",
+  "risks": [
+    "Published RS-BASE-01 says new registered CustomRecord kind and proposed Postgres payload, whereas this refined package explicitly requires initial kind=page/contentKind=record with no global new kind or duplicate store. Follow the refined A+B boundary and have root record the reconciliation; do not change ROX2_ENTITY_KINDS under this package.",
+    "The current authorized shared patch list contains only PageKind/PageConfig. Actual transport/query/detail routing, locale edits and lifecycle registration may need additional existing-file changes. Those require accepted dependency registration interfaces or a reviewed scope amendment, not guessed patch locations.",
+    "PageConfig.grants are HTML source-action approvals bound to index.html digests; reusing them as record field ACL would authorize the wrong object. authorizeRox2Action alone is not entity/field policy enforcement.",
+    "parseRox2TypedRecord accepts generic properties and preserves future raw input only in its result. It does not validate the 18 field types, retain durable original bytes, implement CAS or guarantee safe future-version UI.",
+    "record.create/patchFields/get API list does not name delete/history operations although the UI contract requires soft-delete/history. Reuse and verify native lifecycle APIs; do not waive this requirement or invent a second history store.",
+    "Optional body and record fields can cross commit boundaries; exact ownership, ACL intersection, failure receipt and recovery must be established before showing combined success.",
+    "Unknown schema fields, type migrations and later acknowledged writes can be lost if payload decoders rebuild only known fields or rollback replaces whole snapshots. Preserve raw/versioned data and use accepted WP016 repair semantics.",
+    "Source hashes may become stale during root integration. This is preflight lineage only; accepted implementation receipts must bind the new committed version and recomputed evidence.",
+    "A green isolated test, screenshot, event notification or queued provider receipt cannot establish canonical persistence, shared identity or full feature completion. All mandatory native, restart, policy and actual Electron lanes remain unverified."
+  ]
+}

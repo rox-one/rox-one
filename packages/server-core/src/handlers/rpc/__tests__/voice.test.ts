@@ -36,7 +36,7 @@ describe('voice RPC', () => {
     expect(prefs).toMatchObject({
       sttEngine: 'cloud-rox',
       asrModelId: 'rocks-t1',
-      ttsEngine: 'edge',
+      ttsEngine: 'system',
       wakeWordEnabled: false,
       alwaysListeningConsent: false,
       autoSubmit: false,
@@ -64,7 +64,7 @@ describe('voice RPC', () => {
       audioBase64: wav.toString('base64'),
       mimeType: 'audio/wav',
       transcript: 'injected by the renderer',
-    })).rejects.toThrow(/Voice gateway is not live|fixture transcripts are not production/)
+    })).rejects.toThrow(/Enable cloud ASR consent or select local Whisper/)
   })
 
   it('lists the three local model families without claiming they are ready', async () => {

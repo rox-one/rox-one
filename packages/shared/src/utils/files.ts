@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, statSync, writeFileSync, unlinkSync, mkdtempSync, renameSync } from 'fs';
-import { extname, basename, resolve, join, relative } from 'path';
+import { existsSync, readFileSync, statSync, writeFileSync, unlinkSync, mkdtempSync, renameSync, openSync, closeSync, fsyncSync } from 'fs';
+import { extname, basename, resolve, join, relative, dirname } from 'path';
 import { execSync } from 'child_process';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
@@ -30,21 +30,55 @@ export function readJsonFileSync<T = unknown>(filePath: string): T {
 }
 
 /**
- * Atomically write a file by writing to a temp file then renaming.
- * This prevents partial writes from corrupting the file on crash/interrupt.
- * Uses write-to-temp-then-rename pattern which is atomic on POSIX systems.
+ * Atomically replace a file through a same-directory temporary file.
+ * On Windows, flush the complete staged file before replacement so a failed
+ * write/flush cannot truncate the prior snapshot. A successful return means
+ * the replacement completed; callers must still handle and surface failures.
  */
-export function atomicWriteFileSync(filePath: string, data: string): void {
+export function atomicWriteFileSync(filePath: string, data: string, options?: { readonly durable?: boolean }): void {
   // Unique temp name per write: a fixed `${filePath}.tmp` lets two concurrent
   // writers to the same target (e.g. a page's refresh script and a host one-shot
   // both regenerating snapshot.json) clobber each other's temp mid-rename,
   // producing a torn/empty file or ENOENT. pid + random keeps them disjoint.
   const tmpPath = `${filePath}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`;
+  if (process.platform === 'win32') {
+    let fd: number | undefined;
+    let ownsTmp = false;
+    try {
+      const mode = existsSync(filePath) ? statSync(filePath).mode & 0o777 : undefined;
+      fd = openSync(tmpPath, 'wx', mode);
+      ownsTmp = true;
+      writeFileSync(fd, data, 'utf-8');
+      fsyncSync(fd);
+      closeSync(fd);
+      fd = undefined;
+      renameSync(tmpPath, filePath);
+    } catch (error) {
+      if (fd !== undefined) {
+        try { closeSync(fd); } catch {}
+      }
+      // Only this transaction's uniquely named staged file is removed. The
+      // destination is never unlinked before replacement, preserving old data
+      // when staging, flush, or replacement fails.
+      if (ownsTmp) {
+        try { unlinkSync(tmpPath); } catch {}
+      }
+      throw error;
+    }
+    return;
+  }
+
   try {
-    writeFileSync(tmpPath, data);
+    if (options?.durable) {
+      const fd = openSync(tmpPath, 'wx');
+      try { writeFileSync(fd, data); fsyncSync(fd); } finally { closeSync(fd); }
+    } else { writeFileSync(tmpPath, data); }
     renameSync(tmpPath, filePath);
+    if (options?.durable) {
+      const directoryFd = openSync(dirname(filePath), 'r');
+      try { fsyncSync(directoryFd); } finally { closeSync(directoryFd); }
+    }
   } catch (error) {
-    // Clean up temp file if rename failed
     try { unlinkSync(tmpPath); } catch {}
     throw error;
   }

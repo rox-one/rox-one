@@ -9,13 +9,20 @@
  */
 
 import { RPC_CHANNELS } from './channels'
-import { resolveConfigDir } from "../config/paths.ts"
 
 // ---------------------------------------------------------------------------
 // LOCAL_ONLY — fundamentally requires local OS / Electron
 // ---------------------------------------------------------------------------
 
 export const LOCAL_ONLY_CHANNELS = new Set<string>([
+  // Repository capture uses the verified local Electron source owner.
+  RPC_CHANNELS.codeIntelligence.PREVIEW,
+  RPC_CHANNELS.codeIntelligence.BIND,
+  RPC_CHANNELS.codeIntelligence.CAPTURE,
+  RPC_CHANNELS.codeIntelligence.LIST,
+  RPC_CHANNELS.codeIntelligence.READ_SPAN,
+  RPC_CHANNELS.codeIntelligence.FRESHNESS,
+  RPC_CHANNELS.codeIntelligence.CANCEL,
   // remote — local connectivity management (reaches out to remote server from local app)
   RPC_CHANNELS.remote.TEST_CONNECTION,
 
@@ -91,6 +98,10 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.credentials.APPLY_MIGRATION,
   RPC_CHANNELS.credentials.GET_MIGRATION_STATUS,
   RPC_CHANNELS.credentials.ROLLBACK_MIGRATION,
+
+  // Native onboarding may inspect host runtime configuration only through
+  // the local Electron window's bounded, credential-free projection.
+  RPC_CHANNELS.llmConnections.GET_STARTUP_SUMMARY,
 
   // shell — local OS shell (openFile/showInFolder guarded for remote)
   RPC_CHANNELS.shell.OPEN_URL,
@@ -462,6 +473,9 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.orgs.GET_IDENTITY,
   RPC_CHANNELS.orgs.UPDATE_IDENTITY,
   RPC_CHANNELS.orgs.SET_WORKSPACE_ORG,
+  RPC_CHANNELS.orgs.UPDATE_MEMBER_ROLE,
+  RPC_CHANNELS.orgs.REMOVE_MEMBER,
+  RPC_CHANNELS.orgs.REVOKE_INVITE,
 
   // identity — profile + service connections (Identity Center, S-07)
   RPC_CHANNELS.identity.GET_STATE,
@@ -506,6 +520,8 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   // sessions — core session runtime
   RPC_CHANNELS.sessions.GET,
   RPC_CHANNELS.sessions.GET_UNREAD_SUMMARY,
+  RPC_CHANNELS.sessions.GET_BUDGET,
+  RPC_CHANNELS.sessions.SET_BUDGET,
   RPC_CHANNELS.sessions.MARK_ALL_READ,
   RPC_CHANNELS.sessions.UNREAD_SUMMARY_CHANGED,
   RPC_CHANNELS.sessions.CREATE,
@@ -577,8 +593,11 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.notes.LIST,
   RPC_CHANNELS.notes.READ,
   RPC_CHANNELS.notes.SAVE,
+  RPC_CHANNELS.notes.UPDATE_PROPERTIES,
   RPC_CHANNELS.notes.CREATE,
+  RPC_CHANNELS.notes.PREPARE_CREATE,
   RPC_CHANNELS.notes.RENAME,
+  RPC_CHANNELS.notes.MOVE,
   RPC_CHANNELS.notes.DELETE,
   RPC_CHANNELS.notes.SEARCH,
   RPC_CHANNELS.notes.GET_BACKLINKS,
@@ -590,13 +609,29 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.notes.LIST_ASSETS,
   RPC_CHANNELS.notes.DELETE_ASSET,
   RPC_CHANNELS.notes.RENAME_ASSET,
-  RPC_CHANNELS.notes.UPDATE_PROPERTIES,
   RPC_CHANNELS.notes.REBUILD_INDEX,
   RPC_CHANNELS.notes.WATCH,
   RPC_CHANNELS.notes.UNWATCH,
   RPC_CHANNELS.notes.CHANGED,
   RPC_CHANNELS.notes.RENAME_FOLDER,
   RPC_CHANNELS.notes.DELETE_FOLDER,
+
+  // Native projection follows the canonical workspace server. Native writes
+  // still use Notes/nativeData; handlers explicitly reject the legacy WAL path.
+  RPC_CHANNELS.content.RESOLVE,
+  RPC_CHANNELS.content.DESCRIBE,
+  RPC_CHANNELS.content.ADOPT_DESCRIPTOR,
+  RPC_CHANNELS.content.COMMIT_MARKDOWN,
+  RPC_CHANNELS.content.GET_COMMIT_RECEIPT,
+  RPC_CHANNELS.content.GET_BLOCK_TREE,
+  RPC_CHANNELS.content.PREVIEW_MARKER_MAPPING,
+  RPC_CHANNELS.content.APPLY_MARKER_MAPPING,
+
+  // Native canonical data follows the authenticated workspace's server.
+  RPC_CHANNELS.nativeData.GET_CONTEXT,
+  RPC_CHANNELS.nativeData.READ_ENTITY,
+  RPC_CHANNELS.nativeData.MUTATE,
+  RPC_CHANNELS.nativeData.PULL_CHANGES,
 
   // knowledge — P1 read-only knowledge provider (workspace-data read ops +
   // change broadcast, proxied to the workspace-owning server)
@@ -652,6 +687,8 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
 
   // memory — lesson/context data served by workspace host
   RPC_CHANNELS.memory.LIST_LESSONS,
+  RPC_CHANNELS.memory.LIST_ARCHIVE,
+  RPC_CHANNELS.memory.RESTORE_ARCHIVE,
   RPC_CHANNELS.memory.ADD_LESSON,
   RPC_CHANNELS.memory.UPDATE_LESSON,
   RPC_CHANNELS.memory.DELETE_LESSON,
@@ -846,7 +883,13 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.projects.LIST_ASSETS,
   RPC_CHANNELS.projects.UPLOAD_ASSET,
   RPC_CHANNELS.projects.DELETE_ASSET,
+  RPC_CHANNELS.projects.GET_ROADMAP,
+  RPC_CHANNELS.projects.SAVE_ROADMAP,
+  RPC_CHANNELS.projects.AI_STATUS,
+  RPC_CHANNELS.projects.AI_ROADMAP,
   RPC_CHANNELS.projects.CHANGED,
+  RPC_CHANNELS.projects.GET_OKR,
+  RPC_CHANNELS.projects.SAVE_OKR,
 
   // pages — workspace pages (mini dashboards)
   RPC_CHANNELS.pages.GET,

@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-30T15:35:21.067600+00:00",
+  "inputRevision": "665ba43ac1f360b7753a0e939d06794a956f4969",
+  "manifestPath": "/tmp/rox-wp48-domain/backend-v3/manifest.json",
+  "manifestSha256": "f10780ca51d1c0e8cd781df645bd43841dd4f71b332a82251bb10ccd7f07c267",
+  "exactPaths": [
+    {
+      "path": "apps/workspace-service/migrations/48-license-audit.sql",
+      "baseSha256": null,
+      "resultSha256": "57ed39ed25bf89f429fd38e15f5ed1a226b762d71ba0f7653c447a7bc6a69b91",
+      "patchSha256": "37d591b8a556cbf25a30cb1f4a597b69e5992c804d28a434fdacb1629af58903",
+      "patch": "patches/apps__workspace-service__migrations__48-license-audit.sql.patch"
+    },
+    {
+      "path": "apps/workspace-service/src/configuration.ts",
+      "baseSha256": "fc39c9f4404fbf3b485c47f177a6e3b551933331dc940b73c8d70cc5206a181d",
+      "resultSha256": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+      "patchSha256": "2cdd9cd6187cd902f40e91c6162437ecb97d42a025c46f6b583fb5b90437bc56",
+      "patch": "patches/apps__workspace-service__src__configuration.ts.patch"
+    },
+    {
+      "path": "apps/workspace-service/src/http.ts",
+      "baseSha256": "461192aff3985fa5c015ce468b08e54cfc1fb60b8d3dabccd016bbdb9cabf57c",
+      "resultSha256": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+      "patchSha256": "5fa7e6d571f6c643187fb2a63c0ae482736c3e03e87aab30b1a1b36fbcd6b5c0",
+      "patch": "patches/apps__workspace-service__src__http.ts.patch"
+    },
+    {
+      "path": "apps/workspace-service/src/index.ts",
+      "baseSha256": "bf390e866e143827ca9e2e67a2e9cf2e514d982e00f3d1d8ddf8a5cdf87b2b96",
+      "resultSha256": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+      "patchSha256": "c309cd8e99adf14996ed6239d91e449b6c6e10fe222d08d7cdec7583cd2bf067",
+      "patch": "patches/apps__workspace-service__src__index.ts.patch"
+    },
+    {
+      "path": "apps/workspace-service/src/modules/identity/repository.ts",
+      "baseSha256": "9899ca80d645ea243e395debcec2fa9405f64e6e3c945ff706a5e533269e0a6d",
+      "resultSha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+      "patchSha256": "66a3965fb74c227f1aaeba07788879d854a23dc36e8590673d8ed9cadaa31e26",
+      "patch": "patches/apps__workspace-service__src__modules__identity__repository.ts.patch"
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/commands.ts",
+      "baseSha256": null,
+      "resultSha256": "0b0971dfb6eb4c68cb16396dae4cd864dbb567cc0e4c3930b9bdfeb5c14a3af7",
+      "patchSha256": "571269e9b0cdc4aa1b994523a4bd0f57c491b44205b323f3586a570889b59da8",
+      "patch": "patches/apps__workspace-service__src__modules__licenses__commands.ts.patch"
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/registry.ts",
+      "baseSha256": null,
+      "resultSha256": "32a0c2ef4b13a098f2606dc9a02551db22e22486d8225586b9636cb583c59b7f",
+      "patchSha256": "ce3273d51e8a1e3f087ade1c0d46b6cf814eec678d5050ea75db8cb4318decdf",
+      "patch": "patches/apps__workspace-service__src__modules__licenses__registry.ts.patch"
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/repository.ts",
+      "baseSha256": null,
+      "resultSha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+      "patchSha256": "67228dd52417625ff17a76fe28fa0c3b48e9d9ef298b20fd2bc90a9e8f1f2a64",
+      "patch": "patches/apps__workspace-service__src__modules__licenses__repository.ts.patch"
+    },
+    {
+      "path": "apps/workspace-service/src/server.ts",
+      "baseSha256": "b44b1de53867b6d46312e3f350b142ebaa5d1700cc6f7fce3d2e53c875c75621",
+      "resultSha256": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+      "patchSha256": "9454e3def37ef1441f01b628513362b85bd2b1ca23d94111fcfeef465e952b88",
+      "patch": "patches/apps__workspace-service__src__server.ts.patch"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "baseSha256": "cd5c85783eabd35ec0b8963cce2e1ec4fcd87d4d3dce1225bca6a502e9d52ca4",
+      "resultSha256": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "patchSha256": "2595c38ce1ad91d301286d7cec1775f6304402bfa7dc8ef32be76a61e879613d",
+      "patch": "patches/packages__core__src__rox2__platform-contract.ts.patch"
+    },
+    {
+      "path": "packages/server-core/src/transport/server.ts",
+      "baseSha256": "f61389662c1b10024bb8773aaa09b2b6c78c21c3bb136f6b7ed05ffc47e14ea8",
+      "resultSha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+      "patchSha256": "3a70b7ab85ab016bb670e14a275207af0c445739400c9a22c4538538d0289ca4",
+      "patch": "patches/packages__server-core__src__transport__server.ts.patch"
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "baseSha256": "2c9542094dcb2a8fb4664edf6a597a1e3d7e80eed6a9a84be07671e03c5ec99a",
+      "resultSha256": "d7da03384d9511f8b78fb027382bcc5f8d7f7199b69c06ec74d13a26c0ca0697",
+      "patchSha256": "ec77304ea18a1c440f1d780c2d12c14e23cd0759bb682cd1b55b3df7dc5d9344",
+      "patch": "patches/packages__server-core__src__transport__types.ts.patch"
+    },
+    {
+      "path": "packages/shared/package.json",
+      "baseSha256": "ca55daa9dc0ec0342e52b695df2efa247d8fd7e6baab7100434813d9a18a0c09",
+      "resultSha256": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+      "patchSha256": "e00921f513492e05ca67cc6dd7c09342edc501412ea916597ac7f53a639a3e00",
+      "patch": "patches/packages__shared__package.json.patch"
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+      "baseSha256": "7bbbae09fa49763bebddfc57f76b2d43a6c5ca7f32b31772c6c858933b82f265",
+      "resultSha256": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+      "patchSha256": "d3e9556c348ce26e2b01358bd98129df3a34cd19306b837de1717593c9512143",
+      "patch": "patches/packages__shared__src__workspace-domain__identity__contracts.ts.patch"
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/licenses/contracts.ts",
+      "baseSha256": null,
+      "resultSha256": "ccc60719c7f037e6e2f3d30c471497585ff1ff321ade044217ab82ccb8901ae6",
+      "patchSha256": "551f6a003fc4f0b8901684bbd6adb42e786ddb94758a37ba4c3ccd9f266bd56d",
+      "patch": "patches/packages__shared__src__workspace-domain__licenses__contracts.ts.patch"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-domain.test.ts",
+      "baseSha256": null,
+      "resultSha256": "87cc9c549e4ffaf2c88c8b02d9ac49abd96dddc0c3e1e97779423f9b163c1618",
+      "patchSha256": "0ed23d8b4ae33af2682a82c0bdbba9c6ac9631b31927550be94b10b0202038bc",
+      "patch": "patches/tests__macro-integration__wp-48-domain.test.ts.patch"
+    }
+  ],
+  "rootReviewed": true,
+  "identityEndpointPreserved": true,
+  "unrelatedWrites": false,
+  "mechanism": "ROOT_SCOPED_VERIFIED",
+  "interface": "NOT_VERIFIED",
+  "fullDoD": false,
+  "independentGate": "Ultra actual v3 seven variants, projection, READ-revoke controls passed; sealed receipt pending readback",
+  "rootRuns": [
+    {
+      "log": "/tmp/rox-wp48-v3-root-domain-final.log",
+      "sha256": "ef2b5b94d29a4276e9280f8eb3237e04b50dabf842fec4ca2e4f44264c3c54f4",
+      "passed": 17,
+      "failed": 0,
+      "assertions": 146,
+      "files": 1
+    },
+    {
+      "log": "/tmp/rox-wp48-v3-root-wp01-neighbors.log",
+      "sha256": "a65f98790b4d09b84a9768cd0b6c0e536e396c20e9cc526576d6331d9f61b62f",
+      "passed": 74,
+      "failed": 0,
+      "assertions": 1093,
+      "files": 6
+    }
+  ],
+  "testFixtureReconciliation": {
+    "path": "tests/macro-integration/wp-48-domain.test.ts",
+    "currentSha256": "3e3e65c75dffe74af561949ff69281c86b702274e171b2a0156c826d6f779279",
+    "nativeV1FixtureAdaptationOnly": true,
+    "explicitDependencySymlinkOnly": true,
+    "assertionsChanged": false,
+    "firstFailurePreserved": true
+  },
+  "independentReview": "evidence/wp48/independent-v3/root-readback.json",
+  "typecheck": {
+    "serviceExitCode": 0,
+    "electronPrior": 43,
+    "electronCurrent": 43,
+    "new": 0
+  }
+}

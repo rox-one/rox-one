@@ -102,36 +102,6 @@ console.log('ok');
     expect(result.stdout.trim()).toBe('ok')
   })
 
-  it('invites and accepts locally', async () => {
-    const configDir = tmp()
-    const result = await runInConfigDir(
-      configDir,
-      `
-const org = api.createOrganization({ name: 'Rox' });
-const invite = api.inviteToOrganization({
-  orgId: org.id,
-  emailOrUsername: 'teammate@example.com',
-  role: 'member',
-});
-if (!invite.token) throw new Error('missing token');
-if (invite.acceptedAt) throw new Error('should be pending');
-// Redeem as a different local user so owner membership stays distinct.
-const accepted = api.acceptInvite({ token: invite.token, userId: 'user_teammate_test' });
-if (accepted.org.id !== org.id) throw new Error('org mismatch');
-if (accepted.member.role !== 'member') throw new Error('role mismatch: ' + accepted.member.role);
-if (accepted.member.userId !== 'user_teammate_test') throw new Error('userId mismatch');
-if (accepted.member.email !== 'teammate@example.com') throw new Error('email: ' + accepted.member.email);
-if (!accepted.invite.acceptedAt) throw new Error('not accepted');
-const members = api.listOrgMembers(org.id);
-if (!members.some((m) => m.role === 'owner')) throw new Error('missing owner');
-if (!members.some((m) => m.role === 'member' && m.userId === 'user_teammate_test')) throw new Error('missing member');
-console.log('ok');
-`,
-    )
-    expect(result.stderr).toBe('')
-    expect(result.exitCode).toBe(0)
-    expect(result.stdout.trim()).toBe('ok')
-  })
 
   it('ensures stable local userId across calls', async () => {
     const configDir = tmp()
@@ -191,6 +161,132 @@ console.log(JSON.stringify({ inviteId: invite.id, token: invite.token }));
     expect(stored?.token).toBe(token)
   })
 
+  it('rejects an invite addressed to a different account without consuming it', async () => {
+    const configDir = tmp()
+    const result = await runInConfigDir(
+      configDir,
+      `
+const { updatePreferences } = await import(${JSON.stringify(pathToFileURL(join(import.meta.dir, '../../config/preferences.ts')).href)});
+updatePreferences({ email: 'ada@example.com' });
+const org = api.createOrganization({ name: 'Exact recipient' });
+const invite = api.inviteToOrganization({
+  orgId: org.id,
+  emailOrUsername: 'grace@example.com',
+});
+let rejected = false;
+try { api.acceptInvite({ token: invite.token }); }
+catch { rejected = true; }
+if (!rejected) throw new Error('wrong recipient accepted invite');
+if (api.findInviteByToken(invite.token)?.acceptedAt) throw new Error('failed attempt consumed invite');
+if (api.listOrgMembers(org.id).length !== 1) throw new Error('failed attempt changed membership');
+console.log('ok');
+`,
+    )
+    expect(result.stderr).toBe('')
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout.trim()).toBe('ok')
+  })
+
+  it('binds organization access and invitation acceptance to the server principal subject', async () => {
+    const configDir = tmp()
+    const ownerSubject = '069a72c6-259e-4e76-b7b3-17e5822cbf36'
+    const memberSubject = 'bf42a7d3-fb9a-4b74-97c0-a79c5a2e1f31'
+    const result = await runInConfigDir(
+      configDir,
+      `
+const org = api.createOrganization({ name: 'Server identity' }, { userId: ${JSON.stringify(ownerSubject)} });
+if (org.members[0].userId !== ${JSON.stringify(ownerSubject)}) throw new Error('owner used local profile ID');
+const invite = api.inviteToOrganization({
+  orgId: org.id,
+  emailOrUsername: ${JSON.stringify(memberSubject)},
+}, { userId: ${JSON.stringify(ownerSubject)} });
+let emailRejected = false;
+try {
+  api.inviteToOrganization({ orgId: org.id, emailOrUsername: 'person@example.com' }, { userId: ${JSON.stringify(ownerSubject)} });
+} catch { emailRejected = true; }
+if (!emailRejected) throw new Error('unverified email invite accepted on native path');
+let actorSpoofRejected = false;
+try {
+  api.acceptInvite({ token: invite.token, userId: 'renderer-controlled' }, { userId: ${JSON.stringify(memberSubject)} });
+} catch { actorSpoofRejected = true; }
+if (!actorSpoofRejected) throw new Error('renderer-supplied userId altered acceptance');
+const accepted = api.acceptInvite({ token: invite.token }, { userId: ${JSON.stringify(memberSubject)} });
+if (accepted.member.userId !== ${JSON.stringify(memberSubject)}) throw new Error('accepted member ID is not server subject');
+if (accepted.member.email !== undefined) throw new Error('unverified invitation target was stored as verified email');
+if (api.listOrganizations(${JSON.stringify(memberSubject)}).length !== 1) throw new Error('member cannot read own org');
+if (api.listOrganizations('9e5820f4-511e-4a3f-b297-e1359ee7f9c1').length !== 0) throw new Error('non-member can read org');
+let denied = false;
+try { api.listOrgMembers(org.id, '9e5820f4-511e-4a3f-b297-e1359ee7f9c1'); }
+catch { denied = true; }
+if (!denied) throw new Error('non-member can read roster');
+console.log('ok');
+`,
+    )
+    expect(result.stderr).toBe('')
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout.trim()).toBe('ok')
+  })
+
+  it('supports owner-fenced role, revoke, and removal lifecycle with an owner invariant', async () => {
+    const configDir = tmp()
+    const ownerSubject = '069a72c6-259e-4e76-b7b3-17e5822cbf36'
+    const memberSubject = 'bf42a7d3-fb9a-4b74-97c0-a79c5a2e1f31'
+    const result = await runInConfigDir(
+      configDir,
+      `
+const owner = { userId: ${JSON.stringify(ownerSubject)} };
+const org = api.createOrganization({ name: 'Lifecycle' }, owner);
+let lastOwnerRemovalRejected = false;
+try { api.removeOrganizationMember(org.id, owner.userId, owner); }
+catch { lastOwnerRemovalRejected = true; }
+if (!lastOwnerRemovalRejected) throw new Error('removed the last owner');
+const invite = api.inviteToOrganization({ orgId: org.id, emailOrUsername: ${JSON.stringify(memberSubject)} }, owner);
+api.revokeOrganizationInvite(org.id, invite.id, owner);
+let revokedAcceptanceRejected = false;
+try { api.acceptInvite({ token: invite.token }, { userId: ${JSON.stringify(memberSubject)} }); }
+catch { revokedAcceptanceRejected = true; }
+if (!revokedAcceptanceRejected) throw new Error('revoked invitation was accepted');
+if (api.listOrganizations(owner.userId)[0].pendingInvites.length !== 0) throw new Error('revoked invite still pending');
+const nextInvite = api.inviteToOrganization({ orgId: org.id, emailOrUsername: ${JSON.stringify(memberSubject)} }, owner);
+api.acceptInvite({ token: nextInvite.token }, { userId: ${JSON.stringify(memberSubject)} });
+api.updateMemberRole(org.id, ${JSON.stringify(memberSubject)}, 'admin', owner);
+if (api.listOrgMembers(org.id, owner.userId).find((member) => member.userId === ${JSON.stringify(memberSubject)})?.role !== 'admin') {
+  throw new Error('role update did not persist');
+}
+api.removeOrganizationMember(org.id, ${JSON.stringify(memberSubject)}, owner);
+if (api.listOrgMembers(org.id, owner.userId).length !== 1) throw new Error('member removal did not persist');
+console.log('ok');
+`,
+    )
+    expect(result.stderr).toBe('')
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout.trim()).toBe('ok')
+  })
+
+  it('rejects an expired invite without changing membership', async () => {
+    const configDir = tmp()
+    const result = await runInConfigDir(
+      configDir,
+      `
+const { readFileSync, writeFileSync } = await import('fs');
+const org = api.createOrganization({ name: 'Expired invite' });
+const invite = api.inviteToOrganization({ orgId: org.id, emailOrUsername: 'owner@example.com' });
+const path = api.getOrgsPath();
+const store = JSON.parse(readFileSync(path, 'utf8'));
+store.invites[0].expiresAt = 1;
+writeFileSync(path, JSON.stringify(store));
+let rejected = false;
+try { api.acceptInvite({ token: invite.token }); }
+catch { rejected = true; }
+if (!rejected) throw new Error('expired invite accepted');
+if (api.listOrgMembers(org.id).length !== 1) throw new Error('expired invite changed membership');
+console.log('ok');
+`,
+    )
+    expect(result.stderr).toBe('')
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout.trim()).toBe('ok')
+  })
   it('loadOrgsStore fails closed on corrupt existing orgs.json', async () => {
     const configDir = tmp()
     const orgsPath = join(configDir, 'orgs.json')

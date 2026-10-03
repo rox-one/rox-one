@@ -66,6 +66,22 @@ describe('repeat rules', () => {
     expect(nextRepeatDate({ rule: 'daily', interval: 3, mode: 'after' }, day(-10), now)).toBe(day(3))
     expect(nextRepeatDate({ rule: 'daily', interval: 1, until: today }, today, now)).toBeNull()
   })
+  it('keeps the scheduled wall clock when a zoned weekly recurrence crosses DST', () => {
+    const anchor = Date.UTC(2026, 2, 1, 14, 30)
+    const completed = Date.UTC(2026, 2, 1, 15)
+    const next = nextRepeatDate({ rule: 'weekly', interval: 1, timeZone: 'America/New_York' }, anchor, completed)
+    expect(next).toBe(Date.UTC(2026, 2, 8, 13, 30))
+  })
+
+  it('returns the same persisted successor when completion is retried', () => {
+    const store = new PersonalTaskStore()
+    const task = store.create({ title: 'Recurring', list: 'today', recurrence: { rule: 'daily', interval: 1 }, now })
+    const first = store.completeTask(task.id, now)
+    const retry = store.completeTask(task.id, now + 10_000)
+    expect(retry.next?.id).toBe(first.next?.id)
+    expect(store.list().filter((item) => item.repeatOf === task.id)).toHaveLength(1)
+  })
+
 
   it('completeTask spawns the next occurrence with a fresh checklist', () => {
     const store = new PersonalTaskStore()

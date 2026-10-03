@@ -1,0 +1,309 @@
+{
+  "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "isolatedCheckout": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "isolatedRevisionMode": "detached exact010 source clone",
+  "toolchain": {
+    "bun": "1.3.14",
+    "node": "24.19.0"
+  },
+  "receipts": {
+    "validate-ci": {
+      "label": "validate-ci",
+      "command": [
+        "/workspace/.onboarding-tools/node_modules/.bin/bun",
+        "--no-env-file",
+        "run",
+        "validate:ci"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "exit": 0,
+      "seconds": 199.679,
+      "log": "validate-ci.log",
+      "logSha256": "5b0225ed4c0f98b6e39aece940694e05a08b9acce53033bcc5c627c7283d5c61",
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "minimalChildEnvironment": true,
+      "HOMERepurposed": false,
+      "sourceAndLockUnchanged": true,
+      "regularFileCount": 6178,
+      "gitlinkCount": 2
+    },
+    "webui-typecheck": {
+      "label": "webui-typecheck",
+      "command": [
+        "/workspace/.onboarding-tools/node_modules/.bin/bun",
+        "--no-env-file",
+        "run",
+        "webui:typecheck"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "exit": 0,
+      "seconds": 73.983,
+      "log": "webui-typecheck.log",
+      "logSha256": "2f81eb99ff92fd33b68966d34e38497fde1c57e3efbc3c0a364442498bc88092",
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "minimalChildEnvironment": true,
+      "HOMERepurposed": false,
+      "sourceAndLockUnchanged": true,
+      "regularFileCount": 6178,
+      "gitlinkCount": 2
+    },
+    "electron-build": {
+      "label": "electron-build",
+      "command": [
+        "/workspace/.onboarding-tools/node_modules/.bin/bun",
+        "--no-env-file",
+        "run",
+        "electron:build"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "exit": 0,
+      "seconds": 126.565,
+      "log": "electron-build.log",
+      "logSha256": "97bea1ebc0ff46f8266660a02930d504d1b479a4e36e4ddfafd5652f1fdd2cb6",
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "minimalChildEnvironment": true,
+      "HOMERepurposed": false,
+      "sourceAndLockUnchanged": true,
+      "regularFileCount": 6178,
+      "gitlinkCount": 2
+    },
+    "compiled-sqlite": {
+      "label": "compiled-sqlite",
+      "command": [
+        "node",
+        "/tmp/rox-r15-exact-ui-20261001/electron-types-private/compiled-sqlite.cjs"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "exit": 0,
+      "seconds": 1.277,
+      "log": "compiled-sqlite.log",
+      "logSha256": "c7c810a730420ec529c83ff8b33fb2b9e77194866449bb48ea59f9ec0cd70b6e",
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "minimalChildEnvironment": true,
+      "HOMERepurposed": false,
+      "sourceAndLockUnchanged": true,
+      "regularFileCount": 6178,
+      "gitlinkCount": 2
+    },
+    "compiled-main-host": {
+      "label": "compiled-main-host",
+      "command": [
+        "node",
+        "/tmp/rox-r15-exact-ui-20261001/electron-types-private/compiled-main-host.cjs"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "exit": 0,
+      "seconds": 2.035,
+      "log": "compiled-main-host.log",
+      "logSha256": "2c87ddfd6ec6ecc29bc76d42d67d2529354a4ba88af292246b62cae847fe6478",
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "minimalChildEnvironment": true,
+      "HOMERepurposed": false,
+      "sourceAndLockUnchanged": true,
+      "regularFileCount": 6178,
+      "gitlinkCount": 2
+    }
+  },
+  "validateCiExecutedBunTests": 248,
+  "validateCiExecutedPythonTests": 19,
+  "validateCiFailures": 0,
+  "validateCiExpectedCalls": 708,
+  "validateCiSkippedTargets": [
+    "workers/pages absent from OSS export"
+  ],
+  "i18n": {
+    "parity": "11 locales /7449 keys each",
+    "coverage": "7165 literal references /5256 unique keys /7449 English keys",
+    "sorted": "PASS"
+  },
+  "rendererMapClosure": {
+    "rendererMapCount": 408,
+    "textualSourceEntryCount": 1192,
+    "exactTextualMatches": 1192,
+    "textualMismatches": [],
+    "generatedAssetWrapperCount": 23,
+    "allGeneratedAssetWrappers": true,
+    "allRequiredShellSourcesCompiled": true,
+    "htmlEntries": [
+      "apps/electron/dist/renderer/browser-empty-state.html",
+      "apps/electron/dist/renderer/browser-toolbar.html",
+      "apps/electron/dist/renderer/index.html",
+      "apps/electron/dist/renderer/playground.html",
+      "apps/electron/dist/renderer/voice-overlay.html"
+    ],
+    "artifactCount": 1618,
+    "sqliteAdapterOwnerSha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831",
+    "sqliteAdapterOwnerBytesExpected": true
+  },
+  "probeResults": {
+    "compiled-sqlite": {
+      "actualNode": "24.19.0",
+      "builtInitializerLoaded": true,
+      "fileUrlExact": true,
+      "rows": 1,
+      "rollback": true,
+      "readonlyRefusal": true,
+      "closedRefusal": true,
+      "restartPersistence": true,
+      "assertions": 16,
+      "runtimeAssertions": 14,
+      "extractionAssertions": 2,
+      "bundleSha256": "c18f109ed52c09c5b7cf2b131e4ab3bfd01c116c55a10a8799454fc27cd4f261",
+      "initializerSha256": "325b0b150cc1c33e6f740d86af7c395d4702b52d44e2c5541f76fc6755fb3b75",
+      "compiledStartLine": 437408
+    },
+    "compiled-main-host": {
+      "bundleSha256": "c18f109ed52c09c5b7cf2b131e4ab3bfd01c116c55a10a8799454fc27cd4f261",
+      "actualNode": "24.19.0",
+      "mockedElectronHost": true,
+      "declaredMockElectronVersion": "39.2.7",
+      "installedElectronOrMacAcceptance": false,
+      "readinessHeld": true,
+      "electronRequires": 46,
+      "whenReadyCalls": 2,
+      "windowConstructions": 0,
+      "networkAttempts": 0,
+      "childAttempts": 0,
+      "outsideReads": 0,
+      "outsideWrites": 0,
+      "publicSystemMetadataReads": 2,
+      "outsideFileDetails": [],
+      "protocolRegistrations": 2,
+      "ipcHandlers": 1,
+      "requireReturned": true,
+      "error": null
+    }
+  },
+  "warnings": [
+    "Existing duplicate-case route-parser pages/page-info warnings; large renderer chunks.",
+    "Pi subprocess build reports koffi absent/not required by current Pi SDK."
+  ],
+  "scopeLimitations": [
+    "Mock Electron host gate; no installed/native/macOS/iOS/provider acceptance.",
+    "No full143/full109/PG/CodeQL acceptance."
+  ],
+  "cleanup": {
+    "ownProcessesActive": [],
+    "removedOwnPrivateDirectories": [
+      "/tmp/rox-r15-exact-ui-20261001/electron-types-private/private-config",
+      "/tmp/rox-r15-exact-ui-20261001/electron-types-private/cache",
+      "/tmp/rox-r15-exact-ui-20261001/electron-types-private/tmp"
+    ],
+    "sharedCheckoutDependenciesAndDistRetained": true,
+    "originalUnchangedAndClean": {
+      "revision": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "status": ""
+    },
+    "helpersRetainedAndCopiedToEvidence": true
+  }
+}

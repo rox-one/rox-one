@@ -1,12 +1,11 @@
 import type { TeamMemberRef } from './types.ts'
 
-/** Handle used in @mentions: username, else email local-part, else slugified name. */
+/** Stable handle; the opaque member id suffix prevents collisions across a roster. */
 export function mentionHandle(member: TeamMemberRef): string {
   const base = member.username?.trim() || member.email?.split('@')[0]?.trim() || member.displayName.trim()
-  return base
-    .toLowerCase()
-    .replace(/\s+/g, '.')
-    .replace(/[^\p{L}\p{N}._-]/gu, '')
+  const handle = base.toLowerCase().replace(/\s+/g, '.').replace(/[^\p{L}\p{N}._-]/gu, '')
+  const stableId = member.userId.toLowerCase().replace(/[^\p{L}\p{N}-]/gu, '')
+  return `${handle || 'member'}.${stableId || 'unknown'}`
 }
 
 const MENTION_RE = /(^|[^\p{L}\p{N}_.@])@([\p{L}\p{N}][\p{L}\p{N}._-]*)/gu
@@ -21,15 +20,10 @@ export function extractMentionHandles(text: string): string[] {
   return out
 }
 
-/** Resolve @handles in text against the real roster; unknown handles are ignored. */
+/** Resolve only exact stable handles from the visible organization roster. */
 export function resolveMentions(text: string, roster: readonly TeamMemberRef[]): string[] {
-  const handles = extractMentionHandles(text)
-  if (handles.length === 0) return []
-  const ids: string[] = []
-  for (const member of roster) {
-    if (handles.includes(mentionHandle(member)) && !ids.includes(member.userId)) ids.push(member.userId)
-  }
-  return ids
+  const handles = new Set(extractMentionHandles(text))
+  return roster.filter((member) => handles.has(mentionHandle(member))).map((member) => member.userId)
 }
 
 /** Members whose handle or name starts with the partial query (for a picker). */

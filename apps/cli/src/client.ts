@@ -7,6 +7,7 @@
 
 import {
   PROTOCOL_VERSION,
+  assertNativeCredentialTransport,
   type MessageEnvelope,
 } from '@craft-agent/shared/protocol'
 import {
@@ -60,6 +61,7 @@ export class CliRpcClient {
   /** Connect to the server and complete the handshake. Returns the assigned clientId. */
   async connect(): Promise<string> {
     if (this._destroyed) throw new Error('Client destroyed')
+    assertNativeCredentialTransport(this.url, this.token)
 
     return new Promise<string>((resolve, reject) => {
       const timer = setTimeout(() => {

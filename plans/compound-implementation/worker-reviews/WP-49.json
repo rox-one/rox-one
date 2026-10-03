@@ -1,0 +1,525 @@
+{
+  "task_id": "WP-49-preflight",
+  "attempt_id": "d0925f1a48e1131e50c42fd05ed6b09b",
+  "packet_hash": "62b601fbb0b464a29e3aff07af0cdb39621c447097fc2ba9af41ec086b4d1eac",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-49",
+  "featureComplete": false,
+  "mode": "inspect-only; owned preflight artifact, not implementation",
+  "workTier": "bounded-workflow",
+  "dependencies": ["WP-02", "WP-03"],
+  "inspection": {
+    "authority": "Only this report was written. No product source, tests, manifests, progress, shared file or Git state changed. No builds, tests, native UI or network operations were run.",
+    "scope": "Six normative affected files, direct imported page/editor/protocol/transport/document contracts, their dependency manifests, and relevant published specification sections.",
+    "revisionQualification": "input_revision is the dispatch revision, not a claim that inspected bytes equal committed HEAD. Evidence describes the live working tree, which contains lead-owned uncommitted wave0 work. Whole-file SHA-256 values bind the observations; re-read changed files after wave0 and accepted dependency integration.",
+    "specificationHash": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "sourceFreshness": "Hashes captured after reads. First supplied verifier run failed because lead integration changed NotesPage.tsx from 7f7785d836d3336e9f3fa3835231f96d5c5965c3a6704cba54276f20c55c907b. Re-read saveCurrentNote at 1022-1098, editor host at 2591-2620 and added block-tree/marker seams at 675-734; refreshed whole-file digest is ac127ef6789ba21ef516bbe79a03c1e02ec20fcce66b87a09cf6ef0668a34c87. The save reconciliation and Markdown editor observations still hold. Any subsequent change invalidates affected references and requires reinspection.",
+    "verificationHistory": [{"attempt": 1, "result": "REJECTED_STALE_SOURCE", "evidence": "launch-worker-pool.py --verify raised Source changed after inspection: apps/electron/src/renderer/pages/NotesPage.tsx", "recovery": "Re-read changed seams and update report hashes/line ranges only."}, {"attempt": 2, "result": "REJECTED_STALE_SOURCE", "evidence": "launch-worker-pool.py --verify raised Source changed after inspection: packages/shared/src/protocol/channels.ts; integration-sensitive digest check also identified changed protocol/routing.ts.", "recovery": "Re-read Page channels at 841-865 and workspace routing at 867-894; those Page mechanisms are unchanged and their anchors shifted one line. Refresh references to inspected current bytes; do not alter lead source or claim feature verification."}],
+    "toolLimitations": [
+      "Codegraph returned no .codegraph index for this project; fallback inspection used read/grep/glob.",
+      "Descriptive find for imported core symbols failed with an upstream 402. Literal grep located PageConfig, PageKind and rpcPages*Result and those sections were read.",
+      "Scoped glob found neither candidate files nor wp-49.test.ts nor editor-binding-decision.json. This is a scoped absence observation, not a claim that no unrelated collaboration code exists anywhere in the repository."
+    ]
+  },
+  "foundationGates": [
+    {
+      "gate": "LEAD_WAVE0_AND_ACCEPTED_INPUTS",
+      "classification": "dispatch execution gate; does not alter explicit dependencies",
+      "evidence": "Worker instruction requires lead wave0 commit before implementation; work-packages.json:44394-44410 requires accepted typed interface, applied migration or N/A receipt, scenario verification receipt from WP-02 and WP-03.",
+      "requiredPrerequisite": "Lead's wave0 commit and accepted dependency receipts, including canonical entity registration/link resolution and server-side Authorize/Grant/Revoke/policyEpoch contracts.",
+      "effect": "Plan candidate code now; do not implement against speculative dependency APIs or claim the existing native annotation helper enforces resource ACL."
+    },
+    {
+      "gate": "DURABLE_COMMAND_RECEIPT_AND_OUTBOX",
+      "classification": "hidden foundation capability, published owner WP-04, not an explicit WP-49 DAG edge",
+      "evidence": "WP-49 requires RoxCommand v2, idempotency/revision policy, transactional audit event and crash between persist/reply (work-packages.json:44324-44339,44416-44420,44600-44615). WP-04 owns atomic mutation+receipt+event/inbox uniqueness (21-implementation-plan.md:65-82). pages.ts:273-281 writes a file then pushes; storage.ts:455-462 writes HTML then config separately.",
+      "requiredPrerequisite": "Accepted common command gateway, canonical request hash, receipt repository and transaction outbox/inbox API from the lead/WP-04; authenticated HTTP registration seam for the specified operation.",
+      "effect": "Both-candidate fixtures can be prepared independently, but an in-memory probe result or pages:changed push cannot satisfy durable operator acceptance. Do not create a second receipt store in a spike."
+    },
+    {
+      "gate": "OFFLINE_REPLAY_AND_SYNC_FENCE",
+      "classification": "hidden foundation capabilities, published owners WP-05 and WP-51, not explicit WP-49 DAG edges",
+      "evidence": "WP-49 requires WAL ack/reconnect/anchors and CRDT causal frontier plus policy fence (work-packages.json:44324-44326,44615). WP-05 owns persisted queue/cursor/replay/rejected draft (21-implementation-plan.md:84-102); WP-51 owns single-writer routing and append/broadcast revoke fence (1020-1036). pages RPC ignores _ctx in writes and uses file authority; NotesPage has an existing Markdown commit owner/precondition mechanism, not a demonstrated shared Loro WAL.",
+      "requiredPrerequisite": "Lead-supplied common durable replay/authority/fence contract for live shared probes. Versioned isolated CRDT fixture persistence may be used for adapter comparison only.",
+      "effect": "Do not present simulated offline convergence as live reconnect or route shared content through both commitMarkdown and CRDT. Preserve the Markdown standalone owner."
+    },
+    {
+      "gate": "COMMON_PROJECTION_ATTENTION_AND_MENTION_CONSUMERS",
+      "classification": "hidden full-feature acceptance capabilities; published owners WP-06, WP-07, WP-09; not explicit WP-49 DAG edges",
+      "evidence": "WP-49 lists search, mentions, notifications, activity and agent access in completeness (work-packages.json:44368-44390). Published WP-06 owns ACL-aware search/memory watermark; WP-07 owns durable notification/activity; WP-09 owns canonical mention occurrences/recipient policy (21-implementation-plan.md:104-178). The inspected editor WikiLink and HashTag extensions decorate text, not canonical entity nodes or notification effects.",
+      "requiredPrerequisite": "Accepted common kind adapters/projection/attention/mention contracts, or lead integration receipts proving existing consumers cover the candidate document subtype. These consumer implementations were intentionally not broadly inspected outside the permitted package/import scope.",
+      "effect": "Keep these criteria open, not N/A. Publish authorized materialization/entity refs into the existing shared mechanisms; no editor-only search, notification or activity store."
+    },
+    {
+      "gate": "CANONICAL_DOCUMENT_DESCRIPTOR_AND_RENDERER_SUBTYPE",
+      "classification": "existing mechanism integration gate, not a new document store",
+      "evidence": "core/docs/content-descriptor.ts already defines document authority, contentRef/revision, authorityEpoch, preserved unknown formats and note/page alias identity. core/types/page.ts defines PageKind as runtime capability, not content representation; shared pages validation accepts schemaVersion 1 and only static/interactive/live. PageView always uses HTML contentDigest/render lease/PageFrame.",
+      "requiredPrerequisite": "Lead agreement on selected adapter metadata within the existing DocumentDescriptor/content-kind dispatch and isolated fixture schema. Accepted canonical registry identity must remain stable across adapter fallback.",
+      "effect": "Do not add 'lexical' to PageKind or invent another Page/Note identity. Do not perform a production migration under WP-49. WP-10 owns production collaborative Page/WAL and depends on WP-49; WP-15 depends on WP-10. Neither WP-10 nor WP-15 should be made a predecessor to this spike, which would create a cycle."
+    },
+    {
+      "gate": "PINNED_DEPENDENCY_LICENSE_AND_REAL_SURFACE_PROOF",
+      "classification": "published licensing and verification gates, not explicit DAG edges",
+      "evidence": "WP-49 licensePolicy is BEHAVIOR_REIMPLEMENTATION with upstream DEPENDENCY_ONLY after exact license audit and fixture is not a live receipt (work-packages.json:44392-44393). Editor imports Tiptap and Markdown extensions; inspected UI/shared/Electron manifests do not establish a pinned Loro/Lexical binding. docs/22-test-plan.md:7-9,30-56 requires actual renderer/RPC and failure/reload evidence.",
+      "requiredPrerequisite": "Lead-owned dependency resolution/pins/lockfile, exact licenses for Loro, candidate bindings, Lexical packages and transitive runtime imports; DOM-capable runner and actual Electron/browser scenario slot after implementation authorization.",
+      "effect": "No network/license fetching or dependency installation in this preflight. Neither a package name nor a fixture pass authorizes copying upstream source or declaring live success."
+    }
+  ],
+  "ownedNewFiles": [
+    "spikes/editor-binding/tiptap-loro.ts",
+    "spikes/editor-binding/lexical-loro.ts",
+    "tests/macro-integration/wp-49.test.ts",
+    "plans/macro-integration/editor-binding-decision.json"
+  ],
+  "proposedContributions": [
+    {
+      "path": "spikes/editor-binding/tiptap-loro.ts",
+      "change": "Implement an isolated headless Tiptap/ProseMirror-to-Loro adapter using the existing rich schema/extensions rather than Markdown as the live authority. Export candidate-neutral typed probe inputs/results and ProbeEditorRoundTrip, ProbeSelectiveUndo, ProbeCursor; include frontier, schemaVersion, logical document tree/marks/entity refs and anchor state in results. Apply incremental local transactions to Loro and remote changes to the editor with origin tagging so echoes do not append duplicate updates. Delegate selective undo to the canonical CRDT undo mechanism and disable competing editor history only in collaborative mode. Persist/export/import versioned fixture snapshots plus operation tail; resolve anchors against CRDT positions, never DOM offsets."
+    },
+    {
+      "path": "spikes/editor-binding/lexical-loro.ts",
+      "change": "Implement the same probe contract independently with React Lexical-compatible headless editor nodes and the same Loro authority; reuse only candidate-neutral types from the Tiptap spike via type-only import, not Tiptap binding behavior. Map nested lists/task items, marks, stable entity-ref nodes and selection anchors to the same canonical fixture schema. Produce explicit unsupported-schema/binding failures, not Markdown flattening or a fake passing fallback."
+    },
+    {
+      "path": "tests/macro-integration/wp-49.test.ts",
+      "change": "Own one shared generated fixture matrix and deterministic seed 20260979; run each identical case against both probe implementations. Cover rich-text/list/entity-node round-trip; independent peers concurrent at one position; reordered/duplicate updates; offline snapshot+tail restart; actor-local undo/redo preserving remote insert; anchor movement/deleted-target orphan and cursor expiry. Add authenticated operator, idempotency/crash/reply and denied-actor scenarios only through accepted lead gateway interfaces. Keep caught mutation controls separate from infrastructure errors and include independently injected holdout."
+    },
+    {
+      "path": "plans/macro-integration/editor-binding-decision.json",
+      "change": "Record tested implementation revision, dependency versions/license hashes, fixture schema and seed, both candidate outcome matrices, reproduction traces/artifact hashes, and a transparent migration-cost comparison. Eligible candidates must pass every required oracle. Compare concrete existing caller/API changes, preserved rich-node/export fidelity, authority/schema work and replacement surface cost, with rationale rather than an ungrounded time estimate. Select one adapter only after observed proof; if Tiptap fails and Lexical passes select React Lexical document subtype with the same canonical ref. If neither passes record blocked and no selected passing adapter."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "TiptapMarkdownEditorProps, extensions useMemo, useEditor.onUpdate, controlled-content effect",
+      "change": "Lead exposes/reuses the existing extension construction for headless round-trip probes and adds an explicit optional collaborative binding mode. In that mode seed once from canonical rich document state, observe incremental local/remote transactions, replace StarterKit local-history authority with CRDT selective undo, and bypass Markdown onUpdate/setContent synchronization. Leave current legacy/official Markdown standalone behavior unchanged. Do not use the focused-editor guard at lines 413-416 as remote-merge handling.",
+      "reason": "Current props carry Markdown only; serializing every onUpdate loses canonical node/frontier data and the focus guard discards remote content. One existing editor surface must be preserved without dual history or document authority."
+    },
+    {
+      "path": "packages/shared/src/pages/types.ts",
+      "symbol": "CreatePageInput, LoadedPage and core page type re-exports",
+      "change": "Expose typed audit request/result and probe DTOs through the existing page boundary after accepted dependency interfaces. Carry canonical ref, selected adapter, descriptor/fixture schema version, causal frontier and policy epoch for document probes; keep HTML path-bearing LoadedPage fields for artifact Pages. Reuse imported core document descriptor/ref types rather than a second Page/Note model.",
+      "reason": "The current seam only models HTML creation and filesystem paths; both candidates need one typed, renderer-safe contract."
+    },
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageKind, PageConfig",
+      "change": "Keep static/interactive/live as runtime capability classes. Any probe document representation must be separately discriminated using the existing content descriptor and candidate metadata, not a new runtime PageKind. Lead integrates accepted descriptor dispatch without changing production schemaVersion 1 or converting artifact Pages during WP-49.",
+      "reason": "PageKind drives sandbox capability, and contentDigest is explicitly the HTML hash. Overloading it with editor choice breaks old Pages."
+    },
+    {
+      "path": "packages/core/src/docs/content-descriptor.ts",
+      "symbol": "DocumentDescriptor, canonicalPageRef, decodeDocumentDescriptor",
+      "change": "Reuse canonicalPageRef/contentRef/contentRevision/authorityEpoch and rich-blocks authority for the isolated rich fixture. If adapter identity needs serialized metadata, coordinate an additive versioned descriptor/fixture metadata extension with the lead and decoder preservation rules; do not add lexical as a second entity kind or make fallback change the native ID.",
+      "reason": "Wave0 already contains a document authority and alias mechanism. A second editor descriptor or standalone store would compete with it."
+    },
+    {
+      "path": "packages/shared/src/pages/validation.ts",
+      "symbol": "PageKindSchema, PageConfigSchema, validatePageConfig",
+      "change": "Keep artifact validation stable and validate versioned isolated document probe DTOs in the same boundary alongside accepted descriptor validation. Never bypass existing validation or silently strip a persisted document discriminant. Production discriminated Page migration remains the owning downstream package's work.",
+      "reason": "Extending only the TypeScript page input cannot persist an editor subtype through the existing schemaVersion 1 validator; the spike is explicitly no-production-migration."
+    },
+    {
+      "path": "packages/shared/src/pages/storage.ts",
+      "symbol": "createPage, loadPage, savePageContent",
+      "change": "Preserve HTML constants, atomic file writes and existing standalone adapter. For isolated versioned probe persistence use the lead-approved fixture persistence/authority adapter; for shared canonical IDs call the accepted gateway/projection path and prohibit savePageContent from becoming a second CRDT writer. Persist fixture snapshot/frontier/update tail before acknowledging a probe checkpoint; do not use script-private store.sqlite as collaborative authority.",
+      "reason": "createPage emits local page_ IDs; savePageContent writes HTML and config separately and offers neither causal WAL nor transactional receipt/outbox."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/pages.ts",
+      "symbol": "registerPagesHandlers, HANDLED_CHANNELS, broadcastChanged, pages GET/GET_CONTENT/SET_CONTENT/CREATE_LEASE handlers",
+      "change": "Register domain.audit.editorBinding through the lead's existing authenticated command dispatcher and typed protocol, validate candidate/fixtureSet/seed with additionalProperties false, reject body actors and workspace mismatch, authorize read/write/action and linked refs, then invoke isolated candidate probes through accepted command transaction/receipt/outbox. Shared Page reads/writes must route by accepted writer mode/fence; retain explicit standalone behavior. Emit audit.editor_binding_verified only for verified eligible results, and project authorized changes rather than using full unfiltered loadWorkspacePages broadcast for shared IDs.",
+      "reason": "Current handlers mostly ignore _ctx, accept workspaceId arguments and broadcast full filesystem Page DTOs; native result annotations do not establish transport principal/resource authorization or durable audit delivery."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext, HandlerFn",
+      "change": "WP-03/lead supplies the accepted transport-derived principal and workspace authority context consumed by the audit handler, with explicit standalone mode. Do not derive authorization from clientId, webContentsId, body actor or renderer allow-all.",
+      "reason": "Inspected RequestContext has clientId/workspaceId/webContentsId only; audit actor injection rejection requires a real authority contract."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.pages and accepted domain dispatch namespace",
+      "change": "Lead registers the normative native channel domain.audit.editorBinding in the existing typed domain dispatcher; wire PageView invocation to that name rather than inventing an incompatible pages:probe endpoint. Extend channels only if the accepted common dispatcher requires an entry.",
+      "reason": "The inspected pages namespace contains HTML CRUD, grants, leases and publishing only; new operator routing must have one transport contract."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "workspace pages channel routing list",
+      "change": "Route the accepted domain.audit.editorBinding request to authenticated workspace authority with the same workspace/resource boundary as its HTTP command; standalone probes require explicit mode. Do not route shared audit as a renderer-local call.",
+      "reason": "Existing Page channels route to the workspace host, which must remain authoritative for server execution."
+    },
+    {
+      "path": "packages/shared/src/protocol/events.ts",
+      "symbol": "pages.CHANGED typed payload and accepted domain event projection",
+      "change": "Keep existing standalone pages.CHANGED payload compatible. Feed audit.editor_binding_verified through the accepted domain outbox event DTO with command/causation/correlation IDs, aggregate revision, policy epoch and watermark; use authorized projections for shared audiences and separate ephemeral cursor/presence messages.",
+      "reason": "Current pages.CHANGED is workspaceId plus full LoadedPage array, not a durable, replayable or policy-filtered audit event."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PageView.tsx",
+      "symbol": "PageView, hasContent, render-lease effect, body dispatch, SharePageDialog integration",
+      "change": "Within the existing Pages detail surface dispatch document probe/subtype through the canonical descriptor to the selected candidate, with unchanged canonical route/ref. Keep HTML Pages on exact-content render lease and PageFrame. Add audit action/result read-back and explicit loading/empty/permission_denied/offline_queued/retryable_error/applied_verified states; document availability must not depend on index.html contentDigest. Gate share/rename/edit on accepted resource capabilities and recheck on revoke. Use t() and lead-owned parity translations for new visible text.",
+      "reason": "The current surface only knows HTML contentDigest, lease and PageFrame; absence/error can become notFound, and a Lexical fallback cannot appear without a document representation dispatch."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "NotesPage.saveCurrentNote, pendingCommitsRef/saveQueueRef, TiptapMarkdownEditor caller",
+      "change": "Preserve existing standalone Markdown commit/reconciliation/sourceStoreId/expectedRevision logic and rich editor affordances. Add only descriptor/authority-aware dispatch for the isolated probe or selected document subtype; never send a CRDT update through onUpdate -> whole-Markdown commitMarkdown. Include current callers' wiki autocomplete, tags, comment highlights, task extraction, frontmatter, export and selection integrations in measured migration cost; do not globally replace NotesPage with Lexical.",
+      "reason": "NotesPage is an actual host-level Tiptap consumer and already protects unknown commit outcomes; replacing its save loop would regress wave0 authority and create dual writers."
+    },
+    {
+      "path": "packages/ui/src/components/markdown/extensions/WikiLink.ts",
+      "symbol": "WikiLink.addProseMirrorPlugins, buildDecorations",
+      "change": "Reuse existing text-link UI for Markdown standalone. For candidate rich entity-node fixtures add an explicit typed canonical-ref node/mark mapping at the binding/schema seam rather than claiming decoration widgets are stored entity nodes; resolve linked targets through accepted WP-02/03 authorization.",
+      "reason": "Current WikiLink finds text and creates offset-keyed decorations/widgets; it has no persisted canonical reference or stable CRDT anchor."
+    },
+    {
+      "path": "packages/ui/package.json",
+      "symbol": "dependencies/peerDependencies",
+      "change": "Lead resolves audited exact Loro and Lexical runtime/binding versions and the existing Tiptap import dependency ownership in the workspace before candidate implementation, then updates the owning existing manifest and lockfile in a single integration transaction. Do not add Yjs as another canonical authority or let this worker mutate manifests.",
+      "reason": "The inspected UI manifest does not establish Loro/Lexical dependencies or binding versions; installed/imported code and a license-approved runnable candidate are different prerequisites."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-49 section",
+      "change": "After actual verification, link the decision artifact, tested SHA/schema/dependency license evidence, both outcome matrices, selected adapter and retained HTML/Markdown behaviors. Document additional foundation capabilities separately from the exact explicit DAG and preserve blocked state until their receipts exist.",
+      "reason": "Current section is a proposed plan, not an observed editor binding decision."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "common acceptance boundary, COLLAB-01 and failure/control evidence",
+      "change": "Add the concrete WP-49 same-fixture probe oracles, selection/cost/fallback scenario and links to exact revision-bound surface/failure/reload/control evidence. Distinguish isolated candidate fixtures from downstream production collaborative document acceptance.",
+      "reason": "Published plan explicitly states fixtures are not live receipts and requires actual changed surface plus persistence/failure evidence."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Both candidates run same rich-text/list/entity-node + concurrent/offline/undo/anchor fixtures",
+      "seam": "TiptapMarkdownEditor extensions/useEditor; proposed three Probe* exports in both normative spike files",
+      "currentEvidence": "Tiptap has StarterKit, nested TaskItem, code/math/Mermaid/image and text decoration links; props/onUpdate serialize Markdown. No normative candidate files were found.",
+      "requiredChange": "Implement both real adapters over identical canonical rich fixture DTOs and Loro operations, with peer-local origins/selective undo, versioned snapshot+tail restart and stable CRDT node/span anchors. Use one fixture generator, not candidate-specific weakened assertions.",
+      "verification": "Future bun test tests/macro-integration/wp-49.test.ts plus DOM-capable adapter run: exact semantic tree/marks/list nesting/entity ref equality; all concurrent inserts retained, duplicate replay no duplication, reload convergence, local undo preserves remote insert and redo once, moved/orphan anchors and cursor expiry. Record seed 20260979 and causal frontiers.",
+      "missingPrerequisite": "Accepted WP-02/03 types/receipts; audited dependency versions and DOM runner; lead wave0 commit.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "pick passing lower migration cost",
+      "seam": "TiptapMarkdownEditorProps/onEditorReady and NotesPage Tiptap caller; editor-binding-decision.json",
+      "currentEvidence": "NotesPage uses TiptapEditorHandle, wiki/tag callbacks and Markdown save; changing editor affects actual caller APIs, not just rendering a paragraph. No decision artifact found.",
+      "requiredChange": "Exclude every failing candidate first; compare documented concrete caller/extension/export/schema/authority changes among passing candidates and select one with a justified lower migration cost. No assumed Tiptap win and no arbitrary timing-based score.",
+      "verification": "Decision read-back references both identical fixture result sets, actual impacted call sites and license proofs; recompute choice with a failing candidate excluded and both-pass cost comparison. If neither passes the decision remains blocked.",
+      "missingPrerequisite": "Both complete result matrices, dependency/license evidence and lead-reviewed cost rubric.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "failed Tiptap binding falls back to React Lexical document subtype",
+      "seam": "DocumentDescriptor/canonicalPageRef; PageView body dispatch; lexical-loro.ts",
+      "currentEvidence": "PageView always renders PageFrame via HTML leases; descriptor already supports rich-blocks authority and preserved unknown formats, not editor dispatch. PageKind is runtime capability only.",
+      "requiredChange": "Force a substantive Tiptap binding failure while Lexical passes, select Lexical, render it inside existing Pages document representation under unchanged canonical ref/authority. Do not silently flatten content, change entity ID or convert HTML Pages.",
+      "verification": "Open selected fallback through actual Page route, edit rich/list/entity content, reload/read back canonical ID/revision, then open old HTML Page. When Lexical also fails show unavailable/blocked, not applied_verified.",
+      "missingPrerequisite": "Passing Lexical implementation, accepted descriptor dispatch and lead-owned real surface scenario slot.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "seam": "PageView body branch and NotesPage editor host",
+      "currentEvidence": "Existing Page detail surface has loading/empty/error and HTML frame; NotesPage has rich editor host.",
+      "requiredChange": "Reuse Pages document representation for candidate audit and selected subtype; preserve Notes/HTML capabilities, Russian t() strings, compact existing chrome and accessible controls.",
+      "verification": "Actual renderer interaction, ARIA assertions and screenshots of success/fallback/error/reload; no preview-only completion.",
+      "missingPrerequisite": "Descriptor-aware binding integration and translation parity supplied by lead.",
+      "state": "CHANGE_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "seam": "registerPagesHandlers; RPC_CHANNELS.pages; protocol routing workspace list; PageView pageSlug route",
+      "currentEvidence": "Existing RPC Page channels are HTML CRUD/lease/share; normative domain.audit.editorBinding not in the inspected Page channel block.",
+      "requiredChange": "Wire accepted typed domain dispatcher to native domain.audit.editorBinding and POST /v1/workspaces/{workspaceId}/commands/audit.editorBinding; keep canonical Page route on fallback.",
+      "verification": "Invoke both authenticated transports with same payload/envelope, compare canonical result/receipt, reject wrong workspace and unsupported channel; deep-link reload opens correct representation.",
+      "missingPrerequisite": "Lead HTTP/common command routing interface; not broadly inspected outside this scope.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "seam": "CreatePageInput/LoadedPage; core PageConfig; DocumentDescriptor/canonicalPageRef",
+      "currentEvidence": "PageConfig schemaVersion 1 is HTML; existing document descriptors preserve one note/page alias identity and content authority.",
+      "requiredChange": "Use accepted canonical collaborative_document/page ref with versioned isolated rich schema and adapter metadata; separate representation from PageKind, preserve unknown payloads and identity on candidate switch.",
+      "verification": "Typed read-back has same ref/native ID across restart/fallback; unknown fixture schema rejected/read-only without destructive overwrite; alias resolution agrees.",
+      "missingPrerequisite": "WP-02 accepted registry/kind/alias interface and descriptor integration agreement.",
+      "state": "CHANGE_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "seam": "storage.createPage/savePageContent; candidate versioned snapshot/frontier/tail export/import; NotesPage commit reconciliation",
+      "currentEvidence": "HTML/config writes are separate atomics; NotesPage has queued commit reconciliation, not demonstrated Loro durable persistence.",
+      "requiredChange": "Persist isolated editor/CRDT fixtures with version/schema/frontier/update tail; reuse common durable receipt store for authenticated audit. No production migration, second content authority or script-private collaborative DB.",
+      "verification": "Restart between persist and reply and offline client reload preserve exact logical state, receipt and ID; corrupt/unsupported snapshot fails explicitly without saved badge.",
+      "missingPrerequisite": "Accepted fixture persistence adapter and WP-04 durable command transaction/receipt API.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "seam": "registerPagesHandlers audit dispatch; accepted common command gateway",
+      "currentEvidence": "Current Page writes directly call storage and broadcast; published operator requires RoxCommand v2.",
+      "requiredChange": "Validate strict candidate enum/fixtureSet 1..10000/seed integer >=0, reject body actor, require idempotency and mutable revision preconditions; CRDT probes carry causal frontier and policy fence. Reuse transaction/receipt/outbox.",
+      "verification": "Same key/payload retry returns same canonical receipt, changed payload fails IDEMPOTENCY_CONFLICT, stale metadata fails REVISION_CONFLICT; unknown reply remains unconfirmed until receipt read-back.",
+      "missingPrerequisite": "Accepted WP-04 gateway, WP-03 principal/policy and producer receipts.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "seam": "pages.GET/GET_ONE/GET_CONTENT and audit typed result read-back",
+      "currentEvidence": "Page queries return local DTOs/content by workspace argument; handlers ignore _ctx in inspected paths.",
+      "requiredChange": "Return authorized canonical result/probe DTO/receipt only; filter private titles/counts and linked refs; use authorized pagination/cursor for any list result.",
+      "verification": "Owner/member read exact result and revision; outsider/forged workspace or cursor sees no PRIVATE_WP-49 title/body/count; revoke blocks subsequent reads.",
+      "missingPrerequisite": "WP-02 canonical DTO and WP-03 read authorization/query cursor contracts.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "seam": "broadcastChanged and protocol events; candidate remote transaction apply/cursor probe",
+      "currentEvidence": "pages:changed pushes a full local list; no durable replay watermark in that typed event. Current Tiptap focused content guard is not convergence.",
+      "requiredChange": "Separate ephemeral authorized cursor/presence from durable CRDT/audit outbox updates; apply remote edits even when focused, deduplicate by operation/frontier and ACK after durable write.",
+      "verification": "Two focused peers concurrent edits converge, reordered/duplicate delivery stable, disconnect/rejoin catches missing operations; dropped/duplicate event mutations fail appropriate oracle and stale presence expires.",
+      "missingPrerequisite": "Common WAL/replay/outbox and authority/policy fence contract.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "seam": "RequestContext; registerPagesHandlers; isPageGrantUsable; accepted WP-03 Authorize",
+      "currentEvidence": "RequestContext has no principal field; existing PageActionGrant usability checks content digest/expiry, not collaborative read/write ACL.",
+      "requiredChange": "Derive principal from authenticated transport, scope workspace/resource/action, reauthorize linked refs, forbid viewer writes/share and agent allow-all bypass; check current policy/fence at append/read/broadcast.",
+      "verification": "A owner/B member/C outsider plus viewer and allow-all agent controls: forged actor/workspace denied, revoke while pending blocks append/delivery and subsequent read/rejoin with no private marker.",
+      "missingPrerequisite": "WP-03 accepted authority/revocation interfaces plus WP-51 sync fence for live probes.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "seam": "PageView SharePageDialog/usePageShareCapabilities and PageConfig.share",
+      "currentEvidence": "PageConfig.share is an existing publication pointer; PageView opens existing sharing dialog. This does not establish collaborative document ACL sharing.",
+      "requiredChange": "Reuse existing sharing surface with accepted resource capabilities and descriptor-aware preview; never infer access from a link/entity-node or treat Cloudflare publication as collaboration grant.",
+      "verification": "Owner-authorized shared probe visible only to B; viewer cannot share and C cannot read linked target/preview; revoke and reload remove future access; old HTML publishing preserved.",
+      "missingPrerequisite": "WP-03 sharing/resource policy and lead document preview adapter.",
+      "state": "CHANGE_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "seam": "Canonical materialization from probe/descriptor to published WP-06 common projection; existing PageView canonical identity",
+      "currentEvidence": "Specification requires search; inspected Page/editor seams establish no audit document indexing receipt. WP-06 owns authorized projection/watermark, not this spike.",
+      "requiredChange": "Register selected document subtype materialization with the existing common kind projection, maintaining canonical ref/revision and read-time ACL. Do not create spike-only index or mark criterion N/A.",
+      "verification": "Authorized search finds distinctive rich/entity fixture after watermark; revoke before indexing hides PRIVATE_WP-49 snippet/title; replay/tombstone does not resurrect it.",
+      "missingPrerequisite": "Lead/WP-06 accepted projection consumer interface and observed integration receipt.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "seam": "WikiLink.buildDecorations/HashTag.buildDecorations, NotesPage wiki host; canonical entity-node probe mapping",
+      "currentEvidence": "WikiLink widgets and hashtag spans are text decorations with offsets, not canonical mention occurrences.",
+      "requiredChange": "Round-trip canonical entity refs as stable rich nodes and pass mention occurrence/source revision deltas into accepted common mention mechanism; preserve standalone wiki/tag UX, recheck target ACL and never auto-share.",
+      "verification": "Rich entity-node survives merge/undo/reload; authorized click resolves canonical target; denied target reveals no title; edit/remove mention updates backlink without granting access.",
+      "missingPrerequisite": "WP-02/03 typed refs plus published WP-09 occurrence/recipient contract for live completeness.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "seam": "audit.editor_binding_verified outbox and accepted common attention consumer",
+      "currentEvidence": "Required in completeness; inspected Page changed push is not a recipient notification. Published WP-07 owns durable notification policy/uniqueness.",
+      "requiredChange": "Route any policy-defined audit/mention recipient effects through the existing attention mechanism, preserving actor/resource ACL and deduplication. Do not invent per-editor notifications or N/A the gate.",
+      "verification": "Retry/outbox replay produces exactly the policy-required recipient effect; overlap/coalescing does not duplicate; revoked/outsider recipients receive no copied title/body.",
+      "missingPrerequisite": "Lead/WP-07 accepted semantic recipient policy and consumer receipt.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "seam": "audit operator transaction/outbox; published WP-07 activity.recorded consumer",
+      "currentEvidence": "Page handlers log strings and pages:changed but provide no inspected audit activity receipt.",
+      "requiredChange": "Attach verified audit decision to canonical entity activity via common outbox with command/causation/correlation and revision/policy identifiers; avoid raw fixture bodies in activity payload/logs.",
+      "verification": "Same command/replay yields one authorized activity item at recorded watermark; failed or unverified probe never appears as verified success.",
+      "missingPrerequisite": "Accepted WP-04 outbox and WP-07 activity interface/policy.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "seam": "PageView.handleDesignWithAgent; NotesPage right-session context and Rox2Context imports; accepted canonical audit DTO",
+      "currentEvidence": "Existing agent entry/context affordances exist but no observed selected adapter audit tool/read receipt is established by this inspection.",
+      "requiredChange": "Expose authorized canonical probe result/descriptor/ref/revision through existing context/command mechanisms, preserving source provenance and actual status. Agent allow-all must not broaden resource rights.",
+      "verification": "Real native agent reads permitted result with correct ref/revision and status; denied viewer write/outsider context fails without private marker; unknown/queued is not described as verified.",
+      "missingPrerequisite": "Lead accepted domain/context integration and WP-03 agent resource authorization; search/memory projection contract where used.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "seam": "Normative audit.editorBinding HTTP/nativeRpc and existing Page handler source/MCP execution boundary",
+      "currentEvidence": "Operator HTTP/native RPC is expressly mandatory. Existing Page MCP executor invokes source tools; it is not evidence that this domain operator is available to an agent/MCP caller.",
+      "requiredChange": "Implement strict typed HTTP/native operation via common dispatcher and reuse existing agent/MCP domain access only through accepted authenticated contract; if MCP capability is unsupported expose that honestly rather than a fake tool.",
+      "verification": "HTTP and native RPC real read-back agree on canonical result/receipt/errors; any supported MCP/native agent path uses same authorization and no alternate writer. Keep coverage prerequisite open until applicability is resolved from accepted dispatcher capability, not assumed N/A.",
+      "missingPrerequisite": "Lead transport/tool capability contract and WP-04 command envelope.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "seam": "registerPagesHandlers logger/broadcastChanged; accepted command/outbox/projection DTO",
+      "currentEvidence": "Current logs include create/grant messages, but inspected paths have no complete normative correlated metrics.",
+      "requiredChange": "Record commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark and retry/DLQ counters through existing observability; logs use hashes/status and never raw body/transcript/tokens.",
+      "verification": "Trace one command through receipt/event/projection and a failure/retry/DLQ path; all required IDs match, private marker/token/body absent from logs, counters correspond to injected failure.",
+      "missingPrerequisite": "Lead common command/outbox/metrics contract and privacy-safe artifact collection.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "seam": "Normative tests/macro-integration/wp-49.test.ts and both real candidate adapters",
+      "currentEvidence": "Scoped glob found no WP-49 test. Published runner and mutation controls are plans, not executed results.",
+      "requiredChange": "Create deterministic identical consumer-visible fixture oracles, authenticated boundary tests and restart/recovery coverage. Keep infrastructure failure separate from mutation caught and include independent holdout variant.",
+      "verification": "Future bun test tests/macro-integration/wp-49.test.ts and relevant existing package tests; baseline passes, drop-remote-insertion-on-local-undo assertion fails under mutation, independent failure variant caught; actual UI/API smoke plus full failure/reload scenario recorded.",
+      "missingPrerequisite": "Both adapters, accepted dependency/foundation APIs and lead authorization to run tests/surface verification.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "seam": "21-implementation-plan.md#wp-49; 22-test-plan.md; editor-binding-decision.json",
+      "currentEvidence": "Published documents explicitly describe proposed implementation and no PASS; decision artifact missing.",
+      "requiredChange": "Lead updates existing sections with actual adapter decision, exact dependency/license and fixture/surface proof, retained standalone paths, failure behavior and hidden foundation gates; no new unrequested doc files.",
+      "verification": "Each documented claim links exact tested revision/schema/artifact; explicit dependencies remain WP-02/WP-03; fixtures and live receipts distinguishable.",
+      "missingPrerequisite": "Observed candidate/live receipts and accepted decision, after implementation.",
+      "state": "CHANGE_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "seam": "PageView leaseError/leaseRetry/fallback; NotesPage saveError/saveNeedsReload; audit result errors",
+      "currentEvidence": "HTML lease error/retry and Markdown save recovery exist; Page fallback fetch catch becomes null/notFound, not typed denial/offline.",
+      "requiredChange": "Surface permission_denied and retryable_error plus normative UNAUTHENTICATED/FORBIDDEN/WORKSPACE_MISMATCH/INVALID_PAYLOAD/REVISION_CONFLICT/IDEMPOTENCY_CONFLICT/PROVIDER_UNAVAILABLE/UNKNOWN_EXTERNAL_EFFECT/SCHEMA_VERSION_UNSUPPORTED/REVOKE_FENCE_PENDING. Never label queued/ambiguous/pending_fence as applied_verified; preserve drafts.",
+      "verification": "Exercise denied, unsupported schema, persistence failure, disconnected/unknown reply, conflict and revoke-fence scenarios through UI/API; retry reuses operation and reload does not lose draft or leak content.",
+      "missingPrerequisite": "Accepted typed result/error union, common receipt/fence and descriptor dispatch.",
+      "state": "CHANGE_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "seam": "PageView fallbackResolved and LoadingIndicator lease/snapshot readiness",
+      "currentEvidence": "Existing Page loading waits for fallback/lease/snapshot but document probe has no modeled readiness.",
+      "requiredChange": "Reuse LoadingIndicator with document/audit receipt readiness; cancel stale route/workspace responses and do not depend on HTML lease/contentDigest for document loading.",
+      "verification": "Delayed open/audit and rapid workspace/route switch show loading and no stale candidate result; success only after actual result/read-back, not network idle.",
+      "missingPrerequisite": "Typed descriptor/probe read-back state integration.",
+      "state": "CHANGE_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "seam": "PageView !hasContent body and pages.noContentTitle; candidate empty rich root",
+      "currentEvidence": "Current empty state means no HTML contentDigest and offers design-with-agent/open-folder.",
+      "requiredChange": "Distinguish empty valid document, no audit performed, denied and no HTML artifact; allow empty canonical root round-trip without requiring index.html.",
+      "verification": "Empty document opens/editable for authorized actor, reload remains empty until edit; no audit displays neutral state, denied is not empty, old empty HTML behavior retained.",
+      "missingPrerequisite": "Descriptor-aware state dispatch and audited fixture schema empty-root definition.",
+      "state": "CHANGE_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "seam": "Candidate snapshot/frontier/update-tail persistence and PageView typed queued state; existing Notes commit replay remains separate",
+      "currentEvidence": "Tiptap controlled Markdown content and in-memory Page lease do not prove durable collaborative offline state. Published fixture explicitly requires offline/reload/reconnect.",
+      "requiredChange": "Persist isolated offline changes, rehydrate snapshot+tail and exchange missing causal updates; live shared probe uses common replay and current policy fence, quarantines revoked drafts and distinguishes durable-local from server-acked.",
+      "verification": "A offline edits+reload while B edits, then reconnect exact logical convergence with all edits; crash before/after durable append and revoke while offline produce correct receipt/draft states with no premature saved label.",
+      "missingPrerequisite": "Audited Loro persistence plus accepted common WP-05/WP-51 live replay/fence contract.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Negative-control: unauthorized actor or dropped/duplicated event must fail WP-49 acceptance",
+      "seam": "Authenticated audit handler/authorized projection; ProbeSelectiveUndo and event replay oracle",
+      "currentEvidence": "Normative test assertions and mutation at work-packages.json:44333-44335,45018-45021; current Page writes ignore _ctx and direct push is not deduplicated durable replay evidence.",
+      "requiredChange": "Run passing baseline then mutate local undo to drop a remote insertion; independently inject authorization bypass or second event/anchor failure. Unauthorized marker leakage and duplicate/lost semantic effect must fail specific assertions.",
+      "verification": "Preserve baseline and mutation traces/seeds; expected assertion identifies lost B edit, duplicate event effect or denied content leak, not module/runner startup error. Holdout injected by independent evaluator.",
+      "missingPrerequisite": "Passing both candidate baseline fixtures and accepted actor/event interfaces.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Persistence-recovery: restart between persisted command and reply keeps state/receipt/canonical ID consistent",
+      "seam": "Accepted audit command transaction/receipt/outbox; versioned fixture checkpoint; canonicalPageRef",
+      "currentEvidence": "savePageContent writes two files; NotesPage reconciles pending commit before submitting another command, a mechanism to preserve rather than replace. Neither establishes the normative audit recovery path.",
+      "requiredChange": "Commit audit result/receipt/event using common atomic transaction, kill after commit before reply, and reconcile same key/hash on restart against persisted fixture state without rerunning non-idempotent effects or allocating new IDs.",
+      "verification": "Real process restart/retry through native/HTTP yields same command/receipt/entity/revision, one audit event/effect and correct state; changed payload rejected; before-commit kill produces no false applied result.",
+      "missingPrerequisite": "Accepted WP-04 durable transaction and receipt lookup plus fixture persistence owner.",
+      "state": "FOUNDATION_BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "License policy: BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+      "seam": "TiptapMarkdownEditor import set; packages/ui/package.json and both normative spike modules",
+      "currentEvidence": "Existing editor imports Tiptap/Markdown/extensions; UI manifest is Apache-2.0 but that is not evidence of external binding/transitive licenses. No candidate pins verified in this scope.",
+      "requiredChange": "Audit exact resolved versions, source license files and transitive runtime dependencies; implement behavior against public dependency APIs, do not copy Macro implementation or add Yjs alongside Loro as authority.",
+      "verification": "Decision artifact records exact package versions/license hashes and dependency provenance, owning manifest/lockfile matches runnable candidates; lead license review accepts before integration.",
+      "missingPrerequisite": "Lead dependency resolution and exact license receipts, unavailable without the prohibited network/install operations here.",
+      "state": "PREREQUISITE_PENDING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Isolated versioned editor/CRDT fixtures only; no production migration",
+      "seam": "Candidate fixture schema/export/import; PageConfigSchema version 1 and DocumentDescriptor preserved decode",
+      "currentEvidence": "Normative dbChanges and migrations [] forbid production migration for this spike; existing Page schema/content representation must remain intact.",
+      "requiredChange": "Version and isolate probe fixture state via accepted adapter; validate unsupported schema and avoid changing production Page data/authority under WP-49. Deliver selected adapter/interface evidence to downstream WP-10 for actual production integration.",
+      "verification": "Fixture reload checks schema/frontier/logical equality, unsupported bytes preserved; existing artifact Page/Markdown source unchanged by audit/fallback; no WP-49 production migration in delivery.",
+      "missingPrerequisite": "Lead fixture storage/descriptor agreement and accepted downstream handoff shape.",
+      "state": "CHANGE_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Verification gate: real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+      "seam": "PageView actual renderer/native RPC; existing Notes/HTML routes; version-bound decision evidence",
+      "currentEvidence": "All runtime work is prohibited for this preflight and no run/pass is claimed. Published docs require UI/API behavior on exact implementation revision.",
+      "requiredChange": "After lead integration exercise actual audit/result/fallback in Pages, observe failures and restart/reload, preserve screenshots/ARIA/video where concurrency needs it plus typed read-back/ref/revision/unique counts/receipts/watermark/traces.",
+      "verification": "Lead scenario receipt covers same revision/schema/environment as decision and tests, W1 A/B/C with PRIVATE_WP-49, seed 20260979; old HTML and standalone Notes remain working. Separate implemented/verified/delivered states.",
+      "missingPrerequisite": "Implemented accepted integration and lead authorization for runtime verification; this report is preflight only.",
+      "state": "NOT_VERIFIED_BY_DESIGN_PREFLIGHT_ONLY"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/shared/src/pages/types.ts","symbol":"isPageGrantUsable, CreatePageInput, LoadedPage","lineStart":40,"lineEnd":100,"sha256":"89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"createPage","lineStart":281,"lineEnd":309,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"savePageContent","lineStart":445,"lineEnd":464,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path":"packages/shared/src/pages/validation.ts","symbol":"PageKindSchema, PageConfigSchema","lineStart":178,"lineEnd":215,"sha256":"dc9579b3f129baae3d81943a6fc2f5a87212af3aa72ecef1facbd9667deaf3f3"},
+    {"path":"packages/server-core/src/handlers/rpc/pages.ts","symbol":"registerPagesHandlers GET/GET_ONE/CREATE","lineStart":176,"lineEnd":223,"sha256":"c6bc8a9161d21c228dabf55c8406bce2bbfe5419315919cba072e8b6c01c7a04"},
+    {"path":"packages/server-core/src/handlers/rpc/pages.ts","symbol":"registerPagesHandlers GET_CONTENT/SET_CONTENT","lineStart":261,"lineEnd":282,"sha256":"c6bc8a9161d21c228dabf55c8406bce2bbfe5419315919cba072e8b6c01c7a04"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext, HandlerFn, RpcServer","lineStart":7,"lineEnd":33,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView render lease lifecycle","lineStart":79,"lineEnd":111,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView empty/error/loading/PageFrame body","lineStart":386,"lineEnd":439,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx","symbol":"TiptapMarkdownEditorProps, TiptapMarkdownEditor extension construction","lineStart":202,"lineEnd":335,"sha256":"8e919184dda7d4e7b632dc204b313c74aea8ba9feeaca9beeaa44577b926d3c1"},
+    {"path":"packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx","symbol":"useEditor onUpdate and focused content synchronization","lineStart":383,"lineEnd":437,"sha256":"8e919184dda7d4e7b632dc204b313c74aea8ba9feeaca9beeaa44577b926d3c1"},
+    {"path":"packages/ui/src/components/markdown/extensions/WikiLink.ts","symbol":"buildDecorations","lineStart":66,"lineEnd":118,"sha256":"832feb024e005b1915f8326873beaade669dfaa753097fc49295f5e13d6d7f39"},
+    {"path":"packages/ui/src/components/markdown/extensions/HashTag.ts","symbol":"buildDecorations","lineStart":79,"lineEnd":98,"sha256":"a167a50e40ba562938b7d6be5a65dca4008b8f15452e957032002b89a9a5954d"},
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"NotesPage.saveCurrentNote","lineStart":1022,"lineEnd":1098,"sha256":"ac127ef6789ba21ef516bbe79a03c1e02ec20fcce66b87a09cf6ef0668a34c87"},
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"TiptapMarkdownEditor host and NotesCommentHighlights","lineStart":2591,"lineEnd":2620,"sha256":"ac127ef6789ba21ef516bbe79a03c1e02ec20fcce66b87a09cf6ef0668a34c87"},
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"visibleBlockTree, openStableBlock, prepareMarkers","lineStart":675,"lineEnd":734,"sha256":"ac127ef6789ba21ef516bbe79a03c1e02ec20fcce66b87a09cf6ef0668a34c87"},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageKind","lineStart":29,"lineEnd":35,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageConfig","lineStart":294,"lineEnd":320,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"packages/core/src/docs/content-descriptor.ts","symbol":"DocumentDescriptor, canonicalPageRef, decodeDocumentDescriptor","lineStart":23,"lineEnd":161,"sha256":"0234ad0d971b59dd3d9fc511b6257601c584bc76112faea0ddaf555321b47263"},
+    {"path":"packages/core/src/docs/command-envelope.ts","symbol":"MarkdownCommitCommand, decodeMarkdownCommitCommand","lineStart":1,"lineEnd":46,"sha256":"39e55e808796e48fee16ff0ee40c345886af9264bbc776c91657ce1ea2286817"},
+    {"path":"packages/core/src/rox2/rpc-native-actions.ts","symbol":"rpcPagesListResult, rpcPagesReadResult, rpcPagesActResult","lineStart":1061,"lineEnd":1076,"sha256":"692630527926522d5a3989a2650a595e5f04a932dcc1ab821bc28cc801482d6a"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.pages","lineStart":841,"lineEnd":865,"sha256":"89177712f430183f89657f08f985ea50861c8d774652dbb56471d5eb7cca0aaa"},
+    {"path":"packages/shared/src/protocol/events.ts","symbol":"BroadcastEventMap pages.CHANGED payload","lineStart":78,"lineEnd":81,"sha256":"2c488ef99e2bf5e9600c20b9795dd70360901e8a378e478df2410728b44fee62"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"workspace pages channel routing list","lineStart":867,"lineEnd":894,"sha256":"c8fb48dde141d0ebcc20eec69e8386797d31a8b2b84dfbbd93afcad883b670c2"},
+    {"path":"packages/ui/package.json","symbol":"dependencies and peerDependencies","lineStart":21,"lineEnd":59,"sha256":"876343a067aa1a19261a7ed96a60ee5dc57ecf06a617d0a40fc73c61ab59032b"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-49 dependencies, affectedFiles, newFiles, DoD, permissions, completeness and inputs","lineStart":44259,"lineEnd":44420,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-49 canonical result errors and expectedRevisionPolicy","lineStart":44597,"lineEnd":44629,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-49 verification fixtures, negative control, artifacts and completeness","lineStart":45000,"lineEnd":45056,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-04/05 command/outbox/offline foundation","lineStart":65,"lineEnd":102,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-06/07/08/09 projection, notification/activity and mention foundation","lineStart":104,"lineEnd":178,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-49 published editor plan","lineStart":984,"lineEnd":1000,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-51 single-writer and revocation fence foundation","lineStart":1020,"lineEnd":1036,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Common acceptance boundary and COLLAB-01 renderer/offline/control oracles","lineStart":5,"lineEnd":56,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reviews this preflight and assigns shared patch requests to existing file owners; no implementation is authorized in this worker dispatch.",
+    "afterPrerequisites": "After lead wave0 commit and accepted WP-02/WP-03 interface/migration/scenario receipts, re-read every changed hash-bound seam and resolve audited dependency pins plus common probe/descriptor contract. Implement the four normative new artifacts in dependency order; submit shared patches to lead rather than writing shared files independently.",
+    "beforeFullAcceptance": "Obtain hidden foundation capability receipts for command/outbox, live offline/fence, projection/mention/attention/context integration; then lead runs the specified test and actual renderer/API failure/reload scenarios on the integrated exact revision. Never make downstream WP-10/WP-15 prerequisites to this spike or claim an isolated fixture is a production collaboration receipt.",
+    "reportVerification": "Run only the supplied read-only launch-worker-pool.py --verify report/packet path after writing. That verifies lineage and source hashes, not feature behavior."
+  },
+  "risks": [
+    "Loro/Tiptap binding, selective undo and rich entity-node fidelity are unproven. A binding that converges text but loses list/marks/refs/anchors is failing, not partly complete.",
+    "StarterKit local history plus CRDT undo or Yjs plus Loro authority can erase remote changes or create competing document truth; disable only the competing mechanism in explicit collaborative mode.",
+    "The focused-editor content guard skips incoming Markdown changes; naïvely piping remote snapshots through current controlled content props fails focused concurrent editing and anchors.",
+    "WikiLink/HashTag are decorations over raw text, not stable typed entity nodes; substituting them for the required entity-node fixture weakens the acceptance oracle.",
+    "PageKind is sandbox runtime capability; inserting a lexical/tiptap kind there conflates document subtype and HTML permissions. A document cannot be made available by merely setting contentDigest.",
+    "Wave0 DocumentDescriptor and Markdown commit reconciliation already provide identity/authority mechanisms. New editor stores, global Notes replacement or whole-Markdown CRDT writes would undermine them.",
+    "Refreshed NotesPage now also binds committed block trees, stable #^ block navigation and marker-mapping previews to sourceStoreId/revision/sourceHash/authorityEpoch. Candidate migration cost and shared patches must preserve these existing mechanisms; they are not proof of CRDT-position anchors.",
+    "Published full-feature DoD demands mechanisms owned by WP-04/05/06/07/09/51 despite only WP-02/03 explicit dependencies. Preserve explicit array and expose capability gaps for lead resolution, not silent N/A or speculative new stores.",
+    "WP-10 consumes WP-49 and WP-15 consumes WP-10. Requiring their production Page/WAL/history implementations before candidate probes introduces a cycle; isolated probe evidence and live integration evidence must remain distinct.",
+    "No passing candidate means blocked, not an automatic Lexical success. Migration cost is compared only among passing, license-accepted candidates.",
+    "Current Page RPC source passes caller workspaceId and mostly ignores _ctx; native annotation helpers and digest-bound action grants do not prove shared principal/resource ACL.",
+    "Separate HTML/config writes and full list push cannot meet durable result/outbox/restart requirements; replay must be reconciled using the accepted command authority.",
+    "Whole-file hashes reflect inspected uncommitted working tree and may change during root integration; stale evidence must be reread before implementation or acceptance.",
+    "No build/test/UI/network verification ran in this preflight by instruction. Report validation is not a feature completion or runtime pass."
+  ]
+}
