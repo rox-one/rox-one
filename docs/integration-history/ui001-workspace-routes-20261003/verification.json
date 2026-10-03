@@ -1,5 +1,5 @@
 {
-  "state": "latestmain_reconciled_pending_final_core_and_build",
+  "state": "currentmain_qualified",
   "source_pr": 1448,
   "source_head": "1eb2c8289b68e9103880c3f2aee2c57e70c3409a",
   "actual_source_path_count": 107,
@@ -433,6 +433,21 @@
       "log": "pr1457-joined-current-callbacks-first.log",
       "sha256": "2e1d2a2a7427c6163a7de82e7f6249391b656df028b62a8e66533fd29a868878",
       "bytes": 24269
+    },
+    {
+      "log": "ui1448-latestmain-core-controls.log",
+      "sha256": "e8308f6c5407e5c3a8ddeed8cafec8001726d3589e77f6662e5a0ff034719c1c",
+      "bytes": 66890
+    },
+    {
+      "log": "ui1448-latestmain-electron-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "log": "ui1448-latestmain-renderer-build.log",
+      "sha256": "352293bc3fbc9b02d936eda052b3077c71f2d4083df7246462b6a98934c8e2a2",
+      "bytes": 61795
     }
   ],
   "installed_desktop_or_full_feature_acceptance": false,
@@ -448,5 +463,29 @@
     "assertions": 268,
     "full_Electron_types_exit": 0,
     "incoming_StrictMode_retained": true
-  }
+  },
+  "qualified_revision": "bc10aa146323551c1b5d591ff028060af0c902fa",
+  "final_checks": {
+    "core": {
+      "pass": 487,
+      "fail": 0,
+      "assertions": 7506,
+      "files": 96
+    },
+    "mounted_navigation": {
+      "pass": 37,
+      "fail": 0
+    },
+    "callback_history": {
+      "pass": 50,
+      "fail": 0,
+      "assertions": 268
+    },
+    "full_Electron_types_exit": 0,
+    "full_renderer_build_exit": 0,
+    "renderer_build_seconds": 129
+  },
+  "warning_limits": [
+    "Existing chunk-size and CSS diagnostics retained in successful renderer log; not a native release claim"
+  ]
 }
