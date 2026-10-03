@@ -579,7 +579,7 @@ app.whenReady().then(async () => {
 
     const { registerVoiceHotkeys } = await import('./voice/overlay-window')
     const { sendVoiceHotkeyToClient } = await import('./voice/command-input')
-    const sendVoiceCommand = (command: import('@rox/shared/voice/hotkey-types').HotkeyCommand, webContentsId?: number) => {
+    const sendVoiceCommand = (command: import('@rox/shared/voice/hotkey-types').HotkeyCommand, webContentsId?: number, recordingId?: string) => {
       const target = webContentsId === undefined
         ? windowManager?.getLastActiveWindow()
         : windowManager?.getWindowByWebContentsId(webContentsId)
@@ -590,7 +590,7 @@ app.whenReady().then(async () => {
         resolveClient: id => windowManager?.getClientIdForWindow(id),
         push: windowManager?.getRpcEventSink(),
         channel: RPC_CHANNELS.voice.HOTKEY,
-      }, command)
+      }, command, recordingId)
     }
     const disposeVoiceHotkeys = registerVoiceHotkeys(sendVoiceCommand, id => windowManager?.getFocusedWindow()?.webContents.id === id)
     const { createNativeVoiceOverlayHost } = await import('./voice/overlay-owner')
@@ -601,7 +601,7 @@ app.whenReady().then(async () => {
         return owner && !owner.isDestroyed() && windowManager?.getWorkspaceForWindow(context.webContentsId) === context.workspaceId
           && windowManager?.getClientIdForWindow(context.webContentsId) === context.clientId ? owner : null
       },
-      sendCommand: (context, command) => context.webContentsId != null && sendVoiceCommand(command, context.webContentsId),
+      sendCommand: (context, command, recordingId) => context.webContentsId != null && sendVoiceCommand(command, context.webContentsId, recordingId),
     }) : undefined
     app.once('will-quit', () => { disposeVoiceHotkeys(); voiceOverlay?.dispose() })
     registerMeetingCaptureIpc()

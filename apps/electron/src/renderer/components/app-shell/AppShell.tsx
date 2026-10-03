@@ -1747,6 +1747,7 @@ function AppShellContent({
     enabledSources: sources,
     skills,
     activeSessionWorkingDirectory,
+    localMcpEnabled,
     labels: displayLabelConfigs,
     onSessionLabelsChange: handleSessionLabelsChange,
     projects: projectMenuOptions,
@@ -1770,7 +1771,7 @@ function AppShellContent({
     automationTestResults,
     getAutomationHistory,
     onReplayAutomation: handleReplayAutomation,
-  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
+  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, localMcpEnabled, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
   // Persist expanded folders to localStorage (workspace-scoped)
   React.useEffect(() => {
     if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return

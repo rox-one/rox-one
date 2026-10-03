@@ -37,6 +37,10 @@ export interface NativeMemoryContext {
 }
 
 export interface ISessionManager {
+  getRuntimeTraceSnapshot?(query: import('@rox/core/runtime-trace').RuntimeTraceQuery): Promise<import('@rox/core/runtime-trace').RuntimeTraceSnapshot>
+  readRuntimeTraceEvents?(query: import('@rox/core/runtime-trace').RuntimeEventsQuery): Promise<import('@rox/core/runtime-trace').RuntimeEventsPage>
+  readRuntimeTracePayload?(query: import('@rox/core/runtime-trace').RuntimePayloadQuery): Promise<import('@rox/core/runtime-trace').RuntimePayloadPage>
+
   // ---------------------------------------------------------------------------
   // Lifecycle
   // ---------------------------------------------------------------------------
@@ -146,7 +150,7 @@ export interface ISessionManager {
     existingMessageId?: string,
     _isAuthRetry?: boolean,
     onAck?: (messageId: string) => void,
-    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext; roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext },
+    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext; roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext; runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch },
     _internalRetryKind?: 'auth' | 'failover',
   ): Promise<void>
   cancelProcessing(sessionId: string, silent?: boolean): Promise<void>
@@ -361,6 +365,7 @@ export interface ISessionManager {
 export interface ExecutePromptAutomationInput {
   /** Host supplied only; never copied from RPC payload. */
   roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext
+  runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch
   workspaceId: string
   workspaceRootPath: string
   prompt: string

@@ -32,6 +32,8 @@ import { defaultSessionOptions } from '../hooks/useSessionOptions'
 import { sessionAtomFamily } from '../atoms/sessions'
 
 export interface AppShellContextType {
+  /** Identity of the mounted content panel, independent from its selected session. */
+  panelId?: string
   /** Registers a panel header for the compact top-bar slot. */
   registerCompactHeader?: (
     id: string,
@@ -79,6 +81,7 @@ export interface AppShellContextType {
   skills?: LoadedSkill[]
   /** Working directory of the active session — needed for project-level skill resolution */
   activeSessionWorkingDirectory?: string
+  localMcpEnabled?: boolean
   /** All label configs (tree) for label menu and badge display */
   labels?: import('@rox/shared/labels').LabelConfig[]
   /** Callback when session labels change */

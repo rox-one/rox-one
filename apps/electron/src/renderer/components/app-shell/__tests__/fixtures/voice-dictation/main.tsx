@@ -19,9 +19,10 @@ let resolveConsent: ((value: unknown) => void) | undefined
 let resolveGrant: (() => void) | undefined
 let resolveStart: (() => void) | undefined
 let resolveMedia: ((value: unknown) => void) | undefined
+let recordingSequence = 0
 let rejectedMedia = false
 let rejectedGrant = false
-let hotkeyListener: ((payload: { command: 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel' }) => void) | undefined
+let hotkeyListener: ((payload: { command: 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel'; recordingId?: string }) => void) | undefined
 const audioBytes = query.get('largeAudio') === 'true' ? 5 * 1024 * 1024 + 123 : 3
 const audioPayload = new Uint8Array(audioBytes)
 for (let index = 0; index < audioPayload.length; index++) audioPayload[index] = index % 251
@@ -44,9 +45,10 @@ const api = {
   },
   async startVoiceCapture(args: unknown) {
     record('startVoiceCapture', args)
+    const recordingId = ++recordingSequence === 1 ? 'synthetic-recording' : `synthetic-recording-${recordingSequence}`
     if (query.get('deferredStart') === 'true') await new Promise<void>((resolve) => { resolveStart = resolve })
     if (query.get('refusedStart') === 'true') throw new Error('Synthetic start refused')
-    return { job: 'queued', recordingId: 'synthetic-recording' }
+    return { job: 'queued', recordingId }
   },
   async grantVoicePermission() {
     record('grantVoicePermission')
@@ -133,6 +135,7 @@ const fixture = {
   resolveStart: () => resolveStart?.(),
   resolveMedia: () => resolveMedia?.(stream),
   hotkey: (command: 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel') => hotkeyListener?.({ command }),
+  overlay: (command: 'toggle' | 'cancel', recordingId: string) => hotkeyListener?.({ command, recordingId }),
   resolveMicrophone: () => resolveMicrophone?.(stream),
 }
 ;(window as any).__voiceFixture = fixture

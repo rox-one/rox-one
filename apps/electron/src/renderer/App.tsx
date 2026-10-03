@@ -12,6 +12,7 @@ import type { SessionOptions, SessionOptionUpdates } from './hooks/useSessionOpt
 import { defaultSessionOptions, mergeSessionOptions } from './hooks/useSessionOptions'
 import { generateMessageId } from '../shared/types'
 import { useEventProcessor } from './event-processor'
+import { ingestRuntimeTraceEvent, ingestRuntimeTraceHealth, removeRuntimeTraceSession } from './event-processor/runtime-trace-ingress'
 import type { AgentEvent, Effect } from './event-processor'
 import { AppShell } from '@/components/app-shell/AppShell'
 import { SessionSharingHost } from '@/components/app-shell/SessionSharingHost'
@@ -1232,6 +1233,14 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     const cleanup = window.electronAPI.onSessionEvent((event: SessionEvent) => {
       const scope = eventScope
       if (sessionScopeRef.current !== scope || !scope.authority || scope.workspaceId !== windowWorkspaceId) return
+      if (event.type === 'runtime_trace_health') {
+        ingestRuntimeTraceHealth(store, event, windowWorkspaceId ?? '')
+        return
+      }
+      if (event.type === 'runtime_trace') {
+        ingestRuntimeTraceEvent(store, event, windowWorkspaceId ?? '')
+        return
+      }
       if (!('sessionId' in event)) return
 
       const sessionId = event.sessionId
@@ -1262,6 +1271,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       }
 
       if (event.type === 'session_deleted') {
+        removeRuntimeTraceSession(store, { workspaceId: windowWorkspaceId ?? '', sessionId })
         removeSession(sessionId)
         return
       }

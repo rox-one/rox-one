@@ -1,0 +1,27 @@
+{
+  "class": "unit-projection-benchmark",
+  "syntheticFixture": true,
+  "timestamp": "2026-10-03T17:21:03.164Z",
+  "runtime": "Bun 1.3.14",
+  "environment": {
+    "platform": "linux",
+    "arch": "x64",
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "cpuCount": 9,
+    "totalMemoryBytes": 10451464192
+  },
+  "profile": {
+    "events": 10000,
+    "agents": 20,
+    "nodes": 221,
+    "maxDepth": 2
+  },
+  "projectionMs": 929.6823360000001,
+  "graphMs": 3.3754180000000815,
+  "updateP95Ms": 0.1227249999999458,
+  "updateMaxMs": 152.83180500000003,
+  "retainedHeapDeltaBytes": 11405558,
+  "outputPreservesTopology": true,
+  "rendererEventToPaint": "not-measured-by-this-command",
+  "rendererPanFrameTime": "not-measured-by-this-command"
+}

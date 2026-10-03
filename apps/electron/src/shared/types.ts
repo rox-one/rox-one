@@ -530,6 +530,10 @@ export interface WorkGraphConnectionRecord {
 }
 
 export interface ElectronAPI {
+  getRuntimeTraceSnapshot(query: import('@rox/core/runtime-trace').RuntimeTraceQuery): Promise<import('@rox/core/runtime-trace').RuntimeTraceSnapshot>
+  readRuntimeTraceEvents(query: import('@rox/core/runtime-trace').RuntimeEventsQuery): Promise<import('@rox/core/runtime-trace').RuntimeEventsPage>
+  readRuntimeTracePayload(query: import('@rox/core/runtime-trace').RuntimePayloadQuery): Promise<import('@rox/core/runtime-trace').RuntimePayloadPage>
+
   // Cloud Runs (PRD docs/cloud-runs-prd.md)
   getCloudRunsConfig(): Promise<{
     enabled: boolean
@@ -1829,7 +1833,7 @@ export interface ElectronAPI {
   listVoiceModels(): Promise<{ families: string[]; catalog: unknown[] }>
   onVoiceJob(callback: (job: import('@rox/shared/voice').VoiceJob) => void): () => void
   onVoiceOverlay(callback: (state: import('@rox/shared/voice').OverlayState) => void): () => void
-  onVoiceHotkey(callback: (payload: { command: 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel' }) => void): () => void
+  onVoiceHotkey(callback: (payload: import('@rox/shared/voice/hotkey-types').VoiceHotkeyPayload) => void): () => void
 
   // Session Drafts (persisted composer state — text + attachment refs)
   getDraft(sessionId: string): Promise<import('@rox/shared/config').SessionDraft | null>

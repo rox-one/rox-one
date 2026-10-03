@@ -42,7 +42,7 @@ sm.sendMessage=async(...args)=>{replayContext=args[8]?.roxExecutionContext};
 sm.roxExecutions.delete('s1');let resumeBound;const originalBound=f.authority.bound.bind(f.authority);f.authority.bound=()=>new Promise(r=>resumeBound=r);
 const restore=sm.roxExecutionForSession(managed).catch(e=>e.message);await Bun.sleep(1);sm.roxExecutions.set('s1',cb);resumeBound(ca);const restored=await restore;f.authority.bound=originalBound;
 const restoredOwner=sm.roxExecutions.get('s1')?.cloudAccountId;
-let rejectedLateTitle,lateCallbackError,callbackWrites,heldSwitchError,recoveredQueueOwner,staleQueueSends,queueFailure,missingAuthorityQueueSends,missingAuthorityFailure;
+let rejectedLateTitle,lateCallbackError,callbackWrites,heldSwitchError,recoveredQueueOwner,staleQueueSends,queueFailure,missingAuthorityQueueSends,missingAuthorityFailure,runtimeEventError,runtimeEventText,runtimeCompleteError,runtimeCompleteAdded,nativeEventError,nativeEventText;
 if(!process.env.ROX_OWNER_NEGATIVE_CONTROL){
 // Actual title completion from an otherwise-current A must not publish into a B resource.
 sm.roxExecutions.set('s1',ca);let titleEntered,finishTitle;const titleStarted=new Promise(r=>titleEntered=r),titlePending=new Promise(r=>finishTitle=r);
@@ -53,6 +53,25 @@ sm.roxExecutions.set('s1',ca);managed.messageQueue=[{message:'recovered A',roxOw
 // Registry callbacks also retain A even when both account contexts are current.
 sm.roxExecutions.set('s1',ca);callbackWrites=0;
 const callback=sm.fenceRoxSessionCallback('s1',ca,()=>{callbackWrites++;return 'accepted'});callback();sm.roxExecutions.set('s1',cb);try{callback()}catch(e){lateCallbackError=e.message}
+// A passive collector await must not let an obsolete account event mutate the current turn.
+const originalAgentEvent=sm.runtimeTrace.agentEvent.bind(sm.runtimeTrace);let collectorEntered,releaseCollector;
+const collectorStarted=new Promise(r=>collectorEntered=r),collectorPending=new Promise(r=>releaseCollector=r);
+sm.runtimeTrace.agentEvent=async()=>{collectorEntered();await collectorPending};sm.queueDelta=()=>{};managed.streamingText='';sm.roxExecutions.set('s1',ca);
+const lateEvent=sm.processEvent(managed,{type:'text_delta',text:'obsolete account A output',turnId:'held-trace'}).catch(e=>e.message);await collectorStarted;
+sm.roxExecutions.set('s1',cb);releaseCollector();runtimeEventError=await lateEvent;runtimeEventText=managed.streamingText;sm.runtimeTrace.agentEvent=originalAgentEvent;
+// Completed transcript publication has its own collector await before the message is committed.
+const originalPublish=sm.runtimeTrace.publishMessage.bind(sm.runtimeTrace);let publishEntered,releasePublish;
+const publishStarted=new Promise(r=>publishEntered=r),publishPending=new Promise(r=>releasePublish=r);
+sm.runtimeTrace.publishMessage=async()=>{publishEntered();await publishPending};sm.roxExecutions.set('s1',ca);const beforeComplete=managed.messages.length;
+const lateComplete=sm.processEvent(managed,{type:'text_complete',text:'obsolete account A completion',turnId:'held-publication',isIntermediate:false}).catch(e=>e.message);await publishStarted;
+sm.roxExecutions.set('s1',cb);releasePublish();runtimeCompleteError=await lateComplete;runtimeCompleteAdded=managed.messages.length-beforeComplete;sm.runtimeTrace.publishMessage=originalPublish;
+// The current native-memory grant must also survive the passive collector await.
+let nativeEventCurrent=true,nativeCollectorEntered,releaseNativeCollector;
+const nativeCollectorStarted=new Promise(r=>nativeCollectorEntered=r),nativeCollectorPending=new Promise(r=>releaseNativeCollector=r);
+sm.nativeMemoryContexts.set('s1',{owner:{issuer:'fixture-native',subject:'native-a'},assertAuthorized(){if(!nativeEventCurrent)throw Error('NATIVE_GRANT_REVOKED')}});
+sm.roxExecutions.set('s1',ca);sm.runtimeTrace.agentEvent=async()=>{nativeCollectorEntered();await nativeCollectorPending};managed.streamingText='';
+const nativeEvent=sm.processEvent(managed,{type:'text_delta',text:'obsolete native memory reply',turnId:'held-native'}).catch(e=>e.message);await nativeCollectorStarted;
+nativeEventCurrent=false;releaseNativeCollector();nativeEventError=await nativeEvent;nativeEventText=managed.streamingText;sm.runtimeTrace.agentEvent=originalAgentEvent;sm.nativeMemoryContexts.delete('s1');
 sm.roxExecutions.set('s1',ca);managed.agent=null;
 const hold=sm.acquireRoxSessionLease('s1',ca);await f.authority.logout(a);
 f.client.wait=async()=>({status:'approved',accessToken:'account-a2',refreshToken:'refresh-a2',tokenType:'Bearer',expiresIn:900,user:{id:'account-a2',email:'same@example.test',name:'Cloud'}});
@@ -65,7 +84,7 @@ managed.messageQueue=[{message:'old recovered A',roxOwnerResource:queueResource}
 missingAuthorityQueueSends=0;sm.sendMessage=async()=>{missingAuthorityQueueSends++};sm.sendEvent=e=>{if(e.type==='typed_error')missingAuthorityFailure=e.error.originalError};
 setRoxAccountAuthority(undefined);managed.messageQueue=[{message:'authority unavailable',roxOwnerResource:queueResource}];sm.processNextQueuedMessage('s1');await Bun.sleep(10);setRoxAccountAuthority(f.authority);
 }
-console.log(JSON.stringify({pb,queuedNativeOwner,replayNativeOwner,replayCaller,revokedNativeQueueSends,titleError:title.error,selected:selected?.cloudAccountId,bindingAccount:binding?.accountId,bothCurrent:true,count,queuedAccount:queuedContext?.cloudAccountId,replayAccount:replayContext?.cloudAccountId,restoreError:typeof restored==='string'?restored:null,currentOwner:restoredOwner,rejectedLateTitle,lateCallbackError,callbackWrites,heldSwitchError,switchedOwner:sm.roxExecutions.get('s1')?.cloudAccountId,recoveredQueueOwner,staleQueueSends,queueFailure,missingAuthorityQueueSends,missingAuthorityFailure}));
+console.log(JSON.stringify({pb,queuedNativeOwner,replayNativeOwner,replayCaller,revokedNativeQueueSends,titleError:title.error,selected:selected?.cloudAccountId,bindingAccount:binding?.accountId,bothCurrent:true,count,queuedAccount:queuedContext?.cloudAccountId,replayAccount:replayContext?.cloudAccountId,restoreError:typeof restored==='string'?restored:null,currentOwner:restoredOwner,rejectedLateTitle,lateCallbackError,callbackWrites,heldSwitchError,switchedOwner:sm.roxExecutions.get('s1')?.cloudAccountId,recoveredQueueOwner,staleQueueSends,queueFailure,missingAuthorityQueueSends,missingAuthorityFailure,runtimeEventError,runtimeEventText,runtimeCompleteError,runtimeCompleteAdded,nativeEventError,nativeEventText}));
 `], { cwd: root, env: { ...process.env, NODE_ENV: 'test', ROX_CONFIG_DIR: temp, CRAFT_CONFIG_DIR: temp }, stdout: 'pipe', stderr: 'pipe' })
   const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
   expect({ exit, stdout, stderr }).toMatchObject({ exit: 0 })
@@ -94,5 +113,11 @@ console.log(JSON.stringify({pb,queuedNativeOwner,replayNativeOwner,replayCaller,
   expect(r.queueFailure).toBe('ROX_ACCOUNT_CHANGED')
   expect(r.missingAuthorityQueueSends).toBe(0)
   expect(r.missingAuthorityFailure).toBe('ROX_TRUSTED_ACCOUNT_REQUIRED')
+  expect(r.runtimeEventText).toBe('')
+  expect(r.runtimeEventError).toBe('ROX_SESSION_OWNER_CONFLICT')
+  expect(r.runtimeCompleteError).toBe('ROX_SESSION_OWNER_CONFLICT')
+  expect(r.runtimeCompleteAdded).toBe(0)
+  expect(r.nativeEventError).toBe('NATIVE_GRANT_REVOKED')
+  expect(r.nativeEventText).toBe('')
  } finally { rmSync(temp, { recursive: true, force: true }) }
 }, 90_000)
