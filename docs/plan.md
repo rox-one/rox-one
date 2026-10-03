@@ -676,3 +676,11 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 | LOC-05: Publish, review and merge main | Lead | LOC-04 | scoped PR and verification receipt | exact pushed HEAD, check readback, merge SHA and main ancestry; retain unrelated work |
 
 The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
+
+
+### Session project membership metadata recovery (2026-10-03)
+
+- Owner: recent-features worker; dependencies: current shared serialized session writer, SessionManager, current workspace-confined project delete path and collection query.
+- Selectively adapt source `c0ef036e9c9b627589ad4e2a055abac0212b4295` metadata/storage helpers, preserve primary defaults and canonical project access. Exclude old closed-project-only visibility helpers; current readable-context authority remains canonical.
+- Verify actual create/list/reload/unrelated-save round trips, primary/secondary unlink with transcript preservation, existing manager primary/bulk mutations, workspace-isolated live-owner unlink, secondary filter and external disk mutation during a queued write. Run current persistence/bulk/cold metadata regressions, relevant package types and renderer event controls.
+- Delivery: separate codex branch and PR; original branches retained, lead owns ordered main merge.
