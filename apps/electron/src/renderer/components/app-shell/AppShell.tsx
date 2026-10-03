@@ -972,7 +972,9 @@ function AppShellContent({
   // Reset UI state when workspace changes
   // This prevents stale search queries, focused items, and filter state from persisting
   const previousWorkspaceRef = React.useRef<string | null>(null)
-  React.useEffect(() => {
+  const [workspaceUiStateId, setWorkspaceUiStateId] = React.useState<string | null>(null)
+  // Cancel gestures synchronously before a queued timer can use new handlers.
+  React.useLayoutEffect(() => {
     if (!activeWorkspaceId) return
 
     const previousWorkspaceId = previousWorkspaceRef.current
@@ -992,6 +994,14 @@ function AppShellContent({
     // Load workspace-scoped state on BOTH initial mount AND workspace switch
     // This fixes CMD+R losing filters - previously only ran on workspace switch
     if (previousWorkspaceId !== activeWorkspaceId) {
+      // Cancel pointer/keyboard previews before restoring the next workspace,
+      // so a delayed commit cannot save old dimensions under the new id.
+      sidebarResize.handleKeyCancel()
+      navigatorResize.handleKeyCancel()
+      const layout = loadShellLayout(activeWorkspaceId)
+      setSidebarWidth(layout.sidebarWidth)
+      setSessionListWidth(layout.navigatorWidth)
+
       const newViewFilters = storage.get<ViewFiltersMap>(storage.KEYS.viewFilters, {}, activeWorkspaceId)
       setViewFiltersMap(newViewFilters)
 
@@ -1002,37 +1012,29 @@ function AppShellContent({
       setCollapsedItems(newCollapsedItems !== null ? new Set(newCollapsedItems) : new Set(['nav:labels']))
     }
 
+    setWorkspaceUiStateId(activeWorkspaceId)
     previousWorkspaceRef.current = activeWorkspaceId
   }, [activeWorkspaceId])
 
-  // Load sources from backend on mount
+  // A live update is newer than the initial snapshot; obsolete loads must not
+  // resurrect deleted entities or cross a workspace boundary.
   React.useEffect(() => {
+    let disposed = false
+    let updated = false
+    setSources([])
     if (!activeWorkspaceId) return
-    window.electronAPI.getSources(activeWorkspaceId).then((loaded) => {
-      setSources(loaded || [])
-    }).catch(err => {
-      console.error('[Chat] Failed to load sources:', err)
-    })
-  }, [activeWorkspaceId])
-
-  // Subscribe to live source updates (when sources are added/removed dynamically)
-  React.useEffect(() => {
     const cleanup = window.electronAPI.onSourcesChanged((workspaceId, updatedSources) => {
-      if (workspaceId !== activeWorkspaceId) return
-      // Clear icon cache so updated source icons are re-fetched on render
+      if (disposed || workspaceId !== activeWorkspaceId) return
+      updated = true
       clearSourceIconCaches()
       setSources(updatedSources || [])
     })
-    return cleanup
-  }, [activeWorkspaceId])
-
-  // Subscribe to live skill updates (when skills are added/removed dynamically)
-  React.useEffect(() => {
-    const cleanup = window.electronAPI.onSkillsChanged((workspaceId, updatedSkills) => {
-      if (workspaceId !== activeWorkspaceId) return
-      setSkills(updatedSkills || [])
+    window.electronAPI.getSources(activeWorkspaceId).then((loaded) => {
+      if (!disposed && !updated) setSources(loaded || [])
+    }).catch(err => {
+      if (!disposed && !updated) console.error('[Chat] Failed to load sources:', err)
     })
-    return cleanup
+    return () => { disposed = true; cleanup() }
   }, [activeWorkspaceId])
 
   // Handle session source selection changes
@@ -1402,12 +1404,26 @@ function AppShellContent({
     ? sessionMetaMap.get(session.selected)?.workingDirectory
     : undefined
   React.useEffect(() => {
+    let disposed = false
+    let revision = 0
+    setSkills([])
     if (!activeWorkspaceId) return
-    window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
-      setSkills(loaded || [])
-    }).catch(err => {
-      console.error('[Chat] Failed to load skills:', err)
+    const load = () => {
+      const request = ++revision
+      window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
+        if (!disposed && request === revision) setSkills(loaded || [])
+      }).catch(err => {
+        if (!disposed && request === revision) console.error('[Chat] Failed to load skills:', err)
+      })
+    }
+    const cleanup = window.electronAPI.onSkillsChanged((workspaceId) => {
+      if (disposed || workspaceId !== activeWorkspaceId) return
+      // Watcher payloads omit project skills and shadowed OMP variants.
+      // Refresh with the same directory/options as the canonical initial list.
+      load()
     })
+    load()
+    return () => { disposed = true; revision += 1; cleanup() }
   }, [activeWorkspaceId, activeSessionWorkingDirectory])
 
   // Filter session metadata by active workspace
@@ -1713,9 +1729,9 @@ function AppShellContent({
   }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
   // Persist expanded folders to localStorage (workspace-scoped)
   React.useEffect(() => {
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
     storage.set(storage.KEYS.expandedFolders, [...expandedFolders], activeWorkspaceId)
-  }, [expandedFolders, activeWorkspaceId])
+  }, [expandedFolders, activeWorkspaceId, workspaceUiStateId])
 
   // Persist sidebar visibility to localStorage
   React.useEffect(() => {
@@ -1757,16 +1773,16 @@ function AppShellContent({
 
   // Persist per-view filter map to localStorage (workspace-scoped)
   React.useEffect(() => {
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
     storage.set(storage.KEYS.viewFilters, viewFiltersMap, activeWorkspaceId)
-  }, [viewFiltersMap, activeWorkspaceId])
+  }, [viewFiltersMap, activeWorkspaceId, workspaceUiStateId])
 
   // Persist sidebar section collapsed states (workspace-scoped)
   React.useEffect(() => {
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
     storage.set(storage.KEYS.collapsedSidebarItems, [...collapsedItems], activeWorkspaceId)
     commitShellLayout({ workspaceId: activeWorkspaceId, collapsedSectionIds: [...collapsedItems] })
-  }, [collapsedItems, activeWorkspaceId])
+  }, [collapsedItems, activeWorkspaceId, workspaceUiStateId])
 
   const handleAllSessionsClick = useCallback(() => {
     navigate(routes.view.allSessions())
