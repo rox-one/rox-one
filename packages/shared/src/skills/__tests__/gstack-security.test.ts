@@ -142,3 +142,26 @@ for (const copy of ['', 'gstack']) {
     expect(resolveBrowseAuth({ port: 1234, token: 'private' }).port).toBe(1234);
   });
 }
+
+test('throughput Git filters and paths are passed as literal subprocess arguments', async () => {
+  const { enumerateCommits, analyzeCommit } = await import(join(resources, 'gstack/scripts/garry-output-comparison.ts'));
+  const { execFileSync } = await import('node:child_process');
+  const { mkdirSync, existsSync } = await import('node:fs');
+  const dir = mkdtempSync(join(tmpdir(), 'rox-gstack-shell-'));
+  const marker = join(dir, 'injected');
+  const repo = join(dir, 'repo$(touch injected)');
+  try {
+    mkdirSync(repo);
+    execFileSync('git', ['init', '-q', repo]);
+    writeFileSync(join(repo, 'sample.txt'), 'sample\n');
+    execFileSync('git', ['-C', repo, 'add', 'sample.txt']);
+    execFileSync('git', ['-C', repo, '-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '-q', '-m', 'sample']);
+    const year = new Date().getFullYear();
+    const commits = enumerateCommits(year, repo, ['test@example.com']);
+    expect(commits.length).toBe(1);
+    expect(analyzeCommit(commits[0], repo, false).raw).toBeGreaterThan(0);
+    enumerateCommits(year, repo, [`$(touch ${marker})`]);
+    expect(existsSync(marker)).toBe(false);
+    expect(existsSync(join(process.cwd(), 'injected'))).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

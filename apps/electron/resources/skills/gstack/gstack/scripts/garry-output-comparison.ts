@@ -28,7 +28,7 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 
 function resolveAuthorEmails(argv: string[]): string[] {
   const fromArgs: string[] = [];
@@ -165,27 +165,27 @@ function isLogicalLine(line: string): boolean {
   return true;
 }
 
-function enumerateCommits(year: number, repoPath: string, authorEmails: string[]): string[] {
+export function enumerateCommits(year: number, repoPath: string, authorEmails: string[]): string[] {
   const since = `${year}-01-01`;
   const until = `${year}-12-31`;
-  const authorFlags = authorEmails.map(e => `--author=${e}`).join(' ');
+  const authorFlags = authorEmails.map(e => `--author=${e}`);
   try {
-    const cmd = `git -C "${repoPath}" log --since=${since} --until=${until} ${authorFlags} --pretty=format:'%H' 2>/dev/null`;
-    const out = execSync(cmd, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const out = execFileSync('git', ['-C', repoPath, 'log', `--since=${since}`, `--until=${until}`, ...authorFlags, '--pretty=format:%H'], { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] });
     return out.split('\n').filter(l => /^[0-9a-f]{40}$/.test(l.trim()));
   } catch {
     return [];
   }
 }
 
-function analyzeCommit(commit: string, repoPath: string, sccAvailable: boolean): {
+export function analyzeCommit(commit: string, repoPath: string, sccAvailable: boolean): {
   raw: number; logical: number; filesTouched: number; perLang: Record<string, number>;
 } {
+  if (!/^[0-9a-f]{40}$/i.test(commit)) return { raw: 0, logical: 0, filesTouched: 0, perLang: {} };
   // Use --no-renames to avoid double-counting R100 renames
   let diff = '';
   try {
-    diff = execSync(
-      `git -C "${repoPath}" show --no-renames --format= --unified=0 ${commit}`,
+    diff = execFileSync(
+      'git', ['-C', repoPath, 'show', '--no-renames', '--format=', '--unified=0', commit],
       { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 50 * 1024 * 1024 }
     );
   } catch {
@@ -263,8 +263,8 @@ function analyzeRepo(repoPath: string, year: number, authorEmails: string[], scc
     }
     // Bucket commit into ISO week
     try {
-      const dateStr = execSync(
-        `git -C "${repoPath}" show --format=%cI --no-patch ${commit}`,
+      const dateStr = execFileSync(
+        'git', ['-C', repoPath, 'show', '--format=%cI', '--no-patch', commit],
         { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }
       ).trim();
       if (dateStr) {
@@ -431,4 +431,4 @@ function main() {
   }
 }
 
-main();
+if (import.meta.main) main();

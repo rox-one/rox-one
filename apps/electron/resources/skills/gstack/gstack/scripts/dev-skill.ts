@@ -8,7 +8,7 @@
 
 import { validateSkill } from '../test/helpers/skill-parser';
 import { discoverTemplates } from './discover-skills';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -22,7 +22,7 @@ const TEMPLATES = discoverTemplates(ROOT).map(t => ({
 function regenerateAndValidate() {
   // Regenerate
   try {
-    execSync('bun run scripts/gen-skill-docs.ts', { cwd: ROOT, stdio: 'pipe' });
+    execFileSync('bun', ['run', 'scripts/gen-skill-docs.ts'], { cwd: ROOT, stdio: 'pipe' });
   } catch (err: any) {
     console.log(`  [gen]   ERROR: ${err.stderr?.toString().trim() || err.message}`);
     return;
@@ -59,8 +59,8 @@ function regenerateAndValidate() {
   const RENDER_DIR = path.join(ROOT, '.claude', 'gstack-rendered');
   if (fs.existsSync(RENDER_DIR)) {
     try {
-      execSync(
-        `bun run scripts/gen-skill-docs.ts --respect-detection --host claude --out-dir ${JSON.stringify(RENDER_DIR)}`,
+      execFileSync(
+        'bun', ['run', 'scripts/gen-skill-docs.ts', '--respect-detection', '--host', 'claude', '--out-dir', RENDER_DIR],
         { cwd: ROOT, stdio: 'pipe' },
       );
       console.log('  [render] refreshed .claude/gstack-rendered (brain-aware workspace copy)');
