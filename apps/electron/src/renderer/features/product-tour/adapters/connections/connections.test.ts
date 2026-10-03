@@ -23,6 +23,12 @@ describe('DOMAIN-06 selection and readiness stay separate', () => {
     expect(sourceReadiness(source('a', { mcp: { transport: 'stdio', command: 'unused', authType: 'none' } }), false).state).toBe('unavailable')
     expect(sourceReadiness(source('a', { mcp: { transport: 'http', authType: 'oauth' }, isAuthenticated: false })).state).toBe('denied')
   })
+  test('unknown native local-MCP policy cannot advertise connected stdio as ready', () => {
+    const stdio = source('a', { mcp: { transport: 'stdio', command: 'unused', authType: 'none' } })
+    expect(sourceReadiness(stdio, null)).toEqual({ state: 'pending', reason: 'api-unavailable' })
+    expect(sourceReadiness(stdio)).toEqual({ state: 'pending', reason: 'api-unavailable' })
+    expect(sourceReadiness(stdio, true)).toEqual({ state: 'ready' })
+  })
   test('source from another workspace cannot provide readiness', () => {
     expect(connectionCapabilities({ sources: [source('a')], workspaceId: 'other', selectedSlugs: ['a'] })['sources.ready']).toEqual({ state: 'unavailable', reason: 'missing-entity' })
   })

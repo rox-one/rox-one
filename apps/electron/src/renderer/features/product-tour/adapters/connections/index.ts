@@ -23,14 +23,15 @@ export function resolvePublishedToolSource(toolName: string, enabledSourceSlugs:
   return matches.length === 1 ? matches[0]! : null
 }
 
-export function sourceReadiness(source: LoadedSource, localMcpEnabled = true): TourCapability {
+export function sourceReadiness(source: LoadedSource, localMcpEnabled: boolean | null = null): TourCapability {
   const { config } = source
-  if (!config.enabled || (config.mcp?.transport === 'stdio' && !localMcpEnabled)) return { state: 'unavailable', reason: 'not-connected' }
+  if (!config.enabled || (config.mcp?.transport === 'stdio' && localMcpEnabled === false)) return { state: 'unavailable', reason: 'not-connected' }
   if (config.connectionStatus === 'needs_auth') return { state: 'denied', reason: 'not-authorized' }
   if (config.connectionStatus === 'failed') return { state: 'unavailable', reason: 'not-connected' }
   if (config.connectionStatus === 'local_disabled') return { state: 'unavailable', reason: 'not-connected' }
   const auth = config.mcp?.authType ?? config.api?.authType
   if (auth && auth !== 'none' && config.isAuthenticated !== true) return { state: 'denied', reason: 'not-authorized' }
+  if (config.mcp?.transport === 'stdio' && localMcpEnabled === null) return { state: 'pending', reason: 'api-unavailable' }
   if (config.connectionStatus === 'connected' || config.type === 'local') return { state: 'ready' }
   return { state: 'pending', reason: source.isBuiltin ? 'installing' : 'not-connected' }
 }
@@ -41,7 +42,7 @@ export interface ConnectionCapabilityInput {
   readonly selectedSlugs?: readonly string[]
   readonly sourcesLoading?: boolean
   readonly sourcesUnavailable?: boolean
-  readonly localMcpEnabled?: boolean
+  readonly localMcpEnabled?: boolean | null
   readonly skills?: readonly LoadedSkill[]
   readonly fabric?: 'loading' | 'ready' | 'unavailable' | 'error'
 }

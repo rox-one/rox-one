@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useAtomValue } from 'jotai'
 import { focusedPanelIdAtom } from '@/atoms/panel-stack'
-import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { TourConnectionPolicyContext, useTourTarget, useTourSignals } from '@/features/product-tour/runtime/hooks'
 import { connectionCapabilities } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { DatabaseZap, RefreshCw } from 'lucide-react'
@@ -77,11 +77,13 @@ export function SourcesListPanel({
   const tourScope = { workspaceId: activeWorkspaceId ?? undefined, panelId: focusedPanelId ?? undefined }
   const sourcesTarget = useTourTarget('sources.list', tourScope)
   const tour = useTourSignals(tourScope)
+  const connectionPolicy = React.useContext(TourConnectionPolicyContext)
+  const nativeLocalMcpEnabled = connectionPolicy?.workspaceId === activeWorkspaceId ? connectionPolicy.localMcpEnabled : localMcpEnabled === false ? false : null
   React.useEffect(() => {
-    const caps = connectionCapabilities({ sources, localMcpEnabled, workspaceId: activeWorkspaceId ?? undefined })
+    const caps = connectionCapabilities({ sources, localMcpEnabled: nativeLocalMcpEnabled, workspaceId: activeWorkspaceId ?? undefined })
     const cleanups = [tour.capability('sources.list', caps['sources.list']!), tour.capability('sources.ready', caps['sources.ready']!)]
     return () => cleanups.forEach(cleanup => cleanup())
-  }, [tour, sources, localMcpEnabled, activeWorkspaceId])
+  }, [tour, sources, nativeLocalMcpEnabled, activeWorkspaceId])
 
   // Send to Workspace dialog state
   const [sendDialogOpen, setSendDialogOpen] = React.useState(false)

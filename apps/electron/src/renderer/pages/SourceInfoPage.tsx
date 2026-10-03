@@ -196,7 +196,7 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
   const [mcpTools, setMcpTools] = useState<McpToolWithPermission[] | null>(null)
   const [mcpToolsLoading, setMcpToolsLoading] = useState(false)
   const [mcpToolsError, setMcpToolsError] = useState<string | null>(null)
-  const [localMcpEnabled, setLocalMcpEnabled] = useState(true)
+  const [localMcpEnabled, setLocalMcpEnabled] = useState<boolean | null>(null)
 
   // Native edit drafts
   const [editName, setEditName] = useState('')
@@ -286,13 +286,14 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
   // Load workspace settings (for localMcpEnabled)
   useEffect(() => {
     if (!workspaceId) return
+    let stale = false
+    setLocalMcpEnabled(null)
     window.electronAPI.getWorkspaceSettings(workspaceId).then((settings) => {
-      if (settings) {
-        setLocalMcpEnabled(settings.localMcpEnabled ?? true)
-      }
+      if (!stale && settings) setLocalMcpEnabled(settings.localMcpEnabled ?? true)
     }).catch((err) => {
       console.error('[SourceInfoPage] Failed to load workspace settings:', err)
     })
+    return () => { stale = true }
   }, [workspaceId])
 
   // Listen for source folder changes
@@ -466,7 +467,7 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
           />
 
           {/* Disabled Warning */}
-          {source.config.mcp?.transport === 'stdio' && !localMcpEnabled && (
+          {source.config.mcp?.transport === 'stdio' && localMcpEnabled === false && (
             <Info_Alert variant="warning" icon={<AlertCircle className="h-4 w-4" />}>
               <Info_Alert.Title>{t('sourceInfo.sourceDisabled')}</Info_Alert.Title>
               <Info_Alert.Description>
@@ -503,8 +504,8 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
           >
             <div className="space-y-3 px-4 py-3">
               <div ref={sourceStatusTarget} role="status" className="flex items-center gap-2 text-sm" data-product-tour-target="source.status">
-                <SourceStatusIndicator status={deriveConnectionStatus(source, localMcpEnabled)} errorMessage={source.config.connectionError} />
-                <span>{t({ connected: 'sourceStatus.connected', needs_auth: 'sourceStatus.needsAuth', failed: 'sourceStatus.failed', untested: 'sourceStatus.untested', local_disabled: 'sourceStatus.disabled' }[deriveConnectionStatus(source, localMcpEnabled)])}</span>
+                <SourceStatusIndicator status={deriveConnectionStatus(source, localMcpEnabled ?? true)} errorMessage={source.config.connectionError} />
+                <span>{t({ connected: 'sourceStatus.connected', needs_auth: 'sourceStatus.needsAuth', failed: 'sourceStatus.failed', untested: 'sourceStatus.untested', local_disabled: 'sourceStatus.disabled' }[deriveConnectionStatus(source, localMcpEnabled ?? true)])}</span>
               </div>
               <div className="grid gap-1.5">
                 <label className="text-xs font-medium text-muted-foreground">{t('common.name')}</label>
