@@ -609,3 +609,12 @@ The recent worker owns the gstack command redirect prerequisite in an isolated s
 ## Native Notes Knowledge read projection (2026-10-03)
 
 Owner: historical branch recovery. Add NativeNotesKnowledgeProvider over nativeNotesKnowledgeAccess and explicitly authenticated RPC read handlers; preserve existing SiYuan compatibility reads for legacy contexts. Verify real WebSocket principal authentication, committed note search/read/backlinks, exclusion of loose Markdown files, foreign workspace/global connection rejection, forged/missing principal denial, invalidation of captured readers after revocation, and explicit CAPABILITY_DISABLED for unscoped agent calls. Existing Knowledge RPC/tool runtime tests remain green. Native visual Notes/agent adoption is outside this bounded API proof.
+
+## Bounded historical recovery: browser registry ownership (2026-10-03)
+
+Owner: historical integration; parent retains merge. Dependency: existing useWorkspaceBrowserWindows and the exact browser-surface preference used by TopBar. Owned files: a nonvisual WorkspaceBrowserRegistry, AppShell mounts/imports, hook documentation, and focused tests. Preserve concurrent Golden Gate retained-surface/bounds work and voice/editor providers.
+
+1. Confirm the source lifecycle intent and current hidden-strip producer gap.
+2. Mount a context-bound owner for hidden-strip and mini configurations; retain existing visible-strip subscriptions.
+3. Execute delivered component/hook with actual atoms: initial list, state update, interaction, removal/reconciliation, disabled transfer, unmount and late-event/list controls. Run existing browser/chrome checks and renderer validation.
+4. Publish a separate PR with exact source/head and bounded evidence; original branches remain untouched.

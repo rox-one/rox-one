@@ -102,6 +102,8 @@ import {
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
+import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
+import { featureWorkbenchBrowserSurfaceV2Atom } from "@/atoms/unified-shell"
 import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
@@ -240,6 +242,7 @@ export function AppShell(props: AppShellProps) {
     <EscapeInterruptProvider>
       {mini ? (
         <AppShellProvider value={props.contextValue}>
+          <WorkspaceBrowserRegistry />
           <MiniSessionSurface />
         </AppShellProvider>
       ) : (
@@ -300,6 +303,7 @@ function AppShellContent({
     return storage.get(storage.KEYS.sidebarVisible, !defaultCollapsed)
   })
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
+  const browserSurfaceEnabled = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
   const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const inspectorSuppressed = useInspectorSuppressed()
   const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
@@ -2702,6 +2706,7 @@ function AppShellContent({
   )
   return (
     <AppShellProvider value={appShellContextValue}>
+      <WorkspaceBrowserRegistry enabled={browserSurfaceEnabled} />
       <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
         {/* === TOP BAR === */}
         <TopBar
