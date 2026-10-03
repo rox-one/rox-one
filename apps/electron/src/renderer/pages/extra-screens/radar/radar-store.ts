@@ -6,6 +6,7 @@
 import { extractJsonBlock, readAgentRun, startAgentRun } from '@/lib/extra-screens/agent-run'
 import { loadWorkspaceJson, newLocalId, saveWorkspaceJson } from '@/lib/extra-screens/storage'
 import { externalFeedItems, loadFeed } from '@/lib/extra-screens/use-rox-sources'
+import { known, unknown, type RuntimeLaunch } from '@rox/core/runtime-trace'
 import {
   MAX_SWEEPS,
   buildRadarPrompt,
@@ -88,14 +89,30 @@ async function startSweep(
     const feedItems = feedContext.flatMap(item => item.url && /^https?:\/\//i.test(item.url) && item.source && item.at !== undefined
       ? [{ url: item.url, source: item.source, at: item.at }] : []).slice(0, 100)
     patchSweep(workspaceId, claim.id, { sourceSlugs: selected, feedItems })
+    let runtimeLaunch: RuntimeLaunch | undefined
+    if (trigger === 'daily') {
+      let timezone: string | undefined
+      try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || undefined } catch { /* The local timezone was not exposed. */ }
+      runtimeLaunch = {
+        kind: 'scheduled',
+        // The existing once-per-local-day policy owns this saved sweep claim.
+        scheduleId: `rox.radar.claim.v1:${workspaceId}`,
+        triggerId: claim.date,
+        occurrenceId: claim.id,
+        ...(timezone ? { timezone } : {}),
+        scheduledAt: unknown('not-recorded'),
+      }
+    }
     const sessionId = await startAgentRun({
       workspaceId,
       name: sessionName,
       prompt: buildRadarPrompt(data.topics, now, language, feedContext) + '\n' + (language === 'ru' ? 'Доступные sourceSlugs: ' : 'Available sourceSlugs: ') + (selected.join(', ') || '(none)'),
       enabledSourceSlugs: selected,
+      ...(runtimeLaunch ? { runtimeLaunch } : {}),
       async onCreated(id) {
         await assertWorkspace(workspaceId, options)
         patchSweep(workspaceId, claim.id, { sessionId: id, status: 'running' })
+        if (runtimeLaunch) runtimeLaunch.dispatchedAt = known(Date.now(), 'radar-dispatch')
       },
     })
     return loadRadar(workspaceId).sweeps.find(sweep => sweep.id === claim.id) ?? { ...claim, sessionId, status: 'running' }

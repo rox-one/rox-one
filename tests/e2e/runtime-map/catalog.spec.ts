@@ -98,7 +98,10 @@ test('skills: keyboard search/category/scope, dependencies, navigation and real 
   await search.press('Tab')
   const category = page.getByRole('combobox', { name: copy('capabilityCatalog.category') })
   await expect(category).toBeFocused()
-  await category.press('Home'); await category.press('ArrowDown'); await category.press('ArrowDown'); await category.press('Enter')
+  // Native macOS popups do not consume synthetic Home/Arrow keys in headless Chrome.
+  // Keep focus and the exact production change/value assertions; only the OS chooser uses its driver.
+  if (process.platform === 'darwin') await category.selectOption('code')
+  else { await category.press('Home'); await category.press('ArrowDown'); await category.press('ArrowDown'); await category.press('Enter') }
   await expect(category).toHaveValue('code')
   await expect(page.getByTestId('catalog-skill-row')).toHaveCount(1)
   const name = page.getByRole('button', { name: /^Fixture code review/ })
@@ -136,7 +139,9 @@ test('integrations: intersected category/type/search filters preserve unknown pr
   await page.keyboard.press('Enter')
   await expect(page.getByTestId('catalog-integration-card')).toHaveCount(2)
   await expect(page.locator('[data-source-id="custom-source"]')).toBeVisible()
-  await type.focus(); await type.press('Home'); await type.press('ArrowDown'); await type.press('ArrowDown'); await type.press('Enter')
+  await type.focus()
+  if (process.platform === 'darwin') await type.selectOption('api')
+  else { await type.press('Home'); await type.press('ArrowDown'); await type.press('ArrowDown'); await type.press('Enter') }
   await expect(type).toHaveValue('api')
   await expect(page.getByTestId('catalog-integration-card')).toHaveCount(1)
   const search = page.getByRole('searchbox', { name: copy('capabilityCatalog.searchIntegrations') })
@@ -168,7 +173,7 @@ test('source navigator: existing modifier selection, Escape and arrow navigation
   const github = navigator.locator('#item-github-source')
   await custom.click()
   await expect(page.getByTestId('catalog-selection-count')).toHaveText('1')
-  await github.click({ modifiers: ['Control'] })
+  await github.click({ modifiers: [process.platform === 'darwin' ? 'Meta' : 'Control'] })
   await expect(page.getByTestId('catalog-selection-count')).toHaveText('2')
   await expect(page.getByRole('heading', { name: 'Выбрано 2 источника', exact: true })).toBeVisible()
   await page.getByTestId('catalog-production-surfaces').screenshot({ path: info.outputPath('sources-existing-multiselect-dark.png') })

@@ -62,7 +62,7 @@ function ContextCanvasInner({ graph, scopeKey, selectedId, query = '', onSelect,
       const height = closed ? 38 : 38 + Math.max(1, rowCount) * 48 + (group.rows.length > limit ? 32 : 0)
       const position = { x: 12 + group.column * 280, y: offsets[group.column]! }
       offsets[group.column] = position.y + height + 20
-      return { id: `context-group:${group.id}`, type: 'contextGroup', position, initialWidth: 256, initialHeight: height, handles: [], draggable: false, selectable: false, focusable: false, data: { group, collapsed: closed, limit, selectedId, searching: !!query.trim(), onToggle, onMore, onSelect } }
+      return { id: `context-group:${group.id}`, type: 'contextGroup', position, initialWidth: 256, initialHeight: height, handles: [], draggable: false, selectable: false, focusable: false, style: { pointerEvents: 'auto' }, data: { group, collapsed: closed, limit, selectedId, searching: !!query.trim(), onToggle, onMore, onSelect } }
     })
   }, [groups, collapsed, limits, selectedId, onToggle, onMore, onSelect, query])
   const focusNode = (id: string) => {
