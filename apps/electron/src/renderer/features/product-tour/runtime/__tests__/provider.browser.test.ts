@@ -50,7 +50,7 @@ afterAll(async () => {
   await browser?.close()
   server?.stop(true)
   stage('provider:browser:closed')
-})
+}, 30_000)
 
 // Keep the production bundle and browser lifecycle independent of other Bun suites.
 function browserTest(name: string, operation: () => Promise<void>, timeout: number) {
