@@ -656,3 +656,9 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 | LOC-05: Publish, review and merge main | Lead | LOC-04 | scoped PR and verification receipt | exact pushed HEAD, check readback, merge SHA and main ancestry; retain unrelated work |
 
 The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
+
+## SSE fixture follow-up — 2026-10-03
+
+1. Lead + standards_review: diagnose actual post-merge Linux MCP failure, bind request traces to session IDs — late previous-session POST confirmed; runtime headers correct.
+2. locator_audit: own only client-sse.test.ts; record handshake/POST session IDs and correlate authorization assertions. Depends on diagnosis; retain strict positive checks and add temporary missing-POST-header negative control.
+3. Lead: focused SSE, complete MCP onboarding command and independent review; publish scoped follow-up PR and merge main, verify exact delivered test blob and remote ancestry. Dependency: session isolation plus failing negative control and passing full gate. Existing credential repair/source validation receipts remain bound to their original revisions.

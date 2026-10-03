@@ -31,6 +31,7 @@ import { validateMcpConnection } from '../validation.ts'
 interface SeenRequest {
   method: string
   path: string
+  sessionId?: string
   authorization?: string
 }
 
@@ -74,14 +75,16 @@ beforeAll(async () => {
 
   httpServer = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1')
-    seen.push({
+    const request: SeenRequest = {
       method: req.method ?? '?',
       path: url.pathname,
       authorization: req.headers['authorization'],
-    })
+    }
+    seen.push(request)
 
     if (req.method === 'GET' && url.pathname === '/sse') {
       const transport = new SSEServerTransport('/messages', res)
+      request.sessionId = transport.sessionId
       transports.set(transport.sessionId, transport)
       res.on('close', () => {
         transports.delete(transport.sessionId)
@@ -93,6 +96,7 @@ beforeAll(async () => {
 
     if (req.method === 'POST' && url.pathname === '/messages') {
       const sessionId = url.searchParams.get('sessionId') ?? ''
+      request.sessionId = sessionId
       const transport = transports.get(sessionId)
       if (!transport) {
         res.writeHead(404).end('unknown session')
@@ -162,9 +166,11 @@ describe('CraftMcpClient — SSE transport', () => {
       await client.close()
     }
     const related = seen.slice(before)
-    const handshake = related.find((r) => r.method === 'GET' && r.path === '/sse')
-    const posts = related.filter((r) => r.method === 'POST' && r.path === '/messages')
+    const handshake = related.find((r) => r.method === 'GET' && r.path === '/sse' && r.authorization === 'Bearer sse-token-123')
     expect(handshake?.authorization).toBe('Bearer sse-token-123')
+    expect(handshake?.sessionId).toBeDefined()
+    expect(handshake?.sessionId?.length).toBeGreaterThan(0)
+    const posts = related.filter((r) => r.method === 'POST' && r.path === '/messages' && r.sessionId === handshake?.sessionId)
     expect(posts.length).toBeGreaterThan(0)
     for (const post of posts) {
       expect(post.authorization).toBe('Bearer sse-token-123')
