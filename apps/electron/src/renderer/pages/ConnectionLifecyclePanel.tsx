@@ -122,7 +122,7 @@ export function ConnectionLifecyclePanel({ connection, workspaceId }: { connecti
     finally { if (mutation.current === captured) { mutation.current = null; if (belongs(captured)) setBusy(null) } }
   }
 
-  if (connection.workspaceId !== workspaceId || !fields) return <section role="alert">{t('sidebar.connectionsUnavailable')}</section>
+  if (connection.workspaceId !== workspaceId || !fields) return <section role="alert">{t('chat.connectionUnavailable')}</section>
   const field = (label: string, value: string) => <div className="min-w-0"><dt className="text-xs text-muted-foreground">{t(label)}</dt><dd className="break-all font-mono text-xs text-foreground">{value || '—'}</dd></div>
   return <section data-testid="connection-lifecycle" data-connection-id={connection.id} className="space-y-3 px-2.5 py-2 text-foreground">
     <dl className="grid grid-cols-1 gap-2">
@@ -135,7 +135,7 @@ export function ConnectionLifecyclePanel({ connection, workspaceId }: { connecti
       {login && field('inspector.field.testLogin', login)}{consumers && field('inspector.field.consumers', consumers)}{leases && field('inspector.field.leases', leases)}
     </dl>
     {state === 'loading' && <p role="status" className="text-xs text-muted-foreground">{t('common.loading')}</p>}
-    {(state === 'error' || state === 'unavailable') && <p role="alert" className="text-xs">{t(state === 'error' ? 'chat.connectionUnavailable' : 'sidebar.connectionsUnavailable')}</p>}
+    {(state === 'error' || state === 'unavailable') && <p role="alert" className="text-xs">{t('chat.connectionUnavailable')}</p>}
     {inspect && isStaleInspectSummary(inspect) && <p className="text-xs">{t('connections.reconnectHint')}</p>}
     {completed && <p role="status" className="text-xs">{t('connections.reconnectDone')}</p>}
     <div className="flex flex-wrap gap-1">
