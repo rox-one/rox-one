@@ -734,3 +734,11 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 2. Recover the pure keyed draft map and bind current floating composer setters to workspace plus active document identity. Preserve current write/mutation authority and in-page draft lifetime.
 3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
 4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
+
+
+## Golden service navigation and guidance recovery — 2026-10-03
+
+1. Historical integration owns selective `findServicePanel`/focus atom recovery onto the current registry and routes; compose it only into current AppShell root callbacks. Depend on the existing panel stack and its NavigationContext history subscriber. Keep explicit subroutes and compact Settings drill-in.
+2. Recover the source's workspace-scoped dismissal key/helper; compose it into today's flat SidebarChrome/PromoSlot using the existing all-locale `common.dismiss` key. Fence focus by captured workspace and connected/visible profile owner. Keep reminders independent.
+3. Execute actual component callbacks with real panel atoms and controlled local storage: mounted-route/draft preservation, preferred match, missing-service fallback, explicit subroutes, compact mode, durable workspace isolation and stale-callback focus. Verify current DOM keyboard/disclosure, panel lanes, promo policy and Electron types. Run before-source negative controls, restore exact files, reconcile live main without replacing later docs, publish a separate PR and retain all source branches.
+4. Acceptance is bounded source and renderer integration; do not claim installed native UI, old sidebar layout recovery, full Golden source-family completion or production acceptance.

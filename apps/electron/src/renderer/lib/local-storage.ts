@@ -12,6 +12,7 @@ const PREFIX = 'craft-'
 export const KEYS = {
   // Chat sidebar
   sidebarVisible: 'sidebar-visible',
+  sidebarDismissedGuidance: 'sidebar-dismissed-guidance',
   sidebarWidth: 'sidebar-width',
   sessionListWidth: 'session-list-width',
   sidebarMode: 'sidebar-mode',
