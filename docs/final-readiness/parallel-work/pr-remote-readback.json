@@ -1,7 +1,7 @@
 {
-  "capturedAt": "2026-10-03T04:40:37.912Z",
+  "capturedAt": "2026-10-03T04:51:12.491Z",
   "repository": "rox-one/rox-one",
-  "observedDefaultBranchMain": "7e24a97cc8bef429d95c9f703420805f9153a99b",
+  "observedDefaultBranchMain": "c5c44f5ae4a347e89f0623d989d136395ac73817",
   "requestedPullRequests": 19,
   "allRemoteMerged": true,
   "allOriginalHeadsReachable": true,
@@ -275,13 +275,15 @@
   ],
   "independentIntegrationPullRequest": {
     "number": 1385,
-    "state": "OPEN",
-    "isDraft": true,
-    "mergedAt": null,
-    "headRefOid": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+    "state": "MERGED",
+    "isDraft": false,
+    "mergedAt": "2026-10-03T04:49:59Z",
+    "headRefOid": "99330d599152e4a4b20c71515d6d92fcd193a7ef",
     "url": "https://github.com/rox-one/rox-one/pull/1385",
-    "mergeCommit": null
+    "mergeCommit": {
+      "oid": "c5c44f5ae4a347e89f0623d989d136395ac73817"
+    }
   },
-  "independentPromoted": false,
+  "independentPromoted": true,
   "promotionContext": "Requested PR promotion observed during independent reconciliation; remote state does not assign sole authorship or certify a final release."
 }

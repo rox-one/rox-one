@@ -1,13 +1,13 @@
 {
   "schemaVersion": 2,
-  "phase": "REQUESTED_19_MERGED_INDEPENDENT_SOURCE_AND_PLAN_FINAL_PROMOTION_PENDING",
-  "capturedAt": "2026-10-03T04:40:37.912Z",
+  "phase": "REQUESTED_19_PLUS_INDEPENDENT_RECONCILIATION_REMOTE_MERGED_WITH_OPEN_RELEASE_DOD",
+  "capturedAt": "2026-10-03T04:51:12.491Z",
   "repository": "rox-one/rox-one",
   "requestedPullRequestCount": 19,
   "allRequestedPullRequestsRemoteMerged": true,
-  "observedMainAtReadback": "7e24a97cc8bef429d95c9f703420805f9153a99b",
+  "observedMainAtReadback": "c5c44f5ae4a347e89f0623d989d136395ac73817",
   "independentReconciliationCandidate": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
-  "independentCandidateDefaultBranchPromotionVerified": false,
+  "independentCandidateDefaultBranchPromotionVerified": true,
   "pullRequests": [
     {
       "number": 1323,
@@ -344,9 +344,168 @@
       "releaseAcceptanceClosed": false
     },
     "finalWholeWorkspaceMatrix": "NOT_RUN_TO_COMPLETION; partial older0.11.6 evidence preserved",
-    "productionSourceDeltaSinceQualifiedCommit": [],
-    "productionCodeAndBuildLockUnchanged": "verified by final post-promotion readback",
-    "limits": "Source/unit/contract/general CI and built local server qualification do not certify signed installed Windows/macOS, Intel/minimum OS, live providers or hosted production. Local failures remain separate. Full445 leaf DoD remains unclosed."
+    "productionSourceDeltaSinceQualifiedCommit": [
+      "docs/final-readiness/17-parallel-launch-plan.ru.md",
+      "docs/final-readiness/18-launch-status.md",
+      "docs/final-readiness/19-start-work.ru.md",
+      "docs/final-readiness/README.md",
+      "docs/final-readiness/parallel-work/github-current-qualification.json",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/document-validation-corrected-missing-reference.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/document-validation-pass.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/frozen-install-metadata.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/github-server-lifecycle.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/github-sqlite-original-mixed.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/affected-build.ts",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/affected-module-build.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/executed-checks.json",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/product-version-check.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/receipt.json",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/run-platform-checks.ts",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/update-metadata-fixtures.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/update-metadata-fixtures.test.ts",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/updater-packaging-tests.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/voice-byte-comparison.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/built-server-fixture-smoke.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/built-server-smoke.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/pi-subprocess-build.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/runtime-diagnostic-retry.json",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/runtime-diagnostic-retry.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/server-bundle-build.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/verification.json",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/webui-build.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/surfaces-final/plan-validation.log",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/surfaces-final/results.json",
+      "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/surfaces-final/ui-focused.log",
+      "docs/final-readiness/parallel-work/postmerge/roadmap-ai-caller-fix/after.log",
+      "docs/final-readiness/parallel-work/postmerge/roadmap-ai-caller-fix/before.log",
+      "docs/final-readiness/parallel-work/postmerge/roadmap-ai-caller-fix/boundary-rerun.log",
+      "docs/final-readiness/parallel-work/postmerge/roadmap-ai-caller-fix/caller-only.log",
+      "docs/final-readiness/parallel-work/postmerge/roadmap-ai-caller-fix/results.json",
+      "docs/final-readiness/parallel-work/pr-integration-receipt.json",
+      "docs/final-readiness/parallel-work/pr-remote-readback.json",
+      "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+      "packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts",
+      "scripts/final-readiness-audit.ts"
+    ],
+    "productionCodeAndBuildLockUnchanged": true,
+    "limits": "Source/unit/contract/general CI and built local server qualification do not certify signed installed Windows/macOS, Intel/minimum OS, live providers or hosted production. Local failures remain separate. Full445 leaf DoD remains unclosed.",
+    "finalCandidateChecks": {
+      "headSha": "99330d599152e4a4b20c71515d6d92fcd193a7ef",
+      "capturedAt": "2026-10-03T04:58:30.300Z",
+      "checks": [
+        {
+          "bucket": "skipping",
+          "link": "https://backend.blacksmith.sh/track/enable-autofix?expires=1793594598&installation_model_id=436701&pr_number=1385&ref=codesmith_check&repository=rox-one%2Frox-one&return_to=https%3A%2F%2Fgithub.com%2Frox-one%2Frox-one%2Fpull%2F1385&utm_campaign=rox-one%2Frox-one&utm_source=codesmith-check&signature=a859c7db614c227af3101d06d1c5acb0b6a990a43eb97137ee60e94735a24fd9",
+          "name": "[code]smith",
+          "state": "SKIPPED"
+        },
+        {
+          "bucket": "skipping",
+          "link": "https://github.com/rox-one/rox-one/runs/111130024959",
+          "name": "CodeQL",
+          "state": "NEUTRAL"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097362179/job/111129913382",
+          "name": "durable-runtime (macos-15)",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097362159/job/111129913626",
+          "name": "lifecycle (lifecycle)",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097362176/job/111129913460",
+          "name": "validate",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097360070/job/111129911737",
+          "name": "Analyze (swift)",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097360070/job/111129911679",
+          "name": "Analyze (actions)",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097359166/job/111129904282",
+          "name": "lifecycle (lifecycle)",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097360070/job/111129911602",
+          "name": "Analyze (rust)",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097360070/job/111129911666",
+          "name": "Analyze (javascript-typescript)",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097360070/job/111129911695",
+          "name": "Analyze (python)",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097362179/job/111129913533",
+          "name": "durable-runtime (ubuntu-24.04)",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097359843/job/111129908942",
+          "name": "Analyze (javascript-typescript)",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://vercel.com/github",
+          "name": "Vercel Agent Review",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pass",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097359843/job/111129908787",
+          "name": "Analyze (python)",
+          "state": "SUCCESS"
+        },
+        {
+          "bucket": "pending",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097362250/job/111129916360",
+          "name": "native (self-hosted, linux-toolchain)",
+          "state": "QUEUED"
+        },
+        {
+          "bucket": "pending",
+          "link": "https://github.com/rox-one/rox-one/actions/runs/37097362250/job/111129916209",
+          "name": "native (self-hosted, macos-toolchain)",
+          "state": "QUEUED"
+        },
+        {
+          "bucket": "fail",
+          "link": "https://vercel.com/knowledge/why-is-my-account-deployment-blocked",
+          "name": "Vercel",
+          "state": "FAILURE"
+        }
+      ],
+      "coreNamedChecksPassed": true,
+      "allChecksGreen": false,
+      "limits": "Native self-hosted jobs remain queued and Vercel account deployment is blocked; these are not signed target or deployed acceptance."
+    }
   },
   "initialPreparation": {
     "leafTasks": 16,
@@ -355,12 +514,14 @@
   },
   "independentIntegrationPullRequest": {
     "number": 1385,
-    "state": "OPEN",
-    "isDraft": true,
-    "mergedAt": null,
-    "headRefOid": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+    "state": "MERGED",
+    "isDraft": false,
+    "mergedAt": "2026-10-03T04:49:59Z",
+    "headRefOid": "99330d599152e4a4b20c71515d6d92fcd193a7ef",
     "url": "https://github.com/rox-one/rox-one/pull/1385",
-    "mergeCommit": null
+    "mergeCommit": {
+      "oid": "c5c44f5ae4a347e89f0623d989d136395ac73817"
+    }
   },
-  "deliveredBaseline": null
+  "deliveredBaseline": "c5c44f5ae4a347e89f0623d989d136395ac73817"
 }
