@@ -56,7 +56,8 @@ function shellNavigatorExpressions() {
 }
 
 // Execute the actual desktop title callback and shared model. Strip chrome,
-// keyboard controls and title-loading transport remain explicit fixture seams.
+// keyboard controls, mode/extra-screen registrations and title-loading transport
+// remain explicit fixture seams. Core service titles use the actual registry.
 function desktopTabTitleExpressions() {
   const source = readFileSync(process.env.ROX_UI001_TABS_SOURCE ?? join(root, 'apps/electron/src/renderer/platform/SurfaceTabs.tsx'), 'utf8')
   const file = ts.createSourceFile('SurfaceTabs.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
@@ -89,8 +90,6 @@ async function bundle() {
     import {NavigationProvider,useNavigation,useNavigationState} from './apps/electron/src/renderer/contexts/NavigationContext';
     import {CompactWorkspaceMenu} from './apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu';
     import {APP_NAV_DESTINATIONS} from './apps/electron/src/renderer/components/app-shell/nav-destinations';
-    import {EXTRA_SCREENS} from './apps/electron/src/renderer/pages/extra-screens/registry';
-    import {getModeRegistry} from './apps/electron/src/renderer/platform/mode-registry-bootstrap';
     import {buildSurfaceTabViews} from './apps/electron/src/renderer/platform/surface-tab-model';
     import {panelStackAtom,focusedPanelIdAtom,focusedSessionIdAtom} from './apps/electron/src/renderer/atoms/panel-stack';
     import {sessionMetaMapAtom} from './apps/electron/src/renderer/atoms/sessions';
@@ -121,6 +120,7 @@ async function bundle() {
     let workspace='ws-a';
     const useAppShellContext=()=>({activeWorkspaceId:workspace,workspaces:[{id:workspace}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]});
     const useTranslation=()=>({t:key=>key});
+    const EXTRA_SCREENS=[],getModeRegistry=()=>({list:()=>[]});
     const automationsAtom=atom([]),knowledgeHomeViewAtom=atom('search'),knowledgeActiveViewIdAtom=atom(null);
     const Pass=props=>React.createElement('section',null,props.children), Panel=Pass, StoplightProvider=Pass;
     const SendResourceToWorkspaceDialog=()=>null, MultiSelectPanel=()=>null, CollectionBulkBar=()=>null;
