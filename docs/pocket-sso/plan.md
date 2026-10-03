@@ -1,7 +1,7 @@
 # ROX Pocket ID SSO Implementation Plan
-> For agentic workers: use superpowers:subagent-driven-development. Read your task brief and docs/spec.md contracts. Lead owns integration and review; separate repositories/file owners may execute in parallel.
+> For agentic workers: use superpowers:subagent-driven-development. Read your task brief and docs/pocket-sso/spec.md contracts. Lead owns integration and review; separate repositories/file owners may execute in parallel.
 Goal: first launch SSO + canonical personal account/org/wallet + automatically configured Swiss personal key and metered inference.
-Spec: docs/spec.md
+Spec: docs/pocket-sso/spec.md
 ## Global Constraints
 All fixed product policy, shared external contracts, preservation and invariants in spec.md bind every task. No legacy account merge, no fake Telegram identity, no raw secret renderer/log/URL. No whole dirty-branch deployment.
 ## Review Focus
@@ -22,4 +22,3 @@ Owner website. PKCE start/poll atomic redeem+60s proof-bound result recovery; ac
 Owner desktop. Active core Connect registration reuses existing hardened flow; v2main client/bootstrap/secure store; startup auto external browser; actual registry tests; caller/account/generation flows to OMP/children/title/automation; account switch abort; unified snapshot cabinet/footer and locale parity; preserve native authority/local content. Native fresh/upgraded Mac/Win/relaunch/two-device/denied/outage and wrong ambient-key regressions.
 ## Delivery
 Lead independently reviews each subsystem and integration; build verified images, run staging first charged inference+fault recovery, backup/apply compatible migrations then feature flags/canary, domain cutover gates, platform native verification/publish. Commit/push branches/PRs with exact readback; do not equate PR/local pass with production acceptance.
-
