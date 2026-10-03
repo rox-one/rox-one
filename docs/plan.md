@@ -924,3 +924,10 @@ Owner: recent_features; dependency: current native Voice capture and Product Lea
 ## Portable resources follow-up (2026-10-03)
 
 Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.
+
+## Legacy MCP SSE recovery graph (2026-10-03)
+
+1. Scout adapts only the missing #1436 pool negotiation onto current #1450 deadlines/privacy and #1455 infrastructure, preserving all modern recovery/config/source ownership. Root reviews and merges a separate qualified PR; source branches stay intact.
+2. Exercise real SDK legacy-SSE servers with HTTP initialize 400/404/405, header retention, mapped tool call and unchanged-config resync. Exercise actual HTTP401/403/429/500/503, health/discovery405 and both-failure credential scrub; preserve current transient retry and no-replay controls.
+3. Exercise deterministic lifecycle cancellation during HTTP cleanup and SSE initialization, shrinking connection budget, expired-budget cleanup. Run all current MCP controls and shared/Electron types with pinned Bun and exact owned workspace dependency bindings. Retain initial failed fixture/cancellation observations, source regression proof and exact revision receipt.
+4. Publish/attach the bounded PR, record exact remote head and parent merge readback, then continue local-source health/migration, host Bash and performance residuals. No whole137-path completion claim.
