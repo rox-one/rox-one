@@ -32,6 +32,13 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.workspaces.UPDATE_REMOTE,
 
   // workgraph — app-owned local database, never remote/headless.
+  RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES,
+  RPC_CHANNELS.workgraph.INSPECT_CONNECTION,
+  RPC_CHANNELS.workgraph.MOVE_CONNECTION,
+  RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN,
+  RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN,
+  RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN,
+  RPC_CHANNELS.workgraph.RECONNECT_CONNECTION,
   RPC_CHANNELS.workgraph.GET_HEALTH,
   RPC_CHANNELS.workgraph.GET_VERSION,
   RPC_CHANNELS.workgraph.LIST_CONNECTIONS,
@@ -476,6 +483,8 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
 // ---------------------------------------------------------------------------
 
 export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
+  // Read-only Meeting plans use a verified native workspace read grant.
+  RPC_CHANNELS.meetings.PLAN_ACTIONS,
   // voice — private actor state and client-supplied audio; OS playback stays on the client
   RPC_CHANNELS.voice.GET,
   RPC_CHANNELS.voice.SAVE,
