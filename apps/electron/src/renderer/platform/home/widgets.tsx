@@ -283,7 +283,7 @@ function QuickActionsWidget({ edit, width }: WidgetProps) {
   ]
   return (
     <WidgetFrame testId="quickActions" title={t('workbench.home.w.quickActions')} edit={edit}>
-      <div className={cn('grid h-full gap-2 pb-5', widgetContentLayout(width).quickActionColumns === 4 ? 'grid-cols-4' : 'grid-cols-2')}>
+      <div className={cn('grid content-start gap-2 pb-5', widgetContentLayout(width).quickActionColumns === 4 ? 'grid-cols-4' : 'grid-cols-2')}>
         {actions.map((a) => (
           <button
             key={a.key}
@@ -291,7 +291,7 @@ function QuickActionsWidget({ edit, width }: WidgetProps) {
             disabled={busy === a.key}
             onClick={a.onClick}
             data-home-action={a.key}
-            className="rox-home-tile flex min-w-0 flex-col items-start justify-between gap-1 rounded-[var(--radius-card)] px-3 py-2 text-left disabled:opacity-60"
+            className="rox-home-tile flex min-h-10 min-w-0 items-center gap-2 rounded-[var(--radius-card)] px-3 py-2 text-left disabled:opacity-60"
           >
             <span className="text-foreground">{a.icon}</span>
             <span className="flex w-full min-w-0 items-baseline gap-1">

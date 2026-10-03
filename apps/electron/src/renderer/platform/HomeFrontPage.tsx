@@ -150,13 +150,18 @@ function SortableWidget({
       }
     : null
   const Widget = def.Component
+  // Summary and actions have a fixed amount of content. Keep the user's
+  // saved size/order and width, but do not reserve extra empty rows for them.
+  const rowSpan = placement.id === 'summary' || placement.id === 'quickActions'
+    ? Math.min(2, widgetRowSpan(placement.size))
+    : widgetRowSpan(placement.size)
   return (
     <div
       ref={setNodeRef}
       data-home-cell={placement.id}
       data-home-size={placement.size}
       className={cn('min-h-0 min-w-0', isDragging && 'relative z-10 opacity-80')}
-      style={{ gridColumn: `span ${span} / span ${span}`, gridRow: `span ${widgetRowSpan(placement.size)}`, transform: CSS.Translate.toString(transform), transition }}
+      style={{ gridColumn: `span ${span} / span ${span}`, gridRow: `span ${rowSpan}`, transform: CSS.Translate.toString(transform), transition }}
     >
       <WidgetBoundary
         fallback={

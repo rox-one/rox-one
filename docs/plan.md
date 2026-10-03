@@ -2,6 +2,10 @@
 
 ## Zed appearance implementation — 2026-10-03
 
+### Visual correction after user review — 2026-10-04
+
+The user rejected the displayed result. The `81e13ce4` technical receipts remain historical checks, not visual acceptance. Root owns a bounded follow-up: map the inspector to the panel background at 88% rather than toolbar fill, flatten the raised titlebar mode track, remove the experimental-sidebar inset sheet, and compact only the fixed-content summary/action widgets. Preserve font metrics, saved widget IDs/order/size/width, list-widget height/item limits, keyboard navigation and the 0/4/6px contract. A read-only surface scout confirmed the concrete causes; only root writes implementation. Rebuild the clients and inspect fresh screenshots before declaring the follow-up ready.
+
 User confirmed the design tree and requested implementation. Base: 29e86bcc515e24039a15a781d5885b272cbad1df; isolated branch `codex/rox-zed-appearance-20261003`. The release checkout has an unrelated unfinished merge and is not modified by this work. Integrate only after its owner completes that merge, then repeat affected checks on the combined revision.
 
 | Task | Owner | Dependencies | Owned output | Verification |
