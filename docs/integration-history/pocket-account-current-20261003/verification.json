@@ -1,8 +1,8 @@
 {
-  "state": "runtime_map_account_composition_qualified_pending_latest_source",
-  "source_head": "26441ca2949c4fa8c01c44cee6b9734fe4c8dfd1",
+  "state": "qualified_current_candidate_pending_latestmain_merge",
+  "source_head": "2d93d2fcca9e0504668e2bc4c757decbe26b06eb",
   "base_main": "ab431f5a35ef6be44c68b9f973eb79c40cd7e315",
-  "source_path_count": 179,
+  "source_path_count": 225,
   "root_checks": [
     {
       "name": "auth/client/native store",
@@ -124,5 +124,126 @@
   "original_branch_deleted": false,
   "runtime_composition_receipt": "sso-runtime-session-omp-qualification.json",
   "currentmain_reconciled": "f86660e7d84fbe35342d90b56db0189ae4e62ed4",
-  "runtime_composition_repair": "Actual held collector append reproduced obsolete-account output. ProcessEvent retains execution/native grant and rechecks both after trace await; chat/backend creation rechecks native grant after trace capture."
+  "runtime_composition_repair": "Actual held collector append reproduced obsolete-account output. ProcessEvent retains execution/native grant and rechecks both after trace await; chat/backend creation rechecks native grant after trace capture.",
+  "current_checks": [
+    {
+      "name": "auth/store/device/flow/startup/profile/probe",
+      "pass": 75,
+      "fail": 0,
+      "assertions": 299,
+      "files": 10
+    },
+    {
+      "name": "registered onboarding without native vault",
+      "pass": 9,
+      "fail": 0,
+      "assertions": 25
+    },
+    {
+      "name": "locale parity",
+      "pass": 278,
+      "fail": 0,
+      "assertions": 6487
+    },
+    {
+      "name": "full Electron types",
+      "exit": 0
+    },
+    {
+      "name": "full server-core strict local workspace resolution",
+      "exit": 0
+    },
+    {
+      "name": "Electron main allworkers build",
+      "exit": 0
+    },
+    {
+      "name": "preload and toolbar build",
+      "exit": 0
+    },
+    {
+      "name": "renderer production build",
+      "exit": 0
+    },
+    {
+      "name": "actual production App controlled native journal",
+      "pass": 7,
+      "fail": 0
+    },
+    {
+      "name": "production learning components actual browser",
+      "pass": 7,
+      "fail": 0
+    }
+  ],
+  "production_source_head": "609c2446c870c26817eae1909bd9c27eec135aba",
+  "qualified_candidate": "cab4452780d49bba1d6cc83e97d3d7a65c0db766",
+  "later_source_delta": "27 source historical receipt/rollout documentation paths only; no production change",
+  "fixture_repairs": [
+    "Explicit noncloud synthetic getRoxCloudState matches fixture declared shell seam, production mandatory account gate unchanged",
+    "Load the owned Vite config once with configFile:false for build+preview; avoids reimporting Vite deleted temporary bundled config under Bun"
+  ],
+  "current_logs": [
+    {
+      "log": "pocket-latest-actual-app14-config-repaired.log",
+      "bytes": 11079,
+      "sha256": "9ce0f803d718c8330ab2df0eafa605ed1ea9dfc3360c513f3c0ee5f7c66bdd0c"
+    },
+    {
+      "log": "pocket-latest-actual-app14.log",
+      "bytes": 9786,
+      "sha256": "85490c6ef8ee63fefb9454f0526092cf548e8d2186cea9ccc5de873589a8b1c7"
+    },
+    {
+      "log": "pocket-latest-electron-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "log": "pocket-latest-locales.log",
+      "bytes": 42102,
+      "sha256": "4818efc3362d1c4e31225e81c42bdc820e375e7532ff76703d065ae582e04a34"
+    },
+    {
+      "log": "pocket-latest-main-build.log",
+      "bytes": 2378,
+      "sha256": "24f535bd1668f7572c34cebc0d501fd34a10a13ff01e692c195b8118f2cf58c0"
+    },
+    {
+      "log": "pocket-latest-onboarding.log",
+      "bytes": 1256,
+      "sha256": "98c961085a2892be7d0147595b246e5ce25d72db343c1f314d5e422b82d00872"
+    },
+    {
+      "log": "pocket-latest-preloads-build.log",
+      "bytes": 478,
+      "sha256": "b3d0c2ac36ee93b03725a9dc64ad41d31af9fbff622c58caa24c6246d8ced2ef"
+    },
+    {
+      "log": "pocket-latest-production-components7.log",
+      "bytes": 3000,
+      "sha256": "7b7bbaa12f46e5f031d878ae22d720669fc9df6b72bdba4d63a64638d32c892b"
+    },
+    {
+      "log": "pocket-latest-renderer-build.log",
+      "bytes": 61938,
+      "sha256": "0d244846c5a9de3d575991f2ec24abb4287a46ed4f5c007bb331ab52067e4edf"
+    },
+    {
+      "log": "pocket-latest-root-source-controls.log",
+      "bytes": 9808,
+      "sha256": "472f390be76f99c02127bd8eabf08bb64404f7c9f4eb7d1679368c0617a3c830"
+    },
+    {
+      "log": "pocket-latest-server-core-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "log": "pocket-latest-toolbar-build.log",
+      "bytes": 287,
+      "sha256": "f789219f826daed76187a9e2360098d7b4c2cdd9fb550acfa334e6f1ab8e3ff0"
+    }
+  ],
+  "application_receipt_sha256": "4d8abd77bcaa3b32d966f5bb824bdfdff14a2a49bcef458a84a9c4a2d280480c"
 }
