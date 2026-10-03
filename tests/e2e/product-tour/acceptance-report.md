@@ -1,3 +1,7 @@
+# Historical Product Learning source evidence
+
+This report is copied source-branch evidence. Its Linux paths, revisions and PASS rows do not qualify this recovered candidate. Current source, tested revision, failures, limits and receipts are recorded separately in docs/spec.md, docs/plan.md and the recovery PR. Installed macOS/Windows and full domain acceptance remain independent until actually exercised.
+
 Independent acceptance is **partial; release gates remain open**. The feature must remain off by default until the required application/platform evidence is collected. Automated component or synthetic domain evidence does not establish native application success.
 
 The contract base is `f00ffcacc6a94a88b6e99b2f708224050842be7f`. Integrated checks below ran in `/workspace/rox-product-learning` as owners committed code and root runtime integration changed. Tested snapshots include `3652ad73`, `c49e76f3`, and `302cc0d4` plus root working-tree changes. Final immutable candidate checks must follow subsequent runtime corrections.

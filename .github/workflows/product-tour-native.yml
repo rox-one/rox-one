@@ -4,10 +4,8 @@ on:
   pull_request:
     paths:
       - '.github/workflows/product-tour-native.yml'
-      - 'apps/electron/src/renderer/features/product-tour/**'
-      - 'apps/electron/src/renderer/App.tsx'
-      - 'apps/electron/src/renderer/components/app-shell/**'
-      - 'apps/electron/src/renderer/pages/settings/LearningSettingsPage.tsx'
+      - 'apps/electron/src/renderer/**'
+      - 'packages/ui/src/**'
       - 'apps/electron/src/main/**'
       - 'apps/electron/src/preload/**'
       - 'apps/electron/vite.config.ts'
@@ -21,10 +19,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/product-tour-native.yml'
-      - 'apps/electron/src/renderer/features/product-tour/**'
-      - 'apps/electron/src/renderer/App.tsx'
-      - 'apps/electron/src/renderer/components/app-shell/**'
-      - 'apps/electron/src/renderer/pages/settings/LearningSettingsPage.tsx'
+      - 'apps/electron/src/renderer/**'
+      - 'packages/ui/src/**'
       - 'apps/electron/src/main/**'
       - 'apps/electron/src/preload/**'
       - 'apps/electron/vite.config.ts'
@@ -55,7 +51,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: '1.3.14'
       - name: Install exact lockfile
@@ -106,7 +102,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: '1.3.14'
       - name: Record candidate and installed runtimes
