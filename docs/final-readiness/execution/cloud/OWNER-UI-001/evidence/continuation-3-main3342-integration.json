@@ -1,0 +1,27 @@
+{
+  "observedAt": "2026-10-03T17:38:41.962359+00:00",
+  "candidateBeforeIntegration": "76f6ab26fec76f5f1f880dd7531c75b69439dd2f",
+  "incomingMain": "3342fad30166bdf005d296e0d5fe24d36d4df5fb",
+  "conflicts": 17,
+  "preservedResults": [
+    "integration-history/candidate-76f6ab2/result.json",
+    "integration-history/incoming-main-3342fad/result.json"
+  ],
+  "resolvedBehavior": [
+    "Retain main strict renderer route boundary and permissive legacy parser contract; test unavailable behavior at actual renderer boundary",
+    "Use main panel-url codec with backward json/strict zero-one ratio readers and canonical recovery module",
+    "Keep current/stale/ABA owner fences, remote-only subscriptions and readiness restoration from main",
+    "Keep background editor drafts and synchronous per-panel workspace guard, StrictMode/sidebar refs and failed history-switch acknowledgement",
+    "Retain latest Inspector/ChatScroll source and updated golden-layout tests",
+    "Update native ownership IPC fixture to report live canonical pane ids; keep all original ownership assertions"
+  ],
+  "testReceipts": [
+    "continuation-3-merged-regression-v2",
+    "continuation-3-merged-navigation",
+    "continuation-3-merged-resources",
+    "continuation-3-merged-owner-navigation",
+    "continuation-3-merged-behavior-v2",
+    "continuation-3-merged-native-owners-v2"
+  ],
+  "fullDoDClosed": false
+}

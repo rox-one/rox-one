@@ -1,0 +1,32 @@
+{
+  "source_pr": 1448,
+  "source_sha": "1eb2c8289b68e9103880c3f2aee2c57e70c3409a",
+  "integrated_main": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+  "qualified_runtime": "Bun1.3.14, Node22.23.3",
+  "source_blobs": {
+    "apps/electron/src/main/index.ts": "5db966bbc339d0208f4bba4745bb337255b44a9d4dc6f69d3b6de85f23fb9745",
+    "scripts/build/staged-servers.ts": "76ce35f07d8ced795f15d1a0d1bea6ef4f9e3b5dbf54a9672faeb934610daf87",
+    "scripts/electron-build-resources.ts": "8bd58fa551286460f53590edb2fd1b19707938379011618995bae182a0d7460c",
+    "tests/e2e/meeting-agents/harness.ts": "ba2c39ddb0bfff2786c5e481cbd2c21d70e1624abad1e298559a56aacd987b7e"
+  },
+  "verified": {
+    "test_files": 3,
+    "pass": 18,
+    "fail": 0,
+    "log": "1448-native-resource-controls-current.log"
+  },
+  "preserved": [
+    "Windowsbootstrap/PATH/Bun payload resolution and currentnative-replica thinclient custody",
+    "Existing NODE_ENV=test explicit protocol opt-out",
+    "Default/packaged primary andlegacy aliases unless existing explicit test-only gate",
+    "Required stagedpi server andordinaryvendoredsource files; deleted symlink targets remainunchanged"
+  ],
+  "failure_history": [
+    "Old protocol fixture expected2 top-levelinvocations. Currentmainalready wraps both calls inone explicit test gate, causing13 fixture failures. Extractor now validates both actualnested callsites and executes the current outergate; added positive/negative test-only gatecontrol."
+  ],
+  "limits": [
+    "Protocol OS callback controlled; no hostglobalURLassociationchanged",
+    "No packagedWindows/macOS installedpayload acceptance; native executable tested before spawnwithfixture paths"
+  ],
+  "branches_deleted": false
+}

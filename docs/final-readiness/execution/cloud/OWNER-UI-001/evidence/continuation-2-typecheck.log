@@ -1,0 +1,13 @@
+src/renderer/components/app-shell/MainContentPanel.tsx(167,30): error TS2345: Argument of type '() => Promise<LoadedSource[]> | Promise<LoadedSkill[]> | undefined' is not assignable to parameter of type '(value: void) => LoadedSource[] | PromiseLike<LoadedSource[] | undefined> | undefined'.
+  Type 'Promise<LoadedSource[]> | Promise<LoadedSkill[]> | undefined' is not assignable to type 'LoadedSource[] | PromiseLike<LoadedSource[] | undefined> | undefined'.
+    Type 'Promise<LoadedSkill[]>' is not assignable to type 'LoadedSource[] | PromiseLike<LoadedSource[] | undefined> | undefined'.
+      Type 'Promise<LoadedSkill[]>' is not assignable to type 'PromiseLike<LoadedSource[] | undefined>'.
+        Types of property 'then' are incompatible.
+          Type '<TResult1 = LoadedSkill[], TResult2 = never>(onfulfilled?: ((value: LoadedSkill[]) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<...>) | ... 1 more ... | undefined) => Promise<...>' is not assignable to type '<TResult1 = LoadedSource[] | undefined, TResult2 = never>(onfulfilled?: ((value: LoadedSource[] | undefined) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<...>) | ... 1 more ... | undefined) => PromiseLike<...>'.
+            Types of parameters 'onfulfilled' and 'onfulfilled' are incompatible.
+              Types of parameters 'value' and 'value' are incompatible.
+                Type 'LoadedSkill[]' is not assignable to type 'LoadedSource[]'.
+                  Type 'LoadedSkill' is missing the following properties from type 'LoadedSource': config, guide, folderPath, workspaceRootPath, workspaceId
+src/renderer/components/app-shell/MainContentPanel.tsx(176,28): error TS2352: Conversion of type 'LoadedSource[]' to type 'LoadedSkill[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'LoadedSource' is missing the following properties from type 'LoadedSkill': slug, metadata, content, path, source
+error: "tsc" exited with code 2

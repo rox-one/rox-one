@@ -37,7 +37,9 @@ function mainBuildCommand(): string[] {
     compilerOptions: { target: ts.ScriptTarget.ESNext },
   }).outputText
   // The production define function sees an empty object; no credential is read.
-  return new Function('process', 'ELECTRON_MAIN_CJS_FLAGS', `${code}; return actual;`)({ env: {} }, ELECTRON_MAIN_CJS_FLAGS)
+  return new Function('process', 'ELECTRON_MAIN_CJS_FLAGS', 'OUTPUT_FILE', `${code}; return actual;`)(
+    { env: {}, argv: [] }, ELECTRON_MAIN_CJS_FLAGS, join(repo, 'apps/electron/dist/main.cjs'),
+  )
 }
 
 async function compileFixture(): Promise<{ root: string; built: string }> {

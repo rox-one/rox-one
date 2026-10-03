@@ -1,0 +1,26 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts:
+(pass) UI-001 visible panel allocation > opens the first panel at full width [7.01ms]
+(pass) UI-001 visible panel allocation > opens a sibling with a positive width and preserves the existing panel identity [0.71ms]
+(pass) UI-001 visible panel allocation > preserves the ratio of resized siblings when inserting another panel [0.41ms]
+
+apps/electron/src/renderer/atoms/__tests__/panel-stack-lanes.test.ts:
+(pass) panel stack single-lane behavior > keeps insertion order for new panels [9.26ms]
+(pass) panel stack single-lane behavior > implicit navigation updates focused panel route [0.64ms]
+(pass) panel stack single-lane behavior > pushPanel afterIndex inserts immediately after the given panel [0.19ms]
+(pass) panel stack single-lane behavior > reconcile focuses by focusedIndex first when duplicate routes exist [0.13ms]
+(pass) panel stack single-lane behavior > reconcile no-op keeps focused index target with duplicate routes [0.19ms]
+
+apps/electron/src/renderer/atoms/__tests__/panel-stack-knowledge.test.ts:
+(pass) getPanelTypeFromRoute: knowledge classification > classifies knowledge/{kind}/{id} routes as knowledge [0.18ms]
+(pass) getPanelTypeFromRoute: knowledge classification > classifies the bare knowledge home route as knowledge [0.08ms]
+(pass) getPanelTypeFromRoute: knowledge classification > classifies the database tab route (rides knowledge) as knowledge [0.03ms]
+(pass) getPanelTypeFromRoute: knowledge classification > classifies the compat full-interface surface route as knowledge [0.02ms]
+(pass) getPanelTypeFromRoute: knowledge classification > does not classify other navigators as knowledge [0.02ms]
+(pass) panel stack: knowledge entries > pushes a knowledge route into the main lane with panelType knowledge [4.73ms]
+
+ 14 pass
+ 0 fail
+ 36 expect() calls
+Ran 14 tests across 3 files. [622.00ms]

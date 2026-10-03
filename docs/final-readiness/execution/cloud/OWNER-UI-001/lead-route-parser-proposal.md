@@ -1,0 +1,13 @@
+# Lead-owned route recovery proposal, version 4 (not applied)
+
+Input: 76228cc33e44518e5fab5e59f5c754f4051d1e8c. Current owned product: 4c46b06c4a4b85ce903993878877216e19db9adb. Authority stays with the lead: shared source and existing tests are read-only for OWNER-UI-001.
+
+Preferred artifact: `lead-route-recovery-proposal-v4.patch`, SHA-256 5b0b266239bd8e133d2e1d0b3dbad21fed322c08ae0c9685a96bd5bbb2984880. It proposes the shared parser/types, renderer nav-helpers and NavigationContext plus one legacy-Notes regression expectation. Parser failures retain a typed raw-route unavailable identity and safe persisted panel key; explicit missing sessions retain identity. navigate accepts unavailable view links, readiness queues retain full routes/options, focused-state derivation enforces known workspace ownership, and actions retain their side-effect contract. The old emitted /chat/ key remains compatible and now restores selected identity.
+
+Qualification: 38 behavioral checks of virtual parser/types and actual extracted resolveAutoSelection, navigate, navigationState, pending and deep-link callbacks; 67 parser/history regression tests with 66 unchanged and one proposed retired-route expectation; full Electron TS5.9.3 compiler program with zero diagnostics. 40 aggregate checks pass. No physical shared source/test edit, no mounted NavigationProvider acceptance, no native/hosted/server/provider integration claim. Exact proposed paths and original/candidate hashes are in evidence/continuation-2-proposal-stable.log. All actual shared bytes equal input.
+
+History retained: original lead-route-parser-proposal.patch caused 9 type diagnostics and 3 unavailable key failures; v2 had an undefined-versus-omitted test-harness comparison and later the intentional legacy-Notes contract mismatch; v3 fixed the expectation and passed parser/type checks but failed six broader real-callback checks. V4 fixes those callbacks and passes final qualification. These are historical proposals, not alternative release candidates.
+
+The separate lead-layout-test-proposal.patch adapts the non-owned layout declaration assertion to behavior. It remains unapplied. Existing sash test top=0 disagrees with input constant=4 and needs its owner to resolve the intended behavior.
+
+Integration acceptance remains with the lead: review/apply to its immutable candidate; run mounted NavigationProvider URL/sidebar reconciliation, direct links, back/forward/reload/readiness/workspace changes and the original Windows/Mac/hosted/backend workflows. Preserve capabilities and every original task clause. Do not infer fullDoDClosed from this virtual qualification.

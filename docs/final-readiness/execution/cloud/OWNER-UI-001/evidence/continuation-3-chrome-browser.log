@@ -1,0 +1,34 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts:
+(pass) UI-001 real Chromium component and persistence fixtures > selected source deletion and recreation preserve workspace and entity address [6815.66ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retry recovers an unavailable selected source through the actual click handler [3930.58ms]
+(pass) UI-001 real Chromium component and persistence fixtures > late resource load cannot replace a new missing address [1372.53ms]
+(pass) UI-001 real Chromium component and persistence fixtures > cloud run switch clears previous content while the new callback is pending [3600.82ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retries rejected lazy imports and keeps the selected route [3207.80ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retries rendering failure and a new route clears a previous error [4039.18ms]
+(pass) UI-001 real Chromium component and persistence fixtures > workspace switch cancels a real pending resize timer before it can persist old geometry [4907.17ms]
+(pass) UI-001 real Chromium component and persistence fixtures > actual localStorage persists valid sizes across reload and other windows [13762.31ms]
+killed 2 dangling processes
+(fail) UI-001 real Chromium component and persistence fixtures > (unnamed) [15001.41ms]
+  ^ a beforeEach/afterEach hook timed out for this test.
+
+apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:
+killed 2 dangling processes
+(fail) production native surface renderer ownership > hidden/released duplicate hosts cannot hide their visible sibling, while clipping hides the selected host [30006.47ms]
+  ^ this test timed out after 30000ms.
+(fail) production native surface renderer ownership > retains a typed draft through responsive hiding, restores geometry and suppresses overlays [30000.39ms]
+  ^ this test timed out after 30000ms.
+(fail) production native surface renderer ownership > releases an inspector attachment arriving after close without hiding a sibling surface [30001.22ms]
+  ^ this test timed out after 30000ms.
+(fail) production native surface renderer ownership > ignores an obsolete attachment failure after a newer open succeeds [30005.57ms]
+  ^ this test timed out after 30000ms.
+(fail) production native surface renderer ownership > preserves imported-cookie consent controls and routes explicit opt-in to a private instance [30001.14ms]
+  ^ this test timed out after 30000ms.
+(fail) production native surface renderer ownership > (unnamed) [30005.57ms]
+  ^ a beforeEach/afterEach hook timed out for this test.
+
+ 8 pass
+ 7 fail
+ 17 expect() calls
+Ran 15 tests across 2 files. [272.17s]

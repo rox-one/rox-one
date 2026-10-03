@@ -880,3 +880,7 @@ Owner: root branch integration. Dependency: route recovery #1446, current Window
 ### Golden Tasks recovery verification — 2026-10-03
 
 Owner: recent_features; integration/remote merge owner: root. Dependencies: current native PersonalTaskPersistStore, personalTasks RPC CAS and caller-scope lifetime, current Tasks import validation and shell sidebar ownership. Implement a confirmed merge-import seam in the existing shared renderer store; connect the actual file callback and an opt-in responsive layout in the current Tasks consumer. Verify real native disk restart, denied/forged/partial ACK/readback, mid-await edits and actor/workspace ABA; exercise actual TasksPage DOM with compiled production stylesheet for pending file reads, persistence refusal, focus return, outside focus, narrow navigation and resize. Retain failures and exact source fingerprints; reconcile fresh main and current Product Learning producers before final delivery. Original source branches are preserved.
+
+## Portable resources follow-up (2026-10-03)
+
+Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.

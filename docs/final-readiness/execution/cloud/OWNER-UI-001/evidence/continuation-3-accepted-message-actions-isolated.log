@@ -1,0 +1,16 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/message-actions.browser.test.ts:
+(pass) production message actions with persisted synthetic RPC > shows the requested action order on both user and assistant messages, including compact mode [1050.07ms]
+(pass) production message actions with persisted synthetic RPC > likes its own message through the real annotation RPC and retains/removes the reaction after reload [7039.25ms]
+(pass) production message actions with persisted synthetic RPC > toggles the authenticated user’s own reaction on an assistant answer without duplicating it [1704.78ms]
+(pass) production message actions with persisted synthetic RPC > keeps likes disabled when identity fails and retries when the app gains focus [2327.29ms]
+(pass) production message actions with persisted synthetic RPC > copies, quotes and directly listens to the selected message with a visible stop control [1355.66ms]
+(pass) production message actions with persisted synthetic RPC > creates a usable own-message branch via the real creation RPC and continues the child dialogue [2866.49ms]
+(pass) production message actions with persisted synthetic RPC > forks an assistant answer with its complete earlier context [1194.82ms]
+(pass) production message actions with persisted synthetic RPC > opens a side-thread prompt for the chosen user message and keeps canonical provenance [1162.08ms]
+
+ 8 pass
+ 0 fail
+ 19 expect() calls
+Ran 8 tests across 1 file. [39.43s]

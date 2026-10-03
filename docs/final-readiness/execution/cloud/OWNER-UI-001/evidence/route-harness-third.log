@@ -1,0 +1,24 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts:
+6508 | }
+6509 | function _enum(values, params) {
+6510 |   const entries = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
+6511 |   return new ZodEnum({
+6512 |     type: "enum",
+6513 |     ...util.normalizeParams(params)
+                  ^
+ReferenceError: util is not defined
+      at _enum (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-iuuWaS/rox-readiness-ui-001.entry.bundle.js:6513:12)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-iuuWaS/rox-readiness-ui-001.entry.bundle.js:7730:34)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-iuuWaS/rox-readiness-ui-001.entry.bundle.js:16:48)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-iuuWaS/rox-readiness-ui-001.entry.bundle.js:7834:18)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-iuuWaS/rox-readiness-ui-001.entry.bundle.js:16:48)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-iuuWaS/rox-readiness-ui-001.entry.bundle.js:7846:14)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-iuuWaS/rox-readiness-ui-001.entry.bundle.js:16:48)
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-iuuWaS/rox-readiness-ui-001.entry.bundle.js:8988:14
+(fail) (unnamed) [157.46ms]
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [644.00ms]

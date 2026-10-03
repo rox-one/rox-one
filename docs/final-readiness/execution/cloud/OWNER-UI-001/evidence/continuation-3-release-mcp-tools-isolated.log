@@ -1,0 +1,9 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/handlers/rpc/__tests__/mcp-tools-runtime.test.ts:
+(pass) source tool listing resolves vault credentials and portable paths and always closes the client [875.46ms]
+
+ 1 pass
+ 0 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [973.00ms]

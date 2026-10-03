@@ -1,0 +1,284 @@
+{
+  "fullDoDClosed": false,
+  "fixtureLanesAreNotAcceptance": true,
+  "activities": [
+    {
+      "activityId": "PW-UI-001.1-WIN10",
+      "taskIds": [
+        "UI-001.1"
+      ],
+      "target": "WIN10",
+      "status": "PREPARED_NOT_EXECUTED",
+      "prerequisites": {
+        "producerTaskId": "WIN-002",
+        "consumedOutput": "runnable native Electron/build artifact for this Windows version; source/UI fixture work and existing installed build baseline do not wait",
+        "wholeTaskRequired": false
+      },
+      "requiredAcceptance": {
+        "Requirements": "Preserve workspace and entity selection through direct links, restart, browser history and missing/deleted entities. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+        "DoD": "Every link resolves to its own surface or a specific missing/unavailable state; no unrelated chat fallback.",
+        "Full functional verification": "Open direct links for session, source, skill, project, note, page, knowledge, extension, terminal, cloud-run and all extra screens; remove each entity while selected.",
+        "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+      },
+      "executionSteps": [
+        "Launch the patched target with isolated authorized workspace fixture and verify the immutable source/lockfile manifests.",
+        "Open the literal canonical routes from rox-readiness-ui-001.route-recovery.test.ts and verify selected entity plus workspace against independent backend readback.",
+        "Delete each selected task-owned fixture entity with the real target callback; retain deletion receipt and assert a specific missing/unavailable surface and unchanged route identity.",
+        "Repeat direct open, actual back/forward, reload/relaunch, offline/reconnect, late snapshot and wrong-workspace/denied-actor negatives."
+      ],
+      "retainEvidence": [
+        "actual route URL and actor/workspace",
+        "service/backend receipts",
+        "real window/browser screenshots and interaction assertions",
+        "canonical persistence and restart readback",
+        "source/artifact/log hashes",
+        "every failed attempt",
+        "final integrated immutable-candidate replay"
+      ]
+    },
+    {
+      "activityId": "PW-UI-001.1-WIN11",
+      "taskIds": [
+        "UI-001.1"
+      ],
+      "target": "WIN11",
+      "status": "PREPARED_NOT_EXECUTED",
+      "prerequisites": {
+        "producerTaskId": "WIN-002",
+        "consumedOutput": "runnable native Electron/build artifact for this Windows version; source/UI fixture work and existing installed build baseline do not wait",
+        "wholeTaskRequired": false
+      },
+      "requiredAcceptance": {
+        "Requirements": "Preserve workspace and entity selection through direct links, restart, browser history and missing/deleted entities. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+        "DoD": "Every link resolves to its own surface or a specific missing/unavailable state; no unrelated chat fallback.",
+        "Full functional verification": "Open direct links for session, source, skill, project, note, page, knowledge, extension, terminal, cloud-run and all extra screens; remove each entity while selected.",
+        "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+      },
+      "executionSteps": [
+        "Launch the patched target with isolated authorized workspace fixture and verify the immutable source/lockfile manifests.",
+        "Open the literal canonical routes from rox-readiness-ui-001.route-recovery.test.ts and verify selected entity plus workspace against independent backend readback.",
+        "Delete each selected task-owned fixture entity with the real target callback; retain deletion receipt and assert a specific missing/unavailable surface and unchanged route identity.",
+        "Repeat direct open, actual back/forward, reload/relaunch, offline/reconnect, late snapshot and wrong-workspace/denied-actor negatives."
+      ],
+      "retainEvidence": [
+        "actual route URL and actor/workspace",
+        "service/backend receipts",
+        "real window/browser screenshots and interaction assertions",
+        "canonical persistence and restart readback",
+        "source/artifact/log hashes",
+        "every failed attempt",
+        "final integrated immutable-candidate replay"
+      ]
+    },
+    {
+      "activityId": "PW-UI-001.1-MAC",
+      "taskIds": [
+        "UI-001.1"
+      ],
+      "target": "MAC",
+      "status": "PREPARED_NOT_EXECUTED",
+      "prerequisites": {
+        "producerTaskId": "MAC-002",
+        "consumedOutput": "runnable native Electron artifact of the tested architecture; existing local native baseline can start independently of release signing",
+        "wholeTaskRequired": false
+      },
+      "requiredAcceptance": {
+        "Requirements": "Preserve workspace and entity selection through direct links, restart, browser history and missing/deleted entities. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+        "DoD": "Every link resolves to its own surface or a specific missing/unavailable state; no unrelated chat fallback.",
+        "Full functional verification": "Open direct links for session, source, skill, project, note, page, knowledge, extension, terminal, cloud-run and all extra screens; remove each entity while selected.",
+        "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+      },
+      "executionSteps": [
+        "Launch the patched target with isolated authorized workspace fixture and verify the immutable source/lockfile manifests.",
+        "Open the literal canonical routes from rox-readiness-ui-001.route-recovery.test.ts and verify selected entity plus workspace against independent backend readback.",
+        "Delete each selected task-owned fixture entity with the real target callback; retain deletion receipt and assert a specific missing/unavailable surface and unchanged route identity.",
+        "Repeat direct open, actual back/forward, reload/relaunch, offline/reconnect, late snapshot and wrong-workspace/denied-actor negatives."
+      ],
+      "retainEvidence": [
+        "actual route URL and actor/workspace",
+        "service/backend receipts",
+        "real window/browser screenshots and interaction assertions",
+        "canonical persistence and restart readback",
+        "source/artifact/log hashes",
+        "every failed attempt",
+        "final integrated immutable-candidate replay"
+      ]
+    },
+    {
+      "activityId": "PW-UI-001.1-WEB",
+      "taskIds": [
+        "UI-001.1"
+      ],
+      "target": "WEB",
+      "status": "PREPARED_NOT_EXECUTED",
+      "prerequisites": {
+        "producerTaskIds": [
+          "WEB-001",
+          "WEB-003"
+        ],
+        "consumedOutput": "runnable browser/server transport with authorized task fixture; deployable shared code/server build or isolated local WebUI can be tested now, public-hosted proof needs actual ingress/deployment",
+        "wholeTasksRequired": false
+      },
+      "requiredAcceptance": {
+        "Requirements": "Preserve workspace and entity selection through direct links, restart, browser history and missing/deleted entities. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+        "DoD": "Every link resolves to its own surface or a specific missing/unavailable state; no unrelated chat fallback.",
+        "Full functional verification": "Open direct links for session, source, skill, project, note, page, knowledge, extension, terminal, cloud-run and all extra screens; remove each entity while selected.",
+        "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+      },
+      "executionSteps": [
+        "Launch the patched target with isolated authorized workspace fixture and verify the immutable source/lockfile manifests.",
+        "Open the literal canonical routes from rox-readiness-ui-001.route-recovery.test.ts and verify selected entity plus workspace against independent backend readback.",
+        "Delete each selected task-owned fixture entity with the real target callback; retain deletion receipt and assert a specific missing/unavailable surface and unchanged route identity.",
+        "Repeat direct open, actual back/forward, reload/relaunch, offline/reconnect, late snapshot and wrong-workspace/denied-actor negatives."
+      ],
+      "retainEvidence": [
+        "actual route URL and actor/workspace",
+        "service/backend receipts",
+        "real window/browser screenshots and interaction assertions",
+        "canonical persistence and restart readback",
+        "source/artifact/log hashes",
+        "every failed attempt",
+        "final integrated immutable-candidate replay"
+      ]
+    },
+    {
+      "activityId": "PW-UI-001.2-WIN10",
+      "taskIds": [
+        "UI-001.2"
+      ],
+      "target": "WIN10",
+      "status": "PREPARED_NOT_EXECUTED",
+      "prerequisites": {
+        "producerTaskId": "WIN-002",
+        "consumedOutput": "runnable native Electron/build artifact for this Windows version; source/UI fixture work and existing installed build baseline do not wait",
+        "wholeTaskRequired": false
+      },
+      "requiredAcceptance": {
+        "Requirements": "Verify all shell variants, native overlays and modal focus at supported DPI/zoom; persist only valid layout sizes. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+        "DoD": "Content remains usable without clipped actions, native view overlap or inaccessible resize handles.",
+        "Full functional verification": "Resize panels while opening dialogs, browser and extension hosts; repeat Windows 100/150/200% scaling and macOS Retina plus browser zoom.",
+        "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+      },
+      "executionSteps": [
+        "Launch the patched native/hosted target with isolated authorized fixture and record source, architecture, DPI/zoom and chrome variant.",
+        "Resize through pointer and keyboard interactions; interrupt with dialog, browser and extension/native host; assert focus, usable actions and unobscured handles.",
+        "Exercise Windows 100/150/200 percent, macOS Retina and browser zoom on their actual targets.",
+        "Reload/relaunch and switch workspaces; independently read stored values, reject malformed/non-finite input, and verify cancelled resize cannot commit into another workspace."
+      ],
+      "retainEvidence": [
+        "actual route URL and actor/workspace",
+        "service/backend receipts",
+        "real window/browser screenshots and interaction assertions",
+        "canonical persistence and restart readback",
+        "source/artifact/log hashes",
+        "every failed attempt",
+        "final integrated immutable-candidate replay"
+      ]
+    },
+    {
+      "activityId": "PW-UI-001.2-WIN11",
+      "taskIds": [
+        "UI-001.2"
+      ],
+      "target": "WIN11",
+      "status": "PREPARED_NOT_EXECUTED",
+      "prerequisites": {
+        "producerTaskId": "WIN-002",
+        "consumedOutput": "runnable native Electron/build artifact for this Windows version; source/UI fixture work and existing installed build baseline do not wait",
+        "wholeTaskRequired": false
+      },
+      "requiredAcceptance": {
+        "Requirements": "Verify all shell variants, native overlays and modal focus at supported DPI/zoom; persist only valid layout sizes. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+        "DoD": "Content remains usable without clipped actions, native view overlap or inaccessible resize handles.",
+        "Full functional verification": "Resize panels while opening dialogs, browser and extension hosts; repeat Windows 100/150/200% scaling and macOS Retina plus browser zoom.",
+        "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+      },
+      "executionSteps": [
+        "Launch the patched native/hosted target with isolated authorized fixture and record source, architecture, DPI/zoom and chrome variant.",
+        "Resize through pointer and keyboard interactions; interrupt with dialog, browser and extension/native host; assert focus, usable actions and unobscured handles.",
+        "Exercise Windows 100/150/200 percent, macOS Retina and browser zoom on their actual targets.",
+        "Reload/relaunch and switch workspaces; independently read stored values, reject malformed/non-finite input, and verify cancelled resize cannot commit into another workspace."
+      ],
+      "retainEvidence": [
+        "actual route URL and actor/workspace",
+        "service/backend receipts",
+        "real window/browser screenshots and interaction assertions",
+        "canonical persistence and restart readback",
+        "source/artifact/log hashes",
+        "every failed attempt",
+        "final integrated immutable-candidate replay"
+      ]
+    },
+    {
+      "activityId": "PW-UI-001.2-MAC",
+      "taskIds": [
+        "UI-001.2"
+      ],
+      "target": "MAC",
+      "status": "PREPARED_NOT_EXECUTED",
+      "prerequisites": {
+        "producerTaskId": "MAC-002",
+        "consumedOutput": "runnable native Electron artifact of the tested architecture; existing local native baseline can start independently of release signing",
+        "wholeTaskRequired": false
+      },
+      "requiredAcceptance": {
+        "Requirements": "Verify all shell variants, native overlays and modal focus at supported DPI/zoom; persist only valid layout sizes. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+        "DoD": "Content remains usable without clipped actions, native view overlap or inaccessible resize handles.",
+        "Full functional verification": "Resize panels while opening dialogs, browser and extension hosts; repeat Windows 100/150/200% scaling and macOS Retina plus browser zoom.",
+        "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+      },
+      "executionSteps": [
+        "Launch the patched native/hosted target with isolated authorized fixture and record source, architecture, DPI/zoom and chrome variant.",
+        "Resize through pointer and keyboard interactions; interrupt with dialog, browser and extension/native host; assert focus, usable actions and unobscured handles.",
+        "Exercise Windows 100/150/200 percent, macOS Retina and browser zoom on their actual targets.",
+        "Reload/relaunch and switch workspaces; independently read stored values, reject malformed/non-finite input, and verify cancelled resize cannot commit into another workspace."
+      ],
+      "retainEvidence": [
+        "actual route URL and actor/workspace",
+        "service/backend receipts",
+        "real window/browser screenshots and interaction assertions",
+        "canonical persistence and restart readback",
+        "source/artifact/log hashes",
+        "every failed attempt",
+        "final integrated immutable-candidate replay"
+      ]
+    },
+    {
+      "activityId": "PW-UI-001.2-WEB",
+      "taskIds": [
+        "UI-001.2"
+      ],
+      "target": "WEB",
+      "status": "PREPARED_NOT_EXECUTED",
+      "prerequisites": {
+        "producerTaskIds": [
+          "WEB-001",
+          "WEB-003"
+        ],
+        "consumedOutput": "runnable browser/server transport with authorized task fixture; deployable shared code/server build or isolated local WebUI can be tested now, public-hosted proof needs actual ingress/deployment",
+        "wholeTasksRequired": false
+      },
+      "requiredAcceptance": {
+        "Requirements": "Verify all shell variants, native overlays and modal focus at supported DPI/zoom; persist only valid layout sizes. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+        "DoD": "Content remains usable without clipped actions, native view overlap or inaccessible resize handles.",
+        "Full functional verification": "Resize panels while opening dialogs, browser and extension hosts; repeat Windows 100/150/200% scaling and macOS Retina plus browser zoom.",
+        "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+      },
+      "executionSteps": [
+        "Launch the patched native/hosted target with isolated authorized fixture and record source, architecture, DPI/zoom and chrome variant.",
+        "Resize through pointer and keyboard interactions; interrupt with dialog, browser and extension/native host; assert focus, usable actions and unobscured handles.",
+        "Exercise Windows 100/150/200 percent, macOS Retina and browser zoom on their actual targets.",
+        "Reload/relaunch and switch workspaces; independently read stored values, reject malformed/non-finite input, and verify cancelled resize cannot commit into another workspace."
+      ],
+      "retainEvidence": [
+        "actual route URL and actor/workspace",
+        "service/backend receipts",
+        "real window/browser screenshots and interaction assertions",
+        "canonical persistence and restart readback",
+        "source/artifact/log hashes",
+        "every failed attempt",
+        "final integrated immutable-candidate replay"
+      ]
+    }
+  ]
+}

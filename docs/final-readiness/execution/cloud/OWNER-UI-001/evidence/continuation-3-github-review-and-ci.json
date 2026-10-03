@@ -1,0 +1,443 @@
+{
+  "observedAt": "2026-10-03T16:51:50.963275+00:00",
+  "pullRequest": {
+    "baseRefOid": "ae19683e69f079893cd09065487cfa7653d01154",
+    "headRefOid": "20842365c55889d8dec7b3a164ad7d20df24238b",
+    "mergeStateStatus": "UNKNOWN",
+    "reviewDecision": "",
+    "reviews": [
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQe6MDw",
+        "author": {
+          "login": "github-advanced-security"
+        },
+        "authorAssociation": "NONE",
+        "body": "",
+        "submittedAt": "2026-10-03T13:57:53Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "6190965f724fd8c9b2296e394e2c7dfe82275a11"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQe7Gcg",
+        "author": {
+          "login": "chatgpt-codex-connector"
+        },
+        "authorAssociation": "NONE",
+        "body": "\n### 💡 Codex Review\n\nHere are some automated review suggestions for this pull request.\n\n**Reviewed commit:** `6190965f72`\n    \n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\".\n\nIf Codex has suggestions, it will comment; otherwise it will react with 👍.\n\n\n\n\nCodex can also answer questions or update the PR. Try commenting \"@codex address that feedback\".\n            \n</details>",
+        "submittedAt": "2026-10-03T14:02:11Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "6190965f724fd8c9b2296e394e2c7dfe82275a11"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQe8tNw",
+        "author": {
+          "login": "vercel"
+        },
+        "authorAssociation": "NONE",
+        "body": "**Additional Suggestion:**\n\nThe workspace\\-mismatch guard added in `NavigationContext` never reaches the panel content render path\\, so a panel route pointing to a session in a different workspace still renders that foreign session\\'s `ChatPage` instead of the route\\-unavailable surface\\.\n\n<!-- VADE-CATEGORY: security -->\n<!-- VADE-GITHUB-SUGGESTION-ID:855b34d134a7713e13f5f679d586460afbbd79a3ec8b8a8164d24ca9a39bf098 -->\n\n<!-- VADE-RECOMMENDATION: FIX -->\n\n<a href=\"https://vercel.com/0xdx/~/agent/tasks/364a5fae-963b-4c42-9df7-87db846a67a9\" rel=\"noreferrer\"><picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-dark\">\n    <source media=\"(prefers-color-scheme: light)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-light\">\n    <img src=\"https://vercel.com/vercel-agent-view-suggestion-light\" alt=\"Fix on Vercel\" width=\"127\" height=\"28\" />\n  </picture></a>\n<!-- VADE-GITHUB-REVIEW-BOT-ACTIVE -->\n<!-- VADE-GITHUB-REVIEW-BOT-SHA:1ce30492f8d186dccb74afce98cfdabf90d35743 -->\n<!-- VADE-GITHUB-REVIEW-BOT-BASE-SHA:b1526a85f6db5a6cdf668438e484f62ce15e6f29 -->\n<!-- VADE-GITHUB-REVIEW-BOT-REVIEW-ID:e7576c0b42ec022bf95e303bec07c520 -->\n<!-- VADE-GITHUB-REVIEW-BOT-TASK-ID:364a5fae-963b-4c42-9df7-87db846a67a9 -->\n<!-- VADE-GITHUB-REVIEW-BOT-VERSION:v2 -->",
+        "submittedAt": "2026-10-03T14:09:28Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "1ce30492f8d186dccb74afce98cfdabf90d35743"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfDI5w",
+        "author": {
+          "login": "chatgpt-codex-connector"
+        },
+        "authorAssociation": "NONE",
+        "body": "\n### 💡 Codex Review\n\nHere are some automated review suggestions for this pull request.\n\n**Reviewed commit:** `2795e46f46`\n    \n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\".\n\nIf Codex has suggestions, it will comment; otherwise it will react with 👍.\n\n\n\n\nCodex can also answer questions or update the PR. Try commenting \"@codex address that feedback\".\n            \n</details>",
+        "submittedAt": "2026-10-03T14:40:40Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "2795e46f46f74eae7c98d4d2554f2f3339c5cc20"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfJG2w",
+        "author": {
+          "login": "vercel"
+        },
+        "authorAssociation": "NONE",
+        "body": "",
+        "submittedAt": "2026-10-03T15:07:07Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "69f6c4d2101a3f82c1885efddcb35d4b58c0dd83"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfR_PQ",
+        "author": {
+          "login": "agisota"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "",
+        "submittedAt": "2026-10-03T15:48:34Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfR_xA",
+        "author": {
+          "login": "agisota"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "",
+        "submittedAt": "2026-10-03T15:48:37Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfSAaQ",
+        "author": {
+          "login": "agisota"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "",
+        "submittedAt": "2026-10-03T15:48:40Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfSnGw",
+        "author": {
+          "login": "vercel"
+        },
+        "authorAssociation": "NONE",
+        "body": "",
+        "submittedAt": "2026-10-03T15:51:00Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfSn5A",
+        "author": {
+          "login": "vercel"
+        },
+        "authorAssociation": "NONE",
+        "body": "",
+        "submittedAt": "2026-10-03T15:51:03Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfT2Yw",
+        "author": {
+          "login": "chatgpt-codex-connector"
+        },
+        "authorAssociation": "NONE",
+        "body": "\n### 💡 Codex Review\n\nHere are some automated review suggestions for this pull request.\n\n**Reviewed commit:** `414493cc30`\n    \n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\".\n\nIf Codex has suggestions, it will comment; otherwise it will react with 👍.\n\n\n\n\nCodex can also answer questions or update the PR. Try commenting \"@codex address that feedback\".\n            \n</details>",
+        "submittedAt": "2026-10-03T15:54:46Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfXHgA",
+        "author": {
+          "login": "vercel"
+        },
+        "authorAssociation": "NONE",
+        "body": "**Additional Suggestion:**\n\nMulti\\-panel `?panels=` URL serialization uses unescaped `,`\\/`:` delimiters\\, so a verbatim `unavailable` route containing a comma fragments into bogus panels on reload\\/Back\\-Forward\\.\n\n<!-- VADE-CATEGORY: logic -->\n<!-- VADE-GITHUB-SUGGESTION-ID:66f28197285537164f0fda90140b8c85133314dc7b3c11e439737af42b997491 -->\n\n<!-- VADE-RECOMMENDATION: FIX -->\n\n<a href=\"https://vercel.com/0xdx/~/agent/tasks/364a5fae-963b-4c42-9df7-87db846a67a9\" rel=\"noreferrer\"><picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-dark\">\n    <source media=\"(prefers-color-scheme: light)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-light\">\n    <img src=\"https://vercel.com/vercel-agent-view-suggestion-light\" alt=\"Fix on Vercel\" width=\"127\" height=\"28\" />\n  </picture></a>\n<!-- VADE-GITHUB-REVIEW-BOT-ACTIVE -->\n<!-- VADE-GITHUB-REVIEW-BOT-SHA:136c6c70fb93d80409a19ac8a14c64f63de2ceec -->\n<!-- VADE-GITHUB-REVIEW-BOT-BASE-SHA:ae19683e69f079893cd09065487cfa7653d01154 -->\n<!-- VADE-GITHUB-REVIEW-BOT-REVIEW-ID:e7576c0b42ec022bf95e303bec07c520 -->\n<!-- VADE-GITHUB-REVIEW-BOT-TASK-ID:364a5fae-963b-4c42-9df7-87db846a67a9 -->\n<!-- VADE-GITHUB-REVIEW-BOT-VERSION:v2 -->",
+        "submittedAt": "2026-10-03T16:11:22Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "136c6c70fb93d80409a19ac8a14c64f63de2ceec"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfdn9A",
+        "author": {
+          "login": "agisota"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "",
+        "submittedAt": "2026-10-03T16:42:19Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "20842365c55889d8dec7b3a164ad7d20df24238b"
+        }
+      }
+    ],
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137129197/job/111245667051",
+        "name": "lifecycle (lifecycle)",
+        "startedAt": "2026-10-03T16:41:12Z",
+        "status": "QUEUED",
+        "workflowName": "Validate Server (Integration)"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:35:11Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137129245/job/111243823941",
+        "name": "validate (ubuntu-24.04)",
+        "startedAt": "2026-10-03T16:30:57Z",
+        "status": "COMPLETED",
+        "workflowName": "CI Validate Alias"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:35:59Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137127004/job/111243819804",
+        "name": "Analyze (javascript-typescript)",
+        "startedAt": "2026-10-03T16:30:56Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL - Code Quality"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:31:34Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137127291/job/111243820796",
+        "name": "Analyze (actions)",
+        "startedAt": "2026-10-03T16:30:56Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:46:38Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137129206/job/111245614583",
+        "name": "durable-runtime (ubuntu-24.04)",
+        "startedAt": "2026-10-03T16:42:58Z",
+        "status": "COMPLETED",
+        "workflowName": "SQLite Runtime Recovery"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:36:59Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137129228/job/111243824021",
+        "name": "component-recovery",
+        "startedAt": "2026-10-03T16:31:42Z",
+        "status": "COMPLETED",
+        "workflowName": "UI-001 Recovery"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137129245/job/111243823883",
+        "name": "validate (macos-15)",
+        "startedAt": "2026-10-03T16:30:55Z",
+        "status": "QUEUED",
+        "workflowName": "CI Validate Alias"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137129206/job/111245614755",
+        "name": "durable-runtime (macos-15)",
+        "startedAt": "2026-10-03T16:40:56Z",
+        "status": "QUEUED",
+        "workflowName": "SQLite Runtime Recovery"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:32:58Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137127004/job/111243819510",
+        "name": "Analyze (python)",
+        "startedAt": "2026-10-03T16:30:56Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL - Code Quality"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:38:39Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137127291/job/111243820856",
+        "name": "Analyze (javascript-typescript)",
+        "startedAt": "2026-10-03T16:30:57Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:32:33Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137127291/job/111243820933",
+        "name": "Analyze (python)",
+        "startedAt": "2026-10-03T16:30:57Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:33:42Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137127291/job/111243820967",
+        "name": "Analyze (rust)",
+        "startedAt": "2026-10-03T16:30:57Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37137127291/job/111243820902",
+        "name": "Analyze (swift)",
+        "startedAt": "2026-10-03T16:30:54Z",
+        "status": "QUEUED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "StatusContext",
+        "context": "Vercel",
+        "startedAt": "2026-10-03T16:30:52Z",
+        "state": "FAILURE",
+        "targetUrl": "https://vercel.com/knowledge/why-is-my-account-deployment-blocked"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:31:27Z",
+        "conclusion": "NEUTRAL",
+        "detailsUrl": "https://github.com/rox-one/rox-one/runs/111243916120",
+        "name": "CodeQL",
+        "startedAt": "2026-10-03T16:31:24Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:35:54Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "external signed URL omitted",
+        "name": "[code]smith",
+        "startedAt": "2026-10-03T16:35:54Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T16:34:10Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://vercel.com/github",
+        "name": "Vercel Agent Review",
+        "startedAt": "2026-10-03T16:30:58Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      }
+    ],
+    "url": "https://github.com/rox-one/rox-one/pull/1417"
+  },
+  "reviewFindings": [
+    {
+      "id": 4173446230,
+      "path": ".github/workflows/ui-001-recovery.yml",
+      "line": null,
+      "commit": "6190965f724fd8c9b2296e394e2c7dfe82275a11",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173446230",
+      "body": "## CodeQL / Unpinned tag for a non-immutable Action or reusable workflow\n\nUnpinned 3rd party Action 'UI-001 Recovery' step [Uses Step](1) uses 'oven-sh/setup-bun' with ref 'v2', not a pinned commit hash\n\n[Show more details](https://github.com/rox-one/rox-one/security/code-scanning/1031)"
+    },
+    {
+      "id": 4173458955,
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "line": 219,
+      "commit": "20842365c55889d8dec7b3a164ad7d20df24238b",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173458955",
+      "body": "**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Enforce workspace mismatch in panel overrides**\n\nWhen a stored/deep-linked session belongs to another workspace, this changes only the `NavigationContext` state to `unavailable`, but the rendered content does not consume that state: `PanelSlot` independently parses `entry.route` and always passes it as `navStateOverride`, and `MainContentPanel` prefers that override over the context value. Consequently, restoring or switching to a workspace while a foreign session route remains selected still mounts `ChatPage` for that session instead of the intended unavailable surface. Apply the workspace check to each panel's parsed state (or ensure the focused panel uses the checked context state).\n\nUseful? React with 👍 / 👎."
+    },
+    {
+      "id": 4173573441,
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "line": 244,
+      "commit": "20842365c55889d8dec7b3a164ad7d20df24238b",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173573441",
+      "body": "**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Block foreign chats when metadata is absent**\n\nWhen a workspace switch retains the previous panel route, this check only rejects it if `selectedSession` exists. Fresh evidence in the current code is that `handleSelectWorkspace` explicitly clears `sessionMetaMapAtom` in `App.tsx:2203-2206` before `NavigationContext` reconciles the panels, so the old route renders `ChatPage` with an undefined lookup and can start loading that foreign session during the intervening render. Treat unresolved session metadata as pending/unavailable during a workspace transition rather than allowing it through.\n\nUseful? React with 👍 / 👎."
+    },
+    {
+      "id": 4173573444,
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "line": null,
+      "commit": "ec04d7401abe6f7c39ac18526c69a0e448b009bc",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173573444",
+      "body": "**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Release history suppression when workspace lookup fails**\n\nIf Back/Forward reaches an entry for a workspace that has since been deleted, `handleSwitchWorkspaceBySlug` in `App.tsx:2216-2221` finds no target and returns without changing `workspaceSlug`. No workspace-switch effect then runs to call `finishHistoryReconcile`, leaving both `suppressPushRef` and `isPopstateSwitchRef` set indefinitely; subsequent navigation stops creating history entries and a later UI workspace switch can be mistaken for that stale popstate. Only enter suppression after confirming the switch, or provide a failure path that clears these flags.\n\nUseful? React with 👍 / 👎."
+    },
+    {
+      "id": 4173657621,
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "line": 243,
+      "commit": "20842365c55889d8dec7b3a164ad7d20df24238b",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173657621",
+      "body": "During a workspace switch\\, the workspace\\-mismatch guard fails to block a retained session route whose metadata was just cleared\\, letting ChatPage mount and load the previous workspace\\'s session\\.\n\n<!-- VADE-CATEGORY: concurrency -->\n<!-- VADE-GITHUB-SUGGESTION-ID:94cd160bc0d227b85c12f0e65a69074c5b9c76c86b326b34ad5bf4d287c95e4c -->\n\n<!-- VADE-RECOMMENDATION: FIX -->\n<a href=\"https://vercel.com/0xdx/~/agent/tasks/364a5fae-963b-4c42-9df7-87db846a67a9#suggestion-94cd160bc0d227b85c12f0e65a69074c5b9c76c86b326b34ad5bf4d287c95e4c\" rel=\"noreferrer\"><picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-dark\">\n    <source media=\"(prefers-color-scheme: light)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-light\">\n    <img src=\"https://vercel.com/vercel-agent-view-suggestion-light\" alt=\"Fix on Vercel\" width=\"127\" height=\"28\" />\n  </picture></a>\n\n<!-- VADE-OUTCOME: ISSUE_RESOLVED -->"
+    },
+    {
+      "id": 4173657624,
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "line": 973,
+      "commit": "20842365c55889d8dec7b3a164ad7d20df24238b",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173657624",
+      "body": "In the popstate handler\\, `suppressPushRef`\\/`isPopstateSwitchRef` are set to `true` before confirming the target workspace exists\\, so a slug for a deleted\\/unknown workspace leaves both flags stuck at true forever\\, silently disabling history pushes\\.\n\n<!-- VADE-CATEGORY: logic -->\n<!-- VADE-GITHUB-SUGGESTION-ID:369cf6e52d96410cfbbce98e1e67cf7b0cafa385809a1b9e3b4aca97adf08952 -->\n\n<!-- VADE-RECOMMENDATION: FIX -->\n<a href=\"https://vercel.com/0xdx/~/agent/tasks/364a5fae-963b-4c42-9df7-87db846a67a9#suggestion-369cf6e52d96410cfbbce98e1e67cf7b0cafa385809a1b9e3b4aca97adf08952\" rel=\"noreferrer\"><picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-dark\">\n    <source media=\"(prefers-color-scheme: light)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-light\">\n    <img src=\"https://vercel.com/vercel-agent-view-suggestion-light\" alt=\"Fix on Vercel\" width=\"127\" height=\"28\" />\n  </picture></a>\n\n<!-- VADE-OUTCOME: ISSUE_RESOLVED -->"
+    },
+    {
+      "id": 4173820816,
+      "path": ".github/workflows/ui-001-recovery.yml",
+      "line": 55,
+      "commit": "20842365c55889d8dec7b3a164ad7d20df24238b",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173820816",
+      "body": "**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Fail CI when committed source hashes diverge**\n\nThis comparison is only written to the receipt and never asserted, so the recovery job remains green even when it tests a different candidate than the committed manifest. That occurs in this commit: for example, the manifest records `303be05d...` for `MainContentPanel.tsx`, while the committed file hashes to `6a49e0bb...` (and several other listed files also differ). Make this step exit nonzero on a mismatch, or update the manifest, so uploaded qualification evidence cannot silently describe an unpinned source set.\n\nUseful? React with 👍 / 👎."
+    },
+    {
+      "id": 4173820818,
+      "path": "apps/electron/src/shared/route-parser.ts",
+      "line": 949,
+      "commit": "20842365c55889d8dec7b3a164ad7d20df24238b",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173820818",
+      "body": "**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Escape preserved routes in split-panel history**\n\nWhen a malformed known-prefix route containing a comma, such as `knowledge/unknown,id/x`, is opened with `newPanel`, this new fallback preserves the route verbatim. `syncUrl` then concatenates panel routes with commas, while `reconcileFromUrlParams` restores them with `panelsParam.split(',')`, so reload or Back/Forward turns this one route into multiple panels and loses the original address. Encode each panel route independently or use a structured serialization before allowing arbitrary unavailable routes into the panel stack.\n\nUseful? React with 👍 / 👎."
+    }
+  ]
+}

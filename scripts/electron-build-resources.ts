@@ -1,6 +1,7 @@
 /** Cross-platform resources copy script. */
-import { existsSync, cpSync, lstatSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, lstatSync, readdirSync, rmSync } from "node:fs";
 import { join, relative } from "node:path";
+import { copyElectronResourceTree, SKILL_DEVELOPMENT_DIRECTORIES } from './build/staged-servers';
 
 /** Vendored skills must be ordinary files so checkout/copy works on Windows
  * without symlink privileges and cannot reference a developer's local paths. */
@@ -8,6 +9,7 @@ export function assertPortableSkillResources(skillsDir: string): void {
   if (!existsSync(skillsDir)) return;
   const visit = (directory: string): void => {
     for (const name of readdirSync(directory)) {
+      if (SKILL_DEVELOPMENT_DIRECTORIES.has(name)) continue;
       const path = join(directory, name);
       const stat = lstatSync(path);
       if (stat.isSymbolicLink()) {
@@ -27,7 +29,7 @@ if (import.meta.main) {
     assertPortableSkillResources(join(srcDir, "skills"));
     // Rebuild generated output so removed resources cannot survive packaging.
     rmSync(destDir, { recursive: true, force: true });
-    cpSync(srcDir, destDir, { recursive: true, force: true });
+    copyElectronResourceTree(srcDir, destDir);
     console.log("📦 Copied resources to dist");
   } else {
     console.log("⚠️ No resources directory found");
