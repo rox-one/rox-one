@@ -9,7 +9,8 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { AlertCircle, Globe, Copy, RefreshCw, Link2Off, Info, Pencil, Eye, EyeOff, SquareSlash, MoreHorizontal } from 'lucide-react'
-import { ChatDisplay } from '@/components/app-shell/ChatDisplay'
+import { ChatDisplay, type ChatDisplayHandle } from '@/components/app-shell/ChatDisplay'
+import { ChatRuntimeSplit } from '@/components/runtime-map/ChatRuntimeSplit'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SessionMenu } from '@/components/app-shell/SessionMenu'
 import { CompactSessionMenu } from '@/components/app-shell/CompactSessionMenu'
@@ -64,6 +65,9 @@ const SessionWorkflowEditor = React.lazy(() =>
     default: m.SessionWorkflowEditor,
   })),
 )
+const RuntimeMapDock = React.lazy(() =>
+  import('@/components/runtime-map/RuntimeMapDock').then((m) => ({ default: m.RuntimeMapDock })),
+)
 const SessionGitOutline = React.lazy(() =>
   import('@/components/session-workbench/SessionGitOutline').then((m) => ({
     default: m.SessionGitOutline,
@@ -71,9 +75,10 @@ const SessionGitOutline = React.lazy(() =>
 )
 
 function SessionSecondaryFallback() {
+  const { t } = useTranslation()
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 items-center justify-center text-muted-foreground">
-      <p className="text-sm">Loading…</p>
+      <p className="text-sm">{t('runtimeMap.loading')}</p>
     </div>
   )
 }
@@ -94,6 +99,7 @@ export interface ChatPageProps {
 
 const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   const { t } = useTranslation()
+  const appShell = useAppShellContext()
   // Diagnostic: mark when component runs
   React.useLayoutEffect(() => {
     rendererPerf.markSessionSwitch(sessionId, 'panel.mounted')
@@ -106,13 +112,17 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   )
 
   const [sessionView, setSessionView] = useEntityView(
-    `session:${sessionId}`,
+    `session:${appShell.activeWorkspaceId ?? ''}:${sessionId}:${appShell.panelId ?? 'primary'}`,
     sessionEntityCapabilities,
     'standard',
   )
+  const [runtimeFocusMessageId, setRuntimeFocusMessageId] = React.useState<string>()
+  const [runtimeFocusRequestId, setRuntimeFocusRequestId] = React.useState(0)
+  const [runtimeInitialMode, setRuntimeInitialMode] = React.useState<'execution' | 'context' | 'editor'>('execution')
 
   const {
     activeWorkspaceId,
+    panelId,
     llmConnections,
     workspaceDefaultLlmConnection,
     onSendMessage,
@@ -153,7 +163,20 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     onChatMatchInfoChange,
     isFocusedPanel,
     onCreateSession,
-  } = useAppShellContext()
+  } = appShell
+
+  const ownChatDisplayRef = React.useRef<ChatDisplayHandle | null>(null)
+  const connectChatDisplayRef = React.useCallback((handle: ChatDisplayHandle | null) => {
+    ownChatDisplayRef.current = handle
+    if (isFocusedPanel && chatDisplayRef) {
+      ;(chatDisplayRef as React.MutableRefObject<ChatDisplayHandle | null>).current = handle
+    }
+  }, [chatDisplayRef, isFocusedPanel])
+  React.useEffect(() => {
+    if (isFocusedPanel && chatDisplayRef) {
+      ;(chatDisplayRef as React.MutableRefObject<ChatDisplayHandle | null>).current = ownChatDisplayRef.current
+    }
+  }, [chatDisplayRef, isFocusedPanel])
 
   // Use the unified session options hook for clean access
   const {
@@ -344,14 +367,31 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
   React.useEffect(() => {
     const handler = (e: Event) => {
-      const { sessionId: targetId, view } = (e as CustomEvent).detail ?? {}
+      const { sessionId: targetId, view, mode, panelId: targetPanel } = (e as CustomEvent).detail ?? {}
+      if (targetPanel && targetPanel !== panelId) return
+      if (!targetPanel && isFocusedPanel === false) return
       if (targetId === sessionId && (view === 'map' || view === 'outline' || view === 'standard')) {
+        if (view === 'map') setRuntimeInitialMode(mode === 'editor' ? 'editor' : 'execution')
         setSessionView(view)
       }
     }
     window.addEventListener('craft:session-view', handler)
     return () => window.removeEventListener('craft:session-view', handler)
-  }, [sessionId, setSessionView])
+  }, [sessionId, panelId, isFocusedPanel, setSessionView])
+
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ sessionId?: string; messageId?: string; panelId?: string }>).detail
+      if (detail?.sessionId !== sessionId || !detail.messageId || (detail.panelId && detail.panelId !== panelId)) return
+      if (!detail.panelId && isFocusedPanel === false) return
+      setRuntimeFocusMessageId(detail.messageId)
+      setRuntimeFocusRequestId(previous => previous + 1)
+      setRuntimeInitialMode('execution')
+      setSessionView('map')
+    }
+    window.addEventListener('craft:runtime-map-focus', handler)
+    return () => window.removeEventListener('craft:runtime-map-focus', handler)
+  }, [sessionId, panelId, isFocusedPanel, setSessionView])
 
   const handleInputChange = React.useCallback((value: string) => {
     const nextText = coerceInputText(value)
@@ -597,18 +637,16 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
   const handleMindMapNavigate = React.useCallback(
     (source: { kind: string; id: string }) => {
-      // Switch to standard chat and scroll to the source message/turn.
+      // The transcript remains mounted beside the map while inspecting an event.
       if (source.kind === 'message' || source.kind === 'tool') {
-        setSessionView('standard')
-        // Defer until ChatDisplay is mounted for standard view.
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            chatDisplayRef?.current?.scrollToMessage?.(source.id)
+            ownChatDisplayRef.current?.scrollToMessage(source.id)
           })
         })
       }
     },
-    [chatDisplayRef, setSessionView],
+    [],
   )
 
 
@@ -734,10 +772,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         ...(m.toolStatus != null ? { toolStatus: m.toolStatus } : {}),
         ...(m.statusType != null ? { status: m.statusType } : {}),
       }))
-      if (sessionView === 'standard') {
-        return chatDisplay
-      }
-      if (sessionView === 'map') {
+      if (sessionView === 'standard' || sessionView === 'map') {
         const relatedBranches = [...sessionMetaMap.values()]
           .filter((meta) => meta.id !== sessionId && (meta.branchFromSessionId === sessionId || meta.parentSessionId === sessionId))
           .map((meta) => ({
@@ -746,20 +781,50 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
             ...(meta.branchFromMessageId ? { fromMessageId: meta.branchFromMessageId } : {}),
           }))
         return (
-          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-            <React.Suspense fallback={<SessionSecondaryFallback />}>
-              <SessionWorkflowEditor
-                sessionId={sessionId}
-                messages={workbenchMessages}
-                relatedBranches={relatedBranches}
-                onFork={handleWorkbenchFork}
-                onRewrite={handleWorkbenchRewrite}
-                onCreateChildSessions={handleCreateChildSessions}
-                onOpenMessage={(id) => handleMindMapNavigate({ kind: 'message', id })}
-                onOpenSession={(id) => navigate(routes.view.allSessions(id))}
-              />
-            </React.Suspense>
-          </div>
+          <ChatRuntimeSplit
+            chat={chatDisplay}
+            open={sessionView === 'map'}
+            onCloseMap={() => setSessionView('standard')}
+            scopeKey={`${activeWorkspaceId ?? session?.workspaceId ?? ''}:${sessionId}:${panelId ?? 'primary'}`}
+            map={sessionView === 'map' ? (
+              <React.Suspense fallback={<SessionSecondaryFallback />}>
+                <RuntimeMapDock
+                  sessionId={sessionId}
+                  workspaceId={session?.workspaceId ?? activeWorkspaceId ?? ''}
+                  panelId={panelId}
+                  legacyMessages={session?.messages}
+                  focusMessageId={runtimeFocusMessageId}
+                  focusRequestId={runtimeFocusRequestId}
+                  initialMode={runtimeInitialMode}
+                  onClose={() => setSessionView('standard')}
+                  onOpenMessage={(id, toolUseId) => {
+                    const mounted = session?.messages.find(message => message.id === id || message.backendMessageId === id || (toolUseId && message.toolUseId === toolUseId))
+                    handleMindMapNavigate({ kind: 'message', id: mounted?.id ?? toolUseId ?? id })
+                  }}
+                  onOpenCapability={(capability) => {
+                    if (capability.kind === 'skill') navigate(routes.view.skills(capability.id), { newPanel: true })
+                    else if (capability.kind === 'source') navigate(routes.view.sources({ sourceSlug: capability.id }), { newPanel: true })
+                    else if (capability.kind === 'model-connection') navigate(routes.view.settings('ai'), { newPanel: true })
+                    else if (capability.kind === 'channel-identity') navigate(routes.view.settings('accounts'), { newPanel: true })
+                  }}
+                  editor={(
+                    <React.Suspense fallback={<SessionSecondaryFallback />}>
+                      <SessionWorkflowEditor
+                        sessionId={sessionId}
+                        messages={workbenchMessages}
+                        relatedBranches={relatedBranches}
+                        onFork={handleWorkbenchFork}
+                        onRewrite={handleWorkbenchRewrite}
+                        onCreateChildSessions={handleCreateChildSessions}
+                        onOpenMessage={(id) => handleMindMapNavigate({ kind: 'message', id })}
+                        onOpenSession={(id) => navigate(routes.view.allSessions(id))}
+                      />
+                    </React.Suspense>
+                  )}
+                />
+              </React.Suspense>
+            ) : undefined}
+          />
         )
       }
       if (sessionView === 'outline') {
@@ -784,7 +849,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
                   // Defer until ChatDisplay is mounted for standard view.
                   requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
-                      chatDisplayRef?.current?.scrollToMessage?.(id)
+                      ownChatDisplayRef.current?.scrollToMessage(id)
                     })
                   })
                 }}
@@ -804,6 +869,10 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     [
       sessionView,
       sessionId,
+      panelId,
+      runtimeFocusMessageId,
+      runtimeFocusRequestId,
+      runtimeInitialMode,
       sessionMindMapLoading,
       messageLoadState.error,
       handleMindMapNavigate,
@@ -1220,7 +1289,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
             <div className="flex-1 flex flex-col min-h-0">
               {renderSessionViewBody(
               <ChatDisplay
-                ref={chatDisplayRef}
+                ref={connectChatDisplayRef}
                 session={skeletonSession}
                 onSendMessage={() => {}}
                 onOpenFile={handleOpenFile}
@@ -1295,7 +1364,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         <div className="flex-1 flex flex-col min-h-0">
           {renderSessionViewBody(
             <ChatDisplay
-              ref={chatDisplayRef}
+              ref={connectChatDisplayRef}
               session={session}
               onSendMessage={(message, attachments, skillSlugs) => {
                 if (session) {

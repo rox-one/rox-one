@@ -1,4 +1,10 @@
 import * as React from "react"
+import { useAtom } from "jotai"
+import { suggestionHistoryAtom } from "@/atoms/header-status"
+import { rememberSuggestion } from "@/lib/contextual-suggestions"
+import { appendStarterPrompt, canShowStarterPrompts, selectStarterPrompts, starterHistoryId, type StarterPrompt } from "@/lib/starter-prompts"
+import { EmptyChatWelcome } from "@/components/chat/EmptyChatWelcome"
+import { StarterPromptList } from "@/components/chat/StarterPromptList"
 import { followChatOutput } from "./chat-scroll"
 import { useChatOutputFollow } from "./useChatOutputFollow"
 import { createMessageTts } from '@/lib/message-tts'
@@ -597,19 +603,59 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
+  const runtimePanelId = (appShellContext as typeof appShellContext & { panelId?: string })?.panelId
 
   const handleOpenWorkflow = useCallback(() => {
     if (!session?.id) return
     window.dispatchEvent(new CustomEvent('craft:session-view', {
-      detail: { sessionId: session.id, view: 'map' },
+      detail: { sessionId: session.id, view: 'map', mode: 'editor', panelId: runtimePanelId },
     }))
-  }, [session?.id])
+  }, [session?.id, runtimePanelId])
+
+  const runtimeMapSessionRef = React.useRef(session)
+  runtimeMapSessionRef.current = session
+  const handleShowRuntimeMap = useCallback((messageId: string) => {
+    const current = runtimeMapSessionRef.current
+    if (!current || current.id !== session?.id) return
+    window.dispatchEvent(new CustomEvent('craft:runtime-map-focus', {
+      detail: { sessionId: current.id, messageId: messageActionId(current.messages, messageId), panelId: runtimePanelId },
+    }))
+  }, [session?.id, runtimePanelId])
+
+  const [starterHistory, setStarterHistory] = useAtom(suggestionHistoryAtom)
+  const emptyWelcome = Boolean(session && session.messages.length === 0 && !compactMode && !messagesLoading && !messagesLoadError && !session.isProcessing)
+  const starterOptions = {
+    session,
+    skills: skills ?? EMPTY_SKILLS,
+    sources: sources ?? [],
+    active: isFocusedPanel && !compactMode && !disabled && !connectionUnavailable && !messagesLoading && !messagesLoadError && Boolean(onInputChange),
+    hasPendingRequest: Boolean(pendingPermission || pendingCredential),
+    history: starterHistory,
+    now: Date.now(),
+  }
+  const starterPrompts = selectStarterPrompts(starterOptions)
+  const prepareStarterPrompt = (prompt: StarterPrompt) => {
+    // Recheck the live dependency state before preparing a draft. This path
+    // never calls handleSubmit, onSendMessage, an auth flow, or a provider.
+    if (!session || !canShowStarterPrompts(starterOptions) || !starterPrompts.some(item => item.id === prompt.id)) return
+    let text = t(prompt.promptKey, prompt.values)
+    if (prompt.skill && !(inputValue ?? '').includes(`[skill:${prompt.skill.slug}]`)) text = `[skill:${prompt.skill.slug}] ${text}`
+    onInputChange?.(appendStarterPrompt(inputValue ?? '', text))
+    const dependencies = prompt.dependencies.filter(ref => ref.kind === 'source').map(ref => ref.id)
+    if (dependencies.length) onSourcesChange?.([...new Set([...(session.enabledSourceSlugs ?? []), ...dependencies])])
+    setStarterHistory(history => rememberSuggestion(history, starterHistoryId(session, prompt.id), Date.now()))
+    textareaRef?.current?.focus()
+  }
+  const dismissStarterPrompts = () => {
+    if (!session) return
+    setStarterHistory(history => starterPrompts.reduce((current, prompt) => rememberSuggestion(current, starterHistoryId(session, prompt.id), Date.now()), history))
+  }
 
   useContextualSuggestions({
     session,
     skills: skills ?? EMPTY_SKILLS,
     draft: inputValue ?? '',
-    active: isFocusedPanel,
+    active: isFocusedPanel && !emptyWelcome,
     hasPendingRequest: Boolean(pendingPermission || pendingCredential),
     onDraftChange: (draft) => {
       onInputChange?.(draft)
@@ -1872,6 +1918,7 @@ const handleFollowUpChipClick = useCallback((item: {
           <div className="flex flex-1 flex-col min-h-0 min-w-0 relative z-10">
           {/* === MESSAGES AREA: Scrollable list of message bubbles === */}
           <div className="relative flex-1 min-h-0">
+            {emptyWelcome && !pendingPermission && !pendingCredential && <EmptyChatWelcome />}
             {/* Mask wrapper - fades content at top and bottom over transparent/image backgrounds */}
             <div
               className="h-full"
@@ -2015,6 +2062,7 @@ const handleFollowUpChipClick = useCallback((item: {
                             onPickSideThread={handlePickSideThread}
                             onListen={(text) => { void handleListen(text, turn.message.id) }}
                             isListening={listeningTurnId === turn.message.id}
+                            onShowRuntimeMap={handleShowRuntimeMap}
                             onBranch={session?.supportsBranching && !turn.message.isPending && !turn.message.isQueued ? handleMessageBranch : undefined}
                           />
                         </div>
@@ -2125,6 +2173,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         onQuote={handleQuoteMessage}
                         onLearnFromMessage={handleLearnFromMessage}
                         onPickSideThread={handlePickSideThread}
+                        onShowRuntimeMap={handleShowRuntimeMap}
                         onBranch={session?.supportsBranching ? handleMessageBranch : undefined}
                         onAddAnnotation={persistAnnotation}
                         onRemoveAnnotation={removeAnnotation}
@@ -2273,6 +2322,14 @@ const handleFollowUpChipClick = useCallback((item: {
             </div>
           </div>
 
+          {/* Recommendations stay directly above the existing lower composer. */}
+          <StarterPromptList
+            prompts={starterPrompts}
+            sources={sources ?? []}
+            workspaceId={session.workspaceId}
+            onSelect={prepareStarterPrompt}
+            onDismiss={dismissStarterPrompts}
+          />
           {/* === INPUT CONTAINER: FreeForm or Structured Input === */}
           <ChatInputZone
             compactMode={compactMode}
@@ -2525,6 +2582,7 @@ interface MessageBubbleProps {
   onListen?: (text: string) => void
   isListening?: boolean
   onBranch?: (messageId: string) => void
+  onShowRuntimeMap?: (messageId: string) => void
 }
 
 /**
@@ -2620,6 +2678,7 @@ function MessageBubble({
   onListen,
   isListening,
   onBranch,
+  onShowRuntimeMap,
 }: MessageBubbleProps) {
   const { t } = useTranslation()
   const messageContent = useMemo(() => linkifyNoteReferences(message.content), [message.content])
@@ -2647,6 +2706,7 @@ function MessageBubble({
         onListen={onListen}
         isListening={isListening}
         onBranch={onBranch}
+        onShowRuntimeMap={onShowRuntimeMap}
       />
     )
   }
@@ -2806,6 +2866,7 @@ const MemoizedMessageBubble = React.memo(MessageBubble, (prev, next) => {
     prev.onListen === next.onListen &&
     prev.isListening === next.isListening &&
     prev.onBranch === next.onBranch &&
+    prev.onShowRuntimeMap === next.onShowRuntimeMap &&
     prev.onQuote === next.onQuote &&
     prev.onLearnFromMessage === next.onLearnFromMessage &&
     prev.onPickSideThread === next.onPickSideThread

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { SessionToolContext } from '../context.ts';
 import { handleHostBash } from './host-bash.ts';
-import { setHostBashPort } from '../runtime/host-bash-port.ts';
+import { type HostBashObservation, setHostBashPort } from '../runtime/host-bash-port.ts';
 
 describe('host-tool bash', () => {
   let rootDir: string;
@@ -83,6 +83,44 @@ describe('host-tool bash', () => {
     expect(text).toContain('exitCode: 0');
     expect(text).toContain(workspaceDir);
     expect(text).toContain('host-bash-ok');
+  });
+
+  it('publishes real stdout, stderr, exit code, cwd and monotonic executor evidence', async () => {
+    const observations: HostBashObservation[] = [];
+    const command = "printf 'actual-out'; printf 'actual-err' >&2; exit 7";
+    const result = await handleHostBash(ctx({ hostBashObserver: observation => observations.push(observation) }), { command });
+    expect(result.isError).toBe(true);
+    expect(observations[0]).toMatchObject({ phase: 'started', execution: 'local', command, cwd: workspaceDir });
+    expect(observations.filter(observation => observation.phase === 'output').map(observation => observation.stdout ?? '').join('')).toBe('actual-out');
+    expect(observations.filter(observation => observation.phase === 'output').map(observation => observation.stderr ?? '').join('')).toBe('actual-err');
+    const completed = observations.at(-1)!;
+    expect(completed).toMatchObject({ phase: 'completed', execution: 'local', result: { stdout: 'actual-out', stderr: 'actual-err', exitCode: 7, timedOut: false, cwd: workspaceDir } });
+    expect(completed.monotonicMs).toBeGreaterThanOrEqual(observations[0]!.monotonicMs);
+    expect(completed.result!.durationMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('observer failures cannot rerun a successful sidecar command through fallback', async () => {
+    let calls = 0;
+    setHostBashPort(async req => {
+      calls++;
+      return { stdout: 'sidecar-executed-once', stderr: '', exitCode: 0, timedOut: false, durationMs: 4, cwd: req.cwd };
+    });
+    const result = await handleHostBash(ctx({ hostBashObserver: () => { throw new Error('trace unavailable'); } }), { command: 'printf should-never-run-locally' });
+    expect(calls).toBe(1);
+    expect(result.isError).toBe(false);
+    expect(result.content[0]!.text).toContain('sidecar-executed-once');
+    expect(result.content[0]!.text).not.toContain('stdout:\nshould-never-run-locally');
+  });
+
+  it('reports an actual sidecar failure separately from the following local execution', async () => {
+    const observations: HostBashObservation[] = [];
+    setHostBashPort(async () => { throw new Error('sidecar down'); });
+    const result = await handleHostBash(ctx({ hostBashObserver: observation => observations.push(observation) }), { command: 'printf fallback-output' });
+    expect(result.isError).toBe(false);
+    expect(observations[0]).toMatchObject({ phase: 'started', execution: 'sidecar' });
+    expect(observations[1]).toMatchObject({ phase: 'failed', execution: 'sidecar', error: 'sidecar down' });
+    expect(observations[2]).toMatchObject({ phase: 'started', execution: 'local' });
+    expect(observations.at(-1)).toMatchObject({ phase: 'completed', execution: 'local', result: { stdout: 'fallback-output', exitCode: 0 } });
   });
 
   it('strips blocked credential env vars from the child', async () => {

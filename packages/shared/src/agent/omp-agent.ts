@@ -62,6 +62,10 @@ import type { FileAttachment } from '../utils/files.ts';
 import { getProxyEnvVars } from '../config/proxy-env.ts';
 import { getToolchain, resolveOmpExecutableOrExplain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
 import { prepareOmpNativePolicy } from './omp-native-policy.ts';
+import { randomUUID } from 'node:crypto';
+import { OmpRuntimeObserver } from './omp-runtime-observer.ts';
+import { OmpRuntimeTraceBridge } from './omp-runtime-trace-bridge.ts';
+import { known, unknown, type RuntimeAgentObservation, type RuntimeContent } from '@rox/core/runtime-trace';
 
 import { AbortReason } from './backend/types.ts';
 import type {
@@ -97,6 +101,7 @@ import type { SdkMcpServerConfig } from './backend/types.ts';
 import {
   SESSION_TOOL_REGISTRY,
   type ToolResult as SessionToolResult,
+  type HostBashObservation,
 } from '@rox/session-tools-core';
 import { createClaudeContext, type SessionToolContext } from './claude-context.ts';
 import { attachSessionSelfManagementBindings } from './session-self-management-bindings.ts';
@@ -294,6 +299,31 @@ interface PendingPermission {
 // ============================================================
 
 export class OmpAgent extends BaseAgent {
+  private runtimeObserver: OmpRuntimeObserver | null = null;
+  private readonly runtimeTraceBridge = new OmpRuntimeTraceBridge();
+  private runtimeObservationRunId = '';
+  private runtimeObservationErrorSeq = 0;
+  private pendingRuntimeUserPrompt: string | null = null;
+  private pendingRuntimeSkills = new Map<string, string>();
+
+  protected override extractSkillPaths(message: string): ReturnType<BaseAgent['extractSkillPaths']> {
+    const resolved = super.extractSkillPaths(message);
+    // BaseAgent subsequently prepends branch/skill instructions. Capture the
+    // actual user text at its authoritative preprocessing boundary.
+    this.pendingRuntimeUserPrompt = message;
+    this.pendingRuntimeSkills = new Map(resolved.skillPaths);
+    return resolved;
+  }
+
+  private reportRuntimeObservationFailure(reason: string): void {
+    if (!this._isProcessing || this.eventQueue.isComplete) return;
+    const observation: RuntimeAgentObservation = {
+      sourceEventId: randomUUID(), sourceId: 'omp-observer-diagnostics', sourceSeq: ++this.runtimeObservationErrorSeq,
+      agentId: 'root', occurredAt: known(Date.now(), 'ROX OMP observer'), clockDomain: 'rox-host', origin: 'observed',
+      kind: 'trace.coverage', payload: { coverage: { state: 'partial', source: 'runtime', missing: ['native-observation-stream'], reason } },
+    };
+    this.eventQueue.enqueue({ type: 'runtime_observation', observation });
+  }
   private async prepareNativeInvocation(bin: string, env: NodeJS.ProcessEnv): Promise<{bin:string; prefix:string[]; dispose:()=>void}> {
     const packageDir = join(dirname(bin), '..', 'package');
     if (!existsSync(join(packageDir, 'src/session/agent-session.ts'))) {
@@ -782,9 +812,25 @@ export class OmpAgent extends BaseAgent {
       configFiles: env.PI_CONFIG_FILES,
     });
     if (runtimeConfig) Object.assign(env, runtimeConfig.env);
+    let observer: OmpRuntimeObserver | null = null;
+    try {
+      observer = new OmpRuntimeObserver(join(runtimeConfig.agentDir, 'runtime-observer'), event => {
+        if (this.runtimeObserver !== observer || !this._isProcessing || this.eventQueue.isComplete) return;
+        for (const observation of this.runtimeTraceBridge.map(event)) {
+          this.eventQueue.enqueue({ type: 'runtime_observation', observation });
+        }
+      }, () => this.reportRuntimeObservationFailure('Native observation transport could not read a bounded frame'));
+      this.runtimeObserver = observer;
+      Object.assign(env, observer.env);
+      args.push('--extension', observer.extensionPath);
+    } catch {
+      this.reportRuntimeObservationFailure('Native observation transport could not initialize');
+    }
     let nativeInvocation: Awaited<ReturnType<OmpAgent['prepareNativeInvocation']>>;
     try { nativeInvocation = await this.prepareNativeInvocation(bin, env); }
     catch (error) {
+      observer?.dispose();
+      if (this.runtimeObserver === observer) this.runtimeObserver = null;
       try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
       throw error;
     }
@@ -793,6 +839,8 @@ export class OmpAgent extends BaseAgent {
     try {
       child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
     } catch (error) {
+      observer?.dispose();
+      if (this.runtimeObserver === observer) this.runtimeObserver = null;
       try { runtimeConfig?.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
       try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
       throw error;
@@ -800,6 +848,8 @@ export class OmpAgent extends BaseAgent {
     // Capture this attempt's disposer: a predecessor closing after respawn
     // must never delete its successor's agent directory.
     child.once('close', () => {
+      observer?.dispose();
+      if (this.runtimeObserver === observer) this.runtimeObserver = null;
       try { runtimeConfig?.dispose(); }
       catch { this.debug('OMP runtime profile cleanup could not complete'); }
       try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
@@ -841,6 +891,9 @@ export class OmpAgent extends BaseAgent {
       const evidence = childStderr + text;
       childStderr = evidence.slice(-OMP_STDERR_RING_LIMIT);
       if (isCurrentChild()) {
+        if (text.includes('ROX_RUNTIME_OBSERVER_ERROR')) {
+          this.reportRuntimeObservationFailure('Native observation capture exceeded a quota or could not append');
+        }
         this.recentStderr = childStderr;
         if (!latchedStartupError) {
           // Probe the pre-eviction evidence (bounded by ring + chunk size).
@@ -1070,6 +1123,11 @@ export class OmpAgent extends BaseAgent {
     // ready handshake. No-op once the handshake has settled.
     this.settleReady(new OmpStartupAbortedError('OMP subprocess terminated before startup completed'));
     if (!child) return;
+    const observer = this.runtimeObserver;
+    observer?.drain();
+    this.runtimeObserver = null;
+    // Detach synchronously; a predecessor cannot append into the next turn.
+    observer?.dispose();
     try {
       child.stdin?.end();
     } catch {
@@ -1108,6 +1166,7 @@ export class OmpAgent extends BaseAgent {
     latchedStartupError: () => OmpStartupError | null,
   ): void {
     this.debug(`OMP subprocess exited: code=${code}, signal=${signal}`);
+    this.runtimeObserver?.drain();
 
     const wasStartupPending = this.startupInFlight;
     const wasReady = this.readyAccepted;
@@ -1253,6 +1312,7 @@ export class OmpAgent extends BaseAgent {
   }
 
   private handleLine(line: string): void {
+    this.runtimeObserver?.drain();
     const trimmed = line.trim();
     if (!trimmed) return;
 
@@ -1560,11 +1620,12 @@ export class OmpAgent extends BaseAgent {
   private handleHostToolCall(msg: Record<string, unknown>): void {
     const frameId = String(msg.id ?? '');
     const toolName = String(msg.toolName ?? 'tool');
+    const toolCallId = typeof msg.toolCallId === 'string' ? msg.toolCallId : undefined;
     const args = (msg.arguments as Record<string, unknown> | undefined) ?? {};
     if (!frameId) return;
 
     this.debug(`host_tool_call: ${toolName} (frame ${frameId})`);
-    void this.executeHostToolCall(frameId, toolName, args).catch((error) => {
+    void this.executeHostToolCall(frameId, toolName, args, toolCallId).catch((error) => {
       this.debug(`host_tool_call ${toolName} crashed: ${error instanceof Error ? error.message : error}`);
     });
   }
@@ -1573,9 +1634,15 @@ export class OmpAgent extends BaseAgent {
     frameId: string,
     toolName: string,
     args: Record<string, unknown>,
+    toolCallId?: string,
   ): Promise<void> {
     const entry = { cancelled: false };
+    const runtimeRunId = this.runtimeObservationRunId;
+    const originatingChild = this.subprocess;
     this.pendingHostToolCalls.set(frameId, entry);
+    const hostBashObserver = toolCallId
+      ? this.createHostBashObserver(toolCallId, runtimeRunId, () => !entry.cancelled && this.subprocess === originatingChild)
+      : undefined;
 
     const finish = (text: string, isError: boolean): void => {
       this.pendingHostToolCalls.delete(frameId);
@@ -1613,7 +1680,7 @@ export class OmpAgent extends BaseAgent {
         }
       }
 
-      const execution = this.executeHostSessionTool(toolName, args);
+      const execution = this.executeHostSessionTool(toolName, args, hostBashObserver);
       const timeout = new Promise<{ content: string; isError: boolean }>((resolve) => {
         setTimeout(
           () => resolve({ content: `Host tool '${toolName}' timed out after ${Math.floor(OMP_HOST_TOOL_TIMEOUT_MS / 1000)}s`, isError: true }),
@@ -1627,6 +1694,45 @@ export class OmpAgent extends BaseAgent {
     }
   }
 
+  /** Execution evidence is scoped to this invocation, never to a cached context. */
+  private createHostBashObserver(
+    toolCallId: string,
+    runtimeRunId: string,
+    invocationActive: () => boolean,
+  ): (evidence: HostBashObservation) => void {
+    let sourceSeq = 0;
+    let attempt = 0;
+    let startedMonotonicMs: number | undefined;
+    const content = (text: string, isDelta: boolean, truncated = false): RuntimeContent => ({
+      text, isDelta, truncated, byteLength: Buffer.byteLength(text), availability: 'available', tokens: unknown('not-emitted'),
+    });
+    return evidence => {
+      // An unawaited host result may outlive cancellation or a new user turn.
+      if (!invocationActive() || !this._isProcessing || this.eventQueue.isComplete || this.runtimeObservationRunId !== runtimeRunId) return;
+      if (evidence.phase === 'started') { attempt += 1; startedMonotonicMs = evidence.monotonicMs; }
+      const result = evidence.result;
+      const complete = evidence.phase === 'completed' || evidence.phase === 'failed';
+      const observation: RuntimeAgentObservation = {
+        sourceEventId: randomUUID(), sourceId: `omp-host-bash:${runtimeRunId}:${toolCallId}`, sourceSeq: ++sourceSeq,
+        agentId: 'root', toolUseId: toolCallId, spanId: `tool:${toolCallId}`,
+        attemptId: `${toolCallId}:${evidence.execution}:${attempt}`,
+        occurredAt: known(evidence.occurredAt, 'ROX host bash executor'), clockDomain: 'rox-host', origin: 'observed',
+        elapsedMs: startedMonotonicMs === undefined ? undefined : evidence.monotonicMs - startedMonotonicMs,
+        kind: evidence.phase === 'started' ? 'terminal.started' : complete ? 'terminal.completed' : 'terminal.output',
+        payload: {
+          command: evidence.command, cwd: result?.cwd ?? evidence.cwd, shell: evidence.shell,
+          stdout: result ? content(result.stdout, false, result.stdoutTruncated) : evidence.stdout === undefined ? undefined : content(evidence.stdout, true),
+          stderr: result ? content(result.stderr, false, result.stderrTruncated) : evidence.stderr === undefined ? undefined : content(evidence.stderr, true),
+          exitCode: result?.exitCode == null ? unknown('not-emitted') : known(result.exitCode, 'ROX host bash executor'),
+          durationMs: result ? known(result.durationMs, 'ROX host bash executor') : undefined,
+          timedOut: result?.timedOut, error: evidence.error, execution: evidence.execution,
+          status: evidence.phase === 'failed' || (result && (result.timedOut || result.exitCode !== 0)) ? 'failed' : complete ? 'succeeded' : 'running',
+        },
+      };
+      this.eventQueue.enqueue({ type: 'runtime_observation', observation });
+    };
+  }
+
   /**
    * Route + execute a host tool with the same semantics as
    * PiAgent.routeToolCall/handleToolExecute: MCP pool proxy tools dispatch to
@@ -1635,6 +1741,7 @@ export class OmpAgent extends BaseAgent {
   private async executeHostSessionTool(
     toolName: string,
     args: Record<string, unknown>,
+    hostBashObserver?: (observation: HostBashObservation) => void,
   ): Promise<{ content: string; isError: boolean }> {
     // MCP source-proxy tool — same execution path as PiAgent.handleToolExecute
     // (mcpPool.callTool by proxy name). No SESSION_TOOL_REGISTRY entry exists
@@ -1741,7 +1848,8 @@ export class OmpAgent extends BaseAgent {
         };
       }
 
-      const ctx = this.getSessionToolContext();
+      const cachedCtx = this.getSessionToolContext();
+      const ctx: SessionToolContext = hostBashObserver ? { ...cachedCtx, hostBashObserver } : cachedCtx;
       const result: SessionToolResult = await def.handler(ctx, args);
       const text = result.content.map((c) => c.text).join('\n');
       return { content: text, isError: !!result.isError };
@@ -1929,6 +2037,10 @@ export class OmpAgent extends BaseAgent {
   }
 
   private handleAgentEnd(msg: Record<string, unknown>): void {
+    this.runtimeObserver?.drain();
+    // Native retries/stop hooks can schedule another provider continuation.
+    // They are not the completion of this ROX user request.
+    if (msg.willContinue === true) return;
     // Final usage lives on the last assistant message (notes §Events.agent_end).
     if (!this.lastUsage && Array.isArray(msg.messages)) {
       for (let i = msg.messages.length - 1; i >= 0; i--) {
@@ -1985,6 +2097,8 @@ export class OmpAgent extends BaseAgent {
     attachments?: FileAttachment[],
     _options?: ChatOptions,
   ): AsyncGenerator<AgentEvent> {
+    const runtimeUserPrompt = this.pendingRuntimeUserPrompt ?? message;
+    const runtimeSkills = new Map(this.pendingRuntimeSkills);
     // Permission changes retire the child asynchronously. Wait before claiming
     // this turn so its predecessor's intentional exit cannot fail the new turn
     // or leave ensureSubprocess using a child whose stdin is already closed.
@@ -2008,6 +2122,16 @@ export class OmpAgent extends BaseAgent {
     this.eventQueue.reset();
     this.lastUsage = undefined;
     this.toolNames.clear();
+    this.runtimeObservationRunId = randomUUID();
+    this.runtimeTraceBridge.beginRun(this.runtimeObservationRunId, runtimeUserPrompt, runtimeSkills);
+    let selectedSeq = 0;
+    for (const [slug] of runtimeSkills) {
+      this.eventQueue.enqueue({ type: 'runtime_observation', observation: {
+        sourceEventId: randomUUID(), sourceId: `omp-user-selection:${this.runtimeObservationRunId}`, sourceSeq: ++selectedSeq,
+        agentId: 'root', occurredAt: known(Date.now(), 'ROX resolved user skill selection'), clockDomain: 'rox-host', origin: 'observed',
+        kind: 'skill.selected', payload: { capability: { kind: 'skill', id: slug, scope: 'session', label: slug } },
+      } });
+    }
 
     // Attachments: append textual references (OMP RPC prompt accepts images but
     // the wire contract for them is not part of the verified notes — keep to text).
@@ -2028,6 +2152,7 @@ export class OmpAgent extends BaseAgent {
 
     try {
       await this.ensureSubprocess();
+      this.runtimeObserver?.beginRun(this.runtimeObservationRunId);
 
       await this.sendCommand('set_thinking_level', { level: 'max' });
       // Refresh source state on every turn, just as Claude/Pi do. The static

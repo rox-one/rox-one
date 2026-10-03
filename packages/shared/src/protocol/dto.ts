@@ -410,6 +410,8 @@ export interface PermissionModeState {
 
 // turnId: Correlation ID from the API's message.id, groups all events in an assistant turn
 export type SessionEvent =
+  | { type: 'runtime_trace_health'; sessionId: string; workspaceId: string; rootRunId: string; coverage: import('@rox/core/runtime-trace').TraceCoverage }
+  | { type: 'runtime_trace'; sessionId: string; event: import('@rox/core/runtime-trace').RuntimeEvent }
   | { type: 'text_discard'; sessionId: string; turnId: string }
   | { type: 'retry'; sessionId: string; phase: 'backoff'; message: string }
   | { type: 'retry'; sessionId: string; phase: 'active' | 'end' }

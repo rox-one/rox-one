@@ -1,0 +1,40 @@
+name: Runtime map native evidence
+on:
+  pull_request:
+    paths:
+      - 'packages/core/src/runtime-trace/**'
+      - 'packages/shared/src/agent/omp-runtime*'
+      - 'packages/shared/src/agent/omp-agent.ts'
+      - 'packages/server-core/src/sessions/runtime-trace/**'
+      - 'scripts/probes/*runtime-map*'
+      - 'tests/e2e/runtime-map/**'
+      - '.github/workflows/runtime-map.yml'
+permissions:
+  contents: read
+jobs:
+  native-loop:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24' }
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: '1.3.14' }
+      - run: bun install --frozen-lockfile
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - name: Prepare verified native package and pinned dependency graph
+        run: bun scripts/probes/prepare-runtime-map-omp.ts "$RUNNER_TEMP/runtime-map-omp"
+      - name: Exercise actual native parent, nested task and restricted worker
+        run: bun scripts/probes/runtime-map-native-loop.ts "$RUNNER_TEMP/runtime-map-native-loop.json"
+        env:
+          ROX_OMP_PACKAGE_DIR: ${{ runner.temp }}/runtime-map-omp/package
+      - name: Verify observation and projection boundaries
+        run: bun test packages/core/src/runtime-trace packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts packages/server-core/src/sessions/runtime-trace packages/server-core/src/handlers/rpc/__tests__/runtime-trace.test.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: runtime-map-native-loop
+          path: ${{ runner.temp }}/runtime-map-native-loop.json
+          if-no-files-found: error

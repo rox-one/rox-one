@@ -1,3 +1,4 @@
+import type { RuntimeEvent, RuntimeContent } from '@rox/core/runtime-trace'
 import type { AnnotationV1, Message } from '@rox/core/types'
 import { CodedError, RPC_CHANNELS, type Session, type SessionEvent } from '@rox/shared/protocol'
 import type { LoadedSource } from '@rox/shared/sources'
@@ -77,10 +78,57 @@ export function nativeSources(sources: readonly LoadedSource[]): LoadedSource[] 
   }))
 }
 
+/** Preserve event identities/cursors while retaining the native boundary's host-data restriction. */
+export function nativeRuntimeTraceEvent(event: RuntimeEvent): RuntimeEvent {
+  const redacted = (): RuntimeContent => ({ availability: 'redacted', tokens: { state: 'unknown', reason: 'redacted' } })
+  const copy = structuredClone(event)
+  delete copy.payloadRef
+  const payload = copy.payload
+  switch (copy.kind) {
+    case 'context.captured': case 'context.changed': {
+      copy.payload.snapshot.originalPrompt = redacted()
+      copy.payload.snapshot.effectivePrompt = redacted()
+      copy.payload.snapshot.workingDirectory = undefined
+      copy.payload.snapshot.blocks = copy.payload.snapshot.blocks.map(block => ({ ...block, source: block.kind, content: redacted() }))
+      copy.payload.snapshot.coverage = { ...copy.payload.snapshot.coverage, state: 'partial', missing: [...copy.payload.snapshot.coverage.missing, 'host-data-redacted'] }
+      break
+    }
+    case 'tool.started': case 'tool.output': case 'tool.completed':
+      copy.payload.input = redacted(); copy.payload.result = redacted(); copy.payload.modelContent = redacted(); copy.payload.error = undefined
+      break
+    case 'terminal.started': case 'terminal.output': case 'terminal.completed':
+      copy.payload.command = '[REDACTED]'; copy.payload.cwd = undefined; copy.payload.stdout = redacted(); copy.payload.stderr = redacted()
+      break
+    case 'agent.assigned': copy.payload.assignment.task = redacted(); copy.payload.assignment.prompt = redacted(); copy.payload.assignment.expectedResult = redacted(); break
+    case 'agent.completed': copy.payload.result = redacted(); break
+    case 'skill.selected': case 'skill.loaded': case 'skill.applied': copy.payload.content = redacted(); break
+    case 'memory.retrieved': case 'memory.included': case 'memory.proposed': case 'memory.committed': copy.payload.content = redacted(); break
+    case 'plan.published': case 'plan.revised':
+      copy.payload.plan.content = redacted(); copy.payload.plan.tasks = copy.payload.plan.tasks.map(task => ({ ...task, description: redacted() })); break
+    case 'task.state-changed': copy.payload.task.description = redacted(); break
+    case 'acceptance.started': case 'acceptance.completed': copy.payload.acceptance.evidence = [redacted()]; break
+    case 'artifact.created': copy.payload.artifact.uri = undefined; copy.payload.artifact.content = redacted(); break
+    case 'context.compacted': copy.payload.snapshot = undefined; copy.payload.summary = redacted(); break
+    case 'approval.requested': copy.payload.description = '[REDACTED]'; break
+    case 'attempt.started': case 'attempt.completed': copy.payload.description = undefined; break
+    case 'operation.queued': copy.payload.description = '[REDACTED]'; break
+  }
+  // Even conversation records may reference a host-side blob. Never expose those pointers.
+  const stripReferences = (node: unknown): void => {
+    if (!node || typeof node !== 'object') return
+    if ('payloadRef' in node) delete (node as Record<string, unknown>).payloadRef
+    for (const item of Object.values(node)) stripReferences(item)
+  }
+  stripReferences(payload)
+  return copy
+}
+
 /** Only conversation display events cross the native boundary; tool/auth/host data stay server-side. */
 export function nativeSessionEvent(event: SessionEvent): SessionEvent | null {
   const identity = { type: event.type, sessionId: event.sessionId }
   switch (event.type) {
+    case 'runtime_trace_health': return { ...identity, type: event.type, workspaceId: event.workspaceId, rootRunId: event.rootRunId, coverage: { ...event.coverage, reason: event.coverage.reason ? 'Runtime observation recording is incomplete.' : undefined, missing: [...new Set([...event.coverage.missing, 'host-data-redacted'])] } }
+    case 'runtime_trace': return { ...identity, type: event.type, event: nativeRuntimeTraceEvent(event.event) }
     case 'user_message': {
       const message = nativeMessage(event.message)
       return message ? { ...identity, type: event.type, message, status: event.status, optimisticMessageId: event.optimisticMessageId } : null

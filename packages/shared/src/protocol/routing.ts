@@ -484,6 +484,9 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
 // ---------------------------------------------------------------------------
 
 export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
+  RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT,
+  RPC_CHANNELS.runtimeTrace.READ_EVENTS,
+  RPC_CHANNELS.runtimeTrace.READ_PAYLOAD,
   // Read-only Meeting plans use a verified native workspace read grant.
   RPC_CHANNELS.meetings.PLAN_ACTIONS,
   // voice — private actor state and client-supplied audio; OS playback stays on the client

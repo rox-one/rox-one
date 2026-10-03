@@ -21,6 +21,23 @@ export interface HostBashExecRequest {
   workspaceRoot?: string;
 }
 
+/** Passive executor evidence; callback failures never authorize or cancel a command. */
+export interface HostBashObservation {
+  phase: 'started' | 'output' | 'completed' | 'failed';
+  command: string;
+  cwd: string;
+  shell?: string;
+  execution: 'local' | 'sidecar';
+  stdout?: string;
+  stderr?: string;
+  result?: HostBashExecResult;
+  error?: string;
+  occurredAt: number;
+  monotonicMs: number;
+}
+
+export type HostBashObserver = (observation: HostBashObservation) => void;
+
 export type HostBashPort = (req: HostBashExecRequest) => Promise<HostBashExecResult>;
 
 let port: HostBashPort | null = null;
