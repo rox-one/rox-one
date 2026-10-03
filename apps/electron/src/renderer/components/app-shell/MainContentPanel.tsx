@@ -270,6 +270,7 @@ export function MainContentPanel({
   // entity/workspace must start with fresh state, including pending async work.
   const routeIdentity = JSON.stringify([
     activeWorkspaceId, navState.navigator,
+    navState.navigator === 'unavailable' ? navState.route : null,
     isScreenNavigation(navState) ? navState.screen : null,
     isSettingsNavigation(navState) ? navState.subpage : null,
     isSessionsNavigation(navState) ? navState.viewMode : null,
@@ -722,6 +723,7 @@ export function MainContentPanel({
         role="status"
         className="flex items-center justify-center h-full text-muted-foreground"
         data-testid="route-unavailable"
+        data-route={navState.navigator === 'unavailable' ? navState.route : undefined}
       >
         {/* Unknown/stale deep links must not masquerade as an unrelated chat route. */}
         <p className="text-sm">{t('common.unavailable')}</p>

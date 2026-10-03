@@ -5,7 +5,7 @@
  */
 
 import { atom } from 'jotai'
-import { parseRouteToNavigationState } from '../../shared/route-parser'
+import { resolveViewRoute } from '../../shared/route-parser'
 import type { ViewRoute } from '../../shared/routes'
 
 let nextPanelId = 0
@@ -63,8 +63,7 @@ export const focusedPanelRouteAtom = atom((get) => {
 })
 
 export function getPanelTypeFromRoute(route: ViewRoute): PanelType {
-  const navState = parseRouteToNavigationState(route)
-  if (!navState) return 'other'
+  const navState = resolveViewRoute(route)
 
   switch (navState.navigator) {
     case 'sessions':
@@ -118,14 +117,8 @@ function normalizeProportions(stack: PanelStackEntry[]): PanelStackEntry[] {
 }
 
 export function parseSessionIdFromRoute(route: ViewRoute): string | null {
-  // Strip any query string first — a `?x=y` tail on the last segment would otherwise
-  // leak into the extracted session id and poison every focused-session consumer.
-  const segments = route.split('?')[0].split('/')
-  const idx = segments.indexOf('session')
-  if (idx >= 0 && idx + 1 < segments.length) {
-    return segments[idx + 1]
-  }
-  return null
+  const state = resolveViewRoute(route)
+  return state.navigator === 'sessions' ? state.details?.sessionId ?? null : null
 }
 
 export const focusedSessionIdAtom = atom((get) => {

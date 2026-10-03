@@ -2699,10 +2699,19 @@ export interface TerminalNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+/** An external/stored view address that cannot be resolved by this build. */
+export interface UnavailableNavigationState {
+  navigator: 'unavailable'
+  route: string
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
 /**
  * Unified navigation state
  */
 export type NavigationState =
+  | UnavailableNavigationState
   | SessionsNavigationState
   | SourcesNavigationState
   | SettingsNavigationState
@@ -2825,6 +2834,9 @@ export const DEFAULT_NAVIGATION_STATE: NavigationState = {
 }
 
 export const getNavigationStateKey = (state: NavigationState): string => {
+  if (state.navigator === 'unavailable') {
+    return `unavailable:${encodeURIComponent(state.route)}`
+  }
   if (state.navigator === 'search') {
     return `search${state.query ? `?q=${encodeURIComponent(state.query)}` : ''}`
   }
@@ -2947,6 +2959,13 @@ export const getNavigationStateKey = (state: NavigationState): string => {
 }
 
 export const parseNavigationStateKey = (key: string): NavigationState | null => {
+  if (key.startsWith('unavailable:')) {
+    try {
+      return { navigator: 'unavailable', route: decodeURIComponent(key.slice('unavailable:'.length)), details: null }
+    } catch {
+      return null
+    }
+  }
   // Handle sources
   if (key === 'sources') return { navigator: 'sources', details: null }
   if (key.startsWith('sources/source/')) {

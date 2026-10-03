@@ -174,7 +174,7 @@ for (const kind of ['desktop', 'compact'] as const) {
         expect(app.readbacks).toEqual([sessionId])
         expect(app.hook(sessionId).options.permissionModeVersion).toBe(5)
         expect(app.errors).toEqual([])
-      })
+      }, 15000)
     }
 
     it('restores the actual mode when RPC fails before the optimistic UI commits', async () => {

@@ -35,6 +35,7 @@ import type {
   AutomationFilter,
   RightSidebarPanel,
   KnowledgeRefKind,
+  UnavailableNavigationState,
 } from './types'
 import { isValidSettingsSubpage, type SettingsSubpage } from './settings-registry'
 import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
@@ -960,6 +961,31 @@ export function parseRouteToNavigationState(
 }
 
 /**
+ * Resolve a panel/deep-link view without discarding its original address.
+ * Stored action routes are views here and must never execute during restore.
+ * The nullable parser retains its legacy degradation contract; mounted runtime
+ * consumers use this boundary to reject lossy surface-to-chat degradation.
+ */
+export function resolveViewRoute(route: string, sidebarParam?: string): NavigationState {
+  const unavailable: UnavailableNavigationState = { navigator: 'unavailable', route, details: null }
+  const rightSidebar = parseRightSidebarParam(sidebarParam)
+  if (rightSidebar) unavailable.rightSidebar = rightSidebar
+  try {
+    // Some legacy routes retain encoded slugs, but malformed encoding is never
+    // a valid entity address, even when that parser branch does not decode it.
+    decodeURIComponent(route.split('?')[0])
+    const state = parseRouteToNavigationState(route, sidebarParam)
+    if (!state) return unavailable
+    const prefix = route.split('?')[0].split('/')[0]
+    if (['knowledge', 'cloud-run', 'extension', 'diff', 'terminal'].includes(prefix)
+      && state.navigator !== prefix) return unavailable
+    return state
+  } catch {
+    return unavailable
+  }
+}
+
+/**
  * Convert a ParsedCompoundRoute to NavigationState
  */
 function convertCompoundToNavigationState(compound: ParsedCompoundRoute): NavigationState {
@@ -1344,16 +1370,6 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
         }
       }
       return { navigator: 'projects', details: null }
-    case 'pages':
-      return { navigator: 'pages', details: null }
-    case 'page-info':
-      if (parsed.id) {
-        return {
-          navigator: 'pages',
-          details: { type: 'page', pageSlug: parsed.id },
-        }
-      }
-      return { navigator: 'pages', details: null }
     case 'session':
       if (parsed.id) {
         // Reconstruct filter from params
@@ -1428,7 +1444,7 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
 /**
  * Convert NavigationState to ParsedCompoundRoute
  */
-function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundRoute {
+function navigationStateToCompoundRoute(state: Exclude<NavigationState, UnavailableNavigationState>): ParsedCompoundRoute {
   if (state.navigator === 'search') {
     return { navigator: 'search', query: state.query, details: null }
   }
@@ -1616,6 +1632,7 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
  * Build a route string from NavigationState
  */
 export function buildRouteFromNavigationState(state: NavigationState): string {
+  if (state.navigator === 'unavailable') return state.route
   return buildCompoundRoute(navigationStateToCompoundRoute(state))
 }
 

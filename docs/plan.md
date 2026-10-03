@@ -627,3 +627,8 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 2. Wire Notes folding preferences and replace placeholder slash insertions with real nodes. Supply legacy parser/serializer adapters required by the current default engine; preserve existing column aliases and literal code fences.
 3. Verify actual installed legacy parser/ProseMirror/serializer parse-edit-export-reopen, official-engine roundtrips, fold state normalization, malformed markers, bounded resizing, read-only refusal and locale parity; run consumed Electron types and renderer build.
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
+
+
+## UI-001: внешние ссылки и интеграция в main — 2026-10-03
+
+Владелец: `fix/ui-001-main-integration-20261003-7`. [UI-001 план](final-readiness/execution/cloud/OWNER-UI-001/main-integration/plan.md) сохраняет исходную матрицу UI-001.1/UI-001.2 и явное разрешение пользователя на GitHub/merge. Другие разделы и рабочие копии сохраняются.

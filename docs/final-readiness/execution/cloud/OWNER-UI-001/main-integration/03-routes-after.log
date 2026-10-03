@@ -1,0 +1,329 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/shared/__tests__/shell-appearance.test.ts:
+(pass) parseZenShellEnabled / parseShellMaterialPreference > enables fresh installs and preserves explicit opt-outs [1.31ms]
+(pass) parseZenShellEnabled / parseShellMaterialPreference > defaults unknown preference to system [0.12ms]
+(pass) parseZenShellPatch > accepts enabled and materialPreference only [0.95ms]
+(pass) parseZenShellPatch > rejects BrowserWindow options and extra keys [11.52ms]
+(pass) resolveShellMaterial > does not emit glass when zen is disabled (resolver not used for OFF path) [0.11ms]
+(pass) resolveShellMaterial > macOS system/glass → vibrancy when paint is healthy [0.09ms]
+(pass) resolveShellMaterial > uses mica only on Windows 11 22H2 or newer [0.06ms]
+(pass) resolveShellMaterial > Linux and web are honest solid [0.05ms]
+(pass) resolveShellMaterial > user opaque, reduce transparency, high contrast, missing paint, gpu, destroyed beat glass [0.31ms]
+(pass) resolveShellMaterial > accessibility beats user glass even on capable macOS [0.02ms]
+(pass) snapshotZenShell > exposes the typed flag name and resolved material [0.04ms]
+
+apps/electron/src/shared/__tests__/settings-security.test.ts:
+(pass) security settings page registry > registers exactly one security subpage through the canonical registry [0.17ms]
+(pass) security settings page registry > derives the deep link and every menu/component/icon integration from the registry [21.29ms]
+(pass) security settings page registry > keeps unknown deep links invalid [1.02ms]
+
+apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts:
+(pass) route-parser: canonical Notes routes > builds canonical local Notes routes and round-trips nested note ids [0.96ms]
+(pass) route-parser: canonical Notes routes > does not expose retired legacy Notes routes [0.91ms]
+(pass) route-parser: canonical Notes routes > uses canonical Notes navigation-state keys [0.16ms]
+
+apps/electron/src/shared/__tests__/shell-window-lifecycle.test.ts:
+(pass) reduceZenWindow > did-finish-load and timeout show once without applying glass [0.09ms]
+(pass) reduceZenWindow > ready-to-show shows once and applies material [0.06ms]
+(pass) reduceZenWindow > late ready-to-show still applies material after an opaque first show [0.03ms]
+(pass) reduceZenWindow > gpu-crash increments generation and clears material [0.10ms]
+(pass) reduceZenWindow > policy-change applies only when paintGeneration matches generation [0.64ms]
+
+apps/electron/src/shared/__tests__/route-parser-connections.test.ts:
+(pass) route-parser: Connections routes > round-trips the bare connections route [1.51ms]
+(pass) route-parser: Connections routes > does not throw on an unknown connections subpath [0.31ms]
+
+apps/electron/src/shared/__tests__/browser-live-fx.test.ts:
+(pass) getBrowserLiveFxCornerRadii > uses 16px bottom corners on macOS [0.06ms]
+(pass) getBrowserLiveFxCornerRadii > uses 8px bottom corners on Windows [0.02ms]
+(pass) getBrowserLiveFxCornerRadii > uses 6px bottom corners on Linux and fallback platforms [0.03ms]
+
+apps/electron/src/shared/__tests__/route-parser-extra-screens.test.ts:
+(pass) extra screen routes > every extra screen id is a compound route prefix (rox:// accepts it) [0.13ms]
+(pass) extra screen routes > route builders [0.06ms]
+(pass) extra screen routes > segment parser rejects unknown ids [2.23ms]
+(pass) extra screen routes > dossier: parse, build and panel-key round trips [0.20ms]
+(pass) extra screen routes > radar: parse, build and panel-key round trips [0.03ms]
+(pass) extra screen routes > decisions: parse, build and panel-key round trips [0.03ms]
+(pass) extra screen routes > agents: parse, build and panel-key round trips [0.02ms]
+(pass) extra screen routes > focus: parse, build and panel-key round trips [0.01ms]
+
+apps/electron/src/shared/__tests__/page-bridge.test.ts:
+(pass) parsePageBridgeMessage > accepts a well-formed api action [9.92ms]
+(pass) parsePageBridgeMessage > accepts a bare script action trigger [0.22ms]
+(pass) parsePageBridgeMessage > accepts a well-formed mcp action with args [5.37ms]
+(pass) parsePageBridgeMessage > accepts ready / action-cancel / open-url [0.06ms]
+(pass) parsePageBridgeMessage > rejects wrong/missing protocol and unknown types [0.04ms]
+(pass) parsePageBridgeMessage > rejects malformed actions [0.58ms]
+(pass) parsePageBridgeMessage > rejects oversized and cyclic payloads [5.52ms]
+(pass) parsePageBridgeMessage > rejects pathologically deep params [0.44ms]
+(pass) parsePageBridgeMessage: grant-request > accepts well-formed mcp and api entries [0.79ms]
+(pass) parsePageBridgeMessage: grant-request > rejects missing nonce, empty/oversized request lists, duplicate keys [0.92ms]
+(pass) parsePageBridgeMessage: grant-request > rejects malformed descriptors [0.14ms]
+(pass) parsePageBridgeMessage: grant-request > accepts a well-formed script descriptor [0.54ms]
+(pass) parsePageBridgeMessage: grant-request > rejects unsafe or malformed script descriptors [1.31ms]
+(pass) parsePageBridgeMessage: grant-request > rejects oversized descriptions [0.05ms]
+(pass) descriptorEquals > matches on all fields per kind, never across kinds [0.15ms]
+(pass) descriptorEquals > script matches on path, runtime (bun default), and ordered args [0.07ms]
+(pass) isSafeExternalUrl > allows only http(s) [2.18ms]
+(pass) isMutatingInvocation > api GET is the only activation-exempt invocation [0.53ms]
+(pass) isMutatingInvocation > mcp always mutates (opaque tools — no method to infer read vs write) [0.52ms]
+(pass) isMutatingInvocation > script always mutates (host command execution needs a fresh gesture) [0.10ms]
+(pass) outgoing message builders > stamp the protocol and wrap payloads [0.10ms]
+(pass) outgoing message builders > init and grants messages carry grant summaries [0.49ms]
+(pass) PageActionRateLimiter > caps concurrent requests [0.19ms]
+(pass) PageActionRateLimiter > caps mutating requests to one in flight [0.60ms]
+(pass) PageActionRateLimiter > enforces a sliding one-minute window [0.05ms]
+(pass) PageActionRateLimiter > exposes in-flight ids for unmount cancellation [0.07ms]
+(pass) reconcileGrantSummaries > config additions appear, revocations disappear [0.10ms]
+(pass) reconcileGrantSummaries > an in-render approval survives until the config confirms it [0.06ms]
+(pass) reconcileGrantSummaries > grantIdsEqual is order-insensitive set equality [0.06ms]
+
+apps/electron/src/shared/__tests__/route-parser-meetings.test.ts:
+(pass) meetings routes > route builders emit the meetings prefix [0.07ms]
+(pass) meetings routes > meetings is a compound route prefix [71.39ms]
+(pass) meetings routes > parses bare and detail meetings routes [0.18ms]
+(pass) meetings routes > round-trips navigation state and panel keys [0.07ms]
+
+apps/electron/src/shared/__tests__/ipc-channels.test.ts:
+810 | // End auto-generated
+811 | 
+812 | describe('RPC_CHANNELS wire-format stability', () => {
+813 |   it(`contains exactly ${EXPECTED_COUNT} channel strings`, () => {
+814 |     const actual = flattenValues(RPC_CHANNELS)
+815 |     expect(actual.length).toBe(EXPECTED_COUNT)
+                                ^
+error: expect(received).toBe(expected)
+
+Expected: 793
+Received: 795
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/ipc-channels.test.ts:815:27)
+(fail) RPC_CHANNELS wire-format stability > contains exactly 793 channel strings [25.08ms]
+815 |     expect(actual.length).toBe(EXPECTED_COUNT)
+816 |   })
+817 | 
+818 |   it('preserves exact wire-format strings (sorted equality)', () => {
+819 |     const actual = flattenValues(RPC_CHANNELS).sort()
+820 |     expect(actual).toEqual(EXPECTED_CHANNELS)
+                         ^
+error: expect(received).toEqual(expected)
+
+@@ -66,11 +66,12 @@
+    "browser-pane:sync-bounds",
+    "browser-pane:type",
+    "browserProfile:cookieAutoRun",
+    "browserProfile:cookieAutoSet",
+    "browserProfile:cookieAutoStatus",
++   "browserProfile:credentialCapabilities",
++   "browserProfile:dataAutoImport",
+    "browserProfile:delete",
+    "browserProfile:discover",
+    "browserProfile:import",
+    "browserProfile:rollback",
+    "bundledSkills:CHANGED",
+
+- Expected  - 0
++ Received  + 2
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/ipc-channels.test.ts:820:20)
+(fail) RPC_CHANNELS wire-format stability > preserves exact wire-format strings (sorted equality) [21.30ms]
+(pass) RPC_CHANNELS wire-format stability > has no duplicate wire-format strings [0.77ms]
+(pass) BroadcastEventMap payload shapes > sources:changed carries (workspaceId, sources) [0.03ms]
+(pass) BroadcastEventMap payload shapes > sources:indexChanged carries (workspaceId, payload)
+(pass) BroadcastEventMap payload shapes > skills:changed carries (workspaceId, skills) [1.67ms]
+(pass) BroadcastEventMap payload shapes > contextDocs:CHANGED carries no payload [0.04ms]
+
+apps/electron/src/shared/__tests__/right-sidebar-param.test.ts:
+(pass) right sidebar URL round-trip > round-trips files, history, git, browser, and context [0.98ms]
+(pass) right sidebar URL round-trip > omits none from the URL and still parses the token [0.41ms]
+(pass) right sidebar URL round-trip > does not treat terminal as a sidebar panel [1.20ms]
+
+apps/electron/src/shared/__tests__/route-parser-automations.test.ts:
+(pass) route-parser: automations routes > parses "automations" as automations navigator with no filter or details [7.68ms]
+(pass) route-parser: automations routes > parses "automations/scheduled" as automations with scheduled filter [4.65ms]
+(pass) route-parser: automations routes > parses "automations/event" as automations with event filter [0.08ms]
+(pass) route-parser: automations routes > parses "automations/agentic" as automations with agentic filter [0.03ms]
+(pass) route-parser: automations routes > parses "automations/scheduled/automation/automation-1" as filtered + details [0.03ms]
+(pass) route-parser: automations routes > parses "automations/automation/automation-1" as unfiltered + details [0.03ms]
+(pass) route-parser: automations routes > roundtrips automations (no filter, no details) [0.02ms]
+(pass) route-parser: automations routes > roundtrips automations with scheduled filter [0.03ms]
+(pass) route-parser: automations routes > roundtrips automations/scheduled/automation/automation-1 [0.03ms]
+(pass) route-parser: automations routes > roundtrips automations/automation/automation-1 [0.01ms]
+
+apps/electron/src/shared/__tests__/route-parser-inbox.test.ts:
+(pass) inbox route > builds and parses inbox routes [0.18ms]
+(pass) inbox route > round-trips navigation state [0.05ms]
+
+apps/electron/src/shared/__tests__/route-parser-legacy-settings.test.ts:
+(pass) legacy settings redirects > redirects toolchain → runtime [0.67ms]
+(pass) legacy settings redirects > redirects preferences → context [25.52ms]
+(pass) legacy settings redirects > keeps Marketplace and Extensions as independent settings routes [57.11ms]
+(pass) legacy settings redirects > rejects unknown pages [3.71ms]
+(pass) legacy settings redirects > maps bare settings to Overview and keeps settings/app as App [0.10ms]
+
+apps/electron/src/shared/__tests__/route-parser-board-session.test.ts:
+(pass) route-parser: board session card > round-trips board without a session [0.12ms]
+(pass) route-parser: board session card > round-trips board/session/{id} as board + session details [0.05ms]
+
+apps/electron/src/shared/__tests__/route-surfaces.test.ts:
+(pass) route-parser: unified shell surfaces > registers Search as a query-preserving route and accepts its deep link [0.96ms]
+(pass) route-parser: unified shell surfaces > round-trips session via NavigationState: allSessions/session/session-1 [0.06ms]
+(pass) route-parser: unified shell surfaces > round-trips session via ParsedCompoundRoute: allSessions/session/session-1 [5.31ms]
+(pass) route-parser: unified shell surfaces > round-trips browser via NavigationState: browser/instance/browser-embedded-7 [0.06ms]
+(pass) route-parser: unified shell surfaces > round-trips browser via ParsedCompoundRoute: browser/instance/browser-embedded-7 [0.02ms]
+(pass) route-parser: unified shell surfaces > round-trips knowledge via NavigationState: knowledge/document/doc-1 [0.02ms]
+(pass) route-parser: unified shell surfaces > round-trips knowledge via ParsedCompoundRoute: knowledge/document/doc-1 [0.01ms]
+(pass) route-parser: unified shell surfaces > round-trips database via NavigationState: knowledge/database/db-9
+(pass) route-parser: unified shell surfaces > round-trips database via ParsedCompoundRoute: knowledge/database/db-9
+(pass) route-parser: unified shell surfaces > round-trips cloud-run via NavigationState: cloud-run/run-42 [0.01ms]
+(pass) route-parser: unified shell surfaces > round-trips cloud-run via ParsedCompoundRoute: cloud-run/run-42
+(pass) route-parser: unified shell surfaces > round-trips extension via NavigationState: extension/ext-1/mainview [0.03ms]
+(pass) route-parser: unified shell surfaces > round-trips extension via ParsedCompoundRoute: extension/ext-1/mainview
+(pass) route-parser: unified shell surfaces > round-trips diff via NavigationState: diff/prop-2 [0.01ms]
+(pass) route-parser: unified shell surfaces > round-trips diff via ParsedCompoundRoute: diff/prop-2
+(pass) route-parser: unified shell surfaces > parses knowledge route into knowledge navigator with ref kind + id [0.07ms]
+(pass) route-parser: unified shell surfaces > parses database route as knowledge navigator with kind "database" [0.02ms]
+(pass) route-parser: unified shell surfaces > parses cloud-run extension and diff into their own navigators [0.04ms]
+(pass) route-parser: unified shell surfaces > decodes percent-encoded ids (slashes/spaces survive the round-trip) [0.04ms]
+(pass) route-parser: unified shell surfaces > builds exact route strings (compat pins for the new builders) [0.05ms]
+(pass) route-parser: unified shell surfaces > parses knowledge/view/{viewId} into knowledge-view details and round-trips [0.03ms]
+(pass) route-parser: unified shell surfaces > degrades knowledge route with unknown ref kind to sessions/allSessions [0.03ms]
+(pass) route-parser: unified shell surfaces > degrades knowledge route missing its id to sessions/allSessions [0.02ms]
+(pass) route-parser: unified shell surfaces > keeps bare surface roots as navigator-only states that rebuild exactly [0.06ms]
+(pass) route-parser: unified shell surfaces > degrades legacy parseRoute() of a surface route to the allSessions view [0.02ms]
+(pass) route-parser: unified shell surfaces > maps surface states to nearest existing views via degradeSurfaceNavigationState [0.05ms]
+(pass) route-parser: unified shell surfaces > is identity for pre-W1 states [0.01ms]
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: allSessions [0.02ms]
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: flagged
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: archived
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: board
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: table
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: heatmap
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: memory
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: home
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: allSessions/session/abc123
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: flagged/session/abc123 [0.01ms]
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: state/todo/session/abc123
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: label/work/session/abc123
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: sources
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: sources/api
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: sources/api/source/gmail [0.01ms]
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: sources/source/github
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: skills
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: skills/skill/skill-1
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: notes
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: notes/note/note-1
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: automations
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: automations/scheduled [0.05ms]
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: automations/scheduled/automation/auto-1 [0.03ms]
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: projects
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: projects/project/proj-1
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: settings
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: settings/shortcuts [0.01ms]
+(pass) route-parser: unified shell surfaces > keeps pre-existing route intact: browser/instance/browser-embedded-1 [1.69ms]
+(pass) route-parser: unified shell surfaces > parses table route into sessions viewMode table and round-trips [0.27ms]
+(pass) route-parser: unified shell surfaces > parses heatmap route into sessions viewMode heatmap and round-trips [0.21ms]
+
+apps/electron/src/shared/__tests__/route-parser-home.test.ts:
+(pass) route-parser: Home routes > round-trips the bare home route [3.12ms]
+(pass) route-parser: Home routes > does not throw on an unknown home subpath [0.04ms]
+
+apps/electron/src/shared/__tests__/route-parser-label-filter.test.ts:
+(pass) route-parser: label filter routes > parses a plain label route [4.15ms]
+(pass) route-parser: label filter routes > round-trips a label route with session details [0.18ms]
+(pass) route-parser: label filter routes > builds label routes without details [0.03ms]
+(pass) route-parser: label filter routes > a stray query tail never leaks into the parsed labelId (slash-segment invariant) [0.02ms]
+(pass) route-parser: label filter routes > session ids extracted from label routes stay clean even with a query tail [0.02ms]
+
+apps/electron/src/shared/__tests__/settings-presentation.test.ts:
+(pass) settings presentation > covers every registered settings page exactly once [0.11ms]
+(pass) settings presentation > filters translated rows without reordering matching pages [5.24ms]
+(pass) settings presentation > returns the original ordered rows for a blank query [0.06ms]
+(pass) settings presentation > looks up the group for a registered page [0.05ms]
+(pass) settings presentation > groups filtered rows and hides empty groups [12.63ms]
+(pass) settings presentation > places permissions in Agent after ai (not Application) [0.11ms]
+
+apps/electron/src/shared/__tests__/settings-knowledge.test.ts:
+(pass) settings knowledge page > registers exactly one knowledge entry with i18n label keys [1.13ms]
+(pass) settings knowledge page > is a valid settings subpage resolvable via getSettingsPage [0.12ms]
+(pass) settings knowledge page > round-trips settings/knowledge through the compound route parser [1.96ms]
+(pass) settings knowledge page > still rejects unknown settings subpages [0.07ms]
+(pass) settings knowledge page > presents local notes as default and does not require an external engine [0.48ms]
+
+apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:
+(pass) UI-001 external route recovery > retains unavailable address future/session/private without session selection [1.13ms]
+(pass) UI-001 external route recovery > retains unavailable address settings/future without session selection [0.04ms]
+(pass) UI-001 external route recovery > retains unavailable address knowledge/unknown/doc without session selection [0.05ms]
+(pass) UI-001 external route recovery > retains unavailable address notes/note/%E0%A4%A without session selection [0.05ms]
+(pass) UI-001 external route recovery > retains unavailable address cloud-run/%ZZ without session selection
+(pass) UI-001 external route recovery > retains unavailable address extension/% without session selection [0.01ms]
+(pass) UI-001 external route recovery > retains unavailable address action/delete-session/s1 without session selection [0.02ms]
+(pass) UI-001 external route recovery > reconciles valid and malformed panels atomically, retaining focus and proportions [4.30ms]
+(pass) UI-001 external route recovery > preserves established parsing, query and explicit entity addresses [37.82ms]
+
+apps/electron/src/shared/__tests__/route-parser-tasks.test.ts:
+(pass) tasks routes > route builders emit the tasks prefix [88.60ms]
+(pass) tasks routes > tasks is a compound route prefix [0.08ms]
+(pass) tasks routes > parses bare and detail tasks routes [0.47ms]
+(pass) tasks routes > round-trips navigation state and panel keys [0.08ms]
+
+apps/electron/src/shared/__tests__/route-parser-pages.test.ts:
+(pass) pages routes > route builders emit the pages prefix [0.10ms]
+(pass) pages routes > pages is a compound route prefix [0.08ms]
+(pass) pages routes > parses bare pages route (library grid, no auto-selected detail) [0.08ms]
+(pass) pages routes > parses page detail route [0.04ms]
+(pass) pages routes > rejects malformed pages routes [0.02ms]
+(pass) pages routes > round-trips route ⇄ navigation state [0.06ms]
+(pass) pages routes > buildCompoundRoute emits pages routes [0.02ms]
+(pass) pages routes > round-trips navigation state ⇄ panel key [0.03ms]
+(pass) pages routes > automations panel key round-trips (regression: id had a leading slash) [0.02ms]
+
+apps/electron/src/renderer/atoms/__tests__/panel-stack-lanes.test.ts:
+(pass) panel stack single-lane behavior > keeps insertion order for new panels [8.32ms]
+(pass) panel stack single-lane behavior > implicit navigation updates focused panel route [5.26ms]
+(pass) panel stack single-lane behavior > pushPanel afterIndex inserts immediately after the given panel [0.20ms]
+(pass) panel stack single-lane behavior > reconcile focuses by focusedIndex first when duplicate routes exist [0.09ms]
+(pass) panel stack single-lane behavior > reconcile no-op keeps focused index target with duplicate routes [0.82ms]
+
+apps/electron/src/renderer/atoms/__tests__/panel-stack-knowledge.test.ts:
+(pass) getPanelTypeFromRoute: knowledge classification > classifies knowledge/{kind}/{id} routes as knowledge [0.13ms]
+(pass) getPanelTypeFromRoute: knowledge classification > classifies the bare knowledge home route as knowledge [0.03ms]
+(pass) getPanelTypeFromRoute: knowledge classification > classifies the database tab route (rides knowledge) as knowledge [0.02ms]
+(pass) getPanelTypeFromRoute: knowledge classification > classifies the compat full-interface surface route as knowledge [0.02ms]
+(pass) getPanelTypeFromRoute: knowledge classification > does not classify other navigators as knowledge [0.02ms]
+(pass) panel stack: knowledge entries > pushes a knowledge route into the main lane with panelType knowledge [0.17ms]
+
+apps/electron/src/renderer/atoms/__tests__/panel-stack-spatial-focus.test.ts:
+(pass) panel spatial focus > chooses the closest visible panel in the requested direction, not stack order [26.08ms]
+(pass) panel spatial focus > returns no target at a directional edge instead of wrapping to another panel [0.05ms]
+(pass) panel spatial focus > does not focus panels omitted from the visible geometry snapshot [0.02ms]
+
+apps/electron/src/renderer/contexts/__tests__/navigation-history-key.test.ts:
+(pass) buildSemanticHistoryKey > changes when focused panel index changes even if routes are identical [0.09ms]
+(pass) buildSemanticHistoryKey > stays stable for identical semantic inputs [0.02ms]
+(pass) canRunInitialRestore > returns false until session metadata is ready [0.03ms]
+(pass) canRunInitialRestore > returns true only when all restore conditions are satisfied [0.02ms]
+
+apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts:
+(pass) normalizePanelRouteForReconcile > auto-selects session details for filter-only session routes [0.14ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit session details unchanged [0.03ms]
+(pass) normalizePanelRouteForReconcile > normalizes each session panel route independently [0.08ms]
+(pass) normalizePanelRouteForReconcile > keeps route unchanged when resolver leaves state without details [3.71ms]
+(pass) normalizePanelRouteForReconcile > keeps non-session routes unchanged with session-only resolver [0.10ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail route even if resolver tries to rewrite it [0.03ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail routes distinct across multiple panels [0.04ms]
+
+apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts:
+(pass) isDetailNavState > treats Settings Overview as a compact detail surface [21.09ms]
+(pass) isDetailNavState > keeps other navigator semantics [0.16ms]
+
+2 tests failed:
+(fail) RPC_CHANNELS wire-format stability > contains exactly 793 channel strings [25.08ms]
+(fail) RPC_CHANNELS wire-format stability > preserves exact wire-format strings (sorted equality) [21.30ms]
+
+ 219 pass
+ 2 fail
+ 733 expect() calls
+Ran 221 tests across 29 files. [3.80s]

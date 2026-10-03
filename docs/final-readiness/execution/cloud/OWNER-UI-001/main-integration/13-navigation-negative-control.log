@@ -1,0 +1,23 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+115 |   await page.goto(`${base}/?${new URLSearchParams({ ws: 'ws-a', route, ...extra })}`)
+116 |   await page.waitForFunction(() => Boolean((window as any).ui001))
+117 |   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+118 | }
+119 | async function unavailable(route: string) {
+120 |   await page.locator('[data-focused="true"] [data-testid="route-unavailable"]').waitFor({ timeout: 5000 })
+                                                                                      ^
+TimeoutError: for: Timeout 5000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-focused="true"] [data-testid="route-unavailable"]') to be visible[22m
+
+      at unavailable (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:120:81)
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:153:6
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > unknown single link survives reload and never selects its nested session [10737.96ms]
+
+ 0 pass
+ 7 filtered out
+ 1 fail
+Ran 1 test across 1 file. [31.32s]

@@ -1,0 +1,36 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts:
+(pass) UI-001 real Chromium component and persistence fixtures > selected source deletion and recreation preserve workspace and entity address [6020.02ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retry recovers an unavailable selected source through the actual click handler [4180.05ms]
+(pass) UI-001 real Chromium component and persistence fixtures > late resource load cannot replace a new missing address [3503.12ms]
+(pass) UI-001 real Chromium component and persistence fixtures > cloud run switch clears previous content while the new callback is pending [7630.03ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retries rejected lazy imports and keeps the selected route [7820.22ms]
+225 | 
+226 |   it('retries rendering failure and a new route clears a previous error', async () => {
+227 |     await page.evaluate(()=>{ (window as any).ui001.failPage(true); (window as any).ui001.navigate('extension/plugin/view') })
+228 |     await page.locator('[data-testid="route-error"]').waitFor()
+229 |     await page.evaluate(()=>(window as any).ui001.failPage(false))
+230 |     await page.getByRole('button',{name:'common.retry'}).click()
+                                                               ^
+TimeoutError: click: Timeout 2000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'common.retry' })[22m
+[2m    - locator resolved to <button type="button" class="rounded-md border px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">common.retry</button>[22m
+[2m  - attempting click action[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+[2m    - element is visible, enabled and stable[22m
+[2m    - scrolling into view if needed[22m
+[2m    - done scrolling[22m
+[2m    - performing click action[22m
+
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts:230:58
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 real Chromium component and persistence fixtures > retries rendering failure and a new route clears a previous error [11971.54ms]
+(pass) UI-001 real Chromium component and persistence fixtures > workspace switch cancels a real pending resize timer before it can persist old geometry [7518.15ms]
+(pass) UI-001 real Chromium component and persistence fixtures > actual localStorage persists valid sizes across reload and other windows [16931.33ms]
+
+ 7 pass
+ 1 fail
+ 16 expect() calls
+Ran 8 tests across 1 file. [76.73s]

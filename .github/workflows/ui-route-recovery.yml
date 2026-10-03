@@ -1,0 +1,60 @@
+name: UI Route Recovery Fixtures
+
+on:
+  pull_request:
+    paths:
+      - 'apps/electron/src/shared/**'
+      - 'apps/electron/src/renderer/**'
+      - '.github/workflows/ui-route-recovery.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/electron/src/shared/**'
+      - 'apps/electron/src/renderer/**'
+      - '.github/workflows/ui-route-recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  route-fixtures:
+    # Browser/transport fixtures on hosted OS runners; not installed/native or
+    # authenticated hosted-product acceptance for the UI-001 target matrix.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Route and shell regression
+        run: >-
+          bun test apps/electron/src/shared/__tests__
+          apps/electron/src/renderer/contexts/__tests__
+          apps/electron/src/renderer/components/app-shell/__tests__
+          apps/electron/src/renderer/atoms/__tests__/panel-stack-knowledge.test.ts
+          apps/electron/src/renderer/atoms/__tests__/panel-stack-lanes.test.ts
+          apps/electron/src/renderer/atoms/__tests__/panel-stack-spatial-focus.test.ts
+          apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts
+          apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts
+          apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts
+          apps/electron/src/renderer/platform/__tests__/layout-snapshot.test.ts
+      - name: Install isolated Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Actual navigation callbacks in Chromium
+        run: bun test apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts
+        env:
+          ROX_UI001_BROWSER_TEST: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui001-navigation-fixture-${{ matrix.os }}
+          path: docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/browser/
+          if-no-files-found: ignore

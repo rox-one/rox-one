@@ -33,7 +33,7 @@
 
 import { routes } from '../../shared/routes'
 import type { ViewRoute } from '../../shared/routes'
-import { parseRouteToNavigationState } from '../../shared/route-parser'
+import { resolveViewRoute } from '../../shared/route-parser'
 import type { KnowledgeRefKind } from '../../shared/types'
 
 // =============================================================================
@@ -127,8 +127,7 @@ export function surfaceTabToRoute(tab: SurfaceTabLike): string {
  * routes, extension roots without viewId, degraded malformed surface routes).
  */
 export function surfaceTabFromRoute(route: string): SurfaceTabLike | null {
-  const state = parseRouteToNavigationState(route)
-  if (!state) return null
+  const state = resolveViewRoute(route)
 
   switch (state.navigator) {
     case 'sessions':

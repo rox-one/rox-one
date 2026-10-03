@@ -1,0 +1,21 @@
+{
+  ".github/workflows/ui-route-recovery.yml": "3df7b720543a64e8dbb0372d7a6c018dff69bb19d2e513faab573fe23c910baf",
+  "apps/electron/src/renderer/atoms/panel-stack.ts": "12fb6c1fd4458dcd33bbe272b87af1d403698c97b61b96ae866e1a1026b6adf7",
+  "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "9e8e4236f97d5e21653b8cd1292bd2921d92b9ebb50aed36a277c134d0383d09",
+  "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "b82f544d59c4e1cc4d830c8bbad5de8f34e79d56a83deb3507bc8507971c584e",
+  "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "56709c28a54dc5ca55fcdd5288f1ddfb3202323672a1a40ba1b661cd1827132f",
+  "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts": "cfa55da662cac55b9193043061c5973732bf97e1fe11caf17743f78844b91710",
+  "apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts": "db6ca51a11e27ede445863b0e98d1597b912c60b9bd082766b7a6ea69ba89218",
+  "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts": "7232661ae9985068f9e740e3375fdddc82785d264d31d152d2e760f0d9dcd23f",
+  "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "1683a5148a47e9de1b8ab8d6df97aa73bccba3d83d583941b44276ad88355336",
+  "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "a1e7f8e6ea9d72af5f039c756b3fde68c32b83e789c39db8d97f348009a54f50",
+  "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts": "51e9e56b9c89fcb61ae6e0eccb0af73ec2fa6afdbfc82f31e149f9f534129da4",
+  "apps/electron/src/renderer/contexts/NavigationContext.tsx": "62baee417ea71efee70d41028bf56431b7e7ee677788ce4ce396a14449921b12",
+  "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "01f5271fe8e7e98b26daf56455fd7fbbe54ddfacf8fddf089a63c99ae58c3de5",
+  "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+  "apps/electron/src/renderer/platform/layout-snapshot.ts": "7ddddb3219994b3ecad254429d2207adda7b90d29a7f905b79d150839871b057",
+  "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "f8a16cf35e901f0db117433f33c999754afdb9b10758832f2714f3d1cbf25df2",
+  "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts": "1e3aada0195476b234fd10625f1e1d26cb2b982dde1da68f97e6090069f8627a",
+  "apps/electron/src/shared/route-parser.ts": "df086f9b1b057a469c6e79b3d901841421f2bba46b5c40de737b6cabdc60d691",
+  "apps/electron/src/shared/types.ts": "e76583884065661e9553ede07dce576137f665ab6b62067b25fac55c35c90168"
+}

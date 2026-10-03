@@ -26,8 +26,15 @@ describe.skipIf(!existsSync(executablePath))('production native surface renderer
         await Bun.sleep(100)
       }
       browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
+      // A Vite HTML response precedes its first module compilation. Complete
+      // that startup inside the fixture hook, before the per-behavior budget.
+      const warmup = await browser.newPage()
+      try {
+        await warmup.goto(endpoint)
+        await expectDOM(warmup.getByTestId('first-host')).toBeVisible({ timeout: 60000 })
+      } finally { await warmup.close() }
     } catch (error) { await stop(); throw error }
-  }, 45000)
+  }, 90000)
   afterAll(stop, 30000)
   const withPage = async (path: string, run: (page: Page) => Promise<void>) => {
     const page = await browser.newPage({viewport:{width:1250,height:800}})

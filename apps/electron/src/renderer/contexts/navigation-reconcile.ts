@@ -1,4 +1,4 @@
-import { buildRouteFromNavigationState, parseRouteToNavigationState } from '../../shared/route-parser'
+import { buildRouteFromNavigationState, resolveViewRoute } from '../../shared/route-parser'
 import type { ViewRoute } from '../../shared/routes'
 import type { NavigationState } from '../../shared/types'
 
@@ -15,8 +15,8 @@ export function normalizePanelRouteForReconcile(
   route: ViewRoute,
   resolveAutoSelection: AutoSelectionResolver,
 ): ViewRoute {
-  const navState = parseRouteToNavigationState(route)
-  if (!navState) return route
+  const navState = resolveViewRoute(route)
+  if (navState.navigator === 'unavailable') return route
 
   // Preserve explicit detail routes exactly as encoded in URL.
   // Reconciliation should only auto-select for filter/list routes.

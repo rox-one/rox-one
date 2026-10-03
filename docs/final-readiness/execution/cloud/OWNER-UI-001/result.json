@@ -152,16 +152,14 @@
   "originalContract": "verification/original-contract.json",
   "originalRequirementsChanged": false,
   "leadOwnedGaps": [
-    "NavigationContext resolves explicit missing/cross-workspace sessions to unrelated auto-selected chat",
-    "Raw invalid parser/context routes can become default session state before generic fallback"
+    "Shared route-parser/context correction implemented in main-integration; complete CI/remote merge receipt pending"
   ],
   "externalPrerequisites": [
-    "Lead-owned parser/context correction and real URL/history proof",
-    "SVC-003 real reconnect/capability/current-workspace callbacks and independently readable canonical receipts for every entity family",
-    "WIN-002 native Windows10 and11 artifacts plus100/150/200percent scaling/overlap/modal-focus proof",
-    "MAC-002 native macOS artifact Retina/overlay/modal-focus proof",
-    "WEB-001/WEB-003 authorized actual hosted ingress/fixture and zoom/history/restart proof",
-    "INT-016 immutable integrated candidate replay on original targets"
+    "SVC-003 actual reconnect/capability/current-workspace callbacks and canonical backend receipts for every entity family",
+    "Native Windows10/11 artifacts, 100/150/200 percent scaling/modal/overlap readback",
+    "Native macOS artifact with Retina/overlay/modal-focus readback",
+    "Actual authorized hosted product ingress/auth and browser zoom/reload/back-forward acceptance",
+    "INT-016 immutable integrated release candidate replay of original complete target matrix"
   ],
   "notExecuted": [
     "Deployment",
@@ -178,5 +176,170 @@
     "independentReview": "/root/patch_scout",
     "sourceRevision": "536eaa1483550a2cb2916c7cf090b07fe710ee2c",
     "result": "No remaining actionable issue in owned changes; P2 synchronous workspace resize cancellation corrected and mounted timer regression passed; preexisting lead context/parser gaps retained."
-  }
+  },
+  "mainIntegration": {
+    "taskIds": [
+      "UI-001.1",
+      "UI-001.2"
+    ],
+    "inputRevision": "635fc495d02c3fe1380740444cb90cf4fbdb58d9",
+    "originalInputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
+    "authorization": "User 2026-10-03: full source repair, any GitHub writes, autonomous end-to-end and merge main",
+    "branch": "fix/ui-001-main-integration-20261003-7",
+    "runtime": {
+      "host": "macOS-27.0-arm64-arm-64bit",
+      "arch": "arm64",
+      "taskIdentity": "01a10148-72de-7aa3-9d4f-e220de570688",
+      "bun": "1.3.14",
+      "bunSha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233",
+      "codegraph": "absent; named paths inspected; gap retained"
+    },
+    "changedPaths": [
+      ".github/workflows/ui-route-recovery.yml",
+      "apps/electron/src/renderer/atoms/panel-stack.ts",
+      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx",
+      "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx",
+      "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts",
+      "apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts",
+      "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts",
+      "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+      "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+      "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts",
+      "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "apps/electron/src/renderer/contexts/navigation-reconcile.ts",
+      "apps/electron/src/renderer/lib/nav-helpers.ts",
+      "apps/electron/src/renderer/platform/layout-snapshot.ts",
+      "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+      "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts",
+      "apps/electron/src/shared/route-parser.ts",
+      "apps/electron/src/shared/types.ts"
+    ],
+    "implementedClauses": [
+      "Unknown/malformed URLs retain raw address and resolve to localized unavailable surface through actual NavigationProvider and panel rendering",
+      "Single/multi-panel reload, history and workspace preservation",
+      "Lossless latest pending route and new-panel options, including search query",
+      "Stored action routes never execute during URL restoration; explicit action callbacks remain supported",
+      "Compact mode shows unavailable surface and unknown nested session routes cannot select a session"
+    ],
+    "retainedCurrentMainBehavior": [
+      "Selected source/skill presence and workspace event/race guards",
+      "Lazy import/render recovery",
+      "Validated shell layout storage and resize cancellation",
+      "Legacy nullable parser degradation remains compatible"
+    ],
+    "testCommands": [
+      {
+        "command": "bun test apps/electron/src/shared/__tests__ apps/electron/src/renderer/contexts/__tests__ and panel/nav helper regressions",
+        "result": "221 pass, 0 fail, 733 assertions",
+        "evidence": "09-routes-regression.log"
+      },
+      {
+        "command": "bun test apps/electron/src/renderer/components/app-shell/__tests__ and geometry/layout/native owner regressions",
+        "result": "338 pass, 0 fail, 27 explicit browser skips, 1454 assertions",
+        "evidence": "14-shell-regression.log"
+      },
+      {
+        "command": "ROX_UI001_BROWSER_TEST=1 ROX_UI001_CHROMIUM_EXECUTABLE=<qualified local Chromium> bun test rox-readiness-ui-001.navigation-browser.test.ts",
+        "result": "8 pass, 0 fail, 121 assertions",
+        "evidence": "10-navigation-browser.log"
+      },
+      {
+        "command": "ROX_UI001_NAVIGATION_SOURCE=<original main NavigationContext> same actual browser test --test-name-pattern unknown single link",
+        "result": "expected failure: unavailable surface never appears with original NavigationProvider; 7 other tests filtered",
+        "evidence": "13-navigation-negative-control.log"
+      },
+      {
+        "command": "bun run typecheck:electron",
+        "result": "exit 0; exact frozen TypeScript graph",
+        "evidence": "04-electron-types.log"
+      },
+      {
+        "command": "bun run lint:i18n:parity / sorted / coverage",
+        "result": "all pass; no locale changes",
+        "evidence": [
+          "15-i18n-parity.log",
+          "16-i18n-sorted.log",
+          "17-i18n-coverage.log"
+        ]
+      },
+      {
+        "command": "parse UI route workflow using installed js-yaml",
+        "result": "valid YAML and two OS matrix entries",
+        "evidence": "22-workflow-yaml.log"
+      },
+      {
+        "command": "bun run validate:ci",
+        "result": "running; must be completed before final acceptance",
+        "evidence": "18-validate-ci.log"
+      },
+      {
+        "command": "bun run electron:build:renderer",
+        "result": "exit 0, built in 9m53s; bundle size and Node deprecation warnings retained",
+        "evidence": "12-renderer-build.log"
+      },
+      {
+        "command": "ROX_UI001_BROWSER_TEST=1 ROX_UI001_BROWSER_TIMEOUT_MS=10000 bun test --timeout 30000 rox-readiness-ui-001.browser.test.ts rox-readiness-ui-001.navigation-browser.test.ts",
+        "result": "16 pass, 0 fail, 138 assertions; all fixtures close cleanly",
+        "evidence": "25-browser-final.log"
+      },
+      {
+        "command": "CHROMIUM_EXECUTABLE=<qualified local Chromium> bun test native-surface-owners.browser.test.ts",
+        "result": "5 pass, 0 fail, 9 assertions; production BrowserPanel/InspectorBrowser/RetainedSurface with synthetic native bridge",
+        "evidence": "24-native-surface-renderer-fixtures.log"
+      }
+    ],
+    "failureHistory": [
+      "01: expected absent new resolver export before implementation",
+      "02: actual original parser shows unrelated session fallback, nested session selection, URIError",
+      "03: 219 passes and 2 stale IPC snapshot failures before regeneration",
+      "05/07: Bun 5s browser test budget killed owned Chromium; fixed explicit 30s behavior budgets",
+      "08: 8 behavior passes with lingering server teardown failure; fixed owned HTTP connection cleanup",
+      "11: 317 passes, 3 failures: outdated native wiring/retained inspector assertions and slow AST fixture startup budget; corrected tests for current source without weakening behavior",
+      "19: 7 passes, 1 Playwright 2s click timeout under busy host; fixture now supports explicit timeout override",
+      "20: native renderer fixture first module startup consumed behavior budget; fixture now warms actual module in startup hook",
+      "21: auxiliary YAML parser shadowed require; corrected in 22",
+      "23: 8 resource/layout browser behaviors pass, but HTTP fixture teardown times out; close callback is now installed before closing active connections",
+      "25: final combined browser run 16/0; 24: native renderer ownership 5/0"
+    ],
+    "externalPrerequisites": [
+      "SVC-003 actual reconnect/capability/current-workspace callbacks and canonical backend receipts for every entity family",
+      "Native Windows10/11 artifacts, 100/150/200 percent scaling/modal/overlap readback",
+      "Native macOS artifact with Retina/overlay/modal-focus readback",
+      "Actual authorized hosted product ingress/auth and browser zoom/reload/back-forward acceptance",
+      "INT-016 immutable integrated release candidate replay of original complete target matrix"
+    ],
+    "originalRequirementsChanged": false,
+    "fullDoDClosed": false,
+    "delivery": {
+      "status": "ready for source PR; complete CI and GitHub merge readback before delivered claim",
+      "pushAuthorized": true,
+      "mergeAuthorized": true
+    },
+    "sourceManifest": {
+      ".github/workflows/ui-route-recovery.yml": "3df7b720543a64e8dbb0372d7a6c018dff69bb19d2e513faab573fe23c910baf",
+      "apps/electron/src/renderer/atoms/panel-stack.ts": "12fb6c1fd4458dcd33bbe272b87af1d403698c97b61b96ae866e1a1026b6adf7",
+      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "9e8e4236f97d5e21653b8cd1292bd2921d92b9ebb50aed36a277c134d0383d09",
+      "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "b82f544d59c4e1cc4d830c8bbad5de8f34e79d56a83deb3507bc8507971c584e",
+      "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "56709c28a54dc5ca55fcdd5288f1ddfb3202323672a1a40ba1b661cd1827132f",
+      "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts": "cfa55da662cac55b9193043061c5973732bf97e1fe11caf17743f78844b91710",
+      "apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts": "db6ca51a11e27ede445863b0e98d1597b912c60b9bd082766b7a6ea69ba89218",
+      "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts": "7232661ae9985068f9e740e3375fdddc82785d264d31d152d2e760f0d9dcd23f",
+      "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "1683a5148a47e9de1b8ab8d6df97aa73bccba3d83d583941b44276ad88355336",
+      "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "a1e7f8e6ea9d72af5f039c756b3fde68c32b83e789c39db8d97f348009a54f50",
+      "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts": "51e9e56b9c89fcb61ae6e0eccb0af73ec2fa6afdbfc82f31e149f9f534129da4",
+      "apps/electron/src/renderer/contexts/NavigationContext.tsx": "62baee417ea71efee70d41028bf56431b7e7ee677788ce4ce396a14449921b12",
+      "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "01f5271fe8e7e98b26daf56455fd7fbbe54ddfacf8fddf089a63c99ae58c3de5",
+      "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+      "apps/electron/src/renderer/platform/layout-snapshot.ts": "7ddddb3219994b3ecad254429d2207adda7b90d29a7f905b79d150839871b057",
+      "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "f8a16cf35e901f0db117433f33c999754afdb9b10758832f2714f3d1cbf25df2",
+      "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts": "1e3aada0195476b234fd10625f1e1d26cb2b982dde1da68f97e6090069f8627a",
+      "apps/electron/src/shared/route-parser.ts": "df086f9b1b057a469c6e79b3d901841421f2bba46b5c40de737b6cabdc60d691",
+      "apps/electron/src/shared/types.ts": "e76583884065661e9553ede07dce576137f665ab6b62067b25fac55c35c90168"
+    }
+  },
+  "leadOwnedGapsHistory": [
+    "NavigationContext resolves explicit missing/cross-workspace sessions to unrelated auto-selected chat",
+    "Raw invalid parser/context routes can become default session state before generic fallback"
+  ]
 }

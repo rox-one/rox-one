@@ -45,6 +45,7 @@ import { matchesLabelFilter } from '@rox/shared/labels'
 import {
   parseRoute,
   parseRouteToNavigationState,
+  resolveViewRoute,
   buildRouteFromNavigationState,
   buildRightSidebarParam,
   type ParsedRoute,
@@ -207,7 +208,7 @@ export function NavigationProvider({
   // NavigationState derived from the focused panel's route
   const navigationState: NavigationState = useMemo(() => {
     const base = focusedRoute
-      ? parseRouteToNavigationState(focusedRoute) ?? DEFAULT_NAVIGATION_STATE
+      ? resolveViewRoute(focusedRoute)
       : DEFAULT_NAVIGATION_STATE
     return rightSidebar ? { ...base, rightSidebar } : base
   }, [focusedRoute, rightSidebar])
@@ -235,7 +236,7 @@ export function NavigationProvider({
   const isPopstateSwitchRef = useRef(false)
 
   // Queue navigation if not ready yet
-  const pendingNavigationRef = useRef<ParsedRoute | null>(null)
+  const pendingNavigationRef = useRef<{ route: Route; options?: NavigateOptions } | null>(null)
 
   // Suppress auto-select for one cycle (used by skipAutoSelect to prevent the effect from re-selecting)
   const suppressAutoSelectRef = useRef(false)
@@ -463,13 +464,8 @@ export function NavigationProvider({
         focusedIndex = focusedIndexParam != null ? (parseInt(focusedIndexParam, 10) || 0) : 0
       } else if (initialRoute) {
         // Single panel from ?route=
-        const navState = parseRouteToNavigationState(initialRoute)
-        if (navState) {
-          const finalRoute = ('details' in navState && navState.details)
-            ? (initialRoute as ViewRoute)
-            : (buildRouteFromNavigationState(resolveAutoSelectionRef.current(navState)) as ViewRoute)
-          entries = [{ route: finalRoute, proportion: 1 }]
-        }
+        const route = normalizePanelRouteForReconcile(initialRoute as ViewRoute, (state) => resolveAutoSelectionRef.current(state))
+        entries = [{ route, proportion: 1 }]
       }
 
       if (entries.length > 0) {
@@ -845,18 +841,13 @@ export function NavigationProvider({
       }
 
       const parsed = parseRoute(route)
-      if (!parsed) {
-        console.warn('[Navigation] Invalid route:', route)
-        return
-      }
-
       if (!isReady) {
-        pendingNavigationRef.current = parsed
+        pendingNavigationRef.current = { route, options }
         return
       }
 
       // Handle actions (side effects)
-      if (parsed.type === 'action') {
+      if (parsed?.type === 'action') {
         await handleActionNavigation(parsed, options)
         return
       }
@@ -880,28 +871,28 @@ export function NavigationProvider({
       // navigator-only view in compact mode, App-page fallback on desktop. We
       // intentionally do NOT auto-redirect to the last-visited subpage; doing so
       // would defeat the compact-mode drill-in UX.
-      const newNavState = parseRouteToNavigationState(route)
+      const newNavState = resolveViewRoute(route)
 
       // Suppress auto-select effect
       if (options?.skipAutoSelect) {
         suppressAutoSelectRef.current = true
       }
 
-      if (newNavState) {
-        // Resolve auto-selection (pure — no side effects)
-        const resolvedState = resolveAutoSelection(newNavState, options)
-        const finalRoute = buildRouteFromNavigationState(resolvedState) as ViewRoute
+      // Resolve auto-selection (pure — no side effects)
+      const resolvedState = resolveAutoSelection(newNavState, options)
+      const finalRoute = ('details' in newNavState && newNavState.details)
+        ? route as ViewRoute
+        : buildRouteFromNavigationState(resolvedState) as ViewRoute
 
-        // Persist last selected session for auto-select on next visit
-        if (isSessionsNavigation(resolvedState) && resolvedState.details && workspaceId) {
-          storage.set(storage.KEYS.lastSelectedSessionId, resolvedState.details.sessionId, workspaceId)
-        }
-
-        // Update the focused panel's route (atom update is synchronous)
-        // The panelStack atom subscription detects the route change and calls syncUrl(true)
-        store.set(updateFocusedPanelRouteAtom, finalRoute)
-        setNavigationRevision(revision => revision + 1)
+      // Persist last selected session for auto-select on next visit
+      if (isSessionsNavigation(resolvedState) && resolvedState.details && workspaceId) {
+        storage.set(storage.KEYS.lastSelectedSessionId, resolvedState.details.sessionId, workspaceId)
       }
+
+      // Update the focused panel's route (atom update is synchronous)
+      // The panelStack atom subscription detects the route change and calls syncUrl(true)
+      store.set(updateFocusedPanelRouteAtom, finalRoute)
+      setNavigationRevision(revision => revision + 1)
     },
     [isReady, handleActionNavigation, resolveAutoSelection, store, pushPanel, workspaceId]
   )
@@ -1071,20 +1062,9 @@ export function NavigationProvider({
       const pending = pendingNavigationRef.current
       pendingNavigationRef.current = null
 
-      if (pending.type === 'action') {
-        handleActionNavigation(pending)
-        return
-      }
-
-      const routeStr = `${pending.name}${pending.id ? `/${pending.id}` : ''}`
-      const navState = parseRouteToNavigationState(routeStr)
-      if (navState) {
-        const resolved = resolveAutoSelection(navState)
-        const finalRoute = buildRouteFromNavigationState(resolved) as ViewRoute
-        store.set(updateFocusedPanelRouteAtom, finalRoute)
-      }
+      void navigate(pending.route, pending.options)
     }
-  }, [isReady, handleActionNavigation, resolveAutoSelection, store])
+  }, [isReady, navigate])
 
   // =========================================================================
   // DEEP LINK LISTENER
@@ -1112,13 +1092,6 @@ export function NavigationProvider({
       }
 
       if (route) {
-        const navState = parseRouteToNavigationState(route)
-        if (!navState && !route.startsWith('action/')) {
-          toast.error(t('toast.invalidLink'), {
-            description: t('toast.invalidLinkDesc'),
-          })
-          return
-        }
         navigate(route as Route)
       }
     })
@@ -1224,7 +1197,7 @@ export function NavigationProvider({
     // Earlier restoration effects can change the focused route in this same
     // effect pass; the render-time navigationState may still describe sessions.
     const currentRoute = store.get(focusedPanelRouteAtom)
-    const currentState = currentRoute ? parseRouteToNavigationState(currentRoute) : null
+    const currentState = currentRoute ? resolveViewRoute(currentRoute) : null
     if (!currentState || !isSessionsNavigation(currentState) || currentState.details) return
 
     const resolved = resolveAutoSelection(currentState)
