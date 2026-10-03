@@ -100,3 +100,18 @@ describe('gstack shared file boundaries', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });
+
+
+test('canonical pytest plan rejects quoted count-suppressing addopts but admits normal flags', async () => {
+  const { canonicalTestPlan } = await import(join(resources, 'gstack/lib/cso/verification.ts'));
+  const dir = mkdtempSync(join(tmpdir(), 'rox-gstack-pytest-'));
+  try {
+    writeFileSync(join(dir, 'test_example.py'), 'def test_example():\n    assert True\n');
+    for (const config of ['[pytest]\naddopts="-qq"\n', "[pytest]\naddopts='-qqq'\n", '[pytest]\naddopts = -qq\n']) {
+      writeFileSync(join(dir, 'pytest.ini'), config);
+      expect(() => canonicalTestPlan(dir, 'python')).toThrow();
+    }
+    writeFileSync(join(dir, 'pytest.ini'), '[pytest]\naddopts="-q"\n');
+    expect(() => canonicalTestPlan(dir, 'python')).not.toThrow();
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

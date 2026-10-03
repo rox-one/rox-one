@@ -637,7 +637,7 @@ export function canonicalTestPlan(sourceRoot: string, stack: CsoStack): Canonica
       pytestControl = [...configBodies, canonical(pyproject)].join('\n');
     if (
       usePytest &&
-      /(?:--collect-only|\s--co\b|--setup-(?:only|plan)|--fixtures(?:-per-test)?|--no-summary|\baddopts[^\n]*(?:\s-k\b|\s-m\b|--ignore\b|--deselect\b|(?:^|\s)-q{2,}\b))/i.test(
+      /(?:--collect-only|\s--co\b|--setup-(?:only|plan)|--fixtures(?:-per-test)?|--no-summary|\baddopts[^\n]*(?:\s-k\b|\s-m\b|--ignore\b|--deselect\b|(?:\s|["'=])-q{2,}\b))/i.test(
         pytestControl,
       )
     )
