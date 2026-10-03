@@ -113,7 +113,7 @@ export function TeamSessionButton({ sessionId, sessionTitle }: TeamSessionButton
           data-testid="team-session-button"
         />
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[340px] border-0 p-0 shadow-lg">
+      <PopoverContent align="end" className="w-[340px] border-0 p-0 shadow-modal-small">
         {open ? (
           <TeamSessionPanel
             sessionId={sessionId}
@@ -331,7 +331,7 @@ export function TeamSessionPanel({
                   className="w-full resize-none bg-foreground/[0.04] p-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 {suggestions.length > 0 ? (
-                  <div className="absolute left-0 right-0 top-full z-10 flex flex-col bg-background shadow-md" role="listbox" aria-label={t('teamCollab.mentionSuggestions')}>
+                  <div className="absolute left-0 right-0 top-full z-10 flex flex-col bg-background shadow-modal-small" role="listbox" aria-label={t('teamCollab.mentionSuggestions')}>
                     {suggestions.map((m) => (
                       <button key={m.userId} type="button" role="option" aria-selected={false} onClick={() => insertMention(mentionHandle(m))} className="px-2 py-1 text-left text-sm hover:bg-foreground/[0.08]">
                         @{mentionHandle(m)} <span className="text-muted-foreground">{m.displayName}</span>
