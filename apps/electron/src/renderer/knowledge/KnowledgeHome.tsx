@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils'
 import type { ViewConfig as KnowledgeViewConfig } from '@craft-agent/shared/views'
 import { KnowledgeProposals } from './KnowledgeProposals'
 import { countActionableProposals, resolveKnowledgeMutationsApi } from './proposal-actions'
+import { getKernelAvailability } from './kernel-availability'
 
 /**
  * Which body KnowledgeHome renders. Module-level atom so other column hosts
@@ -380,6 +381,9 @@ export function KnowledgeHome() {
 
   // Probe whether the legacy external knowledge engine is up. Empty state
   // Rox Notes only — no SiYuan install/start CTA and no SiYuan document routes.
+  // Cached via kernel-availability: repeat tab switches reuse the last verdict
+  // (30s TTL) instead of re-firing engineStatus (2.5s bootstrap probe + up to
+  // 10s getVersion) on every mount.
   useEffect(() => {
     if (typeof window === 'undefined') return
     let cancelled = false
@@ -392,7 +396,7 @@ export function KnowledgeHome() {
       try {
         const connections = api.listConnections ? await api.listConnections() : []
         const connectionId = connections[0]?.id
-        const status = await api.engineStatus({
+        const status = await getKernelAvailability(api, {
           ...(workspaceId ? { workspaceId } : {}),
           ...(connectionId ? { connectionId } : {}),
         })

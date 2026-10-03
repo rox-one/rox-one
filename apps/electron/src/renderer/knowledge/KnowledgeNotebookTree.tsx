@@ -51,6 +51,7 @@ import type {
 } from '../../shared/types'
 import { buildNewDocumentCreateArgs, pickOpenNotebook } from './knowledge-new-note'
 import { filterTree, mergeFolderChildren, type NavFilter, type SiyuanDocTreeNode } from './knowledge-tree'
+import { getKernelAvailability } from './kernel-availability'
 
 // ---------------------------------------------------------------------------
 // Data plumbing (exported for logic-level tests — KnowledgeHome precedent)
@@ -144,15 +145,24 @@ export function selectFavoriteEnvelopes(
  * Loads all navigator sections. Honest fallbacks: notebooks report
  * 'unavailable' on a typed RPC failure / missing channel / no connection;
  * views and envelopes fail soft to empty lists (workspace-local stores).
+ *
+ * `skipKernelReads` is the tab-switch fast path: when the kernel is known
+ * absent (see `kernel-availability`), skip every kernel-touching RPC
+ * (`listNotebooks` + per-envelope `get` title resolution, each with a 10s
+ * client timeout) and report notebooks as unavailable immediately. Local
+ * stores (`viewsList`, `envelopeList`) are still read so Recent/Favorites and
+ * saved views render without waiting on the kernel.
  */
 export async function loadKnowledgeNavigatorData(
   api: KnowledgeNavigatorApi,
+  opts?: { skipKernelReads?: boolean },
 ): Promise<KnowledgeNavigatorData> {
   const connections = await api.listConnections().catch(() => [] as Array<{ id: string }>)
   const connectionId = connections[0]?.id
+  const skipKernelReads = opts?.skipKernelReads === true
 
   const notebooksPromise = (async (): Promise<NotebookSectionState> => {
-    if (!connectionId || typeof api.listNotebooks !== 'function') {
+    if (skipKernelReads || !connectionId || typeof api.listNotebooks !== 'function') {
       return { status: 'unavailable', items: [] }
     }
     try {
@@ -186,8 +196,9 @@ export async function loadKnowledgeNavigatorData(
 
     // Best-effort title resolution in parallel; per-row failure keeps the row
     // (label falls back to the ref id) rather than poisoning the section.
+    // Skipped on the known-absent fast path: every `get` is a kernel RPC.
     const titles = new Map<string, string>()
-    if (typeof api.get === 'function' && connectionId) {
+    if (!skipKernelReads && typeof api.get === 'function' && connectionId) {
       const uniqueRefs = new Map<string, KnowledgeRef>()
       for (const entry of [...recentEnvelopes, ...favoriteEnvelopes]) {
         uniqueRefs.set(`${entry.knowledgeRef.kind}:${entry.knowledgeRef.id}`, entry.knowledgeRef)
@@ -287,9 +298,18 @@ export function KnowledgeNotebookTree({ mobile = false }: { mobile?: boolean }) 
     const api = typeof window === 'undefined' ? undefined : window.electronAPI?.knowledge
     if (!api) return
     let cancelled = false
-    void loadKnowledgeNavigatorData(api).then((result) => {
+    void (async () => {
+      // Fast path: a cached absent-kernel verdict skips ~21 kernel RPCs
+      // (listNotebooks + per-envelope get, 10s timeout each) per tab switch.
+      const availability = await getKernelAvailability(api, {
+        workspaceId: workspaceId ?? undefined,
+      })
+      if (cancelled) return
+      const result = await loadKnowledgeNavigatorData(api, {
+        skipKernelReads: !availability.running,
+      })
       if (!cancelled) setData(result)
-    })
+    })()
     return () => {
       cancelled = true
     }
