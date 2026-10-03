@@ -107,6 +107,32 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     expect(reads).toBe(3)
   })
 
+  it('retains the complete skill catalog through a failed refresh and accepts a later recovery', async () => {
+    const responses = [deferred<string[]>(), deferred<string[]>(), deferred<string[]>()]
+    let reads = 0, errors = 0
+    let event!: (workspace: string, data: string[]) => void
+    let data: string[] = []
+    const cleanup = appShellEffect('electronAPI.getSkills(', {
+      window: { electronAPI: {
+        getSkills: () => responses[reads++]!.promise,
+        onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+      } },
+      activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
+      setSkills: (next: string[]) => { data = next }, console: { error: () => { errors++ } },
+    })
+    responses[0]!.resolve(['workspace', 'project', 'omp']); await settle()
+    event('current', [])
+    responses[1]!.reject(new Error('transport offline')); await settle()
+    expect(data).toEqual(['workspace', 'project', 'omp'])
+    expect(errors).toBe(1)
+    event('current', [])
+    responses[2]!.resolve(['recovered', 'project', 'omp']); await settle()
+    expect(data).toEqual(['recovered', 'project', 'omp'])
+    cleanup?.()
+    event('current', [])
+    expect(reads).toBe(3)
+  })
+
   it('recovers from request rejection and unmount without installing stale data', async () => {
     const request = deferred<string[]>()
     let data = ['previous-workspace']

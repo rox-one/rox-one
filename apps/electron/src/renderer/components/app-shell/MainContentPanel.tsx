@@ -135,6 +135,7 @@ export function MainContentPanel({
     routeKey: string
     status: 'present' | 'missing' | 'unavailable'
     detailEpoch?: number
+    editableSkill?: boolean
   } | null>(null)
   useEffect(() => {
     setEntityPresence(null)
@@ -154,6 +155,7 @@ export function MainContentPanel({
         // Non-workspace pages also subscribe to the partial workspace snapshot.
         // Remount their read-only detail from the full, correctly scoped catalog.
         detailEpoch: skill && skill.source !== 'workspace' ? refreshEpoch : 0,
+        editableSkill: skill?.source === 'workspace',
       })
     }
     const refreshPresence = async (fromUpdate = false) => {
@@ -167,7 +169,15 @@ export function MainContentPanel({
         if (selectedSourceSlug) sourcePresence(entities as LoadedSource[])
         else skillPresence(entities as LoadedSkill[], fromUpdate ? version : 0)
       } catch {
-        if (!cancelled && version === lookupVersion) setEntityPresence({ routeKey, status: 'unavailable' })
+        if (!cancelled && version === lookupVersion) {
+          setEntityPresence(previous => (
+            // A failed background read does not prove deletion. Retain a mounted
+            // workspace editor and its draft until a complete snapshot arrives.
+            previous?.routeKey === routeKey && previous.status === 'present' && previous.editableSkill
+              ? previous
+              : { routeKey, status: 'unavailable' }
+          ))
+        }
       }
     }
     // These snapshots are authoritative only for the selected workspace. Keep the
