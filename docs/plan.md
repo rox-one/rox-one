@@ -645,6 +645,15 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
 
 
+## Credential locator persistence regression delivery — 2026-10-03
+
+Implementation unit U1. Owner: core repair lead; independent review owner: locator reviewer. Dependencies: PR #1407's own-data validator and existing ten-variant regression matrix, current main workflow and the registry persistence contract.
+
+1. Preserve current main's validator and tests; reconcile the parallel repair without duplicate test matrices. Add frozen positives under prototype pollution, inherited descriptor getter controls and rejected-write/reload coverage for reference and version state.
+2. Review the exact integrated commit independently. Run pinned frozen Linux focused/full core tests, core TypeScript, unchanged `validate:ci` and the workflow's MCP onboarding tests. Capture commands, exits, diagnostics, skips and exact source hashes; retain earlier failed controls as history.
+3. Publish the verified integration in PR #1413, resolve actionable feedback and merge into `main` under the user's explicit source/GitHub authorization. Read back the pushed and merged SHAs and verify actual merged-source behavior.
+4. Remove only task-owned test resources, retain evidence and report revision-bound results. Preserve unrelated work, credentials, lockfile and repository policy; deployment and broad feature acceptance remain separate.
+
 ## Credential locator repair plan — 2026-10-03
 
 | Task | Owner | Depends on | Owned files | Verification |
@@ -656,12 +665,3 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 | LOC-05: Publish, review and merge main | Lead | LOC-04 | scoped PR and verification receipt | exact pushed HEAD, check readback, merge SHA and main ancestry; retain unrelated work |
 
 The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
-
-## Credential locator persistence regression delivery — 2026-10-03
-
-Implementation unit U1. Owner: core repair lead; independent review owner: locator reviewer. Dependencies: PR #1407's own-data validator and existing ten-variant regression matrix, current main workflow and the registry persistence contract.
-
-1. Preserve current main's validator and tests; reconcile the parallel repair without duplicate test matrices. Add frozen positives under prototype pollution, inherited descriptor getter controls and rejected-write/reload coverage for reference and version state.
-2. Review the exact integrated commit independently. Run pinned frozen Linux focused/full core tests, core TypeScript, unchanged `validate:ci` and the workflow's MCP onboarding tests. Capture commands, exits, diagnostics, skips and exact source hashes; retain earlier failed controls as history.
-3. Publish the verified integration in PR #1413, resolve actionable feedback and merge into `main` under the user's explicit source/GitHub authorization. Read back the pushed and merged SHAs and verify actual merged-source behavior.
-4. Remove only task-owned test resources, retain evidence and report revision-bound results. Preserve unrelated work, credentials, lockfile and repository policy; deployment and broad feature acceptance remain separate.

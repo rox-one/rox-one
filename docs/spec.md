@@ -502,14 +502,6 @@ Branch `codex/rox-ui-dev-loop-20260901` at `1f56af31d3658ee9880105361ad5312324f3
 The default legacy Markdown engine and official engine must preserve content across parse/edit/export/reopen. Recover the source's portable `:::rox-columns`/`:::rox-column` syntax with validated normalized widths, support the previous slash-menu `:::columns 2/3` aliases, and preserve Obsidian `[!spoiler]-`/`[!details]+` markers without escaping away their meaning. Fold preferences are scoped by workspace/document and separate from Markdown. Read-only callout/resize interactions cannot change document content. Preserve newer comments, mixed task-list handling, trailing nodes, controlled echoes and no-save authority flips. Labels exist in all 12 current locales. Source tests/builds establish bounded integration; native visual interaction acceptance remains separately verifiable.
 
 
-## Credential locator inherited-field repair — 2026-10-03
-
-Owner: `fix/credential-locator-own-fields-20261003`, based on main `635fc495d02c3fe1380740444cb90cf4fbdb58d9`. PR #1317 is already merged; this follow-up closes its inherited-field validation gap.
-
-Credential locators must contain their discriminator and every required value as their own enumerable data properties. Capture descriptor values into a null-prototype record before dispatch or normalization; never evaluate an own or inherited getter. Inherited `Object.prototype.value` must not turn an accessor descriptor into a data descriptor. Preserve valid frozen/readonly records, exact field allowlists, registry identity and persistence formats. Failed registration and provider replacement must leave registry state unchanged.
-
-Acceptance: negative data/getter cases for every locator variant and required field, zero getter invocations, unchanged state after rejection, existing valid/frozen positives, complete core suite and TypeScript, unchanged comprehensive CI command, and actual built-server HTTP/WebSocket authentication, shutdown and persistence/restart checks. Bind results to the delivered revision; Linux reproduction and hosted macOS checks are separate evidence.
-
 ## Credential locator persistence and descriptor regression coverage — 2026-10-03
 
 Owner: core repair lead on `fix/credential-locator-own-data-20261003`; independent verifier: locator reviewer. PR #1407 already delivers the own-data validator. This follow-up preserves that implementation and all its regression cases, then covers inherited descriptor `value` getters, frozen valid locators during prototype pollution, rejected persistent writes and malformed persisted reloads.
@@ -517,3 +509,11 @@ Owner: core repair lead on `fix/credential-locator-own-data-20261003`; independe
 Rejected registration/provider replacement must leave reference and version files byte-for-byte unchanged, preserve the live record and current version, and survive reopening. Reload must skip malformed neighbors without evaluating inherited getters or rewriting the source file. Restore all temporary prototype mutations and remove temporary directories even after failure. Ordinary objects and trusted JavaScript built-ins define the locator boundary; Proxy descriptor traps and filesystem transaction guarantees remain separate concerns.
 
 Acceptance: independent review and Bun 1.3.14 focused/full core tests, core TypeScript, unchanged `validate:ci` and the current workflow's MCP onboarding gate on the integrated commit. Verify the pushed PR head, merge into `main`, and repeat revision-bound checks on the actual merged source. Preserve the frozen lockfile and unrelated dirty checkout.
+
+## Credential locator inherited-field repair — 2026-10-03
+
+Owner: `fix/credential-locator-own-fields-20261003`, based on main `635fc495d02c3fe1380740444cb90cf4fbdb58d9`. PR #1317 is already merged; this follow-up closes its inherited-field validation gap.
+
+Credential locators must contain their discriminator and every required value as their own enumerable data properties. Capture descriptor values into a null-prototype record before dispatch or normalization; never evaluate an own or inherited getter. Inherited `Object.prototype.value` must not turn an accessor descriptor into a data descriptor. Preserve valid frozen/readonly records, exact field allowlists, registry identity and persistence formats. Failed registration and provider replacement must leave registry state unchanged.
+
+Acceptance: negative data/getter cases for every locator variant and required field, zero getter invocations, unchanged state after rejection, existing valid/frozen positives, complete core suite and TypeScript, unchanged comprehensive CI command, and actual built-server HTTP/WebSocket authentication, shutdown and persistence/restart checks. Bind results to the delivered revision; Linux reproduction and hosted macOS checks are separate evidence.
