@@ -597,7 +597,7 @@ The recent worker owns the gstack command redirect prerequisite in an isolated s
 
 ## Selective editor block recovery — 2026-10-03
 
-Owner: recent feature worker; integration owner: branch audit lead. Source dependency: `1f56af31d3658ee9880105361ad5312324f36ab8`; base: live main `d8c92f96363f47e0b72e7296a36aa23a9227a691`.
+Owner: recent feature worker; integration owner: branch audit lead. Source dependency: `1f56af31d3658ee9880105361ad5312324f36ab8`; base: live main `cc56c95c75cb7bedd025e1b9af60a5312d0cf119`.
 
 1. Recover only ColumnsBlock, DocumentFolding and rox-block-syntax plus focused source tests and styles; retain current editor/shell behavior.
 2. Wire Notes folding preferences and replace placeholder slash insertions with real nodes. Supply legacy parser/serializer adapters required by the current default engine; preserve existing column aliases and literal code fences.
