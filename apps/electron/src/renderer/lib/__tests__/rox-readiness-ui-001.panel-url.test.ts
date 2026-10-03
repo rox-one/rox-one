@@ -28,7 +28,7 @@ describe('UI-001 panel URL transport', () => {
   })
 
   it('keeps bracket-prefixed legacy addresses and their siblings separate from tuple JSON', () => {
-    for (const route of ['[future]', '[[future]]', '["future"]']) {
+    for (const route of ['[future]', '[[future]]', '["future"]', '[1]', '[["future"]]']) {
       expect(codec().decodePanelEntries(route)).toEqual([{route,proportion:0}])
       expect(codec().decodePanelEntries(`${route}:0.6000,tasks:0.4000`)).toEqual([
         { route, proportion: 0.6 }, { route: 'tasks', proportion: 0.4 },

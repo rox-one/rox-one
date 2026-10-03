@@ -273,7 +273,7 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
   }, 30000)
 
   it('JSON-valid legacy bracket addresses remain unavailable across initial restore, history and reload', async () => {
-    for (const route of ['["future"]']) {
+    for (const route of ['["future"]', '[1]', '[["future"]]']) {
       await open('tasks', {panels:route})
       await unavailable(route)
       expect((await snapshot()).panels).toHaveLength(1)
@@ -320,7 +320,7 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     }, 30000)
   }
 
-  for (const panels of ['[]', ' [] ', ',,', '[', '[1]', '[["tasks"]]', '  ']) {
+  for (const panels of ['[]', ' [] ', ',,', '[', 'v2:[1]', 'v2:[["tasks"]]', '  ']) {
     it(`empty or invalid panel list ${JSON.stringify(panels)} restores the focused address during history and reload`, async () => {
       await open('future/stale-before-empty')
       await unavailable('future/stale-before-empty')

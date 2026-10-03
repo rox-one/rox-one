@@ -113,8 +113,15 @@ describe('normalizePanelRouteForReconcile', () => {
 
     expect(normalized).toEqual(['allSessions/session/left', 'allSessions/session/right'])
   })
+  it('keeps JSON-valid non-tuple legacy addresses unavailable instead of auto-selecting the focused route', () => {
+    for (const route of ['["future"]', '[1]', '[["future"]]']) {
+      expect(parsePanelEntriesFromUrl(route)).toEqual([{route,proportion:0}])
+      expect(normalizePanelRouteForReconcile(route as ViewRoute, () => {throw new Error('Unexpected auto-selection')})).toBe(route as ViewRoute)
+    }
+  })
+
   it('returns no entries for malformed structured panel data so focused-route recovery can run', () => {
-    for (const value of ['[', '[1]', '[["tasks"]]', ' [ [ "tasks", 1 ] ', '[["",0]]', '[[" ",0]]', '  ']) expect(parsePanelEntriesFromUrl(value)).toEqual([])
+    for (const value of ['[', 'v2:[1]', 'v2:[["tasks"]]', ' [ [ "tasks", 1 ] ', '[["",0]]', '[[" ",0]]', '  ']) expect(parsePanelEntriesFromUrl(value)).toEqual([])
     expect(parsePanelEntriesFromUrl('[["tasks",0]]')).toEqual([{ route: 'tasks', proportion: 0 }])
   })
 
