@@ -23,6 +23,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - run: bun test apps/electron/src/main/__tests__/auto-update-suppress.test.ts
       - run: bun run validate:ci
         env:
           NODE_OPTIONS: --max-old-space-size=4096
@@ -48,6 +49,11 @@ jobs:
       - run: bun scripts/desktop-release.ts
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          CSC_LINK: ${{ matrix.platform == 'darwin' && secrets.MAC_CSC_LINK || secrets.WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ matrix.platform == 'darwin' && secrets.MAC_CSC_KEY_PASSWORD || secrets.WIN_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}-${{ matrix.arch }}
@@ -57,5 +63,6 @@ jobs:
             apps/electron/release/Rox-*.exe
             apps/electron/release/*.blockmap
             apps/electron/release/manifest-*.json
+            apps/electron/release/latest*.yml
           if-no-files-found: error
           retention-days: 14

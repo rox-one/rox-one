@@ -2,6 +2,7 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
+import { verifyUpdateMetadata } from './verify-update-metadata';
 import { copySDK, copyRipgrep, verifySDKCopy, downloadBun, downloadUv, type BuildConfig } from './build/common';
 
 const platform = process.platform;
@@ -57,6 +58,9 @@ const artifacts = extensions.map(ext => `Rox-${arch}.${ext}`).map(name => {
   return { name, size: statSync(file).size, sha256: createHash('sha256').update(readFileSync(file)).digest('hex') };
 });
 const version = (await Bun.file(join(electronDir, 'package.json')).json()).version;
+await verifyUpdateMetadata(releaseDir, platform, version);
+const feed = Bun.YAML.parse(await Bun.file(join(resources, 'app-update.yml')).text()) as any;
+if (feed.provider !== 'github' || feed.owner !== 'rox-one' || feed.repo !== 'rox-one') throw new Error('Packaged updater provider mismatch');
 const commit = (await new Response(Bun.spawn(['git', 'rev-parse', 'HEAD'], {cwd:rootDir}).stdout).text()).trim();
 await Bun.write(join(releaseDir, `manifest-${platform}-${arch}.json`), JSON.stringify({version, commit, platform, arch, signed: Boolean(process.env.CSC_LINK), artifacts}, null, 2)+'\n');
 console.log('Verified packaged desktop resources, native SQLite and executable versions', artifacts);

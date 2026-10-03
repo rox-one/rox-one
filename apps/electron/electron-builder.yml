@@ -80,10 +80,12 @@ files:
 extraMetadata:
   main: dist/main.cjs
 
-# Auto-update: electron-updater fetches from this URL for update manifests (.yml files)
+# ROX release feed; electron-builder embeds this provider in app-update.yml.
 publish:
-  provider: generic
-  url: https://thecraftagents.com/electron/latest
+  provider: github
+  owner: rox-one
+  repo: rox-one
+  releaseType: prerelease
 
 # Disable ASAR to avoid decompression overhead and click delays
 asar: false

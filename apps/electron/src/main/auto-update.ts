@@ -2,8 +2,8 @@
  * Auto-update module using electron-updater
  *
  * Handles checking for updates, downloading, and installing via the standard
- * electron-updater library. Updates are served from https://thecraftagents.com/electron/latest
- * using the generic provider (YAML manifests + binaries on R2/S3).
+ * electron-updater library. Updates are served from rox-one/rox-one GitHub
+ * releases using generated YAML manifests and native installers.
  *
  * Platform behavior:
  * - macOS: Downloads zip, extracts and swaps app bundle atomically
@@ -282,11 +282,16 @@ function broadcastDownloadProgress(progress: number): void {
 // Auto-download updates in the background after detection
 autoUpdater.autoDownload = true
 
+// ROX currently ships preview releases; accept GitHub prereleases as well.
+// Keep downgrade protection enabled when a newer local build is installed.
+autoUpdater.allowPrerelease = true
+autoUpdater.allowDowngrade = false
+
 // Install on app quit (if update is downloaded but user hasn't clicked "Restart")
 autoUpdater.autoInstallOnAppQuit = true
 
 // Release-channel override without rebuilding electron-builder.yml. Production
-// keeps the build-baked publish config (agents.craft.do); for forks/OSS builds
+// keeps the build-baked rox-one/rox-one GitHub config; for forks/OSS builds
 // point this at any generic-updater host that serves latest-*.yml (e.g. a
 // GitHub release URL), e.g.:
 //   CRAFT_UPDATER_URL=https://<host>/path/to/channel
