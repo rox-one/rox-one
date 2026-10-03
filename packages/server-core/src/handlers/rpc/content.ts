@@ -96,8 +96,10 @@ export function registerContentHandlers(server: RpcServer, ports: NativeContentP
         if (!candidate.startsWith(root + sep) || await readNoteTarget(root, candidate, () => realpath(candidate)) !== candidate) return { allowed: false, policyRevision: 'native-v1' }
         await readNoteTarget(root, candidate, () => access(candidate, constants.R_OK))
         const canWrite = await readNoteTarget(root, candidate, () => access(candidate, constants.W_OK)).then(() => true, error => {
-          if (['EACCES', 'EPERM'].includes((error as NodeJS.ErrnoException).code ?? '')) return false
-          throw error
+          // A write-capability failure must not prevent an authorized read.
+          // Structured absence and authority failures remain strict.
+          if (error instanceof CodedError) throw error
+          return false
         })
         return { allowed: action === 'read' || canWrite, canWrite, policyRevision: 'native-v1' }
       },
