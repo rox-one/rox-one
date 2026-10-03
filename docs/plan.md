@@ -618,3 +618,12 @@ Owner: historical integration; parent retains merge. Dependency: existing useWor
 2. Mount a context-bound owner for hidden-strip and mini configurations; retain existing visible-strip subscriptions.
 3. Execute delivered component/hook with actual atoms: initial list, state update, interaction, removal/reconciliation, disabled transfer, unmount and late-event/list controls. Run existing browser/chrome checks and renderer validation.
 4. Publish a separate PR with exact source/head and bounded evidence; original branches remain untouched.
+
+## Selective editor block recovery — 2026-10-03
+
+Owner: recent feature worker; integration owner: branch audit lead. Source dependency: `1f56af31d3658ee9880105361ad5312324f36ab8`; base: live main `3d04470f9be127945dd15c582775ed1e0401ed50`.
+
+1. Recover only ColumnsBlock, DocumentFolding and rox-block-syntax plus focused source tests and styles; retain current editor/shell behavior.
+2. Wire Notes folding preferences and replace placeholder slash insertions with real nodes. Supply legacy parser/serializer adapters required by the current default engine; preserve existing column aliases and literal code fences.
+3. Verify actual installed legacy parser/ProseMirror/serializer parse-edit-export-reopen, official-engine roundtrips, fold state normalization, malformed markers, bounded resizing, read-only refusal and locale parity; run consumed Electron types and renderer build.
+4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
