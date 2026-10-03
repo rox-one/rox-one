@@ -54,9 +54,6 @@ import {
   Chip,
   EmptyState,
   ModeScreenLayout,
-  NavItem,
-  NavSection,
-  NavTitle,
   SectionLabel,
   useListKeys,
   type Tone,
@@ -68,9 +65,7 @@ import {
   buildTeamItems,
   filterView,
   groupOrdered,
-  sourceHealth,
   sourceLabel,
-  sourceTone,
   suggestTags,
   tabCounts,
   tagsInUse,
@@ -80,10 +75,11 @@ import {
   type FeedOrder,
   type FeedViewItem,
 } from './feed/feed-model'
-import { ColorDot, ColorFilter, ColorPicker, FEED_COLOR_HEX, SourceIcon, TagChip, TagEditor } from './feed/FeedParts'
+import { ColorFilter, ColorPicker, FEED_COLOR_HEX, SourceIcon, TagChip, TagEditor } from './feed/FeedParts'
 import { SourceEditor, SourcesView } from './feed/FeedSources'
+import { FeedSidebar, type FeedView } from './feed/FeedSidebar'
 
-type View = FeedTab | 'sources'
+type View = FeedView
 type Density = 'list' | 'cards'
 
 const KIND_GLYPH: Record<FeedViewItem['kind'], string> = {
@@ -407,57 +403,14 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   // ── navigator ────────────────────────────────────────────────────────────
   const xConnected = data.x.state === 'connected'
   const navigator = (
-    <>
-      <NavTitle>{t('feed.title')}</NavTitle>
-      {FEED_TABS.map((id) => (
-        <NavItem
-          key={id}
-          testId={`feed-nav-${id}`}
-          label={t(`feed.tab.${id}`)}
-          count={id === tab && view !== 'sources' ? visible.length || null : counts[id] || null}
-          dot={id === 'agents' && attention ? 'warning' : id === 'subscriptions' && !xConnected ? 'muted' : undefined}
-          active={view === id && !(id === 'news' && sourceFilter)}
-          onClick={() => { switchView(id); setSourceFilter(null) }}
-        />
-      ))}
-      <NavSection title={t('feed.nav.sources')}>
-        {data.sources.map((s) => (
-          <NavItem
-            key={s.id}
-            label={<span className="flex min-w-0 items-center gap-1"><ColorDot color={s.color} size={6} /><span className="truncate">{sourceLabel(s)}</span></span>}
-            count={s.itemCount || null}
-            dot={sourceHealth(s) === 'checking' ? 'accent' : s.paused ? 'muted' : sourceTone(s)}
-            active={view === 'news' && sourceFilter === s.id}
-            onClick={() => { switchView('news'); setSourceFilter(s.id) }}
-          />
-        ))}
-        <NavItem testId="feed-nav-sources" label={data.sources.length ? t('feed.nav.manageSources') : t('feed.nav.addFirstSource')} active={view === 'sources'} onClick={() => switchView('sources')} />
-      </NavSection>
-      {tabTags.length && view !== 'sources' ? (
-        <NavSection title={t('feed.nav.tags')}>
-          {tabTags.slice(0, 8).map((x) => (
-            <NavItem key={x.tag} label={`#${x.tag}`} count={x.count} active={tagFilter?.toLowerCase() === x.tag.toLowerCase()} onClick={() => setTagFilter(tagFilter?.toLowerCase() === x.tag.toLowerCase() ? null : x.tag)} />
-          ))}
-        </NavSection>
-      ) : null}
-      <NavSection title={t('feed.nav.connections')}>
-        {/* Two-line rows: long states wrap instead of being cut off at 220 px. */}
-        <button type="button" onClick={() => switchView('sources')} className="flex w-full items-start gap-2 rounded-[6px] px-2 py-1 text-left outline-none hover:bg-foreground/[0.05]" data-testid="feed-conn-x">
-          <span aria-hidden className={cn('mt-2 size-1.5 shrink-0 rounded-full', xConnected ? 'bg-success' : data.x.state === 'error' ? 'bg-destructive' : 'bg-text-muted')} />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[13px] text-text-secondary">X</span>
-            <span className="block break-words text-[11px] leading-4 text-text-muted">{xConnected ? `@${data.x.username ?? ''}` : t('feed.x.notConnected')}</span>
-          </span>
-        </button>
-        <button type="button" onClick={() => switchView('team')} className="flex w-full items-start gap-2 rounded-[6px] px-2 py-1 text-left outline-none hover:bg-foreground/[0.05]" data-testid="feed-conn-team">
-          <span aria-hidden className={cn('mt-2 size-1.5 shrink-0 rounded-full', roster.org ? 'bg-[var(--warning,#d9a13b)]' : 'bg-text-muted')} />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[13px] text-text-secondary">{t('feed.tab.team')}</span>
-            <span className="block break-words text-[11px] leading-4 text-text-muted">{roster.org ? roster.org.name ?? t('feed.nav.teamLocal') : t('feed.nav.teamNoOrg')}</span>
-          </span>
-        </button>
-      </NavSection>
-    </>
+    <FeedSidebar
+      view={view} sourceFilter={sourceFilter} tagFilter={tagFilter}
+      sources={data.sources} tags={tabTags} counts={counts} visibleCount={visible.length} attention={attention}
+      x={data.x} hasTeam={Boolean(roster.org)} teamName={roster.org ? roster.org.name ?? t('feed.nav.teamLocal') : t('feed.nav.teamNoOrg')}
+      onViewSelect={(next) => { switchView(next); if (next !== 'sources') setSourceFilter(null) }}
+      onSourceSelect={(id) => { switchView('news'); setSourceFilter(id) }}
+      onTagSelect={setTagFilter}
+    />
   )
 
   // ── list: feed tabs ──────────────────────────────────────────────────────
@@ -496,7 +449,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
           onClick={() => select(item.id)}
           className={cn(
             'relative mx-2 mb-2 flex cursor-default gap-3 rounded-[8px] py-3 pl-4 pr-3 outline-none',
-            isSel ? 'bg-foreground/[0.09] shadow-[inset_0_0_0_2px_var(--accent)]' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
+            isSel ? 'bg-foreground/[0.09] ring-2 ring-inset ring-accent' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
           )}
         >
           {colorBar}
@@ -531,7 +484,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
         onClick={() => select(item.id)}
         className={cn(
           'relative mx-1 flex cursor-default items-start gap-2 rounded-[6px] py-2 pl-3 pr-2 outline-none',
-          isSel ? 'bg-foreground/[0.08] shadow-[inset_0_0_0_1px_var(--accent)]' : 'hover:bg-foreground/[0.04]',
+          isSel ? 'bg-foreground/[0.08] ring-1 ring-inset ring-accent' : 'hover:bg-foreground/[0.04]',
         )}
       >
         {colorBar}

@@ -615,7 +615,7 @@ export default function RuntimeSettingsPage() {
                           <div className="text-xs text-muted-foreground space-y-0.5">
                             <div>
                               <span className="text-foreground/70">{t('settings.runtime.llmProvider')}: </span>
-                              <span className="font-mono">{defaultLlmConnection.providerType}</span>
+                              <span className="font-mono">{defaultLlmConnection.providerType === 'omp' ? ROX_VISIBLE_TERMS.product : defaultLlmConnection.providerType}</span>
                             </div>
                             {defaultLlmConnection.defaultModel && (
                               <div className="truncate">

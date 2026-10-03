@@ -19,7 +19,8 @@ import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { setTransferableHandler } from './transfer'
 import { assertValidBulkUpdateInput, assertValidBulkUpdatePatch } from '../../sessions/bulk-labels'
-import { getBroInviteService } from '../../collaboration/bro-invite-service.ts'
+import { disposeBroInviteService, getBroInviteService } from '../../collaboration/bro-invite-service.ts'
+import { parseInviteUrl } from '@rox/shared/collaboration'
 import {
   isClaimableLive,
   rpcSessionsActResult,
@@ -153,6 +154,7 @@ export const HANDLED_CHANNELS = [
 export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): void {
   const { sessionManager, platform } = deps
   const log = platform.logger
+  server.onShutdown?.(disposeBroInviteService)
 
   // Get all sessions for the calling window's workspace
   // Waits for initialization to complete so sessions are never returned empty during startup
@@ -327,7 +329,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Session commands - consolidated handler for session operations
   server.handle(RPC_CHANNELS.sessions.COMMAND, async (
-    _ctx,
+    ctx,
     sessionId: string,
     command: import('@rox/shared/protocol').SessionCommand
   ) => {
@@ -396,7 +398,11 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       case 'revokeShare':
         return sessionManager.revokeShare(sessionId)
       case 'inviteBro': {
-        const invited = await getBroInviteService().invite(sessionId, command.role)
+        const session = await sessionManager.getSession(sessionId)
+        if (!session) {
+          return { success: false, error: 'invalid', errorCode: 'invalid' }
+        }
+        const invited = await getBroInviteService().invite(sessionId, command.role, { workspaceId: session.workspaceId, session })
         if (!invited.success) {
           return {
             success: false,
@@ -414,11 +420,21 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         }
       }
       case 'revokeBroInvite':
-        return getBroInviteService().revoke(command.joinKey)
-      case 'joinBroInvite':
-        return getBroInviteService().join(command.url)
+        return getBroInviteService().revoke(command.joinKey, ctx.workspaceId)
+      case 'joinBroInvite': {
+        const parsed = parseInviteUrl(command.url)
+        if (!parsed) return { ok: false, error: 'invalid' }
+        const service = getBroInviteService()
+        if (service.usesRemote(ctx.workspaceId)) return service.join(command.url, ctx.workspaceId)
+        // An invite must not be consumed if its session has been deleted.
+        // Resolve the target from the URL, independently of the caller's page.
+        const targetSession = await sessionManager.getSession(parsed.sessionId)
+        if (!targetSession) return { ok: false, error: 'invalid' }
+        const joined = await service.join(command.url)
+        return joined.ok ? { ...joined, workspaceId: targetSession.workspaceId } : joined
+      }
       case 'listBroPresence':
-        return getBroInviteService().listPresence(sessionId)
+        return getBroInviteService().listPresence(sessionId, (await sessionManager.getSession(sessionId))?.workspaceId ?? ctx.workspaceId)
       case 'refreshTitle':
         log.info(`IPC: refreshTitle received for session ${sessionId}`)
         return sessionManager.refreshTitle(sessionId)

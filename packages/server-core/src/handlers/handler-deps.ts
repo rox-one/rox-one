@@ -8,6 +8,7 @@ import type { IOAuthFlowStore } from './oauth-flow-store-interface'
 import type { IBrowserPaneManager } from './browser-pane-manager-interface'
 import type { IWindowManager } from './window-manager-interface'
 import type { IMessagingGatewayRegistry } from './messaging-registry-interface'
+import type { BrowserCredentialHost } from '@rox/shared/browser/browser-credential-host'
 import type {
   AcceptSecurityRiskRequest,
   AuditMode,
@@ -69,6 +70,8 @@ export interface HandlerDeps<
   browserPaneManager?: TBrowserPaneManager
   oauthFlowStore: TOAuthFlowStore
   messagingRegistry?: IMessagingGatewayRegistry
+  /** Native browser-password grants and OS-protected key custody; absent in headless hosts. */
+  browserCredentials?: BrowserCredentialHost
   /** Optional because standalone/headless hosts do not compose a managed OpenClaw runtime. */
   openClawSecurity?: OpenClawSecurityService
   commandGateway?: PendingCommandsStore

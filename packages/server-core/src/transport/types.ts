@@ -50,6 +50,8 @@ export interface RpcHandlerOptions {
 }
 
 export interface RpcServer {
+  /** Host-owned background tasks are disposed with the transport. */
+  onShutdown?(dispose: () => void): () => void
   handle(channel: string, handler: HandlerFn, options?: RpcHandlerOptions): void
   push(channel: string, target: PushTarget, ...args: any[]): void
   invokeClient(clientId: string, channel: string, ...args: any[]): Promise<any>

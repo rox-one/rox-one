@@ -33,6 +33,7 @@ import { getModeRegistry } from './mode-registry-bootstrap'
 import { CORE_MODES, resolveSeededModes } from './modes-seed'
 import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
 import { useInboxBlockingCount } from '@/hooks/useInboxItems'
+import { handleModePillKeyDown } from './mode-pill-keyboard'
 
 const MODE_ICONS: Record<string, LucideIcon> = {
   BookOpen,
@@ -95,7 +96,7 @@ function PillItems({
               else itemRefs.current.delete(mode.id)
             } : undefined}
             type="button"
-            tabIndex={interactive ? undefined : -1}
+            tabIndex={interactive && !disabled ? undefined : -1}
             data-mode={mode.id}
             aria-label={badge ? `${title} · ${t('workbench.mode.badge', { count: badge })}` : title}
             aria-current={active ? 'page' : undefined}
@@ -207,6 +208,7 @@ export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
         data-collapsed={collapsed || undefined}
         data-ready={ready || undefined}
         data-testid="titlebar-mode-pill"
+        onKeyDown={handleModePillKeyDown}
       >
         <span
           aria-hidden

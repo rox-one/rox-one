@@ -218,6 +218,7 @@ export class WsRpcServer implements RpcServer {
   private readonly nativeAuthority: NativeAuthority | null
   private readonly nativeEventChannels: ReadonlySet<string>
   private readonly disposeAuthorityListener: (() => void) | null
+  private readonly shutdownHooks = new Set<() => void>()
 
   constructor(opts?: WsRpcServerOptions) {
     this.host = opts?.host ?? '127.0.0.1'
@@ -591,7 +592,16 @@ export class WsRpcServer implements RpcServer {
     })
   }
 
+  onShutdown(dispose: () => void): () => void {
+    this.shutdownHooks.add(dispose)
+    return () => this.shutdownHooks.delete(dispose)
+  }
+
   close(): void {
+    for (const dispose of this.shutdownHooks) {
+      try { dispose() } catch { /* Continue closing the remaining host resources. */ }
+    }
+    this.shutdownHooks.clear()
     this.disposeAuthorityListener?.()
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer)

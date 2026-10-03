@@ -17,9 +17,9 @@ describe('CF-6.2 Connections nav and surface', () => {
     expect(dest?.linkId).toBe('nav:connections')
   })
 
-  it('does not add a Connections entry to the legacy AppShell links list', () => {
-    expect(appShellSource).not.toContain('id: "nav:connections"')
-    expect(appShellSource).not.toContain('handleConnectionsClick')
+  it('exposes Connections in the single primary sidebar using the canonical route', () => {
+    expect(appShellSource).toContain('id: "nav:connections"')
+    expect(appShellSource).toContain('onClick: () => navigate(routes.view.connections())')
   })
 
   it('renders ConnectionsPage from MainContentPanel on the connections navigator', () => {

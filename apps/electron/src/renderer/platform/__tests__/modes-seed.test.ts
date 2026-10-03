@@ -69,11 +69,17 @@ describe('mode-screen flags (workbench.mode.<id>.v1)', () => {
     expect(seeded?.contribution.requiredCapabilities).toBeUndefined()
   })
 
-  it('maps ⌥⌘1…7 to the pill order', () => {
+  it('maps ⌘/Ctrl 1…7 to the pill order', () => {
     expect(modeForSlot(contributions, 1)?.id).toBe('home')
     expect(modeForSlot(contributions, 4)?.id).toBe('tasks')
     expect(modeForSlot(contributions, 6)?.id).toBe('feed')
     expect(modeForSlot(contributions, 7)?.id).toBe('inbox')
     expect(modeForSlot(contributions, 8)).toBeNull()
   })
+  it('keeps all seven native routes available with fresh default flags', () => {
+    const modes = resolveSeededModes(CORE_MODES.map(seed => seed.contribution), {})
+    expect(modes.map(mode => mode.id)).toEqual(['home', 'chat', 'meetings', 'tasks', 'notes', 'feed', 'inbox'])
+    for (let slot = 1; slot <= 7; slot++) expect(modeForSlot(modes, slot)?.rootRoute).toBeTruthy()
+  })
+
 })

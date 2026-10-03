@@ -14,9 +14,56 @@ import {
   resizeWidget,
   shiftWidget,
   widgetSpan,
+  widgetRowSpan,
+  widgetItemLimit,
+  widgetWidth,
+  widgetContentLayout,
+  HOME_GRID_GAP,
+  HOME_GRID_ROW_HEIGHT,
 } from '../home/dashboard-layout'
 
 describe('home dashboard layout', () => {
+  it('keeps full-span narrow cards in a readable internal layout', () => {
+    const width = 380
+    for (const size of ['S', 'M', 'L'] as const) {
+      const cardWidth = widgetWidth(widgetSpan(size, width), width)
+      expect(cardWidth).toBe(width)
+      expect(widgetContentLayout(cardWidth)).toEqual({
+        summaryColumns: 2,
+        quickActionColumns: 2,
+        listColumns: 1,
+        splitPanels: false,
+        calendarView: 'list',
+        trackerColumns: 2,
+      })
+    }
+    const desktopWidth = 1400
+    const small = widgetContentLayout(widgetWidth(widgetSpan('S', desktopWidth), desktopWidth))
+    expect(small.listColumns).toBe(1)
+    expect(small.calendarView).toBe('list')
+    const large = widgetContentLayout(widgetWidth(widgetSpan('L', desktopWidth), desktopWidth))
+    expect(large.listColumns).toBe(2)
+    expect(large.calendarView).toBe('week')
+    expect(large.summaryColumns).toBe(6)
+  })
+
+  it('accounts for grid gutters when resolving card widths', () => {
+    expect(widgetWidth(3, 1200)).toBe(291)
+    expect(widgetWidth(6, 1200)).toBe(594)
+    expect(widgetWidth(12, 1200)).toBe(1200)
+  })
+
+  it('increases height and visible items for each size even on a narrow screen', () => {
+    const sizes = ['S', 'M', 'L'] as const
+    const heights = sizes.map((size) => widgetRowSpan(size) * HOME_GRID_ROW_HEIGHT + (widgetRowSpan(size) - 1) * HOME_GRID_GAP)
+    expect(heights).toEqual([232, 354, 476])
+    expect(sizes.map((size) => widgetSpan(size, 500))).toEqual([12, 12, 12])
+    expect(sizes.map((size) => widgetItemLimit(size, 4))).toEqual([4, 7, 10])
+    expect(widgetItemLimit('L', 4, 2)).toBe(20)
+    const saved = normalizeHomeLayout({ version: 2, widgets: [{ id: 'feed', size: 'M' }] })
+    expect(widgetRowSpan(saved.widgets[0]!.size)).toBe(3)
+  })
+
   it('default layout has unique known widgets filling whole 12-column rows at desktop width', () => {
     const ids = DEFAULT_HOME_LAYOUT.widgets.map((w) => w.id)
     expect(new Set(ids).size).toBe(ids.length)

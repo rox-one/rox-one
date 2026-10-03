@@ -1,8 +1,23 @@
 import {
   isLocalConnection,
+  getDefaultModelsForConnection,
   type LlmConnection,
 } from '@config/llm-connections'
 import { ROX_VISIBLE_TERMS } from '@rox/shared/identity'
+import type { ModelDefinition } from '@config/models'
+import { connectionUsesBuiltInRoxModels, isRoxPublicModelId, isRoxLegacyInternalModelId, toRoxSelectableModelDefinitions } from '@rox/shared/config/rox-public-models'
+
+/** Older installs may still send the five bundled endpoints before startup migration runs. */
+export function getConnectionModelsForPicker(connection: Pick<LlmConnection, 'slug' | 'name' | 'providerType' | 'models' | 'defaultModel' | 'baseUrl' | 'piAuthProvider'>): Array<string | ModelDefinition> {
+  if (connectionUsesBuiltInRoxModels(connection)) {
+    const customModels = (connection.models ?? []).filter((entry) => {
+      const id = typeof entry === 'string' ? entry : entry.id
+      return !isRoxPublicModelId(id) && !isRoxLegacyInternalModelId(id)
+    })
+    return [...toRoxSelectableModelDefinitions(), ...customModels]
+  }
+  return connection.models ?? getDefaultModelsForConnection(connection.providerType, connection.piAuthProvider)
+}
 
 /**
  * Format token count for display (e.g., 1500 -> "1.5k", 200000 -> "200k").
@@ -54,7 +69,7 @@ export function groupConnectionsByProvider<T extends LlmConnection>(
   }
   for (const conn of connections) {
     const provider = conn.providerType || 'anthropic'
-    if (provider === 'anthropic') {
+    if (provider === 'anthropic' || provider === 'anthropic_compat') {
       groups['Anthropic'].push(conn)
     } else if (provider === 'omp') {
       groups[ROX_VISIBLE_TERMS.product].push(conn)

@@ -39,7 +39,7 @@ describe('H5 import and advisor wiring', () => {
     expect(page).not.toContain('<select')
   })
 
-  it('wires privileged browser profile import with separate OS credential approval', () => {
+  it('wires privileged import without claiming renderer checkboxes grant OS credential access', () => {
     const panel = readFileSync(join(__dirname, '..', 'BrowserProfileImportPanel.tsx'), 'utf8')
     const types = readFileSync(join(repoRoot, 'apps/electron/src/shared/types.ts'), 'utf8')
     const handler = readFileSync(
@@ -47,13 +47,16 @@ describe('H5 import and advisor wiring', () => {
       'utf8',
     )
     expect(panel).toContain('data-testid="browser-profile-import"')
-    expect(panel).toContain('data-testid="browser-profile-os-approved"')
+    expect(panel).toContain('data-testid="browser-profile-os-access"')
+    expect(panel).not.toContain('browser-profile-os-approved')
+    expect(panel).toContain('browserImportConsent')
+    expect(handler).toContain('osCredentialsApproved: false')
     expect(panel).toContain('discoverBrowserProfiles')
     expect(panel).toContain('void discover()')
     expect(panel).not.toMatch(/useEffect\(\(\) => \{\s*void discover\(\)/)
     expect(panel).toContain('if (opening && profiles.length === 0) void discover()')
     expect(panel).toContain('importBrowserProfile')
-    expect(panel).toContain('osCredentialsApproved')
+    expect(panel).toContain('browserImportConsent')
     expect(types).toContain('discoverBrowserProfiles')
     expect(handler).not.toContain('COOKIE_SECRET')
     expect(handler).toContain('cookie-vault.json')

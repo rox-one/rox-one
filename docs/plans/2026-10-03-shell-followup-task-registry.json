@@ -1,0 +1,163 @@
+{
+  "pr": "https://github.com/rox-one/rox-one/pull/1391",
+  "concurrency_limit": 6,
+  "policy": "Одна задача — один отдельный агент. Независимые задачи выполняются параллельно; ожидающие задачи запускаются при освобождении слота.",
+  "tasks": [
+    {
+      "id": "native_os_permissions",
+      "task": "Разрешение ОС на чтение выбранного браузерного профиля",
+      "agent": "/root/native_os_permissions",
+      "status": "completed"
+    },
+    {
+      "id": "native_password_import",
+      "task": "Нативное чтение и расшифровка паролей Chromium",
+      "agent": "/root/native_password_import",
+      "status": "completed"
+    },
+    {
+      "id": "durable_invitation_store",
+      "task": "Сохранение приглашений после перезапуска",
+      "agent": "/root/durable_invitation_store",
+      "status": "completed"
+    },
+    {
+      "id": "remote_invitation_transport",
+      "task": "Аутентифицированный транспорт приглашений между устройствами",
+      "agent": "/root/remote_invitation_transport",
+      "status": "completed"
+    },
+    {
+      "id": "inbox_navigation_polish",
+      "task": "Иерархия и цветные иконки входящих",
+      "agent": "/root/inbox_navigation_polish",
+      "status": "completed"
+    },
+    {
+      "id": "sharp_typecheck_repair",
+      "task": "Обычная проверка типов без временных обходов",
+      "agent": "/root/sharp_typecheck_repair",
+      "status": "completed"
+    },
+    {
+      "id": "credential_import_integration",
+      "task": "Подключение разрешений и зашифрованного импорта к UI/RPC",
+      "agent": "/root/credential_import_integration",
+      "status": "completed"
+    },
+    {
+      "id": "session_remote_authority_bridge",
+      "task": "Доверенная публикация сессии для удалённого приглашения",
+      "agent": "/root/session_remote_authority_bridge",
+      "status": "completed"
+    },
+    {
+      "id": "feed_navigation_polish",
+      "task": "Контекстная навигация ленты",
+      "agent": "/root/feed_navigation_polish",
+      "status": "completed"
+    },
+    {
+      "id": "notes_navigation_polish",
+      "task": "Папки и навигация заметок",
+      "agent": "/root/notes_navigation_polish",
+      "status": "completed"
+    },
+    {
+      "id": "tasks_navigation_polish",
+      "task": "Группы и фильтры задач",
+      "agent": "/root/tasks_navigation_polish",
+      "status": "completed"
+    },
+    {
+      "id": "meetings_navigation_polish",
+      "task": "Группы и фильтры встреч",
+      "agent": "/root/meetings_navigation_polish",
+      "status": "completed"
+    },
+    {
+      "id": "session_sidebar_interactions",
+      "task": "Раскрытие раздела сессий и действия рядом с заголовком",
+      "agent": "/root/session_sidebar_interactions",
+      "status": "completed"
+    },
+    {
+      "id": "top_navigation_keyboard",
+      "task": "Верхние вкладки и Cmd/Ctrl+1…7",
+      "agent": "/root/top_navigation_keyboard",
+      "status": "completed"
+    },
+    {
+      "id": "profile_layout_accessibility",
+      "task": "Профиль и настройки при разных размерах окна",
+      "agent": "/root/profile_layout_accessibility",
+      "status": "completed"
+    },
+    {
+      "id": "glass_platform_compatibility",
+      "task": "Стекло и системные настройки доступности",
+      "agent": "/root/glass_platform_compatibility",
+      "status": "completed"
+    },
+    {
+      "id": "widget_responsive_sizes",
+      "task": "Размеры и содержимое виджетов S/M/L",
+      "agent": "/root/widget_responsive_sizes",
+      "status": "completed"
+    },
+    {
+      "id": "canvas_interaction_corrections",
+      "task": "Инструменты, стикеры, условия, выход и рамки карты",
+      "agent": "/root/canvas_interaction_corrections",
+      "status": "completed"
+    },
+    {
+      "id": "model_selector_consistency",
+      "task": "Rox R1 Max и подключённые провайдеры во всех селекторах",
+      "agent": "/root/model_selector_consistency",
+      "status": "completed"
+    },
+    {
+      "id": "session_actions_regression",
+      "task": "Обзор, публикация, приглашение и присоединение",
+      "agent": "/root/session_actions_regression",
+      "status": "completed"
+    },
+    {
+      "id": "app_defaults_onboarding",
+      "task": "Дефолты и первый запуск приложения",
+      "agent": "/root/app_defaults_onboarding",
+      "status": "completed"
+    },
+    {
+      "id": "import_automation_lifecycle",
+      "task": "Автоимпорт при перезапуске и смене рабочего пространства",
+      "agent": "/root/import_automation_lifecycle",
+      "status": "completed"
+    },
+    {
+      "id": "safari_bookmark_parser",
+      "task": "Исправление квадратичного разбора Safari plist по замечанию CodeQL",
+      "agent": "/root/safari_bookmark_parser",
+      "status": "completed"
+    },
+    {
+      "id": "credential_import_ui_acceptance",
+      "task": "Проверка нативного импорта и отмены в интерфейсе",
+      "agent": "/root/credential_import_ui_acceptance",
+      "status": "completed"
+    },
+    {
+      "id": "native_flow_localization",
+      "task": "Переводы новых разрешений и удалённых приглашений",
+      "agent": "/root/native_flow_localization",
+      "status": "completed"
+    },
+    {
+      "id": "cross_task_integration_review",
+      "task": "Независимая проверка интеграции и ошибок между компонентами",
+      "agent": "/root/cross_task_integration_review",
+      "status": "completed"
+    }
+  ]
+}

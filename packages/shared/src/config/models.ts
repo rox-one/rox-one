@@ -9,6 +9,7 @@
  * 2. The convenience exports (ANTHROPIC_MODELS, OPENAI_MODELS) auto-update
  * 3. Update llm-connections.ts if adding a new built-in connection
  */
+import { toRoxPublicModelDefinitions } from './rox-public-models.ts';
 // Bedrock-native → bare Anthropic ID reverse mapping.
 // Duplicated from llm-connections.ts to avoid circular imports (llm-connections imports models).
 // Must stay in sync with BEDROCK_MODEL_MAP in llm-connections.ts.
@@ -129,6 +130,7 @@ export interface ModelDefinition {
  * This is the authoritative list - all other model arrays derive from this.
  */
 export const MODEL_REGISTRY: ModelDefinition[] = [
+  ...toRoxPublicModelDefinitions(),
   // ----------------------------------------
   // Anthropic Claude Models
   // ----------------------------------------
