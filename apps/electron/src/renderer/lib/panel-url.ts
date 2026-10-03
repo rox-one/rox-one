@@ -9,16 +9,19 @@ export function encodePanelEntries(entries: readonly PanelUrlEntry[]): string {
 }
 
 export function decodePanelEntries(value: string): PanelUrlEntry[] {
-  if (value.startsWith('v2:')) {
+  if (value.startsWith('v2:') || value.startsWith('json:')) {
     try {
-      const entries: unknown = JSON.parse(value.slice(3))
+      const compatible = value.startsWith('json:')
+      const entries: unknown = JSON.parse(value.slice(value.startsWith('v2:') ? 3 : 5))
       if (!Array.isArray(entries) || !entries.every(entry =>
         entry !== null && typeof entry === 'object' && !Array.isArray(entry)
         && typeof entry.route === 'string' && entry.route.trim().length > 0
-        && typeof entry.proportion === 'number' && Number.isFinite(entry.proportion)
-        && entry.proportion > 0 && entry.proportion <= 1,
+        && (compatible || (typeof entry.proportion === 'number' && Number.isFinite(entry.proportion)
+          && entry.proportion > 0 && entry.proportion <= 1)),
       )) return []
-      return entries.map(({ route, proportion }) => ({ route, proportion }))
+      return entries.map(({ route, proportion }) => ({ route, proportion: compatible
+        && !(typeof proportion === 'number' && Number.isFinite(proportion) && proportion >= 0 && proportion <= 1)
+        ? 0 : proportion }))
     } catch {
       return []
     }
@@ -47,7 +50,7 @@ export function decodePanelEntries(value: string): PanelUrlEntry[] {
     if (colonIndex > 0) {
       const text = entry.slice(colonIndex + 1)
       const proportion = /^(?:\d+(?:\.\d*)?|\.\d+)$/.test(text) ? Number(text) : NaN
-      if (!isNaN(proportion) && proportion > 0 && proportion < 1) {
+      if (Number.isFinite(proportion) && proportion >= 0 && proportion <= 1) {
         return { route: entry.slice(0, colonIndex), proportion }
       }
     }

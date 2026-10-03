@@ -44,6 +44,13 @@ describe('UI-001 panel URL transport', () => {
     ])
   })
 
+  it('reads json object URLs and requests equal layout for omitted or unusable weights', () => {
+    expect(codec().decodePanelEntries('json:[{"route":"tasks"},{"route":"notes/note/a,b","proportion":0.4}]')).toEqual([
+      {route:'tasks',proportion:0},{route:'notes/note/a,b',proportion:0.4},
+    ])
+    expect(codec().decodePanelEntries('json:[{"route":" ","proportion":0.4}]')).toEqual([])
+  })
+
   it('supports a valid single-entry v2 payload', () => {
     const entries = [{ route: 'unknown/one', proportion: 1 }]
     expect(codec().decodePanelEntries(codec().encodePanelEntries(entries))).toEqual(entries)

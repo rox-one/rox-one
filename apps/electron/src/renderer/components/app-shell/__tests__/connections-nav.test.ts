@@ -29,4 +29,3 @@ describe('CF-6.2 Connections nav and surface', () => {
     expect(mainContentSource).toContain('ConnectionsPage')
   })
 })
-

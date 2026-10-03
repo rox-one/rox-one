@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 import { Badge, Button, ListHeader, SectionLabel } from '@/components/mode-screen/ModeScreen'
 import { ColorDot, ColorPicker, HealthDot, SourceIcon, Sparkline, TagEditor } from './FeedParts'
 import { itemsPerDay, sourceErrorText, sourceHealth, sourceHost, sourceLabel } from './feed-model'
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 
 export interface FeedPreset {
   id: 'github' | 'youtube' | 'blog' | 'hn' | 'habr' | 'x'
@@ -341,6 +342,7 @@ export function SourcesView({ api, sources, items, now, x, suggestions, selected
   fmt: (at: number) => string
 }) {
   const { t } = useTranslation()
+  const sourcesTourRef = useTourTarget('feed.sources')
   const [busyAll, setBusyAll] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const run = async (operation: () => Promise<unknown>) => {
@@ -362,7 +364,7 @@ export function SourcesView({ api, sources, items, now, x, suggestions, selected
         ) : null}
       />
       {error ? <p role="alert" className="px-3 pt-2 text-[12px] text-destructive">{error}</p> : null}
-      <div className="min-h-0 flex-1 overflow-y-auto pb-4" data-testid="feed-sources">
+      <div ref={sourcesTourRef} data-tour-id="feed.sources" className="min-h-0 flex-1 overflow-y-auto pb-4" data-testid="feed-sources">
         <AddSource api={api} sources={sources} suggestions={suggestions} xConnected={x.state === 'connected'} onAdded={(id) => { onSelect(id); void reload() }} fmt={fmt} />
         {sources.length ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(248px,1fr))] gap-2 px-3 pt-4" data-testid="feed-source-grid">

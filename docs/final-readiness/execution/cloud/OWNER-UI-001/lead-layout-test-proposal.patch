@@ -1,0 +1,16 @@
+--- a/apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts
++++ b/apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts
+@@ -112,10 +112,9 @@
+ describe('side panel defaults (layout v2)', () => {
+   it('left sidebar and right inspector share one default width', async () => {
+     expect(SIDEBAR_WIDTH_DEFAULT).toBe(SIDE_PANEL_DEFAULT_WIDTH)
+-    const { readFileSync } = await import('node:fs')
+-    const { join } = await import('node:path')
+-    const atoms = readFileSync(join(import.meta.dir, '..', '..', 'atoms', 'unified-shell.ts'), 'utf8')
+-    expect(atoms).toMatch(/inspectorPanelWidthAtom = atomWithStorage<number>\(\s*getKeyString\(KEYS\.inspectorPanelWidth\),\s*SIDE_PANEL_DEFAULT_WIDTH,/)
++    const { createStore } = await import('jotai/vanilla')
++    const { inspectorPanelWidthAtom } = await import('../../atoms/unified-shell')
++    expect(createStore().get(inspectorPanelWidthAtom)).toBe(SIDE_PANEL_DEFAULT_WIDTH)
+   })
+ 
+   it('narrows wider stored widths once, keeps narrower ones, expands the rail', () => {

@@ -1,3 +1,4 @@
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { Check, PanelsTopLeft, PanelTop } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -24,6 +25,7 @@ import {
 
 /** Always available in compact chrome, including a chat's custom header. */
 export function CompactWorkspaceMenu({ onOpenBrowser }: { onOpenBrowser: () => void }) {
+  const tourWorkspaceTarget = useTourTarget('workspace.switcher', { scope: 'shell', variant: 'compact' })
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const navigation = useNavigationState()
@@ -63,6 +65,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser }: { onOpenBrowser: () => v
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <TopBarButton
+          ref={tourWorkspaceTarget}
           aria-label={`${t('rail.title')} · ${t('surfaceTabs.panel')}`}
           data-compact-workspace-menu="true"
           className="h-9 w-9 shrink-0 focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"

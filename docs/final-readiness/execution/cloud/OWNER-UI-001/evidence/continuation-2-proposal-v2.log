@@ -1,0 +1,165 @@
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1352:9:
+      1352 │     case 'pages':
+           ╵          ~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1326:9:
+      1326 │     case 'pages':
+           ╵          ~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1354:9:
+      1354 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1328:9:
+      1328 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+{
+  "scope": "unapplied lead proposal only; patch is held in a temporary Git index and virtual compiler/bundler modules; actual shared source is unchanged; no runtime/native integration",
+  "patch": "docs/final-readiness/execution/cloud/OWNER-UI-001/lead-route-recovery-proposal-v2.patch",
+  "patchSha256": "d1d0891f70bca8f920b2dbf48f15601cb7f24c17393f7fa6266fe2e3aa40f924",
+  "candidateSourceSha256": {
+    "apps/electron/src/shared/route-parser.ts": "fa0b150788b857fe0b801e51d064982bfbd7e739f74ae33b6d9f8e9309d351cc",
+    "apps/electron/src/shared/types.ts": "0c31972dd5cdb053d039845134cb8ff85a13d555655f7bc0f7feacf0a599681b",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "a7fdb197b5f37b842113f09e400bc217a207a549c146ab16a10f120db98a595e"
+  },
+  "actualSourceUnchanged": {
+    "apps/electron/src/shared/route-parser.ts": "8afa43adf5397285211597dd6ae08199c5c7f7d8610490dad7bb0345ceadd487",
+    "apps/electron/src/shared/types.ts": "a8edf4a2b0a970b5333a7a7d017f5259ad62958e30f37d0bfafdb05b21024db4",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "b1ca9afdabd16f5be59b5d4db250b193b9b5a762b447cf7ef8575dd7fbc2df3a",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fb09c3e16677369e0df4a165e10d0b8c738b4272d0273f3bf0c277c754ba365a"
+  },
+  "results": [
+    {
+      "name": "Unavailable route unknown-surface/one retains its raw identity",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route unknown-surface/one survives a persisted panel key",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route knowledge/unknown-kind/one retains its raw identity",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route knowledge/unknown-kind/one survives a persisted panel key",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route knowledge/document/%E0%A4%A retains its raw identity",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route knowledge/document/%E0%A4%A survives a persisted panel key",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip allSessions/session/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip sources/source/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip skills/skill/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip projects/project/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip notes/note/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip pages/page/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip knowledge/document/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip extension/one/view",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip terminal/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip cloud-run/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip dossier/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip radar/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip decisions/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip agents/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip focus/item/one",
+      "pass": true
+    },
+    {
+      "name": "Action routes keep their side-effect-only navigation contract",
+      "pass": true
+    },
+    {
+      "name": "Unavailable routes stay visible as compact detail surfaces",
+      "pass": true
+    },
+    {
+      "name": "Canonical session identities survive their emitted legacy panel key",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    details: {\n      sessionId: 'one',\n      type: 'session'\n    },\n...\n    navigator: 'sessions',\n-   viewMode: undefined\n  }\n"
+    },
+    {
+      "name": "Explicit missing session identity is retained through empty metadata",
+      "pass": true
+    },
+    {
+      "name": "Deleted explicit sessions do not become another available session",
+      "pass": true
+    },
+    {
+      "name": "Foreign-workspace session metadata becomes its own unavailable route",
+      "pass": true
+    },
+    {
+      "name": "Local and remote aliases keep valid explicit session identity",
+      "pass": true
+    },
+    {
+      "name": "List-only session routes retain their existing auto-selection",
+      "pass": true
+    },
+    {
+      "name": "Full Electron typecheck with virtual parser/types overlay",
+      "pass": true
+    }
+  ],
+  "diagnostics": []
+}

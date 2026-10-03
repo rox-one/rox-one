@@ -98,7 +98,7 @@ async function bundle() {
     import {useSession} from './apps/electron/src/renderer/hooks/useSession';
     import {sourceSelection,skillSelection,automationSelection} from './apps/electron/src/renderer/hooks/useEntitySelection';
     import * as guards from './apps/electron/src/shared/types';
-    import {resolveViewRoute} from './apps/electron/src/shared/route-parser';
+    import {resolveViewRoute,buildRouteFromNavigationState} from './apps/electron/src/shared/route-parser';
     import {isDetailNavState} from './apps/electron/src/renderer/lib/nav-helpers';
     import {isCollectionCanvasView} from './apps/electron/src/renderer/components/app-shell/collection/collection-view-cycle';
     import * as storage from './apps/electron/src/renderer/lib/local-storage';
@@ -125,6 +125,9 @@ async function bundle() {
     const EXTRA_SCREENS=[],getModeRegistry=()=>({list:()=>[]});
     const automationsAtom=atom([]),knowledgeHomeViewAtom=atom('search'),knowledgeActiveViewIdAtom=atom(null);
     const Pass=props=>React.createElement('section',null,props.children), Panel=Pass, StoplightProvider=Pass;
+    // Product-tour instrumentation is a declared fixture seam; real navigation
+    // and content recovery callbacks above remain the production implementation.
+    const TourPanelScope=Pass, navigationEntity=()=>({}), UnavailableAutomationTour=()=>null;
     const SendResourceToWorkspaceDialog=()=>null, MultiSelectPanel=()=>null, CollectionBulkBar=()=>null;
     const leaf=name=>props=>React.createElement('div',{'data-leaf':name,'data-entity':props.sessionId||props.sourceSlug||props.skillSlug||props.noteId||props.pageSlug||props.runId||props.terminalId||props.extensionId||props.screen||''},name);
     const ChatPage=leaf('session'),SourceInfoPage=leaf('source'),SkillInfoPage=leaf('skill'),MemoryScreen=leaf('memory'),
@@ -148,7 +151,7 @@ async function bundle() {
         back:nav.goBack,forward:nav.goForward,focus:id=>store.set(focusedPanelIdAtom,id),
         snapshot:()=>({state:nav.navigationState,panels:store.get(panelStackAtom),focused:store.get(focusedPanelIdAtom),session:store.get(focusedSessionIdAtom),
           selected:selected.selected,workspace,calls,search:location.search,back:nav.canGoBack,forward:nav.canGoForward,
-          saved:storage.get(storage.KEYS.workspaceUrl,'',workspace),listeners:events.size,detail:isDetailNavState(nav.navigationState)})};
+          saved:storage.get(storage.KEYS.workspaceUrl,'',workspace),lastSelected:storage.get(storage.KEYS.lastSelectedSessionId,null,workspace),listeners:events.size,detail:isDetailNavState(nav.navigationState)})};
       return <><ShellNavigatorProbe/><DesktopTabsProbe/><CompactWorkspaceMenu onOpenBrowser={()=>calls.push(['openBrowser'])}/><output data-state={nav.navigationState.navigator} data-ready={nav.isReady}/>{panels.map(entry=><div key={entry.id} data-panel={entry.id} data-focused={entry.id===focused}>
         <MainContentPanel navStateOverride={resolveViewRoute(entry.route)} isSidebarAndNavigatorHidden={false}/></div>)}</>;
     }
@@ -351,24 +354,34 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     expect((await snapshot()).calls).toEqual([['deleteSession', 's1']])
   }, 30000)
 
-  it('missing or foreign session links retain their requested address and cannot mount an unrelated chat', async () => {
+  it('missing or foreign session links retain their requested address without selecting or mounting another chat', async () => {
     await open('allSessions/session/s1')
     for (const id of ['missing', 's2']) {
+      await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/s1'))
+      await page.locator('[data-focused="true"] [data-leaf="session"][data-entity="s1"]').waitFor()
       await page.evaluate(id => (window as any).ui001.navigate(`allSessions/session/${id}?keep=1`, { skipAutoSelect: true }), id)
-      await page.locator('[data-testid="route-session-missing"]').waitFor()
+      const missing = id === 'missing'
+      const surface = page.locator(`[data-focused="true"] [data-testid="${missing ? 'route-session-unavailable' : 'route-unavailable'}"]`)
+      await surface.waitFor()
       const state = await snapshot()
-      expect(state.state.details.sessionId).toBe(id)
+      if (missing) {
+        expect(state.state.details.sessionId).toBe(id)
+        expect(await surface.getAttribute('data-session-id')).toBe(id)
+      } else {
+        expect(state.state).toMatchObject({navigator:'unavailable',route:`allSessions/session/${id}?keep=1`,reason:'workspace-mismatch'})
+      }
+      expect(state.selected).toBe('s1')
+      expect(state.lastSelected).toBe('s1')
       expect(new URLSearchParams(state.search).get('route')).toBe(`allSessions/session/${id}?keep=1`)
       expect(await page.locator('[data-focused="true"] [data-leaf="session"]').count()).toBe(0)
-      expect(await page.locator('[data-testid="route-session-missing"]').getAttribute('data-route-entity')).toBe(id)
       await page.reload()
-      await page.locator('[data-testid="route-session-missing"]').waitFor()
+      await surface.waitFor()
       expect(new URLSearchParams((await snapshot()).search).get('route')).toBe(`allSessions/session/${id}?keep=1`)
     }
     await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/s1?keep=1'))
     expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s1?keep=1')
     await page.evaluate(() => (window as any).ui001.deepLink({ view: 'allSessions/session/s2?keep=1' }))
-    await page.locator('[data-testid="route-session-missing"]').waitFor()
+    await page.locator('[data-focused="true"] [data-testid="route-unavailable"]').waitFor()
     expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s2?keep=1')
     expect(await page.locator('[data-focused="true"] [data-leaf="session"]').count()).toBe(0)
   }, 30000)
