@@ -1,0 +1,1667 @@
+{
+  "source_pr": 1448,
+  "source_head": "1eb2c8289b68e9103880c3f2aee2c57e70c3409a",
+  "source_paths": {
+    "apps/electron/resources/skills/gstack/gstack/browse/test/cookie-import-native-job.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 9,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/resources/skills/gstack/gstack/browse/test/cookie-import-native-job.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "27cd2962cb9e5142470540750f20cb70ea7feec9",
+      "current_blob": "27cd2962cb9e5142470540750f20cb70ea7feec9",
+      "consumer": "Existing vendored job/daemon and Swift accessor consumers; outer state-root equivalent to canonical nested implementation",
+      "proof_refs": [
+        "ui1448-vendored-current-controls.log",
+        "ui1448-swift-accessor-warm-current.log"
+      ]
+    },
+    "apps/electron/resources/skills/gstack/gstack/browse/test/watchdog.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 10,
+      "source_deletions": 4,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/resources/skills/gstack/gstack/browse/test/watchdog.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "9dcbcd951c75901eedd6d98cabcb7aec9bfa21d1",
+      "current_blob": "9dcbcd951c75901eedd6d98cabcb7aec9bfa21d1",
+      "consumer": "Existing vendored job/daemon and Swift accessor consumers; outer state-root equivalent to canonical nested implementation",
+      "proof_refs": [
+        "ui1448-vendored-current-controls.log",
+        "ui1448-swift-accessor-warm-current.log"
+      ]
+    },
+    "apps/electron/resources/skills/gstack/gstack/ios-qa/scripts/gen-accessors.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/resources/skills/gstack/gstack/ios-qa/scripts/gen-accessors.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "5e34f1bbd5c17099b22ede4ddc7d4a381c4e0a75",
+      "current_blob": "5e34f1bbd5c17099b22ede4ddc7d4a381c4e0a75",
+      "consumer": "Existing vendored job/daemon and Swift accessor consumers; outer state-root equivalent to canonical nested implementation",
+      "proof_refs": [
+        "ui1448-vendored-current-controls.log",
+        "ui1448-swift-accessor-warm-current.log"
+      ]
+    },
+    "apps/electron/resources/skills/gstack/ios-qa/scripts/gen-accessors-tool/.gitignore": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/resources/skills/gstack/ios-qa/scripts/gen-accessors-tool/.gitignore",
+      "original_branch_preserved": true,
+      "source_blob": "bb39a0ba755164273125cafa2236b9bc6a9732c7",
+      "current_blob": "bb39a0ba755164273125cafa2236b9bc6a9732c7",
+      "consumer": "Existing vendored job/daemon and Swift accessor consumers; outer state-root equivalent to canonical nested implementation",
+      "proof_refs": [
+        "ui1448-vendored-current-controls.log",
+        "ui1448-swift-accessor-warm-current.log"
+      ]
+    },
+    "apps/electron/resources/skills/gstack/ios-qa/scripts/gen-accessors.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/resources/skills/gstack/ios-qa/scripts/gen-accessors.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "5e34f1bbd5c17099b22ede4ddc7d4a381c4e0a75",
+      "current_blob": "5e34f1bbd5c17099b22ede4ddc7d4a381c4e0a75",
+      "consumer": "Existing vendored job/daemon and Swift accessor consumers; outer state-root equivalent to canonical nested implementation",
+      "proof_refs": [
+        "ui1448-vendored-current-controls.log",
+        "ui1448-swift-accessor-warm-current.log"
+      ]
+    },
+    "apps/electron/resources/skills/gstack/lib/state-root.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 103,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/resources/skills/gstack/lib/state-root.ts",
+      "original_branch_preserved": true,
+      "source_blob": "a0b1780607dd909320028f2a9501e1546edf19e0",
+      "current_blob": "a0b1780607dd909320028f2a9501e1546edf19e0",
+      "consumer": "Existing vendored job/daemon and Swift accessor consumers; outer state-root equivalent to canonical nested implementation",
+      "proof_refs": [
+        "ui1448-vendored-current-controls.log",
+        "ui1448-swift-accessor-warm-current.log"
+      ]
+    },
+    "apps/electron/src/main/__tests__/session-branch-rollback.isolated.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 15,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/main/__tests__/session-branch-rollback.isolated.ts",
+      "original_branch_preserved": true,
+      "source_blob": "f931f38c124406013990d73e8d33634a188920fa",
+      "current_blob": "f931f38c124406013990d73e8d33634a188920fa",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts": {
+      "status": "incorporated_adapted_current_source_contracts",
+      "owner": "root",
+      "source_additions": 3,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "08b5b9afeb05c5c2094c708533377cdb860887b8",
+      "current_blob": "a9b8ba5eddb08ac1bc40b46b572f1f3a759844cc",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/main/handlers/__tests__/registration.test.ts": {
+      "status": "incorporated_adapted_current_source_contracts",
+      "owner": "root",
+      "source_additions": 3,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "51ded2e881b30d4e0aa6bff36e531c24e6f620fb",
+      "current_blob": "71a383d8c01ed651021765bf5931e0aa06eac64d",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/main/index.ts": {
+      "status": "delivered_1452_dev_protocol_guard_and_1449_current_startup_ingress",
+      "owner": "root",
+      "source_additions": 4,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/main/index.ts",
+      "original_branch_preserved": true,
+      "source_blob": "f00b830165f55dc1b02582388d13f5d4e2cf8b0e",
+      "current_blob": "3f5a2b6d387032402d5271ce943d2695c0930cd6",
+      "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
+      "proof_refs": [
+        "docs/integration-history/portable-resources-20261003"
+      ]
+    },
+    "apps/electron/src/renderer/App.tsx": {
+      "status": "existing_current_1417_bool_workspace_result_and_owner_guard",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/App.tsx",
+      "original_branch_preserved": true,
+      "source_blob": "1c3087e9039b3510f8da3c148bd4cc7d911cc6b5",
+      "current_blob": "8fcdf621593bf7b87bad6d3fba50623d2263bf7d",
+      "consumer": "Existing current AppShell/MainContentPanel settings/gateway/native contract, retaining owned ProductTour scope and foreign session guard",
+      "proof_refs": [
+        "ui1448-all-final-controls.log",
+        "ui1448-final-current-electron-types.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
+      "status": "incorporated_adapted_current_production_owner_and_route_contracts",
+      "owner": "root",
+      "source_additions": 3,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "original_branch_preserved": true,
+      "source_blob": "106f7f3be68fea7c559856a239b1dba5d558f48d",
+      "current_blob": "29fe2de24f765b8ab94156bffee4f2d5049976de",
+      "consumer": "Existing current AppShell/MainContentPanel settings/gateway/native contract, retaining owned ProductTour scope and foreign session guard",
+      "proof_refs": [
+        "ui1448-all-final-controls.log",
+        "ui1448-final-current-electron-types.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": {
+      "status": "incorporated_adapted_current_production_owner_and_route_contracts",
+      "owner": "root",
+      "source_additions": 11,
+      "source_deletions": 7,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "original_branch_preserved": true,
+      "source_blob": "62c073f60157033a61af5a1f43fedc9302a6424f",
+      "current_blob": "8d92271893fcbc03c91ea7f114fc112bebf2b138",
+      "consumer": "Existing current AppShell/MainContentPanel settings/gateway/native contract, retaining owned ProductTour scope and foreign session guard",
+      "proof_refs": [
+        "ui1448-all-final-controls.log",
+        "ui1448-final-current-electron-types.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 1,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "e4c34940737cff8c2afe5780e366ba3eaf88742a",
+      "current_blob": "e4c34940737cff8c2afe5780e366ba3eaf88742a",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": {
+      "status": "incorporated_adapted_current_source_contracts",
+      "owner": "root",
+      "source_additions": 45,
+      "source_deletions": 9,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "da03f8cf82ba4011abd8f4452bf419c9f9f8723b",
+      "current_blob": "14db6910e169cddd52030edc8f20d0e226193c70",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.effect-harness.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 6,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.effect-harness.ts",
+      "original_branch_preserved": true,
+      "source_blob": "2a152aff1d7ed45dc53b87cab9b426233b3e3485",
+      "current_blob": "2a152aff1d7ed45dc53b87cab9b426233b3e3485",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-cloud-run.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 97,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-cloud-run.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "f1f6f930e277869903a04c6c3e1abf89c67e81e1",
+      "current_blob": "f1f6f930e277869903a04c6c3e1abf89c67e81e1",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-extra-screen.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 62,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-extra-screen.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "fda329f88d42b60099446ccbf0027a8eb67db33a",
+      "current_blob": "fda329f88d42b60099446ccbf0027a8eb67db33a",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-harness.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 98,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-harness.ts",
+      "original_branch_preserved": true,
+      "source_blob": "dbcb2de07a358fb9d4488a08d0fc7bc25e5822ce",
+      "current_blob": "dbcb2de07a358fb9d4488a08d0fc7bc25e5822ce",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-notes.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 185,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-notes.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "ee7a3240dafd89d0ba0863b760c3f56de0458e46",
+      "current_blob": "ee7a3240dafd89d0ba0863b760c3f56de0458e46",
+      "consumer": "Actual NotesPage/NativeNotes metadata/read/delete and dirty draft ownership; no missing route fallback",
+      "proof_refs": [
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-project.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 105,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-project.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "d840b130e7f5f2a6bd042c0d2c57e625607f24af",
+      "current_blob": "d840b130e7f5f2a6bd042c0d2c57e625607f24af",
+      "consumer": "Actual ProjectInfoPage read generation/unavailable/retry with current Product hooks",
+      "proof_refs": [
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-terminal.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 45,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.leaf-terminal.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "f4befefee8da5dfe98d4a3d869abf270264a4bf0",
+      "current_blob": "f4befefee8da5dfe98d4a3d869abf270264a4bf0",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts": {
+      "status": "incorporated_adapted_current_source_contracts",
+      "owner": "root",
+      "source_additions": 144,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "9570ffe0792ea72694cfc106a486ac961c599379",
+      "current_blob": "ac3a67cb33af61ce2031574ca3454b68ba217800",
+      "consumer": "Actual NavigationContext history/pending workspace owner and unavailable URL; current service panel consumers",
+      "proof_refs": [
+        "ui1448-current-navigation-browser.log",
+        "pr1457-current-recovery-receipt.json"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/service-panel-navigation.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 1,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/service-panel-navigation.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "dc1f09aae4fa877cc1ab8473a360a7c2d4d3aed6",
+      "current_blob": "dc1f09aae4fa877cc1ab8473a360a7c2d4d3aed6",
+      "consumer": "Actual NavigationContext history/pending workspace owner and unavailable URL; current service panel consumers",
+      "proof_refs": [
+        "ui1448-current-navigation-browser.log",
+        "pr1457-current-recovery-receipt.json"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts": {
+      "status": "incorporated_adapted_current_source_contracts",
+      "owner": "root",
+      "source_additions": 96,
+      "source_deletions": 8,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "4838f1a7bb5ad980c5cf1eeeb0b90aac21ef5869",
+      "current_blob": "af1a98a3f7ea143f5fb1c49a8efffdfaba8d236f",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 7,
+      "source_deletions": 6,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "b234643c0481b4e847dba38c18651f9ecb636ba6",
+      "current_blob": "b234643c0481b4e847dba38c18651f9ecb636ba6",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/components/ui/__tests__/continue-visual-3-chrome.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 3,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/components/ui/__tests__/continue-visual-3-chrome.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "000f1ccc273d633842497d4b221a5c1566eaddef",
+      "current_blob": "000f1ccc273d633842497d4b221a5c1566eaddef",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": {
+      "status": "incorporated_adapted_current_production_owner_and_route_contracts",
+      "owner": "root",
+      "source_additions": 146,
+      "source_deletions": 42,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "original_branch_preserved": true,
+      "source_blob": "6a9084b1c49a5f15f98bee2f1f68ccc44ec7f6a9",
+      "current_blob": "cc3511fb3414f8dc7401d89dbcfc21767d253888",
+      "consumer": "Actual NavigationContext history/pending workspace owner and unavailable URL; current service panel consumers",
+      "proof_refs": [
+        "ui1448-current-navigation-browser.log",
+        "pr1457-current-recovery-receipt.json"
+      ]
+    },
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts": {
+      "status": "incorporated_adapted_current_source_contracts",
+      "owner": "root",
+      "source_additions": 450,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "b63c1dd193602d710d3af1c0a5a773e8130b4b6e",
+      "current_blob": "06e4fe1d492fc5d2f48dc96fe28e0db37948bb50",
+      "consumer": "Actual NavigationContext history/pending workspace owner and unavailable URL; current service panel consumers",
+      "proof_refs": [
+        "ui1448-current-navigation-browser.log",
+        "pr1457-current-recovery-receipt.json"
+      ]
+    },
+    "apps/electron/src/renderer/lib/__tests__/unknown-error-i18n.test.ts": {
+      "status": "incorporated_adapted_current_source_contracts",
+      "owner": "root",
+      "source_additions": 1,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/lib/__tests__/unknown-error-i18n.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "3d154ac8289ea07b20535fc6b333dffea4d6cf59",
+      "current_blob": "2e233d8197eb9d9cb03cce01ec644bafeeeb97ad",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/lib/__tests__/zen-shell-acceptance.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/lib/__tests__/zen-shell-acceptance.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "3c23b0271985177d747807cba3a6aabcf5fac8d6",
+      "current_blob": "3c23b0271985177d747807cba3a6aabcf5fac8d6",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/pages/CloudRunSurfacePage.tsx": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 63,
+      "source_deletions": 45,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/pages/CloudRunSurfacePage.tsx",
+      "original_branch_preserved": true,
+      "source_blob": "b46b96a2a2c3822e7e9342f5568c2364a6e53f96",
+      "current_blob": "b46b96a2a2c3822e7e9342f5568c2364a6e53f96",
+      "consumer": "Actual routed terminal/cloud leaf, current read/visibility ownership and explicit missing/unavailable",
+      "proof_refs": [
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "apps/electron/src/renderer/pages/NotesPage.tsx": {
+      "status": "incorporated_adapted_current_production_owner_and_route_contracts",
+      "owner": "root",
+      "source_additions": 64,
+      "source_deletions": 23,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "original_branch_preserved": true,
+      "source_blob": "0e979dac1521999bcca98f997825cc539661af02",
+      "current_blob": "ed9a31d74fdc0a42a972426932b25d78de1ae1a2",
+      "consumer": "Actual NotesPage/NativeNotes metadata/read/delete and dirty draft ownership; no missing route fallback",
+      "proof_refs": [
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "apps/electron/src/renderer/pages/ProjectInfoPage.tsx": {
+      "status": "incorporated_adapted_current_production_owner_and_route_contracts",
+      "owner": "root",
+      "source_additions": 31,
+      "source_deletions": 6,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "original_branch_preserved": true,
+      "source_blob": "d1f23f9bfe684d3e517de6ef7b0887ab7594d732",
+      "current_blob": "2cff4d41bac4a608ef4d095eb46ac9f696d6126c",
+      "consumer": "Actual ProjectInfoPage read generation/unavailable/retry with current Product hooks",
+      "proof_refs": [
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "apps/electron/src/renderer/pages/TerminalSurfacePage.tsx": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 15,
+      "source_deletions": 11,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/pages/TerminalSurfacePage.tsx",
+      "original_branch_preserved": true,
+      "source_blob": "be11527c9265131225ab7909be604e6a16e2ba9e",
+      "current_blob": "be11527c9265131225ab7909be604e6a16e2ba9e",
+      "consumer": "Actual routed terminal/cloud leaf, current read/visibility ownership and explicit missing/unavailable",
+      "proof_refs": [
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.project-lifecycle.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.project-lifecycle.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "524bc173cf76118d43a6e9698665a60d2f061caf",
+      "current_blob": "524bc173cf76118d43a6e9698665a60d2f061caf",
+      "consumer": "Actual ProjectInfoPage read generation/unavailable/retry with current Product hooks",
+      "proof_refs": [
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "apps/electron/src/renderer/pages/settings/AppSettingsPage.tsx": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 3,
+      "source_deletions": 3,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/pages/settings/AppSettingsPage.tsx",
+      "original_branch_preserved": true,
+      "source_blob": "27b6b7c46103be995fdbe8175464189ab589a7a7",
+      "current_blob": "27b6b7c46103be995fdbe8175464189ab589a7a7",
+      "consumer": "Existing current AppShell/MainContentPanel settings/gateway/native contract, retaining owned ProductTour scope and foreign session guard",
+      "proof_refs": [
+        "ui1448-all-final-controls.log",
+        "ui1448-final-current-electron-types.log"
+      ]
+    },
+    "apps/electron/src/renderer/pages/settings/SecuritySettingsPage.tsx": {
+      "status": "existing_current_1417_bound_feature_workbench_flags",
+      "owner": "root",
+      "source_additions": 1,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/pages/settings/SecuritySettingsPage.tsx",
+      "original_branch_preserved": true,
+      "source_blob": "6bf53af3c7dfc4d19ae928fff210bb034d57178d",
+      "current_blob": "6c63a588236d910482b1a361c4e7669bd2b21eb2",
+      "consumer": "Existing current AppShell/MainContentPanel settings/gateway/native contract, retaining owned ProductTour scope and foreign session guard",
+      "proof_refs": [
+        "ui1448-all-final-controls.log",
+        "ui1448-final-current-electron-types.log"
+      ]
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/extension-center-h4.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 1,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/pages/settings/__tests__/extension-center-h4.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "d711b249aad5341e79a4e973086b1417553bcddf",
+      "current_blob": "d711b249aad5341e79a4e973086b1417553bcddf",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/platform/__tests__/inspector-strip-host.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/platform/__tests__/inspector-strip-host.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "e22a25fe197e61e91a02e2cb3310282da83e3273",
+      "current_blob": "e22a25fe197e61e91a02e2cb3310282da83e3273",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/platform/__tests__/panel-inset-alignment.test.ts": {
+      "status": "incorporated_adapted_current_source_contracts",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/platform/__tests__/panel-inset-alignment.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "108d116c5ec8bc35ce4ee267d858e4fd3fa20f5e",
+      "current_blob": "f6e360bf0f8dd36961cb2ac04c0f1742f0369d74",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/renderer/platform/__tests__/workbench-leftover-chrome.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/renderer/platform/__tests__/workbench-leftover-chrome.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "5dc907df3cda00662eec1cfc67e88b138c1de4c7",
+      "current_blob": "5dc907df3cda00662eec1cfc67e88b138c1de4c7",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "apps/electron/src/shared/__tests__/route-surfaces.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 12,
+      "source_deletions": 11,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/shared/__tests__/route-surfaces.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "13b88fad9fad73702eb518e0ebaff4cdffec7507",
+      "current_blob": "13b88fad9fad73702eb518e0ebaff4cdffec7507",
+      "consumer": "Actual public parseCompoundRoute/parseRoute, strict arity/query/unicode and unavailable typed route",
+      "proof_refs": [
+        "ui1448-public-parser-native-readback.log",
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "apps/electron/src/shared/__tests__/rox-readiness-ui-001.strict-routes.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 130,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/shared/__tests__/rox-readiness-ui-001.strict-routes.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "d1150c4d9d282ded17481d1f7bbdeeb3bcc65654",
+      "current_blob": "d1150c4d9d282ded17481d1f7bbdeeb3bcc65654",
+      "consumer": "Actual public parseCompoundRoute/parseRoute, strict arity/query/unicode and unavailable typed route",
+      "proof_refs": [
+        "ui1448-public-parser-native-readback.log",
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "apps/electron/src/shared/route-parser.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 97,
+      "source_deletions": 81,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/shared/route-parser.ts",
+      "original_branch_preserved": true,
+      "source_blob": "26664701c2d3039463835fe1131406f8f7409151",
+      "current_blob": "26664701c2d3039463835fe1131406f8f7409151",
+      "consumer": "Actual public parseCompoundRoute/parseRoute, strict arity/query/unicode and unavailable typed route",
+      "proof_refs": [
+        "ui1448-public-parser-native-readback.log",
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "apps/electron/src/shared/types.ts": {
+      "status": "incorporated_adapted_current_production_owner_and_route_contracts",
+      "owner": "root",
+      "source_additions": 13,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "apps/electron/src/shared/types.ts",
+      "original_branch_preserved": true,
+      "source_blob": "b881b82b823cdcf147e6360416fe227db8272c7d",
+      "current_blob": "931bd0d7e68a08f578d18f81832d772928fad3fa",
+      "consumer": "Actual public parseCompoundRoute/parseRoute, strict arity/query/unicode and unavailable typed route",
+      "proof_refs": [
+        "ui1448-public-parser-native-readback.log",
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "apps/workspace-service/src/server.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 1,
+      "source_deletions": 1,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/continuation-plan.md": {
+      "status": "preserved_original_evidence_not_current_acceptance",
+      "owner": "root",
+      "source_additions": 10,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "docs/final-readiness/execution/cloud/OWNER-UI-001/continuation-plan.md",
+      "original_branch_preserved": true,
+      "source_blob": "a981f549975d88052b2594f44ac77c1ce977ba7d",
+      "current_blob": null,
+      "consumer": "Original historical OWNER-UI-001 artifact retained on exact source branch; replaced by present revision-bound receipt",
+      "proof_refs": []
+    },
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/continuation-spec.md": {
+      "status": "preserved_original_evidence_not_current_acceptance",
+      "owner": "root",
+      "source_additions": 9,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "docs/final-readiness/execution/cloud/OWNER-UI-001/continuation-spec.md",
+      "original_branch_preserved": true,
+      "source_blob": "a6f87d56ca8bf7316631e2912d2e0a8a38f6cbe0",
+      "current_blob": null,
+      "consumer": "Original historical OWNER-UI-001 artifact retained on exact source branch; replaced by present revision-bound receipt",
+      "proof_refs": []
+    },
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/result.json": {
+      "status": "preserved_original_evidence_not_current_acceptance",
+      "owner": "root",
+      "source_additions": 188,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "docs/final-readiness/execution/cloud/OWNER-UI-001/result.json",
+      "original_branch_preserved": true,
+      "source_blob": "4c050e72431e9e67b58a4bc7a28cbf73d15045d0",
+      "current_blob": "cd4f505585e874c2ea209edcad5f8c9508e0a375",
+      "consumer": "Original historical OWNER-UI-001 artifact retained on exact source branch; replaced by present revision-bound receipt",
+      "proof_refs": []
+    },
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history/main-3342-owner-result.json": {
+      "status": "preserved_original_evidence_not_current_acceptance",
+      "owner": "root",
+      "source_additions": 1178,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history/main-3342-owner-result.json",
+      "original_branch_preserved": true,
+      "source_blob": "6c0d37333897c559b2bc6b2d01a6fd09534397fd",
+      "current_blob": null,
+      "consumer": "Original historical OWNER-UI-001 artifact retained on exact source branch; replaced by present revision-bound receipt",
+      "proof_refs": []
+    },
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history/pre-3342-root-continuation-result.json": {
+      "status": "preserved_original_evidence_not_current_acceptance",
+      "owner": "root",
+      "source_additions": 354,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history/pre-3342-root-continuation-result.json",
+      "original_branch_preserved": true,
+      "source_blob": "e9fdd3e342f48128e5e45624c94c0d0969cbe584",
+      "current_blob": null,
+      "consumer": "Original historical OWNER-UI-001 artifact retained on exact source branch; replaced by present revision-bound receipt",
+      "proof_refs": []
+    },
+    "docs/plan.md": {
+      "status": "current_spec_plan_and_registry_receipt_replace_stale_source_report",
+      "owner": "root",
+      "source_additions": 4,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "docs/plan.md",
+      "original_branch_preserved": true,
+      "source_blob": "6a453fbab9dd4aeab80e2fe46de1ae75b9c1ca05",
+      "current_blob": "c7098f20b3033931cb8c43d879d18247739ca996",
+      "consumer": "Existing current AppShell/MainContentPanel settings/gateway/native contract, retaining owned ProductTour scope and foreign session guard",
+      "proof_refs": [
+        "ui1448-all-final-controls.log",
+        "ui1448-final-current-electron-types.log"
+      ]
+    },
+    "docs/spec.md": {
+      "status": "current_spec_plan_and_registry_receipt_replace_stale_source_report",
+      "owner": "root",
+      "source_additions": 4,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "docs/spec.md",
+      "original_branch_preserved": true,
+      "source_blob": "9ef118160b6efa02e846ad718e0d0ad3d6f8c6ca",
+      "current_blob": "a3b0f0daf6b9d90bf6db85d7e79edec871c9b195",
+      "consumer": "Existing current AppShell/MainContentPanel settings/gateway/native contract, retaining owned ProductTour scope and foreign session guard",
+      "proof_refs": [
+        "ui1448-all-final-controls.log",
+        "ui1448-final-current-electron-types.log"
+      ]
+    },
+    "package.json": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 1,
+      "source_deletions": 1,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "packages/messaging-gateway/src/__tests__/access-control.test.ts": {
+      "status": "incorporated_adapted_current_source_contracts",
+      "owner": "root",
+      "source_additions": 19,
+      "source_deletions": 4,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/messaging-gateway/src/__tests__/access-control.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "a2c4c63afcd152752eef97d77af076d9e0cfefc0",
+      "current_blob": "a17453b4c43fd74e99cdfe5b38d628d771099a04",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "packages/messaging-gateway/src/__tests__/gateway-button-access.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 19,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/messaging-gateway/src/__tests__/gateway-button-access.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "8e7e095c7ecd05eb01a1dbe43663f69ec78392e6",
+      "current_blob": "8e7e095c7ecd05eb01a1dbe43663f69ec78392e6",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "packages/messaging-gateway/src/access-control.ts": {
+      "status": "incorporated_adapted_current_production_owner_and_route_contracts",
+      "owner": "root",
+      "source_additions": 5,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/messaging-gateway/src/access-control.ts",
+      "original_branch_preserved": true,
+      "source_blob": "e0e540dde6b1054c81f9be99fa463316d1117790",
+      "current_blob": "9f7200d887c9242d2d554b9e1371bcd3e37d68ee",
+      "consumer": "Existing current AppShell/MainContentPanel settings/gateway/native contract, retaining owned ProductTour scope and foreign session guard",
+      "proof_refs": [
+        "ui1448-all-final-controls.log",
+        "ui1448-final-current-electron-types.log"
+      ]
+    },
+    "packages/server-core/src/bootstrap/lock-identity.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/server-core/src/bootstrap/lock-identity.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "fd9edcbe17e5d29d6a684b1ebe0f48c3e6a69695",
+      "current_blob": "fd9edcbe17e5d29d6a684b1ebe0f48c3e6a69695",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/roadmap-model-provenance.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/server-core/src/handlers/rpc/__tests__/roadmap-model-provenance.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "2967d418a854283cca20e023d1663674c85e7dd4",
+      "current_blob": "2967d418a854283cca20e023d1663674c85e7dd4",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "packages/server-core/src/sessions/refresh-connection-runtime.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 5,
+      "source_deletions": 5,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/server-core/src/sessions/refresh-connection-runtime.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "c8d120609bf46658b85f175382120007d10fdb87",
+      "current_blob": "c8d120609bf46658b85f175382120007d10fdb87",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "packages/server-core/src/transport/__tests__/before-response-authority.test.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 39,
+      "source_deletions": 2,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "packages/server-core/src/transport/__tests__/rox-readiness-ui-001.response-admission.test.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 176,
+      "source_deletions": 0,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "packages/server-core/src/transport/server.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 29,
+      "source_deletions": 15,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "packages/server-core/src/transport/types.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 11,
+      "source_deletions": 1,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "packages/shared/src/agent/core/__tests__/prerequisite-manager.isolated.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 37,
+      "source_deletions": 11,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/agent/core/__tests__/prerequisite-manager.isolated.ts",
+      "original_branch_preserved": true,
+      "source_blob": "10423e872c4bb80f60ecb2eb18cf27e1cbf9ea40",
+      "current_blob": "10423e872c4bb80f60ecb2eb18cf27e1cbf9ea40",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "packages/shared/src/config/__tests__/storage-startup-migration.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 33,
+      "source_deletions": 25,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "21ba8e04b46c927a3ac46f4cb177a3608d187d05",
+      "current_blob": "21ba8e04b46c927a3ac46f4cb177a3608d187d05",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "packages/shared/src/config/theme-vibrancy.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 9,
+      "source_deletions": 4,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/config/theme-vibrancy.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "41f0b2de05ef28355ae8978a0aa0a92bd223db2c",
+      "current_blob": "41f0b2de05ef28355ae8978a0aa0a92bd223db2c",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/ar.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/ar.json",
+      "original_branch_preserved": true,
+      "source_blob": "c8af041101a76c621ec71d40967f5a8fe1fb4ebe",
+      "current_blob": "fa7cb570aed9f1c06ce4c1d5c6ddc455488628aa",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/de.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/de.json",
+      "original_branch_preserved": true,
+      "source_blob": "450ec5046fe6dd36b8352c1b376bbb3fc89e31a4",
+      "current_blob": "2409b4fe777020ad40aaa973d68f92d97d022b5c",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/en.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/en.json",
+      "original_branch_preserved": true,
+      "source_blob": "fb0da2d2e7d1a5a15920ac1242cf23f7fe0dd425",
+      "current_blob": "c7506de9ca9c60c93e7f20d5a851aae344113aa4",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/es.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/es.json",
+      "original_branch_preserved": true,
+      "source_blob": "c146a415c68cd68b0ab04567fce12f859ef2d6bb",
+      "current_blob": "5c9a6f6cb0b0327ef02de574f01b5ff4ca1bbee0",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/fr.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/fr.json",
+      "original_branch_preserved": true,
+      "source_blob": "f7e3775bef5123984548fee57d719b40dc9de4fd",
+      "current_blob": "9eb739e606c2f2edcd9fdd8725a57d0d9b1c582a",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/hu.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/hu.json",
+      "original_branch_preserved": true,
+      "source_blob": "4aeb87a2652faeaeeaef546b11030631fccb99c7",
+      "current_blob": "4609a15dd6d03235cc3e7f171695323566d5272d",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/ja.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/ja.json",
+      "original_branch_preserved": true,
+      "source_blob": "3900aa4ddceede7092c71942f58d0dcdd2056b33",
+      "current_blob": "0fd04e54c60ce4c6222ef65a8219bda504ff0ba9",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/ko.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/ko.json",
+      "original_branch_preserved": true,
+      "source_blob": "2517b1c727439703f41c7438ec9dc014e9a803ec",
+      "current_blob": "8314b7e01db555a108a315f920c9495e4a40eeea",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/pl.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/pl.json",
+      "original_branch_preserved": true,
+      "source_blob": "e602b69562b3b386a0a611c6d2ce69cb20ea443f",
+      "current_blob": "a409b5b4fb1dfc9c98893ceca31e8528c9ff0276",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/ru.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/ru.json",
+      "original_branch_preserved": true,
+      "source_blob": "fdec0457746577b2bf888943d995be8c61193be0",
+      "current_blob": "b69e046a3d7788c5d3963baae7d65adaea7d8751",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/zh-Hans.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "original_branch_preserved": true,
+      "source_blob": "8fdb3a7c8c25998a2e105f18845c23edad8b2e6f",
+      "current_blob": "19bbf19fd8e4339bb8f6da15457127c0b60a2f5a",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/i18n/locales/zh-Hant.json": {
+      "status": "incorporated_source_dictionary_delta_preserving_current_product_keys",
+      "owner": "root",
+      "source_additions": 16,
+      "source_deletions": 15,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/i18n/locales/zh-Hant.json",
+      "original_branch_preserved": true,
+      "source_blob": "cbcadc5ceab42d0ca6969ef5600038c654228f5c",
+      "current_blob": "4d93e231549c3cd11a4375add3cf850ed1f43fa5",
+      "consumer": "12 actual locale union; retained source keys with current product/native dictionaries",
+      "proof_refs": [
+        "ui1448-final-new-service-terminology-locales.log"
+      ]
+    },
+    "packages/shared/src/identity/__tests__/terminology-lint.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 6,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/identity/__tests__/terminology-lint.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "ceac2847eb170e49d70c978b957ae7e353caf907",
+      "current_blob": "ceac2847eb170e49d70c978b957ae7e353caf907",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "packages/shared/src/identity/terms.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/shared/src/identity/terms.ts",
+      "original_branch_preserved": true,
+      "source_blob": "f37b5bf7f5fa2fd43a35b79b7c556e32df3a1cb0",
+      "current_blob": "f37b5bf7f5fa2fd43a35b79b7c556e32df3a1cb0",
+      "consumer": "Existing current AppShell/MainContentPanel settings/gateway/native contract, retaining owned ProductTour scope and foreign session guard",
+      "proof_refs": [
+        "ui1448-all-final-controls.log",
+        "ui1448-final-current-electron-types.log"
+      ]
+    },
+    "packages/shared/src/toolchain/__tests__/installer-git-npm.test.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 1,
+      "source_deletions": 1,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "packages/shared/src/toolchain/__tests__/kinds.test.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 15,
+      "source_deletions": 4,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-isolation.test.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 181,
+      "source_deletions": 0,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 154,
+      "source_deletions": 0,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "packages/shared/src/toolchain/installer.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 34,
+      "source_deletions": 6,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "packages/shared/src/toolchain/manager.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 50,
+      "source_deletions": 3,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "packages/ui/src/components/annotations/__tests__/interaction-state-machine.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 1,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/ui/src/components/annotations/__tests__/interaction-state-machine.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "3d39d6198a90d6accc518a00f16d41fc084809e3",
+      "current_blob": "3d39d6198a90d6accc518a00f16d41fc084809e3",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "packages/ui/src/components/overlay/__tests__/rich-block-parity.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 1,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/ui/src/components/overlay/__tests__/rich-block-parity.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "e97bd00656c257b063b8be6c8b5db24aaaf5a017",
+      "current_blob": "e97bd00656c257b063b8be6c8b5db24aaaf5a017",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "packages/ui/src/components/overlay/__tests__/useRichBlockInteractions.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 1,
+      "source_deletions": 1,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "packages/ui/src/components/overlay/__tests__/useRichBlockInteractions.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "ad7613febf4c2e9be1be39769b91f96fcd90230a",
+      "current_blob": "ad7613febf4c2e9be1be39769b91f96fcd90230a",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    },
+    "plans/rox2/README.md": {
+      "status": "current_spec_plan_and_registry_receipt_replace_stale_source_report",
+      "owner": "root",
+      "source_additions": 5,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "plans/rox2/README.md",
+      "original_branch_preserved": true,
+      "source_blob": "81f28a72413922c3a8219d3387aa5d46f2a3fbf5",
+      "current_blob": "9d11b9b9f88e0b40c2a6ecc7efe29cb88c63a94e",
+      "consumer": "200-card identity and literal charter RPC contract; new handlers discovered separately, no whole200-card program acceptance",
+      "proof_refs": [
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "plans/rox2/__tests__/rox-readiness-ui-001.registry-stability.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 18,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "plans/rox2/__tests__/rox-readiness-ui-001.registry-stability.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "90d0fa5eedbfb0958e3814214d89278471f4f8ad",
+      "current_blob": "90d0fa5eedbfb0958e3814214d89278471f4f8ad",
+      "consumer": "200-card identity and literal charter RPC contract; new handlers discovered separately, no whole200-card program acceptance",
+      "proof_refs": [
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "plans/rox2/registry.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 67,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "plans/rox2/registry.ts",
+      "original_branch_preserved": true,
+      "source_blob": "a90740684d0bc829baceb4ea8c63472007cb6a7c",
+      "current_blob": "a90740684d0bc829baceb4ea8c63472007cb6a7c",
+      "consumer": "200-card identity and literal charter RPC contract; new handlers discovered separately, no whole200-card program acceptance",
+      "proof_refs": [
+        "ui1448-all-final-controls.log"
+      ]
+    },
+    "scripts/build/staged-servers.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 29,
+      "source_deletions": 3,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "scripts/build/staged-servers.ts",
+      "original_branch_preserved": true,
+      "source_blob": "404263a9366df13bf61e41bc99fb810d97282f1b",
+      "current_blob": "404263a9366df13bf61e41bc99fb810d97282f1b",
+      "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
+      "proof_refs": [
+        "docs/integration-history/portable-resources-20261003"
+      ]
+    },
+    "scripts/electron-build-resources.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 4,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "scripts/electron-build-resources.ts",
+      "original_branch_preserved": true,
+      "source_blob": "ca00b78453b3bbfa5f022802302f9dbfbab64bb7",
+      "current_blob": "ca00b78453b3bbfa5f022802302f9dbfbab64bb7",
+      "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
+      "proof_refs": [
+        "docs/integration-history/portable-resources-20261003"
+      ]
+    },
+    "scripts/rox-readiness-ui-001.native-protocol.test.ts": {
+      "status": "delivered_1452_current_portable_resources",
+      "owner": "root",
+      "source_additions": 119,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "scripts/rox-readiness-ui-001.native-protocol.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "bb03b8c0c548643ea3dd5ac97d8a1a3cec9c8bff",
+      "current_blob": "bc2a60fdd909cbf7e91ccb2641451f5f4f7c00ea",
+      "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
+      "proof_refs": [
+        "docs/integration-history/portable-resources-20261003"
+      ]
+    },
+    "scripts/rox-readiness-ui-001.resource-copy.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 57,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "scripts/rox-readiness-ui-001.resource-copy.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "3bc8a36054d2e132dbbedb735062db07ab9a72a8",
+      "current_blob": "3bc8a36054d2e132dbbedb735062db07ab9a72a8",
+      "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
+      "proof_refs": [
+        "docs/integration-history/portable-resources-20261003"
+      ]
+    },
+    "scripts/rox-readiness-ui-001.runner-electron.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 23,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "scripts/rox-readiness-ui-001.runner-electron.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "7d3e565073d3007547ba39c1325b08cf8d5cdbe5",
+      "current_blob": "7d3e565073d3007547ba39c1325b08cf8d5cdbe5",
+      "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
+      "proof_refs": [
+        "docs/integration-history/portable-resources-20261003"
+      ]
+    },
+    "scripts/rox-readiness-ui-001.runner.test.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 274,
+      "source_deletions": 0,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "scripts/test-all.ts": {
+      "status": "delivered_qualified_merged_slice",
+      "owner": "pr_scout",
+      "source_additions": 426,
+      "source_deletions": 0,
+      "checkout": "/tmp/rox-branch-integration-20261003/infra1448-worktree",
+      "base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+      "pr": 1455,
+      "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+      "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+      "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
+    },
+    "tests/e2e/meeting-agents/harness.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 18,
+      "source_deletions": 10,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "tests/e2e/meeting-agents/harness.ts",
+      "original_branch_preserved": true,
+      "source_blob": "e7c4b3f3d53c49b369a812fc514e525ed9df2586",
+      "current_blob": "e7c4b3f3d53c49b369a812fc514e525ed9df2586",
+      "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
+      "proof_refs": [
+        "docs/integration-history/portable-resources-20261003"
+      ]
+    },
+    "tests/macro-integration/wp-01-http.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 97,
+      "source_deletions": 32,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "tests/macro-integration/wp-01-http.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "7e0c2034ebb870390482eb4fc8525bc1e5ba8214",
+      "current_blob": "7e0c2034ebb870390482eb4fc8525bc1e5ba8214",
+      "consumer": "Actual PostgreSQL/HTTP/native WS/caller boundary with private UTF8 fixture and existing transport channels",
+      "proof_refs": [
+        "ui1448-owned-pg-final-utf8.log"
+      ]
+    },
+    "tests/macro-integration/wp-01-native-routing.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 20,
+      "source_deletions": 3,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "tests/macro-integration/wp-01-native-routing.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "66fdbf0b5c7ed5bb2b8dba6ec5e5fde97cd5327a",
+      "current_blob": "66fdbf0b5c7ed5bb2b8dba6ec5e5fde97cd5327a",
+      "consumer": "Actual PostgreSQL/HTTP/native WS/caller boundary with private UTF8 fixture and existing transport channels",
+      "proof_refs": [
+        "ui1448-owned-pg-final-utf8.log"
+      ]
+    },
+    "tests/macro-integration/wp-01-transport.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 42,
+      "source_deletions": 0,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "tests/macro-integration/wp-01-transport.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "d4de655d561e0c57d9f8e0f218ee47f5dfda46fe",
+      "current_blob": "d4de655d561e0c57d9f8e0f218ee47f5dfda46fe",
+      "consumer": "Actual PostgreSQL/HTTP/native WS/caller boundary with private UTF8 fixture and existing transport channels",
+      "proof_refs": [
+        "ui1448-owned-pg-final-utf8.log"
+      ]
+    },
+    "tests/macro-integration/wp-01.test.ts": {
+      "status": "incorporated_exact_source",
+      "owner": "root",
+      "source_additions": 2,
+      "source_deletions": 2,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "tests/macro-integration/wp-01.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "2448c0233c11d07bbf73bc83c58210761aac40c3",
+      "current_blob": "2448c0233c11d07bbf73bc83c58210761aac40c3",
+      "consumer": "Actual PostgreSQL/HTTP/native WS/caller boundary with private UTF8 fixture and existing transport channels",
+      "proof_refs": [
+        "ui1448-owned-pg-final-utf8.log"
+      ]
+    },
+    "tests/rox-suite/focus-native-ack.test.ts": {
+      "status": "incorporated_adapted_current_source_contracts",
+      "owner": "root",
+      "source_additions": 41,
+      "source_deletions": 12,
+      "qualified_source": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+      "current_path": "tests/rox-suite/focus-native-ack.test.ts",
+      "original_branch_preserved": true,
+      "source_blob": "cca074cddde3877d9788452cdb9976a217f63f48",
+      "current_blob": "0da377aea9d63b5eea4cabc6a16e2b465f4433fd",
+      "consumer": "Actual current production contract fixture adaptation; declared callback/AST/DOM/native-port seams, assertions retained",
+      "proof_refs": [
+        "ui1448-final-compat-results.json",
+        "ui1448-service-complete-seams.log"
+      ]
+    }
+  },
+  "source_branch_preserved": true,
+  "infra_additional_repairs": [
+    "scripts/electron-build-main.ts: selected customoutdir nowowns extensionworkeroutput",
+    "packages/shared/src/toolchain/__tests__/generated-readiness.test.ts: current platform suffix/retainedsource fixtures preserve all old assertions and add source/pointer authority",
+    "manager receipt/head bounded NOFOLLOW opened-identity inspection, pre-flip admission and exact current target"
+  ],
+  "infra_limits": [
+    "No native Windows/installed Electron acceptance",
+    "Root owns Navigation/resources/nativeharness; runner-electron test is paired with root actual missing resolveMeetingElectronExecutable implementation",
+    "No original branch deletion, no whole1448/source audit completion"
+  ],
+  "updated_at_utc": "2026-10-03T18:56:52.922074+00:00",
+  "infra_qualified_source": "30824044862932411ddb9d938255b598d2e96903",
+  "infra_integrated_main": "14cf6c561a4c39c47658ab1566e61c200041f649",
+  "infra_published_head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
+  "infra_receipt": "docs/integration-history/install-response-runner-20261003/verification.json",
+  "infra_status": "merged_bounded_slice",
+  "infra_pr": 1455,
+  "infra_merge_commit": "5211746270f5005d551ddc103970714520b25b67",
+  "root_disposition_complete": true,
+  "full_native_release_acceptance": false,
+  "root_navigation_additional_source": 1457,
+  "root_final_qualified_production_core": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+  "root_final_navigation_blob": "979d29d343db6b6124d7abbcdb3c002273080266",
+  "integration_main": "c9f149554f22b89cb3db1b65a3b9cb6b882f8dbb"
+}

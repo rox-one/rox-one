@@ -43,6 +43,7 @@ describe('ship-rox-chrome-leftover-post-960', () => {
     const retained = readFileSync(join(appShell, '../../platform/RetainedSurface.tsx'), 'utf8')
     expect(retained).toContain('element.inert = !visible')
     expect(retained).toContain("display: visible ? 'contents' : 'none'")
+    expect(host).toMatch(/<RetainedSurface[^>]*>\s*<InspectorHost \/>\s*<\/RetainedSurface>/)
     const start = inspector.indexOf('if (chromeCollapsed)')
     const collapsedReturn = inspector.indexOf('return (', start)
     const expandedReturn = inspector.indexOf('return (', collapsedReturn + 1)

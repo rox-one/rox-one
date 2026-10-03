@@ -55,10 +55,10 @@ async function fixtureBundle() {
     const onSwitchWorkspaceBySlug=next=>{if(switchMode==='missing')return false;if(switchMode==='reject')return Promise.reject(new Error('fixture switch rejected'));if(switchMode==='hold')return new Promise((resolve,reject)=>switches.push({next,resolve,reject}));slug=next;ws='ws-'+next;remote=ws==='ws-a'?'remote-a':null;render();return true};
     const onCreateSession=workspaceId=>new Promise(resolve=>createRequests.push({workspaceId,resolve}));
     const onInputChange=(id,input)=>{inputs.push({id,input})};
-    function render() { root.render(React.createElement(Provider,{store},React.createElement(NavigationProvider,{
+    function render() { const tree=React.createElement(Provider,{store},React.createElement(NavigationProvider,{
       workspaceId:ws, workspaceSlug:slug, remoteWorkspaceId:remote,
       isReady:ready,isSessionsReady:sessionsReady,onSwitchWorkspaceBySlug,onCreateSession,onInputChange,
-    },React.createElement(Probe)))); }
+    },React.createElement(Probe)));root.render(new URLSearchParams(location.search).get('strict')==='1'?React.createElement(React.StrictMode,null,tree):tree); }
     window.ui001nav={
       navigate: (route,options)=>state.navigate(route,options),
       deep: view=>deepLink({view}),
@@ -124,17 +124,18 @@ async function focusedHistorySwitchFailure(outcome: 'false' | 'reject') {
     if(outcome==='reject')ui.rejectSwitch(0)
     else ui.resolveSwitch(0,false)
   },outcome)
-  await page.waitForFunction(()=>{
-    const params=new URL(location.href).searchParams
-    return params.get('ws')==='a'&&params.get('route')==='notes/note/a'
-  })
+  await page.waitForTimeout(100)
+  // Current unknown-workspace ownership intentionally retains the requested
+  // address. Recovery uses a real local history request, never a normal
+  // navigate() call that would independently clear the stuck switch flag.
+  expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')
   const current=await snapshot()
   expect(current.ws).toBe('ws-a')
-  expect(current.nav.details.noteId).toBe('a')
+  expect(current.nav.navigator).toBe('unavailable')
   expect(current.panels.map((panel: {route: string})=>panel.route)).toEqual(['notes/note/a','home'])
-  // Resume another actual focus intent, without navigate() clearing the flags.
-  await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs('home')
-  await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
+  await popCurrentWorkspacePanels('home');await routeIs('home')
+  await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+  await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
   expect(new URL(page.url()).searchParams.get('ws')).toBe('a')
 }
 
@@ -248,13 +249,14 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('notes/note/note-a')
   })
 
-  browserTest('missing or rejected workspace history targets release suppression and retain current selection',async()=>{
+  browserTest('missing or rejected workspace history targets retain unavailable address until explicit local recovery',async()=>{
     await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
     for (const mode of ['missing','reject']) {
       await page.evaluate(mode=>{(window as any).ui001nav.switchMode(mode);(window as any).ui001nav.pop('?ws=gone&route=notes%2Fnote%2Fforeign')},mode)
-      await page.waitForFunction(()=>new URL(location.href).searchParams.get('ws')==='a')
+      await page.waitForFunction(()=>JSON.parse(document.querySelector('output')!.textContent!).nav.navigator==='unavailable')
+      expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')
       expect((await snapshot()).ws).toBe('ws-a')
-      expect((await snapshot()).nav.details.noteId).toBe('a')
+      expect((await snapshot()).nav.navigator).toBe('unavailable')
       await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')
       await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
       await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/a'));await routeIs('notes/note/a')
@@ -294,12 +296,11 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.waitForTimeout(100)
     expect(new URL(page.url()).searchParams.get('ws')).toBe('newer')
     expect(new URL(page.url()).searchParams.get('route')).toBe('notes/note/new-target')
-    expect((await snapshot()).nav.details.noteId).toBe('a')
+    expect((await snapshot()).nav.navigator).toBe('unavailable')
     await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(1,false))
-    await page.waitForFunction(()=>{
-      const params=new URL(location.href).searchParams
-      return params.get('ws')==='a'&&params.get('route')==='notes/note/a'
-    })
+    await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('ws')).toBe('newer')
+    expect(new URL(page.url()).searchParams.get('route')).toBe('notes/note/new-target')
     await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')
     await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
   })
@@ -363,12 +364,11 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.remote('remote-new'))
     await page.waitForFunction(()=>(window as any).ui001nav.deepListeners().at(-1)?.remoteWorkspaceId==='remote-new')
     await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(0,false))
-    await page.waitForFunction(()=>{
-      const params=new URL(location.href).searchParams
-      return params.get('ws')==='a'&&params.get('route')==='notes/note/a'
-    })
+    await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')
+    expect(new URL(page.url()).searchParams.get('route')).toBe('notes/note/foreign')
     expect((await snapshot()).ws).toBe('ws-a')
-    expect((await snapshot()).nav.details.noteId).toBe('a')
+    expect((await snapshot()).nav.navigator).toBe('unavailable')
     await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')
     await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
   })
@@ -400,6 +400,30 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
     await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs(target)
     await page.waitForFunction(route=>new URL(location.href).searchParams.get('route')===route,target)
+  })
+
+  browserTest('actual StrictMode mount releases restoration without losing later focus history',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa&strict=1');await routeIs('notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('home',{newPanel:true}));await routeIs('home')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
+    await page.goBack();await routeIs('home')
+    expect((await snapshot()).panels.map((panel:{route:string})=>panel.route)).toEqual(['notes/note/a','home'])
+  })
+
+  browserTest('actual StrictMode mount preserves a pending foreign history request through focus and late refusal',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa&strict=1');await routeIs('notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('home',{newPanel:true}));await routeIs('home')
+    await page.evaluate(()=>{const ui=(window as any).ui001nav;ui.switchMode('hold');ui.pop('?ws=gone&route=notes%2Fnote%2Fforeign&strict=1')})
+    await page.waitForFunction(()=>(window as any).ui001nav.pendingSwitches().length===1)
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(0,false));await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')
+    expect((await snapshot()).nav.navigator).toBe('unavailable')
+    await popCurrentWorkspacePanels('home');await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
   })
 
   browserTest('canonical page broadcasts beat stale list replies and former workspace replies are ignored',async()=>{

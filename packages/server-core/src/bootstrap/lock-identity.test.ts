@@ -28,7 +28,7 @@ describe('lockHolderMatchesLock (#978)', () => {
   })
 
   it('matches execName case-insensitively', () => {
-    expect(lockHolderMatchesLock(lockWith('craft agents.exe'), 'ROX.EXE', null)).toBe(true)
+    expect(lockHolderMatchesLock(lockWith('rox.exe'), 'ROX.EXE', null)).toBe(true)
   })
 
   it('matches dev shapes the legacy heuristic missed (bun holding the lock)', () => {
@@ -51,7 +51,7 @@ describe('lockHolderMatchesLock (#978)', () => {
 
   describe('legacy locks without execName', () => {
     it('falls back to the craft-substring heuristic on the command line', () => {
-      expect(lockHolderMatchesLock(lockWith(undefined), null, '/Applications/ROX.app/Contents/MacOS/ROX')).toBe(true)
+      expect(lockHolderMatchesLock(lockWith(undefined), null, '/Applications/Craft Agents.app/Contents/MacOS/Craft Agents')).toBe(true)
       expect(lockHolderMatchesLock(lockWith(undefined), null, '/usr/libexec/swcd')).toBe(false)
     })
 

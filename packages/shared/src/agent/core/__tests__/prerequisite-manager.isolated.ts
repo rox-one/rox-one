@@ -5,19 +5,30 @@
  * until required files (like guide.md) have been read.
  */
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
+import * as actualFs from 'node:fs';
 import { resolve, join } from 'node:path';
+import { resolveConfigDir } from '../../../config/paths.ts';
 import { PrerequisiteManager } from '../prerequisite-manager.ts';
 
 // Mock existsSync to control guide.md existence
-const originalExistsSync = existsSync;
+const actualStorage = await import('../../../config/storage.ts');
+const originalExistsSync = actualFs.existsSync;
 let mockExistsPaths: Set<string> = new Set();
+let browserEnabled = true;
 
 mock.module('node:fs', () => ({
-  existsSync: (path: string) => mockExistsPaths.has(path),
-  // Re-export anything else the module needs
-  readFileSync: originalExistsSync,
+  ...actualFs,
+  existsSync: (path: Parameters<typeof actualFs.existsSync>[0]) => {
+    if (typeof path === 'string' && (path.startsWith(WORKSPACE_ROOT + '/') || path === browserDocPath())) {
+      return mockExistsPaths.has(path);
+    }
+    return originalExistsSync(path);
+  },
+}));
+
+mock.module('../../../config/storage.ts', () => ({
+  ...actualStorage,
+  getBrowserToolEnabled: () => browserEnabled,
 }));
 
 const WORKSPACE_ROOT = '/test/workspace';
@@ -27,7 +38,7 @@ function guidePath(slug: string): string {
 }
 
 function browserDocPath(): string {
-  return resolve(join(homedir(), '.craft-agent', 'docs', 'browser-tools.md'));
+  return resolve(join(resolveConfigDir(), 'docs', 'browser-tools.md'));
 }
 
 describe('PrerequisiteManager', () => {
@@ -37,6 +48,7 @@ describe('PrerequisiteManager', () => {
   beforeEach(() => {
     debugMessages = [];
     mockExistsPaths = new Set();
+    browserEnabled = true;
     manager = new PrerequisiteManager({
       workspaceRootPath: WORKSPACE_ROOT,
       onDebug: (msg) => debugMessages.push(msg),
@@ -92,7 +104,7 @@ describe('PrerequisiteManager', () => {
       const docsPath = browserDocPath();
       mockExistsPaths.add(docsPath);
 
-      const result = manager.checkPrerequisites('browser_snapshot');
+      const result = manager.checkPrerequisites('browser_tool');
       expect(result.allowed).toBe(false);
       expect(result.blockReason).toContain(docsPath);
     });
@@ -104,6 +116,20 @@ describe('PrerequisiteManager', () => {
       const result = manager.checkPrerequisites('mcp__session__browser_tool');
       expect(result.allowed).toBe(false);
       expect(result.blockReason).toContain(docsPath);
+    });
+
+    it('does not treat browser commands inside browser_tool as separate callable tools', () => {
+      mockExistsPaths.add(browserDocPath());
+      for (const command of ['browser_snapshot', 'browser_open', 'browser_click']) {
+        expect(manager.checkPrerequisites(command).allowed).toBe(true);
+      }
+    });
+
+    it('skips the browser prerequisite while the built-in browser tool is disabled', () => {
+      mockExistsPaths.add(browserDocPath());
+      browserEnabled = false;
+      expect(manager.checkPrerequisites('browser_tool').allowed).toBe(true);
+      expect(manager.checkPrerequisites('mcp__session__browser_tool').allowed).toBe(true);
     });
   });
 
@@ -292,11 +318,11 @@ describe('PrerequisiteManager', () => {
       const docsPath = browserDocPath();
       mockExistsPaths.add(docsPath);
 
-      expect(manager.checkPrerequisites('browser_open').allowed).toBe(false);
-      expect(manager.checkPrerequisites('browser_open').allowed).toBe(false);
+      expect(manager.checkPrerequisites('browser_tool').allowed).toBe(false);
+      expect(manager.checkPrerequisites('browser_tool').allowed).toBe(false);
 
       manager.trackReadTool({ file_path: docsPath });
-      expect(manager.checkPrerequisites('browser_open').allowed).toBe(true);
+      expect(manager.checkPrerequisites('browser_tool').allowed).toBe(true);
     });
   });
 

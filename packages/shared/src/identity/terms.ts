@@ -63,8 +63,8 @@ const FORBIDDEN_IN_NORMAL_UI: Array<{ id: string; pattern: RegExp }> = [
   { id: '~/.omp', pattern: /~\/\.omp\b|\/\.omp\// },
   { id: 'oh-my-pi', pattern: /oh-my-pi/i },
   { id: 'Hermes', pattern: /\bHermes\b/ },
-  { id: 'ROX', pattern: /ROX/ },
-  { id: 'ROX', pattern: /ROX(?!s)/ },
+  // Product copy uses Rox; documented environment identifiers remain exact.
+  { id: 'ROX', pattern: /\bROX\b/ },
   { id: 'Craft', pattern: /\bCraft\b/ },
   // Latin "Pi" as a whole word — not French Pièces / Pile / etc.
   { id: 'Pi', pattern: /(?<![A-Za-z\u00C0-\u024F])Pi(?![A-Za-z\u00C0-\u024F])/ },
