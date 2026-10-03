@@ -5,6 +5,7 @@
  * an item into a personal task or a reply DRAFT (a pre-filled, unsent chat).
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ExtraScreenItemUnavailable } from '../ExtraScreenItemUnavailable'
 import { useTranslation } from 'react-i18next'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
@@ -66,6 +67,7 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notes, setNotes] = useState<{ id: string; title: string; updatedAt?: number }[]>([])
+  const [notesLoadedWorkspace, setNotesLoadedWorkspace] = useState<string | null | undefined>(undefined)
 
   useEffect(() => {
     setData(loadRadar(workspaceId))
@@ -78,15 +80,18 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
   }, [workspaceId])
 
   const sessions = useWorkspaceSessions(workspaceId)
-  const { meetings } = useMeetings(workspaceId)
+  const { meetings, loaded: meetingsLoaded } = useMeetings(workspaceId)
   const feed = useFeedItems(workspaceId)
   useEffect(() => {
     let cancelled = false
     const api = window.electronAPI
-    if (!workspaceId || typeof api?.listNotes !== 'function') return
+    setNotes([])
+    setNotesLoadedWorkspace(undefined)
+    if (!workspaceId || typeof api?.listNotes !== 'function') { setNotesLoadedWorkspace(workspaceId); return }
     api.listNotes(workspaceId)
       .then((list) => { if (!cancelled) setNotes(list.map((n) => ({ id: n.id, title: n.title, updatedAt: n.updatedAt }))) })
       .catch(() => { if (!cancelled) setNotes([]) })
+      .finally(() => { if (!cancelled) setNotesLoadedWorkspace(workspaceId) })
     return () => { cancelled = true }
   }, [workspaceId])
 
@@ -100,7 +105,9 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
     if (!workspaceId || !sweep) { setSyncState(null); return }
     if (sweep.parsedAt) { setSyncState(sweep.parseFailed ? 'failed' : 'done'); return }
     let cancelled = false
-    const tick = () => syncRadarSweep(workspaceId, sweep.id).then((state) => { if (!cancelled) setSyncState(state) })
+    const tick = () => syncRadarSweep(workspaceId, sweep.id)
+      .then((state) => { if (!cancelled) setSyncState(state) })
+      .catch(() => { if (!cancelled) setSyncState('failed') })
     void tick()
     const timer = window.setInterval(() => { void tick() }, 5000)
     return () => { cancelled = true; window.clearInterval(timer) }
@@ -159,6 +166,37 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
     ts ? new Date(ts).toLocaleString(i18n.language, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
 
   const selectedTopic = selectedTopicId ? data.topics.find((topic) => topic.id === selectedTopicId) ?? null : null
+
+  // An explicit address owns the full pane. Fixed overview columns can consume
+  // all available width and hide both its detail and its recovery action.
+  if (itemId) {
+    const pendingSource = selectedTopicId === null && !selectedItem && (
+      (itemId.startsWith('feed-') && !feed.loaded)
+      || (itemId.startsWith('loc-note-') && notesLoadedWorkspace !== workspaceId)
+      || (itemId.startsWith('loc-meeting-') && !meetingsLoaded)
+      || (itemId.startsWith('rad-') && !!sweep && !sweep.parsedAt && (syncState === null || syncState === 'running'))
+    )
+    return (
+      <ScreenRoot>
+        <ScreenDetail>
+          {selectedTopic ? (
+            <TopicEditor
+              key={selectedTopic.id}
+              topic={selectedTopic}
+              onUpdate={(patch) => updateTopic(selectedTopic.id, patch)}
+              onDelete={() => { save({ ...data, topics: data.topics.filter((topic) => topic.id !== selectedTopic.id) }); select(null) }}
+            />
+          ) : selectedItem ? (
+            <ItemDetail key={selectedItem.id} item={selectedItem} language={language} onDismiss={() => dismiss(selectedItem.id)} />
+          ) : pendingSource ? (
+            <div role="status" data-testid="radar-item-loading" data-item-id={itemId}>{t('common.loading')}</div>
+          ) : (
+            <ExtraScreenItemUnavailable screen="radar" itemId={itemId} />
+          )}
+        </ScreenDetail>
+      </ScreenRoot>
+    )
+  }
 
   return (
     <ScreenRoot>
@@ -272,18 +310,7 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
       </ScreenColumn>
 
       <ScreenDetail>
-        {selectedTopic ? (
-          <TopicEditor
-            key={selectedTopic.id}
-            topic={selectedTopic}
-            onUpdate={(patch) => updateTopic(selectedTopic.id, patch)}
-            onDelete={() => { save({ ...data, topics: data.topics.filter((topic) => topic.id !== selectedTopic.id) }); select(null) }}
-          />
-        ) : selectedItem ? (
-          <ItemDetail key={selectedItem.id} item={selectedItem} language={language} onDismiss={() => dismiss(selectedItem.id)} />
-        ) : (
-          <EmptyState title={t('extraScreens.radar.pickTitle')} body={t('extraScreens.radar.pickBody')} />
-        )}
+        <EmptyState title={t('extraScreens.radar.pickTitle')} body={t('extraScreens.radar.pickBody')} />
       </ScreenDetail>
     </ScreenRoot>
   )

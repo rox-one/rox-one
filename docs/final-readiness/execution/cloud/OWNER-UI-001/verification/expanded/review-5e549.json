@@ -1,0 +1,46 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "baseReviewedRevision": "5a0b769b894aed2ed09ba8bcbe01a41cf8149d76",
+  "reviewedRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "reviewedAtUtc": "2026-10-03T15:47:37.612936+00:00",
+  "verdict": "no additional actionable defect found within reviewed UI001 scope after verified P1 repair",
+  "scope": "Final deep-link owner effect repair, sourcebinding of both mounted lanes, and upstream AppShell service focus/SurfaceTabs interaction with monotonic navigation ownership. Upstream settings/promo work is outside this bounded review.",
+  "sources": [
+    {
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "sha256": "f9849afff8791539720582497d0fbf9c9b62bad33598a864ff28970b03d98829"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "sha256": "5ad7e50d2349a68d03de0402810925cca760a580efe1747383d61e679691052b"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/service-navigation.ts",
+      "sha256": "c70de20413482f2873923d92a7582336b6ff29bb7e77038b6b37eff5867decfd"
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/SurfaceTabs.tsx",
+      "sha256": "969bbb9cfd638b19b895f73047d71fe063af43e2ced8c84a98d0e8c032582461"
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/surface-tab-navigation.ts",
+      "sha256": "9863d175b3655f4f5bb304a6b259f9b129fb26e82a52ecd708b0d39436ea058d"
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/knowledge-tab-titles.ts",
+      "sha256": "b4bd8570c3b950bf7a4c7df020fc738ab912fddd3a3f3ed624a28bd4f8f4a021"
+    }
+  ],
+  "closedSourceFinding": "UI001-REVIEW-P1-DEEP-LINK-OWNER",
+  "evidence": "harness/rox-readiness-ui-001.mounted-result-5e549.json",
+  "originalAcceptanceUnchanged": true,
+  "limitations": [
+    "This review is bounded to source and explicit fixture callbacks; independent native, service and full target acceptance remain separate.",
+    "Native Windows10/11 scaling100/150/200%, macOS Retina/modal/native overlap and actual hosted web zoom coverage have not been observed by this worker.",
+    "Original full functional verification and DoD remain externally incomplete. This review does not authorize a claim of full acceptance."
+  ],
+  "fullDoDClosed": false
+}

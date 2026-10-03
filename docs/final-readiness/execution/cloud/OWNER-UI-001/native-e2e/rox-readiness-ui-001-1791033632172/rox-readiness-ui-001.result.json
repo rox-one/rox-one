@@ -1,0 +1,50 @@
+{
+  "inputRevision": "9fa0dea8b7667fd472fe651849ca0d093bf0a006",
+  "sourceHashes": {
+    "apps/electron/src/main/index.ts": "bd36e0b3d7cddf1f3d9cc75e90f793b59a586e3edf70e30a52d35a901d7d7812",
+    "apps/electron/src/shared/route-parser.ts": "5c53254719063adf08802d72dda47b2ae4d75755e5ccdc2bcf36af16ddb1a3d1",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "5260a882d2b94e3dbcad3527df067f10120e291ba8366c564639423465e8ea44",
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e4246c8ca6c5d99d16aa42705d7520c05ca54be7aa3a556cd2a2d6c39628d27e",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "1be415abb14553e7e5958fc38ac6a24cd36abaa34de409a8a8b9b441037b2e0c",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "d085966c69ee1e51c069f63b787bc14efcc965e44090429d3b528c1d965e656a"
+  },
+  "buildHashes": {
+    "apps/electron/dist/main.cjs": "1c671ac2590d8dd0e22a893aebc0dec1cb953a95dd2302278361bc32fa282458",
+    "apps/electron/dist/bootstrap-preload.cjs": "98cb5432096598fe7c2380ed70cfa328eb37ea53db864349a5f544ee467ad548",
+    "apps/electron/dist/renderer/index.html": "ffa4c1aad9d896b27eb5c7a0c61b4bccea4ec49ed522836b0724d2f6a90e4ae6"
+  },
+  "profile": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-uTDrq0",
+  "acceptanceLevel": "actual local macOS Electron with shipped RPC and disposable canonical backend",
+  "fullDoDClosed": false,
+  "platformLimits": [
+    "Windows 10/11 DPI and native acceptance not run",
+    "Hosted web ingress/transport acceptance not run"
+  ],
+  "protocolRegistration": "explicit test-only guard; OS protocol registration itself not exercised",
+  "environmentIsolation": {
+    "homePreserved": true,
+    "credentialsInherited": false,
+    "realLoginShellWithoutStartupFiles": true,
+    "executableInventory": [
+      "bun",
+      "node",
+      "sh",
+      "env",
+      "git",
+      "uname",
+      "which"
+    ],
+    "keychainCliAvailable": false
+  },
+  "stage": "boot-native-product",
+  "status": "failed",
+  "error": "launch: Timeout 60000ms exceeded.",
+  "stages": [
+    {
+      "name": "boot-native-product",
+      "at": "2026-10-03T13:21:38.343Z"
+    }
+  ],
+  "screenshots": [],
+  "errors": []
+}

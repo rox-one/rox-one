@@ -1,0 +1,3 @@
+Actual test callbacks via task-local Node adapter; Node v26.8.2; external Chromium; no Bun pass claim
+[PASS] actual localStorage persists valid sizes across reload and other windows 1241ms
+{"runtime":"Node actual source callbacks adapter","pass":1,"fail":0,"assertions":3,"cases":1,"registeredCases":11,"elapsedMs":1299}

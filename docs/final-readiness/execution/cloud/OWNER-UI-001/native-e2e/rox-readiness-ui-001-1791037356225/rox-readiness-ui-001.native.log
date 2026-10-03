@@ -1,0 +1,439 @@
+2026-10-03T14:23:09.337Z INFO   2026-10-03T14:23:09.337Z [PowerShellValidator] Root set to: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/dist/resources
+2026-10-03T14:23:09.338Z INFO   2026-10-03T14:23:09.338Z [docs] Synced 0 docs
+2026-10-03T14:23:09.338Z INFO   2026-10-03T14:23:09.338Z [bundled-skills] Bundle root not found — skipping sync
+2026-10-03T14:23:09.339Z INFO   2026-10-03T14:23:09.339Z [release-notes] Synced 0 release notes
+2026-10-03T14:23:09.340Z INFO  [main] Registered thumbnail:// protocol handler
+2026-10-03T14:23:09.340Z INFO   [proxy] Applying proxy settings: {"enabled":false,"source":"system","hasHttpProxy":false,"hasHttpsProxy":false,"hasNoProxy":false}
+2026-10-03T14:23:09.337Z [PowerShellValidator] Root set to: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/dist/resources
+2026-10-03T14:23:09.338Z [docs] Synced 0 docs
+2026-10-03T14:23:09.338Z [bundled-skills] Bundle root not found — skipping sync
+2026-10-03T14:23:09.339Z [release-notes] Synced 0 release notes
+2026-10-03T14:23:09.384Z INFO  [main] Badge icon initialized: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/resources/icon.png
+2026-10-03T14:23:09.385Z INFO  [main] Instance badge set: 96
+2026-10-03T14:23:09.386Z INFO  [main] [browser-pane] Toolbar IPC handlers registered
+2026-10-03T14:23:09.386Z INFO  [main] [browser-pane] Capability IPC handler registered
+2026-10-03T14:23:09.393Z INFO   2026-10-03T14:23:09.393Z [config] No bundled assets dir found - using fallback config-defaults
+2026-10-03T14:23:09.394Z INFO   [bootstrap] Config artifacts initialized
+2026-10-03T14:23:09.393Z [config] No bundled assets dir found - using fallback config-defaults
+2026-10-03T14:23:09.395Z INFO   [bootstrap] Global config found
+(node:98300) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `Electron --trace-warnings ...` to show where the warning was created)
+2026-10-03T14:23:09.416Z INFO   [session] [browser-pane] setRpcServer called — remote browser bridge is now available
+2026-10-03T14:23:09.417Z INFO  [main] [messaging-gateway] messaging bootstrap created {"timestamp":"2026-10-03T14:23:09.417Z","level":"info","scope":"messaging-gateway","component":"bootstrap","event":"messaging_bootstrap_created","workerEntry":"/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/packages/messaging-whatsapp-worker/dist/worker.cjs","nodeBin":"(host default)","pairingMode":"qr","message":"messaging bootstrap created"}
+2026-10-03T14:23:09.429Z INFO   2026-10-03T14:23:09.429Z [config] Seeded default rox-kimi connection (existing config had no LLM connections)
+2026-10-03T14:23:09.429Z [config] Seeded default rox-kimi connection (existing config had no LLM connections)
+2026-10-03T14:23:09.430Z INFO   2026-10-03T14:23:09.430Z [CredentialManager] Backend available: secure-storage (priority 100)
+2026-10-03T14:23:09.430Z [CredentialManager] Backend available: secure-storage (priority 100)
+2026-10-03T14:23:09.430Z [CredentialManager] Using backend: secure-storage
+2026-10-03T14:23:09.430Z INFO   2026-10-03T14:23:09.430Z [CredentialManager] Using backend: secure-storage
+2026-10-03T14:23:09.431Z INFO   [session] Reinitializing auth for connection: rox-kimi (none)
+2026-10-03T14:23:09.432Z INFO   [session] Auth env vars set for connection: rox-kimi
+2026-10-03T14:23:09.432Z INFO   2026-10-03T14:23:09.432Z [summarize] resetSummarizationClient called (no-op)
+2026-10-03T14:23:09.433Z INFO   [session] Setting up ConfigWatcher for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84 (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001)
+2026-10-03T14:23:09.434Z INFO   2026-10-03T14:23:09.434Z [ConfigWatcher] Starting for workspace: ui-001
+2026-10-03T14:23:09.432Z [summarize] resetSummarizationClient called (no-op)
+2026-10-03T14:23:09.434Z [ConfigWatcher] Starting for workspace: ui-001
+2026-10-03T14:23:09.438Z INFO   2026-10-03T14:23:09.438Z [ConfigWatcher] Watching global configs: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4
+2026-10-03T14:23:09.438Z INFO   2026-10-03T14:23:09.438Z [ConfigWatcher] Setting up workspace watcher for: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:09.439Z INFO   2026-10-03T14:23:09.439Z [ConfigWatcher] Watching workspace recursively: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:09.439Z INFO   2026-10-03T14:23:09.439Z [ConfigWatcher] Watching app themes directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/themes
+2026-10-03T14:23:09.439Z INFO   2026-10-03T14:23:09.439Z [ConfigWatcher] Watching app permissions directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/permissions
+2026-10-03T14:23:09.439Z INFO   2026-10-03T14:23:09.439Z [ConfigWatcher] Watching context docs directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/context
+2026-10-03T14:23:09.440Z INFO   2026-10-03T14:23:09.440Z [ConfigWatcher] Known sources: ["applications","brave","codegraph","context7","deepwiki","e2b","everything-mcp","exa","firecrawl","firecrawl-mcp","mem0","memory","notes","playwright","projects","qdrant","qmd","sessions","tasks","telegram-mcp","telegram-support","ui001-local-source","weaviate","windows-commander","windows-mcp","workspace-tree"]
+2026-10-03T14:23:09.440Z INFO   2026-10-03T14:23:09.440Z [ConfigWatcher] Known skills: ["ui001-workspace-skill"]
+2026-10-03T14:23:09.440Z INFO   2026-10-03T14:23:09.440Z [ConfigWatcher] Known themes: []
+2026-10-03T14:23:09.438Z [ConfigWatcher] Watching global configs: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4
+2026-10-03T14:23:09.438Z [ConfigWatcher] Setting up workspace watcher for: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:09.439Z [ConfigWatcher] Watching workspace recursively: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:09.439Z [ConfigWatcher] Watching app themes directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/themes
+2026-10-03T14:23:09.439Z [ConfigWatcher] Watching app permissions directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/permissions
+2026-10-03T14:23:09.439Z [ConfigWatcher] Watching context docs directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/context
+2026-10-03T14:23:09.440Z [ConfigWatcher] Known sources: ["applications","brave","codegraph","context7","deepwiki","e2b","everything-mcp","exa","firecrawl","firecrawl-mcp","mem0","memory","notes","playwright","projects","qdrant","qmd","sessions","tasks","telegram-mcp","telegram-support","ui001-local-source","weaviate","windows-commander","windows-mcp","workspace-tree"]
+2026-10-03T14:23:09.440Z [ConfigWatcher] Known skills: ["ui001-workspace-skill"]
+2026-10-03T14:23:09.440Z [ConfigWatcher] Known themes: []
+2026-10-03T14:23:09.441Z INFO   2026-10-03T14:23:09.441Z [ConfigWatcher] Started watching files
+2026-10-03T14:23:09.441Z [ConfigWatcher] Started watching files
+2026-10-03T14:23:09.441Z [PERF] configWatcher.start: 6.92ms (ensureDir:0.2ms → watchGlobalConfigs:4.4ms → watchWorkspaceDir:4.9ms → watchAppThemesDir:5.1ms → watchAppPermissionsDir:5.3ms → watchContextDocsDir:5.4ms → scanSources:5.9ms → scanSkills:6.1ms → scanAppThemes:6.2ms → initLlmConnectionsHash:6.8ms) {"workspaceId":"ui-001"}
+2026-10-03T14:23:09.443Z INFO   2026-10-03T14:23:09.443Z [event-bus] DEBUG [EventBus] Created for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:09.443Z [event-bus] DEBUG [EventBus] Created for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:09.454Z INFO   2026-10-03T14:23:09.454Z [automation-system] DEBUG [AutomationSystem] Loaded 30 actions from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:09.455Z INFO   2026-10-03T14:23:09.455Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:23:09.455Z INFO   2026-10-03T14:23:09.455Z [prompt-handler] DEBUG [PromptHandler] Subscribed to event bus
+2026-10-03T14:23:09.456Z INFO   2026-10-03T14:23:09.456Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:23:09.456Z INFO   2026-10-03T14:23:09.456Z [retry-scheduler] DEBUG [RetryScheduler] Started
+2026-10-03T14:23:09.456Z INFO   2026-10-03T14:23:09.456Z [webhook-handler] DEBUG [WebhookHandler] Subscribed to event bus
+2026-10-03T14:23:09.456Z INFO   2026-10-03T14:23:09.456Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:23:09.456Z INFO   2026-10-03T14:23:09.456Z [event-log-handler] DEBUG [EventLogHandler] Subscribed to event bus, logging to /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/events.jsonl
+2026-10-03T14:23:09.456Z INFO   2026-10-03T14:23:09.456Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:23:09.457Z INFO   2026-10-03T14:23:09.457Z [script-handler] DEBUG [ScriptHandler] Subscribed to event bus
+2026-10-03T14:23:09.457Z INFO   2026-10-03T14:23:09.457Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:23:09.457Z INFO   2026-10-03T14:23:09.457Z [knowledge-handler] DEBUG [KnowledgeHandler] Subscribed to event bus
+2026-10-03T14:23:09.457Z INFO   2026-10-03T14:23:09.457Z [automation-system] DEBUG [AutomationSystem] Handlers created and subscribed
+2026-10-03T14:23:09.457Z INFO   2026-10-03T14:23:09.457Z [automation-system] DEBUG [AutomationSystem] Scheduler started
+2026-10-03T14:23:09.457Z INFO   2026-10-03T14:23:09.457Z [automation-system] DEBUG [AutomationSystem] Created for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:09.457Z INFO   [session] Initialized AutomationSystem for workspace 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:09.459Z INFO   2026-10-03T14:23:09.459Z [Mode] Set permission mode to allow-all for session 261003-alert-obsidian (changedBy=restore, modeVersion=1)
+2026-10-03T14:23:09.460Z INFO   2026-10-03T14:23:09.460Z [Mode] Set permission mode to allow-all for session 261003-sleek-lagoon (changedBy=restore, modeVersion=1)
+2026-10-03T14:23:09.460Z INFO   [session] Loaded 2 sessions from disk (metadata only)
+2026-10-03T14:23:09.464Z INFO   Rox server listening on ws://127.0.0.1:50709
+2026-10-03T14:23:09.466Z INFO  [main] [messaging] Fan-out sink active for 1 workspace(s)
+2026-10-03T14:23:09.454Z [automation-system] DEBUG [AutomationSystem] Loaded 30 actions from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:09.455Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:23:09.455Z [prompt-handler] DEBUG [PromptHandler] Subscribed to event bus
+2026-10-03T14:23:09.456Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:23:09.456Z [retry-scheduler] DEBUG [RetryScheduler] Started
+2026-10-03T14:23:09.456Z [webhook-handler] DEBUG [WebhookHandler] Subscribed to event bus
+2026-10-03T14:23:09.456Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:23:09.456Z [event-log-handler] DEBUG [EventLogHandler] Subscribed to event bus, logging to /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/events.jsonl
+2026-10-03T14:23:09.456Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:23:09.457Z [script-handler] DEBUG [ScriptHandler] Subscribed to event bus
+2026-10-03T14:23:09.457Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:23:09.457Z [knowledge-handler] DEBUG [KnowledgeHandler] Subscribed to event bus
+2026-10-03T14:23:09.457Z [automation-system] DEBUG [AutomationSystem] Handlers created and subscribed
+2026-10-03T14:23:09.457Z [automation-system] DEBUG [AutomationSystem] Scheduler started
+2026-10-03T14:23:09.457Z [automation-system] DEBUG [AutomationSystem] Created for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:09.459Z [PERF] session.listSessions: 0.70ms (readdir:0.1ms → parsed:0.7ms) {"count":2}
+2026-10-03T14:23:09.459Z [Mode] Set permission mode to allow-all for session 261003-alert-obsidian (changedBy=restore, modeVersion=1)
+2026-10-03T14:23:09.460Z [Mode] Set permission mode to allow-all for session 261003-sleek-lagoon (changedBy=restore, modeVersion=1)
+2026-10-03T14:23:09.593Z INFO  [window] Created window for workspace 781b41fb-8a33-12d1-409f-a52c3034ad84 (focused: false)
+2026-10-03T14:23:09.594Z INFO  [main] Created window for first workspace: UI-001 acceptance
+2026-10-03T14:23:09.597Z INFO  [main] [power] Power manager initialized {"settingEnabled":false}
+2026-10-03T14:23:09.598Z INFO  [main] [auto-update] Skipping auto-update in dev mode
+2026-10-03T14:23:09.599Z INFO  [main] App initialized successfully
+2026-10-03T14:23:09.599Z INFO  [main] Debug mode enabled - logs at: /Users/t/Library/Logs/@rox/electron/main.log
+2026-10-03T14:23:09.599Z INFO  [main] Messaging gateway log path: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/logs/messaging-gateway.log
+2026-10-03T14:23:09.683Z INFO   [bootstrap] Toolchain ensureAll scheduled
+2026-10-03T14:23:10.421Z INFO   2026-10-03T14:23:10.421Z [ws-rpc-server] INFO  Client connected {"clientId":"480de918-94b6-4dd7-a2dd-14f753d687d7","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:10.421Z [ws-rpc-server] INFO  Client connected {"clientId":"480de918-94b6-4dd7-a2dd-14f753d687d7","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:10.604Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:10.610Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:10.664Z INFO   personalTasks: migrated 0 task(s) from localStorage (skipped 0)
+2026-10-03T14:23:10.736Z INFO   2026-10-03T14:23:10.736Z [ConfigWatcher] preferences.json changed
+2026-10-03T14:23:10.736Z [ConfigWatcher] preferences.json changed
+2026-10-03T14:23:11.102Z INFO  [window] Updated window 1 from workspace 781b41fb-8a33-12d1-409f-a52c3034ad84 to 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:11.102Z [PERF] ipc.switchWorkspace: 0.45ms {"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:11.184Z INFO   AUTOMATIONS_GET: Loading automations for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:11.192Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:11.195Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:11.196Z DEBUG  [session] Cold-load triggered for persistSession on 261003-alert-obsidian
+2026-10-03T14:23:11.196Z DEBUG  [session] Cold-hydrated 0 messages for session 261003-alert-obsidian
+2026-10-03T14:23:11.196Z [PERF] session.loadSession: 0.16ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:11.198Z [PERF] session.loadSession: 0.11ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:11.199Z [PERF] rpc.getSessions: 3.11ms
+2026-10-03T14:23:11.198Z DEBUG  [session] Cold-load triggered for persistSession on 261003-sleek-lagoon
+2026-10-03T14:23:11.198Z DEBUG  [session] Cold-hydrated 0 messages for session 261003-sleek-lagoon
+2026-10-03T14:23:11.199Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":2,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":2},"returnedIds":{"count":2,"ids":["261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:11.200Z INFO   2026-10-03T14:23:11.200Z [loadViewsConfig] No config found, seeding with default views
+2026-10-03T14:23:11.200Z [loadViewsConfig] No config found, seeding with default views
+2026-10-03T14:23:11.500Z INFO   2026-10-03T14:23:11.500Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T14:23:11.500Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T14:23:11.519Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:11.522Z INFO   2026-10-03T14:23:11.522Z [PersistenceQueue] Session 261003-alert-obsidian metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T14:23:11.523Z INFO   2026-10-03T14:23:11.523Z [PersistenceQueue] Session 261003-sleek-lagoon metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T14:23:11.522Z [PersistenceQueue] Session 261003-alert-obsidian metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T14:23:11.523Z [PersistenceQueue] Session 261003-sleek-lagoon metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T14:23:11.559Z INFO   2026-10-03T14:23:11.559Z [ConfigWatcher] preferences.json changed
+2026-10-03T14:23:11.559Z [ConfigWatcher] preferences.json changed
+2026-10-03T14:23:12.527Z [PERF] session.loadSession: 0.17ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:12.534Z [PERF] session.loadSession: 0.17ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:12.534Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:12.536Z [PERF] session.loadSession: 0.11ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:12.536Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:12.536Z [PERF] session.loadSession: 0.06ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:12.540Z [PERF] rpc.getSessionMessages: 6.47ms
+2026-10-03T14:23:12.612Z INFO   2026-10-03T14:23:12.612Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T14:23:12.612Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T14:23:12.672Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:12.830Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:12.831Z INFO   2026-10-03T14:23:12.831Z [PersistenceQueue] Wrote session 261003-sleek-lagoon
+2026-10-03T14:23:12.831Z INFO   2026-10-03T14:23:12.831Z [PersistenceQueue] Wrote session 261003-alert-obsidian
+2026-10-03T14:23:12.831Z [PersistenceQueue] Wrote session 261003-sleek-lagoon
+2026-10-03T14:23:12.831Z [PersistenceQueue] Wrote session 261003-alert-obsidian
+2026-10-03T14:23:12.852Z [PERF] session.loadSession: 0.15ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:13.285Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:13.285Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:14.649Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:14.650Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:14.779Z INFO  [main] Received deeplink: rox://workspace/781b41fb-8a33-12d1-409f-a52c3034ad84/allSessions/session/261003-sleek-lagoon
+2026-10-03T14:23:14.780Z INFO  [main] [DeepLink] Handling: {"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","view":"allSessions/session/261003-sleek-lagoon"}
+2026-10-03T14:23:15.594Z [PERF] session.loadSession: 0.24ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:15.614Z [PERF] session.loadSession: 0.10ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:15.614Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:15.701Z [PERF] rpc.getSessionMessages: 99.39ms
+2026-10-03T14:23:16.006Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:16.009Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:16.095Z INFO  [main] Received deeplink: rox://workspace/781b41fb-8a33-12d1-409f-a52c3034ad84/search?q=UI001%20native%20query
+2026-10-03T14:23:16.096Z INFO  [main] [DeepLink] Handling: {"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","view":"search?q=UI001%20native%20query"}
+2026-10-03T14:23:16.312Z INFO   [search] ipc:request {"searchId":"mushf7mg","queryLength":18}
+2026-10-03T14:23:17.536Z [PERF] session.loadSession: 0.19ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:17.542Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:17.542Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:17.896Z [PERF] session.loadSession: 0.11ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:17.978Z INFO   2026-10-03T14:23:17.978Z [ws-rpc-server] INFO  Client disconnected {"clientId":"480de918-94b6-4dd7-a2dd-14f753d687d7"}
+2026-10-03T14:23:17.978Z [ws-rpc-server] INFO  Client disconnected {"clientId":"480de918-94b6-4dd7-a2dd-14f753d687d7"}
+2026-10-03T14:23:18.234Z INFO   2026-10-03T14:23:18.234Z [ws-rpc-server] INFO  Client connected {"clientId":"de316e29-68e9-473e-b947-16d1f3102244","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:18.234Z [ws-rpc-server] INFO  Client connected {"clientId":"de316e29-68e9-473e-b947-16d1f3102244","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:18.368Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:18.374Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:18.484Z INFO   AUTOMATIONS_GET: Loading automations for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:18.491Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:18.495Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:18.496Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":2,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":2},"returnedIds":{"count":2,"ids":["261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:18.496Z [PERF] rpc.getSessions: 0.14ms
+2026-10-03T14:23:18.499Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:18.536Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:18.783Z [PERF] session.loadSession: 0.18ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:18.791Z [PERF] rpc.getSessionMessages: 3.30ms
+2026-10-03T14:23:19.131Z [PERF] session.loadSession: 0.11ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:19.131Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:19.149Z [PERF] session.loadSession: 0.10ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:19.149Z [PERF] session.loadSession: 0.06ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:19.161Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:19.502Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:19.879Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:19.879Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:20.301Z INFO   2026-10-03T14:23:20.301Z [ws-rpc-server] INFO  Client disconnected {"clientId":"de316e29-68e9-473e-b947-16d1f3102244"}
+2026-10-03T14:23:20.301Z [ws-rpc-server] INFO  Client disconnected {"clientId":"de316e29-68e9-473e-b947-16d1f3102244"}
+2026-10-03T14:23:20.547Z INFO   2026-10-03T14:23:20.547Z [ws-rpc-server] INFO  Client connected {"clientId":"303200ce-d2ec-4a63-9e72-8d54d0aa17d7","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:20.547Z [ws-rpc-server] INFO  Client connected {"clientId":"303200ce-d2ec-4a63-9e72-8d54d0aa17d7","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:20.704Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:20.710Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:20.798Z INFO   AUTOMATIONS_GET: Loading automations for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:20.803Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:20.806Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:20.806Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":2,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":2},"returnedIds":{"count":2,"ids":["261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:20.806Z [PERF] rpc.getSessions: 0.04ms
+2026-10-03T14:23:20.809Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:20.846Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:21.008Z [PERF] session.loadSession: 0.17ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:21.014Z [PERF] rpc.getSessionMessages: 2.51ms
+2026-10-03T14:23:21.417Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:21.417Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:21.432Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:21.432Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:21.443Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:21.773Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:22.137Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:22.137Z [PERF] session.loadSession: 0.04ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:24.288Z [PERF] session.loadSession: 0.45ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:24.295Z [PERF] session.loadSession: 0.15ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:24.295Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:24.915Z [PERF] rpc.getSessionMessages: 620.37ms
+2026-10-03T14:23:25.153Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:25.243Z [PERF] session.loadSession: 0.16ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:25.357Z [PERF] session.loadSession: 0.21ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:25.768Z [PERF] session.loadSession: 0.18ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:25.771Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:25.772Z [PERF] session.loadSession: 0.06ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:25.772Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:25.772Z [PERF] session.loadSession: 0.06ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:26.091Z [PERF] session.loadSession: 0.10ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:26.139Z INFO   2026-10-03T14:23:26.139Z [ws-rpc-server] INFO  Client disconnected {"clientId":"303200ce-d2ec-4a63-9e72-8d54d0aa17d7"}
+2026-10-03T14:23:26.139Z [ws-rpc-server] INFO  Client disconnected {"clientId":"303200ce-d2ec-4a63-9e72-8d54d0aa17d7"}
+2026-10-03T14:23:26.408Z INFO   2026-10-03T14:23:26.408Z [ws-rpc-server] INFO  Client connected {"clientId":"dd44e65a-02b8-4fbc-b6dd-6c770ef1313e","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:26.408Z [ws-rpc-server] INFO  Client connected {"clientId":"dd44e65a-02b8-4fbc-b6dd-6c770ef1313e","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:26.555Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:26.560Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:26.636Z INFO   AUTOMATIONS_GET: Loading automations for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:26.642Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:26.645Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:26.645Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":2,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":2},"returnedIds":{"count":2,"ids":["261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:26.648Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:26.645Z [PERF] rpc.getSessions: 0.04ms
+2026-10-03T14:23:26.691Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:26.932Z [PERF] session.loadSession: 0.19ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:26.981Z [PERF] session.loadSession: 0.17ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:26.988Z [PERF] rpc.getSessionMessages: 51.88ms
+2026-10-03T14:23:26.991Z [PERF] rpc.getSessionMessages: 5.86ms
+2026-10-03T14:23:26.993Z [PERF] session.loadSession: 0.12ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:26.993Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:26.993Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:26.995Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:26.995Z [PERF] session.loadSession: 0.06ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:27.012Z [PERF] session.loadSession: 0.10ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:27.014Z [PERF] session.loadSession: 0.06ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:27.014Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:27.017Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:27.057Z [PERF] session.loadSession: 0.13ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:27.057Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:27.437Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:27.751Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:27.751Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:27.751Z [PERF] session.loadSession: 0.04ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:27.899Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-sleek-lagoon"}
+2026-10-03T14:23:27.899Z [PERF] session.loadSession: 0.06ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:29.443Z INFO   2026-10-03T14:23:29.442Z [ws-rpc-server] INFO  Client disconnected {"clientId":"dd44e65a-02b8-4fbc-b6dd-6c770ef1313e"}
+2026-10-03T14:23:29.442Z [ws-rpc-server] INFO  Client disconnected {"clientId":"dd44e65a-02b8-4fbc-b6dd-6c770ef1313e"}
+2026-10-03T14:23:29.692Z INFO   2026-10-03T14:23:29.692Z [ws-rpc-server] INFO  Client connected {"clientId":"18d9f42c-e3a5-4434-87d5-67230521a90b","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:29.692Z [ws-rpc-server] INFO  Client connected {"clientId":"18d9f42c-e3a5-4434-87d5-67230521a90b","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:29.840Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:29.845Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:29.918Z INFO   AUTOMATIONS_GET: Loading automations for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:29.923Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:29.927Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:29.928Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":2,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":2},"returnedIds":{"count":2,"ids":["261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:29.930Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:29.928Z [PERF] rpc.getSessions: 0.04ms
+2026-10-03T14:23:29.977Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:30.265Z [PERF] session.loadSession: 0.16ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:30.276Z [PERF] rpc.getSessionMessages: 4.97ms
+2026-10-03T14:23:30.285Z [PERF] session.loadSession: 0.15ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:30.286Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:30.287Z [PERF] session.loadSession: 0.04ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:30.285Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:30.287Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:30.352Z [PERF] session.loadSession: 0.23ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:30.393Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:30.805Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:30.805Z [PERF] session.loadSession: 0.04ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:30.897Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-alert-obsidian"}
+2026-10-03T14:23:32.688Z INFO   2026-10-03T14:23:32.688Z [ws-rpc-server] INFO  Client disconnected {"clientId":"18d9f42c-e3a5-4434-87d5-67230521a90b"}
+2026-10-03T14:23:32.688Z [ws-rpc-server] INFO  Client disconnected {"clientId":"18d9f42c-e3a5-4434-87d5-67230521a90b"}
+2026-10-03T14:23:32.972Z INFO   2026-10-03T14:23:32.972Z [ws-rpc-server] INFO  Client connected {"clientId":"30160afd-163d-4eaf-b274-ebcca273185b","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:32.972Z [ws-rpc-server] INFO  Client connected {"clientId":"30160afd-163d-4eaf-b274-ebcca273185b","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:33.094Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:33.099Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:33.191Z INFO   AUTOMATIONS_GET: Loading automations for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:33.197Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:33.200Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:33.200Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":2,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":2},"returnedIds":{"count":2,"ids":["261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:33.202Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:33.200Z [PERF] rpc.getSessions: 0.05ms
+2026-10-03T14:23:33.248Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:33.338Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:33.340Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:33.949Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:33.951Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:34.826Z INFO   2026-10-03T14:23:34.826Z [ws-rpc-server] INFO  Client disconnected {"clientId":"30160afd-163d-4eaf-b274-ebcca273185b"}
+2026-10-03T14:23:34.826Z [ws-rpc-server] INFO  Client disconnected {"clientId":"30160afd-163d-4eaf-b274-ebcca273185b"}
+2026-10-03T14:23:35.123Z INFO   2026-10-03T14:23:35.123Z [ws-rpc-server] INFO  Client connected {"clientId":"eb6d8c19-80a9-4c03-9877-83060866fbf3","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:35.123Z [ws-rpc-server] INFO  Client connected {"clientId":"eb6d8c19-80a9-4c03-9877-83060866fbf3","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:35.244Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:35.249Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:35.351Z INFO   AUTOMATIONS_GET: Loading automations for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:35.358Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:35.361Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:35.362Z [PERF] rpc.getSessions: 0.04ms
+2026-10-03T14:23:35.362Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":2,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":2},"returnedIds":{"count":2,"ids":["261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:35.364Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:35.415Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:35.985Z INFO   2026-10-03T14:23:35.985Z [ws-rpc-server] INFO  Client disconnected {"clientId":"eb6d8c19-80a9-4c03-9877-83060866fbf3"}
+2026-10-03T14:23:35.985Z [ws-rpc-server] INFO  Client disconnected {"clientId":"eb6d8c19-80a9-4c03-9877-83060866fbf3"}
+2026-10-03T14:23:36.264Z INFO   2026-10-03T14:23:36.264Z [ws-rpc-server] INFO  Client connected {"clientId":"32ce5d3f-3bd6-43cb-a153-18d00b5cdbc3","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:36.264Z [ws-rpc-server] INFO  Client connected {"clientId":"32ce5d3f-3bd6-43cb-a153-18d00b5cdbc3","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:36.392Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:36.398Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:36.481Z INFO   AUTOMATIONS_GET: Loading automations for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:36.491Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:36.494Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:36.495Z [PERF] rpc.getSessions: 0.04ms
+2026-10-03T14:23:36.495Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":2,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":2},"returnedIds":{"count":2,"ids":["261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:36.499Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:36.538Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:36.694Z INFO   Created page action broker for workspace 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:38.041Z [PERF] rpc.getSessions: 0.05ms
+2026-10-03T14:23:38.041Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":2,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":2},"returnedIds":{"count":2,"ids":["261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:38.054Z INFO   2026-10-03T14:23:38.054Z [jsonl] Failed to read session header: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/sessions/261003-wide-chrome/session.jsonl {"errno":-2,"code":"ENOENT","syscall":"open","path":"/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/sessions/261003-wide-chrome/session.jsonl"}
+2026-10-03T14:23:38.054Z [jsonl] Failed to read session header: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/sessions/261003-wide-chrome/session.jsonl {"errno":-2,"code":"ENOENT","syscall":"open","path":"/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/sessions/261003-wide-chrome/session.jsonl"}
+2026-10-03T14:23:38.057Z INFO   2026-10-03T14:23:38.057Z [PersistenceQueue] Wrote session 261003-wide-chrome
+2026-10-03T14:23:38.057Z [PersistenceQueue] Wrote session 261003-wide-chrome
+2026-10-03T14:23:38.057Z INFO   2026-10-03T14:23:38.057Z [Mode] Set permission mode to allow-all for session 261003-wide-chrome (changedBy=restore, modeVersion=1)
+2026-10-03T14:23:38.057Z [Mode] Set permission mode to allow-all for session 261003-wide-chrome (changedBy=restore, modeVersion=1)
+2026-10-03T14:23:38.057Z [PERF] rpc.createSession: 8.36ms {"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:38.086Z INFO   2026-10-03T14:23:38.086Z [PersistenceQueue] Session 261003-wide-chrome metadata mismatch detected (local preserved, previousSig={"permission)
+2026-10-03T14:23:38.086Z [PersistenceQueue] Session 261003-wide-chrome metadata mismatch detected (local preserved, previousSig={"permission)
+2026-10-03T14:23:38.090Z [PERF] rpc.getSessions: 0.06ms
+2026-10-03T14:23:38.090Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":3,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":3},"returnedIds":{"count":3,"ids":["261003-wide-chrome","261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:38.093Z INFO   2026-10-03T14:23:38.093Z [PersistenceQueue] Wrote session 261003-wide-chrome
+2026-10-03T14:23:38.093Z INFO   2026-10-03T14:23:38.093Z [PersistenceQueue] Wrote session 261003-alert-obsidian
+2026-10-03T14:23:38.094Z INFO   2026-10-03T14:23:38.094Z [PersistenceQueue] Wrote session 261003-sleek-lagoon
+2026-10-03T14:23:38.093Z [PersistenceQueue] Wrote session 261003-wide-chrome
+2026-10-03T14:23:38.093Z [PersistenceQueue] Wrote session 261003-alert-obsidian
+2026-10-03T14:23:38.094Z [PersistenceQueue] Wrote session 261003-sleek-lagoon
+2026-10-03T14:23:39.168Z [PERF] rpc.getSessions: 0.06ms
+2026-10-03T14:23:39.168Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":3,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":3},"returnedIds":{"count":3,"ids":["261003-wide-chrome","261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:39.993Z INFO   2026-10-03T14:23:39.993Z [ws-rpc-server] INFO  Client disconnected {"clientId":"32ce5d3f-3bd6-43cb-a153-18d00b5cdbc3"}
+2026-10-03T14:23:39.993Z [ws-rpc-server] INFO  Client disconnected {"clientId":"32ce5d3f-3bd6-43cb-a153-18d00b5cdbc3"}
+2026-10-03T14:23:40.290Z INFO   2026-10-03T14:23:40.290Z [ws-rpc-server] INFO  Client connected {"clientId":"62c093e3-c957-4389-8e13-65c60d440306","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:40.290Z [ws-rpc-server] INFO  Client connected {"clientId":"62c093e3-c957-4389-8e13-65c60d440306","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:40.470Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:40.475Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:40.562Z INFO   AUTOMATIONS_GET: Loading automations for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:40.569Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:40.572Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:40.573Z [PERF] rpc.getSessions: 0.04ms
+2026-10-03T14:23:40.573Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":3,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":3},"returnedIds":{"count":3,"ids":["261003-wide-chrome","261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:40.575Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:40.613Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:42.153Z INFO   2026-10-03T14:23:42.153Z [ws-rpc-server] INFO  Client disconnected {"clientId":"62c093e3-c957-4389-8e13-65c60d440306"}
+2026-10-03T14:23:42.153Z [ws-rpc-server] INFO  Client disconnected {"clientId":"62c093e3-c957-4389-8e13-65c60d440306"}
+2026-10-03T14:23:42.450Z INFO   2026-10-03T14:23:42.450Z [ws-rpc-server] INFO  Client connected {"clientId":"4b56b47e-c89c-4e10-84de-f2a3893cf6a3","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:42.450Z [ws-rpc-server] INFO  Client connected {"clientId":"4b56b47e-c89c-4e10-84de-f2a3893cf6a3","webContentsId":1,"workspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84"}
+2026-10-03T14:23:42.584Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:42.590Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:23:42.697Z INFO   AUTOMATIONS_GET: Loading automations for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:42.698Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+2026-10-03T14:23:42.706Z INFO   SKILLS_GET: Loading skills for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:23:42.709Z [PERF] rpc.getSessions: 0.06ms
+2026-10-03T14:23:42.709Z INFO   [sessions:get] result {"ctxWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","webContentsId":1,"windowWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","resolvedWorkspaceId":"781b41fb-8a33-12d1-409f-a52c3034ad84","returnedCount":3,"returnedWorkspaceIds":{"781b41fb-8a33-12d1-409f-a52c3034ad84":3},"returnedIds":{"count":3,"ids":["261003-wide-chrome","261003-alert-obsidian","261003-sleek-lagoon"],"truncated":false}}
+2026-10-03T14:23:42.710Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:23:42.751Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001/automations.json
+[SchedulerService] TICK at 17:24 UTC: 2026-10-03T14:24:00.006Z
+2026-10-03T14:24:00.007Z INFO   2026-10-03T14:24:00.007Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-03T14:24:00.009Z INFO   2026-10-03T14:24:00.009Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-03T14:24:00.010Z INFO   2026-10-03T14:24:00.010Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 5 any-handlers)
+[SchedulerService] TICK callback completed
+2026-10-03T14:24:00.007Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-03T14:24:00.009Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-03T14:24:00.010Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 5 any-handlers)
+2026-10-03T14:24:09.422Z INFO   2026-10-03T14:24:09.422Z [secrets] daytona → DAYTONA_API_KEY: [REDACTED] (SECRET_NOT_FOUND)
+2026-10-03T14:24:09.422Z [secrets] daytona → DAYTONA_API_KEY: [REDACTED] (SECRET_NOT_FOUND)
+2026-10-03T14:24:14.073Z INFO  [main] [WindowState] Saved window state: 1 windows
+2026-10-03T14:24:14.074Z INFO  [main] [window-state] saved {"windowCount":1,"reason":"before-quit"}
+2026-10-03T14:24:14.074Z INFO  [main] [update-flow] before-quit save {"windowCount":1,"electronWindowCount":1,"isUpdating":false,"reason":"user-quit"}
+2026-10-03T14:24:14.074Z INFO  [main] Flushed all pending session writes
+2026-10-03T14:24:14.074Z INFO   [session] Cleaning up resources...
+Debugger ending on ws://127.0.0.1:50700/73ea8b96-d2a0-42e3-86ea-d97d44070a4a
+For help, see: https://nodejs.org/en/docs/inspector
+2026-10-03T14:24:14.088Z INFO   2026-10-03T14:24:14.088Z [ConfigWatcher] Stopped
+2026-10-03T14:24:14.088Z INFO   [session] Stopped config watcher for /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:24:14.088Z INFO   2026-10-03T14:24:14.088Z [automation-system] DEBUG [AutomationSystem] Disposing for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:24:14.089Z INFO   2026-10-03T14:24:14.089Z [automation-system] DEBUG [AutomationSystem] Scheduler stopped
+2026-10-03T14:24:14.089Z INFO   2026-10-03T14:24:14.089Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:24:14.088Z [ConfigWatcher] Stopped
+2026-10-03T14:24:14.088Z [automation-system] DEBUG [AutomationSystem] Disposing for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:24:14.089Z [automation-system] DEBUG [AutomationSystem] Scheduler stopped
+2026-10-03T14:24:14.089Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:24:14.089Z [prompt-handler] DEBUG [PromptHandler] Disposed
+2026-10-03T14:24:14.089Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:24:14.089Z [retry-scheduler] DEBUG [RetryScheduler] Disposed
+2026-10-03T14:24:14.089Z INFO   2026-10-03T14:24:14.089Z [prompt-handler] DEBUG [PromptHandler] Disposed
+2026-10-03T14:24:14.089Z INFO   2026-10-03T14:24:14.089Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:24:14.089Z INFO   2026-10-03T14:24:14.089Z [retry-scheduler] DEBUG [RetryScheduler] Disposed
+2026-10-03T14:24:14.089Z INFO   2026-10-03T14:24:14.089Z [webhook-handler] DEBUG [WebhookHandler] Disposed
+2026-10-03T14:24:14.089Z INFO   2026-10-03T14:24:14.089Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:24:14.089Z INFO   2026-10-03T14:24:14.089Z [script-handler] DEBUG [ScriptHandler] Disposed
+2026-10-03T14:24:14.090Z INFO   2026-10-03T14:24:14.090Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:24:14.090Z INFO   2026-10-03T14:24:14.090Z [knowledge-handler] DEBUG [KnowledgeHandler] Disposed
+2026-10-03T14:24:14.090Z INFO   2026-10-03T14:24:14.090Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:24:14.090Z INFO   [session] Disposed AutomationSystem for /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-IBdVr4/workspaces/ui-001
+2026-10-03T14:24:14.090Z INFO   2026-10-03T14:24:14.090Z session-scoped-tools Unregistered callbacks for session 261003-alert-obsidian
+2026-10-03T14:24:14.090Z INFO   2026-10-03T14:24:14.090Z session-scoped-tools Unregistered callbacks for session 261003-sleek-lagoon
+2026-10-03T14:24:14.090Z INFO   2026-10-03T14:24:14.090Z session-scoped-tools Unregistered callbacks for session 261003-wide-chrome
+2026-10-03T14:24:14.090Z INFO   [session] Cleanup complete
+2026-10-03T14:24:14.090Z INFO   2026-10-03T14:24:14.090Z [event-log-handler] DEBUG [EventLogHandler] Disposed
+2026-10-03T14:24:14.090Z INFO   2026-10-03T14:24:14.090Z [event-bus] DEBUG [EventBus] Disposing for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:24:14.091Z INFO   2026-10-03T14:24:14.091Z [automation-system] DEBUG [AutomationSystem] Disposed
+2026-10-03T14:24:14.091Z INFO  [window] Window closed for workspace 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:24:14.089Z [webhook-handler] DEBUG [WebhookHandler] Disposed
+2026-10-03T14:24:14.089Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:24:14.089Z [script-handler] DEBUG [ScriptHandler] Disposed
+2026-10-03T14:24:14.090Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:24:14.090Z [knowledge-handler] DEBUG [KnowledgeHandler] Disposed
+2026-10-03T14:24:14.090Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:24:14.090Z session-scoped-tools Unregistered callbacks for session 261003-alert-obsidian
+2026-10-03T14:24:14.090Z session-scoped-tools Unregistered callbacks for session 261003-sleek-lagoon
+2026-10-03T14:24:14.090Z session-scoped-tools Unregistered callbacks for session 261003-wide-chrome
+2026-10-03T14:24:14.090Z [event-log-handler] DEBUG [EventLogHandler] Disposed
+2026-10-03T14:24:14.090Z [event-bus] DEBUG [EventBus] Disposing for workspace: 781b41fb-8a33-12d1-409f-a52c3034ad84
+2026-10-03T14:24:14.091Z [automation-system] DEBUG [AutomationSystem] Disposed

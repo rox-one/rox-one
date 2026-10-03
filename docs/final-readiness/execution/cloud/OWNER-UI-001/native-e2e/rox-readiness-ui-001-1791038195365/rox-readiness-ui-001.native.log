@@ -1,0 +1,493 @@
+2026-10-03T14:36:53.744Z INFO   2026-10-03T14:36:53.744Z [PowerShellValidator] Root set to: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/dist/resources
+2026-10-03T14:36:53.744Z [PowerShellValidator] Root set to: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/dist/resources
+2026-10-03T14:36:53.745Z INFO   2026-10-03T14:36:53.744Z [docs] Synced 0 docs
+2026-10-03T14:36:53.744Z [docs] Synced 0 docs
+2026-10-03T14:36:53.745Z INFO   2026-10-03T14:36:53.745Z [bundled-skills] Bundle root not found — skipping sync
+2026-10-03T14:36:53.745Z [bundled-skills] Bundle root not found — skipping sync
+2026-10-03T14:36:53.745Z [release-notes] Synced 0 release notes
+2026-10-03T14:36:53.745Z INFO   2026-10-03T14:36:53.745Z [release-notes] Synced 0 release notes
+2026-10-03T14:36:53.746Z INFO  [main] Registered thumbnail:// protocol handler
+2026-10-03T14:36:53.747Z INFO   [proxy] Applying proxy settings: {"enabled":false,"source":"system","hasHttpProxy":false,"hasHttpsProxy":false,"hasNoProxy":false}
+2026-10-03T14:36:53.789Z INFO  [main] Badge icon initialized: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/resources/icon.png
+2026-10-03T14:36:53.790Z INFO  [main] Instance badge set: 96
+2026-10-03T14:36:53.790Z INFO  [main] [browser-pane] Toolbar IPC handlers registered
+2026-10-03T14:36:53.790Z INFO  [main] [browser-pane] Capability IPC handler registered
+2026-10-03T14:36:53.797Z INFO   2026-10-03T14:36:53.797Z [config] No bundled assets dir found - using fallback config-defaults
+2026-10-03T14:36:53.797Z [config] No bundled assets dir found - using fallback config-defaults
+2026-10-03T14:36:53.798Z INFO   [bootstrap] Config artifacts initialized
+2026-10-03T14:36:53.798Z INFO   [bootstrap] Global config found
+(node:14384) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `Electron --trace-warnings ...` to show where the warning was created)
+2026-10-03T14:36:53.815Z INFO   [session] [browser-pane] setRpcServer called — remote browser bridge is now available
+2026-10-03T14:36:53.816Z INFO  [main] [messaging-gateway] messaging bootstrap created {"timestamp":"2026-10-03T14:36:53.815Z","level":"info","scope":"messaging-gateway","component":"bootstrap","event":"messaging_bootstrap_created","workerEntry":"/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/packages/messaging-whatsapp-worker/dist/worker.cjs","nodeBin":"(host default)","pairingMode":"qr","message":"messaging bootstrap created"}
+2026-10-03T14:36:53.827Z INFO   2026-10-03T14:36:53.827Z [config] Seeded default rox-kimi connection (existing config had no LLM connections)
+2026-10-03T14:36:53.827Z [config] Seeded default rox-kimi connection (existing config had no LLM connections)
+2026-10-03T14:36:53.829Z INFO   2026-10-03T14:36:53.829Z [CredentialManager] Backend available: secure-storage (priority 100)
+2026-10-03T14:36:53.829Z [CredentialManager] Backend available: secure-storage (priority 100)
+2026-10-03T14:36:53.829Z INFO   2026-10-03T14:36:53.829Z [CredentialManager] Using backend: secure-storage
+2026-10-03T14:36:53.829Z [CredentialManager] Using backend: secure-storage
+2026-10-03T14:36:53.830Z INFO   [session] Reinitializing auth for connection: rox-kimi (none)
+2026-10-03T14:36:53.830Z INFO   [session] Auth env vars set for connection: rox-kimi
+2026-10-03T14:36:53.830Z INFO   2026-10-03T14:36:53.830Z [summarize] resetSummarizationClient called (no-op)
+2026-10-03T14:36:53.830Z [summarize] resetSummarizationClient called (no-op)
+2026-10-03T14:36:53.832Z INFO   [session] Setting up ConfigWatcher for workspace: b00f2123-0211-c848-21ad-c6bbee672def (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001)
+2026-10-03T14:36:53.832Z INFO   2026-10-03T14:36:53.832Z [ConfigWatcher] Starting for workspace: ui-001
+2026-10-03T14:36:53.832Z [ConfigWatcher] Starting for workspace: ui-001
+2026-10-03T14:36:53.833Z INFO   2026-10-03T14:36:53.833Z [ConfigWatcher] Watching global configs: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd
+2026-10-03T14:36:53.833Z [ConfigWatcher] Watching global configs: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd
+2026-10-03T14:36:53.833Z INFO   2026-10-03T14:36:53.833Z [ConfigWatcher] Setting up workspace watcher for: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:36:53.833Z [ConfigWatcher] Setting up workspace watcher for: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:36:53.834Z INFO   2026-10-03T14:36:53.834Z [ConfigWatcher] Watching workspace recursively: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:36:53.834Z [ConfigWatcher] Watching workspace recursively: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:36:53.834Z INFO   2026-10-03T14:36:53.834Z [ConfigWatcher] Watching app themes directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/themes
+2026-10-03T14:36:53.834Z [ConfigWatcher] Watching app themes directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/themes
+2026-10-03T14:36:53.834Z INFO   2026-10-03T14:36:53.834Z [ConfigWatcher] Watching app permissions directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/permissions
+2026-10-03T14:36:53.834Z [ConfigWatcher] Watching app permissions directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/permissions
+2026-10-03T14:36:53.834Z INFO   2026-10-03T14:36:53.834Z [ConfigWatcher] Watching context docs directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/context
+2026-10-03T14:36:53.834Z [ConfigWatcher] Watching context docs directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/context
+2026-10-03T14:36:53.835Z INFO   2026-10-03T14:36:53.835Z [ConfigWatcher] Known sources: ["applications","brave","codegraph","context7","deepwiki","e2b","everything-mcp","exa","firecrawl","firecrawl-mcp","mem0","memory","notes","playwright","projects","qdrant","qmd","sessions","tasks","telegram-mcp","telegram-support","ui001-local-source","weaviate","windows-commander","windows-mcp","workspace-tree"]
+2026-10-03T14:36:53.835Z [ConfigWatcher] Known sources: ["applications","brave","codegraph","context7","deepwiki","e2b","everything-mcp","exa","firecrawl","firecrawl-mcp","mem0","memory","notes","playwright","projects","qdrant","qmd","sessions","tasks","telegram-mcp","telegram-support","ui001-local-source","weaviate","windows-commander","windows-mcp","workspace-tree"]
+2026-10-03T14:36:53.835Z [ConfigWatcher] Known skills: ["ui001-workspace-skill"]
+2026-10-03T14:36:53.835Z INFO   2026-10-03T14:36:53.835Z [ConfigWatcher] Known skills: ["ui001-workspace-skill"]
+2026-10-03T14:36:53.835Z INFO   2026-10-03T14:36:53.835Z [ConfigWatcher] Known themes: []
+2026-10-03T14:36:53.835Z [ConfigWatcher] Known themes: []
+2026-10-03T14:36:53.836Z INFO   2026-10-03T14:36:53.836Z [ConfigWatcher] Started watching files
+2026-10-03T14:36:53.836Z [ConfigWatcher] Started watching files
+2026-10-03T14:36:53.836Z [PERF] configWatcher.start: 3.58ms (ensureDir:0.2ms → watchGlobalConfigs:1.0ms → watchWorkspaceDir:1.4ms → watchAppThemesDir:1.6ms → watchAppPermissionsDir:1.8ms → watchContextDocsDir:1.9ms → scanSources:2.4ms → scanSkills:2.6ms → scanAppThemes:2.8ms → initLlmConnectionsHash:3.4ms) {"workspaceId":"ui-001"}
+2026-10-03T14:36:53.838Z INFO   2026-10-03T14:36:53.838Z [event-bus] DEBUG [EventBus] Created for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:36:53.838Z [event-bus] DEBUG [EventBus] Created for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:36:53.852Z INFO   2026-10-03T14:36:53.852Z [automation-system] DEBUG [AutomationSystem] Loaded 30 actions from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:36:53.852Z [automation-system] DEBUG [AutomationSystem] Loaded 30 actions from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:36:53.853Z INFO   2026-10-03T14:36:53.853Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:36:53.853Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:36:53.853Z INFO   2026-10-03T14:36:53.853Z [prompt-handler] DEBUG [PromptHandler] Subscribed to event bus
+2026-10-03T14:36:53.853Z [prompt-handler] DEBUG [PromptHandler] Subscribed to event bus
+2026-10-03T14:36:53.853Z INFO   2026-10-03T14:36:53.853Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:36:53.853Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:36:53.854Z INFO   2026-10-03T14:36:53.853Z [retry-scheduler] DEBUG [RetryScheduler] Started
+2026-10-03T14:36:53.854Z INFO   2026-10-03T14:36:53.854Z [webhook-handler] DEBUG [WebhookHandler] Subscribed to event bus
+2026-10-03T14:36:53.853Z [retry-scheduler] DEBUG [RetryScheduler] Started
+2026-10-03T14:36:53.854Z [webhook-handler] DEBUG [WebhookHandler] Subscribed to event bus
+2026-10-03T14:36:53.854Z INFO   2026-10-03T14:36:53.854Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:36:53.854Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:36:53.854Z [event-log-handler] DEBUG [EventLogHandler] Subscribed to event bus, logging to /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/events.jsonl
+2026-10-03T14:36:53.854Z INFO   2026-10-03T14:36:53.854Z [event-log-handler] DEBUG [EventLogHandler] Subscribed to event bus, logging to /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/events.jsonl
+2026-10-03T14:36:53.854Z INFO   2026-10-03T14:36:53.854Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:36:53.854Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:36:53.854Z [script-handler] DEBUG [ScriptHandler] Subscribed to event bus
+2026-10-03T14:36:53.854Z INFO   2026-10-03T14:36:53.854Z [script-handler] DEBUG [ScriptHandler] Subscribed to event bus
+2026-10-03T14:36:53.854Z INFO   2026-10-03T14:36:53.854Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:36:53.854Z INFO   2026-10-03T14:36:53.854Z [knowledge-handler] DEBUG [KnowledgeHandler] Subscribed to event bus
+2026-10-03T14:36:53.854Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T14:36:53.854Z [knowledge-handler] DEBUG [KnowledgeHandler] Subscribed to event bus
+2026-10-03T14:36:53.855Z INFO   2026-10-03T14:36:53.855Z [automation-system] DEBUG [AutomationSystem] Handlers created and subscribed
+2026-10-03T14:36:53.855Z [automation-system] DEBUG [AutomationSystem] Handlers created and subscribed
+2026-10-03T14:36:53.855Z INFO   2026-10-03T14:36:53.855Z [automation-system] DEBUG [AutomationSystem] Scheduler started
+2026-10-03T14:36:53.855Z INFO   2026-10-03T14:36:53.855Z [automation-system] DEBUG [AutomationSystem] Created for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:36:53.855Z [automation-system] DEBUG [AutomationSystem] Scheduler started
+2026-10-03T14:36:53.855Z [automation-system] DEBUG [AutomationSystem] Created for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:36:53.855Z INFO   [session] Initialized AutomationSystem for workspace b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:36:53.856Z [PERF] session.listSessions: 0.59ms (readdir:0.1ms → parsed:0.6ms) {"count":2}
+2026-10-03T14:36:53.857Z INFO   2026-10-03T14:36:53.857Z [Mode] Set permission mode to allow-all for session 261003-quick-peak (changedBy=restore, modeVersion=1)
+2026-10-03T14:36:53.857Z [Mode] Set permission mode to allow-all for session 261003-quick-peak (changedBy=restore, modeVersion=1)
+2026-10-03T14:36:53.857Z INFO   2026-10-03T14:36:53.857Z [Mode] Set permission mode to allow-all for session 261003-ivory-moon (changedBy=restore, modeVersion=1)
+2026-10-03T14:36:53.857Z INFO   [session] Loaded 2 sessions from disk (metadata only)
+2026-10-03T14:36:53.857Z [Mode] Set permission mode to allow-all for session 261003-ivory-moon (changedBy=restore, modeVersion=1)
+2026-10-03T14:36:53.862Z INFO   Rox server listening on ws://127.0.0.1:58023
+2026-10-03T14:36:53.864Z INFO  [main] [messaging] Fan-out sink active for 1 workspace(s)
+2026-10-03T14:36:53.983Z INFO  [window] Created window for workspace b00f2123-0211-c848-21ad-c6bbee672def (focused: false)
+2026-10-03T14:36:53.985Z INFO  [main] Created window for first workspace: UI-001 acceptance
+2026-10-03T14:36:53.988Z INFO  [main] [power] Power manager initialized {"settingEnabled":false}
+2026-10-03T14:36:53.989Z INFO  [main] [auto-update] Skipping auto-update in dev mode
+2026-10-03T14:36:53.990Z INFO  [main] App initialized successfully
+2026-10-03T14:36:53.990Z INFO  [main] Debug mode enabled - logs at: /Users/t/Library/Logs/@rox/electron/main.log
+2026-10-03T14:36:53.990Z INFO  [main] Messaging gateway log path: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/logs/messaging-gateway.log
+2026-10-03T14:36:54.016Z INFO   [bootstrap] Toolchain ensureAll scheduled
+2026-10-03T14:36:54.657Z INFO   2026-10-03T14:36:54.657Z [ws-rpc-server] INFO  Client connected {"clientId":"2acd55b2-f055-4831-8bf7-84459f96ef4c","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:36:54.657Z [ws-rpc-server] INFO  Client connected {"clientId":"2acd55b2-f055-4831-8bf7-84459f96ef4c","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:36:54.845Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:36:54.850Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:36:54.901Z INFO   personalTasks: migrated 0 task(s) from localStorage (skipped 0)
+2026-10-03T14:36:54.958Z INFO   2026-10-03T14:36:54.958Z [ConfigWatcher] preferences.json changed
+2026-10-03T14:36:54.958Z [ConfigWatcher] preferences.json changed
+2026-10-03T14:36:55.061Z INFO  [window] Updated window 1 from workspace b00f2123-0211-c848-21ad-c6bbee672def to b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:36:55.062Z [PERF] ipc.switchWorkspace: 0.45ms {"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:36:55.137Z INFO   2026-10-03T14:36:55.137Z [ConfigWatcher] preferences.json changed
+2026-10-03T14:36:55.137Z [ConfigWatcher] preferences.json changed
+2026-10-03T14:36:55.142Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:36:55.152Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:36:55.155Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:36:55.157Z DEBUG  [session] Cold-load triggered for persistSession on 261003-quick-peak
+2026-10-03T14:36:55.157Z [PERF] session.loadSession: 0.20ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:36:55.157Z DEBUG  [session] Cold-hydrated 0 messages for session 261003-quick-peak
+2026-10-03T14:36:55.158Z DEBUG  [session] Cold-load triggered for persistSession on 261003-ivory-moon
+2026-10-03T14:36:55.159Z DEBUG  [session] Cold-hydrated 0 messages for session 261003-ivory-moon
+2026-10-03T14:36:55.159Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:36:55.159Z [PERF] rpc.getSessions: 2.97ms
+2026-10-03T14:36:55.160Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":2,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":2},"returnedIds":{"count":2,"ids":["261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:36:55.160Z INFO   2026-10-03T14:36:55.160Z [loadViewsConfig] No config found, seeding with default views
+2026-10-03T14:36:55.160Z [loadViewsConfig] No config found, seeding with default views
+2026-10-03T14:36:55.469Z INFO   2026-10-03T14:36:55.469Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T14:36:55.469Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T14:36:55.489Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:36:55.491Z INFO   2026-10-03T14:36:55.491Z [PersistenceQueue] Session 261003-quick-peak metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T14:36:55.492Z INFO   2026-10-03T14:36:55.492Z [PersistenceQueue] Session 261003-ivory-moon metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T14:36:55.491Z [PersistenceQueue] Session 261003-quick-peak metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T14:36:55.492Z [PersistenceQueue] Session 261003-ivory-moon metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T14:36:55.539Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:36:55.541Z INFO   2026-10-03T14:36:55.541Z [PersistenceQueue] Wrote session 261003-ivory-moon
+2026-10-03T14:36:55.541Z [PersistenceQueue] Wrote session 261003-ivory-moon
+2026-10-03T14:36:55.542Z [PersistenceQueue] Wrote session 261003-quick-peak
+2026-10-03T14:36:55.542Z INFO   2026-10-03T14:36:55.542Z [PersistenceQueue] Wrote session 261003-quick-peak
+2026-10-03T14:36:56.205Z [PERF] session.loadSession: 0.15ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:36:56.210Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:36:56.211Z [PERF] session.loadSession: 0.06ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:36:56.211Z [PERF] session.loadSession: 0.06ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:36:56.212Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:36:56.210Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:36:56.215Z [PERF] rpc.getSessionMessages: 5.81ms
+2026-10-03T14:36:56.265Z INFO   2026-10-03T14:36:56.265Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T14:36:56.265Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T14:36:56.289Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:36:56.337Z [PERF] session.loadSession: 0.20ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:36:56.340Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:36:56.694Z [PERF] session.loadSession: 0.10ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:36:56.694Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:36:57.805Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:36:57.806Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:36:57.888Z INFO  [main] Received deeplink: rox://workspace/b00f2123-0211-c848-21ad-c6bbee672def/allSessions/session/261003-ivory-moon
+2026-10-03T14:36:57.889Z INFO  [main] [DeepLink] Handling: {"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","view":"allSessions/session/261003-ivory-moon"}
+2026-10-03T14:36:58.275Z [PERF] session.loadSession: 0.13ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:36:58.279Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:36:58.305Z [PERF] session.loadSession: 0.10ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:36:58.358Z [PERF] rpc.getSessionMessages: 79.05ms
+2026-10-03T14:36:58.628Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:36:58.630Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:36:58.656Z INFO  [main] Received deeplink: rox://workspace/b00f2123-0211-c848-21ad-c6bbee672def/search?q=UI001%20native%20query
+2026-10-03T14:36:58.656Z INFO  [main] [DeepLink] Handling: {"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","view":"search?q=UI001%20native%20query"}
+2026-10-03T14:36:59.313Z INFO   [search] ipc:request {"searchId":"mushwunl","queryLength":18}
+2026-10-03T14:36:59.920Z [PERF] session.loadSession: 0.15ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:36:59.924Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:36:59.924Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:36:59.955Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:00.267Z [PERF] session.loadSession: 0.10ms {"sessionId":"261003-ivory-moon"}
+[SchedulerService] TICK at 17:37 UTC: 2026-10-03T14:37:00.275Z
+2026-10-03T14:37:00.275Z INFO   2026-10-03T14:37:00.275Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-03T14:37:00.275Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-03T14:37:00.277Z INFO   2026-10-03T14:37:00.277Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-03T14:37:00.277Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-03T14:37:00.278Z INFO   2026-10-03T14:37:00.278Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 5 any-handlers)
+[SchedulerService] TICK callback completed
+2026-10-03T14:37:00.278Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 5 any-handlers)
+2026-10-03T14:37:00.303Z INFO   2026-10-03T14:37:00.303Z [ws-rpc-server] INFO  Client disconnected {"clientId":"2acd55b2-f055-4831-8bf7-84459f96ef4c"}
+2026-10-03T14:37:00.303Z [ws-rpc-server] INFO  Client disconnected {"clientId":"2acd55b2-f055-4831-8bf7-84459f96ef4c"}
+2026-10-03T14:37:00.534Z INFO   2026-10-03T14:37:00.534Z [ws-rpc-server] INFO  Client connected {"clientId":"62ba84ac-d9a7-4a98-bdcd-9e8e21d53e05","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:00.534Z [ws-rpc-server] INFO  Client connected {"clientId":"62ba84ac-d9a7-4a98-bdcd-9e8e21d53e05","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:00.675Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:00.681Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:00.751Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:00.757Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:00.760Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:00.761Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":2,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":2},"returnedIds":{"count":2,"ids":["261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:00.761Z [PERF] rpc.getSessions: 0.15ms
+2026-10-03T14:37:00.764Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:00.801Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:00.970Z [PERF] session.loadSession: 0.17ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:00.977Z [PERF] rpc.getSessionMessages: 3.27ms
+2026-10-03T14:37:01.307Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:01.307Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:01.320Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:01.324Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:01.414Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:01.630Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:02.057Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:02.071Z [PERF] session.loadSession: 0.15ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:02.411Z INFO   2026-10-03T14:37:02.411Z [ws-rpc-server] INFO  Client disconnected {"clientId":"62ba84ac-d9a7-4a98-bdcd-9e8e21d53e05"}
+2026-10-03T14:37:02.411Z [ws-rpc-server] INFO  Client disconnected {"clientId":"62ba84ac-d9a7-4a98-bdcd-9e8e21d53e05"}
+2026-10-03T14:37:02.651Z INFO   2026-10-03T14:37:02.651Z [ws-rpc-server] INFO  Client connected {"clientId":"ae1d0339-c00b-44b4-9982-55dc350b6508","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:02.651Z [ws-rpc-server] INFO  Client connected {"clientId":"ae1d0339-c00b-44b4-9982-55dc350b6508","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:02.794Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:02.799Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:02.875Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:02.880Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:02.883Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:02.884Z [PERF] rpc.getSessions: 0.04ms
+2026-10-03T14:37:02.884Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":2,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":2},"returnedIds":{"count":2,"ids":["261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:02.887Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:02.922Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:03.037Z [PERF] session.loadSession: 0.16ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:03.043Z [PERF] rpc.getSessionMessages: 2.96ms
+2026-10-03T14:37:03.393Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:03.393Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:03.410Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:03.428Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:03.468Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:03.778Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:04.172Z [PERF] session.loadSession: 0.10ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:04.184Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:05.883Z [PERF] session.loadSession: 0.14ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:05.897Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:05.897Z [PERF] session.loadSession: 0.06ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:05.950Z [PERF] rpc.getSessionMessages: 60.04ms
+2026-10-03T14:37:06.309Z [PERF] session.loadSession: 0.13ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:06.384Z [PERF] session.loadSession: 0.14ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:06.811Z [PERF] session.loadSession: 0.35ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:06.816Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:06.816Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:06.816Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:06.816Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:07.168Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:07.233Z INFO   2026-10-03T14:37:07.233Z [ws-rpc-server] INFO  Client disconnected {"clientId":"ae1d0339-c00b-44b4-9982-55dc350b6508"}
+2026-10-03T14:37:07.233Z [ws-rpc-server] INFO  Client disconnected {"clientId":"ae1d0339-c00b-44b4-9982-55dc350b6508"}
+2026-10-03T14:37:07.507Z INFO   2026-10-03T14:37:07.507Z [ws-rpc-server] INFO  Client connected {"clientId":"3cf90a6d-f5d7-491d-a6c3-bfac81f61b18","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:07.507Z [ws-rpc-server] INFO  Client connected {"clientId":"3cf90a6d-f5d7-491d-a6c3-bfac81f61b18","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:07.626Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:07.631Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:07.726Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:07.740Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:07.743Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:07.744Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":2,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":2},"returnedIds":{"count":2,"ids":["261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:07.744Z [PERF] rpc.getSessions: 0.04ms
+2026-10-03T14:37:07.747Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:07.797Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:07.974Z [PERF] session.loadSession: 0.16ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:08.032Z [PERF] session.loadSession: 0.17ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:08.039Z [PERF] rpc.getSessionMessages: 61.31ms
+2026-10-03T14:37:08.043Z [PERF] rpc.getSessionMessages: 7.44ms
+2026-10-03T14:37:08.448Z [PERF] session.loadSession: 0.10ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:08.838Z [PERF] session.loadSession: 0.12ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:08.838Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:08.855Z [PERF] session.loadSession: 0.12ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:08.857Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:08.857Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:08.860Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:08.863Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:08.863Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:08.952Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:09.109Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:09.109Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:10.225Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:10.644Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:10.662Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-ivory-moon"}
+2026-10-03T14:37:10.662Z [PERF] session.loadSession: 0.05ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:12.485Z INFO   2026-10-03T14:37:12.485Z [ws-rpc-server] INFO  Client disconnected {"clientId":"3cf90a6d-f5d7-491d-a6c3-bfac81f61b18"}
+2026-10-03T14:37:12.485Z [ws-rpc-server] INFO  Client disconnected {"clientId":"3cf90a6d-f5d7-491d-a6c3-bfac81f61b18"}
+2026-10-03T14:37:12.754Z INFO   2026-10-03T14:37:12.754Z [ws-rpc-server] INFO  Client connected {"clientId":"e6a27500-7fbf-489a-a1bb-62d5a118f1db","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:12.754Z [ws-rpc-server] INFO  Client connected {"clientId":"e6a27500-7fbf-489a-a1bb-62d5a118f1db","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:12.883Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:12.888Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:12.960Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:12.975Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:12.978Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:12.979Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":2,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":2},"returnedIds":{"count":2,"ids":["261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:12.979Z [PERF] rpc.getSessions: 0.04ms
+2026-10-03T14:37:12.981Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:13.016Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:13.160Z [PERF] session.loadSession: 0.13ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:13.166Z [PERF] rpc.getSessionMessages: 2.52ms
+2026-10-03T14:37:13.584Z [PERF] session.loadSession: 0.34ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:13.584Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:13.608Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:13.612Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:13.625Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:14.132Z [PERF] session.loadSession: 0.08ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:14.622Z [PERF] session.loadSession: 0.10ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:14.622Z [PERF] session.loadSession: 0.06ms {"sessionId":"261003-quick-peak"}
+2026-10-03T14:37:16.405Z INFO   2026-10-03T14:37:16.405Z [ws-rpc-server] INFO  Client disconnected {"clientId":"e6a27500-7fbf-489a-a1bb-62d5a118f1db"}
+2026-10-03T14:37:16.405Z [ws-rpc-server] INFO  Client disconnected {"clientId":"e6a27500-7fbf-489a-a1bb-62d5a118f1db"}
+2026-10-03T14:37:16.686Z INFO   2026-10-03T14:37:16.686Z [ws-rpc-server] INFO  Client connected {"clientId":"624fbd09-b6b3-4afc-970a-c9e496d64ffe","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:16.686Z [ws-rpc-server] INFO  Client connected {"clientId":"624fbd09-b6b3-4afc-970a-c9e496d64ffe","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:16.803Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:16.808Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:16.897Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:16.904Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:16.908Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:16.909Z [PERF] rpc.getSessions: 0.05ms
+2026-10-03T14:37:16.909Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":2,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":2},"returnedIds":{"count":2,"ids":["261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:16.911Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:16.949Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:17.143Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:17.144Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:17.724Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:17.726Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:18.709Z INFO   2026-10-03T14:37:18.709Z [ws-rpc-server] INFO  Client disconnected {"clientId":"624fbd09-b6b3-4afc-970a-c9e496d64ffe"}
+2026-10-03T14:37:18.709Z [ws-rpc-server] INFO  Client disconnected {"clientId":"624fbd09-b6b3-4afc-970a-c9e496d64ffe"}
+2026-10-03T14:37:18.996Z INFO   2026-10-03T14:37:18.996Z [ws-rpc-server] INFO  Client connected {"clientId":"325b459d-22db-4017-ab79-80f5cf13a7b2","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:18.996Z [ws-rpc-server] INFO  Client connected {"clientId":"325b459d-22db-4017-ab79-80f5cf13a7b2","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:19.116Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:19.121Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:19.202Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:19.215Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:19.219Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:19.220Z [PERF] rpc.getSessions: 0.03ms
+2026-10-03T14:37:19.220Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":2,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":2},"returnedIds":{"count":2,"ids":["261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:19.222Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:19.259Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:21.049Z INFO   2026-10-03T14:37:21.049Z [ws-rpc-server] INFO  Client disconnected {"clientId":"325b459d-22db-4017-ab79-80f5cf13a7b2"}
+2026-10-03T14:37:21.049Z [ws-rpc-server] INFO  Client disconnected {"clientId":"325b459d-22db-4017-ab79-80f5cf13a7b2"}
+2026-10-03T14:37:21.333Z INFO   2026-10-03T14:37:21.333Z [ws-rpc-server] INFO  Client connected {"clientId":"fbe47c99-3fb8-4ed5-8f1c-c527c8a8ae42","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:21.333Z [ws-rpc-server] INFO  Client connected {"clientId":"fbe47c99-3fb8-4ed5-8f1c-c527c8a8ae42","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:21.444Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:21.449Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:21.549Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:21.557Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:21.560Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:21.561Z [PERF] rpc.getSessions: 0.04ms
+2026-10-03T14:37:21.561Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":2,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":2},"returnedIds":{"count":2,"ids":["261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:21.563Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:21.601Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:21.698Z INFO   Created page action broker for workspace b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:23.076Z [PERF] rpc.getSessions: 0.05ms
+2026-10-03T14:37:23.076Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":2,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":2},"returnedIds":{"count":2,"ids":["261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:23.085Z INFO   2026-10-03T14:37:23.085Z [jsonl] Failed to read session header: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/sessions/261003-fluid-laurel/session.jsonl {"errno":-2,"code":"ENOENT","syscall":"open","path":"/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/sessions/261003-fluid-laurel/session.jsonl"}
+2026-10-03T14:37:23.085Z [jsonl] Failed to read session header: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/sessions/261003-fluid-laurel/session.jsonl {"errno":-2,"code":"ENOENT","syscall":"open","path":"/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/sessions/261003-fluid-laurel/session.jsonl"}
+2026-10-03T14:37:23.099Z INFO   2026-10-03T14:37:23.099Z [PersistenceQueue] Wrote session 261003-fluid-laurel
+2026-10-03T14:37:23.099Z [PersistenceQueue] Wrote session 261003-fluid-laurel
+2026-10-03T14:37:23.100Z [Mode] Set permission mode to allow-all for session 261003-fluid-laurel (changedBy=restore, modeVersion=1)
+2026-10-03T14:37:23.100Z INFO   2026-10-03T14:37:23.100Z [Mode] Set permission mode to allow-all for session 261003-fluid-laurel (changedBy=restore, modeVersion=1)
+2026-10-03T14:37:23.100Z [PERF] rpc.createSession: 19.76ms {"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:23.111Z INFO   2026-10-03T14:37:23.111Z [PersistenceQueue] Session 261003-fluid-laurel metadata mismatch detected (local preserved, previousSig={"permission)
+2026-10-03T14:37:23.111Z [PersistenceQueue] Session 261003-fluid-laurel metadata mismatch detected (local preserved, previousSig={"permission)
+2026-10-03T14:37:23.124Z INFO   2026-10-03T14:37:23.124Z [PersistenceQueue] Wrote session 261003-fluid-laurel
+2026-10-03T14:37:23.125Z INFO   2026-10-03T14:37:23.125Z [PersistenceQueue] Wrote session 261003-quick-peak
+2026-10-03T14:37:23.125Z INFO   2026-10-03T14:37:23.125Z [PersistenceQueue] Wrote session 261003-ivory-moon
+2026-10-03T14:37:23.124Z [PersistenceQueue] Wrote session 261003-fluid-laurel
+2026-10-03T14:37:23.125Z [PersistenceQueue] Wrote session 261003-quick-peak
+2026-10-03T14:37:23.125Z [PersistenceQueue] Wrote session 261003-ivory-moon
+2026-10-03T14:37:23.217Z [PERF] rpc.getSessions: 0.06ms
+2026-10-03T14:37:23.218Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":3,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":3},"returnedIds":{"count":3,"ids":["261003-fluid-laurel","261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:24.200Z [PERF] rpc.getSessions: 0.06ms
+2026-10-03T14:37:24.201Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":3,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":3},"returnedIds":{"count":3,"ids":["261003-fluid-laurel","261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:25.455Z INFO   2026-10-03T14:37:25.455Z [ws-rpc-server] INFO  Client disconnected {"clientId":"fbe47c99-3fb8-4ed5-8f1c-c527c8a8ae42"}
+2026-10-03T14:37:25.455Z [ws-rpc-server] INFO  Client disconnected {"clientId":"fbe47c99-3fb8-4ed5-8f1c-c527c8a8ae42"}
+2026-10-03T14:37:25.744Z INFO   2026-10-03T14:37:25.744Z [ws-rpc-server] INFO  Client connected {"clientId":"c2ea5ed3-fb8b-4f9e-b866-11f4987cd7ad","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:25.744Z [ws-rpc-server] INFO  Client connected {"clientId":"c2ea5ed3-fb8b-4f9e-b866-11f4987cd7ad","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:25.867Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:25.872Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:25.956Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:25.971Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:25.974Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:25.975Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":3,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":3},"returnedIds":{"count":3,"ids":["261003-fluid-laurel","261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:25.975Z [PERF] rpc.getSessions: 0.05ms
+2026-10-03T14:37:25.977Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:26.017Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:27.458Z INFO   2026-10-03T14:37:27.458Z [ws-rpc-server] INFO  Client disconnected {"clientId":"c2ea5ed3-fb8b-4f9e-b866-11f4987cd7ad"}
+2026-10-03T14:37:27.458Z [ws-rpc-server] INFO  Client disconnected {"clientId":"c2ea5ed3-fb8b-4f9e-b866-11f4987cd7ad"}
+2026-10-03T14:37:27.729Z INFO   2026-10-03T14:37:27.729Z [ws-rpc-server] INFO  Client connected {"clientId":"624d6aaa-9e8d-4fdb-8e07-9b757c1a7e84","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:27.729Z [ws-rpc-server] INFO  Client connected {"clientId":"624d6aaa-9e8d-4fdb-8e07-9b757c1a7e84","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:27.857Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:27.862Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:27.954Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:27.961Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:27.966Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:27.970Z [PERF] rpc.getSessions: 0.05ms
+2026-10-03T14:37:27.970Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":3,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":3},"returnedIds":{"count":3,"ids":["261003-fluid-laurel","261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:27.971Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:28.008Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:28.289Z WARN  [main] [browser-pane] syncEmbeddedBounds ignored: no embedded instance id=ui001-absent-browser
+2026-10-03T14:37:29.830Z INFO   2026-10-03T14:37:29.830Z [ws-rpc-server] INFO  Client disconnected {"clientId":"624d6aaa-9e8d-4fdb-8e07-9b757c1a7e84"}
+2026-10-03T14:37:29.830Z [ws-rpc-server] INFO  Client disconnected {"clientId":"624d6aaa-9e8d-4fdb-8e07-9b757c1a7e84"}
+2026-10-03T14:37:30.137Z INFO   2026-10-03T14:37:30.137Z [ws-rpc-server] INFO  Client connected {"clientId":"19af67df-e65b-4d17-a18c-91c0aa74c5d0","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:30.137Z [ws-rpc-server] INFO  Client connected {"clientId":"19af67df-e65b-4d17-a18c-91c0aa74c5d0","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:30.229Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:30.234Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:30.327Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:30.341Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:30.345Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:30.346Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":3,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":3},"returnedIds":{"count":3,"ids":["261003-fluid-laurel","261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:30.349Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:30.346Z [PERF] rpc.getSessions: 0.05ms
+2026-10-03T14:37:30.395Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:32.040Z INFO   2026-10-03T14:37:32.040Z [ws-rpc-server] INFO  Client disconnected {"clientId":"19af67df-e65b-4d17-a18c-91c0aa74c5d0"}
+2026-10-03T14:37:32.040Z [ws-rpc-server] INFO  Client disconnected {"clientId":"19af67df-e65b-4d17-a18c-91c0aa74c5d0"}
+2026-10-03T14:37:32.359Z INFO   2026-10-03T14:37:32.359Z [ws-rpc-server] INFO  Client connected {"clientId":"7a231f18-def2-440a-8cf6-9e7ec788d265","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:32.359Z [ws-rpc-server] INFO  Client connected {"clientId":"7a231f18-def2-440a-8cf6-9e7ec788d265","webContentsId":1,"workspaceId":"b00f2123-0211-c848-21ad-c6bbee672def"}
+2026-10-03T14:37:32.430Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:32.435Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T14:37:32.552Z INFO   AUTOMATIONS_GET: Loading automations for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:32.559Z INFO   SKILLS_GET: Loading skills for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:37:32.562Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:32.563Z INFO   [sessions:get] result {"ctxWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","webContentsId":1,"windowWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","resolvedWorkspaceId":"b00f2123-0211-c848-21ad-c6bbee672def","returnedCount":3,"returnedWorkspaceIds":{"b00f2123-0211-c848-21ad-c6bbee672def":3},"returnedIds":{"count":3,"ids":["261003-fluid-laurel","261003-quick-peak","261003-ivory-moon"],"truncated":false}}
+2026-10-03T14:37:32.563Z [PERF] rpc.getSessions: 0.05ms
+2026-10-03T14:37:32.566Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:37:32.607Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001/automations.json
+2026-10-03T14:37:33.008Z INFO  [main] [browser-pane] Created embedded instance: browser-embedded-1
+2026-10-03T14:37:33.012Z WARN  [main] [browser-pane] empty-state load failed id=browser-embedded-1: ERR_ABORTED (-3) loading 'about:blank'
+2026-10-03T14:37:33.018Z WARN  [main] [browser-pane] did-fail-load id=browser-embedded-1 code=-2 url=about:blank error=ERR_FAILED
+2026-10-03T14:37:33.240Z INFO  [main] [browser-pane] did-navigate id=browser-embedded-1 from=about:blank to=about:blank
+(electron) 'webContents.canGoBack' is deprecated and will be removed. Please use 'webContents.navigationHistory.canGoBack' instead.
+(electron) 'webContents.canGoForward' is deprecated and will be removed. Please use 'webContents.navigationHistory.canGoForward' instead.
+2026-10-03T14:37:33.282Z WARN  [main] [browser-pane] initial navigate failed id=browser-embedded-1: ERR_FAILED (-2) loading 'about:blank'
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+2026-10-03T14:37:33.285Z WARN  [main] [browser-pane] console id=browser-embedded-1 level=2: %cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security
+  Policy set or a policy with "unsafe-eval" enabled. This exposes users of
+  this app to unnecessary security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.
+2026-10-03T14:37:33.347Z INFO  [main] [browser-pane] native overlay ready id=browser-embedded-1 platform=darwin corners=16px/16px
+2026-10-03T14:37:33.540Z INFO  [main] [browser-pane] toolbar ready id=browser-embedded-1 reason=did-finish-load
+2026-10-03T14:37:53.821Z INFO   2026-10-03T14:37:53.821Z [secrets] daytona → DAYTONA_API_KEY: [REDACTED] (SECRET_NOT_FOUND)
+2026-10-03T14:37:53.821Z [secrets] daytona → DAYTONA_API_KEY: [REDACTED] (SECRET_NOT_FOUND)
+[SchedulerService] TICK at 17:38 UTC: 2026-10-03T14:38:00.284Z
+2026-10-03T14:38:00.284Z INFO   2026-10-03T14:38:00.284Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-03T14:38:00.284Z [event-bus] DEBUG [EventBus] Emitting: SchedulerTick
+2026-10-03T14:38:00.285Z INFO   2026-10-03T14:38:00.285Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-03T14:38:00.285Z [event-log-handler] DEBUG [EventLogHandler] Logged: SchedulerTick
+2026-10-03T14:38:00.285Z INFO   2026-10-03T14:38:00.285Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 5 any-handlers)
+2026-10-03T14:38:00.285Z [event-bus] DEBUG [EventBus] Emitted: SchedulerTick (0 handlers, 5 any-handlers)
+[SchedulerService] TICK callback completed
+2026-10-03T14:38:03.918Z INFO  [main] [WindowState] Saved window state: 1 windows
+2026-10-03T14:38:03.919Z INFO  [main] [window-state] saved {"windowCount":1,"reason":"before-quit"}
+2026-10-03T14:38:03.919Z INFO  [main] [update-flow] before-quit save {"windowCount":1,"electronWindowCount":1,"isUpdating":false,"reason":"user-quit"}
+2026-10-03T14:38:03.919Z INFO  [main] Flushed all pending session writes
+2026-10-03T14:38:03.919Z INFO   [session] Cleaning up resources...
+Debugger ending on ws://127.0.0.1:58018/201f056f-5d8a-4606-a04c-f746f04ee0fe
+For help, see: https://nodejs.org/en/docs/inspector
+2026-10-03T14:38:03.923Z INFO   2026-10-03T14:38:03.923Z [ConfigWatcher] Stopped
+2026-10-03T14:38:03.923Z [ConfigWatcher] Stopped
+2026-10-03T14:38:03.924Z [automation-system] DEBUG [AutomationSystem] Disposing for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:38:03.924Z [automation-system] DEBUG [AutomationSystem] Scheduler stopped
+2026-10-03T14:38:03.924Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:38:03.924Z [prompt-handler] DEBUG [PromptHandler] Disposed
+2026-10-03T14:38:03.924Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:38:03.924Z INFO   [session] Stopped config watcher for /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:38:03.924Z INFO   2026-10-03T14:38:03.924Z [automation-system] DEBUG [AutomationSystem] Disposing for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:38:03.924Z INFO   2026-10-03T14:38:03.924Z [automation-system] DEBUG [AutomationSystem] Scheduler stopped
+2026-10-03T14:38:03.924Z INFO   2026-10-03T14:38:03.924Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:38:03.924Z INFO   2026-10-03T14:38:03.924Z [prompt-handler] DEBUG [PromptHandler] Disposed
+2026-10-03T14:38:03.924Z INFO   2026-10-03T14:38:03.924Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:38:03.924Z INFO   2026-10-03T14:38:03.924Z [retry-scheduler] DEBUG [RetryScheduler] Disposed
+2026-10-03T14:38:03.925Z INFO   2026-10-03T14:38:03.925Z [webhook-handler] DEBUG [WebhookHandler] Disposed
+2026-10-03T14:38:03.924Z [retry-scheduler] DEBUG [RetryScheduler] Disposed
+2026-10-03T14:38:03.925Z [webhook-handler] DEBUG [WebhookHandler] Disposed
+2026-10-03T14:38:03.925Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:38:03.925Z INFO   2026-10-03T14:38:03.925Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:38:03.925Z INFO   2026-10-03T14:38:03.925Z [script-handler] DEBUG [ScriptHandler] Disposed
+2026-10-03T14:38:03.925Z [script-handler] DEBUG [ScriptHandler] Disposed
+2026-10-03T14:38:03.925Z INFO   2026-10-03T14:38:03.925Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:38:03.925Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:38:03.925Z [knowledge-handler] DEBUG [KnowledgeHandler] Disposed
+2026-10-03T14:38:03.925Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:38:03.925Z INFO   2026-10-03T14:38:03.925Z [knowledge-handler] DEBUG [KnowledgeHandler] Disposed
+2026-10-03T14:38:03.925Z INFO   2026-10-03T14:38:03.925Z [event-bus] DEBUG [EventBus] Unregistered any-handler
+2026-10-03T14:38:03.925Z INFO   [session] Disposed AutomationSystem for /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-BvesWd/workspaces/ui-001
+2026-10-03T14:38:03.925Z INFO   2026-10-03T14:38:03.925Z session-scoped-tools Unregistered callbacks for session 261003-quick-peak
+2026-10-03T14:38:03.925Z INFO   2026-10-03T14:38:03.925Z session-scoped-tools Unregistered callbacks for session 261003-ivory-moon
+2026-10-03T14:38:03.925Z session-scoped-tools Unregistered callbacks for session 261003-quick-peak
+2026-10-03T14:38:03.925Z session-scoped-tools Unregistered callbacks for session 261003-ivory-moon
+2026-10-03T14:38:03.926Z session-scoped-tools Unregistered callbacks for session 261003-fluid-laurel
+2026-10-03T14:38:03.926Z INFO   2026-10-03T14:38:03.926Z session-scoped-tools Unregistered callbacks for session 261003-fluid-laurel
+2026-10-03T14:38:03.926Z INFO   [session] Cleanup complete
+2026-10-03T14:38:03.926Z INFO  [main] [browser-pane] destroy requested id=browser-embedded-1 destroyedBefore=false keepAlive=false
+2026-10-03T14:38:03.927Z INFO  [main] [browser-pane] Destroyed instance: browser-embedded-1 (destroy)
+2026-10-03T14:38:03.928Z INFO  [main] [browser-pane] destroy completed id=browser-embedded-1 removed=true
+2026-10-03T14:38:03.928Z INFO   2026-10-03T14:38:03.928Z [event-log-handler] DEBUG [EventLogHandler] Disposed
+2026-10-03T14:38:03.928Z [event-log-handler] DEBUG [EventLogHandler] Disposed
+2026-10-03T14:38:03.928Z INFO   2026-10-03T14:38:03.928Z [event-bus] DEBUG [EventBus] Disposing for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:38:03.928Z INFO   2026-10-03T14:38:03.928Z [automation-system] DEBUG [AutomationSystem] Disposed
+2026-10-03T14:38:03.928Z [event-bus] DEBUG [EventBus] Disposing for workspace: b00f2123-0211-c848-21ad-c6bbee672def
+2026-10-03T14:38:03.928Z [automation-system] DEBUG [AutomationSystem] Disposed
+2026-10-03T14:38:03.929Z INFO  [window] Window closed for workspace b00f2123-0211-c848-21ad-c6bbee672def

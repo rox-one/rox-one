@@ -24,12 +24,7 @@ export function buildSemanticHistoryKey({
   focusedPanelIndex,
   sidebarParam,
 }: SemanticHistoryKeyInput): string {
-  return [
-    workspaceSlug ?? '',
-    panelRoutes.join('|'),
-    String(focusedPanelIndex),
-    sidebarParam,
-  ].join('::')
+  return JSON.stringify([workspaceSlug ?? '', panelRoutes, focusedPanelIndex, sidebarParam])
 }
 
 /**
