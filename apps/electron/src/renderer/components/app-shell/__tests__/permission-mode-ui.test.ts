@@ -9,7 +9,7 @@ import { readLocalSessionCapability } from '../../../lib/caller-session-loading'
 
 const renderer = resolve(import.meta.dir, '../../..')
 
-/** Execute the actual UI and App callbacks; substitute scheduling and IPC only. */
+/** Execute the actual UI and App callbacks; substitute scheduling, IPC and DOM target registration. */
 function declaration(path: string, name: string): string {
   const source = ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   let text: string | undefined
@@ -54,6 +54,8 @@ function descendants(node: React.ReactNode): React.ReactElement<any>[] {
 function uiHarness(kind: 'desktop' | 'compact') {
   const slots: unknown[] = []
   let cursor = 0
+  // Without a tour provider, the hook returns a DOM ref callback and registers nothing.
+  const tourTarget = (_node: HTMLElement | null) => {}
   const react = {
     ...React,
     useState(initial: unknown) {
@@ -72,6 +74,7 @@ function uiHarness(kind: 'desktop' | 'compact') {
   const bindings = {
     useTourTarget: () => () => {},
     React: react, useTranslation: () => ({ t: (key: string) => key }), cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
+    useTourTarget: () => tourTarget,
     PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, isWebUI: false,
     Popover: 'popover', PopoverContent: 'popover-content', PopoverTrigger: 'popover-trigger',
     SlashCommandMenu: 'slash-menu', DEFAULT_SLASH_COMMAND_GROUPS: [],

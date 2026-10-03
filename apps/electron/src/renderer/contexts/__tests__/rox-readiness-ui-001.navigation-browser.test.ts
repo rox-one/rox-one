@@ -45,12 +45,12 @@ async function fixtureBundle() {
       state=useNavigation();
       usePages(ws);
       const panels=useAtomValue(panelStackAtom), route=useAtomValue(focusedPanelRouteAtom);
-      return React.createElement('output',{'data-testid':'navigation', 'data-route':route, 'data-workspace':ws, 'data-ready':String(ready)},JSON.stringify({nav:state.navigationState,panels,revision:state.navigationRevision}));
+      return React.createElement('output',{'data-testid':'navigation', 'data-route':route, 'data-workspace':ws, 'data-ready':String(ready), 'data-sessions-ready':String(sessionsReady)},JSON.stringify({nav:state.navigationState,panels,revision:state.navigationRevision}));
     }
     const root=createRoot(document.getElementById('root'));
     // Production callback identities can stay stable across a remote-only owner
     // change. Recreating them in render would mask a missing effect dependency.
-    const onSwitchWorkspaceBySlug=next=>{if(switchMode==='missing')return false;if(switchMode==='reject')return Promise.reject(new Error('fixture switch rejected'));if(switchMode==='hold')return new Promise(resolve=>switches.push({next,resolve}));slug=next;ws='ws-'+next;remote=ws==='ws-a'?'remote-a':null;render();return true};
+    const onSwitchWorkspaceBySlug=next=>{if(switchMode==='missing')return false;if(switchMode==='reject')return Promise.reject(new Error('fixture switch rejected'));if(switchMode==='hold')return new Promise((resolve,reject)=>switches.push({next,resolve,reject}));slug=next;ws='ws-'+next;remote=ws==='ws-a'?'remote-a':null;render();return true};
     const onCreateSession=workspaceId=>new Promise(resolve=>createRequests.push({workspaceId,resolve}));
     const onInputChange=(id,input)=>{inputs.push({id,input})};
     function render() { root.render(React.createElement(Provider,{store},React.createElement(NavigationProvider,{
@@ -82,6 +82,8 @@ async function fixtureBundle() {
       fireActionTimers(){window.setTimeout=nativeSetTimeout;scheduled.splice(0).forEach(callback=>callback())},
       snapshot(){return{nav:state.navigationState,panels:store.get(panelStackAtom),ws,slug}},
       switchMode(value){switchMode=value}, resolveSwitch(index, result){switches[index].resolve(result)},
+      rejectSwitch(index){switches[index].reject(new Error('fixture switch rejected'))},
+      pendingSwitches(){return switches.map(({next})=>({next}))},
       pop(search){history.pushState({seq:0},'',search);window.dispatchEvent(new PopStateEvent('popstate',{state:{seq:0}}))},
     };
     const params=new URLSearchParams(location.search);
@@ -94,6 +96,45 @@ async function fixtureBundle() {
 
 async function snapshot() { return page.evaluate(()=>(window as any).ui001nav.snapshot()) }
 async function routeIs(route: string) { await page.waitForFunction(route=>document.querySelector('output')?.getAttribute('data-route')===route,route) }
+
+async function popCurrentWorkspacePanels(route: string) {
+  await page.evaluate(route=>{
+    const ui=(window as any).ui001nav
+    const panels=ui.snapshot().panels.map((panel: {route: string, proportion: number},index: number)=>({
+      route:index===1?route:panel.route,proportion:panel.proportion,
+    }))
+    const params=new URLSearchParams({ws:'a',route,panels:'v2:'+JSON.stringify(panels),fi:'1'})
+    ui.pop('?'+params.toString())
+  },route)
+}
+
+async function focusedHistorySwitchFailure(outcome: 'false' | 'reject') {
+  await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
+  await page.evaluate(()=>(window as any).ui001nav.navigate('home',{newPanel:true}));await routeIs('home')
+  await page.evaluate(()=>{
+    const ui=(window as any).ui001nav
+    ui.switchMode('hold');ui.pop('?ws=gone&route=notes%2Fnote%2Fforeign')
+  })
+  await page.waitForFunction(()=>(window as any).ui001nav.pendingSwitches().length===1)
+  await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+  await page.evaluate(outcome=>{
+    const ui=(window as any).ui001nav
+    if(outcome==='reject')ui.rejectSwitch(0)
+    else ui.resolveSwitch(0,false)
+  },outcome)
+  await page.waitForFunction(()=>{
+    const params=new URL(location.href).searchParams
+    return params.get('ws')==='a'&&params.get('route')==='notes/note/a'
+  })
+  const current=await snapshot()
+  expect(current.ws).toBe('ws-a')
+  expect(current.nav.details.noteId).toBe('a')
+  expect(current.panels.map((panel: {route: string})=>panel.route)).toEqual(['notes/note/a','home'])
+  // Resume another actual focus intent, without navigate() clearing the flags.
+  await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs('home')
+  await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
+  expect(new URL(page.url()).searchParams.get('ws')).toBe('a')
+}
 
 const browserTest = (name: string, run: () => Promise<void>) => it(name, run, 30_000)
 
@@ -214,6 +255,134 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.waitForTimeout(100)
     expect(new URL(page.url()).searchParams.get('route')).toBe('home')
     expect((await snapshot()).ws).toBe('ws-a')
+  })
+
+  browserTest('history-switch regression: false reply after focus-only change releases suppression',async()=>{
+    await focusedHistorySwitchFailure('false')
+  })
+
+  browserTest('history-switch regression: rejected reply after focus-only change releases suppression',async()=>{
+    await focusedHistorySwitchFailure('reject')
+  })
+
+  browserTest('history-switch regression: older failure cannot release a newer workspace switch',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
+    await page.evaluate(()=>{
+      const ui=(window as any).ui001nav
+      ui.switchMode('hold');ui.pop('?ws=old&route=notes%2Fnote%2Fold-target')
+      ui.pop('?ws=newer&route=notes%2Fnote%2Fnew-target')
+    })
+    await page.waitForFunction(()=>(window as any).ui001nav.pendingSwitches().length===2)
+    await page.evaluate(()=>(window as any).ui001nav.rejectSwitch(0))
+    await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('ws')).toBe('newer')
+    expect(new URL(page.url()).searchParams.get('route')).toBe('notes/note/new-target')
+    expect((await snapshot()).nav.details.noteId).toBe('a')
+    await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(1,false))
+    await page.waitForFunction(()=>{
+      const params=new URL(location.href).searchParams
+      return params.get('ws')==='a'&&params.get('route')==='notes/note/a'
+    })
+    await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
+  })
+
+  browserTest('history-switch regression: same-workspace popstate supersedes a pending foreign switch',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('home',{newPanel:true}));await routeIs('home')
+    await page.evaluate(()=>{
+      const ui=(window as any).ui001nav
+      ui.switchMode('hold');ui.pop('?ws=gone&route=notes%2Fnote%2Fforeign')
+    })
+    await page.waitForFunction(()=>(window as any).ui001nav.pendingSwitches().length===1)
+    await popCurrentWorkspacePanels('notes/note/current')
+    await routeIs('notes/note/current')
+    await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(0,false))
+    await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('route')).toBe('notes/note/current')
+    // Focus must update the browser URL after reconciliation, without a normal
+    // navigate() call masking a stuck pending-workspace flag.
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
+    expect(new URL(page.url()).searchParams.get('ws')).toBe('a')
+    expect((await snapshot()).panels.map((panel: {route: string})=>panel.route)).toEqual(['notes/note/a','notes/note/current'])
+    await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs('notes/note/current')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/current')
+  })
+
+  browserTest('history-switch regression: metadata-blocked same-workspace history retains its newer target',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('home',{newPanel:true}));await routeIs('home')
+    await page.evaluate(()=>{
+      const ui=(window as any).ui001nav
+      ui.switchMode('hold');ui.pop('?ws=gone&route=notes%2Fnote%2Fforeign')
+    })
+    await page.waitForFunction(()=>(window as any).ui001nav.pendingSwitches().length===1)
+    await page.evaluate(()=>(window as any).ui001nav.ready(true,false))
+    await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-sessions-ready')==='false')
+    const target='notes/note/current?keep=a%2Fb&next=%3F'
+    await popCurrentWorkspacePanels(target)
+    await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(0,false))
+    await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('ws')).toBe('a')
+    expect(new URL(page.url()).searchParams.get('route')).toBe(target)
+    expect((await snapshot()).panels.map((panel: {route: string})=>panel.route)).toEqual(['notes/note/a','home'])
+    await page.evaluate(()=>(window as any).ui001nav.ready(true,true));await routeIs(target)
+    expect((await snapshot()).nav.details.noteId).toBe('current')
+    expect(new URL(page.url()).searchParams.get('route')).toBe(target)
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs(target)
+    await page.waitForFunction(route=>new URL(location.href).searchParams.get('route')===route,target)
+  })
+
+  browserTest('history-switch regression: remote-only owner rotation still releases a failed workspace switch',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
+    await page.evaluate(()=>{
+      const ui=(window as any).ui001nav
+      ui.switchMode('hold');ui.pop('?ws=gone&route=notes%2Fnote%2Fforeign')
+    })
+    await page.waitForFunction(()=>(window as any).ui001nav.pendingSwitches().length===1)
+    await page.evaluate(()=>(window as any).ui001nav.remote('remote-new'))
+    await page.waitForFunction(()=>(window as any).ui001nav.deepListeners().at(-1)?.remoteWorkspaceId==='remote-new')
+    await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(0,false))
+    await page.waitForFunction(()=>{
+      const params=new URL(location.href).searchParams
+      return params.get('ws')==='a'&&params.get('route')==='notes/note/a'
+    })
+    expect((await snapshot()).ws).toBe('ws-a')
+    expect((await snapshot()).nav.details.noteId).toBe('a')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
+  })
+
+  browserTest('history-switch regression: workspace ABA cannot revive a failed switch over blocked current history',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('home',{newPanel:true}));await routeIs('home')
+    await page.evaluate(()=>{
+      const ui=(window as any).ui001nav
+      ui.switchMode('hold');ui.pop('?ws=gone&route=notes%2Fnote%2Fforeign')
+    })
+    await page.waitForFunction(()=>(window as any).ui001nav.pendingSwitches().length===1)
+    await page.evaluate(()=>(window as any).ui001nav.ready(true,false))
+    await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-sessions-ready')==='false')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'))
+    await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-workspace')==='ws-b')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'))
+    await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-workspace')==='ws-a')
+    const target='notes/note/current-after-aba?keep=a%2Fb'
+    await popCurrentWorkspacePanels(target)
+    await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(0,false))
+    await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('ws')).toBe('a')
+    expect(new URL(page.url()).searchParams.get('route')).toBe(target)
+    await page.evaluate(()=>(window as any).ui001nav.ready(true,true));await routeIs(target)
+    expect((await snapshot()).ws).toBe('ws-a')
+    expect((await snapshot()).nav.details.noteId).toBe('current-after-aba')
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs(target)
+    await page.waitForFunction(route=>new URL(location.href).searchParams.get('route')===route,target)
   })
 
   browserTest('canonical page broadcasts beat stale list replies and former workspace replies are ignored',async()=>{

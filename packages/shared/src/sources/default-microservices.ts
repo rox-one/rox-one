@@ -3,15 +3,18 @@
  *
  * These are local folder sources pointing at real directories. They are not
  * live importers (no browser-profile scrape, no running-app enumerator).
- * Existing source configs are never overwritten.
+ * Existing preferences are preserved; exact obsolete native defaults can migrate
+ * on Windows when the old path is absent and the replacement is verified.
  */
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, posix, win32 } from 'node:path';
 import type { FolderSourceConfig } from './types.ts';
 import { toPortablePath } from '../utils/paths.ts';
 import { BUILTIN_SOURCE_SLUGS, ensureLocalNotesSource } from './builtin-sources.ts';
+import { isReadableDirectory } from './storage.ts';
+import { updateRegularSourceFile } from './local-default-migration.ts';
 
 export const DEFAULT_ENABLED_LOCAL_SOURCE_SLUGS = [
   'notes',
@@ -39,6 +42,10 @@ export function collectDefaultEnabledSourceSlugs(): string[] {
 export interface MicroserviceSeedOptions {
   roxRoot: string;
   notesPath: string;
+  /** Runtime defaults; injectable so migration tests only probe temporary paths. */
+  platform?: NodeJS.Platform;
+  homeDir?: string;
+  env?: NodeJS.ProcessEnv;
 }
 
 interface MicroserviceSpec {
@@ -59,15 +66,17 @@ function writeLocalSource(
   workspaceRootPath: string,
   spec: MicroserviceSpec,
   now: number,
-): void {
+): boolean {
   const dir = join(sourcesDir(workspaceRootPath), spec.slug);
   const configPath = join(dir, 'config.json');
-  if (existsSync(configPath)) return;
+  if (existsSync(configPath)) return false;
+
+  mkdirSync(dir, { recursive: true });
+  if (lstatSync(dir).isSymbolicLink() || realpathSync(dir) !== join(realpathSync(sourcesDir(workspaceRootPath)), spec.slug)) return false;
 
   if (spec.mkdir) {
     mkdirSync(spec.path, { recursive: true });
   }
-  mkdirSync(dir, { recursive: true });
 
   const config: FolderSourceConfig = {
     id: `ms-${spec.slug}`,
@@ -83,30 +92,54 @@ function writeLocalSource(
     icon: spec.icon,
     tagline: spec.tagline,
     isAuthenticated: true,
-    connectionStatus: 'connected',
+    // Native app folders may not exist on this machine. A pointer is not proof
+    // of a successful connection; leave it enabled and available for testing.
+    connectionStatus: isReadableDirectory(spec.path) ? 'connected' : 'untested',
     createdAt: now,
     updatedAt: now,
   };
 
-  writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8');
-  writeFileSync(join(dir, 'guide.md'), spec.guide, 'utf-8');
+  try { writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, { encoding: 'utf8', flag: 'wx', mode: 0o600 }); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'EEXIST') return false; throw error; }
+  try { writeFileSync(join(dir, 'guide.md'), spec.guide, { encoding: 'utf8', flag: 'wx', mode: 0o600 }); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; }
+  return true;
 }
 
-function homeJoin(...parts: string[]): string {
-  try {
-    return join(homedir(), ...parts);
-  } catch {
-    return join('~', ...parts);
+/** Native folder locations, without creating directories or probing app data. */
+export function resolveNativeFolderSourcePaths(
+  platform: NodeJS.Platform = process.platform,
+  homeDir: string = homedir(),
+  env: NodeJS.ProcessEnv = process.env,
+): { applications: string; telegram: string } {
+  if (platform === 'win32') {
+    const appData = env.APPDATA && win32.isAbsolute(env.APPDATA) && win32.parse(env.APPDATA).root.length > 1
+      ? env.APPDATA : win32.join(homeDir, 'AppData', 'Roaming');
+    return {
+      applications: win32.join(appData, 'Microsoft', 'Windows', 'Start Menu', 'Programs'),
+      telegram: win32.join(appData, 'Telegram Desktop'),
+    };
   }
+  if (platform === 'darwin') {
+    return {
+      applications: posix.join(homeDir, 'Applications'),
+      telegram: posix.join(homeDir, 'Library', 'Application Support', 'Telegram'),
+    };
+  }
+  const dataHome = env.XDG_DATA_HOME && posix.isAbsolute(env.XDG_DATA_HOME) ? env.XDG_DATA_HOME : posix.join(homeDir, '.local', 'share');
+  return {
+    applications: posix.join(dataHome, 'applications'),
+    telegram: posix.join(dataHome, 'TelegramDesktop'),
+  };
 }
 
-function buildSpecs(workspaceRootPath: string, roxRoot: string): MicroserviceSpec[] {
+function buildSpecs(workspaceRootPath: string, opts: MicroserviceSeedOptions): MicroserviceSpec[] {
   const tasksPath = join(workspaceRootPath, 'tasks');
   const projectsPath = join(workspaceRootPath, 'projects');
-  const memoryPath = join(roxRoot, 'memory');
-  const sessionsPath = join(roxRoot, 'sessions');
-  const applicationsPath = homeJoin('Applications');
-  const telegramPath = homeJoin('Library', 'Application Support', 'Telegram');
+  const memoryPath = join(opts.roxRoot, 'memory');
+  const sessionsPath = join(opts.roxRoot, 'sessions');
+  const platform = opts.platform ?? process.platform;
+  const { applications: applicationsPath, telegram: telegramPath } = resolveNativeFolderSourcePaths(platform, opts.homeDir, opts.env);
 
   return [
     {
@@ -158,21 +191,77 @@ function buildSpecs(workspaceRootPath: string, roxRoot: string): MicroserviceSpe
       slug: 'applications',
       name: 'Applications',
       icon: '🧩',
-      tagline: 'Applications and ~/Library/Applications',
+      tagline: 'Native application folder and launch shortcuts',
       path: applicationsPath,
       mkdir: false,
-      guide: `# Applications\n\nFolder source for installed apps. Paths (macOS):\n\n- ${applicationsPath}\n- /Applications\n- ~/Library/Applications\n\nThis is a folder pointer, not a live process enumerator.\n`,
+      guide: `# Applications\n\nNative application folder (${platform}):\n\n${applicationsPath}\n\n${platform === 'darwin' ? 'Other macOS application folders: /Applications and ~/Library/Applications.\n\n' : ''}This is a folder pointer, not a live process enumerator. The folder may be absent if no applications have been installed there.\n`,
     },
     {
       slug: 'telegram-support',
-      name: 'Telegram Application Support',
+      name: 'Telegram Desktop data',
       icon: '✈️',
-      tagline: 'Telegram Application Support folder',
+      tagline: 'Native Telegram Desktop data folder',
       path: telegramPath,
       mkdir: false,
-      guide: `# Telegram Application Support\n\nFolder source for:\n\n${telegramPath}\n\nThis is a folder pointer, not a Telegram API importer.\n`,
+      guide: `# Telegram Desktop data\n\nNative folder (${platform}):\n\n${telegramPath}\n\nThis is a folder pointer, not a Telegram API importer. The folder may be absent if Telegram Desktop is not installed or uses a portable/custom data directory.\n`,
     },
   ];
+}
+
+/** ENOENT is evidence of absence; a permissions failure is not. */
+function isAbsent(path: string): boolean {
+  try {
+    lstatSync(path);
+    return false;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === 'ENOENT';
+  }
+}
+
+export function migrateLegacyNativeDefault(
+  workspaceRootPath: string,
+  configPath: string,
+  spec: MicroserviceSpec,
+  opts: MicroserviceSeedOptions,
+  now: number,
+): boolean {
+  if ((opts.platform ?? process.platform) !== 'win32') return false;
+  if (spec.slug !== 'applications' && spec.slug !== 'telegram-support') return false;
+  try {
+    let oldGuide = '';
+    // Read raw config: expansion would erase the exact legacy-path signature.
+    const migrated = updateRegularSourceFile(configPath, workspaceRootPath, raw => {
+      const config = JSON.parse(raw) as FolderSourceConfig;
+      const applications = spec.slug === 'applications';
+      const suffix = applications ? ['Applications'] : ['Library', 'Application Support', 'Telegram'];
+      const oldPath = join(opts.homeDir ?? homedir(), ...suffix);
+      const portable = `~/${suffix.join('/')}`;
+      const oldName = applications ? 'Applications' : 'Telegram Application Support';
+      const oldTagline = applications ? 'Applications and ~/Library/Applications' : 'Telegram Application Support folder';
+      if (config.id !== `ms-${spec.slug}` || config.slug !== spec.slug || config.type !== 'local' ||
+          config.provider !== 'craft-local' || config.name !== oldName || config.icon !== spec.icon ||
+          config.tagline !== oldTagline || config.local?.format !== 'markdown' ||
+          ![portable, portable.replaceAll('/', '\\'), oldPath].includes(config.local.path)) return null;
+      if (!isAbsent(oldPath) || !isReadableDirectory(spec.path)) return null;
+
+      oldGuide = applications
+        ? `# Applications\n\nFolder source for installed apps. Paths (macOS):\n\n- ${oldPath}\n- /Applications\n- ~/Library/Applications\n\nThis is a folder pointer, not a live process enumerator.\n`
+        : `# Telegram Application Support\n\nFolder source for:\n\n${oldPath}\n\nThis is a folder pointer, not a Telegram API importer.\n`;
+      config.local = { ...config.local, path: toPortablePath(spec.path) };
+      config.name = spec.name;
+      config.tagline = spec.tagline;
+      config.connectionStatus = 'connected';
+      delete config.connectionError;
+      config.updatedAt = now;
+      return `${JSON.stringify(config, null, 2)}\n`;
+    });
+    if (migrated) updateRegularSourceFile(join(dirname(configPath), 'guide.md'), workspaceRootPath,
+      raw => raw === oldGuide ? spec.guide : null);
+    return migrated;
+  } catch {
+    // A malformed config or failed filesystem probe must not block bootstrap.
+    return false;
+  }
 }
 
 /**
@@ -184,15 +273,20 @@ export function ensureDefaultMicroserviceSources(
   opts: MicroserviceSeedOptions,
 ): { created: string[] } {
   mkdirSync(sourcesDir(workspaceRootPath), { recursive: true });
+  // A user-owned workspace root may be a link, but its sources directory must
+  // remain inside that canonical workspace before any default files are added.
+  if (realpathSync(sourcesDir(workspaceRootPath)) !== join(realpathSync(workspaceRootPath), 'sources')) return { created: [] };
   ensureLocalNotesSource(workspaceRootPath, opts.notesPath);
 
   const now = Date.now();
   const created: string[] = [];
-  for (const spec of buildSpecs(workspaceRootPath, opts.roxRoot)) {
+  for (const spec of buildSpecs(workspaceRootPath, opts)) {
     const configPath = join(sourcesDir(workspaceRootPath), spec.slug, 'config.json');
-    if (existsSync(configPath)) continue;
-    writeLocalSource(workspaceRootPath, spec, now);
-    created.push(spec.slug);
+    if (existsSync(configPath)) {
+      migrateLegacyNativeDefault(workspaceRootPath, configPath, spec, opts, now);
+      continue;
+    }
+    if (writeLocalSource(workspaceRootPath, spec, now)) created.push(spec.slug);
   }
   return { created };
 }

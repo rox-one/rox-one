@@ -476,6 +476,9 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
 // ---------------------------------------------------------------------------
 
 export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
+  RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT,
+  RPC_CHANNELS.runtimeTrace.READ_EVENTS,
+  RPC_CHANNELS.runtimeTrace.READ_PAYLOAD,
   // Private self profile belongs to the authenticated workspace principal.
   RPC_CHANNELS.orgs.GET_IDENTITY,
   RPC_CHANNELS.orgs.UPDATE_IDENTITY,

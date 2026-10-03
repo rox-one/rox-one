@@ -271,6 +271,27 @@ export function NavigationProvider({
   const historyReconcileRevisionRef = useRef(0)
   const historyMountedRef = useRef(false)
 
+  // History leases belong to the local workspace, independently of action
+  // ownership, which also rotates on remote changes and panel focus intents.
+  useLayoutEffect(() => {
+    const revision = ++historyReconcileRevisionRef.current
+    // StrictMode replays layout setup after passive cleanup. The initial
+    // restoration remains complete, but its release frame belongs to the
+    // disposed lease. Resume that release without resetting the semantic key,
+    // so navigation arriving before the frame still creates a history entry.
+    if (initialRouteRestoredRef.current && suppressPushRef.current
+      && !historyMountedRef.current && !isPopstateSwitchRef.current
+      && pendingUrlRestoreRef.current === null) {
+      requestAnimationFrame(() => {
+        if (!historyMountedRef.current || revision !== historyReconcileRevisionRef.current
+          || isPopstateSwitchRef.current || pendingUrlRestoreRef.current !== null) return
+        suppressPushRef.current = false
+        maybePushHistoryForSemanticChange()
+      })
+    }
+    return () => { ++historyReconcileRevisionRef.current }
+  }, [workspaceId])
+
   const updateCanGoBackForward = useCallback(() => {
     setCanGoBack(historySeqRef.current > 0)
     setCanGoForward(historySeqRef.current < historyMaxSeqRef.current)
@@ -1000,6 +1021,11 @@ export function NavigationProvider({
     const handlePopState = (event: PopStateEvent) => {
       // A browser-history request supersedes pending create/prefill/send work.
       navigationOwnerRef.current.revision += 1
+      // Claim this history request before any readiness or workspace branch.
+      // This also fences a previous switch failure and reconciliation frame.
+      const revision = ++historyReconcileRevisionRef.current
+      isPopstateSwitchRef.current = false
+      suppressPushRef.current = true
       // Update sequence tracking
       const eventSeq = event.state?.seq ?? 0
       historySeqRef.current = eventSeq
@@ -1014,13 +1040,8 @@ export function NavigationProvider({
         // Workspace boundary crossed — trigger workspace switch
         // The workspace switch effect will handle reconciliation
         isPopstateSwitchRef.current = true
-        const revision = ++historyReconcileRevisionRef.current
-        const owner = navigationOwnerRef.current
-        const intent = owner.revision
-        suppressPushRef.current = true
         const releaseFailedSwitch = () => {
-          if (!historyMountedRef.current || revision !== historyReconcileRevisionRef.current
-            || !owner.active || navigationOwnerRef.current !== owner || owner.revision !== intent) return
+          if (!historyMountedRef.current || revision !== historyReconcileRevisionRef.current) return
           isPopstateSwitchRef.current = false
           suppressPushRef.current = false
           syncUrl(false)
