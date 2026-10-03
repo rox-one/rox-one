@@ -1,0 +1,9 @@
+{
+  "checkedAtUtc": "2026-10-03T20:53:19.878664+00:00",
+  "ownedPid": 60311,
+  "processIdentity": "60311 60310 node /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/node_modules/.bin/tsc --noEmit",
+  "action": "SIGTERM only own redundant local red typecheck; parent runner preserves interrupted log and proceeds to corrected green command.",
+  "reason": "Exact remote compiler failure and same private fixture import are already preserved; global host has concurrent compiler load, so a second baseline is unnecessary. Interruption is not a reproduced compiler failure.",
+  "remoteRedReceipt": "UI-001-expanded-history-durable-ci-304da43.json",
+  "fullDoDClosed": false
+}

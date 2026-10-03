@@ -1,0 +1,18 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/sessions/pocket-session-resource-owner.test.ts:
+39 | const restore=sm.roxExecutionForSession(managed).catch(e=>e.message);await Bun.sleep(1);sm.roxExecutions.set('s1',cb);resumeBound(ca);const restored=await restore;f.authority.bound=originalBound;
+40 | console.log(JSON.stringify({pb,titleError:title.error,selected:selected?.cloudAccountId,bindingAccount:binding?.accountId,bothCurrent:true,count,queuedAccount:queuedContext?.cloudAccountId,replayAccount:replayContext?.cloudAccountId,restoreError:typeof restored==='string'?restored:null,currentOwner:sm.roxExecutions.get('s1')?.cloudAccountId}));
+41 | `], { cwd: root, env: { ...process.env, NODE_ENV: 'test', ROX_CONFIG_DIR: temp, CRAFT_CONFIG_DIR: temp }, stdout: 'pipe', stderr: 'pipe' })
+42 |   const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+43 |   expect({ exit, stdout, stderr }).toMatchObject({ exit: 0 })
+44 |   const r = JSON.parse(stdout)
+                      ^
+SyntaxError: JSON Parse error: Unexpected identifier "session"
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/server-core/src/sessions/pocket-session-resource-owner.test.ts:44:18)
+(fail) actual SessionManager rejects foreign concurrent and title owners, freezes queue and fences restored bindings [3870.51ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [4.62s]

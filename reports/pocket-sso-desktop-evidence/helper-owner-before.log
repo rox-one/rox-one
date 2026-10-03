@@ -1,0 +1,28 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/sessions/pocket-helper-owner.test.ts:
+27 | console.log(JSON.stringify({previousOwner,freshDraft,stale,owners,queries,creates,before}));
+28 | `], { cwd: root, env: { ...process.env, ROX_CONFIG_DIR: fixture, CRAFT_CONFIG_DIR: fixture }, stdout: 'pipe', stderr: 'pipe' })
+29 |     const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+30 |     expect({ exit, stdout, stderr }).toMatchObject({ exit: 0 })
+31 |     const result = JSON.parse(stdout)
+32 |     expect(result.previousOwner).toEqual({ success: true, text: 'account-b' })
+                                      ^
+error: expect(received).toEqual(expected)
+
+  {
+    "success": true,
+-   "text": "account-b",
++   "text": "account-a",
+  }
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/server-core/src/sessions/pocket-helper-owner.test.ts:32:34)
+(fail) actual draft helper selects the RPC caller before backend creation and rejects stale callers before query [41966.27ms]
+
+ 0 pass
+ 1 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [45.86s]

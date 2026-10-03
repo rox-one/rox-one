@@ -113,7 +113,7 @@ export interface MemoryServiceDeps {
   episodicMemory?: EpisodicMemory
   clock?: () => number
   /** LLM one-shot: prompt → raw text (expected strict JSON). Default: throws. */
-  distiller?: (prompt: string) => Promise<string>
+  distiller?: (prompt: string, sessionId?: string) => Promise<string>
   /**
    * M3: one-shot text summarizer for history decay rollups (weekly/monthly).
    * Absent → decay falls back to concat + 4000-char truncation (no LLM).
@@ -241,7 +241,7 @@ export class MemoryService {
   private readonly clock: () => number
   private readonly emit: (channel: string, args: unknown[]) => void
   private readonly logger: { warn: (msg: string, err?: unknown) => void; info?: (msg: string) => void }
-  private distiller: (prompt: string) => Promise<string>
+  private distiller: (prompt: string, sessionId?: string) => Promise<string>
   private queue: DistillJob[] = []
   private draining = false
   private stopped = false
@@ -264,7 +264,7 @@ export class MemoryService {
   }
 
   /** Attach the real one-shot distiller (lazy bootstrap wiring). */
-  setDistiller(distiller: (prompt: string) => Promise<string>): void {
+  setDistiller(distiller: (prompt: string, sessionId?: string) => Promise<string>): void {
     this.distiller = distiller
   }
 
@@ -632,7 +632,7 @@ export class MemoryService {
       const negativeFirst = this.config.negativeFirst
       let raw: string | null = null
       try {
-        raw = await this.distiller(buildDistillPrompt(windowText, job.full, negativeFirst))
+        raw = await this.distiller(buildDistillPrompt(windowText, job.full, negativeFirst), job.sessionId)
         job.nativeContext?.assertAuthorized()
       } catch (err) {
         this.logger.warn(`MemoryService: distiller failed for ${job.sessionId}: ${err instanceof Error ? err.message : String(err)}`, err)
@@ -641,7 +641,7 @@ export class MemoryService {
       result = parseDistillResult(raw)
       if (!result) {
         // One retry with a harder JSON-only instruction.
-        raw = await this.distiller(buildDistillPrompt(windowText, job.full, negativeFirst) + '\nReturn only valid JSON')
+        raw = await this.distiller(buildDistillPrompt(windowText, job.full, negativeFirst) + '\nReturn only valid JSON', job.sessionId)
         job.nativeContext?.assertAuthorized()
         result = parseDistillResult(raw ?? '')
         if (!result) {
