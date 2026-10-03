@@ -1,0 +1,23 @@
+{
+  "scope": "Run in the isolated rox-one checkout with Bun1.3.14; replace only the runtime executable paths for another host. Browser and native lanes are local fixtures, not hosted/installed release acceptance.",
+  "commands": {
+    "dependencies": "bun install --frozen-lockfile --ignore-scripts",
+    "repositoryValidation": "NODE_OPTIONS=--max-old-space-size=4096 bun run --bun validate:ci",
+    "rendererRegression": "bun test --test-name-pattern '^(?!ProfileStrip preserves its translated accessibility contracts in isolation)' ./apps/electron/src/renderer/components/app-shell/__tests__ ./apps/electron/src/renderer/contexts/__tests__ ./apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.extension-lifecycle.test.ts ./apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.note-route-lifecycle.test.ts ./apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.project-lifecycle.test.ts ./apps/electron/src/renderer/knowledge/__tests__/rox-readiness-ui-001.knowledge-projection.test.ts ./apps/electron/src/renderer/components/pages/__tests__/rox-readiness-ui-001.page-lifecycle.test.ts ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.route-isolation.test.ts ./apps/electron/src/shared/__tests__ ./apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts ./apps/electron/src/renderer/lib/__tests__/rox-readiness-ui-001.panel-url.test.ts ./apps/electron/src/renderer/platform/__tests__/layout-snapshot.test.ts",
+    "profileDirect": "cd apps/electron && bun test ./src/renderer/components/app-shell/__tests__/profile-strip-accessibility.isolated.tsx",
+    "mainParser": "bun test ./apps/electron/src/main/__tests__/rox-readiness-ui-001.deep-link-query.isolated.ts",
+    "extraMissingItems": "bun test ./apps/electron/src/renderer/pages/extra-screens/__tests__/rox-readiness-ui-001.missing-items.isolated.ts",
+    "panelGeometry": "bun test apps/electron/src/renderer/atoms/rox-readiness-ui-001.route-isolation.test.ts apps/electron/src/renderer/lib/__tests__/rox-readiness-ui-001.panel-url.test.ts",
+    "browserBunAttempt": "ROX_UI001_BROWSER_TEST=1 ROX_UI001_CHROMIUM_EXECUTABLE=<isolated Chromium executable> bun test apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+    "nativeBuildMain": "bun tests/final-readiness/rox-readiness-ui-001.build.ts",
+    "nativeBuildRenderer": "bun tests/final-readiness/rox-readiness-ui-001.build.ts --renderer",
+    "nativeBuildDriver": "bun tests/final-readiness/rox-readiness-ui-001.build.ts --node-driver",
+    "nativeReplay": "ROX_UI_001_PRODUCT_E2E=1 ROX_UI_001_BUN=<Bun1.3.14 executable> ROX_UI_001_ELECTRON=<isolated Electron39.2.7 executable> node work/rox-readiness-ui-001.native-driver.cjs",
+    "diff": "git diff --check",
+    "radarSelected": "bun test ./apps/electron/src/renderer/pages/extra-screens/__tests__/rox-readiness-ui-001.radar-selected.isolated.ts (separate process)",
+    "meetingSource": "bun test ./apps/electron/src/renderer/lib/extra-screens/__tests__/rox-readiness-ui-001.meetings-source.test.ts (separate process)"
+  },
+  "browserNodeFallback": "See the revision-bound fixture manifests and reproducible scripts under verification/expanded/harness. That lane runs the same registered test callbacks with Node assertions and Playwright transport; it does not claim a Bun test runner pass.",
+  "excludedWrapper": "profile-strip-accessibility.test.tsx failed because bun:test child process returned empty stdout. The actual isolated component file was run directly with qualified Bun and passed. The wrapper failure remains in history.",
+  "frozenSourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d"
+}

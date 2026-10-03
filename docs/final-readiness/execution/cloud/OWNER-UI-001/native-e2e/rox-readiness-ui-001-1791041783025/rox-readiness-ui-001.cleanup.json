@@ -1,0 +1,54 @@
+{
+  "capturedAt": "2026-10-03T15:47:26.923181+00:00",
+  "productRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "driverSession": 10399,
+  "driverExitCode": 0,
+  "ownedElectronPids": [
+    89868,
+    94011
+  ],
+  "ownedPidsAbsent": true,
+  "ownedProfileProcessesAbsent": true,
+  "profileName": "rox-readiness-ui-001-Gs0U0f",
+  "quitRecovery": "normal quit exceeded 20s after state save; owned process terminated",
+  "normalCleanQuitAccepted": false,
+  "sourceLeaseReleased": true,
+  "processChecks": [
+    {
+      "command": "ps -p 89868,94011 -o pid=,ppid=,command=",
+      "exitCode": 1,
+      "stdout": ""
+    },
+    {
+      "command": "pgrep -fal rox-readiness-ui-001-Gs0U0f",
+      "exitCode": 1,
+      "stdout": ""
+    }
+  ],
+  "driverOutput": {
+    "privateInputSha256": "127a7cf893284126f53a01ddd3878e420b2c35708988947a74441310caf93f05",
+    "sanitizedPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791041783025/rox-readiness-ui-001.startup-debug.log",
+    "sanitizedSha256": "b01cfbed5bb10cdc16266e13cf874410cc858074a0efec495fca52a08090eaf8",
+    "inputBytes": 194471,
+    "sanitizedBytes": 194475
+  },
+  "result": {
+    "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791041783025/rox-readiness-ui-001.result.json",
+    "sha256": "723b75375edb8753c8f2a96816f4ac9e0258b953d9ac6b3fceedbbb321373607"
+  },
+  "buildReceipts": [
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001.build-5e5493-main.final.json",
+      "sha256": "16c1c5f4020979e122beca40ee7c2b1e606575503651ca2a180e49eb4fd59596",
+      "sourceManifestSha256": "9135605f00553e0fc97cebc36e48b826cd2e6ac13117dc21e397cf7fea077b6a",
+      "sourceInputCount": 2776
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001.build-5e5493-renderer.final.json",
+      "sha256": "7d3f93b0cc793bea84a8007cb40288f76cc64434fd0b2a056555a1e0201a8a5b",
+      "sourceManifestSha256": "9135605f00553e0fc97cebc36e48b826cd2e6ac13117dc21e397cf7fea077b6a",
+      "sourceInputCount": 2776
+    }
+  ],
+  "fullDoDClosed": false
+}

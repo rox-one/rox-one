@@ -1,0 +1,11 @@
+{
+  "capturedBeforeSeedAndNativeLaunch": true,
+  "capturedAt": "2026-10-03T14:42:34.367Z",
+  "hashes": {
+    "tests/final-readiness/rox-readiness-ui-001.product.test.ts": "5c69d9fcdd28d525c42556229555df260d724fe097734ebc82adbc079420b714",
+    "tests/final-readiness/rox-readiness-ui-001.seed.ts": "67392804b4afadb1e9b572748bc206fc925d62c05af4400112819931d91bab86",
+    "tests/final-readiness/rox-readiness-ui-001.node-driver.ts": "c84ba4b82c326e8e22ab4dd24476b976281bc744e492279b89848c3c43696abf",
+    "tests/final-readiness/rox-readiness-ui-001.build.ts": "ac7c6c278512813beb5ee021fc90687d4a59fc76494b7506b3b8a9302c2f869b",
+    "work/rox-readiness-ui-001.native-driver.cjs": "8ff278603f79a1cb646b780fe88480a2bec3205b0aa9d4f94648c4c35dd7b030"
+  }
+}
