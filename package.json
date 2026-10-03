@@ -123,7 +123,10 @@
     "check-version": "bun run scripts/check-version.ts",
     "oss:sync": "bun run scripts/oss-sync.ts",
     "rx:validate": "bun run scripts/rx-validate.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:product-tour": "bun test apps/electron/src/renderer/features/product-tour && bun test apps/electron/src/renderer/context/__tests__/product-tour-layers.test.ts",
+    "test:product-tour:e2e": "playwright test --config tests/e2e/product-tour/playwright.config.ts",
+    "test:product-tour:native": "bun scripts/product-tour/run-native.ts"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.947.0",

@@ -697,6 +697,12 @@ export function FreeFormInput({
   const containerRef = React.useRef<HTMLDivElement>(null)
   const sourceButtonRef = React.useRef<HTMLButtonElement>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  React.useEffect(() => {
+    const input = fileInputRef.current
+    const cancel = () => { tourSignals.handoff(attachmentObservationRef.current, false); attachmentObservationRef.current = null }
+    input?.addEventListener('cancel', cancel)
+    return () => input?.removeEventListener('cancel', cancel)
+  }, [tourSignals])
 
   // Merge refs for RichTextInput
   const internalInputRef = React.useRef<RichTextInputHandle>(null)
@@ -1313,6 +1319,7 @@ export function FreeFormInput({
   const handleAttachClick = () => {
     if (disabled) return
     attachmentObservationRef.current = tourSignals.capture()
+    tourSignals.handoff(attachmentObservationRef.current, true)
     fileInputRef.current?.click()
   }
 
@@ -1331,6 +1338,7 @@ export function FreeFormInput({
 
     // Reset input so re-selecting the same file triggers onChange again
     e.target.value = ''
+    tourSignals.handoff(observation, false)
   }
 
   const handleRemoveAttachment = (index: number) => {
@@ -2253,6 +2261,7 @@ export function FreeFormInput({
                 tooltip={t("chat.sourcesTooltip")}
               />
               <CompactSourceSelector
+                tourSessionSelection={true}
                 open={sourceDropdownOpen}
                 onOpenChange={setSourceDropdownOpen}
                 sources={sources}
@@ -2386,6 +2395,7 @@ export function FreeFormInput({
               />
 
               <SourceSelectorPopover
+                tourSessionSelection={true}
                 open={sourceDropdownOpen}
                 onOpenChange={setSourceDropdownOpen}
                 anchorRef={sourceButtonRef}

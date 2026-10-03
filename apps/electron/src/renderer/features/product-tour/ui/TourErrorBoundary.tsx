@@ -9,7 +9,7 @@ export interface TourErrorBoundaryProps {
 
 function ErrorFallback() {
   const { t } = useTranslation()
-  return <div role="status" className="fixed bottom-4 right-4 z-dropdown max-w-80 rounded-lg bg-background p-4 shadow-lg">
+  return <div role="status" className="fixed bottom-4 right-4 z-dropdown max-w-80 rounded-lg bg-background p-4 shadow-modal-small">
     <p className="font-medium">{t('productTour.error.title')}</p>
     <p className="mt-1 text-sm text-muted-foreground">{t('productTour.error.body')}</p>
   </div>
