@@ -116,6 +116,17 @@ test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creati
   await page.locator('[contenteditable="true"]').first().fill(content)
   await expect.poll(async () => (await evidence(page)).nativeFiles.some((file: { actualContent: string; content: string }) => file.actualContent.includes(content) && file.actualContent === file.content)).toBe(true)
   await expect(popup).toHaveCount(0)
+  await expect(page.getByTestId('product-tour-status')).toHaveCount(0)
+  await expect.poll(() => page.evaluate(() => new Promise<boolean>((resolve, reject) => {
+    const open = indexedDB.open('rox-product-tour')
+    open.onerror = () => reject(open.error)
+    open.onsuccess = () => {
+      const db = open.result
+      const read = db.transaction('progress', 'readonly').objectStore('progress').getAll()
+      read.onerror = () => { db.close(); reject(read.error) }
+      read.onsuccess = () => { db.close(); resolve(read.result.some((record: any) => record.tourId === 'OBT-17' && record.steps['notes.create']?.verifiedAt !== undefined && record.steps['notes.save']?.verifiedAt !== undefined)) }
+    }
+  }))).toBe(true)
   await attachEvidence(page, info)
 })
 
