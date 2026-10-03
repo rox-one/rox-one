@@ -217,7 +217,7 @@ describe('MessagingGateway button-press access gate', () => {
     await h.adapter.fireButton(buildPress({ buttonId: compactButton, senderId: 'alice', threadId: 42, messageId: 'actual-compact-press' }))
     const compactLaunch = { kind: 'channel', triggerId: 'actual-compact-press', channel: {
       kind: 'channel-identity', id: binding.id, scope: 'workspace', label: 'telegram: chat-1',
-    } }
+    } } as const
     expect(send).toHaveBeenCalledTimes(1)
     expect(send.mock.calls[0]![0]).toBe('sess-A')
     expect(send.mock.calls[0]![1]).toBe('/compact')

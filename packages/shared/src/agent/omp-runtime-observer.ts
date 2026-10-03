@@ -290,9 +290,10 @@ export class OmpRuntimeObserver {
     this.fd = openSync(this.path, constants.O_CREAT | constants.O_EXCL | constants.O_RDONLY, 0o600);
     this.env = { ROX_RUNTIME_OBSERVATION_PATH: this.path, ROX_RUNTIME_CONTROL_PATH: this.controlPath };
     try {
-      this.watcher = watch(directory, (_event, filename) => {
-        if (filename?.toString() === 'native-observations.jsonl') this.drain();
-      });
+      // Directory notifications may coalesce creation and append events under
+      // another filename. Read only the already-open private spool descriptor;
+      // event filenames never choose a path or widen the observation scope.
+      this.watcher = watch(directory, () => this.drain());
       this.watcher.unref();
     } catch (error) {
       // The OMP transport drains before each RPC frame and before completion too.
