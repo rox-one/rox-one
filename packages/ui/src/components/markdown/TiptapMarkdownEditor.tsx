@@ -23,6 +23,9 @@ import { RichBlockInteractions } from './extensions/RichBlockInteractions'
 import { WikiLink } from './extensions/WikiLink'
 import { HashTag } from './extensions/HashTag'
 import { MarkdownComment } from './extensions/MarkdownComment'
+import { DocumentFolding, type DocumentFoldingJSON } from './extensions/DocumentFolding'
+import { RoxColumnsBlock, RoxColumnBlock } from './extensions/ColumnsBlock'
+import { RoxBlockCallout, PortableCalloutBlockquote } from './extensions/rox-block-syntax'
 import { cn } from '../../lib/utils'
 import 'katex/dist/katex.min.css'
 import './tiptap-editor.css'
@@ -30,6 +33,19 @@ import './extensions/animated-task-item.css'
 
 export type MarkdownEngine = 'legacy' | 'official'
 export type TiptapEditorHandle = NonNullable<ReturnType<typeof useEditor>>
+
+export function readFoldingPreference(key?: string): DocumentFoldingJSON | null {
+  if (!key || typeof window === 'undefined') return null
+  try {
+    const value = JSON.parse(window.localStorage.getItem(key) ?? 'null')
+    return value?.version === 1 && Array.isArray(value.foldedIds) ? value : null
+  } catch { return null }
+}
+
+export function writeFoldingPreference(key: string | undefined, value: DocumentFoldingJSON): void {
+  if (!key || typeof window === 'undefined') return
+  try { window.localStorage.setItem(key, JSON.stringify(value)) } catch { /* Optional UI preference. */ }
+}
 
 
 function getLegacyMarkdown(editor: { storage: { markdown?: { getMarkdown?: () => string } } }): string {
@@ -217,6 +233,8 @@ export interface TiptapMarkdownEditorProps {
   onWikiLinkClick?: (target: string) => void
   /** Called when the user clicks a #tag in the editor. */
   onTagClick?: (tag: string) => void
+  /** Workspace/document-scoped UI preference, separate from Markdown content. */
+  foldingStorageKey?: string
   /**
    * Migration flag for markdown engine foundations.
    * - `legacy`: tiptap-markdown (default for safe rollout)
@@ -234,6 +252,7 @@ export function TiptapMarkdownEditor({
   onEditorReady,
   onWikiLinkClick,
   onTagClick,
+  foldingStorageKey,
   markdownEngine = 'legacy',
 }: TiptapMarkdownEditorProps) {
   const onUpdateRef = React.useRef(onUpdate)
@@ -256,10 +275,12 @@ export function TiptapMarkdownEditor({
     const base = [
       StarterKit.configure({
         codeBlock: false,
+        blockquote: false,
         trailingNode: false,
         heading: { levels: [1, 2, 3] },
       }),
       RetainedTrailingNode,
+      PortableCalloutBlockquote,
       TaskList,
       TaskItem.configure({
         nested: true,
@@ -285,6 +306,19 @@ export function TiptapMarkdownEditor({
         },
       }),
       RichBlockInteractions,
+      RoxColumnsBlock.configure({ labels: { resizeColumn: i18n.t('notes.columns.resize') } }),
+      RoxColumnBlock,
+      DocumentFolding.configure({
+        initialState: readFoldingPreference(foldingStorageKey),
+        labels: {
+          collapseSection: i18n.t('notes.folding.collapseSection'),
+          collapseTaskList: i18n.t('notes.folding.collapseTaskList'),
+          expandSection: i18n.t('notes.folding.expandSection'),
+          expandTaskList: i18n.t('notes.folding.expandTaskList'),
+        },
+        onChange: state => writeFoldingPreference(foldingStorageKey, state),
+      }),
+      RoxBlockCallout.configure({ labels: { collapse: i18n.t('notes.blocks.collapse'), expand: i18n.t('notes.blocks.expand') } }),
       WikiLink.configure({
         onWikiLinkClick: (target) => onWikiLinkClickRef.current?.(target),
       }),
@@ -338,7 +372,7 @@ export function TiptapMarkdownEditor({
         transformCopiedText: true,
       }),
     ]
-  }, [placeholder, useOfficialMarkdown])
+  }, [placeholder, useOfficialMarkdown, foldingStorageKey])
 
   const initialContent = useOfficialMarkdown
     ? preprocessMarkdownForOfficial(content)

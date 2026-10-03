@@ -12,11 +12,14 @@
  */
 
 import * as React from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { focusedPanelIdAtom } from '@/atoms/panel-stack'
 import { useAppShellContext } from '@/context/AppShellContext'
+import { useNativeSurfaceBounds } from '@/hooks/useNativeSurfaceBounds'
+import { NativeSurfacePlaceholder } from '@/components/browser/NativeSurfacePlaceholder'
+import { releaseNativeSurface } from '@/lib/native-surface-dom'
 
 export interface ExtensionSurfacePageProps {
   extensionId: string
@@ -35,14 +38,20 @@ export default function ExtensionSurfacePage({
 }: ExtensionSurfacePageProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
-  const frameRef = useRef(0)
   const releaseRef = useRef<Promise<void>>(Promise.resolve())
   const [instanceId, setInstanceId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [removed, setRemoved] = useState(false)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
-  const { activeWorkspaceId } = useAppShellContext()
-  const isFocused = panelId === undefined || focusedPanelId === panelId
+  const { activeWorkspaceId, isFocusedPanel } = useAppShellContext()
+  const isFocused = isFocusedPanel ?? (panelId === undefined || focusedPanelId === panelId)
+  const presentation = useNativeSurfaceBounds({
+    containerRef,
+    instanceId,
+    focused: isFocused,
+    removed: removed || Boolean(error),
+    syncBounds: (nativeId, rect) => window.electronAPI.extensionSurface.syncBounds({ instanceId: nativeId, rect }),
+  })
 
   const durableKey = useMemo(() => {
     const ws =
@@ -82,7 +91,7 @@ export default function ExtensionSurfacePage({
       releaseRef.current = acquire.then(async () => {
         if (createdId === null) return
         try {
-          await window.electronAPI.extensionSurface.syncBounds({ instanceId: createdId, rect: null })
+          await releaseNativeSurface(createdId, (nativeId, rect) => window.electronAPI.extensionSurface.syncBounds({ instanceId: nativeId, rect }))
         } catch {
           // Best-effort hide
         }
@@ -94,47 +103,6 @@ export default function ExtensionSurfacePage({
       })
     }
   }, [durableKey, surfaceUrl, extensionId, viewId, activeWorkspaceId])
-
-  const syncBounds = useCallback(() => {
-    if (!instanceId) return
-    const el = containerRef.current
-    if (!el || !isFocused || removed) {
-      window.electronAPI.extensionSurface.syncBounds({ instanceId, rect: null })
-      return
-    }
-    const rect = el.getBoundingClientRect()
-    window.electronAPI.extensionSurface.syncBounds({
-      instanceId,
-      rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
-    })
-  }, [instanceId, isFocused, removed])
-
-  const scheduleSync = useCallback(() => {
-    if (frameRef.current) return
-    frameRef.current = requestAnimationFrame(() => {
-      frameRef.current = 0
-      syncBounds()
-    })
-  }, [syncBounds])
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const observer = new ResizeObserver(scheduleSync)
-    observer.observe(el)
-    window.addEventListener('resize', scheduleSync)
-    scheduleSync()
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', scheduleSync)
-      if (frameRef.current) cancelAnimationFrame(frameRef.current)
-      frameRef.current = 0
-    }
-  }, [scheduleSync])
-
-  useEffect(() => {
-    scheduleSync()
-  }, [isFocused, removed, scheduleSync])
 
   useEffect(() => {
     if (!instanceId) return
@@ -150,7 +118,11 @@ export default function ExtensionSurfacePage({
     }
   }, [instanceId])
 
-  const fullSurface = <div ref={containerRef} className="h-full w-full bg-background" />
+  const fullSurface = (
+    <div ref={containerRef} className="relative h-full w-full bg-background">
+      <NativeSurfacePlaceholder presentation={presentation} surfaceRef={containerRef} />
+    </div>
+  )
 
   if (error) {
     return (

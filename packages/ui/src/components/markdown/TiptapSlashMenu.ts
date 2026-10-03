@@ -5,6 +5,8 @@ import type { Editor } from '@tiptap/core'
 import i18n from 'i18next'
 import { InlineMenuSurface } from '../ui/InlineMenuSurface'
 import { RICH_BLOCK_EDIT_EVENT } from './rich-block-events'
+import { insertRoxColumnsContent } from './extensions/ColumnsBlock'
+import { createRoxBlockContent } from './extensions/rox-block-syntax'
 
 export interface SlashCommandItem {
   id: string
@@ -362,34 +364,30 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     {
       id: 'columns-2',
       title: slashTitle('notes.slash.twoColumns', 'Two columns'),
-      description: 'Insert a portable two-column layout',
+      description: slashTitle('notes.slash.columns2Description', 'Insert a portable two-column layout'),
       icon: 'square-code',
       group: 'Blocks',
       aliases: ['columns', 'split', 'layout'],
-      run: (e) => {
-        e.chain().focus().insertContent(':::columns 2\n:::column\n\n:::\n:::column\n\n:::\n:::\n').run()
-      },
+      run: (e, insertPos) => insertRoxColumnsContent(e, 2, insertPos),
     },
     {
       id: 'columns-3',
       title: slashTitle('notes.slash.threeColumns', 'Three columns'),
-      description: 'Insert a portable three-column layout',
+      description: slashTitle('notes.slash.columns3Description', 'Insert a portable three-column layout'),
       icon: 'square-code',
       group: 'Blocks',
       aliases: ['columns', 'split', 'layout'],
-      run: (e) => {
-        e.chain().focus().insertContent(':::columns 3\n:::column\n\n:::\n:::column\n\n:::\n:::column\n\n:::\n:::\n').run()
-      },
+      run: (e, insertPos) => insertRoxColumnsContent(e, 3, insertPos),
     },
     {
       id: 'spoiler',
       title: slashTitle('notes.slash.spoiler', 'Spoiler'),
-      description: 'Insert a foldable spoiler callout',
+      description: slashTitle('notes.slash.spoilerDescription', 'Insert a foldable spoiler callout'),
       icon: 'quote',
       group: 'Blocks',
       aliases: ['spoiler', 'hidden', 'fold'],
-      run: (e) => {
-        e.chain().focus().insertContent('> [!spoiler]\n> \n').run()
+      run: (e, insertPos) => {
+        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('spoiler', slashTitle('notes.slash.spoiler', 'Spoiler'))).run()
       },
     },
     {

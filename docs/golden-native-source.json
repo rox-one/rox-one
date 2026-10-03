@@ -1,0 +1,79 @@
+{
+  "source_branch": "codex/golden-gate-workspace",
+  "source_sha": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
+  "source_pr": 584,
+  "copied_files": [
+    {
+      "path": "apps/electron/src/renderer/hooks/useNativeSurfaceBounds.ts",
+      "source_sha256": "b0f975d5348fef469e78d823bcf5a15c49931538e7054921bbd359e0fabec2b6",
+      "replaces_existing": false,
+      "integrated_sha256": "b0f975d5348fef469e78d823bcf5a15c49931538e7054921bbd359e0fabec2b6"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/native-surface-dom.ts",
+      "source_sha256": "9a1929cd1037ddf08165b4373442f598dc9c612d274c7d2e701c6e7560b75220",
+      "replaces_existing": false,
+      "integrated_sha256": "9a1929cd1037ddf08165b4373442f598dc9c612d274c7d2e701c6e7560b75220"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/native-surface-owners.ts",
+      "source_sha256": "ba981851dc960dc470b492a9be67f44acd3e3f5d57169dc9b2a08c2e7737d7a5",
+      "replaces_existing": false,
+      "integrated_sha256": "ba981851dc960dc470b492a9be67f44acd3e3f5d57169dc9b2a08c2e7737d7a5"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/__tests__/native-surface-dom.test.ts",
+      "source_sha256": "8e169ca69e62a11ab2bb9b43a67064c31f53f35399ca988438775d84d1f87ad9",
+      "replaces_existing": false,
+      "integrated_sha256": "8e169ca69e62a11ab2bb9b43a67064c31f53f35399ca988438775d84d1f87ad9"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/__tests__/native-surface-owners.test.ts",
+      "source_sha256": "c210cd7c695b886c207884cbea04f632ee2813dd86c2b0632973d0b5169376d2",
+      "replaces_existing": false,
+      "integrated_sha256": "c210cd7c695b886c207884cbea04f632ee2813dd86c2b0632973d0b5169376d2"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/browser/NativeSurfacePlaceholder.tsx",
+      "source_sha256": "fe8f4c324b5d362e9c11f819fbfc4cfb91b6776e2d6fe0ca3e5a793f7e01ebd6",
+      "replaces_existing": false,
+      "integrated_sha256": "fe8f4c324b5d362e9c11f819fbfc4cfb91b6776e2d6fe0ca3e5a793f7e01ebd6"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/BrowserPanelPage.tsx",
+      "source_sha256": "546c1cc185c46743500e4a67b2e89f4a0167db13fd4b5bbd946344d890894188",
+      "replaces_existing": true,
+      "integrated_sha256": "546c1cc185c46743500e4a67b2e89f4a0167db13fd4b5bbd946344d890894188"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ExtensionSurfacePage.tsx",
+      "source_sha256": "089390e158eefe2cbd54c380803f6b2ead766e348824975301b665262b07beed",
+      "replaces_existing": true,
+      "integrated_sha256": "089390e158eefe2cbd54c380803f6b2ead766e348824975301b665262b07beed"
+    },
+    {
+      "path": "apps/electron/src/renderer/platform/RetainedSurface.tsx",
+      "source_sha256": "990e9e155fcdc8aa0b007d2ebfe31871445d26ef385301f92071b8988279754a",
+      "replaces_existing": false,
+      "integrated_sha256": "990e9e155fcdc8aa0b007d2ebfe31871445d26ef385301f92071b8988279754a"
+    }
+  ],
+  "locale_keys": [
+    "nativeSurface.focusToShow",
+    "nativeSurface.notFullyVisible",
+    "nativeSurface.showPanel"
+  ],
+  "preserved_current_decisions": [
+    "KnowledgeSurfacePage remains disabled and redirects to Rox Notes",
+    "Inspector imported-cookie consent controls",
+    "Current inspector rail/layout/section contracts"
+  ],
+  "adaptations": [
+    "Preserve current browser cookie consent and private-instance lifecycle",
+    "Preserve current browser and extension contracts and navigation",
+    "Retain inspector state through host responsive hiding without global browser hide",
+    "Reject late/superseded inspector attachments and stale failures",
+    "Keep disabled SiYuan route and local Notes redirect unchanged"
+  ],
+  "integration_main": "cc56c95c75cb7bedd025e1b9af60a5312d0cf119"
+}
