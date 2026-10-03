@@ -1,3 +1,11 @@
+## Product Learning durable foundation recovery — 2026-10-03
+
+Owner: pr_scout; integration lead owns main merge, historical_sweep owns dependent current UI/runtime/consumer wiring. Recover final a6 `35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5` contracts/core/persistence/analytics as a coherent foundation, preserving all source branches. Current main has none of these feature modules. The transition engine has no domain-mutation, clock, DOM or storage port: acknowledged, observed and native verified evidence stay distinct, bindings/operation correlation and captured clocks reject stale callbacks; foreground/modal/capability/scope changes pause or block without automatic resumption.
+
+Client-profile/workspace progress uses real IndexedDB transactions, monotonic milestones/lease fences, committed transaction receipts and scoped reset. Future database/record/semantic versions remain intact; storage denial or quota failure explicitly reports memory-only or failed and cannot claim durable ownership. Realm-local memory leases require explicit opt-in and never claim multi-window coordination. Diagnostics are off by default and store only finite public enums/numeric versions, with no content, paths or correlation identifiers, bounded to 500 records/seven days. Capture own data properties once so getters cannot change values after validation. No server store, account identity or domain authority is introduced.
+
+Acceptance includes pure transition adversarial cases, real IndexedDB multi-window acquisition/TTL/stale owner/release and persistence, transaction-abort/denial/future-version/corruption/reset, opt-in privacy/retention and malicious accessor durable readback. Renderer types/build verify compatibility. Activated learning routes, spotlight/targets/catalogue and real current native consumers depend on a separate recovery PR and remain unaccepted in this foundation alone.
+
 # Golden Gate surface tab recovery — 2026-10-03
 
 Recover Golden Gate title-loader success-only bounded caching, shared pending requests, failed/offline retry on navigation, and actual SurfaceTabs roving keyboard navigation/close focus. Preserve the current route registries, compact top-bar portal, embedded browser exclusion, authenticated Knowledge API and native authority. No source connection or filesystem authority is added.
