@@ -15,11 +15,11 @@ import {
   writeFileSync,
 } from 'fs';
 import type { Dirent } from 'fs';
-import { readFile } from 'fs/promises';
 import { homedir } from 'os';
 import { isAbsolute, join, relative, resolve, sep } from 'path';
 import matter from 'gray-matter';
 import type { LoadedSkill, SkillMetadata, SkillSource } from './types.ts';
+import { readSkillInstructions } from './read-instructions.ts';
 import { listOmpSkills, OMP_GLOBAL_SKILLS_DIR, OMP_SHARED_SKILLS_DIR, OMP_WORKSPACE_SKILLS_DIR } from './omp-discovery.ts';
 import { getWorkspaceSkillsPath } from '../workspaces/storage.ts';
 import { resolveConfigDir } from '../config/paths.ts';
@@ -125,23 +125,6 @@ function isDirectoryOrSymlinkToDirectory(parentDir: string, entry: Dirent): bool
 // Load Operations
 // ============================================================
 
-/** A directory link is a supported skill identity. An instructions-file link
- * must stay inside that selected canonical directory, before any bytes are read. */
-function resolveSkillInstructionsFile(skillDir: string): string | null {
-  try {
-    const directory = realpathSync(skillDir);
-    const file = realpathSync(join(directory, 'SKILL.md'));
-    const rel = relative(directory, file);
-    if (!rel || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel) || !statSync(file).isFile()) {
-      throw new Error('Skill instructions path denied');
-    }
-    return file;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
-    throw error;
-  }
-}
-
 /** Load one craft skill through the shared instructions-file boundary. */
 function loadSkillFromDir(skillsDir: string, slug: string, source: SkillSource): LoadedSkill | null {
   // Dot entries (.pending, .versions) are internal state, never skills.
@@ -151,21 +134,8 @@ function loadSkillFromDir(skillsDir: string, slug: string, source: SkillSource):
 }
 
 function loadSkillAtPath(skillDir: string, slug: string, source: SkillSource): LoadedSkill | null {
-
-  // Check directory exists
-  try { if (!statSync(skillDir).isDirectory()) return null; } catch { return null; }
-
-  // All craft precedence paths (including managed aliases) share this boundary.
-  const skillFile = resolveSkillInstructionsFile(skillDir);
-  if (!skillFile) return null;
-
-  // Read and parse SKILL.md
-  let content: string;
-  try {
-    content = readFileSync(skillFile, 'utf-8');
-  } catch {
-    return null;
-  }
+  const content = readSkillInstructions(skillDir);
+  if (content === null) return null;
 
   const parsed = parseSkillFile(content);
   if (!parsed) {
@@ -422,10 +392,10 @@ export async function loadSkillDetails(workspaceRoot: string, slug: string, proj
     const skillDir = join(root, slug);
     // Match current-main discovery's application-tier exclusion (disabled packs too).
     if (isInsideSkillStore(skillDir, APP_MANAGED_SKILLS_DIR)) continue;
-    const file = resolveSkillInstructionsFile(skillDir);
-    if (!file) continue;
+    const content = readSkillInstructions(skillDir, APP_MANAGED_SKILLS_DIR);
+    if (content === null) continue;
     try {
-      const parsed = matter(await readFile(file, 'utf-8'));
+      const parsed = matter(content);
       return {
         slug, source: 'omp', path: skillDir, content: parsed.content,
         metadata: {

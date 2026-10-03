@@ -52,7 +52,7 @@ export const SidebarDisclosureButton = React.forwardRef<HTMLButtonElement, Sideb
         ref={ref}
         type="button"
         className={cn(
-          'sidebar-disclosure flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[4px]',
+          'sidebar-disclosure flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[var(--radius-control)]',
           'outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
           expanded
             ? 'opacity-40 group-hover/row:opacity-100 group-focus-within/row:opacity-100 [@media(pointer:coarse)]:opacity-100'

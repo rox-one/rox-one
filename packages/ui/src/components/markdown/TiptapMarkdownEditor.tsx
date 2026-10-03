@@ -27,6 +27,8 @@ import { DocumentFolding, type DocumentFoldingJSON } from './extensions/Document
 import { RoxColumnsBlock, RoxColumnBlock } from './extensions/ColumnsBlock'
 import { RoxBlockCallout, PortableCalloutBlockquote } from './extensions/rox-block-syntax'
 import { cn } from '../../lib/utils'
+import { useShikiTheme } from '../../context/ShikiThemeContext'
+import { tiptapShikiThemeModes, updateTiptapShikiTheme } from './tiptap-shiki-theme'
 import 'katex/dist/katex.min.css'
 import './tiptap-editor.css'
 import './extensions/animated-task-item.css'
@@ -255,6 +257,8 @@ export function TiptapMarkdownEditor({
   foldingStorageKey,
   markdownEngine = 'legacy',
 }: TiptapMarkdownEditorProps) {
+  const shikiTheme = useShikiTheme()
+  const shikiModes = React.useRef(tiptapShikiThemeModes(shikiTheme))
   const onUpdateRef = React.useRef(onUpdate)
   onUpdateRef.current = onUpdate
   const lastEmittedMarkdownRef = React.useRef<string | null>(null)
@@ -286,7 +290,7 @@ export function TiptapMarkdownEditor({
         nested: true,
       }),
       tiptapCodeBlock.configure({
-        themes: { light: 'github-light', dark: 'github-dark' },
+        themes: shikiModes.current,
       }),
       MermaidBlock,
       LatexBlock,
@@ -431,6 +435,12 @@ export function TiptapMarkdownEditor({
 
   // Keep editorRef in sync for the Mathematics onClick callback
   editorRef.current = editor
+
+  React.useEffect(() => {
+    if (!editor || editor.isDestroyed) return
+    updateTiptapShikiTheme(editor, shikiModes.current, shikiTheme)
+    scheduleShikiRefresh(editor)
+  }, [editor, shikiTheme])
 
   React.useEffect(() => {
     onEditorReady?.(editor as TiptapEditorHandle | null)

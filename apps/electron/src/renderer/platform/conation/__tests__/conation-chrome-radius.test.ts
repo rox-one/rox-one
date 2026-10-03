@@ -8,12 +8,12 @@ const fund = readFileSync(join(dir, 'ConationFundPanel.tsx'), 'utf8')
 const board = readFileSync(join(dir, 'ConationBoardPanel.tsx'), 'utf8')
 
 describe('conation surface chrome radius', () => {
-  it('frames inspector/fund/board with RADIUS_INNER and header strip', () => {
+  it('keeps inspector/fund/board as continuous rectangular panes', () => {
     for (const src of [inspector, fund, board]) {
-      expect(src).toContain('RADIUS_INNER')
-      expect(src).toContain('borderRadius: RADIUS_INNER')
-      expect(src).toContain('border border-border/50')
-      expect(src).toContain('shadow-middle')
+      expect(src).toContain('rox-shell-pane')
+      expect(src).not.toContain('borderRadius:')
+      expect(src).not.toContain('border border-border/50')
+      expect(src).not.toContain('shadow-middle')
     }
     expect(inspector).toContain('data-testid="conation-inspector-placeholder"')
     expect(fund).toContain('data-conation-fund-open')

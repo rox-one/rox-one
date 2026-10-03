@@ -13,10 +13,11 @@
  * No fs watcher — deferred refresh only (PRD §5 Phase 1).
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
+import { existsSync, readdirSync, statSync } from 'fs';
 import { homedir } from 'os';
 import { join, resolve, sep } from 'path';
 import matter from 'gray-matter';
+import { readSkillInstructions } from './read-instructions.ts';
 
 /** Global OMP skills directory: ~/.omp/agent/skills/ */
 export const OMP_GLOBAL_SKILLS_DIR = join(homedir(), '.omp', 'agent', 'skills');
@@ -91,11 +92,14 @@ function scanDir(skillsDir: string): OmpSkillInfo[] {
       let name = entry.name;
       let description = '';
       try {
-        const parsed = matter(readFileSync(skillFile, 'utf-8'));
+        const content = readSkillInstructions(skillDir);
+        if (content === null) continue;
+        const parsed = matter(content);
         if (typeof parsed.data.name === 'string' && parsed.data.name) name = parsed.data.name;
         if (typeof parsed.data.description === 'string') description = parsed.data.description;
       } catch {
-        // Unparseable frontmatter — keep slug fallback values
+        // An unsafe or invalid entry cannot expose bytes or hide its neighbours.
+        continue;
       }
 
       skills.push({ slug: entry.name, name, description, source: 'omp', path: skillDir });

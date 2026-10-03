@@ -15,8 +15,8 @@ const constants = readFileSync(
 )
 
 describe('panel inset alignment', () => {
-  it('keeps the rounded desktop stack on its shared 4px inset', () => {
-    expect(constants).toContain('export const PANEL_STACK_TOP_INSET = 4')
+  it('keeps the desktop stack flush with its chrome boundary', () => {
+    expect(constants).toContain('export const PANEL_STACK_TOP_INSET = 0')
     expect(constants).toContain('export const PANEL_STACK_BOTTOM_INSET = 0')
     expect(constants).toContain('export const PANEL_STACK_VERTICAL_OVERFLOW = 0')
 

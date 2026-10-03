@@ -18,10 +18,11 @@ import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {flushSync} from 'react-dom';
 import SkillInfoPage from './apps/electron/src/renderer/pages/SkillInfoPage';
-const reads=[], saves=[], deletes=[], watchers=[], toasts=[], navigations=[];
+const reads=[], saves=[], deletes=[], watchers=[], toasts=[], navigations=[],listCalls=[];
 let props={workspaceId:'ws-a',skillSlug:'sample',workingDirectory:'/project-a'};
-window.skillInfo={props,reads,saves,deletes,toasts,navigations};
+window.skillInfo={props,reads,saves,deletes,toasts,navigations,listCalls};
 window.electronAPI={
+ getSkills(workspaceId,cwd){listCalls.push({workspaceId,cwd});return Promise.resolve([window.skillInfo.item('OMP metadata','Description','','omp')])},
  getSkillDetails(workspaceId,slug,cwd){return new Promise((resolve,reject)=>reads.push({workspaceId,slug,cwd,resolve,reject}))},
  onSkillsChanged(callback){const entry={callback,active:true};watchers.push(entry);return()=>{entry.active=false}},
  updateSkill(workspaceId,slug,values){return new Promise((resolve,reject)=>saves.push({workspaceId,slug,values,resolve,reject}))},
@@ -33,7 +34,7 @@ Object.assign(window.skillInfo,{
  item(name='Canonical',description='Description',content='Instructions',source='workspace'){
   return {slug:'sample',metadata:{name,description},content,source,path:'/workspace/skills/sample'};
  },
- resolve(index,items){reads[index].resolve(items[0] ?? null)},
+ resolve(index,items){reads[index].resolve(items.find(item=>item.slug===reads[index].slug)??null)},
  reject(index){reads[index].reject(new Error('fixture offline'))},
  watch(workspaceId='ws-a',items=[]){watchers.filter(w=>w.active).forEach(w=>w.callback(workspaceId,items))},
  retained(index,workspaceId='ws-a'){watchers[index].callback(workspaceId,[])},
@@ -163,4 +164,22 @@ describe('current SkillInfoPage catalog/draft/save ownership', { skip: !enabled 
     expect(await page.locator('textarea').count()).toBe(0)
     expect(await page.getByText('Project content').textContent()).toBe('Project content')
   })
+  browserTest('selected OMP Unicode body is read-only and watcher refresh uses its exact identity', async () => {
+    await waitReads(1)
+    expect(await page.evaluate(() => (window as any).skillInfo.reads[0].slug)).toBe('sample')
+    await page.evaluate(() => { const ui=(window as any).skillInfo;ui.resolve(0,[ui.item('OMP selected','Description','日本語 🔒\nCanonical full instructions','omp')]) })
+    await page.locator('pre').waitFor()
+    expect(await page.locator('pre').textContent()).toBe('日本語 🔒\nCanonical full instructions')
+    expect(await page.locator('input:not([disabled]),textarea').count()).toBe(0)
+    expect(await page.getByRole('button',{name:'fixture AI edit'}).count()).toBe(0)
+    expect(await page.getByRole('button',{name:'finder',exact:true}).count()).toBe(0)
+    expect(await page.getByRole('button',{name:'delete',exact:true}).count()).toBe(0)
+    expect(await page.evaluate(() => (window as any).skillInfo.listCalls.length)).toBe(0)
+    await page.evaluate(() => (window as any).skillInfo.watch());await waitReads(2)
+    expect(await page.evaluate(() => (window as any).skillInfo.reads[1].slug)).toBe('sample')
+    await page.evaluate(() => { const ui=(window as any).skillInfo;ui.resolve(1,[ui.item('OMP selected','Description','Updated full text','omp')]) })
+    await page.waitForFunction(()=>document.querySelector('pre')?.textContent==='Updated full text')
+    expect(await page.evaluate(() => (window as any).skillInfo.saves.length + (window as any).skillInfo.deletes.length)).toBe(0)
+  })
+
 })

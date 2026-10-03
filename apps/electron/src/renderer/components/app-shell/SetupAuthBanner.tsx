@@ -79,7 +79,7 @@ export function SetupAuthBanner({
   // inputAreaCover variant - matches chat input styling
   if (variant === 'inputAreaCover') {
     return (
-      <div className="rounded-xl border bg-background overflow-hidden">
+      <div className="rounded-[var(--radius-card)] border bg-background overflow-hidden">
         <div className="py-6 px-4 text-center font-sans">
           <h3 className="text-sm font-semibold text-foreground flex items-center justify-center gap-2">
             {getTitle()}
@@ -108,7 +108,7 @@ export function SetupAuthBanner({
       <Button
         onClick={onAction}
         size="sm"
-        className="shrink-0 text-xs rounded-[8px]"
+        className="shrink-0 text-xs rounded-[var(--radius-card)]"
       >
         {getButtonText()}
       </Button>

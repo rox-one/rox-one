@@ -162,7 +162,7 @@ export const StyledDropdownMenuItem = React.forwardRef<
       '[&_svg]:pointer-events-none [&_svg]:shrink-0',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       // Keep pointer hover understated; keyboard focus gets a visible ring.
-      'pr-4 rounded-[4px] hover:bg-foreground/[0.03] focus:bg-foreground/[0.1]',
+      'pr-4 rounded-[var(--radius-control)] hover:bg-foreground/[0.03] focus:bg-foreground/[0.1]',
       'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
       '[&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0',
       variant === 'destructive' && 'text-destructive focus:text-destructive hover:text-destructive [&_svg]:!text-destructive',
@@ -198,7 +198,7 @@ export const StyledDropdownMenuSubTrigger = React.forwardRef<
     className={cn(
       'relative flex cursor-default items-center gap-2 px-2 py-1.5 text-sm outline-hidden select-none',
       '[&_svg]:pointer-events-none [&_svg]:shrink-0',
-      'pr-1.5 rounded-[4px] hover:bg-foreground/10 focus:bg-foreground/10 data-[state=open]:bg-foreground/10',
+      'pr-1.5 rounded-[var(--radius-control)] hover:bg-foreground/10 focus:bg-foreground/10 data-[state=open]:bg-foreground/10',
       'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
       '[&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0',
       className,

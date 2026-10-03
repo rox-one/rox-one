@@ -41,7 +41,7 @@ export function FileViewer({ path }: FileViewerProps) {
   if (!path) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8 text-center">
-        <div className="size-16 bg-muted rounded-2xl flex items-center justify-center mb-4">
+        <div className="size-16 bg-muted rounded-[var(--radius-control)] flex items-center justify-center mb-4">
           <FileText className="size-8 text-muted-foreground/50" />
         </div>
         <p className="font-medium text-foreground">{t("fileViewer.noFileSelected")}</p>

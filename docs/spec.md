@@ -813,10 +813,16 @@ Owner: branch integration historical worker. Dependency: current native collecti
 Recover the strict local calendar-day check from preserved Golden source5def9ffd into the current Tasks schedule form, through its existing parseDateExpression port. ISO dates must round-trip the exact year/month/day; impossible dates return no schedule change or native write. Valid leap days retain local midnight. Current native task actor/workspace custody, CAS/ACK/readback, import/background barriers and Product Learning producers remain canonical. Owner: recent_features; dependency: current Tasks1456 and runtime main; no legacy CatalogPanel or alternate store.
 
 
+## Zed appearance reconciliation —2026-10-04
+
+Recover geometry0/4/6, chrome-only material, opaque reading surfaces and three licensed UI/code/terminal themes from PR1469 on current main. Preserve current navigation, native authority, task conversion, Product Learning refs, keyboard access, resize and workspace source errors. Existing saved themes survive; only a physically missing config seeds Nordfox. Cookie theme grants remain scoped to the authenticated current workspace with post-await withdrawal checks. Historical source native/WebUI receipts are not acceptance of this combined revision.
+
 ### Golden per-task form draft recovery — 2026-10-04
 
 Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
 
+
+Zed source addendum frozen at7379efcda6f5806b66672e236a1cc61bdffb4e00 includes compact fixed-content Home widgets, a flat mode switch and inspector tint matching the side panel. Adapt Home grid sizing while preserving current per-widget appearance and saved S/M/L layout ownership. Source release29e86 and installed/native reports remain historical.
 
 ### Knowledge availability recovery — 2026-10-03
 
@@ -852,3 +858,7 @@ Owner: historical_sweep; root reviews/merges. Preserve frozen #1444 c2e8f07b5cb8
 ## Runtime Map context and navigation extension — 2026-10-04
 
 Owner historical_sweep; dependency merged collector1485 and current read-only Runtime RPC/ingress. Recover frozen #1444 c2e8 context groups using each observed agent/snapshot identity, safe public metadata export with scoped aliases, stable measured overview, lazy chunk retry without remounting chat, requested historic event selection and observed catalog lifecycle phases. Presentation and navigation never grant runtime actions or synthesize execution evidence. Preserve current SSO account/workspace ownership,1471 immediate-history lease release, Product Learning roots and all locale keys. Qualification remains pending until actual renderer/continuity/context cases and current consumer types finish; installed/live-provider acceptance is separate.
+
+### Selected skill instructions custody recovery — 2026-10-04
+
+Owner recent_features; dependency: externally merged selected-detail1467 at89cb22c and current native request authority. Craft/OMP selected bodies and discovery metadata use one bounded opened-descriptor reader. File links stay inside the selected canonical directory; directory links retain their supported identity. Compare BigInt descriptor/leaf identity and every canonical ancestor before bytes and return. Refuse invalid selected reads and late revoked requests; preserve current SkillInfo ownership/read-only controls, managed tiers and metadata-only OMP lists.

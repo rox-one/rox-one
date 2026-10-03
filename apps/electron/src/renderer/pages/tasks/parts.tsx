@@ -43,7 +43,7 @@ export function TaskCheckbox({
       }}
       style={{ width: size, height: size }}
       className={cn(
-        'mt-[1px] inline-flex shrink-0 items-center justify-center rounded-[4px] outline-none transition-[background-color,transform] duration-200 focus-visible:ring-2 focus-visible:ring-accent',
+        'mt-[1px] inline-flex shrink-0 items-center justify-center rounded-[var(--radius-control)] outline-none transition-[background-color,transform] duration-200 focus-visible:ring-2 focus-visible:ring-accent',
         on ? 'bg-accent text-[var(--accent-foreground,white)]' : 'shadow-[inset_0_0_0_1.5px_var(--text-muted,currentColor)] hover:shadow-[inset_0_0_0_1.5px_var(--accent)]',
         pending && 'scale-110',
       )}
@@ -123,7 +123,7 @@ export function Overlay({
         aria-label={label}
         data-testid={testId}
         style={{ width, maxWidth: '100%' }}
-        className="flex max-h-[76vh] flex-col overflow-hidden rounded-[12px] bg-background font-sans text-[13px] text-foreground shadow-[0_12px_40px_rgba(0,0,0,0.28),0_0_0_1px_color-mix(in_oklch,var(--foreground)_14%,transparent)]"
+        className="flex max-h-[76vh] flex-col overflow-hidden rounded-[var(--radius-card)] bg-background font-sans text-[13px] text-foreground shadow-[0_12px_40px_rgba(0,0,0,0.28),0_0_0_1px_color-mix(in_oklch,var(--foreground)_14%,transparent)]"
       >
         {children}
       </div>
@@ -156,7 +156,7 @@ export function ConfirmDialog({
         {body ? <div className="mt-1.5 text-[12px] text-text-secondary">{body}</div> : null}
       </div>
       <div className="flex justify-end gap-1.5 px-4 pb-4">
-        <button type="button" onClick={onCancel} className="h-7 rounded-[6px] px-3 text-[12px] text-text-secondary hover:bg-foreground/[0.06]">
+        <button type="button" onClick={onCancel} className="h-7 rounded-[var(--radius-control)] px-3 text-[12px] text-text-secondary hover:bg-foreground/[0.06]">
           {t('common.cancel')}
         </button>
         <button
@@ -165,7 +165,7 @@ export function ConfirmDialog({
           onClick={onConfirm}
           data-testid="confirm-dialog-ok"
           className={cn(
-            'h-7 rounded-[6px] px-3 text-[12px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-accent',
+            'h-7 rounded-[var(--radius-card)] px-3 text-[12px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-accent',
             danger ? 'bg-destructive text-white hover:brightness-110' : 'bg-accent text-[var(--accent-foreground,white)] hover:brightness-110',
           )}
         >
@@ -207,9 +207,9 @@ export function MiniCalendar({
   return (
     <div className="select-none" data-testid="mini-calendar">
       <div className="flex items-center justify-between px-1 pb-1">
-        <button type="button" aria-label="‹" onClick={() => shift(-1)} className="size-6 rounded-[4px] text-text-secondary hover:bg-foreground/[0.07]">‹</button>
+        <button type="button" aria-label="‹" onClick={() => shift(-1)} className="size-6 rounded-[var(--radius-control)] text-text-secondary hover:bg-foreground/[0.07]">‹</button>
         <span className="text-[12px] font-semibold capitalize">{monthFmt.format(first)}</span>
-        <button type="button" aria-label="›" onClick={() => shift(1)} className="size-6 rounded-[4px] text-text-secondary hover:bg-foreground/[0.07]">›</button>
+        <button type="button" aria-label="›" onClick={() => shift(1)} className="size-6 rounded-[var(--radius-control)] text-text-secondary hover:bg-foreground/[0.07]">›</button>
       </div>
       <div className="grid grid-cols-7 gap-0.5 text-center text-[11px]">
         {heads.map((head, i) => <div key={i} className="h-5 leading-5 text-text-muted">{head}</div>)}
@@ -219,7 +219,7 @@ export function MiniCalendar({
             type="button"
             onClick={() => onPick(at)}
             className={cn(
-              'h-6 rounded-[4px] tabular-nums outline-none hover:bg-foreground/[0.08] focus-visible:ring-2 focus-visible:ring-accent',
+              'h-6 rounded-[var(--radius-control)] tabular-nums outline-none hover:bg-foreground/[0.08] focus-visible:ring-2 focus-visible:ring-accent',
               new Date(at).toDateString() === valueKey && 'bg-accent font-semibold text-[var(--accent-foreground,white)] hover:bg-accent',
               new Date(at).toDateString() === todayKey && new Date(at).toDateString() !== valueKey && 'font-semibold text-accent',
               at < new Date(now).setHours(0, 0, 0, 0) && 'text-text-muted',

@@ -1001,6 +1001,11 @@ Owner root. Depends on existing rail-links/Popover/Select and current product-to
 
 Owner recent_features: restore exact ISO calendar-day validation in the current parser; verify impossible-date refusal and valid leap-day persistence through the actual TaskDetail form. Keep before-fix unit/browser failures, full personal-task regression checks and both timezone offsets; qualify current core types and production component/CSS bundle. Parent owns ordered PR merge; source branches stay preserved. Broader Golden/native release acceptance remains separate.
 
+
+## Zed appearance reconciliation —2026-10-04
+
+Owner: root; dependency: current main recoveries. Apply only the source delta from release29e86 to PR1469c11ed and preserve current behavior through every overlap. Verify current theme/storage/cookie/geometry tests, unchanged browser assertion bodies through supported Node lifecycle, full types and production clients. Keep source history, fingerprints, failure attempts and remaining native Mac/Windows gates. Publish a separate PR to main with original branches retained.
+
 Collection recovery qualification completed on current bb047:33/0/80 native-storage/current callbacks,5/0 mounted Chromium and full Electron Node22 types0. Prior test-type diagnostics were corrected by precise literal fixture types; all source failures remain in the archived evidence.
 
 
@@ -1008,6 +1013,8 @@ Collection recovery qualification completed on current bb047:33/0/80 native-stor
 
 Owner recent_features; depends on current Tasks1456, strict date1470 and Product1454. Preserve old source and modern Things UI. Exercise actual two-task link/kind/tag retention, submitted-field-only clearing, actor/workspace ABA, unmount and stale pre-render button denial, plus all retained task import/responsive cases and current native commit controls. Retain the before-fix lost draft and fixture failure history; qualify current Electron types with own workspace dependency resolution, record exact source/log hashes, reconcile all current docs without deletions, publish separate PR for parent review/merge.
 
+
+Zed addendum owner root: freeze final344-path source7379efcd; preserve current Home widget appearance when adopting content-sized rows, retain current settings option roles, and repeat production-optimized browser checks. Record the first28/1 stale-selector result and the subsequent cold-build hook timeout; extend only startup build budget from300 to900seconds under concurrent host load, keeping all29 case assertions and deadlines unchanged. Final combined qualification remains pending.
 
 ### Knowledge availability recovery — 2026-10-03
 
@@ -1054,3 +1061,10 @@ Owner recent_features; parent owns ordered integration. Retain held-prepare dest
 1. Freeze latest c2e8 and compare current actual consumers. Reproduce missing grouped-context UI with real current renderer and production journal behind an explicitly synthetic executor; retain source fixture failures (missing build manifest and required clockDomain), then the valid-context negative.
 2. Restore only scoped renderer components/helpers/actual ChatPage/MainContentPanel ports. Add read-only runtime link intent to current NavigationContext while preserving its immediate-history release; union the20 runtimeMap keys in all12 current locales.
 3. Qualify focused projection/export/layout/catalog/link behavior, actual mounted context/provenance and lazy retry, retained chat/editor continuities, current package types and renderer build. Preserve every failure and byte-bound receipts; merge latest main normally. Root owns separate PR merge, pr_scout separately owns actual origin-tagged producers.
+
+Zed final bounded qualification on current991c8b80b: 122 focused +323 Home/token/12-locale tests;29 browser bodies via28 whole-run passes plus unchanged-bundle1-case rerun (whole aggregate retains one cancellation);7 actual App/native-journal and7 production-component cases. All failure histories archived, no assertions or case deadlines weakened. Current main collector/Skills/native launch/Notes changes merged normally; Skills OMP selection/reset buttons retain current semantics with appearance tokens. Full final Electron follow-up and source344 ledger bind their own receipt before publication. Installed OS/cloud/release DoD stays separate.
+
+
+### Selected skill instructions custody recovery — 2026-10-04
+
+Owner recent_features; parent reviews and merges. Preserve merged1467 UI/API exactly, retain merged-source ancestor failure0/1 and legacy outside-link failure. Qualify48 storage/managed/custody cases,4 registered native RPC/workspace cases including zero body opens after revoke,7 actual SkillInfo owner/draft/OMP cases and runtime row keyboard/reset control plus full strict Electron types. Retain original fixture/default-timeout failures and exact hashes; reconcile docs additively, preserve all source branches. Installed platform/full release acceptance stays separate.

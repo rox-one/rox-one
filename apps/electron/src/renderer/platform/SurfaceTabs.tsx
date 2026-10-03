@@ -82,8 +82,8 @@ function SurfaceTabItem({ tab, isTabStop, onNavigate, onClose }: {
         if (event.button === 1) { event.preventDefault(); onClose(tab.panelId) }
       }}
       className={cn(
-        'group chrome-label titlebar-no-drag flex h-6 max-w-[200px] min-w-0 shrink cursor-default items-center gap-1 rounded-[6px] transition-colors',
-        tab.focused ? 'bg-foreground/10 text-foreground' : 'text-muted-foreground hover:bg-foreground/5',
+        'group chrome-label titlebar-no-drag flex h-6 max-w-[200px] min-w-0 shrink cursor-default items-center gap-1 rounded-[var(--radius-control)] transition-colors',
+        tab.focused ? 'bg-[var(--surface-tab-active,var(--shell-selected,var(--element-selected,var(--foreground-5))))] text-foreground' : 'bg-[var(--surface-tab-inactive,transparent)] text-text-secondary hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] hover:text-foreground',
       )}
     >
       <button
@@ -103,7 +103,7 @@ function SurfaceTabItem({ tab, isTabStop, onNavigate, onClose }: {
             event.preventDefault(); onClose(tab.panelId)
           }
         }}
-        className="flex h-full min-w-0 flex-1 items-center gap-1 rounded-[6px] pl-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex h-full min-w-0 flex-1 items-center gap-1 rounded-[var(--radius-control)] pl-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
         <span className="min-w-0 flex-1 truncate">{tab.title}</span>
@@ -114,7 +114,7 @@ function SurfaceTabItem({ tab, isTabStop, onNavigate, onClose }: {
         aria-label={`${t('surfaceTabs.closeTab')}: ${tab.title}`}
         onClick={() => onClose(tab.panelId)}
         className={cn(
-          'mr-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] outline-none transition-all hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring',
+          'mr-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-[var(--radius-control)] outline-none transition-all hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring',
           tab.focused ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover:opacity-60 group-focus-within:opacity-60',
         )}
       >

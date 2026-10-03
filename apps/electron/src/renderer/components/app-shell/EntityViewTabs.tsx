@@ -159,7 +159,7 @@ export function EntityViewTabs({ value, onChange, capabilities, className, varia
   if (variant === 'segmented') {
     return (
       <div
-        className={cn('rox-view-switch titlebar-no-drag inline-flex shrink-0 items-center gap-0.5 rounded-[8px] p-0.5', className)}
+        className={cn('rox-view-switch titlebar-no-drag inline-flex shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] p-0.5', className)}
         role="tablist"
         aria-label={t('entityView.tabsLabel')}
         data-entity-view-switch="segmented"
@@ -178,7 +178,7 @@ export function EntityViewTabs({ value, onChange, capabilities, className, varia
                   disabled={!available && !active}
                   onClick={() => available && onChange(id)}
                   className={cn(
-                    'rox-view-switch-item inline-flex h-6 min-w-6 items-center justify-center gap-1 rounded-[6px] px-1.5 text-xs font-medium transition-colors',
+                    'rox-view-switch-item inline-flex h-6 min-w-6 items-center justify-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs font-medium transition-colors',
                     'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     active
                       ? 'bg-foreground/10 text-foreground'
@@ -219,7 +219,7 @@ export function EntityViewTabs({ value, onChange, capabilities, className, varia
             disabled={!available && !active}
             onClick={() => available && onChange(id)}
             className={cn(
-              'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[8px] text-xs font-medium transition-colors',
+              'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[var(--radius-control)] text-xs font-medium transition-colors',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               active
                 ? 'bg-foreground/10 text-foreground'
@@ -248,7 +248,7 @@ export function EntityViewPlaceholder({ view, labelKey }: EntityViewPlaceholderP
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center min-h-0">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-foreground/5 text-muted-foreground">
+      <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground">
         <Icon className="h-6 w-6" strokeWidth={1.5} />
       </div>
       <div className="space-y-1">
