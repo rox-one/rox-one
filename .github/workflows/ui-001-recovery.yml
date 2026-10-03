@@ -108,6 +108,20 @@ jobs:
           do
             bun test --timeout 60000 "$test_path"
           done
+      - name: Confirm the tested source hashes stayed unchanged
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import pathlib, hashlib, json
+          owner = pathlib.Path('docs/final-readiness/execution/cloud/OWNER-UI-001')
+          destination = owner / 'verification/browser/ui001-ci-source.json'
+          receipt = json.loads(destination.read_text())
+          receipt['sourceAfterSha256'] = {path: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+                                         for path in receipt['actualSourceSha256']}
+          receipt['sourcesStable'] = receipt['sourceAfterSha256'] == receipt['actualSourceSha256']
+          destination.write_text(json.dumps(receipt, indent=2) + '\n')
+          assert receipt['sourcesStable'] and receipt['matchesCommittedCandidate']
+          PY
       - name: Preserve component fixture evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

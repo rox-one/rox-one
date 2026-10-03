@@ -1,0 +1,54 @@
+{
+  "environment": "Actual mounted NavigationProvider, PanelSlot, MainContentPanel, session-selection hooks and panel/session atoms in isolated Chromium; leaf presentation and IPC boundary fixtures; no hosted/native service acceptance",
+  "browserVersion": "153.0.8010.12",
+  "results": [
+    {
+      "name": "The mounted NavigationProvider restores a source deep link, back/forward and reload",
+      "pass": true
+    },
+    {
+      "name": "A deleted selected source retains its URL and specific missing surface",
+      "pass": true
+    },
+    {
+      "name": "Missing and deleted explicit sessions stay selected instead of choosing another chat",
+      "pass": true
+    },
+    {
+      "name": "A foreign workspace session is unavailable and the remote alias remains valid",
+      "pass": true
+    },
+    {
+      "name": "Restoring a foreign session address checks the actual PanelSlot override through reload",
+      "pass": true
+    },
+    {
+      "name": "An unfocused foreign-session panel stays unavailable beside a valid local panel",
+      "pass": true
+    },
+    {
+      "name": "Legacy zero/one panel proportions recover without becoming part of an entity address",
+      "pass": true
+    },
+    {
+      "name": "Unknown and malformed incoming deep links retain an unavailable surface through reload",
+      "pass": true
+    },
+    {
+      "name": "A queued address keeps its complete entity and new-panel option until readiness",
+      "pass": true
+    },
+    {
+      "name": "A queued deep-link action retains query parameters and executes once after readiness",
+      "pass": true
+    },
+    {
+      "name": "Browser workspace history restores the workspace and its selected address together",
+      "pass": true
+    },
+    {
+      "name": "Unmount removes the actual deep-link subscription",
+      "pass": true
+    }
+  ]
+}

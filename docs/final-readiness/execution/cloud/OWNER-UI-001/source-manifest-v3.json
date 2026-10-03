@@ -1,5 +1,4 @@
 {
-  "inputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
   "integrationBase": "ae19683e69f079893cd09065487cfa7653d01154",
   "sourceSha256": {
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "6a49e0bb9495317a1bc0c7fb8c2d8c311444f2aafabf89de2a95d00a721a0231",
@@ -12,16 +11,16 @@
     "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
     "apps/electron/src/renderer/atoms/panel-stack.ts": "a4c7eedc505833c3c32a2ae14a3c18dcb841aecf6a729104def2169a17b52a5b",
     "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff",
+    "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "a372afcebeb0a4b6ecaf8fc8fd984e816cc842983bc1984e2afef2845b23a889",
+    "apps/electron/src/renderer/App.tsx": "d64ef62211618bc54bb1dff62dc15b0ec6199e4f5deeff103bcbb5548598dd64",
+    "apps/electron/src/renderer/contexts/navigation-history.ts": "924195d87e3feeef28f2b9bcda7caf5aa3911eaba0628d79dda9a48a84dcb0a8",
     "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "5066215fe939a922d3eb6c39d17adffaecdee5d4a88ed0b0f41b28e7d24df501",
     "apps/electron/src/renderer/hooks/usePanelResize.ts": "ac50c51b98b9e1a782cb964e2dfe6ae7ff976777733c0cac0467acf1a4eb02dd",
     "apps/electron/src/renderer/components/app-shell/panel-constants.ts": "6166298674f6ea0d50c69223d366aba54f443f4d1262a0483a4b3331c3902fc9",
     "apps/electron/src/renderer/lib/panel-workspace-layout.ts": "865a6d20ea9ed91c45238015afd948c7d09a5d671c255b31343786b3133545a5",
     "apps/electron/src/renderer/atoms/sessions.ts": "98138d1255f09fe6a44e507f3087e21ffbe9076b12baab7adab3a2560b9ebb81",
     "apps/electron/src/renderer/lib/local-storage.ts": "2867f04095afa1f97b467a902b2b8f32b55624b0af0cfc09c1d5f772635ce49d",
-    "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "a372afcebeb0a4b6ecaf8fc8fd984e816cc842983bc1984e2afef2845b23a889",
-    "apps/electron/src/renderer/App.tsx": "d64ef62211618bc54bb1dff62dc15b0ec6199e4f5deeff103bcbb5548598dd64",
     "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "0d88909cd875a435df6532cec6738c5788f85f723436a5156f6fb36e2d8c6cb0",
-    "apps/electron/src/renderer/components/app-shell/nav-destinations.ts": "bb6617b42816f5302c90601290ab440cbc7efed22cdd7df168b5bc7f4f4ea6a2",
-    "apps/electron/src/renderer/contexts/navigation-history.ts": "924195d87e3feeef28f2b9bcda7caf5aa3911eaba0628d79dda9a48a84dcb0a8"
+    "apps/electron/src/renderer/components/app-shell/nav-destinations.ts": "bb6617b42816f5302c90601290ab440cbc7efed22cdd7df168b5bc7f4f4ea6a2"
   }
 }
