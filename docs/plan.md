@@ -936,6 +936,9 @@ Owner: recent_features; dependency: current native Voice capture and Product Lea
 Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.
 
 
+## UI-001 route integration graph —2026-10-03
+Root recovers actual public parser/current route leaves and93 remaining source paths; scout14 infrastructure already1455 and native resources1452. Historical worker proves1457 against the real mounted35-case history route. Qualify isolated native/PG UTF8/current compatibility/Swift consumers, retain failed fixtures, reconcile latestmain then repeat affected build/types. Commit revision/consumer/log receipts and merge one separate UI PR preserving every source branch.
+
 - Tasks import follow-up ownership review: register the background operation before opening transport; import invalidates background epochs, drains already dispatched same-owner work, then reads current canonical storage. Cover a held earlier refresh and held earlier write ACK with real native persistence (baseline8pass/2fail; recovered10pass/0fail). Refresh/sync cannot publish or issue a later call across that import lifetime.
 
 ### Recover native overlay recording custody (2026-10-03)

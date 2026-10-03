@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from 'bun:test'
 import { mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { resolveBackendContext } from '@rox/shared/agent/backend'
+import { resolveOmpSessionContext } from '@rox/shared/agent/backend'
 import { addLlmConnection, deleteLlmConnection, loadStoredConfig, saveConfig } from '@rox/shared/config/storage'
 import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import { SessionManager, createManagedSession } from './SessionManager.ts'
@@ -77,7 +77,7 @@ function injectSession(
     managed.backendRestartSignature = opts.backendRestartSignature
   } else {
     const workspaceConfig = loadWorkspaceConfig(workspaceRoot)
-    const ctx = resolveBackendContext({
+    const ctx = resolveOmpSessionContext({
       sessionConnectionSlug: llmConnection,
       workspaceDefaultConnectionSlug: workspaceConfig?.defaults?.defaultLlmConnection,
     })
@@ -109,9 +109,9 @@ describe('refreshConnectionRuntime', () => {
     addLlmConnection({
       slug: 'slug-A',
       name: 'Test Connection A',
-      providerType: 'anthropic',
-      authType: 'api_key',
-      defaultModel: 'claude-sonnet-4-5',
+      providerType: 'omp',
+      authType: 'none',
+      defaultModel: 'rox/standard',
     } as never)
     sm = new SessionManager()
   })

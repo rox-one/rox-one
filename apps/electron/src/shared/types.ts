@@ -3069,6 +3069,10 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
 }
 
 const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null => {
+  // Retain saved keys produced before versioned unavailable-route keys.
+  if (key.startsWith('unavailable/')) {
+    return { navigator: 'unavailable', route: decodeURIComponent(key.slice('unavailable/'.length)), details: null }
+  }
   if (key.startsWith('unavailable:')) {
     const legacy = /^unavailable:(unsupported-route|invalid-encoding|workspace-mismatch):(.*)$/.exec(key)
     if (legacy) return { navigator: 'unavailable', reason: legacy[1] as UnavailableNavigationState['reason'], route: decodeURIComponent(legacy[2]) }
