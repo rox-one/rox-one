@@ -50,43 +50,142 @@ import {
   knowledgeHomeViewAtom,
 } from '../../knowledge/KnowledgeHome'
 
-const SearchPage = React.lazy(() => import('@/pages/SearchPage'))
-const NotesPage = React.lazy(() => import('@/pages/NotesPage'))
-const ConnectionsPage = React.lazy(() => import('@/pages/ConnectionsPage'))
-const ExtraScreenHost = React.lazy(() => import('@/pages/extra-screens/ExtraScreenHost'))
-const TasksPage = React.lazy(() => import('@/pages/TasksPage'))
-const MeetingsPage = React.lazy(() => import('@/pages/MeetingsPage'))
-const InboxPage = React.lazy(() => import('@/pages/InboxPage'))
-const FeedPage = React.lazy(() => import('@/pages/FeedPage'))
-const KnowledgeEntityPage = React.lazy(() => import('@/pages/KnowledgeEntityPage'))
-const SkillInfoPage = React.lazy(() => import('@/pages/SkillInfoPage'))
-const SourceInfoPage = React.lazy(() => import('@/pages/SourceInfoPage'))
-const ProjectInfoPage = React.lazy(() => import('@/pages/ProjectInfoPage'))
-const BrowserPanelPage = React.lazy(() => import('@/pages/BrowserPanelPage'))
-const ExtensionSurfacePage = React.lazy(() => import('@/pages/ExtensionSurfacePage'))
-const TerminalSurfacePage = React.lazy(() => import('@/pages/TerminalSurfacePage'))
-const CloudRunSurfacePage = React.lazy(() => import('@/pages/CloudRunSurfacePage'))
-const PagesHome = React.lazy(() =>
+const RouteRecoveryContext = React.createContext<object>({})
+
+/** Cache across suspended renders; replace the promise only for a new attempt. */
+export function lazyRoutePage<Component extends React.ComponentType<any>>(loadPage: () => Promise<{ default: Component }>) {
+  const attempts = new WeakMap<object, React.LazyExoticComponent<Component>>()
+  return function LazyRoutePage(props: React.ComponentProps<Component>) {
+    const scope = React.useContext(RouteRecoveryContext)
+    let LazyPage = attempts.get(scope)
+    if (!LazyPage) {
+      LazyPage = React.lazy(loadPage)
+      attempts.set(scope, LazyPage)
+    }
+    const Page = LazyPage as React.ComponentType<React.ComponentProps<Component>>
+    return <Page {...props} />
+  }
+}
+
+class RouteErrorBoundary extends React.Component<{
+  children: React.ReactNode
+  fallback: (retry: () => void) => React.ReactNode
+}, { failed: boolean; attempt: number; scope: object }> {
+  state = { failed: false, attempt: 0, scope: {} }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  private retry = () => {
+    this.setState(({ attempt }) => ({ failed: false, attempt: attempt + 1, scope: {} }))
+  }
+
+  render() {
+    if (this.state.failed) return this.props.fallback(this.retry)
+    return (
+      <RouteRecoveryContext.Provider value={this.state.scope}>
+        <React.Fragment key={this.state.attempt}>{this.props.children}</React.Fragment>
+      </RouteRecoveryContext.Provider>
+    )
+  }
+}
+
+const SearchPage = lazyRoutePage(() => import('@/pages/SearchPage'))
+const NotesPage = lazyRoutePage(() => import('@/pages/NotesPage'))
+const ConnectionsPage = lazyRoutePage(() => import('@/pages/ConnectionsPage'))
+const ExtraScreenHost = lazyRoutePage(() => import('@/pages/extra-screens/ExtraScreenHost'))
+const TasksPage = lazyRoutePage(() => import('@/pages/TasksPage'))
+const MeetingsPage = lazyRoutePage(() => import('@/pages/MeetingsPage'))
+const InboxPage = lazyRoutePage(() => import('@/pages/InboxPage'))
+const FeedPage = lazyRoutePage(() => import('@/pages/FeedPage'))
+const KnowledgeEntityPage = lazyRoutePage(() => import('@/pages/KnowledgeEntityPage'))
+const SkillInfoPage = lazyRoutePage(() => import('@/pages/SkillInfoPage'))
+const SourceInfoPage = lazyRoutePage(() => import('@/pages/SourceInfoPage'))
+const ProjectInfoPage = lazyRoutePage(() => import('@/pages/ProjectInfoPage'))
+const BrowserPanelPage = lazyRoutePage(() => import('@/pages/BrowserPanelPage'))
+const ExtensionSurfacePage = lazyRoutePage(() => import('@/pages/ExtensionSurfacePage'))
+const TerminalSurfacePage = lazyRoutePage(() => import('@/pages/TerminalSurfacePage'))
+const CloudRunSurfacePage = lazyRoutePage(() => import('@/pages/CloudRunSurfacePage'))
+const PagesHome = lazyRoutePage(() =>
   import('../pages/PagesHome').then((m) => ({ default: m.PagesHome })),
 )
-const KanbanBoardContainer = React.lazy(() =>
+const KanbanBoardContainer = lazyRoutePage(() =>
   import('./kanban/KanbanBoardContainer').then((m) => ({ default: m.KanbanBoardContainer })),
 )
-const SessionTableHost = React.lazy(() =>
+const SessionTableHost = lazyRoutePage(() =>
   import('./session-table/SessionTableHost').then((m) => ({ default: m.SessionTableHost })),
 )
-const AutomationEditor = React.lazy(() =>
+const AutomationEditor = lazyRoutePage(() =>
   import('../automations/AutomationEditor').then((m) => ({ default: m.AutomationEditor })),
 )
-const KnowledgeDiff = React.lazy(() =>
+const KnowledgeDiff = lazyRoutePage(() =>
   import('../../knowledge/KnowledgeDiff').then((m) => ({ default: m.KnowledgeDiff })),
 )
-const KnowledgeHome = React.lazy(() =>
+const KnowledgeHome = lazyRoutePage(() =>
   import('../../knowledge/KnowledgeHome').then((m) => ({ default: m.KnowledgeHome })),
 )
-const KnowledgeProposals = React.lazy(() =>
+const KnowledgeProposals = lazyRoutePage(() =>
   import('../../knowledge/KnowledgeProposals').then((m) => ({ default: m.KnowledgeProposals })),
 )
+
+type SelectedResourceStatus = 'loading' | 'ready' | 'missing' | 'unavailable'
+
+/** Observe canonical source/skill snapshots without changing the selected URL. */
+function useSelectedResourceAvailability(
+  workspaceId: string | null | undefined,
+  kind: 'source' | 'skill' | null,
+  slug: string | null,
+  workingDirectory?: string,
+): { status: SelectedResourceStatus; retry: () => void } {
+  const [attempt, setAttempt] = useState(0)
+  const identity = JSON.stringify([workspaceId, kind, slug, workingDirectory])
+  const [state, setState] = useState<{ identity: string; status: SelectedResourceStatus }>({
+    identity,
+    status: kind ? 'loading' : 'ready',
+  })
+  useEffect(() => {
+    if (!kind || !slug) return
+    let active = true
+    let revision = 0
+    const api = typeof window !== 'undefined' ? window.electronAPI : undefined
+    if (!workspaceId || !api || (kind === 'source' ? !api.getSources : !api.getSkills)) {
+      setState({ identity, status: 'unavailable' })
+      return
+    }
+    const load = async () => {
+      const request = ++revision
+      setState({ identity, status: 'loading' })
+      try {
+        const exists = kind === 'source'
+          ? (await api.getSources(workspaceId)).some((source) => source.config.slug === slug)
+          : (await api.getSkills(workspaceId, workingDirectory)).some((skill) => skill.slug === slug)
+        if (active && request === revision) setState({ identity, status: exists ? 'ready' : 'missing' })
+      } catch {
+        if (active && request === revision) setState({ identity, status: 'unavailable' })
+      }
+    }
+    const off = kind === 'source'
+      ? api.onSourcesChanged?.((changedWorkspaceId, sources) => {
+          if (!active || changedWorkspaceId !== workspaceId) return
+          revision += 1
+          const valid = Array.isArray(sources) && sources.every((source) => typeof source?.config?.slug === 'string')
+          setState({ identity, status: valid ? (sources.some((source) => source.config.slug === slug) ? 'ready' : 'missing') : 'unavailable' })
+        })
+      : api.onSkillsChanged?.((changedWorkspaceId) => {
+          if (!active || changedWorkspaceId !== workspaceId) return
+          // Workspace watcher payloads need not contain project/global skills.
+          // Re-read the same resolution context as the selected skill host.
+          void load()
+        })
+    void load()
+    return () => { active = false; revision += 1; off?.() }
+  }, [identity, workspaceId, kind, slug, workingDirectory, attempt])
+  return {
+    status: state.identity === identity ? state.status : kind ? 'loading' : 'ready',
+    retry: () => setAttempt((value) => value + 1),
+  }
+}
 
 export interface MainContentPanelProps {
   isSidebarAndNavigatorHidden?: boolean
@@ -157,6 +256,26 @@ export function MainContentPanel({
   const selectedAutomationIds = automationSelection.useSelectedIds()
   const { clearMultiSelect: clearAutomationSelection } = automationSelection.useSelection()
 
+  const resourceKind = isSourcesNavigation(navState) && navState.details
+    ? 'source'
+    : isSkillsNavigation(navState) && navState.details?.type === 'skill' ? 'skill' : null
+  const resourceSlug = isSourcesNavigation(navState) && navState.details
+    ? navState.details.sourceSlug
+    : isSkillsNavigation(navState) && navState.details?.type === 'skill' ? navState.details.skillSlug : null
+  const { status: resourceStatus, retry: retryResource } = useSelectedResourceAvailability(
+    activeWorkspaceId, resourceKind, resourceSlug,
+    resourceKind === 'skill' ? activeSessionWorkingDirectory : undefined,
+  )
+  // Keep session hosts mounted when only their list filter changes. A different
+  // entity/workspace must start with fresh state, including pending async work.
+  const routeIdentity = JSON.stringify([
+    activeWorkspaceId, navState.navigator,
+    isScreenNavigation(navState) ? navState.screen : null,
+    isSettingsNavigation(navState) ? navState.subpage : null,
+    isSessionsNavigation(navState) ? navState.viewMode : null,
+    'details' in navState ? navState.details : null,
+  ])
+
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
   const [sendResourceType, setSendResourceType] = useState<SendResourceType>('source')
   const [sendResourceIds, setSendResourceIds] = useState<string[]>([])
@@ -181,9 +300,18 @@ export function MainContentPanel({
 
   const wrapWithStoplight = (content: React.ReactNode) => (
     <StoplightProvider value={isSidebarAndNavigatorHidden}>
-      <React.Suspense fallback={pageFallback}>
-        {content}
-      </React.Suspense>
+      <RouteErrorBoundary key={routeIdentity} fallback={(retry) => (
+        <Panel variant="grow" className={className}>
+          <div role="alert" data-testid="route-error" className="flex h-full flex-col items-center justify-center gap-3 p-4 text-center">
+            <p className="text-sm text-muted-foreground">{t('common.errorLoadingContent')}</p>
+            <button type="button" onClick={retry} className="rounded-md border px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              {t('common.retry')}
+            </button>
+          </div>
+        </Panel>
+      )}>
+        <React.Suspense fallback={pageFallback}>{content}</React.Suspense>
+      </RouteErrorBoundary>
       <SendResourceToWorkspaceDialog
         open={sendDialogOpen}
         onOpenChange={setSendDialogOpen}
@@ -195,6 +323,39 @@ export function MainContentPanel({
       />
     </StoplightProvider>
   )
+
+  const resourceMultiSelect = resourceKind === 'source' ? isSourceMultiSelectActive : isSkillMultiSelectActive
+  if (resourceKind && !resourceMultiSelect && resourceStatus !== 'ready') {
+    const message = resourceStatus === 'loading'
+      ? t('common.loading')
+      : resourceStatus === 'missing'
+        ? t(resourceKind === 'source' ? 'sourceInfo.notFound' : 'skillInfo.notFound')
+        : t('common.unavailable')
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <div
+          className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground"
+          role="status"
+          aria-live="polite"
+          data-testid={`route-resource-${resourceStatus}`}
+          data-route-resource={resourceKind}
+          data-route-entity={resourceSlug}
+        >
+          <p className="text-sm">{message}</p>
+          {resourceStatus !== 'loading' && (
+            <button
+              type="button"
+              className="rounded-md border border-border px-3 py-1 text-sm text-foreground hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              data-testid="route-resource-retry"
+              onClick={retryResource}
+            >
+              {t('common.retry')}
+            </button>
+          )}
+        </div>
+      </Panel>
+    )
+  }
 
   if (isSettingsNavigation(navState)) {
     if (navState.subpage === null) {
@@ -553,10 +714,17 @@ export function MainContentPanel({
     )
   }
 
+  // Historical regression sentinel: terminal/cloud-run precede the generic
+  // branch that formerly rendered session.selectConversation.
   return wrapWithStoplight(
     <Panel variant="grow" className={className}>
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        <p className="text-sm">{t("session.selectConversation")}</p>
+      <div
+        role="status"
+        className="flex items-center justify-center h-full text-muted-foreground"
+        data-testid="route-unavailable"
+      >
+        {/* Unknown/stale deep links must not masquerade as an unrelated chat route. */}
+        <p className="text-sm">{t('common.unavailable')}</p>
       </div>
     </Panel>
   )
