@@ -46,7 +46,7 @@ describe.skipIf(!enabled)('mounted map lazy-load recovery', () => {
     })
     await new Promise<void>(resolve => server!.listen(0, '127.0.0.1', resolve))
     base = `http://127.0.0.1:${(server.address() as { port: number }).port}`
-    browser = await chromium.launch({ headless: true })
+    browser = await chromium.launch({ headless: true, executablePath: process.env.ROX_TEST_CHROMIUM ?? process.env.CHROMIUM_EXECUTABLE })
   }, 30_000)
   afterAll(async () => {
     await browser?.close()

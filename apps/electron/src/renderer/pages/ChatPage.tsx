@@ -372,7 +372,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     return () => clearInterval(interval)
   }, [sessionId, getDraft])
 
-  // Listen for restore-input events (queued messages restored to input on abort)
+  // Read-only event navigation opens the captured runtime view in the focused panel.
   React.useEffect(() => {
     if (!runtimeOpenRequest || isFocusedPanel === false) return
     const key = JSON.stringify([activeWorkspaceId, sessionId, runtimeOpenRequest.requestId])

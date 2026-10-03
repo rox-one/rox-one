@@ -14,7 +14,7 @@ test('actual Chromium browser 200 percent zoom preserves the mounted chat and do
     if (change.status === 'complete' && tab.url?.startsWith('http://127.0.0.1:4176/')) chrome.tabs.setZoom(tabId, 2);
   });`)
   const context = await chromium.launchPersistentContext(join(directory, 'profile'), {
-    executablePath: chromium.executablePath(), headless: false, viewport: null,
+    executablePath: process.env.ROX_TEST_CHROMIUM ?? process.env.CHROMIUM_EXECUTABLE ?? chromium.executablePath(), headless: false, viewport: null,
     ignoreDefaultArgs: ['--disable-extensions'],
     args: ['--headless=new', '--window-size=1440,900', '--force-device-scale-factor=1', `--disable-extensions-except=${extension}`, `--load-extension=${extension}`],
   })

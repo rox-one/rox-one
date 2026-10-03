@@ -1,5 +1,7 @@
 name: Runtime map native evidence
 on:
+  push:
+    branches: ['codex/live-runtime-map-20261003']
   pull_request:
     paths:
       - 'packages/core/src/runtime-trace/**'
