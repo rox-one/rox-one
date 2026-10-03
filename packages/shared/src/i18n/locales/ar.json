@@ -1723,6 +1723,7 @@
   "errors.omp.authRequired.title": "مطلوب مصادقة Rox",
   "errors.omp.noModels.message": "لا يحتوي وقت تشغيل Rox على مزودي نماذج. يلزم مفتاح Rox API ‏(ROX_API_KEY) أو ملف models.yml محلي قبل الجولة الأولى.",
   "errors.omp.noModels.title": "لا توجد نماذج مُعدّة في Rox",
+  "errors.omp.runtimeUnavailable.message": "تعذّر تشغيل بيئة Bun في «{{path}}». اضبط CRAFT_BUN_PATH على ملف Bun تنفيذي أصلي أو ثبّت بيئة تشغيل Bun المُدارة ثم أعد المحاولة.",
   "errors.pleaseReload": "يُرجى إعادة تحميل الصفحة. تم الإبلاغ عن الخطأ.",
   "errors.retryLoadingSessions": "إعادة محاولة تحميل الجلسات",
   "errors.sessionNotFound": "لم يُعثر على الجلسة",

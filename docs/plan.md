@@ -1031,3 +1031,8 @@ Owner recent_features; depends on current Tasks1456, strict date1470 and Product
 - [x] Publish separate PR #1483 and attach it; read back the exact head and update the original137 source/caller ledger. Root owns merge.
 
 
+
+
+### Native OMP launch cancellation recovery — 2026-10-04
+
+Owner recent_features; parent owns ordered integration. Retain held-prepare destroy baseline failure, execute all 27 pinned native controls and 317 current account/domain/helper/observer/i18n checks, and qualify full strict Electron types. Preserve all failure history, current SSO/RuntimeMap authority and original branches; reconcile current main without document deletion, publish a separate scoped PR. Installed Windows and full release acceptance stay separate.

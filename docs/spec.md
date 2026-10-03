@@ -834,3 +834,8 @@ Owner: historical branch worker; dependency: externally merged Notes1465 on2338a
 - Acceptance: both actual OmpAgent callers request hidden windows; literal prompt, private helper model/no-session and shell-free execution remain intact. Controlled protocol fixtures prove launch configuration, not native Windows console visibility or installed18.4.12 acceptance.
 
 
+
+
+### Native OMP launch cancellation recovery — 2026-10-04
+
+Owner recent_features. Recover source1464 through the current OmpAgent. Startup and helper preparation carry launch/account/model-domain generations before every asynchronous boundary; cancelled or destroyed work never spawns a late child. Preparation failures release ready ownership and allow a later valid retry. Managed Bun paths and literal native argv retain policy, source observers and Windows hidden-process options. Runtime guidance is translated in all twelve locales.
