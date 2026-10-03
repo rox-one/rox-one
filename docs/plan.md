@@ -975,3 +975,8 @@ Owner root. Depends on existing rail-links/Popover/Select and current product-to
 2. Exercise the actual factory → context → core registry → Bash with an owned managed CLI, under Bun and native Node, and the same no-provider negative. Exercise fresh per-call values, blocked credentials, Windows case folding, startup-file/function refusal, private provider failure/deadline/no-late-spawn and actual inherited pipes after root exit. Retain the original native Windows fixtures and add actual configured shell/cmd/descendant lifetime controls with explicit off-platform skips.
 3. Compare baseline/source against exact startup canary and orphan-pipe probes; retain failed fixture history and bounded cleanup of fixture-owned PIDs. Run focused/adjacent session runtime and tool-definition controls plus shared/Electron typechecks. Freeze exact implementation and receipt, commit/push/attach a separate PR; root owns remote merge.
 4. Continue Knowledge availability cache and the exhaustive137-path function/caller disposition. Historical owns the independent AppShell collection persistence/grouping gap. Native Windows execution and full installed release acceptance remain separately stated.
+
+
+### Golden task date validation recovery — 2026-10-03
+
+Owner recent_features: restore exact ISO calendar-day validation in the current parser; verify impossible-date refusal and valid leap-day persistence through the actual TaskDetail form. Keep before-fix unit/browser failures, full personal-task regression checks and both timezone offsets; qualify current core types and production component/CSS bundle. Parent owns ordered PR merge; source branches stay preserved. Broader Golden/native release acceptance remains separate.
