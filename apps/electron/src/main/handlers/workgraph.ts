@@ -1,17 +1,27 @@
+import { join } from 'node:path'
+import { resolveConfigDir } from '@rox/shared/config'
+
 import { CredentialRefRegistry } from '@rox/core/platform'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   InProcessCredentialBroker,
   LocalFileSecretProvider,
+  NamedCredentialBackend,
   SecureStorageBackend,
+  type CredentialBackend,
+  type GithubOAuthHttpClient,
 } from '@rox/shared/credentials'
-import type { RpcServer } from '@rox/server-core/transport'
+import type { RequestContext, RpcServer } from '@rox/server-core/transport'
 import {
-  convertCopyToReferenceAndRevalidate,
   commitGitHelperImport,
+  commitGithubEnvImport,
+  createGithubDeviceFlow,
   previewGitHelperImport,
   previewGithubEnvImport,
-  commitGithubEnvImport,
+  convertCopyToReferenceAndRevalidate,
+  listConnectionLeases,
+  moveConnectionBackendAndRevalidate,
+  reconnectConnectionAndRevalidate,
   repairConnectionAndRevalidate,
   revokeConnectionAndRevalidate,
   revokeConnectionBindingAndRevalidate,
@@ -28,6 +38,7 @@ import {
   previewSshAgentImport,
   commitSshAgentImport,
   createConnectionGrant,
+  inspectConnectionMetadata,
   type CreateConnectionInput,
   type GithubFetch,
   type WorkGraphKernel,
@@ -39,17 +50,24 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.workgraph.LIST_CONNECTIONS,
   RPC_CHANNELS.workgraph.LIST_CONNECTION_AUDIT,
   RPC_CHANNELS.workgraph.LIST_CONNECTION_BINDINGS,
+  RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES,
   RPC_CHANNELS.workgraph.CONVERT_CONNECTION,
   RPC_CHANNELS.workgraph.REVOKE_CONNECTION_BINDING,
   RPC_CHANNELS.workgraph.GET_CONNECTION,
+  RPC_CHANNELS.workgraph.INSPECT_CONNECTION,
   RPC_CHANNELS.workgraph.CREATE_CONNECTION,
   RPC_CHANNELS.workgraph.GRANT_CONNECTION,
+  RPC_CHANNELS.workgraph.MOVE_CONNECTION,
+  RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN,
+  RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN,
+  RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN,
   RPC_CHANNELS.workgraph.PREVIEW_GITHUB_ENV,
   RPC_CHANNELS.workgraph.IMPORT_GITHUB_ENV,
   RPC_CHANNELS.workgraph.PREVIEW_GIT_HELPER,
   RPC_CHANNELS.workgraph.IMPORT_GIT_HELPER,
   RPC_CHANNELS.workgraph.REVOKE_CONNECTION,
   RPC_CHANNELS.workgraph.REPAIR_CONNECTION,
+  RPC_CHANNELS.workgraph.RECONNECT_CONNECTION,
   RPC_CHANNELS.workgraph.ROTATE_CONNECTION,
   RPC_CHANNELS.workgraph.TEST_CONNECTION,
   RPC_CHANNELS.workgraph.PREVIEW_DOCKER_HELPER,
@@ -73,11 +91,14 @@ export interface FabricImportHost {
   readonly commitGitHelper: typeof commitGitHelperImport
   readonly revoke: typeof revokeConnectionAndRevalidate
   readonly repair: typeof repairConnectionAndRevalidate
+  readonly reconnect: typeof reconnectConnectionAndRevalidate
   readonly rotate: typeof rotateConnectionAndRevalidate
-  readonly convert: typeof convertCopyToReferenceAndRevalidate
-  readonly unbind: typeof revokeConnectionBindingAndRevalidate
   readonly testGithub: typeof testGithubConnection
   readonly fetchImpl: GithubFetch
+  readonly convert: typeof convertCopyToReferenceAndRevalidate
+  readonly unbind: typeof revokeConnectionBindingAndRevalidate
+  readonly move: typeof moveConnectionBackendAndRevalidate
+  readonly backends: Readonly<Record<string, CredentialBackend>>
 }
 
 export type GithubEnvImportHost = FabricImportHost
@@ -85,6 +106,10 @@ export type GithubEnvImportHost = FabricImportHost
 export function createGithubEnvImportHost(): FabricImportHost {
   const registry = new CredentialRefRegistry()
   const provider = new LocalFileSecretProvider(new SecureStorageBackend(), registry)
+  const localAlt = new NamedCredentialBackend(
+    'local-alt',
+    new SecureStorageBackend(join(resolveConfigDir(), 'credentials-alt')),
+  )
   return {
     provider,
     broker: new InProcessCredentialBroker(provider, (id) => registry.get(id)),
@@ -94,12 +119,37 @@ export function createGithubEnvImportHost(): FabricImportHost {
     commitGitHelper: commitGitHelperImport,
     revoke: revokeConnectionAndRevalidate,
     repair: repairConnectionAndRevalidate,
+    reconnect: reconnectConnectionAndRevalidate,
     rotate: rotateConnectionAndRevalidate,
-    convert: convertCopyToReferenceAndRevalidate,
-    unbind: revokeConnectionBindingAndRevalidate,
     testGithub: testGithubConnection,
     fetchImpl: globalThis.fetch.bind(globalThis),
+    convert: convertCopyToReferenceAndRevalidate,
+    unbind: revokeConnectionBindingAndRevalidate,
+    move: moveConnectionBackendAndRevalidate,
+    backends: { 'local-alt': localAlt },
   }
+}
+
+function assertMetadataRecord(input: unknown, keys: ReadonlySet<string>): asserts input is Record<string, unknown> {
+  if (!input || typeof input !== 'object' || Array.isArray(input)
+    || (Object.getPrototypeOf(input) !== Object.prototype && Object.getPrototypeOf(input) !== null)) {
+    throw new Error('Invalid metadata')
+  }
+  for (const key of Reflect.ownKeys(input)) {
+    if (typeof key !== 'string' || !keys.has(key)) throw new Error('Invalid metadata field')
+    const descriptor = Object.getOwnPropertyDescriptor(input, key)
+    if (!descriptor || !('value' in descriptor)) throw new Error('Invalid metadata field')
+  }
+}
+
+function assertMetadataString(value: unknown): asserts value is string {
+  if (typeof value !== 'string' || !value.trim() || value.length > 1024 || value.includes('\0')) {
+    throw new Error('Invalid metadata identifier')
+  }
+}
+
+function assertConnectionWorkspace(ctx: RequestContext, workspaceId: string): void {
+  if (!ctx.workspaceId || ctx.workspaceId !== workspaceId) throw new Error('workspace_denied')
 }
 
 const CONNECTION_INPUT_KEYS = new Set([
@@ -122,24 +172,115 @@ function assertConnectionMetadata(input: unknown): CreateConnectionInput {
   return input as CreateConnectionInput
 }
 
-const GRANT_INPUT_KEYS: Record<string, true> = {
-  workspaceId: true,
-  connectionId: true,
-  consumerId: true,
-  purpose: true,
-  actions: true,
-  resources: true,
-}
+const GRANT_INPUT_KEYS = new Set([
+  'workspaceId',
+  'connectionId',
+  'consumerId',
+  'purpose',
+  'actions',
+  'resources',
+])
 
 function assertGrantMetadata(input: unknown): void {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid grant metadata')
   }
   for (const key of Object.keys(input)) {
-    if (!GRANT_INPUT_KEYS[key]) {
+    if (!GRANT_INPUT_KEYS.has(key)) {
       throw new Error(`Invalid grant metadata field: ${key}`)
     }
   }
+}
+
+const MOVE_INPUT_KEYS = new Set([
+  'workspaceId',
+  'connectionId',
+  'targetBackend',
+])
+
+function assertMoveMetadata(input: unknown): void {
+  assertMetadataRecord(input, MOVE_INPUT_KEYS)
+  for (const field of ['workspaceId', 'connectionId', 'targetBackend']) assertMetadataString(input[field])
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid move metadata')
+  }
+  for (const key of Object.keys(input)) {
+    if (!MOVE_INPUT_KEYS.has(key)) {
+      throw new Error(`Invalid move metadata field: ${key}`)
+    }
+  }
+}
+
+const GITHUB_DEVICE_POLL_KEYS = new Set(['flowId', 'workspaceId'])
+
+function assertGithubDevicePollMetadata(input: unknown): { flowId: string; workspaceId: string } {
+  assertMetadataRecord(input, GITHUB_DEVICE_POLL_KEYS)
+  assertMetadataString(input.flowId)
+  assertMetadataString(input.workspaceId)
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid device poll metadata')
+  }
+  for (const key of Object.keys(input)) {
+    if (!GITHUB_DEVICE_POLL_KEYS.has(key)) {
+      throw new Error(`Invalid connection metadata field: ${key}`)
+    }
+  }
+  const rec = input as { flowId?: unknown; workspaceId?: unknown }
+  if (typeof rec.flowId !== 'string' || !rec.flowId || typeof rec.workspaceId !== 'string' || !rec.workspaceId) {
+    throw new Error('Invalid device poll metadata')
+  }
+  return { flowId: rec.flowId, workspaceId: rec.workspaceId }
+}
+
+const GITHUB_DEVICE_CANCEL_KEYS = new Set(['flowId'])
+
+const CONNECTION_LEASE_LIST_KEYS = new Set(['workspaceId', 'connectionId'])
+
+function assertConnectionLeaseListMetadata(input: unknown): { workspaceId: string; connectionId: string } {
+  assertMetadataRecord(input, CONNECTION_LEASE_LIST_KEYS)
+  assertMetadataString(input.workspaceId)
+  assertMetadataString(input.connectionId)
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid lease list metadata')
+  }
+  for (const key of Object.keys(input)) {
+    if (!CONNECTION_LEASE_LIST_KEYS.has(key)) {
+      throw new Error(`Invalid connection metadata field: ${key}`)
+    }
+  }
+  const rec = input as { workspaceId?: unknown; connectionId?: unknown }
+  if (typeof rec.workspaceId !== 'string' || !rec.workspaceId || typeof rec.connectionId !== 'string' || !rec.connectionId) {
+    throw new Error('Invalid lease list metadata')
+  }
+  return { workspaceId: rec.workspaceId, connectionId: rec.connectionId }
+}
+
+function assertGithubDeviceCancelMetadata(input: unknown): { flowId: string } {
+  assertMetadataRecord(input, GITHUB_DEVICE_CANCEL_KEYS)
+  assertMetadataString(input.flowId)
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid device cancel metadata')
+  }
+  for (const key of Object.keys(input)) {
+    if (!GITHUB_DEVICE_CANCEL_KEYS.has(key)) {
+      throw new Error(`Invalid connection metadata field: ${key}`)
+    }
+  }
+  const rec = input as { flowId?: unknown }
+  if (typeof rec.flowId !== 'string' || !rec.flowId) {
+    throw new Error('Invalid device cancel metadata')
+  }
+  return { flowId: rec.flowId }
+}
+
+const defaultGithubOAuthHttp: GithubOAuthHttpClient = async (request) => {
+  const response = await fetch(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: request.body,
+    redirect: 'manual',
+  })
+  return { status: response.status, body: await response.text() }
 }
 
 function assertLocalPath(value: unknown): string {
@@ -168,11 +309,36 @@ type WorkGraphSurface = Pick<
  * localElectron access class additionally requires the renderer's trusted,
  * main-issued window/workspace binding before these channels are advertised.
  */
+async function withConnectionInspect<T extends object>(
+  workGraph: WorkGraphSurface,
+  fabric: FabricImportHost,
+  input: { workspaceId: string; connectionId: string },
+  result: T,
+) {
+  const inspect = await inspectConnectionMetadata({
+    kernel: workGraph,
+    provider: fabric.provider,
+    workspaceId: input.workspaceId,
+    connectionId: input.connectionId,
+  })
+  return { ...result, inspect }
+}
+
 export function registerWorkGraphHandlers(
   server: RpcServer,
   workGraph: WorkGraphSurface,
   fabric?: FabricImportHost,
 ): void {
+  const deviceOwners = new Map<string, { clientId: string; workspaceId: string }>()
+  const githubDeviceFlow = fabric
+    ? createGithubDeviceFlow({
+        http: defaultGithubOAuthHttp,
+        clientId: process.env.GITHUB_OAUTH_CLIENT_ID ?? '',
+        provider: fabric.provider,
+        kernel: workGraph,
+        broker: fabric.broker,
+      })
+    : undefined
   server.handle(RPC_CHANNELS.workgraph.GET_HEALTH, () => workGraph.getHealth(), { access: 'localElectron' })
   server.handle(RPC_CHANNELS.workgraph.GET_VERSION, () => workGraph.getVersion(), { access: 'localElectron' })
   server.handle(
@@ -195,17 +361,32 @@ export function registerWorkGraphHandlers(
     { access: 'localElectron' },
   )
   server.handle(
+    RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES,
+    async (_ctx, input: unknown) => {
+      const rec = assertConnectionLeaseListMetadata(input)
+      if (!fabric) throw new Error('leases_unavailable')
+      assertConnectionWorkspace(_ctx, rec.workspaceId)
+      return listConnectionLeases({
+        kernel: workGraph,
+        broker: fabric.broker,
+        workspaceId: rec.workspaceId,
+        connectionId: rec.connectionId,
+      })
+    },
+    { access: 'localElectron' },
+  )
+  server.handle(
     RPC_CHANNELS.workgraph.CONVERT_CONNECTION,
     async (_ctx, input: { workspaceId: string; connectionId: string }) => {
       if (!fabric) throw new Error('convert_unavailable')
-      return fabric.convert({
+      return withConnectionInspect(workGraph, fabric, input, await fabric.convert({
         kernel: workGraph,
         broker: fabric.broker,
         provider: fabric.provider,
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
         reason: 'owner-convert',
-      })
+      }))
     },
     { access: 'localElectron' },
   )
@@ -227,6 +408,21 @@ export function registerWorkGraphHandlers(
     (_ctx, input: { workspaceId: string; connectionId: string }) => (
       workGraph.getConnection(input.workspaceId, input.connectionId)
     ),
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.INSPECT_CONNECTION,
+    async (_ctx, input: { workspaceId: string; connectionId: string }) => {
+      const rec = assertConnectionLeaseListMetadata(input)
+      if (!fabric) throw new Error('inspect_unavailable')
+      assertConnectionWorkspace(_ctx, rec.workspaceId)
+      return inspectConnectionMetadata({
+        kernel: workGraph,
+        provider: fabric.provider,
+        workspaceId: input.workspaceId,
+        connectionId: input.connectionId,
+      })
+    },
     { access: 'localElectron' },
   )
   server.handle(
@@ -256,6 +452,64 @@ export function registerWorkGraphHandlers(
         actions: input.actions,
         resources: input.resources,
       })
+    },
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.MOVE_CONNECTION,
+    async (_ctx, input: { workspaceId: string; connectionId: string; targetBackend: string }) => {
+      assertMoveMetadata(input)
+      if (!fabric) throw new Error('move_unavailable')
+      assertConnectionWorkspace(_ctx, input.workspaceId)
+      const target = Object.hasOwn(fabric.backends, input.targetBackend) ? fabric.backends[input.targetBackend] : undefined
+      if (!target) throw new Error('unknown_backend')
+      return withConnectionInspect(workGraph, fabric, input, await fabric.move({
+        kernel: workGraph,
+        broker: fabric.broker,
+        provider: fabric.provider,
+        target,
+        workspaceId: input.workspaceId,
+        connectionId: input.connectionId,
+        reason: 'owner-move',
+      }))
+    },
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN,
+    async (_ctx) => {
+      if (!githubDeviceFlow) throw new Error('github_device_unavailable')
+      if (!_ctx.workspaceId) throw new Error('workspace_denied')
+      const view = await githubDeviceFlow.start()
+      deviceOwners.set(view.flowId, { clientId: _ctx.clientId, workspaceId: _ctx.workspaceId })
+      return view
+    },
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN,
+    async (_ctx, input: unknown) => {
+      const pollInput = assertGithubDevicePollMetadata(input)
+      if (!githubDeviceFlow) throw new Error('github_device_unavailable')
+      assertConnectionWorkspace(_ctx, pollInput.workspaceId)
+      const owner = deviceOwners.get(pollInput.flowId)
+      if (!owner || owner.clientId !== _ctx.clientId || owner.workspaceId !== _ctx.workspaceId) throw new Error('unknown_flow')
+      const result = await githubDeviceFlow.poll(pollInput)
+      if (result.status === 'imported' || result.status === 'denied' || result.status === 'expired') deviceOwners.delete(pollInput.flowId)
+      return result
+    },
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN,
+    async (_ctx, input: unknown) => {
+      const rec = assertGithubDeviceCancelMetadata(input)
+      if (!githubDeviceFlow) throw new Error('github_device_unavailable')
+      const owner = deviceOwners.get(rec.flowId)
+      if (owner && (owner.clientId !== _ctx.clientId || owner.workspaceId !== _ctx.workspaceId)) throw new Error('unknown_flow')
+      const result = await githubDeviceFlow.cancel(rec.flowId)
+      deviceOwners.delete(rec.flowId)
+      return result
     },
     { access: 'localElectron' },
   )
@@ -311,14 +565,14 @@ export function registerWorkGraphHandlers(
     RPC_CHANNELS.workgraph.REVOKE_CONNECTION,
     async (_ctx, input: { workspaceId: string; connectionId: string }) => {
       if (!fabric) throw new Error('revoke_unavailable')
-      return fabric.revoke({
+      return withConnectionInspect(workGraph, fabric, input, await fabric.revoke({
         kernel: workGraph,
         broker: fabric.broker,
         provider: fabric.provider,
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
         reason: 'owner-revoke',
-      })
+      }))
     },
     { access: 'localElectron' },
   )
@@ -326,12 +580,29 @@ export function registerWorkGraphHandlers(
     RPC_CHANNELS.workgraph.REPAIR_CONNECTION,
     async (_ctx, input: { workspaceId: string; connectionId: string }) => {
       if (!fabric) throw new Error('repair_unavailable')
-      return fabric.repair({
+      return withConnectionInspect(workGraph, fabric, input, await fabric.repair({
         kernel: workGraph,
         broker: fabric.broker,
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
-      })
+      }))
+    },
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.RECONNECT_CONNECTION,
+    async (_ctx, input: { workspaceId: string; connectionId: string }) => {
+      assertConnectionLeaseListMetadata(input)
+      if (!fabric) throw new Error('reconnect_unavailable')
+      assertConnectionWorkspace(_ctx, input.workspaceId)
+      return withConnectionInspect(workGraph, fabric, input, await fabric.reconnect({
+        kernel: workGraph,
+        broker: fabric.broker,
+        provider: fabric.provider,
+        workspaceId: input.workspaceId,
+        connectionId: input.connectionId,
+        reason: 'owner-reconnect',
+      }))
     },
     { access: 'localElectron' },
   )
@@ -339,14 +610,14 @@ export function registerWorkGraphHandlers(
     RPC_CHANNELS.workgraph.ROTATE_CONNECTION,
     async (_ctx, input: { workspaceId: string; connectionId: string }) => {
       if (!fabric) throw new Error('rotate_unavailable')
-      return fabric.rotate({
+      return withConnectionInspect(workGraph, fabric, input, await fabric.rotate({
         kernel: workGraph,
         broker: fabric.broker,
         provider: fabric.provider,
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
         reason: 'owner-rotate',
-      })
+      }))
     },
     { access: 'localElectron' },
   )

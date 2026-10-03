@@ -981,8 +981,8 @@ describe('credential locator own-data boundary', () => {
       Object.defineProperty(Object.prototype, 'value', { configurable: true, value: 'inherited descriptor value' });
       rejected = rejects(() => registry.register({ kind: 'api_key', providerId: 'local', locator: locator as ProviderLocator, now: 100 }));
     } finally {
+      Reflect.deleteProperty(Object.prototype, 'value');
       if (previous) Object.defineProperty(Object.prototype, 'value', previous);
-      else Reflect.deleteProperty(Object.prototype, 'value');
     }
     expect(rejected).toBe(true);
     expect(reads).toBe(0);
