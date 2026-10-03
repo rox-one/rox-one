@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTourNativeLayer } from '@/features/product-tour/runtime/native-layer'
-import { useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { TourConnectionPolicyContext, useTourSignals } from '@/features/product-tour/runtime/hooks'
 import { beginChatCommit } from '@/features/product-tour/adapters/chat'
 import { connectionCapabilities, toggleSourceSelection } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
@@ -33,13 +33,16 @@ export function SourceSelectorPopover({
 }: SourceSelectorPopoverProps) {
   const { t } = useTranslation()
   const tour = useTourSignals()
+  const connectionPolicy = React.useContext(TourConnectionPolicyContext)
+  const policyWorkspaceId = connectionPolicy?.workspaceId
+  const policyLocalMcpEnabled = connectionPolicy?.localMcpEnabled ?? null
   const nativeLayer = useTourNativeLayer({ open, onOpenChange }, false)
   React.useEffect(() => {
     if (!tourSessionSelection) return
-    const caps = connectionCapabilities({ sources, selectedSlugs })
+    const caps = connectionCapabilities({ sources, selectedSlugs, workspaceId: policyWorkspaceId, localMcpEnabled: policyLocalMcpEnabled })
     const cleanups = [tour.capability('sources.list', caps['sources.list']!), tour.capability('sources.ready', caps['sources.ready']!)]
     return () => cleanups.forEach(cleanup => cleanup())
-  }, [tour, tourSessionSelection, sources, selectedSlugs])
+  }, [tour, tourSessionSelection, sources, selectedSlugs, policyWorkspaceId, policyLocalMcpEnabled])
   const toggleSlug = (slug: string) => {
     if (tourSessionSelection) beginChatCommit(tour.capture(), 'session.sources-committed', toggleSourceSelection(selectedSlugs, slug))
     onToggleSlug(slug)
