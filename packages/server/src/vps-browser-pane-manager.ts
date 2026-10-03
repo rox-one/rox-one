@@ -20,8 +20,8 @@ import type {
   BrowserWaitArgs,
   BrowserWaitResult,
   IBrowserPaneManager,
-} from '@craft-agent/server-core/handlers'
-import type { BrowserInstanceInfo } from '@craft-agent/shared/protocol'
+} from '@rox/server-core/handlers'
+import type { BrowserInstanceInfo } from '@rox/shared/protocol'
 
 type AgentBrowserResponse<T = unknown> = {
   success?: boolean

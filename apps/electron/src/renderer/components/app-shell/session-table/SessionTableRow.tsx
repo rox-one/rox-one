@@ -10,9 +10,9 @@ import {
   GripVertical,
   Tag,
 } from 'lucide-react'
-import { PremiumMenu, type PremiumMenuItem } from '@craft-agent/ui'
-import type { CollectionDensity, SessionPriority } from '@craft-agent/shared/sessions/collection'
-import { formatTranscriptSize } from '@craft-agent/shared/sessions/collection'
+import { PremiumMenu, type PremiumMenuItem } from '@rox/ui'
+import type { CollectionDensity, SessionPriority } from '@rox/shared/sessions/collection'
+import { formatTranscriptSize } from '@rox/shared/sessions/collection'
 import type { SessionMeta } from '@/atoms/sessions'
 import { resolveLabelDisplayName, resolveStatusDisplayLabel, type SessionStatusConfig } from '@/config/session-status-config'
 import { getSessionTitle } from '@/utils/session'
@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils'
 import { isDueOverdue } from './table-due'
 import { collectionTableRowClass } from './table-density'
 import { NO_PROJECT_VALUE } from '../collection/bulk-input'
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { getAppLocale } from '@rox/shared/i18n'
 
 export interface SessionTableRowProps {
   meta: SessionMeta

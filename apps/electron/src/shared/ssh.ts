@@ -1,4 +1,4 @@
-import type { RemoteServerConfig } from '@craft-agent/core/types'
+import type { RemoteServerConfig } from '@rox/core/types'
 
 /** True when this remote config is reached over SSH (durable, not port-derived). */
 export function isSshBacked(

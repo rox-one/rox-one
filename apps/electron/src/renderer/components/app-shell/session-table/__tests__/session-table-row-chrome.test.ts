@@ -8,7 +8,7 @@ const HOST = readFileSync(join(__dirname, '..', 'SessionTableHost.tsx'), 'utf8')
 describe('session table row chrome', () => {
   it('replaces native status/priority selects with compact PremiumMenu', () => {
     expect(ROW).not.toContain('<select')
-    expect(ROW).toContain("import { PremiumMenu, type PremiumMenuItem } from '@craft-agent/ui'")
+    expect(ROW).toContain("import { PremiumMenu, type PremiumMenuItem } from '@rox/ui'")
     expect(ROW).toContain('<PremiumMenu')
     expect(ROW).toContain('variant="compact"')
     expect(ROW).toContain("t('collection.table.column.status')")

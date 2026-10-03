@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils"
 import { slugify } from "@/lib/slugify"
 import { Input } from "../ui/input"
 import { Button } from "../ui/button"
-import { PremiumMenuSelect } from "@craft-agent/ui"
+import { PremiumMenuSelect } from "@rox/ui"
 import { AddWorkspaceContainer, AddWorkspaceStepHeader, AddWorkspaceSecondaryButton, AddWorkspacePrimaryButton } from "./primitives"
 import { AddWorkspace_RadioOption } from "./AddWorkspace_RadioOption"
 import { useDirectoryPicker } from "@/hooks/useDirectoryPicker"
 import { ServerDirectoryBrowser } from "@/components/ServerDirectoryBrowser"
-import type { OrganizationWithMembers } from "@craft-agent/shared/orgs"
+import type { OrganizationWithMembers } from "@rox/shared/orgs"
 
 const MAX_ORGANIZATION_NAME_LENGTH = 120
 

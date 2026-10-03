@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "purpose": "source integration verification; not installed desktop or release acceptance",
+  "verifiedSourceHead": "07f05212b7efdfff12be27f167c3c44490517d8a",
+  "integratedMainHead": "2cbc3b594eaeae3606d870d994346d42d085f504",
+  "originalRuntimeSource": "29e86bcc515e24039a15a781d5885b272cbad1df",
+  "originalBranchesPreserved": true,
+  "runtime": "Bun 1.3.14",
+  "gates": {
+    "validateCi": {
+      "exitCode": 0,
+      "strictTypecheckPackages": 10,
+      "bunTestsPassed": 254,
+      "pythonDocumentTestsPassed": 19,
+      "localeFiles": 12,
+      "localeKeys": 7613
+    },
+    "focusedIntegratedRuntimeMcp": {
+      "exitCode": 0,
+      "passed": 257,
+      "failed": 0,
+      "assertions": 4946
+    },
+    "independentSecurityControls": {
+      "exitCode": 0,
+      "passed": 3,
+      "failed": 0,
+      "scope": [
+        "strict image ancestor swap refusal with no outside descriptor read",
+        "valid image inlining",
+        "real-process marker contention and generation ownership"
+      ]
+    },
+    "securityFollowups": [
+      "exclusive serialized sync marker generations",
+      "descriptor and ancestor checks during strict PDF image reads",
+      "HTTP command redirects refused in all three BrowseClient copies"
+    ]
+  },
+  "limits": [
+    "Remote CodeQL aggregate findings require source dispositions and current scan readback; no global security closure claimed.",
+    "Vercel account deployment block is external.",
+    "Installed native desktop, provider and signed production release acceptance is not established by these source checks."
+  ],
+  "logs": {
+    "runtime-integrated-validate.log": {
+      "sha256": "55e0f171a4ee8e386f32de50ef518b64daf72da49e8c9f6de7c0ee11835ac0a2",
+      "localPath": "/tmp/rox-branch-integration-20261003/runtime-integrated-validate.log"
+    },
+    "runtime-integrated-focused.log": {
+      "sha256": "9e60702d897c4795101108881f42cab944083c47c237684fbdaaf01d21b1b7bd",
+      "localPath": "/tmp/rox-branch-integration-20261003/runtime-integrated-focused.log"
+    },
+    "independent-runtime-security.log": {
+      "sha256": "ac413a9dba940c717d5a84b744c7a6d07c481b8cb4c6c6dcf2b4cf6c07459f72",
+      "localPath": "/tmp/rox-branch-integration-20261003/independent-runtime-security.log"
+    }
+  },
+  "recordedAtUtc": "2026-10-03T11:48:29.954984+00:00"
+}

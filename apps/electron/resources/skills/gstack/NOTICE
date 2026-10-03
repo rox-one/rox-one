@@ -1,0 +1,5 @@
+Upstream source and MIT license: see SKILLS.lock and LICENSE.
+
+ROX security modifications (2026-10-03): see SKILLS.lock securityPatches and
+VENDOR-SECURITY-PATCHES.json for changed upstream files, hashes and rationale.
+The pinned upstream revision and license remain unchanged.

@@ -7,7 +7,7 @@ import {
   formatRox2EntityId,
   queuedResult,
   type Rox2Result,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const VOICE_OVERLAY_SURFACE_ID = 'voice-overlay' as const
 

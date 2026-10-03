@@ -14,7 +14,7 @@ import {
   __resetMetricsStoreCacheForTests,
 } from '../metrics-store'
 import { KnowledgePublicationsStore } from '../publications-store'
-import type { PublicationRecord } from '@craft-agent/core/knowledge'
+import type { PublicationRecord } from '@rox/core/knowledge'
 
 let workspaceRoot: string
 const tmpDirs: string[] = []

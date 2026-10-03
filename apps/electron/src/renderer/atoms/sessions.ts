@@ -14,7 +14,7 @@ import { atomFamily } from 'jotai-family'
 import type { Session, Message, SessionPriority } from '../../shared/types'
 
 import { markStatusUnseen } from '@/lib/sidebar-unseen-status'
-import { countGitCommits, countToolCalls } from '@craft-agent/shared/sessions/collection'
+import { countGitCommits, countToolCalls } from '@rox/shared/sessions/collection'
 
 /**
  * Session metadata for list display (lightweight, no messages)

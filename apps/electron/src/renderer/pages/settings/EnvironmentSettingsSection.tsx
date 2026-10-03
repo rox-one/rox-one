@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   type EnvironmentPrefs,
-} from '@craft-agent/shared/environment'
+} from '@rox/shared/environment'
 import { SettingsCard, SettingsSection } from '@/components/settings'
 import { EnvironmentFields } from '@/components/onboarding/EnvironmentFields'
 import { createDesktopSettingsSession } from './desktop-settings-session'

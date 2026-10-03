@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { parseWorkbenchLayout } from '@craft-agent/core/platform'
+import { parseWorkbenchLayout } from '@rox/core/platform'
 import { routes, type ViewRoute } from '../../../shared/routes'
 import type { PanelStackEntry } from '../../atoms/panel-stack'
 import { groupTabsByLayout, panelEntryToLegacy, panelStackToWorkbenchLayout, persistableWorkbenchLayout } from '../tab-groups'

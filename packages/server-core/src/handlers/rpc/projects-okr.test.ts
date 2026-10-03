@@ -2,15 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { createProject } from '@craft-agent/shared/projects'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { createProject } from '@rox/shared/projects'
 import type { RequestContext, RpcHandlerOptions, RpcServer } from '../../transport/types'
 import type { HandlerDeps } from '../handler-deps'
 
 let workspaceRoot = ''
 let projectSlug = ''
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   getWorkspaceByNameOrId: (workspaceId: string) =>
     workspaceId === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
 }))

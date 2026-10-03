@@ -1,6 +1,6 @@
 {
-  "name": "@craft-agent/server",
-  "version": "0.11.7",
+  "name": "@rox/server",
+  "version": "0.11.8",
   "description": "Standalone headless Craft Agent server (Bun runtime)",
   "type": "module",
   "main": "src/index.ts",
@@ -25,10 +25,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@craft-agent/core": "workspace:*",
-    "@craft-agent/messaging-gateway": "workspace:*",
-    "@craft-agent/server-core": "workspace:*",
-    "@craft-agent/shared": "workspace:*"
+    "@rox/core": "workspace:*",
+    "@rox/messaging-gateway": "workspace:*",
+    "@rox/server-core": "workspace:*",
+    "@rox/shared": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.2",

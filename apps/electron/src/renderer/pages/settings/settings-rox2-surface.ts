@@ -13,7 +13,7 @@ import {
   type Rox2Context,
   type Rox2Permission,
   type Rox2Result,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const SETTINGS_SURFACE_ID = 'settings' as const
 

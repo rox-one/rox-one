@@ -3,23 +3,23 @@ import { join } from 'path'
 import { homedir } from 'os'
 import { execFile, execSync } from 'child_process'
 import { promisify } from 'util'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { emptyGitWorkingTreeStatus } from '@craft-agent/shared/git/status'
-import { readGitBranchName, readGitWorkingTreeStatus } from '@craft-agent/shared/git/exec'
-import { getGitBashPath, setGitBashPath, clearGitBashPath } from '@craft-agent/shared/config'
-import { classifyExternalUrl, formatBlockedUrlError } from '@craft-agent/shared/utils/url-safety'
-import { isUsableGitBashPath, validateGitBashPath } from '@craft-agent/server-core/services'
-import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
-import { isSensitiveAgentCwd } from '@craft-agent/shared/sessions'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { emptyGitWorkingTreeStatus } from '@rox/shared/git/status'
+import { readGitBranchName, readGitWorkingTreeStatus } from '@rox/shared/git/exec'
+import { getGitBashPath, setGitBashPath, clearGitBashPath } from '@rox/shared/config'
+import { classifyExternalUrl, formatBlockedUrlError } from '@rox/shared/utils/url-safety'
+import { isUsableGitBashPath, validateGitBashPath } from '@rox/server-core/services'
+import { validateFilePath, getWorkspaceAllowedDirs } from '@rox/server-core/handlers'
+import { isSensitiveAgentCwd } from '@rox/shared/sessions'
 import { existsSync, statSync } from 'fs'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import {
   requestClientOpenExternal,
   requestClientOpenPath,
   requestClientShowInFolder,
   requestClientOpenFileDialog,
-} from '@craft-agent/server-core/transport'
+} from '@rox/server-core/transport'
 
 export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.theme.GET_SYSTEM_PREFERENCE,
@@ -104,12 +104,12 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Release notes
   server.handle(RPC_CHANNELS.releaseNotes.GET, async () => {
-    const { getCombinedReleaseNotes } = require('@craft-agent/shared/release-notes') as typeof import('@craft-agent/shared/release-notes')
+    const { getCombinedReleaseNotes } = require('@rox/shared/release-notes') as typeof import('@rox/shared/release-notes')
     return getCombinedReleaseNotes()
   })
 
   server.handle(RPC_CHANNELS.releaseNotes.GET_LATEST_VERSION, async () => {
-    const { getLatestReleaseVersion } = require('@craft-agent/shared/release-notes') as typeof import('@craft-agent/shared/release-notes')
+    const { getLatestReleaseVersion } = require('@rox/shared/release-notes') as typeof import('@rox/shared/release-notes')
     return getLatestReleaseVersion()
   })
 
@@ -321,7 +321,7 @@ export function registerSystemGuiHandlers(server: RpcServer, deps: HandlerDeps):
   // Auto-update handlers
   server.handle(RPC_CHANNELS.update.CHECK, async () => {
     const { checkForUpdates } = await import('../auto-update')
-    return checkForUpdates({ autoDownload: true })
+    return checkForUpdates({ autoDownload: true, manual: true })
   })
 
   server.handle(RPC_CHANNELS.update.GET_INFO, async () => {
@@ -335,12 +335,12 @@ export function registerSystemGuiHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   server.handle(RPC_CHANNELS.update.DISMISS, async (_ctx, version: string) => {
-    const { setDismissedUpdateVersion } = await import('@craft-agent/shared/config')
+    const { setDismissedUpdateVersion } = await import('@rox/shared/config')
     setDismissedUpdateVersion(version)
   })
 
   server.handle(RPC_CHANNELS.update.GET_DISMISSED, async () => {
-    const { getDismissedUpdateVersion } = await import('@craft-agent/shared/config')
+    const { getDismissedUpdateVersion } = await import('@rox/shared/config')
     return getDismissedUpdateVersion()
   })
 
@@ -395,7 +395,7 @@ export function registerSystemGuiHandlers(server: RpcServer, deps: HandlerDeps):
 
   server.handle(RPC_CHANNELS.menu.ZOOM_RESET, async (ctx) => {
     if (!windowManager) return
-    const { getDefaultZoomLevel } = await import('@craft-agent/shared/config/storage')
+    const { getDefaultZoomLevel } = await import('@rox/shared/config/storage')
     const win = windowManager.getWindowByWebContentsId(ctx.webContentsId!)
     win?.webContents.setZoomFactor(getDefaultZoomLevel() / 100)
   })
@@ -449,12 +449,12 @@ export function registerSystemGuiHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   server.handle(RPC_CHANNELS.notification.GET_ENABLED, async () => {
-    const { getNotificationsEnabled } = await import('@craft-agent/shared/config/storage')
+    const { getNotificationsEnabled } = await import('@rox/shared/config/storage')
     return getNotificationsEnabled()
   })
 
   server.handle(RPC_CHANNELS.notification.SET_ENABLED, async (_ctx, enabled: boolean) => {
-    const { setNotificationsEnabled } = await import('@craft-agent/shared/config/storage')
+    const { setNotificationsEnabled } = await import('@rox/shared/config/storage')
     setNotificationsEnabled(enabled)
 
     if (enabled) {

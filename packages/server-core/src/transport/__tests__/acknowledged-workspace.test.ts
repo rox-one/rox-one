@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from 'bun:test'
 import type { ServerWebSocket } from 'bun'
-import { PROTOCOL_VERSION } from '@craft-agent/shared/protocol'
+import { PROTOCOL_VERSION } from '@rox/shared/protocol'
 import { WsRpcClient, type TransportConnectionStatus } from '../client'
 import { WsRpcServer } from '../server'
 

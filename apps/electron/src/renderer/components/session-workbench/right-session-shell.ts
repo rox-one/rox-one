@@ -7,7 +7,7 @@ import {
   sameContextSnapshot,
   type Rox2Context,
   type SurfaceContextInput,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const RIGHT_SESSION_FOCUS_TARGET = 'session' as const
 export const RIGHT_SESSION_SHELL_TEST_ID = 'right-session-shell'

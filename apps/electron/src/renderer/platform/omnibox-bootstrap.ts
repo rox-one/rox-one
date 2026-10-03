@@ -19,7 +19,7 @@ import {
   type CommandRegistry,
   type ContextKeyService,
   type ResourceProviderRegistry,
-} from '@craft-agent/core/platform'
+} from '@rox/core/platform'
 import { getDefaultStore } from 'jotai'
 import i18n from 'i18next'
 import { actions, type ActionId } from '@/actions/definitions'
@@ -212,8 +212,8 @@ function registerConationCommands(commands: CommandRegistry, t?: LabelResolver):
 function registerKnowledgeCommands(commands: CommandRegistry): void {
   const openHome: CommandContribution = {
     id: 'knowledge.openHome',
-    title: 'Open Knowledge',
-    category: 'Knowledge',
+    title: i18n.t('knowledge.openHome'),
+    category: i18n.t('sidebar.knowledge'),
     source: 'craft',
     keywords: ['knowledge', 'siyuan', 'notes', 'docs'],
     async execute() {
@@ -222,8 +222,8 @@ function registerKnowledgeCommands(commands: CommandRegistry): void {
   }
   const search: CommandContribution = {
     id: 'knowledge.search',
-    title: 'Search Knowledge',
-    category: 'Knowledge',
+    title: i18n.t('knowledge.search'),
+    category: i18n.t('sidebar.knowledge'),
     source: 'craft',
     keywords: ['knowledge', 'search', 'find', 'docs'],
     async execute() {
@@ -232,8 +232,8 @@ function registerKnowledgeCommands(commands: CommandRegistry): void {
   }
   const openCompat: CommandContribution = {
     id: 'knowledge.openCompat',
-    title: 'Open SiYuan compatibility view',
-    category: 'Knowledge',
+    title: i18n.t('knowledge.openCompat'),
+    category: i18n.t('sidebar.knowledge'),
     source: 'craft',
     keywords: ['knowledge', 'siyuan', 'compat', 'full', 'interface', 'plugin'],
     async execute() {
@@ -242,8 +242,8 @@ function registerKnowledgeCommands(commands: CommandRegistry): void {
   }
   const openCompatAlias: CommandContribution = {
     id: 'siyuan.openCompat',
-    title: 'Open SiYuan compatibility view',
-    category: 'Knowledge',
+    title: i18n.t('siyuan.openCompat'),
+    category: i18n.t('sidebar.knowledge'),
     source: 'craft',
     keywords: ['siyuan', 'compat', 'full', 'interface', 'plugin'],
     async execute() {
@@ -368,7 +368,7 @@ async function refreshPluginBridgeCommands(commands: CommandRegistry): Promise<v
             contributions.push({
               id,
               title: cmd.title,
-              category: 'SiYuan Plugin',
+              category: i18n.t('omnibox.category.siyuanPlugin'),
               // Domain lands `siyuan-plugin` on the source union; cast keeps bootstrap green either way.
               source: 'siyuan-plugin' as CommandContribution['source'],
               when: cmd.when,

@@ -51,7 +51,7 @@ async function prepare(){
 
 ${p.outputs.map(x=>`- ${x}`).join('\n')}
 
-Расширить существующий capability pack \`@craft-agent/shared/code-intelligence\` и Source/Project/Knowledge/Sessions seams. Одна repository binding/snapshot authority; provider artefacts и human Wiki ownership различаются. \`alwaysOn:false\` сохраняется. Нельзя создавать отдельное приложение, wiki daemon или второй source/user/permission store.
+Расширить существующий capability pack \`@rox/shared/code-intelligence\` и Source/Project/Knowledge/Sessions seams. Одна repository binding/snapshot authority; provider artefacts и human Wiki ownership различаются. \`alwaysOn:false\` сохраняется. Нельзя создавать отдельное приложение, wiki daemon или второй source/user/permission store.
 
 ## Inputs
 

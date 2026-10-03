@@ -5,7 +5,7 @@ import { initReactI18next } from 'react-i18next'
 import BrowserPanelPage from '@/pages/BrowserPanelPage'
 import { InspectorBrowserPane } from '@/components/session-inspector/InspectorBrowserPane'
 import { RetainedSurface } from '@/platform/RetainedSurface'
-import { INTERNAL_BROWSER_OPEN_EVENT } from '@craft-agent/shared/browser/retained-pane'
+import { INTERNAL_BROWSER_OPEN_EVENT } from '@rox/shared/browser/retained-pane'
 import en from '../../../../../../../../../packages/shared/src/i18n/locales/en.json'
 import '../../../../../index.css'
 

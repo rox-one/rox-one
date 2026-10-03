@@ -5,14 +5,14 @@ import { join } from 'path'
 import {
   automationGraphRevision,
   projectAutomationsToGraph,
-} from '@craft-agent/shared/automations/graph'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+} from '@rox/shared/automations/graph'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RpcServer, RequestContext } from '../../transport/types'
 import type { HandlerDeps } from '../handler-deps'
 
 let workspaceRoot = ''
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   getWorkspaceByNameOrId: (workspaceId: string) =>
     workspaceId === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
 }))

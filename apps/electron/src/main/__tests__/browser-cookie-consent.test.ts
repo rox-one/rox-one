@@ -8,7 +8,7 @@ if (process.env.ROX_COOKIE_CONSENT_ISOLATED === '1') {
 const root = mkdtempSync(join(tmpdir(), 'rox-cookie-consent-'))
 const cookies: Array<{ domain: string; name: string; path: string; secure: boolean }> = []
 let refuseRemoval = false
-mock.module('@craft-agent/shared/config', () => ({ CONFIG_DIR: root, resolveConfigDir: () => root }))
+mock.module('@rox/shared/config', () => ({ CONFIG_DIR: root, resolveConfigDir: () => root }))
 mock.module('electron', () => ({ session: { fromPartition(partition: string) {
   if (partition !== 'persist:browser-cookie-import') throw Error('unexpected partition')
   return { cookies: {
@@ -18,7 +18,7 @@ mock.module('electron', () => ({ session: { fromPartition(partition: string) {
   } }
 } } }))
 const { BrowserCookieAutoImporter } = await import('../browser-cookie-auto-import')
-const { loadPrivacyState } = await import('@craft-agent/shared/privacy')
+const { loadPrivacyState } = await import('@rox/shared/privacy')
 class FixtureImporter extends BrowserCookieAutoImporter {
   override run() { return Promise.resolve(this.status()) }
 }

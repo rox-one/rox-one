@@ -1,5 +1,5 @@
 /**
- * ⌥⌘1…7 — jump to the n-th titlebar mode (pill order). Disabled modes
+ * ⌘/Ctrl 1…7 — jump to the n-th titlebar mode (pill order). Disabled modes
  * (rootRoute null, e.g. flag off) are a no-op.
  */
 import { useAtomValue } from 'jotai'

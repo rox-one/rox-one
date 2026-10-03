@@ -5,9 +5,12 @@ import { tmpdir } from 'node:os';
 
 const originalCwd = process.cwd();
 const originalConfigDir = process.env.CRAFT_CONFIG_DIR;
+const originalRoxConfigDir = process.env.ROX_CONFIG_DIR;
 
 afterEach(async () => {
   process.chdir(originalCwd);
+  if (originalRoxConfigDir === undefined) delete process.env.ROX_CONFIG_DIR;
+  else process.env.ROX_CONFIG_DIR = originalRoxConfigDir;
   if (originalConfigDir === undefined) delete process.env.CRAFT_CONFIG_DIR;
   else process.env.CRAFT_CONFIG_DIR = originalConfigDir;
   try {
@@ -64,6 +67,7 @@ describe('ensureDefaultPermissions migration', () => {
     );
 
     process.env.CRAFT_CONFIG_DIR = tempConfig;
+    process.env.ROX_CONFIG_DIR = tempConfig;
     process.chdir(tempRoot);
     // Pin assets root to the fixture so a prior test's setBundledAssetsRoot(electron)
     // cannot shadow cwd-based resources/permissions resolution.
@@ -140,6 +144,7 @@ describe('ensureDefaultPermissions migration', () => {
     );
 
     process.env.CRAFT_CONFIG_DIR = tempConfig;
+    process.env.ROX_CONFIG_DIR = tempConfig;
     process.chdir(tempRoot);
 
     const mod = await import(`../permissions-config.ts?case=${Date.now()}`);
@@ -191,6 +196,7 @@ describe('ensureDefaultPermissions migration', () => {
     );
 
     process.env.CRAFT_CONFIG_DIR = tempConfig;
+    process.env.ROX_CONFIG_DIR = tempConfig;
 
     const mod = await import(`../permissions-config.ts?case=${Date.now()}`);
     const merged = mod.permissionsConfigCache.getMergedConfig({ workspaceRootPath: tempWorkspace });

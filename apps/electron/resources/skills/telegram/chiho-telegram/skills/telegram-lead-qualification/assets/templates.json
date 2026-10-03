@@ -1,0 +1,8 @@
+[
+  {
+    "id": "lead-stage-tags",
+    "title": "Lead stage tags",
+    "tags": ["Lead", "Qualified", "Partner", "Customer", "Investor"],
+    "notes": "Use the narrowest stage supported by the conversation."
+  }
+]

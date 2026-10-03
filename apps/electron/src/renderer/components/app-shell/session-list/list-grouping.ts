@@ -13,8 +13,8 @@
  */
 
 import { startOfDay } from 'date-fns'
-import type { SessionPriority } from '@craft-agent/shared/protocol/dto'
-import { dueBucket, type CollectionGroupBy, type DueBucket } from '@craft-agent/shared/sessions/collection'
+import type { SessionPriority } from '@rox/shared/protocol/dto'
+import { dueBucket, type CollectionGroupBy, type DueBucket } from '@rox/shared/sessions/collection'
 import type { SessionMeta } from '@/atoms/sessions'
 import { getSessionStatus } from '@/utils/session'
 import {

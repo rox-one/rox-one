@@ -13,7 +13,7 @@
 
 import type { PermissionMode } from '../agent/mode-manager.ts';
 import type { ThinkingLevel } from '../agent/thinking-levels.ts';
-import type { Workspace } from '@craft-agent/core/types';
+import type { Workspace } from '@rox/core/types';
 
 /** Kept aligned with the core workspace DTO without duplicating its union. */
 export type WorkspaceKind = NonNullable<Workspace['kind']>;

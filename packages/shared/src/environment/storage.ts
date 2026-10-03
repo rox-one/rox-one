@@ -95,7 +95,11 @@ export function normalizeEnvironmentPrefs(raw: unknown, now: number = Date.now()
     sttEngine: readChoice<SttChoice>(obj.sttEngine, isSttChoice),
     ttsEngine: readChoice<TtsChoice>(obj.ttsEngine, isTtsChoice),
     wakeWord: readChoice<boolean>(obj.wakeWord, (value): value is boolean => typeof value === 'boolean'),
-    browserImport: readStringListChoice<BrowserImportCategory>(obj.browserImport, isBrowserImportCategory),
+    // A first-run file can be written before the browser question is shown.
+    // Only a missing answer inherits the selection defaults; saved opt-outs win.
+    browserImport: Object.hasOwn(obj, 'browserImport')
+      ? readStringListChoice<BrowserImportCategory>(obj.browserImport, isBrowserImportCategory)
+      : base.browserImport,
     syncPurposes: readStringListChoice<SyncPurpose>(obj.syncPurposes, isSyncPurpose),
     notifications: readChoice<boolean>(
       obj.notifications,

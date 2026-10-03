@@ -1,6 +1,6 @@
-import type { CalendarProvider } from '@craft-agent/core/calendar'
+import type { CalendarProvider } from '@rox/core/calendar'
 import { useTranslation } from 'react-i18next'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { cn } from '@/lib/utils'
 
 export const CALENDAR_PROVIDERS: CalendarProvider[] = ['google', 'outlook', 'yandex', 'mailru', 'appleReminders']

@@ -6,8 +6,8 @@ import { PersonalTaskPersistStore } from '../../tasks/personal-persist.ts'
 import { approveAndExecuteNative } from '../approve-execute.ts'
 import { createNativeActionHarness, readbackNative } from '../native-actions.ts'
 import { payloadHash, type ProposalStore } from '../proposals.ts'
-import type { MeetingProposal } from '@craft-agent/core/meetings'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingProposal } from '@rox/core/meetings'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
 import type { OutboxJob } from '../executor.ts'
 
 const tmpDirs: string[] = []

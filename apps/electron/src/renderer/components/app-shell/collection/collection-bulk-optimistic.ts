@@ -1,8 +1,8 @@
 import type {
   BulkUpdateSessionsPatch,
   BulkUpdateSessionsResult,
-} from '@craft-agent/shared/protocol'
-import { resolveBulkLabels } from '@craft-agent/shared/sessions/collection'
+} from '@rox/shared/protocol'
+import { resolveBulkLabels } from '@rox/shared/sessions/collection'
 import type { SessionMeta } from '@/atoms/sessions'
 
 const COLLECTION_META_FIELDS = [

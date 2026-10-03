@@ -16,7 +16,7 @@ export const ROX_PRODUCT_NAME = 'Rox'
 
 export const ROX_BUNDLE_ID = 'one.rox.app'
 
-/** Packaged appId stays on this alias so existing update channels keep working. */
+/** Read-only compatibility identity for installations predating the ROX appId. */
 export const ROX_LEGACY_BUNDLE_ID = 'com.lukilabs.craft-agent'
 
 export const ROX_DEEPLINK_SCHEME = 'rox'

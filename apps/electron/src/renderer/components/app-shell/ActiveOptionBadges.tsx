@@ -16,14 +16,14 @@ import {
   DropdownMenuSub,
 } from '@/components/ui/styled-dropdown'
 import { Check, ChevronDown, FolderKanban, Tag } from 'lucide-react'
-import { PERMISSION_MODE_CONFIG, type PermissionMode } from '@craft-agent/shared/agent/modes'
+import { PERMISSION_MODE_CONFIG, type PermissionMode } from '@rox/shared/agent/modes'
 import { ActiveTasksBar, type BackgroundTask } from './ActiveTasksBar'
 import type { TerminalOverlayData } from './TaskActionMenu'
 import { LabelIcon, LabelValueTypeIcon } from '@/components/ui/label-icon'
 import { LabelValuePopover } from '@/components/ui/label-value-popover'
-import type { LabelConfig } from '@craft-agent/shared/labels'
-import { extractLabelId, flattenLabels, parseLabelEntry, formatLabelEntry, formatDisplayValue, toggleLabelInList } from '@craft-agent/shared/labels'
-import { resolveEntityColor } from '@craft-agent/shared/colors'
+import type { LabelConfig } from '@rox/shared/labels'
+import { extractLabelId, flattenLabels, parseLabelEntry, formatLabelEntry, formatDisplayValue, toggleLabelInList } from '@rox/shared/labels'
+import { resolveEntityColor } from '@rox/shared/colors'
 import { useTheme } from '@/context/ThemeContext'
 import { useDynamicStack } from '@/hooks/useDynamicStack'
 import type { SessionStatus } from '@/config/session-status-config'
@@ -592,29 +592,20 @@ interface PermissionModeDropdownProps {
 function PermissionModeDropdown({ permissionMode, onPermissionModeChange, sessionId }: PermissionModeDropdownProps) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
-  // Optimistic local state - updates immediately, syncs with prop
-  const [optimisticMode, setOptimisticMode] = React.useState(permissionMode)
-
-  // Sync optimistic state when prop changes (confirmation from backend)
-  React.useEffect(() => {
-    setOptimisticMode(permissionMode)
-  }, [permissionMode])
 
   const activeCommands = React.useMemo((): SlashCommandId[] => {
-    return [optimisticMode as SlashCommandId]
-  }, [optimisticMode])
+    return [permissionMode as SlashCommandId]
+  }, [permissionMode])
 
   // Handle command selection from dropdown
   const handleSelect = React.useCallback((commandId: SlashCommandId) => {
     if (commandId === 'safe' || commandId === 'ask' || commandId === 'allow-all') {
-      setOptimisticMode(commandId)
       onPermissionModeChange?.(commandId)
     }
     setOpen(false)
   }, [onPermissionModeChange])
 
-  // Get config for current mode (use optimistic state for instant UI update)
-  const config = PERMISSION_MODE_CONFIG[optimisticMode]
+  // App owns the optimistic mode and authoritative rollback after a failed RPC.
 
   // Mode-specific styling using CSS variables (theme-aware)
   // - safe (Explore): foreground at 60% opacity - subtle, read-only feel
@@ -634,7 +625,7 @@ function PermissionModeDropdown({ permissionMode, onPermissionModeChange, sessio
       shadowVar: 'var(--accent-rgb)',
     },
   }
-  const currentStyle = modeStyles[optimisticMode]
+  const currentStyle = modeStyles[permissionMode]
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -648,8 +639,8 @@ function PermissionModeDropdown({ permissionMode, onPermissionModeChange, sessio
           )}
           style={{ '--shadow-color': currentStyle.shadowVar } as React.CSSProperties}
         >
-          <PermissionModeIcon mode={optimisticMode} className="h-3.5 w-3.5" />
-          <span>{t(`mode.${optimisticMode}`)}</span>
+          <PermissionModeIcon mode={permissionMode} className="h-3.5 w-3.5" />
+          <span>{t(`mode.${permissionMode}`)}</span>
           <ChevronDown className="h-3.5 w-3.5 opacity-60" />
         </button>
       </PopoverTrigger>
@@ -679,4 +670,3 @@ function PermissionModeDropdown({ permissionMode, onPermissionModeChange, sessio
     </Popover>
   )
 }
-

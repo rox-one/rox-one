@@ -1,0 +1,23 @@
+{
+  "ready": true,
+  "state": {
+    "success": true,
+    "messageCount": 0,
+    "isStreaming": false
+  },
+  "exitCode": 143,
+  "signal": null,
+  "blockedFetchAttempts": 18,
+  "unexpectedStderr": "",
+  "policy": {
+    "version": "18.4.12",
+    "sourceSha256": "a51e06caf5e5f382c7f80c86030ae13a70ed4c7d0c1ac9f6d6ffc11c20d2c81e",
+    "patchedSha256": "feebc10fdb59904060a32a12d9e4275a56d72bc4e220975a60b2ae3a10c6f996",
+    "seam": "post-native-expansion/pre-native-keyword-notices",
+    "skillArgsCovered": true,
+    "queuedUserMessagesCovered": true,
+    "syntheticUnchanged": true
+  },
+  "bunVersion": "1.3.14",
+  "scope": "Final source CLI startup+RPC only; isolated HOME/profile and fetch forbidden; no prompt/provider calls."
+}

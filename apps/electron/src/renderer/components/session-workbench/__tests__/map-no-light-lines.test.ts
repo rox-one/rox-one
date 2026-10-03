@@ -8,7 +8,7 @@ const entityRow = readFileSync(join(import.meta.dir, '../../ui/entity-row.tsx'),
 describe('map + list chrome without light lines', () => {
   it('branch nodes have no white border; frames use a faint dashed outline', () => {
     expect(editor).not.toContain('border-white/10')
-    expect(editor).toContain('outline-dashed outline-1 outline-foreground/10')
+    expect(editor).toContain('border border-dashed border-foreground/20')
     expect(editor).not.toContain('outline-foreground/25')
   })
 

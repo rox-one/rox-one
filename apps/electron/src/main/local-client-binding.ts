@@ -3,7 +3,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto'
 import type {
   LocalClientBindingCandidate,
   TrustedLocalClientBinding,
-} from '@craft-agent/server-core/transport'
+} from '@rox/server-core/transport'
 
 export interface LocalWindowBinding {
   readonly webContentsId: number

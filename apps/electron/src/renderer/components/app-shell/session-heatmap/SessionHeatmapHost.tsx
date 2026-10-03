@@ -20,7 +20,7 @@ import {
   type HeatmapDayOrderBy,
   type HeatmapNavDir,
   type SessionPriority,
-} from '@craft-agent/shared/sessions/collection'
+} from '@rox/shared/sessions/collection'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { routes } from '@/lib/navigate'
@@ -42,7 +42,7 @@ import { CollectionBulkBar } from '../collection/CollectionBulkBar'
 import { skipRailChipClearOnce, userSliceNavigation } from '../collection/collection-rail-filters'
 import type { SessionStatus } from '@/config/session-status-config'
 import { cn } from '@/lib/utils'
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { getAppLocale } from '@rox/shared/i18n'
 
 const PRIORITIES: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const

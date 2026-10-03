@@ -423,17 +423,17 @@ Declared ranges below are read from the pinned manifest snapshot. Exact installe
 | `@img/sharp-linux-arm64` | `0.34.5` | optionalDependencies |
 | `@img/sharp-linux-x64` | `0.34.5` | optionalDependencies |
 
-### [INV-DEP] @craft-agent/cli — [apps/cli/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/cli/package.json#L1)
+### [INV-DEP] @rox/cli — [apps/cli/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/cli/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/server-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/server-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@types/bun` | `latest` | devDependencies |
 | `@types/node` | `^22.0.0` | devDependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-### [INV-DEP] @craft-agent/cloud-gateway — [apps/cloud-gateway/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/cloud-gateway/package.json#L1)
+### [INV-DEP] @rox/cloud-gateway — [apps/cloud-gateway/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/cloud-gateway/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
@@ -442,15 +442,15 @@ Declared ranges below are read from the pinned manifest snapshot. Exact installe
 | `typescript` | `^5.9.0` | devDependencies |
 | `wrangler` | `^4.115.0` | devDependencies |
 
-### [INV-DEP] @craft-agent/electron — [apps/electron/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/electron/package.json#L1)
+### [INV-DEP] @rox/electron — [apps/electron/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/electron/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/messaging-gateway` | `workspace:*` | dependencies |
-| `@craft-agent/server-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
-| `@craft-agent/ui` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/messaging-gateway` | `workspace:*` | dependencies |
+| `@rox/server-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
+| `@rox/ui` | `workspace:*` | dependencies |
 | `@dnd-kit/core` | `^6.3.1` | dependencies |
 | `@dnd-kit/sortable` | `^10.0.0` | dependencies |
 | `@dnd-kit/utilities` | `^3.2.2` | dependencies |
@@ -492,12 +492,12 @@ Declared ranges below are read from the pinned manifest snapshot. Exact installe
 | `ws` | `^8.19.0` | dependencies |
 | `@types/ws` | `^8.18.1` | devDependencies |
 
-### [INV-DEP] @craft-agent/viewer — [apps/viewer/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/viewer/package.json#L1)
+### [INV-DEP] @rox/viewer — [apps/viewer/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/viewer/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/ui` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/ui` | `workspace:*` | dependencies |
 | `react` | `^18.3.1` | dependencies |
 | `react-dom` | `^18.3.1` | dependencies |
 | `react-i18next` | `^17.0.2` | dependencies |
@@ -517,13 +517,13 @@ Declared ranges below are read from the pinned manifest snapshot. Exact installe
 | `typescript` | `^5.7.3` | devDependencies |
 | `vite` | `^6.2.5` | devDependencies |
 
-### [INV-DEP] @craft-agent/webui — [apps/webui/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/webui/package.json#L1)
+### [INV-DEP] @rox/webui — [apps/webui/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/webui/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
-| `@craft-agent/ui` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
+| `@rox/ui` | `workspace:*` | dependencies |
 | `i18next` | `^26.0.3` | dependencies |
 | `i18next-browser-languagedetector` | `^8.2.1` | dependencies |
 | `jotai` | `^2.16.0` | dependencies |
@@ -532,13 +532,13 @@ Declared ranges below are read from the pinned manifest snapshot. Exact installe
 | `react-i18next` | `^17.0.2` | dependencies |
 | `sonner` | `^2.0.7` | dependencies |
 
-### [INV-DEP] @craft-agent/cloud-runner — [packages/cloud-runner/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/cloud-runner/package.json#L1)
+### [INV-DEP] @rox/cloud-runner — [packages/cloud-runner/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/cloud-runner/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
 | None declared | — | Contracts/source package |
 
-### [INV-DEP] @craft-agent/core — [packages/core/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/core/package.json#L1)
+### [INV-DEP] @rox/core — [packages/core/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/core/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
@@ -546,7 +546,7 @@ Declared ranges below are read from the pinned manifest snapshot. Exact installe
 | `@anthropic-ai/claude-agent-sdk` | `0.3.258` | peerDependencies |
 | `@modelcontextprotocol/sdk` | `>=1.29.0` | peerDependencies |
 
-### [INV-DEP] @craft-agent/messaging-discord-worker — [packages/messaging-discord-worker/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/messaging-discord-worker/package.json#L1)
+### [INV-DEP] @rox/messaging-discord-worker — [packages/messaging-discord-worker/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/messaging-discord-worker/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
@@ -554,22 +554,22 @@ Declared ranges below are read from the pinned manifest snapshot. Exact installe
 | `@types/node` | `^22.0.0` | devDependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-### [INV-DEP] @craft-agent/messaging-gateway — [packages/messaging-gateway/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/messaging-gateway/package.json#L1)
+### [INV-DEP] @rox/messaging-gateway — [packages/messaging-gateway/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/messaging-gateway/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/messaging-discord-worker` | `workspace:*` | dependencies |
-| `@craft-agent/messaging-whatsapp-worker` | `workspace:*` | dependencies |
-| `@craft-agent/server-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/messaging-discord-worker` | `workspace:*` | dependencies |
+| `@rox/messaging-whatsapp-worker` | `workspace:*` | dependencies |
+| `@rox/server-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@larksuiteoapi/node-sdk` | `^1.62.1` | dependencies |
 | `grammy` | `^1.35.0` | dependencies |
 | `qrcode-terminal` | `0.12.0` | dependencies |
 | `@types/node` | `^22.0.0` | devDependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-### [INV-DEP] @craft-agent/messaging-whatsapp-worker — [packages/messaging-whatsapp-worker/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/messaging-whatsapp-worker/package.json#L1)
+### [INV-DEP] @rox/messaging-whatsapp-worker — [packages/messaging-whatsapp-worker/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/messaging-whatsapp-worker/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
@@ -577,12 +577,12 @@ Declared ranges below are read from the pinned manifest snapshot. Exact installe
 | `@types/node` | `^22.0.0` | devDependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-### [INV-DEP] @craft-agent/pi-agent-server — [packages/pi-agent-server/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/pi-agent-server/package.json#L1)
+### [INV-DEP] @rox/pi-agent-server — [packages/pi-agent-server/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/pi-agent-server/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/session-tools-core` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/session-tools-core` | `workspace:*` | dependencies |
 | `@earendil-works/pi-agent-core` | `0.85.1` | dependencies |
 | `@earendil-works/pi-ai` | `0.85.1` | dependencies |
 | `@earendil-works/pi-coding-agent` | `0.85.1` | dependencies |
@@ -592,14 +592,14 @@ Declared ranges below are read from the pinned manifest snapshot. Exact installe
 | `turndown` | `^7.2.0` | dependencies |
 | `@types/node` | `^22.0.0` | devDependencies |
 
-### [INV-DEP] @craft-agent/server-core — [packages/server-core/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/server-core/package.json#L1)
+### [INV-DEP] @rox/server-core — [packages/server-core/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/server-core/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/cloud-runner` | `workspace:*` | dependencies |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/session-tools-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/cloud-runner` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/session-tools-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@earendil-works/pi-ai` | `0.85.1` | dependencies |
 | `@tursodatabase/database` | `0.7.2` | dependencies |
 | `@xenova/transformers` | `2.17.2` | dependencies |
@@ -610,45 +610,45 @@ Declared ranges below are read from the pinned manifest snapshot. Exact installe
 | `ws` | `^8.19.0` | dependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-### [INV-DEP] @craft-agent/server — [packages/server/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/server/package.json#L1)
+### [INV-DEP] @rox/server — [packages/server/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/server/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/messaging-gateway` | `workspace:*` | dependencies |
-| `@craft-agent/server-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/messaging-gateway` | `workspace:*` | dependencies |
+| `@rox/server-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@types/node` | `^22.0.0` | devDependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 | `ws` | `^8.16.0` | devDependencies |
 
-### [INV-DEP] @craft-agent/session-mcp-server — [packages/session-mcp-server/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/session-mcp-server/package.json#L1)
+### [INV-DEP] @rox/session-mcp-server — [packages/session-mcp-server/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/session-mcp-server/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/session-tools-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/session-tools-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@modelcontextprotocol/sdk` | `^1.29.0` | dependencies |
 | `zod` | `^4.0.0` | dependencies |
 | `@types/node` | `^22.0.0` | devDependencies |
 
-### [INV-DEP] @craft-agent/session-tools-core — [packages/session-tools-core/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/session-tools-core/package.json#L1)
+### [INV-DEP] @rox/session-tools-core — [packages/session-tools-core/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/session-tools-core/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
 | `beautiful-mermaid` | `*` | dependencies |
 | `gray-matter` | `^4.0.3` | dependencies |
 | `zod` | `^3.23.0` | dependencies |
 | `zod-to-json-schema` | `^3.25.0` | dependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-### [INV-DEP] @craft-agent/shared — [packages/shared/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/shared/package.json#L1)
+### [INV-DEP] @rox/shared — [packages/shared/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/shared/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/session-tools-core` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/session-tools-core` | `workspace:*` | dependencies |
 | `@earendil-works/pi-agent-core` | `0.85.1` | dependencies |
 | `@earendil-works/pi-ai` | `0.85.1` | dependencies |
 | `@earendil-works/pi-coding-agent` | `0.85.1` | dependencies |
@@ -669,12 +669,12 @@ Declared ranges below are read from the pinned manifest snapshot. Exact installe
 | `@modelcontextprotocol/sdk` | `>=1.29.0` | peerDependencies |
 | `zod` | `>=4.0.0` | peerDependencies |
 
-### [INV-DEP] @craft-agent/ui — [packages/ui/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/ui/package.json#L1)
+### [INV-DEP] @rox/ui — [packages/ui/package.json](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/ui/package.json#L1)
 
 | Dependency | Declared constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@paper-design/shaders-react` | `^0.0.69` | dependencies |
 | `@types/mdast` | `^4.0.0` | dependencies |
 | `@uiw/react-json-view` | `^2.0.0-alpha.40` | dependencies |

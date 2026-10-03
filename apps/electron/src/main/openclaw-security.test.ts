@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test'
-import type { OpenClawRuntimeStatus } from '@craft-agent/shared/openclaw'
-import type { ManagedOpenClawLauncher } from '@craft-agent/shared/toolchain'
+import type { OpenClawRuntimeStatus } from '@rox/shared/openclaw'
+import type { ManagedOpenClawLauncher } from '@rox/shared/toolchain'
 import { installManagedOpenClawRuntime } from './openclaw-security.ts'
 
 const WORKSPACE_ID = 'workspace-openclaw'

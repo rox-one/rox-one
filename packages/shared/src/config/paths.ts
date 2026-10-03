@@ -1,16 +1,14 @@
 /**
- * Centralized path configuration for Craft Agent.
+ * Centralized path configuration for ROX.
  *
  * Supports multi-instance development via ROX_CONFIG_DIR (preferred) or
- * CRAFT_CONFIG_DIR. When running from a numbered folder (e.g., craft-tui-agent-1),
- * detect-instance.sh sets the override to ~/.craft-agent-1 so instances stay isolated.
+ * CRAFT_CONFIG_DIR as a deprecated compatibility alias.
  *
  * Default (clean install): ~/.rox/
- * Existing Craft-era tree without ~/.rox: ~/.craft-agent/ until Issue 33 migration.
- * Instance 1 (-1 suffix): ~/.craft-agent-1/
- * Instance 2 (-2 suffix): ~/.craft-agent-2/
+ * Legacy configuration is imported once into ~/.rox without removing its source.
+ * Explicit overrides isolate development instances and skip global import.
  *
- * The default directory is not moved. CRAFT_CONFIG_DIR still works and logs
+ * CRAFT_CONFIG_DIR still works and logs
  * one deprecation warning per process (ticket 07).
  */
 

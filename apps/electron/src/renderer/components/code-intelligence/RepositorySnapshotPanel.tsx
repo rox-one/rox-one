@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, FileCode2, FolderGit2, Loader2, RefreshCw, X } from 'lucide-react'
-import type { FileSpan, RepositoryFreshness, RepositoryConnectionInspection, RepositoryPreviewInput, RepositoryPreview, RepositoryProjectInput, RepositorySnapshotSummary } from '@craft-agent/shared/code-intelligence'
+import type { FileSpan, RepositoryFreshness, RepositoryConnectionInspection, RepositoryPreviewInput, RepositoryPreview, RepositoryProjectInput, RepositorySnapshotSummary } from '@rox/shared/code-intelligence'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 

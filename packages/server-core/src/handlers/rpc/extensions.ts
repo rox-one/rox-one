@@ -13,8 +13,8 @@
 
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   automationsToExtensionRecords,
   createDefaultCatalogRegistry,
@@ -33,30 +33,30 @@ import {
   type ExtensionsListCatalogResult,
   type ExtensionsListInstalledResult,
   type ExtensionsSetEnabledResult,
-} from '@craft-agent/shared/extensions'
+} from '@rox/shared/extensions'
 import {
   getCatalog,
   marketplacePaths,
   readLock,
   type MarketplaceCatalog,
-} from '@craft-agent/shared/marketplace'
-import { loadAllSkills } from '@craft-agent/shared/skills'
-import { loadWorkspaceSources } from '@craft-agent/shared/sources'
-import { resolveAutomationsConfigPath } from '@craft-agent/shared/automations/resolve-config-path'
-import type { AutomationsConfig } from '@craft-agent/shared/automations'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/shared/marketplace'
+import { loadAllSkills } from '@rox/shared/skills'
+import { loadWorkspaceSources } from '@rox/shared/sources'
+import { resolveAutomationsConfigPath } from '@rox/shared/automations/resolve-config-path'
+import type { AutomationsConfig } from '@rox/shared/automations'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   loadPluginBridgeManifests,
   pluginBridgeBazaarCatalogListFn,
 } from './plugin-bridge'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 import {
   isClaimableLive,
   rpcExtensionsActResult,
   rpcExtensionsListResult,
   rpcExtensionsReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.extensions.LIST_CATALOG,

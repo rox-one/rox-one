@@ -18,7 +18,7 @@ import { useAppShellContext } from '@/context/AppShellContext'
 import { activeSessionIdAtom } from '@/atoms/sessions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@rox/ui'
 import {
   SettingsSection,
   SettingsCard,
@@ -27,13 +27,13 @@ import {
   SettingsMenuSelectRow,
 } from '@/components/settings'
 import { useToolchainStatus } from '@/hooks/useToolchainStatus'
-import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
+import { ROX_VISIBLE_TERMS } from '@rox/shared/identity'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { PermissionMode, ThinkingLevel, ToolchainToolName, ToolchainToolStatus } from '../../../shared/types'
 import { cn } from '@/lib/utils'
-import { DEFAULT_THINKING_LEVEL, THINKING_LEVELS } from '@craft-agent/shared/agent/thinking-levels'
+import { DEFAULT_THINKING_LEVEL, THINKING_LEVELS } from '@rox/shared/agent/thinking-levels'
 import { SecretRefsSection } from './SecretRefsSection'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
@@ -615,7 +615,7 @@ export default function RuntimeSettingsPage() {
                           <div className="text-xs text-muted-foreground space-y-0.5">
                             <div>
                               <span className="text-foreground/70">{t('settings.runtime.llmProvider')}: </span>
-                              <span className="font-mono">{defaultLlmConnection.providerType}</span>
+                              <span className="font-mono">{defaultLlmConnection.providerType === 'omp' ? ROX_VISIBLE_TERMS.product : defaultLlmConnection.providerType}</span>
                             </div>
                             {defaultLlmConnection.defaultModel && (
                               <div className="truncate">

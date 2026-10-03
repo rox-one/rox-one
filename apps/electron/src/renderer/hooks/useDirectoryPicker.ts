@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { useTransportConnectionState } from './useTransportConnectionState'
 import { folderPickerErrorDescription } from '../pages/connections-ui'
 import { toast } from 'sonner'

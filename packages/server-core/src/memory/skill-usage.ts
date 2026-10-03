@@ -19,9 +19,9 @@
  */
 import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync } from 'fs'
 import { dirname, join, resolve, sep } from 'path'
-import { listSkillSlugs, invalidateSkillsCache } from '@craft-agent/shared/skills'
-import { getWorkspaceSkillsPath } from '@craft-agent/shared/workspaces'
-import type { SkillExportResult, SkillPruneResult, SkillUsageMap } from '@craft-agent/shared/memory/types'
+import { listSkillSlugs, invalidateSkillsCache } from '@rox/shared/skills'
+import { getWorkspaceSkillsPath } from '@rox/shared/workspaces'
+import type { SkillExportResult, SkillPruneResult, SkillUsageMap } from '@rox/shared/memory/types'
 import { AuditLog } from './AuditLog'
 
 /** Same grammar as SkillPendingQueue: lowercase slug, the on-disk folder name. */

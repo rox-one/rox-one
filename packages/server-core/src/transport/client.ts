@@ -17,7 +17,7 @@ import {
   assertNativeCredentialTransport,
   type ErrorCode,
   type MessageEnvelope,
-} from '@craft-agent/shared/protocol'
+} from '@rox/shared/protocol'
 import type { RpcClient } from './types'
 import { serializeEnvelope, deserializeEnvelope } from './codec'
 import type { PeerTrustVerifier, RemoteTlsSocketOptions } from './peer-trust'

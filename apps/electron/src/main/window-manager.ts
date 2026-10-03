@@ -4,34 +4,32 @@ import { join, resolve, sep } from 'path'
 import { existsSync } from 'fs'
 import { release } from 'os'
 import { fileURLToPath } from 'url'
-import { getWorkspaceByNameOrId, isZenShellEnabled } from '@craft-agent/shared/config'
-import { classifyExternalUrl, formatBlockedUrlError } from '@craft-agent/shared/utils/url-safety'
+import { getWorkspaceByNameOrId, isZenShellEnabled } from '@rox/shared/config'
+import { classifyExternalUrl, formatBlockedUrlError } from '@rox/shared/utils/url-safety'
 import { RPC_CHANNELS, type WindowCloseRequestSource } from '../shared/types'
 import { getExtensionHostManager } from './extension-host-manager'
 import type { SavedWindow } from './window-state'
-import { attachZenWindowPolicy } from './shell-material'
+import { attachZenWindowPolicy, reapplyZenShellOnWindow, peekZenShellSnapshotForWindow, nativeAccessibilityPrefersSolid, setZenShellSnapshotListener } from './shell-material'
+import { WINDOWS_MICA_BUILD } from '../shared/shell-appearance'
 
 // Vite dev server URL for hot reload
 const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 
 /**
  * Get the appropriate background material for Windows transparency effects
- * - Windows 11 (build 22000+): Mica effect
- * - Windows 10 1809+ (build 17763+): Acrylic effect
+ * - Windows 11 22H2 (build 22621+): Mica effect
  * - Older versions: No transparency
  */
-function getWindowsBackgroundMaterial(): 'mica' | 'acrylic' | undefined {
+function getWindowsBackgroundMaterial(): 'mica' | undefined {
   if (process.platform !== 'win32') return undefined
+  if (nativeAccessibilityPrefersSolid()) return undefined
 
   // os.release() returns "10.0.xxxxx" where xxxxx is the build number
   const buildNumber = parseInt(release().split('.')[2] || '0', 10)
 
-  if (buildNumber >= 22000) {
+  if (buildNumber >= WINDOWS_MICA_BUILD) {
     windowLog.info('Windows 11 detected (build ' + buildNumber + '), using Mica')
     return 'mica'
-  } else if (buildNumber >= 17763) {
-    windowLog.info('Windows 10 1809+ detected (build ' + buildNumber + '), using Acrylic')
-    return 'acrylic'
   }
 
   windowLog.info('Older Windows detected (build ' + buildNumber + '), no transparency')
@@ -59,7 +57,7 @@ export class WindowManager {
   private windows: Map<number, ManagedWindow> = new Map()  // webContents.id → ManagedWindow
   private focusedModeWindows: Set<number> = new Set()  // webContents.id of windows in focused mode
   private lastActiveWindowId: number | null = null
-  private eventSink: ((channel: string, target: import('@craft-agent/shared/protocol').PushTarget, ...args: any[]) => void) | null = null
+  private eventSink: ((channel: string, target: import('@rox/shared/protocol').PushTarget, ...args: any[]) => void) | null = null
   private clientResolver: ((wcId: number) => string | undefined) | null = null
   private keyboardCloseIntents: Set<number> = new Set()  // webContents.id flagged by Cmd/Ctrl+W before close
   private keyboardCloseIntentTimeouts: Map<number, NodeJS.Timeout> = new Map()  // Auto-clear stale keyboard-close intents
@@ -73,7 +71,7 @@ export class WindowManager {
    * instead of webContents.send. Called after server creation.
    */
   setRpcEventSink(
-    sink: (channel: string, target: import('@craft-agent/shared/protocol').PushTarget, ...args: any[]) => void,
+    sink: (channel: string, target: import('@rox/shared/protocol').PushTarget, ...args: any[]) => void,
     resolver: (wcId: number) => string | undefined
   ): void {
     this.eventSink = sink
@@ -81,7 +79,7 @@ export class WindowManager {
   }
 
   /** Return current RPC event sink, if transport has been initialized. */
-  getRpcEventSink(): ((channel: string, target: import('@craft-agent/shared/protocol').PushTarget, ...args: any[]) => void) | null {
+  getRpcEventSink(): ((channel: string, target: import('@rox/shared/protocol').PushTarget, ...args: any[]) => void) | null {
     return this.eventSink
   }
 
@@ -245,11 +243,13 @@ export class WindowManager {
       // macOS-specific: hidden title bar with inset traffic lights.
       // Vibrancy waits until first paint — under-window + GPU crash paints black.
       ...(isMac && {
+        roundedCorners: true,
         titleBarStyle: 'hiddenInset',
         trafficLightPosition: { x: 18, y: 16 },
       }),
-      // Windows: use native frame with Mica/Acrylic transparency (Windows 10/11)
+      // Windows: preserve native resize/snap controls; supported builds use Mica.
       ...(isWindows && {
+        roundedCorners: true,
         frame: true, // Keep native frame for better UX
         autoHideMenuBar: true, // Menu is null on Windows, this is just for safety
         // Note: Don't use transparent:true with backgroundMaterial - it hides the window frame
@@ -272,7 +272,7 @@ export class WindowManager {
       }
     })
 
-    import('@craft-agent/shared/config/storage')
+    import('@rox/shared/config/storage')
       .then(({ getDefaultZoomLevel }) => {
         if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
           window.webContents.setZoomFactor(getDefaultZoomLevel() / 100)
@@ -284,6 +284,9 @@ export class WindowManager {
 
     // Zen ON: show once + apply material after healthy paint (see shell-material.ts).
     // Zen OFF: existing revealWindow — isVisible() early-return is intentional.
+    setZenShellSnapshotListener(window, snapshot => {
+      this.pushToWindow(window, RPC_CHANNELS.appearance.SHELL_CHANGED, snapshot)
+    })
     if (zenEnabled) {
       attachZenWindowPolicy(window)
     } else {
@@ -292,7 +295,7 @@ export class WindowManager {
       // unless first paint actually arrived.
       const revealWindow = (opts?: { vibrancy?: boolean }) => {
         if (window.isDestroyed() || window.isVisible()) return
-        if (isMac && opts?.vibrancy !== false) {
+        if (isMac && opts?.vibrancy !== false && !nativeAccessibilityPrefersSolid()) {
           try {
             window.setVibrancy('under-window')
             // setVisualEffectState появился в новых типах Electron; на старых
@@ -480,6 +483,9 @@ export class WindowManager {
     // Listen for system theme changes and notify this window's renderer
     const themeHandler = () => {
       this.pushToWindow(window, RPC_CHANNELS.theme.SYSTEM_CHANGED, nativeTheme.shouldUseDarkColors)
+      // OS contrast/transparency changes also update material on existing windows.
+      reapplyZenShellOnWindow(window)
+      this.pushToWindow(window, RPC_CHANNELS.appearance.SHELL_CHANGED, peekZenShellSnapshotForWindow(window))
     }
     nativeTheme.on('updated', themeHandler)
 

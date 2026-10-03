@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'motion/react' // motion used for backdr
 import { Popover, PopoverTrigger, PopoverContent } from './popover'
 import { Button } from './button'
 import { cn } from '@/lib/utils'
-import { usePlatform } from '@craft-agent/ui'
+import { usePlatform } from '@rox/ui'
 import type { ContentBadge, Session, CreateSessionOptions } from '../../../shared/types'
 import { useActiveWorkspace, useAppShellContext, useSession, usePendingPermission, usePendingCredential } from '@/context/AppShellContext'
 import { useEscapeInterrupt } from '@/context/EscapeInterruptContext'

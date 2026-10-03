@@ -4,8 +4,8 @@
  * agents/news/subscriptions; the team tab is merged here because the team
  * model lives in renderer storage.
  */
-import type { FeedColor, FeedItem, FeedItemAnnotation, FeedSource, FeedSourceKind, FeedTab } from '@craft-agent/shared/feed'
-import type { TeamActivityEvent } from '@craft-agent/shared/team'
+import type { FeedColor, FeedItem, FeedItemAnnotation, FeedSource, FeedSourceKind, FeedTab } from '@rox/shared/feed'
+import type { TeamActivityEvent } from '@rox/shared/team'
 
 export type FeedChip =
   | 'all'

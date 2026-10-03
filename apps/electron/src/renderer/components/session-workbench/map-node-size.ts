@@ -2,7 +2,7 @@
  * Node sizes on the session map: defaults, measured boxes for layout
  * helpers, and persistence of user resizes (scene pins + draft graph).
  */
-import type { SessionMapPin } from '@craft-agent/core/mindmap'
+import type { SessionMapPin } from '@rox/core/mindmap'
 import type { SessionDraftNode } from './draft-nodes'
 import type { CanvasBox } from './canvas-layout'
 
@@ -17,12 +17,16 @@ export function defaultDraftSize(role: SessionDraftNode['role']): NodeSize {
     case 'sticky':
       return { width: 180, height: 120 }
     case 'frame':
-      return { width: 280, height: 180 }
+      return { width: 440, height: 280 }
     case 'group':
       return { width: 260, height: 160 }
     default:
       return { width: 224, height: 120 }
   }
+}
+
+export function draftMinimumSize(role: SessionDraftNode['role']): NodeSize {
+  return role === 'frame' || role === 'group' ? { width: 240, height: 160 } : MIN_DRAFT_SIZE
 }
 
 type SizedNode = {
@@ -77,8 +81,7 @@ export function draftNodesWithSize(
   id: string,
   box: { x: number; y: number } & NodeSize,
 ): SessionDraftNode[] {
-  const size = cleanSize(box, MIN_DRAFT_SIZE)
   return nodes.map((node) =>
-    node.id === id ? { ...node, position: { x: box.x, y: box.y }, size } : node,
+    node.id === id ? { ...node, position: { x: box.x, y: box.y }, size: cleanSize(box, draftMinimumSize(node.role)) } : node,
   )
 }

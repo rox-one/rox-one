@@ -1,4 +1,4 @@
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   acceptInvite,
   createOrganization,
@@ -11,7 +11,7 @@ import {
   removeOrganizationMember,
   revokeOrganizationInvite,
   updateMemberRole,
-} from '@craft-agent/shared/orgs'
+} from '@rox/shared/orgs'
 import type {
   AcceptInviteInput,
   CreateOrganizationInput,
@@ -20,20 +20,20 @@ import type {
   OrgAuditEvent,
   OrgCallerIdentity,
   OrgRole,
-} from '@craft-agent/shared/orgs'
-import { setWorkspaceOrganization } from '@craft-agent/shared/config'
+} from '@rox/shared/orgs'
+import { setWorkspaceOrganization } from '@rox/shared/config'
 import {
   ensureLocalUserIdentity,
   loadPreferences,
   updatePreferences,
-} from '@craft-agent/shared/config/preferences'
+} from '@rox/shared/config/preferences'
 import {
   isClaimableLive,
   rpcOrgsActResult,
   rpcOrgsListResult,
   rpcOrgsReadResult,
-} from '@craft-agent/core/rox2'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/core/rox2'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 
 export const HANDLED_CHANNELS = [

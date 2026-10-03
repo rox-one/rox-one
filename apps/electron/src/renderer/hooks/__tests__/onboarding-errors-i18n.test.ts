@@ -61,6 +61,6 @@ describe('visibleError', () => {
     expect(visibleError('   ', 'fallback')).toBe('fallback')
     expect(visibleError('Failed to create OMP connection', 'fallback')).toBe('fallback')
     expect(visibleError('check oh-my-pi CLI', 'fallback')).toBe('fallback')
-    expect(visibleError('Craft Agents token expired', 'fallback')).toBe('fallback')
+    expect(visibleError('ROX token expired', 'fallback')).toBe('fallback')
   })
 })

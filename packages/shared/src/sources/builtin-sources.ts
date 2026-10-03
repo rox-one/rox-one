@@ -273,7 +273,7 @@ export function getBuiltinSources(workspaceId: string, workspaceRootPath: string
 export function getDocsSource(workspaceId: string, workspaceRootPath: string): LoadedSource {
   const placeholderConfig: FolderSourceConfig = {
     id: 'builtin-craft-agents-docs',
-    name: 'Craft Agents Docs',
+    name: 'ROX Docs',
     slug: 'craft-agents-docs',
     enabled: true,
     provider: 'mintlify',
@@ -283,7 +283,7 @@ export function getDocsSource(workspaceId: string, workspaceRootPath: string): L
       url: 'https://agents.craft.do/docs/mcp',
       authType: 'none',
     },
-    tagline: 'Search Craft Agents documentation and source setup guides',
+    tagline: 'Search ROX documentation and source setup guides',
     icon: '📚',
     isAuthenticated: true,
     connectionStatus: 'connected',

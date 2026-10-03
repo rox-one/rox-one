@@ -23,13 +23,13 @@
     "paths": {
       "@/*": ["src/renderer/*"],
       "@config/*": ["../../packages/shared/src/config/*"],
-      "@craft-agent/shared": ["../../packages/shared/src/index.ts"],
-      "@craft-agent/shared/*": ["../../packages/shared/src/*"],
-      "@craft-agent/core": ["../../packages/core/src/index.ts"],
-      "@craft-agent/core/*": ["../../packages/core/src/*"],
-      "@craft-agent/cloud-runner": ["../../packages/cloud-runner/src/index.ts"],
-      "@craft-agent/server-core": ["../../packages/server-core/src/index.ts"],
-      "@craft-agent/server-core/*": ["../../packages/server-core/src/*"]
+      "@rox/shared": ["../../packages/shared/src/index.ts"],
+      "@rox/shared/*": ["../../packages/shared/src/*"],
+      "@rox/core": ["../../packages/core/src/index.ts"],
+      "@rox/core/*": ["../../packages/core/src/*"],
+      "@rox/cloud-runner": ["../../packages/cloud-runner/src/index.ts"],
+      "@rox/server-core": ["../../packages/server-core/src/index.ts"],
+      "@rox/server-core/*": ["../../packages/server-core/src/*"]
     }
   },
   "include": ["src/**/*", "../../packages/shared/src/**/*.d.ts"],

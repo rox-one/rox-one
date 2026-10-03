@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { isCredentialKind, type CredentialKind } from '@craft-agent/core/platform';
+import { isCredentialKind, type CredentialKind } from '@rox/core/platform';
 import type { StoredCredential } from './types.ts';
 
 export const CREDENTIAL_ENVELOPE_FORMAT = 'rox-credential-envelope' as const;

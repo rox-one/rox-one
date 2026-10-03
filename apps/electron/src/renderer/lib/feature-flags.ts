@@ -6,4 +6,4 @@
  * canonical mechanism. CRAFT_FEATURE_KNOWLEDGE defaults ON; set
  * CRAFT_FEATURE_KNOWLEDGE=0 to fall back to the compatibility view.
  */
-export { isKnowledgeFeatureEnabled } from '@craft-agent/shared/feature-flags';
+export { isKnowledgeFeatureEnabled } from '@rox/shared/feature-flags';

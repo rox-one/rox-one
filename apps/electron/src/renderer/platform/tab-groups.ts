@@ -10,7 +10,7 @@ import {
   parseWorkbenchLayout,
   type LegacyPanelStackEntry,
   type WorkbenchLayout,
-} from '@craft-agent/core/platform'
+} from '@rox/core/platform'
 import type { PanelStackEntry } from '@/atoms/panel-stack'
 import { surfaceTabFromRoute } from './layout-snapshot'
 

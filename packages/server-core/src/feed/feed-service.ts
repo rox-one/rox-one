@@ -31,7 +31,7 @@ import {
   type FeedSourcePatch,
   type ParsedFeed,
   type XConnectionStatus,
-} from '@craft-agent/shared/feed'
+} from '@rox/shared/feed'
 import { fetchText, type FetchLike } from './fetcher'
 import { notConnectedXAdapter, type XPost, type XSubscriptionsAdapter } from './x-adapter'
 

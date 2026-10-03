@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from "react-i18next"
-import type { SessionProvenance } from '@craft-agent/shared/memory/types'
+import type { SessionProvenance } from '@rox/shared/memory/types'
 
 /**
  * Memory provenance strip (specs Y2/Y3): renders under the latest assistant

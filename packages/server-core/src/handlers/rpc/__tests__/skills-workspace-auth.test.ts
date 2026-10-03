@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { HandlerFn, RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { HandlerFn, RpcServer } from '@rox/server-core/transport'
 import { registerSkillsHandlers } from '../skills.ts'
 
 describe('skills RPC workspace authorization', () => {

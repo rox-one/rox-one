@@ -12,7 +12,7 @@ import {
   type SecurityFinding,
   type SecurityFindingAcceptance,
   type SecurityRiskAcceptance,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 import { OpenClawOperationError } from './runtime-manager.ts'
 
 const OWNER_DIR_MODE = 0o700

@@ -545,6 +545,36 @@ describe('ROX2 platform contract', () => {
     expect(index.get(encoded)?.revisionId).toBe('rev-2')
     expect(index.has(legacy)).toBe(false)
     expect(index.size).toBe(1)
+
+    // Migration preserves the native identity, including every later replay.
+    for (const revisionId of ['rev-3', 'rev-4']) {
+      const replay = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, revisionId)
+      expect(replay.status).toBe('ok')
+      if (replay.status === 'ok') {
+        expect(replay.ref.entityId).toBe(existingRef.entityId)
+        expect(replay.ref.revisionId).toBe(revisionId)
+      }
+      expect(index.size).toBe(1)
+      expect(index.has(legacy)).toBe(false)
+    }
+  })
+
+  test('encoded keys accept only the exact legacy identity for the same binding and kind', () => {
+    const binding = { provider: 'google', account: 'user@x.com', remoteType: 'event', remoteId: '1' }
+    const encoded = formatRox2ExternalBindingKey(binding)
+    for (const entityId of ['calendar-event:another', 'task:google:user@x.com:event:1']) {
+      const existing = { workspaceId: 'ws-1', entityId, revisionId: 'rev-1' }
+      const index = new Map<string, Rox2EntityRef>([[encoded, existing]])
+      const clash = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-2')
+      expect(clash).toEqual({ status: 'quarantine', reason: 'binding-collision', existing })
+      expect(index.get(encoded)).toEqual(existing)
+    }
+    const existing = { workspaceId: 'ws-other', entityId: 'calendar-event:google:user@x.com:event:1', revisionId: 'rev-1' }
+    const index = new Map<string, Rox2EntityRef>([[encoded, existing]])
+    expect(registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-2')).toEqual({
+      status: 'quarantine', reason: 'workspace-mismatch', existing,
+    })
+    expect(index.get(encoded)).toEqual(existing)
   })
 
   test('legacy unencoded four-slot workspace mismatch quarantines without encoded write', () => {

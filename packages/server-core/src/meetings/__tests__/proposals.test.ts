@@ -7,8 +7,8 @@ import {
   rejectMeetingProposal,
   type ProposalStore,
 } from '../proposals.ts'
-import type { MeetingProposal } from '@craft-agent/core/meetings'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingProposal } from '@rox/core/meetings'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
 
 function proposal(status: MeetingProposal['status'] = 'proposed'): MeetingProposal {
   const payload = { title: 'прототип' }

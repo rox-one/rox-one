@@ -1,0 +1,74 @@
+{
+  "owner": "OWNER-UI-001",
+  "taskIds": ["UI-001.1", "UI-001.2"],
+  "inputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
+  "sourceRevisionVerified": true,
+  "runtime": {
+    "identity": "container 3057251f48ef; branch work; Linux x86_64",
+    "codegraph": "absent",
+    "bun": {
+      "requested": "1.3.14",
+      "available": "1.2.14",
+      "path": "/root/.local/share/mise/installs/bun/1.2.14/bin/bun",
+      "qualified": false
+    }
+  },
+  "ownedChangedPaths": [
+    "apps/electron/src/renderer/atoms/unified-shell.ts",
+    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts",
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/result.json"
+  ],
+  "implementedClauses": [
+    "Unknown or stale parsed navigation states render a specific unavailable state instead of an unrelated chat-selection fallback.",
+    "Existing dedicated session, source, skill, project, note, page, knowledge, extension, terminal, cloud-run and extra-screen hosts were retained and regression-enumerated.",
+    "Persisted inspector width and terminal dock height now reject malformed/non-finite reload values and clamp writes and reads to usable bounds.",
+    "Positive, negative, reload-corruption and boundary/race-like repeated-input paths execute the real size-normalization callback."
+  ],
+  "unchangedBehaviorDemonstrated": [
+    "Dedicated terminal and cloud-run routes remain ahead of the generic unavailable branch.",
+    "All previously wired surface components remain present; no shared route parser was changed."
+  ],
+  "sharedRouteParserProposal": {
+    "owner": "lead",
+    "path": "apps/electron/src/shared/route-parser.ts",
+    "proposal": "Return a typed unavailable navigation state carrying the rejected canonical route for syntactically valid but unsupported/deleted deep links, rather than null/default-session coercion; preserve the URL through history reconciliation. No patch was made here because this path is outside OWNER-UI-001 ownership."
+  },
+  "testCommands": [
+    {
+      "command": "bun test apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+      "result": "pass: 11 tests, 0 failures, 165 assertions",
+      "bunVersion": "1.2.14"
+    },
+    {
+      "command": "bun test apps/electron/src/renderer/components/app-shell/__tests__ apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+      "result": "fail: 149 pass; dependency-resolution errors (react, jotai, lucide-react, i18next, date-fns, typescript and internal workspace module) plus pre-existing sash expectation; initial run also recorded the now-fixed terminal fallback sentinel failure",
+      "environmentLimited": true
+    },
+    {
+      "command": "cd apps/electron && bun run tsc --noEmit",
+      "result": "fail: missing bun/node type definitions and repository TypeScript baseUrl deprecation under the installed toolchain",
+      "environmentLimited": true
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "externalPrerequisites": [
+    "Bun 1.3.14 and installed workspace dependencies for a qualified regression/typecheck run.",
+    "SVC-003 real reconnect/capability/current-workspace callbacks and independently readable receipts.",
+    "WIN-002 runnable Windows 10 and Windows 11 Electron artifacts for 100/150/200 percent native scaling verification.",
+    "MAC-002 runnable macOS artifact for Retina and native-overlay verification.",
+    "WEB-001/WEB-003 authorized hosted ingress and fixture for actual hosted browser history/reload verification.",
+    "INT-016 immutable integrated candidate SHA/source manifest for final replay.",
+    "Lead-owned route-parser decision/patch for preserving unsupported raw routes end to end."
+  ],
+  "notExecuted": [
+    "Installed Windows, macOS, or browser fixtures",
+    "Deployment, signing, real-provider calls, push, or main-branch changes",
+    "Full functional DoD workflow"
+  ],
+  "fullDoDClosed": false
+}

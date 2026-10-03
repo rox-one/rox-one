@@ -32,4 +32,6 @@ export type { ConcurrentEdit, ConcurrentEditKind, ConflictResolution } from './c
 export { OMP_COLLAB_SURFACE_MAP, mapOmpCollabVerb } from './omp-map.ts'
 export type { OmpCollabVerb } from './omp-map.ts'
 export { BroInviteStore } from './store.ts'
-export type { CreateInviteInput } from './store.ts'
+export type { BroInviteStorage, CreateInviteInput } from './store.ts'
+export { requireSessionPublicationInput, requireRemoteSessionProjection, MAX_SESSION_PUBLICATION_BYTES, MAX_SESSION_PUBLICATION_MESSAGES } from './session-publication.ts'
+export type { RemoteSessionProjection, SessionPublicationInput } from './session-publication.ts'

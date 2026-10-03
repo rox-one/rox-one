@@ -25,8 +25,8 @@ function base(overrides: Partial<ResolveShellMaterialInput> = {}): ResolveShellM
 }
 
 describe('parseZenShellEnabled / parseShellMaterialPreference', () => {
-  it('treats only boolean true as enabled (flag default OFF)', () => {
-    expect(parseZenShellEnabled(undefined)).toBe(false)
+  it('enables fresh installs and preserves explicit opt-outs', () => {
+    expect(parseZenShellEnabled(undefined)).toBe(true)
     expect(parseZenShellEnabled(false)).toBe(false)
     expect(parseZenShellEnabled('true')).toBe(false)
     expect(parseZenShellEnabled(1)).toBe(false)
@@ -73,8 +73,8 @@ describe('resolveShellMaterial', () => {
     expect(resolveShellMaterial(base({ preference: 'glass' })).material).toBe('vibrancy')
   })
 
-  it('Windows mica only at build >= 22000; older Zen branch is solid not acrylic', () => {
-    expect(WINDOWS_MICA_BUILD).toBe(22000)
+  it('uses mica only on Windows 11 22H2 or newer', () => {
+    expect(WINDOWS_MICA_BUILD).toBe(22621)
     expect(resolveShellMaterial(base({
       platform: 'win32',
       windowsBuild: 22621,
@@ -88,6 +88,9 @@ describe('resolveShellMaterial', () => {
       material: 'solid',
       fallbackReason: 'unknown-capability',
     })
+    expect(resolveShellMaterial(base({ platform: 'win32', windowsBuild: 22000 })).material).toBe('solid')
+    expect(resolveShellMaterial(base({ platform: 'win32', windowsBuild: 22620 })).material).toBe('solid')
+    expect(resolveShellMaterial(base({ platform: 'win32', windowsBuild: WINDOWS_MICA_BUILD })).material).toBe('mica')
   })
 
   it('Linux and web are honest solid', () => {

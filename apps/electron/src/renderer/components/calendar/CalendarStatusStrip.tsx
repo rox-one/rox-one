@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { calendarEventIdentity, CalendarStore, mergeTodayUpcoming, type TaskLike } from '@craft-agent/core/calendar'
+import { calendarEventIdentity, CalendarStore, mergeTodayUpcoming, type TaskLike } from '@rox/core/calendar'
 import { CalendarConnectorChips } from './CalendarConnectorChips'
 import { cn } from '@/lib/utils'
 

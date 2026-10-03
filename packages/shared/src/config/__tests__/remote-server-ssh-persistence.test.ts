@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { pathToFileURL } from 'url'
-import type { RemoteServerConfig, Workspace } from '@craft-agent/core/types'
+import type { RemoteServerConfig, Workspace } from '@rox/core/types'
 
 /** SSH-backed workspaces record sshHostId durably (not the ephemeral port);
  * plain-ws workspaces round-trip unchanged (backward compat). */

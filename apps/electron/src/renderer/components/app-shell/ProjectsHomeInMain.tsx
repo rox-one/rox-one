@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { ProjectsListPanel } from './ProjectsListPanel'
 import { CreateProjectDialog } from '../projects/CreateProjectDialog'
-import type { LoadedProject } from '@craft-agent/shared/projects/types'
+import type { LoadedProject } from '@rox/shared/projects/types'
 import { projectsAtom } from '@/atoms/projects'
 import { navigate as navigateRoute, routes } from '@/lib/navigate'
 import {

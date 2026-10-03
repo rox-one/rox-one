@@ -74,5 +74,6 @@
     "Retain inspector state through host responsive hiding without global browser hide",
     "Reject late/superseded inspector attachments and stale failures",
     "Keep disabled SiYuan route and local Notes redirect unchanged"
-  ]
+  ],
+  "integration_main": "cc56c95c75cb7bedd025e1b9af60a5312d0cf119"
 }

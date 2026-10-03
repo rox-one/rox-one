@@ -1,0 +1,219 @@
+{
+  "author": "ROX",
+  "modifiedAt": "2026-10-03",
+  "upstream": "https://github.com/garrytan/gstack",
+  "upstreamCommit": "f30b7b788a210d217ea3125bf3001b29cbc2a463",
+  "upstreamLicense": "MIT",
+  "note": "Upstream license/copyright notices retained. Local modifications are identified by portable paths and SHA256; local validation is separate from remote scanner closure.",
+  "securityPatches": [
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/browse-client.ts",
+      "alerts": [
+        816,
+        815
+      ],
+      "change": "Authenticated daemon IPC deliberately sends local/scoped bearer token and commands to literal127.0.0.1 endpoints; port/state/token types now validated before URL construction (e7c7e0e25). Pair-agent remote health probe is explicit opt-in and carries no bearer token. Regression rejects authority injection and header controls. HTTP redirects now fail through the existing non-2xx error contract with redirect:manual; actual HTTP307/308 same-origin and cross-port regressions prove no command/capability forwarding, while direct authenticated POST behavior is retained.",
+      "sha256": "4ed6b44315b06d445ead9eed707474a471d536071da214d411beb43b1d6fab02"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/browser-skill-commands.ts",
+      "alerts": [
+        712,
+        711
+      ],
+      "change": "Captured output is read through one nonblocking no-follow descriptor with fstat regular-file check and bounded buffer.",
+      "sha256": "c31116c4216677044d13ec0a1a43f5cbc18bdf99618e8841b5e3b4e632f50574"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/browser-skill-write.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "ea729446d348f7276e0d5cea35c6690bbf62c530bf0e71e252c3447315e9bbc5"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/browser-skills.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "a760ec62c436430b6ec39ab68dea4d993a1790449b2471d25c383667711bcdbe"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/claude-bin.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "24566530d78eb3faa13729242a8633162a2a127242bbc3df3e518a66d3ddf2dd"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/cli.ts",
+      "alerts": [
+        836,
+        835,
+        834,
+        833,
+        832,
+        831,
+        830,
+        829,
+        828,
+        827,
+        826,
+        825,
+        824,
+        823,
+        822,
+        821,
+        820
+      ],
+      "change": "Authenticated daemon IPC deliberately sends local/scoped bearer token and commands to literal127.0.0.1 endpoints; port/state/token types now validated before URL construction (e7c7e0e25). Pair-agent remote health probe is explicit opt-in and carries no bearer token. Regression rejects authority injection and header controls.",
+      "sha256": "fafd70565cc4a46c37f13bdc7a5a897f254f8b07496d10f28d88f2ea3108002b"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/config.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "c8971bec68a7cb5a1bddc23b12512e742bd51923623371790f906a16cf3dec1a"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/domain-skill-commands.ts",
+      "alerts": [
+        614
+      ],
+      "change": "Edit body is exclusively created mode0600 inside mkdtemp private directory; always cleaned in finally.",
+      "sha256": "6fcf3b8eedbb48f01330d8f4cd56408a420df8df063d65eb7d9a33bd070a3847"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/domain-skills.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "884228de333ae5d04526543060aa54d09a0271075a3ac2ceb53bbc7fb5411d02"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/error-handling.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "532911e61efcb36e9f5d2cd355b50790bfb512f5fd61d46cdbb6fe7a55be5acd"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/file-permissions.ts",
+      "alerts": [
+        906,
+        713
+      ],
+      "change": "Private write/append operate on opened no-follow/nonblocking regular owned inode; POSIX fchmod before mutation; Windows retains icacls plus identity verification.",
+      "sha256": "22ddc560b64ece2e170ca1e662b84663eaac1aa0a2bf43aaf2a84948512a92b5"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/loopback-auth.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "880e39f82eb3a6774fb2d8d6e68286445ed1f6719a4205864560c1570a8cc756"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/network-capture.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "5727a156b05e508817ae888412bf1abbee5206ca785bd293466a790528520176"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/read-commands.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "cca4fc50a8f5df759b445609fc97a78bdfd22966891f15ab897386c45545949c"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/routes/core.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "8ebd0106cf80010f1e1d79aec37a854b1094ab40f58d857fad94051f163299b3"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/screenshot-size-guard.ts",
+      "alerts": [
+        615
+      ],
+      "change": "ea12ab774; LOCAL-SECURITY-BROWSE.md and gstack-browse-io.test.ts actual both-copy dispatch/write/lock regressions 6 tests38assertions",
+      "sha256": "29e90e015611e52df978265f5f21fc86de0f2e038c7a70d8427a091967528087"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/security-classifier.ts",
+      "alerts": [
+        586
+      ],
+      "change": "htmlToPlainText output is consumed solely by testsavantClassifier(plain) as natural-language classifier input, not rendered as HTML.",
+      "sha256": "538419aedc09a334432c6d996d36a5095125cdc80343a52576d786a70c1c7e6d"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/server.ts",
+      "alerts": [
+        838,
+        837
+      ],
+      "change": "Private terminal/browser IPC sends internal/session credential to literal127.0.0.1 numeric parsed port, not arbitrary remote host. server grant/restart and terminal active-tab synchronization are intentional authenticated local broker operations.",
+      "sha256": "ca811bc94817ace9da664ab9174362dbe2b524341e31a4d56e9ce1d8d3d9f3b6"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/telemetry.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "2e4c2d4b48bf674713f6b37b751982a668b9a7a2b101e72c79e8aa3f988ff460"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/terminal-agent-control.ts",
+      "alerts": [
+        715,
+        714
+      ],
+      "change": "ea12ab774; LOCAL-SECURITY-BROWSE.md and gstack-browse-io.test.ts actual both-copy dispatch/write/lock regressions 6 tests38assertions",
+      "sha256": "ef19eeaba7337edb6d86a705007bd65c2200c7acb83ff8cf8e83dad1d4a777f1"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/terminal-agent.ts",
+      "alerts": [
+        839
+      ],
+      "change": "Private terminal/browser IPC sends internal/session credential to literal127.0.0.1 numeric parsed port, not arbitrary remote host. server grant/restart and terminal active-tab synchronization are intentional authenticated local broker operations.",
+      "sha256": "8b8c02008041a073354fc9aab1e7023f9077ba16a223f6175753e212b1620f7c"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/tunnel-denial-log.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "d5b1da30f4e1c7a602daad86e894883d9042b65887eb2a31d03c8ef30a42f343"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/browse/src/write-commands.ts",
+      "alerts": [
+        716,
+        619,
+        618,
+        617,
+        616
+      ],
+      "change": "ea12ab774; LOCAL-SECURITY-BROWSE.md and gstack-browse-io.test.ts actual both-copy dispatch/write/lock regressions 6 tests38assertions",
+      "sha256": "e053777d8d15c0e117235987d4686098e7c351123366edd923a7a0226177f984"
+    }
+  ],
+  "removedFiles": []
+}

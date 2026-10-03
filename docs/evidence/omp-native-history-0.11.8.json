@@ -1,0 +1,72 @@
+{
+  "runtime": "@oh-my-pi/pi-coding-agent@18.4.12",
+  "date": "2026-10-03",
+  "scope": {
+    "fixtureTranscript": true,
+    "providerPrompts": 0,
+    "providerApiCalls": 0,
+    "normalApplicationProfile": false,
+    "flags": [
+      "--mode rpc",
+      "--allow-home",
+      "--no-extensions",
+      "--no-skills",
+      "--no-rules"
+    ],
+    "disabledProviders": [
+      "claude-plugins",
+      "agent-plugins",
+      "omp-plugins"
+    ],
+    "tested": [
+      "switch_session",
+      "fork exact assistant anchor",
+      "process replacement",
+      "restore fork transcript",
+      "parent byte preservation",
+      "child transcript isolation"
+    ],
+    "notTested": [
+      "paid completion",
+      "tool execution",
+      "image bytes",
+      "native UI"
+    ]
+  },
+  "loaded": [
+    [
+      "user",
+      "Remember BANANA"
+    ],
+    [
+      "assistant",
+      "BANANA saved"
+    ],
+    [
+      "user",
+      "Remember MANGO"
+    ]
+  ],
+  "forked": [
+    [
+      "user",
+      "Remember BANANA"
+    ],
+    [
+      "assistant",
+      "BANANA saved"
+    ]
+  ],
+  "resumed": [
+    [
+      "user",
+      "Remember BANANA"
+    ],
+    [
+      "assistant",
+      "BANANA saved"
+    ]
+  ],
+  "forkFileInChild": true,
+  "parentUnchanged": true
+}

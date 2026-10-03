@@ -9,8 +9,8 @@
 
 import i18n from 'i18next'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import type { LabelConfig } from '@craft-agent/shared/labels'
-import { flattenLabels } from '@craft-agent/shared/labels'
+import type { LabelConfig } from '@rox/shared/labels'
+import { flattenLabels } from '@rox/shared/labels'
 
 export interface UseLabelsResult {
   /** Label tree (root-level nodes with nested children) */

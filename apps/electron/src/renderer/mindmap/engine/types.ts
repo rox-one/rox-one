@@ -8,7 +8,7 @@ import type {
   MindMapLayout,
   MindMapNodeId,
   MindMapNodeSource,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 
 export type MindMapEngineMode = 'map' | 'outline' | 'split'
 

@@ -27,7 +27,7 @@ import { MARKDOWN_MATH_OPTIONS } from './math-options'
 import { markdownUrlTransform } from './url-transform'
 import { usePlatform } from '../../context/PlatformContext'
 import { SourcedStatement } from './SourcedStatement'
-import { indexCitationViews, lookupCitation, type SourceCitationView } from '@craft-agent/core/research'
+import { indexCitationViews, lookupCitation, type SourceCitationView } from '@rox/core/research'
 
 /**
  * Names of preview-block code-fence types that recursive `Markdown` callers

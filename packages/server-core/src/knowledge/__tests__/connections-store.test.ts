@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { CodedError } from '@craft-agent/shared/protocol'
+import { CodedError } from '@rox/shared/protocol'
 import { KnowledgeConnectionsStore, normalizeKnowledgeBaseUrl, parseConnectionFile, type KnowledgeConnectionRecord } from '../connections-store'
 
 let configDir: string

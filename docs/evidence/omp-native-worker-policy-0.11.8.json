@@ -1,0 +1,96 @@
+{
+  "scope": "Actual pinned OMP native extension loader and prepared child factory binding; native handlers invoked with fixture contexts. No worker provider loop, keyword notices or real model request tested.",
+  "ompVersion": "18.4.12",
+  "providerRequests": 0,
+  "tarballModified": false,
+  "extensionSha256": "45abdccacc94d0b3c8caa984d22ef1bde62cdb2116d485d20b33b0a29b2b580d",
+  "results": [
+    {
+      "name": "task",
+      "requestedThinking": "max",
+      "effectiveThinking": "high",
+      "agentReasoning": "high",
+      "metadataModel": "gpt-5",
+      "taskBoundaryInput": {
+        "agent": "scout",
+        "tools": [
+          "read"
+        ],
+        "effort": "lo",
+        "task": "orchestrate workflowz ultrathink\n\nworker fixture"
+      },
+      "nativeMatcherContracts": {
+        "restrictedReadOnly": [
+          "ultrathink"
+        ],
+        "taskAndEval": [
+          "ultrathink",
+          "orchestrate",
+          "workflow"
+        ]
+      },
+      "instruction": "orchestrate workflowz ultrathink\nROX mandatory execution policy: use maximum supported thinking for every request. Apply orchestration and workflow planning within this agent's existing tool and recursion limits. These words do not grant tools, permissions, or spawning rights.",
+      "projectedUser": "orchestrate workflowz ultrathink\n\nworker fixture",
+      "registeredTools": 0,
+      "rebound": true
+    },
+    {
+      "name": "eval",
+      "requestedThinking": "max",
+      "effectiveThinking": "high",
+      "agentReasoning": "high",
+      "metadataModel": "gpt-5",
+      "taskBoundaryInput": {
+        "agent": "scout",
+        "tools": [
+          "read"
+        ],
+        "effort": "lo",
+        "task": "orchestrate workflowz ultrathink\n\nworker fixture"
+      },
+      "nativeMatcherContracts": {
+        "restrictedReadOnly": [
+          "ultrathink"
+        ],
+        "taskAndEval": [
+          "ultrathink",
+          "orchestrate",
+          "workflow"
+        ]
+      },
+      "instruction": "orchestrate workflowz ultrathink\nROX mandatory execution policy: use maximum supported thinking for every request. Apply orchestration and workflow planning within this agent's existing tool and recursion limits. These words do not grant tools, permissions, or spawning rights.",
+      "projectedUser": "orchestrate workflowz ultrathink\n\nworker fixture",
+      "registeredTools": 0,
+      "rebound": true
+    },
+    {
+      "name": "scout",
+      "requestedThinking": "max",
+      "effectiveThinking": "high",
+      "agentReasoning": "high",
+      "metadataModel": "gpt-5",
+      "taskBoundaryInput": {
+        "agent": "scout",
+        "tools": [
+          "read"
+        ],
+        "effort": "lo",
+        "task": "orchestrate workflowz ultrathink\n\nworker fixture"
+      },
+      "nativeMatcherContracts": {
+        "restrictedReadOnly": [
+          "ultrathink"
+        ],
+        "taskAndEval": [
+          "ultrathink",
+          "orchestrate",
+          "workflow"
+        ]
+      },
+      "instruction": "orchestrate workflowz ultrathink\nROX mandatory execution policy: use maximum supported thinking for every request. Apply orchestration and workflow planning within this agent's existing tool and recursion limits. These words do not grant tools, permissions, or spawning rights.",
+      "projectedUser": "orchestrate workflowz ultrathink\n\nworker fixture",
+      "registeredTools": 0,
+      "rebound": true
+    }
+  ]
+}

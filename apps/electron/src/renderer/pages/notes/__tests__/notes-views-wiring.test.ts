@@ -107,7 +107,6 @@ describe('issues 07–09 wiring', () => {
     expect(reading).toContain('NotesCommentComposer')
     expect(reading).toContain('notes-comment-highlights')
     expect(reading).toContain('notes-comment-tooltip')
-    expect(page).toContain('NOTES_AI_MODEL')
     expect(page).toContain('notes-bound-chat')
     expect(page).toContain('composerTop')
     expect(page).toContain("t('notes.vault.empty')")

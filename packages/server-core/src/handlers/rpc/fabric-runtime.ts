@@ -13,14 +13,14 @@ import {
   createP0Importers,
   InfisicalFabricProvider,
   createInfisicalImporter,
-} from '@craft-agent/core/platform'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+} from '@rox/core/platform'
+import { resolveConfigDir } from "@rox/shared/config/paths"
 import {
   isClaimableLive,
   rpcFabricRuntimeActResult,
   rpcFabricRuntimeListResult,
   rpcFabricRuntimeReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export interface FabricRuntime {
   readonly directory: string

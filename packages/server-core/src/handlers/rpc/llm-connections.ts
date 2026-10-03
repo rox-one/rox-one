@@ -1,28 +1,28 @@
-import { RPC_CHANNELS, type LlmConnectionSetup, type StartupRuntimeSummary } from '@craft-agent/shared/protocol'
-import { getLlmConnections, getLlmConnection, addLlmConnection, updateLlmConnection, deleteLlmConnection, getDefaultLlmConnection, setDefaultLlmConnection, touchLlmConnection, isCompatProvider, isAnthropicProvider, getDefaultModelsForConnection, getDefaultModelForConnection, resolveMidStreamBehavior, type LlmConnection, type LlmConnectionWithStatus, toBedrockNativeId, deriveBedrockRegionPrefix } from '@craft-agent/shared/config'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { setSetupDeferred } from '@craft-agent/shared/config/storage'
+import { RPC_CHANNELS, type LlmConnectionSetup, type StartupRuntimeSummary } from '@rox/shared/protocol'
+import { getLlmConnections, getLlmConnection, addLlmConnection, updateLlmConnection, deleteLlmConnection, getDefaultLlmConnection, setDefaultLlmConnection, touchLlmConnection, isCompatProvider, isAnthropicProvider, getDefaultModelsForConnection, getDefaultModelForConnection, resolveMidStreamBehavior, type LlmConnection, type LlmConnectionWithStatus, toBedrockNativeId, deriveBedrockRegionPrefix } from '@rox/shared/config'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { setSetupDeferred } from '@rox/shared/config/storage'
 import {
   resolveSetupTestConnectionHint,
   testBackendConnection,
   validateStoredBackendConnection,
-} from '@craft-agent/shared/agent/backend'
-import { getModelRefreshService } from '@craft-agent/server-core/model-fetchers'
-import { parseTestConnectionError, createBuiltInConnection, validateModelList, piAuthProviderDisplayName, validateSetupTestInput, setupTestRequiresApiKey, resolveCustomEndpointSetup } from '@craft-agent/server-core/domain'
-import { getWorkspaceOrThrow, buildBackendHostRuntimeContext } from '@craft-agent/server-core/handlers'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/shared/agent/backend'
+import { getModelRefreshService } from '@rox/server-core/model-fetchers'
+import { parseTestConnectionError, createBuiltInConnection, validateModelList, piAuthProviderDisplayName, validateSetupTestInput, setupTestRequiresApiKey, resolveCustomEndpointSetup } from '@rox/server-core/domain'
+import { getWorkspaceOrThrow, buildBackendHostRuntimeContext } from '@rox/server-core/handlers'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcLlmConnectionsActResult,
   rpcLlmConnectionsListResult,
   rpcLlmConnectionsReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import { randomUUID } from 'node:crypto'
-import { CLIENT_OPEN_EXTERNAL } from '@craft-agent/server-core/transport'
-import { CHATGPT_OAUTH_CONFIG } from '@craft-agent/shared/auth'
-import { refreshClaudeToken, isTokenExpired } from '@craft-agent/shared/auth/claude-token'
-import { refreshChatGptTokens } from '@craft-agent/shared/auth/chatgpt-oauth'
+import { CLIENT_OPEN_EXTERNAL } from '@rox/server-core/transport'
+import { CHATGPT_OAUTH_CONFIG } from '@rox/shared/auth'
+import { refreshClaudeToken, isTokenExpired } from '@rox/shared/auth/claude-token'
+import { refreshChatGptTokens } from '@rox/shared/auth/chatgpt-oauth'
 
 // Local OAuth state
 let copilotOAuthAbort: AbortController | null = null
@@ -84,7 +84,7 @@ async function refreshLlmOAuthIfNeeded(
         expiresAt: refreshed.expiresAt,
       })
     } else if (connection.providerType === 'pi' && connection.piAuthProvider === 'github-copilot') {
-      const { refreshGitHubCopilotToken } = await import('@craft-agent/shared/auth')
+      const { refreshGitHubCopilotToken } = await import('@rox/shared/auth')
       const refreshed = await refreshGitHubCopilotToken(oauth.refreshToken)
       await manager.setLlmOAuth(connection.slug, {
         accessToken: refreshed.access,
@@ -453,7 +453,7 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
 
   // Unified connection test — uses the agent factory to spawn a real agent subprocess
   // and validate credentials via runMiniCompletion(). Same code path as actual chat.
-  server.handle(RPC_CHANNELS.settings.TEST_LLM_CONNECTION_SETUP, async (_ctx, params: import('@craft-agent/shared/protocol').TestLlmConnectionParams): Promise<import('@craft-agent/shared/protocol').TestLlmConnectionResult> => {
+  server.handle(RPC_CHANNELS.settings.TEST_LLM_CONNECTION_SETUP, async (_ctx, params: import('@rox/shared/protocol').TestLlmConnectionParams): Promise<import('@rox/shared/protocol').TestLlmConnectionResult> => {
     const { provider, apiKey, baseUrl, model, piAuthProvider, customEndpoint } = params
     const trimmedKey = apiKey?.trim() ?? ''
     const allowEmptyApiKey = !setupTestRequiresApiKey(baseUrl)
@@ -506,17 +506,17 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
   // ============================================================
 
   server.handle(RPC_CHANNELS.pi.GET_API_KEY_PROVIDERS, async () => {
-    const { getPiApiKeyProviders } = await import('@craft-agent/shared/config')
+    const { getPiApiKeyProviders } = await import('@rox/shared/config')
     return getPiApiKeyProviders()
   })
 
   server.handle(RPC_CHANNELS.pi.GET_PROVIDER_BASE_URL, async (_ctx, provider: string) => {
-    const { getPiProviderBaseUrl } = await import('@craft-agent/shared/config')
+    const { getPiProviderBaseUrl } = await import('@rox/shared/config')
     return getPiProviderBaseUrl(provider)
   })
 
   server.handle(RPC_CHANNELS.pi.GET_PROVIDER_MODELS, async (_ctx, provider: string) => {
-    const { getPiCatalogModelsForAuthProvider } = await import('@craft-agent/shared/config')
+    const { getPiCatalogModelsForAuthProvider } = await import('@rox/shared/config')
     try {
       const models = getPiCatalogModelsForAuthProvider(provider)
       const sorted = [...models].sort((a, b) => b.cost.output - a.cost.output || b.cost.input - a.cost.input)
@@ -583,7 +583,7 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
         && conn.piAuthProvider === 'openai-codex'
       ) {
         try {
-          const { parseChatGptIdToken } = await import('@craft-agent/shared/auth')
+          const { parseChatGptIdToken } = await import('@rox/shared/auth')
           const identity = parseChatGptIdToken(oauth.idToken)
           if (identity?.accountUuid || identity?.accountEmail) {
             updateLlmConnection(conn.slug, {
@@ -740,7 +740,7 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
       deps.platform.logger?.info(`[LLM_CONNECTION_TEST] Error for ${slug}: ${msg.slice(0, 500)}`)
-      const { parseValidationError } = await import('@craft-agent/shared/config')
+      const { parseValidationError } = await import('@rox/shared/config')
       return { success: false, error: parseValidationError(msg) }
     }
   })
@@ -774,7 +774,7 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
         }
       }
 
-      const { loadWorkspaceConfig, saveWorkspaceConfig } = await import('@craft-agent/shared/workspaces')
+      const { loadWorkspaceConfig, saveWorkspaceConfig } = await import('@rox/shared/workspaces')
       const config = loadWorkspaceConfig(workspace.rootPath)
       if (!config) {
         return { success: false, error: 'Failed to load workspace config' }
@@ -846,7 +846,7 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
     flowId: string
   }> => {
     cleanupExpiredChatGptFlows()
-    const { prepareChatGptOAuth } = await import('@craft-agent/shared/auth')
+    const { prepareChatGptOAuth } = await import('@rox/shared/auth')
 
     const prepared = prepareChatGptOAuth()
     const flowId = randomUUID()
@@ -882,7 +882,7 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
     }
 
     try {
-      const { exchangeChatGptTokens, parseChatGptIdToken } = await import('@craft-agent/shared/auth')
+      const { exchangeChatGptTokens, parseChatGptIdToken } = await import('@rox/shared/auth')
       const credentialManager = getCredentialManager()
 
       const tokens = await exchangeChatGptTokens(code, flow.codeVerifier)
@@ -993,7 +993,7 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
     error?: string
   }> => {
     try {
-      const { loginGitHubCopilot } = await import('@craft-agent/shared/auth')
+      const { loginGitHubCopilot } = await import('@rox/shared/auth')
       const credentialManager = getCredentialManager()
 
       // Cancel any previous in-flight flow
