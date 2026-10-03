@@ -31,7 +31,7 @@ function Harness() {
       resolve: (panelId: string) => registry.resolve('composer.input', { ...binding, panelId }),
       hide: () => { setOpen(false) }, show: () => { setTarget(targets[0]); setOpen(true) }, handoff: () => setNative(true),
       move: () => { first.current!.style.transform = 'translate(60px, 25px)'; window.dispatchEvent(new Event('resize')) },
-      staleCleanup: () => { const old = registry.register({ ...targets[0], registrationToken: 'old' }); const newer = { ...targets[0], registrationToken: 'new' }; registry.register(newer); old(); return registry.resolve('composer.input', binding) },
+      staleCleanup: () => { const old = registry.register({ ...targets[0], context: { ...targets[0].context, entityId: 'old' } }); registry.register({ ...targets[0], context: { ...targets[0].context, entityId: 'replacement' } }); old(); return registry.resolve('composer.input', binding) },
     }
     return () => { cleanups.forEach(cleanup => cleanup()) }
   }, [])
