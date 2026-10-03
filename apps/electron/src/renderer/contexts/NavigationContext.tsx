@@ -186,6 +186,7 @@ export function NavigationProvider({
     const owner = { active: true, revision: 0 }
     navigationOwnerRef.current.active = false
     navigationOwnerRef.current = owner
+    suppressAutoSelectRef.current = false
     return () => { owner.active = false }
   }, [workspaceId, remoteWorkspaceId])
   const [, setSession] = useSession()
@@ -393,14 +394,18 @@ export function NavigationProvider({
   useEffect(() => {
     let prevFocusId = store.get(focusedPanelIdAtom)
     const unsub = store.sub(focusedPanelIdAtom, () => {
-      if (suppressPushRef.current || !initialRouteRestoredRef.current) return
       const newFocusId = store.get(focusedPanelIdAtom)
       if (newFocusId !== prevFocusId) {
+        // A focus-away-and-back intent must invalidate pending work even when
+        // the original panel identity and route become equal again.
+        navigationOwnerRef.current.revision += 1
+        suppressAutoSelectRef.current = false
+        prevFocusId = newFocusId
+        if (suppressPushRef.current || !initialRouteRestoredRef.current) return
         if (!pendingPushRef.current) {
           pendingPushRef.current = true
           queueMicrotask(() => { pendingPushRef.current = false; maybePushHistoryForSemanticChange() })
         }
-        prevFocusId = newFocusId
       }
     })
     return unsub
@@ -661,7 +666,7 @@ export function NavigationProvider({
     async (parsed: ParsedRoute, options?: { newPanel?: boolean; targetLaneId?: 'main' }) => {
       if (!workspaceId) return
       const owner = navigationOwnerRef.current
-      const requestRevision = owner.revision
+      let requestRevision = owner.revision
       let targetPanelId = store.get(focusedPanelIdAtom)
       let targetRoute = store.get(focusedPanelRouteAtom)
       const isCurrent = () => owner.active && navigationOwnerRef.current === owner && owner.revision === requestRevision
@@ -749,6 +754,9 @@ export function NavigationProvider({
 
             targetPanelId = store.get(focusedPanelIdAtom)
             targetRoute = store.get(focusedPanelRouteAtom)
+            // Our own synchronous panel commit can change focus. Delayed input
+            // belongs to that committed target, with a fresh intent revision.
+            requestRevision = owner.revision
             setNavigationRevision(revision => revision + 1)
 
             // Parse badges from params

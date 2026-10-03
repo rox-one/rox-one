@@ -324,6 +324,34 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[],messages:[]})
   })
 
+  browserTest('focus away and back cannot regain an old deferred-create continuation',async()=>{
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/owner',{newPanel:true}));await routeIs('notes/note/owner')
+    await page.evaluate(()=>{void (window as any).ui001nav.navigate('action/new-session?input=old&send=true')})
+    await page.waitForFunction(()=>(window as any).ui001nav.creations().length===1)
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs('notes/note/owner')
+    await page.evaluate(()=>(window as any).ui001nav.resolveCreate(0,'old-after-focus-cycle'))
+    await page.waitForTimeout(150)
+    expect((await snapshot()).panels.map((panel:any)=>panel.route)).toEqual(['home','notes/note/owner'])
+    expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[],messages:[]})
+  })
+
+  browserTest('the current new-panel create retains its own committed focus and delayed prefill',async()=>{
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    await page.evaluate(()=>{
+      (window as any).ui001nav.holdActionTimers()
+      void (window as any).ui001nav.navigate('action/new-session?input=new-panel',{newPanel:true})
+    })
+    await page.waitForFunction(()=>(window as any).ui001nav.creations().length===1)
+    await page.evaluate(()=>(window as any).ui001nav.resolveCreate(0,'created-new-panel'))
+    await page.waitForFunction(()=>(window as any).ui001nav.timers()===1)
+    await routeIs('allSessions/session/created-new-panel')
+    expect((await snapshot()).panels.map((panel:any)=>panel.route)).toEqual(['home','allSessions/session/created-new-panel'])
+    await page.evaluate(()=>(window as any).ui001nav.fireActionTimers())
+    expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[{id:'created-new-panel',input:'new-panel'}],messages:[]})
+  })
+
   browserTest('current create actions still navigate, rename, prefill and send using actual callbacks',async()=>{
     await page.goto(base+'/?ws=a&route=home');await routeIs('home')
     await page.evaluate(()=>{

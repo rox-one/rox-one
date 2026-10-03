@@ -229,6 +229,24 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       await page.frameLocator('iframe[title="UI001 page"]').getByText('UI001 canonical page body', { exact: true }).waitFor()
       await capture('canonical-page')
 
+      stage('actual-pending-create-navigation-race')
+      const sessionsBeforeRace = await page.evaluate(async () => (await window.electronAPI.getSessions()).length)
+      const raceDestination = `notes/note/${seed.noteId}`
+      await page.evaluate(target => {
+        // Both real ingress events run in one turn: native create must await
+        // its genuine RPC, while the user's selected note becomes current.
+        window.dispatchEvent(new CustomEvent('rox-navigate', { detail: { route: 'action/new-chat' } }))
+        window.dispatchEvent(new CustomEvent('rox-navigate', { detail: { route: target } }))
+      }, raceDestination)
+      await page.waitForFunction(target => new URL(location.href).searchParams.get('route') === target, raceDestination)
+      await page.waitForFunction(async count => (await window.electronAPI.getSessions()).length > count, sessionsBeforeRace)
+      await page.getByText('UI001 canonical note body.', { exact: false }).first().waitFor()
+      expect(await route()).toBe(raceDestination)
+      observations.pendingCreateRace = { actualNativeSessionCreated: true, userSelectedNoteRetained: true,
+        ingressWithinSameEventTurn: true, providerSendRequested: false,
+        sessionsBefore: sessionsBeforeRace, sessionsAfter: await page.evaluate(async () => (await window.electronAPI.getSessions()).length) }
+      await capture('pending-create-note-retained')
+
       stage('unavailable-capability-routes')
       for (const [target, selector] of [
         ['terminal/ui001-absent-terminal', '[data-testid="terminal-surface-unavailable"]'],
