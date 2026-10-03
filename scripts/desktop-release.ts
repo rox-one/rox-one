@@ -30,8 +30,11 @@ if (!process.argv.includes('--verify-only')) {
   await downloadBun(config);
   await downloadUv(config);
   await run(['bun', 'run', 'scripts/build/stage-servers.ts', platform, arch]);
-  // Never implicitly publish to the upstream Craft update host.
-  await run(['bun', 'x', '--no-install', 'electron-builder', platform === 'darwin' ? '--mac' : '--win', `--${arch}`, '--publish', 'never'], electronDir, { CSC_IDENTITY_AUTO_DISCOVERY: process.env.CSC_LINK ? 'true' : 'false' });
+  // Explicit target names keep the base YAML from adding other architectures.
+  const targets = platform === 'darwin'
+    ? ['--mac', `dmg:${arch}`, `zip:${arch}`]
+    : ['--win', `nsis:${arch}`];
+  await run(['bun', 'x', '--no-install', 'electron-builder', ...targets, '--publish', 'never'], electronDir, { CSC_IDENTITY_AUTO_DISCOVERY: process.env.CSC_LINK ? 'true' : 'false' });
 }
 const releaseDir = join(electronDir, 'release');
 const resources = platform === 'darwin'
