@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useCallback, useRef, useEffect } from 'react'
 import { actions, type ActionId } from './definitions'
 import type { ActionDefinition, ActionHandler } from './types'
-import { isMac } from '@/lib/platform'
+import { formatHotkeyDisplay, isMac } from '@/lib/platform'
 import { getKeybindingContext, evaluateWhen } from './keybinding-context'
 
 interface ActionRegistryContextType {
@@ -183,23 +183,4 @@ function matchesHotkey(e: KeyboardEvent, hotkey: string): boolean {
   const altCorrect = needsAlt ? e.altKey : !e.altKey
 
   return codeMatches && modCorrect && shiftCorrect && altCorrect
-}
-
-function formatHotkeyDisplay(hotkey: string): string {
-  const parts = hotkey.toLowerCase().split('+')
-
-  const symbols = parts.map(part => {
-    if (part === 'mod') return isMac ? '⌘' : 'Ctrl'
-    if (part === 'shift') return isMac ? '⇧' : 'Shift'
-    if (part === 'alt') return isMac ? '⌥' : 'Alt'
-    if (part === 'escape') return 'Esc'
-    if (part === 'tab') return 'Tab'
-    if (part === 'left') return '←'
-    if (part === 'right') return '→'
-    if (part === '[') return '['
-    if (part === ']') return ']'
-    return part.toUpperCase()
-  })
-
-  return isMac ? symbols.join('') : symbols.join('+')
 }
