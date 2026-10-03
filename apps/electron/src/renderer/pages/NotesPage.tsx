@@ -901,11 +901,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       })
       window.electronAPI.unwatchNotes(activeWorkspaceId).catch(() => {})
     }
-<<<<<<< HEAD
-  }, [activeWorkspaceId, selectedNoteId, openNote, refreshAssets, refreshIndexHealth, refreshNotes, t])
-=======
-  }, [activeWorkspaceId, openNote, refreshAssets, refreshIndexHealth, refreshNotes, nativeNotesSync, t])
->>>>>>> 362fe6db9 (feat(learning): bind native domain targets to current committed evidence)
+  }, [activeWorkspaceId, selectedNoteId, openNote, refreshAssets, refreshIndexHealth, refreshNotes, nativeNotesSync, t])
 
   React.useEffect(() => {
     if (selectedNoteId) {
@@ -2300,12 +2296,9 @@ h1,h2,h3{margin-top:1.5em}
               </button>
             </div>
           )}
-<<<<<<< HEAD
           <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
-=======
           <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" /></button>
           {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
->>>>>>> 362fe6db9 (feat(learning): bind native domain targets to current committed evidence)
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} />
           <button
             className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"

@@ -76,7 +76,6 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
       : Boolean(activeWorkspaceId) && p.workspaceId === activeWorkspaceId)) ?? null,
     [pages, pageSlug, activeWorkspaceId, workspaceRootPath],
   )
-<<<<<<< HEAD
   const [fallback, setFallback] = React.useState<{
     workspaceId: string; slug: string; list: LoadedPage[]; page: LoadedPage | null
   } | null>(null)
@@ -84,25 +83,15 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
     && fallback?.slug === pageSlug && fallback?.list === pages
   const page = pageFromAtom ?? (fallbackCurrent ? fallback.page : null)
   const fallbackResolved = !activeWorkspaceId || fallbackCurrent
-=======
-  const [fallback, setFallback] = React.useState<{ workspaceId: string; slug: string; page: LoadedPage | null } | null>(null)
-  const page = pageFromAtom ?? (fallback?.workspaceId === activeWorkspaceId && fallback?.slug === pageSlug ? fallback.page : null)
-  const fallbackResolved = fallback?.workspaceId === activeWorkspaceId && fallback?.slug === pageSlug
->>>>>>> 362fe6db9 (feat(learning): bind native domain targets to current committed evidence)
 
   React.useEffect(() => {
     if (pageFromAtom || !activeWorkspaceId) return
     let stale = false
-    if (typeof window.electronAPI.getPage !== 'function') { setFallback({ workspaceId: activeWorkspaceId, slug: pageSlug, page: null }); return }
+    if (typeof window.electronAPI.getPage !== 'function') { setFallback({ workspaceId: activeWorkspaceId, slug: pageSlug, list: pages, page: null }); return }
     window.electronAPI
       .getPage(activeWorkspaceId, pageSlug)
-<<<<<<< HEAD
       .then(loaded => { if (!stale) setFallback({ workspaceId: activeWorkspaceId, slug: pageSlug, list: pages, page: loaded }) })
       .catch(() => { if (!stale) setFallback({ workspaceId: activeWorkspaceId, slug: pageSlug, list: pages, page: null }) })
-=======
-      .then(loaded => { if (!stale) setFallback({ workspaceId: activeWorkspaceId, slug: pageSlug, page: loaded }) })
-      .catch(() => { if (!stale) setFallback({ workspaceId: activeWorkspaceId, slug: pageSlug, page: null }) })
->>>>>>> 362fe6db9 (feat(learning): bind native domain targets to current committed evidence)
     return () => { stale = true }
   }, [activeWorkspaceId, pageSlug, pageFromAtom, pages])
 
@@ -158,50 +147,29 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
   // ------------------------------------------------------------------
   const refreshStamp = page?.config.lastRefresh?.at ?? 0
   const updatedStamp = page?.config.updatedAt ?? 0
-<<<<<<< HEAD
   const snapshotKey = `${activeWorkspaceId ?? ''}\0${pageSlug}\0${contentDigest ?? ''}\0${refreshStamp}\0${updatedStamp}`
   const [snapshotState, setSnapshotState] = React.useState<{ key: string; data: PageDataSnapshot | null } | null>(null)
 
   React.useEffect(() => {
     setSnapshotState(null)
-    if (!activeWorkspaceId || !pageLoaded) return
+    if (!activeWorkspaceId || !pageLoaded || !pagesAvailable) return
     let stale = false
     window.electronAPI
       .getPageData(activeWorkspaceId, pageSlug)
       .then(data => { if (!stale) setSnapshotState({ key: snapshotKey, data }) })
       .catch(() => { if (!stale) setSnapshotState({ key: snapshotKey, data: null }) })
     return () => { stale = true }
-  }, [activeWorkspaceId, pageSlug, pageLoaded, snapshotKey])
+  }, [activeWorkspaceId, pageSlug, pageLoaded, snapshotKey, pagesAvailable])
 
   const snapshotReady = snapshotState?.key === snapshotKey
-=======
-  const [snapshotState, setSnapshotState] = React.useState<{
-    workspaceId: string | null
-    slug: string
-    loaded: boolean
-    data: PageDataSnapshot | null
-  }>({ workspaceId: activeWorkspaceId, slug: pageSlug, loaded: false, data: null })
-
-  React.useEffect(() => {
-    if (!activeWorkspaceId || !pageLoaded || !pagesAvailable) return
-    let stale = false
-    window.electronAPI
-      .getPageData(activeWorkspaceId, pageSlug)
-      .then(data => { if (!stale) setSnapshotState({ workspaceId: activeWorkspaceId, slug: pageSlug, loaded: true, data }) })
-      .catch(() => { if (!stale) setSnapshotState({ workspaceId: activeWorkspaceId, slug: pageSlug, loaded: true, data: null }) })
-    return () => { stale = true }
-  }, [activeWorkspaceId, pageSlug, pageLoaded, refreshStamp, updatedStamp, pagesAvailable])
-
-  const snapshotReady = snapshotState.workspaceId === activeWorkspaceId && snapshotState.slug === pageSlug && snapshotState.loaded
-  const currentLease = leaseState?.workspaceId === activeWorkspaceId && pageLeaseMatches(leaseState.lease, pageSlug, contentDigest) ? leaseState : null
   const [renderedLeaseId, setRenderedLeaseId] = React.useState<string | null>(null)
   React.useEffect(() => knowledgeSignals.capability('pages.entity-present', pageLoaded ? { state: 'ready' } : { state: 'pending', reason: 'missing-entity' }), [knowledgeSignals, pageLoaded])
   React.useEffect(() => {
-    if (!activeWorkspaceId || !currentLease || !contentDigest || !snapshotReady || renderedLeaseId !== currentLease.lease.leaseId) return
+    if (!activeWorkspaceId || !currentLease || !contentDigest || !snapshotReady || renderedLeaseId !== currentLease.lease.leaseId
+      || !pageLeaseMatches(currentLease.lease, pageSlug, contentDigest)) return
     // Current-state policy observes the trusted mounted host. No iframe document is inspected.
     knowledgeSignals.publish(knowledgeSignals.capture(), { kind: 'page-host-rendered', workspaceId: activeWorkspaceId, pageSlug, contentDigest, lease: currentLease.lease })
   }, [knowledgeSignals, currentLease, contentDigest, snapshotReady, renderedLeaseId, activeWorkspaceId, pageSlug])
->>>>>>> 362fe6db9 (feat(learning): bind native domain targets to current committed evidence)
 
   // ------------------------------------------------------------------
   // Actions
@@ -503,12 +471,8 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
               page={page}
               lease={currentLease.lease}
               content={currentLease.content}
-<<<<<<< HEAD
               snapshot={snapshotState?.data ?? null}
-=======
-              snapshot={snapshotState.data}
               onHostLoad={() => setRenderedLeaseId(currentLease.lease.leaseId)}
->>>>>>> 362fe6db9 (feat(learning): bind native domain targets to current committed evidence)
             />
           </div>
         )}
