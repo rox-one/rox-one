@@ -8,8 +8,8 @@
  */
 import { createHash } from 'node:crypto'
 import { accessSync, constants, closeSync, existsSync, openSync, readFileSync, statSync } from 'node:fs'
-import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises'
-import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { lstat, mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises'
+import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import ts from 'typescript'
 
@@ -27,6 +27,7 @@ export interface SuiteManifest {
   root: string
   suites: TestSuite[]
   discovery: {
+    inventory: 'git-ls-files' | 'filesystem-fallback'
     standard: string
     supplemental: string
     omittedDirectories: string[]
@@ -131,16 +132,57 @@ function nearestPackage(root: string, file: string) {
   return portable(relative(root, directory)) || '.'
 }
 
+async function gitTestInventory(root: string): Promise<string[] | null> {
+  const gitRoot = await gitOutput(root, ['rev-parse', '--show-toplevel'])
+  if (gitRoot === null) {
+    // A damaged checkout must not silently become an unrestricted filesystem
+    // scan. Only a genuinely non-Git fixture gets the historical fallback.
+    let directory = root
+    while (true) {
+      if (existsSync(join(directory, '.git'))) throw new Error('Git test inventory unavailable')
+      const parent = dirname(directory)
+      if (parent === directory) return null
+      directory = parent
+    }
+  }
+  const output = await gitOutput(root, ['ls-files', '--cached', '--others', '--exclude-standard', '-z'])
+  if (output === null) throw new Error('Git test inventory unavailable')
+  // Preserve whitespace in names; tracked files remain present even if an
+  // ignore rule now matches them. New source files use Git's ignore policy.
+  return [...new Set(output.split('\0').filter(Boolean))]
+}
+
 /** Match Bun's filename forms; retain the existing explicit *.isolated.ts stage. */
 export async function discoverSuites(inputRoot: string): Promise<SuiteManifest> {
   const root = resolve(inputRoot)
   const manifest: SuiteManifest = {
     schemaVersion: 1, root, suites: [],
     discovery: {
+      inventory: 'filesystem-fallback',
       standard: '*.{test,spec}.{js,jsx,ts,tsx,mjs,cjs,mts,cts} and *_{test,spec} forms',
       supplemental: '*.isolated.ts (including hidden source directories, as the former find stage did)',
       omittedDirectories: ['node_modules', '.git'], hiddenStandardFiles: 0,
     },
+  }
+  async function inspect(path: string, hidden: boolean) {
+    const name = basename(path)
+    if (!STANDARD_TEST.test(name) && !ISOLATED_TEST.test(name)) return
+    // Do not follow symlinks into dependency checkouts or external profiles.
+    // An enumerated source disappearing is an error, not reduced coverage.
+    if (!(await lstat(path)).isFile()) return
+    if (hidden && !ISOLATED_TEST.test(name)) { manifest.discovery.hiddenStandardFiles += 1; return }
+    const content = await readFile(path)
+    const dependencies = imports(content.toString('utf8'))
+    const runner: TestRunner = dependencies.has('bun:test') ? 'bun'
+      : dependencies.has('@playwright/test') ? 'playwright'
+      : dependencies.has('vitest') ? 'vitest' : 'bun'
+    const suite: TestSuite = { path: portable(relative(root, path)), runner, sha256: hash(content) }
+    if (runner !== 'bun') {
+      suite.config = await nearestConfiguration(root, path, runner)
+      suite.packageRoot = nearestPackage(root, path)
+      if (!suite.config) suite.prerequisiteError = `${runner} config not found for ${suite.path}`
+    }
+    manifest.suites.push(suite)
   }
   async function visit(directory: string, hidden: boolean) {
     const entries = (await readdir(directory, { withFileTypes: true })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
@@ -148,24 +190,19 @@ export async function discoverSuites(inputRoot: string): Promise<SuiteManifest> 
       if (entry.name === 'node_modules' || entry.name === '.git') continue
       const path = join(directory, entry.name)
       if (entry.isDirectory()) { await visit(path, hidden || entry.name.startsWith('.')); continue }
-      // Do not follow symlinks into dependency checkouts or external profiles.
-      if (!entry.isFile() || (!STANDARD_TEST.test(entry.name) && !ISOLATED_TEST.test(entry.name))) continue
-      if (hidden && !ISOLATED_TEST.test(entry.name)) { manifest.discovery.hiddenStandardFiles += 1; continue }
-      const content = await readFile(path)
-      const dependencies = imports(content.toString('utf8'))
-      const runner: TestRunner = dependencies.has('bun:test') ? 'bun'
-        : dependencies.has('@playwright/test') ? 'playwright'
-        : dependencies.has('vitest') ? 'vitest' : 'bun'
-      const suite: TestSuite = { path: portable(relative(root, path)), runner, sha256: hash(content) }
-      if (runner !== 'bun') {
-        suite.config = await nearestConfiguration(root, path, runner)
-        suite.packageRoot = nearestPackage(root, path)
-        if (!suite.config) suite.prerequisiteError = `${runner} config not found for ${suite.path}`
-      }
-      manifest.suites.push(suite)
+      if (entry.isFile()) await inspect(path, hidden)
     }
   }
-  await visit(root, false)
+  const inventory = await gitTestInventory(root)
+  if (inventory === null) await visit(root, false)
+  else {
+    manifest.discovery.inventory = 'git-ls-files'
+    for (const file of inventory) {
+      const parts = portable(file).split('/')
+      if (parts.includes('node_modules') || parts.includes('.git')) continue
+      await inspect(join(root, file), parts.slice(0, -1).some(part => part.startsWith('.')))
+    }
+  }
   manifest.suites.sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0)
   return manifest
 }

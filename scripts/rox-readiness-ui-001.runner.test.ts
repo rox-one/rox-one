@@ -25,6 +25,53 @@ async function runner() {
 }
 
 describe('UI-001 repository test runner', () => {
+  test('Git inventory retains tracked and new source suites while excluding ignored generated copies', async () => {
+    const root = fixture()
+    const git = (...args: string[]) => {
+      const child = Bun.spawnSync(['git', ...args], { cwd: root, stdout: 'pipe', stderr: 'pipe' })
+      expect({ exit: child.exitCode, stderr: child.stderr.toString() }).toMatchObject({ exit: 0 })
+    }
+    git('init', '--quiet')
+    const bun = "import {test} from 'bun:test'; test('source coverage',()=>{});"
+    file(root, '.gitignore', 'dist/\nwork/\n')
+    file(root, 'src/tracked.test.ts', bun)
+    file(root, 'src/.hidden/required.isolated.ts', bun)
+    file(root, 'src/.hidden/ordinary.test.ts', bun)
+    file(root, 'dist/intentional.isolated.ts', bun)
+    git('add', '--force', '.gitignore', 'src/tracked.test.ts', 'src/.hidden/required.isolated.ts', 'src/.hidden/ordinary.test.ts', 'dist/intentional.isolated.ts')
+    // Actual source copies remain separate suites, even with identical bytes.
+    file(root, 'src/new-copy.test.ts', bun)
+    file(root, 'src/name with space.test.ts', bun)
+    const unusualName = process.platform === 'win32' ? 'src/name-é.test.ts' : 'src/name\nwith newline.test.ts'
+    file(root, unusualName, bun)
+    file(root, 'dist/resources/skills/copied.test.ts', bun)
+    file(root, 'work/native-profile/config/skills/copied.test.ts', bun)
+    file(root, 'node_modules/dependency/copied.test.ts', bun)
+    const manifest = await (await runner()).discoverSuites(root)
+    expect(manifest.suites.map(suite => suite.path)).toEqual([
+      'dist/intentional.isolated.ts', 'src/.hidden/required.isolated.ts',
+      unusualName, 'src/name with space.test.ts', 'src/new-copy.test.ts', 'src/tracked.test.ts',
+    ].sort())
+    expect(manifest.discovery).toMatchObject({ inventory: 'git-ls-files', hiddenStandardFiles: 1 })
+    expect(new Set(manifest.suites.map(suite => suite.sha256)).size).toBe(1)
+    expect(manifest.suites.every(suite => suite.runner === 'bun')).toBe(true)
+  })
+
+  test('a damaged Git inventory fails instead of executing ignored copies through filesystem fallback', async () => {
+    const root = fixture()
+    const git = (...args: string[]) => {
+      const child = Bun.spawnSync(['git', ...args], { cwd: root, stdout: 'pipe', stderr: 'pipe' })
+      expect({ exit: child.exitCode, stderr: child.stderr.toString() }).toMatchObject({ exit: 0 })
+    }
+    git('init', '--quiet')
+    file(root, '.gitignore', 'dist/\n')
+    file(root, 'src/required.test.ts', "import {test} from 'bun:test'; test('required',()=>{});")
+    file(root, 'dist/generated.test.ts', "import {test} from 'bun:test'; test('must not discover',()=>{});")
+    git('add', '.gitignore', 'src/required.test.ts')
+    writeFileSync(join(root, '.git/index'), 'damaged-index-negative-control')
+    await expect((await runner()).discoverSuites(root)).rejects.toThrow('Git test inventory unavailable')
+  })
+
   test('keeps all Bun filename forms and supplemental isolated files while routing actual Playwright tests', async () => {
     const root = fixture()
     const bun = "import {test} from 'bun:test'; test('covered',()=>{});"
@@ -37,6 +84,7 @@ describe('UI-001 repository test runner', () => {
     file(root, 'node_modules/dependency/dependency.test.ts', bun)
     file(root, 'tests/browser/not-a-test.ts', bun)
     const manifest = await (await runner()).discoverSuites(root)
+    expect(manifest.discovery.inventory).toBe('filesystem-fallback')
     expect(manifest.suites.filter(suite => suite.runner === 'bun').map(suite => suite.path)).toEqual([
       'tests/.hidden/supplemental.isolated.ts', 'tests/a.test.js', 'tests/b_test.jsx', 'tests/browser/library.test.ts',
       'tests/c.spec.ts', 'tests/d_spec.tsx', 'tests/e.test.mjs', 'tests/f.test.cjs', 'tests/g.spec.mts', 'tests/h_spec.cts', 'tests/i.isolated.ts',
