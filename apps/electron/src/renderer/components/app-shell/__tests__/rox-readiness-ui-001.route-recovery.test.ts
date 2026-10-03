@@ -41,6 +41,14 @@ describe('ROX UI-001 actual MainContentPanel dispatch', () => {
   for (const [route, host, prop, value] of cases) {
     it(`dispatches ${route} with its own selected entity`, async () => {
       const html = await rendered({ route, workspace: 'workspace-a' })
+      if (host === 'ChatPage') {
+        // This fixture has no session metadata. Preserve the requested ID
+        // without starting a chat load whose workspace cannot be verified.
+        expect(html).toContain('data-testid="route-session-unavailable"')
+        expect(html).toContain(`data-session-id="${value}"`)
+        expect(html).not.toContain('data-route-host="ChatPage"')
+        return
+      }
       if (host === 'SourceInfoPage' || host === 'SkillInfoPage') {
         // SSR cannot run the canonical lookup effect. The selected identity
         // stays explicit while the real browser fixture exercises ready pages.

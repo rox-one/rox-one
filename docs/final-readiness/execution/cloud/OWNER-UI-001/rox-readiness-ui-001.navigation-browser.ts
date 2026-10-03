@@ -35,11 +35,16 @@ let props={workspace:params.get('ws')??'workspace-a',ready:params.get('delayed')
 const createSession=async(workspace,options)=>{actions.push(['create',workspace,options]);const row={id:'created',workspaceId:workspace,name:'Created'};
  store.set(sessionMetaMapAtom,new Map([...store.get(sessionMetaMapAtom),[row.id,row]]));return row};
 const switchWorkspace=workspace=>{props={...props,workspace};render()};
+const switchRequests=[];
+const switchWorkspaceBySlug=workspace=>{switchRequests.push(workspace);
+ if(workspace==='rejected-workspace')throw new Error('fixture workspace switch rejected');
+ if(!['workspace-a','workspace-b'].includes(workspace))return false;
+ switchWorkspace(workspace);return true};
 function Probe(){const nav=useNavigation();const panels=useAtomValue(panelStackAtom);window.ui001.navigation=nav;
  return <><pre id="navigation-state">{JSON.stringify(nav.navigationState)}</pre><pre id="panel-stack">{JSON.stringify(panels)}</pre>{panels.map((entry,index)=><PanelSlot key={entry.id} entry={entry} isOnly={panels.length===1} isFocusedPanel={index===panels.length-1} isSidebarAndNavigatorHidden={false} isAtLeftEdge={true} isAtRightEdge={true} proportion={1}/>)}</>}
 function FullFixture(){return <Provider store={store}><ShellContext.Provider value={{activeWorkspaceId:props.workspace,workspaces:[{id:props.workspace,remoteServer:{remoteWorkspaceId:props.remoteWorkspaceId}}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]}}>
  <NavigationProvider workspaceId={props.workspace} workspaceSlug={props.workspace} isReady={props.ready} isSessionsReady={props.sessionsReady}
-  remoteWorkspaceId={props.remoteWorkspaceId} onCreateSession={createSession} onSwitchWorkspaceBySlug={switchWorkspace}>
+  remoteWorkspaceId={props.remoteWorkspaceId} onCreateSession={createSession} onSwitchWorkspaceBySlug={switchWorkspaceBySlug}>
   <Probe/>
  </NavigationProvider></ShellContext.Provider></Provider>}
 function render(){root.render(<React.StrictMode><FullFixture/></React.StrictMode>)}
@@ -50,6 +55,9 @@ window.ui001={navigation:null,ready:()=>{props={...props,ready:true,sessionsRead
  removeSession:id=>{const next=new Map(store.get(sessionMetaMapAtom));next.delete(id);store.set(sessionMetaMapAtom,next)},
  removeSource:()=>{sources=[];for(const fn of sourceListeners)fn(props.workspace,sources)},
  switchWorkspace,requests:()=>requests,actions:()=>actions,source,
+ beginWorkspaceSwitch:()=>{props={...props,workspace:'workspace-b',sessionsReady:false};store.set(sessionMetaMapAtom,new Map());render()},
+ completeWorkspaceSwitch:()=>{store.set(sessionMetaMapAtom,new Map([['foreign',metadata[1]]]));props={...props,sessionsReady:true};render()},
+ chatMounts:()=>window.__ui001ChatMounts??[],switchRequests:()=>switchRequests,
  unmount:()=>root.unmount(),listeners:()=>deepLinkListeners.size};
 render();
 `
@@ -103,12 +111,16 @@ try {
   await check('Missing and deleted explicit sessions stay selected instead of choosing another chat', async () => {
     await page.goto(`${origin}?ws=workspace-a&route=allSessions/session/missing`)
     await selected('sessions', 'missing')
+    await page.locator('[data-testid="route-session-unavailable"]').waitFor()
+    assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
     await page.reload(); await selected('sessions', 'missing')
     await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/local'))
     await selected('sessions', 'local')
     await page.evaluate(() => (window as any).ui001.removeSession('local'))
     await selected('sessions', 'local')
-    assert.equal(await page.locator('[data-route-host="ChatPage"]').getAttribute('data-props'), '{"sessionId":"local"}')
+    await page.locator('[data-testid="route-session-unavailable"]').waitFor()
+    assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
+    assert.equal(await page.locator('[data-testid="route-session-unavailable"]').getAttribute('data-session-id'), 'local')
   })
   await check('A foreign workspace session is unavailable and the remote alias remains valid', async () => {
     await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/foreign'))
@@ -140,6 +152,20 @@ try {
     await page.reload(); await selected('sessions', 'local')
     assert.equal(await page.locator('[data-testid="route-unavailable"]').count(), 1)
     assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 1)
+  })
+  await check('Cleared metadata cannot mount a retained chat during a real workspace transition', async () => {
+    await page.goto(`${origin}?ws=workspace-a&route=allSessions/session/local`)
+    await selected('sessions', 'local')
+    await page.locator('[data-route-host="ChatPage"]').waitFor()
+    const before = await page.evaluate(() => (window as any).ui001.chatMounts().length)
+    await page.evaluate(() => (window as any).ui001.beginWorkspaceSwitch())
+    await page.locator('[data-testid="route-session-unavailable"]').waitFor({ timeout: 3500 })
+    assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
+    assert.equal(await page.evaluate(() => (window as any).ui001.chatMounts().length), before)
+    await page.evaluate(() => (window as any).ui001.completeWorkspaceSwitch())
+    await selected('sessions', 'foreign')
+    await page.locator('[data-route-host="ChatPage"]').waitFor()
+    assert.ok((await page.evaluate(before => (window as any).ui001.chatMounts().slice(before), before)).every((id: string) => id === 'foreign'))
   })
   await check('Legacy zero/one panel proportions recover without becoming part of an entity address', async () => {
     const panels = 'allSessions/session/local:1.0000,retired/surface:0.0000'
@@ -209,6 +235,26 @@ try {
     assert.equal(new URL(page.url()).searchParams.get('ws'), 'workspace-a')
     await page.goForward(); await page.goForward(); await selected('sources', 'two')
     assert.equal(new URL(page.url()).searchParams.get('ws'), 'workspace-b')
+  })
+  await check('Deleted and rejected history workspaces release suppression for later navigation and workspace switches', async () => {
+    for (const missing of ['deleted-workspace', 'rejected-workspace']) {
+      await page.goto(`${origin}?ws=workspace-a&route=sources/source/one`)
+      await selected('sources', 'one')
+      await page.evaluate(missing => {
+        const url = new URL(location.href); url.searchParams.set('ws', missing)
+        history.replaceState({ seq: 0 }, '', url)
+        dispatchEvent(new PopStateEvent('popstate', { state: { seq: 0 } }))
+      }, missing)
+      await page.waitForFunction(missing => (window as any).ui001.switchRequests().includes(missing), missing)
+      await page.evaluate(() => (window as any).ui001.navigate('sources/source/two'))
+      await selected('sources', 'two')
+      await page.waitForFunction(() => new URL(location.href).searchParams.get('ws') === 'workspace-a'
+        && new URL(location.href).searchParams.get('route') === 'sources/source/two', null, { timeout: 3500 })
+      await page.evaluate(() => (window as any).ui001.switchWorkspace('workspace-b'))
+      await page.waitForFunction(() => new URL(location.href).searchParams.get('ws') === 'workspace-b', null, { timeout: 3500 })
+      await page.goBack(); await selected('sources', 'two')
+      assert.equal(new URL(page.url()).searchParams.get('ws'), 'workspace-a')
+    }
   })
   await check('Unmount removes the actual deep-link subscription', async () => {
     assert.equal(await page.evaluate(() => (window as any).ui001.listeners()), 1)

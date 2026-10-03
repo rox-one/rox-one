@@ -14,7 +14,7 @@ describe('Notes shell navigation', () => {
       source.indexOf('// Handlers for automations view'),
     )
 
-    expect(handler).toContain('navigate(routes.view.notes())')
+    expect(handler).toContain("handleServiceClick('notes')")
     expect(handler).not.toContain('navigate(routes.view.knowledge())')
   })
 

@@ -732,6 +732,23 @@ export function MainContentPanel({
       />
     )
     if (navState.details) {
+      // Metadata is cleared while changing workspaces. Until ownership can be
+      // verified, do not mount ChatPage (which can load the retained session).
+      if (!selectedSession || !activeWorkspaceId) {
+        return wrapWithStoplight(
+          <Panel variant="grow" className={className}>
+            <div
+              role="status"
+              className="flex items-center justify-center h-full text-muted-foreground"
+              data-testid="route-session-unavailable"
+              data-session-id={navState.details.sessionId}
+            >
+              <p className="text-sm">{t('common.unavailable')}</p>
+            </div>
+            {sessionsBulkBar}
+          </Panel>
+        )
+      }
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <ChatPage sessionId={navState.details.sessionId} />

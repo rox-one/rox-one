@@ -39,6 +39,24 @@ jobs:
           bun-version: '1.3.14'
       - name: Install pinned dependencies
         run: bun install --frozen-lockfile --ignore-scripts
+      - name: Record the tested merge revision and source hashes
+        run: |
+          python3 - <<'PY'
+          import pathlib, subprocess, hashlib, json
+          owner = pathlib.Path('docs/final-readiness/execution/cloud/OWNER-UI-001')
+          manifest = json.loads((owner / 'source-manifest-v3.json').read_text())
+          hashes = {path: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+                    for path in manifest['sourceSha256']}
+          receipt = {'testedRevision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+                     'bun': subprocess.check_output(['bun', '--version'], text=True).strip(),
+                     'node': subprocess.check_output(['node', '--version'], text=True).strip(),
+                     'actualSourceSha256': hashes,
+                     'matchesCommittedCandidate': hashes == manifest['sourceSha256']}
+          destination = owner / 'verification/browser/ui001-ci-source.json'
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          destination.write_text(json.dumps(receipt, indent=2) + '\n')
+          print(json.dumps(receipt, indent=2))
+          PY
       - name: Shell, parser, persistence and navigation regression
         run: >-
           bun test --timeout 30000

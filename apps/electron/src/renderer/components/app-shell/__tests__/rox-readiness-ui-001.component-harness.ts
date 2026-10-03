@@ -10,6 +10,9 @@ const leafSource = `import * as React from 'react';
 let nextMount = 0;
 export function leaf(name) { return function Surface(props) {
  const [mount] = React.useState(() => ++nextMount);
+ React.useEffect(() => {
+  if (name === 'ChatPage') (window.__ui001ChatMounts ??= []).push(props.sessionId);
+ }, [props.sessionId]);
  return React.createElement('section', {'data-route-host':name,'data-mount':mount,'data-props':JSON.stringify(props)}, name);
 } }
 export const MultiSelectPanel = leaf('MultiSelectPanel');

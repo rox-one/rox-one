@@ -146,8 +146,8 @@ interface NavigationProviderProps {
   workspaceId: string | null
   /** Current workspace slug (used for URL ?ws= param and localStorage) */
   workspaceSlug: string | null
-  /** Switch to a workspace by slug (called on popstate when ?ws= changes) */
-  onSwitchWorkspaceBySlug?: (slug: string) => void
+  /** Switch by slug; false or rejection means the history target is unavailable. */
+  onSwitchWorkspaceBySlug?: (slug: string) => boolean | Promise<boolean>
   /** Session creation handler */
   onCreateSession: (workspaceId: string, options?: import('../../shared/types').CreateSessionOptions) => Promise<Session>
   /** Input change handler for pre-filling chat input */
@@ -981,9 +981,25 @@ export function NavigationProvider({
         // Workspace boundary crossed — trigger workspace switch
         // The workspace switch effect will handle reconciliation
         isPopstateSwitchRef.current = true
-        historyReconcileRevisionRef.current += 1
+        const revision = ++historyReconcileRevisionRef.current
         suppressPushRef.current = true
-        onSwitchWorkspaceBySlug(wsSlug)
+        const releaseFailedSwitch = () => {
+          if (!historyMountedRef.current || revision !== historyReconcileRevisionRef.current) return
+          isPopstateSwitchRef.current = false
+          suppressPushRef.current = false
+          // Restore the actual current workspace/panels when the target was
+          // deleted or the switch failed. Later navigation must push normally.
+          syncUrl(false)
+          lastSemanticHistoryKeyRef.current = getSemanticHistoryKey()
+        }
+        void (async () => {
+          try {
+            if (!await onSwitchWorkspaceBySlug(wsSlug)) releaseFailedSwitch()
+          } catch (error) {
+            console.warn('[Navigation] Workspace history switch failed:', error)
+            releaseFailedSwitch()
+          }
+        })()
         return
       }
 
@@ -1001,7 +1017,7 @@ export function NavigationProvider({
 
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
-  }, [workspaceSlug, onSwitchWorkspaceBySlug, updateCanGoBackForward, finishHistoryReconcile, isSessionsReady])
+  }, [workspaceSlug, onSwitchWorkspaceBySlug, updateCanGoBackForward, finishHistoryReconcile, isSessionsReady, syncUrl, getSemanticHistoryKey])
 
   // =========================================================================
   // WORKSPACE SWITCH

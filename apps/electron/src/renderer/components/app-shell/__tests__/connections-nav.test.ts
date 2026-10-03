@@ -19,7 +19,7 @@ describe('CF-6.2 Connections nav and surface', () => {
 
   it('exposes Connections in the single primary sidebar using the canonical route', () => {
     expect(appShellSource).toContain('id: "nav:connections"')
-    expect(appShellSource).toContain('onClick: () => navigate(routes.view.connections())')
+    expect(appShellSource).toContain("onClick: () => handleServiceClick('connections')")
   })
 
   it('renders ConnectionsPage from MainContentPanel on the connections navigator', () => {
@@ -27,4 +27,3 @@ describe('CF-6.2 Connections nav and surface', () => {
     expect(mainContentSource).toContain('ConnectionsPage')
   })
 })
-
