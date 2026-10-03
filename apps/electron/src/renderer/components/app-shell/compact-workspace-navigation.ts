@@ -1,5 +1,5 @@
 import type { PanelStackEntry } from '@/atoms/panel-stack'
-import { resolveViewRoute } from '../../../shared/route-parser'
+import { findServicePanel } from './service-navigation'
 import type { ViewRoute } from '../../../shared/routes'
 import type { NavigationState } from '../../../shared/types'
 import {
@@ -20,22 +20,6 @@ export type CompactWorkspaceAction =
 /** The focused route determines which service the compact menu highlights. */
 export function getActiveService(navState: NavigationState): AppNavDestinationId | null {
   return APP_NAV_DESTINATIONS.find((destination) => destination.isActive(navState))?.id ?? null
-}
-
-/** Prefer the current panel when multiple panels of the same service are open. */
-function findServicePanel(
-  panels: readonly PanelStackEntry[],
-  focusedPanelId: string | null,
-  serviceId: AppNavDestinationId,
-): PanelStackEntry | undefined {
-  const destination = APP_NAV_DESTINATIONS_BY_ID[serviceId]
-  if (!destination) return undefined
-  const matches = (panel: PanelStackEntry) => {
-    return destination.isActive(resolveViewRoute(panel.route))
-  }
-  const focusedPanel = panels.find((panel) => panel.id === focusedPanelId)
-  if (focusedPanel && matches(focusedPanel)) return focusedPanel
-  return panels.find(matches)
 }
 
 /** The compact menu uses exactly the same existing-panel preference as the rail. */

@@ -20,7 +20,7 @@ export function serializePanelEntriesForUrl(entries: readonly UrlPanelEntry[]): 
 /** Read current structured entries and existing comma-delimited saved URLs. */
 export function parsePanelEntriesFromUrl(value: string): UrlPanelEntry[] {
   const validProportion = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value > 0 && value < 1 ? value : 0
-  if (value.startsWith('[')) {
+  if (value.trimStart().startsWith('[')) {
     try {
       const entries: unknown = JSON.parse(value)
       if (Array.isArray(entries) && entries.every(entry => Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string')) {

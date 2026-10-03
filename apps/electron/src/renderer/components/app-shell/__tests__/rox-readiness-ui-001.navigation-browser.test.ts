@@ -222,6 +222,27 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     expect(state.panels[1].id).toBe(state.focused)
   }, 30000)
 
+  for (const panels of ['[]', ' [] ', ',,']) {
+    it(`empty panel list ${JSON.stringify(panels)} restores the focused address during history and reload`, async () => {
+      await open('future/stale-before-empty')
+      await unavailable('future/stale-before-empty')
+      await page.evaluate(panels => {
+        const url = new URL(location.href)
+        url.searchParams.set('route', 'tasks?view=calendar')
+        url.searchParams.set('panels', panels)
+        history.pushState(null, '', url)
+        window.dispatchEvent(new PopStateEvent('popstate'))
+      }, panels)
+      await page.waitForFunction(() => (window as any).ui001.snapshot().state.navigator === 'tasks', undefined, { timeout: 5000 })
+      expect((await snapshot()).panels.map((panel: any) => panel.route)).toEqual(['tasks?view=calendar'])
+      await page.reload()
+      await page.waitForFunction(() => Boolean((window as any).ui001))
+      expect((await snapshot()).panels.map((panel: any) => panel.route)).toEqual(['tasks?view=calendar'])
+      await page.evaluate(() => (window as any).ui001.navigate('future/stale-before-empty'))
+      await unavailable('future/stale-before-empty')
+    }, 30000)
+  }
+
   it('actual navigate and deep-link callbacks preserve unavailable route and browser back/forward', async () => {
     await open('allSessions/session/s1')
     await page.locator('[data-leaf="session"]').waitFor()

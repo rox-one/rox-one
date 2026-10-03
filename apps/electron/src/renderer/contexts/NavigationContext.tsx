@@ -432,10 +432,11 @@ export function NavigationProvider({
       let entries: { route: ViewRoute; proportion: number }[] = []
       let focusedIndex = 0
 
-      if (panelsParam) {
+      const parsedPanels = panelsParam ? parsePanelEntriesFromUrl(panelsParam) : []
+      if (parsedPanels.length > 0) {
         // Canonical format: ?panels= contains ALL panels, ?fi= is focused index.
         // We intentionally no longer support older mixed route/panels formats.
-        entries = parsePanelEntriesFromUrl(panelsParam).map(({ route: rawRoute, proportion }) => ({
+        entries = parsedPanels.map(({ route: rawRoute, proportion }) => ({
           route: normalizePanelRouteForReconcile(rawRoute, state => resolveAutoSelectionRef.current(state)),
           proportion,
         }))
