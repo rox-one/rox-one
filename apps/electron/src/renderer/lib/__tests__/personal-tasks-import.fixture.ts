@@ -11,6 +11,7 @@ let directory: string, native: PersonalTaskPersistStore
 const events = new EventTarget(), cache = new Map<string, string>(), calls: string[] = []
 let actor = 'alice', held: (() => void) | null = null, hold = false, denied = false, wrongReceipt = false, readbackDenied = false
 let listCount = 0
+let holdNextList = false, heldList: (() => void) | null = null
 const watchers = new Set<() => void>()
 const task = (id: string, title = id): PersonalTask => ({ id, title, notes: '', list: 'inbox', tags: [], priority: 'none', evening: false, links: [], order: 0, createdAt: 1 })
 const api: PersonalTasksApi & { onPersonalTasksChanged(callback: () => void): () => void } = {
@@ -19,7 +20,9 @@ const api: PersonalTasksApi & { onPersonalTasksChanged(callback: () => void): ()
     if (readbackDenied && ++listCount >= 3) throw new Error('Synthetic readback denied')
     if (!readbackDenied) listCount++
     const records = native.list()
-    return { tasks: records.map(row => row.task), revisions: Object.fromEntries(records.map(row => [row.task.id, row.revision])), meta: native.readMeta(), migration: null }
+    const snapshot = { tasks: records.map(row => row.task), revisions: Object.fromEntries(records.map(row => [row.task.id, row.revision])), meta: native.readMeta(), migration: null }
+    if (holdNextList) { holdNextList = false; await new Promise<void>(resolve => { heldList = resolve }) }
+    return snapshot
   },
   async personalTasksPut(writes, meta) {
     calls.push(`put:${actor}`)
@@ -58,7 +61,7 @@ beforeEach(async () => {
   Object.defineProperty(globalThis, 'localStorage', { value: { getItem: (key: string) => cache.get(key) ?? null, setItem: (key: string, value: string) => cache.set(key, value) }, configurable: true })
   setPersonalTaskScope(null); cache.clear(); watchers.clear(); calls.length = 0
   directory = mkdtempSync(join(tmpdir(), 'rox-confirmed-task-import-')); native = new PersonalTaskPersistStore(directory)
-  held = null; hold = denied = wrongReceipt = readbackDenied = false; listCount = 0
+  held = heldList = null; holdNextList = false; hold = denied = wrongReceipt = readbackDenied = false; listCount = 0
   native.put(task('original')); bind(); await hydratePersonalTasks()
 })
 afterEach(() => { setPersonalTaskScope(null); rmSync(directory, { recursive: true, force: true }) })
@@ -121,4 +124,31 @@ test('one active import refuses a second writer before it opens a transport', as
   await expect(importPersonalTasksConfirmed(incoming(task('second')), capturePersonalTaskScope())).rejects.toThrow('unavailable')
   expect(calls).toHaveLength(count); hold = false; held!(); await first
   expect(new PersonalTaskPersistStore(directory).get('second')).toBeNull()
+})
+
+test('an earlier native refresh cannot publish its captured snapshot across a confirmed import', async () => {
+  holdNextList = true
+  for (const notify of watchers) notify()
+  await settle(); expect(heldList).not.toBeNull()
+  const result = importPersonalTasksConfirmed(incoming(task('imported')), capturePersonalTaskScope())
+  await settle()
+  try { expect(calls.filter(call => call.startsWith('put'))).toHaveLength(0) }
+  finally { heldList!(); await result }
+  await settle()
+  expect(loadPersonalTaskStore().get('imported')?.title).toBe('imported')
+  expect(new PersonalTaskPersistStore(directory).get('imported')?.task.title).toBe('imported')
+})
+test('confirmed import drains a preceding native write ACK before its own snapshot and transport', async () => {
+  hold = true
+  const edited = loadPersonalTaskStore(); edited.update('original', { title: 'Earlier background edit' }); persistPersonalTaskStore(edited)
+  await settle(); expect(held).not.toBeNull()
+  hold = false
+  const result = importPersonalTasksConfirmed(incoming(task('imported')), capturePersonalTaskScope())
+  await settle()
+  try { expect(calls.filter(call => call.startsWith('put'))).toHaveLength(1) }
+  finally { held!(); await result }
+  await settle()
+  expect(loadPersonalTaskStore().get('original')?.title).toBe('Earlier background edit')
+  expect(loadPersonalTaskStore().get('imported')?.title).toBe('imported')
+  expect(new PersonalTaskPersistStore(directory).get('imported')?.task.title).toBe('imported')
 })

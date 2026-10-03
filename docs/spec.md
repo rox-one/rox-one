@@ -754,3 +754,6 @@ Owner: recent_features; dependency: current native Voice capture and Product Lea
 ## Portable resources and isolated protocol verification (2026-10-03)
 
 Owner: root integration. Recover #1448 at `1eb2c8289b68e9103880c3f2aee2c57e70c3409a`: packaged resources exclude development caches only under skills, retain required subprocess resources and reject ordinary vendored symlinks. Stale generated skill symlinks are removed without deleting their external target. A qualified native Electron path must exist, be absolute and be executable before a disposable meeting profile starts. Explicit developer protocol verification can avoid OS association changes; default and packaged aliases and the existing test-only gate remain intact. Windows startup/bootstrap/path resolution and thin-client native Notes custody remain authoritative.
+
+
+Confirmed Tasks import also drains native background work dispatched before the import lifetime. Its registered import barrier invalidates old sync/refresh continuations before a subsequent transport or publication; fresh canonical CAS starts after those existing acknowledgements settle. Two actual native negative controls reproduce the prior overlapping read/write race, and ten isolated native controls pass with the barrier. Current actor/workspace fences and queued local edits remain intact.
