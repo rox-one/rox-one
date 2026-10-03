@@ -1,0 +1,101 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:
+(pass) UI-001 external route recovery > retains unavailable address future/session/private without session selection [3.05ms]
+(pass) UI-001 external route recovery > retains unavailable address settings/future without session selection [0.39ms]
+(pass) UI-001 external route recovery > retains unavailable address knowledge/unknown/doc without session selection [0.41ms]
+(pass) UI-001 external route recovery > retains unavailable address notes/note/%E0%A4%A without session selection [0.46ms]
+(pass) UI-001 external route recovery > retains unavailable address cloud-run/%ZZ without session selection
+(pass) UI-001 external route recovery > retains unavailable address extension/% without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address action/delete-session/s1 without session selection [0.03ms]
+(pass) UI-001 external route recovery > retains unavailable address tasks/calendar without session selection [0.03ms]
+(pass) UI-001 external route recovery > retains unavailable address connections/v2 without session selection [0.06ms]
+(pass) UI-001 external route recovery > retains unavailable address allSessions/future/private without session selection [0.22ms]
+(pass) UI-001 external route recovery > retains unavailable address flagged/future/private without session selection [0.03ms]
+(pass) UI-001 external route recovery > retains unavailable address archived/future/private without session selection [0.33ms]
+(pass) UI-001 external route recovery > retains unavailable address state/todo/future/private without session selection [0.03ms]
+(pass) UI-001 external route recovery > retains unavailable address label/work/future/private without session selection [0.03ms]
+(pass) UI-001 external route recovery > retains unavailable address view/custom/future/private without session selection [0.05ms]
+(pass) UI-001 external route recovery > retains unavailable address board/future/private without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address table/session/s1 without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address heatmap/session/s1 without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address memory/future without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address inbox/future without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address feed/future without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address meetings/future without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address home/future without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address dossier/future/private without session selection [0.06ms]
+(pass) UI-001 external route recovery > retains unavailable address sources/api/future/private without session selection [0.03ms]
+(pass) UI-001 external route recovery > retains unavailable address automations/event/future/private without session selection [0.03ms]
+(pass) UI-001 external route recovery > retains unavailable address skills/skill/s/extra without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address projects/project/p/extra without session selection [0.03ms]
+(pass) UI-001 external route recovery > retains unavailable address pages/page/p/extra without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address browser/instance/b/extra without session selection [0.02ms]
+(pass) UI-001 external route recovery > retains unavailable address settings/app/extra without session selection [0.04ms]
+(pass) UI-001 external route recovery > retains unavailable address knowledge/view without session selection [0.03ms]
+(pass) UI-001 external route recovery > retains unavailable address allSessions/session/s1/extra without session selection [0.04ms]
+(pass) UI-001 external route recovery > retains unavailable address tasks/task/t/extra without session selection [0.07ms]
+(pass) UI-001 external route recovery > reconciles valid and malformed panels atomically, retaining focus and proportions [2.00ms]
+(pass) UI-001 external route recovery > preserves established parsing, query and explicit entity addresses [1.32ms]
+60 |     expect(parseNavigationStateKey('unavailable:%ZZ')).toBeNull()
+61 |   })
+62 |   it('normalizes empty separators before resolving known routes and retains encoded entity data', () => {
+63 |     for (const route of ['tasks/', 'settings/', 'allSessions/', 'notes//note/n/', 'settings//toolchain/', 'allSessions//session/s1/', 'tasks/task/a%2F%2Fb/']) {
+64 |       const normalized = route.split('/').filter(Boolean).join('/')
+65 |       expect(resolveViewRoute(route)).toEqual(parseRouteToNavigationState(normalized)!)
+                                           ^
+error: expect(received).toEqual(expected)
+
+  {
+    "details": null,
+-   "navigator": "tasks",
++   "navigator": "unavailable",
++   "route": "tasks/",
+  }
+
+- Expected  - 1
++ Received  + 2
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts:65:39)
+(fail) UI-001 external route recovery > normalizes empty separators before resolving known routes and retains encoded entity data [2.38ms]
+
+apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts:
+(pass) normalizePanelRouteForReconcile > auto-selects session details for filter-only session routes [2.03ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit session details unchanged [0.13ms]
+(pass) normalizePanelRouteForReconcile > normalizes each session panel route independently [0.08ms]
+(pass) normalizePanelRouteForReconcile > keeps route unchanged when resolver leaves state without details [0.03ms]
+(pass) normalizePanelRouteForReconcile > preserves every query parameter when reconciling a list or search route [0.22ms]
+(pass) normalizePanelRouteForReconcile > keeps non-session routes unchanged with session-only resolver [0.07ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail route even if resolver tries to rewrite it [0.03ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail routes distinct across multiple panels [0.05ms]
+112 |     const normalized = routes.map((route) => normalizePanelRouteForReconcile(route, resolver))
+113 |
+114 |     expect(normalized).toEqual(['allSessions/session/left', 'allSessions/session/right'])
+115 |   })
+116 |   it('returns no entries for malformed structured panel data so focused-route recovery can run', () => {
+117 |     for (const value of ['[', '[1]', '[["tasks"]]', ' [ [ "tasks", 1 ] ']) expect(parsePanelEntriesFromUrl(value)).toEqual([])
+                                                                                                                         ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   {
++     "proportion": 0,
++     "route": "[",
++   },
++ ]
+
+- Expected  - 1
++ Received  + 6
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts:117:116)
+(fail) normalizePanelRouteForReconcile > returns no entries for malformed structured panel data so focused-route recovery can run [0.42ms]
+
+2 tests failed:
+(fail) UI-001 external route recovery > normalizes empty separators before resolving known routes and retains encoded entity data [2.38ms]
+(fail) normalizePanelRouteForReconcile > returns no entries for malformed structured panel data so focused-route recovery can run [0.42ms]
+
+ 44 pass
+ 2 fail
+ 311 expect() calls
+Ran 46 tests across 2 files. [311.00ms]

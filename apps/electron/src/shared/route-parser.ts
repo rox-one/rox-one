@@ -974,8 +974,12 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
     // Some legacy routes retain encoded slugs, but malformed encoding is never
     // a valid entity address, even when that parser branch does not decode it.
     const path = route.split('?')[0]
-    const decodedPath = decodeURIComponent(path)
-    const state = parseRouteToNavigationState(route, sidebarParam)
+    // Empty separators are legacy aliases. Normalize before decoding so encoded
+    // slashes inside entity identifiers remain data, and preserve the full query.
+    const normalizedPath = path.split('/').filter(Boolean).join('/')
+    const decodedPath = decodeURIComponent(normalizedPath)
+    const query = route.slice(path.length)
+    const state = parseRouteToNavigationState(normalizedPath + query, sidebarParam)
     if (!state) return unavailable
     // Compare the full address, allowing equivalent entity encoding and the
     // established settings aliases. A parser fallback must not drop a suffix.

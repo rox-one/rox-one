@@ -222,8 +222,8 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     expect(state.panels[1].id).toBe(state.focused)
   }, 30000)
 
-  for (const panels of ['[]', ' [] ', ',,']) {
-    it(`empty panel list ${JSON.stringify(panels)} restores the focused address during history and reload`, async () => {
+  for (const panels of ['[]', ' [] ', ',,', '[', '[1]', '[["tasks"]]', '  ']) {
+    it(`empty or invalid panel list ${JSON.stringify(panels)} restores the focused address during history and reload`, async () => {
       await open('future/stale-before-empty')
       await unavailable('future/stale-before-empty')
       await page.evaluate(panels => {
@@ -242,6 +242,21 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
       await unavailable('future/stale-before-empty')
     }, 30000)
   }
+
+  it('known routes with empty separators resolve their surface and query through navigation and reload', async () => {
+    const route = 'tasks///?keep=separator'
+    const canonicalRoute = 'tasks?keep=separator'
+    await open(route)
+    await page.waitForFunction(() => (window as any).ui001.snapshot().state.navigator === 'tasks', undefined, { timeout: 5000 })
+    expect((await snapshot()).panels.map((panel: any) => panel.route)).toEqual([canonicalRoute])
+    expect(new URLSearchParams((await snapshot()).search).get('route')).toBe(canonicalRoute)
+    await page.reload()
+    await page.waitForFunction(() => Boolean((window as any).ui001))
+    expect((await snapshot()).panels.map((panel: any) => panel.route)).toEqual([canonicalRoute])
+    await page.evaluate(() => (window as any).ui001.navigate('notes//note/n1/'))
+    await page.waitForFunction(() => (window as any).ui001.snapshot().state.navigator === 'notes', undefined, { timeout: 5000 })
+    expect((await snapshot()).panels.map((panel: any) => panel.route)).toEqual(['notes//note/n1/'])
+  }, 30000)
 
   it('actual navigate and deep-link callbacks preserve unavailable route and browser back/forward', async () => {
     await open('allSessions/session/s1')

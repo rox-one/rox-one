@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { normalizePanelRouteForReconcile } from '../navigation-reconcile'
+import { normalizePanelRouteForReconcile, parsePanelEntriesFromUrl } from '../navigation-reconcile'
 import type { ViewRoute } from '../../../shared/routes'
 import type { NavigationState } from '../../../shared/types'
 
@@ -113,4 +113,9 @@ describe('normalizePanelRouteForReconcile', () => {
 
     expect(normalized).toEqual(['allSessions/session/left', 'allSessions/session/right'])
   })
+  it('returns no entries for malformed structured panel data so focused-route recovery can run', () => {
+    for (const value of ['[', '[1]', '[["tasks"]]', ' [ [ "tasks", 1 ] ', '[["",0]]', '[[" ",0]]', '  ']) expect(parsePanelEntriesFromUrl(value)).toEqual([])
+    expect(parsePanelEntriesFromUrl('[["tasks",0]]')).toEqual([{ route: 'tasks', proportion: 0 }])
+  })
+
 })

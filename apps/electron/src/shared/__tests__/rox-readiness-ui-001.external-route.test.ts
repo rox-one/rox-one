@@ -59,4 +59,14 @@ describe('UI-001 external route recovery', () => {
     expect(parseRouteToNavigationState('knowledge/unknown/doc')?.navigator).toBe('sessions')
     expect(parseNavigationStateKey('unavailable:%ZZ')).toBeNull()
   })
+  it('normalizes empty separators before resolving known routes and retains encoded entity data', () => {
+    for (const route of ['tasks/', 'settings/', 'allSessions/', 'notes//note/n/', 'settings//toolchain/', 'allSessions//session/s1/', 'tasks/task/a%2F%2Fb/']) {
+      const normalized = route.split('/').filter(Boolean).join('/')
+      expect(resolveViewRoute(route)).toEqual(parseRouteToNavigationState(normalized)!)
+    }
+    expect(resolveViewRoute('tasks///future/').navigator).toBe('unavailable')
+    expect(resolveViewRoute('allSessions//session/s1/extra/').navigator).toBe('unavailable')
+    expect(resolveViewRoute('notes//note/%GG/').navigator).toBe('unavailable')
+  })
+
 })

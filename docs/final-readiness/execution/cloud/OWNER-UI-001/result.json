@@ -243,9 +243,18 @@
       "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/77-third-review-regression-green.log",
       "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/78-Bun-electron-types.log",
       "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/79-b697-integrated-regression-green.log",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/80-delivery-validate-ci.log",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/81-delivery-renderer-build.log",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/82-delivery-Bun-electron-types.log",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/83-separators-and-invalid-JSON-red.log",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/84-invalid-panels-browser-red.log",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/85-separator-and-JSON-regression-green.log",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/86-final-navigation-browser.log",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/87-final-navigation-browser-green.log",
       "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/plan.md",
       "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/report.md",
       "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/review-repair-round3.json",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/review-repair-round4.json",
       "package.json"
     ],
     "implementedClauses": [
@@ -261,7 +270,9 @@
       "Preserve current main persistent panel workspace/grid/inert/focus implementation; restore existing sidebar hairline styling and update outdated branch-marker tests without weakening assertions",
       "Empty or whitespace JSON panel arrays and empty legacy CSV fall back to explicit focused route on initial/history reconciliation",
       "Shared desktop and compact service panel matching uses strict resolver, preserves panel identities and refuses unavailable addresses",
-      "Tests execute actual named/sidebar callbacks and actual central service callback using real Jotai focus atoms; navigation is a recording sink"
+      "Tests execute actual named/sidebar callbacks and actual central service callback using real Jotai focus atoms; navigation is a recording sink",
+      "Normalize empty literal path separators before decode/strict canonical comparison while preserving query and encoded entity data",
+      "Invalid/truncated JSON, invalid tuples, blank structured routes and whitespace-only legacy panel values yield no entries for focused-route fallback"
     ],
     "retainedCurrentMainBehavior": [
       "Selected source/skill presence and workspace event/race guards",
@@ -423,6 +434,21 @@
         "command": "route/shell regression on exact b697e96d integration",
         "result": "571 pass, 0 fail, 83 opt-in skips, 2395 assertions, 104 files",
         "evidence": "79-b697-integrated-regression-green.log"
+      },
+      {
+        "command": "qualified Bun exact full route/shell regression after separator/JSON repairs",
+        "result": "573 pass / 0 fail / 88 explicit opt-in skips / 2413 assertions / 104 files",
+        "evidence": "85-separator-and-JSON-regression-green.log"
+      },
+      {
+        "command": "actual NavigationProvider Chromium suite",
+        "result": "21 pass / 0 fail / 321 assertions",
+        "evidence": "87-final-navigation-browser-green.log"
+      },
+      {
+        "command": "bun run validate:ci on stable865d526c product source",
+        "result": "exit0; 391 Bun tests + 19 Python tests and complete package typegraph/i18n",
+        "evidence": "80-delivery-validate-ci.log"
       }
     ],
     "failureHistory": [
@@ -523,6 +549,18 @@
       {
         "evidence": "74-Node-types-interrupted.log",
         "result": "Owned Node compiler interrupted with SIGTERM after 17 minutes under host resource contention; exact frozen compiler retried under qualified Bun, no other task process changed"
+      },
+      {
+        "evidence": "83-separators-and-invalid-JSON-red.log",
+        "result": "44 pass / 2 expected failures / 311 assertions"
+      },
+      {
+        "evidence": "84-invalid-panels-browser-red.log",
+        "result": "0 pass / 1 expected failure / 19 filtered; actual callbacks keep serialization blob before fix"
+      },
+      {
+        "evidence": "86-final-navigation-browser.log",
+        "result": "20 pass / 1 fail: overstrict test expected raw task slash alias; existing list canonicalization is retained, corrected assertion checks canonical task path and complete query; notes detail spelling is still asserted"
       }
     ],
     "externalPrerequisites": [
@@ -562,7 +600,7 @@
       "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts": "7232661ae9985068f9e740e3375fdddc82785d264d31d152d2e760f0d9dcd23f",
       "apps/electron/src/renderer/components/app-shell/__tests__/radius-everywhere.test.ts": "4c32251dc57bcc946aa41f67ba9af41627646576c0bb71b0278de710962edebf",
       "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "1683a5148a47e9de1b8ab8d6df97aa73bccba3d83d583941b44276ad88355336",
-      "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "109afb7a943186b6f6fee5a16bb564cb4eb3a451be0ad35ca56e8a03b29e39fa",
+      "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "a00486878aaf46fa794a1f214ae103bbf3064d8ce296885413aef20f19522ddc",
       "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-navigation.test.ts": "7f9983b9e78c32976826baea3f42fd084c9a57cfb3ee9da167773e9564151072",
       "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.shell-callback.ts": "a2faba7fed4c05df6f5b233ba4b0ba1de31e36a7eaf5d92c0309162675181a89",
       "apps/electron/src/renderer/components/app-shell/__tests__/sash-terminal-clearance.test.ts": "002fefdf199b1593d7626c6884339f6fccf47205ce1080914f67498bdf00e4a9",
@@ -570,13 +608,13 @@
       "apps/electron/src/renderer/components/app-shell/compact-workspace-navigation.ts": "470c7a70400cee09713863ce2638594224b229c403ec30db1eedb856d15c5dae",
       "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "95e9fe5e1a3ea1aeb87cca113b7921c90485142c699b2f2898f9133053381303",
       "apps/electron/src/renderer/contexts/NavigationContext.tsx": "a8305d95e9bad4b0628b7775ea1cde4540844d1b1f2f9e8d42a093f96ee65dd9",
-      "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts": "2fa3f49188438a39981f60c505fe18fa122639bf788233eef8390f3976c6d371",
-      "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "7b1e11a7a78e75d174b41ca736a52a0ad82cc19c8f310ff8be21777593a8bbc6",
+      "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts": "56afc5cd2a95436fdc680c62c8c1e755ac182ecc5f76377b34a6b93e7c6d8ea7",
+      "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "94fe130699ec12c53d29ca4b0dca5eb285681453e6b47117cd1840d9b8ab10d0",
       "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
       "apps/electron/src/renderer/platform/layout-snapshot.ts": "7ddddb3219994b3ecad254429d2207adda7b90d29a7f905b79d150839871b057",
       "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "6221f39ef3d44b59b154677794c926b0ebfa28cfdab3eb01366ec3fa965ce379",
-      "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts": "b2126832e4d4da67d416a2b9721cfee084f5df09dfbbfb5cc0cea7ad2cd271fa",
-      "apps/electron/src/shared/route-parser.ts": "49c5001ca769ceb0b9beebc30a42f33d5f12fc2dba6bd498df5abefaccafb741",
+      "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts": "6b9595889bc3a524cea2e39ee8bf70a3164be5c480e3ccb0d6bdad93c8a32c77",
+      "apps/electron/src/shared/route-parser.ts": "f743c060c592b25be85d0d680769e3a797d30016bf774158c5c8cc58d3c7a664",
       "apps/electron/src/shared/types.ts": "3599d06642af88d0367e0589880bdc95bc69e18d7188ba4853d0be462f5bd72a",
       "package.json": "3745122d57049c86eb4717c743f2ee0d5e64a5dabbd1074ab03fc884184613aa"
     },
@@ -588,12 +626,9 @@
         "UI-001.1",
         "UI-001.2"
       ],
-      "inputHead": "dee3e15c0fff97ae11bb7d5b7a9373a220351ca2",
-      "exactGitHubIntegrationRevision": "01723bb2f43915bc5d335e2bea883d50d00828ee",
-      "exactGitHubIntegrationParents": [
-        "ae19683e69f079893cd09065487cfa7653d01154",
-        "dee3e15c0fff97ae11bb7d5b7a9373a220351ca2"
-      ],
+      "inputHead": "09b263efc7cea715d4385db2b3eab1e9311aab77",
+      "integratedBase": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
+      "workingProductPatchSha256": "07ec7767c97e14f9aa4e3b14ded7787ed98d5e3039f4399d280e38b716f0b304",
       "sourceContentHashes": {
         ".github/workflows/ui-route-recovery.yml": "03024fedae3d138504b6f48307ab44a0044b8e3a58a093056a099e7c5b4f902d",
         "apps/electron/src/main/__tests__/deep-link-parse.test.ts": "2e63c8d9d11d5a8cc8ecb5bb62c3b59c783afd54e6a18f34f3a621165104354e",
@@ -614,7 +649,7 @@
         "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts": "7232661ae9985068f9e740e3375fdddc82785d264d31d152d2e760f0d9dcd23f",
         "apps/electron/src/renderer/components/app-shell/__tests__/radius-everywhere.test.ts": "4c32251dc57bcc946aa41f67ba9af41627646576c0bb71b0278de710962edebf",
         "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "1683a5148a47e9de1b8ab8d6df97aa73bccba3d83d583941b44276ad88355336",
-        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "109afb7a943186b6f6fee5a16bb564cb4eb3a451be0ad35ca56e8a03b29e39fa",
+        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "a00486878aaf46fa794a1f214ae103bbf3064d8ce296885413aef20f19522ddc",
         "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-navigation.test.ts": "7f9983b9e78c32976826baea3f42fd084c9a57cfb3ee9da167773e9564151072",
         "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.shell-callback.ts": "a2faba7fed4c05df6f5b233ba4b0ba1de31e36a7eaf5d92c0309162675181a89",
         "apps/electron/src/renderer/components/app-shell/__tests__/sash-terminal-clearance.test.ts": "002fefdf199b1593d7626c6884339f6fccf47205ce1080914f67498bdf00e4a9",
@@ -622,145 +657,80 @@
         "apps/electron/src/renderer/components/app-shell/compact-workspace-navigation.ts": "470c7a70400cee09713863ce2638594224b229c403ec30db1eedb856d15c5dae",
         "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "95e9fe5e1a3ea1aeb87cca113b7921c90485142c699b2f2898f9133053381303",
         "apps/electron/src/renderer/contexts/NavigationContext.tsx": "a8305d95e9bad4b0628b7775ea1cde4540844d1b1f2f9e8d42a093f96ee65dd9",
-        "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts": "2fa3f49188438a39981f60c505fe18fa122639bf788233eef8390f3976c6d371",
-        "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "7b1e11a7a78e75d174b41ca736a52a0ad82cc19c8f310ff8be21777593a8bbc6",
+        "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts": "56afc5cd2a95436fdc680c62c8c1e755ac182ecc5f76377b34a6b93e7c6d8ea7",
+        "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "94fe130699ec12c53d29ca4b0dca5eb285681453e6b47117cd1840d9b8ab10d0",
         "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
         "apps/electron/src/renderer/platform/layout-snapshot.ts": "7ddddb3219994b3ecad254429d2207adda7b90d29a7f905b79d150839871b057",
         "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "6221f39ef3d44b59b154677794c926b0ebfa28cfdab3eb01366ec3fa965ce379",
-        "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts": "b2126832e4d4da67d416a2b9721cfee084f5df09dfbbfb5cc0cea7ad2cd271fa",
-        "apps/electron/src/shared/route-parser.ts": "49c5001ca769ceb0b9beebc30a42f33d5f12fc2dba6bd498df5abefaccafb741",
+        "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts": "6b9595889bc3a524cea2e39ee8bf70a3164be5c480e3ccb0d6bdad93c8a32c77",
+        "apps/electron/src/shared/route-parser.ts": "f743c060c592b25be85d0d680769e3a797d30016bf774158c5c8cc58d3c7a664",
         "apps/electron/src/shared/types.ts": "3599d06642af88d0367e0589880bdc95bc69e18d7188ba4853d0be462f5bd72a",
         "package.json": "3745122d57049c86eb4717c743f2ee0d5e64a5dabbd1074ab03fc884184613aa"
       },
-      "reviewThread": "PRRT_kwDOTx7GeM6opANS",
-      "reviewComment": 4173760729,
-      "repairs": [
-        "Empty or whitespace JSON panel arrays and empty legacy CSV fall back to explicit focused route on initial/history reconciliation",
-        "Shared desktop and compact service panel matching uses strict resolver, preserves panel identities and refuses unavailable addresses",
-        "Tests execute actual named/sidebar callbacks and actual central service callback using real Jotai focus atoms; navigation is a recording sink"
-      ],
       "evidence": [
         {
-          "path": "67-GitHub-route-CI-red.log",
-          "originalCaptureSha256": "728f3d9a866b684611abcb8af8e21d0a774117e107c33c78294b6ed44597ea64",
-          "capturedFrom": "ui001-ci-route-ubuntu-dee3-job.raw.log"
+          "path": "80-delivery-validate-ci.log",
+          "originalCaptureSha256": "fa5533288839898e5df6651bc429bba13fb5aec7c92562f7eb89238ed51ae9a7"
         },
         {
-          "path": "68-service-focus-red.log",
-          "originalCaptureSha256": "ed7f245af4b26937689a0c6b4be2e3eb6f8a484dab11c39edf9ea7eb124f47df",
-          "capturedFrom": "ui001-live-68-service-focus-red.log"
+          "path": "81-delivery-renderer-build.log",
+          "originalCaptureSha256": "bb891e621f3e322fa9f3bc980c386ca2dab3108ca7f65061cfe8b80a7e8ee7e3"
         },
         {
-          "path": "69-empty-panels-red.log",
-          "originalCaptureSha256": "8e4bb2a56fe89bce9393ae38db44616e2fe9a0400ef63c6359a7a1d7a00c3441",
-          "capturedFrom": "ui001-live-69-empty-panels-red.log"
+          "path": "82-delivery-Bun-electron-types.log",
+          "originalCaptureSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         },
         {
-          "path": "70-empty-panels-negative-control.log",
-          "originalCaptureSha256": "ab572ba81af61b62c3f0cb51cf638d88707df1fe2ab4360b2991bf8dbb1fad96",
-          "capturedFrom": "ui001-live-70-empty-panels-red-corrected-deadline.log"
+          "path": "83-separators-and-invalid-JSON-red.log",
+          "originalCaptureSha256": "af931452e161278a3fb20adf3070c7e46cddbfa4cb842fee7ba0545ea5ef1942"
         },
         {
-          "path": "71-current-main-callbacks-green.log",
-          "originalCaptureSha256": "f5be55a8166e6fb2e6018d8577a9dc6918bb04ca4e5b76f806b0b3839750c6cf",
-          "capturedFrom": "ui001-live-71-current-main-callbacks-green.log"
+          "path": "84-invalid-panels-browser-red.log",
+          "originalCaptureSha256": "c249b28e37ff518fdfd7eaa49827a22914bfce68a27f095019432b230cad5488"
         },
         {
-          "path": "72-service-and-callbacks-green.log",
-          "originalCaptureSha256": "b710eb2919abf85652ff737de3ed6944048b3d53312d3e7b1a4ffc5d3fd8a921",
-          "capturedFrom": "ui001-live-72-service-and-callbacks-green.log"
+          "path": "85-separator-and-JSON-regression-green.log",
+          "originalCaptureSha256": "bb6108ae99b4a3b2d4a3d9e1cd8b28e4ca45f26864ebc18851339f255f4fc868"
         },
         {
-          "path": "73-combined-empty-browser-timeout.log",
-          "originalCaptureSha256": "281c3b0f347c0a58cc12bdba4edcfb4a7d151dc7db7ed1da6c3c53bea5e79a63",
-          "capturedFrom": "ui001-live-73-empty-and-service-browser-green.log"
+          "path": "86-final-navigation-browser.log",
+          "originalCaptureSha256": "6a8af3e9d289187a4c092c34ef0068f005b30a83aa3873597338b935fc615de0"
         },
         {
-          "path": "75-empty-panels-browser-green.log",
-          "originalCaptureSha256": "5dc7b5c4ee9a063fdab9f4082312582c03cd833b7dd1140e5cd3444ba0db5e24",
-          "capturedFrom": "ui001-live-75-separated-empty-browser.log"
-        },
-        {
-          "path": "76-exact-CI-actual-callback-green.log",
-          "originalCaptureSha256": "c48a91f6387248d96fe622be889264fe3ab7de40e2cfe3e15fab9a8dd2304864",
-          "capturedFrom": "ui001-live-76-exact-ci-actual-callback.log"
-        },
-        {
-          "path": "74-Node-types-interrupted.log",
-          "originalCaptureSha256": "2bf40ccf2587f6267aa6ce736aac46ad426b8d51951919212d0fb604fc8b4a56",
-          "capturedFrom": "ui001-live-74-service-and-empty-types.log"
-        },
-        {
-          "path": "77-third-review-regression-green.log",
-          "originalCaptureSha256": "6b15532e09cce922ad3fc0f3059b6b786477b0646fae4ea48af25ebb341fd895",
-          "capturedFrom": "ui001-live-77-third-review-regression.log"
-        },
-        {
-          "path": "78-Bun-electron-types.log",
-          "originalCaptureSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "capturedFrom": "ui001-live-78-Bun-electron-types.log"
-        },
-        {
-          "path": "79-b697-integrated-regression-green.log",
-          "originalCaptureSha256": "d81e14e02042a2de4294951d44a7ace3ad581e3a244740924bd19b835114fae8",
-          "capturedFrom": "ui001-live-79-b697-integrated-regression.log"
+          "path": "87-final-navigation-browser-green.log",
+          "originalCaptureSha256": "6f29db49af70697a4eef082be05ba328f41ce33e170fdc595bcc43fbf3edfeef"
         }
       ],
-      "qualifiedBun": "1.3.14",
-      "failureHistoryPreserved": true,
-      "fullDoDClosed": false,
-      "boundary": "Actual Chromium and actual protocol callbacks with declared fixture leaf/synthetic transport boundaries; installed Windows/macOS/hosted auth and backend matrix not observed",
-      "typeCompilerRetry": {
-        "stoppedOwnedPid": 26601,
-        "verifiedCommand": "node /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/.bin/tsc --noEmit",
-        "reason": "17-minute Node compiler on contended host; retry exact frozen TypeScript compiler under qualified task-local Bun 1.3.14",
-        "replacement": "bun node_modules/typescript/bin/tsc --noEmit -p apps/electron/tsconfig.json",
-        "exitCode": 0,
-        "qualificationBoundary": "Run78 started on468eb81ed and completed after865d526c integration; fresh stable-source82 is the final graph gate."
+      "reviewRoots": [
+        4173929270,
+        4173929273
+      ],
+      "judgment": "Both findings valid: known separator aliases are preserved, and invalid panel serialization falls back to the explicit focused route. Unknown suffixes and malformed entity encoding remain unavailable. Encoded slash data is not normalized.",
+      "implementedClauses": [
+        "Normalize empty literal path separators before decode/strict canonical comparison while preserving query and encoded entity data",
+        "Invalid/truncated JSON, invalid tuples, blank structured routes and whitespace-only legacy panel values yield no entries for focused-route fallback"
+      ],
+      "negativeControls": {
+        "unit83": "44 pass / 2 expected failures / 311 assertions",
+        "browser84": "0 pass / 1 expected failure / 19 filtered; actual callbacks keep serialization blob before fix",
+        "browser86": "20 pass / 1 fail: overstrict test expected raw task slash alias; existing list canonicalization is retained, corrected assertion checks canonical task path and complete query; notes detail spelling is still asserted"
       },
       "testResults": {
-        "Chromium": "16 pass / 0 fail / 261 assertions; actual NavigationProvider/URL/history/Jotai/menu/recovery; declared leaves are fixtures",
-        "exactGitHubAppShellCallbacks": "9 pass / 0 fail / 72 assertions; actual source 01723bb2; actual callbacks, actual focus atoms; recording navigation sink",
-        "regression": "563 pass / 0 fail / 83 explicit opt-in browser skips / 2363 assertions / 102 files",
-        "BunTypeCompiler": "78 exit0 with transition boundary; fresh final82 running",
-        "integratedRegression": "571 pass / 0 fail / 83 opt-in skips / 2395 assertions / 104 files",
-        "FinalPackageValidation": "80 running; prior full372/19 typegraph receipt retained",
-        "FinalRendererBuild": "81 running; prior build65 exit0 retained"
+        "unit85": "573 pass / 0 fail / 88 explicit opt-in skips / 2413 assertions / 104 files",
+        "browser87": "21 pass / 0 fail / 321 assertions",
+        "preRepairPackage80": "exit0; 391 Bun tests + 19 Python tests and complete package typegraph/i18n",
+        "preRepairBuild81": "exit0; 1m26s",
+        "preRepairTypes82": "exit0; exact stable-source frozen Electron TypeScript compiler under Bun1.3.14",
+        "finalPackage88": "running",
+        "finalBuild89": "running",
+        "finalTypes90": "running"
       },
-      "reviewCompletion": {
-        "publishedSource": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
-        "rootComment": 4173760729,
-        "submittedReply": 4173912557,
-        "submittedReview": 5401649228,
-        "reviewState": "COMMENTED",
-        "isResolved": true,
-        "bodySha256": "a8c03ce2de5f772c804ecffb2764cc705b8ffb38dee7f2a8c87f07caba410ae8"
+      "currency11Confirmation": {
+        "marked": "currency:ab7f380dd8355a0f6d06f053cacf5ed2fc2a843036aa0655b673e1ccb8040323"
       },
-      "currencyRepair": {
-        "plan": {
-          "head": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
-          "base": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
-          "conflictFingerprint": "c8d211d6e171a76f2dc0aa736251a6b89795caea1db3fd719b97deb10df5f220",
-          "preview": "6a389b75d005103c7bf98e66357eba68bbaeba9b\n100644 b00cdbdccfe3972c1ea710077761de0f028166b7 2\tapps/electron/src/renderer/components/app-shell/service-navigation.ts\n100644 4c1d0e4ecb764c3921509b5eee34a40a8f510b80 3\tapps/electron/src/renderer/components/app-shell/service-navigation.ts\n\nAuto-merging apps/electron/src/renderer/components/app-shell/AppShell.tsx\nAuto-merging apps/electron/src/renderer/components/app-shell/service-navigation.ts\nCONFLICT (add/add): Merge conflict in apps/electron/src/renderer/components/app-shell/service-navigation.ts\nAuto-merging docs/plan.md\nAuto-merging docs/spec.md\n",
-          "mechanicalIntent": "Preserve incoming shared desktop/compact API and actual focus atom verbatim; replace legacy parser with strict resolver and guard unknown destination. Exact incoming source differs only in these validated edits. No other manual resolution required.",
-          "directPushEvidence": "Normal push dee3 -> 468eb81ed succeeded and PR REST head readback equals468eb81ed",
-          "noPlausibleAlternative": "Both main and reviewed patch use the shared helper API; permissive parser is the actual reproduced defect, tests68/72/76/77 prove strict replacement."
-        },
-        "preflight": {
-          "head": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
-          "base": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
-          "localHead": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
-          "clean": true,
-          "directPushAuthority": "Normal non-force push 468eb81ed verified; same-repository branch owned by this task",
-          "exactMechanicalPreview": "ui001-currency11-plan.json"
-        },
-        "mergeCommit": "865d526c2a7d879d3bc400a1abc5e6f31ec77921",
-        "conflictSourcePreserved": "Incoming shared API/focus atom preserved except the validated strict-parser/guard edits",
-        "confirmation": "Pending normal push and exact host/base ancestry readback"
-      },
-      "integratedInputHead": "865d526c2a7d879d3bc400a1abc5e6f31ec77921",
-      "integratedBase": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
-      "workflowTypecheck": "Ubuntu/macOS matrix verifies the complete Electron TypeScript graph before browser/native callback fixtures"
+      "failureHistoryPreserved": true,
+      "originalRequirementsChanged": false,
+      "fullDoDClosed": false
     },
     "verificationHistory": [
       {
@@ -859,12 +829,192 @@
           "apps/electron/src/shared/types.ts": "3599d06642af88d0367e0589880bdc95bc69e18d7188ba4853d0be462f5bd72a",
           "package.json": "3745122d57049c86eb4717c743f2ee0d5e64a5dabbd1074ab03fc884184613aa"
         }
+      },
+      {
+        "taskIds": [
+          "UI-001.1",
+          "UI-001.2"
+        ],
+        "inputHead": "dee3e15c0fff97ae11bb7d5b7a9373a220351ca2",
+        "exactGitHubIntegrationRevision": "01723bb2f43915bc5d335e2bea883d50d00828ee",
+        "exactGitHubIntegrationParents": [
+          "ae19683e69f079893cd09065487cfa7653d01154",
+          "dee3e15c0fff97ae11bb7d5b7a9373a220351ca2"
+        ],
+        "sourceContentHashes": {
+          ".github/workflows/ui-route-recovery.yml": "03024fedae3d138504b6f48307ab44a0044b8e3a58a093056a099e7c5b4f902d",
+          "apps/electron/src/main/__tests__/deep-link-parse.test.ts": "2e63c8d9d11d5a8cc8ecb5bb62c3b59c783afd54e6a18f34f3a621165104354e",
+          "apps/electron/src/main/__tests__/deep-link-routing.test.ts": "c11d4408f86a523a69d66429c6749abc3e37cd7cf25a0f6b2564c4d1a0754d88",
+          "apps/electron/src/main/__tests__/rox-readiness-ui-001.native-preload.ts": "8ee9639c26727e58fa8ebe501574c0a1784df45ae6adfad31c12a254bc51f3da",
+          "apps/electron/src/main/deep-link.ts": "0e70f480c456e92130f9f39c0032311ab3b7071f71eea61fd78c6b23c3fd0c40",
+          "apps/electron/src/renderer/atoms/panel-stack.ts": "12fb6c1fd4458dcd33bbe272b87af1d403698c97b61b96ae866e1a1026b6adf7",
+          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "d8982a1ef07cbc3087d5dece9d162d6929942ba0e1603659870384c7c6664ca7",
+          "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx": "77412f323402a792f684179b1c0797a2f8335e7d4ba873474be54e451dd00ae1",
+          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "9e8e4236f97d5e21653b8cd1292bd2921d92b9ebb50aed36a277c134d0383d09",
+          "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "35bdbe03154e6af7646f33dabcb9455dd48d969223e76d15b12692add7345d94",
+          "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "412f23dad2690ba563dbf6b5b783386b7b90fd6bb529802324039d8dce4e9523",
+          "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts": "cfa55da662cac55b9193043061c5973732bf97e1fe11caf17743f78844b91710",
+          "apps/electron/src/renderer/components/app-shell/__tests__/compact-workspace-navigation.test.ts": "ec0f57e4a38072fdb7f39f4c372438784a8ba8acd2135200711a615c518543c9",
+          "apps/electron/src/renderer/components/app-shell/__tests__/connections-nav.test.ts": "bda2b9afb4e707eef912a018849e6499973b2d10709876613da0d41bd748d435",
+          "apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts": "db6ca51a11e27ede445863b0e98d1597b912c60b9bd082766b7a6ea69ba89218",
+          "apps/electron/src/renderer/components/app-shell/__tests__/notes-canonical-navigation.test.ts": "24f860d63eb8a1088ea21879a890d5589a6475ee378e6dfdcf6c11306ccd077a",
+          "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts": "7232661ae9985068f9e740e3375fdddc82785d264d31d152d2e760f0d9dcd23f",
+          "apps/electron/src/renderer/components/app-shell/__tests__/radius-everywhere.test.ts": "4c32251dc57bcc946aa41f67ba9af41627646576c0bb71b0278de710962edebf",
+          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "1683a5148a47e9de1b8ab8d6df97aa73bccba3d83d583941b44276ad88355336",
+          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "109afb7a943186b6f6fee5a16bb564cb4eb3a451be0ad35ca56e8a03b29e39fa",
+          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-navigation.test.ts": "7f9983b9e78c32976826baea3f42fd084c9a57cfb3ee9da167773e9564151072",
+          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.shell-callback.ts": "a2faba7fed4c05df6f5b233ba4b0ba1de31e36a7eaf5d92c0309162675181a89",
+          "apps/electron/src/renderer/components/app-shell/__tests__/sash-terminal-clearance.test.ts": "002fefdf199b1593d7626c6884339f6fccf47205ce1080914f67498bdf00e4a9",
+          "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts": "51e9e56b9c89fcb61ae6e0eccb0af73ec2fa6afdbfc82f31e149f9f534129da4",
+          "apps/electron/src/renderer/components/app-shell/compact-workspace-navigation.ts": "470c7a70400cee09713863ce2638594224b229c403ec30db1eedb856d15c5dae",
+          "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "95e9fe5e1a3ea1aeb87cca113b7921c90485142c699b2f2898f9133053381303",
+          "apps/electron/src/renderer/contexts/NavigationContext.tsx": "a8305d95e9bad4b0628b7775ea1cde4540844d1b1f2f9e8d42a093f96ee65dd9",
+          "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts": "2fa3f49188438a39981f60c505fe18fa122639bf788233eef8390f3976c6d371",
+          "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "7b1e11a7a78e75d174b41ca736a52a0ad82cc19c8f310ff8be21777593a8bbc6",
+          "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+          "apps/electron/src/renderer/platform/layout-snapshot.ts": "7ddddb3219994b3ecad254429d2207adda7b90d29a7f905b79d150839871b057",
+          "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "6221f39ef3d44b59b154677794c926b0ebfa28cfdab3eb01366ec3fa965ce379",
+          "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts": "b2126832e4d4da67d416a2b9721cfee084f5df09dfbbfb5cc0cea7ad2cd271fa",
+          "apps/electron/src/shared/route-parser.ts": "49c5001ca769ceb0b9beebc30a42f33d5f12fc2dba6bd498df5abefaccafb741",
+          "apps/electron/src/shared/types.ts": "3599d06642af88d0367e0589880bdc95bc69e18d7188ba4853d0be462f5bd72a",
+          "package.json": "3745122d57049c86eb4717c743f2ee0d5e64a5dabbd1074ab03fc884184613aa"
+        },
+        "reviewThread": "PRRT_kwDOTx7GeM6opANS",
+        "reviewComment": 4173760729,
+        "repairs": [
+          "Empty or whitespace JSON panel arrays and empty legacy CSV fall back to explicit focused route on initial/history reconciliation",
+          "Shared desktop and compact service panel matching uses strict resolver, preserves panel identities and refuses unavailable addresses",
+          "Tests execute actual named/sidebar callbacks and actual central service callback using real Jotai focus atoms; navigation is a recording sink"
+        ],
+        "evidence": [
+          {
+            "path": "67-GitHub-route-CI-red.log",
+            "originalCaptureSha256": "728f3d9a866b684611abcb8af8e21d0a774117e107c33c78294b6ed44597ea64",
+            "capturedFrom": "ui001-ci-route-ubuntu-dee3-job.raw.log"
+          },
+          {
+            "path": "68-service-focus-red.log",
+            "originalCaptureSha256": "ed7f245af4b26937689a0c6b4be2e3eb6f8a484dab11c39edf9ea7eb124f47df",
+            "capturedFrom": "ui001-live-68-service-focus-red.log"
+          },
+          {
+            "path": "69-empty-panels-red.log",
+            "originalCaptureSha256": "8e4bb2a56fe89bce9393ae38db44616e2fe9a0400ef63c6359a7a1d7a00c3441",
+            "capturedFrom": "ui001-live-69-empty-panels-red.log"
+          },
+          {
+            "path": "70-empty-panels-negative-control.log",
+            "originalCaptureSha256": "ab572ba81af61b62c3f0cb51cf638d88707df1fe2ab4360b2991bf8dbb1fad96",
+            "capturedFrom": "ui001-live-70-empty-panels-red-corrected-deadline.log"
+          },
+          {
+            "path": "71-current-main-callbacks-green.log",
+            "originalCaptureSha256": "f5be55a8166e6fb2e6018d8577a9dc6918bb04ca4e5b76f806b0b3839750c6cf",
+            "capturedFrom": "ui001-live-71-current-main-callbacks-green.log"
+          },
+          {
+            "path": "72-service-and-callbacks-green.log",
+            "originalCaptureSha256": "b710eb2919abf85652ff737de3ed6944048b3d53312d3e7b1a4ffc5d3fd8a921",
+            "capturedFrom": "ui001-live-72-service-and-callbacks-green.log"
+          },
+          {
+            "path": "73-combined-empty-browser-timeout.log",
+            "originalCaptureSha256": "281c3b0f347c0a58cc12bdba4edcfb4a7d151dc7db7ed1da6c3c53bea5e79a63",
+            "capturedFrom": "ui001-live-73-empty-and-service-browser-green.log"
+          },
+          {
+            "path": "75-empty-panels-browser-green.log",
+            "originalCaptureSha256": "5dc7b5c4ee9a063fdab9f4082312582c03cd833b7dd1140e5cd3444ba0db5e24",
+            "capturedFrom": "ui001-live-75-separated-empty-browser.log"
+          },
+          {
+            "path": "76-exact-CI-actual-callback-green.log",
+            "originalCaptureSha256": "c48a91f6387248d96fe622be889264fe3ab7de40e2cfe3e15fab9a8dd2304864",
+            "capturedFrom": "ui001-live-76-exact-ci-actual-callback.log"
+          },
+          {
+            "path": "74-Node-types-interrupted.log",
+            "originalCaptureSha256": "2bf40ccf2587f6267aa6ce736aac46ad426b8d51951919212d0fb604fc8b4a56",
+            "capturedFrom": "ui001-live-74-service-and-empty-types.log"
+          },
+          {
+            "path": "77-third-review-regression-green.log",
+            "originalCaptureSha256": "6b15532e09cce922ad3fc0f3059b6b786477b0646fae4ea48af25ebb341fd895",
+            "capturedFrom": "ui001-live-77-third-review-regression.log"
+          },
+          {
+            "path": "78-Bun-electron-types.log",
+            "originalCaptureSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "capturedFrom": "ui001-live-78-Bun-electron-types.log"
+          },
+          {
+            "path": "79-b697-integrated-regression-green.log",
+            "originalCaptureSha256": "d81e14e02042a2de4294951d44a7ace3ad581e3a244740924bd19b835114fae8",
+            "capturedFrom": "ui001-live-79-b697-integrated-regression.log"
+          }
+        ],
+        "qualifiedBun": "1.3.14",
+        "failureHistoryPreserved": true,
+        "fullDoDClosed": false,
+        "boundary": "Actual Chromium and actual protocol callbacks with declared fixture leaf/synthetic transport boundaries; installed Windows/macOS/hosted auth and backend matrix not observed",
+        "typeCompilerRetry": {
+          "stoppedOwnedPid": 26601,
+          "verifiedCommand": "node /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/node_modules/.bin/tsc --noEmit",
+          "reason": "17-minute Node compiler on contended host; retry exact frozen TypeScript compiler under qualified task-local Bun 1.3.14",
+          "replacement": "bun node_modules/typescript/bin/tsc --noEmit -p apps/electron/tsconfig.json",
+          "exitCode": 0,
+          "qualificationBoundary": "Run78 started on468eb81ed and completed after865d526c integration; fresh stable-source82 is the final graph gate."
+        },
+        "testResults": {
+          "Chromium": "16 pass / 0 fail / 261 assertions; actual NavigationProvider/URL/history/Jotai/menu/recovery; declared leaves are fixtures",
+          "exactGitHubAppShellCallbacks": "9 pass / 0 fail / 72 assertions; actual source 01723bb2; actual callbacks, actual focus atoms; recording navigation sink",
+          "regression": "563 pass / 0 fail / 83 explicit opt-in browser skips / 2363 assertions / 102 files",
+          "BunTypeCompiler": "78 exit0 with transition boundary; fresh final82 running",
+          "integratedRegression": "571 pass / 0 fail / 83 opt-in skips / 2395 assertions / 104 files",
+          "FinalPackageValidation": "80 running; prior full372/19 typegraph receipt retained",
+          "FinalRendererBuild": "81 running; prior build65 exit0 retained"
+        },
+        "reviewCompletion": {
+          "publishedSource": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
+          "rootComment": 4173760729,
+          "submittedReply": 4173912557,
+          "submittedReview": 5401649228,
+          "reviewState": "COMMENTED",
+          "isResolved": true,
+          "bodySha256": "a8c03ce2de5f772c804ecffb2764cc705b8ffb38dee7f2a8c87f07caba410ae8"
+        },
+        "currencyRepair": {
+          "plan": {
+            "head": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
+            "base": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
+            "conflictFingerprint": "c8d211d6e171a76f2dc0aa736251a6b89795caea1db3fd719b97deb10df5f220",
+            "preview": "6a389b75d005103c7bf98e66357eba68bbaeba9b\n100644 b00cdbdccfe3972c1ea710077761de0f028166b7 2\tapps/electron/src/renderer/components/app-shell/service-navigation.ts\n100644 4c1d0e4ecb764c3921509b5eee34a40a8f510b80 3\tapps/electron/src/renderer/components/app-shell/service-navigation.ts\n\nAuto-merging apps/electron/src/renderer/components/app-shell/AppShell.tsx\nAuto-merging apps/electron/src/renderer/components/app-shell/service-navigation.ts\nCONFLICT (add/add): Merge conflict in apps/electron/src/renderer/components/app-shell/service-navigation.ts\nAuto-merging docs/plan.md\nAuto-merging docs/spec.md\n",
+            "mechanicalIntent": "Preserve incoming shared desktop/compact API and actual focus atom verbatim; replace legacy parser with strict resolver and guard unknown destination. Exact incoming source differs only in these validated edits. No other manual resolution required.",
+            "directPushEvidence": "Normal push dee3 -> 468eb81ed succeeded and PR REST head readback equals468eb81ed",
+            "noPlausibleAlternative": "Both main and reviewed patch use the shared helper API; permissive parser is the actual reproduced defect, tests68/72/76/77 prove strict replacement."
+          },
+          "preflight": {
+            "head": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
+            "base": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
+            "localHead": "468eb81ed6f64ead3b2a36831ee8b38b325dc5a3",
+            "clean": true,
+            "directPushAuthority": "Normal non-force push 468eb81ed verified; same-repository branch owned by this task",
+            "exactMechanicalPreview": "ui001-currency11-plan.json"
+          },
+          "mergeCommit": "865d526c2a7d879d3bc400a1abc5e6f31ec77921",
+          "conflictSourcePreserved": "Incoming shared API/focus atom preserved except the validated strict-parser/guard edits",
+          "confirmation": "Pending normal push and exact host/base ancestry readback"
+        },
+        "integratedInputHead": "865d526c2a7d879d3bc400a1abc5e6f31ec77921",
+        "integratedBase": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
+        "workflowTypecheck": "Ubuntu/macOS matrix verifies the complete Electron TypeScript graph before browser/native callback fixtures"
       }
     ],
     "initialProductCommit": "bfed5d055da7209ce4ca8decb3c9f68fd6562cd5",
     "sourceCommitReceipt": "../result.json final delivery receipt; source hashes below bind this pre-publication phase",
     "reviewRepairFinal": "review-repair-final.json",
-    "reviewRepairRound3": "review-repair-round3.json"
+    "reviewRepairRound3": "review-repair-round3.json",
+    "reviewRepairRound4": "review-repair-round4.json"
   },
   "leadOwnedGapsHistory": [
     "NavigationContext resolves explicit missing/cross-workspace sessions to unrelated auto-selected chat",

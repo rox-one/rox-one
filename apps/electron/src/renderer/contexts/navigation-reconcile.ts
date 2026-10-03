@@ -23,15 +23,15 @@ export function parsePanelEntriesFromUrl(value: string): UrlPanelEntry[] {
   if (value.trimStart().startsWith('[')) {
     try {
       const entries: unknown = JSON.parse(value)
-      if (Array.isArray(entries) && entries.every(entry => Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string')) {
+      if (Array.isArray(entries) && entries.every(entry => Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string' && entry[0].trim().length > 0)) {
         return entries.map(([route, proportion]) => ({ route: route as ViewRoute, proportion: validProportion(proportion) }))
       }
-      return [{ route: value as ViewRoute, proportion: 0 }]
+      return []
     } catch {
-      return [{ route: value as ViewRoute, proportion: 0 }]
+      return []
     }
   }
-  return value.split(',').filter(Boolean).map(entry => {
+  return value.split(',').filter(entry => entry.trim().length > 0).map(entry => {
     const colon = entry.lastIndexOf(':')
     const proportion = colon > 0 ? validProportion(Number(entry.slice(colon + 1))) : 0
     return { route: (proportion > 0 ? entry.slice(0, colon) : entry) as ViewRoute, proportion }
