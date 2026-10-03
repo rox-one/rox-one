@@ -1,0 +1,412 @@
+{
+  "baselineSha": "192558583b3f7acc84e0636a4e5fc7ba8d9a7435",
+  "status": "proposed-instrumentation-map",
+  "note": "IDs and hooks are new. Candidate file paths must be inspected at exact controls before patching. Runtime presence is not asserted.",
+  "targets": {
+    "session.entry": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx"
+      ],
+      "integration": "Регистрировать существующий rendered boundary выбранной сессии/хода; не переписывать shared TurnCard и не использовать text selector."
+    },
+    "session.execution": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx"
+      ],
+      "integration": "Регистрировать существующий rendered boundary выбранной сессии/хода; не переписывать shared TurnCard и не использовать text selector."
+    },
+    "session.final-result": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx"
+      ],
+      "integration": "Регистрировать существующий rendered boundary выбранной сессии/хода; не переписывать shared TurnCard и не использовать text selector."
+    },
+    "session.tool-result": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx"
+      ],
+      "integration": "Регистрировать существующий rendered boundary выбранной сессии/хода; не переписывать shared TurnCard и не использовать text selector."
+    },
+    "session.new": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/FabNewChat.tsx",
+        "apps/electron/src/renderer/components/app-shell/SessionList.tsx"
+      ],
+      "integration": "Существующий control/list; глобальный дубликат в AppShell инструментирует A0."
+    },
+    "session.list": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/FabNewChat.tsx",
+        "apps/electron/src/renderer/components/app-shell/SessionList.tsx"
+      ],
+      "integration": "Существующий control/list; глобальный дубликат в AppShell инструментирует A0."
+    },
+    "composer.input": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/InputContainer.tsx"
+      ],
+      "integration": "Трассировать текущий control и compose существующие refs; не заменять input/send handler."
+    },
+    "composer.send": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/InputContainer.tsx"
+      ],
+      "integration": "Трассировать текущий control и compose существующие refs; не заменять input/send handler."
+    },
+    "composer.attach": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/InputContainer.tsx"
+      ],
+      "integration": "Трассировать текущий control и compose существующие refs; не заменять input/send handler."
+    },
+    "composer.attachments": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/InputContainer.tsx"
+      ],
+      "integration": "Трассировать текущий control и compose существующие refs; не заменять input/send handler."
+    },
+    "composer.permissions": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx"
+      ],
+      "integration": "Register regular и compact; session.project также нужен сценарию A5, но файл меняет только A4."
+    },
+    "session.status": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx"
+      ],
+      "integration": "Register regular и compact; session.project также нужен сценарию A5, но файл меняет только A4."
+    },
+    "session.labels": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx"
+      ],
+      "integration": "Register regular и compact; session.project также нужен сценарию A5, но файл меняет только A4."
+    },
+    "session.project": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx"
+      ],
+      "integration": "Register regular и compact; session.project также нужен сценарию A5, но файл меняет только A4."
+    },
+    "composer.model": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/input/CompactModelSelector.tsx"
+      ],
+      "integration": "Target поставляет A4; модель/AI контент и settings adapter — A7."
+    },
+    "composer.directory": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/input/WorkingDirectorySelector.tsx"
+      ],
+      "integration": "Существующий cwd control; не обходить разрешения и не обещать sandbox."
+    },
+    "composer.voice": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/input/VoiceDictationControl.tsx"
+      ],
+      "integration": "Явное управление записью; route/capability и нативный permission handoff."
+    },
+    "permission.request": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx"
+      ],
+      "integration": "Приоритет реального решения выше обучения; разрешение/отказ остаются native."
+    },
+    "permission.actions": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx"
+      ],
+      "integration": "Приоритет реального решения выше обучения; разрешение/отказ остаются native."
+    },
+    "agents.summary": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/pages/extra-screens/agents/AgentCenterPage.tsx"
+      ],
+      "integration": "Использовать реальные ready/unavailable snapshot; не менять лимиты и стопы."
+    },
+    "agents.budget": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/pages/extra-screens/agents/AgentCenterPage.tsx"
+      ],
+      "integration": "Использовать реальные ready/unavailable snapshot; не менять лимиты и стопы."
+    },
+    "sessions.view-switcher": {
+      "owner": "A4",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/collection/CollectionViewCycleButton.tsx"
+      ],
+      "integration": "Подтвердить фактический caller в checkout; не подменять переключатель произвольной кнопкой."
+    },
+    "workspace.switcher": {
+      "owner": "A0",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx",
+        "apps/electron/src/renderer/components/app-shell/WorkspaceIconRail.tsx"
+      ],
+      "integration": "Shell target; выбрать видимый variant. App.tsx/AppShell.tsx остаются у A0."
+    },
+    "settings.ai": {
+      "owner": "A7",
+      "files": [
+        "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx"
+      ],
+      "integration": "LLM settings surface, не Connection Fabric."
+    },
+    "sources.list": {
+      "owner": "A7",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/SourcesListPanel.tsx"
+      ],
+      "integration": "Реальный список, не обязательная установка всех MCP."
+    },
+    "source.status": {
+      "owner": "A7",
+      "files": [
+        "apps/electron/src/renderer/pages/SourceInfoPage.tsx"
+      ],
+      "integration": "Проверенные статус/инструменты; не считать selected равным connected."
+    },
+    "composer.sources": {
+      "owner": "A7",
+      "files": [
+        "apps/electron/src/renderer/components/ui/SourceSelectorPopover.tsx",
+        "apps/electron/src/renderer/components/ui/CompactSourceSelector.tsx"
+      ],
+      "integration": "Существующий selector; ref относится к trigger, не portal body без scope."
+    },
+    "skills.list": {
+      "owner": "A7",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx"
+      ],
+      "integration": "Readiness навыков и каталог."
+    },
+    "composer.skills": {
+      "owner": "A7",
+      "files": [
+        "apps/electron/src/renderer/components/ui/SkillSelectorPopover.tsx"
+      ],
+      "integration": "Существующий skill control; не менять FreeFormInput, принадлежащий A4."
+    },
+    "projects.list": {
+      "owner": "A5",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx",
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx"
+      ],
+      "integration": "Проверить native create/select и актуальное состояние проекта."
+    },
+    "tasks.quick-entry": {
+      "owner": "A5",
+      "files": [
+        "apps/electron/src/renderer/pages/TasksPage.tsx",
+        "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+        "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx"
+      ],
+      "integration": "Создание PersonalTask и delegation, а не board/session."
+    },
+    "tasks.delegate": {
+      "owner": "A5",
+      "files": [
+        "apps/electron/src/renderer/pages/TasksPage.tsx",
+        "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+        "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx"
+      ],
+      "integration": "Создание PersonalTask и delegation, а не board/session."
+    },
+    "pages.host": {
+      "owner": "A6",
+      "files": [
+        "apps/electron/src/renderer/components/pages/PageView.tsx",
+        "apps/electron/src/renderer/components/pages/PagesHome.tsx"
+      ],
+      "integration": "Только host chrome: no iframe inspection/reparent/grants."
+    },
+    "pages.freshness": {
+      "owner": "A6",
+      "files": [
+        "apps/electron/src/renderer/components/pages/PageView.tsx",
+        "apps/electron/src/renderer/components/pages/PagesHome.tsx"
+      ],
+      "integration": "Только host chrome: no iframe inspection/reparent/grants."
+    },
+    "notes.create": {
+      "owner": "A6",
+      "files": [
+        "apps/electron/src/renderer/pages/NotesPage.tsx"
+      ],
+      "integration": "Native Notes; подтверждение записи от действующего save path."
+    },
+    "notes.editor": {
+      "owner": "A6",
+      "files": [
+        "apps/electron/src/renderer/pages/NotesPage.tsx"
+      ],
+      "integration": "Native Notes; подтверждение записи от действующего save path."
+    },
+    "memory.list": {
+      "owner": "A6",
+      "files": [
+        "apps/electron/src/renderer/components/memory/MemoryScreen.tsx"
+      ],
+      "integration": "Scope и редактирование; старый OnboardingDialog изменяет только A0."
+    },
+    "memory.scope": {
+      "owner": "A6",
+      "files": [
+        "apps/electron/src/renderer/components/memory/MemoryScreen.tsx"
+      ],
+      "integration": "Scope и редактирование; старый OnboardingDialog изменяет только A0."
+    },
+    "memory.editor": {
+      "owner": "A6",
+      "files": [
+        "apps/electron/src/renderer/components/memory/MemoryScreen.tsx"
+      ],
+      "integration": "Scope и редактирование; старый OnboardingDialog изменяет только A0."
+    },
+    "search.input": {
+      "owner": "A6",
+      "files": [
+        "apps/electron/src/renderer/pages/SearchPage.tsx"
+      ],
+      "integration": "Учитывать версии query/workspace и stale results."
+    },
+    "search.results": {
+      "owner": "A6",
+      "files": [
+        "apps/electron/src/renderer/pages/SearchPage.tsx"
+      ],
+      "integration": "Учитывать версии query/workspace и stale results."
+    },
+    "inbox.list": {
+      "owner": "A10",
+      "files": [
+        "apps/electron/src/renderer/pages/InboxPage.tsx"
+      ],
+      "integration": "Разделять triage и реальные действия; empty state — отдельная ветвь."
+    },
+    "inbox.actions": {
+      "owner": "A10",
+      "files": [
+        "apps/electron/src/renderer/pages/InboxPage.tsx"
+      ],
+      "integration": "Разделять triage и реальные действия; empty state — отдельная ветвь."
+    },
+    "feed.sources": {
+      "owner": "A10",
+      "files": [
+        "apps/electron/src/renderer/pages/FeedPage.tsx",
+        "apps/electron/src/renderer/pages/feed/FeedSources.tsx",
+        "apps/electron/src/renderer/pages/feed/FeedParts.tsx"
+      ],
+      "integration": "Подтвердить фактический mutation handler перед emit; не fake articles."
+    },
+    "feed.reader": {
+      "owner": "A10",
+      "files": [
+        "apps/electron/src/renderer/pages/FeedPage.tsx",
+        "apps/electron/src/renderer/pages/feed/FeedSources.tsx",
+        "apps/electron/src/renderer/pages/feed/FeedParts.tsx"
+      ],
+      "integration": "Подтвердить фактический mutation handler перед emit; не fake articles."
+    },
+    "meetings.list": {
+      "owner": "A11",
+      "files": [
+        "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+        "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx"
+      ],
+      "integration": "Только доступные встречи/артефакты, запись не включать."
+    },
+    "meetings.artifacts": {
+      "owner": "A11",
+      "files": [
+        "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+        "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx"
+      ],
+      "integration": "Только доступные встречи/артефакты, запись не включать."
+    },
+    "automation.trigger": {
+      "owner": "A11",
+      "files": [
+        "apps/electron/src/renderer/components/automations/AutomationEditor.tsx"
+      ],
+      "integration": "Контрольный toggle действует сразу; never auto click."
+    },
+    "automation.action": {
+      "owner": "A11",
+      "files": [
+        "apps/electron/src/renderer/components/automations/AutomationEditor.tsx"
+      ],
+      "integration": "Контрольный toggle действует сразу; never auto click."
+    },
+    "automation.controls": {
+      "owner": "A11",
+      "files": [
+        "apps/electron/src/renderer/components/automations/AutomationEditor.tsx"
+      ],
+      "integration": "Контрольный toggle действует сразу; never auto click."
+    },
+    "connections.services": {
+      "owner": "A7",
+      "files": [
+        "apps/electron/src/renderer/pages/ConnectionsPage.tsx"
+      ],
+      "integration": "workgraph capabilities, masked data, без автоимпорта и grant."
+    },
+    "connections.audit": {
+      "owner": "A7",
+      "files": [
+        "apps/electron/src/renderer/pages/ConnectionsPage.tsx"
+      ],
+      "integration": "workgraph capabilities, masked data, без автоимпорта и grant."
+    },
+    "learning.library": {
+      "owner": "A0",
+      "files": [
+        "apps/electron/src/renderer/pages/settings/LearningSettingsPage.tsx"
+      ],
+      "integration": "Новый native settings page; reset только обучения."
+    },
+    "learning.preferences": {
+      "owner": "A0",
+      "files": [
+        "apps/electron/src/renderer/pages/settings/LearningSettingsPage.tsx"
+      ],
+      "integration": "Новый native settings page; reset только обучения."
+    }
+  },
+  "latestMainDelta": "latest-main-delta.json",
+  "latestObservedHead": "d8c92f96363f47e0b72e7296a36aa23a9227a691"
+}
