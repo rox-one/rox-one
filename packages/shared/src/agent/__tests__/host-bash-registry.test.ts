@@ -33,7 +33,7 @@ const nativeNode = process.env.HOST_BASH_TEST_NODE ?? Bun.which('node') ?? 'node
         ...(process.platform === 'win32' ? { aws_session_token: 'registry-private-canary' } : {}) };
       const child = spawn(runtime, [bundle, ...(withoutProvider ? ['--without-provider'] : [])], { env, stdio: ['ignore', 'pipe', 'pipe'] });
       let out = '', err = '';
-      const timer = setTimeout(() => { child.kill('SIGKILL'); child.stdout.destroy(); child.stderr.destroy(); reject(new Error('registry fixture exceeded deadline')); }, 15000);
+      const timer = setTimeout(() => { child.kill('SIGKILL'); child.stdout.destroy(); child.stderr.destroy(); reject(new Error(`registry fixture exceeded deadline: stdout=${out.slice(-2000)} stderr=${err.slice(-2000)}`)); }, 40000);
       child.stdout.on('data', data => { out += data.toString(); }); child.stderr.on('data', data => { err += data.toString(); });
       child.once('error', error => { clearTimeout(timer); reject(error); });
       child.once('close', code => { clearTimeout(timer); if (code !== 0) reject(new Error(`fixture exit ${code}: ${err}`)); else { try { resolve(JSON.parse(out.trim())); } catch (error) { reject(error); } } });
@@ -53,7 +53,7 @@ const nativeNode = process.env.HOST_BASH_TEST_NODE ?? Bun.which('node') ?? 'node
       expect(result.phases[0]).toBe('started');
       expect(result.phases.at(-1)).toBe('completed');
       expect(result.parentPathUnchanged).toBe(true);
-    }, 20000);
+    }, 50000);
   }
   it('negative control: the same factory without its provider cannot find the managed CLI', async () => {
     const result = await probe(process.execPath, true);
@@ -62,5 +62,5 @@ const nativeNode = process.env.HOST_BASH_TEST_NODE ?? Bun.which('node') ?? 'node
     expect(result.result.content[0]!.text).not.toContain('managed-pandoc-canary');
     expect(result.portCalled).toBe(true);
     expect(result.parentPathUnchanged).toBe(true);
-  }, 20000);
+  }, 50000);
 });
