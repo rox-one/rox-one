@@ -1,0 +1,137 @@
+{
+  "scope": "Original1436 Knowledge fast-path through actual current Home and NotebookTree, preserving native authority and Rox Notes routes",
+  "source_pr": 1436,
+  "source_revision": "384843bfc4cf7d4a1f34c902a66a9a3198043c9f",
+  "source_base": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+  "qualified_source_revision": "b55a680e66040322cde79f8491060dc9964489d8",
+  "reconciled_revision": "a760d8e830cb06b7cbe60e918d80a9b0dbcf7d5a",
+  "reconciled_main": "2338adb95cb986157f9c14dbf949c2d19b26f65a",
+  "production_fingerprints": [
+    {
+      "path": "apps/electron/src/renderer/knowledge/KnowledgeHome.tsx",
+      "sha256": "70571b7acc8dccb31a75b6746a55c603e5e28e455d590229741b6a57d9d6f25e",
+      "qualified_bytes_unchanged_on_reconciled_source": true
+    },
+    {
+      "path": "apps/electron/src/renderer/knowledge/KnowledgeNotebookTree.tsx",
+      "sha256": "dd7bc27958f5578a32a5db04d809db7b966eb5cd13105f3a433ee710e76e8f51",
+      "qualified_bytes_unchanged_on_reconciled_source": true
+    },
+    {
+      "path": "apps/electron/src/renderer/knowledge/kernel-availability.ts",
+      "sha256": "e1e44eab16f5f6a9b819dabcdf60219b66100ba2c77626ca2fdc742734a2ce12",
+      "qualified_bytes_unchanged_on_reconciled_source": true
+    }
+  ],
+  "verification": [
+    {
+      "scope": "All non-browser Knowledge logic",
+      "pass": 123,
+      "fail": 0,
+      "assertions": 296,
+      "files": 14,
+      "exit": 0,
+      "log": "knowledge-availability-frozen-units.log.gz"
+    },
+    {
+      "scope": "Actual mounted current KnowledgeHome and KnowledgeNotebookTree with real React/Jotai/Chromium DOM; controlled native RPC and shell navigation ports",
+      "pass": 5,
+      "fail": 0,
+      "bun_assertions": 21,
+      "exit": 0,
+      "log": "knowledge-availability-browser-final.log.gz"
+    },
+    {
+      "scope": "Full strict Electron typecheck using current own workspace package aliases",
+      "exit": 0,
+      "log": "knowledge-electron-types-first.log.gz"
+    },
+    {
+      "scope": "Frozen own source strict Electron incremental typecheck, own source bytes unchanged through reconciliation",
+      "exit": 0,
+      "log": "knowledge-electron-types-frozen.log.gz"
+    }
+  ],
+  "source_negatives": {
+    "original1436_global_cache": "A absent poisoned B and a different connection with only1status call; candidate isolates3calls/B=true. Reset old completion returned stale false before fresh; candidate waits current owner. JSON result/probe/snapshot retained.",
+    "pre_recovery_current_main_actual_DOM": "Same unchanged controlled fixture on6a; KnowledgeHome/Tree production blobs proved identical to pre-recoverybbba. Expected offline notebook calls0, received1:0pass1fail. Candidate full5pass0. Provisioning-only first missingPlaywright failure retained and not counted as behavioral proof."
+  },
+  "behavior": [
+    "30second confirmed hint; API identity/workspace/connection cache keys; implicit actor scope is uncached",
+    "3second renderer probe budget; unknown error/timeout/missing channel caches at most1second and never certifies absence",
+    "Shared native observer invalidates once before refresh; generation entry identity fences old completion",
+    "Local views/envelopes remain read while probepending/offline; no notebook/title fanout absent confirmed online",
+    "Tree current request tickets stop obsolete kernel fanout; Tree/Home workspace snapshots hide old private rows synchronously during render",
+    "Current Notes route, saved-view operations and native read authority preserved"
+  ],
+  "failure_history": [
+    "First browser2pass3fail: fixture used full ref ID instead of existing short label and lacked requiredviewRun for current views API; corrected fixture only. Real stale positiveprobe then started obsolete notebook call; fixed loader isCurrent fences and meaningful unit/actual event controls.",
+    "Initial sourcecache and currentmain negatives kept; missingPlaywright was corrected with thirdpartycache plus baseline-owned workspace aliases.",
+    "Whole duplicate renderer build was stopped while transforming after~10minutes under host load (ownedPID45522,exit143), to leave full assembled build to lead. No compiler/product error or successful full renderer claim. Actual affected current consumers compiled/executed through Vite in all5 browser controls.",
+    "Incoming2338 reports contain original trailing whitespace; preserved original dated evidence instead of rewriting it. Diff check scoped to own source/docs has noerrors."
+  ],
+  "limits": [
+    "No native external Knowledge service or installed/native/release feature acceptance",
+    "Renderer timeout cannot cancel the underlying native probe; late result is discarded from cached entry",
+    "Availability cache is a hint, not credential/permission/evidence cache; actual native calls remain authoritative",
+    "Whole old source singleton and unusedisKernelKnownUnavailable helper are not imported",
+    "Full assembled renderer build is owned by lead; this receipt does not claim it succeeded"
+  ],
+  "environment": {
+    "bun": "1.3.14",
+    "node": "22.23.3",
+    "chromium": "1243 Google Chrome for Testing arm64, headless owned fixture; clean profiles",
+    "native_data": "Synthetic controlled RPC only; no installed credentials read"
+  },
+  "logs": [
+    {
+      "path": "knowledge-availability-units-first.log.gz",
+      "uncompressed_sha256": "83b58bae4a3ef340a4f692ba58ba841b027f42e700fd77cd55eb412e3719c227"
+    },
+    {
+      "path": "knowledge-availability-units-final.log.gz",
+      "uncompressed_sha256": "2231dccff05de223071e6558e3908e599f745732229b20ee9abf99438f9646a1"
+    },
+    {
+      "path": "knowledge-availability-frozen-units.log.gz",
+      "uncompressed_sha256": "9ffb1b2ba4a322971244db3c3d89e27a1c51826edb4bd4d198729c95161976f3"
+    },
+    {
+      "path": "knowledge-availability-browser-first.log.gz",
+      "uncompressed_sha256": "03ae866d38a3e3f08fd77bb3975812a30648f9ed84c2afb98b2b783d3f440399"
+    },
+    {
+      "path": "knowledge-availability-browser-second.log.gz",
+      "uncompressed_sha256": "745b7478bcf33331042d32ad8d2a282f8b449f34d60d1fdc98765f52e33f6031"
+    },
+    {
+      "path": "knowledge-availability-browser-final.log.gz",
+      "uncompressed_sha256": "2a63b8702a051879d20ce23d5244fa85aae35c7c0fa7ec0f68362c927e8176b8"
+    },
+    {
+      "path": "knowledge-current-main-dom-negative.log.gz",
+      "uncompressed_sha256": "16695883fd14746e92bf0a5a7cea99dfefccd012dda60fd1c412d2713a4248a5"
+    },
+    {
+      "path": "knowledge-current-main-dom-negative-bound.log.gz",
+      "uncompressed_sha256": "45e3acb4262131272b40b07addd78f487c6d43298a91d8f3841367a49c65ff9d"
+    },
+    {
+      "path": "knowledge-electron-types-first.log.gz",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "knowledge-electron-types-frozen.log.gz",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "knowledge-renderer-build.log.gz",
+      "uncompressed_sha256": "93c8a88cc5053a350e5b233718f24987262d292f3794933cfc78f0259241767c"
+    }
+  ],
+  "docs_preservation": {
+    "spec": "fresh2338 content plus own6lines/-0",
+    "plan": "fresh2338 content plus own7lines/-0"
+  },
+  "created_at_utc": "2026-10-03T21:52:02.051496+00:00"
+}
