@@ -154,5 +154,21 @@
     "This proves the exact changed date/parser/form/persistence seam. It is not full application, OS, account/provider, or all Golden program acceptance.",
     "No new user-facing labels; existing translation keys and all locale files remain unchanged.",
     "Original branches are preserved."
-  ]
+  ],
+  "reconciliation": {
+    "main_revision": "57871f492d1b21177ab767454d90395d72496b4e",
+    "merge_revision": "8e41e7d1a9d2b2ba881d1ce970b8cc6d51442eb5",
+    "all_nine_qualified_source_fingerprints_unchanged": true,
+    "docs_against_current_main": {
+      "spec": {
+        "added": 5,
+        "deleted": 0
+      },
+      "plan": {
+        "added": 5,
+        "deleted": 0
+      }
+    },
+    "note": "Normal current-main merge preserves all current UI-001 route sections; date-owned docs append only. No requalification claimed for unrelated current-main source paths."
+  }
 }
