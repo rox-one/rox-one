@@ -56,6 +56,7 @@ export function Info_Page({loading,error,empty,children}) {
 const Section=({children,title,actions})=><div>{title}{actions}{children}</div>;
 Info_Page.Header=Section; Info_Page.Content=Section; Info_Page.Hero=Section;
 export const Info_Section=Section,Info_Table=Section,Info_Alert=Section;
+export const Tooltip=Section,TooltipContent=Section,TooltipTrigger=Section;
 Info_Table.Row=({label,value,children})=><div>{label}{value}{children}</div>;
 export const PermissionsDataTable=()=>null,ToolsDataTable=()=>null;
 export const EditPopover=({trigger})=>trigger??null,getEditConfig=()=>({});
@@ -111,6 +112,10 @@ window.ui001.render({});` : ''}
     plugins: [{ name: 'UI-001 component boundaries', setup(build) {
       build.onResolve({ filter: /^rox-ui001-bindings$/ }, () => ({ path: 'bindings', namespace: 'ui001' }))
       build.onResolve({ filter: /.*/ }, args => {
+        if (/\/components\/ui\/source-status-indicator\.tsx$/.test(args.importer)) {
+          if (args.path === '@rox/ui') return { path: 'entity-ui', namespace: 'ui001' }
+          if (args.path === 'react-i18next') return { path: 'bindings', namespace: 'ui001' }
+        }
         if (options.realNavigation && /\/contexts\/NavigationContext\.tsx$/.test(args.importer)
           && ['react-i18next', 'sonner'].includes(args.path)) return { path: 'bindings', namespace: 'ui001' }
         if (options.realEntityPages && /\/pages\/(SourceInfoPage|SkillInfoPage)\.tsx$/.test(args.importer)) {
