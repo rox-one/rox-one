@@ -83,7 +83,7 @@ export function MoveDialog({
                 className={cn(
                   'flex h-7 w-full items-center gap-2 rounded-[6px] px-2 text-left text-[13px] outline-none',
                   dest.indent && 'pl-6',
-                  index === active ? 'bg-accent/15 font-semibold shadow-[inset_2px_0_0_var(--accent)]' : 'hover:bg-foreground/[0.05]',
+                  index === active ? 'bg-accent/15 font-semibold ring-2 ring-inset ring-accent' : 'hover:bg-foreground/[0.05]',
                 )}
               >
                 <span className="min-w-0 flex-1 truncate">{dest.label}</span>
