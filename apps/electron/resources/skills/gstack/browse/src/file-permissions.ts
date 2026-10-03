@@ -365,7 +365,7 @@ function writePrivateDescriptor(filePath: string, data: string | NodeJS.ArrayBuf
   const fd = fs.openSync(filePath, flags, 0o600);
   try {
     const stat = fs.fstatSync(fd);
-    if (!stat.isFile()) throw new Error('Refusing non-regular private state file');
+    if (!stat.isFile() || stat.nlink !== 1) throw new Error('Refusing non-regular or hard-linked private state file');
     const uid = process.geteuid?.() ?? process.getuid?.();
     if (uid !== undefined && stat.uid !== uid) throw new Error('Refusing foreign-owned private state file');
     if (process.platform === 'win32') {

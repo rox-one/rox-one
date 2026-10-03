@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdtempSync, readFileSync, statSync, writeFileSync, symlinkSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, statSync, writeFileSync, symlinkSync, linkSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -56,6 +56,11 @@ for (const copy of ['', 'gstack']) {
         symlinkSync(target, link);
         expect(() => writeSecureFile(link, 'clobber')).toThrow();
         expect(() => appendSecureFile(link, 'clobber')).toThrow();
+        expect(readFileSync(target, 'utf8')).toBe('new+append');
+        const hard = join(dir, 'hard');
+        linkSync(target, hard);
+        expect(() => writeSecureFile(hard, 'clobber')).toThrow();
+        expect(() => appendSecureFile(hard, 'clobber')).toThrow();
         expect(readFileSync(target, 'utf8')).toBe('new+append');
       } finally { rmSync(dir, { recursive: true, force: true }); }
     });
