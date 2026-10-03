@@ -233,7 +233,7 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, deps: Ha
     }
     const capability = deps.browserCredentials.capabilities(profile)
     return deps.browserCredentials.vaultKeys.available() ? capability : { ...capability, supported: false, reason: 'browser-credential-vault-unavailable' }
-  })
+  }, { access: 'localElectron' })
 
   server.handle(
     RPC_CHANNELS.browserProfile.IMPORT,
@@ -318,6 +318,7 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, deps: Ha
         }
       }
     },
+    { access: 'localElectron' },
   )
 
   server.handle(RPC_CHANNELS.browserProfile.ROLLBACK, (_ctx, args: { workspaceId: string; token: string }) => {
