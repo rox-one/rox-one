@@ -23,6 +23,9 @@ describe('DOMAIN-06 selection and readiness stay separate', () => {
     expect(sourceReadiness(source('a', { mcp: { transport: 'stdio', command: 'unused', authType: 'none' } }), false).state).toBe('unavailable')
     expect(sourceReadiness(source('a', { mcp: { transport: 'http', authType: 'oauth' }, isAuthenticated: false })).state).toBe('denied')
   })
+  test('source from another workspace cannot provide readiness', () => {
+    expect(connectionCapabilities({ sources: [source('a')], workspaceId: 'other', selectedSlugs: ['a'] })['sources.ready']).toEqual({ state: 'unavailable', reason: 'missing-entity' })
+  })
   test('T-SOURCES-SELECT exact requested payload supports both selection and removal', () => {
     expect(toggleSourceSelection(['b'], 'a')).toEqual(['b', 'a'])
     expect(toggleSourceSelection(['b', 'a'], 'a')).toEqual(['b'])

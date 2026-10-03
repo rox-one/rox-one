@@ -74,6 +74,7 @@ export default function ConnectionsPage() {
   const auditTarget = useTourTarget('connections.audit', { workspaceId: workspace?.id })
   const tour = useTourSignals({ workspaceId: workspace?.id })
   const auditObservation = useRef<TourObservation | null>(null)
+  const auditViewReady = useRef(false)
   const [auditSurface, setAuditSurface] = useState<SurfaceState | 'loading'>('loading')
   const [tab, setTab] = useState<ConnectionsTab>('services')
   const [selected, setSelected] = useAtom(selectedConnectionAtom)
@@ -191,19 +192,22 @@ export default function ConnectionsPage() {
   }, [tab, workspace?.id])
 
   useEffect(() => {
-    const fabric = rowsWorkspaceId !== workspace?.id ? 'loading' : surface !== 'ready' ? surface : rows === null ? 'loading' : tab === 'audit' ? auditSurface : 'ready'
+    const fabric = surface !== 'ready' ? surface : rowsWorkspaceId !== workspace?.id || rows === null ? 'loading' : tab === 'audit' ? auditSurface : 'ready'
     return tour.capability('connection-fabric.available', connectionCapabilities({ fabric })['connection-fabric.available']!)
   }, [tour, surface, rows, tab, auditSurface, rowsWorkspaceId, workspace?.id])
 
+  auditViewReady.current = tab === 'audit' && surface === 'ready' && rows !== null && auditSurface === 'ready' && rowsWorkspaceId === workspace?.id && auditWorkspaceId === workspace?.id
   useEffect(() => {
-    if (tab !== 'audit' || surface !== 'ready' || rows === null || auditSurface !== 'ready' || rowsWorkspaceId !== workspace?.id || auditWorkspaceId !== workspace?.id) return
-    const current = tour.capture()
-    const captured = auditObservation.current
-    // An outstanding native read retains its original attempt; the ready view
-    // can be observed again when a new tour opens on the already rendered tab.
-    const observation = captured?.binding.runToken === current?.binding.runToken ? captured : current
-    tour.emit(observation, 'connections.audit-visible', 'observed', 'ui-observation')
+    if (!auditViewReady.current) return
+    // The native read keeps the attempt captured before it began. A late
+    // completion must never be stamped with a replacement tour's binding.
+    tour.emit(auditObservation.current, 'connections.audit-visible', 'observed', 'ui-observation')
   }, [tour, tab, surface, rows, auditSurface, rowsWorkspaceId, auditWorkspaceId, workspace?.id])
+  useEffect(() => {
+    // Starting a tour on an already loaded Audit view is a new visibility
+    // observation; a read that is still pending cannot enter this branch.
+    if (auditViewReady.current) tour.emit(tour.capture(), 'connections.audit-visible', 'observed', 'ui-observation')
+  }, [tour])
 
   const refreshRows = async (workspaceId: string) => {
     const listConnections = window.electronAPI?.workgraph?.listConnections

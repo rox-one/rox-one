@@ -37,6 +37,7 @@ export function sourceReadiness(source: LoadedSource, localMcpEnabled = true): T
 
 export interface ConnectionCapabilityInput {
   readonly sources?: readonly LoadedSource[]
+  readonly workspaceId?: string
   readonly selectedSlugs?: readonly string[]
   readonly sourcesLoading?: boolean
   readonly sourcesUnavailable?: boolean
@@ -49,7 +50,8 @@ export function connectionCapabilities(input: ConnectionCapabilityInput): Capabi
   const capabilities: Partial<Record<keyof CapabilitySnapshot, TourCapability>> = {}
   if (input.sources) {
     capabilities['sources.list'] = input.sourcesUnavailable ? { state: 'unavailable', reason: 'api-unavailable' } : input.sourcesLoading ? { state: 'pending', reason: 'installing' } : { state: 'ready' }
-    const selected = input.selectedSlugs ? input.sources.filter(source => input.selectedSlugs!.includes(source.config.slug)) : input.sources
+    const scoped = input.workspaceId ? input.sources.filter(source => source.workspaceId === input.workspaceId) : input.sources
+    const selected = input.selectedSlugs ? scoped.filter(source => input.selectedSlugs!.includes(source.config.slug)) : scoped
     const readiness = selected.map(source => sourceReadiness(source, input.localMcpEnabled))
     capabilities['sources.ready'] = readiness.some(state => state.state === 'ready') ? { state: 'ready' } : readiness.find(state => state.state === 'pending') ?? readiness[0] ?? { state: 'unavailable', reason: 'missing-entity' }
     if (input.sourcesLoading) capabilities['sources.ready'] = { state: 'pending', reason: 'installing' }
