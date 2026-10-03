@@ -120,7 +120,7 @@
       "owner": "A2",
       "releaseBlocking": true,
       "evidenceStatus": "PARTIAL_APPLICATION_EVIDENCE",
-      "verification": "Real Notes App stable target/mask offset<=2 CSS px after production Focus action PASS at finala49ef481. Prior112.4375px position-only layout regression reproduced and fixed at a0ff359a; six component cases also PASS. Full App90/100/125%zoom and nested-scroll matrix remain NOT_RUN."
+      "verification": "Real Notes App stable target/mask offset<=2 CSS px after production Focus action PASS at final c8d83576. Prior112.4375px position-only layout regression reproduced and fixed at a0ff359a; six component cases also PASS. Full App90/100/125%zoom and nested-scroll matrix remain NOT_RUN."
     },
     {
       "id": "UI-06",
@@ -128,7 +128,7 @@
       "owner": "A2",
       "releaseBlocking": true,
       "evidenceStatus": "PARTIAL_APPLICATION_EVIDENCE",
-      "verification": "Real Notes production Focus-control action retains target focus; ordinary keyboard Enter opens native product dialog and explicit user submission creates note PASS. Full keyboard-only draft/no-send/single-Escape matrix remains NOT_RUN."
+      "verification": "Real Notes production Focus-control action retains target focus; ordinary keyboard Enter opens production Notes dialog and explicit user submission creates note PASS. Full keyboard-only draft/no-send/single-Escape matrix remains NOT_RUN."
     },
     {
       "id": "UI-07",
@@ -176,7 +176,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs merge."
+      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
     },
     {
       "id": "DATA-02",
@@ -184,7 +184,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs merge."
+      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
     },
     {
       "id": "DATA-03",
@@ -192,7 +192,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs merge."
+      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
     },
     {
       "id": "DATA-04",
@@ -200,7 +200,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs merge."
+      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
     },
     {
       "id": "DATA-05",
@@ -208,7 +208,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs merge."
+      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
     },
     {
       "id": "DATA-06",
@@ -216,7 +216,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs merge."
+      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
     },
     {
       "id": "DATA-07",
@@ -224,7 +224,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs merge."
+      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
     },
     {
       "id": "DATA-08",
@@ -232,7 +232,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "PARTIAL_STORAGE_EVIDENCE",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs merge."
+      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
     },
     {
       "id": "DOMAIN-01",
@@ -448,7 +448,7 @@
       "owner": "A9",
       "releaseBlocking": true,
       "evidenceStatus": "NOT_RUN",
-      "verification": "Fresh Linux native runner at a49ef481 exit2, releaseBlocking true, native test exit null. macOS/Windows/system microphone cases NOT_RUN. Automated real Electron fresh-setup/no-auto-tour CI is implemented but not executed here; no native focus proof is claimed."
+      "verification": "Fresh Linux native runner at c8d83576 exit2, releaseBlocking true, native test exit null. macOS/Windows/system microphone cases NOT_RUN. Automated real Electron fresh-setup/no-auto-tour CI is implemented but not executed here; no native focus proof is claimed."
     },
     {
       "id": "NATIVE-02",
@@ -456,7 +456,7 @@
       "owner": "A9",
       "releaseBlocking": true,
       "evidenceStatus": "NOT_RUN",
-      "verification": "Fresh Linux native runner at a49ef481 exit2, releaseBlocking true, native test exit null. macOS/Windows/system microphone cases NOT_RUN. Automated real Electron fresh-setup/no-auto-tour CI is implemented but not executed here; no native focus proof is claimed."
+      "verification": "Fresh Linux native runner at c8d83576 exit2, releaseBlocking true, native test exit null. macOS/Windows/system microphone cases NOT_RUN. Automated real Electron fresh-setup/no-auto-tour CI is implemented but not executed here; no native focus proof is claimed."
     },
     {
       "id": "NATIVE-03",
@@ -464,7 +464,7 @@
       "owner": "A9",
       "releaseBlocking": true,
       "evidenceStatus": "NOT_RUN",
-      "verification": "Fresh Linux native runner at a49ef481 exit2, releaseBlocking true, native test exit null. macOS/Windows/system microphone cases NOT_RUN. Automated real Electron fresh-setup/no-auto-tour CI is implemented but not executed here; no native focus proof is claimed."
+      "verification": "Fresh Linux native runner at c8d83576 exit2, releaseBlocking true, native test exit null. macOS/Windows/system microphone cases NOT_RUN. Automated real Electron fresh-setup/no-auto-tour CI is implemented but not executed here; no native focus proof is claimed."
     },
     {
       "id": "BUILD-01",
@@ -472,7 +472,7 @@
       "owner": "A9",
       "releaseBlocking": true,
       "evidenceStatus": "BUILD_PASS",
-      "verification": "Renderer builds exit0 at c9b73303 baseline and clean a49ef481 candidate. Consistent Bun-gzip JS delta+153063 bytes(2.33%),raw+595646; CSSgzip-222/raw-3131. Six fixture markers absent. Candidate artifactSHA256 c7a6aaf2c3152124a712e3f97c565f11eca1a6da2b6cfa70655f3b927c2fc5a4. Mainline changes are included in this measured delta."
+      "verification": "Renderer builds exit0 at c9b73303 baseline and clean c8d83576 candidate. Consistent Bun-gzip JS delta +154807 bytes (2.36%), raw +601563; CSS gzip -222/raw -3131. Six fixture markers absent. Candidate artifact SHA256 eab4c0db06554d355315d8bfb0890a4e2373539bdd231ecca9291485fbac5c2f. Mainline changes are included in this measured delta."
     },
     {
       "id": "DELTA-01",
@@ -499,15 +499,15 @@
       "verification": "Required integrated application/native evidence has not yet been collected."
     }
   ],
-  "evidenceSnapshot": "Immutable integrated a49ef4812e456939bbe1bfe715d5a3d0c71b2856, 2026-10-03. Exact E2E and production renderer PASS. Root feature gate at7e0 remains historical with unchanged feature source; affected Surface Tabs checks and final App E2E repeated after main synchronization.",
+  "evidenceSnapshot": "Immutable integrated c8d83576cd56f90c5b6478aff25c2702de47b707, 2026-10-03. Exact E2E and production renderer PASS. Root feature gate at7e0 remains historical with unchanged feature source; affected Surface Tabs/Settings/service-focus checks and final App E2E repeated after main synchronization.",
   "applicationEvidence": {
     "command": "bun run test:product-tour:e2e",
-    "sourceSha": "a49ef4812e456939bbe1bfe715d5a3d0c71b2856",
+    "sourceSha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
     "exitCode": 0,
     "passed": 13,
     "failed": 0,
-    "durationSeconds": 107.558304,
-    "logPath": "/workspace/product-tour-a9-final-a49ef481-e2e.log",
+    "durationSeconds": 105.72621400000001,
+    "logPath": "/workspace/product-tour-a9-final-c8d83576-e2e.log",
     "environment": "Linux Chromium151, EN,1280x900,reduced motion; production App with isolated native-store and custody/IPC adapters"
   },
   "earlierStartupTimeout": {
