@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "workPackage": "UI-001 onboarding CI followup",
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "sourceRevision": "c33f00eed2adf22ad6da610325602d6dfa26af7b",
+  "sourceTree": "0390abb9ed19548b28254890dc52bfaf096fa4ae",
+  "testedUncommittedFixture": true,
+  "testedFixtureSha256": "99d21b60c02cc34fb890a134165ba195803fffa1d629db7562d0cac7ed6ef7ab",
+  "finalCommitBinding": "No final commit SHA embedded; delivery binding is recorded by the lead after commit/remote readback.",
+  "ownedChangedPaths": [
+    "packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/omp-onboarding-followup/**"
+  ],
+  "productSourceEditedByThisWorker": false,
+  "rootCause": "Incoming Pocket account authority made this older public-model transport fixture fail before child startup because it lacked roxExecutionContext.",
+  "repair": [
+    "Capture a fresh LOCAL_ROX_CALLER execution context using the existing in-memory Pocket fixture.",
+    "Restore the exact prior authority singleton and environment; isolate runtime profiles and observe profile disposal after destroy.",
+    "Retain every existing payload, model identity, negotiation, recovery and8s chat assertion.",
+    "Add a missing-context no-start negative control and exact error/frame checks for all10 malformed-peer cases.",
+    "Allow30s per test-case runner for setup plus bounded turns/disposal, while preserving every8s chat bound."
+  ],
+  "testCommands": [
+    {
+      "stage": "fail-closed-control",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "-e",
+        "import { resolveOmpExecutableOrExplain } from './packages/shared/src/toolchain-runtime.ts';\nimport { spawn } from 'node:child_process';\nconst executable = await resolveOmpExecutableOrExplain();\nif (executable !== process.env.OMP_CLI_PATH) throw Error('Override was not retained');\nawait new Promise((resolve,reject) => { const child=spawn(executable,[],{shell:false,windowsHide:true});\nchild.once('spawn',()=>reject(Error('Forbidden executable launched')));\nchild.once('error',error=>error.code==='ENOENT'?resolve(undefined):reject(error)); });\nconsole.log(JSON.stringify({executable,observedErrorCode:'ENOENT',spawned:false}));"
+      ],
+      "pid": 19729,
+      "observedExitCode": 0,
+      "durationSeconds": 1.1216318607330322,
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001-omp-ci/../expanded-omp-transport-fail-closed-control-c33f00e.log",
+      "logSha256": "b0102f6bc7e92867ec3b66b950237eb534306736957d82cd919b11de5b7c4b6f",
+      "reportedChildSummaries": []
+    },
+    {
+      "stage": "isolated-final",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts"
+      ],
+      "pid": 19787,
+      "observedExitCode": 0,
+      "durationSeconds": 32.199092864990234,
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001-omp-ci/../expanded-omp-transport-isolated-final-c33f00e.log",
+      "logSha256": "a9b685db2beb41669792dfa44b56a59312ce5f6ccf5a4716d1033b551d5e88ba",
+      "reportedChildSummaries": [
+        {
+          "pass": 18,
+          "skip": 0,
+          "fail": 0,
+          "errors": 0,
+          "assertions": 133
+        }
+      ]
+    },
+    {
+      "stage": "account-runtime-collision-final",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "--timeout",
+        "30000",
+        "./packages/shared/src/auth/__tests__/rox-account-authority.test.ts",
+        "./packages/shared/src/agent/__tests__/omp-public-runtime.test.ts",
+        "./packages/shared/src/agent/__tests__/omp-query-llm.test.ts",
+        "./packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts",
+        "./packages/shared/src/agent/__tests__/omp-permission-mode.test.ts",
+        "./packages/shared/src/agent/__tests__/omp-hidden-window.test.ts"
+      ],
+      "pid": 20660,
+      "observedExitCode": 0,
+      "durationSeconds": 27.70136284828186,
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001-omp-ci/../expanded-omp-transport-account-runtime-collision-final-c33f00e.log",
+      "logSha256": "04eb9c0069c4815f025124da16489be98d1e08564e83ccb948ec7c19d2427352",
+      "reportedChildSummaries": [
+        {
+          "pass": 58,
+          "skip": 0,
+          "fail": 0,
+          "errors": 0,
+          "assertions": 318
+        }
+      ]
+    }
+  ],
+  "toolchain": {
+    "bun": "1.3.14",
+    "node": "v24.21.0"
+  },
+  "inputHashesBefore": {
+    "packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts": "99d21b60c02cc34fb890a134165ba195803fffa1d629db7562d0cac7ed6ef7ab",
+    "packages/shared/src/agent/__tests__/omp-fake-cli.ts": "6368653751ee81dfc1fc2eff73ee90f8acfbf88f27023ecc5ad9dc28b2b182a3",
+    "packages/shared/src/agent/omp-agent.ts": "fbe2b095deedc6f26bf7458fac1594f5e8e5e43874c00f732da5ef06364449f6",
+    "packages/shared/src/agent/omp-rpc-transport.ts": "11015bcd3e12234f87317bc41380ffc721f7e193a8174efcbd53ac2121d8869d",
+    "packages/shared/src/auth/rox-account-authority.ts": "5a0366ae799c760451c1005afc1523531b342c48995b593985afa3dcb778b357",
+    "packages/shared/src/auth/__tests__/pocket-test-fixture.ts": "e23452fb96157d5212a8743fc10deb7e04e804db17a30eacc5a20456b0f99d17",
+    "packages/shared/src/toolchain-runtime.ts": "a2bf83ca696218dbfbcc731872404079b5906dcd252ccb7e1780529a906ed1a1",
+    "packages/shared/src/agent/__tests__/omp-hidden-window.test.ts": "86e295f9414cc82b671f129751de986d0f66ad577e8422ddff86b7cf14625382",
+    "packages/shared/src/agent/__tests__/omp-permission-mode.test.ts": "724d31736e5c7e5cb98bc63a0dbb9e79b9a6ae3931140f2dc39b4d8a02890e8d",
+    "package.json": "999100cd459b8f2cf3870997d8480207e51f0425d02a12f6a0ca1902f90f306a",
+    "bunfig.toml": "deeae6086535bc87b723805491fb04850c07c23f730fc8764137432cf15bd529",
+    "scripts/test-config-isolation.ts": "8b847732d8c6ef5f3e901914e8cf15178863ef5c1d68ae09a6d2958d94c5a373"
+  },
+  "inputHashesAfter": {
+    "packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts": "99d21b60c02cc34fb890a134165ba195803fffa1d629db7562d0cac7ed6ef7ab",
+    "packages/shared/src/agent/__tests__/omp-fake-cli.ts": "6368653751ee81dfc1fc2eff73ee90f8acfbf88f27023ecc5ad9dc28b2b182a3",
+    "packages/shared/src/agent/omp-agent.ts": "fbe2b095deedc6f26bf7458fac1594f5e8e5e43874c00f732da5ef06364449f6",
+    "packages/shared/src/agent/omp-rpc-transport.ts": "11015bcd3e12234f87317bc41380ffc721f7e193a8174efcbd53ac2121d8869d",
+    "packages/shared/src/auth/rox-account-authority.ts": "5a0366ae799c760451c1005afc1523531b342c48995b593985afa3dcb778b357",
+    "packages/shared/src/auth/__tests__/pocket-test-fixture.ts": "e23452fb96157d5212a8743fc10deb7e04e804db17a30eacc5a20456b0f99d17",
+    "packages/shared/src/toolchain-runtime.ts": "a2bf83ca696218dbfbcc731872404079b5906dcd252ccb7e1780529a906ed1a1",
+    "packages/shared/src/agent/__tests__/omp-hidden-window.test.ts": "86e295f9414cc82b671f129751de986d0f66ad577e8422ddff86b7cf14625382",
+    "packages/shared/src/agent/__tests__/omp-permission-mode.test.ts": "724d31736e5c7e5cb98bc63a0dbb9e79b9a6ae3931140f2dc39b4d8a02890e8d",
+    "package.json": "999100cd459b8f2cf3870997d8480207e51f0425d02a12f6a0ca1902f90f306a",
+    "bunfig.toml": "deeae6086535bc87b723805491fb04850c07c23f730fc8764137432cf15bd529",
+    "scripts/test-config-isolation.ts": "8b847732d8c6ef5f3e901914e8cf15178863ef5c1d68ae09a6d2958d94c5a373"
+  },
+  "inputsStable": true,
+  "timeouts": {
+    "previousImplicitCaseRunnerMs": 5000,
+    "transportCaseRunnerMs": 30000,
+    "transportChatMs": 8000,
+    "profileDisposalMs": 8000,
+    "collisionGlobalCaseRunnerMs": 30000,
+    "chatGuardEnvironmentOverride": null,
+    "qualification": "Outer case budget includes Pocket setup and subprocess disposal; recovery contains two independently8s turns. No transport or functional assertion weakened."
+  },
+  "fallbackGuard": {
+    "override": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001-omp-ci/../omp-forbidden-native-fallback",
+    "actualResolverRetainedOverride": true,
+    "actualSpawnError": "ENOENT",
+    "actualSpawnedExecutable": false,
+    "excludedTest": "omp-native-launch.test.ts"
+  },
+  "authStoresChanged": false,
+  "authStoresChangedScope": "Real user/global/auth source stores only; static isolation and temporary config roots were reviewed. This is not a global byte audit of unrelated actors.",
+  "temporaryStoresExercised": [
+    "Fresh in-memory Pocket authority records/bindings.",
+    "Per-run isolated ROX_CONFIG_DIR/CRAFT_CONFIG_DIR credential-manager fixture keys in existing public-runtime collision cases.",
+    "Per-case private runtime profiles and fake transcript workspace files."
+  ],
+  "qualification": [
+    "Currentc33 OmpAgent includes broader incoming launch-generation/runtime fixes, so earlier790 combined results do not establish current whole-product acceptance.",
+    "Exact local test:mcp-onboarding failed under host contention with preserved5s timeouts; no repeated overloaded local full run. Current guarded file and collision passed; unchanged full command remains a remote CI acceptance prerequisite.",
+    "Native runtime launch was observed only in the failed790 timeout cascade; provider interaction for that batch is unknown. Later final runs used the tested nonexistent fallback override and controlled protocol fixtures.",
+    "Primary0a full validation and earlier native8e proof remain independently revision-bound; this test-only followup does not extend native/platform acceptance."
+  ],
+  "externalPrerequisites": [
+    "Exact full test:mcp-onboarding command on the committed integrated candidate in GitHub Ubuntu CI.",
+    "Original installed Windows/macOS, hosted web and real-provider acceptance remain outside this fixture proof."
+  ],
+  "fullDoDClosed": false,
+  "failureHistory": "failure-history.json",
+  "logManifest": "log-manifest.json",
+  "createdAt": "2026-10-03T22:35:01.508159+00:00",
+  "observedExitCode": 0,
+  "noProviderCalls": true,
+  "noProviderCallsScope": "Final guarded fail-closed/isolated/collision runs only. Earlier failed790 combined batch had an observed native launch and unknown provider attempts.",
+  "failClosedOmpCliOverride": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001-omp-ci/../omp-forbidden-native-fallback",
+  "testSourceSha256": {
+    "packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts": "99d21b60c02cc34fb890a134165ba195803fffa1d629db7562d0cac7ed6ef7ab"
+  }
+}
