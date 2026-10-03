@@ -327,3 +327,23 @@ describe('capability and version policies', () => {
     expect(start(definition, { progress }).phase).toBe('blocked')
   })
 })
+
+describe('native operation continuity through an execution explanation', () => {
+  test('a UI observation cannot replace the accepted turn token before final delivery', () => {
+    const definition = tour([
+      step('first.send', { completion: signalPolicy('user-turn.accepted') }),
+      step('first.execution', { completion: signalPolicy('execution.state-visible', { evidence: 'observed', priorState: 'allow-current-state', requireAcknowledgementAfterEvidence: true }) }),
+      step('first.result', { completion: signalPolicy('user-turn.final-delivered', { priorState: 'same-attempt', requireAcknowledgementAfterEvidence: true }) }),
+    ])
+    let state = emit(show(start(definition)), signal('user-turn.accepted')).state
+    state = show(state)
+    state = emit(state, signal('execution.state-visible', { at: 120, level: 'observed', origin: 'ui-observation', operationToken: 'ui-snapshot' })).state
+    expect(state.attempt?.operationToken).toBe('operation-1')
+    state = click(state, 'ACK', 125).state
+    state = show(state)
+    state = emit(state, signal('user-turn.final-delivered', { at: 130, operationStartedAt: 105 })).state
+    expect(state.attemptEvidence['first.result']?.level).toBe('verified')
+    expect(state.phase).toBe('presenting')
+    expect(click(state, 'ACK', 140).state.phase).toBe('finished')
+  })
+})

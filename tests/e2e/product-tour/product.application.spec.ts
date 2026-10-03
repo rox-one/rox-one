@@ -91,11 +91,69 @@ test('T-LEARNING-LIBRARY/T-LEARNING-CONTROLS: production learning controls start
   const popup = page.locator('[data-product-tour-popover]')
   await expect(popup).toBeVisible()
   await expect(popup).toHaveAttribute('data-product-tour-step', 'learning.library')
-  await popup.getByRole('button', { name: /Next|Continue/i }).click()
+  await popup.getByRole('button', { name: /^(Next|Continue)$/i }).click()
   await expect(popup).toHaveAttribute('data-product-tour-step', 'learning.controls')
-  await popup.getByRole('button', { name: /Next|Continue|Finish/i }).click()
+  await popup.getByRole('button', { name: /^(Next|Continue|Finish)$/i }).click()
   await expect(popup).toHaveCount(0)
   const calls = (await evidence(page)).operations as Array<{ method: string }>
   expect(calls.some(call => ['sendMessage', 'respondToPermission', 'performOAuth', 'runAutomation', 'toggleAutomation'].includes(call.method))).toBe(false)
+  await attachEvidence(page, info)
+})
+
+test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creation and save only after ordinary user actions', async ({ page }, info) => {
+  await openApp(page, 'settings/learning', true)
+  await expect(page.getByTestId('learning-settings')).toBeVisible()
+  await page.getByTestId('learning-start-OBT-17').click()
+  const popup = page.locator('[data-product-tour-popover]')
+  await expect(popup).toHaveAttribute('data-product-tour-step', 'notes.create')
+  // Notes has several ordinary create buttons; act on the actual highlighted control.
+  const point = await page.locator('[data-product-tour-mask] rect').evaluate(rect => {
+    const x = Number(rect.getAttribute('x')) + Number(rect.getAttribute('width')) / 2
+    const y = Number(rect.getAttribute('y')) + Number(rect.getAttribute('height')) / 2
+    const button = document.elementFromPoint(x, y)?.closest('button')
+    return { x, y, label: button?.getAttribute('aria-label') ?? button?.getAttribute('title') }
+  })
+  expect(point.label).toBe('New note')
+  await page.mouse.click(point.x, point.y)
+  const dialog = page.getByRole('dialog').filter({ has: page.getByRole('textbox') })
+  await dialog.getByRole('textbox').fill(`Guided canonical note ${Date.now()}`)
+  await dialog.getByRole('textbox').press('Enter')
+  await expect(dialog).toHaveCount(0)
+  await expect(popup).toHaveAttribute('data-product-tour-step', 'notes.save')
+  const content = 'User-written guided note canonical acceptance 72194.'
+  await page.locator('[contenteditable="true"]').first().fill(content)
+  await expect.poll(async () => (await evidence(page)).nativeFiles.some((file: { actualContent: string; content: string }) => file.actualContent.includes(content) && file.actualContent === file.content)).toBe(true)
+  await expect(popup).toHaveCount(0)
+  await expect(page.getByTestId('product-tour-status')).toHaveCount(0)
+  await expect.poll(() => page.evaluate(() => new Promise<boolean>((resolve, reject) => {
+    const open = indexedDB.open('rox-product-tour')
+    open.onerror = () => reject(open.error)
+    open.onsuccess = () => {
+      const db = open.result
+      const read = db.transaction('progress', 'readonly').objectStore('progress').getAll()
+      read.onerror = () => { db.close(); reject(read.error) }
+      read.onsuccess = () => { db.close(); resolve(read.result.some((record: any) => record.tourId === 'OBT-17' && record.steps['notes.create']?.verifiedAt !== undefined && record.steps['notes.save']?.verifiedAt !== undefined)) }
+    }
+  }))).toBe(true)
+  await attachEvidence(page, info)
+})
+
+test('T-WORKSPACE-SCOPE: the real App resolves a shell target for the voluntary workspace explanation', async ({ page }, info) => {
+  await openApp(page, 'settings/learning', true)
+  await page.getByTestId('learning-start-OBT-02').click()
+  const popup = page.locator('[data-product-tour-popover]')
+  await expect(popup).toHaveAttribute('data-product-tour-step', 'workspace.scope')
+  await popup.getByRole('button', { name: /^(Next|Finish)$/i }).click()
+  await expect(popup).toHaveCount(0)
+  await attachEvidence(page, info)
+})
+
+test('APP-03: ordinary navigation away from an active Learning step pauses its real App presentation', async ({ page }, info) => {
+  await openApp(page, 'settings/learning', true)
+  await page.getByTestId('learning-start-OBT-25').click()
+  await expect(page.locator('[data-product-tour-popover]')).toHaveAttribute('data-product-tour-step', 'learning.library')
+  await page.locator('[data-tutorial="sources-nav"]').first().click()
+  await expect(page.locator('[data-product-tour-popover]')).toHaveCount(0)
+  await expect(page.getByTestId('product-tour-status')).toContainText(/changed|paused/i)
   await attachEvidence(page, info)
 })

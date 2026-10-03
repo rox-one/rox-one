@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { TourPanelScope, useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { navigationEntity } from '@/features/product-tour/runtime/routes'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
@@ -49,6 +51,17 @@ import {
   knowledgeActiveViewIdAtom,
   knowledgeHomeViewAtom,
 } from '../../knowledge/KnowledgeHome'
+
+function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null }) {
+  const signals = useTourSignals({ workspaceId: workspaceId ?? '' })
+  useEffect(() => {
+    const capability = { state: 'unavailable', reason: 'missing-entity' } as const
+    const removeAvailable = signals.capability('automations.available', capability)
+    const removeEntity = signals.capability('automation.entity-present', capability)
+    return () => { removeEntity(); removeAvailable() }
+  }, [signals])
+  return null
+}
 
 const RouteRecoveryContext = React.createContext<object>({})
 
@@ -299,6 +312,7 @@ export function MainContentPanel({
   )
 
   const wrapWithStoplight = (content: React.ReactNode) => (
+    <TourPanelScope workspaceId={activeWorkspaceId ?? ''} panelId={panelId ?? 'shell'} {...navigationEntity(navState)}>
     <StoplightProvider value={isSidebarAndNavigatorHidden}>
       <RouteErrorBoundary key={routeIdentity} fallback={(retry) => (
         <Panel variant="grow" className={className}>
@@ -322,6 +336,7 @@ export function MainContentPanel({
         activeWorkspaceId={activeWorkspaceId || ''}
       />
     </StoplightProvider>
+    </TourPanelScope>
   )
 
   const resourceMultiSelect = resourceKind === 'source' ? isSourceMultiSelectActive : isSkillMultiSelectActive
@@ -470,6 +485,7 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <div className="flex h-full items-center justify-center p-8" data-testid="automations-empty-editor">
+          <UnavailableAutomationTour workspaceId={activeWorkspaceId} />
           <div className="max-w-sm text-center text-sm text-muted-foreground">
             <p className="text-base text-foreground">
               {/* A stale selection (e.g. just deleted) falls back to the picker once the list has loaded. */}

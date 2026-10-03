@@ -62,6 +62,7 @@ export const CHANNEL_MAP = {
   getTask: invoke(RPC_CHANNELS.tasks.GET),
   listTasks: invoke(RPC_CHANNELS.tasks.LIST),
   listMeetings: invoke(RPC_CHANNELS.meetings.LIST),
+  planMeetingActions: invoke(RPC_CHANNELS.meetings.PLAN_ACTIONS),
   getMeeting: invoke(RPC_CHANNELS.meetings.GET),
   searchMeetings: invoke(RPC_CHANNELS.meetings.SEARCH),
   deleteMeeting: invoke(RPC_CHANNELS.meetings.DELETE),
@@ -393,6 +394,13 @@ export const CHANNEL_MAP = {
   // 7 P3 write-back proposal channels (spec 05) plus 8 P4 publication channels
   // (spec 06), all REMOTE_ELIGIBLE except engineStatus (LOCAL_ONLY).
   // Dotted keys nest into api.knowledge.*, mirroring the browserPane surface.
+  'workgraph.listConnectionLeases': invoke(RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES),
+  'workgraph.inspectConnection': invoke(RPC_CHANNELS.workgraph.INSPECT_CONNECTION),
+  'workgraph.moveConnection': invoke(RPC_CHANNELS.workgraph.MOVE_CONNECTION),
+  'workgraph.startGithubDeviceLogin': invoke(RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN),
+  'workgraph.pollGithubDeviceLogin': invoke(RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN),
+  'workgraph.cancelGithubDeviceLogin': invoke(RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN),
+  'workgraph.reconnectConnection': invoke(RPC_CHANNELS.workgraph.RECONNECT_CONNECTION),
   'workgraph.listConnections': invoke(RPC_CHANNELS.workgraph.LIST_CONNECTIONS),
   'workgraph.listConnectionAudit': invoke(RPC_CHANNELS.workgraph.LIST_CONNECTION_AUDIT),
   'workgraph.listConnectionBindings': invoke(RPC_CHANNELS.workgraph.LIST_CONNECTION_BINDINGS),

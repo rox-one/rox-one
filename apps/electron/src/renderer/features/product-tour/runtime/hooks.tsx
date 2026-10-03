@@ -5,16 +5,20 @@ import type { CapabilityId, SignalName, TourBinding, TourCapability, TourScope, 
 export interface TourObservation { readonly binding: TourBinding; readonly operationToken: string; readonly at: number }
 export interface TourRuntimePort {
   readonly enabled: boolean
+  readonly attemptToken?: string
   capture(scope: TourScope): TourObservation | null
   emit(signal: TourSignal): void
+  handoff?(observation: TourObservation, open: boolean): void
   register(target: TourTargetRegistration): () => void
   setCapability(scope: TourScope, id: CapabilityId, capability: TourCapability): () => void
 }
 export const TourRuntimeContext = createContext<TourRuntimePort | null>(null)
 export const TourScopeContext = createContext<TourScope | null>(null)
+/** Read-only policy from the shell's existing settings read; null never implies stdio is enabled. */
+export const TourConnectionPolicyContext = createContext<{ workspaceId: string; localMcpEnabled: boolean | null } | null>(null)
 
 export function TourPanelScope({ children, ...scope }: TourScope & { children: ReactNode }) {
-  const value = useMemo(() => scope, [scope.workspaceId, scope.panelId, scope.sessionId, scope.entityId])
+  const value = useMemo(() => ({ workspaceId: scope.workspaceId, panelId: scope.panelId, sessionId: scope.sessionId, entityId: scope.entityId }), [scope.workspaceId, scope.panelId, scope.sessionId, scope.entityId])
   return <TourScopeContext.Provider value={value}>{children}</TourScopeContext.Provider>
 }
 
@@ -55,6 +59,7 @@ export function useTourSignals(overrides: Partial<TourScope> = {}) {
       if (!observation || !runtime?.enabled || (level === 'verified' && origin === 'ui-observation')) return
       runtime.emit({ name, binding: observation.binding, operationToken: observation.operationToken, operationStartedAt: observation.at, eventToken, at: Date.now(), level, origin } as TourSignal)
     },
+    handoff: (observation: TourObservation | null, open: boolean) => { if (observation && runtime?.enabled) runtime.handoff?.(observation, open) },
     capability: (id: CapabilityId, value: TourCapability) => scope && runtime?.enabled ? runtime.setCapability(scope, id, value) : () => {},
   }), [runtime, scope])
 }

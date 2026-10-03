@@ -147,6 +147,19 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
+  it('T-MEETINGS-RESULT: changing the panel rejects a pending artifact load', async () => {
+    const page = await fixture('meetings', 'transcript')
+    await page.evaluate(() => (window as any).fixture.start())
+    await page.getByRole('tab', { name: 'meetings.local.tab.transcript' }).click()
+    await page.evaluate(() => { const f = (window as any).fixture; f.panelId = 'foreign-panel'; f.render(); f.finishTranscript() })
+    await page.getByTestId('meeting-transcript').waitFor()
+    const state = await inspect(page)
+    expect(state.events).toEqual([])
+    expect(state.accepted).toEqual([])
+    expect(state.targets['meetings.artifacts'].context.panelId).toBe('foreign-panel')
+    await page.close()
+  })
+
   it('DOMAIN-19/T-AUTOMATION-TRIGGER/ACTION/CONTROL: real section refs and schedule stay read-only', async () => {
     const page = await fixture('automation')
     await page.evaluate(() => (window as any).fixture.start())
@@ -179,6 +192,19 @@ describe('A11 rendered native surfaces', () => {
     expect(state.mutations).toEqual([])
     await page.evaluate(() => (window as any).fixture.unmount())
     expect((await inspect(page)).targets).toEqual({})
+    await page.close()
+  })
+
+  it('T-AUTOMATION-TRIGGER/ACTION/CONTROL: a foreign selection cannot relabel the native entity', async () => {
+    const page = await fixture('automation')
+    await page.evaluate(() => { const f = (window as any).fixture; f.selectedId = 'foreign-automation'; f.render() })
+    const state = await inspect(page)
+    for (const id of ['automation.trigger', 'automation.action', 'automation.controls']) {
+      expect(state.targets[id].context.entityId).toBe('automation-a')
+    }
+    expect(state.capabilities['automation.entity-present'].value).toEqual({ state: 'pending', reason: 'missing-entity' })
+    expect(state.events).toEqual([])
+    expect(state.mutations).toEqual([])
     await page.close()
   })
 })

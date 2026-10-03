@@ -144,7 +144,9 @@ function prepare(state: RuntimeState, index: number, at: number, resetEvidence =
     const step = definition.steps[index]!
     state = { ...setPhase(state, 'preparing'), stepActivatedAt: at,
       attempt: { ...state.attempt!, phase: 'preparing', stepId: step.id, reason: undefined,
-        operationToken: step.completion.priorState === 'same-attempt' ? state.attempt?.operationToken : undefined } }
+        operationToken: step.completion.priorState === 'same-attempt'
+          || (step.completion.priorState === 'allow-current-state' && definition.steps.slice(index + 1).some(candidate => candidate.completion.priorState === 'same-attempt'))
+          ? state.attempt?.operationToken : undefined } }
     if (resetEvidence) state = { ...state, attemptEvidence: { ...state.attemptEvidence, [step.id]: undefined } }
     const eligibility = state.snapshot ? evaluateEligibility(definition, state.snapshot, step) : { status: 'ready' as const }
     if (eligibility.status === 'not-applicable') {
@@ -200,10 +202,11 @@ function acceptSignal(state: RuntimeState, signal: TourSignal): Transition {
   if ((signal.level === 'verified' || eligible.some(step => step.completion.priorState === 'same-attempt')) && !signal.operationToken) {
     return stop(state, 'blocked', 'correlation-ambiguous')
   }
-  if (state.attempt.operationToken && signal.operationToken && state.attempt.operationToken !== signal.operationToken) return inert(state)
+  const correlatedOperation = signal.level === 'verified' || eligible.some(step => step.completion.priorState === 'same-attempt')
+  if (correlatedOperation && state.attempt.operationToken && signal.operationToken && state.attempt.operationToken !== signal.operationToken) return inert(state)
   const effects: TourEffect[] = []
   state = { ...state, seenEventTokens: [...(state.seenEventTokens ?? []), signal.eventToken],
-    attempt: { ...state.attempt, operationToken: state.attempt.operationToken ?? signal.operationToken } }
+    attempt: { ...state.attempt, operationToken: correlatedOperation ? state.attempt.operationToken ?? signal.operationToken : state.attempt.operationToken } }
   for (const step of eligible) {
     state = { ...state, attemptEvidence: { ...state.attemptEvidence,
       [step.id]: { ...state.attemptEvidence[step.id], level: signal.level, at: signal.at } } }

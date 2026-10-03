@@ -1605,7 +1605,7 @@ const definitions = [
   {
     "id": "OBT-17",
     "slug": "notes",
-    "version": 1,
+    "version": 2,
     "title": "Заметки",
     "goal": "Создать и сохранить собственную заметку.",
     "why": "Получить повторно используемый материал после разговора.",
@@ -1621,7 +1621,7 @@ const definitions = [
     "steps": [
       {
         "id": "notes.create",
-        "version": 1,
+        "version": 2,
         "target": "notes.create",
         "routeKey": "notes",
         "copy": {
@@ -1641,7 +1641,7 @@ const definitions = [
           "priorState": "after-activation",
           "requireAcknowledgementAfterEvidence": false
         },
-        "handoff": false,
+        "handoff": true,
         "optional": false,
         "notes": "",
         "scope": "bound-panel",

@@ -589,7 +589,7 @@
         "priorState": "after-activation",
         "requireAcknowledgementAfterEvidence": false
       },
-      "handoff": false,
+      "handoff": true,
       "optional": false,
       "onUnavailable": "block"
     },
@@ -899,6 +899,7 @@
     }
   ],
   "revisions": [
-    "sources.result priorState=same-attempt, step version 2, approved by A0 to correlate the source question and result."
+    "sources.result priorState=same-attempt, step version 2, approved by A0 to correlate the source question and result.",
+    "notes.create handoff=true, step version 2 and OBT-17 version 2, approved by A0 after real Notes creation Dialog inspection."
   ]
 }

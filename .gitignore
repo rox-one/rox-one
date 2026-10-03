@@ -87,3 +87,7 @@ scripts/.marketplace-catalog-signing-key.b64
 # Native substrate (Rust workspace + local benches)
 native/target/
 bench-results/
+
+# Product Learning local verification artifacts
+/test-results/
+/playwright-report/

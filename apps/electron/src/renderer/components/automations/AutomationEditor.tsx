@@ -521,9 +521,10 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
 
   const tourScope = React.useContext(TourScopeContext)
   const tourSignals = useTourSignals()
-  const triggerTarget = useTourTarget('automation.trigger')
-  const actionTarget = useTourTarget('automation.action')
-  const controlsTarget = useTourTarget('automation.controls')
+  const nativeTargetScope = { workspaceId: workspaceId ?? undefined, entityId: automation.id }
+  const triggerTarget = useTourTarget('automation.trigger', nativeTargetScope)
+  const actionTarget = useTourTarget('automation.action', nativeTargetScope)
+  const controlsTarget = useTourTarget('automation.controls', nativeTargetScope)
 
   React.useEffect(() => {
     const capabilities = meetingsAutomationCapabilities({
