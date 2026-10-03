@@ -8,7 +8,7 @@ const check=playwrightExpect.configure({timeout:15000}),viewport=(page:Page)=>pa
 const action=(page:Page,code:string)=>page.evaluate(code)
 const positions=(page:Page)=>page.evaluate(()=>({outer:document.getElementById('outer')!.scrollTop,window:window.scrollY}))
 const bottom=(page:Page)=>viewport(page).evaluate(e=>e.scrollHeight-e.scrollTop-e.clientHeight)
-const scrolls=(page:Page)=>page.evaluate(()=>(window as any).__scrollFixture.scrolls.map((item:any)=>({owned:item.element.hasAttribute('data-radix-scroll-area-viewport'),behavior:item.options.behavior})))
+const scrolls=(page:Page):Promise<Array<{owned:boolean;behavior:ScrollBehavior}>>=>page.evaluate(()=>(window as any).__scrollFixture.scrolls.map((item:any)=>({owned:item.element.hasAttribute('data-radix-scroll-area-viewport'),behavior:item.options.behavior})))
 describe.skipIf(!existsSync(executablePath))('production ChatDisplay private output viewport',()=>{
  let server:ReturnType<typeof Bun.spawn>|undefined,browser:Browser,ownedChrome:{pid:number,profile:string}|undefined
  const processText=async(args:string[])=>{const child=Bun.spawn(['ps',...args],{stdout:'pipe',stderr:'ignore'});const value=await new Response(child.stdout).text();await child.exited;return value}
