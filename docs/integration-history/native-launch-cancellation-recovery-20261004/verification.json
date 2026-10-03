@@ -172,5 +172,11 @@
     "Synthetic native package and account state prove lifecycle seams on macOS; no installed Windows/public release acceptance",
     "No transport framing or source credential contract changed"
   ],
-  "reconciliation_pending": "fresh main99d1 includes independent windowsHide options; normal merge follows scoped commit"
+  "reconciliation_pending": false,
+  "reconciliation": {
+    "main": "99d1b4677f914041617b91db83ce91a63d6f88f6",
+    "source_omp_and_test_hashes_unchanged": true,
+    "merged_main_hidden_windows_options": "both windowsHide:true are retained alongside pre-spawn generation checks and shell:false",
+    "docs": "exact main contents plus unique owned section; all current locale unions retained"
+  }
 }
