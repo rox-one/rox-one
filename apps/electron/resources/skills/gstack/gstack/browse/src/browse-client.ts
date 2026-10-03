@@ -163,6 +163,8 @@ export class BrowseClient {
     try {
       resp = await fetch(`http://127.0.0.1:${this.port}/command`, {
         method: 'POST',
+        // Daemon commands and scoped credentials must stay at the selected endpoint.
+        redirect: 'manual',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.token}`,

@@ -448,3 +448,6 @@ server to loopback, isolate development context by default, persist each new
 bearer token with mode 0600, and never print its value. Installation or entropy
 failure must stop before subsequent work. Hosted Cursor execution and provider
 credentials require their own verification. See `docs/cursor-cloud-server.md`.
+
+
+The canonical and portable gstack browser clients must send authenticated commands only to their selected literal loopback endpoint. HTTP redirects must fail through the existing non-2xx error contract without forwarding the command body or capability. Real HTTP 307/308 negative controls cover both same-origin and another-port destinations; normal authenticated POST commands retain their arguments and tab scope.

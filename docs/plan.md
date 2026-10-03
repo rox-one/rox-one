@@ -578,3 +578,6 @@ Dependencies: current server entry point and helper build commands at main
    token rotation, plus failed install/entropy negative controls — complete.
 4. Deliver a separate PR preserving the original branch; main integration remains
    owned by the lead. Hosted Cursor provisioning remains unverified.
+
+
+The recent worker owns the gstack command redirect prerequisite in an isolated security worktree. Input is the three identical shipped BrowseClient copies at runtime revision `05f1e3741`; dependencies are the existing bearer/port validation and portable provenance catalogs. Verify real HTTP redirects fail before any destination request, direct commands retain authentication, and patch hashes match all parent and portable notices. The lead integrates the committed prerequisite into the runtime PR and retains remote CodeQL closure as a separate pending gate.

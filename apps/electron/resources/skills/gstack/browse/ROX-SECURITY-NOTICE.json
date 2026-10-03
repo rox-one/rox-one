@@ -13,8 +13,8 @@
         816,
         815
       ],
-      "change": "Authenticated daemon IPC deliberately sends local/scoped bearer token and commands to literal127.0.0.1 endpoints; port/state/token types now validated before URL construction (e7c7e0e25). Pair-agent remote health probe is explicit opt-in and carries no bearer token. Regression rejects authority injection and header controls.",
-      "sha256": "fb1184356a9a4bab26eee91af2661ddd2092f2ba4a715a1b8fff11b032d656d3"
+      "change": "Authenticated daemon IPC deliberately sends local/scoped bearer token and commands to literal127.0.0.1 endpoints; port/state/token types now validated before URL construction (e7c7e0e25). Pair-agent remote health probe is explicit opt-in and carries no bearer token. Regression rejects authority injection and header controls. HTTP redirects now fail through the existing non-2xx error contract with redirect:manual; actual HTTP307/308 same-origin and cross-port regressions prove no command/capability forwarding, while direct authenticated POST behavior is retained.",
+      "sha256": "4ed6b44315b06d445ead9eed707474a471d536071da214d411beb43b1d6fab02"
     },
     {
       "pack": "gstack",
