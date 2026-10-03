@@ -36,11 +36,13 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
   const [skills, setSkills] = useState<PendingSkillLike[]>([])
   const [senders, setSenders] = useState<PendingSenderLike[]>([])
   const [loaded, setLoaded] = useState<Record<InboxRemoteSource, boolean>>({ memory: false, skills: false, senders: false })
+  const [loading, setLoading] = useState<Record<InboxRemoteSource, boolean>>({ memory: false, skills: false, senders: false })
   const [errors, setErrors] = useState<Partial<Record<InboxRemoteSource, string>>>({})
   const [hasSnapshot, setHasSnapshot] = useState<Record<InboxRemoteSource, boolean>>({ memory: false, skills: false, senders: false })
   const [remoteWorkspaceId, setRemoteWorkspaceId] = useState(workspaceId)
-  const workspaceRef = useRef(workspaceId)
-  workspaceRef.current = workspaceId
+  const contextRef = useRef({ workspaceId })
+  if (contextRef.current.workspaceId !== workspaceId) contextRef.current = { workspaceId }
+  const requests = useRef<Record<InboxRemoteSource, number>>({ memory: 0, skills: 0, senders: 0 })
   const firstSeen = useRef(new Map<string, number>())
   const [now, setNow] = useState(() => Date.now())
 
@@ -49,6 +51,7 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
     setSkills([])
     setSenders([])
     setLoaded({ memory: false, skills: false, senders: false })
+    setLoading({ memory: false, skills: false, senders: false })
     setErrors({})
     setRemoteWorkspaceId(workspaceId)
     setHasSnapshot({ memory: false, skills: false, senders: false })
@@ -63,21 +66,28 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
   const load = useCallback(async (which?: InboxRemoteSource) => {
     const api = typeof window !== 'undefined' ? window.electronAPI : undefined
     if (!api || !workspaceId) return
+    const context = contextRef.current
     const run = async <T,>(key: InboxRemoteSource, fn: () => Promise<T> | undefined, set: (v: T) => void) => {
       if (which && which !== key) return
+      const requestId = ++requests.current[key]
+      const current = () => contextRef.current === context && requests.current[key] === requestId
+      setLoading((previous) => ({ ...previous, [key]: true }))
       try {
         const request = fn()
         if (!request) throw new Error('This source is unavailable in the current runtime')
         const value = await request
-        if (workspaceRef.current !== workspaceId) return
+        if (!current()) return
         set(value)
         setHasSnapshot((previous) => ({ ...previous, [key]: true }))
         setErrors((e) => ({ ...e, [key]: undefined }))
       } catch (error) {
-        if (workspaceRef.current !== workspaceId) return
+        if (!current()) return
         setErrors((e) => ({ ...e, [key]: error instanceof Error ? error.message : String(error) }))
       } finally {
-        if (workspaceRef.current === workspaceId) setLoaded((l) => (l[key] ? l : { ...l, [key]: true }))
+        if (current()) {
+          setLoaded((l) => (l[key] ? l : { ...l, [key]: true }))
+          setLoading((previous) => ({ ...previous, [key]: false }))
+        }
       }
     }
     await Promise.all([
@@ -147,6 +157,7 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
     counts,
     now,
     loaded,
+    loading,
     errors,
     staleSources,
     reload: load,

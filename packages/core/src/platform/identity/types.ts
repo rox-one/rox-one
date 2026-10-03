@@ -125,7 +125,10 @@ export interface Entitlement {
   expiresAt?: number;
 }
 
+/** Runtime identity metadata; contains no credentials. */
 export interface IdentityState {
+  /** Canonical annotation author for this authenticated connection. */
+  annotationActorId?: string;
   profile: Profile;
   connections: ServiceConnection[];
   entitlements: Entitlement[];

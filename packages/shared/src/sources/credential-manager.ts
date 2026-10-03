@@ -60,6 +60,7 @@ import {
   refreshGenericOAuthToken,
 } from '../auth/generic-oauth.ts';
 import { debug } from '../utils/debug.ts';
+import { getBuiltinSourceCredential } from './builtin-sources.ts';
 import { markSourceAuthenticated, loadSourceConfig, saveSourceConfig } from './storage.ts';
 import { getBuiltinMcpReadiness, isManagedBuiltinMcpSource } from './builtin-mcp.ts';
 
@@ -172,7 +173,8 @@ export class SourceCredentialManager {
       debug(`[SourceCredentialManager] Found ${credentialId.type} for ${source.config.slug}`);
     }
 
-    return cred;
+    const sharedKey = !cred?.value ? getBuiltinSourceCredential(source) : undefined;
+    return cred?.value ? cred : (sharedKey ? { value: sharedKey } : cred);
   }
 
   /**
@@ -264,10 +266,21 @@ export class SourceCredentialManager {
       try {
         const parsed = JSON.parse(cred.value);
         debug(`[SourceCredentialManager] Parsed JSON keys: ${Object.keys(parsed).join(', ')}`);
+        // Telegram's account credential can contain a pool or named session
+        // instead of the catalog's singular session field. Launch readiness
+        // validates the real combination with source/environment settings.
+        const telegramAccount = source.config.slug === 'telegram-mcp'
+          && source.config.mcp?.transport === 'stdio' && isManagedBuiltinMcpSource(source.config)
+          && parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+          && Object.values(parsed).every(value => typeof value === 'string')
+          && Object.keys(parsed).some(key => key === 'TELEGRAM_API_ID' || key === 'TELEGRAM_API_HASH'
+            || key === 'TELEGRAM_SESSION_STRINGS' || key === 'TELEGRAM_SESSION_STRING'
+            || key === 'TELEGRAM_SESSION_NAME' || key.startsWith('TELEGRAM_SESSION_STRING_')
+            || key.startsWith('TELEGRAM_SESSION_NAME_'));
         // Validate all required headers are present
         const hasAllHeaders = headerNames.every((h) => h in parsed);
         debug(`[SourceCredentialManager] hasAllHeaders=${hasAllHeaders}`);
-        if (hasAllHeaders) {
+        if (hasAllHeaders || telegramAccount) {
           return parsed as MultiHeaderCredential;
         }
       } catch (e) {
@@ -1351,7 +1364,10 @@ export function sourceNeedsAuthentication(source: LoadedSource): boolean {
         // Local transport can still require upstream account credentials.
         // A successful authentication may have used the encrypted vault;
         // actual values are checked again by the server builder at launch.
-        return !source.config.isAuthenticated && getBuiltinMcpReadiness(source.config).status === 'needs_auth';
+        return !source.config.isAuthenticated && getBuiltinMcpReadiness(source.config, {
+          workspaceRootPath: source.workspaceRootPath,
+          sourceFolderPath: source.folderPath,
+        }).status === 'needs_auth';
       }
       // Stdio sources run locally and don't need authentication
       return false;
@@ -1365,6 +1381,7 @@ export function sourceNeedsAuthentication(source: LoadedSource): boolean {
 
   // API sources with auth requirements
   if (source.config.type === 'api' && api) {
+    if (getBuiltinSourceCredential(source)) return false;
     if (api.authType !== 'none' && api.authType !== undefined && !source.config.isAuthenticated) {
       return true;
     }

@@ -6,11 +6,12 @@
  * branch-fork handshake (transcript parsing / anchor resolution).
  */
 import { afterEach, describe, expect, it } from 'bun:test';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { AgentEvent } from '@rox/core/types';
 import { OmpAgent } from '../omp-agent.ts';
 import type { LoadedSource } from '../../sources/types.ts';
+import type { McpClientPool, ProxyToolDef } from '../../mcp/mcp-pool.ts';
 import {
   createFakeOmp,
   useFakeOmpEnv,
@@ -54,6 +55,34 @@ async function waitForRpcFrame(
 }
 
 describe('OmpAgent session flow — healthy turn', () => {
+  it('re-registers a same-name MCP tool when its schema or description changes', async () => {
+    let tools: ProxyToolDef[] = [{
+      name: 'mcp__deepwiki__query', description: 'Query a repository',
+      inputSchema: { type: 'object', properties: { question: { type: 'string' } } },
+    }];
+    const pool = {
+      getProxyToolDefs: () => tools,
+      getConnectedSlugs: () => ['deepwiki'],
+      getTools: () => tools,
+    } as unknown as McpClientPool;
+    const { agent, fake } = setup('healthy', { mcpPool: pool });
+    await chatEvents(agent, 'first turn', 8_000);
+    tools = [{
+      name: 'mcp__deepwiki__query', description: 'Query a repository at a chosen revision',
+      inputSchema: { type: 'object', properties: { question: { type: 'string' }, revision: { type: 'string' } } },
+    }];
+    await chatEvents(agent, 'second turn', 8_000);
+    const registrations = fake.readRpcLog().filter(frame => frame.type === 'set_host_tools');
+    expect(registrations).toHaveLength(2);
+    const updated = (registrations[1]!.tools as Array<Record<string, unknown>>)
+      .find(tool => tool.name === 'mcp__deepwiki__query')!;
+    expect(updated.description).toBe(tools[0]!.description);
+    expect(updated.parameters).toEqual(tools[0]!.inputSchema);
+    expect(updated.loadMode).toBe('essential');
+    await chatEvents(agent, 'third unchanged turn', 8_000);
+    expect(fake.readRpcLog().filter(frame => frame.type === 'set_host_tools')).toHaveLength(2);
+  }, 25_000);
+
   it('briefs OMP about integrations and refreshes source availability on every prompt', async () => {
     const { agent, fake } = setup('healthy');
     const source = (slug: string, needsAuth = false): LoadedSource => ({
@@ -286,7 +315,7 @@ describe('OmpAgent branch handshake', () => {
     expect(switchFrame?.sessionPath).not.toBe(parentFile);
     expect(String(switchFrame?.sessionPath)).toContain(join('session-test', 'omp'));
     const branchFrame = log.find((f) => f.type === 'fork');
-    // OMP's branch cuts at the USER entry following the anchor.
+    // Runtime 18.4.12 fork retains the path through the selected entry.
     expect(branchFrame?.entryId).toBe('asst0001');
     expect(events.at(-1)?.type).toBe('complete');
   });
@@ -332,6 +361,30 @@ describe('OmpAgent branch handshake', () => {
     expect(events.at(-1)?.type).toBe('complete');
     expect(agent.isProcessing()).toBe(false);
   });
+
+  it('own-message branch forks a private transcript at the selected user without editing the parent', async () => {
+    const { agent, fake } = setup('healthy');
+    const { parentSessionPath, parentFile } = writeParentTranscript(fake);
+    const parentBytes = readFileSync(parentFile, 'utf8');
+    (agent as any).config.session.branchFromMessageId = 'craft-user-2';
+    (agent as any).config.session.branchFromSessionPath = parentSessionPath;
+    (agent as any).config.session.branchFromSdkTurnId = 'user0002';
+
+    await agent.ensureBranchReady();
+    const switched = fake.readRpcLog().find(frame => frame.type === 'switch_session');
+    expect(String(switched?.sessionPath)).toContain(join('sessions', 'session-test', 'omp'));
+    // The adapter sends the inclusive native fork command after attaching a
+    // private mirror. The fake CLI records this boundary; pure branch tests
+    // separately cover the selected-user prefix and later-message exclusion.
+    expect(readFileSync(String(switched?.sessionPath), 'utf8')).toBe(parentBytes);
+    const log = fake.readRpcLog();
+    expect(log.find(frame => frame.type === 'fork')?.entryId).toBe('user0002');
+    expect(log.findIndex(frame => frame.type === 'switch_session')).toBeLessThan(log.findIndex(frame => frame.type === 'fork'));
+    expect(log.some(frame => frame.type === 'branch')).toBe(false);
+    expect(readFileSync(parentFile, 'utf8')).toBe(parentBytes);
+    const events = await chatEvents(agent, 'continue from selected user', 8_000);
+    expect(events.at(-1)?.type).toBe('complete');
+  }, 15_000);
 });
 
 describe('OmpAgent transcript parsing (pure)', () => {

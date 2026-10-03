@@ -6,6 +6,7 @@ import { existsSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { atomicWriteFileSync, readJsonFileSync } from '../utils/files.ts'
 import { resolveConfigDir } from "../config/paths.ts"
+import { recordXpDay, seedXpDays, type XpDay } from './activity.ts'
 import {
   getLevelForXp,
   getLevelProgress,
@@ -43,6 +44,8 @@ export interface GamificationState {
     xp: number
     at: number
   }>
+  /** Durable daily activity totals; older files migrate from their recorded events. */
+  dailyXp?: XpDay[]
   quests: Record<QuestId, QuestRecord>
   ratings: SessionRating[]
   analyticsConsent: boolean
@@ -109,7 +112,7 @@ function normalizeState(raw: unknown): GamificationState {
       if (!entry || typeof entry !== 'object') continue
       const e = entry as Record<string, unknown>
       if (!isXpEventType(e.type)) continue
-      if (typeof e.xp !== 'number' || typeof e.at !== 'number') continue
+      if (typeof e.xp !== 'number' || !Number.isFinite(e.xp) || e.xp < 0 || typeof e.at !== 'number' || !Number.isFinite(e.at)) continue
       recentEvents.push({ type: e.type, xp: Math.floor(e.xp), at: e.at })
       if (recentEvents.length >= RECENT_EVENTS_CAP) break
     }
@@ -158,6 +161,9 @@ function normalizeState(raw: unknown): GamificationState {
     level: getLevelForXp(xp) || level,
     balance,
     recentEvents,
+    dailyXp: Array.isArray(obj.dailyXp) ? obj.dailyXp.filter((entry): entry is XpDay =>
+      !!entry && typeof entry === 'object' && Number.isSafeInteger(entry.day) &&
+      Number.isSafeInteger(entry.xp) && entry.xp >= 0).slice(0, 90) : undefined,
     quests,
     ratings,
     analyticsConsent: obj.analyticsConsent === true,
@@ -204,12 +210,13 @@ export function awardXp(
   configDir: string = resolveConfigDir(),
 ): AwardXpResult {
   const current = loadGamificationState(configDir)
+  const now = Date.now()
   const previousLevel = getLevelForXp(current.xp)
   const awarded = getXpReward(event)
   const xp = current.xp + awarded
   const level = getLevelForXp(xp)
   const recentEvents = [
-    { type: event, xp: awarded, at: Date.now() },
+    { type: event, xp: awarded, at: now },
     ...(current.recentEvents ?? []),
   ].slice(0, RECENT_EVENTS_CAP)
   const state: GamificationState = {
@@ -218,7 +225,8 @@ export function awardXp(
     xp,
     level,
     recentEvents,
-    updatedAt: Date.now(),
+    dailyXp: recordXpDay(seedXpDays(current, now), awarded, now),
+    updatedAt: now,
   }
   saveGamificationState(state, configDir)
   const result: AwardXpResult = {
@@ -262,11 +270,36 @@ export function applyQuestAction(
   options: { cloudFeaturesEnabled?: boolean; now?: number } = {},
   configDir: string = resolveConfigDir(),
 ): { state: GamificationState; analytics: ReturnType<typeof planProductAnalytics> } {
+  const result = transitionQuestAction(loadGamificationState(configDir), action, questId, options)
+  // Completion and its XP reward are published together. An intermediate award
+  // previously exposed an unfinished quest and could be awarded again.
+  if (result.state !== result.previousState) saveGamificationState(result.state, configDir)
+  if (result.award) {
+    try { awardListener?.(result.award) } catch { /* product hooks remain best-effort */ }
+  }
+  return { state: result.state, analytics: result.analytics }
+}
+
+/** Pure transition shared by desktop files and transactional native actor state. */
+export function transitionQuestAction(
+  current: GamificationState,
+  action: 'complete' | 'dismiss' | 'snooze',
+  questId: QuestId,
+  options: { cloudFeaturesEnabled?: boolean; now?: number } = {},
+): {
+  previousState: GamificationState
+  state: GamificationState
+  analytics: ReturnType<typeof planProductAnalytics>
+  award?: AwardXpResult
+} {
   const now = options.now ?? Date.now()
   const cloudFeaturesEnabled = options.cloudFeaturesEnabled !== false
-  const current = loadGamificationState(configDir)
   const quest = current.quests[questId] ?? { id: questId, status: 'available' as QuestStatus }
   const analytics = planProductAnalytics(`quest.${action}.${questId}`, current.analyticsConsent)
+  // Terminal statuses cannot be reopened by snooze/dismiss/replay.
+  if (quest.status === 'completed' || quest.status === 'dismissed' || quest.status === 'skipped_cloud') {
+    return { previousState: current, state: current, analytics }
+  }
 
   if (action === 'complete' && QUEST_CLOUD_REQUIRED[questId] && !cloudFeaturesEnabled) {
     const quests = {
@@ -274,30 +307,35 @@ export function applyQuestAction(
       [questId]: { ...quest, status: 'skipped_cloud' as const, completedAt: now },
     }
     const state = { ...current, quests, updatedAt: now }
-    saveGamificationState(state, configDir)
-    return { state, analytics }
+    return { previousState: current, state, analytics }
   }
 
-  if (action === 'complete' && quest.status !== 'completed') {
-    const awarded = awardXp(QUEST_XP_EVENT[questId], configDir)
-    const next = loadGamificationState(configDir)
+  if (action === 'complete') {
+    const event = QUEST_XP_EVENT[questId]
+    const awarded = getXpReward(event)
+    const xp = current.xp + awarded
+    const previousLevel = getLevelForXp(current.xp)
+    const level = getLevelForXp(xp)
     const quests = {
-      ...next.quests,
+      ...current.quests,
       [questId]: { ...quest, status: 'completed' as const, completedAt: now },
     }
-    const state = { ...awarded.state, ...next, quests, updatedAt: now }
-    saveGamificationState(state, configDir)
-    return { state, analytics }
+    const state = {
+      ...current, xp, level, quests, updatedAt: now,
+      dailyXp: recordXpDay(seedXpDays(current, now), awarded, now),
+      recentEvents: [{ type: event, xp: awarded, at: now }, ...(current.recentEvents ?? [])].slice(0, RECENT_EVENTS_CAP),
+    }
+    return { previousState: current, state, analytics,
+      award: { state, awarded, event, leveledUp: level > previousLevel, previousLevel } }
   }
 
-  if (action === 'dismiss' && quest.status !== 'completed') {
+  if (action === 'dismiss') {
     const quests = {
       ...current.quests,
       [questId]: { ...quest, status: 'dismissed' as const },
     }
     const state = { ...current, quests, updatedAt: now }
-    saveGamificationState(state, configDir)
-    return { state, analytics }
+    return { previousState: current, state, analytics }
   }
 
   if (action === 'snooze') {
@@ -306,11 +344,10 @@ export function applyQuestAction(
       [questId]: { ...quest, status: 'snoozed' as const, snoozeUntil: now + QUEST_SNOOZE_MS },
     }
     const state = { ...current, quests, updatedAt: now }
-    saveGamificationState(state, configDir)
-    return { state, analytics }
+    return { previousState: current, state, analytics }
   }
 
-  return { state: current, analytics }
+  return { previousState: current, state: current, analytics }
 }
 
 export function saveSessionRating(

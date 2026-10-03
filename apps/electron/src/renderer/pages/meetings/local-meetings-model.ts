@@ -3,6 +3,7 @@
  * transcript search, summary prompt/parse). No I/O.
  */
 import type { LocalMeeting, LocalTranscriptSegment } from '../../../shared/meetings-local'
+import { planMeetingActions, type MeetingProfileId } from '@rox/shared/meeting-agents'
 
 export type LocalBucket = 'all' | 'today' | 'upcoming' | 'past' | 'live' | 'needsAction'
 
@@ -146,6 +147,8 @@ export function buildSummaryPrompt(input: {
   participants: readonly string[]
   segments: readonly Pick<LocalTranscriptSegment, 'id' | 'startMs' | 'endMs' | 'text'>[]
   language: 'ru' | 'en'
+  recipeId?: MeetingProfileId
+  slash?: string
 }): string {
   const transcript = input.segments
     .map((s) => `[segmentId=${s.id} ${formatDuration(s.startMs)}–${formatDuration(s.endMs)}] ${s.text}`)
@@ -168,7 +171,15 @@ export function buildSummaryPrompt(input: {
         '',
         '--- Transcript ---',
       ]
-  return [...head, clipped].join('\n')
+  const profile = input.recipeId || input.slash
+    ? planMeetingActions({ meetingId: 'analysis', recipeId: input.recipeId, slash: input.slash }, 0)
+    : null
+  const profileInstructions = profile ? [
+    `Analysis profile: ${profile.recipeId}; playbook: ${profile.playbook}; profile schema: ${profile.outputSchemaId}.`,
+    `Role perspectives: ${profile.jobs.map(job => job.roleId).join(', ')}. Requested outputs: ${profile.outputs.join(', ')}.`,
+    'Use these perspectives to prioritize the transcript-backed analysis. Preserve the JSON shape below. Propose only; do not create tasks, notes, knowledge changes, CRM updates, or external sends.',
+  ] : []
+  return [...profileInstructions, ...head, clipped].join('\n')
 }
 
 export function parseSummaryExtraction(parsed: unknown, allowedSegmentIds: readonly string[]): SummaryExtraction | null {
@@ -206,6 +217,8 @@ export function parseSummaryExtraction(parsed: unknown, allowedSegmentIds: reado
     : []
   const actions = citedTextItems(o.actions)
   const questions = citedTextItems(o.questions)
-  if (!summary && decisions.length === 0 && actions.length === 0 && questions.length === 0) return null
+  const explicitlyEmpty = o.summary === '' && Array.isArray(o.summarySourceSegmentIds) && o.summarySourceSegmentIds.length === 0
+    && Array.isArray(o.decisions) && o.decisions.length === 0 && Array.isArray(o.actions) && o.actions.length === 0 && Array.isArray(o.questions) && o.questions.length === 0
+  if (!summary && decisions.length === 0 && actions.length === 0 && questions.length === 0 && !explicitlyEmpty) return null
   return { summary, summarySourceSegmentIds, decisions, actions, questions }
 }

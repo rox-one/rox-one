@@ -15,6 +15,8 @@ import type { LoadedSource, ApiConfig } from './types.ts';
 import { isMultiHeaderCredential, type ApiCredential } from './credential-manager.ts';
 import { isSourceUsable } from './storage.ts';
 import { createApiServer, type SummarizeCallback } from './api-tools.ts';
+import { createE2bApiServer } from './e2b-tools.ts';
+import { isManagedBuiltinSource } from './builtin-sources.ts';
 import { createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk';
 import { debug } from '../utils/debug.ts';
 import { expandVars, resolveStdioConfig } from '../utils/paths.ts';
@@ -91,6 +93,8 @@ export class SourceServerBuilder {
     }
 
     const builtinOptions = {
+      workspaceRootPath: source.workspaceRootPath,
+      sourceFolderPath: source.folderPath,
       token,
       credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
     };
@@ -198,6 +202,10 @@ export class SourceServerBuilder {
     const apiConfig = source.config.api;
     const authType = apiConfig.authType;
     const provider = source.config.provider;
+    if (source.config.slug === 'e2b' && isManagedBuiltinSource(source.config)) {
+      const resolved = getCredential ?? credential;
+      return resolved ? createE2bApiServer(this.buildApiConfig(source), resolved, sessionPath, summarize) : null;
+    }
 
     // Google APIs - use token getter with auto-refresh
     // Note: Direct isAuthenticated check is safe - Google OAuth always requires auth
@@ -290,6 +298,7 @@ export class SourceServerBuilder {
     const config: ApiConfig = {
       name: source.config.slug,
       baseUrl: api.baseUrl,
+      rejectRedirects: isManagedBuiltinSource(source.config),
       // documentation is no longer inlined into the tool description (see #683
       // and api-tools.ts:buildToolDescription). The model reads guide.md via
       // the prerequisite-manager-enforced Read instead.
@@ -355,10 +364,14 @@ export class SourceServerBuilder {
             debug(`[SourceServerBuilder] Built MCP server for ${source.config.slug}`);
             mcpServers[source.config.slug] = config;
           } else if (getBuiltinMcpReadiness(source.config, {
+            workspaceRootPath: source.workspaceRootPath,
+            sourceFolderPath: source.folderPath,
             token,
             credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
           }).status !== 'ready') {
             const readiness = getBuiltinMcpReadiness(source.config, {
+              workspaceRootPath: source.workspaceRootPath,
+              sourceFolderPath: source.folderPath,
               token,
               credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
             });

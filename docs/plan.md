@@ -1,3 +1,23 @@
+# Golden Gate meeting request ownership integration (2026-10-03)
+
+Owner: pr_scout; merge owner: root. Depends on main UI/native/profile contracts; preserve LocalMeetingDetail profile and analysis work owned by historical_sweep. Graph: source/consumer comparison → committed request tracker + current callbacks → executed production-callback adverse timing tests and current Notes equivalence controls → renderer typecheck/build/localization → exact source readback and separate PR. Original branches are retained. Tests cover duplicate submission, edited draft, rejection/retry, A→B→A, disposal, latest record/deletion, stale subscriber, pending catalogue overlay and transcript success/refusal.
+
+## Golden Gate device diagnostics recovery plan — 2026-10-03
+
+1. Historical scout identified exact source revision and runtime files absent from main; integration worker audited the diagnostic dependency closure and recorded source hashes.
+2. Recover the 13 source modules/tests, localized keys and minimal TopBar/main/preload wiring, preserving current shell behavior.
+3. Cover arbitrary command/path/sender denial, native cancellation/replacement, bounded/redacted logs including links/FIFOs, browser closed cost and open/tab/close behavior.
+4. Run targeted tests, complete package types and WebUI/Electron main/preload/renderer builds; publish a separate PR after main/release reconciliation. Lead owns independent review and serial main merge; all original branches remain.
+5. Recover remaining panel/native/request/task clusters in coherent subsequent slices with actual callers and behavior evidence.
+
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
+## Session UX branch integration plan — 2026-10-03
+
+1. PR scout owns exhaustive fresh open PR/check/head inventory, retained in `/tmp/rox-branch-integration-20261003/pr-scout.json`; complete.
+2. UI worker reproduces exact #1391 fixture typing and renderer import failures; original logs retained under that task directory; complete.
+3. UI worker applies only runtime-checked fixture narrowing, valid attachment type and direct pure public catalog imports; root separately owns release runtime/security repairs.
+4. UI worker repairs the reproduced credential/ASR check/read races and 22 missing locale keys, covers malicious links/replacements/growth and caller upload/publication refusal, then runs complete package type checks, validate:ci, targeted native behavior tests and browser builds; publishes an isolated candidate commit and reports exact receipt.
+5. Root owns serial release/session reconciliation, security disposition and authorized main integration; no branch deletion. Product/provider/hardware acceptance retains its existing pending state.
 ## Golden Gate native surface ownership recovery plan — 2026-10-03
 
 1. Audit actual missing source closure and current callers. Preserve current deliberate SiYuan removal and cookie consent behavior; exclude historical shell replacements.
@@ -606,6 +626,17 @@ Dependencies: current server entry point and helper build commands at main
 Binding replay recovery: compare the exact legacy identity alongside the canonical encoded identity; verify raw-key migration followed by repeated imports, and negative controls for wrong kind, unrelated ID and foreign workspace. Run the existing platform-contract tests before separate PR publication.
 The recent worker owns the gstack command redirect prerequisite in an isolated security worktree. Input is the three identical shipped BrowseClient copies at runtime revision `05f1e3741`; dependencies are the existing bearer/port validation and portable provenance catalogs. Verify real HTTP redirects fail before any destination request, direct commands retain authentication, and patch hashes match all parent and portable notices. The lead integrates the committed prerequisite into the runtime PR and retains remote CodeQL closure as a separate pending gate.
 
+
+## Connections producer recovery — 2026-10-03
+
+Owner: branch integration lead. Source: `checkpoint/session-audit-20260821-craft-agents` at `86154e8c812746261282bb4c517b16ad7becc0ec`. Dependencies: existing WorkGraph canonical SQLite kernel, credential registry/broker, generated Electron preload and trusted local window/workspace transport.
+
+Restore the seven missing Connections controller operations: lease metadata, inspection, backend move, reconnect, GitHub device start/poll/cancel. Preserve current ROX config resolution, credential migration contracts and legacy broker ID-only revoke API. Only metadata may cross renderer transport. Device flows belong to the initiating authenticated local client/workspace; revoked/cancelled or concurrent polls cannot commit a late approval. Existing OAuth client configuration is required; no new client ID, account/device grant or real credential import is performed by this integration.
+
+Backend move must verify destination contents before deleting the source, refuse existing destinations and simultaneous moves, revoke outstanding leases before attempting a move, restore the source and clear the destination on recoverable failure, and return a distinct rollback failure when storage recovery cannot be proven. Real credential/backend availability and OAuth sign-in remain environment-dependent; fixture proof does not certify a real provider or native UI.
+
+The existing Connections UI remains a separate consumer recovery; this PR restores its missing backend and transport dependency. Acceptance: original source branch retained; current strict types and the configured validation assertions; real temporary SQLite audits and workspace isolation; generated channel/access inventory; deterministic memory-backend write/readback/delete/rollback failures; OAuth pending/approved/cancel race and concurrent-poll controls. Record exact delivered revision and test receipt under `docs/integration-history/connections-86154e8c/`.
+
 ## Native Notes Knowledge read projection (2026-10-03)
 
 Owner: historical branch recovery. Add NativeNotesKnowledgeProvider over nativeNotesKnowledgeAccess and explicitly authenticated RPC read handlers; preserve existing SiYuan compatibility reads for legacy contexts. Verify real WebSocket principal authentication, committed note search/read/backlinks, exclusion of loose Markdown files, foreign workspace/global connection rejection, forged/missing principal denial, invalidation of captured readers after revocation, and explicit CAPABILITY_DISABLED for unscoped agent calls. Existing Knowledge RPC/tool runtime tests remain green. Native visual Notes/agent adoption is outside this bounded API proof.
@@ -618,6 +649,25 @@ Owner: historical integration; parent retains merge. Dependency: existing useWor
 2. Mount a context-bound owner for hidden-strip and mini configurations; retain existing visible-strip subscriptions.
 3. Execute delivered component/hook with actual atoms: initial list, state update, interaction, removal/reconciliation, disabled transfer, unmount and late-event/list controls. Run existing browser/chrome checks and renderer validation.
 4. Publish a separate PR with exact source/head and bounded evidence; original branches remain untouched.
+
+## Bounded historical recovery: Meeting profiles, slash and followup planning (2026-10-03)
+
+Owner: historical integration; parent merges. Dependency: current packaged roles/recipes, safe analysis session port, local Meeting store, NativeAuthority read fences and canonical MeetingJournal. Preserve concurrent voice/PTT producer/consumer work, native Notes authority and current glass/navigation.
+
+1. Map richer historical recipe/followup intent to actual routed consumers; reject synthetic receipts, writable-file grants and invented host principal.
+2. Bind profile/slash to current durable claim/attach/finish analysis and persist profile through existing local store; retain CAS, no-source-tool sessions, source-revision result validation and manual-edit supersession.
+3. Publish context-bound read-only plan RPC with canonical revision and policy projection; refuse unsafe/background execution, independent scheduling writes and corrupt-tail repair.
+4. Verify actual safe analysis callback, store restart, real authenticated WebSocket planning, foreign/missing/forged/revoked identities, asynchronous revocation, unknown/unpermitted slash and no journal/outbox/schedule mutation. Check routing, all locale catalogs, changed package/renderer types and relevant builds. Reconcile current built-in MCP provisioning and prove real SessionManager empty per-session source selection survives nonempty workspace defaults and persisted headers.
+5. Deliver separate PR with exact source/head and explicitly bounded receipts. The missing real authenticated backend/scheduler delegation ports remain named acceptance limits.
+
+## Voice command transport recovery — 2026-10-03
+
+Owner: recent feature worker; main integration owner: branch audit lead. Dependencies: current HOTKEY wire channel, native window/client binding and composer consent/permission/generation guards at main 3d04470f9be127945dd15c582775ed1e0401ed50.
+
+1. Restore actual toggle/cancel delivery and foreground Right Option pairing onto current contracts. Dispose registrations/held state, preserve application shortcuts and idle Escape, and fail closed for unmanaged/unbound clients.
+2. Route all four commands into current composer capture. Cancel pending/released/finalizing requests and retain current native host ownership; do not copy old capture singleton, provider defaults or authorization.
+3. Verify actual Electron registration adapter with isolated ports, input-to-client-to-controller behavior, repeated/unpaired/foreign/unbound keys, permission-release and finalization cancellation, and unchanged voice/meeting/privacy regressions; run package types and main/renderer builds.
+4. Commit, push and attach a separate PR, preserving every source branch. Lead owns remote main merge; current live ASR, global native key input and visual microphone acceptance remain explicitly unverified.
 
 ## Selective editor block recovery — 2026-10-03
 
@@ -632,3 +682,28 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 ## UI-001 source repair and main integration — 2026-10-03
 
 The user authorized complete source repair and GitHub merge into main. See [continuation ownership and verification plan](final-readiness/execution/cloud/OWNER-UI-001/continuation-plan.md) for exact address preservation, workspace safety, executor isolation and owned worker dependencies. All original UI-001 requirements and platform acceptance remain unchanged.
+
+## Credential locator repair plan — 2026-10-03
+
+| Task | Owner | Depends on | Owned files | Verification |
+|---|---|---|---|---|
+| LOC-01: Audit current main and merged PR lineage | Lead + independent scouts | none | task-owned evidence | exact remote SHA; validate current source rather than stale PR body |
+| LOC-02: Add inherited-property regression matrix | locator_audit worker | LOC-01 | credential-types.test.ts | red run on original validator, restoration of polluted prototype before assertions |
+| LOC-03: Capture only own descriptor values | Lead | LOC-02 red proof | credential-types.ts | green focused test, every required field rejects inherited substitution |
+| LOC-04: Validate current integration and built runtime | Lead + independent reviewer | LOC-03 | isolated Linux dependencies/artifacts; task-owned logs | full core/types, validate:ci, WebUI types, three builds and built lifecycle |
+| LOC-05: Publish, review and merge main | Lead | LOC-04 | scoped PR and verification receipt | exact pushed HEAD, check readback, merge SHA and main ancestry; retain unrelated work |
+
+The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
+
+## Recovered connection audit action projection — 2026-10-03
+
+Owner: branch integration lead. Source: checkpoint/session-audit-20260821-craft-agents @86154e8c812746261282bb4c517b16ad7becc0ec; dependency: delivered Connections producer PR1414 and current canonical WorkGraph SQLite. Recover the missing additive schema3 action column and creation audit projection. V1/V2 migration SQL/checksums must remain identical; migration3 SQL matches the source. Older ledger rows remain immutable and expose event type as the fallback action. Only metadata action labels cross transport; never restore payload content.
+
+Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/installation, schema3 restart, current actions plus creation event, foreign workspace exclusion and update/delete trigger refusal. The negative control runs the actual new test against unchanged main. Existing kernel/connection/revalidation and consumed server types must pass. Deliver independently and retain the source branch. This supplies audit metadata for the separately recovered Connections UI; no native/provider acceptance is claimed.
+
+### Calendar synchronization ownership recovery (2026-10-03)
+
+- Owner: recent-features integration worker; dependency: current canonical CalendarStore and adapters.
+- Recover the absent per-account request fence from source `1dd90c5031087855e72cd3ecfce7dd057a2a6208`, preserving current conflict/identity and provider-readiness behavior.
+- Verification: deterministic deferred adapters reproduce stale event/cursor overwrite, stale conflict/delete replacement and newer-failure/older-success races before the fix; after the fix verify all three and independent-account/revocation controls, plus the complete calendar suite and core types.
+- Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.

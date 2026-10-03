@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypt
 import { chmodSync, closeSync, lstatSync, mkdirSync, openSync, realpathSync, statSync } from 'node:fs'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
+import { normalizeProfileAvatar, normalizeProfileEmail, type Profile, type UpdateProfileInput } from '@rox/core/platform/identity/types'
 
 export const NATIVE_AUTHORITY_ACTIONS = ['read', 'write', 'delete', 'subscribe', 'manage'] as const
 export type NativeAuthorityAction = (typeof NATIVE_AUTHORITY_ACTIONS)[number]
@@ -141,6 +142,10 @@ export class NativeAuthority {
       CREATE TABLE IF NOT EXISTS self_profiles (
         issuer TEXT NOT NULL, subject_id TEXT NOT NULL REFERENCES subjects(id),
         name TEXT, updated_at INTEGER NOT NULL, PRIMARY KEY(issuer,subject_id)
+      );
+      CREATE TABLE IF NOT EXISTS self_profile_details (
+        issuer TEXT NOT NULL, subject_id TEXT NOT NULL REFERENCES subjects(id),
+        email TEXT, avatar TEXT, PRIMARY KEY(issuer,subject_id)
       );
       CREATE TABLE IF NOT EXISTS credentials (
         id TEXT PRIMARY KEY, subject_id TEXT NOT NULL REFERENCES subjects(id), digest BLOB NOT NULL,
@@ -442,6 +447,41 @@ export class NativeAuthority {
       .run(principal.issuer, principal.subject, name, Date.now());
     this.#audit('profile.self-update', principal.subject, principal.credentialId, workspaceId);
     return { name };
+  }
+
+  /** Identity Center exposes only this caller's metadata, never the host profile. */
+  getSelfIdentityProfile(principal: NativePrincipal, workspaceId: string): Profile {
+    const self = this.getSelfProfile(principal, workspaceId)
+    const details = this.#db.prepare('SELECT email, avatar FROM self_profile_details WHERE issuer=? AND subject_id=?')
+      .get(principal.issuer, principal.subject) as { email: string | null; avatar: string | null } | undefined
+    return {
+      id: principal.subject, displayName: self.name ?? '', mode: 'local', plan: 'standard',
+      ...(details?.email ? { email: details.email } : {}),
+      ...(details?.avatar ? { avatar: details.avatar } : {}),
+    }
+  }
+
+  updateSelfIdentityProfile(principal: NativePrincipal, workspaceId: string, input: UpdateProfileInput): Profile {
+    if (!this.authorize(principal, workspaceId, 'read')) throw new Error('Native self profile denied')
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Invalid profile update')
+    // Local presentation metadata cannot modify billing or authenticated identity.
+    if (input.plan !== undefined || input.mode !== undefined) throw new Error('Profile plan and mode are managed by the account')
+    const prior = this.getSelfIdentityProfile(principal, workspaceId)
+    const email = input.email === undefined ? prior.email : normalizeProfileEmail(input.email)
+    const avatar = input.avatar === undefined ? prior.avatar : normalizeProfileAvatar(input.avatar)
+    this.#db.exec('BEGIN IMMEDIATE')
+    try {
+      if (input.displayName !== undefined) this.updateSelfProfile(principal, workspaceId, { name: input.displayName })
+      this.#db.prepare(`INSERT INTO self_profile_details(issuer,subject_id,email,avatar) VALUES(?,?,?,?)
+        ON CONFLICT(issuer,subject_id) DO UPDATE SET email=excluded.email,avatar=excluded.avatar`)
+        .run(principal.issuer, principal.subject, email ?? null, avatar ?? null)
+      if (input.displayName === undefined) this.#audit('profile.self-update', principal.subject, principal.credentialId, workspaceId)
+      this.#db.exec('COMMIT')
+    } catch (error) {
+      this.#db.exec('ROLLBACK')
+      throw error
+    }
+    return this.getSelfIdentityProfile(principal, workspaceId)
   }
 
   permissionFence(principal: NativePrincipal, workspaceId: string, action: NativeAuthorityAction): string | null {

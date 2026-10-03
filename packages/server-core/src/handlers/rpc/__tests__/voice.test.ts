@@ -136,7 +136,7 @@ describe('voice RPC', () => {
     const prefs = await handlers.get(RPC_CHANNELS.voice.GET)!({})
     expect(prefs).toMatchObject({
       sttEngine: 'cloud-rox',
-      asrModelId: 'rocks-t1',
+      asrModelId: 'nova-3',
       ttsEngine: 'system',
       wakeWordEnabled: false,
       alwaysListeningConsent: false,

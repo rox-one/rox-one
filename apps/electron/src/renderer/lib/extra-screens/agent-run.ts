@@ -9,6 +9,9 @@ export interface AgentRunRequest {
   name: string
   prompt: string
   labels?: string[]
+  enabledSourceSlugs?: string[]
+  /** Persist an owner claim before a prompt can begin. */
+  onCreated?: (sessionId: string) => Promise<void>
 }
 
 export async function startAgentRun(request: AgentRunRequest): Promise<string> {
@@ -17,7 +20,9 @@ export async function startAgentRun(request: AgentRunRequest): Promise<string> {
     name: request.name,
     permissionMode: 'safe',
     ...(request.labels?.length ? { labels: request.labels } : {}),
+    ...(request.enabledSourceSlugs ? { enabledSourceSlugs: request.enabledSourceSlugs } : {}),
   })
+  await request.onCreated?.(session.id)
   await api.sendMessage(session.id, request.prompt)
   return session.id
 }

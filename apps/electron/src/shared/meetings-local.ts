@@ -2,8 +2,8 @@
  * Local meeting recordings (Встречи) — the device-side store shared by main,
  * preload and renderer. Each meeting is a folder `<configDir>/meetings/<id>/`
  * with meeting.json, the audio file, transcript.json/.md and documents/.
- * Capture/import and Whisper transcription are device-local. Explicit summary
- * generation uses the ordinary configured agent model/provider separately.
+ * Capture/import remain device-local. Deepgram transcription uploads audio
+ * after explicit cloud consent; local Whisper is an optional device engine.
  */
 
 export const MEETINGS_LOCAL_SCHEMA = 1
@@ -35,6 +35,11 @@ export const MEETINGS_LOCAL_IPC = {
   OPEN_DOC: 'meetings-local:open-doc',
   REVEAL: 'meetings-local:reveal',
   REMOVE_DOC: 'meetings-local:remove-doc',
+  EXTRACTION_CLAIM: 'meetings-local:extraction-claim',
+  EXTRACTION_ATTACH: 'meetings-local:extraction-attach',
+  EXTRACTION_FINISH: 'meetings-local:extraction-finish',
+  EXTRACTION_FAIL: 'meetings-local:extraction-fail',
+  ACTION_SAVE: 'meetings-local:action-save',
   CHANGED: 'meetings-local:changed',
 } as const
 
@@ -75,6 +80,8 @@ export interface LocalTranscriptProvenance {
   sourceHash?: string
   engine?: string
   model?: string
+  modelRevision?: string
+  diarizationModel?: string
   generatedAt?: number
 }
 
@@ -94,6 +101,38 @@ export interface LocalMeetingAction {
   sourceSegmentIds?: string[]
   sourceTranscriptRevision?: number
   createdAt: number
+  editedAt?: number
+}
+
+export interface LocalMeetingExtraction {
+  id: string
+  workspaceId: string
+  transcriptRevision: number
+  editRevision: number
+  automatic: boolean
+  status: 'starting' | 'running' | 'done' | 'failed' | 'superseded'
+  startedAt: number
+  finishedAt?: number
+  sessionId?: string
+  errorCode?: string
+}
+
+export interface LocalMeetingExtractedDecision {
+  id: string
+  title: string
+  why: string
+  who: string[]
+  sourceSegmentIds: string[]
+  sourceTranscriptRevision: number
+  sourceStartMs?: number
+}
+
+export interface LocalMeetingExtractionResult {
+  summary: string
+  summarySourceSegmentIds: string[]
+  actions: Array<{ text: string; sourceSegmentIds: string[] }>
+  decisions: Array<{ title: string; why: string; who: string[]; sourceSegmentIds: string[] }>
+  questions: Array<{ text: string; sourceSegmentIds: string[] }>
 }
 
 export interface LocalMeetingDocument {
@@ -129,10 +168,17 @@ export interface LocalMeeting {
   source: LocalMeetingSource
   participants: string[]
   notes: string
+  /** User-selected analysis profile; does not grant tools or background work. */
+  recipeId?: import('@rox/shared/meeting-agents').MeetingProfileId
   audio: LocalMeetingAudio | null
   transcript: LocalMeetingTranscriptState
   summary: LocalMeetingSummary | null
-  summaryRun?: { sessionId: string; startedAt: number; transcriptRevision?: number }
+  summaryRun?: { sessionId: string; startedAt: number; transcriptRevision?: number; automatic?: boolean }
+  summaryAutoRevision?: number
+  /** Main-process claim and completion guards shared by every app window. */
+  extraction?: LocalMeetingExtraction
+  analysisEditRevision?: number
+  extractedDecisions?: LocalMeetingExtractedDecision[]
   actions: LocalMeetingAction[]
   documents: LocalMeetingDocument[]
   updatedAt: number
@@ -185,12 +231,13 @@ export interface LocalAsrEngine {
   model: string | null
   modelPath: string | null
   ffmpeg: string | null
-  /** Why it isn't ready: 'no-whisper' | 'no-model' | 'no-ffmpeg'. */
+  /** Includes missing local tools, cloud-consent, or deepgram-not-configured. */
   missing: string[]
+  cloudAvailable?: boolean
 }
 
 export type LocalMeetingPatch = Partial<Pick<LocalMeeting,
-  'title' | 'participants' | 'notes' | 'scheduledAt' | 'actions' | 'summary' | 'summaryRun'>>
+  'title' | 'participants' | 'notes' | 'recipeId' | 'scheduledAt' | 'actions' | 'summary' | 'summaryRun' | 'summaryAutoRevision'>>
 
 export type MeetingsLocalResult<T> = { ok: true; value: T } | { ok: false; code: string; message?: string }
 
@@ -199,6 +246,11 @@ export interface MeetingsLocalApi {
   get(id: string): Promise<LocalMeeting | null>
   create(input: { title: string; workspaceId: string | null; scheduledAt?: number }): Promise<LocalMeeting>
   update(id: string, patch: LocalMeetingPatch): Promise<LocalMeeting | null>
+  claimExtraction(id: string, input: { workspaceId: string; transcriptRevision: number; automatic: boolean }): Promise<MeetingsLocalResult<LocalMeeting>>
+  attachExtraction(id: string, input: { runId: string; sessionId: string }): Promise<MeetingsLocalResult<LocalMeeting>>
+  finishExtraction(id: string, input: { runId: string; result: LocalMeetingExtractionResult }): Promise<MeetingsLocalResult<LocalMeeting>>
+  failExtraction(id: string, input: { runId: string; code: string }): Promise<MeetingsLocalResult<LocalMeeting>>
+  saveAction(id: string, input: { actionId: string; patch?: Partial<Pick<LocalMeetingAction, 'text' | 'done' | 'taskId'>>; remove?: boolean; create?: boolean }): Promise<MeetingsLocalResult<LocalMeeting>>
   trash(id: string): Promise<boolean>
   recStart(input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string }): Promise<MeetingsLocalResult<LocalMeeting>>
   recChunk(meetingId: string, chunk: Uint8Array): Promise<boolean>
