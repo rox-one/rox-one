@@ -102,7 +102,11 @@ ditto "$app" "$staged_app"
 
 # Quit only an installed ROX process. Never stop development Electron sessions.
 if pgrep -f "$destination/Contents/MacOS/Rox" >/dev/null 2>&1; then
-  osascript -e 'tell application "Rox" to quit' || fail 'Close ROX before replacing its application bundle.'
+  osascript - "$destination" <<'APPLESCRIPT' || fail 'Close ROX before replacing its application bundle.'
+on run argv
+  tell application (item 1 of argv) to quit
+end run
+APPLESCRIPT
   for attempt in 1 2 3 4 5; do
     pgrep -f "$destination/Contents/MacOS/Rox" >/dev/null 2>&1 || break
     sleep 1
