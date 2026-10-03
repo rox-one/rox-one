@@ -24,6 +24,8 @@ interface CtxOverrides {
   validateStdioMcpConnection?: SessionToolContext['validateStdioMcpConnection'];
   validateMcpConnection?: SessionToolContext['validateMcpConnection'];
   credentialManager?: SessionToolContext['credentialManager'];
+  resolveStdioMcpSourceConfig?: SessionToolContext['resolveStdioMcpSourceConfig'];
+  resolveHttpMcpSourceConfig?: SessionToolContext['resolveHttpMcpSourceConfig'];
 }
 
 function createCtx(workspacePath: string, overrides: CtxOverrides = {}): SessionToolContext {
@@ -66,6 +68,8 @@ function createCtx(workspacePath: string, overrides: CtxOverrides = {}): Session
     },
     // Stub the MCP validator so connection tests don't hit the network.
     validateStdioMcpConnection: overrides.validateStdioMcpConnection,
+    resolveStdioMcpSourceConfig: overrides.resolveStdioMcpSourceConfig,
+    resolveHttpMcpSourceConfig: overrides.resolveHttpMcpSourceConfig,
     validateMcpConnection: overrides.validateMcpConnection,
     credentialManager: overrides.credentialManager,
     activateSourceInSession: overrides.activateSourceInSession,
@@ -118,6 +122,58 @@ function stubMcpOk(): NonNullable<SessionToolContext['validateStdioMcpConnection
 function stubMcpFail(): NonNullable<SessionToolContext['validateStdioMcpConnection']> {
   return async () => ({ success: false, error: 'boom' });
 }
+
+describe('source_test host stdio runtime resolution', () => {
+  let tempDir: string;
+  beforeEach(() => { tempDir = mkdtempSync(join(tmpdir(), 'source-test-runtime-')); });
+  afterEach(() => { rmSync(tempDir, { recursive: true, force: true }); });
+
+  it('probes host-resolved credentials and paths without persisting runtime secrets', async () => {
+    writeSource(tempDir, 'firecrawl-mcp', {
+      id: 'builtin-mcp-firecrawl-mcp', mcp: { transport: 'stdio', command: 'npx', args: ['firecrawl-mcp'] },
+    });
+    const runtime = { command: '/managed/node/bin/npx', args: ['firecrawl-mcp'], env: { FIRECRAWL_API_KEY: 'vault-secret' }, cwd: '/runtime/source' };
+    let received: Parameters<NonNullable<SessionToolContext['validateStdioMcpConnection']>>[0] | undefined;
+    const ctx = createCtx(tempDir, {
+      resolveStdioMcpSourceConfig: async source => {
+        expect(source.mcp?.env).toBeUndefined();
+        return { config: runtime };
+      },
+      validateStdioMcpConnection: async config => { received = config; return { success: true }; },
+    });
+    const result = await handleSourceTest(ctx, { sourceSlug: 'firecrawl-mcp', autoEnable: false });
+    expect(received).toEqual(runtime);
+    expect(result.content[0]?.text).toContain('MCP server started successfully');
+    expect(result.content[0]?.text).not.toContain('vault-secret');
+    expect(readFileSync(join(tempDir, 'sources', 'firecrawl-mcp', 'config.json'), 'utf-8')).not.toContain('vault-secret');
+  });
+
+  it('reports host readiness failure instead of spawning the unresolved command', async () => {
+    writeSource(tempDir, 'telegram-mcp');
+    let probes = 0;
+    const ctx = createCtx(tempDir, {
+      resolveStdioMcpSourceConfig: async () => ({ config: null, error: 'Configure TELEGRAM_API_HASH.' }),
+      validateStdioMcpConnection: async () => { probes++; return { success: true }; },
+    });
+    const result = await handleSourceTest(ctx, { sourceSlug: 'telegram-mcp', autoEnable: false });
+    expect(probes).toBe(0);
+    expect(result.content[0]?.text).toContain('Configure TELEGRAM_API_HASH.');
+    const saved = JSON.parse(readFileSync(join(tempDir, 'sources', 'telegram-mcp', 'config.json'), 'utf-8'));
+    expect(saved.connectionStatus).toBe('error');
+  });
+
+  it('does not expose raw credential-store resolution exceptions', async () => {
+    writeSource(tempDir, 'firecrawl-mcp');
+    const ctx = createCtx(tempDir, {
+      resolveStdioMcpSourceConfig: async () => { throw new Error('Vault rejected secret-vault-token'); },
+      validateStdioMcpConnection: stubMcpOk(),
+    });
+    const result = await handleSourceTest(ctx, { sourceSlug: 'firecrawl-mcp', autoEnable: false });
+    expect(result.content[0]?.text).toContain('Check source setup and credentials');
+    expect(result.content[0]?.text).not.toContain('secret-vault-token');
+    expect(readFileSync(join(tempDir, 'sources', 'firecrawl-mcp', 'config.json'), 'utf-8')).not.toContain('secret-vault-token');
+  });
+});
 
 describe('source_test auto-enable', () => {
   let tempDir: string;
@@ -695,6 +751,182 @@ describe('source_test HTTP MCP probe credential forwarding (regression for #720)
     expect(calls[0]?.headers).toEqual({ 'X-Api-Key': 'k1' });
     expect(calls[0]?.accessToken).toBeUndefined();
     expect(cred.refreshCalls).toBe(0);
+  });
+});
+
+describe('source_test host HTTP runtime resolution', () => {
+  let tempDir: string;
+  beforeEach(() => { tempDir = mkdtempSync(join(tmpdir(), 'source-test-http-runtime-')); });
+  afterEach(() => { rmSync(tempDir, { recursive: true, force: true }); });
+
+  it('probes the resolved endpoint, headers and token without persisting runtime configuration', async () => {
+    const diskMcp = { transport: 'http' as const, url: 'https://weaviate.invalid/v1/mcp', authType: 'none' as const };
+    writeHttpMcpSource(tempDir, 'weaviate', { id: 'builtin-mcp-weaviate', mcp: diskMcp });
+    const runtime = {
+      url: 'https://weaviate-runtime.example.test/v1/mcp?token=runtime-url-key', transport: 'sse' as const,
+      authType: 'bearer' as const, headers: { 'X-Api-Key': 'runtime-header-key' }, accessToken: 'runtime-access-token',
+    };
+    const calls: ValidateMcpCall[] = [];
+    const credential = makeCredentialManager({ cachedToken: 'fallback-must-not-override' });
+    const ctx = createCtx(tempDir, {
+      resolveHttpMcpSourceConfig: async source => {
+        expect(source.mcp).toEqual(diskMcp);
+        return { config: runtime };
+      },
+      credentialManager: credential.manager,
+      validateMcpConnection: async config => { calls.push(config); return { success: true, toolCount: 3 }; },
+    });
+
+    const result = await handleSourceTest(ctx, { sourceSlug: 'weaviate', autoEnable: false });
+
+    expect(result.isError).toBeFalsy();
+    expect(calls).toEqual([runtime]);
+    expect(credential.getTokenCalls).toBe(0);
+    const persisted = readFileSync(join(tempDir, 'sources', 'weaviate', 'config.json'), 'utf8');
+    expect(JSON.parse(persisted).mcp).toEqual(diskMcp);
+    expect(JSON.parse(persisted).connectionStatus).toBe('connected');
+    for (const value of ['weaviate-runtime.example.test', 'runtime-url-key', 'runtime-header-key', 'runtime-access-token']) {
+      expect(persisted).not.toContain(value);
+    }
+    expect(result.content[0]?.text).not.toContain('runtime-url-key');
+    expect(result.content[0]?.text).not.toContain('runtime-header-key');
+    expect(result.content[0]?.text).not.toContain('runtime-access-token');
+  });
+
+  it('does not probe an unresolved managed endpoint or activate the source', async () => {
+    writeHttpMcpSource(tempDir, 'weaviate', { enabled: false, mcp: { transport: 'http', url: 'https://weaviate.invalid/v1/mcp', authType: 'none' } });
+    let probes = 0;
+    let activations = 0;
+    const ctx = createCtx(tempDir, {
+      resolveHttpMcpSourceConfig: async () => ({ config: null, error: 'Set WEAVIATE_URL to a running database.' }),
+      validateMcpConnection: async () => { probes++; return { success: true }; },
+      activateSourceInSession: async () => { activations++; return { ok: true }; },
+    });
+
+    const result = await handleSourceTest(ctx, { sourceSlug: 'weaviate' });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain('Set WEAVIATE_URL');
+    expect(probes).toBe(0);
+    expect(activations).toBe(0);
+    const persisted = JSON.parse(readFileSync(join(tempDir, 'sources', 'weaviate', 'config.json'), 'utf8'));
+    expect(persisted.connectionStatus).toBe('error');
+    expect(persisted.enabled).toBe(false);
+  });
+
+  it('accepts successful environment-only authentication even when the disk source is already authenticated', async () => {
+    writeHttpMcpSource(tempDir, 'mem0', { isAuthenticated: true, mcp: { transport: 'http', url: 'https://mcp.mem0.ai/mcp', authType: 'bearer' } });
+    const credential = makeCredentialManager({ cachedToken: null, refreshedToken: null });
+    const ctx = createCtx(tempDir, {
+      credentialManager: credential.manager,
+      resolveHttpMcpSourceConfig: async () => ({ config: { url: 'https://mcp.mem0.ai/mcp', transport: 'http', authType: 'none', headers: { Authorization: 'Bearer env-only-mem0-key' } } }),
+      validateMcpConnection: async () => ({ success: true }),
+    });
+
+    const result = await handleSourceTest(ctx, { sourceSlug: 'mem0', autoEnable: false });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.content[0]?.text).toContain('MCP authentication verified by the connection test');
+    expect(result.content[0]?.text).not.toContain('token missing');
+    expect(result.content[0]?.text).not.toContain('env-only-mem0-key');
+    expect(credential.getTokenCalls).toBe(0);
+    expect(credential.refreshCalls).toBe(0);
+    expect(readFileSync(join(tempDir, 'sources', 'mem0', 'config.json'), 'utf8')).not.toContain('env-only-mem0-key');
+  });
+
+  it('fails a managed authentication rejection instead of marking it connected', async () => {
+    writeHttpMcpSource(tempDir, 'mem0', { enabled: false, mcp: { transport: 'http', url: 'https://mcp.mem0.ai/mcp', authType: 'bearer' } });
+    let activations = 0;
+    const ctx = createCtx(tempDir, {
+      resolveHttpMcpSourceConfig: async () => ({ config: { url: 'https://mcp.mem0.ai/mcp', transport: 'http', authType: 'none', headers: { Authorization: 'Bearer rejected-mem0-key' } } }),
+      validateMcpConnection: async () => ({ success: false, needsAuth: true, error: '401 rejected-mem0-key' }),
+      activateSourceInSession: async () => { activations++; return { ok: true }; },
+    });
+
+    const result = await handleSourceTest(ctx, { sourceSlug: 'mem0' });
+
+    expect(result.isError).toBe(true);
+    expect(activations).toBe(0);
+    expect(result.content[0]?.text).toContain('Check source credentials before activation');
+    const persisted = readFileSync(join(tempDir, 'sources', 'mem0', 'config.json'), 'utf8');
+    expect(JSON.parse(persisted).connectionStatus).toBe('error');
+    expect(JSON.parse(persisted).enabled).toBe(false);
+    expect(persisted).not.toContain('rejected-mem0-key');
+  });
+
+  it('keeps the generic cached-token and auth-required behavior when the host returns undefined', async () => {
+    writeHttpMcpSource(tempDir, 'custom-oauth');
+    const credential = makeCredentialManager({ cachedToken: 'generic-cached-token' });
+    const calls: ValidateMcpCall[] = [];
+    const ctx = createCtx(tempDir, {
+      resolveHttpMcpSourceConfig: async () => undefined,
+      credentialManager: credential.manager,
+      validateMcpConnection: async config => { calls.push(config); return { success: false, needsAuth: true }; },
+    });
+
+    const result = await handleSourceTest(ctx, { sourceSlug: 'custom-oauth', autoEnable: false });
+
+    expect(result.isError).toBeFalsy();
+    expect(calls[0]?.accessToken).toBe('generic-cached-token');
+    expect(credential.refreshCalls).toBe(0);
+    expect(JSON.parse(readFileSync(join(tempDir, 'sources', 'custom-oauth', 'config.json'), 'utf8')).connectionStatus).toBe('connected');
+  });
+
+  for (const throws of [false, true]) {
+    it(`redacts ${throws ? 'thrown' : 'returned'} probe errors and echoed runtime URLs from persisted diagnostics`, async () => {
+      writeHttpMcpSource(tempDir, 'mem0', { mcp: { transport: 'http', url: 'https://mcp.mem0.ai/mcp', authType: 'bearer' } });
+      const runtime = {
+        url: 'https://runtime.example.test/mcp?token=url-secret', transport: 'http' as const,
+        headers: { Authorization: 'Bearer header-secret', 'X-Api-Key': 'api-secret', 'X-Subscription': 'custom-credential' }, accessToken: 'access-secret',
+      };
+      const message = `Failure at ${runtime.url}; header-secret api-secret access-secret custom-credential`;
+      const ctx = createCtx(tempDir, {
+        resolveHttpMcpSourceConfig: async () => ({ config: runtime }),
+        validateMcpConnection: async () => {
+          if (throws) throw new Error(message);
+          return { success: false, error: message };
+        },
+      });
+
+      const result = await handleSourceTest(ctx, { sourceSlug: 'mem0', autoEnable: false });
+
+      expect(result.isError).toBe(true);
+      const output = result.content[0]?.text ?? '';
+      const persisted = readFileSync(join(tempDir, 'sources', 'mem0', 'config.json'), 'utf8');
+      for (const secret of ['url-secret', 'header-secret', 'api-secret', 'access-secret', 'custom-credential']) {
+        expect(output).not.toContain(secret);
+        expect(persisted).not.toContain(secret);
+      }
+      expect(persisted).not.toContain('runtime.example.test');
+      expect(output).toContain('[MCP endpoint]');
+    });
+  }
+
+  it('does not expose credential-store resolution exceptions', async () => {
+    writeHttpMcpSource(tempDir, 'mem0');
+    let probes = 0;
+    const ctx = createCtx(tempDir, {
+      resolveHttpMcpSourceConfig: async () => { throw new Error('Vault rejected hidden-mem0-secret'); },
+      validateMcpConnection: async () => { probes++; return { success: true }; },
+    });
+
+    const result = await handleSourceTest(ctx, { sourceSlug: 'mem0', autoEnable: false });
+
+    expect(result.isError).toBe(true);
+    expect(probes).toBe(0);
+    expect(result.content[0]?.text).toContain('Check source setup and credentials');
+    expect(result.content[0]?.text).not.toContain('hidden-mem0-secret');
+    expect(readFileSync(join(tempDir, 'sources', 'mem0', 'config.json'), 'utf8')).not.toContain('hidden-mem0-secret');
+  });
+
+  it('does not mark an unverified managed remote config connected when the validator is unavailable', async () => {
+    writeHttpMcpSource(tempDir, 'mem0');
+    const ctx = createCtx(tempDir, { resolveHttpMcpSourceConfig: async () => ({ config: { url: 'https://mcp.mem0.ai/mcp', transport: 'http' } }) });
+
+    const result = await handleSourceTest(ctx, { sourceSlug: 'mem0', autoEnable: false });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.parse(readFileSync(join(tempDir, 'sources', 'mem0', 'config.json'), 'utf8')).connectionStatus).toBe('error');
   });
 });
 

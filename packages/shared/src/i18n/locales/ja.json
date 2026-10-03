@@ -3879,6 +3879,8 @@
   "onboarding.errors.selectAuthMethod": "先に認証方法を選択してください。",
   "onboarding.errors.validationFailed": "検証に失敗しました",
   "onboarding.errors.workspaceTransitionFailed": "ワークスペースを開けませんでした。もう一度お試しください。",
+  "onboarding.firstSession.message": "こんにちは、Roxです。あなたに合ったお手伝いができるよう、いくつか質問させてください。\n\n1. 何とお呼びすればよいですか？\n2. まず何に取り組みたいですか？\n3. 回答のスタイルの希望や、考慮すべき制約はありますか？\n\nどの質問から答えても、すぐにタスクを送っていただいても構いません。",
+  "onboarding.firstSession.title": "まずは自己紹介から",
   "onboarding.gitBash.alreadyInstalled": "Gitはすでにインストール済みですか？",
   "onboarding.gitBash.browse": "参照...",
   "onboarding.gitBash.customPath": "Gitが標準以外の場所にインストールされている場合は、bash.exeのパスを指定できます。",

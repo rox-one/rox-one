@@ -469,6 +469,7 @@ const EXPECTED_CHANNELS: string[] = [
   'onboarding:clearClaudeOAuthState',
   'onboarding:clearRoxCloud',
   'onboarding:deferSetup',
+  'onboarding:ensureFirstSession',
   'onboarding:exchangeClaudeCode',
   'onboarding:getAuthState',
   'onboarding:getRoxBalance',

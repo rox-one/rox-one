@@ -19,6 +19,7 @@ import { getTopBarLeftInset, shouldShowWorkspaceIconRail, WORKSPACE_SELECTOR_RAI
 import { viewportBand } from '@/platform/viewport-band'
 import type { AppShellContextType } from '@/context/AppShellContext'
 import { OnboardingWizard, ReauthScreen, ensureRoxRuntimeDefault } from '@/components/onboarding'
+import { openFirstSessionWelcome } from '@/components/onboarding/first-session-welcome'
 import { WorkspacePicker } from '@/components/workspace'
 import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog'
@@ -1442,6 +1443,39 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
     return session
   }, [addSession, syncSessionOptionsFromSession])
+
+  const firstSessionAttemptedRef = useRef(false)
+  const firstSessionMountedRef = useRef(true)
+  useEffect(() => {
+    firstSessionMountedRef.current = true
+    return () => { firstSessionMountedRef.current = false }
+  }, [])
+  useEffect(() => {
+    if (appState !== 'ready' || !sessionsLoaded || sessionLoadError || callerAuthority !== 'local'
+      || !windowWorkspaceId || initialSessionId || webTransportBootstrap || firstSessionAttemptedRef.current) return
+    const workspace = workspaces.find(item => item.id === windowWorkspaceId)
+    if (!workspace || workspace.remoteServer) return
+    firstSessionAttemptedRef.current = true
+    const initialUrl = window.location.href
+    void openFirstSessionWelcome({
+      workspaceId: windowWorkspaceId,
+      isCurrent: () => firstSessionMountedRef.current && callerAuthorityRef.current === 'local'
+        && store.get(windowWorkspaceIdAtom) === windowWorkspaceId,
+      getWindowWorkspace: () => window.electronAPI.getWindowWorkspace(),
+      ensureWelcome: id => window.electronAPI.ensureFirstSessionWelcome(id),
+      onSession: session => {
+        addSession(session)
+        syncSessionOptionsFromSession(session)
+      },
+      onOpen: id => {
+        if (window.location.href === initialUrl) navigate(routes.view.allSessions(id))
+      },
+    }).catch(error => {
+      // A greeting must never gate opening the app or starting an ordinary chat.
+      console.warn('[App] Could not open the first-session welcome:', error)
+    })
+  }, [appState, sessionsLoaded, sessionLoadError, callerAuthority, windowWorkspaceId, initialSessionId,
+    webTransportBootstrap, workspaces, addSession, syncSessionOptionsFromSession, store])
 
   // Deep link navigation is initialized later after handleInputChange is defined
 

@@ -24,6 +24,7 @@ import type { HandlerDeps } from '../handler-deps'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.onboarding.GET_AUTH_STATE,
+  RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION,
   RPC_CHANNELS.onboarding.VALIDATE_MCP,
   RPC_CHANNELS.onboarding.START_MCP_OAUTH,
   RPC_CHANNELS.onboarding.START_CLAUDE_OAUTH,
@@ -37,6 +38,11 @@ export const HANDLED_CHANNELS = [
 
 export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps): void {
   const log = deps.platform.logger
+
+  server.handle(RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION, async (_ctx, workspaceId: string) => {
+    if (typeof workspaceId !== 'string' || !workspaceId.trim()) throw new Error('workspaceId is required')
+    return deps.sessionManager.ensureFirstSessionWelcome(workspaceId)
+  })
 
   // Get current auth state
   server.handle(RPC_CHANNELS.onboarding.GET_AUTH_STATE, async () => {

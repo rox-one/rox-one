@@ -25,6 +25,9 @@ async function packagingFilter(target: string, arch: string) {
     'package.json', 'dist/main.cjs', 'dist/renderer/index.html',
     'resources/pi-agent-server/index.js', 'resources/cloud-runner/index.js',
     'resources/scripts/pdf-tool.py', 'vendor/bun/bun', 'vendor/bun/bun.exe',
+    'dist/resources/skills/SKILLS.lock',
+    'dist/resources/skills/understand-anything/understand/SKILL.md',
+    'dist/resources/skills/understand-anything/understand/plugin/skills/understand/scan-project.mjs',
     ...binaryTargets.flatMap((binary) => [`resources/bin/${binary}/uv`, `dist/resources/bin/${binary}/uv`]),
     'src/main/index.ts', 'scripts/afterPack.cjs', '.env',
     'release/old/mac-arm64/Rox.app/Contents/Frameworks/Mantle.framework/Versions/A/Resources/Info.plist',
@@ -74,7 +77,9 @@ describe('electron-builder target application file selection', () => {
     const filter = await packagingFilter(target!, arch!);
     for (const file of ['package.json', 'dist/main.cjs', 'dist/renderer/index.html',
       'resources/pi-agent-server/index.js', 'resources/cloud-runner/index.js',
-      'resources/scripts/pdf-tool.py']) {
+      'resources/scripts/pdf-tool.py', 'dist/resources/skills/SKILLS.lock',
+      'dist/resources/skills/understand-anything/understand/SKILL.md',
+      'dist/resources/skills/understand-anything/understand/plugin/skills/understand/scan-project.mjs']) {
       expect(filter.includes(file)).toBe(true);
     }
     for (const candidate of binaryTargets) {

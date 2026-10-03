@@ -51,6 +51,8 @@ export interface ISessionManager {
 
   getSessions(workspaceId?: string): Session[]
   getSession(sessionId: string): Promise<Session | null>
+  /** Persist a one-time assistant welcome for a fresh installation. Never starts the model. */
+  ensureFirstSessionWelcome(workspaceId: string): Promise<Session | null>
   /** Creates a session and (unless `internal.emitCreatedEvent === false`) announces it to the
    *  renderer so it hydrates full metadata instead of fabricating a "New Chat" placeholder. */
   createSession(
@@ -283,6 +285,7 @@ export interface ISessionManager {
   /** Return client-safe workspace list (no rootPath) for remote clients. */
   getWorkspacesInfo(): WorkspaceInfo[]
   setupConfigWatcher(workspaceRootPath: string, workspaceId: string): void
+  retryBuiltinMcpSources?(workspaceId: string): void
   /**
    * Manually notify the ConfigWatcher of a file change.
    * Workaround for Bun's fs.watch on Linux not detecting atomic renames.
