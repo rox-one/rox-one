@@ -1,5 +1,5 @@
 import type { PanelStackEntry } from '@/atoms/panel-stack'
-import { parseRouteToNavigationState } from '../../../shared/route-parser'
+import { resolveViewRoute } from '../../../shared/route-parser'
 import type { ViewRoute } from '../../../shared/routes'
 import type { NavigationState } from '../../../shared/types'
 import {
@@ -31,8 +31,7 @@ function findServicePanel(
   const destination = APP_NAV_DESTINATIONS_BY_ID[serviceId]
   if (!destination) return undefined
   const matches = (panel: PanelStackEntry) => {
-    const navState = parseRouteToNavigationState(panel.route)
-    return navState !== null && destination.isActive(navState)
+    return destination.isActive(resolveViewRoute(panel.route))
   }
   const focusedPanel = panels.find((panel) => panel.id === focusedPanelId)
   if (focusedPanel && matches(focusedPanel)) return focusedPanel

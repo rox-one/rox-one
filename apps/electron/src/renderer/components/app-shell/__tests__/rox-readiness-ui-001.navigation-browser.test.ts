@@ -1,8 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
-import { createServer, type Server } from 'node:http'
 import { mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { build } from 'esbuild'
+import { build, type PluginBuild } from 'esbuild'
 import ts from 'typescript'
 import { chromium, type Browser, type BrowserContext, type Page } from '@playwright/test'
 
@@ -11,7 +10,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from '@playwri
 const enabled = process.env.ROX_UI001_BROWSER_TEST === '1'
 const root = join(import.meta.dir, '../../../../../../..')
 const evidence = join(root, 'docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/browser')
-let server: Server, browser: Browser, context: BrowserContext, page: Page, base: string
+let server: ReturnType<typeof Bun.serve>, browser: Browser, context: BrowserContext, page: Page, base: string
 
 function mainFunctions() {
   const source = readFileSync(join(import.meta.dir, '../MainContentPanel.tsx'), 'utf8')
@@ -23,6 +22,39 @@ function mainFunctions() {
     .map(node => node.getText(file).replace(/^export /, '')).join('\n')
 }
 
+
+// Extract the actual shell slot/width/resize conditions; chrome leaves are fixtures.
+function shellNavigatorExpressions() {
+  const source = readFileSync(process.env.ROX_UI001_SHELL_SOURCE ?? join(import.meta.dir, '../AppShell.tsx'), 'utf8')
+  const file = ts.createSourceFile('AppShell.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const names = new Set(['isBoardView', 'isPagesView', 'isTasksView', 'isMeetingsView', 'isMemoryView', 'isProjectsView', 'isModeScreenView', 'hideModuleMiddleNav'])
+  const declarations: string[] = []
+  let hidden = '', width = '', resize = ''
+  function visit(node: ts.Node) {
+    if (ts.isVariableDeclaration(node) && names.has(node.name.getText(file))) declarations.push(`const ${node.getText(file)};`)
+    if (ts.isJsxAttribute(node) && node.initializer && ts.isJsxExpression(node.initializer)) {
+      const expression = node.initializer.expression
+      if (node.name.getText(file) === 'navigatorSlot' && expression && ts.isConditionalExpression(expression)) hidden = expression.condition.getText(file)
+      if (node.name.getText(file) === 'navigatorWidth' && expression) width = expression.getText(file)
+    }
+    if (ts.isJsxSelfClosingElement(node) && node.tagName.getText(file) === 'ResizeHandle'
+      && node.attributes.properties.some(property => ts.isJsxAttribute(property) && property.name.getText(file) === 'controlsId' && property.initializer?.getText(file) === '"shell-navigator"')) {
+      let parent: ts.Node = node.parent
+      while (!ts.isJsxExpression(parent) && parent.parent) parent = parent.parent
+      if (ts.isJsxExpression(parent) && parent.expression && ts.isBinaryExpression(parent.expression)) resize = parent.expression.left.getText(file)
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(file)
+  if (declarations.length !== names.size || !hidden || !width || !resize) throw new Error('Actual AppShell navigator conditions were not found')
+  return `function ShellNavigatorProbe(){
+    const navState=useNavigationState(), isAutoCompact=window.innerWidth<768, sessionListWidth=300, effectiveSidebarAndNavigatorHidden=false;
+    ${declarations.join('\n')}
+    return <>{!(${hidden})&&<aside data-shell-navigator style={{width:${width}}}>All Sessions</aside>}
+      {(${resize})&&<button data-shell-navigator-resize role="separator"/>}</>;
+  }`
+}
+
 async function bundle() {
   const contents = `
     import * as React from 'react';
@@ -30,6 +62,7 @@ async function bundle() {
     import {createRoot} from 'react-dom/client';
     import {Provider,atom,createStore,useAtomValue,useSetAtom} from 'jotai';
     import {NavigationProvider,useNavigation,useNavigationState} from './apps/electron/src/renderer/contexts/NavigationContext';
+    import {CompactWorkspaceMenu} from './apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu';
     import {panelStackAtom,focusedPanelIdAtom,focusedSessionIdAtom} from './apps/electron/src/renderer/atoms/panel-stack';
     import {sessionMetaMapAtom} from './apps/electron/src/renderer/atoms/sessions';
     import {useSession} from './apps/electron/src/renderer/hooks/useSession';
@@ -37,6 +70,7 @@ async function bundle() {
     import * as guards from './apps/electron/src/shared/types';
     import {resolveViewRoute} from './apps/electron/src/shared/route-parser';
     import {isDetailNavState} from './apps/electron/src/renderer/lib/nav-helpers';
+    import {isCollectionCanvasView} from './apps/electron/src/renderer/components/app-shell/collection/collection-view-cycle';
     import * as storage from './apps/electron/src/renderer/lib/local-storage';
     const {isSessionsNavigation,isSourcesNavigation,isSettingsNavigation,isSkillsNavigation,isMemoryNavigation,
       isTasksNavigation,isMeetingsNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,
@@ -72,6 +106,7 @@ async function bundle() {
       AutomationEditor=leaf('automation'),KnowledgeDiff=leaf('diff'),KnowledgeHome=leaf('knowledge-home'),KnowledgeProposals=leaf('proposals');
     const getSettingsPageComponent=()=>leaf('settings'),recordRecentSetting=()=>{};
     ${mainFunctions()}
+    ${shellNavigatorExpressions()}
     let setReady,setWorkspace;
     const createSession=async(ws,options)=>{calls.push(['createSession',ws,options]);return {id:'created',workspaceId:ws}};
     function View(){
@@ -81,7 +116,7 @@ async function bundle() {
         snapshot:()=>({state:nav.navigationState,panels:store.get(panelStackAtom),focused:store.get(focusedPanelIdAtom),session:store.get(focusedSessionIdAtom),
           selected:selected.selected,workspace,calls,search:location.search,back:nav.canGoBack,forward:nav.canGoForward,
           saved:storage.get(storage.KEYS.workspaceUrl,'',workspace),listeners:events.size,detail:isDetailNavState(nav.navigationState)})};
-      return <><output data-state={nav.navigationState.navigator} data-ready={nav.isReady}/>{panels.map(entry=><div key={entry.id} data-panel={entry.id} data-focused={entry.id===focused}>
+      return <><ShellNavigatorProbe/><CompactWorkspaceMenu onOpenBrowser={()=>calls.push(['openBrowser'])}/><output data-state={nav.navigationState.navigator} data-ready={nav.isReady}/>{panels.map(entry=><div key={entry.id} data-panel={entry.id} data-focused={entry.id===focused}>
         <MainContentPanel navStateOverride={resolveViewRoute(entry.route)} isSidebarAndNavigatorHidden={false}/></div>)}</>;
     }
     function App(){
@@ -95,15 +130,23 @@ async function bundle() {
   const result = await build({
     stdin: { contents, sourcefile: 'ui-001-navigation-fixture.tsx', resolveDir: root, loader: 'tsx' },
     bundle: true, write: false, platform: 'browser', format: 'iife', jsx: 'automatic',
-    plugins: process.env.ROX_UI001_NAVIGATION_SOURCE ? [{
+    // This fixture exercises menu behavior; product font/layout acceptance is separate.
+    loader: { '.css': 'empty' },
+    plugins: [{
+      name: 'ui001-inert-asset-urls',
+      setup(builder: PluginBuild) {
+        builder.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'ui001-asset' }))
+        builder.onLoad({ filter: /.*/, namespace: 'ui001-asset' }, () => ({ contents: 'export default "about:blank"', loader: 'js' }))
+      },
+    }, ...(process.env.ROX_UI001_NAVIGATION_SOURCE ? [{
       name: 'ui001-navigation-negative-control',
-      setup(builder) {
+      setup(builder: PluginBuild) {
         builder.onLoad({ filter: /contexts\/NavigationContext\.tsx$/ }, args => ({
           contents: readFileSync(process.env.ROX_UI001_NAVIGATION_SOURCE!, 'utf8'),
           loader: 'tsx', resolveDir: join(args.path, '..'),
         }))
       },
-    }] : [],
+    }] : [])],
     tsconfig: join(root, 'apps/electron/tsconfig.json'),
     define: { 'process.env.NODE_ENV': '"development"' },
   })
@@ -131,25 +174,22 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
   beforeAll(async () => {
     mkdirSync(evidence, { recursive: true })
     const script = await bundle()
-    server = createServer((request, response) => {
-      response.setHeader('Content-Type', request.url === '/fixture.js' ? 'text/javascript' : 'text/html')
-      response.end(request.url === '/fixture.js' ? script : '<div id="app"></div><script src="/fixture.js"></script>')
-    }).listen(0, '127.0.0.1')
-    await new Promise<void>(resolve => server.once('listening', resolve))
-    base = `http://127.0.0.1:${(server.address() as any).port}`
+    server = Bun.serve({
+      hostname: '127.0.0.1', port: 0,
+      fetch(request) {
+        const isScript = new URL(request.url).pathname === '/fixture.js'
+        return new Response(isScript ? script : '<div id="app"></div><script src="/fixture.js"></script>', {
+          headers: { 'Content-Type': isScript ? 'text/javascript' : 'text/html' },
+        })
+      },
+    })
+    base = `http://127.0.0.1:${server.port}`
     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
   }, 60000)
   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
   afterEach(async () => { await context?.close() }, 15000)
   afterAll(async () => {
-    try { await browser?.close() } finally {
-      if (server) {
-        await new Promise<void>((resolve, reject) => {
-          server.close(error => error ? reject(error) : resolve())
-          server.closeAllConnections()
-        })
-      }
-    }
+    try { await browser?.close() } finally { await server?.stop(true) }
   }, 15000)
 
   it('unknown single link survives reload and never selects its nested session', async () => {
@@ -216,14 +256,14 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
       await page.waitForFunction(() => !(window as any).ui001.snapshot().state.details)
       const state = await snapshot()
       expect(state.session).toBeNull()
-      expect(new URLSearchParams(state.search).get('route')).toBe('allSessions')
+      expect(new URLSearchParams(state.search).get('route')).toBe('allSessions?keep=1')
       expect(await page.locator(`[data-entity="${invalidId}"]`).count()).toBe(0)
     }
     await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/s1?keep=1'))
     expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s1?keep=1')
     await page.evaluate(() => (window as any).ui001.deepLink({ view: 'allSessions/session/s2?keep=1' }))
     await page.waitForFunction(() => (window as any).ui001.snapshot().session === 's1')
-    expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s1')
+    expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s1?keep=1')
     expect(await page.locator('[data-entity="s2"]').count()).toBe(0)
   }, 30000)
 
@@ -245,6 +285,74 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     await page.evaluate(() => (window as any).ui001.ready(true))
     await unavailable('future/session/private')
     expect((await snapshot()).listeners).toBe(1)
+  }, 30000)
+
+  it('additional query parameters survive list auto-selection, navigation, history and reload', async () => {
+    const routes = ['tasks?view=calendar', 'search?q=ok&mode=future', 'allSessions?keep=a%2Cb']
+    const expected = ['tasks?view=calendar', 'search?q=ok&mode=future', 'allSessions/session/s1?keep=a%2Cb']
+    for (let i = 0; i < routes.length; i++) {
+      await open(routes[i])
+      expect((await snapshot()).panels[0].route).toBe(expected[i])
+      await page.reload()
+      await page.waitForFunction(() => Boolean((window as any).ui001))
+      expect((await snapshot()).panels[0].route).toBe(expected[i])
+    }
+    await page.evaluate(() => (window as any).ui001.navigate('search?q=ok&mode=future'))
+    expect(new URLSearchParams((await snapshot()).search).get('route')).toBe(expected[1])
+    await page.evaluate(() => (window as any).ui001.back())
+    await page.waitForFunction(() => (window as any).ui001.snapshot().panels[0].route === 'allSessions/session/s1?keep=a%2Cb')
+  }, 30000)
+
+  it('literal commas, percent encoding and unknown addresses retain separate panels after reload', async () => {
+    await open('allSessions/session/s1')
+    const route = 'notes/note/foo,bar?keep=one,two'
+    await page.evaluate(route => (window as any).ui001.navigate(route, { newPanel: true }), route)
+    let state = await snapshot()
+    expect(state.panels.map((p: any) => p.route)).toEqual(['allSessions/session/s1', route])
+    await page.reload()
+    await page.waitForFunction(() => Boolean((window as any).ui001))
+    state = await snapshot()
+    expect(state.panels.map((p: any) => p.route)).toEqual(['allSessions/session/s1', route])
+    expect(state.panels[1].id).toBe(state.focused)
+    expect(state.state.details.noteId).toBe('foo,bar')
+    const unknown = 'future/comma,percent%2Ccolon:part?keep=a,b'
+    await page.evaluate(route => (window as any).ui001.navigate(route, { newPanel: true }), unknown)
+    await unavailable(unknown)
+    await page.reload()
+    await unavailable(unknown)
+    expect((await snapshot()).panels.map((p: any) => p.route)).toEqual(['allSessions/session/s1', route, unknown])
+  }, 30000)
+
+  it('compact menu labels unavailable panels consistently and Sessions opens its own service', async () => {
+    await page.setViewportSize({ width: 360, height: 640 })
+    await open('knowledge/unknown/doc')
+    await unavailable('knowledge/unknown/doc')
+    await page.locator('[data-compact-workspace-menu]').click()
+    const entry = page.locator('[data-compact-panel-id]')
+    expect(await entry.count()).toBe(1)
+    expect(await entry.textContent()).toBe('common.unavailable')
+    await page.locator('[data-service-id="sessions"]').click()
+    await page.waitForFunction(() => (window as any).ui001.snapshot().session === 's1')
+    expect((await snapshot()).panels[0].route).toBe('allSessions/session/s1')
+  }, 30000)
+
+  it('desktop unavailable links remove the unrelated navigator and resize boundary', async () => {
+    for (const width of [960, 1440]) {
+      await page.setViewportSize({ width, height: 900 })
+      await open('knowledge/unknown/doc')
+      await unavailable('knowledge/unknown/doc')
+      expect(await page.locator('[data-shell-navigator]').count()).toBe(0)
+      expect(await page.locator('[data-shell-navigator-resize]').count()).toBe(0)
+      await page.evaluate(() => (window as any).ui001.navigate('allSessions'))
+      await page.waitForFunction(() => (window as any).ui001.snapshot().session === 's1')
+      expect(await page.locator('[data-shell-navigator]').count()).toBe(1)
+      expect(await page.locator('[data-shell-navigator]').evaluate(element => element.getBoundingClientRect().width)).toBe(300)
+      expect(await page.locator('[data-shell-navigator-resize]').count()).toBe(1)
+      await page.evaluate(() => (window as any).ui001.back())
+      await unavailable('knowledge/unknown/doc')
+      expect(await page.locator('[data-shell-navigator]').count()).toBe(0)
+      expect(await page.locator('[data-shell-navigator-resize]').count()).toBe(0)
+    }
   }, 30000)
 
   it('workspace restoration and history keep each workspace address', async () => {

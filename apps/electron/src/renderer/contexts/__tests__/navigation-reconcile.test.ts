@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { normalizePanelRouteForReconcile } from '../navigation-reconcile'
+import type { ViewRoute } from '../../../shared/routes'
 import type { NavigationState } from '../../../shared/types'
 
 describe('normalizePanelRouteForReconcile', () => {
@@ -56,6 +57,14 @@ describe('normalizePanelRouteForReconcile', () => {
 
     const normalized = normalizePanelRouteForReconcile('allSessions', resolver)
     expect(normalized).toBe('allSessions')
+  })
+
+  it('preserves every query parameter when reconciling a list or search route', () => {
+    const identity = (state: NavigationState) => state
+    expect<string>(normalizePanelRouteForReconcile('tasks?view=calendar' as ViewRoute, identity)).toBe('tasks?view=calendar')
+    expect<string>(normalizePanelRouteForReconcile('search?q=ok&mode=future' as ViewRoute, identity)).toBe('search?q=ok&mode=future')
+    expect<string>(normalizePanelRouteForReconcile('allSessions?keep=a%2Cb' as ViewRoute, state => ({ ...state, details: { type: 'session', sessionId: 's1' } } as NavigationState)))
+      .toBe('allSessions/session/s1?keep=a%2Cb')
   })
 
   it('keeps non-session routes unchanged with session-only resolver', () => {

@@ -48,6 +48,11 @@ jobs:
           apps/electron/src/renderer/platform/__tests__/layout-snapshot.test.ts
       - name: Install isolated Chromium
         run: bunx playwright install --with-deps chromium
+      - name: Main-process protocol callbacks with synthetic windows and transport
+        run: >-
+          bun test --preload ./apps/electron/src/main/__tests__/rox-readiness-ui-001.native-preload.ts
+          apps/electron/src/main/__tests__/deep-link-parse.test.ts
+          apps/electron/src/main/__tests__/deep-link-routing.test.ts
       - name: Actual navigation callbacks in Chromium
         run: bun test apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts
         env:

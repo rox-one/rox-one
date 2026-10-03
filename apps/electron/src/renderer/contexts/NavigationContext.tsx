@@ -53,7 +53,7 @@ import {
 import { routes, type Route, type ViewRoute } from '../../shared/routes'
 import { parsePermissionMode } from '@rox/shared/agent/mode-types'
 import { NAVIGATE_EVENT, type NavigateOptions } from '../lib/navigate'
-import { normalizePanelRouteForReconcile } from './navigation-reconcile'
+import { normalizePanelRouteForReconcile, parsePanelEntriesFromUrl, preserveRouteQuery, serializePanelEntriesForUrl } from './navigation-reconcile'
 import { buildSemanticHistoryKey, canRunInitialRestore } from './navigation-history'
 import * as storage from '@/lib/local-storage'
 import type {
@@ -295,7 +295,7 @@ export function NavigationProvider({
 
     // ?panels= encodes ALL panels in stack order
     if (panels.length > 1) {
-      const encoded = panels.map(p => `${p.route}:${p.proportion.toFixed(4)}`).join(',')
+      const encoded = serializePanelEntriesForUrl(panels)
       url.searchParams.set('panels', encoded)
     } else {
       url.searchParams.delete('panels')
@@ -435,20 +435,10 @@ export function NavigationProvider({
       if (panelsParam) {
         // Canonical format: ?panels= contains ALL panels, ?fi= is focused index.
         // We intentionally no longer support older mixed route/panels formats.
-        entries = panelsParam.split(',').filter(Boolean).map(entry => {
-          const colonIdx = entry.lastIndexOf(':')
-          if (colonIdx > 0) {
-            const proportion = parseFloat(entry.slice(colonIdx + 1))
-            if (!isNaN(proportion) && proportion > 0 && proportion < 1) {
-              const rawRoute = entry.slice(0, colonIdx) as ViewRoute
-              const route = normalizePanelRouteForReconcile(rawRoute, (state) => resolveAutoSelectionRef.current(state))
-              return { route, proportion }
-            }
-          }
-          const rawRoute = entry as ViewRoute
-          const route = normalizePanelRouteForReconcile(rawRoute, (state) => resolveAutoSelectionRef.current(state))
-          return { route, proportion: 0 }
-        })
+        entries = parsePanelEntriesFromUrl(panelsParam).map(({ route: rawRoute, proportion }) => ({
+          route: normalizePanelRouteForReconcile(rawRoute, state => resolveAutoSelectionRef.current(state)),
+          proportion,
+        }))
 
         const hasProportions = entries.some(e => e.proportion > 0)
         if (!hasProportions) {
@@ -882,7 +872,7 @@ export function NavigationProvider({
       const resolvedState = resolveAutoSelection(newNavState, options)
       const finalRoute = (resolvedState === newNavState && 'details' in resolvedState && resolvedState.details)
         ? route as ViewRoute
-        : buildRouteFromNavigationState(resolvedState) as ViewRoute
+        : preserveRouteQuery(route, buildRouteFromNavigationState(resolvedState))
 
       // Persist last selected session for auto-select on next visit
       if (isSessionsNavigation(resolvedState) && resolvedState.details && workspaceId) {
@@ -1197,12 +1187,13 @@ export function NavigationProvider({
     // Earlier restoration effects can change the focused route in this same
     // effect pass; the render-time navigationState may still describe sessions.
     const currentRoute = store.get(focusedPanelRouteAtom)
-    const currentState = currentRoute ? resolveViewRoute(currentRoute) : null
-    if (!currentState || !isSessionsNavigation(currentState) || currentState.details) return
+    if (!currentRoute) return
+    const currentState = resolveViewRoute(currentRoute)
+    if (!isSessionsNavigation(currentState) || currentState.details) return
 
     const resolved = resolveAutoSelection(currentState)
     if (isSessionsNavigation(resolved) && resolved.details) {
-      void navigate(buildRouteFromNavigationState(resolved) as ViewRoute)
+      void navigate(preserveRouteQuery(currentRoute, buildRouteFromNavigationState(resolved)))
     }
   }, [
     isReady,

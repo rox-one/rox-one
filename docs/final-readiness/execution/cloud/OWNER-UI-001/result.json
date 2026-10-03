@@ -196,31 +196,45 @@
     },
     "changedPaths": [
       ".github/workflows/ui-route-recovery.yml",
+      "apps/electron/src/main/__tests__/deep-link-parse.test.ts",
+      "apps/electron/src/main/__tests__/deep-link-routing.test.ts",
+      "apps/electron/src/main/__tests__/rox-readiness-ui-001.native-preload.ts",
+      "apps/electron/src/main/deep-link.ts",
       "apps/electron/src/renderer/atoms/panel-stack.ts",
+      "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx",
       "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
       "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx",
       "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx",
       "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts",
+      "apps/electron/src/renderer/components/app-shell/__tests__/compact-workspace-navigation.test.ts",
       "apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts",
       "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts",
       "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
       "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
       "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts",
+      "apps/electron/src/renderer/components/app-shell/compact-workspace-navigation.ts",
       "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts",
       "apps/electron/src/renderer/contexts/navigation-reconcile.ts",
       "apps/electron/src/renderer/lib/nav-helpers.ts",
       "apps/electron/src/renderer/platform/layout-snapshot.ts",
       "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
       "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts",
       "apps/electron/src/shared/route-parser.ts",
-      "apps/electron/src/shared/types.ts"
+      "apps/electron/src/shared/types.ts",
+      "package.json"
     ],
     "implementedClauses": [
       "Unknown/malformed URLs retain raw address and resolve to localized unavailable surface through actual NavigationProvider and panel rendering",
       "Single/multi-panel reload, history and workspace preservation",
       "Lossless latest pending route and new-panel options, including search query",
       "Stored action routes never execute during URL restoration; explicit action callbacks remain supported",
-      "Compact mode shows unavailable surface and unknown nested session routes cannot select a session"
+      "Compact mode shows unavailable surface and unknown nested session routes cannot select a session",
+      "Complete view query parameters survive native protocol forwarding, reconciliation, navigation, auto-selection, reload and history; native window/sidebar remain transport controls",
+      "Structured panel URLs preserve literal commas, colons and percent spelling; existing CSV saved URLs remain readable",
+      "Compact panel labels/service matching use strict unavailable classification",
+      "Desktop unavailable addresses collapse actual AppShell navigator slot, width and resize boundary"
     ],
     "retainedCurrentMainBehavior": [
       "Selected source/skill presence and workspace event/race guards",
@@ -270,7 +284,7 @@
       },
       {
         "command": "bun run validate:ci",
-        "result": "running; must be completed before final acceptance",
+        "result": "historical failure captured: 104 pass / 5 migration process timeouts; full qualified retries 30/37/50 passed",
         "evidence": "18-validate-ci.log"
       },
       {
@@ -287,6 +301,56 @@
         "command": "CHROMIUM_EXECUTABLE=<qualified local Chromium> bun test native-surface-owners.browser.test.ts",
         "result": "5 pass, 0 fail, 9 assertions; production BrowserPanel/InspectorBrowser/RetainedSurface with synthetic native bridge",
         "evidence": "24-native-surface-renderer-fixtures.log"
+      },
+      {
+        "command": "bun test apps/electron/src/shared/__tests__ apps/electron/src/renderer/contexts/__tests__",
+        "result": "232 pass, 0 fail, 912 assertions",
+        "evidence": "31-review-regression.log"
+      },
+      {
+        "command": "ROX_UI001_BROWSER_TEST=1 bun test rox-readiness-ui-001.navigation-browser.test.ts",
+        "result": "9 pass, 0 fail, 148 assertions; complete cleanup",
+        "evidence": "34-review-browser-clean.log"
+      },
+      {
+        "command": "bun run validate:ci (qualified Bun 1.3.14)",
+        "result": "exit 0: all package typechecks, 254 Bun tests, 19 document-tool tests, parity/sorting/coverage",
+        "evidence": "30-validate-ci-retry.log"
+      },
+      {
+        "command": "bun test shared, navigation context, shell, atoms, layout snapshot and compact service regressions",
+        "result": "559 pass, 0 fail, 68 explicit opt-in browser skips, 2307 assertions",
+        "evidence": "42-review-round2-regression.log"
+      },
+      {
+        "command": "ROX_UI001_BROWSER_TEST=1 bun test rox-readiness-ui-001.navigation-browser.test.ts",
+        "result": "13 pass, 0 fail, 219 assertions; actual shell conditions at 960 and 1440 pixels",
+        "evidence": "58-desktop-review-browser-green.log"
+      },
+      {
+        "command": "bun test --preload ./apps/electron/src/main/__tests__/rox-readiness-ui-001.native-preload.ts apps/electron/src/main/__tests__/deep-link-parse.test.ts apps/electron/src/main/__tests__/deep-link-routing.test.ts",
+        "result": "31 pass, 0 fail, 124 assertions; synthetic windows/transport and logger boundary",
+        "evidence": "52-native-query-fixture-green.log"
+      },
+      {
+        "command": "ROX_UI001_NATIVE_SOURCE=<exact previous source with only import paths adjusted> same native protocol tests",
+        "result": "expected negative control: 29 pass, 2 fail, 121 assertions; both native query losses reproduced",
+        "evidence": "53-native-query-negative-control.log"
+      },
+      {
+        "command": "bun run validate:ci (Bun 1.3.14)",
+        "result": "exit 0; complete package typegraph, 254 Bun tests and 19 document-tool tests, all locale checks",
+        "evidence": "50-final-validate-ci.log"
+      },
+      {
+        "command": "bun run typecheck:electron",
+        "result": "exit 0 after final AppShell and fixture changes",
+        "evidence": "59-desktop-review-types.log"
+      },
+      {
+        "command": "bun run build:renderer in apps/electron",
+        "result": "exit 0; built in 41.93 seconds; existing bundle warnings retained; precedes final AppShell clause",
+        "evidence": "56-final-renderer-build.log"
       }
     ],
     "failureHistory": [
@@ -301,7 +365,65 @@
       "21: auxiliary YAML parser shadowed require; corrected in 22",
       "23: 8 resource/layout browser behaviors pass, but HTTP fixture teardown times out; close callback is now installed before closing active connections",
       "25: final combined browser run 16/0; 24: native renderer ownership 5/0",
-      "Captured Bun code-frame trailing spaces normalized for diff checks; original byte logs retained in source commit history."
+      "Captured Bun code-frame trailing spaces normalized for diff checks; original byte logs retained in source commit history.",
+      {
+        "evidence": "18-validate-ci.log",
+        "result": "104 pass / 5 fail: default 5-second budget killed isolated migration processes; command budget fixed and full repeat passed"
+      },
+      {
+        "evidence": "28-review-red.log",
+        "result": "9 pass / 27 fail before general lossless route guard"
+      },
+      {
+        "evidence": "29-review-session-red.log",
+        "result": "expected regression: invalid session remained selected; wait timed out before fix"
+      },
+      {
+        "evidence": "32-review-browser-green.log",
+        "result": "9 behavior tests pass, afterAll teardown timeout; diagnostic and clean replay passed"
+      },
+      {
+        "evidence": "38-review-round2-unit-red.log",
+        "result": "10 pass / 2 fail; complete query and compact classification bugs reproduced"
+      },
+      {
+        "evidence": [
+          "39-review-round2-browser-red.log",
+          "40-review-round2-browser-red-corrected-fixture.log"
+        ],
+        "result": "real compact menu introduced CSS/font and Vite ?url asset fixture dependencies; explicit inert fixture assets fixed; no behavior asserted by these setup failures"
+      },
+      {
+        "evidence": "41-review-round2-browser-red.log",
+        "result": "0 pass / 3 fail; query loss, comma panel corruption, compact service mismatch reproduced"
+      },
+      {
+        "evidence": "43-review-round2-browser-green.log",
+        "result": "11 pass / 2 fail: obsolete query-dropping expectation and afterAll timeout; full query expectations corrected; owned server now uses Bun.serve/stop(true)"
+      },
+      {
+        "evidence": "44-review-round2-electron-types.log",
+        "result": "fixture type annotations failed; corrected, later 46/54/59 typechecks passed"
+      },
+      {
+        "evidence": [
+          "48-native-query-red.log",
+          "49-native-query-green.log"
+        ],
+        "result": "test import failed before behavior because Electron binary was absent; logger-only preload permits actual functions with explicit synthetic boundaries"
+      },
+      {
+        "evidence": "51-native-query-negative-control.log",
+        "result": "outside-workspace negative control import failed; fixed only actual import path resolution"
+      },
+      {
+        "evidence": "53-native-query-negative-control.log",
+        "result": "29 pass / 2 expected fail against original native parser/sink; actual query regressions proven"
+      },
+      {
+        "evidence": "57-desktop-review-red.log",
+        "result": "0 pass / 1 expected fail / 12 filtered; actual AppShell left unrelated navigator mounted before fix"
+      }
     ],
     "externalPrerequisites": [
       "SVC-003 actual reconnect/capability/current-workspace callbacks and canonical backend receipts for every entity family",
@@ -313,9 +435,11 @@
     "originalRequirementsChanged": false,
     "fullDoDClosed": false,
     "delivery": {
-      "status": "ready for source PR; complete CI and GitHub merge readback before delivered claim",
+      "status": "PR #1412 open; second review batch validated; normal push and exact-base merge receipt pending",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1412",
       "pushAuthorized": true,
-      "mergeAuthorized": true
+      "mergeAuthorized": true,
+      "fullDoDClosed": false
     },
     "sourceManifest": {
       ".github/workflows/ui-route-recovery.yml": "3df7b720543a64e8dbb0372d7a6c018dff69bb19d2e513faab573fe23c910baf",
@@ -338,7 +462,44 @@
       "apps/electron/src/shared/route-parser.ts": "df086f9b1b057a469c6e79b3d901841421f2bba46b5c40de737b6cabdc60d691",
       "apps/electron/src/shared/types.ts": "e76583884065661e9553ede07dce576137f665ab6b62067b25fac55c35c90168"
     },
-    "sourceCommit": "bfed5d055da7209ce4ca8decb3c9f68fd6562cd5"
+    "sourceCommit": "bfed5d055da7209ce4ca8decb3c9f68fd6562cd5",
+    "reviewRepair": "review-repair.json",
+    "reviewRepairRound2": "review-repair-round2.json",
+    "latestVerification": {
+      "inputHead": "2c0ea7afc463a3305188bd76c3ab4a2542beaa4c",
+      "sourceContentHashes": {
+        ".github/workflows/ui-route-recovery.yml": "187f561c5b10e15af6c00eb6eae6e3cfe47e9b2f24333bf11b2794eb8e322045",
+        "apps/electron/src/main/__tests__/deep-link-parse.test.ts": "2e63c8d9d11d5a8cc8ecb5bb62c3b59c783afd54e6a18f34f3a621165104354e",
+        "apps/electron/src/main/__tests__/deep-link-routing.test.ts": "c11d4408f86a523a69d66429c6749abc3e37cd7cf25a0f6b2564c4d1a0754d88",
+        "apps/electron/src/main/__tests__/rox-readiness-ui-001.native-preload.ts": "8ee9639c26727e58fa8ebe501574c0a1784df45ae6adfad31c12a254bc51f3da",
+        "apps/electron/src/main/deep-link.ts": "0e70f480c456e92130f9f39c0032311ab3b7071f71eea61fd78c6b23c3fd0c40",
+        "apps/electron/src/renderer/atoms/panel-stack.ts": "12fb6c1fd4458dcd33bbe272b87af1d403698c97b61b96ae866e1a1026b6adf7",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "b8b84eeb39750ba0a252d39abd31188857c84527f9fb760e8367299d5550f65c",
+        "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx": "77412f323402a792f684179b1c0797a2f8335e7d4ba873474be54e451dd00ae1",
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "9e8e4236f97d5e21653b8cd1292bd2921d92b9ebb50aed36a277c134d0383d09",
+        "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "b82f544d59c4e1cc4d830c8bbad5de8f34e79d56a83deb3507bc8507971c584e",
+        "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "56709c28a54dc5ca55fcdd5288f1ddfb3202323672a1a40ba1b661cd1827132f",
+        "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts": "cfa55da662cac55b9193043061c5973732bf97e1fe11caf17743f78844b91710",
+        "apps/electron/src/renderer/components/app-shell/__tests__/compact-workspace-navigation.test.ts": "ec0f57e4a38072fdb7f39f4c372438784a8ba8acd2135200711a615c518543c9",
+        "apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts": "db6ca51a11e27ede445863b0e98d1597b912c60b9bd082766b7a6ea69ba89218",
+        "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts": "7232661ae9985068f9e740e3375fdddc82785d264d31d152d2e760f0d9dcd23f",
+        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "1683a5148a47e9de1b8ab8d6df97aa73bccba3d83d583941b44276ad88355336",
+        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "c85675278c77d873c6d8b45e90d86a7f4d1050bc5c55e1da268faed97edfdff7",
+        "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts": "51e9e56b9c89fcb61ae6e0eccb0af73ec2fa6afdbfc82f31e149f9f534129da4",
+        "apps/electron/src/renderer/components/app-shell/compact-workspace-navigation.ts": "8c197fdd4d589b04a552bb1ba50a8d2804093b3498d8898b72c6f849d71b8f3f",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "f1afcf698fd13670a75631fdf2e6283021695c32ce7ad5ff00f6e4a100f15ad0",
+        "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts": "2fa3f49188438a39981f60c505fe18fa122639bf788233eef8390f3976c6d371",
+        "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "2fb8c1989cf58749144ae6bbed35bdb3488500f4b32079de58f82064ef57c96f",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "apps/electron/src/renderer/platform/layout-snapshot.ts": "7ddddb3219994b3ecad254429d2207adda7b90d29a7f905b79d150839871b057",
+        "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "10adb4db85d7fc5e14c1e3e6c0ff5aeb6686fa8c905de52f2b31035f2ffdd41d",
+        "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts": "b2126832e4d4da67d416a2b9721cfee084f5df09dfbbfb5cc0cea7ad2cd271fa",
+        "apps/electron/src/shared/route-parser.ts": "49c5001ca769ceb0b9beebc30a42f33d5f12fc2dba6bd498df5abefaccafb741",
+        "apps/electron/src/shared/types.ts": "b1d4feb5252ef8294b33e004cd85cc4d3da635526ec6f8eb5dc9d5eb2af0f866",
+        "package.json": "3745122d57049c86eb4717c743f2ee0d5e64a5dabbd1074ab03fc884184613aa"
+      },
+      "sourceCommitReceipt": "To be recorded after normal publication and exact main integration; historical sourceCommit below names the initial product phase"
+    }
   },
   "leadOwnedGapsHistory": [
     "NavigationContext resolves explicit missing/cross-workspace sessions to unrelated auto-selected chat",

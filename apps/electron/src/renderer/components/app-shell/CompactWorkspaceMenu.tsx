@@ -6,7 +6,7 @@ import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { getSessionTitle } from '@/utils/session'
 import { buildSurfaceTabViews } from '@/platform/surface-tab-model'
-import { parseRouteToNavigationState } from '../../../shared/route-parser'
+import { resolveViewRoute } from '../../../shared/route-parser'
 import { TopBarButton } from '@/components/ui/TopBarButton'
 import {
   DropdownMenu,
@@ -82,11 +82,12 @@ export function CompactWorkspaceMenu({ onOpenBrowser }: { onOpenBrowser: () => v
                 {t('surfaceTabs.panel')}
               </div>
               {tabs.map((tab, index) => {
-                const state = parseRouteToNavigationState(entries[index].route)
-                const serviceId = state ? getActiveService(state) : null
+                const state = resolveViewRoute(entries[index].route)
+                const serviceId = getActiveService(state)
                 const service = serviceId ? APP_NAV_DESTINATIONS_BY_ID[serviceId] : null
                 const Icon = service?.icon ?? PanelTop
-                const title = tab.kind === null && service ? t(service.labelKey) : tab.title
+                const title = state.navigator === 'unavailable' ? t('common.unavailable')
+                  : tab.kind === null && service ? t(service.labelKey) : tab.title
                 return (
                   <StyledDropdownMenuItem
                     key={tab.panelId}

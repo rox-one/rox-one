@@ -95,6 +95,15 @@ function parseRightSidebar(parsed: URL): string | undefined {
   return parsed.searchParams.get('sidebar') || undefined
 }
 
+/** Forward view parameters separately from native window/sidebar controls. */
+function buildViewRoute(parsed: URL, path: string): string {
+  const params = new URLSearchParams(parsed.searchParams)
+  params.delete('window')
+  params.delete('sidebar')
+  const query = params.toString()
+  return query ? `${path}?${query}` : path
+}
+
 /**
  * Parse a deep link URL into structured target
  */
@@ -128,7 +137,7 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
       const viewRoute = pathParts.length > 0 ? `${host}/${pathParts.join('/')}` : host
       return {
         workspaceId: undefined,
-        view: viewRoute,
+        view: buildViewRoute(parsed, viewRoute),
         windowMode,
         rightSidebar,
       }
@@ -148,7 +157,7 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
       // e.g., /workspace/ws123/allSessions/session/abc123
       if (routeType && COMPOUND_ROUTE_PREFIXES.includes(routeType)) {
         const viewRoute = pathParts.slice(1).join('/')
-        result.view = viewRoute
+        result.view = buildViewRoute(parsed, viewRoute)
         return result
       }
 
