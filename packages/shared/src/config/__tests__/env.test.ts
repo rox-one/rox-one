@@ -50,13 +50,15 @@ describe('resolveConfigDir', () => {
     expect(resolveConfigDir({}, '/home/u-no-such-rox-home')).toBe(join('/home/u-no-such-rox-home', '.rox'));
   });
 
-  it('keeps a Craft-era ~/.craft-agent until ~/.rox exists', () => {
+  it('imports a legacy default into ~/.rox and preserves the original', () => {
     const homeDir = join(homedir(), '.rox-issue33-env-home');
     rmSync(homeDir, { recursive: true, force: true });
     mkdirSync(join(homeDir, '.craft-agent'), { recursive: true });
     writeFileSync(join(homeDir, '.craft-agent', 'keep.txt'), 'legacy');
     try {
-      expect(resolveConfigDir({}, homeDir)).toBe(join(homeDir, '.craft-agent'));
+      expect(resolveConfigDir({}, homeDir)).toBe(join(homeDir, '.rox'));
+      expect(existsSync(join(homeDir, '.rox', 'keep.txt'))).toBe(true);
+      expect(existsSync(join(homeDir, '.craft-agent', 'keep.txt'))).toBe(true);
       mkdirSync(join(homeDir, '.rox'), { recursive: true });
       expect(resolveConfigDir({}, homeDir)).toBe(join(homeDir, '.rox'));
     } finally {
