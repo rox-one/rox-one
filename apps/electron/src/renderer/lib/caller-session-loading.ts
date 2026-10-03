@@ -1,8 +1,10 @@
 export type SessionCallerAuthority = 'native' | 'local' | null
 
-/** Host session inventory is a legacy-local capability, not a native grant. */
+/** Native inventory comes only from the workspace-scoped RPC registered for that actor. */
 export async function loadCallerSessionInventory<T>(ports: {
   getAuthority(): SessionCallerAuthority
+  getNativeWorkspaceId?(): string | null
+  getScopeKey?(): unknown
   request(): Promise<T[]>
   markUnavailable(): void
 }): Promise<{ kind: 'available'; sessions: T[] } | { kind: 'unavailable' }> {
@@ -10,14 +12,20 @@ export async function loadCallerSessionInventory<T>(ports: {
     ports.markUnavailable()
     return { kind: 'unavailable' as const }
   }
-  if (ports.getAuthority() !== 'local') return unavailable()
+  const authority = ports.getAuthority()
+  const workspaceId = ports.getNativeWorkspaceId?.()
+  const scopeKey = ports.getScopeKey?.()
+  if (!authority || authority === 'native' && !workspaceId) return unavailable()
+  const isCurrent = () => ports.getAuthority() === authority && ports.getScopeKey?.() === scopeKey
+    && (authority !== 'native' || ports.getNativeWorkspaceId?.() === workspaceId)
   try {
     const sessions = await ports.request()
-    // A late local response must not repopulate host inventory after a native switch.
-    if (ports.getAuthority() !== 'local') return unavailable()
+    if (!isCurrent()) return { kind: 'unavailable' }
+    if (authority === 'native' && sessions.some(session => !session || typeof session !== 'object'
+      || !('workspaceId' in session) || session.workspaceId !== workspaceId)) throw new Error('native-session-workspace-mismatch')
     return { kind: 'available', sessions }
   } catch (error) {
-    if (ports.getAuthority() !== 'local') return unavailable()
+    if (!isCurrent()) return { kind: 'unavailable' }
     throw error
   }
 }

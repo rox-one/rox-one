@@ -47,6 +47,8 @@ export interface MemoryProposalCost {
 }
 
 export interface MemoryProposal {
+  /** Personal native authority owner; absent proposals remain host-private. */
+  owner?: { issuer: string; subject: string }
   id: string
   text: string
   kind: MemoryProposalKind

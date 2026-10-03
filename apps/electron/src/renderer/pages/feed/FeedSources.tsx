@@ -279,7 +279,7 @@ function SourceCard({ source, items, now, selected, onSelect, onCheck, onToggleP
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect() } }}
       className={cn(
         'group flex min-w-0 flex-col gap-2 rounded-[10px] p-3 outline-none',
-        selected ? 'bg-accent/10 shadow-[inset_0_0_0_2px_var(--accent)]' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
+        selected ? 'bg-accent/10 ring-2 ring-inset ring-accent' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
         source.paused && 'opacity-70',
       )}
     >
@@ -344,8 +344,13 @@ export function SourcesView({ api, sources, items, now, x, suggestions, selected
   const { t } = useTranslation()
   const sourcesTourRef = useTourTarget('feed.sources')
   const [busyAll, setBusyAll] = React.useState(false)
-  const update = async (id: string, patch: FeedSourcePatch) => { await api?.feedUpdateSource(id, patch); await reload() }
-  const check = async (id: string) => { await api?.feedRefresh(id); await reload() }
+  const [error, setError] = React.useState<string | null>(null)
+  const run = async (operation: () => Promise<unknown>) => {
+    setError(null)
+    try { await operation(); await reload() } catch (failure) { setError(failure instanceof Error ? failure.message : String(failure)) }
+  }
+  const update = (id: string, patch: FeedSourcePatch) => run(async () => api?.feedUpdateSource(id, patch))
+  const check = (id: string) => run(async () => api?.feedRefresh(id))
   const errors = sources.filter((s) => s.lastStatus === 'error').length
   return (
     <>
@@ -353,11 +358,12 @@ export function SourcesView({ api, sources, items, now, x, suggestions, selected
         title={<span className="whitespace-nowrap">{t('feed.sources.title')}</span>}
         subtitle={sources.length ? `${t('feed.sources.subtitle', { count: sources.length })}${errors ? ` · ${t('feed.sources.withErrors', { count: errors })}` : ''}` : undefined}
         actions={sources.length ? (
-          <Button variant="ghost" disabled={busyAll} onClick={() => { setBusyAll(true); void (async () => { try { await api?.feedRefresh(null); await reload() } finally { setBusyAll(false) } })() }}>
+          <Button variant="ghost" disabled={busyAll} onClick={() => { setBusyAll(true); void run(async () => api?.feedRefresh(null)).finally(() => setBusyAll(false)) }}>
             <RefreshCw aria-hidden className={cn('size-3', busyAll && 'animate-spin')} />{busyAll ? t('feed.refreshing') : t('feed.sources.refreshAll')}
           </Button>
         ) : null}
       />
+      {error ? <p role="alert" className="px-3 pt-2 text-[12px] text-destructive">{error}</p> : null}
       <div ref={sourcesTourRef} data-tour-id="feed.sources" className="min-h-0 flex-1 overflow-y-auto pb-4" data-testid="feed-sources">
         <AddSource api={api} sources={sources} suggestions={suggestions} xConnected={x.state === 'connected'} onAdded={(id) => { onSelect(id); void reload() }} fmt={fmt} />
         {sources.length ? (

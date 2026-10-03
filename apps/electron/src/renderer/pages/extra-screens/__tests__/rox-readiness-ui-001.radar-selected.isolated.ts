@@ -28,12 +28,15 @@ const source = process.env.ROX_UI001_RADAR_SOURCE
   ? pathToFileURL(process.env.ROX_UI001_RADAR_SOURCE).href
   : new URL('../radar/RadarPage.tsx', import.meta.url).href
 const { default: RadarPage } = await import(source)
+const { radarItemId } = await import('../radar/radar-model')
 const { ExtraScreenItemUnavailable } = await import('../ExtraScreenItemUnavailable')
 const render = (itemId: string | null) => renderToStaticMarkup(React.createElement(RadarPage, { itemId }))
 const noOverview = (html: string) => {
   expect(html).not.toContain('width:240px')
   expect(html).not.toContain('width:400px')
   expect(html).not.toContain('extraScreens.radar.digestOf')
+  expect(html).not.toContain('data-testid="radar-setup"')
+  expect(html).not.toContain('data-testid="radar-digest"')
 }
 
 describe('UI-001 Radar explicit selected address owns the pane', () => {
@@ -79,9 +82,9 @@ describe('UI-001 Radar explicit selected address owns the pane', () => {
     stored = {
       topics: [{ id: 'known', label: 'Known topic', kind: 'topic', keywords: [] }],
       sweeps: [{ id: 'sweep', sessionId: 'session', date: '2026-10-03', startedAt: 1, parsedAt: 1,
-        items: [{ id: 'rad-known', title: 'Known item', summary: 'Selected summary', source: 'fixture', bucket: 'changed', origin: 'agent' }] }],
+        items: [{ id: radarItemId('Known item'), title: 'Known item', summary: 'Selected summary', source: 'fixture', bucket: 'changed', origin: 'agent' }] }],
     }
-    for (const [id, text] of [['topic:known', 'Known topic'], ['rad-known', 'Selected summary']] as const) {
+    for (const [id, text] of [['topic:known', 'Known topic'], [radarItemId('Known item'), 'Selected summary']] as const) {
       const html = render(id)
       noOverview(html)
       expect(html).toContain(text)
@@ -92,8 +95,8 @@ describe('UI-001 Radar explicit selected address owns the pane', () => {
   it('keeps root overview and exact Back-to-list callback', () => {
     stored = {}; feed.loaded = true; meetings.loaded = true
     const html = render(null)
-    expect(html).toContain('width:240px')
-    expect(html).toContain('width:400px')
+    expect(html).toContain('data-testid="radar-setup"')
+    expect(html).toContain('data-testid="radar-digest"')
     navigations.length = 0
     const recovery = ExtraScreenItemUnavailable({ screen: 'radar', itemId: 'missing' })
     recovery.props.children.props.action.props.onClick()
