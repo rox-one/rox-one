@@ -18,7 +18,7 @@ function activate(tour: TourDefinition, step: TourStep): RuntimeState {
   state = transition(state, { type: 'START', tour: definition, binding, progress: null, startMode: 'new', at: 100 }).state
   state = transition(state, { type: 'VIEW_READY', runToken: binding.runToken, stepId: step.id, navigationRevision: 9 }).state
   state = transition(state, { type: 'TARGET_READY', runToken: binding.runToken, stepId: step.id }).state
-  expect(state.phase).toBe('presenting')
+  expect(state.phase).toBe(step.completion.kind === 'signal' ? 'waiting-action' : 'presenting')
   return state
 }
 const dispatch = (state: RuntimeState, input: TourInput) => transition(state, input).state
@@ -58,7 +58,7 @@ for (const tour of catalogue) for (const step of tour.steps) describe(`${step.te
   })
   test('foreign panel/workspace/attempt, stale popup ACK and premature Next cannot create outcome evidence', () => {
     const initial = activate(tour, step)
-    for (const foreign of [{ ...binding, workspaceId: 'foreign' }, { ...binding, panelId: 'foreign' }, { ...binding, runToken: 'old-run' }]) {
+    for (const foreign of [{ ...binding, workspaceId: 'foreign' }, { ...binding, panelId: 'foreign' }, { ...binding, sessionId: 'foreign' }, { ...binding, entityId: 'foreign' }, { ...binding, clientProfileId: 'foreign' }, { ...binding, runToken: 'old-run' }]) {
       const next = dispatch(initial, { type: 'SIGNAL', signal: signal(step, { binding: foreign }) })
       expect(next.attemptEvidence).toEqual(initial.attemptEvidence)
       expect(next.phase).toBe(initial.phase)
