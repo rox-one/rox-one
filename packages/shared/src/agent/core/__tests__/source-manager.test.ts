@@ -242,6 +242,21 @@ describe('SourceManager', () => {
       expect(nextTurn).not.toContain("server is unreachable");
       expect(nextTurn).not.toContain('Re-authenticate');
     });
+
+    it('describes a network outage on an authenticated source without asking for another credential', () => {
+      sourceManager.setAllSources([createMockSource('mem0', {
+        connectionStatus: 'failed', connectionError: 'HTTP 503: service unavailable', isAuthenticated: true,
+        mcp: { transport: 'http', url: 'https://mcp.mem0.ai/mcp', authType: 'bearer' },
+      })]);
+      sourceManager.updateActiveState([], [], ['mem0']);
+      sourceManager.formatSourceState();
+      const nextTurn = sourceManager.formatSourceState();
+      expect(nextTurn).toContain('mem0 (no tools)');
+      expect(nextTurn).toContain('HTTP 503');
+      expect(nextTurn).toContain('server is unreachable');
+      expect(nextTurn).not.toContain('Re-authenticate');
+      expect(nextTurn).not.toContain('source_credential_prompt');
+    });
   });
 
   describe('Authentication Utilities', () => {

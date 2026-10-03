@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import type { AgentEvent } from '@rox/core/types';
 import { OmpAgent } from '../omp-agent.ts';
 import type { LoadedSource } from '../../sources/types.ts';
+import type { McpClientPool, ProxyToolDef } from '../../mcp/mcp-pool.ts';
 import {
   createFakeOmp,
   useFakeOmpEnv,
@@ -54,6 +55,34 @@ async function waitForRpcFrame(
 }
 
 describe('OmpAgent session flow — healthy turn', () => {
+  it('re-registers a same-name MCP tool when its schema or description changes', async () => {
+    let tools: ProxyToolDef[] = [{
+      name: 'mcp__deepwiki__query', description: 'Query a repository',
+      inputSchema: { type: 'object', properties: { question: { type: 'string' } } },
+    }];
+    const pool = {
+      getProxyToolDefs: () => tools,
+      getConnectedSlugs: () => ['deepwiki'],
+      getTools: () => tools,
+    } as unknown as McpClientPool;
+    const { agent, fake } = setup('healthy', { mcpPool: pool });
+    await chatEvents(agent, 'first turn', 8_000);
+    tools = [{
+      name: 'mcp__deepwiki__query', description: 'Query a repository at a chosen revision',
+      inputSchema: { type: 'object', properties: { question: { type: 'string' }, revision: { type: 'string' } } },
+    }];
+    await chatEvents(agent, 'second turn', 8_000);
+    const registrations = fake.readRpcLog().filter(frame => frame.type === 'set_host_tools');
+    expect(registrations).toHaveLength(2);
+    const updated = (registrations[1]!.tools as Array<Record<string, unknown>>)
+      .find(tool => tool.name === 'mcp__deepwiki__query')!;
+    expect(updated.description).toBe(tools[0]!.description);
+    expect(updated.parameters).toEqual(tools[0]!.inputSchema);
+    expect(updated.loadMode).toBe('essential');
+    await chatEvents(agent, 'third unchanged turn', 8_000);
+    expect(fake.readRpcLog().filter(frame => frame.type === 'set_host_tools')).toHaveLength(2);
+  }, 25_000);
+
   it('briefs OMP about integrations and refreshes source availability on every prompt', async () => {
     const { agent, fake } = setup('healthy');
     const source = (slug: string, needsAuth = false): LoadedSource => ({
