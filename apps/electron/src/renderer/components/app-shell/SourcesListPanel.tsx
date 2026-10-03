@@ -1,4 +1,8 @@
 import * as React from 'react'
+import { useAtomValue } from 'jotai'
+import { focusedPanelIdAtom } from '@/atoms/panel-stack'
+import { TourConnectionPolicyContext, useTourTarget, useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { connectionCapabilities } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { DatabaseZap, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
@@ -69,6 +73,17 @@ export function SourcesListPanel({
   const { t } = useTranslation()
   const { workspaces, activeWorkspaceId } = useAppShellContext()
   const hasOtherWorkspaces = workspaces.length > 1
+  const focusedPanelId = useAtomValue(focusedPanelIdAtom)
+  const tourScope = { workspaceId: activeWorkspaceId ?? undefined, panelId: focusedPanelId ?? undefined }
+  const sourcesTarget = useTourTarget('sources.list', tourScope)
+  const tour = useTourSignals(tourScope)
+  const connectionPolicy = React.useContext(TourConnectionPolicyContext)
+  const nativeLocalMcpEnabled = connectionPolicy?.workspaceId === activeWorkspaceId ? connectionPolicy.localMcpEnabled : localMcpEnabled === false ? false : null
+  React.useEffect(() => {
+    const caps = connectionCapabilities({ sources, localMcpEnabled: nativeLocalMcpEnabled, workspaceId: activeWorkspaceId ?? undefined })
+    const cleanups = [tour.capability('sources.list', caps['sources.list']!), tour.capability('sources.ready', caps['sources.ready']!)]
+    return () => cleanups.forEach(cleanup => cleanup())
+  }, [tour, sources, nativeLocalMcpEnabled, activeWorkspaceId])
 
   // Send to Workspace dialog state
   const [sendDialogOpen, setSendDialogOpen] = React.useState(false)
@@ -224,7 +239,7 @@ export function SourcesListPanel({
   )
 
   return (
-    <>
+    <div ref={sourcesTarget} className="min-h-0" data-product-tour-target="sources.list">
     <div className="flex items-center justify-end gap-2 px-3 pt-2 pb-1">
       {indexFileCount != null && (
         <span
@@ -345,6 +360,6 @@ export function SourcesListPanel({
         activeWorkspaceId={activeWorkspaceId}
       />
     )}
-    </>
+    </div>
   )
 }

@@ -68,6 +68,8 @@ interface PageFrameProps {
    * replacement snapshots via `data` messages when this prop changes.
    */
   snapshot: PageDataSnapshot | null
+  /** Parent observes the trusted iframe load without reading its document. */
+  onHostLoad?: () => void
   className?: string
 }
 
@@ -88,7 +90,7 @@ function descriptorSignature(d: PageActionDescriptor): string {
   return `api:${d.sourceSlug}:${d.method}:${d.pathPattern}`
 }
 
-export function PageFrame({ workspaceId, page, lease, content, snapshot, className }: PageFrameProps) {
+export function PageFrame({ workspaceId, page, lease, content, snapshot, onHostLoad, className }: PageFrameProps) {
   const { t } = useTranslation()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const snapshotRef = useRef(snapshot)
@@ -322,7 +324,7 @@ export function PageFrame({ workspaceId, page, lease, content, snapshot, classNa
         sandbox={sandboxForKind(kind)}
         referrerPolicy="no-referrer"
         srcDoc={content}
-        onLoad={postInit}
+        onLoad={() => { postInit(); onHostLoad?.() }}
         className={className ?? 'h-full w-full border-0 bg-white'}
       />
       <PageGrantRequestDialog

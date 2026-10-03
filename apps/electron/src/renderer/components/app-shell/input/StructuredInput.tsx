@@ -9,6 +9,7 @@ interface StructuredInputProps {
   onResponse: (response: StructuredResponse) => void
   /** When true, removes container styling (shadow, bg, rounded) - used when wrapped by InputContainer */
   unstyled?: boolean
+  tourVariant?: 'regular' | 'compact'
 }
 
 /**
@@ -18,12 +19,13 @@ interface StructuredInputProps {
  * - permission: PermissionRequest (bash command approval)
  * - credential: CredentialRequest (secure auth input)
  */
-export function StructuredInput({ state, onResponse, unstyled = false }: StructuredInputProps) {
+export function StructuredInput({ state, onResponse, unstyled = false, tourVariant = 'regular' }: StructuredInputProps) {
   switch (state.type) {
     case 'permission':
       return (
         <PermissionRequest
           request={state.data as PermissionRequestType}
+          tourVariant={tourVariant}
           onResponse={onResponse}
           unstyled={unstyled}
         />

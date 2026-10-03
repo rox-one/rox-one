@@ -11,6 +11,7 @@ export interface LearningLeaseGuard {
 }
 export interface LearningProgressRepository extends ProgressRepository {
   apply(scopeKey: string, tour: TourDefinition, mutation: ProgressMutation, guard?: LearningLeaseGuard): Promise<PersistResult<TourProgress>>
+  resetScope(scopeKey: string, guard?: LearningLeaseGuard): Promise<PersistResult<void>>
 }
 export class LearningLeaseLostError extends Error {
   constructor() { super('Learning lease lost'); this.name = 'LearningLeaseLostError' }
@@ -126,16 +127,18 @@ export function createProgressRepository(options: LearningStorageOptions = {}): 
       (current as WindowLease).fence !== guard.lease.fence ||
       !((current as WindowLease).expiresAt > at) || !(guard.lease.expiresAt > at)) throw new LearningLeaseLostError()
   }
-  async function applyInMemory(scopeKey: string, tour: TourDefinition, mutation: ProgressMutation, guard?: LearningLeaseGuard) {
-    if (guard) {
-      if (guard.memoryOnly) {
-        if (!hasCurrentMemoryLease(options, guard.profileId, guard.lease, now())) throw new LearningLeaseLostError()
-      } else {
-        // Quota failure may still permit a readonly ownership check. Never assume the earlier fence remains valid.
-        try { await transaction(await database.open(), ['leases'], 'readonly', tx => assertDurableLease(tx, guard)) }
-        catch (error) { if (error instanceof LearningLeaseLostError) throw error; return failed() }
-      }
+  async function assertFallbackLease(guard: LearningLeaseGuard): Promise<boolean> {
+    if (guard.memoryOnly) {
+      if (!hasCurrentMemoryLease(options, guard.profileId, guard.lease, now())) throw new LearningLeaseLostError()
+    } else {
+      // Quota failure may still permit a readonly ownership check. Never assume the earlier fence remains valid.
+      try { await transaction(await database.open(), ['leases'], 'readonly', tx => assertDurableLease(tx, guard)) }
+      catch (error) { if (error instanceof LearningLeaseLostError) throw error; return false }
     }
+    return true
+  }
+  async function applyInMemory(scopeKey: string, tour: TourDefinition, mutation: ProgressMutation, guard?: LearningLeaseGuard) {
+    if (guard && !await assertFallbackLease(guard)) return failed()
     const cached = cache.get(key(scopeKey, tour.id))
     if (cached) memory.seed(cached)
     return fallback.apply(scopeKey, tour, mutation)
@@ -186,10 +189,15 @@ export function createProgressRepository(options: LearningStorageOptions = {}): 
       }
       return applyInMemory(scopeKey, tour, mutation, guard)
     },
-    async resetScope(scopeKey) {
+    async resetScope(scopeKey, guard) {
       if (unsupported) return failed()
+      // Deleting milestones is a write and requires the same ownership fence as evidence.
+      if (!guard) throw new LearningLeaseLostError()
+      assertScope(scopeKey, guard)
+      if (guard.memoryOnly) unavailable = true
       if (!unavailable) try {
-        await transaction(await database.open(), ['progress', 'attempts'], 'readwrite', async tx => {
+        await transaction(await database.open(), ['progress', 'attempts', 'leases'], 'readwrite', async tx => {
+          await assertDurableLease(tx, guard)
           for (const name of ['progress', 'attempts']) await new Promise<void>((resolve, reject) => {
             const request = tx.objectStore(name).openCursor()
             request.onerror = () => reject(request.error)
@@ -208,9 +216,11 @@ export function createProgressRepository(options: LearningStorageOptions = {}): 
         await fallback.resetScope(scopeKey)
         return saved(undefined)
       } catch (error) {
+        if (error instanceof LearningLeaseLostError) throw error
         if (error instanceof UnsupportedLearningSchema) { unsupported = true; return failed() }
         unavailable = true
       }
+      if (!await assertFallbackLease(guard)) return failed()
       for (const [id, value] of cache) if (value.scopeKey === scopeKey) cache.delete(id)
       return fallback.resetScope(scopeKey)
     },

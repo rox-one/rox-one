@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback, useRef } from 'react'
+import React, { createContext, useContext, useMemo, useRef } from 'react'
 
 /**
  * Modal registry context - tracks open modals for layered close handling.
@@ -9,13 +9,22 @@ import React, { createContext, useContext, useCallback, useRef } from 'react'
  * Modals register themselves with a priority (higher = closed first) and a close handler.
  */
 
-interface RegisteredModal {
+export interface ModalSnapshot {
+  readonly id: string
+  readonly priority: number
+}
+
+interface RegisteredModal extends ModalSnapshot {
   id: string
   priority: number
   close: () => void
+  order: number
 }
 
-interface ModalContextValue {
+export interface ModalContextValue {
+  /** Cached reactive list of open layers, ordered by close priority. */
+  getSnapshot: () => readonly ModalSnapshot[]
+  subscribe: (listener: () => void) => () => void
   /** Register a modal when it opens. Returns unregister function. */
   registerModal: (id: string, close: () => void, priority?: number) => () => void
   /** Check if any modals are open */
@@ -26,54 +35,59 @@ interface ModalContextValue {
 
 const ModalContext = createContext<ModalContextValue | null>(null)
 
-/**
- * Provider for modal registry. Wrap your app with this to enable close interception.
- */
-export function ModalProvider({ children }: { children: React.ReactNode }) {
-  // Using ref instead of state to avoid re-renders when modals register/unregister.
-  // The UI doesn't need to know about the registry - only the close handler does.
-  const modalsRef = useRef<Map<string, RegisteredModal>>(new Map())
-
-  const registerModal = useCallback((id: string, close: () => void, priority = 0) => {
-    modalsRef.current.set(id, { id, priority, close })
-
-    // Return unregister function for cleanup
-    return () => {
-      modalsRef.current.delete(id)
-    }
-  }, [])
-
-  const hasOpenModals = useCallback(() => {
-    return modalsRef.current.size > 0
-  }, [])
-
-  const closeTopModal = useCallback(() => {
-    const modals = Array.from(modalsRef.current.values())
-    if (modals.length === 0) return false
-
-    // Sort by priority descending, close the highest priority modal
-    modals.sort((a, b) => b.priority - a.priority)
-    const topModal = modals[0]
-    topModal.close()
-    return true
-  }, [])
-
-  const value: ModalContextValue = {
-    registerModal,
-    hasOpenModals,
-    closeTopModal,
+/** Registry preserves imperative close handling and adds reactive snapshots. */
+export function createModalRegistry(): ModalContextValue {
+  const modals = new Map<string, RegisteredModal>()
+  const listeners = new Set<() => void>()
+  let order = 0
+  let snapshot: readonly ModalSnapshot[] = Object.freeze([])
+  const publish = () => {
+    snapshot = Object.freeze(Array.from(modals.values())
+      .sort((a, b) => b.priority - a.priority || b.order - a.order)
+      .map(({ id, priority }) => Object.freeze({ id, priority })))
+    for (const listener of listeners) listener()
   }
+  return {
+    registerModal(id, close, priority = 0) {
+      const registration = { id, close, priority, order: ++order }
+      modals.set(id, registration)
+      publish()
+      return () => {
+        // StrictMode cleanup from a prior registration must not remove its replacement.
+        if (modals.get(id) !== registration) return
+        modals.delete(id)
+        publish()
+      }
+    },
+    hasOpenModals: () => modals.size > 0,
+    closeTopModal: () => {
+      const top = snapshot[0]
+      if (!top) return false
+      modals.get(top.id)?.close()
+      return true
+    },
+    getSnapshot: () => snapshot,
+    subscribe(listener) {
+      listeners.add(listener)
+      return () => { listeners.delete(listener) }
+    },
+  }
+}
 
-  return (
-    <ModalContext.Provider value={value}>
-      {children}
-    </ModalContext.Provider>
-  )
+/** Provider for the existing Cmd+W modal-close path. */
+export function ModalProvider({ children }: { children: React.ReactNode }) {
+  const registry = useMemo(() => createModalRegistry(), [])
+  return <ModalContext.Provider value={registry}>{children}</ModalContext.Provider>
 }
 
 /**
  * Hook to access modal registry functions.
  */
+/** Shared primitives may render in isolated roots without an app registry. */
+export function useOptionalModalRegistry(): ModalContextValue | null {
+  return useContext(ModalContext)
+}
+
 export function useModalRegistry() {
   const context = useContext(ModalContext)
   if (!context) {

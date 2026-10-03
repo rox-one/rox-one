@@ -1,3 +1,5 @@
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { beginChatSessionCreation, beginChatSessionReopen, beginChatCommit } from '@/features/product-tour/adapters/chat'
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { useAtomValue, useSetAtom } from "jotai"
@@ -204,6 +206,9 @@ export function SessionList({
   activeChatMatchInfo,
 }: SessionListProps) {
   const { t, i18n } = useTranslation()
+  const tourSignals = useTourSignals({ workspaceId, sessionId: focusedSessionId ?? undefined })
+  const listTarget = useTourTarget('session.list', { workspaceId, sessionId: focusedSessionId ?? undefined })
+  const newTarget = useTourTarget('session.new', { workspaceId, sessionId: focusedSessionId ?? undefined })
   const setSendToWorkspace = useSetAtom(sendToWorkspaceAtom)
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
   const collectionFilters = useAtomValue(collectionFiltersAtom)
@@ -230,7 +235,11 @@ export function SessionList({
   const selectionStore = useSessionSelectionStore()
 
   const { navigate, navigateToSession: navigateToSessionPrimary } = useNavigation()
-  const navigateToSession = onNavigateToSession ?? navigateToSessionPrimary
+  const nativeNavigateToSession = onNavigateToSession ?? navigateToSessionPrimary
+  const navigateToSession = useCallback((id: string) => {
+    beginChatSessionReopen(tourSignals.capture(), id)
+    nativeNavigateToSession(id)
+  }, [nativeNavigateToSession, tourSignals])
   const navState = useNavigationState()
   const { showEscapeOverlay } = useEscapeInterrupt()
 
@@ -1185,16 +1194,16 @@ export function SessionList({
 
   const listContext = useMemo((): SessionListContextValue => ({
     onRenameClick: handleRenameClick,
-    onSessionStatusChange,
+    onSessionStatusChange: (id, state) => { const captured = tourSignals.capture(); if (captured?.binding.sessionId === id) beginChatCommit(captured, 'session.status-committed', state); onSessionStatusChange(id, state) },
     onFlag: onFlag ? handleFlagWithToast : undefined,
     onUnflag: onUnflag ? handleUnflagWithToast : undefined,
     onArchive: onArchive ? handleArchiveWithToast : undefined,
     onUnarchive: onUnarchive ? handleUnarchiveWithToast : undefined,
     onMarkUnread,
     onDelete: handleDeleteWithToast,
-    onLabelsChange,
+    onLabelsChange: onLabelsChange ? (id, values) => { const captured = tourSignals.capture(); if (captured?.binding.sessionId === id) beginChatCommit(captured, 'session.labels-committed', values); onLabelsChange(id, values) } : undefined,
     projects,
-    onSetProjectId,
+    onSetProjectId: onSetProjectId ? (id, value) => { const captured = tourSignals.capture(); if (captured?.binding.sessionId === id) beginChatCommit(captured, 'session.project-committed', value); onSetProjectId(id, value) } : undefined,
     onSelectSessionById: handleSelectSessionById,
     onOpenInNewWindow: handleOpenInNewWindow,
     onSendToWorkspace: (ids: string[]) => setSendToWorkspace(ids),
@@ -1219,7 +1228,7 @@ export function SessionList({
     handleSelectSessionById, handleOpenInNewWindow, setSendToWorkspace, handleFocusZone, handleKeyDown,
     sessionStatuses, flatLabels, labels, resolvedSearchQuery,
     focusedSessionId, selectionStore.state.selected, isMultiSelectActive,
-    sessionOptions, contentSearchResults, activeChatMatchInfo, hasPendingPrompt,
+    sessionOptions, contentSearchResults, activeChatMatchInfo, hasPendingPrompt, tourSignals,
   ])
 
   // --- Empty state (non-search) — keep search bar pinned above empty UI ---
@@ -1256,7 +1265,9 @@ export function SessionList({
         className="h-full"
       >
         <button
+          ref={newTarget}
           onClick={() => {
+            beginChatSessionCreation(tourSignals.capture())
             const params: { status?: string; label?: string } = {}
             if (currentFilter?.kind === 'state') params.status = currentFilter.stateId
             else if (currentFilter?.kind === 'label') params.label = currentFilter.labelId
@@ -1269,7 +1280,7 @@ export function SessionList({
       </EntityListEmptyScreen>
     )
     return (
-      <div className="flex flex-col flex-1 min-h-0">
+      <div ref={listTarget} className="flex flex-col flex-1 min-h-0">
         <SessionSearchHeader
           searchQuery={searchQuery}
           onSearchChange={onSearchChange}
@@ -1293,7 +1304,7 @@ export function SessionList({
 
   // --- Render ---
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div ref={listTarget} className="flex flex-col flex-1 min-h-0">
       <SessionListProvider value={listContext}>
       <EntityList<SessionListRow>
         groups={rowData.groups}
