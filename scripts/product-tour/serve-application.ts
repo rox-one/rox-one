@@ -1,12 +1,12 @@
 /** Test-only composition: production App/transport/native Notes; synthetic shell bootstrap and custody DI. */
-import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, rmSync, readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, rmSync, readFileSync, realpathSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import { EventEmitter } from 'node:events'
 import { createServer } from 'vite'
 
 const repository = resolve(import.meta.dirname, '../..')
-const profile = mkdtempSync(join(tmpdir(), 'rox-product-tour-app-'))
+const profile = realpathSync(mkdtempSync(join(tmpdir(), 'rox-product-tour-app-')))
 const config = join(profile, 'config')
 mkdirSync(config)
 process.env.ROX_CONFIG_DIR = config

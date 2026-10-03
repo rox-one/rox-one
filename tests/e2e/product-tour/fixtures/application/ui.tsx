@@ -55,7 +55,7 @@ function Harness() {
       <textarea ref={first} aria-label="First panel draft" style={{ width: 320, height: 80 }} />
       <textarea ref={second} aria-label="Second panel draft" style={{ width: 320, height: 80 }} />
     </div>
-    <button onClick={() => setOutside(value => value + 1)} style={{ marginTop: 160 }}>Ordinary action</button>
+    <button onClick={() => setOutside(value => value + 1)} style={{ position: 'fixed', bottom: 24, left: 40 }}>Ordinary action</button>
     <output data-testid="ordinary-count">{outside}</output><output data-testid="pause-reason">{paused}</output>
     {native && <div role="dialog" aria-label="Native handoff fixture"><button onClick={() => setNative(false)}>Close handoff</button></div>}
     {open && target && <SpotlightOverlay target={target} step={step} binding={binding} onPause={reason => { setPaused(reason); setOpen(false) }} onNext={() => setOpen(false)} canNext={false} />}
