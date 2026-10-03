@@ -101,8 +101,15 @@ export function createNativeReplicaBridge({ client, invokeIpc }: NativeReplicaBr
     close: async handle => {
       const previous = contexts.get(handle)
       contexts.delete(handle)
-      forgetReceipts(previous)
       if (!previous) return
+      // Ordinary handle cleanup is not a permission-context change. Another
+      // Notes panel can still own the same context or be opening concurrently.
+      // Retain receipt custody only while a matching original context is live.
+      if (![...contexts.values()].some(context => sameContext(context, previous))) {
+        for (const [key, receipt] of serverReceipts) {
+          if (receipt.issuer === previous.issuer && receipt.subject === previous.subject && receipt.workspaceId === previous.workspaceId) serverReceipts.delete(key)
+        }
+      }
       await invokeIpc(NATIVE_REPLICA_IPC.CLOSE, { handle })
     },
   }

@@ -10,6 +10,10 @@ export interface NativeNotesApi {
   getTransportConnectionState(): Promise<Parameters<typeof isNativeReplicaNetworkLoss>[0]>
 }
 
+// Notes panels may replace their controller while retaining the same preload API.
+// Close custody belongs to that API, not to a component/controller instance.
+const replicaClosings = new WeakMap<NativeReplicaPublicApi, Promise<void>>()
+
 /** Workspace-scoped durable Notes mutation transport. */
 export function createNativeNotesSyncController(api: NativeNotesApi = (globalThis as unknown as { window: { electronAPI: NativeNotesApi } }).window.electronAPI) {
   let workspaceId: string | null = null
@@ -36,7 +40,7 @@ export function createNativeNotesSyncController(api: NativeNotesApi = (globalThi
     return { workspaceId, handle, generation }
   }
 
-  const closeSession = async (): Promise<void> => {
+  const closeSession = (): Promise<void> => {
     const opening = starting
     const closingHandle = handle
     generation++
@@ -44,17 +48,25 @@ export function createNativeNotesSyncController(api: NativeNotesApi = (globalThi
     workspaceId = null
     handle = null
     starting = null
-    if (opening) await opening.catch(() => {})
-    if (closingHandle) await api.nativeReplica.close(closingHandle)
+    const previousClosing = replicaClosings.get(api.nativeReplica)
+    const closing = (async () => {
+      if (previousClosing) await previousClosing.catch(() => {})
+      if (opening) await opening.catch(() => {})
+      if (closingHandle) await api.nativeReplica.close(closingHandle)
+    })()
+    replicaClosings.set(api.nativeReplica, closing)
+    const settled = () => { if (replicaClosings.get(api.nativeReplica) === closing) replicaClosings.delete(api.nativeReplica) }
+    void closing.then(settled, settled)
+    return closing
   }
 
   return {
     async start(nextWorkspaceId: string): Promise<void> {
       if (!nextWorkspaceId) throw new Error('A workspace is required for native Notes sync')
       const request = ++lifecycleRequest
-      // The production bridge invalidates receipts when a handle closes. StrictMode
-      // cleanup must finish closing an obsolete opener before mounting a new one.
-      const closing = stopping
+      // Wait for obsolete open/close work even when a remount constructed a new
+      // controller. Native handle custody must settle before replacing it.
+      const closing = replicaClosings.get(api.nativeReplica) ?? stopping
       if (closing) await closing
       if (request !== lifecycleRequest) return
       if (workspaceId === nextWorkspaceId && (handle || starting)) {
