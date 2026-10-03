@@ -1,0 +1,78 @@
+component-recovery	Record the tested merge revision and source hashes	﻿2026-10-03T17:43:03.8017293Z ##[group]Run python3 - <<'PY'
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8017676Z ^[[36;1mpython3 - <<'PY'^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8017980Z ^[[36;1mimport pathlib, subprocess, hashlib, json^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8018441Z ^[[36;1mowner = pathlib.Path('docs/final-readiness/execution/cloud/OWNER-UI-001')^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8019006Z ^[[36;1mmanifest = json.loads((owner / 'source-manifest-v3.json').read_text())^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8019886Z ^[[36;1mhashes = {path: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8020387Z ^[[36;1m          for path in manifest['sourceSha256']}^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8020934Z ^[[36;1mreceipt = {'testedRevision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8021589Z ^[[36;1m           'bun': subprocess.check_output(['bun', '--version'], text=True).strip(),^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8022154Z ^[[36;1m           'node': subprocess.check_output(['node', '--version'], text=True).strip(),^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8022911Z ^[[36;1m           'actualSourceSha256': hashes,^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8023371Z ^[[36;1m           'matchesCommittedCandidate': hashes == manifest['sourceSha256']}^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8023892Z ^[[36;1mdestination = owner / 'verification/browser/ui001-ci-source.json'^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8024390Z ^[[36;1mdestination.parent.mkdir(parents=True, exist_ok=True)^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8024854Z ^[[36;1mdestination.write_text(json.dumps(receipt, indent=2) + '\n')^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8025455Z ^[[36;1mprint(json.dumps(receipt, indent=2))^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8026019Z ^[[36;1massert receipt['matchesCommittedCandidate'], 'Tested sources differ from the committed candidate manifest'^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8026553Z ^[[36;1mPY^[[0m
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8090049Z shell: /usr/bin/bash -e {0}
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8090316Z env:
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8090568Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8090894Z ##[endgroup]
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8552906Z {
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8553645Z   "testedRevision": "53a3bb7668e248646ed1b0e4aad4ca5f47f2bbb7",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8554314Z   "bun": "1.3.14",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8554563Z   "node": "v24.21.0",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8554848Z   "actualSourceSha256": {
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8555734Z     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "587281b0676cd7135e842a7440c0820bd475b93ed96b6a5b99c7303d34100231",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8556996Z     "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "58b85510a98cfa268e03b89f0925a2e8c7e1e9837d2015d9d7c655e56a35d2c3",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8558169Z     "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8559310Z     "apps/electron/src/renderer/contexts/NavigationContext.tsx": "82f17df12cb3d544c35ff8c993b1d62643686144c4304aa1ceb428efb1bb4053",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8560419Z     "apps/electron/src/shared/route-parser.ts": "613068e6cc643848b45f9ee3a4fb8a991cbb80873bd31bbf1f40d48f2bfe8ad5",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8561315Z     "apps/electron/src/shared/types.ts": "899852aae94cdd8d729ff616021bc7605158bc59c5db058ad78bd8a3cbf86c40",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8562773Z     "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8563768Z     "apps/electron/src/renderer/lib/nav-helpers.ts": "7b94fc00f694ee2c83a682725ca9460d88a138b4a421fa452d1a77d034df5e2f",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8564851Z     "apps/electron/src/renderer/atoms/panel-stack.ts": "329cde215256c531e259d034382f45a246117739ad75f9dfb25f263997317024",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8565610Z     "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8566626Z     "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8567616Z     "apps/electron/src/renderer/App.tsx": "d94f61493a507398c98d342f124be6f57bc4e4c49401b0e8d9872a92d14f60ee",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8568806Z     "apps/electron/src/renderer/contexts/navigation-history.ts": "da8884b5cd39fa877d2d06793af008c84e123f9d4dd9137ea555c751585df159",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8569814Z     "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "a4edf3356beecf2a4b273c18b28263f45b7c2d83d15d709aa8bfba422036ebbd",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8571005Z     "apps/electron/src/renderer/hooks/usePanelResize.ts": "ac50c51b98b9e1a782cb964e2dfe6ae7ff976777733c0cac0467acf1a4eb02dd",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8572008Z     "apps/electron/src/renderer/components/app-shell/panel-constants.ts": "6166298674f6ea0d50c69223d366aba54f443f4d1262a0483a4b3331c3902fc9",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8573150Z     "apps/electron/src/renderer/lib/panel-workspace-layout.ts": "865a6d20ea9ed91c45238015afd948c7d09a5d671c255b31343786b3133545a5",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8574088Z     "apps/electron/src/renderer/atoms/sessions.ts": "98138d1255f09fe6a44e507f3087e21ffbe9076b12baab7adab3a2560b9ebb81",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8574992Z     "apps/electron/src/renderer/lib/local-storage.ts": "2867f04095afa1f97b467a902b2b8f32b55624b0af0cfc09c1d5f772635ce49d",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8575993Z     "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "c70de20413482f2873923d92a7582336b6ff29bb7e77038b6b37eff5867decfd",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8577056Z     "apps/electron/src/renderer/components/app-shell/nav-destinations.ts": "bb6617b42816f5302c90601290ab440cbc7efed22cdd7df168b5bc7f4f4ea6a2",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8578220Z     "apps/electron/src/renderer/lib/panel-url.ts": "739481afb14184d51e6f8922601a52184bd7d7ec53013b3112e61048a41bfea3",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8579288Z     "apps/electron/src/renderer/lib/route-recovery.tsx": "9f3a29dc956e4be7ea8437482c345794434bff3bdb741ca35b18296d929c0ea5",
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8580247Z     "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "e881a85c503f492fe47186b9dd9241a6884855dda46072bdcfbbfcc932fd0e2b"
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8580857Z   },
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8581102Z   "matchesCommittedCandidate": false
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.8581383Z }
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.9234054Z Traceback (most recent call last):
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.9234657Z   File "<stdin>", line 15, in <module>
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.9235345Z AssertionError: Tested sources differ from the committed candidate manifest
+component-recovery	Record the tested merge revision and source hashes	2026-10-03T17:43:03.9360699Z ##[error]Process completed with exit code 1.
+component-recovery	Confirm the tested source hashes stayed unchanged	﻿2026-10-03T17:43:03.9477554Z ##[group]Run python3 - <<'PY'
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9477908Z ^[[36;1mpython3 - <<'PY'^[[0m
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9478184Z ^[[36;1mimport pathlib, hashlib, json^[[0m
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9478636Z ^[[36;1mowner = pathlib.Path('docs/final-readiness/execution/cloud/OWNER-UI-001')^[[0m
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9479179Z ^[[36;1mdestination = owner / 'verification/browser/ui001-ci-source.json'^[[0m
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9479623Z ^[[36;1mreceipt = json.loads(destination.read_text())^[[0m
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9480174Z ^[[36;1mreceipt['sourceAfterSha256'] = {path: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()^[[0m
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9480763Z ^[[36;1m                               for path in receipt['actualSourceSha256']}^[[0m
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9481307Z ^[[36;1mreceipt['sourcesStable'] = receipt['sourceAfterSha256'] == receipt['actualSourceSha256']^[[0m
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9481877Z ^[[36;1mdestination.write_text(json.dumps(receipt, indent=2) + '\n')^[[0m
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9482605Z ^[[36;1massert receipt['sourcesStable'] and receipt['matchesCommittedCandidate']^[[0m
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9483059Z ^[[36;1mPY^[[0m
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9546071Z shell: /usr/bin/bash -e {0}
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9546341Z env:
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9546601Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:03.9546926Z ##[endgroup]
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:04.0509409Z Traceback (most recent call last):
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:04.0509964Z   File "<stdin>", line 9, in <module>
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:04.0510346Z AssertionError
+component-recovery	Confirm the tested source hashes stayed unchanged	2026-10-03T17:43:04.0632954Z ##[error]Process completed with exit code 1.

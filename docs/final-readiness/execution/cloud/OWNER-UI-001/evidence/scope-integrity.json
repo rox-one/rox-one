@@ -1,0 +1,184 @@
+{
+  "checkedAt": "2026-10-03T11:10:02.103899+00:00",
+  "inputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
+  "productCommit": "3b32a3e44b08d09966b336e0acf038f9dce7af5a",
+  "originalTaskObjectsUnchanged": true,
+  "existingChangedPaths": [
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+    "apps/electron/src/renderer/atoms/unified-shell.ts"
+  ],
+  "newProductTestPaths": [
+    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.component-harness.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.effect-harness.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts"
+  ],
+  "unchangedGuardedFiles": [
+    "bun.lock",
+    "docs/final-readiness/parallel-work/launch-plan.json",
+    "apps/electron/src/shared/route-parser.ts",
+    "apps/electron/src/shared/types.ts"
+  ],
+  "manifestHashesMatchWorkingTreeAndCommit": true,
+  "allEvidenceLogDigestsMatch": true,
+  "receiptsVerified": [
+    {
+      "label": "baseline-regression",
+      "exitCode": 1,
+      "logSha256": "426de340295fee96b32e4a1a102377aac918e87c1c1e4a696da0ebf9e6744077"
+    },
+    {
+      "label": "baseline-typecheck",
+      "exitCode": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "browser-final",
+      "exitCode": 0,
+      "logSha256": "c2ffaafcbc61d4e06a259bbbb736107a5056d8197e676fb879f8d55166086c8f"
+    },
+    {
+      "label": "browser-green",
+      "exitCode": 0,
+      "logSha256": "c2ffaafcbc61d4e06a259bbbb736107a5056d8197e676fb879f8d55166086c8f"
+    },
+    {
+      "label": "browser-red",
+      "exitCode": 1,
+      "logSha256": "2f041ed559d9f294deb4f144b0d05b007579a0bb2a54289c5c4c0dab02de257d"
+    },
+    {
+      "label": "current-typecheck",
+      "exitCode": 2,
+      "logSha256": "66829d21a1735afc264151101b430ddeb691e80ee2e0e494e6e6d957be0c001a"
+    },
+    {
+      "label": "final-app-shell-regression",
+      "exitCode": 1,
+      "logSha256": "7bd40a094b2d81bf9584a9f26cf01e15cff9537fdafc324748ade23ca2f1f497"
+    },
+    {
+      "label": "final-layout-regression",
+      "exitCode": 1,
+      "logSha256": "6d21018d181a9631a0a67c1f96479217a2772d5e127821a58a78975165583006"
+    },
+    {
+      "label": "final-regression",
+      "exitCode": 1,
+      "logSha256": "d2bce82c81d917a39cc73798a1c17b39cad677f9fe34b4be0aa6379fd2a1218a"
+    },
+    {
+      "label": "final-typecheck",
+      "exitCode": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "geometry-green",
+      "exitCode": 0,
+      "logSha256": "9bc37d1c04f221073f2fe90c5f6dd64f8c2396661637afcfd794bde6eca0b85e"
+    },
+    {
+      "label": "geometry-red",
+      "exitCode": 1,
+      "logSha256": "79bf9ef37df4f508235d2beba85191f3335907566e33d8663a0a96ae047e2916"
+    },
+    {
+      "label": "owned-tests",
+      "exitCode": 0,
+      "logSha256": "5d3802228db7d6feab301861769174e73834948f5f954655377a8cc661c4626f"
+    },
+    {
+      "label": "parser-gap-probe",
+      "exitCode": 0,
+      "logSha256": "ec1e9684ff087383a63e8267b3669f434e86922d3b9b74db61e56c86ec54fa86"
+    },
+    {
+      "label": "renderer-build-final",
+      "exitCode": 0,
+      "logSha256": "f51247a02bfc734545d872654fc9bad96fd0d94ca6abc336573fbfdf9347e480"
+    },
+    {
+      "label": "renderer-build",
+      "exitCode": 0,
+      "logSha256": "5cfaddcd5e68876cb48af148fb2e5c8d4527d829654a400ee1d59d924f858bb3"
+    },
+    {
+      "label": "route-dispatch-green",
+      "exitCode": 0,
+      "logSha256": "227cc5e0127ace287df25f4cfe494b4c984d6ab77119a88a69698ada6524b5d4"
+    },
+    {
+      "label": "route-harness-esbuild",
+      "exitCode": 1,
+      "logSha256": "b444796f643512a2673e367455d86a08120def20240983c28954a2dc726ef7c1"
+    },
+    {
+      "label": "route-harness-first",
+      "exitCode": 1,
+      "logSha256": "afb7492ef0c4a1b5bf897763ae9026d53b0a3b484d23d8fedb91fac56b63bc60"
+    },
+    {
+      "label": "route-harness-second",
+      "exitCode": 1,
+      "logSha256": "9d0cf208676766a6f2412139f66c65c0b43b25d8995fad7121586721d96702a7"
+    },
+    {
+      "label": "route-harness-third",
+      "exitCode": 1,
+      "logSha256": "3fc88c7633fc302a43bb4bc453ab17dbe5c0ecad7856941770d7cc1f46bd0938"
+    },
+    {
+      "label": "workspace-green",
+      "exitCode": 0,
+      "logSha256": "bed2316be8b16ab545b60c74f0351d37f6a72e9bd59e025ad465d3cd562b1cca"
+    },
+    {
+      "label": "workspace-persistence-green",
+      "exitCode": 0,
+      "logSha256": "50946e776a57a8b7413df1b7bf6bf5109ae9915000ce196793528fa9f6e10997"
+    },
+    {
+      "label": "workspace-persistence-red",
+      "exitCode": 1,
+      "logSha256": "21c98ecda761f2f4aef9061d67916ae59ceaec81f0aac854c651ad547de9972b"
+    },
+    {
+      "label": "workspace-red",
+      "exitCode": 1,
+      "logSha256": "b86f477912f517a2ff1877e20507b9f52ffb9967c3769ef9bad523c227a5d019"
+    },
+    {
+      "label": "docs-whitespace-raw",
+      "exitCode": 2,
+      "logSha256": "fc9212069dee5850f5aabb793f638d7a5548505070ba49054bad3f868bb41d97"
+    }
+  ],
+  "finalSourceBoundReceipts": [
+    "owned-tests",
+    "browser-final",
+    "final-typecheck",
+    "renderer-build-final",
+    "final-app-shell-regression",
+    "final-layout-regression",
+    "parser-gap-probe"
+  ],
+  "unappliedProposalChecks": [
+    {
+      "artifact": "lead-route-parser-proposal.patch",
+      "applied": false,
+      "applicationCheck": "pass",
+      "sha256": "77b480684454307b98da13ed666271e3e6cd620f3c77124683d96b558591ba8c"
+    },
+    {
+      "artifact": "lead-layout-test-proposal.patch",
+      "applied": false,
+      "applicationCheck": "pass",
+      "sha256": "60cb4f7530226e90508a14bbbe9a7d4d11fb203dc3f0c44f0f942c70b96f973a"
+    }
+  ],
+  "cloudDiffDigestMatches": true,
+  "fullDoDClosed": false,
+  "packagingWhitespace": "product/tests/editable docs pass; verbatim evidence excluded and unchanged; raw failure retained"
+}

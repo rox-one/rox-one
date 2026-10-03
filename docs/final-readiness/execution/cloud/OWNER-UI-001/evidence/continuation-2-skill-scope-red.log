@@ -1,0 +1,83 @@
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1347:9:
+      1347 │     case 'pages':
+           ╵          ~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1321:9:
+      1321 │     case 'pages':
+           ╵          ~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1349:9:
+      1349 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1323:9:
+      1323 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+288 |   await check('Unmounted atom subscriptions ignore later native storage events', async () => {
+289 |     await page.evaluate(() => (window as any).ui001.layout.unsubscribe())
+290 |     await second.evaluate(() => { const x = (window as any).ui001; localStorage.setItem(x.layout.keys.inspector,'850'); localStorage.setItem(x.layout.keys.dock,'350') })
+291 |     assert.deepEqual(await page.evaluate(() => (window as any).ui001.layout.read()),{inspector:320,dock:104})
+292 |   })
+293 |   assert.deepEqual(errors, [])
+               ^
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
++ [
++   "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n" +
++     '\n' +
++     'Check the render method of `SkillInfoPage`.',
++   "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n" +
++     '\n' +
++     'Check the render method of `SkillInfoPage`.',
++   "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n" +
++     '\n' +
++     'Check the render method of `SkillInfoPage`.',
++   "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n" +
++     '\n' +
++     'Check the render method of `SkillInfoPage`.',
++   "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n" +
++     '\n' +
++     'Check the render method of `SkillInfoPage`.',
++   "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n" +
++     '\n' +
++     'Check the render method of `SkillInfoPage`.',
++   "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n" +
++     '\n' +
++     'Check the render method of `SkillInfoPage`.',
++   "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n" +
++     '\n' +
++     'Check the render method of `SkillInfoPage`.',
++   "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n" +
++     '\n' +
++     'Check the render method of `SkillInfoPage`.'
++ ]
+- []
+
+ generatedMessage: true,
+     actual: [ "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n\nCheck the render method of `SkillInfoPage`.",
+  "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n\nCheck the render method of `SkillInfoPage`.",
+  "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n\nCheck the render method of `SkillInfoPage`.",
+  "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n\nCheck the render method of `SkillInfoPage`.",
+  "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n\nCheck the render method of `SkillInfoPage`.",
+  "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n\nCheck the render method of `SkillInfoPage`.",
+  "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n\nCheck the render method of `SkillInfoPage`.",
+  "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n\nCheck the render method of `SkillInfoPage`.",
+  "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.\n\nCheck the render method of `SkillInfoPage`."
+],
+   expected: [],
+   operator: "deepStrictEqual",
+       code: "ERR_ASSERTION"
+
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts:293:10
+
+Bun v1.3.14 (macOS arm64)

@@ -29,6 +29,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'sessions':
       return navState.details !== null
     case 'settings':
+    case 'unavailable':
       return true
     case 'sources':
     case 'skills':

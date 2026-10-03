@@ -280,6 +280,10 @@ if (userDataOverride) {
 }
 
 function registerDeeplinkScheme(scheme: string): void {
+  // Isolated developer verification must preserve the user's OS URL associations.
+  // Packaged applications retain the primary and legacy registrations.
+  if (!app.isPackaged && process.env.ROX_DEV_DISABLE_PROTOCOL_REGISTRATION === '1') return
+
   if (process.defaultApp) {
     if (process.argv.length >= 2) {
       app.setAsDefaultProtocolClient(scheme, process.execPath, [process.argv[1]])
@@ -344,6 +348,10 @@ if (!gotTheLock) {
       handleDeepLink(url, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(err => {
         mainLog.error('Failed to handle deep link:', err)
       })
+    } else if (url) {
+      // Startup (including Windows dependency bootstrap) can precede the manager.
+      // Reuse the same latest-link replay as the macOS open-url callback.
+      pendingDeepLink = url
     } else if (windowManager) {
       // No deep link - just focus the first window
       const windows = windowManager.getAllWindows()
