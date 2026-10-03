@@ -13,6 +13,7 @@ import {
   type ShareCapabilityHost,
 } from './share-capability'
 import { composeSpawnEnv } from './spawn-env'
+import { selectResumeHistory } from './resume-history'
 import { emitTurnComplete } from './turn-complete'
 import { shouldBrokerGatePermission } from './permission-broker-gate'
 import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
@@ -25,9 +26,9 @@ import { readFile, writeFile, mkdir } from 'fs/promises'
 import { type AgentEvent, setPermissionMode, hydratePreviousPermissionMode, getPermissionModeDiagnostics, type PermissionMode, unregisterSessionScopedToolCallbacks, mergeSessionScopedToolCallbacks, AbortReason, AgentBudgetLedger, type AgentBudgetSnapshot, type AuthRequest, type AuthResult, type CredentialAuthRequest, type BrowserPaneFns, generateConversationSummary, resolveKeepBackgroundTasksAlive } from '@craft-agent/shared/agent'
 import {
   resolveSessionConnection,
-  createBackendFromConnection,
-  resolveBackendContext,
-  createBackendFromResolvedContext,
+  createOmpSessionBackendFromConnection as createBackendFromConnection,
+  resolveOmpSessionContext as resolveBackendContext,
+  createOmpSessionBackendFromResolvedContext as createBackendFromResolvedContext,
   cleanupSourceRuntimeArtifacts,
   providerTypeToAgentProvider,
   type AgentBackend,
@@ -3499,12 +3500,13 @@ export class SessionManager implements ISessionManager {
           if (branchFromSessionPath) {
             branchFromSdkTurnId = await getOmpTurnAnchor(branchFromSessionPath, options.branchFromMessageId)
             if (!branchFromSdkTurnId) {
-              sessionLog.warn('OMP branch anchor missing; branch will fail preflight', {
+              sessionLog.warn('OMP branch anchor missing; reconstructing selected persisted history', {
                 workspaceId,
                 branchFromSessionId: options.branchFromSessionId,
                 branchFromMessageId: options.branchFromMessageId,
               })
-              throw new Error('Cannot create branch: this message has no OMP branch anchor. OMP branching requires a completed assistant reply whose transcript entry is known (branch from that message instead).')
+              // The adapter reconstructs the exact selected ROX history slice in
+              // the child when a legacy/imported session has no native anchor.
             }
           }
         } else if (sourceBackendContext.provider === 'anthropic') {
@@ -3540,7 +3542,7 @@ export class SessionManager implements ISessionManager {
         }
       }
 
-      if (branchContextStrategy === 'sdk-fork' && !branchFromSdkSessionId) {
+      if (branchContextStrategy === 'sdk-fork' && !branchFromSdkSessionId && sourceBackendContext.provider !== 'omp') {
         sessionLog.warn('Branch validation failed: sdk-fork requires parent SDK session ID', {
           workspaceId,
           branchFromSessionId: options.branchFromSessionId,
@@ -4069,8 +4071,13 @@ export class SessionManager implements ISessionManager {
 
       // Lock the connection after first resolution
       // This ensures the session always uses the same provider
-      if (connection && !managed.connectionLocked) {
+      if (connection && (!managed.connectionLocked || managed.llmConnection !== connection.slug)) {
+        const previousConnection = managed.llmConnection
         managed.llmConnection = connection.slug
+        if (previousConnection !== connection.slug && managed.model !== backendContext.resolvedModel) {
+          managed.model = backendContext.resolvedModel
+          this.sendEvent({ type: 'session_model_changed', sessionId: managed.id, model: managed.model }, managed.workspace.id)
+        }
         managed.connectionLocked = true
         sessionLog.info(`Locked session ${managed.id} to connection "${connection.slug}"`)
         this.persistSession(managed)
@@ -4153,8 +4160,8 @@ export class SessionManager implements ISessionManager {
         lastUsedAt: managed.lastMessageAt,
         workingDirectory: managed.workingDirectory,
         sdkCwd: managed.sdkCwd,
-        model: managed.model,
-        llmConnection: managed.llmConnection,
+        model: backendContext.resolvedModel,
+        llmConnection: connection?.slug,
         permissionMode: managed.permissionMode,
         previousPermissionMode: managed.previousPermissionMode,
         projectId: managed.projectId,
@@ -4314,6 +4321,9 @@ export class SessionManager implements ISessionManager {
         onSdkSessionIdCleared,
         onBranchForkInvalidated,
         getRecoveryMessages,
+        getResumeMessages: () => selectResumeHistory(managed.messages, managed.isProcessing),
+        getBranchResumeMessages: () => managed.branchFromMessageId
+          ? selectResumeHistory(managed.messages, managed.isProcessing) : [],
         getBranchFallbackMessages,
         getBranchSeedMessages,
         markBranchSeedApplied,

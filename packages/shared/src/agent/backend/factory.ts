@@ -29,6 +29,7 @@ import { OmpAgent } from '../omp-agent.ts';
 import {
   getLlmConnection,
   getDefaultLlmConnection,
+  getLlmConnections,
   type LlmConnection,
 } from '../../config/storage.ts';
 // Import deprecated type for legacy migration function only
@@ -36,6 +37,7 @@ import type { LlmConnectionType, CustomEndpointConfig } from '../../config/llm-c
 // Import validation helpers for provider-auth combinations
 import {
   isValidProviderAuthCombination,
+  getMiniModel,
 } from '../../config/llm-connections.ts';
 import { parseValidationError, type LlmValidationResult } from '../../config/llm-validation.ts';
 import type { ModelFetchResult } from '../../config/model-fetcher.ts';
@@ -61,6 +63,7 @@ import {
 import { anthropicDriver } from './internal/drivers/anthropic.ts';
 import { piDriver } from './internal/drivers/pi.ts';
 import { ompDriver } from './internal/drivers/omp.ts';
+import { selectOmpSessionConnection, selectOmpSessionModel } from './omp-session-policy.ts';
 
 const DRIVER_REGISTRY: Record<AgentProvider, ProviderDriver> = {
   anthropic: anthropicDriver,
@@ -394,6 +397,47 @@ export function resolveBackendContext(args: {
     resolvedModel,
     capabilities: BACKEND_CAPABILITIES[provider],
   };
+}
+
+/** Every ROX session, task and auxiliary agent uses the OMP execution engine. */
+export function resolveOmpSessionContext(args: {
+  sessionConnectionSlug?: string;
+  workspaceDefaultConnectionSlug?: string;
+  managedModel?: string;
+}): ResolvedBackendContext {
+  const prior = resolveSessionConnection(args.sessionConnectionSlug, args.workspaceDefaultConnectionSlug);
+  const connection = selectOmpSessionConnection({
+    connections: getLlmConnections(), sessionSlug: args.sessionConnectionSlug,
+    workspaceSlug: args.workspaceDefaultConnectionSlug, defaultSlug: getDefaultLlmConnection(),
+  });
+  return {connection,provider:'omp',authType:connectionAuthTypeToBackendAuthType(connection.authType),
+    resolvedModel:selectOmpSessionModel(connection,args.managedModel,prior?.providerType==='omp'),
+    capabilities:BACKEND_CAPABILITIES.omp};
+}
+
+export function createOmpSessionBackendFromResolvedContext(args: Parameters<typeof createBackendFromResolvedContext>[0]): AgentBackend {
+  const context = args.context.provider === 'omp' ? args.context : resolveOmpSessionContext({
+    sessionConnectionSlug:args.context.connection?.slug, managedModel:args.context.resolvedModel,
+  });
+  const coreConfig = args.context.provider === 'omp' ? args.coreConfig : {
+    ...args.coreConfig,
+    miniModel: getMiniModel(context.connection!) ?? context.connection!.defaultModel,
+  };
+  return createBackendFromResolvedContext({...args,context,coreConfig});
+}
+
+export function createOmpSessionBackendFromConnection(
+  connectionSlug: string, baseConfig: Omit<BackendConfig,'provider'|'authType'>,
+  hostRuntime?: BackendHostRuntimeContext, providerOptions?: BackendProviderOptions,
+): AgentBackend {
+  const context=resolveOmpSessionContext({sessionConnectionSlug:connectionSlug,managedModel:baseConfig.model});
+  const coreConfig = getLlmConnection(connectionSlug)?.providerType === 'omp' ? baseConfig : {
+    ...baseConfig,
+    miniModel: getMiniModel(context.connection!) ?? context.connection!.defaultModel,
+  };
+  if(hostRuntime)return createOmpSessionBackendFromResolvedContext({context,coreConfig,hostRuntime,providerOptions});
+  return createBackend({...coreConfig,provider:'omp',providerType:'omp',authType:context.authType,
+    connectionSlug:context.connection!.slug,model:context.resolvedModel});
 }
 
 /**

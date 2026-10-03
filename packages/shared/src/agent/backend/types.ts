@@ -241,6 +241,10 @@ export interface CoreBackendConfig {
 
   /** Callback to get recent messages for recovery context */
   getRecoveryMessages?: () => RecoveryMessage[];
+  /** Complete persisted ROX history, excluding the current pending user submission. */
+  getResumeMessages?: () => import('@craft-agent/core/types').Message[];
+  /** Exact visible parent slice through the selected fork point, for legacy reconstruction. */
+  getBranchResumeMessages?: () => import('@craft-agent/core/types').Message[];
 
   /**
    * Get ALL parent messages for branch fork fallback (not limited to 6).
