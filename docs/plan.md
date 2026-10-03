@@ -631,7 +631,7 @@ Restore the seven missing Connections controller operations: lease metadata, ins
 
 Backend move must verify destination contents before deleting the source, refuse existing destinations and simultaneous moves, revoke outstanding leases before attempting a move, restore the source and clear the destination on recoverable failure, and return a distinct rollback failure when storage recovery cannot be proven. Real credential/backend availability and OAuth sign-in remain environment-dependent; fixture proof does not certify a real provider or native UI.
 
-Acceptance: original source branch retained; current strict types and full CI validation; real temporary SQLite audits and workspace isolation; generated channel/access inventory; deterministic memory-backend write/readback/delete/rollback failures; OAuth pending/approved/cancel race and concurrent-poll controls. Record exact delivered revision and test receipt under `docs/integration-history/connections-86154e8c/`.
+The existing Connections UI remains a separate consumer recovery; this PR restores its missing backend and transport dependency. Acceptance: original source branch retained; current strict types and the configured validation assertions; real temporary SQLite audits and workspace isolation; generated channel/access inventory; deterministic memory-backend write/readback/delete/rollback failures; OAuth pending/approved/cancel race and concurrent-poll controls. Record exact delivered revision and test receipt under `docs/integration-history/connections-86154e8c/`.
 
 ## Native Notes Knowledge read projection (2026-10-03)
 

@@ -2,50 +2,80 @@
   "schema_version": 1,
   "source_branch": "checkpoint/session-audit-20260821-craft-agents",
   "source_sha": "86154e8c812746261282bb4c517b16ad7becc0ec",
-  "integration_base": "cc56c95c75cb7bedd025e1b9af60a5312d0cf119",
-  "runtime": "Bun1.3.14",
+  "integration_base": "74b8de9554c34b383b6254b30479c877435bb1db",
+  "runtime": "Bun1.3.14; Node22.23.3 for subprocess integration",
   "tests": {
-    "workgraph_and_fabric": 171,
-    "consumer": 53,
-    "failures": 0,
-    "configured_ci_bun": 254,
-    "configured_ci_python": 19
+    "workgraph_fabric_transport": 175,
+    "existing_consumer": 53,
+    "focused_failures": 0,
+    "configured_ci_bun": 308,
+    "configured_ci_python": 19,
+    "mcp_onboarding": 485
   },
   "gates": [
-    "all-package strict types",
+    "all package strict types on c9 combined source; current74b8 replay pending",
     "locale parity/sort/coverage",
-    "Electron main/preload builds"
+    "Electron main/preload builds on c9 combined source",
+    "current74b8 actual MCP onboarding 485 tests"
   ],
   "review": "independent before-controls proved move/revoke both orderings and dishonest too-late device cancellation; repaired with shared mutation barrier and explicit commit state",
   "native_ui_and_real_oauth_acceptance": false,
   "original_branch_retained": true,
   "logs": [
     {
-      "name": "connection-recovery-tests-final2.log",
-      "sha256": "8dbd3c1e451ba2d0f9cc35d8601d3e5842783fa0905a195bc2de77876f7e9da9"
+      "name": "connection-recovery-combined-tests.log",
+      "sha256": "b6ff974dbe3a777b234a5c472854333460a63309e91d1c19ba33ab2abdb842b0"
     },
     {
-      "name": "connection-recovery-consumer-tests.log",
-      "sha256": "3e4d14b0d07a0a78ca88787512b6678a34342a5970fc5e5a7c3fd209e5bf40d6"
+      "name": "connection-recovery-combined-ci.log",
+      "sha256": "9fd6a8230b3ba0e8f555a05c42ccf53088e0e825ab15d718fef39fb0e1b4602f"
     },
     {
-      "name": "connection-recovery-validate-ci-final2.log",
-      "sha256": "7ac579a460f3cf1ac22ef375a2f08f6c569553f4374b63c4e4c5e7fbe0ac81ae"
+      "name": "connection-configured-tests-bounded.log",
+      "sha256": "1492e3197098eb10f5f9fa68c6248ae2e6e15b5386b4b2e6c85c1dec4f93d00e"
     },
     {
-      "name": "connection-recovery-main-build.log",
-      "sha256": "45b17aebac6f349df8b7cbf7210b9413c126a320c83a9ea88ede583a2e05b3cc"
+      "name": "connection-configured-multirun-retry.log",
+      "sha256": "e8bd3c004e43837cd1bf1b6cd1ff46ea871a683ed0ee487b5a100ae9a3e8fb57"
     },
     {
-      "name": "connection-recovery-preload-build.log",
+      "name": "connection-configured-tests-remaining.log",
+      "sha256": "8ad130b95ef11d1a2256b645a0abf0f8d14bba9bd85d6c6f43f39025ca78a0ff"
+    },
+    {
+      "name": "connection-recovery-combined-main-build.log",
+      "sha256": "5baa4e386d85f237afa4e02417c312bdb6faaf6b8182d3997e4497b32e8fe215"
+    },
+    {
+      "name": "connection-recovery-combined-preload-build.log",
       "sha256": "5f2b572850839749bdb24be6b069d694b7bab19297e8ea3aa797a1e34e5a2618"
+    },
+    {
+      "name": "connection-recovery-74b-tests.log",
+      "sha256": "8c34b57cec58c52a42b460b57f558aa2234321330f6519b29b76fb1d8998989f"
+    },
+    {
+      "name": "connection-recovery-74b-consumers.log",
+      "sha256": "bd3f1acff2e08febcf9d04291a816a8ce65f95f0bdbf609b6f8fcf11694209f0"
+    },
+    {
+      "name": "connection-recovery-74b-configured-fabric.log",
+      "sha256": "81ca86cf12e9895dcfce369aff1055d2faf367adc83116100ec7d535467c9563"
+    },
+    {
+      "name": "connection-recovery-74b-mcp.log",
+      "sha256": "4fecf47034aa6811bb1e8a476def943ca4899810b043d79104661f4cd3963b26"
+    },
+    {
+      "name": "connection-controls-independent-review-final.log",
+      "sha256": "5ed84a59697fc252a4156f89a0b849c363d9335dc4ef649197c7fd093031a463"
     }
   ],
   "runtime_files": {
     "apps/electron/src/main/handlers/workgraph.test.ts": "77bf43e68f8bed00f1d427bcb942153c1fcc3be205125d1b5a545abb424bfce7",
     "apps/electron/src/main/handlers/workgraph.ts": "60935f9bd24075029b2b7eff198fee407e0d223ba937dd4ce2a6531dccb9e55e",
     "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "10adb4db85d7fc5e14c1e3e6c0ff5aeb6686fa8c905de52f2b31035f2ffdd41d",
-    "apps/electron/src/shared/types.ts": "33b94b5d80f443eb36747dc91c1ec8d4ee11c42792c01232eaad0e5fb8a6fc51",
+    "apps/electron/src/shared/types.ts": "252b994ce234ebf9c30af83a17280ea8886010c212cbe90b1eb9620b3cac7455",
     "apps/electron/src/transport/__tests__/workgraph-channel-map.test.ts": "18919aeb01b0841ae1e2c7e2ec37c7b4c97c752b9e6796ac8428b2edd66ae8d7",
     "apps/electron/src/transport/channel-map.ts": "b77c2e938307047e7047ce0e57443fe93c0886bce270e39c286800e7f70e29b9",
     "packages/server-core/src/workgraph/github-oauth-import.test.ts": "75950e3bf7682aa26f1ce9a9b5b4758bb7be2bc8cc58d74aefe2ea52e55ce255",
@@ -60,6 +90,25 @@
     "packages/shared/src/credentials/fabric/local-file-provider.ts": "aae80f35f0321cf4c007752aa0000a03a18fd3ca61def0dd0b9148aa73c73fe4",
     "packages/shared/src/credentials/index.ts": "5e49c18508532687dca24166c0c81b57e111710aad28e1b3acf245ddcfcdd6d2",
     "packages/shared/src/protocol/channels.ts": "7dc49608b6a22ddc9e8d1185cbdd23372a056e0db3d72431a1249bf4dfdf1c7e",
-    "packages/shared/src/protocol/routing.ts": "49b61ea17692febf51fbd159e16f6ec0357e91e8df08cf53a0de4bb58a4844cf"
-  }
+    "packages/shared/src/protocol/routing.ts": "3a5513dd6eda947108082415da4e61ba4efa200d7c610767e3e3c808729d3254"
+  },
+  "qualified_runtime_commit": "d51c871a2d37fb8c957196dfd7b9c4c9872856ca",
+  "configured_validation": {
+    "all_package_types_on_combined_c9": "pass",
+    "all_package_types_on_combined_74b8": "running; delivery receipt will record completion",
+    "same_configured_assertions": true,
+    "default_5_second_runner_on_loaded_host": "migration subprocess integration timed out; not claimed as a pass",
+    "same_tests_bounded_runner": "30 seconds per test; single six-process migration case 90 seconds, passed in 42.29 seconds",
+    "configured_shared": {
+      "llm_connections": 21,
+      "models_pi": 11,
+      "config": 109,
+      "config_last_timing_case": "108 passed at 30s; remaining one passed at 90s"
+    },
+    "configured_fabric_current_74b8": 166,
+    "config_isolation": 1,
+    "python_document_tests": 19,
+    "locale_gates": "parity/sort/coverage pass for 12 catalogs"
+  },
+  "consumer_recovery": "Current UI does not yet consume all seven routes. Source UI is separately assigned to the Connections consumer PR."
 }
