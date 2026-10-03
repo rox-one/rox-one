@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { notesRailKeyWidth } from './notes-layout'
 import { ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
@@ -77,6 +78,7 @@ export function NotesRailSash({
   collapsed,
   onToggle,
   label,
+  maximumWidth = 480,
 }: {
   width: number
   onWidth: (width: number) => void
@@ -84,29 +86,61 @@ export function NotesRailSash({
   collapsed?: boolean
   onToggle?: () => void
   label: string
+  maximumWidth?: number
 }) {
+  const cleanupRef = React.useRef<(() => void) | null>(null)
+  React.useEffect(() => () => cleanupRef.current?.(), [])
   return (
     <div className="relative z-10 w-0 shrink-0">
       <button
         type="button"
+        role="separator"
+        aria-orientation="vertical"
         aria-label={label}
-        aria-pressed={collapsed}
-        className="absolute inset-y-0 -left-1 w-2 cursor-col-resize bg-transparent hover:bg-foreground/15"
+        aria-valuenow={width}
+        aria-valuemin={140}
+        aria-valuemax={maximumWidth}
+        className="absolute inset-y-0 -left-1 w-2 cursor-col-resize bg-transparent hover:bg-foreground/15 focus-visible:bg-accent/40 focus-visible:outline-none"
         onDoubleClick={onToggle}
+        onKeyDown={(event) => {
+          if (event.metaKey || event.ctrlKey || event.altKey) return
+          if (event.key === 'Enter') { event.preventDefault(); onToggle?.(); return }
+          const next = notesRailKeyWidth(width, event.key, invert, event.shiftKey)
+          if (next != null) { event.preventDefault(); onWidth(Math.min(maximumWidth, next)) }
+        }}
         onPointerDown={(event) => {
+          if (event.button !== 0 || collapsed) return
           event.preventDefault()
+          cleanupRef.current?.()
+          event.currentTarget.focus()
           const origin = event.clientX
           const start = width
           const move = (next: PointerEvent) => {
+            if (next.pointerId !== event.pointerId) return
             const delta = invert ? origin - next.clientX : next.clientX - origin
-            onWidth(start + delta)
+            onWidth(Math.max(140, Math.min(maximumWidth, start + delta)))
           }
-          const up = () => {
+          const up = (next?: Event) => {
+            if (next && 'pointerId' in next && next.pointerId !== event.pointerId) return
             window.removeEventListener('pointermove', move)
             window.removeEventListener('pointerup', up)
+            window.removeEventListener('pointercancel', up)
+            window.removeEventListener('blur', up)
+            window.removeEventListener('keydown', keyDown)
+            cleanupRef.current = null
           }
+          const keyDown = (key: KeyboardEvent) => {
+            if (key.key !== 'Escape') return
+            key.preventDefault()
+            onWidth(start)
+            up()
+          }
+          cleanupRef.current = up
           window.addEventListener('pointermove', move)
           window.addEventListener('pointerup', up)
+          window.addEventListener('pointercancel', up)
+          window.addEventListener('blur', up)
+          window.addEventListener('keydown', keyDown)
         }}
       />
     </div>

@@ -761,3 +761,11 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 2. Recover the pure keyed draft map and bind current floating composer setters to workspace plus active document identity. Preserve current write/mutation authority and in-page draft lifetime.
 3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
 4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
+
+
+## Golden narrow Notes tools and sash — 2026-10-03
+
+1. Historical integration recovers only the consumed width lease, responsive rail and focus helpers; current NativeNotesPage remains the sole data/editor owner. Depend on existing Dialog and localized Contents/Comments labels, current EntityViewTabs and primary-sidebar vault portal.
+2. Wire sheets for hidden Contents/Comments, using current auto-hide computation rather than source360px all-rail policy. Scope-close to workspace/document/view; keep existing editor mounted and native authority unchanged.
+3. Recover Notes sash keyboard/leased pointer callbacks with current width bounds, foreign-pointer isolation and Escape/blur/cancel/unmount cleanup.
+4. Run actual component/NativeNotesPage callback, observer, hidden/inert/visibility/focus and pointer cancellation tests; substitute original page/sash as before-source negative controls then restore exact candidate. Run relevant existing Notes document/view/comment controls and Electron types, reconcile latestmain, push/attach separate PR. Native visual and other Golden sources remain independently gated.

@@ -1,8 +1,9 @@
 import * as React from 'react'
+import { NotesResponsiveRail, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
 import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
-import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
+import { CalendarDays, ListTree, MessageSquare, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
@@ -385,14 +386,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [railLayout, setRailLayout] = useNotesRailLayout()
   // Width of the document row (СОДЕРЖАНИЕ | note | КОММЕНТАРИИ) so the side
   // rails can yield before the note column gets unreadably narrow.
-  const [docRowEl, setDocRowEl] = React.useState<HTMLDivElement | null>(null)
-  const [docRowWidth, setDocRowWidth] = React.useState(0)
-  React.useEffect(() => {
-    if (!docRowEl || typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(([entry]) => setDocRowWidth(entry?.contentRect.width ?? 0))
-    observer.observe(docRowEl)
-    return () => observer.disconnect()
-  }, [docRowEl])
+  const [setDocRowEl, docRowWidth] = useNotesPanelWidth<HTMLDivElement>()
+  const [railSheet, setRailSheet] = React.useState<'toc' | 'comments' | null>(null)
   const [foldedHeadingIds, setFoldedHeadingIds] = React.useState<string[]>([])
   const [commandQuery, setCommandQuery] = React.useState<string | null>(null)
   const [commandIndex, setCommandIndex] = React.useState(0)
@@ -569,6 +564,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     noteViewCapabilities,
     'standard',
   )
+  React.useEffect(() => { setRailSheet(null) }, [activeWorkspaceId, activeNote?.id, noteView])
   const noteMindMapGraph = React.useMemo((): MindMapGraph | null => {
     if (!activeNote) return null
     if (noteView !== 'map' || !visibleBlockTree) return null
@@ -2289,12 +2285,18 @@ h1,h2,h3{margin-top:1.5em}
         </Dialog>
 
         {activeNote ? (
+          <div className="flex min-w-0 items-center">
           <EntityViewTabs
             value={noteView}
             onChange={setNoteView}
             capabilities={noteViewCapabilities}
             className="min-w-0 flex-wrap"
           />
+          {noteView === 'standard' ? <div className="ml-auto flex shrink-0 gap-1 pr-2">
+            <button type="button" className="grid size-7 place-items-center rounded-md hover:bg-foreground/[0.08]" aria-label={t('notes.toc.title')} title={t('notes.toc.title')} aria-haspopup="dialog" aria-expanded={tocShown || railSheet === 'toc'} onClick={() => { if (tocShown) setRailLayout({ tocCollapsed: true }); else setRailSheet('toc') }}><ListTree className="size-3.5" aria-hidden /></button>
+            <button type="button" className="grid size-7 place-items-center rounded-md hover:bg-foreground/[0.08]" aria-label={t('notes.comments.title')} title={t('notes.comments.title')} aria-haspopup="dialog" aria-expanded={commentsShown || railSheet === 'comments'} onClick={() => { if (commentsShown) setRailLayout({ commentsCollapsed: true }); else setRailSheet('comments') }}><MessageSquare className="size-3.5" aria-hidden /></button>
+          </div> : null}
+          </div>
         ) : null}
 
         <div className="relative flex-1 min-h-0">
@@ -2409,7 +2411,7 @@ h1,h2,h3{margin-top:1.5em}
             </div></div>
           ) : (
             <div ref={setDocRowEl} className="flex h-full min-h-0">
-            {tocShown ? (
+            <NotesResponsiveRail inline={tocShown} open={railSheet === 'toc'} title={t('notes.toc.title')} onClose={() => setRailSheet(null)}>
             <NotesToc
               markdown={content}
               width={railLayout.toc}
@@ -2436,14 +2438,15 @@ h1,h2,h3{margin-top:1.5em}
                 heading?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }}
             />
-            ) : null}
-            <NotesRailSash
+            </NotesResponsiveRail>
+            {tocShown ? <NotesRailSash
               width={railLayout.toc}
               onWidth={(toc) => setRailLayout({ toc })}
               collapsed={railLayout.tocCollapsed}
               onToggle={() => setRailLayout({ tocCollapsed: !railLayout.tocCollapsed })}
               label={t('notes.layout.resizeToc')}
-            />
+              maximumWidth={Math.max(140, docRowWidth - NOTE_COLUMN_MIN - (commentsShown ? railLayout.comments : 0))}
+            /> : null}
             <div
               className="notes-editor relative h-full min-w-0 flex-1 overflow-y-auto px-10 pb-16 pt-8"
               onMouseUp={(event) => {
@@ -2645,15 +2648,16 @@ h1,h2,h3{margin-top:1.5em}
                 />
               ) : null}
             </div>
-            <NotesRailSash
+            {commentsShown ? <NotesRailSash
               width={railLayout.comments}
               invert
               onWidth={(comments) => setRailLayout({ comments })}
               collapsed={railLayout.commentsCollapsed}
               onToggle={() => setRailLayout({ commentsCollapsed: !railLayout.commentsCollapsed })}
               label={t('notes.layout.resizeComments')}
-            />
-            {activeNote && commentsShown ? (
+              maximumWidth={Math.max(140, docRowWidth - NOTE_COLUMN_MIN - (tocShown ? railLayout.toc : 0))}
+            /> : null}
+            {activeNote ? <NotesResponsiveRail inline={commentsShown} open={railSheet === 'comments'} title={t('notes.comments.title')} onClose={() => setRailSheet(null)}>
               <NotesComments
                 noteId={activeNote.id}
                 draftQuote={commentDraftQuote}
@@ -2678,7 +2682,7 @@ h1,h2,h3{margin-top:1.5em}
                   setDirty(true)
                 }}
               />
-            ) : null}
+            </NotesResponsiveRail> : null}
             </div>
           )}
         </div>
