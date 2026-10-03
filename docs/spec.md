@@ -543,6 +543,10 @@ Credential locators must contain their discriminator and every required value as
 
 Acceptance: negative data/getter cases for every locator variant and required field, zero getter invocations, unchanged state after rejection, existing valid/frozen positives, complete core suite and TypeScript, unchanged comprehensive CI command, and actual built-server HTTP/WebSocket authentication, shutdown and persistence/restart checks. Bind results to the delivered revision; Linux reproduction and hosted macOS checks are separate evidence.
 
+
+### Session project membership metadata recovery (2026-10-03)
+
+Recover durable `projectIds` from the cumulative Voice/Meeting branches in the current session owner. `projectId` remains the primary/default compatibility field; the full unique primary-first set is grouping metadata, never project permission, source readability or agent-context authority. Existing primary setter, bulk replacement and task-draft reconciliation update both fields. Current collection filters match secondary metadata memberships; unlinking a primary promotes the next metadata entry and preserves session/transcript. Project deletion updates the live workspace session owner before the existing disk fallback, and external metadata reconciliation/persistence protects the pair. No extra RPC command, grants or parallel membership store is introduced.
 ## Recovered connection audit action projection — 2026-10-03
 
 Owner: branch integration lead. Source: checkpoint/session-audit-20260821-craft-agents @86154e8c812746261282bb4c517b16ad7becc0ec; dependency: delivered Connections producer PR1414 and current canonical WorkGraph SQLite. Recover the missing additive schema3 action column and creation audit projection. V1/V2 migration SQL/checksums must remain identical; migration3 SQL matches the source. Older ledger rows remain immutable and expose event type as the fallback action. Only metadata action labels cross transport; never restore payload content.

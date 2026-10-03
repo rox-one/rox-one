@@ -105,6 +105,8 @@ export interface ISessionManager {
     opts?: { parentSessionId?: string },
   ): Promise<{ labelId: string } | undefined>
   setSessionProjectId(sessionId: string, projectId: string | null): Promise<void>
+  /** Optional owner port; metadata only, never project permission. */
+  unlinkProjectFromSessions?(workspaceId: string, projectId: string): Promise<number>
   setKanbanColumn(sessionId: string, column: string | null): Promise<void>
   setPriority(sessionId: string, priority: SessionPriority): Promise<void>
   setDueDate(sessionId: string, dueDate: number | null): Promise<void>
