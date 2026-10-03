@@ -1,0 +1,60 @@
+[
+  {
+    "case": "reconstruction-source-bind",
+    "passed": true,
+    "baselineFiles": 62,
+    "maintainedFiles": 12,
+    "outputFiles": 72,
+    "compiledManifestFiles": 126,
+    "compiledManifestsIdentical": true,
+    "scope": "Local reconstruction and retained runtime hash manifests; no image rebuild or deployment."
+  },
+  {
+    "case": "archive",
+    "rejected": true,
+    "destinationPreservedOrAbsent": true,
+    "scratchRemoved": true
+  },
+  {
+    "case": "patch",
+    "rejected": true,
+    "destinationPreservedOrAbsent": true,
+    "scratchRemoved": true
+  },
+  {
+    "case": "recipe",
+    "rejected": true,
+    "destinationPreservedOrAbsent": true,
+    "scratchRemoved": true
+  },
+  {
+    "case": "overlay",
+    "rejected": true,
+    "destinationPreservedOrAbsent": true,
+    "scratchRemoved": true
+  },
+  {
+    "case": "existing",
+    "rejected": true,
+    "destinationPreservedOrAbsent": true,
+    "scratchRemoved": true
+  },
+  {
+    "case": "unsafe-archive-traversal",
+    "rejected": true,
+    "noEscape": true,
+    "scratchRemoved": true
+  },
+  {
+    "case": "unsafe-archive-symlink",
+    "rejected": true,
+    "noEscape": true,
+    "scratchRemoved": true
+  },
+  {
+    "case": "unsafe-archive-duplicate",
+    "rejected": true,
+    "noEscape": true,
+    "scratchRemoved": true
+  }
+]

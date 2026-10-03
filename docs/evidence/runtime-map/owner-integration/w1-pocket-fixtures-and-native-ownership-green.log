@@ -1,0 +1,33 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/sessions/pocket-session-resource-owner.test.ts:
+(pass) actual SessionManager rejects foreign concurrent and title owners, freezes queue and fences restored bindings [1316.50ms]
+
+packages/server-core/src/sessions/pocket-helper-owner.test.ts:
+(pass) actual draft helper selects the RPC caller before backend creation and rejects stale callers before query [942.89ms]
+
+packages/server-core/src/sessions/runtime-trace/delegation-compat.test.ts:
+(pass) production trace spawn fixture uses isolated canonical storage [1523.72ms]
+(pass) production trace spawn-race fixture uses isolated canonical storage [1447.90ms]
+(pass) production trace spawn-untraced-parent fixture uses isolated canonical storage [1395.42ms]
+(pass) production trace background-nudge fixture uses isolated canonical storage [1509.97ms]
+(pass) production trace system-dispatch fixture uses isolated canonical storage [1258.76ms]
+(pass) production trace legacy fixture uses isolated canonical storage [447.35ms]
+
+packages/server-core/src/handlers/rpc/__tests__/runtime-launch-producers.test.ts:
+(pass) actual generated task, automation test and scheduler launch provenance remain private and measured [1304.42ms]
+
+packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts:
+(pass) routed Electron API follows native Notes authority; marker writes use only journal CAS and survive real reopen [445.65ms]
+(pass) native projection never reads or recovers legacy WAL; persisted descriptors remain readable by another authorized principal [122.91ms]
+(pass) revocation and regrant while descriptor lookup awaits cannot return native bytes or edit capabilities [39.87ms]
+(pass) active native authority denies missing-principal legacy requests before any read or write [29.97ms]
+(pass) native SAVE positional wire rejects source-store string in argument five and shifted operation in argument four without legacy fallback [39.64ms]
+
+packages/server-core/src/handlers/rpc/__tests__/pocket-core-registry.test.ts:
+(pass) actual registerCoreRpcHandlers serves Connect/bootstrap/logout over authenticated local RPC [1945.18ms]
+
+ 15 pass
+ 0 fail
+ 102 expect() calls
+Ran 15 tests across 6 files. [14.55s]

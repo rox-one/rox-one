@@ -829,11 +829,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     } catch (error) {
       if (!isCurrent()) return
       const code = capabilityErrorCode(error)
-      setNoteOpenError({
-        workspaceId: activeWorkspaceId, noteId,
-        code,
-      })
-      toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
+      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code })
+      if (code !== 'NOT_FOUND') toast.error(code === 'DOCUMENT_AUTHORITY_CHANGED'
+        ? t('notes.content.authorityChanged')
+        : error instanceof Error ? error.message : t('notes.toast.openFailed'))
       clearNote()
     } finally {
       if (isCurrent()) setLoading(false)

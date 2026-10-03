@@ -1,0 +1,65 @@
+{
+  "class": "native-supported-schema-api-source-and-offline-unit-proof",
+  "sourceCommit": "ec1cbc1fd390bccad00d34e88d1fef9a271302ad",
+  "sourceSha256": {
+    "packages/shared/src/agent/omp-runtime-observer.ts": "fa5f3c76b57c82bb947784fd9edec0013e8dae80515d4b4b9856f84c83c22a77",
+    "packages/shared/src/agent/omp-runtime-trace-bridge.ts": "8524abb435159531e3e5fd637a39e0eac3f590205ccfa633cdb1b5f16007f2d3",
+    "packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts": "82598f106dee94797b8c1c366b8743cc18cb29ffa66b540ab213ba8b3edc561b",
+    "scripts/probes/runtime-map-native-loop.ts": "769961b6657d20513b8f2cea710e02d9518fbc9900e149adce98d874a0f6941b"
+  },
+  "issue": {
+    "actualEarlierArtifact": "native-loop-hosted-37155111140.json",
+    "confirmedByIndependentReview": "native-provider-context-w8-review-37155111140.json",
+    "before": "Callable ToolInfo.parameters was omitted by the descriptor sanitizer and JSON serialization. Metadata-only tool entries were incorrectly labeled tool-schema.",
+    "providerPacketCaution": "The whole provider Context.tools fingerprint includes more than parameter schemas; its size must not be interpreted as the parameter schema size."
+  },
+  "change": {
+    "capture": "Explicit public callable parameters.toJsonSchema({target: draft-2020-12, fallback: context.base}), then existing descriptor-safe privacy filter and quotas. Plain JSON Schema is retained with provenance.",
+    "readSafety": "Own data descriptors for ToolInfo metadata/parameters; bounded 8-level prototype data-descriptor lookup for the public conversion method; first accessor refuses capture. Reflect.apply preserves receiver without reading a call getter. Callable values must have both data-method assert and toJsonSchema, matching public native isArkSchema; validators/assertions are never invoked.",
+    "failure": "Conversion failure remains unknown and does not stop native execution; metadata-only snapshots expose native-tool-parameters missing coverage. Declared schemas remain distinct from provider normalization.",
+    "ordering": "The actual getActiveTools order determines recorded definitions; schemas are refreshed on actual context events.",
+    "probe": "Actual delivered per-tool parameter hashes and byte lengths are captured at fixture-provider Context. Observed declarations are converted with public native arkToWireSchema/toolWireSchema and normalizeTools. Matching native normalization profiles must reproduce exact actual delivered hash/bytes and ordered names for root, task child, restricted grandchild and eval. Matching profile equality does not claim configured-option readback."
+  },
+  "primarySources": {
+    "pinnedVersion": "18.4.12",
+    "ToolInfo": "src/extensibility/extensions/types.ts ToolInfo.parameters",
+    "registry": "src/session/session-tools.ts getAllToolInfos",
+    "schemaPublicExport": "@oh-my-pi/pi-ai/src/index.ts exports utils/schema",
+    "conversion": "@oh-my-pi/pi-ai/src/utils/schema/wire.ts arkToWireSchema",
+    "normalizationPublicExport": "@oh-my-pi/pi-agent-core/src/index.ts exports agent-loop.normalizeTools",
+    "actualCallableMethod": "@oh-my-pi/omptype/dist/js/type.js Type.toJsonSchema",
+    "supportedCallableGuard": "@oh-my-pi/pi-ai/src/utils/schema/wire.ts isArkSchema"
+  },
+  "commands": [
+    {
+      "command": "bun test packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts -t \"serializes supported callable\"",
+      "exitCode": 0,
+      "testsPassed": 1,
+      "assertions": 28,
+      "testsFiltered": 20
+    },
+    {
+      "command": "ROX_OBSERVER_WATCH_RECEIPT=docs/evidence/runtime-map/observer-watch-schema-capture.json bun test packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts packages/shared/src/agent/__tests__/omp-runtime-observer-watch.test.ts",
+      "sourceRevision": "ec1cbc1fd390bccad00d34e88d1fef9a271302ad",
+      "exitCode": 0,
+      "testsPassed": 22,
+      "testsFailed": 0,
+      "assertions": 165,
+      "files": 2,
+      "durationSeconds": 1.69
+    }
+  ],
+  "independentSourceReview": {
+    "reviewer": "W3 projection",
+    "result": "No remaining concrete scoped defect after descriptor-method and Reflect.apply fixes. Supported public native converter exports and declared/provider boundary checked read-only."
+  },
+  "watchReceipt": "observer-watch-schema-capture.json",
+  "acceptanceState": "Offline/source proof passed; new hosted actual SDK schema comparisons pending. Earlier native artifact does not prove the repaired schema capture.",
+  "limits": [
+    "No actual local native loop retry: environment AF_UNIX restriction preserved.",
+    "No provider/network/paid/public-account calls in offline fixtures.",
+    "HTTP serialization, exact provider tokenization and installed-app platform acceptance remain unexposed/unverified.",
+    "Existing privacy filtering and capture quotas can redact or truncate schema fields; no exact full schema claim for such captures."
+  ],
+  "initialSchemaCaptureCommit": "24d02cfa4ad24065a278378c5356d8244e40a93a"
+}

@@ -1,0 +1,485 @@
+[2m[WebServer] [22m[0m[33mWarning[0m[2m:[0m [1mThe 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mwarnOnDeactivatedColors[0m[2m ([0m[0m[36minternal:tty[0m[2m:[0m[33m33[0m[2m:[33m24[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mgetColorDepth[0m[2m ([0m[0m[36minternal:tty[0m[2m:[0m[33m42[0m[2m:[33m39[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mshouldColorize[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m14[0m[2m:[33m109[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mrefresh[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m18[0m[2m:[33m31[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3minternal:util/colors[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m24[0m[2m:[33m16[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3minternal:assert/assertion_error[0m[2m ([0m[0m[36minternal:assert/assertion_error[0m[2m:[0m[33m2[0m[2m:[33m187[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mloadAssertionError[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m28[0m[2m:[33m96[0m[2m)[0m
+[2m[WebServer] [22m
+[2m[WebServer] [22m[esbuild css minify]
+[2m[WebServer] [22m▲ [WARNING] "file" is not a known CSS property [unsupported-css-property]
+[2m[WebServer] [22m
+[2m[WebServer] [22m    <stdin>:2243:168231:
+[2m[WebServer] [22m      2243 │ ...gion:no-drag}.\[file\:path\]{file:path}.\[file\:src\/a\.ts\]{...
+[2m[WebServer] [22m           │                                 ~~~~
+[2m[WebServer] [22m           ╵                                 flex
+[2m[WebServer] [22m
+[2m[WebServer] [22m  Did you mean "flex" instead?
+[2m[WebServer] [22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m▲ [WARNING] "file" is not a known CSS property [unsupported-css-property]
+[2m[WebServer] [22m
+[2m[WebServer] [22m    <stdin>:2243:168263:
+[2m[WebServer] [22m      2243 │ ...e:path}.\[file\:src\/a\.ts\]{file:src/a.ts}.\[file\:src\/inde...
+[2m[WebServer] [22m           │                                 ~~~~
+[2m[WebServer] [22m           ╵                                 flex
+[2m[WebServer] [22m
+[2m[WebServer] [22m  Did you mean "flex" instead?
+[2m[WebServer] [22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m▲ [WARNING] "file" is not a known CSS property [unsupported-css-property]
+[2m[WebServer] [22m
+[2m[WebServer] [22m    <stdin>:2243:168303:
+[2m[WebServer] [22m      2243 │ ...ts}.\[file\:src\/index\.ts\]{file:src/index.ts}.\[folder\:doc...
+[2m[WebServer] [22m           │                                 ~~~~
+[2m[WebServer] [22m           ╵                                 flex
+[2m[WebServer] [22m
+[2m[WebServer] [22m  Did you mean "flex" instead?
+[2m[WebServer] [22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m(!) Some chunks are larger than 500 kB after minification. Consider:
+[2m[WebServer] [22m- Using dynamic import() to code-split the application
+[2m[WebServer] [22m- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[2m[WebServer] [22m- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[2m[WebServer] [22m[0m[33mWarning[0m[2m:[0m [1mThe 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mwarnOnDeactivatedColors[0m[2m ([0m[0m[36minternal:tty[0m[2m:[0m[33m33[0m[2m:[33m24[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mgetColorDepth[0m[2m ([0m[0m[36minternal:tty[0m[2m:[0m[33m42[0m[2m:[33m39[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mshouldColorize[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m14[0m[2m:[33m109[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mrefresh[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m18[0m[2m:[33m31[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3minternal:util/colors[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m24[0m[2m:[33m16[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3minternal:assert/assertion_error[0m[2m ([0m[0m[36minternal:assert/assertion_error[0m[2m:[0m[33m2[0m[2m:[33m187[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mloadAssertionError[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m28[0m[2m:[33m96[0m[2m)[0m
+[2m[WebServer] [22m
+
+Running 13 tests using 1 worker
+
+(node:166) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:166) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 browser-zoom.spec.ts:7:1 › actual Chromium browser 200 percent zoom preserves the mounted chat and dock (5.2s)
+(node:195) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:195) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  2 catalog.spec.ts:49:5 › production catalogs light 1280: actual rows, unknown metadata and bounded layout (384ms)
+(node:219) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:219) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  3 catalog.spec.ts:49:5 › production catalogs light 1440: actual rows, unknown metadata and bounded layout (55ms)
+(node:246) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:246) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  4 catalog.spec.ts:49:5 › production catalogs light 1920: actual rows, unknown metadata and bounded layout (62ms)
+(node:269) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:269) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  5 catalog.spec.ts:49:5 › production catalogs dark 1280: actual rows, unknown metadata and bounded layout (57ms)
+(node:294) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:294) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  6 catalog.spec.ts:49:5 › production catalogs dark 1440: actual rows, unknown metadata and bounded layout (75ms)
+(node:316) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:316) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  7 catalog.spec.ts:49:5 › production catalogs dark 1920: actual rows, unknown metadata and bounded layout (101ms)
+(node:340) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:340) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  8 context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in light (4ms)
+(node:362) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:362) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  9 context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in dark (3ms)
+(node:384) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:384) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  10 overview.spec.ts:5:1 › actual Fit overview shows the 200-card runtime window before panning (70ms)
+(node:406) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:406) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  11 stream.spec.ts:5:1 › real ChatDisplay stays mounted while the journal streams into the right dock (51ms)
+(node:430) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:430) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  12 stream.spec.ts:53:1 › pending permission and draft survive toggles in dark and narrow layouts (65ms)
+(node:452) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:452) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  13 stream.spec.ts:84:1 › empty production chat keeps ROX welcome and suggestions above the lower composer (58ms)
+
+
+  1) browser-zoom.spec.ts:7:1 › actual Chromium browser 200 percent zoom preserves the mounted chat and dock 
+
+    Error: browserType.launchPersistentContext: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --no-sandbox --headless=new --window-size=1440,900 --force-device-scale-factor=1 --disable-extensions-except=/tmp/rox-browser-zoom-Wz66sV/zoom-extension --load-extension=/tmp/rox-browser-zoom-Wz66sV/zoom-extension --user-data-dir=/tmp/rox-browser-zoom-Wz66sV/profile --remote-debugging-pipe about:blank
+    <launched> pid=179
+    [pid=179][err] [179:179:1003/144439.681652:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=179][err] [1003/144439.684016:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=179][err] [1003/144439.684104:ERROR:directory_reader_posix.cc(43)] opendir /proc/179/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --no-sandbox --headless=new --window-size=1440,900 --force-device-scale-factor=1 --disable-extensions-except=/tmp/rox-browser-zoom-Wz66sV/zoom-extension --load-extension=/tmp/rox-browser-zoom-Wz66sV/zoom-extension --user-data-dir=/tmp/rox-browser-zoom-Wz66sV/profile --remote-debugging-pipe about:blank[22m
+    [2m  - <launched> pid=179[22m
+    [2m  - [pid=179][err] [179:179:1003/144439.681652:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=179][err] [1003/144439.684016:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=179][err] [1003/144439.684104:ERROR:directory_reader_posix.cc(43)] opendir /proc/179/task: No such file or directory (2)[22m
+
+
+      14 |     if (change.status === 'complete' && tab.url?.startsWith('http://127.0.0.1:4176/')) chrome.tabs.setZoom(tabId, 2);
+      15 |   });`)
+    > 16 |   const context = await chromium.launchPersistentContext(join(directory, 'profile'), {
+         |                   ^
+      17 |     executablePath: chromium.executablePath(), headless: false, viewport: null,
+      18 |     ignoreDefaultArgs: ['--disable-extensions'],
+      19 |     args: ['--headless=new', '--window-size=1440,900', '--force-device-scale-factor=1', `--disable-extensions-except=${extension}`, `--load-extension=${extension}`],
+        at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/browser-zoom.spec.ts:16:19
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/browser-zoom-actual-Chromi-da299-s-the-mounted-chat-and-dock/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/browser-zoom-actual-Chromi-da299-s-the-mounted-chat-and-dock/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) catalog.spec.ts:49:5 › production catalogs light 1280: actual rows, unknown metadata and bounded layout 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-fNJRnu --remote-debugging-pipe --no-startup-window
+    <launched> pid=209
+    [pid=209][err] [209:209:1003/144445.443026:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=209][err] [1003/144445.443233:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=209][err] [1003/144445.443315:ERROR:directory_reader_posix.cc(43)] opendir /proc/209/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-fNJRnu --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=209[22m
+    [2m  - [pid=209][err] [209:209:1003/144445.443026:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=209][err] [1003/144445.443233:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=209][err] [1003/144445.443315:ERROR:directory_reader_posix.cc(43)] opendir /proc/209/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-edd6c-metadata-and-bounded-layout/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-edd6c-metadata-and-bounded-layout/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) catalog.spec.ts:49:5 › production catalogs light 1440: actual rows, unknown metadata and bounded layout 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-6QVjiN --remote-debugging-pipe --no-startup-window
+    <launched> pid=234
+    [pid=234][err] [234:234:1003/144451.892146:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=234][err] [1003/144451.892362:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=234][err] [1003/144451.892453:ERROR:directory_reader_posix.cc(43)] opendir /proc/234/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-6QVjiN --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=234[22m
+    [2m  - [pid=234][err] [234:234:1003/144451.892146:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=234][err] [1003/144451.892362:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=234][err] [1003/144451.892453:ERROR:directory_reader_posix.cc(43)] opendir /proc/234/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-1d9df-metadata-and-bounded-layout/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-1d9df-metadata-and-bounded-layout/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) catalog.spec.ts:49:5 › production catalogs light 1920: actual rows, unknown metadata and bounded layout 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-kVjFOn --remote-debugging-pipe --no-startup-window
+    <launched> pid=259
+    [pid=259][err] [259:259:1003/144457.647278:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=259][err] [1003/144457.647537:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=259][err] [1003/144457.647644:ERROR:directory_reader_posix.cc(43)] opendir /proc/259/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-kVjFOn --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=259[22m
+    [2m  - [pid=259][err] [259:259:1003/144457.647278:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=259][err] [1003/144457.647537:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=259][err] [1003/144457.647644:ERROR:directory_reader_posix.cc(43)] opendir /proc/259/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-c5396-metadata-and-bounded-layout/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-c5396-metadata-and-bounded-layout/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) catalog.spec.ts:49:5 › production catalogs dark 1280: actual rows, unknown metadata and bounded layout 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-BY2n1R --remote-debugging-pipe --no-startup-window
+    <launched> pid=284
+    [pid=284][err] [284:284:1003/144504.080013:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=284][err] [1003/144504.080410:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=284][err] [1003/144504.080541:ERROR:directory_reader_posix.cc(43)] opendir /proc/284/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-BY2n1R --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=284[22m
+    [2m  - [pid=284][err] [284:284:1003/144504.080013:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=284][err] [1003/144504.080410:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=284][err] [1003/144504.080541:ERROR:directory_reader_posix.cc(43)] opendir /proc/284/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-68b35-metadata-and-bounded-layout/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-68b35-metadata-and-bounded-layout/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) catalog.spec.ts:49:5 › production catalogs dark 1440: actual rows, unknown metadata and bounded layout 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-XWIIh1 --remote-debugging-pipe --no-startup-window
+    <launched> pid=307
+    [pid=307][err] [307:307:1003/144509.887209:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=307][err] [1003/144509.887596:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=307][err] [1003/144509.887709:ERROR:directory_reader_posix.cc(43)] opendir /proc/307/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-XWIIh1 --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=307[22m
+    [2m  - [pid=307][err] [307:307:1003/144509.887209:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=307][err] [1003/144509.887596:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=307][err] [1003/144509.887709:ERROR:directory_reader_posix.cc(43)] opendir /proc/307/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-752d8-metadata-and-bounded-layout/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-752d8-metadata-and-bounded-layout/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) catalog.spec.ts:49:5 › production catalogs dark 1920: actual rows, unknown metadata and bounded layout 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-Mj3J0n --remote-debugging-pipe --no-startup-window
+    <launched> pid=330
+    [pid=330][err] [330:330:1003/144515.770725:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=330][err] [1003/144515.771044:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=330][err] [1003/144515.771138:ERROR:directory_reader_posix.cc(43)] opendir /proc/330/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-Mj3J0n --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=330[22m
+    [2m  - [pid=330][err] [330:330:1003/144515.770725:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=330][err] [1003/144515.771044:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=330][err] [1003/144515.771138:ERROR:directory_reader_posix.cc(43)] opendir /proc/330/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-e397c-metadata-and-bounded-layout/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/catalog-production-catalog-e397c-metadata-and-bounded-layout/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in light 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-DtgLG3 --remote-debugging-pipe --no-startup-window
+    <launched> pid=353
+    [pid=353][err] [353:353:1003/144521.528396:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=353][err] [1003/144521.528654:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=353][err] [1003/144521.528756:ERROR:directory_reader_posix.cc(43)] opendir /proc/353/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-DtgLG3 --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=353[22m
+    [2m  - [pid=353][err] [353:353:1003/144521.528396:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=353][err] [1003/144521.528654:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=353][err] [1003/144521.528756:ERROR:directory_reader_posix.cc(43)] opendir /proc/353/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/context-grouped-context-is-22a30-t-child-provenance-in-light/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/context-grouped-context-is-22a30-t-child-provenance-in-light/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  9) context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in dark 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-ShiD0v --remote-debugging-pipe --no-startup-window
+    <launched> pid=375
+    [pid=375][err] [375:375:1003/144527.445731:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=375][err] [1003/144527.446186:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=375][err] [1003/144527.446312:ERROR:directory_reader_posix.cc(43)] opendir /proc/375/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-ShiD0v --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=375[22m
+    [2m  - [pid=375][err] [375:375:1003/144527.445731:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=375][err] [1003/144527.446186:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=375][err] [1003/144527.446312:ERROR:directory_reader_posix.cc(43)] opendir /proc/375/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  10) overview.spec.ts:5:1 › actual Fit overview shows the 200-card runtime window before panning ──
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-Tj0IlT --remote-debugging-pipe --no-startup-window
+    <launched> pid=397
+    [pid=397][err] [397:397:1003/144533.285478:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=397][err] [1003/144533.286020:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=397][err] [1003/144533.286131:ERROR:directory_reader_posix.cc(43)] opendir /proc/397/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-Tj0IlT --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=397[22m
+    [2m  - [pid=397][err] [397:397:1003/144533.285478:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=397][err] [1003/144533.286020:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=397][err] [1003/144533.286131:ERROR:directory_reader_posix.cc(43)] opendir /proc/397/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/overview-actual-Fit-overvi-495cb-ntime-window-before-panning/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/overview-actual-Fit-overvi-495cb-ntime-window-before-panning/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  11) stream.spec.ts:5:1 › real ChatDisplay stays mounted while the journal streams into the right dock 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-VYgHxV --remote-debugging-pipe --no-startup-window
+    <launched> pid=419
+    [pid=419][err] [419:419:1003/144538.941096:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=419][err] [1003/144538.941306:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=419][err] [1003/144538.941443:ERROR:directory_reader_posix.cc(43)] opendir /proc/419/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-VYgHxV --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=419[22m
+    [2m  - [pid=419][err] [419:419:1003/144538.941096:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=419][err] [1003/144538.941306:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=419][err] [1003/144538.941443:ERROR:directory_reader_posix.cc(43)] opendir /proc/419/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/stream-real-ChatDisplay-st-ead37-streams-into-the-right-dock/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/stream-real-ChatDisplay-st-ead37-streams-into-the-right-dock/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  12) stream.spec.ts:53:1 › pending permission and draft survive toggles in dark and narrow layouts 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-Ke3ipO --remote-debugging-pipe --no-startup-window
+    <launched> pid=443
+    [pid=443][err] [443:443:1003/144544.603683:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=443][err] [1003/144544.604053:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=443][err] [1003/144544.604193:ERROR:directory_reader_posix.cc(43)] opendir /proc/443/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-Ke3ipO --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=443[22m
+    [2m  - [pid=443][err] [443:443:1003/144544.603683:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=443][err] [1003/144544.604053:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=443][err] [1003/144544.604193:ERROR:directory_reader_posix.cc(43)] opendir /proc/443/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/stream-pending-permission--69bb0--in-dark-and-narrow-layouts/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/stream-pending-permission--69bb0--in-dark-and-narrow-layouts/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  13) stream.spec.ts:84:1 › empty production chat keeps ROX welcome and suggestions above the lower composer 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-9cQMJv --remote-debugging-pipe --no-startup-window
+    <launched> pid=465
+    [pid=465][err] [465:465:1003/144550.601086:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=465][err] [1003/144550.601652:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)
+    [pid=465][err] [1003/144550.601760:ERROR:directory_reader_posix.cc(43)] opendir /proc/465/task: No such file or directory (2)
+    Call log:
+    [2m  - <launching> /root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-9cQMJv --remote-debugging-pipe --no-startup-window[22m
+    [2m  - <launched> pid=465[22m
+    [2m  - [pid=465][err] [465:465:1003/144550.601086:FATAL:process_singleton_posix.cc(292)] Check failed: . socket() failed: Operation not permitted (1)[22m
+    [2m  - [pid=465][err] [1003/144550.601652:ERROR:scoped_ptrace_attach.cc(27)] ptrace: Operation not permitted (1)[22m
+    [2m  - [pid=465][err] [1003/144550.601760:ERROR:directory_reader_posix.cc(43)] opendir /proc/465/task: No such file or directory (2)[22m
+
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/stream-empty-production-ch-56ac8-ns-above-the-lower-composer/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02/stream-empty-production-ch-56ac8-ns-above-the-lower-composer/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  13 failed
+    browser-zoom.spec.ts:7:1 › actual Chromium browser 200 percent zoom preserves the mounted chat and dock 
+    catalog.spec.ts:49:5 › production catalogs light 1280: actual rows, unknown metadata and bounded layout 
+    catalog.spec.ts:49:5 › production catalogs light 1440: actual rows, unknown metadata and bounded layout 
+    catalog.spec.ts:49:5 › production catalogs light 1920: actual rows, unknown metadata and bounded layout 
+    catalog.spec.ts:49:5 › production catalogs dark 1280: actual rows, unknown metadata and bounded layout 
+    catalog.spec.ts:49:5 › production catalogs dark 1440: actual rows, unknown metadata and bounded layout 
+    catalog.spec.ts:49:5 › production catalogs dark 1920: actual rows, unknown metadata and bounded layout 
+    context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in light 
+    context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in dark 
+    overview.spec.ts:5:1 › actual Fit overview shows the 200-card runtime window before panning ────
+    stream.spec.ts:5:1 › real ChatDisplay stays mounted while the journal streams into the right dock 
+    stream.spec.ts:53:1 › pending permission and draft survive toggles in dark and narrow layouts ──
+    stream.spec.ts:84:1 › empty production chat keeps ROX welcome and suggestions above the lower composer 

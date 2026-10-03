@@ -1,3 +1,4 @@
+import { peekRoxAccountAuthority, LOCAL_ROX_CALLER } from '@rox/shared/auth'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { PushTarget } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId, getWorkspaces } from '@rox/shared/config'
@@ -117,7 +118,7 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
       const llmWorkspaceId = workspaceId ?? getWorkspaces()[0]?.id
       if (!llmWorkspaceId) return []
       const rules = existing.map(l => l.rule)
-      const text = await run.call(deps.sessionManager, llmWorkspaceId, buildConflictPrompt(newLesson.rule, rules))
+      const text = await run.call(deps.sessionManager, llmWorkspaceId, buildConflictPrompt(newLesson.rule, rules), await peekRoxAccountAuthority()?.capture(owner ?? LOCAL_ROX_CALLER))
       return parseConflicts(text, rules)
     } catch (err) {
       deps.platform.logger?.warn('MEMORY_ADD_LESSON: conflict check failed, skipping', err)

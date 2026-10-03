@@ -1,0 +1,44 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/sessions/pocket-session-resource-owner.test.ts:
+(pass) actual SessionManager rejects foreign concurrent and title owners, freezes queue and fences restored bindings [6786.14ms]
+
+packages/server-core/src/sessions/pocket-helper-owner.test.ts:
+(pass) actual draft helper selects the RPC caller before backend creation and rejects stale callers before query [6948.33ms]
+
+packages/shared/src/auth/__tests__/rox-account-authority.test.ts:
+(pass) Pocket host account authority > does not share native/local account credentials and never projects tokens/key [5.51ms]
+(pass) Pocket host account authority > keeps zero balance authenticated and ready but rejects paid dispatch [2.21ms]
+(pass) Pocket host account authority > fences old executor and durable session/automation bindings on account switch [0.89ms]
+(pass) Pocket host account authority > restores exact owned resources after restart without ambient fallback [2.78ms]
+(pass) Pocket host account authority > persists refresh operation proof before dispatch, retries same id after dropped response [0.77ms]
+(pass) Pocket host account authority > refreshes expired access and durably clears pending proof before inference without a UI poll [0.51ms]
+(pass) Pocket host account authority > ignores a late bootstrap response after logout and removes persisted secrets [49.56ms]
+(pass) Pocket host account authority > uses sealed prior access proof to revoke a device after an in-flight refresh rotation [35.13ms]
+(pass) Pocket host account authority > fences a running executor when account key generation changes [0.39ms]
+(pass) Pocket host account authority > invalidates the running executor when the active key is revoked [17.44ms]
+(pass) Pocket host account authority > keeps failed device revocation sealed for retry after process restart [9.64ms]
+(pass) Pocket host account authority > revokes via logout-only prior access proof without an expired refresh replay [0.31ms]
+(pass) Pocket host account authority > fences crash-window active records and drains logout on ordinary restart state reads [0.24ms]
+(pass) Pocket host account authority > keeps a pending logout fail-closed across clear failure and broker outage restarts [0.32ms]
+(pass) Pocket host account authority > serializes first session owner claims and preserves caller binding across restart [0.46ms]
+
+packages/shared/src/agent/__tests__/omp-public-runtime.test.ts:
+(pass) actual OmpAgent private public catalog lifecycle > confirms the R1 Max provider/model before executing a new default-model turn [2587.98ms]
+(pass) actual OmpAgent private public catalog lifecycle > uses trusted account key after final environment assembly despite wrong ambient/connection/session keys [840.77ms]
+(pass) actual OmpAgent private public catalog lifecycle > keeps the successor profile when the predecessor close disposer arrives after actual respawn [2255.67ms]
+(pass) actual OmpAgent private public catalog lifecycle > removes the private profile after an actual pre-ready child failure [872.27ms]
+(pass) actual OmpAgent private public catalog lifecycle > runs actual mini/title and call_llm children with the account key and aborts old identity after logout [827.85ms]
+(pass) actual OmpAgent private public catalog lifecycle > never dispatches zero balance or ownerless public executions [189.44ms]
+(pass) actual OmpAgent private public catalog lifecycle > kills an actual in-flight one-shot at logout and never accepts its delayed result [684.13ms]
+(pass) actual OmpAgent private public catalog lifecycle > redacts a personal key echoed by an actual child from debug logs and one-shot errors [2112.64ms]
+(pass) actual OmpAgent private public catalog lifecycle > cleans prepared runtime artifacts when logout occurs immediately before dispatch [470.70ms]
+
+packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:
+(pass) actual OmpAgent respawns in both credential/catalog directions and preserves each domain key [2367.71ms]
+(pass) actual in-flight credential-domain switch retires old child and ignores its delayed stream [2505.34ms]
+
+ 28 pass
+ 0 fail
+ 139 expect() calls
+Ran 28 tests across 5 files. [33.16s]

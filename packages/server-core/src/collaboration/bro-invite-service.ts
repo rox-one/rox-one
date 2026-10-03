@@ -1,3 +1,5 @@
+import type { RoxCloudOwner } from '@rox/shared/credentials'
+import { getRoxAccountAuthority } from '@rox/shared/auth'
 /**
  * Session-scoped “Позвать Бро” service.
  *
@@ -21,7 +23,7 @@ import {
 import { RemoteBroInvitationError, RemoteBroInviteClient, type RemoteBroInviteClientOptions } from './remote-bro-invite-client.ts'
 import { projectSessionForCollaboration } from './session-publication-bridge.ts'
 
-export type AccountResolver = () => Promise<RoxAccount | null>
+export type AccountResolver = (caller?: RoxCloudOwner) => Promise<RoxAccount | null>
 export interface BroRemoteTarget { client: RemoteBroInviteClient; workspaceId: string; workspaceName?: string }
 export interface BroInviteServiceOptions {
   remoteConfigured?: (localWorkspaceId: string) => boolean
@@ -70,15 +72,11 @@ function remoteCode(error: unknown): 'membership_required' | 'forbidden' | 'inva
   return error instanceof RemoteBroInvitationError ? error.code : 'remote_unavailable'
 }
 
-export async function resolveRoxAccountFromCredentials(): Promise<RoxAccount | null> {
-  const session = await getCredentialManager().getRoxCloudSession()
-  if (!session?.userId) return null
-  const username = slugifyUsername(session.email || session.name || session.userId)
-  return {
-    accountId: session.userId,
-    username,
-    displayName: session.name || username,
-  }
+export async function resolveRoxAccountFromCredentials(caller?: RoxCloudOwner): Promise<RoxAccount | null> {
+  if (!caller) return null
+  const account = (await getRoxAccountAuthority().state(caller)).account
+  if (!account?.user.handle) return null
+  return { accountId: account.user.id, username: account.user.handle, displayName: account.user.name || account.user.handle }
 }
 
 export class BroInviteService {
@@ -95,7 +93,7 @@ export class BroInviteService {
   async invite(
     sessionId: string,
     role: 'editor' | 'viewer' = 'editor',
-    scope?: { workspaceId: string; session: Session },
+    scope?: { caller?: RoxCloudOwner; workspaceId: string; session: Session },
   ): Promise<{ success: true; card: BroInviteCard } | { success: false; error: string; errorCode: string }> {
     if (scope && this.usesRemote(scope.workspaceId)) {
       try {
@@ -106,7 +104,7 @@ export class BroInviteService {
         return { success: true, card }
       } catch (error) { const code = remoteCode(error); return { success: false, error: code, errorCode: code } }
     }
-    const account = await this.resolveAccount()
+    const account = await this.resolveAccount(scope?.caller)
     if (!account) {
       return { success: false, error: 'Rox account required', errorCode: 'membership_required' }
     }
@@ -114,7 +112,7 @@ export class BroInviteService {
     return { success: true, card }
   }
 
-  async join(url: string, localWorkspaceId?: string | null): Promise<JoinResult> {
+  async join(url: string, localWorkspaceId?: string | null, caller?: RoxCloudOwner): Promise<JoinResult> {
     if (localWorkspaceId && this.usesRemote(localWorkspaceId)) {
       try {
         const remote = await this.options.resolveRemote?.(localWorkspaceId)
@@ -125,17 +123,17 @@ export class BroInviteService {
         return result
       } catch (error) { return { ok: false, error: remoteCode(error) } }
     }
-    const account = await this.resolveAccount()
+    const account = await this.resolveAccount(caller)
     return this.store.join(url, account)
   }
 
-  async revoke(joinKey: string, localWorkspaceId?: string | null): Promise<{ success: boolean }> {
+  async revoke(joinKey: string, localWorkspaceId?: string | null, caller?: RoxCloudOwner): Promise<{ success: boolean }> {
     if (localWorkspaceId && this.usesRemote(localWorkspaceId)) {
       const remote = await this.options.resolveRemote?.(localWorkspaceId)
       if (!remote) throw new RemoteBroInvitationError('remote_unavailable')
       return remote.client.revoke(remote.workspaceId, joinKey)
     }
-    const account = await this.resolveAccount()
+    const account = await this.resolveAccount(caller)
     if (!account) return { success: false }
     return { success: this.store.revoke(joinKey, account.accountId) }
   }

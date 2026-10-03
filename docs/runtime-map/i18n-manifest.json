@@ -911,6 +911,10 @@
     "en": "Output tokens",
     "ru": "Выходные токены"
   },
+  "runtimeMap.overviewCaption": {
+    "en": "Overview: events ordered within each agent lane. Select a card to inspect.",
+    "ru": "Обзор: порядок событий внутри каждой полосы агента. Выберите карточку для подробностей."
+  },
   "runtimeMap.parentAgent": {
     "en": "Parent agent",
     "ru": "Родительский агент"
@@ -970,6 +974,10 @@
   "runtimeMap.provenance.summary": {
     "en": "Reasoning summary",
     "ru": "Краткая сводка рассуждений"
+  },
+  "runtimeMap.providerToolNormalizationUnknown": {
+    "en": "Provider tool normalization was not observed",
+    "ru": "Преобразование инструментов для провайдера не наблюдалось"
   },
   "runtimeMap.redacted": {
     "en": "Content hidden by access / redaction policy",
@@ -1134,6 +1142,10 @@
   "runtimeMap.toolName": {
     "en": "Tool name",
     "ru": "Имя инструмента"
+  },
+  "runtimeMap.toolParametersUnknown": {
+    "en": "Tool parameter schemas were not recorded",
+    "ru": "Схемы параметров инструментов не записаны"
   },
   "runtimeMap.toolResult": {
     "en": "Result returned by tool",

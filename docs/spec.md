@@ -19,6 +19,10 @@ Owner: pr_scout; root owns main merge and historical_sweep adds dependent Produc
 
 Queued callbacks capture the committed session/viewport incarnation and are refused after unmount, replacement or A→B→A; current sticky/focus, reduced-motion and document visibility are checked when execution actually occurs. Disconnected or zero-height viewports cannot follow. Hidden documents do not auto-follow. Forward events belonging to our own output animation preserve stickiness; backwards scrolling, reader gestures and explicit navigation interrupt it before queued output can take ownership. New user intent reseeds the motion baseline. Lazy-load anchoring measures its original height formula only after added turns commit to DOM but an obsolete queue cannot move a replacement session. No focus, shell, consent or native authority changes. Acceptance is actual current ChatDisplay and real Radix/message DOM in a nested viewport with adverse history/hidden/motion/unfocused/late callbacks, source helper/current adjacent tests, complete Electron/WebUI types and renderer build. Explicit search jumps remain user-requested navigation; installed native/full chat acceptance remains separate.
 
+## Единый аккаунт ROX через Pocket ID — 2026-10-03
+
+Спецификация принятой SSO-интеграции сохранён отдельно в [docs/pocket-sso/spec.md](pocket-sso/spec.md). Существующая программа ниже сохранена; SSO-задачи и критерии приёмки дополняют её.
+
 ## Product Learning durable foundation recovery — 2026-10-03
 
 Owner: pr_scout; integration lead owns main merge, historical_sweep owns dependent current UI/runtime/consumer wiring. Recover final a6 `35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5` contracts/core/persistence/analytics as a coherent foundation, preserving all source branches. Current main has none of these feature modules. The transition engine has no domain-mutation, clock, DOM or storage port: acknowledged, observed and native verified evidence stay distinct, bindings/operation correlation and captured clocks reject stale callbacks; foreground/modal/capability/scope changes pause or block without automatic resumption.
@@ -775,6 +779,10 @@ Each existing bounded connection attempt shares its 30-second budget across HTTP
 ## Workspace shortcut popover integration —2026-10-03
 Move the existing per-workspace shortcut editor to an accessible bounded Radix portal; preserve native storage, draft cancellation, keyboard submit and current TourTarget. Acceptance: real desktop/narrow320px DOM, all three kinds, reload/workspace isolation, validation, nested Escape and no-write cancellation; full installed native release remains open.
 
+
+## Current Pocket account integration recovery —2026-10-03
+Preserve source179-path account program and current native-memory/task/voice contracts. Reject blocking/nonregular credential descriptors, stale one-shot account domains and unresolved sealed queue owners. GET_AUTH_STATE may report absent vault without provisioning it. Root owns integration; recent_features owns scoped execution reconciliation. Current public rollout/native installed E2E remains unaccepted.
+
 ## Passive Runtime Map recovery — 2026-10-03
 
 Owner: historical_sweep; integration lead owns merge. Recover the complete 127-path source program from preserved PR #1444 at `28d1d7433a00743194d3a138dd2d0573c4872595`, adapted to current native, Product Learning, Tasks and Voice authorities. RuntimeTraceService, native observation and retained ChatPage runtime dock expose scoped, read-only journal/blob data. Observability never grants execution or credentials and cannot convert a successful durable operation into a failure. Native principals cannot read host payloads; revocation and workspace scope are checked around asynchronous reads. Privacy projections inspect own data descriptors without executing getters or accepting prototype pollution. A delayed native child must bind to its actual parent dispatch reservation or explicit native receipt; ambiguous provenance fails closed and reports partial coverage. Current route, chat draft, permissions and native recording ownership remain intact. Full installed desktop, live provider and R01–R30 acceptance remain outside this bounded verification. Exact source dispositions, failures, 121 focused controls, 43 protocol controls, 278 locale controls, actual Runtime Map Chromium cases, 63 native SDK observations and current build receipts are archived in `docs/integration-history/runtime-map-current-20261003`.
@@ -799,3 +807,23 @@ Owner: branch integration historical worker. Dependency: current native collecti
 ### Golden task date validation recovery — 2026-10-03
 
 Recover the strict local calendar-day check from preserved Golden source5def9ffd into the current Tasks schedule form, through its existing parseDateExpression port. ISO dates must round-trip the exact year/month/day; impossible dates return no schedule change or native write. Valid leap days retain local midnight. Current native task actor/workspace custody, CAS/ACK/readback, import/background barriers and Product Learning producers remain canonical. Owner: recent_features; dependency: current Tasks1456 and runtime main; no legacy CatalogPanel or alternate store.
+
+
+### Golden per-task form draft recovery — 2026-10-04
+
+Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
+
+
+### Knowledge availability recovery — 2026-10-03
+
+- Owner: `pr_scout`; source #1436 `384843bfc4cf7d4a1f34c902a66a9a3198043c9f`. Recover its offline fast path through the current `KnowledgeNotebookTree` and `KnowledgeHome`, preserving native RPC authority, current Rox Notes routes, search, and saved-view operations.
+- Cache by API identity, explicit workspace and connection. Confirmed probes expire after 30 seconds; missing/error/timeout is unknown with at most one second of reuse. A three-second renderer budget does not cancel the native operation or certify a service is absent. Native changes invalidate once before mounted consumers refresh. Late invalidated responses cannot replace fresh entries.
+- Offline/unknown reads retain workspace-local views/envelopes and skip notebook/title calls. Render hides old-workspace rows immediately; request tickets prevent late event/workspace continuations from publishing rows or starting obsolete kernel reads. No new service, data store, installation CTA or authorization path is introduced.
+
+### 2026-10-04 — Подсказки клавиш по платформе (источник PR #1466)
+
+Tasks, Memory, Meetings, множественный выбор и домашние виджеты отображают Ctrl/Shift/Alt на Windows/Linux и символы Command/Option на macOS через единый форматтер. Реальные сочетания клавиш, нативная авторизация, подтверждения записи Tasks и черновики полей сохраняются. Владение: recent_features; зависимость: свежий main с Pocket SSO и Tasks drafts. Проверка: реальный компонент Tasks в Chromium на трех платформах, SSR Tasks/Memory/Meetings и паритет всех 12 локалей.
+
+## Notes source-path classification recovery — 2026-10-04
+
+Owner: historical branch worker; dependency: externally merged Notes1465 on2338adb95. Validate existing path components from the canonical Notes root toward the requested target before classifying absence. A file in place of a parent directory is a document authority change; a missing requested note remains NOT_FOUND only under a healthy authorized source. Symlinks, inaccessible sources, journal failures and permission revocation retain their existing refusal. This helper is read-only and creates no directory or credential. The temporary-file fixture uses the same canonical native root contract as NativeAuthority, including macOS temporary-directory aliases. Evidence: integration-history/note-read-parent-validation-20261004; bounded RPC/native-port/UI-callback checks do not claim installed Electron or OS identity acceptance.

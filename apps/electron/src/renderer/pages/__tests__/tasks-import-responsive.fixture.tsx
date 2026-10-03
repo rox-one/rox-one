@@ -23,6 +23,8 @@ const ui = {
   sidebar() { ui.externalSidebar=true; render() },
   edit(title: string) { const store = loadPersonalTaskStore(); store.update('existing', { title }); persistPersonalTaskStore(store) },
   unmount: () => flushSync(() => root.render(null)),
+  remount: () => render(),
+  retireDraftOwner() { setPersonalTaskScope({ authority: 'native', userId: 'bob', issuer: 'fixture-authority', workspaceId: 'ws-b' }); bind() },
   rows: () => loadPersonalTaskStore().list(),
 }
 ;(window as any).tasksFixture = ui

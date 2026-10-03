@@ -1,11 +1,14 @@
-import { resolve, dirname } from 'node:path'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { resolve, dirname, relative, sep } from 'node:path'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { execFileSync } from 'node:child_process'
 import { build as bundle } from 'esbuild'
 
 const main = resolve(import.meta.dir, '../MainContentPanel.tsx')
 const panelSlot = resolve(import.meta.dir, '../PanelSlot.tsx')
 const types = resolve(import.meta.dir, '../../../../shared/types.ts')
 const parser = resolve(import.meta.dir, '../../../../shared/route-parser.ts')
+const tooltip = resolve(import.meta.dir, '../../../../../../../packages/ui/src/components/tooltip.tsx')
 const leafSource = `import * as React from 'react';
 let nextMount = 0;
 export function leaf(name) { return function Surface(props) {
@@ -78,12 +81,13 @@ export async function buildMainFixture(
   writeFileSync(entry, `import * as React from 'react';
 import {MainContentPanel} from ${JSON.stringify(main)};
 import {ShellContext,NavContext} from 'rox-ui001-bindings';
+import {TooltipProvider} from ${JSON.stringify(tooltip)};
 import {parseRouteToNavigationStateOrUnavailable as parseRouteToNavigationState} from ${JSON.stringify(parser)};
 export function Fixture({route='sources/source/one',workspace='workspace-a',directory,override}) {
  const nav=override??parseRouteToNavigationState(route);
- return <ShellContext.Provider value={{activeWorkspaceId:workspace,workspaces:[],sessionStatuses:[],projects:[],loadedProjects:[],labels:[],activeSessionWorkingDirectory:directory}}>
+ return <TooltipProvider><ShellContext.Provider value={{activeWorkspaceId:workspace,workspaces:[],sessionStatuses:[],projects:[],loadedProjects:[],labels:[],activeSessionWorkingDirectory:directory}}>
   <NavContext.Provider value={nav}><MainContentPanel panelId="fixture-panel" /></NavContext.Provider>
- </ShellContext.Provider>
+ </ShellContext.Provider></TooltipProvider>
 }
 ${browser ? options.browserBootstrap ?? `import {createRoot} from 'react-dom/client';
 const sourceListeners=new Set(),skillListeners=new Set();
@@ -104,16 +108,21 @@ window.ui001.render({});` : ''}
     '@/context/AppShellContext', '@/contexts/NavigationContext', '@/atoms/sessions', '@/atoms/automations',
     '@/hooks/useEntitySelection', '@/lib/settings-recent', 'react-i18next',
   ])
-  await bundle({
+  const result = await bundle({
     entryPoints: [entry], outdir, entryNames: '[name].bundle', target: 'es2022',
     platform: browser ? 'browser' : 'node', format: 'esm', bundle: true, jsx: 'automatic',
     external: browser ? [] : ['react', 'react/jsx-runtime', 'jotai'],
+    metafile: !!process.env.ROX_UI001_COMPONENT_MANIFEST,
     plugins: [{ name: 'UI-001 component boundaries', setup(build) {
       build.onResolve({ filter: /^rox-ui001-bindings$/ }, () => ({ path: 'bindings', namespace: 'ui001' }))
       build.onResolve({ filter: /.*/ }, args => {
+        // Resolve the same public tooltip exports directly, avoiding unrelated KaTeX barrel assets.
+        if (/\/components\/ui\/source-status-indicator\.tsx$/.test(args.importer) && args.path === '@rox/ui') return { path: tooltip }
         if (options.realNavigation && /\/contexts\/NavigationContext\.tsx$/.test(args.importer)
           && ['react-i18next', 'sonner'].includes(args.path)) return { path: 'bindings', namespace: 'ui001' }
         if (options.realEntityPages && /\/pages\/(SourceInfoPage|SkillInfoPage)\.tsx$/.test(args.importer)) {
+          // Keep recorded source health and authentication derivation in production code.
+          if (args.path === '@/components/ui/source-status-indicator') return
           if (['react-i18next', '@/contexts/NavigationContext', '@/context/AppShellContext'].includes(args.path)) {
             return { path: 'bindings', namespace: 'ui001' }
           }
@@ -141,5 +150,17 @@ window.ui001.render({});` : ''}
       })
     } }],
   })
-  return resolve(outdir, 'rox-readiness-ui-001.entry.bundle.js')
+  const output = resolve(outdir, 'rox-readiness-ui-001.entry.bundle.js')
+  if (process.env.ROX_UI001_COMPONENT_MANIFEST) {
+    const sha256 = (value: Buffer) => createHash('sha256').update(value).digest('hex')
+    const inputs = Object.keys(result.metafile!.inputs).map(path => resolve(path))
+      .filter(path => existsSync(path) && !path.startsWith(resolve(outdir) + sep))
+    writeFileSync(process.env.ROX_UI001_COMPONENT_MANIFEST, JSON.stringify({
+      sourceRevision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+      bundleSha256: sha256(readFileSync(output)), bootstrapSha256: sha256(readFileSync(entry)),
+      inputSha256: Object.fromEntries(inputs.map(path => [relative(process.cwd(), path), sha256(readFileSync(path))])),
+      scope: 'real MainContentPanel component fixture; IPC and leaf boundaries remain explicit',
+    }, null, 2) + '\n')
+  }
+  return output
 }

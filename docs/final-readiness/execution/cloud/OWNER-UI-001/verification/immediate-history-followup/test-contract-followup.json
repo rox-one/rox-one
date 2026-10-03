@@ -1,0 +1,26 @@
+{
+  "sourceProductRevision": "e38908b3f2863227fe8286ecba3c9dd00558d04b",
+  "repairs": {
+    "serviceCallbackFixture": "Add actual suppressPushRef and pendingUrlRestoreRef collaborators; assertions unchanged.",
+    "sessionSSRFixture": "Match actual route-session-missing/data-route-entity; retain requested id and no ChatPage assertion.",
+    "navigation17Workflow": "Update actual public surface selectors and add exact entity/workspace/raw-route checks; all17 scenarios/method/timeouts and no-mount/selection/loader guards retained."
+  },
+  "unit": {
+    "observedExitCode": 0,
+    "passed": 20,
+    "failed": 0,
+    "assertions": 72,
+    "logSha256": "18971b71edc38b6a0bf0d2b31f78f657e4592b10aa6f817f16c0b4a2d835311a"
+  },
+  "originalScriptSha256": "cbe1e589f1b3ad93da11e2c8e04d8fe44cd601b3fc82a1c2f0d6fc1f45ab8604",
+  "updatedScriptSha256": "a9549d74ca337188be0ab062cce4aa5679128390e9eaa4434fbdcf16ab3caacb",
+  "original17Result": {
+    "passed": 14,
+    "failed": 3
+  },
+  "updated17Result": {
+    "passed": 17,
+    "failed": 0
+  },
+  "fullDoDClosed": false
+}

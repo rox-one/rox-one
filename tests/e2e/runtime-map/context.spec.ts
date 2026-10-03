@@ -37,7 +37,7 @@ for (const theme of ['light', 'dark'] as const) test(`grouped context is read-on
   expect(await instructionRows.evaluateAll(rows => rows.map(row => row.getAttribute('data-source-event-id')))).toEqual(sourceIds)
   const context = canvas.locator('[data-testid="runtime-context-group"][data-context-group="context"]')
   const rootSource = context.getByTestId('runtime-context-row').filter({ hasText: 'Root source 1' }).first()
-  await expect(rootSource).toHaveAttribute('data-source-agent-id', 'root')
+  await expect(rootSource).toHaveAttribute('data-source-agent-id', fixture.agents.root)
   await expect(rootSource).toHaveAttribute('data-context-snapshot-id', fixture.rootSnapshotId)
   expect(await rootSource.getAttribute('data-source-node-id')).toBeTruthy()
   await rootSource.click()

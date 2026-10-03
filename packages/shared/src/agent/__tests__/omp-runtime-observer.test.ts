@@ -132,6 +132,89 @@ describe('OMP native runtime observation transport', () => {
     }
   });
 
+  it('serializes supported callable parameter schemas and reports unavailable schemas without invoking accessors', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'rox-tool-schema-'));
+    const previous = { path: process.env.ROX_RUNTIME_OBSERVATION_PATH, control: process.env.ROX_RUNTIME_CONTROL_PATH };
+    const events: OmpRuntimeObservation[] = [];
+    const observer = new OmpRuntimeObserver(join(root, 'observer'), event => events.push(event), () => {});
+    try {
+      Object.assign(process.env, observer.env);
+      observer.beginRun('current-turn');
+      const schema = Object.freeze({ type: 'object', properties: Object.freeze({ path: Object.freeze({ type: 'string' }) }), required: ['path'] });
+      let conversions = 0;
+      let accessorReads = 0;
+      const callable = Object.assign(() => { throw new Error('Schema validator must not execute'); }, {
+        assert: () => { throw new Error('Schema assertion must not execute'); },
+        toJsonSchema: (options: { target: string; fallback: (context: { base: unknown }) => unknown }) => {
+          conversions++;
+          expect(options.target).toBe('draft-2020-12');
+          expect(options.fallback({ base: schema })).toBe(schema);
+          return schema;
+        },
+      });
+      Object.defineProperty(callable.toJsonSchema, 'call', { get: () => { accessorReads++; throw new Error('Method call getter must not execute'); } });
+      const broken = Object.assign(() => {}, { assert: () => {}, toJsonSchema: () => { throw new Error('Private conversion failure'); } });
+      const accessor = { name: 'accessor' };
+      Object.defineProperty(accessor, 'parameters', { enumerable: true, get: () => { accessorReads++; return schema; } });
+      const methodAccessor = Object.assign(() => {}, { assert: () => {} });
+      Object.defineProperty(methodAccessor, 'toJsonSchema', { get: () => { accessorReads++; throw new Error('Schema method getter must not execute'); } });
+      const unsupported = Object.assign(() => {}, { toJsonSchema: () => { throw new Error('Unsupported function method must not execute'); } });
+      const assertAccessor = Object.assign(() => {}, { toJsonSchema: () => schema });
+      Object.defineProperty(assertAccessor, 'assert', { get: () => { accessorReads++; throw new Error('Assert getter must not execute'); } });
+      const metadataAccessor = { name: 'metadata-accessor', parameters: schema };
+      for (const key of ['description', 'sourceInfo']) Object.defineProperty(metadataAccessor, key, { enumerable: true, get: () => { accessorReads++; throw new Error('Metadata getter must not execute'); } });
+      const nameAccessor = {};
+      Object.defineProperty(nameAccessor, 'name', { get: () => { accessorReads++; throw new Error('Name getter must not execute'); } });
+      const tools = Object.freeze([{ name: 'plain', parameters: schema }, { name: 'callable', parameters: callable },
+        { name: 'broken', parameters: broken }, { name: 'unavailable' }, accessor, { name: 'method-accessor', parameters: methodAccessor }, metadataAccessor, nameAccessor,
+        { name: 'unsupported', parameters: unsupported }, { name: 'assert-accessor', parameters: assertAccessor }]);
+      const active = ['callable', 'plain', 'broken', 'unavailable', 'accessor', 'method-accessor', 'metadata-accessor', 'name-accessor', 'unsupported', 'assert-accessor'];
+      const hooks = new Map<string, Function>();
+      (await import(observer.extensionPath)).default({ on: (name: string, fn: Function) => hooks.set(name, fn),
+        getActiveTools: () => active, getAllTools: () => tools, getThinkingLevel: () => 'high' });
+      const ctx = { agent: { kind: 'main', id: 'Main', name: 'main', depth: 0 }, sessionManager: { getSessionId: () => 'schema-session' }, cwd: '/fixture', getContextUsage: () => undefined };
+      expect(hooks.get('before_agent_start')!({ prompt: 'fixture', systemPrompt: [] }, ctx)).toBeUndefined();
+      expect(hooks.get('context')!({ messages: [{ role: 'user', content: 'fixture' }] }, ctx)).toBeUndefined();
+      observer.drain();
+      expect(events).toHaveLength(2);
+      expect(conversions).toBe(2);
+      expect(accessorReads).toBe(0);
+      const definitions = events[1]!.payload.toolDefinitions as Array<Record<string, unknown>>;
+      expect(definitions.map(tool => tool.name)).toEqual(active);
+      expect(definitions[0]!.parameters).toEqual(schema);
+      expect(definitions[0]!.parametersConversion).toBe('ArkType.toJsonSchema');
+      expect(definitions[1]!.parametersConversion).toBe('JSON Schema');
+      expect(definitions[2]!.parametersAvailability).toBe('unknown');
+      expect(definitions[2]!.parametersUnavailableReason).toBe('native-schema-conversion-failed');
+      expect(definitions[4]!.parameters).toBeUndefined();
+      expect(definitions[5]!.parametersAvailability).toBe('unknown');
+      expect(definitions[6]!.parameters).toEqual(schema);
+      expect(definitions[6]!.description).toBeUndefined();
+      expect(definitions[7]!.parametersAvailability).toBe('unknown');
+      expect(definitions[8]!.parametersAvailability).toBe('unknown');
+      expect(definitions[9]!.parametersAvailability).toBe('unknown');
+      expect(readFileSync(observer.env.ROX_RUNTIME_OBSERVATION_PATH!, 'utf8')).not.toContain('Private conversion failure');
+      const bridge = new OmpRuntimeTraceBridge();
+      bridge.beginRun('current-turn', 'fixture');
+      const snapshot = bridge.map(events[0]!).find(event => event.kind === 'context.captured');
+      if (snapshot?.kind !== 'context.captured') throw new Error('Expected actual hook context');
+      expect(snapshot.payload.snapshot.coverage.missing).toContain('native-tool-parameters');
+      expect(snapshot.payload.snapshot.blocks.find(block => block.label.includes('tool metadata'))?.kind).toBe('native');
+      const complete = bridge.map(native('before_agent_start', { prompt: 'complete fixture', systemPrompt: [], tools: ['callable'], toolDefinitions: [definitions[0]] },
+        { nativeSessionId: 'complete-schema-session', agent: { kind: 'main', id: 'Main', name: 'main', depth: 0 } })).find(event => event.kind === 'context.captured');
+      if (complete?.kind !== 'context.captured') throw new Error('Expected complete declared schema context');
+      expect(complete.payload.snapshot.blocks.some(block => block.kind === 'tool-schema' && block.content.text?.includes('"required":["path"]'))).toBe(true);
+      expect(complete.payload.snapshot.coverage.missing).not.toContain('native-tool-parameters');
+      expect(complete.payload.snapshot.coverage.missing).toContain('native-provider-tool-normalization');
+    } finally {
+      observer.dispose();
+      for (const [key, value] of Object.entries({ ROX_RUNTIME_OBSERVATION_PATH: previous.path, ROX_RUNTIME_CONTROL_PATH: previous.control })) {
+        if (value === undefined) delete process.env[key]; else process.env[key] = value;
+      }
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('binds delayed descendant starts to their actual native spawn reservation', async () => {
     const root = mkdtempSync(join(tmpdir(), 'rox-observation-'));
     const previous = { path: process.env.ROX_RUNTIME_OBSERVATION_PATH, control: process.env.ROX_RUNTIME_CONTROL_PATH };
@@ -154,7 +237,7 @@ describe('OMP native runtime observation transport', () => {
       childHooks.get('before_agent_start')!({ prompt: 'delayed actual child', systemPrompt: [] }, child);
       observer.drain();
       expect(events.at(-1)?.runId).toBe('originating-run');
-      expect(events.at(-1)?.payload.toolDefinitions).toEqual([{ name: 'read' }]);
+      expect(events.at(-1)?.payload.toolDefinitions).toEqual([{ name: 'read', parametersAvailability: 'unknown', parametersSource: 'OMP ExtensionAPI.getAllTools' }]);
     } finally {
       observer.dispose();
       if (previous.path === undefined) delete process.env.ROX_RUNTIME_OBSERVATION_PATH; else process.env.ROX_RUNTIME_OBSERVATION_PATH = previous.path;
@@ -185,7 +268,7 @@ describe('OMP native runtime observation transport', () => {
       childHooks.get('before_agent_start')!({ prompt: 'delayed actual child', systemPrompt: [] }, child);
       observer.drain();
       expect(events.at(-1)?.runId).toBe('originating-run');
-      expect(events.at(-1)?.payload.toolDefinitions).toEqual([{ name: 'read' }]);
+      expect(events.at(-1)?.payload.toolDefinitions).toEqual([{ name: 'read', parametersAvailability: 'unknown', parametersSource: 'OMP ExtensionAPI.getAllTools' }]);
       parentHooks.get('before_agent_start')!({ prompt: 'next parent', systemPrompt: [] }, parent);
       parentHooks.get('before_subagent_spawn')!({ invocationKind: 'task', spawnKey: 'parent-call-B:0' }, parent);
       const beforeAmbiguous = events.length;

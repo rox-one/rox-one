@@ -46,7 +46,7 @@ if (process.argv[2] === 'legacy') {
   const dispatchJobs: Promise<void>[] = []
   let completeSource!: () => void
   const sourceDispatched = new Promise<void>(resolve => { completeSource = resolve })
-  Object.assign(manager, { runtimeTrace: trace, sessions: new Map([[session.id, managed]]),
+  Object.assign(manager, { runtimeTrace: trace, sessions: new Map([[session.id, managed]]), roxExecutions: new Map(), nativeMemoryContexts: new Map(),
     sendEvent() {}, persistSession() {},
     createSession: async (_workspaceId: string, options: Parameters<typeof createSession>[1]) => {
       const child = await createSession(workspace, options)
@@ -95,7 +95,7 @@ if (process.argv[2] === 'legacy') {
   await trace.agentEvent(session.id, { type: 'task_backgrounded', taskId: 'background-task', toolUseId: 'background-tool' }, { originRun: run })
   const manager = Object.create(SessionManager.prototype) as InstanceType<typeof SessionManager>
   const jobs: Promise<void>[] = []
-  Object.assign(manager, { runtimeTrace: trace, keepBackgroundTasksAlive: true, taskOutputIndex: new Map(),
+  Object.assign(manager, { runtimeTrace: trace, keepBackgroundTasksAlive: true, taskOutputIndex: new Map(), roxExecutions: new Map(), nativeMemoryContexts: new Map(),
     sendEvent() {},
     sendMessage: (...args: Parameters<typeof manager.sendMessage>) => {
       assert.equal(args[4]?.hidden, true)
@@ -140,7 +140,7 @@ if (process.argv[2] === 'legacy') {
   const manager = Object.create(SessionManager.prototype) as InstanceType<typeof SessionManager>
   const jobs: Promise<void>[] = []
   const createdChildren: string[] = []
-  Object.assign(manager, { runtimeTrace: trace,
+  Object.assign(manager, { runtimeTrace: trace, roxExecutions: new Map(), nativeMemoryContexts: new Map(),
     createSession: async (_workspaceId: string, options: Parameters<typeof createSession>[1]) => {
       const child = await createSession(workspace, options)
       register(child)

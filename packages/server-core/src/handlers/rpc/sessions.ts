@@ -1,3 +1,4 @@
+import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER } from '@rox/shared/auth'
 import { readFile, writeFile, stat } from 'fs/promises'
 import { join } from 'path'
 import {
@@ -352,6 +353,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     // a generated dispatch into the exception for the user's original input.
     const runtimeLaunch = options?.runtimeLaunch === undefined ? undefined
       : isRuntimeLaunch(options.runtimeLaunch) ? options.runtimeLaunch : { kind: 'unknown' as const }
+    const cloudCaller = ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER
+    const roxExecutionContext = await peekRoxAccountAuthority()?.capture(cloudCaller)
 
     return await new Promise<{ accepted: true; messageId: string }>((resolve, reject) => {
       let acked = false
@@ -368,7 +371,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       }
 
       sessionManager
-        .sendMessage(sessionId, message, attachments, storedAttachments, options, undefined, undefined, onAck, { callerClientId, runtimeLaunch,
+        .sendMessage(sessionId, message, attachments, storedAttachments, options, undefined, undefined, onAck, { callerClientId, runtimeLaunch, roxExecutionContext,
           nativeMemoryContext: nativeMemoryContext(ctx, deps, server, ctx.workspaceId!) })
         .then(() => {
           // sendMessage finished without firing onAck — should not happen in
@@ -569,7 +572,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         if (!session) {
           return { success: false, error: 'invalid', errorCode: 'invalid' }
         }
-        const invited = await getBroInviteService().invite(sessionId, command.role, { workspaceId: session.workspaceId, session })
+        const invited = await getBroInviteService().invite(sessionId, command.role, { workspaceId: session.workspaceId, session, caller: ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER })
         if (!invited.success) {
           return {
             success: false,
@@ -587,27 +590,27 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         }
       }
       case 'revokeBroInvite':
-        return getBroInviteService().revoke(command.joinKey, ctx.workspaceId)
+        return getBroInviteService().revoke(command.joinKey, ctx.workspaceId, ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER)
       case 'joinBroInvite': {
         const parsed = parseInviteUrl(command.url)
         if (!parsed) return { ok: false, error: 'invalid' }
         const service = getBroInviteService()
-        if (service.usesRemote(ctx.workspaceId)) return service.join(command.url, ctx.workspaceId)
+        if (service.usesRemote(ctx.workspaceId)) return service.join(command.url, ctx.workspaceId, ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER)
         // An invite must not be consumed if its session has been deleted.
         // Resolve the target from the URL, independently of the caller's page.
         const targetSession = await sessionManager.getSession(parsed.sessionId)
         if (!targetSession) return { ok: false, error: 'invalid' }
-        const joined = await service.join(command.url)
+        const joined = await service.join(command.url, undefined, ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER)
         return joined.ok ? { ...joined, workspaceId: targetSession.workspaceId } : joined
       }
       case 'listBroPresence':
         return getBroInviteService().listPresence(sessionId, (await sessionManager.getSession(sessionId))?.workspaceId ?? ctx.workspaceId)
       case 'refreshTitle':
         log.info(`IPC: refreshTitle received for session ${sessionId}`)
-        return sessionManager.refreshTitle(sessionId)
+        return sessionManager.refreshTitle(sessionId, await peekRoxAccountAuthority()?.capture(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER))
       case 'improveDraft':
         log.info(`IPC: improveDraft received for session ${sessionId}`)
-        return sessionManager.improveDraft(sessionId, command.text)
+        return sessionManager.improveDraft(sessionId, command.text, await peekRoxAccountAuthority()?.capture(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER))
       // Connection selection (locked after first message)
       case 'setConnection':
         log.info(`IPC: setConnection received for session ${sessionId}, connection: ${command.connectionSlug}`)

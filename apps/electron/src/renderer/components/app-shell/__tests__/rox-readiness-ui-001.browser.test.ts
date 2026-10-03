@@ -9,7 +9,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from '@playwri
 // Explicit opt-in: a real isolated Chromium fixture, never installed/native or hosted acceptance.
 const enabled = process.env.ROX_UI001_BROWSER_TEST === '1'
 const root = join(import.meta.dir, '../../../../../../..')
-const evidence = join(root, 'docs/final-readiness/execution/cloud/OWNER-UI-001/verification/browser')
+const evidence = process.env.ROX_UI001_EVIDENCE_DIR ?? join(root, 'docs/final-readiness/execution/cloud/OWNER-UI-001/verification/browser')
 let server: Server, browser: Browser, context: BrowserContext, page: Page, base: string
 
 function productionFunctions(): string {
@@ -86,6 +86,7 @@ async function fixtureBundle() {
       }))}), getCloudRunStatus: async () => null,
     };
     const useNavigationState = () => nav;
+    const useNavigation = () => ({isSessionsReady:true,unavailableWorkspaceSlug:undefined});
     const useAppShellContext = () => ({activeWorkspaceId:workspace,workspaces:[{id:workspace}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[],skills:[],localMcpEnabled:false});
     const useTranslation = () => ({ t: key => key });
     const useAtomValue = atom => typeof atom === 'symbol' ? atom === sessionMetaMapAtom ? sessionRows : [] : useProductionAtomValue(atom);
@@ -211,7 +212,7 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
     await page.evaluate(()=>{(window as any).ui001.sessions([{id:'a',workspaceId:'ws-a'},{id:'foreign',workspaceId:'ws-b'}]);(window as any).ui001.navigate('allSessions/session/a')})
     await page.locator('[data-fixture-chat="a"]').waitFor()
     await page.evaluate(()=>(window as any).ui001.sessions([{id:'foreign',workspaceId:'ws-b'}]))
-    await page.locator('[data-testid="route-session-unavailable"][data-session-id="a"]').waitFor()
+    await page.locator('[data-testid="route-session-missing"][data-route-entity="a"]').waitFor()
     expect(await page.locator('[data-fixture-chat]').count()).toBe(0)
     await page.evaluate(()=>(window as any).ui001.navigate('allSessions/session/foreign'))
     await page.locator('[data-testid="route-unavailable"]').waitFor()

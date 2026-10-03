@@ -76,7 +76,8 @@ const server = Bun.serve({ hostname: '127.0.0.1', port: 4177, idleTimeout: 0, as
       await service.capture('fixture-session', rootSnapshot)
       const observation = (sourceSeq: number, agentId: string, kind: RuntimeAgentObservation['kind'], payload: unknown): RuntimeAgentObservation => ({
         sourceId: 'explicit-context-fixture', sourceSeq, sourceEventId: `context-fixture:${sourceSeq}`,
-        agentId, parentAgentId: 'root', occurredAt: known(Date.now(), 'explicit-context-fixture'), origin: 'observed',
+        agentId, parentAgentId: 'root', occurredAt: known(Date.now(), 'explicit-context-fixture'),
+        clockDomain: 'explicit-context-fixture', origin: 'observed',
         kind, payload,
       } as RuntimeAgentObservation)
       await service.observe('fixture-session', observation(1, contextFixtureAgentIds.child, 'agent.assigned', { assignment: {
@@ -97,8 +98,11 @@ const server = Bun.serve({ hostname: '127.0.0.1', port: 4177, idleTimeout: 0, as
         if (!assignment || assignment.kind !== 'agent.assigned') throw new Error('Context fixture assignment was not published')
         return assignment.payload.assignment.agentId
       }
+      const rootContext = events.find(event => event.rootRunId === run!.rootRunId && event.kind === 'context.captured'
+        && event.payload.snapshot.id === rootSnapshot.id)
+      if (!rootContext) throw new Error('Root context fixture was not published')
       return json({ rootSnapshotId: rootSnapshot.id, childSnapshotId: childSnapshot.id,
-        agents: { child: assignedAgent(1), missing: assignedAgent(3) } })
+        agents: { root: rootContext.agentId, child: assignedAgent(1), missing: assignedAgent(3) } })
     }
     if (path === '/large' && request.method === 'POST') {
       if (!run) return json({ error: 'No active test run' }, 409)

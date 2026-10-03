@@ -1,0 +1,79 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/agent/__tests__/omp-public-runtime.test.ts:
+killed 1 dangling process
+
+# Unhandled error between tests
+-------------------------------
+84 | 
+85 | describe('actual OmpAgent private public catalog lifecycle', () => {
+86 |   it('confirms the R1 Max provider/model before executing a new default-model turn', async () => {
+87 |     const { agent, fake } = await setup('model-public', 'rox/r1-max');
+88 |     const events = await chatEvents(agent, 'default-model fixture turn', 8000);
+89 |     expect(events.some(event => event.type === 'text_complete')).toBe(true);
+                                                                      ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/__tests__/omp-public-runtime.test.ts:89:66)
+-------------------------------
+
+(fail) actual OmpAgent private public catalog lifecycle > confirms the R1 Max provider/model before executing a new default-model turn [5605.30ms]
+  ^ this test timed out after 5000ms.
+(pass) actual OmpAgent private public catalog lifecycle > uses trusted account key after final environment assembly despite wrong ambient/connection/session keys [3454.61ms]
+killed 1 dangling process
+
+# Unhandled error between tests
+-------------------------------
+108 | 
+109 |   it('keeps the successor profile when the predecessor close disposer arrives after actual respawn', async () => {
+110 |     const { agent, fake } = await setup();
+111 |     await chatEvents(agent, 'first fixture turn', 8000);
+112 |     const predecessor = (agent as unknown as { subprocess: ChildProcess }).subprocess;
+113 |     const [lateClose] = predecessor.rawListeners('close');
+                              ^
+TypeError: null is not an object (evaluating 'predecessor.rawListeners')
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/__tests__/omp-public-runtime.test.ts:113:25)
+-------------------------------
+
+(fail) actual OmpAgent private public catalog lifecycle > keeps the successor profile when the predecessor close disposer arrives after actual respawn [5481.16ms]
+  ^ this test timed out after 5000ms.
+(pass) actual OmpAgent private public catalog lifecycle > removes the private profile after an actual pre-ready child failure [4460.13ms]
+(pass) actual OmpAgent private public catalog lifecycle > runs actual mini/title and call_llm children with the account key and aborts old identity after logout [4799.45ms]
+(pass) actual OmpAgent private public catalog lifecycle > never dispatches zero balance or ownerless public executions [2294.20ms]
+21 |   const deadline = Date.now() + 2000;
+22 |   while (Date.now() < deadline) {
+23 |     if (predicate()) return;
+24 |     await Bun.sleep(10);
+25 |   }
+26 |   throw new Error('OMP runtime lifecycle fixture did not reach the expected state');
+                 ^
+error: OMP runtime lifecycle fixture did not reach the expected state
+      at waitUntil (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/__tests__/omp-public-runtime.test.ts:26:13)
+      at async <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/__tests__/omp-public-runtime.test.ts:171:11)
+
+# Unhandled error between tests
+-------------------------------
+2374 |         reject(new Error(`omp -p failed: ${err.message}`));
+2375 |       });
+2376 |       child.on('close', (code) => {
+2377 |         clearTimeout(timer);
+2378 |         if (code !== 0) {
+2379 |           reject(new Error(`omp -p failed (exit ${code})${stderr ? ` (${stderr.trim().slice(0, 300)})` : ''}`));
+                            ^
+error: omp -p failed (exit null)
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/omp-agent.ts:2379:22)
+      at emit (node:events:98:22)
+      at #maybeClose (node:child_process:766:16)
+      at #handleOnExit (node:child_process:520:72)
+-------------------------------
+
+(fail) actual OmpAgent private public catalog lifecycle > kills an actual in-flight one-shot at logout and never accepts its delayed result [2963.86ms]
+
+ 4 pass
+ 3 fail
+ 3 errors
+ 21 expect() calls
+Ran 7 tests across 1 file. [42.18s]

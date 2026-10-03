@@ -1,3 +1,4 @@
+import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER, type RoxExecutionContext } from '@rox/shared/auth'
 import { createHash } from 'node:crypto'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
@@ -67,7 +68,7 @@ function redactWebhookGraphCredentials<T>(projection: T): T {
   }
   return result as T
 }
-async function withAutomationMatcher<T = void>(workspaceId: string, eventName: string, matcherIndex: number, mutate: (matchers: Record<string, unknown>[], index: number, config: AutomationsConfigJson, genId: () => string) => T): Promise<T> {
+async function withAutomationMatcher<T = void>(workspaceId: string, eventName: string, matcherIndex: number, mutate: (matchers: Record<string, unknown>[], index: number, config: AutomationsConfigJson, genId: () => string) => T, beforeWrite?: (result: T, matcher: Record<string, unknown>) => Promise<void>): Promise<T> {
   const workspace = getWorkspaceByNameOrId(workspaceId)
   if (!workspace) throw new Error('Workspace not found')
 
@@ -93,6 +94,7 @@ async function withAutomationMatcher<T = void>(workspaceId: string, eventName: s
       }
     }
 
+    await beforeWrite?.(result, matchers[matcherIndex]!)
     atomicWriteFileSync(configPath, JSON.stringify(config, null, 2) + '\n')
     return result
   })
@@ -200,6 +202,9 @@ export const HANDLED_CHANNELS = [
 ] as const
 
 export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps): void {
+  const execution = (ctx: import('@rox/server-core/transport').RequestContext) => peekRoxAccountAuthority()?.capture(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER)
+  const bind = (workspaceId: string, id: string, context: RoxExecutionContext | undefined) => context ? getRoxAccountAuthority().bind(`automation:${workspaceId}:${id}`, context) : Promise.resolve()
+
   const log = deps.platform.logger
   // Mutations push CHANGED directly so every window refreshes immediately,
   // independent of the (debounced) config file watcher.
@@ -266,9 +271,10 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
   // Compile graph metadata into canonical matchers/actions, then atomically
   // replace automations.json while holding the same mutex as legacy mutations.
-  server.handle(RPC_CHANNELS.automations.SAVE_GRAPH, async (_ctx, rawPayload: unknown) => {
+  server.handle(RPC_CHANNELS.automations.SAVE_GRAPH, async (ctx, rawPayload: unknown) => {
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: 'graph' })
     if (!isClaimableLive(act)) throw new Error('automations graph write is not live')
+    const context = await execution(ctx)
     const payload = parseSaveAutomationGraphPayload(rawPayload)
     const workspace = getWorkspaceByNameOrId(payload.workspaceId)
     if (!workspace) throw new Error('Workspace not found')
@@ -291,6 +297,10 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
       const saved = buildAutomationGraphSave(currentConfig, payload)
       const validation = validateAutomationsConfig(saved.config)
       if (!validation.valid) throw new Error(`Compiled automation configuration is invalid: ${validation.errors.join('; ')}`)
+      const previousById = new Map(Object.values((currentConfig as { automations?: Record<string, Record<string, unknown>[]> }).automations ?? {}).flat().map(matcher => [matcher.id, JSON.stringify(matcher)]))
+      for (const matchers of Object.values(saved.config.automations ?? {})) for (const matcher of matchers ?? []) {
+        if (matcher.id && previousById.get(matcher.id) !== JSON.stringify(matcher)) await bind(payload.workspaceId, matcher.id, context)
+      }
       atomicWriteFileSync(configPath, JSON.stringify(saved.config, null, 2) + '\n')
       pushTyped(
         server,
@@ -302,7 +312,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     })
   })
 
-  server.handle(RPC_CHANNELS.automations.TEST, async (_ctx, payload: import('@rox/shared/protocol').TestAutomationPayload) => {
+  server.handle(RPC_CHANNELS.automations.TEST, async (ctx, payload: import('@rox/shared/protocol').TestAutomationPayload) => {
     const workspace = getWorkspaceByNameOrId(payload.workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
@@ -410,6 +420,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
       try {
         const { sessionId } = await deps.sessionManager.executePromptAutomation({
+          roxExecutionContext: await execution(ctx),
           workspaceId: payload.workspaceId,
           workspaceRootPath: workspace.rootPath,
           prompt: action.prompt,
@@ -471,23 +482,25 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
   })
 
   // Automation enabled state management (toggle enabled/disabled in automations.json)
-  server.handle(RPC_CHANNELS.automations.SET_ENABLED, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, enabled: boolean) => {
+  server.handle(RPC_CHANNELS.automations.SET_ENABLED, async (ctx, workspaceId: string, eventName: string, matcherIndex: number, enabled: boolean) => {
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: eventName })
     if (!isClaimableLive(act)) return
+    const context = enabled ? await execution(ctx) : undefined
     await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx) => {
       if (enabled) {
         delete matchers[idx].enabled
       } else {
         matchers[idx].enabled = false
       }
-    })
+    }, async (_result, matcher) => { if (context) await bind(workspaceId, matcher.id as string, context) })
     notifyChanged(workspaceId)
   })
 
   // Duplicate an automation matcher. `copyName` is the clone's name already
   // localized by the client (e.g. «Имя (копия)»); without it the legacy
   // English " Copy" suffix is used.
-  server.handle(RPC_CHANNELS.automations.DUPLICATE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, copyName?: unknown) => {
+  server.handle(RPC_CHANNELS.automations.DUPLICATE, async (ctx, workspaceId: string, eventName: string, matcherIndex: number, copyName?: unknown) => {
+    const context = await execution(ctx)
     const localizedName = typeof copyName === 'string' ? copyName.trim().slice(0, 200) : ''
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: eventName })
     if (!isClaimableLive(act)) return
@@ -497,16 +510,17 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
       clone.name = localizedName || (clone.name ? `${clone.name} Copy` : 'Untitled Copy')
       matchers.splice(idx + 1, 0, clone)
       return clone.id as string
-    })
+    }, id => bind(workspaceId, id, context))
     notifyChanged(workspaceId)
     return { id }
   })
 
   // Replace one matcher's editable fields (id and unknown keys preserved).
   // Changing the event moves the matcher to the end of that event's list.
-  server.handle(RPC_CHANNELS.automations.UPDATE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, rawPayload: unknown) => {
+  server.handle(RPC_CHANNELS.automations.UPDATE, async (ctx, workspaceId: string, eventName: string, matcherIndex: number, rawPayload: unknown) => {
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: eventName })
     if (!isClaimableLive(act)) throw new Error('automations update is not live')
+    const context = await execution(ctx)
     const payload = parseEditPayload(rawPayload)
     const result = await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx, config, genId) => {
       const current = matchers[idx]!
@@ -527,15 +541,16 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
       const target = (eventMap[payload.event] ??= [])
       target.push(next)
       return { id: next.id as string, event: payload.event, matcherIndex: target.length - 1 }
-    })
+    }, result => bind(workspaceId, result.id, context))
     notifyChanged(workspaceId)
     return result
   })
 
   // Append a new matcher (creates automations.json if missing, without seeding).
-  server.handle(RPC_CHANNELS.automations.CREATE, async (_ctx, workspaceId: string, rawPayload: unknown) => {
+  server.handle(RPC_CHANNELS.automations.CREATE, async (ctx, workspaceId: string, rawPayload: unknown) => {
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: 'create' })
     if (!isClaimableLive(act)) throw new Error('automations create is not live')
+    const context = await execution(ctx)
     const payload = parseEditPayload(rawPayload)
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
@@ -547,6 +562,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
       const eventMap = (config.automations ??= {})
       const target = (eventMap[payload.event] ??= [])
       target.push(next)
+      await bind(workspaceId, next.id as string, context)
       atomicWriteFileSync(configPath, JSON.stringify(config, null, 2) + '\n')
       return { id: next.id as string, event: payload.event, matcherIndex: target.length - 1 }
     })

@@ -1,0 +1,331 @@
+{
+  "state": "qualified_current_candidate",
+  "source_head": "2d93d2fcca9e0504668e2bc4c757decbe26b06eb",
+  "base_main": "ab431f5a35ef6be44c68b9f973eb79c40cd7e315",
+  "source_path_count": 225,
+  "root_checks": [
+    {
+      "name": "auth/client/native store",
+      "pass": 27,
+      "fail": 0,
+      "assertions": 128
+    },
+    {
+      "name": "native FIFO cold-process descriptor control",
+      "pass": 1,
+      "fail": 0,
+      "assertions": 4
+    },
+    {
+      "name": "registered onboarding absent native vault and noncloud startup",
+      "pass": 9,
+      "fail": 0,
+      "assertions": 25
+    },
+    {
+      "name": "flow/startup/profile/probe",
+      "pass": 45,
+      "fail": 0,
+      "assertions": 153
+    },
+    {
+      "name": "full Electron types",
+      "exit": 0
+    }
+  ],
+  "worker_receipt": "sso-session-omp-qualification.json",
+  "repairs": [
+    "Source FIFO open could block native account read; nonblocking captured regular descriptor bounded to256000bytes rejects FIFO before decrypt",
+    "GET_AUTH_STATE reports missing native authority without provisioning vault; START/CLEAR and execution still fail closed",
+    "OMP one-shot account-domain generation checked from preparation through child close and old children retired",
+    "Sealed restored queue refuses dispatch while account authority unavailable"
+  ],
+  "logs": [
+    {
+      "log": "pocket-root-auth-vault-controls.log",
+      "sha256": "2ce4ca2df3163adc79bd8427341aa42ea97f60224bfe0cc269283ab94a5b9907",
+      "bytes": 3618
+    },
+    {
+      "log": "pocket-root-descriptor-committed-control.log",
+      "sha256": "37faccfff2352c635e14f84ddcc4076ea7656c5229bb219099e982e076772fe6",
+      "bytes": 267
+    },
+    {
+      "log": "pocket-root-onboarding-vault-i18n.log",
+      "sha256": "ddba1daac7ca9cfce99fa906cacbf0d2f0b72f725b07a3932f7dfcc16cfe3865",
+      "bytes": 45282
+    },
+    {
+      "log": "pocket-root-onboarding-repaired.log",
+      "sha256": "3afae3cbf9ce0fa83cd24009ec0b890e4bd8a91edf7899cda5ad00ec4f180584",
+      "bytes": 1255
+    },
+    {
+      "log": "pocket-root-flow-startup-probes.log",
+      "sha256": "f48483cd216053c8177b104c64bab683c16c0b9e342f8774bfc50ebaba31b6a8",
+      "bytes": 5862
+    },
+    {
+      "log": "pocket-root-current-electron-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "log": "sso-oneshot-domain-before.log",
+      "sha256": "5476cd91d99dcf9cee9de6d9943b52cee3ffe0eeea517340069c16b03ccda5eb",
+      "bytes": 2028
+    },
+    {
+      "log": "sso-oneshot-domain-after.log",
+      "sha256": "de6a982c7476d17606a34b5655e045635b1370e4931d956af382e1f08d091eb8",
+      "bytes": 3354
+    },
+    {
+      "log": "sso-oneshot-fixture-first-failure.log",
+      "sha256": "a10716833161c8ae8a61722e0749b5332c7bb4160d88cab4057f4e223ff16479",
+      "bytes": 2028
+    },
+    {
+      "log": "sso-sealed-queue-unavailable-before.log",
+      "sha256": "6fa07191cfd33f3c98f9261f384ea02e1b708cee238518c016602b7398696332",
+      "bytes": 914
+    },
+    {
+      "log": "sso-current-combined-owner-final.log",
+      "sha256": "ed69bf074756149ae869a6129d7cb9828d94b3d63a87d4bf7f97d1f1b8dd7cec",
+      "bytes": 680
+    },
+    {
+      "log": "sso-current-native-memory-queue-final.log",
+      "sha256": "5cf1129f6665c88415b8332899a3ee13af672bbec549eb246bfd8d2abc1af2fe",
+      "bytes": 1338
+    },
+    {
+      "log": "sso-current-memory-service.log",
+      "sha256": "3fdf6cc66822a135275d50a93a37935ae5296339cddab56df87de4c3abeccf40",
+      "bytes": 5147
+    },
+    {
+      "log": "sso-current-server-core-types.log",
+      "sha256": "40543c6ab2eef493ca19f945dcc5d192c5a3bc5673a02f5918d9982ed2040307",
+      "bytes": 492
+    },
+    {
+      "log": "sso-current-server-core-local-types-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "public_rollout_complete": false,
+  "installed_mac_windows_e2e_currently_verified": false,
+  "single_ledger_charge_cutover_verified": false,
+  "existing_source_historical_OS_receipts_are_not_this_head": true,
+  "original_branch_deleted": false,
+  "runtime_composition_receipt": "sso-runtime-session-omp-qualification.json",
+  "currentmain_reconciled": "63dd527439cd422d0c392cd8fce1461db333168b",
+  "runtime_composition_repair": "Actual held collector append reproduced obsolete-account output. ProcessEvent retains execution/native grant and rechecks both after trace await; chat/backend creation rechecks native grant after trace capture.",
+  "current_checks": [
+    {
+      "name": "auth/store/device/flow/startup/profile/probe",
+      "pass": 75,
+      "fail": 0,
+      "assertions": 299,
+      "files": 10
+    },
+    {
+      "name": "registered onboarding without native vault",
+      "pass": 9,
+      "fail": 0,
+      "assertions": 25
+    },
+    {
+      "name": "locale parity",
+      "pass": 278,
+      "fail": 0,
+      "assertions": 6487
+    },
+    {
+      "name": "full Electron types",
+      "exit": 0
+    },
+    {
+      "name": "full server-core strict local workspace resolution",
+      "exit": 0
+    },
+    {
+      "name": "Electron main allworkers build",
+      "exit": 0
+    },
+    {
+      "name": "preload and toolbar build",
+      "exit": 0
+    },
+    {
+      "name": "renderer production build",
+      "exit": 0
+    },
+    {
+      "name": "actual production App controlled native journal",
+      "pass": 7,
+      "fail": 0
+    },
+    {
+      "name": "production learning components actual browser",
+      "pass": 7,
+      "fail": 0
+    }
+  ],
+  "production_source_head": "609c2446c870c26817eae1909bd9c27eec135aba",
+  "qualified_candidate": "cab4452780d49bba1d6cc83e97d3d7a65c0db766",
+  "later_source_delta": "27 source historical receipt/rollout documentation paths only; no production change",
+  "fixture_repairs": [
+    "Explicit noncloud synthetic getRoxCloudState matches fixture declared shell seam, production mandatory account gate unchanged",
+    "Load the owned Vite config once with configFile:false for build+preview; avoids reimporting Vite deleted temporary bundled config under Bun"
+  ],
+  "current_logs": [
+    {
+      "log": "pocket-latest-actual-app14-config-repaired.log",
+      "bytes": 11079,
+      "sha256": "9ce0f803d718c8330ab2df0eafa605ed1ea9dfc3360c513f3c0ee5f7c66bdd0c"
+    },
+    {
+      "log": "pocket-latest-actual-app14.log",
+      "bytes": 9786,
+      "sha256": "85490c6ef8ee63fefb9454f0526092cf548e8d2186cea9ccc5de873589a8b1c7"
+    },
+    {
+      "log": "pocket-latest-electron-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "log": "pocket-latest-locales.log",
+      "bytes": 42102,
+      "sha256": "4818efc3362d1c4e31225e81c42bdc820e375e7532ff76703d065ae582e04a34"
+    },
+    {
+      "log": "pocket-latest-main-build.log",
+      "bytes": 2378,
+      "sha256": "24f535bd1668f7572c34cebc0d501fd34a10a13ff01e692c195b8118f2cf58c0"
+    },
+    {
+      "log": "pocket-latest-onboarding.log",
+      "bytes": 1256,
+      "sha256": "98c961085a2892be7d0147595b246e5ce25d72db343c1f314d5e422b82d00872"
+    },
+    {
+      "log": "pocket-latest-preloads-build.log",
+      "bytes": 478,
+      "sha256": "b3d0c2ac36ee93b03725a9dc64ad41d31af9fbff622c58caa24c6246d8ced2ef"
+    },
+    {
+      "log": "pocket-latest-production-components7.log",
+      "bytes": 3000,
+      "sha256": "7b7bbaa12f46e5f031d878ae22d720669fc9df6b72bdba4d63a64638d32c892b"
+    },
+    {
+      "log": "pocket-latest-renderer-build.log",
+      "bytes": 61938,
+      "sha256": "0d244846c5a9de3d575991f2ec24abb4287a46ed4f5c007bb331ab52067e4edf"
+    },
+    {
+      "log": "pocket-latest-root-source-controls.log",
+      "bytes": 9808,
+      "sha256": "472f390be76f99c02127bd8eabf08bb64404f7c9f4eb7d1679368c0617a3c830"
+    },
+    {
+      "log": "pocket-latest-server-core-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "log": "pocket-latest-toolbar-build.log",
+      "bytes": 287,
+      "sha256": "f789219f826daed76187a9e2360098d7b4c2cdd9fb550acfa334e6f1ab8e3ff0"
+    },
+    {
+      "log": "pocket-composed-latestmain-controls.log",
+      "bytes": 3860,
+      "sha256": "58b08ba295cfff8e4c6fb88cb4b30dca1b29de22d2d563a0855bd3d583b2b5c5"
+    },
+    {
+      "log": "pocket-composed-latestmain-electron-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "log": "pocket-composed-latestmain-server-types-repaired.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "log": "pocket-composed-latestmain-server-types.log",
+      "bytes": 262,
+      "sha256": "39b145f234a8e000031645bf9c5f9b960ab60085dbdb0962a16933c1e98d1e5d"
+    }
+  ],
+  "application_receipt_sha256": "4d8abd77bcaa3b32d966f5bb824bdfdff14a2a49bcef458a84a9c4a2d280480c",
+  "qualified_code_commit": "4948e98c6bd943b57b70e1b0081b313393648f88",
+  "qualified_composed_commit": "63e33d22e17260efe7e4a333e4eed132e519be4e",
+  "later_independent_draft_source_preserved": true,
+  "composition_checks": [
+    {
+      "name": "current SessionManager account owner +OMP domains/query +collection load/edit",
+      "pass": 28,
+      "fail": 0,
+      "assertions": 111,
+      "files": 4
+    },
+    {
+      "name": "full server-core strict local transport alias",
+      "exit": 0
+    },
+    {
+      "name": "full Electron strict types",
+      "exit": 0
+    }
+  ],
+  "composition_preservation": [
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "sha256": "730842d43d0d1a60a954d817e8137c168b2e562e6fe6cc6887942aee6f50bc16",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/server-core/src/memory/MemoryService.ts",
+      "sha256": "159e9ca63489be82c62c22124a52de741be17afa1d1477338bd3a30d3d4c580e",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/sessions.ts",
+      "sha256": "3609205799c561a647dfda608e4b82aebb0bd1692752368258e362957caec578",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+      "sha256": "715610eb1452ba79724862b0de2fa06e7966e246ab4541b939b54c1be5aae472",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/shared/src/agent/omp-agent.ts",
+      "sha256": "bb8ff894ce6df443b54ce0669d9de8d7f8e06727372155920b3df8795ad1983c",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts",
+      "sha256": "80922e70a8cee7bdfacd8f9a5f7afba67ee6804bd4ac9822f2b9d7f5ef991b9b",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-query-llm.test.ts",
+      "sha256": "b10cc0e1410c0e7b1a94a32333abee828766cf978bfd7233c396e237d36a5b83",
+      "unchanged_from_owned_qualification": true
+    },
+    {
+      "path": "packages/server-core/src/sessions/pocket-session-resource-owner.test.ts",
+      "sha256": "9fd646ecb520ad6defa4ec10668ec999d12f8e34436f2997b36457f67a9565c9",
+      "unchanged_from_owned_qualification": true
+    }
+  ]
+}
