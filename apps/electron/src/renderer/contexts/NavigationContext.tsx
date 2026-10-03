@@ -1161,7 +1161,7 @@ export function NavigationProvider({
       active = false
       cleanup()
     }
-  }, [workspaceId, navigate])
+  }, [workspaceId, remoteWorkspaceId, navigate])
 
   // =========================================================================
   // INTERNAL NAVIGATION EVENT LISTENER

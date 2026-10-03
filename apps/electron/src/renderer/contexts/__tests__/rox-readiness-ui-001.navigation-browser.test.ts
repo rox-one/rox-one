@@ -26,7 +26,7 @@ async function fixtureBundle() {
     import { pagesAtom } from './apps/electron/src/renderer/atoms/pages';
     import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom } from './apps/electron/src/renderer/atoms/panel-stack';
     const store = createStore();
-    let ready=true, sessionsReady=true, ws='ws-a', slug='a', deepLink;
+    let ready=true, sessionsReady=true, ws='ws-a', slug='a', remote='remote-a', deepLink;
     let state, pagesChanged;
     const pageRequests=[], pageSubscriptions=[], deepSubscriptions=[], createRequests=[], commands=[], inputs=[], messages=[], scheduled=[];
     const nativeSetTimeout=window.setTimeout;
@@ -34,7 +34,7 @@ async function fixtureBundle() {
       getPages: workspaceId=>new Promise(resolve=>pageRequests.push({workspaceId,resolve})),
       onPagesChanged: callback=>{pagesChanged=callback;pageSubscriptions.push(callback);return()=>{if(pagesChanged===callback)pagesChanged=undefined}},
       listLabels: async()=>[], onLabelsChanged: ()=>()=>{},
-      onDeepLinkNavigate: callback=>{ deepLink=callback; deepSubscriptions.push({callback,workspaceId:ws}); return()=>{deepLink=undefined}; },
+      onDeepLinkNavigate: callback=>{ deepLink=callback; deepSubscriptions.push({callback,workspaceId:ws,remoteWorkspaceId:remote}); return()=>{deepLink=undefined}; },
       sessionCommand: async(id,command)=>{commands.push({id,command})},
       sendMessage: async(id,input)=>{messages.push({id,input})},
     };
@@ -48,20 +48,24 @@ async function fixtureBundle() {
       return React.createElement('output',{'data-testid':'navigation', 'data-route':route, 'data-workspace':ws, 'data-ready':String(ready)},JSON.stringify({nav:state.navigationState,panels,revision:state.navigationRevision}));
     }
     const root=createRoot(document.getElementById('root'));
+    // Production callback identities can stay stable across a remote-only owner
+    // change. Recreating them in render would mask a missing effect dependency.
+    const onSwitchWorkspaceBySlug=next=>{slug=next;ws='ws-'+next;remote=ws==='ws-a'?'remote-a':null;render()};
+    const onCreateSession=workspaceId=>new Promise(resolve=>createRequests.push({workspaceId,resolve}));
+    const onInputChange=(id,input)=>{inputs.push({id,input})};
     function render() { root.render(React.createElement(Provider,{store},React.createElement(NavigationProvider,{
-      workspaceId:ws, workspaceSlug:slug, remoteWorkspaceId:ws==='ws-a'?'remote-a':null,
-      isReady:ready,isSessionsReady:sessionsReady,onSwitchWorkspaceBySlug(next){slug=next;ws='ws-'+next;render()},
-      onCreateSession:workspaceId=>new Promise(resolve=>createRequests.push({workspaceId,resolve})),
-      onInputChange:(id,input)=>{inputs.push({id,input})},
+      workspaceId:ws, workspaceSlug:slug, remoteWorkspaceId:remote,
+      isReady:ready,isSessionsReady:sessionsReady,onSwitchWorkspaceBySlug,onCreateSession,onInputChange,
     },React.createElement(Probe)))); }
     window.ui001nav={
       navigate: (route,options)=>state.navigate(route,options),
       deep: view=>deepLink({view}),
       deepPayload: payload=>deepLink(payload),
       deepRetained: (index,payload)=>deepSubscriptions[index].callback(payload),
-      deepListeners: ()=>deepSubscriptions.map((entry,index)=>({index,workspaceId:entry.workspaceId})),
+      deepListeners: ()=>deepSubscriptions.map((entry,index)=>({index,workspaceId:entry.workspaceId,remoteWorkspaceId:entry.remoteWorkspaceId})),
       ready(value,sessions=value){ready=value;sessionsReady=sessions;render()},
-      workspace(id, nextSlug){ws=id;slug=nextSlug;render()},
+      workspace(id, nextSlug){ws=id;slug=nextSlug;remote=ws==='ws-a'?'remote-a':null;render()},
+      remote(value){remote=value;render()},
       delete(id){const next=new Map(store.get(sessionMetaMapAtom));next.delete(id);store.set(sessionMetaMapAtom,next)},
       publishSession(id){const next=new Map(store.get(sessionMetaMapAtom));next.set(id,{id,workspaceId:ws,lastMessageAt:10});store.set(sessionMetaMapAtom,next)},
       pages(){return store.get(pagesAtom)},
@@ -450,6 +454,57 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({
       commands:[{id:'current-deep',command:{type:'rename',name:'deep name'}}],inputs:[{id:'current-deep',input:'hello &/%ZZ'}],messages:[],
     })
+  })
+
+  browserTest('remote-only ownership rotation installs a current deep-link listener with stable callbacks',async()=>{
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    const initial=await page.evaluate(()=>(window as any).ui001nav.deepListeners().at(-1).index)
+    await page.evaluate(()=>(window as any).ui001nav.remote(null))
+    await page.waitForFunction(index=>{
+      const current=(window as any).ui001nav.deepListeners().at(-1)
+      return current.index>index&&current.workspaceId==='ws-a'&&current.remoteWorkspaceId===null
+    },initial)
+    await page.evaluate(()=>(window as any).ui001nav.deep('notes/note/current-local-owner'))
+    await routeIs('notes/note/current-local-owner')
+    const local=await page.evaluate(()=>(window as any).ui001nav.deepListeners().at(-1).index)
+    await page.evaluate(()=>(window as any).ui001nav.remote('remote-new'))
+    await page.waitForFunction(index=>{
+      const current=(window as any).ui001nav.deepListeners().at(-1)
+      return current.index>index&&current.workspaceId==='ws-a'&&current.remoteWorkspaceId==='remote-new'
+    },local)
+    await page.evaluate(()=>{
+      (window as any).ui001nav.holdActionTimers()
+      ;(window as any).ui001nav.deepPayload({action:'new-chat',actionParams:{input:'current-remote-owner'}})
+    })
+    await page.waitForFunction(()=>(window as any).ui001nav.creations().length===1)
+    expect(await page.evaluate(()=>(window as any).ui001nav.creations())).toEqual([{workspaceId:'ws-a'}])
+    await page.evaluate(()=>(window as any).ui001nav.resolveCreate(0,'created-remote-owner'))
+    await page.waitForFunction(()=>(window as any).ui001nav.timers()===1)
+    await routeIs('allSessions/session/created-remote-owner')
+    await page.evaluate(()=>(window as any).ui001nav.fireActionTimers())
+    expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[{id:'created-remote-owner',input:'current-remote-owner'}],messages:[]})
+  })
+
+  browserTest('retained remote-owner listeners cannot navigate create or send after remote-only ABA',async()=>{
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    const former=await page.evaluate(()=>(window as any).ui001nav.deepListeners().at(-1).index)
+    await page.evaluate(()=>(window as any).ui001nav.remote('remote-new'))
+    await page.waitForFunction(index=>(window as any).ui001nav.deepListeners().at(-1).index>index,former)
+    const intervening=await page.evaluate(()=>(window as any).ui001nav.deepListeners().at(-1).index)
+    await page.evaluate(()=>(window as any).ui001nav.remote('remote-a'))
+    await page.waitForFunction(index=>(window as any).ui001nav.deepListeners().at(-1).index>index,intervening)
+    await page.evaluate(({former,intervening})=>{
+      for(const index of [former,intervening]){
+        (window as any).ui001nav.deepRetained(index,{view:'notes/note/stale-remote-owner'})
+        ;(window as any).ui001nav.deepRetained(index,{action:'new-session',actionParams:{input:'stale-remote-owner',send:'true'}})
+      }
+    },{former,intervening})
+    await page.waitForTimeout(100)
+    expect((await snapshot()).panels[0].route).toBe('home')
+    expect(await page.evaluate(()=>(window as any).ui001nav.creations())).toEqual([])
+    expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[],messages:[]})
+    await page.evaluate(()=>(window as any).ui001nav.deep('notes/note/current-after-remote-aba'))
+    await routeIs('notes/note/current-after-remote-aba')
   })
 
 })
