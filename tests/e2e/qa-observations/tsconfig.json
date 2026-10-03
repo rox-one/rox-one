@@ -1,0 +1,14 @@
+{
+  "extends": "../../../apps/electron/tsconfig.json",
+  "include": [
+    "fixture.tsx",
+    "stubs.tsx",
+    "observations.spec.ts",
+    "backend-fixture.ts",
+    "backend-server.ts",
+    "backend-detail.isolated.ts",
+    "../../../apps/electron/src/shared/openclaw-host-control.ts",
+    "../../../apps/electron/src/renderer/vite-env.d.ts",
+    "../../../packages/shared/src/**/*.d.ts"
+  ]
+}

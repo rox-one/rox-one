@@ -13,8 +13,11 @@ export async function assertNoteReadPath(notesRoot: string, path: string): Promi
   const source = await lstat(root)
   if (source.isSymbolicLink() || await realpath(root) !== root) throw new CodedError('AUTH_FAILED', 'Document symlink access denied')
   if (!source.isDirectory()) throw new CodedError('DOCUMENT_AUTHORITY_CHANGED', 'Notes source is no longer a directory')
-  let current = candidate
-  while (current !== root) {
+  const components: string[] = []
+  for (let current = candidate; current !== root; current = dirname(current)) components.unshift(current)
+  // Check ancestors first: lstat(child) otherwise reports ENOTDIR before we
+  // can identify a corrupt parent as an authority change.
+  for (const current of components) {
     try {
       const entry = await lstat(current)
       if (entry.isSymbolicLink() || await realpath(current) !== current) throw new CodedError('AUTH_FAILED', 'Document symlink access denied')
@@ -25,7 +28,6 @@ export async function assertNoteReadPath(notesRoot: string, path: string): Promi
       if (!(error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT'
         && 'path' in error && error.path === current)) throw error
     }
-    current = dirname(current)
   }
 }
 

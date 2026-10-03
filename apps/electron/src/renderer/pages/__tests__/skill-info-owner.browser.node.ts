@@ -78,7 +78,7 @@ describe('current SkillInfoPage catalog/draft/save ownership', { skip: !enabled 
     try { await browser?.close() } finally { await closed }
   },30_000)
 
-  browserTest('watcher reads the complete same-directory catalog and preserves edited fields', async () => {
+  browserTest('watcher reloads selected detail in the same directory and preserves edited fields', async () => {
     await loadItem()
     await page.locator('input:not([disabled])').fill('Local name')
     await page.locator('textarea').nth(1).fill('Local instructions')
