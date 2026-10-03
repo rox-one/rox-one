@@ -50,6 +50,11 @@ async function fixtureBundle() {
     import * as storage from './apps/electron/src/renderer/lib/local-storage';
     import { loadShellLayout, commitShellLayout } from './apps/electron/src/renderer/lib/shell-layout-preferences';
     import { createStore, getDefaultStore } from 'jotai/vanilla';
+    import { useStore, useAtomValue as useRuntimeAtomValue } from 'jotai';
+    import { useSession } from './apps/electron/src/renderer/hooks/useSession';
+    import { runtimeTraceScopeKey, runtimeTraceSessionAtomFamily } from './apps/electron/src/renderer/atoms/runtime-trace';
+    import { loadRuntimeTrace } from './apps/electron/src/renderer/event-processor/runtime-trace-ingress';
+    import { runtimeCatalogCapabilities, runtimeCatalogScope } from './apps/electron/src/renderer/lib/runtime-catalog-capabilities';
     import * as guards from './apps/electron/src/shared/types';
     import { resolveRouteNavigationState as parseRouteToNavigationState, buildRouteFromNavigationState } from './apps/electron/src/shared/route-parser';
     import { inspectorPanelWidthAtom, bottomDockHeightAtom, bottomTerminalOpenAtom } from './apps/electron/src/renderer/atoms/unified-shell';
@@ -66,6 +71,7 @@ async function fixtureBundle() {
     const sourceListeners = new Set(), skillListeners = new Set(), reads = [];
     let deferredSource, deferredCloud, delaySource = false, delayCloud = false, failSource = false, failPage = false, rejectLazy = false, lazyAttempts = 0, cloudRows = ['a','b'], failCloud = false;
     window.electronAPI = {
+      getRuntimeTraceSnapshot: async ({workspaceId,sessionId}) => ({schemaVersion:1,workspaceId,sessionId,runs:[],events:[],coverage:{state:'complete',source:'runtime',missing:[]}}),
       getSources(ws) { reads.push(['sources', ws]); if(failSource) { failSource=false; return Promise.reject(new Error('fixture transport offline')); } if (!delaySource) return Promise.resolve(rows);
         delaySource = false; return new Promise(resolve => { deferredSource = resolve }); },
       getSkills(ws, cwd) { reads.push(['skills', ws, cwd]); return Promise.resolve([]); },
@@ -81,7 +87,8 @@ async function fixtureBundle() {
     const useNavigation = () => ({...useFixtureNavigation(),isSessionsReady:sessionsReady});
     const useAppShellContext = () => ({activeWorkspaceId:workspace,workspaces:[{id:workspace,remoteServer:remoteWorkspaceId?{remoteWorkspaceId}:undefined}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]});
     const useTranslation = () => ({ t: key => key });
-    const useAtomValue = atom => atom === sessionMetaMapAtom ? sessionMetas : [];
+    const useAtomValue = atom => atom === sessionMetaMapAtom ? sessionMetas
+      : atom === automationsAtom || atom === knowledgeHomeViewAtom || atom === knowledgeActiveViewIdAtom ? [] : useRuntimeAtomValue(atom);
     const useSetAtom = () => () => {};
     const sessionMetaMapAtom = Symbol(), automationsAtom = Symbol(), knowledgeHomeViewAtom = Symbol(), knowledgeActiveViewIdAtom = Symbol();
     const selection = {useIsMultiSelectActive:()=>false,useSelectionCount:()=>0,useSelectedIds:()=>new Set(),useSelection:()=>({clearMultiSelect(){}})};

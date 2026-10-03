@@ -88,7 +88,7 @@ async function bundle() {
     import {lazyRoutePage,RouteErrorBoundary} from './apps/electron/src/renderer/lib/route-recovery';
     import {useCallback,useEffect,useMemo,useState} from 'react';
     import {createRoot} from 'react-dom/client';
-    import {Provider,atom,createStore,useAtomValue,useSetAtom} from 'jotai';
+    import {Provider,atom,createStore,useAtomValue,useSetAtom,useStore} from 'jotai';
     import {NavigationProvider,useNavigation,useNavigationState} from './apps/electron/src/renderer/contexts/NavigationContext';
     import {CompactWorkspaceMenu} from './apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu';
     import {APP_NAV_DESTINATIONS} from './apps/electron/src/renderer/components/app-shell/nav-destinations';
@@ -96,6 +96,9 @@ async function bundle() {
     import {panelStackAtom,focusedPanelIdAtom,focusedSessionIdAtom} from './apps/electron/src/renderer/atoms/panel-stack';
     import {sessionMetaMapAtom} from './apps/electron/src/renderer/atoms/sessions';
     import {useSession} from './apps/electron/src/renderer/hooks/useSession';
+    import {runtimeTraceScopeKey,runtimeTraceSessionAtomFamily} from './apps/electron/src/renderer/atoms/runtime-trace';
+    import {loadRuntimeTrace} from './apps/electron/src/renderer/event-processor/runtime-trace-ingress';
+    import {runtimeCatalogCapabilities,runtimeCatalogScope} from './apps/electron/src/renderer/lib/runtime-catalog-capabilities';
     import {sourceSelection,skillSelection,automationSelection} from './apps/electron/src/renderer/hooks/useEntitySelection';
     import * as guards from './apps/electron/src/shared/types';
     import {resolveViewRoute,buildRouteFromNavigationState} from './apps/electron/src/shared/route-parser';
@@ -111,6 +114,7 @@ async function bundle() {
     const records=[{id:'s1',workspaceId:'ws-a',name:'Session A'},{id:'s2',workspaceId:'ws-b',name:'Session B'}];
     store.set(sessionMetaMapAtom,new Map(records.map(x=>[x.id,x])));
     window.electronAPI={
+      getRuntimeTraceSnapshot:async({workspaceId,sessionId})=>({schemaVersion:1,workspaceId,sessionId,runs:[],events:[],coverage:{state:'complete',source:'runtime',missing:[]}}),
       listLabels:async()=>[],onLabelsChanged:callback=>{labels.add(callback);return()=>labels.delete(callback)},
       getSources:async()=>[{config:{slug:'src',name:'Fixture source',type:'local'}}],
       getSkills:async()=>[{slug:'skill'}],

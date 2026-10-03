@@ -17,6 +17,8 @@ import { sessionMetaMapAtom } from '../../../atoms/sessions'
 import { preserveRouteQuery, normalizePanelRouteForReconcile } from '../../../contexts/navigation-reconcile'
 
 import { decodePanelEntries, encodePanelEntries } from '../../../lib/panel-url'
+import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey } from '../../../atoms/runtime-trace'
+import { parseRuntimeMapViewRequest } from '../../../../shared/runtime-map-link'
 
 const navURL = new URL('../../../contexts/NavigationContext.tsx', import.meta.url)
 const shellURL = new URL('../AppShell.tsx', import.meta.url)
@@ -41,12 +43,15 @@ function productionClosure(url: URL, name: string, bindings: Record<string, unkn
 
 function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspace') {
   const store = createStore()
+  const requestRuntimeSelection = productionClosure(navURL, 'requestRuntimeSelection', {
+    store, workspaceId: 'a', runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey, parseRuntimeMapViewRequest,
+  })
   const requestedWorkspaceSlugRef = { current: initialRequestedWorkspace }
   let requestedWorkspaceSlug = requestedWorkspaceSlugRef.current
   const rightSidebarRef = { current: undefined as unknown }
   const writes: unknown[] = [], historyWrites: unknown[] = [], persisted: unknown[] = []
   const reconcile = productionClosure(navURL, 'reconcileFromUrlParams', {
-    store, reconcilePanelStackAtom, parseRouteToNavigationState, normalizePanelRouteForReconcile, decodePanelEntries,
+    store, requestRuntimeSelection, reconcilePanelStackAtom, parseRouteToNavigationState, normalizePanelRouteForReconcile, decodePanelEntries,
     resolveAutoSelectionRef: { current: (state: unknown) => state }, rightSidebarRef, setRightSidebar: () => {},
   })
   const params = new URLSearchParams({ ws: 'deleted-workspace', route: 'notes/note/retained' })
@@ -54,7 +59,7 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   reconcile(params)
   const navigate = productionClosure(navURL, 'navigate', {
     parseRoute, resolveRouteNavigationState, parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState, buildRouteFromNavigationState, preserveRouteQuery, isSessionsNavigation, navigationOwnerRef: { current: { active: true, revision: 0 } },
-    store, updateFocusedPanelRouteAtom, sessionMetaMapAtom, workspaceId: 'a', remoteWorkspaceId: null,
+    store, requestRuntimeSelection, updateFocusedPanelRouteAtom, sessionMetaMapAtom, workspaceId: 'a', remoteWorkspaceId: null,
     workspaceSlug: 'a', requestedWorkspaceSlugRef, setRequestedWorkspaceSlug: (value: string) => { requestedWorkspaceSlug = value },
     isReady: true, isSessionsReady: true, initialRouteRestoredRef: { current: true }, isPopstateSwitchRef: { current: false },
     suppressPushRef: { current: true }, pendingUrlRestoreRef: { current: null },

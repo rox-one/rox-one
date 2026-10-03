@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "root": "/tmp/rox-branch-integration-20261003/infra-toolchain-runner-worktree",
+  "suites": [
+    {
+      "path": "packages/shared/src/toolchain/__tests__/acpx.test.ts",
+      "runner": "bun",
+      "sha256": "aec35ac675fbefebe5c1578d2ee27cca6a4a29ffb0da8d88fac2c3c93e8bc383"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/craft-native.test.ts",
+      "runner": "bun",
+      "sha256": "2a17130b71019e2fb6ec4b4b8f3b247345f52326b23b37cee24e8f58279d7a83"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/downloader.test.ts",
+      "runner": "bun",
+      "sha256": "26c04159c1d7588d8965185f9b5327902774693b042aab90c93cbae3cc602ed8"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/exec.test.ts",
+      "runner": "bun",
+      "sha256": "351b335dad6e8eb0e640eb45da7a5fc9271a417d6d5bd1912623630ad5829959"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/generated-readiness.test.ts",
+      "runner": "bun",
+      "sha256": "d676ee21239395402416dd1806f430505139b8fcf5e5095035106f1a0e64c54d"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/installer-git-npm.test.ts",
+      "runner": "bun",
+      "sha256": "b4441f2f5c7e55c6d1a29ca21e86984e2ebbbd0b59fdf9d2831345aae8dacbe3"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/installer.test.ts",
+      "runner": "bun",
+      "sha256": "c0dae3ff6789db89f6d6d3e5770a3e22cd61e81f494221f1981896f871aca806"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/kinds.test.ts",
+      "runner": "bun",
+      "sha256": "822aa36d69812872a924f25a0f13369adfd07c0647686af65ae23869d1286d4b"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/manager.test.ts",
+      "runner": "bun",
+      "sha256": "8683cb883a9eb84a89e77db0d6f96af38f82d1932ca023999c5732ed7d9569c8"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/manifest.test.ts",
+      "runner": "bun",
+      "sha256": "5929e12d72e84a5321cb743eafb03ed1d0b57ef5f5a41526957a60e5db3de73c"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/openclaw.test.ts",
+      "runner": "bun",
+      "sha256": "fb44ee07c517f272c1e5d223f813d14d18c74c6531332eb91ef14deff6521ea2"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/resolver.test.ts",
+      "runner": "bun",
+      "sha256": "17c66add63e1e3814b6a3cf4b201d343a253941c188def39f9b5056d12803555"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-isolation.test.ts",
+      "runner": "bun",
+      "sha256": "410bd5ffa7285b4c374e9a72e8c472bfebbc0e13cbb466b67e63bef9ed855b2a"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts",
+      "runner": "bun",
+      "sha256": "0ce9998a5ad4e41141be0930bcf07abf1258258b7e2ce535398f4bedc167450c"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/windows-bootstrap.test.ts",
+      "runner": "bun",
+      "sha256": "e0d2fe367f84320b68e4f2730c41dad3e2b1d13d0601ee1e07e662dad7b46312"
+    }
+  ],
+  "discovery": {
+    "inventory": "filesystem-fallback",
+    "standard": "Every actual *.test.ts file in packages/shared/src/toolchain/__tests__, explicitly scoped",
+    "supplemental": "No other repository suites included",
+    "omittedDirectories": [],
+    "hiddenStandardFiles": 0
+  }
+}

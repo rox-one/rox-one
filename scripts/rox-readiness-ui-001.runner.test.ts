@@ -51,7 +51,7 @@ describe('UI-001 repository test runner', () => {
       const handle = await actualOpen(...args)
       if (String(args[0]) === path) {
         const actualStat = handle.stat.bind(handle)
-        handle.stat = (async () => { const result = await actualStat(); swap(); return result }) as typeof handle.stat
+        handle.stat = (async (options?: any) => { const result = await actualStat(options); swap(); return result }) as typeof handle.stat
       }
       return handle
     })
@@ -89,7 +89,7 @@ describe('UI-001 repository test runner', () => {
       const handle = await actualOpen(...args)
       if (String(args[0]).endsWith('output.log') && typeof args[1] === 'number' && (args[1] & nativeFs.constants.O_APPEND)) {
         const actualStat = handle.stat.bind(handle)
-        handle.stat = (async () => { const result = await actualStat(); swap(String(args[0])); return result }) as typeof handle.stat
+        handle.stat = (async (options?: any) => { const result = await actualStat(options); swap(String(args[0])); return result }) as typeof handle.stat
       }
       return handle
     })
@@ -102,6 +102,34 @@ describe('UI-001 repository test runner', () => {
       expect(outcome).toMatchObject({ error: expect.objectContaining({ message: 'Execution log is not a regular file' }) })
     } finally { checkedPath.mockRestore(); checkedHandle.mockRestore() }
   }, 20_000)
+
+  test('discovery denies whole ancestor replacement at open before reading foreign bytes', async () => {
+    const outer=fixture(), root=join(outer,'source'), path=join(root,'a.test.ts');
+    file(root,'a.test.ts',"import {test} from 'bun:test';test('original',()=>{})")
+    const original=nativeFsPromises.open;let attacked=false,reads=0
+    const held=spyOn(nativeFsPromises,'open').mockImplementation(async (...args:Parameters<typeof original>)=>{
+      if(String(args[0])===path&&!attacked){attacked=true;nativeFs.renameSync(root,join(outer,'retired'));file(root,'a.test.ts',"import {test} from 'bun:test';test('FOREIGN',()=>{})")}
+      const handle=await original(...args)
+      if(String(args[0])===path){const read=handle.read.bind(handle);handle.read=((...parameters:any[])=>{reads++;return (read as any)(...parameters)}) as typeof handle.read}
+      return handle
+    })
+    try{await expect((await runner()).discoverSuites(root)).rejects.toThrow('ancestor changed');expect(attacked).toBe(true);expect(reads).toBe(0)}finally{held.mockRestore()}
+  },20_000)
+
+  test('oversized test sources fail discovery without reading any source bytes', async () => {
+    const root=fixture(),path=join(root,'large.test.ts');file(root,'large.test.ts',"import {test} from 'bun:test';test('never execute',()=>{})")
+    nativeFs.truncateSync(path,16*1024*1024+1)
+    const original=nativeFsPromises.open;let reads=0
+    const held=spyOn(nativeFsPromises,'open').mockImplementation(async(...args:Parameters<typeof original>)=>{const handle=await original(...args);if(String(args[0])===path){const read=handle.read.bind(handle);handle.read=((...parameters:any[])=>{reads++;return (read as any)(...parameters)}) as typeof handle.read}return handle})
+    try{await expect((await runner()).discoverSuites(root)).rejects.toThrow('bounded read limit');expect(reads).toBe(0)}finally{held.mockRestore()}
+  },20_000)
+
+  test('an actual child output flood is bounded and cannot be accepted as complete output', async () => {
+    const api=await runner(),root=fixture()
+    const result=await api.captureTestCommand(['node','--eval',"process.stdout.write('x'.repeat(50000));setInterval(()=>{},1000)"],{cwd:root,maxOutputBytes:8192,timeoutMs:3000})
+    expect(result.terminationReason).toBe('output-limit');expect(result.stdout.length+result.stderr.length).toBe(8192);expect(result.timedOut).toBe(false)
+    await expect(api.captureTestCommand(['node','--version'],{maxOutputBytes:0})).rejects.toThrow('Output limit')
+  },20_000)
 
   test('actual fast-exit Git, Node and Bun commands retain stdout, stderr and real failure codes', async () => {
     const root = fixture(), api = await runner()

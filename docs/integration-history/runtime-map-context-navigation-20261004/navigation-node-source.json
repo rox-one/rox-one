@@ -1,0 +1,14 @@
+{
+  "marker": "rox-product-tour-unchanged-browser-bodies-node-lifecycle",
+  "test": "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+  "node": "v22.23.3",
+  "adapter": "200dbfce2e2c22d7aae4ac32b682b13985daa1432cc3a39a202c75c55b98948b",
+  "sources": {
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "014a4208c126301350ded68a7baef03556e4169fc030f3e202776b0d650ccbf8",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser-owner.ts": "3fae87dd3126c1330ae05142d01743ba38784e66f035a9ca7c606c2934205c35",
+    "test-results/product-tour/navigation-node-adapter.mjs": "200dbfce2e2c22d7aae4ac32b682b13985daa1432cc3a39a202c75c55b98948b"
+  },
+  "assertionsRewritten": false,
+  "productionImportsReplaced": false,
+  "caseTimeoutsRewritten": false
+}

@@ -13,6 +13,8 @@ import { rendererEffect as productionRendererEffect, deferred, settle } from '..
 
 import { decodePanelEntries, encodePanelEntries } from '../../lib/panel-url'
 import { focusedPanelIdAtom, focusedPanelRouteAtom } from '../../atoms/panel-stack'
+import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey } from '../../atoms/runtime-trace'
+import { parseRuntimeMapViewRequest } from '../../../shared/runtime-map-link'
 
 const sourcePath = process.env.ROX_UI001_NAV_SOURCE
   ? pathToFileURL(process.env.ROX_UI001_NAV_SOURCE) : new URL('../NavigationContext.tsx', import.meta.url)
@@ -23,7 +25,8 @@ const callbacks = new Map<string, string>()
 // Supply the merged production lifecycle/codec boundaries without changing any callback body.
 function mergedBindings(bindings: Record<string, any>): Record<string, any> {
   const owner = bindings.pendingNavigationRef?.current?.owner ?? { active: true, revision: 0 }
-  return { navigationOwnerRef: { current: owner }, decodePanelEntries, encodePanelEntries, preserveRouteQuery,
+  const scope = { navigationOwnerRef: { current: owner }, decodePanelEntries, encodePanelEntries, preserveRouteQuery,
+    runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey, parseRuntimeMapViewRequest,
     parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState,
     isReady: true, isSessionsReady: true, pendingUrlRestoreRef: { current: null },
     historyMountedRef: { current: true }, historyReconcileRevisionRef: { current: 0 },
@@ -35,6 +38,7 @@ function mergedBindings(bindings: Record<string, any>): Record<string, any> {
     setRequestedWorkspaceSlug: () => {}, suppressAutoSelectRef: { current: false },
     setNavigationRevision: () => {}, focusedPanelIdAtom, focusedPanelRouteAtom,
     ...bindings }
+  return { ...scope, requestRuntimeSelection: productionCallback('requestRuntimeSelection', scope) }
 }
 function rendererEffect(path: URL, text: string, bindings: Record<string, any>) {
   const scope = mergedBindings(bindings)
@@ -54,6 +58,11 @@ function callback(name: string, inputBindings: Record<string, any>) {
       get: (atom: unknown) => atom === focusedPanelIdAtom ? 'fixture' : route,
       set: (atom: unknown, value: unknown) => { if (atom === bindings.updateFocusedPanelRouteAtom) route = String(value); originalSet(atom, value) } }
   }
+  return productionCallback(name, bindings)
+}
+
+// Bind new composed operations to their actual source callback and imported atoms.
+function productionCallback(name: string, bindings: Record<string, any>) {
   const cached = callbacks.get(name)
   if (cached) return Function(...Object.keys(bindings), cached)(...Object.values(bindings))
   let expression: ts.Expression | undefined

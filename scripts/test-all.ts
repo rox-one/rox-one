@@ -9,7 +9,7 @@
  */
 import { createHash } from 'node:crypto'
 import { accessSync, constants, existsSync, readFileSync, statSync } from 'node:fs'
-import { lstat, mkdir, mkdtemp, open, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, mkdtemp, open, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import ts from 'typescript'
@@ -88,18 +88,21 @@ const portable = (value: string) => value.split('\\').join('/')
 // bytes rather than relying on the affected capture path.
 const NODE_CAPTURE_DRIVER = [
   "import { spawn } from 'node:child_process'",
+  "import { createHash } from 'node:crypto'",
   "import { closeSync, openSync, readFileSync, writeFileSync, writeSync } from 'node:fs'",
   "const input = JSON.parse(readFileSync(process.argv[2], 'utf8'))",
   "const stdout = openSync(input.stdout, 'wx', 0o600)",
   "const stderr = openSync(input.stderr, 'wx', 0o600)",
   "const log = input.log ? openSync(input.log, 'wx', 0o600) : null",
   "let stdoutBytes = 0, stderrBytes = 0, error, cleanupError",
+  "const stdoutHash = createHash('sha256'), stderrHash = createHash('sha256')",
   "const grouped = process.platform !== 'win32'",
   "const child = spawn(input.command[0], input.command.slice(1), { cwd: input.cwd, env: input.environment, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, detached: grouped })",
   "const write = (descriptor, chunk) => { let offset = 0; while (offset < chunk.length) offset += writeSync(descriptor, chunk, offset, chunk.length - offset) }",
   "const record = (descriptor, chunk) => { write(descriptor, chunk); if (log !== null) write(log, chunk) }",
-  "child.stdout.on('data', chunk => { record(stdout, chunk); stdoutBytes += chunk.length })",
-  "child.stderr.on('data', chunk => { record(stderr, chunk); stderrBytes += chunk.length })",
+  "const retain = (descriptor, digest, chunk, isStdout) => { const remaining = Math.max(0, input.maxOutputBytes - stdoutBytes - stderrBytes); const bytes = chunk.subarray(0, remaining); try { record(descriptor, bytes); digest.update(bytes); if (isStdout) stdoutBytes += bytes.length; else stderrBytes += bytes.length } catch (failure) { error = failure.message; stop('capture-failure') } if (bytes.length !== chunk.length) stop('output-limit') }",
+  "child.stdout.on('data', chunk => retain(stdout, stdoutHash, chunk, true))",
+  "child.stderr.on('data', chunk => retain(stderr, stderrHash, chunk, false))",
   "child.on('error', failure => { error = failure.message })",
   "const killTree = force => {",
   "  if (!child.pid) return",
@@ -119,7 +122,7 @@ const NODE_CAPTURE_DRIVER = [
   "clearInterval(parentCheck); clearTimeout(deadline); if (forceStop) clearTimeout(forceStop); if (cleanupDeadline) clearTimeout(cleanupDeadline)",
   "if (stopped) killTree(true)",
   "closeSync(stdout); closeSync(stderr); if (log !== null) closeSync(log)",
-  "writeFileSync(input.result, JSON.stringify({ ...result, error, cleanupError, timedOut, terminationReason, timeoutMs: input.timeoutMs, processId: child.pid ?? null, nodeVersion: process.version, stdoutBytes, stderrBytes }), { flag: 'wx', mode: 0o600 })",
+  "writeFileSync(input.result, JSON.stringify({ ...result, error, cleanupError, timedOut, terminationReason, timeoutMs: input.timeoutMs, processId: child.pid ?? null, nodeVersion: process.version, stdoutBytes, stderrBytes, stdoutSha256: stdoutHash.digest('hex'), stderrSha256: stderrHash.digest('hex') }), { flag: 'wx', mode: 0o600 })",
 ].join('\n')
 
 /** Capture real command output without Bun test's subprocess capture path. */
@@ -128,10 +131,13 @@ export async function captureTestCommand(command: string[], options: {
   environment?: NodeJS.ProcessEnv
   log?: string
   timeoutMs?: number
+  maxOutputBytes?: number
 } = {}): Promise<{ exitCode: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string; nodeVersion: string; timedOut: boolean; timeoutMs: number; terminationReason?: string }> {
   if (!command[0]) throw new Error('A captured command requires an executable')
   const timeoutMs = options.timeoutMs ?? DEFAULT_WHOLE_SUITE_TIMEOUT_MS
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 3_600_000) throw new Error('Command timeout must be a positive integer at most 3600000')
+  const maxOutputBytes = options.maxOutputBytes ?? MAX_CAPTURE_BYTES
+  if (!Number.isSafeInteger(maxOutputBytes) || maxOutputBytes < 1 || maxOutputBytes > MAX_CAPTURE_BYTES) throw new Error('Output limit must be a positive integer at most 67108864')
   const directory = await mkdtemp(join(tmpdir(), 'rox-test-capture-'))
   const driver = join(directory, 'capture.mjs'), input = join(directory, 'input.json'), result = join(directory, 'result.json')
   const stdoutPath = join(directory, 'stdout'), stderrPath = join(directory, 'stderr')
@@ -140,20 +146,23 @@ export async function captureTestCommand(command: string[], options: {
     await writeFile(driver, NODE_CAPTURE_DRIVER, { flag: 'wx', mode: 0o600 })
     // Environment values can include integration credentials; the protected
     // transient input is removed together with the capture directory.
-    await writeFile(input, JSON.stringify({ command, cwd: options.cwd ?? process.cwd(), environment, log: options.log, timeoutMs,
+    await writeFile(input, JSON.stringify({ command, cwd: options.cwd ?? process.cwd(), environment, log: options.log, timeoutMs, maxOutputBytes,
       stdout: stdoutPath, stderr: stderrPath, result, parentPid: process.pid }), { flag: 'wx', mode: 0o600 })
     const broker = Bun.spawn(['node', driver, input], { env: environment, stdin: 'ignore', stdout: 'ignore', stderr: 'ignore' })
     const brokerExit = await broker.exited
     if (brokerExit !== 0 || !existsSync(result)) throw new Error(`Node command capture did not complete (exit ${brokerExit})`)
-    const receipt = JSON.parse(await readFile(result, 'utf8'))
+    const receiptBytes = await readRegularFile(result, 64 * 1024)
+    if (!receiptBytes) throw new Error('Command capture receipt is not a regular file')
+    const receipt = JSON.parse(receiptBytes.toString('utf8'))
     if (receipt.error) throw new Error(`Command capture failed: ${receipt.error}`)
     if (!(receipt.exitCode === null || Number.isInteger(receipt.exitCode)) ||
       !(receipt.signal === null || typeof receipt.signal === 'string') || typeof receipt.nodeVersion !== 'string' ||
       typeof receipt.timedOut !== 'boolean' || receipt.timeoutMs !== timeoutMs) {
       throw new Error('Node command capture returned an invalid completion receipt')
     }
-    const [stdout, stderr] = await Promise.all([readFile(stdoutPath), readFile(stderrPath)])
-    if (stdout.length !== receipt.stdoutBytes || stderr.length !== receipt.stderrBytes) throw new Error('Node command capture returned incomplete output')
+    const [stdout, stderr] = await Promise.all([readRegularFile(stdoutPath, maxOutputBytes), readRegularFile(stderrPath, maxOutputBytes)])
+    if (!stdout || !stderr || stdout.length !== receipt.stdoutBytes || stderr.length !== receipt.stderrBytes) throw new Error('Node command capture returned incomplete output')
+    if (hash(stdout) !== receipt.stdoutSha256 || hash(stderr) !== receipt.stderrSha256) throw new Error('Node command capture returned substituted output')
     if (receipt.cleanupError || receipt.closeObserved !== true) throw new Error('Command process-tree cleanup failed: ' + (receipt.cleanupError ?? 'child close was not observed'))
     return { exitCode: receipt.exitCode, signal: receipt.signal, nodeVersion: receipt.nodeVersion,
       stdout: stdout.toString('utf8'), stderr: stderr.toString('utf8'), timedOut: receipt.timedOut,
@@ -256,29 +265,72 @@ async function gitTestInventory(root: string): Promise<string[] | null> {
 }
 
 /** Check and use the same inode, even if its pathname changes during IO. */
+const MAX_TEST_SOURCE_BYTES = 16 * 1024 * 1024
+const MAX_CAPTURE_BYTES = 64 * 1024 * 1024
+const descriptorAncestors = new WeakMap<import('node:fs/promises').FileHandle, () => Promise<void>>()
+
 async function openRegularFile(path: string, flags: number, mode?: number) {
-  // Node does not expose these flags on Windows. Its fallback validates the
-  // directory entry against the already opened handle before reading/writing.
-  const noFollow = process.platform === 'win32' ? 0 : constants.O_NOFOLLOW ?? 0
-  const nonBlock = process.platform === 'win32' ? 0 : constants.O_NONBLOCK ?? 0
-  let file: Awaited<ReturnType<typeof open>>
+  const directory = await realpath(dirname(path))
+  const ancestors: Array<{ path: string; dev: bigint; ino: bigint }> = []
+  for (let parent = directory; ; parent = dirname(parent)) {
+    const stat = await lstat(parent, { bigint: true })
+    if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error('File ancestor changed')
+    ancestors.push({ path: parent, dev: stat.dev, ino: stat.ino })
+    if (dirname(parent) === parent) break
+  }
+  const assertAncestors = async () => {
+    if (await realpath(dirname(path)) !== directory) throw new Error('File ancestor changed')
+    for (const ancestor of ancestors) {
+      const stat = await lstat(ancestor.path, { bigint: true })
+      if (!stat.isDirectory() || stat.isSymbolicLink() || stat.dev !== ancestor.dev || stat.ino !== ancestor.ino
+        || await realpath(ancestor.path) !== ancestor.path) throw new Error('File ancestor changed')
+    }
+  }
+  const noFollow = constants.O_NOFOLLOW ?? 0, nonBlock = constants.O_NONBLOCK ?? 0
+  let file
   try { file = await open(path, flags | noFollow | nonBlock, mode) }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ELOOP') return null; throw error }
   let accepted = false
   try {
-    const entry = noFollow ? undefined : await lstat(path)
-    const inode = await file.stat()
+    // Windows has no O_NOFOLLOW: compare the opened inode with the current leaf.
+    const entry = noFollow ? undefined : await lstat(path, { bigint: true })
+    const inode = await file.stat({ bigint: true })
     if (!inode.isFile() || (entry && !entry.isFile())) return null
-    if (entry && (entry.dev !== inode.dev || entry.ino !== inode.ino)) throw new Error('File identity changed while opening: ' + path)
+    if (entry && (entry.dev !== inode.dev || entry.ino !== inode.ino)) throw new Error('File identity changed while opening')
+    await assertAncestors()
+    descriptorAncestors.set(file, assertAncestors)
     accepted = true
     return file
   } finally { if (!accepted) await file.close() }
 }
 
-async function readRegularFile(path: string) {
+/** Snapshot only bytes from the checked descriptor; later execution rechecks its hash.
+ * A renamed leaf can still be this same snapshot, but changed ancestors or writes
+ * must fail. Reads cannot allocate beyond the declared source/capture envelope. */
+async function readOpenedFile(file: import('node:fs/promises').FileHandle, maxBytes: number) {
+  const before = await file.stat({ bigint: true })
+  if (!before.isFile() || before.size > BigInt(maxBytes)) throw new Error('Regular file exceeds bounded read limit')
+  await descriptorAncestors.get(file)?.()
+  const chunks: Buffer[] = [], buffer = Buffer.alloc(Math.min(64 * 1024, maxBytes + 1))
+  let length = 0
+  while (true) {
+    const { bytesRead } = await file.read(buffer, 0, Math.min(buffer.length, maxBytes + 1 - length), length)
+    if (!bytesRead) break
+    length += bytesRead
+    if (length > maxBytes) throw new Error('Regular file exceeds bounded read limit')
+    chunks.push(Buffer.from(buffer.subarray(0, bytesRead)))
+  }
+  const after = await file.stat({ bigint: true })
+  if (!after.isFile() || after.dev !== before.dev || after.ino !== before.ino || after.size !== BigInt(length)
+    || after.size !== before.size || after.mtimeNs !== before.mtimeNs) throw new Error('File changed during bounded read')
+  await descriptorAncestors.get(file)?.()
+  return Buffer.concat(chunks, length)
+}
+
+async function readRegularFile(path: string, maxBytes = MAX_CAPTURE_BYTES + 64 * 1024) {
   const file = await openRegularFile(path, constants.O_RDONLY)
   if (!file) return null
-  try { return await file.readFile() } finally { await file.close() }
+  try { return await readOpenedFile(file, maxBytes) } finally { await file.close() }
 }
 
 async function appendExecutionError(path: string, message: string) {
@@ -316,7 +368,7 @@ export async function discoverSuites(inputRoot: string): Promise<SuiteManifest> 
     let content: Buffer
     try {
       if (hidden && !ISOLATED_TEST.test(name)) { manifest.discovery.hiddenStandardFiles += 1; return }
-      content = await file.readFile()
+      content = await readOpenedFile(file, MAX_TEST_SOURCE_BYTES)
     } finally { await file.close() }
     const dependencies = imports(content.toString('utf8'))
     const runner: TestRunner = dependencies.has('bun:test') ? 'bun'
@@ -453,7 +505,7 @@ export async function runSuites(options: {
     const result: SuiteResult = { path: suite.path, runner: suite.runner, status: 'blocked', exitCode: null, command: [], configRoot, homeRoot, log, logSha256: '', durationMs: 0, testCounts: null }
     const started = performance.now()
     try {
-      const source = await readRegularFile(join(root, suite.path))
+      const source = await readRegularFile(join(root, suite.path), MAX_TEST_SOURCE_BYTES)
       if (!source) throw new Error('Test source is not a regular file; regenerate the manifest')
       if (hash(source) !== suite.sha256) throw new Error('Test source changed since discovery; regenerate the manifest')
       if (suite.prerequisiteError) throw new Error(suite.prerequisiteError)

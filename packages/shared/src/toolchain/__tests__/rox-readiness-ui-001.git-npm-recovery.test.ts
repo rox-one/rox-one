@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it, spyOn } from 'bun:test';
 import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import * as nativeFs from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { getGitLock } from '../git-locks';
@@ -120,6 +121,27 @@ describe('UI-001 git-npm same-version recovery', () => {
     }));
     writeFileSync(join(current, 'source', '.git', 'HEAD'), `${'b'.repeat(40)}\n`);
     expect((await manager.status())[0]?.phase).toBe('missing');
+  });
+
+  it('Windows current copy allows only launcher links into its same verified version', async () => {
+    const fixture=makeFixture();usableInstall(fixture.versionDir);
+    renameSync(join(fixture.versionDir,'bin',launcherName),join(fixture.versionDir,'bin','gbrain.cmd'));writeState(fixture);
+    const current=join(fixture.paths.toolchainDir,entry.name,'current');rmSync(current);cpSync(fixture.versionDir,current,{recursive:true,dereference:true});
+    const launcher=join(current,'bin','gbrain.cmd');rmSync(launcher);symlinkSync(join(fixture.versionDir,'bin','gbrain.cmd'),launcher);
+    const manager=createManager(fixture.paths,{manifest:[entry],platform:'win32-x64',pathEnv:'',windowsBootstrap:null});expect((await manager.status())[0]?.phase).toBe('ready');
+    const foreign=join(fixture.paths.toolchainDir,entry.name,'other-version');usableInstall(foreign);rmSync(launcher);symlinkSync(join(foreign,'bin',launcherName),launcher);expect((await manager.status())[0]?.phase).toBe('missing');
+  });
+
+  it('a replaced version ancestor cannot supply foreign pin receipts before any bytes', async () => {
+    const fixture=makeFixture();usableInstall(fixture.versionDir);writeState(fixture);
+    const marker=realpathSync(join(fixture.versionDir,TOOLCHAIN_INSTALL_COMPLETE_MARKER));
+    const original=nativeFs.openSync;let attacked=false;
+    const open=spyOn(nativeFs,'openSync').mockImplementation(((...args:Parameters<typeof nativeFs.openSync>)=>{
+      if(!attacked&&String(args[0]).endsWith(TOOLCHAIN_INSTALL_COMPLETE_MARKER)&&realpathSync(String(args[0]))===marker){attacked=true;renameSync(fixture.versionDir,fixture.versionDir+'-retired');usableInstall(fixture.versionDir)}
+      return original(...args);
+    }) as typeof nativeFs.openSync);
+    const read=spyOn(nativeFs,'readSync');
+    try{expect((await makeManager(fixture,async()=>{}).status())[0]?.phase).toBe('missing');expect(attacked).toBe(true);expect(read).toHaveBeenCalledTimes(0)}finally{open.mockRestore();read.mockRestore()}
   });
 
   it('marks a dangling temporary launcher missing, reinstalls, and stays ready after manager reload', async () => {

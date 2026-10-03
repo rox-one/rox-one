@@ -1,3 +1,11 @@
+## Current architecture and container repair — local dependency graph
+
+1. Lead: fetch canonical main, freeze source SHA and merged PR ancestry, create isolated branch. Preserve unrelated dirty worktrees, especially `rox-release-20261003`; no force push, no Cloud dispatch.
+2. Local read-only scout + lead: compare delivered audit to current entrypoints, product policy, auth planes, passive trace and package inventory. Dependencies: frozen current source; no worker edits or external tasks.
+3. Lead: repair proven Docker manifest closure and canonical helper recipes; qualify actual BuildKit COPY/context with original-failure and missing-manifest negative controls. Full application image execution is a separate remaining gate.
+4. Lead: publish Russian current architecture, source-bound inventory and precise verification receipt; prepend cancellation correction without rewriting historical backlog. Validate immutable references and unchanged backlog, run diff checks. Read-only scout reviews claims independently.
+5. Lead: refresh main, resolve relevant integration drift, commit/push only this branch, open/update canonical PR and read back head/status. Report implemented, bounded verified and remaining installed/hosted acceptance separately.
+
 ## MCP connection deadline/privacy recovery plan — 2026-10-03
 
 1. Freeze source1436 and current4fec, compare actual symbols. Retain current Qdrant storage ownership, local resolver authority, pool config/generation/recovery semantics; recover only proven missing budgets/diagnostic filtering.
@@ -1071,6 +1079,14 @@ Owner recent_features; parent owns ordered integration. Retain held-prepare dest
 
 Dependencies are sequential for source mutation, build/validation and delivery. Independent scout receipts record ready tasks, closed writers, actual source hashes and runtime identity. The original full run is immutable; later replays are separate evidence. The final GitHub receipt distinguishes tested source, actual merged source, documentation commit, checks and external prerequisites.
 
+
+## Runtime Map renderer late recovery — 2026-10-04
+
+1. Freeze latest c2e8 and compare current actual consumers. Reproduce missing grouped-context UI with real current renderer and production journal behind an explicitly synthetic executor; retain source fixture failures (missing build manifest and required clockDomain), then the valid-context negative.
+2. Restore only scoped renderer components/helpers/actual ChatPage/MainContentPanel ports. Add read-only runtime link intent to current NavigationContext while preserving its immediate-history release; union the20 runtimeMap keys in all12 current locales.
+3. Qualify focused projection/export/layout/catalog/link behavior, actual mounted context/provenance and lazy retry, retained chat/editor continuities, current package types and renderer build. Preserve every failure and byte-bound receipts; merge latest main normally. Root owns separate PR merge, pr_scout separately owns actual origin-tagged producers.
+
+
 ## Late UI1448 runtime edges — 2026-10-04
 
 1. Freeze source52/9 and reject stale account/navigation regressions; isolate four root-owned production files from worker manager/runner ownership.
@@ -1084,3 +1100,18 @@ Zed final bounded qualification on current991c8b80b: 122 focused +323 Home/token
 ### Selected skill instructions custody recovery — 2026-10-04
 
 Owner recent_features; parent reviews and merges. Preserve merged1467 UI/API exactly, retain merged-source ancestor failure0/1 and legacy outside-link failure. Qualify48 storage/managed/custody cases,4 registered native RPC/workspace cases including zero body opens after revoke,7 actual SkillInfo owner/draft/OMP cases and runtime row keyboard/reset control plus full strict Electron types. Retain original fixture/default-timeout failures and exact hashes; reconcile docs additively, preserve all source branches. Installed platform/full release acceptance stays separate.
+
+
+Runtime renderer bounded qualification complete: actual19 browser cases and39 mounted navigation bodies, focused29/0 and locale/helper282/0, native parser/routing34/0, full Electron/WebUI types and current renderer build0. Source node pointer interception is repaired with normal clicks. Publish separate renderer PR on current main; root owns merge. Real producer dependency remains independently qualified. Evidence: integration-history/runtime-map-context-navigation-20261004.
+
+## Opaque route identity follow-up — 2026-10-04
+
+1. Retain actual unchanged boundary1pass/8fail for opaque repeated/trailing slashes and encoded-percent identifiers, plus panel restore/query controls.
+2. Normalize only namespace grammar; preserve each remaining opaque ID byte, current Notes alias and unavailable/action policy.
+3. Qualify517 route/parser/panel/navigation cases0fail and current strict Electron, archive raw logs/hashes and publish separate PR after current-main union; retain branches.
+
+### Управление runtime и изоляция тестов — 2026-10-04
+
+1. recent_features фиксирует источник e572 и текущие установочные guards. Сохранить воспроизведение Windows current-copy15/1 и трёх отказов старого runner: snapshot, logger и caller HOME; не изменять установленный runtime пользователя.
+2. Восстановить только два production-файла: manager и test-all. Подтвердить реальными child processes зависание/cleanup/дальнейшее покрытие, private HOME, output quota, descriptor/ancestor custody, ошибочную и неполную установку.
+3. Сохранить42/0 changed controls,133/0/3 skipped из15 отдельно исполненных toolchain-файлов,1/0 native-executable prerequisite, строгие проверки типов и хеши в integration-history/toolchain-test-runner-recovery-20261004. Нормально согласовать свежий main, сохранить все существующие разделы документации, опубликовать отдельный PR; root проверяет и вливает, исходные ветки не удаляются.
