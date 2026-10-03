@@ -765,3 +765,11 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 2. Recover the pure keyed draft map and bind current floating composer setters to workspace plus active document identity. Preserve current write/mutation authority and in-page draft lifetime.
 3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
 4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
+
+
+## Product Learning runtime integration graph — 2026-10-03
+
+1. pr_scout owns final a6 contracts/core/persistence/analytics foundation and hardened private diagnostics; historical integration owns UI/runtime/catalogue/adapters/App/shell/settings/modal composition and all12 translation unions. recent_features owns selective existing native-domain producer target refs/committed observations without editing new adapter paths. Parent owns exact-head merges; every original source branch is retained.
+2. Apply bounded source hunks to today's App/AppShell/MainContentPanel and native UI registries; preserve current route/panel/scope/credential/consent owners rather than replace cumulative old files. Bind welcome/session events to the canonical event processor and correlate actual accepted/final responses.
+3. Qualify source catalogue/target/geometry/modal/engine policies and negative scope/lease/evidence cases; use the real source browser/native harness with isolated throwaway profile and real authenticated Notes journal. Browser/native receipts must identify actual passing cases and failure history. Feature flag stays opt-in and absent capability must remain blocked.
+4. Compose independently qualified producer layer, exercise all actual user paths and current failure/recovery controls, then source-family close each of9new tips with exact per-layer source/final commit mapping. No foundational pure test, static render or private draft PR establishes full installed-native or production acceptance.
