@@ -25,7 +25,7 @@ beforeAll(async () => {
     themes[`../../../resources/themes/${name}`] = await Bun.file(path).json()
     themeFiles.push(path)
   }
-  const bundle = await build({ absWorkingDir: root, entryPoints: [resolve(import.meta.dir, 'fixtures/native-file-dialog.browser.tsx')], tsconfig: resolve(root, 'apps/electron/tsconfig.json'), bundle: true, platform: 'browser', format: 'esm', write: false, metafile: true, outdir: 'native-file-dialog-browser', jsx: 'automatic', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl' }, plugins: [
+  const bundle = await build({ absWorkingDir: root, entryPoints: [resolve(import.meta.dir, 'fixtures/native-file-dialog.browser.tsx')], tsconfig: resolve(root, 'apps/electron/tsconfig.json'), bundle: true, platform: 'browser', format: 'esm', write: false, metafile: true, outdir: 'native-file-dialog-browser', jsx: 'automatic', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl', '.png': 'dataurl' }, plugins: [
     { name: 'worker-ui-package', setup(build) { build.onResolve({ filter: /^@rox\/ui$/ }, () => ({ path: resolve(root, 'packages/ui/src/index.ts') })) } },
     { name: 'production-renderer-node-boundary', setup(build) { build.onResolve({ filter: /^node:/ }, () => ({ path: resolve(root, 'apps/electron/src/renderer/shims/node-stub.ts') })) } },
     { name: 'production-theme-inventory', setup(build) { build.onLoad({ filter: /\/context\/ThemeContext\.tsx$/ }, async args => ({ contents: (await Bun.file(args.path).text()).replace(/import\.meta\.glob\([^)]*\)/, JSON.stringify(themes)), loader: 'tsx', resolveDir: dirname(args.path) })) } },

@@ -22,7 +22,7 @@ beforeAll(async () => {
   const themeModules: Record<string, unknown> = {}
   for (const name of new Bun.Glob('*.json').scanSync({ cwd: fileURLToPath(themesDirectory) })) themeModules[`../../../resources/themes/${name}`] = await Bun.file(new URL(name, themesDirectory)).json()
   stage('continuity:bundle:start')
-  const bundle = await build({ entryPoints: [fileURLToPath(new URL('./native-continuity.browser.tsx', import.meta.url))], tsconfig: fileURLToPath(new URL('../../../../../tsconfig.json', import.meta.url)), bundle: true, platform: 'browser', format: 'esm', write: false, outdir: 'native-continuity-browser', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl' }, plugins: [
+  const bundle = await build({ entryPoints: [fileURLToPath(new URL('./native-continuity.browser.tsx', import.meta.url))], tsconfig: fileURLToPath(new URL('../../../../../tsconfig.json', import.meta.url)), bundle: true, platform: 'browser', format: 'esm', write: false, outdir: 'native-continuity-browser', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl', '.png': 'dataurl' }, plugins: [
     // Use the renderer's actual production shim, matching electron/vite.config.ts.
     { name: 'production-renderer-node-boundary', setup(build) { build.onResolve({ filter: /^node:/ }, () => ({ path: fileURLToPath(new URL('../../../shims/node-stub.ts', import.meta.url)) })) } },
     // Expand the same real eager JSON theme inventory that Vite expands in production.
