@@ -1,13 +1,16 @@
-import { afterAll, beforeAll, expect, test } from 'bun:test'
+import { afterAll, beforeAll, expect, mock, test } from 'bun:test'
 import { chromium, type Browser } from '@playwright/test'
 import { build } from 'esbuild'
 import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
+import { EventEmitter } from 'node:events'
+import type { RequestContext } from '@rox/server-core/transport'
+import type { HotkeyCommand } from '@rox/shared/voice/hotkey-types'
 import type { RuntimeState, StepId, TourSignal, TourProgress } from '../contracts'
 import { noteNativeBrowserStage as stage, runNativeBrowserProcess } from '../adapters/work/meetings-automations/native-browser-process'
 
-interface NativeContinuitySnapshot { phase: RuntimeState['phase']; stepId?: StepId; evidence: RuntimeState['attemptEvidence']; progress: TourProgress | null; signals: TourSignal[]; calls: { startVoiceCapture: number; stopVoiceCapture: number; copyVoiceText: number; getSources: number } }
-declare global { interface Window { nativeContinuity: { start(kind: 'voice' | 'source', emptyTranscript?: boolean, delivery?: 'draft' | 'clipboard', trailingSpace?: boolean): void; show(): void; acknowledge(): void; snapshot(): NativeContinuitySnapshot; clipboard(): string } } }
+interface NativeContinuitySnapshot { phase: RuntimeState['phase']; stepId?: StepId; evidence: RuntimeState['attemptEvidence']; progress: TourProgress | null; signals: TourSignal[]; calls: { getUserMedia: number; startVoiceCapture: number; grantVoicePermission: number; stopVoiceCapture: number; cancelVoiceCapture: number; copyVoiceText: number; getSources: number } }
+declare global { interface Window { nativeContinuity: { start(kind: 'voice' | 'source', emptyTranscript?: boolean, delivery?: 'draft' | 'clipboard', trailingSpace?: boolean, paired?: boolean, deferredStart?: boolean): void; show(): void; acknowledge(): void; snapshot(): NativeContinuitySnapshot; clipboard(): string; focusPeer(): void; hotkey(payload: { command: HotkeyCommand; recordingId?: string }): void; resolveStart(): void } } }
 const isolatedCase = process.env.ROX_PRODUCT_TOUR_NATIVE_CONTINUITY_CASE
 let registeredCase = false
 let browser: Browser | undefined
@@ -189,5 +192,86 @@ browserTest('T-SOURCES-DETAILS one production source page load advances status a
     expect(await page.evaluate(() => window.nativeContinuity.snapshot().phase)).toBe('finished')
     expect(errors).toEqual([])
   } finally { await page.close() }
+})
+
+for (const action of ['stop', 'cancel'] as const) for (const deferred of [false, true]) browserTest(`T-VOICE-OWNER authenticated overlay ${action} ${deferred ? 'before' : 'after'} START returns reaches its unfocused composer without starting the idle peer`, async () => {
+  const handlers = new Map<string, (event: { sender: unknown }, action: string, recordingId: string) => unknown>()
+  const children: FixtureWindow[] = []
+  class FixtureWindow extends EventEmitter {
+    destroyed = false
+    webContents = Object.assign(new EventEmitter(), { isDestroyed: () => this.destroyed, send() {}, setWindowOpenHandler() {} })
+    constructor(config: { parent?: unknown } = {}) { super(); if (config.parent) children.push(this) }
+    isDestroyed() { return this.destroyed }
+    isFocused() { return true }
+    getBounds() { return { x: 0, y: 0, width: 1000, height: 800 } }
+    showInactive() {}
+    hide() {}
+    destroy() { this.destroyed = true; this.emit('closed') }
+    async loadURL() {}
+  }
+  // Only the OS Electron surface is replaced. Command authorization and delivery
+  // below run through the actual overlay owner and authenticated hotkey router.
+  mock.module('electron', () => ({ app: { isPackaged: true }, BrowserWindow: FixtureWindow,
+    ipcMain: { handle: (id: string, callback: (event: { sender: unknown }, action: string, recordingId: string) => unknown) => handlers.set(id, callback), removeHandler: (id: string) => handlers.delete(id) },
+    screen: { getDisplayMatching: () => ({ workArea: { x: 0, y: 0, width: 1000, height: 800 } }) },
+  }))
+  const { createNativeVoiceOverlayHost, VOICE_OVERLAY_COMMAND } = await import('../../../../main/voice/overlay-owner')
+  const { sendVoiceHotkeyToClient } = await import('../../../../main/voice/command-input')
+  const owner = new FixtureWindow()
+  const context: RequestContext = { clientId: 'native-client', workspaceId: 'native-workspace', webContentsId: 17 }
+  const commands: Array<{ command: HotkeyCommand; recordingId?: string }> = []
+  const overlay = createNativeVoiceOverlayHost({
+    resolveOwner: incoming => incoming === context ? owner as never : null,
+    sendCommand: (incoming, command, recordingId) => sendVoiceHotkeyToClient({ webContentsId: incoming.webContentsId!, isManagedWindow: id => id === 17, resolveClient: () => context.clientId, channel: 'voice:hotkey', push: (_channel, _target, payload) => { commands.push(payload) } }, command, recordingId),
+  })
+  const page = await browser!.newPage()
+  try {
+    await page.goto(server!.url.href)
+    await page.waitForFunction(() => !!window.nativeContinuity)
+    await page.evaluate(deferred => window.nativeContinuity.start('voice', false, 'draft', false, true, deferred), deferred)
+    const ownerComposer = page.getByRole('group', { name: 'Owner composer' })
+    await ownerComposer.getByRole('button', { name: 'Dictate', exact: true }).click()
+    if (deferred) await page.waitForFunction(() => window.nativeContinuity.snapshot().calls.startVoiceCapture === 1)
+    else await ownerComposer.getByRole('button', { name: 'Stop dictation', exact: true }).waitFor()
+    await page.evaluate(() => window.nativeContinuity.focusPeer())
+    overlay.publish({ context, position: 'bottom', state: { recordingId: 'fixture-recording', phase: action === 'cancel' && deferred ? 'permission' : 'recording', elapsedMs: 1, rms: 0, streaming: false }, assertCurrent() {} })
+    expect(handlers.get(VOICE_OVERLAY_COMMAND)!({ sender: children[0]!.webContents }, action, 'fixture-recording')).toEqual({ ok: true })
+    expect(commands).toHaveLength(1)
+    expect(commands[0]?.recordingId).toBe('fixture-recording')
+    await page.evaluate(payload => window.nativeContinuity.hotkey(payload), commands[0]!)
+    // A stale packet arriving later cannot replace the pending owner's command.
+    await page.evaluate(() => window.nativeContinuity.hotkey({ command: 'cancel', recordingId: 'retired-recording' }))
+    if (deferred) {
+      expect(await page.evaluate(() => window.nativeContinuity.snapshot().calls.getUserMedia)).toBe(1)
+      expect(await page.evaluate(() => window.nativeContinuity.snapshot().calls.stopVoiceCapture)).toBe(0)
+      expect(await page.evaluate(() => window.nativeContinuity.snapshot().calls.cancelVoiceCapture)).toBe(0)
+      await page.evaluate(() => window.nativeContinuity.resolveStart())
+    }
+    await page.waitForFunction(action => window.nativeContinuity.snapshot().calls[action === 'stop' ? 'stopVoiceCapture' : 'cancelVoiceCapture'] === 1, action)
+    await ownerComposer.getByRole('button', { name: 'Dictate', exact: true }).waitFor()
+    const result = await page.evaluate(() => window.nativeContinuity.snapshot())
+    expect(result.calls.getUserMedia).toBe(1)
+    expect(result.calls.startVoiceCapture).toBe(1)
+    expect(result.calls.stopVoiceCapture).toBe(action === 'stop' ? 1 : 0)
+    expect(result.calls.cancelVoiceCapture).toBe(action === 'cancel' ? 1 : 0)
+    expect(result.calls.grantVoicePermission).toBe(action === 'cancel' && deferred ? 0 : 1)
+    expect(await page.getByRole('textbox', { name: 'Owner draft' }).inputValue()).toBe(action === 'stop' ? 'Owner draft Private fixture transcript' : 'Owner draft')
+    expect(await page.getByRole('textbox', { name: 'Peer draft' }).inputValue()).toBe('Peer draft')
+    if (action === 'cancel') expect(result.signals).toEqual([])
+    // A delayed command for the finished recording cannot stop its replacement.
+    if (action === 'stop' && !deferred) {
+      await ownerComposer.getByRole('button', { name: 'Dictate', exact: true }).click()
+      await ownerComposer.getByRole('button', { name: 'Stop dictation', exact: true }).waitFor()
+      await page.evaluate(() => window.nativeContinuity.hotkey({ command: 'toggle', recordingId: 'fixture-recording' }))
+      expect(await ownerComposer.getByRole('button', { name: 'Stop dictation', exact: true }).isVisible()).toBe(true)
+      expect(await page.evaluate(() => window.nativeContinuity.snapshot().calls.stopVoiceCapture)).toBe(1)
+      overlay.publish({ context, position: 'bottom', state: { recordingId: 'fixture-recording-2', phase: 'recording', elapsedMs: 1, rms: 0, streaming: false }, assertCurrent() {} })
+      expect(handlers.get(VOICE_OVERLAY_COMMAND)!({ sender: children[0]!.webContents }, 'cancel', 'fixture-recording-2')).toEqual({ ok: true })
+      await page.evaluate(payload => window.nativeContinuity.hotkey(payload), commands[1]!)
+      await page.waitForFunction(() => window.nativeContinuity.snapshot().calls.cancelVoiceCapture === 1)
+      expect(await page.evaluate(() => window.nativeContinuity.snapshot().calls.getUserMedia)).toBe(2)
+      expect(await page.evaluate(() => window.nativeContinuity.snapshot().calls.startVoiceCapture)).toBe(2)
+    }
+  } finally { overlay.dispose(); await page.close() }
 })
 if (isolatedCase && !registeredCase) throw new Error(`Unknown native renderer continuity case: ${isolatedCase}`)

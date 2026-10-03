@@ -101,4 +101,3 @@ test('empty production chat keeps ROX welcome and suggestions above the lower co
   await expect(page.getByTestId('received-count')).toHaveText('2')
   await expect(page.getByTestId('starter-prompt-list')).toHaveCount(0)
 })
-

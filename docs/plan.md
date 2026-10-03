@@ -911,6 +911,12 @@ The native-domain producer preserves main 4fec686d ownership: actor/workspace-sc
 
 Owner: root branch integration. Dependency: route recovery #1446, current Windows bootstrap #1443 and fixture repair #1445. Adapt the remaining #1417 skill catalog/draft behavior and history switch failure signal onto current owner/revision guards; preserve newer main. Verify actual mounted callbacks and real native inputs with controlled backends, restore old source in isolated fixture bundles as negative controls, then run Electron types and renderer build. Browser fixtures compile with Node before launch. The Skill lane uses Node's test runner because the Bun host repeatedly stalled while closing Chromium; all behavior assertions and failure history are retained. Commit and merge a separate PR while retaining both source and integration branches.
 
+## Infrastructure recovery graph — 2026-10-03
+
+1. Scout owns exact1448 installer/manager, RPC transport/types plus current Workspace License guard, serial runner/package test entry, and the reproduced extension-worker custom output-path repair. Depend on merged1443 Windows bootstrap and1450 MCP privacy; preserve all current namespaces, pins and native authority. Lead owns1448 navigation/resources/native executable harness and original branch disposition.
+2. Run actual pinned Bun local frozen CLI install and launcher replay after temporary/local dependency removal, ancestor manifest/lock isolation, same-version reload repair, malformed/linked/oversized receipt refusal, invalid partial pre-flip admission and current pointer mismatch. Retain current Windows/binary/Python/npm controls.
+3. Exercise actual WebSocket response revoke/expiry/replacement/native generation plus Workspace guard composition, zero serialization on denial. Exercise serial runner child mock/profile isolation, byte-complete output/failed prerequisites/continued failure history and actual repository inventory. Run relevant types, full default/custom main worker build and preload; preserve failed source comparison history.
+4. Freeze source and environment/hash receipt, reconcile freshmain, commit/push separate PR and attach. Parent owns merge. Native Windows/installed Electron/physical capture/provider acceptance is separate; no whole1448 or full branch-audit completion claim.
 
 ### Golden voice append recovery — 2026-10-03
 
@@ -919,6 +925,22 @@ Owner: recent_features; dependency: current native Voice capture and Product Lea
 
 Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.
 
-## Runtime-map branch recovery (2026-10-03)
 
-historical_sweep owns complete127-path source audit and isolated current-main adaptation; root retains final merge. Preserve every source branch and current native/renderer guard. Repair demonstrated accessor/prototype leaks and wrong delayed-child run attribution with exact-source negative controls; retain invalid-before-write ordering. Exercise actual host executor/journal and native two-level task/eval SDK with no network/paid requests, current protocol inventories/types/12-locale parity, production browser stream/pending-permission/draft/welcome and10k-event performance, and current App integration regression. Bind receipts to production hashes; retain failed source/local runs and distinguish bounded qualification from installed/live-provider acceptance. Publish a separate recover-runtime-map-current PR, attach it, and hand exact head to root.
+
+### Recover native overlay recording custody (2026-10-03)
+
+- Owner: recent_features; integrate source A7 `eeddeb5bd0af59b93fd121c10b8a7a52956ff0b7` in a separate `codex/` branch after merged Product Learning. Preserve all original branches.
+- Carry recording ID only for authenticated overlay stop/cancel, validate command/ID and managed native client, retain current private child sender/phase/owner checks.
+- Bind queued START/permission commands to the current native recording and capture generation; clear on completion/cancel/failure; cancellation wins. Preserve current learning observation and native consent/PTT paths.
+- Verify actual two-composer/browser owner pipeline with before/after negative proof, delayed START and grant, idle/foreign/retired packets, current 25 dictation regressions, native command/owner and authority/protocol suites, full Electron types and main/preload bundles. Retain failure history; controlled browser/native ports do not establish OS microphone or clipboard acceptance. Parent owns remote merge; delivery receipt remains separate from implementation.
+
+## Legacy MCP SSE recovery graph (2026-10-03)
+
+1. Scout adapts only the missing #1436 pool negotiation onto current #1450 deadlines/privacy and #1455 infrastructure, preserving all modern recovery/config/source ownership. Root reviews and merges a separate qualified PR; source branches stay intact.
+2. Exercise real SDK legacy-SSE servers with HTTP initialize 400/404/405, header retention, mapped tool call and unchanged-config resync. Exercise actual HTTP401/403/429/500/503, health/discovery405 and both-failure credential scrub; preserve current transient retry and no-replay controls.
+3. Exercise deterministic lifecycle cancellation during HTTP cleanup and SSE initialization, shrinking connection budget, expired-budget cleanup. Run all current MCP controls and shared/Electron types with pinned Bun and exact owned workspace dependency bindings. Retain initial failed fixture/cancellation observations, source regression proof and exact revision receipt.
+4. Publish/attach the bounded PR, record exact remote head and parent merge readback, then continue local-source health/migration, host Bash and performance residuals. No whole137-path completion claim.
+
+
+## Workspace shortcut popover integration —2026-10-03
+Owner root. Depends on existing rail-links/Popover/Select and current product-tour hooks. Import1447 selectively, repair viewport constraints, qualify nine actual DOM cases and old25px negative, run full Electron types; commit proof and merge a separate PR preserving source branch. Completed local checks in docs/integration-history/workspace-link-popover-20261003.

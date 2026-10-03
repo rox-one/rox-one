@@ -68,6 +68,8 @@ export function VoiceDictationControl({
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const captureIdRef = useRef(0)
+  const nativeRecordingIdRef = useRef<string | null>(null)
+  const pendingOverlayCommandsRef = useRef(new Map<string, { captureId: number; command: 'toggle' | 'cancel' }>())
   const activeRequestRef = useRef(false)
   const hostStartedRef = useRef(false)
   const commandRef = useRef<VoiceCommandController | null>(null)
@@ -86,6 +88,24 @@ export function VoiceDictationControl({
       if (job.job === 'ready' || job.job === 'cancelled' || job.job === 'failed') setRecording(false)
     })
     const offHotkey = window.electronAPI.onVoiceHotkey?.((payload) => {
+      if (payload.recordingId !== undefined) {
+        const { recordingId, command } = payload
+        if (typeof recordingId !== 'string' || !recordingId || (command !== 'toggle' && command !== 'cancel')) return
+        const remember = () => {
+          const previous = pendingOverlayCommandsRef.current.get(recordingId)
+          pendingOverlayCommandsRef.current.set(recordingId, { captureId: captureIdRef.current, command: previous?.command === 'cancel' ? 'cancel' : command })
+        }
+        if (recordingId !== nativeRecordingIdRef.current) {
+          // Native phase events can precede the START response. Keep this
+          // command with the pending local capture, then match its returned ID.
+          if (!nativeRecordingIdRef.current && activeRequestRef.current) remember()
+          return
+        }
+        if (command === 'cancel') cancelRecordingRef.current()
+        else if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
+        else if (activeRequestRef.current) remember()
+        return
+      }
       void commandRef.current?.handle(payload.command)
     })
     return () => {
@@ -157,6 +177,8 @@ export function VoiceDictationControl({
       }
     } finally {
       if (captureId === captureIdRef.current) {
+        nativeRecordingIdRef.current = null
+        pendingOverlayCommandsRef.current.clear()
         activeRequestRef.current = false
         setTranscribing(false)
       }
@@ -165,6 +187,8 @@ export function VoiceDictationControl({
 
   const cancelRecording = useCallback(() => {
     dictationObservationRef.current = null
+    nativeRecordingIdRef.current = null
+    pendingOverlayCommandsRef.current.clear()
     captureIdRef.current += 1
     activeRequestRef.current = false
     const hostStarted = hostStartedRef.current
@@ -196,6 +220,8 @@ export function VoiceDictationControl({
     startingRef.current = true
     setStarting(true)
     const captureId = ++captureIdRef.current
+    nativeRecordingIdRef.current = null
+    pendingOverlayCommandsRef.current.clear()
     const dictationObservation = tourSignals.capture()
     dictationObservationRef.current = dictationObservation
     activeRequestRef.current = true
@@ -225,6 +251,12 @@ export function VoiceDictationControl({
         return
       }
       hostStartedRef.current = true
+      nativeRecordingIdRef.current = started.recordingId
+      const pendingOverlay = pendingOverlayCommandsRef.current.get(started.recordingId)
+      if (pendingOverlay?.captureId === captureId && pendingOverlay.command === 'cancel') {
+        cancelRecordingRef.current()
+        return
+      }
       await window.electronAPI.grantVoicePermission?.()
       if (captureId !== captureIdRef.current) {
         if (hostStartedRef.current) await cancelHostCapture()
@@ -242,11 +274,19 @@ export function VoiceDictationControl({
       recorderRef.current = recorder
       setRecording(true)
       recorder.start()
+      const pendingCommand = pendingOverlayCommandsRef.current.get(started.recordingId)
+      pendingOverlayCommandsRef.current.clear()
+      if (pendingCommand?.captureId === captureId) {
+        if (pendingCommand.command === 'cancel') cancelRecordingRef.current()
+        else recorder.stop()
+      }
     } catch (error) {
       pendingStream?.getTracks().forEach((track) => track.stop())
       if (captureId === captureIdRef.current) {
         setStarting(false)
         stopTracks()
+        nativeRecordingIdRef.current = null
+        pendingOverlayCommandsRef.current.clear()
         captureIdRef.current += 1
         activeRequestRef.current = false
         const hostStarted = hostStartedRef.current
