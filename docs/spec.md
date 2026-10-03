@@ -539,6 +539,14 @@ Branch `codex/rox-ui-dev-loop-20260901` at `1f56af31d3658ee9880105361ad5312324f3
 The default legacy Markdown engine and official engine must preserve content across parse/edit/export/reopen. Recover the source's portable `:::rox-columns`/`:::rox-column` syntax with validated normalized widths, support the previous slash-menu `:::columns 2/3` aliases, and preserve Obsidian `[!spoiler]-`/`[!details]+` markers without escaping away their meaning. Fold preferences are scoped by workspace/document and separate from Markdown. Read-only callout/resize interactions cannot change document content. Preserve newer comments, mixed task-list handling, trailing nodes, controlled echoes and no-save authority flips. Labels exist in all 12 current locales. Source tests/builds establish bounded integration; native visual interaction acceptance remains separately verifiable.
 
 
+# Credential locator boundary validation — 2026-10-03
+
+Owner: locator boundary-validation lead; independent reviewer: integration-status worker. User authorization includes source repair, GitHub delivery and merge into main. Initial reproduction base: `635fc495d02c3fe1380740444cb90cf4fbdb58d9`. PR #1407 independently delivered the same executable own-descriptor correction during this validation. PR #1408 preserves that production source and its 54 regressions, and adds 64 cases covering attachment, disk reload, persisted nonmutation, frozen records for all variants and ordinary Proxy get traps.
+
+`validateLocator` must derive the discriminator and every required provider field exclusively from own enumerable data descriptors. Missing fields reject even when Object.prototype supplies data or getters; validation must not execute inherited getters or ordinary locator get traps. Preserve rejection of symbols, accessors, hidden/unknown fields and custom/null prototypes, string normalization, and valid frozen records.
+
+Acceptance covers all ten provider variants through real registration, provider replacement, attachment and disk reload: invalid input cannot change registry or persisted metadata; corrupt persisted rows are skipped without repair writes. Focused regressions must fail on the base and pass on the correction. Full core tests, core TypeScript, unchanged validate:ci, relevant hosted CI/lifecycle checks, independent review and exact remote merge readback establish delivery. No deployment or native UI acceptance is inferred.
+
 ## Credential locator inherited-field repair — 2026-10-03
 
 Owner: `fix/credential-locator-own-fields-20261003`, based on main `635fc495d02c3fe1380740444cb90cf4fbdb58d9`. PR #1317 is already merged; this follow-up closes its inherited-field validation gap.
@@ -547,6 +555,10 @@ Credential locators must contain their discriminator and every required value as
 
 Acceptance: negative data/getter cases for every locator variant and required field, zero getter invocations, unchanged state after rejection, existing valid/frozen positives, complete core suite and TypeScript, unchanged comprehensive CI command, and actual built-server HTTP/WebSocket authentication, shutdown and persistence/restart checks. Bind results to the delivered revision; Linux reproduction and hosted macOS checks are separate evidence.
 
+
+### Session project membership metadata recovery (2026-10-03)
+
+Recover durable `projectIds` from the cumulative Voice/Meeting branches in the current session owner. `projectId` remains the primary/default compatibility field; the full unique primary-first set is grouping metadata, never project permission, source readability or agent-context authority. Existing primary setter, bulk replacement and task-draft reconciliation update both fields. Current collection filters match secondary metadata memberships; unlinking a primary promotes the next metadata entry and preserves session/transcript. Project deletion updates the live workspace session owner before the existing disk fallback, and external metadata reconciliation/persistence protects the pair. No extra RPC command, grants or parallel membership store is introduced.
 ## Recovered connection audit action projection — 2026-10-03
 
 Owner: branch integration lead. Source: checkpoint/session-audit-20260821-craft-agents @86154e8c812746261282bb4c517b16ad7becc0ec; dependency: delivered Connections producer PR1414 and current canonical WorkGraph SQLite. Recover the missing additive schema3 action column and creation audit projection. V1/V2 migration SQL/checksums must remain identical; migration3 SQL matches the source. Older ledger rows remain immutable and expose event type as the fallback action. Only metadata action labels cross transport; never restore payload content.
@@ -564,3 +576,16 @@ Keychain selected-target lookup retains the exact discovered service/account, in
 ### Calendar synchronization ownership recovery (2026-10-03)
 
 Restore the per-account stale-response fence present in `feat/voice-v2-p0` and the cumulative Meetings branches, adapting it to the current `CalendarStore`. Only the most recently started connected-account sync may commit events, conflict snapshots, cursor and sync timestamps; a later failed request still supersedes an older response. Revocation invalidates outstanding ownership, and different accounts retain independent syncs. Request ownership is process-local and must not be serialized as credential or provider evidence. Current tuple identity, local-draft conflict review and unavailable production adapters remain authoritative. This bounded recovery does not establish live calendar-provider access.
+
+
+## Validated personal task file/cache imports — 2026-10-03
+
+Owner: historical worker; integration owner: audit lead. Golden source `5def9ffd36dc160fdc7c908784e0ef97ba6a732e` supplies absent consumed malformed-row validation in `tasks/presentation.ts::parseTaskImport`. Recover its intent at current canonical `PersonalTaskStore.tryFromJson`, which actual TasksPage file import and cache loading already consume. Validate task and related bundle rows, nested current links/checklist/recurrence/reminder metadata, finite numeric values and duplicate row identities before constructing the store. Retain current v1/missing-version and missing-collection compatibility, all eight current link kinds and unknown future fields; do not revive old CatalogPanel or its four-kind link restriction.
+
+Malformed rows return the existing quarantine/invalid-shape result with exact original raw bytes. Cache quarantine retains the canonical original and stages later edits; actual file import shows the existing translated failure and makes no persistence call. Valid input merges through the existing persistence port, without changing current native write authority or synchronization. Tests execute actual TasksPage onImport with fixture Files and a controlled persistence port, current cache behavior, malformed-row matrix and modern positive roundtrip; no server/native mutation is issued by verification.
+
+## Scoped Notes comment drafts — 2026-10-03
+
+Owner: historical worker; integration owner: audit lead. Source `codex/golden-gate-workspace@5def9ffd36dc160fdc7c908784e0ef97ba6a732e` supplies a missing workspace/document-keyed quote/body draft map for the actual NativeNotesPage floating comment composer. Switching document or vault cannot retarget an unsent selection/comment; returning to the original document restores its draft. Captured edit/clear callbacks update their original key, and no bound workspace/document means no draft acquisition. Scope keys use JSON tuple encoding and empty entries are removed.
+
+Recover only this source helper and current page wiring, retaining today's native Notes write authority, mutation revision checks, editor/chrome/layout/focus and comment persistence. Drafts live in the mounted page state and are not durable storage or server write receipts. Verify by executing delivered NativeNotesPage state/setter declarations across route changes, stale edit and clear callbacks, unbound scope and delimiter collisions, with an exact current-main negative control. Native installed UI and relaunch persistence are outside this bounded recovery.
