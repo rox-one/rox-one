@@ -53,6 +53,19 @@ describe('OMP persistent history and mandatory runtime modes', () => {
   for(const p of prompts) for(const word of ['orchestrate','workflowz','ultrathink']) expect(String(p.message).match(new RegExp('\\b'+word+'\\b','g'))).toHaveLength(1);
   expect(fake.readRpcLog().filter(f=>f.type==='set_thinking_level' && f.level==='max')).toHaveLength(2);
  },30000);
+ it('reconstructs the exact selected ROX prefix when compaction removed a persisted native anchor',async()=>{
+  const {agent,config}=setup();const parentDir=join(fake.workspaceRoot,'sessions','compacted-parent','omp');const parentFile=transcript(parentDir,'compacted.jsonl','compacted-parent');const before=readFileSync(parentFile,'utf8');
+  Object.assign(config.session!,{branchFromMessageId:'selected-rox-answer',branchFromSessionPath:join(parentDir,'..'),branchFromSdkTurnId:'deleted-native-anchor',branchFromSdkSessionId:'compacted-parent'});
+  config.getBranchResumeMessages=()=>[{id:'u-cut',role:'user',content:'selected BANANA question',timestamp:1},{id:'a-cut',role:'assistant',content:'selected BANANA answer',timestamp:2}];
+  await agent.ensureBranchReady();const frames=fake.readRpcLog();expect(frames.some(f=>f.type==='fork')).toBe(false);const restored=String(frames.find(f=>f.type==='switch_session')?.sessionPath);expect(restored).toContain(join('session-test','omp','recovered-'));
+  const entries=readFileSync(restored,'utf8').trim().split('\n').map(line=>JSON.parse(line));expect(entries.find(e=>e.customType==='rox-history-reconstruction')?.data.reason).toBe('branch');expect(entries.filter(e=>e.type==='message').map(e=>e.message.content[0].text)).toEqual(['selected BANANA question','selected BANANA answer']);expect(readFileSync(parentFile,'utf8')).toBe(before);
+ },60000);
+ it('does not reconstruct history after a generic native fork authentication error',async()=>{
+  const {agent,config}=setup();fake.setScenario('fork-reject');const parentDir=join(fake.workspaceRoot,'sessions','native-parent','omp');const parentFile=transcript(parentDir,'native.jsonl','native-parent');const before=readFileSync(parentFile,'utf8');
+  Object.assign(config.session!,{branchFromMessageId:'selected-rox-answer',branchFromSessionPath:join(parentDir,'..'),branchFromSdkTurnId:'bbbb2222',branchFromSdkSessionId:'native-parent'});config.getBranchResumeMessages=()=>[{id:'u',role:'user',content:'fallback must not run',timestamp:1}];
+  await expect(agent.ensureBranchReady()).rejects.toThrow('fixture fork authentication rejected');
+  expect(fake.readRpcLog().some(f=>f.type==='prompt')).toBe(false);expect(fake.readRpcLog().filter(f=>f.type==='switch_session').every(f=>!String(f.sessionPath).includes('recovered-'))).toBe(true);expect(readFileSync(parentFile,'utf8')).toBe(before);
+ },60000);
  it('forks a private copy at the exact assistant anchor and leaves the parent unchanged', async () => {
   const {agent,config}=setup(); const parentDir=join(fake.workspaceRoot,'sessions','parent','omp'); const file=transcript(parentDir,'2026-10-03_parent-id.jsonl','parent-id'); const before=readFileSync(file,'utf8');
   Object.assign(config.session!,{branchFromMessageId:'visible-answer',branchFromSessionPath:join(parentDir,'..'),branchFromSdkTurnId:'bbbb2222',branchFromSdkSessionId:'parent-id'});

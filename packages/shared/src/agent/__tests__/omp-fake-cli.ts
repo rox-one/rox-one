@@ -255,6 +255,10 @@ function rpcLoop() {
         if (scenario === 'model-branch') selectedModel = { provider: 'cursor', id: 'claude-4.6-opus-high' };
         respond({ cancelled: false });
         break;
+      case 'fork':
+        if (scenario === 'fork-reject') send({id,type:'response',command:msg.type,success:false,error:'fixture fork authentication rejected'});
+        else respond({cancelled:false});
+        break;
       case 'branch':
         respond({ text: 'branch source text', cancelled: false });
         break;
