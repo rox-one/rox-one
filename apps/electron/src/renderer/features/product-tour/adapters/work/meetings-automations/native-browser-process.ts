@@ -1,3 +1,7 @@
+import { spawn } from 'node:child_process'
+import { Readable } from 'node:stream'
+import type { ReadableStream } from 'node:stream/web'
+
 function capturePipe(stream: ReadableStream<Uint8Array>) {
   const reader = stream.getReader()
   const decoder = new TextDecoder()
@@ -25,9 +29,18 @@ export async function runNativeBrowserProcess(command: string[], options: {
   env?: Record<string, string | undefined>
   deadlineMs?: number
 }): Promise<number> {
-  const child = Bun.spawn(command, { env: options.env, stdout: 'pipe', stderr: 'pipe' })
-  const stdout = capturePipe(child.stdout)
-  const stderr = capturePipe(child.stderr)
+  // Keep the original test CLI and environment, but require both diagnostic
+  // pipes at the native Node spawn boundary. A Bun child had an undefined
+  // stdout property despite requesting a pipe in the combined test lane.
+  const child = spawn(command[0]!, command.slice(1), {
+    env: options.env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true,
+  })
+  const stdout = capturePipe(Readable.toWeb(child.stdout))
+  const stderr = capturePipe(Readable.toWeb(child.stderr))
+  const exited = new Promise<number>((resolve, reject) => {
+    child.once('error', error => reject(new Error(`Native browser case ${options.label} could not start: ${error.message}`)))
+    child.once('exit', (code, signal) => resolve(code ?? (signal === 'SIGTERM' ? 143 : 137)))
+  })
   let timeout: ReturnType<typeof setTimeout> | undefined
   const deadline = new Promise<null>(resolve => {
     timeout = setTimeout(() => {
@@ -39,7 +52,7 @@ export async function runNativeBrowserProcess(command: string[], options: {
   })
   let drainTimeout: ReturnType<typeof setTimeout> | undefined
   try {
-    const exitCode = await Promise.race([child.exited, deadline])
+    const exitCode = await Promise.race([exited, deadline])
     // Give graceful shutdown a bounded chance to deliver its final diagnostics.
     // Descendants can inherit the pipes, so EOF never controls the test deadline.
     await Promise.race([
