@@ -31,6 +31,7 @@ import {
   type MailLedgerEntry,
 } from '../../meetings/conation/native-shells.ts'
 import { gateMeetingConationShell } from '@rox/core/rox2'
+import { registerMeetingPlanningHandlers } from './meeting-planning.ts'
 
 const proposalStores = new Map<string, ProposalStore>()
 const jobStores = new Map<string, OutboxJob[]>()
@@ -117,6 +118,7 @@ function catalogItems(workspaceId: string): Meeting[] {
 }
 
 export const MEETING_HANDLED_CHANNELS = [
+  RPC_CHANNELS.meetings.PLAN_ACTIONS,
   RPC_CHANNELS.meetings.LIST,
   RPC_CHANNELS.meetings.GET,
   RPC_CHANNELS.meetings.SEARCH,
@@ -142,6 +144,7 @@ export const MEETING_HANDLED_CHANNELS = [
 ] as const
 
 export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): void {
+  registerMeetingPlanningHandlers(server, _deps, meetingPersistRoot)
   server.handle(RPC_CHANNELS.meetings.LIST, async (_ctx, workspaceId: string, cursor?: string, limit = 20) => {
     return queryMeetings({
       items: catalogItems(workspaceId),
