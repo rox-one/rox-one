@@ -1,0 +1,17 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-01-offline.test.ts:
+(pass) actual encrypted queue persists before send; SIGKILL/new process/offline reload retain IDs, payload and verified scope; explicit retry applies once [19843.96ms]
+(pass) real accepted WS response cut + main SIGKILL retains uncertain intent; fresh process recovers exact original receipt without duplicate [5810.98ms]
+(pass) offline cancellation survives process restart; conflicting drafts cannot replace immutable pending bytes or IDs [7824.51ms]
+(pass) live session revoke blocks retry durably without send; fresh same-user or other-principal sessions cannot view/replay old intent [19959.85ms]
+(pass) wrong-password replacement remains quiesced with exact durable credential/config retained; foreign local scope/body Actor injection cannot enqueue [7840.96ms]
+(pass) explicit disconnect removes pending/scope before credential; unknown encrypted intent formats are blocked and byte-preserved [11767.61ms]
+(pass) authenticated identity query rejects forged scope/query; current membership removal blocks queued retry and persists hidden terminal state [5017.36ms]
+(pass) unknown encrypted scope proof is preserved and cannot be overwritten by queue/cancel or interpreted as empty [1829.82ms]
+(pass) verified replacement session/principal cannot view or replay a still-queued private draft; explicit discard allows a new request [8377.84ms]
+
+ 9 pass
+ 0 fail
+ 241 expect() calls
+Ran 9 tests across 1 file. [90.65s]

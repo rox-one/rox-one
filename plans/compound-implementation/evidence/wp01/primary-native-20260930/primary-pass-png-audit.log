@@ -1,0 +1,337 @@
+{
+  "resultSHA": "79af30eecbbd71b62e6e74b44d943e24eb7e53b618b616857cd76bc9d6131528",
+  "sourceSHA": "cac6ec003b57812e29eb660a39473f939292e3e94edf8d5d87324c5199c26630",
+  "status": "PASS_NATIVE_WP01_CONSUMER",
+  "allSHAAndCRC": 27,
+  "selected": [
+    {
+      "name": "B-native-Connections-403-quiesced-live-preserved-durable",
+      "width": 2678,
+      "height": 2580,
+      "pngSHA": "2e88e629628d8de377ac815e5c10f547a62f6de37821ff38c07430ddde2d0a05",
+      "rgbaSHA": "dcc5b9d35beeafdeac780bfac12094fc441b698ff236d81b8b37254dbe372d11"
+    },
+    {
+      "name": "B-projection-before-rejected-private-get",
+      "width": 1832,
+      "height": 312,
+      "pngSHA": "6aa695201da66b3f4aacdbb74d497e07f68ef3595964e86cd915a7a97b8c5a64",
+      "rgbaSHA": "cc3b2dc8d52507618415b06af9b662fcff38bcf1b4cd7de533ec1be9c31fbf67"
+    },
+    {
+      "name": "B-projection-after-rejected-private-get",
+      "width": 1832,
+      "height": 312,
+      "pngSHA": "6aa695201da66b3f4aacdbb74d497e07f68ef3595964e86cd915a7a97b8c5a64",
+      "rgbaSHA": "cc3b2dc8d52507618415b06af9b662fcff38bcf1b4cd7de533ec1be9c31fbf67"
+    },
+    {
+      "name": "B-private-canonical-route-denied-no-title",
+      "width": 2678,
+      "height": 2580,
+      "pngSHA": "4feed2c96bcfc9604608a4e0d9eb9d625d3172bc057b93bc54bdddb2f602c25a",
+      "rgbaSHA": "75771052a4e3c51b69de479efa8ee5d0992d1dc9be3ffcb8bebbea49743344fc"
+    },
+    {
+      "name": "A-dark-native-shared-detail",
+      "width": 2800,
+      "height": 1800,
+      "pngSHA": "63838617a98931c2e07dbeb736503718aabb8d2d03e4dc6e0ab7862711297415",
+      "rgbaSHA": "3a9ae00acc4a9168e3af95be972cdbbbf412ac3ef97cc2de23b31a6c1ddb8257"
+    },
+    {
+      "name": "A-dark-200-percent-narrow-before-refresh-scroll",
+      "width": 980,
+      "height": 800,
+      "pngSHA": "5287240eda4118b7e812756d063aa049f3edbc60c5e61d8861feee3ca0602334",
+      "rgbaSHA": "624ac527c7625f28fd578ef9f24a5c75c336866e0cfc1cb0672d2048147d6f0f"
+    },
+    {
+      "name": "A-dark-200-percent-narrow-keyboard",
+      "width": 980,
+      "height": 800,
+      "pngSHA": "5287240eda4118b7e812756d063aa049f3edbc60c5e61d8861feee3ca0602334",
+      "rgbaSHA": "624ac527c7625f28fd578ef9f24a5c75c336866e0cfc1cb0672d2048147d6f0f"
+    },
+    {
+      "name": "A-light-native-shared-detail",
+      "width": 2640,
+      "height": 1700,
+      "pngSHA": "79f30ed6b2f13358bfe62bb73efa13f2224ea9441aab61ec422d1acd34226e4b",
+      "rgbaSHA": "346a77157fb70be102db1918a5bf95d71492a189ce43c217a09ddd037f333656"
+    },
+    {
+      "name": "A-light-200-percent-narrow-before-refresh-scroll",
+      "width": 980,
+      "height": 800,
+      "pngSHA": "d019e9cdfa5f5b38bded7cc5d2a8108aee4b88584dfb73401fdc7dfdae11d967",
+      "rgbaSHA": "4df48d4c1c356f4352ad7c756e69df18357f61a6b7ee1b79a0c5a04decbed0dd"
+    },
+    {
+      "name": "A-light-200-percent-narrow-keyboard",
+      "width": 980,
+      "height": 800,
+      "pngSHA": "d019e9cdfa5f5b38bded7cc5d2a8108aee4b88584dfb73401fdc7dfdae11d967",
+      "rgbaSHA": "4df48d4c1c356f4352ad7c756e69df18357f61a6b7ee1b79a0c5a04decbed0dd"
+    },
+    {
+      "name": "A-post-service-and-profile-restart",
+      "width": 2640,
+      "height": 1700,
+      "pngSHA": "02df7e0a729696ea3abaf14b06336280746d3945dabba57afd33fba2b2d13f05",
+      "rgbaSHA": "b8ad2610b7f6b51891cdad530e656fdb2042108f4456cd5ecd7e3a2f4c39c59c"
+    },
+    {
+      "name": "B-post-service-and-profile-restart",
+      "width": 2008,
+      "height": 2580,
+      "pngSHA": "ed31dcc4704d42e135e007248f33a6e46a455571aa3f779581b9ba254b0d76bf",
+      "rgbaSHA": "3112167d752b00a126f4b13a821789cbe5fcf168a6aaaac6a2f29bb275896591"
+    },
+    {
+      "name": "B-revoked-session-denied-host-folder-preserved",
+      "width": 2008,
+      "height": 2580,
+      "pngSHA": "e86e03ceb27cbb8cff3f203a61ba4a3c9a647f0ad92eb3f3534af4ae4088fabc",
+      "rgbaSHA": "7dc6a7c04ab3a23568299efa0b474a00e21deae4d05153a9bae89fd4cbea0bdd"
+    },
+    {
+      "name": "B-explicit-native-disconnect-no-durable-token",
+      "width": 2008,
+      "height": 2580,
+      "pngSHA": "26a1183d3bdd52c22bed8d6535f08e4d33ca863de778e00706fb161e3694daeb",
+      "rgbaSHA": "cbb1167665814a70e3be8f508340e01fff8c2067487afd99e190a405d5d8feb8"
+    }
+  ],
+  "transcripts": [
+    {
+      "name": "B-native-Connections-403-quiesced-live-preserved-durable",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка B\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nНастроить память\n\nДобавьте несколько уроков памяти, чтобы Rox запомнил, как вы работаете.\n\nОткрыть память\nПриёмка WP01\nСтандарт · Баланс —\nСоединения\n\nИсточники, мессенджеры и аккаунты, к которым подключён Rox\n\nОбновить\nПодключить\nОбзор\nУчётные данные\nИмпорты\nПолитики\nАудит\nСервис общих проектов\n\nВойдите в существующий аккаунт сервиса. Пароль используется только для входа, токен хранится зашифрованным на этом устройстве.\n\nURL сервиса\nАдрес сервиса без пути, например https://service.example. HTTP разрешён только для локального сервиса.\nUUID рабочего пространства в сервисе\nUUID пространства в сервисе, а не идентификатор локальной папки ROX.\nНазвание рабочего пространства в сервисе\nВведите название точно как в сервисе. Оно требуется для создания проекта.\nАккаунт\nПароль\nВойти и подключить\nОтключить\n\nДоступ запрещён. Войдите снова или проверьте членство в рабочем пространстве.\n\nЭтот аккаунт не имеет доступа. Проверьте членство в рабочем пространстве и права на проект.\nFORBIDDEN · HTTP 403\n\nИсточники10\nДобавить источник\n🧩\nApplications\nЛокальная папка · Applications and ~/Library/Applications\nПодключено\nОткрыть\nУдалить\n🔎\nExa\nAPI · Neural web search & research (Exa)\nВыключено\nОткрыть\nУдалить\n🔥\nFirecrawl\nAPI · Crawl & extract clean page content (Firecrawl)\nВыключено\nОткрыть\nУдалить\n🗂️\nFolder tree\nЛокальная папка · Workspace folder tree\nПодключено\nОткрыть\nУдалить\n💬\nLast sessions\nЛокальная папка · Imported and archived session transcripts\nПодключено\nОткрыт"
+    },
+    {
+      "name": "B-projection-before-rejected-private-get",
+      "text": "Общие проекты\nСоздать общий проект\n\nЛокальные папки и сеансы работают на этом устройстве. Общие проекты загружаются из подключённого сервиса.\n\nОбщий проект с настоящим каноническим ID\nДля участников\nОбновить"
+    },
+    {
+      "name": "B-projection-after-rejected-private-get",
+      "text": "Общие проекты\nСоздать общий проект\n\nЛокальные папки и сеансы работают на этом устройстве. Общие проекты загружаются из подключённого сервиса.\n\nОбщий проект с настоящим каноническим ID\nДля участников\nОбновить"
+    },
+    {
+      "name": "B-private-canonical-route-denied-no-title",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка B\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nНастроить память\n\nДобавьте несколько уроков памяти, чтобы Rox запомнил, как вы работаете.\n\nОткрыть память\nПриёмка WP01\nСтандарт · Баланс —\nОбщие проекты\n\nЭтот аккаунт не имеет доступа. Проверьте членство в рабочем пространстве и права на проект.\nFORBIDDEN\n\nОбновить\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "A-dark-native-shared-detail",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка A\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nНастроить память\n\nДобавьте несколько уроков памяти, чтобы Rox запомнил, как вы работаете.\n\nОткрыть память\nПриёмка WP01\nСтандарт · Баланс —\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "A-dark-200-percent-narrow-before-refresh-scroll",
+      "text": "П\nП\nПриёмка WP01 A\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить"
+    },
+    {
+      "name": "A-dark-200-percent-narrow-keyboard",
+      "text": "П\nП\nПриёмка WP01 A\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить"
+    },
+    {
+      "name": "A-light-native-shared-detail",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка A\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nНастроить память\n\nДобавьте несколько уроков памяти, чтобы Rox запомнил, как вы работаете.\n\nОткрыть память\nПриёмка WP01\nСтандарт · Баланс —\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "A-light-200-percent-narrow-before-refresh-scroll",
+      "text": "П\nП\nПриёмка WP01 A\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить"
+    },
+    {
+      "name": "A-light-200-percent-narrow-keyboard",
+      "text": "П\nП\nПриёмка WP01 A\nОбщий проект с настоящим каноническим ID\n\nДля участников\n\nСсылка на проект\nproject:e9d9672e-14e5-4308-bcdf-95309e1eaa15\nРабочее пространство\nf197088e-d1c3-4cc2-b615-c1f4f7e577e7\nРевизия\n1\n\nСеансы, задачи, файлы и настройки локальных папок ещё не подключены к этому общему проекту.\n\nОбновить"
+    },
+    {
+      "name": "A-post-service-and-profile-restart",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка A\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nПриёмка WP01\nСтандарт · Баланс —\nВсе проекты\n1\nДобавить проект\nОбщие проекты\nСоздать общий проект\n\nЛокальные папки и сеансы работают на этом устройстве. Общие проекты загружаются из подключённого сервиса.\n\nПРИВАТНЫЙ_ПРОЕКТ_A_入力_🧭_c2f20568\nПриватный\nОбщий проект с настоящим каноническим ID\nДля участников\nОбновить\nЛокальные проекты\nНастоящая локальная папка A\n/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/A/workspaces/native-A\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "B-post-service-and-profile-restart",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка B\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nПриёмка WP01\nСтандарт · Баланс —\nВсе проекты\n1\nДобавить проект\nОбщие проекты\nСоздать общий проект\n\nЛокальные папки и сеансы работают на этом устройстве. Общие проекты загружаются из подключённого сервиса.\n\nОбщий проект с настоящим каноническим ID\nДля участников\nОбновить\nЛокальные проекты\nНастоящая локальная папка B\n/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/B/workspaces/native-B\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "B-revoked-session-denied-host-folder-preserved",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка B\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nПриёмка WP01\nСтандарт · Баланс —\nВсе проекты\n1\nДобавить проект\nОбщие проекты\nСоздать общий проект\n\nЛокальные папки и сеансы работают на этом устройстве. Общие проекты загружаются из подключённого сервиса.\n\nДоступ запрещён. Войдите снова или проверьте членство в рабочем пространстве.\n\nОбновить\nЛокальные проекты\nНастоящая локальная папка B\n/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/B/workspaces/native-B\nИнфо\nЗАГОЛОВОК\nПроекты"
+    },
+    {
+      "name": "B-explicit-native-disconnect-no-durable-token",
+      "text": "Новая сессия\nСессии\n0\nБэклог\n0\nК выполнению\n0\nВ работе\n0\nТребует проверки\n0\nГотово\n0\nОтменено\n0\nИзбранное\n0\nАрхив\nМетки\nПроекты\n1\nНастоящая локальная папка B\nСтраницы\n0\nПамять\nЗадачи\nВстречи\nИсточники\n10\nAPI\n2\nMCP\n0\nЛокальные папки\n8\nНавыки\n134\nЗаметки\nАвтоматизации\n30\nЗапланированные\n10\nПо событиям\n10\nАгентные\n10\nНастройки\nПриёмка WP01\nСтандарт · Баланс —\nСоединения\n\nИсточники, мессенджеры и аккаунты, к которым подключён Rox\n\nОбновить\nПодключить\nОбзор\nУчётные данные\nИмпорты\nПолитики\nАудит\nСервис общих проектов\n\nВойдите в существующий аккаунт сервиса. Пароль используется только для входа, токен хранится зашифрованным на этом устройстве.\n\nURL сервиса\nАдрес сервиса без пути, например https://service.example. HTTP разрешён только для локального сервиса.\nUUID рабочего пространства в сервисе\nUUID пространства в сервисе, а не идентификатор локальной папки ROX.\nНазвание рабочего пространства в сервисе\nВведите название точно как в сервисе. Оно требуется для создания проекта.\nАккаунт\nПароль\nВойти и подключить\nОтключить\n\nПодключение к сервису общих проектов не настроено.\n\nИсточники10\nДобавить источник\n🧩\nApplications\nЛокальная папка · Applications and ~/Library/Applications\nПодключено\nОткрыть\nУдалить\n🔎\nExa\nAPI · Neural web search & research (Exa)\nВыключено\nОткрыть\nУдалить\n🔥\nFirecrawl\nAPI · Crawl & extract clean page content (Firecrawl)\nВыключено\nОткрыть\nУдалить\n🗂️\nFolder tree\nЛокальная папка · Workspace folder tree\nПодключено\nОткрыть\nУдалить\n💬\nLast sessions\nЛокальная папка · Imported and archived session transcripts\nПодключено\nОткрыть\nУдалить\n🧠\nMemory\nЛокальная папка · Self-learning memory files\nПодключено\nОткрыть\nУдалить\n📓\nNotes vault\nЛокальная папка · Markdown notes, backlinks, tags, properties, daily notes, and assets\nПодключено\nОткрыть\nУдалить\n📁\nProjects\nЛокальная папк"
+    }
+  ],
+  "html": [
+    {
+      "name": "B-native-Connections-403-quiesced-live-preserved-durable",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-native-Connections-403-quiesced-live-preserved-durable.html",
+      "sha256": "f80286ffb18f0321c4368e380753447bc80dea0e38e88b27b9f41c018399980b",
+      "bytes": 117410,
+      "rootClasses": null,
+      "projectHeading": "Соединения",
+      "hasCanonicalSharedID": false,
+      "hasForbidden": true,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "B-private-canonical-route-denied-no-title",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-private-canonical-route-denied-no-title.html",
+      "sha256": "6bb061f35f41067b8348e69d37bde6062d3fd6b6dc6399688716cab027176827",
+      "bytes": 74540,
+      "rootClasses": null,
+      "projectHeading": "Общие проекты",
+      "hasCanonicalSharedID": false,
+      "hasForbidden": true,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-dark-native-shared-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-native-shared-detail.html",
+      "sha256": "718c5cce2c173c92f7514b271b66900f3cd4ddf3ccbaa9b3af1ca44cf890c1d1",
+      "bytes": 74976,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-dark-200-percent-narrow-before-refresh-scroll",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-200-percent-narrow-before-refresh-scroll.html",
+      "sha256": "312312ccaf55f30492877599b0daf6698be52f96abf52f4a35d364237b5ee15b",
+      "bytes": 22314,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-dark-200-percent-narrow-keyboard",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-dark-200-percent-narrow-keyboard.html",
+      "sha256": "312312ccaf55f30492877599b0daf6698be52f96abf52f4a35d364237b5ee15b",
+      "bytes": 22314,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-light-native-shared-detail",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-native-shared-detail.html",
+      "sha256": "9048ddd5e7246d93b5b96fe9d1d3afe7dda7b39701187bde175b5e70b9a24de8",
+      "bytes": 74979,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-light-200-percent-narrow-before-refresh-scroll",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-200-percent-narrow-before-refresh-scroll.html",
+      "sha256": "ea18eabbb3fdcf8130f06a6d4b7dd23c8ece4141de7272a90032be3101edd472",
+      "bytes": 22314,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-light-200-percent-narrow-keyboard",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-light-200-percent-narrow-keyboard.html",
+      "sha256": "ea18eabbb3fdcf8130f06a6d4b7dd23c8ece4141de7272a90032be3101edd472",
+      "bytes": 22314,
+      "rootClasses": null,
+      "projectHeading": "Общий проект с настоящим каноническим ID",
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "A-post-service-and-profile-restart",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/A-post-service-and-profile-restart.html",
+      "sha256": "0f32c8f512851125df6fc5b78b718ba91c6c15da4183f6e1de754d9eb39bebd1",
+      "bytes": 79353,
+      "rootClasses": null,
+      "projectHeading": null,
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": true,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "B-post-service-and-profile-restart",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-post-service-and-profile-restart.html",
+      "sha256": "0211c6759f8ba7049a819bfe80b590e48138de0ea75196883401780e6b019c51",
+      "bytes": 78626,
+      "rootClasses": null,
+      "projectHeading": null,
+      "hasCanonicalSharedID": true,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "B-revoked-session-denied-host-folder-preserved",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-revoked-session-denied-host-folder-preserved.html",
+      "sha256": "3be8e6bb334fe33ef721b8e46de563900230f829eb3e129f6b0c67b655f94c72",
+      "bytes": 77948,
+      "rootClasses": null,
+      "projectHeading": null,
+      "hasCanonicalSharedID": false,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    },
+    {
+      "name": "B-explicit-native-disconnect-no-durable-token",
+      "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/B-explicit-native-disconnect-no-durable-token.html",
+      "sha256": "36ed34537cc300d2ad458391d012a851dac480d1f64848ab9e8a32b6bbd56d81",
+      "bytes": 116116,
+      "rootClasses": null,
+      "projectHeading": "Соединения",
+      "hasCanonicalSharedID": false,
+      "hasForbidden": false,
+      "hasUnauthenticated": false,
+      "privateATitlePresent": false,
+      "privateBTitlePresent": false,
+      "scenic": false
+    }
+  ],
+  "privateIndependentRGBA": "cc3b2dc8d52507618415b06af9b662fcff38bcf1b4cd7de533ec1be9c31fbf67",
+  "privateBrowserRGBA": "1fca4c96963aa236df719b9686dfed3b2b1e5f29881c12d64ec37619f1ef1a6e",
+  "manualPrivateRGBAEqualsBrowser": false
+}

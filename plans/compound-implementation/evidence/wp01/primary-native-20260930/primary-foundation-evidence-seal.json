@@ -1,0 +1,48 @@
+{
+  "sourceSha256": "cac6ec003b57812e29eb660a39473f939292e3e94edf8d5d87324c5199c26630",
+  "resultSha256": "79af30eecbbd71b62e6e74b44d943e24eb7e53b618b616857cd76bc9d6131528",
+  "files": [
+    {
+      "path": "primary-foundation-evidence-report.json",
+      "sha256": "5b1bbe4dac110d83120cc50574ac9c8e9e95d7ca2228347b5955a9481d54ad7e",
+      "bytes": 30892
+    },
+    {
+      "path": "primary-foundation-evidence-report.md",
+      "sha256": "227782517221f5097a372747e4b130deebed687ef2a507fcad02998c85cdc856",
+      "bytes": 5907
+    },
+    {
+      "path": "primary-native-criteria-map.json",
+      "sha256": "45c3842972c596179019d5572d14eb19a86918da2d191c2619b04b8a1752cfd8",
+      "bytes": 17855
+    },
+    {
+      "path": "primary-pass-png-audit.json",
+      "sha256": "9cbcf9ed54c2b359d93bea0714452d81380f7bd17b149bc90dbaa56095578d6c",
+      "bytes": 53347
+    },
+    {
+      "path": "primary-pass-png-audit.log",
+      "sha256": "72ff102651c166614f9fa8ba72a9157371f0bb18e78800ac95706157159b0ec8",
+      "bytes": 29833
+    },
+    {
+      "path": "frozen-theme-sidebar-actual-tests.log",
+      "sha256": "ce5ecc290b62f062bb35bf456b336eb2a4c8ac0c2a5f0306c018092dc715df37",
+      "bytes": 795
+    },
+    {
+      "path": "pierre-seed-proposal/manifest.json",
+      "sha256": "1e2caf82c170b3242196bd44946c67351f0c9a51d46fe8b8b267ce6b047c6464",
+      "bytes": 5106
+    },
+    {
+      "path": "pierre-seed-proposal/owned-pierre-seed.patch",
+      "sha256": "68fcca10941edebcf102131df2c4396091b102f99f7c528ef98efc7f36a77433",
+      "bytes": 6916
+    }
+  ],
+  "noRootWrites": true,
+  "fullDoDClaimed": false
+}

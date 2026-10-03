@@ -1,0 +1,92 @@
+diff --git a/tests/macro-integration/ui/wp-01-electron.test.ts b/tests/macro-integration/ui/wp-01-electron.test.ts
+index 00d2218..5c17d91 100644
+--- a/tests/macro-integration/ui/wp-01-electron.test.ts
++++ b/tests/macro-integration/ui/wp-01-electron.test.ts
+@@ -166,7 +166,7 @@ async function isolatedSeed(): Promise<void> {
+   // back to its real mode-0600 credentials.key file, without a provider mock,
+   // binary shim or any change to the host's OS keychain search/default list.
+   config.saveConfig({ workspaces: [], activeWorkspaceId: null, activeSessionId: null,
+-    setupDeferred: true, defaultZoomLevel: 100, notificationsEnabled: false,
++    setupDeferred: true, colorTheme: 'pierre', defaultZoomLevel: 100, notificationsEnabled: false,
+     memory: { enabled: false, semantic: false },
+     // Genuine supported preference excludes default-on tools. Core tools are
+     // always required and are separately cloned from actual pinned installs.
+@@ -179,6 +179,12 @@ async function isolatedSeed(): Promise<void> {
+   const stored = config.loadStoredConfig()!
+   stored.activeWorkspaceId = local.id
+   config.saveConfig(stored)
++  const { getColorTheme } = await import('../../../packages/shared/src/config/storage')
++  const themeFixture = { requested: 'pierre', stored: config.loadStoredConfig()?.colorTheme,
++    resolved: getColorTheme(), presetSha256: 'dd1a2ac59e1873d69dc8fd31a56aa6621cacfdf294c3a12a664cb055e74b6539',
++    supportedModes: ['light','dark'], scenic: false }
++  if (themeFixture.stored !== 'pierre' || themeFixture.resolved !== 'pierre') throw new Error('Owned config did not preserve Pierre fixture')
++  await writeFile(join(profile,'theme-fixture-proof.json'),JSON.stringify(themeFixture,null,2),{mode:0o600,flag:'wx'})
+   const localProjectName = 'Настоящая локальная папка ' + input.label
+   const project = projects.createProject(workspaceRoot, { name: localProjectName, workingDirectory: workspaceRoot })
+   const loaded = projects.loadWorkspaceProjects(workspaceRoot).find(item => item.config.id === project.id)!
+@@ -395,6 +401,8 @@ describe.skipIf(process.env.ROX_WP01_PRODUCT_E2E !== '1')('WP01 genuine Electron
+       const diagnostic = await new Response(child.stderr).text()
+       if (await child.exited !== 0) throw new Error('Owned profile setup failed: ' + redact(diagnostic))
+       const seed = JSON.parse(output.trim().split('\n').at(-1)!) as Seed
++      ;((observed.themeFixtureSeedReceipts ??= []) as unknown[]).push({ profile,
++        ...JSON.parse(await readFile(join(profile,'theme-fixture-proof.json'),'utf8')) })
+       const shellProbe = Bun.spawn([process.execPath, import.meta.path, '--verify-shell'], { cwd:root,env,
+         stdout:'pipe',stderr:'pipe' })
+       const shellOutput = await new Response(shellProbe.stdout).text()
+@@ -597,6 +605,21 @@ describe.skipIf(process.env.ROX_WP01_PRODUCT_E2E !== '1')('WP01 genuine Electron
+       await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {})
+       if (await skip.isVisible()) await skip.click()
+       await target.page.getByRole('navigation', { name: 'Main navigation', exact: true }).first().waitFor()
++      const themeFixture = await target.page.evaluate(async localWorkspaceId => ({
++        appColorTheme: await window.electronAPI.getColorTheme?.(),
++        workspaceColorTheme: await window.electronAPI.getWorkspaceColorTheme?.(localWorkspaceId),
++        theme: document.documentElement.dataset.theme ?? null,
++        scenic: document.documentElement.dataset.scenic ?? null,
++      }), target.seed.localWorkspaceId)
++      ;((observed.ownedThemeFixtureReadbacks ??= []) as unknown[]).push({
++        profile: target.seed.profile, requested: 'pierre', ...themeFixture,
++      })
++      if (themeFixture.appColorTheme !== 'pierre' || themeFixture.workspaceColorTheme !== null) {
++        throw new Error('Owned Pierre fixture must use actual config theme and inherited workspace theme')
++      }
++      await target.page.waitForFunction(() => document.documentElement.dataset.theme === 'pierre' &&
++        document.documentElement.dataset.scenic === undefined)
++
+       await route(target.page, 'connections')
+       await target.page.getByTestId('project-authority-connection').waitFor()
+       target.hasLaunched = true
+diff --git a/tests/macro-integration/ui/wp-01-offline-electron.test.ts b/tests/macro-integration/ui/wp-01-offline-electron.test.ts
+index 0d8554a..faf71d8 100644
+--- a/tests/macro-integration/ui/wp-01-offline-electron.test.ts
++++ b/tests/macro-integration/ui/wp-01-offline-electron.test.ts
+@@ -364,6 +364,8 @@ describe.skipIf(process.env.ROX_WP01_OFFLINE_PRODUCT_E2E !== '1')('WP01 actual n
+       expect(cloned.ensureAllStateUnchanged).toBe(true); expect(cloned.downloads).toEqual([])
+       await writeFile(join(evidence, label + '-runtime-clone.json'), JSON.stringify(cloned, null, 2))
+       const seed = await childJson(environmentHelper, ['--seed-profile'], env, { label: 'Offline-' + label }) as Seed
++      record('themeFixtureSeedReceipts', { profile,
++        ...JSON.parse(await readFile(join(profile,'theme-fixture-proof.json'),'utf8')) })
+       const shell = await childJson(environmentHelper, ['--verify-shell'], env)
+       expect(shell.shell).toBe('/bin/bash'); expect(shell.securityPaths).toEqual([])
+       record('isolatedEnvironment', { label, profile, shell, runtimeCloneSha256: digest(JSON.stringify(cloned)) })
+@@ -390,6 +392,21 @@ describe.skipIf(process.env.ROX_WP01_OFFLINE_PRODUCT_E2E !== '1')('WP01 actual n
+       await skip.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {})
+       if (await skip.isVisible()) await skip.click()
+       await target.page.getByRole('navigation', { name: 'Main navigation', exact: true }).first().waitFor()
++      const themeFixture = await target.page.evaluate(async localWorkspaceId => ({
++        appColorTheme: await window.electronAPI.getColorTheme?.(),
++        workspaceColorTheme: await window.electronAPI.getWorkspaceColorTheme?.(localWorkspaceId),
++        theme: document.documentElement.dataset.theme ?? null,
++        scenic: document.documentElement.dataset.scenic ?? null,
++      }), target.seed.localWorkspaceId)
++      ;((observed.ownedThemeFixtureReadbacks ??= []) as unknown[]).push({
++        profile: target.seed.profile, requested: 'pierre', ...themeFixture,
++      })
++      if (themeFixture.appColorTheme !== 'pierre' || themeFixture.workspaceColorTheme !== null) {
++        throw new Error('Owned Pierre fixture must use actual config theme and inherited workspace theme')
++      }
++      await target.page.waitForFunction(() => document.documentElement.dataset.theme === 'pierre' &&
++        document.documentElement.dataset.scenic === undefined)
++
+       target.hasLaunched = true
+       const runtime = await target.app.evaluate(() => {
+         const { existsSync } = process.getBuiltinModule('node:fs') as typeof import('node:fs')

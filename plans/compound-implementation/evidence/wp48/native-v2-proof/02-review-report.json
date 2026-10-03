@@ -1,0 +1,662 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-30T16:25:22.587Z",
+  "evaluator": "independent GPT6.1Sol Ultra",
+  "decision": "TARGETED_NATIVE_V2_FUNCTIONAL_REVIEW_PASSED_ROOT_NATIVE_INTEGRATION_PENDING",
+  "scope": "Sealed ten-file delta over sealed native-v1 with one exact current-root domain-fixture lifecycle base; exact 32-path composed source reviewed read-only. Three pure source files copied outside and 20 actual Bun tests executed. No root writes, tests, builds, Git edits, physical UI, Electron or PostgreSQL execution by this evaluator. Producer actual service/main and compiler evidence is attributed separately.",
+  "input": {
+    "path": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/input-receipt.json",
+    "sha256": "a0e891467decd9ae7c6c739b8d9480c5c2068f4c03aeb1dded11f660d792a7fc",
+    "bytes": 34475
+  },
+  "originalManifest": {
+    "path": "/tmp/rox-wp48-domain/native-v1/manifest.json",
+    "sha256": "5a2d6b8f8328f2f49f42100800498a5407bd2cc1bfde0246d89cb7be70cc466c"
+  },
+  "deltaManifest": {
+    "path": "/tmp/rox-wp48-domain/native-v2/review-manifest.json",
+    "sha256": "f9fe52b70997e6e635be5384764306d672005a1e4e6b7b2476932af31267d8f5",
+    "state": "EXACT_DELTA_SOURCE_FROZEN_PENDING_FINAL_PROOF"
+  },
+  "finalManifest": {
+    "path": "/tmp/rox-wp48-domain/native-v2/manifest.json",
+    "sha256": "9be658a3be679eb23158d88cc5007477832c67688453d5ca052ac1636de19531",
+    "bytes": 15597
+  },
+  "finalSealReceipt": {
+    "path": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/final-seal-receipt.json",
+    "sha256": "d6a5b6c7e32beeb2eb68250764fe876d07fb0b5a8411f698e63c758c8cc8070e",
+    "bytes": 29227
+  },
+  "exactBinding": {
+    "originalPaths": 31,
+    "deltaPaths": 10,
+    "composedPaths": 32,
+    "allSourceAndPatchHashesMatch": true,
+    "allDeltaBasesMatchOriginalResultsExceptExactRepairedRootFixture": true,
+    "domainFixtureRootReconciliation": {
+      "path": "tests/macro-integration/wp-48-domain.test.ts",
+      "baseSha256": "3e3e65c75dffe74af561949ff69281c86b702274e171b2a0156c826d6f779279",
+      "reason": "Exact current root dependency repair preserved; additional idempotent fixture disposal and explicit consumer finally cleanup"
+    }
+  },
+  "originalFailurePreserved": {
+    "report": {
+      "path": "/tmp/rox-wp48-native-independent-ultra-20260930/native-v1-review.json",
+      "sha256": "620b2fcd671c3be0bedb5c42dd9ed0b05780e5d45e59170cd59d00b53833bc4d",
+      "bytes": 23504
+    },
+    "oracle": {
+      "path": "/tmp/rox-wp48-native-independent-ultra-20260930/validator-controls.test.ts",
+      "sha256": "58295732a250579829e468e76c4fa20687aa758fac6c3ae0cf6d3d7f9d5f5d65",
+      "bytes": 4726
+    },
+    "execution": {
+      "path": "/tmp/rox-wp48-native-independent-ultra-20260930/validator-execution.log",
+      "sha256": "e99ec1e994fe73757528614e696958fdca6cd698e82d8f8b5b9cb1b93564176b",
+      "bytes": 3340
+    },
+    "actualTests": 5,
+    "pass": 1,
+    "fail": 4,
+    "assertions": 8,
+    "rerunOrRewrite": false
+  },
+  "independentExecution": {
+    "tests": 20,
+    "pass": 20,
+    "fail": 0,
+    "assertions": 27,
+    "log": {
+      "path": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/execution.log",
+      "sha256": "5a47c38280b251b14a4ba64e7767cb08e3b79357f9ddcaa663a2930d1fc06b30",
+      "bytes": 1914
+    },
+    "semanticOracle": {
+      "path": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/validator-controls.test.ts",
+      "sha256": "620fc6f3b796bd0443cab472ded9742e601e7353c186b4be158427a5bb3f4a7e",
+      "bytes": 4818
+    },
+    "asyncAdapter": {
+      "path": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/oracle-adapter.json",
+      "sha256": "2aa70a6a65bbd26f1d4850c75600318bc935c39586a661b0816c4f0aa6a2f2b8",
+      "bytes": 756
+    },
+    "eventProofOracle": {
+      "path": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/event-proof-controls.test.ts",
+      "sha256": "0ebd4639e275b604ebd982e8061e974459de18685da00312025119a0c105d134",
+      "bytes": 6766
+    },
+    "validatorObservations": {
+      "path": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/validator-observations.json",
+      "sha256": "953606f349729f98c5c87941cc9cb1f4cb8aae4afde7abfe6d4e86bd110ded30",
+      "bytes": 1752
+    },
+    "eventObservations": {
+      "path": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/event-proof-observations.json",
+      "sha256": "9f05d2e1d4ccb3667672a4af80009183cd27291703f66535a0bc62bbf4fdc21c",
+      "bytes": 1780
+    },
+    "originalSemanticVectorsAndExpectedOutcomesUnchanged": true,
+    "exercised": [
+      "Canonical backend semantic SHA-256 and strict unknown-field rejection",
+      "Current policy epoch advancement with exact retained immutable audit fields and historical receipt",
+      "Wrong valid request hash denial",
+      "Cause/correlation mismatch and duplicate event IDs denial",
+      "Matching original event beyond first 25 with exact opaque cursor",
+      "Ten event identity/evidence substitutions denied",
+      "Missing event cannot yield applied proof",
+      "Cross-page duplicate denial",
+      "Pre-I/O and post-await operation invalidation fences"
+    ],
+    "evidenceLimit": "Actual pure production functions with deterministic synthetic DTOs and asynchronous page port; no actual service/database, React renderer or native-pixel claim."
+  },
+  "standards": {
+    "criteria": [
+      {
+        "id": "N3",
+        "criterion": "receipt_verified requires exact semantic command hash",
+        "status": "VERIFIED_INDEPENDENT_PURE",
+        "source": [
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/shared/license-evidence.ts",
+            "sha256": "ddaf9d1257bc61eb66d7065948ef703196852279b7d8ac20bc7fcbf1a8e1c81c",
+            "bytes": 11616,
+            "relativePath": "apps/electron/src/shared/license-evidence.ts",
+            "symbol": "licenseCommandRequestHash",
+            "line": 60
+          },
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/shared/license-evidence.ts",
+            "sha256": "ddaf9d1257bc61eb66d7065948ef703196852279b7d8ac20bc7fcbf1a8e1c81c",
+            "bytes": 11616,
+            "relativePath": "apps/electron/src/shared/license-evidence.ts",
+            "symbol": "requireLicenseAuditResult hash comparison",
+            "line": 85
+          }
+        ]
+      },
+      {
+        "id": "N4",
+        "criterion": "Native event use requires cause/correlation equality and unique IDs",
+        "status": "VERIFIED_INDEPENDENT_PURE",
+        "source": [
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/shared/license-evidence.ts",
+            "sha256": "ddaf9d1257bc61eb66d7065948ef703196852279b7d8ac20bc7fcbf1a8e1c81c",
+            "bytes": 11616,
+            "relativePath": "apps/electron/src/shared/license-evidence.ts",
+            "symbol": "requireLicenseEvents",
+            "line": 107
+          },
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/shared/license-evidence.ts",
+            "sha256": "ddaf9d1257bc61eb66d7065948ef703196852279b7d8ac20bc7fcbf1a8e1c81c",
+            "bytes": 11616,
+            "relativePath": "apps/electron/src/shared/license-evidence.ts",
+            "symbol": "cross-page duplicate guard",
+            "line": 132
+          }
+        ]
+      },
+      {
+        "id": "N6",
+        "criterion": "Private response and next delivery are fenced after storage/network await",
+        "status": "SOURCE_FIXED_AND_PURE_EVENT_FENCES_VERIFIED_MAIN_SUBPROCESS_PRODUCER_NATIVE_PENDING",
+        "source": [
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/main/project-authority.ts",
+            "sha256": "f16905a4c87aa9fc7b76b8bc8780060163720ef3bc7c0dfdcb91012a814b55ef",
+            "bytes": 21713,
+            "relativePath": "apps/electron/src/main/project-authority.ts",
+            "symbol": "storedAuthorityIntent post-storage get fence",
+            "line": 327
+          },
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "sha256": "2afe003d52f4cbbfc651ca018470a7f3cdd30669ff94ffeac44aefa941e1d2e1",
+            "bytes": 17405,
+            "relativePath": "apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "symbol": "retry pending post-await scope guard",
+            "line": 106
+          },
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "sha256": "2afe003d52f4cbbfc651ca018470a7f3cdd30669ff94ffeac44aefa941e1d2e1",
+            "bytes": 17405,
+            "relativePath": "apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "symbol": "audit connection post-await scope guard",
+            "line": 148
+          },
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/shared/license-evidence.ts",
+            "sha256": "ddaf9d1257bc61eb66d7065948ef703196852279b7d8ac20bc7fcbf1a8e1c81c",
+            "bytes": 11616,
+            "relativePath": "apps/electron/src/shared/license-evidence.ts",
+            "symbol": "event page post-await current fence",
+            "line": 129
+          }
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "criteria": [
+      {
+        "id": "N1",
+        "criterion": "Permission/scope denial retracts all private cached projections and queued proof",
+        "status": "PATCHED_SOURCE_REVIEW_NATIVE_RENDERER_VERIFICATION_PENDING",
+        "source": [
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "sha256": "2afe003d52f4cbbfc651ca018470a7f3cdd30669ff94ffeac44aefa941e1d2e1",
+            "bytes": 17405,
+            "relativePath": "apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "symbol": "central retractDenied",
+            "line": 33
+          },
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "sha256": "2afe003d52f4cbbfc651ca018470a7f3cdd30669ff94ffeac44aefa941e1d2e1",
+            "bytes": 17405,
+            "relativePath": "apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "symbol": "refresh denies before setIntent",
+            "line": 55
+          },
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "sha256": "2afe003d52f4cbbfc651ca018470a7f3cdd30669ff94ffeac44aefa941e1d2e1",
+            "bytes": 17405,
+            "relativePath": "apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "symbol": "refresh blocked denial",
+            "line": 56
+          }
+        ],
+        "branches": [
+          "refresh catch and denied/blocked branches",
+          "open catch",
+          "retry catch and blocked attempt",
+          "audit catch",
+          "cancel catch",
+          "replayActivity catch"
+        ],
+        "limitation": "Actual React setters/DOM visibility were not independently executed."
+      },
+      {
+        "id": "N2",
+        "criterion": "Fresh authorized policy state reconciles without rewriting historical receipt/audit identity",
+        "status": "VERIFIED_INDEPENDENT_PURE_PRODUCER_ACTUAL_PG_HTTP_WS_POLICY_ATTRIBUTED",
+        "source": [
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/shared/license-evidence.ts",
+            "sha256": "ddaf9d1257bc61eb66d7065948ef703196852279b7d8ac20bc7fcbf1a8e1c81c",
+            "bytes": 11616,
+            "relativePath": "apps/electron/src/shared/license-evidence.ts",
+            "symbol": "requireLicenseAuditReadback",
+            "line": 89
+          }
+        ],
+        "retainedFields": [
+          "entity/resource",
+          "label",
+          "revision",
+          "artifact/SBOM",
+          "review/checker/build refs",
+          "evidence",
+          "auditDigest",
+          "auditedAt",
+          "projectionWatermark",
+          "permissionMode"
+        ],
+        "currentFields": [
+          "monotonic policyEpoch",
+          "decisionManifest.policyEpoch equals current epoch",
+          "fresh canAudit"
+        ]
+      },
+      {
+        "id": "N5",
+        "criterion": "Main intent deletion and renderer verified claim require command plus matching event plus GET",
+        "status": "VERIFIED_INDEPENDENT_PURE_EVENT_PROOF_SOURCE_ORDER_AND_PRODUCER_MAIN_SUBPROCESS_ATTRIBUTED_NATIVE_PENDING",
+        "source": [
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/main/project-create-intent.ts",
+            "sha256": "fad8d3d3b62fcdf34bdbb0c17a26cdf867440b95d7891085d3ee662eca040e79",
+            "bytes": 23597,
+            "relativePath": "apps/electron/src/main/project-create-intent.ts",
+            "symbol": "retryLicense",
+            "line": 218
+          },
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/main/project-create-intent.ts",
+            "sha256": "fad8d3d3b62fcdf34bdbb0c17a26cdf867440b95d7891085d3ee662eca040e79",
+            "bytes": 23597,
+            "relativePath": "apps/electron/src/main/project-create-intent.ts",
+            "symbol": "main event proof before GET/delete",
+            "line": 235
+          },
+          {
+            "path": "/tmp/rox-wp48-domain/native-v2/files/apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "sha256": "2afe003d52f4cbbfc651ca018470a7f3cdd30669ff94ffeac44aefa941e1d2e1",
+            "bytes": 17405,
+            "relativePath": "apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+            "symbol": "renderer event proof before verifiedReceipt",
+            "line": 119
+          }
+        ],
+        "order": [
+          "canonical result/hash",
+          "matching original live-actor event with bounded opaque cursor replay",
+          "immutable/current-policy GET reconciliation",
+          "fresh same identity",
+          "encrypted intent delete",
+          "applied original result and proven event"
+        ],
+        "droppedProof": "UNKNOWN_EXTERNAL_EFFECT preserves uncertain encrypted intent; never empty first-page success."
+      }
+    ]
+  },
+  "producerEvidence": {
+    "attribution": "Artifact readback/source review of producer executions; not independently re-executed here.",
+    "finalActualServiceMainWP01Log": {
+      "path": "/tmp/rox-wp48-domain/native-v2-final-lifecycle-tests.log",
+      "sha256": "d45b3fd9d7bef3da6cf3971426537082c727df2f8fe22c4a959e8d5b5bf36979",
+      "bytes": 4780
+    },
+    "acceptedLogSummary": "34 pass / 0 fail / 537 assertions across four files; actual PG/HTTP/WS/main subprocess and WP01 persistence/recovery",
+    "mutationSummary": {
+      "path": "/tmp/rox-wp48-domain/native-v2-controls-final.log",
+      "sha256": "a2b215563a573d9ec8b67e936d64447b5c1907bc2174b1ec9478d9efd225782b",
+      "bytes": 258
+    },
+    "initialMutationCollectorFailurePreserved": {
+      "path": "/tmp/rox-wp48-domain/native-v2-controls.log",
+      "sha256": "dcfa7e29ffb69cccebb6fed6d0c6ac95d468d8d7f9fe7887250fcb841744fe0f",
+      "bytes": 793
+    },
+    "mutationNames": [
+      "wrong-request-hash",
+      "policy-advancement-regression",
+      "event-correlation-and-dedup-bypass",
+      "window-read-fence-bypass",
+      "delete-without-event-proof"
+    ],
+    "collectorCorrection": "Original policy mutation threw INVALID_PAYLOAD at unchanged target test; obsolete expect( log-text requirement caused collector false negative. Exact target failure plus exit1 and one failure now required. Original log remains.",
+    "finalLifecycleFailurePreserved": {
+      "path": "/tmp/rox-wp48-domain/native-v2-lifecycle-proof.log",
+      "sha256": "2a26601797504f1853121544115d991e49b998e91e96822195198e9abd7f46f1",
+      "bytes": 14010
+    },
+    "finalFailureDiagnostic": {
+      "path": "/tmp/rox-wp48-domain/native-v2-child-import-diagnostic.log",
+      "sha256": "489def8f49553340f814982f0a15fc71beba8577ec1711238c2e1069c0d8e54b",
+      "bytes": 163
+    },
+    "failureRecovery": "24 pass/10 child failures/238 assertions from missing actual installed SDK export resolution. Outside fixture import-only normalization uses real installed export; failed run and exact diagnostic preserved. Final unfiltered run is 34/0/537.",
+    "testOnlyStrictTypeScriptLog": {
+      "path": "/tmp/rox-wp48-domain/native-v2-test-only-lifecycle-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "fullElectronTypeScriptLog": {
+      "path": "/tmp/rox-wp48-domain/native-v2-electron-lifecycle-final.log",
+      "sha256": "1de495ff7584ab07587b9d064ba954594dbc94ee6408f78acb6ea81be356e948",
+      "bytes": 29868
+    },
+    "sourceTypeBindingProof": {
+      "path": "/tmp/rox-wp48-domain/native-v2-final-type-source-proof.json",
+      "sha256": "c464958ba79a8dfbd283858a94a1538ad450818f26e8b0a2802aa2631213075c",
+      "bytes": 3514
+    },
+    "finalCleanup": {
+      "path": "/tmp/rox-wp48-domain/native-v2-final-cleanup.json",
+      "sha256": "ac8eb59dcefdf78b6ba201c912859b75e64a6a6239005090a6653d59a695cb36",
+      "bytes": 274
+    },
+    "ownedSixFixtureDisposal": {
+      "path": "/tmp/rox-wp48-domain/native-v2-owned-disposal.json",
+      "sha256": "0892a6ab39236bbe01e4bc57738386a6c4af0846041f676b97865d5fa312a4c1",
+      "bytes": 2633
+    },
+    "ownedFixtureBindings": {
+      "path": "/tmp/rox-wp48-domain/native-v2-retained-schema-bindings.json",
+      "sha256": "9171be361422adf8c11d0025bb653b4697e152edbc41b5c8dd473c884d7a5bc1",
+      "bytes": 5159
+    },
+    "producerVerification": {
+      "tests": {
+        "pass": 34,
+        "fail": 0,
+        "assertions": 537,
+        "fileCount": 4,
+        "filtered": false,
+        "actualPgHttpWsEncryptedCustodyAndSubprocess": true
+      },
+      "strictTestTypecheck": {
+        "exitCode": 0,
+        "ambientStubsAdded": false
+      },
+      "electronTypecheck": {
+        "baseline": 128,
+        "proposed": 128,
+        "newDiagnostics": 0,
+        "limitation": "Outside physical copy includes existing alias-resolution baseline. Root normal Electron gate remains independent."
+      },
+      "ast": {
+        "newAny": 0,
+        "newNonNull": 0,
+        "suppressions": 0,
+        "disabledTests": 0
+      },
+      "sourceNegativeControls": 5,
+      "cleanup": {
+        "observedAt": "2026-09-30T16:19:27.541Z",
+        "actualOsTmpdir": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T",
+        "remainingObservedMatchingSchemas": 0,
+        "remainingMatchingPrivateDirectories": 0,
+        "ownershipClaimForUnknownState": false,
+        "readOnly": true
+      }
+    },
+    "independentlyVerifiedManifestEvidenceHashes": 23,
+    "independentlyVerifiedRuntimeSourceNormalization": {
+      "paths": 10,
+      "method": "TypeScript AST module specifier literals normalized; all remaining source bytes identical for ten delta paths. Real installed SDK export hash verified. No producer-body mutation accepted."
+    },
+    "compilerLimit": "Exit status and baseline differential remain producer claims bound by sealed manifest; an empty log alone is not treated as a compiler pass."
+  },
+  "currentRoot": {
+    "sourceReadsOnly": true,
+    "observedHead": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+    "preimageDifferences": [
+      {
+        "path": "tests/macro-integration/wp-48-domain.test.ts",
+        "origin": "/tmp/rox-wp48-domain/native-v2",
+        "resultSha256": "871c7b6af4b1f92ebc9289a79b567823f3c627300345cc3ef60cc14f8f2de1b0",
+        "rootSha256": "3e3e65c75dffe74af561949ff69281c86b702274e171b2a0156c826d6f779279",
+        "originalRootBaseSha256": "87cc9c549e4ffaf2c88c8b02d9ac49abd96dddc0c3e1e97779423f9b163c1618"
+      }
+    ],
+    "sourceReadback": [
+      {
+        "path": "apps/electron/src/main/index.ts",
+        "currentSha256": "d6b5152bfccf22c447623a4c89ac2518d31c873a396daa97872b85d00092a391",
+        "candidateSha256": "f3815f08fdfac86861a9bfa31f61f25b43a6354865a9419a44347fdf4451995e"
+      },
+      {
+        "path": "apps/electron/src/main/project-authority.ts",
+        "currentSha256": "a5317ee286e8383bb0672e12a32383ab71e384f6140b9cb1f403164af0857bd9",
+        "candidateSha256": "f16905a4c87aa9fc7b76b8bc8780060163720ef3bc7c0dfdcb91012a814b55ef"
+      },
+      {
+        "path": "apps/electron/src/main/project-create-intent.ts",
+        "currentSha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad",
+        "candidateSha256": "fad8d3d3b62fcdf34bdbb0c17a26cdf867440b95d7891085d3ee662eca040e79"
+      },
+      {
+        "path": "apps/electron/src/preload/bootstrap.ts",
+        "currentSha256": "f2be23aa4f69f1126ad79413fcc40ad10e69037ba97e8c4b5aa8a2c8622f3cb5",
+        "candidateSha256": "86fd9ca60a27312c53b785087d80c233fe472df81056d814449b3bae736175f9"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/LicenseEvidencePanel.tsx",
+        "currentSha256": null,
+        "candidateSha256": "2afe003d52f4cbbfc651ca018470a7f3cdd30669ff94ffeac44aefa941e1d2e1"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/settings/ServerSettingsPage.tsx",
+        "currentSha256": "32ce78ea3af9e6a204b86a6ac4825d9300d8c77d1637032a860aa86a7aa0435a",
+        "candidateSha256": "eeca3b33df594c13d00c496a70ea4ae0304cb8673ff255fe8b1320c2152c5b3d"
+      },
+      {
+        "path": "apps/electron/src/shared/license-audit-intent.ts",
+        "currentSha256": null,
+        "candidateSha256": "4812236bbb94e28a42c4fd9efbcdf8cc95efbc0264c31c7cd676d50882248180"
+      },
+      {
+        "path": "apps/electron/src/shared/license-evidence.ts",
+        "currentSha256": null,
+        "candidateSha256": "ddaf9d1257bc61eb66d7065948ef703196852279b7d8ac20bc7fcbf1a8e1c81c"
+      },
+      {
+        "path": "apps/electron/src/shared/types.ts",
+        "currentSha256": "0d0de589efc52485d628349c6ff9b2b07282c97504d7a9b484f333fb718498f7",
+        "candidateSha256": "0563a668ae007bb66587f5aebf016c480347ed1690ae0f81a4e33cd102d5b6ca"
+      },
+      {
+        "path": "apps/electron/src/transport/__tests__/channel-map-parity.test.ts",
+        "currentSha256": "f2da027f4dccd2b9ef664c74813e049bd3e9ab080a1e29629aec08cb61398a84",
+        "candidateSha256": "aee044984d4ac3874a3e97d357d3d6d50ad78a47ec8f257b4c228f8246055a4e"
+      },
+      {
+        "path": "apps/electron/src/transport/channel-map.ts",
+        "currentSha256": "ffcc506c73a74d3133432a2f9b943edb06f78852edb8b04fa63b84a636ce71f0",
+        "candidateSha256": "d3258afc43910ed40d3690dd19ffe7205e5ee5df56957aa9e9d9391c23b2f9fa"
+      },
+      {
+        "path": "apps/electron/src/transport/project-authority-connection.ts",
+        "currentSha256": "b13a62332d71b83bbd01c39abe1248613426a1749387b6d1794feee1f76a0f39",
+        "candidateSha256": "faafd122b7d3b7952f68f7e48c71f2dbc1f992338d94cb130475b986d4c10b9d"
+      },
+      {
+        "path": "apps/electron/src/transport/routed-client.ts",
+        "currentSha256": "033aece0e542d9f5462fd0258901b23748a34018a2bb005a8a8fd6b05d6641c3",
+        "candidateSha256": "e60dda1eeecefd3b27fd2d77940ca283da1a8e949932cf7dd166954fdb1ecd18"
+      },
+      {
+        "path": "docs/macro-integration/wp-48-domain-plan.md",
+        "currentSha256": null,
+        "candidateSha256": "d7c9e3efe54dacc78009d542d64e2195e34225ab2855a27ca0429911ea8f7d5c"
+      },
+      {
+        "path": "docs/macro-integration/wp-48-domain-spec.md",
+        "currentSha256": null,
+        "candidateSha256": "7f32990b3b33bf5524028af5bdcb664a82a7fa335d5478ad403b63348bf44934"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ar.json",
+        "currentSha256": "4f347e828413b0b998965089ee699bac69522e96ba196b59969e55899c7cffb5",
+        "candidateSha256": "214beec41b38f5fc9aca426626841bb9bee91dee0dc59f3513e7e05d2557c1ee"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/de.json",
+        "currentSha256": "b2268b3ceaeb5c4b8b2767ec6708ddd18516a2ea0dda8a033ba13ece17468941",
+        "candidateSha256": "a5d6372427541c16c94f38caca9910085b1ef8ed9c1d42296ce0085df587f979"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/en.json",
+        "currentSha256": "d7a483ff48a3dc3a201ebc786b230c354f6604245f4f6bb8c085764d2b63b5bc",
+        "candidateSha256": "af2e23a96c704b2ff613741ceee36b5f9b068408e9bc546cd8c6968b0e4d1c25"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/es.json",
+        "currentSha256": "ab40878b12343a1915ccfe5bd06064c3fb0fbf036d0ab2fbe290988caa4d19b4",
+        "candidateSha256": "509086c49ee7e3365b1cd5ebe71c5bbf8454ac34176afd17524d3bdf6a4f9ad7"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/fr.json",
+        "currentSha256": "532df5a6fb35b00bda957b0e81b33477db34264dc12c998c1b105054a0b323da",
+        "candidateSha256": "006f5ab2a19e92082e68a8f4373630179b6fc4ec2a94113499236e6b8ae08fc2"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/hu.json",
+        "currentSha256": "f84d246bafac219b46980860f3d5a0edd62a68ad08213bb4a4dd436ba3638206",
+        "candidateSha256": "620d7ebb3e08c6ab1e6e515d876a066caf80fe8d950584c47632eec7853012ce"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ja.json",
+        "currentSha256": "9b59bb49b1101367ab2f21c65027e3e0f2612e63f057551334ceb811f537e118",
+        "candidateSha256": "5f023d77cd3be2422262e96b6127fc6f83cc4d27c8e70d56e94706972770390a"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ko.json",
+        "currentSha256": "8a19476cc5165dcbbbdd1a34fd2978abf9a370bf75eaf12a73ea2808c262c261",
+        "candidateSha256": "8d8d005e91cf3f789a35ac246ea8d8fefbd6a860c8a00d4bd26cc758149ba784"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/pl.json",
+        "currentSha256": "b71986b2d9303d320b23e9310efb3c9a999aefb61bd7a44e5b46ebc2beed9b03",
+        "candidateSha256": "ee7920afa67c50d19ad16ee3f47e4e9acda76415b87b972c496f413fa1b9356c"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ru.json",
+        "currentSha256": "792c4718821cadd3e01ce903ae2e0109d2ec3eb35f5cdfff06df9a66bd6b3354",
+        "candidateSha256": "0be1900b2a24664985f6ac85b1d79cc399839e2064c789c45e96b91c37bf9c8f"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+        "currentSha256": "1f3e78d16c45ce42ffa8ecbab4d8f99fbd765bc1e108ff40f090c0e03fbe6777",
+        "candidateSha256": "cc20cdaf78095687dfc5c90e8a1bb5550c7525b7c4b3c60be110d121a1410d0b"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+        "currentSha256": "7d13d6ec73293de5f283a181d7aa075fc4a5049c433c26afbb97897e8f9aecf6",
+        "candidateSha256": "90c219300fb802cae978dae782e997774a93155c3f8acace430da82e18629281"
+      },
+      {
+        "path": "tests/macro-integration/wp-48-domain.test.ts",
+        "currentSha256": "3e3e65c75dffe74af561949ff69281c86b702274e171b2a0156c826d6f779279",
+        "candidateSha256": "871c7b6af4b1f92ebc9289a79b567823f3c627300345cc3ef60cc14f8f2de1b0"
+      },
+      {
+        "path": "tests/macro-integration/wp-48-native-child.ts",
+        "currentSha256": null,
+        "candidateSha256": "bea5cac85c805961416226f3ba723010ef8c5a4d9f59d044891cb65e3cd7240b"
+      },
+      {
+        "path": "tests/macro-integration/wp-48-native-service.test.ts",
+        "currentSha256": null,
+        "candidateSha256": "4e7d28a454f85eae848b9d574fb4d36ff045d51f8de64aea76de765d4d682155"
+      },
+      {
+        "path": "tests/macro-integration/wp-48-native.test.ts",
+        "currentSha256": null,
+        "candidateSha256": "6226243da172d7de3483c3e5d1ebdfd120c846515e5b1ac64bbd23eb0997ebe1"
+      },
+      {
+        "path": "tests/macro-integration/wp-48-native-policy.test.ts",
+        "currentSha256": null,
+        "candidateSha256": "0f6ea5b7527929714fb4c94fb2f336c5ff89ebb3ad3376bb471745e3dd46c3ba"
+      }
+    ],
+    "codedRendererErrorBoundary": {
+      "source": {
+        "path": "/Users/t/Projects/rox-one-compound-implementation/apps/electron/src/transport/build-api.ts",
+        "sha256": "292a1915085b74f4725f74a9a035b59a6d5006bda13c973824edce4f8e0f7bed",
+        "bytes": 2829
+      },
+      "symbol": "buildClientApi",
+      "line": 43,
+      "findingExcluded": "Existing transport converts validated coded errors into plain rejection data because contextBridge drops Error custom properties. License GET/event methods route through this boundary. No new lost-code defect inferred."
+    },
+    "integrationInstruction": "Apply domain-fixture lifecycle correction only against its exact current-root repaired base 3e3e65c75dffe74af561949ff69281c86b702274e171b2a0156c826d6f779279; that ten-path delta intentionally supersedes the stale v1 domain-fixture patch. Root owns exact merge/apply receipts and delivery proof.",
+    "runtimeAcceptancePending": [
+      "Actual integrated root compile/regression",
+      "Actual Electron Settings native workflow with denial retraction, permissions, triad and intent recovery",
+      "Exact applied source/delivery receipt"
+    ]
+  },
+  "custody": {
+    "existingProjectV1CodecAndSingleEncryptedIntentSlotRetained": true,
+    "boundedConclusion": "Source review of shared discriminated operation codec and existing authority/IPC/transport ports; existing WP01 runtime compatibility separately attributed to producer actual tests. No new authority or queue claimed."
+  },
+  "excludedClaim": {
+    "unusedRetryAlreadyBusyFlag": "No demonstrated deadlock: audit invokes retry from the original pre-busy React closure. Unused flag is not a functional finding."
+  },
+  "cleanup": {
+    "ownPostgreSQLSchemaCreated": false,
+    "ownNetworkListenersCreated": false,
+    "ownUIStarted": false,
+    "rootWrites": false,
+    "ownFiles": "Small immutable outside source copies, oracles, logs and reports retained as evidence; read-only installed dependencies symlink."
+  },
+  "backlog": {
+    "packages": 143,
+    "notStartedRemaining": 130,
+    "statusCounts": {
+      "ROOT_INTEGRATION": 8,
+      "NOT_STARTED": 130,
+      "AWAITING_ROOT_REVIEW": 5
+    },
+    "dependencyIdsUnique": true,
+    "unknownDependencies": [],
+    "progress": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/plans/compound-implementation/progress.json",
+      "sha256": "8ab35c1404bea8ed5a09af28df6760705fb214fab843a121229562180fe45c38",
+      "bytes": 104051
+    },
+    "normativeMacroSpec": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/plans/macro-integration/work-packages.json",
+      "sha256": "f35f93b138670131da4a0c8a56926974b89f3f477f995e69cbe26106b7cb13c5",
+      "bytes": 1682565
+    },
+    "statusChangedByEvaluator": false,
+    "wp48Complete": false,
+    "legalClearanceClaimed": false
+  },
+  "ownToolingFailurePreserved": {
+    "path": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/bind-seal-first-infrastructure.log",
+    "sha256": "6e0bcbd4f10c6566b6345ebbf6593b2d52f293674adcd318efe9cc04ad49568a",
+    "bytes": 372
+  }
+}

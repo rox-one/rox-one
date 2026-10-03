@@ -1,0 +1,15 @@
+bun test v1.4.2 (43848b5a7)
+
+../../../private/tmp/rox-wp01-native-current-diagnostic/worker-core-gate-ultra/pierre-preset-compatibility.test.ts:
+(pass) actual frozen Pierre preset supports both required modes without scenic geometry [0.10ms]
+(pass) Haze remains the explicit incompatible control for light fixture acceptance [0.05ms]
+(pass) actual default resolver does not itself introduce a scenic background [0.03ms]
+
+../../../private/tmp/rox-wp01-native-current-diagnostic/worker-core-gate-ultra/sidebar-display-clamp.test.ts:
+(pass) a +8 preview at the display ceiling can leave aria sidebar width unchanged [0.17ms]
+(pass) the same exact +8 preview is visible when the shell has eight pixels of spare room [0.02ms]
+
+ 5 pass
+ 0 fail
+ 12 expect() calls
+Ran 5 tests across 2 files. [13.00ms]
