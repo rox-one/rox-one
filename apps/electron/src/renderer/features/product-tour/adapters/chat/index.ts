@@ -2,6 +2,7 @@ import type { Message } from '@rox/core'
 import type { Session, SessionEvent } from '@rox/shared/protocol'
 import type { CapabilitySnapshot, SignalName, TargetId, TourSignal } from '../../contracts'
 import type { TourObservation } from '../../runtime/hooks'
+import { resolvePublishedToolSource } from '../connections'
 
 /** Only IDs and evidence live here. Prompt, path, and tool content are never retained. */
 export interface ChatTurnCorrelation {
@@ -17,7 +18,7 @@ export interface ChatTurnCorrelation {
   failed: boolean
   finalMessageId?: string
   finalTurnId?: string
-  readonly sourceTools: Map<string, string | undefined>
+  readonly sourceTools: Map<string, { sourceSlug: string; turnId?: string }>
 }
 
 export function correlateUserTurn(observation: TourObservation | null, before: Session): ChatTurnCorrelation | null {
@@ -95,15 +96,16 @@ export function deriveChatSignals(correlation: ChatTurnCorrelation, event: Sessi
     return [signal(correlation.observation, 'user-turn.final-delivered', 'verified', final.id)]
   }
   if (event.type === 'tool_start') {
-    if (event.parentToolUseId || !correlation.enabledSourceSlugs.some(slug => event.toolName.startsWith(`mcp__${slug}__`))) return []
+    const sourceSlug = resolvePublishedToolSource(event.toolName, correlation.enabledSourceSlugs)
+    if (event.parentToolUseId || !sourceSlug) return []
     const userIndex = canonicalUserIndex(correlation, committed)
     const toolIndex = committed.messages.findIndex(message => message.toolUseId === event.toolUseId)
-    if (userIndex >= 0 && toolIndex > userIndex) correlation.sourceTools.set(event.toolUseId, event.turnId)
+    if (userIndex >= 0 && toolIndex > userIndex) correlation.sourceTools.set(event.toolUseId, { sourceSlug, turnId: event.turnId })
     return []
   }
   if (event.type === 'tool_result') {
     if (!correlation.sourceTools.has(event.toolUseId) || event.isError || event.parentToolUseId) return []
-    const turnId = correlation.sourceTools.get(event.toolUseId)
+    const turnId = correlation.sourceTools.get(event.toolUseId)?.turnId
     if (turnId && event.turnId && turnId !== event.turnId) return []
     const tool = committed.messages.find(message => message.role === 'tool' && message.toolUseId === event.toolUseId && message.toolStatus === 'completed' && !message.isError)
     if (!tool) return []

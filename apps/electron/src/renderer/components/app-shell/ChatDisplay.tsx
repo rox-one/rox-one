@@ -1,5 +1,6 @@
 import * as React from "react"
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { resolvePublishedToolSource } from '@/features/product-tour/adapters/connections'
 import { beginChatUserTurn, beginChatPermissionResponse, cancelChatUserTurn, deriveExecutionCapabilities, observeChatSessionReopened } from '@/features/product-tour/adapters/chat'
 import { createMessageTts } from '@/lib/message-tts'
 import { useAuthenticatedReactionActor } from '@/hooks/useMessageReactionActor'
@@ -2083,7 +2084,7 @@ const handleFollowUpChipClick = useCallback((item: {
                     // Assistant turns - render with TurnCard (buffered streaming)
                     const assistantUiKey = getAssistantTurnUiKey(turn, index)
                     const isNativeFinal = !!turn.response?.messageId && turn.response.messageId === tourFinalMessageId
-                    const hasNativeSourceResult = isLatestAssistantTurn && session.messages.some(message => message.turnId === turn.turnId && message.role === 'tool' && message.toolStatus === 'completed' && !message.isError && (session.enabledSourceSlugs ?? []).some(slug => message.toolName?.startsWith(`mcp__${slug}__`)))
+                    const hasNativeSourceResult = isLatestAssistantTurn && turn.activities.some(activity => activity.type === 'tool' && activity.status === 'completed' && !activity.error && !!activity.toolName && !!resolvePublishedToolSource(activity.toolName, session.enabledSourceSlugs ?? []))
                     return (
                       <div
                         key={turnKey}
