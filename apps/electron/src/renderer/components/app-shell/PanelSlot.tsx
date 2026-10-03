@@ -13,7 +13,7 @@
  * when the stack becomes empty.
  */
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSetAtom } from 'jotai'
 import { cn } from '@/lib/utils'
@@ -41,6 +41,9 @@ interface PanelSlotProps {
   sash?: React.ReactNode
   /** Compact (mobile) mode — shows back button in panel header */
   isCompact?: boolean
+  /** Layout mode changes keep hidden siblings mounted and inert. */
+  isHidden?: boolean
+  layoutStyle?: React.CSSProperties
 }
 
 export function PanelSlot({
@@ -51,12 +54,21 @@ export function PanelSlot({
   proportion,
   sash,
   isCompact,
+  isHidden = false,
+  layoutStyle,
 }: PanelSlotProps) {
   const { t } = useTranslation()
   const closePanel = useSetAtom(closePanelAtom)
   const setFocusedPanel = useSetAtom(focusedPanelIdAtom)
   const parentContext = useAppShellContext()
-  const navState = resolveRouteNavigationState(entry.route)
+  const navState = useMemo(() => resolveRouteNavigationState(entry.route), [entry.route])
+  const panelRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const panel = panelRef.current
+    if (!panel) return
+    panel.inert = isHidden
+    if (isHidden && panel.contains(document.activeElement)) (document.activeElement as HTMLElement | null)?.blur()
+  }, [isHidden])
 
   const handleClose = useCallback(() => {
     closePanel(entry.id)
@@ -96,18 +108,21 @@ export function PanelSlot({
   }), [parentContext, closeButton, backButton, isFocusedPanel])
 
   const handlePointerDown = useCallback(() => {
-    if (!isFocusedPanel) {
+    if (!isHidden && !isFocusedPanel) {
       setFocusedPanel(entry.id)
     }
-  }, [isFocusedPanel, setFocusedPanel, entry.id])
+  }, [isHidden, isFocusedPanel, setFocusedPanel, entry.id])
 
   return (
     <>
       {sash}
       <div
+        ref={panelRef}
+        id={entry.id}
+        aria-hidden={isHidden || undefined}
         onPointerDown={handlePointerDown}
         onFocusCapture={() => {
-          if (!isFocusedPanel) setFocusedPanel(entry.id)
+          if (!isHidden && !isFocusedPanel) setFocusedPanel(entry.id)
         }}
         data-panel-role="content"
         data-panel-id={entry.id}
@@ -138,6 +153,8 @@ export function PanelSlot({
             ? { flexGrow: 1, minWidth: 0 }
             : { flexGrow: proportion, flexShrink: 1, flexBasis: 0, minWidth: PANEL_MIN_WIDTH }
           ),
+          ...layoutStyle,
+          ...(isHidden ? { visibility: 'hidden', pointerEvents: 'none' } : {}),
         }}
       >
         <div className="h-full flex flex-col">

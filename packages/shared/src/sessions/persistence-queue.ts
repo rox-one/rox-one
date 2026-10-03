@@ -15,6 +15,8 @@ interface PendingWrite {
 }
 
 interface HeaderMetadataSignature {
+  projectId?: string
+  projectIds?: string[]
   name?: string
   labels?: string[]
   isFlagged?: boolean
@@ -26,6 +28,8 @@ interface HeaderMetadataSignature {
 
 function getHeaderMetadataSignature(header: SessionHeader): string {
   const signature: HeaderMetadataSignature = {
+    projectId: header.projectId,
+    projectIds: header.projectIds,
     name: header.name,
     labels: header.labels,
     isFlagged: header.isFlagged,
@@ -40,6 +44,8 @@ function getHeaderMetadataSignature(header: SessionHeader): string {
 function mergeHeaderWithExternalMetadata(localHeader: SessionHeader, diskHeader: SessionHeader): SessionHeader {
   return {
     ...localHeader,
+    projectId: diskHeader.projectId,
+    projectIds: diskHeader.projectIds,
     name: diskHeader.name,
     labels: diskHeader.labels,
     isFlagged: diskHeader.isFlagged,

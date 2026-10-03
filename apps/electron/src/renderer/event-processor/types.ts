@@ -184,6 +184,7 @@ export interface ProjectIdChangedEvent {
   type: 'project_id_changed'
   sessionId: string
   projectId: string | null
+  projectIds?: string[]
 }
 
 /**

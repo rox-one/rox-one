@@ -77,12 +77,12 @@ export function ResizeHandle({
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (disabled) return
     const step = event.shiftKey ? KEYBOARD_RESIZE_LARGE_STEP : KEYBOARD_RESIZE_STEP
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+    if (event.key === (vertical ? 'ArrowLeft' : 'ArrowUp')) {
       event.preventDefault()
       onKeyAdjust?.(-step)
       return
     }
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+    if (event.key === (vertical ? 'ArrowRight' : 'ArrowDown')) {
       event.preventDefault()
       onKeyAdjust?.(step)
       return
@@ -131,7 +131,7 @@ export function ResizeHandle({
         dragging && 'shell-sash-active',
         className,
       )}
-      style={{ width: hit, ...style }}
+      style={{ ...(vertical ? { width: hit } : { height: hit, width: '100%' }), touchAction: 'none', ...style }}
       onPointerDown={(event) => {
         if (disabled || event.button !== 0) return
         handlers.onMouseDown()
@@ -152,7 +152,7 @@ export function ResizeHandle({
       <div
         className="h-full"
         style={{
-          width: vertical ? PANEL_SASH_LINE_WIDTH : hit,
+          width: vertical ? PANEL_SASH_LINE_WIDTH : '100%',
           height: vertical ? undefined : PANEL_SASH_LINE_WIDTH,
           ...(dragging
             ? { background: 'var(--shell-sash, color-mix(in oklch, var(--foreground) 36%, transparent))' }
