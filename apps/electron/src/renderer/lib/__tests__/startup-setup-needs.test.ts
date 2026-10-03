@@ -89,3 +89,16 @@ describe('workspace readback after transport recovery', () => {
     expect(calls).toBe(0)
   })
 })
+
+
+describe('mandatory Pocket startup gate', () => {
+  it('gates an upgraded installation with a persisted local name but no central account', () => {
+    expect(decideStartupAppState({ identityProbe, workspaceProbe, cloudProbe: { ok: true, value: { required: true, connected: false }, attempts: 1 } })).toBe('onboarding')
+  })
+  it('accepts a ready central account without a local display name', () => {
+    expect(decideStartupAppState({ identityProbe: { ok: true, value: { authority: 'local', name: '' }, attempts: 1 }, workspaceProbe, cloudProbe: { ok: true, value: { required: true, connected: true }, attempts: 1 } })).toBe('ready')
+  })
+  it('cannot substitute local state for a failed account read', () => {
+    expect(decideStartupAppState({ identityProbe, workspaceProbe, cloudProbe: { ok: false, error: Error('offline'), attempts: 1 } })).toBe('transport-unavailable')
+  })
+})

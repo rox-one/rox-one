@@ -24,6 +24,10 @@ Owner: branch audit lead; depends on merged Golden Gate controller/native/panels
 3. Exercise real production ChatDisplay/Radix/messages in nested DOM: outer/window position, reduced/normal motion, focused/unfocused history, document hidden, delayed commit, old ResizeObserver/queued frames A→B→A/unmount, history anchoring and explicit jump. Keep failure history and controlled fixture boundaries explicit; run types/build and current adjacent tests.
 4. Reconcile live main, freeze source/proof/log receipts, publish/attach separate PR, preserve every source branch. Notify dependent instrumentation owner of exact ChatDisplay source before parent merges.
 
+## Единый аккаунт ROX через Pocket ID — 2026-10-03
+
+План принятой SSO-интеграции сохранён отдельно в [docs/pocket-sso/plan.md](pocket-sso/plan.md). Существующая программа ниже сохранена; SSO-задачи и критерии приёмки дополняют её.
+
 ## Product Learning foundation recovery plan — 2026-10-03
 
 1. Freeze final a6 source and import only contracts/core/persistence/analytics; pr_scout owns these interfaces, historical_sweep integrates dependent UI/runtime/current consumers without copying old shell/pages.
@@ -935,3 +939,9 @@ Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_sco
 
 ## Workspace shortcut popover integration —2026-10-03
 Owner root. Depends on existing rail-links/Popover/Select and current product-tour hooks. Import1447 selectively, repair viewport constraints, qualify nine actual DOM cases and old25px negative, run full Electron types; commit proof and merge a separate PR preserving source branch. Completed local checks in docs/integration-history/workspace-link-popover-20261003.
+
+
+## Pocket recovery integration graph —2026-10-03
+1. Root freezes1453 source26441 and reviews all179 paths; recent_features reconciles only existing execution/native-memory/OMP consumers.
+2. Root proves native FIFO refusal, auth/store/flow/startup/probe and absent-vault registered callbacks; worker proves held preparation/child and sealed queue failures. Preserve failed probes and exact blobs.
+3. Reconcile latest main through normal merge, retain RuntimeMap observers and current Tasks/A7 changes, recheck owned execution/type/build controls. Publish and merge one separate PR, preserve original branches. Public rollout and native release have separate prerequisites.

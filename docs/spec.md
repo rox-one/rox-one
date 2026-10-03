@@ -19,6 +19,10 @@ Owner: pr_scout; root owns main merge and historical_sweep adds dependent Produc
 
 Queued callbacks capture the committed session/viewport incarnation and are refused after unmount, replacement or A→B→A; current sticky/focus, reduced-motion and document visibility are checked when execution actually occurs. Disconnected or zero-height viewports cannot follow. Hidden documents do not auto-follow. Forward events belonging to our own output animation preserve stickiness; backwards scrolling, reader gestures and explicit navigation interrupt it before queued output can take ownership. New user intent reseeds the motion baseline. Lazy-load anchoring measures its original height formula only after added turns commit to DOM but an obsolete queue cannot move a replacement session. No focus, shell, consent or native authority changes. Acceptance is actual current ChatDisplay and real Radix/message DOM in a nested viewport with adverse history/hidden/motion/unfocused/late callbacks, source helper/current adjacent tests, complete Electron/WebUI types and renderer build. Explicit search jumps remain user-requested navigation; installed native/full chat acceptance remains separate.
 
+## Единый аккаунт ROX через Pocket ID — 2026-10-03
+
+Спецификация принятой SSO-интеграции сохранён отдельно в [docs/pocket-sso/spec.md](pocket-sso/spec.md). Существующая программа ниже сохранена; SSO-задачи и критерии приёмки дополняют её.
+
 ## Product Learning durable foundation recovery — 2026-10-03
 
 Owner: pr_scout; integration lead owns main merge, historical_sweep owns dependent current UI/runtime/consumer wiring. Recover final a6 `35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5` contracts/core/persistence/analytics as a coherent foundation, preserving all source branches. Current main has none of these feature modules. The transition engine has no domain-mutation, clock, DOM or storage port: acknowledged, observed and native verified evidence stay distinct, bindings/operation correlation and captured clocks reject stale callbacks; foreground/modal/capability/scope changes pause or block without automatic resumption.
@@ -756,3 +760,7 @@ Each existing bounded connection attempt shares its 30-second budget across HTTP
 
 ## Workspace shortcut popover integration —2026-10-03
 Move the existing per-workspace shortcut editor to an accessible bounded Radix portal; preserve native storage, draft cancellation, keyboard submit and current TourTarget. Acceptance: real desktop/narrow320px DOM, all three kinds, reload/workspace isolation, validation, nested Escape and no-write cancellation; full installed native release remains open.
+
+
+## Current Pocket account integration recovery —2026-10-03
+Preserve source179-path account program and current native-memory/task/voice contracts. Reject blocking/nonregular credential descriptors, stale one-shot account domains and unresolved sealed queue owners. GET_AUTH_STATE may report absent vault without provisioning it. Root owns integration; recent_features owns scoped execution reconciliation. Current public rollout/native installed E2E remains unaccepted.

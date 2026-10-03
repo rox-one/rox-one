@@ -1,0 +1,125 @@
+{
+  "state": "local_integration_before_currentmain_reconciliation",
+  "source_head": "26441ca2949c4fa8c01c44cee6b9734fe4c8dfd1",
+  "base_main": "ab431f5a35ef6be44c68b9f973eb79c40cd7e315",
+  "source_path_count": 179,
+  "root_checks": [
+    {
+      "name": "auth/client/native store",
+      "pass": 27,
+      "fail": 0,
+      "assertions": 128
+    },
+    {
+      "name": "native FIFO cold-process descriptor control",
+      "pass": 1,
+      "fail": 0,
+      "assertions": 4
+    },
+    {
+      "name": "registered onboarding absent native vault and noncloud startup",
+      "pass": 9,
+      "fail": 0,
+      "assertions": 25
+    },
+    {
+      "name": "flow/startup/profile/probe",
+      "pass": 45,
+      "fail": 0,
+      "assertions": 153
+    },
+    {
+      "name": "full Electron types",
+      "exit": 0
+    }
+  ],
+  "worker_receipt": "sso-session-omp-qualification.json",
+  "repairs": [
+    "Source FIFO open could block native account read; nonblocking captured regular descriptor bounded to256000bytes rejects FIFO before decrypt",
+    "GET_AUTH_STATE reports missing native authority without provisioning vault; START/CLEAR and execution still fail closed",
+    "OMP one-shot account-domain generation checked from preparation through child close and old children retired",
+    "Sealed restored queue refuses dispatch while account authority unavailable"
+  ],
+  "logs": [
+    {
+      "log": "pocket-root-auth-vault-controls.log",
+      "sha256": "2ce4ca2df3163adc79bd8427341aa42ea97f60224bfe0cc269283ab94a5b9907",
+      "bytes": 3618
+    },
+    {
+      "log": "pocket-root-descriptor-committed-control.log",
+      "sha256": "37faccfff2352c635e14f84ddcc4076ea7656c5229bb219099e982e076772fe6",
+      "bytes": 267
+    },
+    {
+      "log": "pocket-root-onboarding-vault-i18n.log",
+      "sha256": "ddba1daac7ca9cfce99fa906cacbf0d2f0b72f725b07a3932f7dfcc16cfe3865",
+      "bytes": 45282
+    },
+    {
+      "log": "pocket-root-onboarding-repaired.log",
+      "sha256": "3afae3cbf9ce0fa83cd24009ec0b890e4bd8a91edf7899cda5ad00ec4f180584",
+      "bytes": 1255
+    },
+    {
+      "log": "pocket-root-flow-startup-probes.log",
+      "sha256": "f48483cd216053c8177b104c64bab683c16c0b9e342f8774bfc50ebaba31b6a8",
+      "bytes": 5862
+    },
+    {
+      "log": "pocket-root-current-electron-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "log": "sso-oneshot-domain-before.log",
+      "sha256": "5476cd91d99dcf9cee9de6d9943b52cee3ffe0eeea517340069c16b03ccda5eb",
+      "bytes": 2028
+    },
+    {
+      "log": "sso-oneshot-domain-after.log",
+      "sha256": "de6a982c7476d17606a34b5655e045635b1370e4931d956af382e1f08d091eb8",
+      "bytes": 3354
+    },
+    {
+      "log": "sso-oneshot-fixture-first-failure.log",
+      "sha256": "a10716833161c8ae8a61722e0749b5332c7bb4160d88cab4057f4e223ff16479",
+      "bytes": 2028
+    },
+    {
+      "log": "sso-sealed-queue-unavailable-before.log",
+      "sha256": "6fa07191cfd33f3c98f9261f384ea02e1b708cee238518c016602b7398696332",
+      "bytes": 914
+    },
+    {
+      "log": "sso-current-combined-owner-final.log",
+      "sha256": "ed69bf074756149ae869a6129d7cb9828d94b3d63a87d4bf7f97d1f1b8dd7cec",
+      "bytes": 680
+    },
+    {
+      "log": "sso-current-native-memory-queue-final.log",
+      "sha256": "5cf1129f6665c88415b8332899a3ee13af672bbec549eb246bfd8d2abc1af2fe",
+      "bytes": 1338
+    },
+    {
+      "log": "sso-current-memory-service.log",
+      "sha256": "3fdf6cc66822a135275d50a93a37935ae5296339cddab56df87de4c3abeccf40",
+      "bytes": 5147
+    },
+    {
+      "log": "sso-current-server-core-types.log",
+      "sha256": "40543c6ab2eef493ca19f945dcc5d192c5a3bc5673a02f5918d9982ed2040307",
+      "bytes": 492
+    },
+    {
+      "log": "sso-current-server-core-local-types-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "public_rollout_complete": false,
+  "installed_mac_windows_e2e_currently_verified": false,
+  "single_ledger_charge_cutover_verified": false,
+  "existing_source_historical_OS_receipts_are_not_this_head": true,
+  "original_branch_deleted": false
+}

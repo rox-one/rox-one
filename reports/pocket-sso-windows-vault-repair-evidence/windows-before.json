@@ -1,0 +1,9 @@
+{
+  "jobId": 111267895845,
+  "packagingPassed": true,
+  "nativeProbePassed": false,
+  "reportedFailure": "native_probe_write_failed_1",
+  "knownPhase": "write",
+  "knownStage": null,
+  "scope": "Parent-captured CI log; original runner suppressed raw child stderr, exact store stage not available."
+}

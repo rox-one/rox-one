@@ -1,0 +1,44 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/collaboration/bro-invite-service.test.ts:
+(pass) BroInviteService membership > routes to the explicit workspace authority using only its live encrypted service bearer [767.89ms]
+(pass) BroInviteService membership > rejects a different collaboration origin before reading any credentials [0.50ms]
+(pass) BroInviteService membership > suppresses a bearer if the authority disconnects while encrypted credentials are being read [3.03ms]
+(pass) BroInviteService membership > refuses invite and join without a Rox account [0.53ms]
+(pass) BroInviteService membership > issues a one-time invite card for an authenticated owner [0.21ms]
+
+packages/server-core/src/sessions/sendmessage-durability.test.ts:
+[session] Cannot send event - no event sink
+(pass) sendMessage durability > user message is on disk before onAck fires (normal branch) [522.60ms]
+[session] mid-stream send {
+  sessionId: "durability-midstream",
+  behavior: "steer",
+  steered: false,
+  queueLengthBefore: 0,
+  backend: "none",
+  connectionSlug: undefined,
+}
+[session] Cannot send event - no event sink
+(pass) sendMessage durability > user message is on disk before onAck fires (mid-stream / queued branch) [72.17ms]
+
+packages/server-core/src/handlers/rpc/automations-graph.test.ts:
+(pass) projects a missing config without seeding a file [387.74ms]
+(pass) automation graph save RPC > atomically persists compiled automations and metadata without stale-write clobbering [542.17ms]
+
+packages/server-core/src/handlers/rpc/automations-editor.test.ts:
+(pass) automations editor RPC > toggle writes enabled flag and pushes CHANGED [491.04ms]
+(pass) automations editor RPC > update edits fields in place, preserving id and unknown keys [365.74ms]
+(pass) automations editor RPC > rejects stale editor saves without overwriting the newer matcher [621.82ms]
+(pass) automations editor RPC > redacts saved webhook credentials on reads and retains them when editing other fields [381.35ms]
+(pass) automations editor RPC > update moves a matcher across events and drops cron fields [5.54ms]
+(pass) automations editor RPC > update rejects an invalid matcher without writing [9.25ms]
+(pass) automations editor RPC > create appends to a missing config without seeding defaults [7.66ms]
+(pass) automations editor RPC > duplicate returns the new id [8.93ms]
+(pass) automations editor RPC > duplicate uses the client-localized copy name when given [10.84ms]
+(pass) automations editor RPC > duplicate falls back to the legacy suffix without a copy name [485.71ms]
+(pass) last-executed detailed mode reports the last run status [343.13ms]
+
+ 20 pass
+ 0 fail
+ 64 expect() calls
+Ran 20 tests across 4 files. [33.19s]

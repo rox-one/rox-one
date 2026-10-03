@@ -8,8 +8,16 @@ let setupDeferredReadCount = 0
 const setupDeferredCalls: boolean[] = []
 let oauthPreparationCalls = 0
 const welcomeWorkspaceCalls: string[] = []
+let cloudConnected = false
+let localOmpBlocked = false
+let accountVaultRegistered = true
+let cloudRequired = true
 
 mock.module('@rox/shared/auth', () => ({
+  LOCAL_ROX_CALLER: { issuer: 'rox:local-electron', subject: 'installation' },
+  isRoxCloudRequired: () => cloudRequired,
+  peekRoxAccountAuthority: () => accountVaultRegistered ? ({ state: async () => ({ connected: cloudConnected, account: null }) }) : undefined,
+  getRoxAccountAuthority: () => ({ state: async () => ({ connected: cloudConnected, account: null }) }),
   fetchRoxBalance: async () => ({ balanceRox: '0' }),
   getAuthState: async () => ({
     billing: {
@@ -40,7 +48,8 @@ mock.module('@rox/shared/auth', () => ({
     setupNeeds: {
       needsBillingConfig: true,
       needsCredentials: false,
-      isFullyConfigured: true,
+      needsOmpCredential: localOmpBlocked,
+      isFullyConfigured: !localOmpBlocked,
       isSetupDeferred: deferred === true,
       shouldShowOnboardingOnLaunch: false,
     },
@@ -125,6 +134,10 @@ async function createHarness() {
 }
 
 beforeEach(() => {
+  accountVaultRegistered = true
+  cloudRequired = true;
+  cloudConnected = false
+  localOmpBlocked = false
   setupDeferred = false
   setupDeferredReadCount = 0
   setupDeferredCalls.length = 0
@@ -133,7 +146,14 @@ beforeEach(() => {
 })
 
 describe('onboarding:getAuthState', () => {
-  it('reports a fresh install as launchable without setup', async () => {
+  it('treats a ready central inference account as configured when legacy local OMP auth is absent', async () => {
+    cloudConnected = true
+    localOmpBlocked = true
+    const { invoke } = await createHarness()
+    const result = await invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE) as { setupNeeds: Record<string, unknown> }
+    expect(result.setupNeeds).toMatchObject({ isFullyConfigured: true, needsOmpCredential: false, needsRoxCloud: false, shouldShowOnboardingOnLaunch: false })
+  })
+  it('requires Pocket authentication even when provider setup is deferred', async () => {
     const { invoke } = await createHarness()
     const result = await invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE) as {
       setupNeeds: {
@@ -147,14 +167,14 @@ describe('onboarding:getAuthState', () => {
 
     expect(result.setupNeeds.needsBillingConfig).toBe(true)
     expect(result.setupNeeds.needsCredentials).toBe(false)
-    expect(result.setupNeeds.isFullyConfigured).toBe(true)
-    expect(result.setupNeeds.shouldShowOnboardingOnLaunch).toBe(false)
+    expect(result.setupNeeds.isFullyConfigured).toBe(false)
+    expect(result.setupNeeds.shouldShowOnboardingOnLaunch).toBe(true)
     expect(result.setupNeeds.isSetupDeferred).toBe(false)
     expect(setupDeferredReadCount).toBe(1)
     expect(oauthPreparationCalls).toBe(0)
   })
 
-  it('continues to honor persisted setup deferral without a launch wizard', async () => {
+  it('preserves provider deferral while requiring the independent Pocket gate', async () => {
     setupDeferred = true
     const { invoke } = await createHarness()
     const result = await invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE) as {
@@ -165,8 +185,8 @@ describe('onboarding:getAuthState', () => {
       }
     }
 
-    expect(result.setupNeeds.isFullyConfigured).toBe(true)
-    expect(result.setupNeeds.shouldShowOnboardingOnLaunch).toBe(false)
+    expect(result.setupNeeds.isFullyConfigured).toBe(false)
+    expect(result.setupNeeds.shouldShowOnboardingOnLaunch).toBe(true)
     expect(result.setupNeeds.isSetupDeferred).toBe(true)
     expect(setupDeferredReadCount).toBe(1)
   })
@@ -201,5 +221,26 @@ describe('onboarding:ensureFirstSession', () => {
     const { invoke } = await createHarness()
     await expect(invoke(RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION, '  ')).rejects.toThrow('workspaceId is required')
     expect(welcomeWorkspaceCalls).toEqual([])
+  })
+})
+
+
+describe('onboarding startup without a native account vault', () => {
+  it('reports the Pocket prerequisite without breaking the startup RPC', async () => {
+    accountVaultRegistered = false
+    const h = await createHarness()
+    const result = await h.invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE) as any
+    expect(result.setupNeeds.needsRoxCloud).toBe(true)
+    expect(result.setupNeeds.isFullyConfigured).toBe(false)
+    expect(oauthPreparationCalls).toBe(0)
+  })
+  it('preserves explicitly non-cloud headless setup when no native vault exists', async () => {
+    accountVaultRegistered = false
+    cloudRequired = false
+    const h = await createHarness()
+    const result = await h.invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE) as any
+    expect(result.setupNeeds.needsRoxCloud).toBe(false)
+    expect(result.setupNeeds.isFullyConfigured).toBe(true)
+    expect(oauthPreparationCalls).toBe(0)
   })
 })

@@ -1,0 +1,48 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/auth/__tests__/rox-account-authority.test.ts:
+(pass) Pocket host account authority > does not share native/local account credentials and never projects tokens/key [6.53ms]
+(pass) Pocket host account authority > keeps zero balance authenticated and ready but rejects paid dispatch [1.52ms]
+(pass) Pocket host account authority > fences old executor and durable session/automation bindings on account switch [2.46ms]
+(pass) Pocket host account authority > restores exact owned resources after restart without ambient fallback [0.55ms]
+(pass) Pocket host account authority > persists refresh operation proof before dispatch, retries same id after dropped response [0.97ms]
+(pass) Pocket host account authority > refreshes expired access and durably clears pending proof before inference without a UI poll [0.42ms]
+(pass) Pocket host account authority > ignores a late bootstrap response after logout and removes persisted secrets [5.02ms]
+(pass) Pocket host account authority > uses sealed prior access proof to revoke a device after an in-flight refresh rotation [2.62ms]
+(pass) Pocket host account authority > fences a running executor when account key generation changes [0.23ms]
+(pass) Pocket host account authority > invalidates the running executor when the active key is revoked [0.19ms]
+(pass) Pocket host account authority > keeps failed device revocation sealed for retry after process restart [0.31ms]
+(pass) Pocket host account authority > revokes via logout-only prior access proof without an expired refresh replay [0.17ms]
+148 |   const f = createPocketFixture(); await connect(f)
+149 |   const oldContext = await f.authority.capture(LOCAL_ROX_CALLER)
+150 |   await f.store.writeLogout(LOCAL_ROX_CALLER, f.records.get(JSON.stringify(LOCAL_ROX_CALLER))!)
+151 |   let accountReads = 0; f.client.account = async () => { accountReads++; return pocketSnapshot() }
+152 |   const restarted = new RoxAccountAuthority(f.store, f.client)
+153 |   expect((await restarted.state(LOCAL_ROX_CALLER)).connected).toBe(false)
+                                                                    ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/auth/__tests__/rox-account-authority.test.ts:153:63)
+(fail) Pocket host account authority > fences crash-window active records and drains logout on ordinary restart state reads [2.42ms]
+165 |   f.store.clear = async () => { throw new Error('clear unavailable') }
+166 |   await expect(f.authority.logout(LOCAL_ROX_CALLER)).rejects.toThrow('clear unavailable')
+167 |   expect(f.records.size).toBe(1)
+168 |   expect(f.pendingLogouts.size).toBe(1)
+169 |   const restarted = new RoxAccountAuthority(f.store, f.client)
+170 |   expect((await restarted.state(LOCAL_ROX_CALLER)).connected).toBe(false)
+                                                                    ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/auth/__tests__/rox-account-authority.test.ts:170:63)
+(fail) Pocket host account authority > keeps a pending logout fail-closed across clear failure and broker outage restarts [0.45ms]
+
+ 12 pass
+ 2 fail
+ 49 expect() calls
+Ran 14 tests across 1 file. [290.00ms]

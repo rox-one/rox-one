@@ -1641,6 +1641,7 @@ export interface ElectronAPI {
     connected: boolean
     authBaseUrl: string
     user: { id?: string; email?: string; name?: string } | null
+    account?: import('@rox/shared/auth').RoxAccountSnapshot | null
     connectError?: string | null
     connectExpiresAt?: number | null
   }>

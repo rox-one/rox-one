@@ -1,0 +1,1805 @@
+{
+  "source_pr": 1453,
+  "source_head": "26441ca2949c4fa8c01c44cee6b9734fe4c8dfd1",
+  "source_base": "a3754c9eaab274b2f99d6a931659b0cac91a9993",
+  "actual_git_source_path_count": 179,
+  "github_first_100_files_incomplete": true,
+  "rows": [
+    {
+      "path": ".github/workflows/desktop-release.yml",
+      "source_blob": "0c3e31039e4e1b8cbbac35998dcba6aadbb5da03",
+      "current_blob": "0c3e31039e4e1b8cbbac35998dcba6aadbb5da03",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": ".github/workflows/pocket-native-vault.yml",
+      "source_blob": "48c4cbc601e8a8d57a907fbd0c9de8a98513b01c",
+      "current_blob": "48c4cbc601e8a8d57a907fbd0c9de8a98513b01c",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/main/__tests__/pocket-account-store-durable-write.test.ts",
+      "source_blob": "d8b009d22298e7a1193a192fedb25d72e93f371d",
+      "current_blob": "d8b009d22298e7a1193a192fedb25d72e93f371d",
+      "status": "exact_source",
+      "function_disposition": "OS_store_backend_with_bounded_regular_descriptor_and_write_flush",
+      "qualification_refs": [
+        "pocket-root-auth-vault-controls.log",
+        "pocket-root-descriptor-committed-control.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/main/__tests__/pocket-account-store.test.ts",
+      "source_blob": "cc328136918e4d72b31ef8fb73b168c143c46c08",
+      "current_blob": "cc328136918e4d72b31ef8fb73b168c143c46c08",
+      "status": "exact_source",
+      "function_disposition": "OS_store_backend_with_bounded_regular_descriptor_and_write_flush",
+      "qualification_refs": [
+        "pocket-root-auth-vault-controls.log",
+        "pocket-root-descriptor-committed-control.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/main/index.ts",
+      "source_blob": "bde38d8ba3ef42da8ce29df520ee7bcbed10d680",
+      "current_blob": "709ec9765d41691c3c674c740e21bfe0957eb33e",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/main/mail/local-ipc.ts",
+      "source_blob": "418d6751dedb5704eb6b379c22b9b30cce26e775",
+      "current_blob": "418d6751dedb5704eb6b379c22b9b30cce26e775",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/main/pocket-account-store.ts",
+      "source_blob": "8d24582944f23f686d2876c05992a99e6f0f439d",
+      "current_blob": "511540acb9a95ecd89c848638dce45085483ca80",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "OS_store_backend_with_bounded_regular_descriptor_and_write_flush",
+      "qualification_refs": [
+        "pocket-root-auth-vault-controls.log",
+        "pocket-root-descriptor-committed-control.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/main/rox-connect-flow.ts",
+      "source_blob": "88b652021c03fec3dc014c50058955b29adec9b3",
+      "current_blob": "88b652021c03fec3dc014c50058955b29adec9b3",
+      "status": "exact_source",
+      "function_disposition": "caller_keyed_PKCE_device_authority_and_flow",
+      "qualification_refs": [
+        "pocket-root-auth-vault-controls.log",
+        "pocket-root-flow-startup-probes.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/renderer/App.tsx",
+      "source_blob": "fee4fb022c6b8279451822664bf03e5d6fe697d0",
+      "current_blob": "eebd81f00fe6bcc1f178f6c2a949ed4875d958fc",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "current_startup_account_strip_and_account_settings_consumers",
+      "qualification_refs": [
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "source_blob": "e976e2b50bf4fd8625d5c909d673738b431b020e",
+      "current_blob": "cf152344e273c3ecfd5202d999c00d1a988bf500",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "current_startup_account_strip_and_account_settings_consumers",
+      "qualification_refs": [
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-account.test.ts",
+      "source_blob": "2e6fcdfba2a79df77fc15fce85dfd44e40f0287a",
+      "current_blob": "2e6fcdfba2a79df77fc15fce85dfd44e40f0287a",
+      "status": "exact_source",
+      "function_disposition": "current_startup_account_strip_and_account_settings_consumers",
+      "qualification_refs": [
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/profile-strip-account.ts",
+      "source_blob": "ee7b06466ba0ec96444bfda9e2e9122fe5756c7a",
+      "current_blob": "ee7b06466ba0ec96444bfda9e2e9122fe5756c7a",
+      "status": "exact_source",
+      "function_disposition": "current_startup_account_strip_and_account_settings_consumers",
+      "qualification_refs": [
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/renderer/components/onboarding/RoxConnectStep.tsx",
+      "source_blob": "281e776295dd45084f79b48d962657959476d5a0",
+      "current_blob": "281e776295dd45084f79b48d962657959476d5a0",
+      "status": "exact_source",
+      "function_disposition": "current_startup_account_strip_and_account_settings_consumers",
+      "qualification_refs": [
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useOnboarding.ts",
+      "source_blob": "b2f81353f2e572936aae85380517f47ab9296943",
+      "current_blob": "b2f81353f2e572936aae85380517f47ab9296943",
+      "status": "exact_source",
+      "function_disposition": "current_startup_account_strip_and_account_settings_consumers",
+      "qualification_refs": [
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/__tests__/startup-caller-boundary.test.ts",
+      "source_blob": "f7706554a46f5306edd6a75607ae5245a35c1ba3",
+      "current_blob": "0dc057fba0a9893cd2494a2458ba137c04c4e0bb",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "current_startup_account_strip_and_account_settings_consumers",
+      "qualification_refs": [
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/__tests__/startup-setup-needs.test.ts",
+      "source_blob": "489b87c7dca640c733b54c3ed4d83f0c52ad81a2",
+      "current_blob": "489b87c7dca640c733b54c3ed4d83f0c52ad81a2",
+      "status": "exact_source",
+      "function_disposition": "current_startup_account_strip_and_account_settings_consumers",
+      "qualification_refs": [
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/startup-setup-needs.ts",
+      "source_blob": "5e2eb613a2e3c74d4f03b40d01629ab343655603",
+      "current_blob": "5e2eb613a2e3c74d4f03b40d01629ab343655603",
+      "status": "exact_source",
+      "function_disposition": "current_startup_account_strip_and_account_settings_consumers",
+      "qualification_refs": [
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/AccountSettingsPage.tsx",
+      "source_blob": "f34b9f088c4a1178ce0497bef4e062556c980527",
+      "current_blob": "f34b9f088c4a1178ce0497bef4e062556c980527",
+      "status": "exact_source",
+      "function_disposition": "current_startup_account_strip_and_account_settings_consumers",
+      "qualification_refs": [
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "source_blob": "856c3551cb06165b79686e341c21bc9a921fa771",
+      "current_blob": "423d3ffeec3f075b8577fe15e5b6e3edb682e03f",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "deploy/pocket-sso/id.rox.one.nginx.conf",
+      "source_blob": "d8b08722a6759bcf8ca66b6cba14f1c4df3cbebc",
+      "current_blob": "d8b08722a6759bcf8ca66b6cba14f1c4df3cbebc",
+      "status": "exact_source",
+      "function_disposition": "retained_rollout_templates_not_executed",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "deploy/pocket-sso/rox-sso-safe-log.conf",
+      "source_blob": "54f059d894cc08283cb3bc78adf23da9c1cccfa4",
+      "current_blob": "54f059d894cc08283cb3bc78adf23da9c1cccfa4",
+      "status": "exact_source",
+      "function_disposition": "retained_rollout_templates_not_executed",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "docs/plan.md",
+      "source_blob": "f442a0d1ceefa0971eae318cf9760bf2b9269f9c",
+      "current_blob": "d9f04536d1b55beae7f0ed18b7752ed277af6c3a",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "current_append_only_spec_plan",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "docs/pocket-sso/desktop-brief.md",
+      "source_blob": "2a068929adeb511ec76168aa53d9ee3f72048413",
+      "current_blob": "2a068929adeb511ec76168aa53d9ee3f72048413",
+      "status": "exact_source",
+      "function_disposition": "retained_source_design_and_rollout",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "docs/pocket-sso/plan.md",
+      "source_blob": "27003214759516b1cf795afe18d37955af4572b5",
+      "current_blob": "27003214759516b1cf795afe18d37955af4572b5",
+      "status": "exact_source",
+      "function_disposition": "retained_source_design_and_rollout",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "docs/pocket-sso/rollout.md",
+      "source_blob": "58feb185f1c6409b65ec9bb76e49e0209c7d6112",
+      "current_blob": "58feb185f1c6409b65ec9bb76e49e0209c7d6112",
+      "status": "exact_source",
+      "function_disposition": "retained_source_design_and_rollout",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "docs/pocket-sso/spec.md",
+      "source_blob": "96bb32ada22f6a7dff0f9de0f4d723c38c966316",
+      "current_blob": "96bb32ada22f6a7dff0f9de0f4d723c38c966316",
+      "status": "exact_source",
+      "function_disposition": "retained_source_design_and_rollout",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "docs/pocket-sso/swiss-brief.md",
+      "source_blob": "e7f2d3bc20e2851da3991e66796816f658d4f109",
+      "current_blob": "e7f2d3bc20e2851da3991e66796816f658d4f109",
+      "status": "exact_source",
+      "function_disposition": "retained_source_design_and_rollout",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "docs/pocket-sso/website-brief.md",
+      "source_blob": "db0bf08a82b3404e8ffefb6ba29e388dfc42bd32",
+      "current_blob": "db0bf08a82b3404e8ffefb6ba29e388dfc42bd32",
+      "status": "exact_source",
+      "function_disposition": "retained_source_design_and_rollout",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "docs/spec.md",
+      "source_blob": "a282e5a99f229d82d33f7f39d15c49b293411df9",
+      "current_blob": "2cae68cf9c72bb025734edb2fcdeaeb947863062",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "current_append_only_spec_plan",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/collaboration/bro-invite-service.ts",
+      "source_blob": "32843f30aea19683df282cf253902fb55cd7ac62",
+      "current_blob": "32843f30aea19683df282cf253902fb55cd7ac62",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/__tests__/onboarding.test.ts",
+      "source_blob": "44045c1c385738ca244c23dc86113fff84a120ab",
+      "current_blob": "d7d5fa7c5ec2fe07e8d10255de26f180d4b45594",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/__tests__/pocket-core-registry.fixture.ts",
+      "source_blob": "57d3b4632fd8985d7b593b7ab7ed0424f2179c9f",
+      "current_blob": "57d3b4632fd8985d7b593b7ab7ed0424f2179c9f",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/__tests__/pocket-core-registry.test.ts",
+      "source_blob": "a4b754bb1001998d82b96746afa19a9cc4c6b7bf",
+      "current_blob": "a4b754bb1001998d82b96746afa19a9cc4c6b7bf",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations.ts",
+      "source_blob": "ffdad1de0cf326ea7c9886b68aeb866f4083f2c9",
+      "current_blob": "ffdad1de0cf326ea7c9886b68aeb866f4083f2c9",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/memory.ts",
+      "source_blob": "60ab2eecaa5bb968458d7473700bc330c2462ed0",
+      "current_blob": "60ab2eecaa5bb968458d7473700bc330c2462ed0",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/onboarding.ts",
+      "source_blob": "0e20818c77ff296aa72d25593debea06db9b8edd",
+      "current_blob": "537a0b1806ba50171ccbf5eb37960f6ad1a800b1",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/projects.ts",
+      "source_blob": "ec705c849b0cb52ac4523da8e11bbe04349f70ac",
+      "current_blob": "1b0aea34330d5f2d8088b4f85c184ae9397f96c4",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/sessions.ts",
+      "source_blob": "d835ec258c949564037103041992de4ef883eaf1",
+      "current_blob": "0876ad2492cab9c7cb5498d53a21e7f3aa11368d",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "caller_account_resource_and_native_memory_owned_execution",
+      "qualification_refs": [
+        "sso-session-omp-qualification.json"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+      "source_blob": "7c50fdfdccc22e7cf6bec3f2023e70314b561ec8",
+      "current_blob": "0562ce9a6a30cae4978090a054c3a8a704750d5f",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/memory/MemoryService.ts",
+      "source_blob": "bd2fb2c615c37136569b5a3a9353a4f80d2acb2e",
+      "current_blob": "aab684f1e2c332f826878879c624f373117171a8",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "caller_account_resource_and_native_memory_owned_execution",
+      "qualification_refs": [
+        "sso-session-omp-qualification.json"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "source_blob": "4972e83d2455dbcf52df5db2f27a809d8faf3b95",
+      "current_blob": "d23f0e7b424171adfc3446a452287d1a17cd23c6",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "caller_account_resource_and_native_memory_owned_execution",
+      "qualification_refs": [
+        "sso-session-omp-qualification.json"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/sessions/pocket-helper-owner.test.ts",
+      "source_blob": "b2d16720ce8c658d21e0a11e052a42ede6ab34bc",
+      "current_blob": "b2d16720ce8c658d21e0a11e052a42ede6ab34bc",
+      "status": "exact_source",
+      "function_disposition": "caller_account_resource_and_native_memory_owned_execution",
+      "qualification_refs": [
+        "sso-session-omp-qualification.json"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/server-core/src/sessions/pocket-session-resource-owner.test.ts",
+      "source_blob": "d7419825cf62353777f7fe18b5d887e34cca77f6",
+      "current_blob": "075b7b75a9dd7a6a21977c2866aba57d4e44c45d",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "caller_account_resource_and_native_memory_owned_execution",
+      "qualification_refs": [
+        "sso-session-omp-qualification.json"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts",
+      "source_blob": "5565d7bb8da29aad16e147ef9372091adb854f92",
+      "current_blob": "fe3577c708451933efa9bb6528f3df8b9ea1720e",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "caller_account_resource_and_native_memory_owned_execution",
+      "qualification_refs": [
+        "sso-session-omp-qualification.json"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-public-runtime.test.ts",
+      "source_blob": "536066478b9afa61d8bcfe469ad26777cce4bf2f",
+      "current_blob": "536066478b9afa61d8bcfe469ad26777cce4bf2f",
+      "status": "exact_source",
+      "function_disposition": "caller_account_resource_and_native_memory_owned_execution",
+      "qualification_refs": [
+        "sso-session-omp-qualification.json"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/agent/backend/types.ts",
+      "source_blob": "5cd3dadbfcdaf33b42ef50a9356f54c3d98be37d",
+      "current_blob": "5cd3dadbfcdaf33b42ef50a9356f54c3d98be37d",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/agent/omp-agent.ts",
+      "source_blob": "8924228fa548cf5310e0a2371fe21f11ade3337f",
+      "current_blob": "e60f40144a9e55d12e8e942a3caaa2ca3742f399",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "caller_account_resource_and_native_memory_owned_execution",
+      "qualification_refs": [
+        "sso-session-omp-qualification.json"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/auth/__tests__/pocket-test-fixture.ts",
+      "source_blob": "7792646b5a426b2b753645d28b4e05681d012050",
+      "current_blob": "7792646b5a426b2b753645d28b4e05681d012050",
+      "status": "exact_source",
+      "function_disposition": "caller_keyed_PKCE_device_authority_and_flow",
+      "qualification_refs": [
+        "pocket-root-auth-vault-controls.log",
+        "pocket-root-flow-startup-probes.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/auth/__tests__/rox-account-authority.test.ts",
+      "source_blob": "8826fe9a61d8dad7ea1d6fde384a607e9fb5db80",
+      "current_blob": "8826fe9a61d8dad7ea1d6fde384a607e9fb5db80",
+      "status": "exact_source",
+      "function_disposition": "caller_keyed_PKCE_device_authority_and_flow",
+      "qualification_refs": [
+        "pocket-root-auth-vault-controls.log",
+        "pocket-root-flow-startup-probes.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/auth/__tests__/rox-pocket-client.test.ts",
+      "source_blob": "11db08f8281204d5a98d3789e71b12c801a81ec8",
+      "current_blob": "11db08f8281204d5a98d3789e71b12c801a81ec8",
+      "status": "exact_source",
+      "function_disposition": "caller_keyed_PKCE_device_authority_and_flow",
+      "qualification_refs": [
+        "pocket-root-auth-vault-controls.log",
+        "pocket-root-flow-startup-probes.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/auth/index.ts",
+      "source_blob": "65df455732981f24f238698cbc846998c3ca4223",
+      "current_blob": "65df455732981f24f238698cbc846998c3ca4223",
+      "status": "exact_source",
+      "function_disposition": "caller_keyed_PKCE_device_authority_and_flow",
+      "qualification_refs": [
+        "pocket-root-auth-vault-controls.log",
+        "pocket-root-flow-startup-probes.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/auth/rox-account-authority.ts",
+      "source_blob": "7b1e55f9ca8cd138ab3f642ca8ab624449cbc11e",
+      "current_blob": "7b1e55f9ca8cd138ab3f642ca8ab624449cbc11e",
+      "status": "exact_source",
+      "function_disposition": "caller_keyed_PKCE_device_authority_and_flow",
+      "qualification_refs": [
+        "pocket-root-auth-vault-controls.log",
+        "pocket-root-flow-startup-probes.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/auth/rox-connect-flow.ts",
+      "source_blob": "ebfd2d54d693559ca76eb74a3513ae3bf44db2cb",
+      "current_blob": "ebfd2d54d693559ca76eb74a3513ae3bf44db2cb",
+      "status": "exact_source",
+      "function_disposition": "caller_keyed_PKCE_device_authority_and_flow",
+      "qualification_refs": [
+        "pocket-root-auth-vault-controls.log",
+        "pocket-root-flow-startup-probes.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/auth/rox-pocket-client.ts",
+      "source_blob": "15930c45108af1f28d6067960bac92a61945349d",
+      "current_blob": "15930c45108af1f28d6067960bac92a61945349d",
+      "status": "exact_source",
+      "function_disposition": "caller_keyed_PKCE_device_authority_and_flow",
+      "qualification_refs": [
+        "pocket-root-auth-vault-controls.log",
+        "pocket-root-flow-startup-probes.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/credentials/index.ts",
+      "source_blob": "70b5b9dbe7cccfa9de72d9f9c9592c10797a007c",
+      "current_blob": "70b5b9dbe7cccfa9de72d9f9c9592c10797a007c",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ar.json",
+      "source_blob": "1a8c8337ba50e52e79065c5bd503102ea1e21fe3",
+      "current_blob": "3d4fc1e6cab1d26f191da65cea2af6267c35df19",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "source_blob": "7996fefb88dc3139ecb561451e16a60d1f3ce15e",
+      "current_blob": "975c40a6b5bba8a704ad78846807b52edbfb3d1d",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "source_blob": "a401c6cc10c9b680e5b0db1c110fdf57bde9bc30",
+      "current_blob": "a59163628a5577e9083f6a88ac1f4a7c609fb856",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "source_blob": "1c0e10be76035abf70ceef0475a44c03b85c1665",
+      "current_blob": "0b563cf167eaefce646dbfa5caf48b67fe60f88f",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/fr.json",
+      "source_blob": "4291ce2fa878bbf8f1531da6a7522810cbe0e88c",
+      "current_blob": "8ddc9396cf4a94614378bbfda969eced563768a1",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "source_blob": "55233ec875ea63b3f42e5edf650710439d8ce457",
+      "current_blob": "4661ed518d593c95ef87f3754cf344bffea1199e",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "source_blob": "39ef5237c917990960cbbbe91e3a9840bee5e2a0",
+      "current_blob": "70913a6c9f4d9fe4e11dd3690d4e1b87b74d299f",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ko.json",
+      "source_blob": "503573bf10444671a7580c0fd54a78b4e1e15510",
+      "current_blob": "e471b2c8ff22a8e7932669b40333f88166e77e06",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "source_blob": "be49fa334947f2790d8ace0826912889686a26b9",
+      "current_blob": "fc59584ee4fe0356af78a77b3f966863f12f4e75",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "source_blob": "ea04301982b0593432d1e6c7d3706b7da202f907",
+      "current_blob": "5d3fe4830aff680aabf4e7f01d871a8d4bb595e7",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "source_blob": "63db1677b99aaf18338132703d112d2ac59e304b",
+      "current_blob": "36901892c7330701a1c99898d78a7a754459d6fe",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+      "source_blob": "c5660544bed16e40b5076c6da96dd505c97502fa",
+      "current_blob": "bdc5b864c46efe340b95eda8b9a9e58f0f636c2f",
+      "status": "adapted_preserving_current_consumers",
+      "function_disposition": "union_with_current_12_catalogs",
+      "qualification_refs": [
+        "pocket-root-onboarding-vault-i18n.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/auth-final.log",
+      "source_blob": "8fa101394656ec421dd35b44944d849a41813ce7",
+      "current_blob": "8fa101394656ec421dd35b44944d849a41813ce7",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/authority-vault.log",
+      "source_blob": "8108853fc3d1ad76914d4cd2657d7a117d9ee3de",
+      "current_blob": "8108853fc3d1ad76914d4cd2657d7a117d9ee3de",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/baseline-settings-hashes.json",
+      "source_blob": "94522cd21a236b9c83b5bf0c5557bec813eb010d",
+      "current_blob": "94522cd21a236b9c83b5bf0c5557bec813eb010d",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/baseline-settings-summary.txt",
+      "source_blob": "ff3a404155254a7aa9b882866dafcb3ce292a262",
+      "current_blob": "ff3a404155254a7aa9b882866dafcb3ce292a262",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/checks.json",
+      "source_blob": "81f876d04f89d2e7ad3c5bf713078e72542c4643",
+      "current_blob": "81f876d04f89d2e7ad3c5bf713078e72542c4643",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/ci-gate-current.log",
+      "source_blob": "6b0bc2bc56953ffc8da2f104332be1b06c2462e2",
+      "current_blob": "6b0bc2bc56953ffc8da2f104332be1b06c2462e2",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/client-vault.log",
+      "source_blob": "a16632ddec6c0e63281b02de3c8067a9bb84a5a0",
+      "current_blob": "a16632ddec6c0e63281b02de3c8067a9bb84a5a0",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/core-registry.log",
+      "source_blob": "9efb622a82c88a3fd9f95c0ba408a873fab84c3e",
+      "current_blob": "9efb622a82c88a3fd9f95c0ba408a873fab84c3e",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/electron-typecheck.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/flow.log",
+      "source_blob": "a788bdded9d71be5157446b579ddba8197b413de",
+      "current_blob": "a788bdded9d71be5157446b579ddba8197b413de",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/footer.log",
+      "source_blob": "fc5d298eebde53d63f9f47c4a1faf99008fd0781",
+      "current_blob": "fc5d298eebde53d63f9f47c4a1faf99008fd0781",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/helper-core-tsc.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/helper-owner-after.log",
+      "source_blob": "4989cc19144009128c40ddf5f00617e6e9671537",
+      "current_blob": "4989cc19144009128c40ddf5f00617e6e9671537",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/helper-owner-before.log",
+      "source_blob": "f1408c158213f695d4247a94413f63da7fe40a6a",
+      "current_blob": "f1408c158213f695d4247a94413f63da7fe40a6a",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/initial-pinned-core-timeout.log",
+      "source_blob": "5f98cc300feb8ff88ffa0761d61ff85c2262e3fe",
+      "current_blob": "5f98cc300feb8ff88ffa0761d61ff85c2262e3fe",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/initial-pinned-omp-timeouts.log",
+      "source_blob": "daf591dee971674317858aa2fef1f5a1e4c479d9",
+      "current_blob": "daf591dee971674317858aa2fef1f5a1e4c479d9",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/integrated-auth-i18n.log",
+      "source_blob": "78b957196d8143d1d374240c02f61b0ea88587b9",
+      "current_blob": "78b957196d8143d1d374240c02f61b0ea88587b9",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/integrated-core-tsc.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/integrated-electron-tsc.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/integration-root-checks.json",
+      "source_blob": "aa8572dc74d34e1968ab711ddff34c2933a3099e",
+      "current_blob": "aa8572dc74d34e1968ab711ddff34c2933a3099e",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/locales.log",
+      "source_blob": "91ef11cdd7ba6e88b385623bbe6057dbe4bc5ec7",
+      "current_blob": "91ef11cdd7ba6e88b385623bbe6057dbe4bc5ec7",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/logout-recovery-after.log",
+      "source_blob": "2c2ba85887fcce50199891194d99105972cb9cb5",
+      "current_blob": "2c2ba85887fcce50199891194d99105972cb9cb5",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/logout-recovery-before.log",
+      "source_blob": "66f27b78055e695cc4770352a356230dac5b1d71",
+      "current_blob": "66f27b78055e695cc4770352a356230dac5b1d71",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/main-build.log",
+      "source_blob": "ddd08e431f6e9eb1f9e36a790d778d12eafe0bd6",
+      "current_blob": "ddd08e431f6e9eb1f9e36a790d778d12eafe0bd6",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/model-domain-after.log",
+      "source_blob": "3b40f9732454d6170195d1bcfe987ff97ce0018a",
+      "current_blob": "3b40f9732454d6170195d1bcfe987ff97ce0018a",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/model-domain-before.log",
+      "source_blob": "390fef4aaf60e38d2108cb4019acda83066a7451",
+      "current_blob": "390fef4aaf60e38d2108cb4019acda83066a7451",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/model-domain-related-after.log",
+      "source_blob": "d046a23d67ae70ef767f76d30ff433b893a2ba93",
+      "current_blob": "d046a23d67ae70ef767f76d30ff433b893a2ba93",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/model-domain-related.log",
+      "source_blob": "b94d68dde93cc47f230fb9bb4fcc43edea147270",
+      "current_blob": "b94d68dde93cc47f230fb9bb4fcc43edea147270",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/native-probe-electron-install.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/native-vault-local.log",
+      "source_blob": "deb55687cce7c08c5e74b84b38006cd6b48c205b",
+      "current_blob": "deb55687cce7c08c5e74b84b38006cd6b48c205b",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/omp.log",
+      "source_blob": "5e3b1f09144ad6315fc91a82d139ea40d4fd8817",
+      "current_blob": "5e3b1f09144ad6315fc91a82d139ea40d4fd8817",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/pinned-core-longer-timeout.log",
+      "source_blob": "5338b37537faa0a416ecc156d6295db17ca02407",
+      "current_blob": "5338b37537faa0a416ecc156d6295db17ca02407",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/pinned-omp-short-drain-retry.log",
+      "source_blob": "73f968950932f147468f1bbd66c611dc34cd1b9d",
+      "current_blob": "73f968950932f147468f1bbd66c611dc34cd1b9d",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/related.log",
+      "source_blob": "551e64b20c8dbac8c8dce12ac624b808f91c9068",
+      "current_blob": "551e64b20c8dbac8c8dce12ac624b808f91c9068",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/renderer-frozen-build.log",
+      "source_blob": "5cb450c69efedea826fe015cc0fbeb8d645dd2e2",
+      "current_blob": "5cb450c69efedea826fe015cc0fbeb8d645dd2e2",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/renderer-initial-minified-build.log",
+      "source_blob": "4125e5fc40d6680384fe87bb34e8663f6ef98e08",
+      "current_blob": "4125e5fc40d6680384fe87bb34e8663f6ef98e08",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-auth-related.log",
+      "source_blob": "b314b8a6af50a09167f98ab73e48c9f522423e9f",
+      "current_blob": "b314b8a6af50a09167f98ab73e48c9f522423e9f",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-checks.json",
+      "source_blob": "75696a32aab41a035212e0ba3a4dd5d7c5e5cc7f",
+      "current_blob": "75696a32aab41a035212e0ba3a4dd5d7c5e5cc7f",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-core-tsc.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-delivered-tests.log",
+      "source_blob": "bf2f6db2e98ef85a5e2f106cdf3c5483b1d5abf1",
+      "current_blob": "bf2f6db2e98ef85a5e2f106cdf3c5483b1d5abf1",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final-core-tsc.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final-durable-queue.log",
+      "source_blob": "9a098175c15bc9c4fdcfc2464558bd5fc340bd54",
+      "current_blob": "9a098175c15bc9c4fdcfc2464558bd5fc340bd54",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final-electron-tsc.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final-related.log",
+      "source_blob": "e4816dc916a6637fde689d7d3a1431ec407baeb9",
+      "current_blob": "e4816dc916a6637fde689d7d3a1431ec407baeb9",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final-shared-tsc.log",
+      "source_blob": "8c5366acf9753687554160d1c1d183872f185311",
+      "current_blob": "8c5366acf9753687554160d1c1d183872f185311",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final.log",
+      "source_blob": "078c2056d549da193098ce10055e1c8fb6b8c07a",
+      "current_blob": "078c2056d549da193098ce10055e1c8fb6b8c07a",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-integrated-after.log",
+      "source_blob": "fbb5a46ae27298ca27aea07b11577a5cfb9e858e",
+      "current_blob": "fbb5a46ae27298ca27aea07b11577a5cfb9e858e",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-owner-final-core-tsc.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-owner-final.log",
+      "source_blob": "6efb5cc8e793ad07ba44faf33c9efc67ca733d95",
+      "current_blob": "6efb5cc8e793ad07ba44faf33c9efc67ca733d95",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-session-related.log",
+      "source_blob": "d09c0a5d1378f4c8c9b51f31aca09fc672f8b6b2",
+      "current_blob": "d09c0a5d1378f4c8c9b51f31aca09fc672f8b6b2",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-shared-tsc.log",
+      "source_blob": "cccfd8fbb0b8cab5d100e42c3da667374cf90a68",
+      "current_blob": "cccfd8fbb0b8cab5d100e42c3da667374cf90a68",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-verified-core-tsc.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-verified-electron-tsc.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-verified-shared-tsc.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-verified-tests.log",
+      "source_blob": "2dc26c7d2cb20b0e0421018a0c3f92a2694065e8",
+      "current_blob": "2dc26c7d2cb20b0e0421018a0c3f92a2694065e8",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/resource-core-tsc.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/server-typecheck.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/session-resource-after-asserted.log",
+      "source_blob": "d83626f8d2b70c1ab0e71a3e0d327f1ef57376ef",
+      "current_blob": "d83626f8d2b70c1ab0e71a3e0d327f1ef57376ef",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/session-resource-after.log",
+      "source_blob": "a1753c61e1050d580262b8e4e22d29e177bd362c",
+      "current_blob": "a1753c61e1050d580262b8e4e22d29e177bd362c",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/session-resource-before-asserted.log",
+      "source_blob": "420f73832f9d1451b10f4e6109fb28e3cace0695",
+      "current_blob": "420f73832f9d1451b10f4e6109fb28e3cace0695",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/session-resource-before.log",
+      "source_blob": "bbf71c354960ebcd630faf89d245efa459a8a5a5",
+      "current_blob": "bbf71c354960ebcd630faf89d245efa459a8a5a5",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/startup.log",
+      "source_blob": "d80d76842e66cbfa3db9f8b2a627cafb4a7b40ce",
+      "current_blob": "d80d76842e66cbfa3db9f8b2a627cafb4a7b40ce",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-recheck-evidence/pocket-desktop-race-probe.ts",
+      "source_blob": "96540b87d06ca28a41ad9e7e8e1d52c3a2be52da",
+      "current_blob": "96540b87d06ca28a41ad9e7e8e1d52c3a2be52da",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-recheck-evidence/pocket-desktop-review-probe.ts",
+      "source_blob": "95b1c60d9a4e926b73e765f48538abeccc9e3ecf",
+      "current_blob": "95b1c60d9a4e926b73e765f48538abeccc9e3ecf",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-recheck-evidence/pocket-logout-crash-recheck.ts",
+      "source_blob": "dec59d8d543fec5b22c8cea8b716c3132c506076",
+      "current_blob": "dec59d8d543fec5b22c8cea8b716c3132c506076",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-recheck-evidence/pocket-native-runner-review.ts",
+      "source_blob": "71a63636a1c52430a9a72b66ec152e792eb2c2bd",
+      "current_blob": "71a63636a1c52430a9a72b66ec152e792eb2c2bd",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-recheck-evidence/pocket-registered-callback-probe.ts",
+      "source_blob": "5b31c73e8971ef10450d2aa37c910271404d62ad",
+      "current_blob": "5b31c73e8971ef10450d2aa37c910271404d62ad",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-recheck.md",
+      "source_blob": "0be28c19fd54f8f22a09766cd6bf906a60ec5166",
+      "current_blob": "0be28c19fd54f8f22a09766cd6bf906a60ec5166",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-repairs.md",
+      "source_blob": "f626691e85f2168c0392dcd87fadadc0e6d114f7",
+      "current_blob": "f626691e85f2168c0392dcd87fadadc0e6d114f7",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-desktop-review.md",
+      "source_blob": "bf4ecfe0533928133a31d55aef262fa9842c0cd7",
+      "current_blob": "bf4ecfe0533928133a31d55aef262fa9842c0cd7",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-implementation.md",
+      "source_blob": "53c82bc7a0a5b2a90a30f03a6d41a05219960fb0",
+      "current_blob": "53c82bc7a0a5b2a90a30f03a6d41a05219960fb0",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-native-ci-review.md",
+      "source_blob": "f8975472326dea3c31bdd2770bf862c2bcb091ae",
+      "current_blob": "f8975472326dea3c31bdd2770bf862c2bcb091ae",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-native-vault/darwin.json",
+      "source_blob": "77e1e3bd3cd3a6cf41a53bac9cc8eaded1122a0d",
+      "current_blob": "77e1e3bd3cd3a6cf41a53bac9cc8eaded1122a0d",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/electron-types.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/frozen-before.log",
+      "source_blob": "bd00deb153adec9cd1a80650ae695ec5caf46b62",
+      "current_blob": "bd00deb153adec9cd1a80650ae695ec5caf46b62",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/proof-strict-types.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/receipt-contract-control.log",
+      "source_blob": "1bde0e5bda01e2498e545ef1284ddb8d9aa68e38",
+      "current_blob": "1bde0e5bda01e2498e545ef1284ddb8d9aa68e38",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/receipt-contract-control.ts",
+      "source_blob": "7854790e0cbb42ef2bc93855e44763fc70127309",
+      "current_blob": "7854790e0cbb42ef2bc93855e44763fc70127309",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/runner-controls-hardened.log",
+      "source_blob": "e52a0661556f3e2ddb20d89ee40d2187c784de2e",
+      "current_blob": "e52a0661556f3e2ddb20d89ee40d2187c784de2e",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/runner-controls.log",
+      "source_blob": "0fb7c29fe56fe8ca6853395c062e2fd7030b9e14",
+      "current_blob": "0fb7c29fe56fe8ca6853395c062e2fd7030b9e14",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/saved-mac-compatibility.log",
+      "source_blob": "f38e4cc9708b78b2e06fa07e91f5103189c4001f",
+      "current_blob": "f38e4cc9708b78b2e06fa07e91f5103189c4001f",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/sha256.json",
+      "source_blob": "8ba734bf8fe8e188154225af0d4020736c15c857",
+      "current_blob": "8ba734bf8fe8e188154225af0d4020736c15c857",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/targeted-hardened.log",
+      "source_blob": "83349c13d96c81ddf49a7d1451adc1053e20aa35",
+      "current_blob": "83349c13d96c81ddf49a7d1451adc1053e20aa35",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/targeted.log",
+      "source_blob": "82b0abd6f57051d13b83114ef35feb6b5c9403ac",
+      "current_blob": "82b0abd6f57051d13b83114ef35feb6b5c9403ac",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/validator-before-negative.log",
+      "source_blob": "1dac1f4342e550ffc2022a81577997aca88fd45e",
+      "current_blob": "1dac1f4342e550ffc2022a81577997aca88fd45e",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/validator-before/pocket-vault-diagnostics.test.ts.fixture",
+      "source_blob": "c529955253dd3a4ae0662828d6d70686846c0887",
+      "current_blob": "c529955253dd3a4ae0662828d6d70686846c0887",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/validator-before/pocket-vault-diagnostics.ts",
+      "source_blob": "55a7b85de5ab4b5005ce8ce0c949120c26c79fda",
+      "current_blob": "55a7b85de5ab4b5005ce8ce0c949120c26c79fda",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review-evidence/workflow-readback.json",
+      "source_blob": "39e460dd0d5890af691e536a0f8182374075af05",
+      "current_blob": "39e460dd0d5890af691e536a0f8182374075af05",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-independent-review.md",
+      "source_blob": "ea294438257f4549b06815d73aafaa4e7c3c83d4",
+      "current_blob": "ea294438257f4549b06815d73aafaa4e7c3c83d4",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/contract-before-corrected.log",
+      "source_blob": "2720fbafc5b3a56a894e7edd158809c187518ee9",
+      "current_blob": "2720fbafc5b3a56a894e7edd158809c187518ee9",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/contract-before.log",
+      "source_blob": "943119fda034ce6dde88f3a2fef56391111fc384",
+      "current_blob": "943119fda034ce6dde88f3a2fef56391111fc384",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/electron-types.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/native-mac-after.json",
+      "source_blob": "77e1e3bd3cd3a6cf41a53bac9cc8eaded1122a0d",
+      "current_blob": "77e1e3bd3cd3a6cf41a53bac9cc8eaded1122a0d",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/native-mac-after.log",
+      "source_blob": "deb55687cce7c08c5e74b84b38006cd6b48c205b",
+      "current_blob": "deb55687cce7c08c5e74b84b38006cd6b48c205b",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/pocket-account-store-readonly-before.ts",
+      "source_blob": "41f74037510bca5571ae743f400c0211cb679f4f",
+      "current_blob": "41f74037510bca5571ae743f400c0211cb679f4f",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/probe-strict-types.log",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "current_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/runner-failure-control-initial.log",
+      "source_blob": "81784432e4b474b3d2ba197c2a6f4eb2cc59b8cf",
+      "current_blob": "81784432e4b474b3d2ba197c2a6f4eb2cc59b8cf",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/runner-failure-control.log",
+      "source_blob": "f17d867904388505dfb6443a7e44238465be36bc",
+      "current_blob": "f17d867904388505dfb6443a7e44238465be36bc",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/runner-failure-control.ts",
+      "source_blob": "7b0e008d22ba6939c318dced477726bb5e0be9fd",
+      "current_blob": "7b0e008d22ba6939c318dced477726bb5e0be9fd",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/sha256.json",
+      "source_blob": "03944752f10240a5b6e38248540a1b4413c32433",
+      "current_blob": "03944752f10240a5b6e38248540a1b4413c32433",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/store-after.log",
+      "source_blob": "b6be1415cb3a2347d288fbad71c0701fad63bbca",
+      "current_blob": "b6be1415cb3a2347d288fbad71c0701fad63bbca",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/targeted-after.log",
+      "source_blob": "2bb935ccb1da8479bf813fb2efcb9a71db0cf4a4",
+      "current_blob": "2bb935ccb1da8479bf813fb2efcb9a71db0cf4a4",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/windows-before.json",
+      "source_blob": "81c8bf66cdd65a5166ca4bde3a09dc2b19c7c29b",
+      "current_blob": "81c8bf66cdd65a5166ca4bde3a09dc2b19c7c29b",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/workflow-check-initial.log",
+      "source_blob": "5f9267494ed02508e38c2d0e129139dd86b84429",
+      "current_blob": "5f9267494ed02508e38c2d0e129139dd86b84429",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/workflow-check-second-initial.log",
+      "source_blob": "8a20f0962ce2ea778b16b0cc7f0716dca55537bc",
+      "current_blob": "8a20f0962ce2ea778b16b0cc7f0716dca55537bc",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair-evidence/workflow-check.log",
+      "source_blob": "427a2c9973bcb8417b8de2fdf01e7774ed9485fe",
+      "current_blob": "427a2c9973bcb8417b8de2fdf01e7774ed9485fe",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "reports/pocket-sso-windows-vault-repair.md",
+      "source_blob": "dab3f006d1d2dab2313677da5b187dcbf629eef0",
+      "current_blob": "dab3f006d1d2dab2313677da5b187dcbf629eef0",
+      "status": "exact_source",
+      "function_disposition": "retained_historical_source_evidence_not_current_acceptance",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "scripts/pocket-sso/backup-website.py",
+      "source_blob": "3515138d9ab0c2b739acae6422390587353dcd4a",
+      "current_blob": "3515138d9ab0c2b739acae6422390587353dcd4a",
+      "status": "exact_source",
+      "function_disposition": "retained_rollout_templates_not_executed",
+      "qualification_refs": [],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "scripts/probes/pocket-vault-diagnostics.test.ts",
+      "source_blob": "c6acc388b23dc09984c61bef6bf18db0625843f4",
+      "current_blob": "c6acc388b23dc09984c61bef6bf18db0625843f4",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "scripts/probes/pocket-vault-diagnostics.ts",
+      "source_blob": "ec34308441fd51a52ea8ed57b707227b6c4db13b",
+      "current_blob": "ec34308441fd51a52ea8ed57b707227b6c4db13b",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "scripts/probes/pocket-vault-native.ts",
+      "source_blob": "7f7a8b3d4314feb8a4946a1ad40333c55b65abb4",
+      "current_blob": "7f7a8b3d4314feb8a4946a1ad40333c55b65abb4",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    },
+    {
+      "path": "scripts/probes/run-pocket-vault-native.ts",
+      "source_blob": "5f4dff595fe2b1f23d64a90d8ebb931d47577147",
+      "current_blob": "5f4dff595fe2b1f23d64a90d8ebb931d47577147",
+      "status": "exact_source",
+      "function_disposition": "current_native_registration_or_RPC_or_CI_probe",
+      "qualification_refs": [
+        "pocket-root-onboarding-repaired.log",
+        "pocket-root-flow-startup-probes.log",
+        "pocket-root-current-electron-types.log"
+      ],
+      "original_source_branch_preserved": true
+    }
+  ],
+  "public_deployment_performed": false,
+  "native_OS_E2E_current_acceptance": false
+}
