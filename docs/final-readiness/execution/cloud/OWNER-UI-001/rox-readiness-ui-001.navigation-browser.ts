@@ -1,16 +1,32 @@
 import { chromium } from '@playwright/test'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import assert from 'node:assert/strict'
+import ts from 'typescript'
 import { buildMainFixture } from '../../../../../apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.component-harness'
 
 const temporary = mkdtempSync(join(import.meta.dir, 'rox-readiness-ui-001-nav-temp-'))
 const renderer = resolve(import.meta.dir, '../../../../../apps/electron/src/renderer')
+// Exercise the shipped AppShell effect with the real selection hook and loader
+// atom. Its IPC endpoint is the fixture boundary; no provider is contacted.
+function appShellMessageEffect() {
+  const file = ts.createSourceFile('AppShell.tsx', readFileSync(join(renderer, 'components/app-shell/AppShell.tsx'), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const effects: string[] = []
+  function visit(node: ts.Node) {
+    if (ts.isCallExpression(node) && node.expression.getText(file) === 'React.useEffect'
+      && node.arguments[0]?.getText(file).includes('ensureMessagesLoaded(session.selected)')) effects.push(node.getText(file))
+    ts.forEachChild(node, visit)
+  }
+  visit(file)
+  assert.equal(effects.length, 1, 'The actual shell session loader must be exercised')
+  return effects[0]
+}
 const bootstrap = `
 import {createRoot} from 'react-dom/client';
-import {Provider,createStore,useAtomValue} from 'jotai';
+import {Provider,createStore,useAtomValue,useSetAtom} from 'jotai';
 import {NavigationProvider,useNavigation} from ${JSON.stringify(join(renderer, 'contexts/NavigationContext.tsx'))};
-import {sessionMetaMapAtom} from ${JSON.stringify(join(renderer, 'atoms/sessions.ts'))};
+import {sessionMetaMapAtom,ensureSessionMessagesLoadedAtom} from ${JSON.stringify(join(renderer, 'atoms/sessions.ts'))};
+import {useSession} from ${JSON.stringify(join(renderer, 'hooks/useSession.ts'))};
 import {panelStackAtom} from ${JSON.stringify(join(renderer, 'atoms/panel-stack.ts'))};
 import {PanelSlot} from ${JSON.stringify(join(renderer, 'components/app-shell/PanelSlot.tsx'))};
 const store=createStore();
@@ -20,6 +36,7 @@ const source=slug=>({config:{slug,name:slug,type:'api',api:{baseUrl:'https://fix
 let sources=['one','two'].map(source),skills=[{slug:'skill-one',source:'workspace'}];
 window.electronAPI={
  getSources:async(ws)=>{requests.push(['sources',ws]);return sources},getSkills:async(ws,cwd)=>{requests.push(['skills',ws,cwd]);return skills},
+ getSessionMessages:async(id)=>{requests.push(['messages',props.workspace,id]);return null},
  onSourcesChanged:fn=>{sourceListeners.add(fn);return()=>sourceListeners.delete(fn)},
  onSkillsChanged:fn=>{skillListeners.add(fn);return()=>skillListeners.delete(fn)},
  onDeepLinkNavigate:fn=>{deepLinkListeners.add(fn);return()=>deepLinkListeners.delete(fn)},
@@ -41,6 +58,13 @@ const switchWorkspaceBySlug=workspace=>{switchRequests.push(workspace);
  if(!['workspace-a','workspace-b'].includes(workspace))return false;
  switchWorkspace(workspace);return true};
 function Probe(){const nav=useNavigation();const panels=useAtomValue(panelStackAtom);window.ui001.navigation=nav;
+ const [session,setSession]=useSession();
+ const sessionMetaMap=useAtomValue(sessionMetaMapAtom);
+ const activeWorkspaceId=props.workspace,remoteWorkspaceId=props.remoteWorkspaceId;
+ const ensureMessagesLoaded=useSetAtom(ensureSessionMessagesLoadedAtom);
+ window.ui001.setSelected=id=>setSession({selected:id});
+ ${appShellMessageEffect()};
+ window.ui001.selected=()=>session.selected;
  return <><pre id="navigation-state">{JSON.stringify(nav.navigationState)}</pre><pre id="panel-stack">{JSON.stringify(panels)}</pre>{panels.map((entry,index)=><PanelSlot key={entry.id} entry={entry} isOnly={panels.length===1} isFocusedPanel={index===panels.length-1} isSidebarAndNavigatorHidden={false} isAtLeftEdge={true} isAtRightEdge={true} proportion={1}/>)}</>}
 function FullFixture(){return <Provider store={store}><ShellContext.Provider value={{activeWorkspaceId:props.workspace,workspaces:[{id:props.workspace,remoteServer:{remoteWorkspaceId:props.remoteWorkspaceId}}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]}}>
  <NavigationProvider workspaceId={props.workspace} workspaceSlug={props.workspace} isReady={props.ready} isSessionsReady={props.sessionsReady}
@@ -53,9 +77,10 @@ window.ui001={navigation:null,ready:()=>{props={...props,ready:true,sessionsRead
  deepLink:view=>{for(const fn of deepLinkListeners)fn({view})},
  actionLink:(action,actionParams)=>{for(const fn of deepLinkListeners)fn({action,actionParams})},
  removeSession:id=>{const next=new Map(store.get(sessionMetaMapAtom));next.delete(id);store.set(sessionMetaMapAtom,next)},
+ publishSession:(id,workspaceId)=>{const next=new Map(store.get(sessionMetaMapAtom));next.set(id,{id,workspaceId,name:id});store.set(sessionMetaMapAtom,next)},
  removeSource:()=>{sources=[];for(const fn of sourceListeners)fn(props.workspace,sources)},
  switchWorkspace,requests:()=>requests,actions:()=>actions,source,
- beginWorkspaceSwitch:()=>{props={...props,workspace:'workspace-b',sessionsReady:false};store.set(sessionMetaMapAtom,new Map());render()},
+ beginWorkspaceSwitch:()=>{props={...props,workspace:'workspace-b',sessionsReady:false};window.ui001.setSelected(null);store.set(sessionMetaMapAtom,new Map());render()},
  completeWorkspaceSwitch:()=>{store.set(sessionMetaMapAtom,new Map([['foreign',metadata[1]]]));props={...props,sessionsReady:true};render()},
  chatMounts:()=>window.__ui001ChatMounts??[],switchRequests:()=>switchRequests,
  unmount:()=>root.unmount(),listeners:()=>deepLinkListeners.size};
@@ -166,6 +191,40 @@ try {
     await selected('sessions', 'foreign')
     await page.locator('[data-route-host="ChatPage"]').waitFor()
     assert.ok((await page.evaluate(before => (window as any).ui001.chatMounts().slice(before), before)).every((id: string) => id === 'foreign'))
+  })
+  await check('Cleared ownership metadata cannot restore global selection or trigger the actual shell loader', async () => {
+    await page.goto(`${origin}?ws=workspace-a&route=allSessions/session/local`)
+    await selected('sessions', 'local')
+    await page.waitForFunction(() => (window as any).ui001.selected() === 'local')
+    const before = await page.evaluate(() => (window as any).ui001.requests().filter((row: string[]) => row[0] === 'messages').length)
+    await page.evaluate(() => (window as any).ui001.beginWorkspaceSwitch())
+    await page.locator('[data-testid="route-session-unavailable"]').waitFor({ timeout: 3500 })
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    assert.equal(await page.evaluate(() => (window as any).ui001.selected()), null)
+    assert.equal(await page.evaluate(() => (window as any).ui001.requests().filter((row: string[]) => row[0] === 'messages').length), before)
+    assert.equal(new URL(page.url()).searchParams.get('route'), 'allSessions/session/local')
+    await page.evaluate(() => (window as any).ui001.completeWorkspaceSwitch())
+    await selected('sessions', 'foreign')
+    await page.waitForFunction(() => (window as any).ui001.requests().some((row: string[]) => row[0] === 'messages' && row[1] === 'workspace-b' && row[2] === 'foreign'))
+  })
+  await check('The actual shell loader rejects an independent foreign selection and accepts verified local and remote sessions', async () => {
+    await page.goto(`${origin}?ws=workspace-a&route=home`)
+    await selected('home')
+    await page.evaluate(() => (window as any).ui001.setSelected('foreign'))
+    await page.waitForFunction(() => (window as any).ui001.selected() === 'foreign')
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    assert.deepEqual(await page.evaluate(() => (window as any).ui001.requests().filter((row: string[]) => row[0] === 'messages')), [])
+    await page.evaluate(() => (window as any).ui001.setSelected('missing'))
+    await page.waitForFunction(() => (window as any).ui001.selected() === 'missing')
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    assert.deepEqual(await page.evaluate(() => (window as any).ui001.requests().filter((row: string[]) => row[0] === 'messages')), [])
+    await page.evaluate(() => (window as any).ui001.publishSession('missing', 'workspace-a'))
+    await page.waitForFunction(() => (window as any).ui001.requests().some((row: string[]) => row[0] === 'messages' && row[2] === 'missing'))
+    await page.evaluate(() => (window as any).ui001.setSelected('local'))
+    await page.waitForFunction(() => (window as any).ui001.requests().some((row: string[]) => row[0] === 'messages' && row[2] === 'local'))
+    await page.evaluate(() => (window as any).ui001.setSelected('remote'))
+    await page.waitForFunction(() => (window as any).ui001.requests().some((row: string[]) => row[0] === 'messages' && row[2] === 'remote'))
+    assert.ok((await page.evaluate(() => (window as any).ui001.requests().filter((row: string[]) => row[0] === 'messages'))).every((row: string[]) => row[1] === 'workspace-a' && ['missing', 'local', 'remote'].includes(row[2])))
   })
   await check('Legacy zero/one panel proportions recover without becoming part of an entity address', async () => {
     const panels = 'allSessions/session/local:1.0000,retired/surface:0.0000'
@@ -280,6 +339,6 @@ try {
     assert.equal(await page.evaluate(() => (window as any).ui001.listeners()), 0)
   })
   assert.deepEqual(errors, [])
-  console.log(JSON.stringify({ environment: 'Actual mounted NavigationProvider, PanelSlot, MainContentPanel, session-selection hooks and panel/session atoms under the production StrictMode wrapper in isolated Chromium; leaf presentation and IPC boundary fixtures; no hosted/native service acceptance', browserVersion: browser.version(), results }, null, 2))
+  console.log(JSON.stringify({ environment: 'Actual mounted NavigationProvider, PanelSlot, MainContentPanel, session-selection hooks, panel/session atoms and extracted shipped AppShell message-loading effect under production StrictMode in isolated Chromium; leaf presentation and IPC boundary fixtures; no hosted/native service acceptance', browserVersion: browser.version(), results }, null, 2))
   if (results.some(result => !result.pass)) process.exitCode = 1
 } finally { await browser.close(); server.stop(); rmSync(temporary, { recursive: true, force: true }) }

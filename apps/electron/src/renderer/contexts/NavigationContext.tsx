@@ -564,18 +564,16 @@ export function NavigationProvider({
   // Keep the global session selection in sync with the focused panel
   useEffect(() => {
     if (isSessionsNavigation(navigationState) && navigationState.details) {
+      const meta = store.get(sessionMetaMapAtom).get(navigationState.details.sessionId)
+      // The explicit address remains recoverable while ownership is unresolved,
+      // but selection also drives the shell's message loader.
+      if (!meta || !workspaceId || (meta.workspaceId !== workspaceId && meta.workspaceId !== remoteWorkspaceId)) return
       setSession({ selected: navigationState.details.sessionId })
-      if (workspaceId) {
-        // Only persist if the session belongs to this workspace (prevents cross-workspace
-        // pollution during workspace switch, when workspaceId changed but navigationState
-        // still reflects the old workspace's focused panel)
-        const meta = store.get(sessionMetaMapAtom).get(navigationState.details.sessionId)
-        if (meta && meta.workspaceId === workspaceId) {
-          storage.set(storage.KEYS.lastSelectedSessionId, navigationState.details.sessionId, workspaceId)
-        }
+      if (meta.workspaceId === workspaceId) {
+        storage.set(storage.KEYS.lastSelectedSessionId, navigationState.details.sessionId, workspaceId)
       }
     }
-  }, [navigationState, setSession, workspaceId, store])
+  }, [navigationState, setSession, workspaceId, remoteWorkspaceId, store])
 
   // =========================================================================
   // HELPERS
