@@ -74,5 +74,7 @@
       "bytes": 0
     }
   },
-  "original_branches_preserved": true
+  "original_branches_preserved": true,
+  "reconciled_main": "c33f00eed2adf22ad6da610325602d6dfa26af7b",
+  "reconciliation": "Normal merge of latest main; only additive spec/plan history conflict. All seven qualified production blobs unchanged."
 }
