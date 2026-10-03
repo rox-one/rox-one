@@ -11,7 +11,7 @@ import { useTranslation, Trans } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Kbd, KbdGroup } from '@/components/ui/kbd'
 import { cn } from '@/lib/utils'
-import { isMac } from '@/lib/platform'
+import { formatHotkeyDisplay } from '@/lib/platform'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -74,14 +74,14 @@ export function MultiSelectPanel({
 
   const commandClick = (
     <KbdGroup>
-      <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+      <Kbd>{formatHotkeyDisplay('mod')}</Kbd>
       <Kbd>{clickLabel}</Kbd>
     </KbdGroup>
   )
 
   const shiftClick = (
     <KbdGroup>
-      <Kbd>⇧</Kbd>
+      <Kbd>{formatHotkeyDisplay('shift')}</Kbd>
       <Kbd>{clickLabel}</Kbd>
     </KbdGroup>
   )

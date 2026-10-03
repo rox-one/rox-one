@@ -20,6 +20,7 @@ import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useNavigation, routes } from '@/contexts/NavigationContext'
 import { getSessionTitle } from '@/utils/session'
 import { cn } from '@/lib/utils'
+import { formatHotkeyDisplay } from '@/lib/platform'
 import {
   clusterTopics,
   contextSelection,
@@ -913,7 +914,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   })() : (
     <div className="flex flex-col gap-2 px-5 py-6 text-[12px] text-text-muted" data-testid="memory-detail-empty">
       <p className="text-[13px]">{t('memory.screen.selectHint')}</p>
-      <p>{t('memory.screen.keysHint')}</p>
+      <p>{t('memory.screen.keysHint', { selectAll: formatHotkeyDisplay('mod+a') })}</p>
       <p>{t('memory.screen.meterHint', { limit: LESSON_LIMITS.context })}</p>
     </div>
   )

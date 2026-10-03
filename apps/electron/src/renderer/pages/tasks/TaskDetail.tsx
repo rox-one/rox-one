@@ -18,6 +18,7 @@ import {
   type TaskWhen,
 } from '@rox/core/tasks/personal'
 import { cn } from '@/lib/utils'
+import { formatHotkeyDisplay } from '@/lib/platform'
 import { Badge, Button, Card, SectionLabel, Tabs } from '@/components/mode-screen/ModeScreen'
 import { ConfirmDialog, Glyph, MiniCalendar, TaskCheckbox } from './parts'
 import { checklistProgress, daysUntil, deriveTaskSource, mergeNotesMarkers, visibleNotes, type AgentChip, type AgentSessionLike } from './task-model'
@@ -327,15 +328,15 @@ export function TaskDetail(props: TaskDetailProps) {
               <>
                 <Button className="min-w-0 max-w-full shrink" onClick={() => props.setPopover(props.popover === 'when' ? null : 'when')} data-testid="task-when" aria-expanded={props.popover === 'when'}>
                   {task.evening ? Glyph.moon : task.list === 'today' ? Glyph.star : null}
-                  <span className="min-w-0 truncate">{whenLabel}</span> <span className="shrink-0 opacity-60">⌘S</span>
+                  <span className="min-w-0 truncate">{whenLabel}</span> <span className="shrink-0 opacity-60">{formatHotkeyDisplay('mod+s')}</span>
                 </Button>
               </>
             ), 'task-field-when')}
             {props.popover === 'when' ? (
               <div className="mt-1 w-[260px] max-w-full rounded-[8px] sm:ml-[120px] bg-foreground/[0.04] p-2" data-testid="task-when-popover">
                 <div className="flex flex-col gap-0.5">
-                  <button type="button" className="flex h-7 items-center gap-2 rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'today' })}>{Glyph.star}{t('tasks.when.today')}<span className="ml-auto text-[11px] text-text-muted">⌘T</span></button>
-                  <button type="button" className="flex h-7 items-center gap-2 rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'evening' })}>{Glyph.moon}{t('tasks.when.evening')}<span className="ml-auto text-[11px] text-text-muted">⌘E</span></button>
+                  <button type="button" className="flex h-7 items-center gap-2 rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'today' })}>{Glyph.star}{t('tasks.when.today')}<span className="ml-auto text-[11px] text-text-muted">{formatHotkeyDisplay('mod+t')}</span></button>
+                  <button type="button" className="flex h-7 items-center gap-2 rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'evening' })}>{Glyph.moon}{t('tasks.when.evening')}<span className="ml-auto text-[11px] text-text-muted">{formatHotkeyDisplay('mod+e')}</span></button>
                 </div>
                 <div className="mt-1.5"><MiniCalendar value={task.startAt} now={now} locale={i18n.language} onPick={(at) => setWhen({ kind: 'date', at })} /></div>
                 <form className="mt-1.5" onSubmit={(event) => {
@@ -355,7 +356,7 @@ export function TaskDetail(props: TaskDetailProps) {
             {fieldRow(t('tasks.field.deadline'), (
               <>
                 <Button onClick={() => props.setPopover(props.popover === 'deadline' ? null : 'deadline')} data-testid="task-deadline" className={cn('min-w-0 max-w-full shrink', deadlineDays != null && deadlineDays <= 0 && 'text-destructive')}>
-                  {Glyph.flag}<span className="min-w-0 truncate">{deadlineLabel ?? t('tasks.deadline.add')}</span> <span className="shrink-0 opacity-60">⇧⌘D</span>
+                  {Glyph.flag}<span className="min-w-0 truncate">{deadlineLabel ?? t('tasks.deadline.add')}</span> <span className="shrink-0 opacity-60">{formatHotkeyDisplay('shift+mod+d')}</span>
                 </Button>
                 {task.dueAt != null ? <Button variant="ghost" onClick={() => mutate((current) => { current.setDeadline(task.id, undefined) })}>{t('tasks.clearDate')}</Button> : null}
               </>
@@ -456,7 +457,7 @@ export function TaskDetail(props: TaskDetailProps) {
           <SectionLabel>{t('tasks.section.organize')}</SectionLabel>
           <div className="flex flex-col gap-0.5">
             {fieldRow(t('tasks.field.place'), (
-              <Button onClick={props.onOpenMove} data-testid="task-move">{props.placeLabel} <span className="opacity-60">⌘K</span></Button>
+              <Button onClick={props.onOpenMove} data-testid="task-move">{props.placeLabel} <span className="opacity-60">{formatHotkeyDisplay('mod+k')}</span></Button>
             ))}
             {fieldRow(t('tasks.tags'), (
               <>
@@ -522,7 +523,7 @@ export function TaskDetail(props: TaskDetailProps) {
             <div className="mt-1 text-[12px] text-text-secondary">{t('tasks.delegate.body')}</div>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <Button variant="primary" data-testid="task-delegate" disabled={props.delegating || !props.canDelegate || trashed} onClick={props.onDelegate}>
-                {props.delegating ? t('tasks.delegate.running') : t('tasks.delegate.action')} <span className="opacity-70">⌘↵</span>
+                {props.delegating ? t('tasks.delegate.running') : t('tasks.delegate.action')} <span className="opacity-70">{formatHotkeyDisplay('mod+enter')}</span>
               </Button>
               {props.agentChip ? (
                 <>
@@ -537,7 +538,7 @@ export function TaskDetail(props: TaskDetailProps) {
 
           {!trashed ? (
             <div className="mt-6 flex gap-1.5">
-              <Button variant="danger" onClick={props.onTrash} data-testid="task-trash">{t('tasks.trash.move')} <span className="opacity-60">⌘⌫</span></Button>
+              <Button variant="danger" onClick={props.onTrash} data-testid="task-trash">{t('tasks.trash.move')} <span className="opacity-60">{formatHotkeyDisplay('mod+backspace')}</span></Button>
             </div>
           ) : null}
         </>
