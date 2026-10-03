@@ -191,6 +191,53 @@ describe('MessagingGateway button-press access gate', () => {
     expect(h.adapter.sent.some((s) => s.includes('Bound to'))).toBe(true)
   })
 
+  it('retains the channel button origin through compaction and the subsequent plan approval', async () => {
+    const h = await makeHarness({ workspaceConfig: {
+      enabled: true, platforms: { telegram: { enabled: true, accessMode: 'public-inbox' } },
+    } })
+    const binding = h.gateway.getBindingStore().bind('ws-test', 'sess-A', 'telegram', 'chat-1', undefined,
+      { accessMode: 'owner-control', allowedSenderIds: ['alice'] }, 42)
+    const send = mock(async (..._args: Parameters<ISessionManager['sendMessage']>) => {})
+    h.sessionManager.sendMessage = send
+    let compactButton = ''
+    let acceptButton = ''
+    h.adapter.sendButtons = async (channelId, _text, buttons) => {
+      compactButton = buttons.find(button => button.id.startsWith('plan:compact:'))?.id ?? ''
+      acceptButton = buttons.find(button => button.id.startsWith('plan:accept:'))?.id ?? ''
+      return { platform: 'telegram', channelId, messageId: 'plan-message' }
+    }
+    const publishPlan = async () => {
+      h.gateway.onSessionEvent('session:event', { to: 'workspace', workspaceId: 'ws-test' }, {
+        type: 'plan_submitted', sessionId: 'sess-A', message: { id: 'plan', role: 'plan', content: 'Approved fixture plan', timestamp: Date.now(), planPath: '/fixture/plan.md' },
+      } as SessionEvent)
+      await Promise.resolve(); await Promise.resolve()
+    }
+    await publishPlan()
+    expect(compactButton).toStartWith('plan:compact:')
+    await h.adapter.fireButton(buildPress({ buttonId: compactButton, senderId: 'alice', threadId: 42, messageId: 'actual-compact-press' }))
+    const compactLaunch = { kind: 'channel', triggerId: 'actual-compact-press', channel: {
+      kind: 'channel-identity', id: binding.id, scope: 'workspace', label: 'telegram: chat-1',
+    } } as const
+    expect(send).toHaveBeenCalledTimes(1)
+    expect(send.mock.calls[0]![0]).toBe('sess-A')
+    expect(send.mock.calls[0]![1]).toBe('/compact')
+    expect(send.mock.calls[0]![8]).toEqual({ runtimeLaunch: compactLaunch })
+    expect(h.sessionManager.acceptPlan).not.toHaveBeenCalled()
+    h.gateway.onSessionEvent('session:event', { to: 'workspace', workspaceId: 'ws-test' },
+      { type: 'info', sessionId: 'sess-A', statusType: 'compaction_complete', message: 'Compacted' } as SessionEvent)
+    await Promise.resolve(); await Promise.resolve()
+    expect(h.sessionManager.acceptPlan).toHaveBeenCalledWith('sess-A', '/fixture/plan.md', compactLaunch)
+    expect(h.sessionManager.clearPendingPlanExecution).toHaveBeenCalledTimes(1)
+
+    await publishPlan()
+    await h.adapter.fireButton(buildPress({ buttonId: acceptButton, senderId: 'alice', threadId: 42, messageId: 'actual-accept-press' }))
+    expect(h.sessionManager.acceptPlan).toHaveBeenLastCalledWith('sess-A', '/fixture/plan.md', {
+      ...compactLaunch, triggerId: 'actual-accept-press',
+    })
+    expect(send).toHaveBeenCalledTimes(1)
+    await h.gateway.stop()
+  })
+
   it('rejects perm: button press from non-binding-allow-list sender', async () => {
     const h = await makeHarness({
       workspaceConfig: {

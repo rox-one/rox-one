@@ -2,7 +2,7 @@ import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RuntimeTraceQuery, RuntimeEventsQuery, RuntimePayloadQuery, TraceCoverage } from '@rox/core/runtime-trace'
 import type { RpcServer, RequestContext } from '../../transport/types'
 import type { HandlerDeps } from '../handler-deps'
-import { assertNativeSession, nativeRuntimeTraceEvent } from './native-session-scope'
+import { assertNativeSession, nativeRuntimeTraceEvent, nativeRuntimeTraceRunSummary } from './native-session-scope'
 
 export const HANDLED_CHANNELS = [RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT, RPC_CHANNELS.runtimeTrace.READ_EVENTS, RPC_CHANNELS.runtimeTrace.READ_PAYLOAD] as const
 
@@ -32,7 +32,7 @@ export function registerRuntimeTraceHandlers(server: RpcServer, deps: HandlerDep
     if (!sessionManager.getRuntimeTraceSnapshot) throw new CodedError('CAPABILITY_UNAVAILABLE', 'Runtime trace capability unavailable')
     const snapshot = await sessionManager.getRuntimeTraceSnapshot(query)
     checkCurrent(ctx, query)
-    return ctx.principal ? { ...snapshot, runs: snapshot.runs.map(run => ({ ...run, coverage: nativeCoverage(run.coverage) })), events: snapshot.events.map(nativeRuntimeTraceEvent), coverage: nativeCoverage(snapshot.coverage) } : snapshot
+    return ctx.principal ? { ...snapshot, runs: snapshot.runs.map(run => ({ ...nativeRuntimeTraceRunSummary(run, snapshot.events), coverage: nativeCoverage(run.coverage) })), events: snapshot.events.map(nativeRuntimeTraceEvent), coverage: nativeCoverage(snapshot.coverage) } : snapshot
   }, { nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.runtimeTrace.READ_EVENTS, async (ctx, query: RuntimeEventsQuery) => {
