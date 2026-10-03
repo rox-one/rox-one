@@ -10,6 +10,9 @@ let oauthPreparationCalls = 0
 const welcomeWorkspaceCalls: string[] = []
 
 mock.module('@rox/shared/auth', () => ({
+  LOCAL_ROX_CALLER: { issuer: 'rox:local-electron', subject: 'installation' },
+  isRoxCloudRequired: () => true,
+  getRoxAccountAuthority: () => ({ state: async () => ({ connected: false, account: null }) }),
   fetchRoxBalance: async () => ({ balanceRox: '0' }),
   getAuthState: async () => ({
     billing: {
@@ -133,7 +136,7 @@ beforeEach(() => {
 })
 
 describe('onboarding:getAuthState', () => {
-  it('reports a fresh install as launchable without setup', async () => {
+  it('requires Pocket authentication even when provider setup is deferred', async () => {
     const { invoke } = await createHarness()
     const result = await invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE) as {
       setupNeeds: {
@@ -147,14 +150,14 @@ describe('onboarding:getAuthState', () => {
 
     expect(result.setupNeeds.needsBillingConfig).toBe(true)
     expect(result.setupNeeds.needsCredentials).toBe(false)
-    expect(result.setupNeeds.isFullyConfigured).toBe(true)
-    expect(result.setupNeeds.shouldShowOnboardingOnLaunch).toBe(false)
+    expect(result.setupNeeds.isFullyConfigured).toBe(false)
+    expect(result.setupNeeds.shouldShowOnboardingOnLaunch).toBe(true)
     expect(result.setupNeeds.isSetupDeferred).toBe(false)
     expect(setupDeferredReadCount).toBe(1)
     expect(oauthPreparationCalls).toBe(0)
   })
 
-  it('continues to honor persisted setup deferral without a launch wizard', async () => {
+  it('preserves provider deferral while requiring the independent Pocket gate', async () => {
     setupDeferred = true
     const { invoke } = await createHarness()
     const result = await invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE) as {
@@ -165,8 +168,8 @@ describe('onboarding:getAuthState', () => {
       }
     }
 
-    expect(result.setupNeeds.isFullyConfigured).toBe(true)
-    expect(result.setupNeeds.shouldShowOnboardingOnLaunch).toBe(false)
+    expect(result.setupNeeds.isFullyConfigured).toBe(false)
+    expect(result.setupNeeds.shouldShowOnboardingOnLaunch).toBe(true)
     expect(result.setupNeeds.isSetupDeferred).toBe(true)
     expect(setupDeferredReadCount).toBe(1)
   })
