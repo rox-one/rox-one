@@ -55,6 +55,7 @@ import { focusMinutesOn, isFocusRunning, loadFocusState, localDay, subscribeFocu
 import { startRecording, useRecorder } from '@/lib/meetings/recorder'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
+import { formatHotkeyDisplay } from '@/lib/platform'
 import { buildAgentCenter } from '@/pages/extra-screens/agents/agent-center-model'
 import { DECISIONS_NS, loadDecisions } from '@/pages/extra-screens/decisions/decisions-store'
 import { RADAR_NS, loadRadar } from '@/pages/extra-screens/radar/radar-store'
@@ -280,7 +281,7 @@ function QuickActionsWidget({ edit, width }: WidgetProps) {
       onClick: () => void record(),
     },
     { key: 'note', label: t('workbench.home.quick.newNote'), icon: <NotebookPen className="h-4 w-4" />, onClick: () => void newNote() },
-    { key: 'search', label: t('workbench.home.quick.search'), icon: <Search className="h-4 w-4" />, onClick: () => setOmniboxOpen(true), hint: '⌘K' },
+    { key: 'search', label: t('workbench.home.quick.search'), icon: <Search className="h-4 w-4" />, onClick: () => setOmniboxOpen(true), hint: formatHotkeyDisplay('mod+k') },
   ]
   return (
     <WidgetFrame testId="quickActions" title={t('workbench.home.w.quickActions')} edit={edit}>

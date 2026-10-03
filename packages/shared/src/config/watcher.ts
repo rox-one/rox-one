@@ -829,27 +829,32 @@ export class ConfigWatcher {
   private handleSkillChange(slug: string): void {
     debug('[ConfigWatcher] Skill changed:', slug);
 
-    const skill = loadSkill(this.workspaceDir, slug);
-    this.callbacks.onSkillChange?.(slug, skill);
+    try {
+      const skill = loadSkill(this.workspaceDir, slug);
+      this.callbacks.onSkillChange?.(slug, skill);
 
-    // Check if we need to download an icon from URL
-    // This happens when SKILL.md has icon: "https://..." but no local icon.* file exists
-    if (skill && skillNeedsIconDownload(skill)) {
-      debug('[ConfigWatcher] Skill needs icon download:', slug, skill.metadata.icon);
+      // Check if we need to download an icon from URL
+      // This happens when SKILL.md has icon: "https://..." but no local icon.* file exists
+      if (skill && skillNeedsIconDownload(skill)) {
+        debug('[ConfigWatcher] Skill needs icon download:', slug, skill.metadata.icon);
 
-      // Download asynchronously - don't block the watcher
-      downloadSkillIcon(skill.path, skill.metadata.icon!)
-        .then((iconPath) => {
-          if (iconPath) {
-            // Reload the skill with the new icon and emit another change
-            const updatedSkill = loadSkill(this.workspaceDir, slug);
-            debug('[ConfigWatcher] Icon downloaded, emitting updated skill:', slug);
-            this.callbacks.onSkillChange?.(slug, updatedSkill);
-          }
-        })
-        .catch((error) => {
-          debug('[ConfigWatcher] Icon download failed for skill:', slug, error);
-        });
+        // Download asynchronously - don't block the watcher
+        downloadSkillIcon(skill.path, skill.metadata.icon!)
+          .then((iconPath) => {
+            if (iconPath) {
+              // Reload the skill with the new icon and emit another change
+              const updatedSkill = loadSkill(this.workspaceDir, slug);
+              debug('[ConfigWatcher] Icon downloaded, emitting updated skill:', slug);
+              this.callbacks.onSkillChange?.(slug, updatedSkill);
+            }
+          })
+          .catch((error) => {
+            debug('[ConfigWatcher] Icon download failed for skill:', slug, error);
+          });
+      }
+    } catch (error) {
+      debug('[ConfigWatcher] Error handling skill change:', slug, error);
+      this.callbacks.onError?.(`skills/${slug}`, error as Error);
     }
   }
 

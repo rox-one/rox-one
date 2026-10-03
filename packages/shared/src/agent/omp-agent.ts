@@ -861,7 +861,7 @@ export class OmpAgent extends BaseAgent {
     env.OMP_APP_NAME = 'rox';
     let child: ChildProcess;
     try {
-      child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
+      child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     } catch (error) {
       observer?.dispose();
       if (this.runtimeObserver === observer) this.runtimeObserver = null;
@@ -2533,7 +2533,7 @@ export class OmpAgent extends BaseAgent {
     this.debug('runOneShot: spawning -p child');
     return new Promise<string>((resolve, reject) => {
       let child: ChildProcess;
-      try { child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env }); }
+      try { child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, windowsHide: true }); }
       catch (error) {
         try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
         try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }

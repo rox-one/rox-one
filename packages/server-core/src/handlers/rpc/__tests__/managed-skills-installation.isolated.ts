@@ -3,7 +3,7 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { ensureBundledSkills, listBundledSkillPacks } from '../../../../../shared/src/skills/bundled.ts';
-import { APP_MANAGED_SKILLS_DIR, GLOBAL_AGENT_SKILLS_DIR, invalidateSkillsCache, loadAllSkills, loadSkillBySlug } from '../../../../../shared/src/skills/storage.ts';
+import { APP_MANAGED_SKILLS_DIR, GLOBAL_AGENT_SKILLS_DIR, invalidateSkillsCache, loadAllSkills, loadSkillBySlug, loadSkillDetails } from '../../../../../shared/src/skills/storage.ts';
 import { invalidateOmpSkillsCache } from '../../../../../shared/src/skills/omp-discovery.ts';
 import { isSkillLinkTo, linkManagedSkill, pathEntryExists } from '../../../../../shared/src/skills/managed.ts';
 import { installEntry, removeEntry, sha256Directory, type ExecFileFn } from '../../../../../shared/src/marketplace/installer.ts';
@@ -188,6 +188,23 @@ test('directory-mode packs expose every nested skill with stable qualified ident
   expect(loadSkillBySlug(workspace, 'directory-pack--review')?.path).toBe(join(APP_MANAGED_SKILLS_DIR, 'directory-pack', 'flows', 'review'));
   expect(loadSkillBySlug(workspace, 'directory-pack--review-2')?.content).toContain('ROLE');
   expect(loadSkillBySlug(workspace, 'directory-pack--ship')?.content).toContain('SHIP');
+  // A denied first view must not abort discovery of later healthy views in the
+  // same pack. A directory junction exercises the canonical boundary on Windows
+  // without requiring permission to create a file symlink.
+  const firstInstructions = join(APP_MANAGED_SKILLS_DIR, 'directory-pack', 'flows', 'review', 'SKILL.md');
+  const external = join(homedir(), 'external');
+  put(join(external, 'SKILL.md'), md('EXTERNAL'));
+  rmSync(firstInstructions);
+  symlinkSync(process.platform === 'win32' ? external : join(external, 'SKILL.md'), firstInstructions,
+    process.platform === 'win32' ? 'junction' : 'file');
+  invalidateSkillsCache();
+  expect(loadAllSkills(workspace).map(skill => skill.slug).sort()).toEqual(['directory-pack--review-2', 'directory-pack--ship', 'review']);
+  expect((await loadSkillDetails(workspace, 'directory-pack--review-2'))?.content).toContain('ROLE');
+  expect((await loadSkillDetails(workspace, 'directory-pack--ship'))?.content).toContain('SHIP');
+  expect(readFileSync(join(external, 'SKILL.md'), 'utf8')).toBe(md('EXTERNAL'));
+  rmSync(firstInstructions, { recursive: true });
+  put(firstInstructions, md('FLOW'));
+  invalidateSkillsCache();
   await installEntry(pack, { linksRoot: null, execFileFn: git({ 'roles/review': 'ROLE2' }) });
   expect(loadAllSkills(workspace).map(skill => skill.slug).sort()).toEqual(['directory-pack--review-2', 'review']);
   expect(loadSkillBySlug(workspace, 'directory-pack--review-2')?.content).toContain('ROLE2');
