@@ -3,6 +3,7 @@ import { chromium, type Browser } from '@playwright/test'
 import { build } from 'esbuild'
 import { fileURLToPath } from 'node:url'
 import type { TourCapability } from '../../contracts'
+import { noteNativeBrowserStage as stage, runNativeBrowserProcess } from '../work/meetings-automations/native-browser-process'
 declare global { interface Window { sourcePickerTest: { stats: { paused: number; captured: number; committed: number; selected: string[]; nativeLayers(): number; readiness: TourCapability | null }; mount(enabled: boolean, localMcpEnabled?: boolean | null, compact?: boolean, preselected?: boolean): void } } }
 const isolatedCase = process.env.ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE
 let registeredIsolatedCase = false
@@ -10,12 +11,22 @@ let browser: Browser
 let server: ReturnType<typeof Bun.serve>
 beforeAll(async () => {
   if (!isolatedCase) return
+  stage('source-picker:bundle:start')
   const built = await build({ entryPoints: [fileURLToPath(new URL('./source-picker.browser.tsx', import.meta.url))], bundle: true, platform: 'browser', format: 'esm', write: false, outdir: 'source-picker-browser', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl' }, plugins: [{ name: 'unused-vite-url-assets', setup(build) { build.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'unused-url-asset' })); build.onLoad({ filter: /.*/, namespace: 'unused-url-asset' }, () => ({ contents: "export default 'about:blank'", loader: 'js' })) } }], tsconfig: fileURLToPath(new URL('../../../../../../tsconfig.json', import.meta.url)) })
   const script = built.outputFiles.find(file => file.path.endsWith('.js'))!.text
+  stage('source-picker:bundle:ready')
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) { return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'content-type': 'text/javascript' } }) : new Response('<!doctype html><html><body><div id="root"></div><script type="module" src="/script.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) } })
+  stage('source-picker:browser:launch')
   browser = await chromium.launch({ executablePath: process.env.LEARNING_CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] })
+  stage('source-picker:browser:ready')
 }, 30_000)
-afterAll(async () => { await browser?.close(); server?.stop(true) })
+afterAll(async () => {
+  if (!isolatedCase) return
+  stage('source-picker:browser:close')
+  await browser?.close()
+  server?.stop(true)
+  stage('source-picker:browser:closed')
+})
 
 // Keep the production bundle, browser lifecycle and native registries independent of
 // other suites' Bun module caches and Playwright cleanup. Each child runs real assertions.
@@ -23,22 +34,16 @@ function browserTest(name: string, operation: () => Promise<void>) {
   if (isolatedCase && isolatedCase !== name) return
   if (isolatedCase) registeredIsolatedCase = true
   test(name, async () => {
-    if (isolatedCase === name) return operation()
-    const child = Bun.spawn([process.execPath, 'test', fileURLToPath(import.meta.url)], {
-      env: { ...process.env, ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE: name },
-      stdout: 'pipe', stderr: 'pipe',
-    })
-    const timeout = setTimeout(() => child.kill(), 35_000)
-    try {
-      const [stdout, stderr, exitCode] = await Promise.all([
-        new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited,
-      ])
-      if (exitCode !== 0) throw new Error(`Production source picker case exited ${exitCode}:\n${stdout}${stderr}`)
-      expect(exitCode).toBe(0)
-    } finally {
-      clearTimeout(timeout)
-      child.kill()
+    if (isolatedCase === name) {
+      stage('source-picker:case:start')
+      await operation()
+      stage('source-picker:case:passed')
+      return
     }
+    const exitCode = await runNativeBrowserProcess([process.execPath, 'test', fileURLToPath(import.meta.url)], {
+      label: name, env: { ...process.env, ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE: name }, deadlineMs: 35_000,
+    })
+    expect(exitCode).toBe(0)
   }, isolatedCase ? 30_000 : 40_000)
 }
 
@@ -60,16 +65,27 @@ browserTest('T-SOURCES-SELECT custom portal owns native handoff so source click 
 })
 
 browserTest('APP-06 disabled learning preserves source selection and adds no native layer registrations or captures', async () => {
+  stage('source-picker:disabled:page')
   const page = await browser.newPage()
   page.on('pageerror', error => console.error('Source-picker browser error:', error.message))
   try {
+    stage('source-picker:disabled:navigate')
     await page.goto(server.url.href)
+    stage('source-picker:disabled:bootstrap')
     await page.waitForFunction(() => !!window.sourcePickerTest)
+    stage('source-picker:disabled:mount')
     await page.evaluate(() => window.sourcePickerTest.mount(false))
+    stage('source-picker:disabled:open')
     await page.getByRole('button', { name: 'Choose sources' }).click()
+    stage('source-picker:disabled:select')
     await page.getByText('Native source A', { exact: true }).click()
+    stage('source-picker:disabled:assert')
     expect(await page.evaluate(() => { const s = window.sourcePickerTest.stats; return { layers: s.nativeLayers(), paused: s.paused, captured: s.captured, committed: s.committed, selected: s.selected } })).toEqual({ layers: 0, paused: 0, captured: 0, committed: 0, selected: ['a'] })
-  } finally { await page.close() }
+  } finally {
+    stage('source-picker:disabled:close-page')
+    await page.close()
+    stage('source-picker:disabled:page-closed')
+  }
 })
 
 for (const compact of [false, true]) {
