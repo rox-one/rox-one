@@ -1,0 +1,45 @@
+{
+  "baseline": "6a2020fcc31d07b84208d56073a9c469caaefb9a",
+  "results": [
+    {
+      "checkout": "/tmp/rox-branch-integration-20261003/host-bash-negative-worktree",
+      "kind": "startup",
+      "accepted": false,
+      "elapsedMs": 807,
+      "leaked": true,
+      "exitCode": 0,
+      "stdout": "{\"content\":[{\"type\":\"text\",\"text\":\"exitCode: 0\\ndurationMs: 193\\ntimedOut: false\\ncwd: /private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/host-negative-startup-BIcLLV\\n\\nstdout:\\ncredential:private-startup-canary\"}],\"structuredContent\":{},\"isError\":false}\n",
+      "stderr": ""
+    },
+    {
+      "checkout": "/tmp/rox-branch-integration-20261003/host-bash-negative-worktree",
+      "kind": "pipes",
+      "accepted": true,
+      "elapsedMs": 1577,
+      "leaked": false,
+      "exitCode": 0,
+      "stdout": "{\"content\":[{\"type\":\"text\",\"text\":\"[ERROR] exitCode: null\\ndurationMs: 570\\ntimedOut: true\\ncwd: /private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/host-negative-pipes-U0aYyD\"}],\"structuredContent\":{},\"isError\":true}\n",
+      "stderr": ""
+    },
+    {
+      "checkout": "/tmp/rox-branch-integration-20261003/host-bash-worktree",
+      "kind": "startup",
+      "accepted": true,
+      "elapsedMs": 1889,
+      "leaked": false,
+      "exitCode": 0,
+      "stdout": "{\"content\":[{\"type\":\"text\",\"text\":\"exitCode: 0\\ndurationMs: 697\\ntimedOut: false\\ncwd: /private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/host-negative-startup-0SENiD\\n\\nstdout:\\ncredential:\"}],\"structuredContent\":{},\"isError\":false}\n",
+      "stderr": ""
+    },
+    {
+      "checkout": "/tmp/rox-branch-integration-20261003/host-bash-worktree",
+      "kind": "pipes",
+      "accepted": true,
+      "elapsedMs": 2003,
+      "leaked": false,
+      "exitCode": 0,
+      "stdout": "{\"content\":[{\"type\":\"text\",\"text\":\"[ERROR] exitCode: null\\ndurationMs: 855\\ntimedOut: true\\ncwd: /private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/host-negative-pipes-czErUE\"}],\"structuredContent\":{},\"isError\":true}\n",
+      "stderr": ""
+    }
+  ]
+}
