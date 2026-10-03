@@ -47,8 +47,18 @@ export interface RpcHandlerOptions {
   readonly nativeAction?: Exclude<NativeAuthorityAction, 'manage'>
   /** Host-selected bounded timeout for long audio operations; never accepted from request args. */
   readonly timeoutMs?: number
-  /** Trusted composition-only Resource guard after fresh identity revalidation, before response serialization. */
+  /** Host-only asynchronous check. Shared identity is revalidated again after it settles, before serialization. */
   readonly beforeResponse?: (context: RequestContext, arguments_: readonly unknown[], result: unknown) => Promise<void>
+  /**
+   * Final shared-authority admission, available only with authenticatedWorkspace
+   * access. The trusted host must check the current persisted session, membership
+   * and Resource read permission in the same authority operation (for example,
+   * one transaction holding the corresponding read locks). The supplied Actor
+   * is server-bound; it is not itself proof that those live checks succeeded.
+   * Runs after beforeResponse and fresh identity admission. No asynchronous
+   * transport operation follows this guard before serialization and send.
+   */
+  readonly beforeWorkspaceResponse?: (context: RequestContext, arguments_: readonly unknown[], result: unknown) => Promise<void>
 }
 
 export interface RpcServer {
