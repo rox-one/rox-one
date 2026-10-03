@@ -163,5 +163,11 @@
   },
   "reconciled_main": "47b5fcd270ff7abff163533b60f4d9fa5d5f8f27",
   "reconciled_source_revision": "82a14204ac2369503624f3f61d1fce9c74680a9b",
-  "reconciliation": "normal merge latest main; zero owned source/test fingerprint changes; current Notes privacy/read-error additions retained; docs retain all current sections"
+  "reconciliation": "normal merge latest main; zero owned source/test fingerprint changes; current Notes privacy/read-error additions retained; docs retain all current sections",
+  "final_main_reconciliation": {
+    "main": "0b3d2e584ff7bf5f44eb257d7fa34b0e142bc13f",
+    "source_fingerprints_unchanged": 26,
+    "production_conflicts": 0,
+    "docs": "restore exact live main plus only owned dated shortcut append"
+  }
 }
