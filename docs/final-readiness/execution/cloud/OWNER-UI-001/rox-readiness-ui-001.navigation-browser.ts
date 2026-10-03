@@ -42,7 +42,7 @@ function FullFixture(){return <Provider store={store}><ShellContext.Provider val
   remoteWorkspaceId={props.remoteWorkspaceId} onCreateSession={createSession} onSwitchWorkspaceBySlug={switchWorkspace}>
   <Probe/>
  </NavigationProvider></ShellContext.Provider></Provider>}
-function render(){root.render(<FullFixture/>)}
+function render(){root.render(<React.StrictMode><FullFixture/></React.StrictMode>)}
 window.ui001={navigation:null,ready:()=>{props={...props,ready:true,sessionsReady:true};render()},
  navigate:(route,options)=>window.ui001.navigation.navigate(route,options),
  deepLink:view=>{for(const fn of deepLinkListeners)fn({view})},
@@ -212,6 +212,6 @@ try {
     assert.equal(await page.evaluate(() => (window as any).ui001.listeners()), 0)
   })
   assert.deepEqual(errors, [])
-  console.log(JSON.stringify({ environment: 'Actual mounted NavigationProvider, PanelSlot, MainContentPanel, session-selection hooks and panel/session atoms in isolated Chromium; leaf presentation and IPC boundary fixtures; no hosted/native service acceptance', browserVersion: browser.version(), results }, null, 2))
+  console.log(JSON.stringify({ environment: 'Actual mounted NavigationProvider, PanelSlot, MainContentPanel, session-selection hooks and panel/session atoms under the production StrictMode wrapper in isolated Chromium; leaf presentation and IPC boundary fixtures; no hosted/native service acceptance', browserVersion: browser.version(), results }, null, 2))
   if (results.some(result => !result.pass)) process.exitCode = 1
 } finally { await browser.close(); server.stop(); rmSync(temporary, { recursive: true, force: true }) }

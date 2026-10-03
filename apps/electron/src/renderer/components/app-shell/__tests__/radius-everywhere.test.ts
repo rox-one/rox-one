@@ -29,7 +29,7 @@ describe('one-surface shell', () => {
   })
 
   it('renders sidebar and navigator as flush panes with a hairline divider', () => {
-    const desktop = stack.slice(stack.indexOf('DESKTOP BRANCH'))
+    const desktop = stack
     const sidebar = desktop.slice(desktop.indexOf('data-panel-role="sidebar"'), desktop.indexOf('data-panel-role="navigator"'))
     expect(sidebar).toContain('rox-shell-pane')
     expect(sidebar).toContain('rox-shell-divider-r')

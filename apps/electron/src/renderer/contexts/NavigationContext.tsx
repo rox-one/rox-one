@@ -257,6 +257,7 @@ export function NavigationProvider({
   // Excludes layout-only values (like panel proportions) so resize does not create history entries.
   const lastSemanticHistoryKeyRef = useRef('')
   const historyReconcileRevisionRef = useRef(0)
+  const historyMountedRef = useRef(false)
 
   const updateCanGoBackForward = useCallback(() => {
     setCanGoBack(historySeqRef.current > 0)
@@ -348,6 +349,7 @@ export function NavigationProvider({
   useEffect(() => { syncUrlRef.current = syncUrl }, [syncUrl])
 
   const maybePushHistoryForSemanticChange = useCallback(() => {
+    if (!historyMountedRef.current) return
     const currentSemanticKey = getSemanticHistoryKey()
     if (currentSemanticKey === lastSemanticHistoryKeyRef.current) return
 
@@ -359,7 +361,7 @@ export function NavigationProvider({
     const revision = ++historyReconcileRevisionRef.current
     lastSemanticHistoryKeyRef.current = getSemanticHistoryKey()
     requestAnimationFrame(() => {
-      if (revision !== historyReconcileRevisionRef.current) return
+      if (!historyMountedRef.current || revision !== historyReconcileRevisionRef.current) return
       suppressPushRef.current = false
       // Explicit navigation can arrive before this frame. Preserve that change
       // as history rather than replacing the restored workspace's address.
@@ -367,7 +369,10 @@ export function NavigationProvider({
     })
   }, [getSemanticHistoryKey, maybePushHistoryForSemanticChange])
 
-  useEffect(() => () => { historyReconcileRevisionRef.current += 1 }, [])
+  useEffect(() => {
+    historyMountedRef.current = true
+    return () => { historyMountedRef.current = false }
+  }, [])
 
   // replaceState sync when panel stack, focus, or sidebar changes (catches resize, etc.)
   const panelStack = useAtomValue(panelStackAtom)

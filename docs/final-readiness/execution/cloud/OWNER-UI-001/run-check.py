@@ -3,6 +3,7 @@ root=pathlib.Path(__file__).resolve().parents[5]
 owner=pathlib.Path(__file__).resolve().parent
 label=sys.argv[1]; command=sys.argv[2:]
 paths=["apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx","apps/electron/src/renderer/components/app-shell/AppShell.tsx","apps/electron/src/renderer/atoms/unified-shell.ts","apps/electron/src/renderer/contexts/NavigationContext.tsx","apps/electron/src/shared/route-parser.ts","apps/electron/src/shared/types.ts","apps/electron/src/renderer/pages/SkillInfoPage.tsx","apps/electron/src/renderer/lib/nav-helpers.ts","apps/electron/src/renderer/atoms/panel-stack.ts","bun.lock"]
+paths += ["apps/electron/src/renderer/components/app-shell/PanelSlot.tsx", "apps/electron/src/renderer/hooks/usePanelResize.ts", "apps/electron/src/renderer/components/app-shell/panel-constants.ts", "apps/electron/src/renderer/lib/panel-workspace-layout.ts", "apps/electron/src/renderer/atoms/sessions.ts", "apps/electron/src/renderer/lib/local-storage.ts", "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx"]
 source={p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in paths}
 started=datetime.datetime.now(datetime.timezone.utc).isoformat()
 log=owner/"evidence"/(label+".log")
