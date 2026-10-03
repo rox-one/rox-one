@@ -76,6 +76,7 @@ export function nativeSources(sources: readonly LoadedSource[]): LoadedSource[] 
   return sources.map(source => ({
     workspaceId: source.workspaceId, folderPath: '', workspaceRootPath: '', guide: null,
     isBuiltin: source.isBuiltin,
+    ...(source.config.type === 'local' && typeof source.localFolderAvailable === 'boolean' ? { localFolderAvailable: source.localFolderAvailable } : {}),
     config: {
       id: source.config.id, slug: source.config.slug, name: source.config.name,
       type: source.config.type, provider: source.config.provider, enabled: source.config.enabled,

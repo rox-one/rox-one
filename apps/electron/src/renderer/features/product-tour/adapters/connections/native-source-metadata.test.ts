@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'bun:test'
-import { lstatSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, lstatSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -19,6 +19,9 @@ if (process.env.ROX_PRODUCT_TOUR_NATIVE_SOURCE_METADATA !== '1') {
   }, 15_000)
 } else {
   const { readNativeSourceMetadata } = await import('../../../../../../../../packages/server-core/src/handlers/rpc/native-source-metadata')
+  const { nativeSources, projectNativeWorkspaceEvent } = await import('../../../../../../../../packages/server-core/src/handlers/rpc/native-session-scope')
+  const { getLocalSourceFolderState, isSourceUsable, loadSource } = await import('../../../../../../../../packages/shared/src/sources/storage')
+  const { RPC_CHANNELS } = await import('../../../../../../../../packages/shared/src/protocol')
   const { connectionCapabilities, sourceReadiness } = await import('./index')
   const roots: string[] = []
   afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }) })
@@ -44,6 +47,102 @@ if (process.env.ROX_PRODUCT_TOUR_NATIVE_SOURCE_METADATA !== '1') {
       ? readdirSync(root).sort().map(name => [name, files(join(root, name))])
       : readFileSync(root, 'utf8')]
   }
+
+  test('missing local configuration, absent folders and files cannot inherit saved connected readiness', () => {
+    const { root, read } = workspace([
+      config('fixture-no-path', { type: 'local' }),
+      config('fixture-absent', { type: 'local', local: { path: '${WORKSPACE}/absent' } }),
+      config('fixture-file', { type: 'local', local: { path: '${WORKSPACE}/ordinary-file' } }),
+    ])
+    writeFileSync(join(root, 'ordinary-file'), 'private file content')
+    const before = files(root)
+    for (const projected of read().filter(source => source.config.slug.startsWith('fixture-'))) {
+      const loaded = loadSource(root, projected.config.slug)!
+      expect(getLocalSourceFolderState(loaded).available).toBe(false)
+      expect(isSourceUsable(loaded)).toBe(false)
+      expect(sourceReadiness(projected)).toEqual({ state: 'unavailable', reason: 'not-connected' })
+      expect(loaded.localFolderAvailable).toBe(false)
+      expect(projected.localFolderAvailable).toBe(false)
+      expect(sourceReadiness(projected)).toEqual({ state: 'unavailable', reason: 'not-connected' })
+      expect(sourceReadiness(loaded)).toEqual({ state: 'unavailable', reason: 'not-connected' })
+    }
+    expect(existsSync(join(root, 'absent'))).toBe(false)
+    expect(files(root)).toEqual(before)
+  })
+
+  test('actual folder availability survives native projection and changes on fresh reads without saving health', () => {
+    const { root, read } = workspace([config('fixture-folder', {
+      type: 'local', local: { path: '${SOURCE_DIR}/PRIVATE FIXTURE FOLDER' },
+      connectionStatus: 'needs_auth', isAuthenticated: false,
+      mcp: { transport: 'stdio', authType: 'bearer', command: 'PRIVATE FIXTURE COMMAND' },
+    })])
+    const folder = join(root, 'sources', 'fixture-folder', 'PRIVATE FIXTURE FOLDER')
+    const configPath = join(root, 'sources', 'fixture-folder', 'config.json')
+    const original = readFileSync(configPath, 'utf8')
+    mkdirSync(folder)
+    const before = files(root)
+    const projected = read().find(source => source.config.slug === 'fixture-folder')!
+    const loaded = loadSource(root, 'fixture-folder')!
+    expect(isSourceUsable(loaded)).toBe(true)
+    expect(sourceReadiness(projected, false)).toEqual({ state: 'ready' })
+    expect(loaded.localFolderAvailable).toBe(true)
+    expect(projected.localFolderAvailable).toBe(true)
+    expect(sourceReadiness(projected, false)).toEqual({ state: 'ready' })
+    expect(sourceReadiness(loaded, false)).toEqual({ state: 'ready' })
+    const eventSources = nativeSources([loaded])
+    expect(eventSources[0]?.localFolderAvailable).toBe(true)
+    expect(sourceReadiness(eventSources[0]!)).toEqual({ state: 'ready' })
+    expect(projectNativeWorkspaceEvent(RPC_CHANNELS.sources.CHANGED, [loaded.workspaceId, [loaded]], loaded.workspaceId, () => false)?.[1]).toEqual(eventSources)
+    expect(projectNativeWorkspaceEvent(RPC_CHANNELS.sources.CHANGED, [loaded.workspaceId, [loaded]], 'foreign-workspace', () => false)).toBeNull()
+    expect(connectionCapabilities({ sources: [projected], workspaceId: 'foreign-workspace', selectedSlugs: ['fixture-folder'] })['sources.ready']).toEqual({ state: 'unavailable', reason: 'missing-entity' })
+    expect(connectionCapabilities({ sources: [projected], workspaceId: 'fixture-workspace', selectedSlugs: [] })['sources.ready']).toEqual({ state: 'unavailable', reason: 'missing-entity' })
+    for (const payload of [projected, ...eventSources]) {
+      expect(payload.config.local).toBeUndefined()
+      expect(payload.config.mcp).toBeUndefined()
+      expect(payload.guide).toBeNull()
+      expect(JSON.stringify(payload)).not.toContain('PRIVATE FIXTURE')
+      expect(JSON.stringify(payload)).not.toContain(root)
+    }
+    expect(files(root)).toEqual(before)
+    // A folder disappearing after a saved connected result must not remain ready.
+    writeFileSync(configPath, JSON.stringify({ ...JSON.parse(original), connectionStatus: 'connected' }))
+    const saved = readFileSync(configPath, 'utf8')
+    rmSync(folder, { recursive: true })
+    const refreshed = read().find(source => source.config.slug === 'fixture-folder')!
+    expect(refreshed.localFolderAvailable).toBe(false)
+    expect(sourceReadiness(refreshed)).toEqual({ state: 'unavailable', reason: 'not-connected' })
+    expect(loadSource(root, 'fixture-folder')?.localFolderAvailable).toBe(false)
+    expect(readFileSync(configPath, 'utf8')).toBe(saved)
+  })
+
+  test.skipIf(process.platform === 'win32' || process.getuid?.() === 0)('an actual unreadable local directory supplies no readiness', () => {
+    const { root, read } = workspace([config('fixture-unreadable', { type: 'local', local: { path: '${WORKSPACE}/locked' } })])
+    const locked = join(root, 'locked')
+    mkdirSync(locked)
+    const before = files(root)
+    chmodSync(locked, 0)
+    try {
+      const loaded = loadSource(root, 'fixture-unreadable')!
+      expect(getLocalSourceFolderState(loaded).available).toBe(false)
+      const projected = read().find(source => source.config.slug === 'fixture-unreadable')!
+      expect(sourceReadiness(projected)).toEqual({ state: 'unavailable', reason: 'not-connected' })
+      expect(loaded.localFolderAvailable).toBe(false)
+      expect(projected.localFolderAvailable).toBe(false)
+      expect(sourceReadiness(projected)).toEqual({ state: 'unavailable', reason: 'not-connected' })
+    } finally { chmodSync(locked, 0o755) }
+    expect(files(root)).toEqual(before)
+  })
+
+  test('enabled and selected local sources need explicit backend availability; unknown and cross-type claims stay honest', () => {
+    const { read } = workspace([config('fixture-local', { type: 'local' }), config('fixture-remote')])
+    const { localFolderAvailable: _availability, ...local } = read().find(source => source.config.slug === 'fixture-local')!
+    expect(sourceReadiness(local)).toEqual({ state: 'pending', reason: 'api-unavailable' })
+    expect(sourceReadiness({ ...local, localFolderAvailable: false })).toEqual({ state: 'unavailable', reason: 'not-connected' })
+    expect(sourceReadiness({ ...local, localFolderAvailable: true, config: { ...local.config, enabled: false } })).toEqual({ state: 'unavailable', reason: 'not-connected' })
+    const remote = { ...read().find(source => source.config.slug === 'fixture-remote')!, localFolderAvailable: false }
+    expect(sourceReadiness(remote)).toEqual({ state: 'ready' })
+    expect(nativeSources([remote])[0]?.localFolderAvailable).toBeUndefined()
+  })
 
   test('actual projected stdio respects disabled and unknown local-MCP policy despite a saved connected status', () => {
     const { read } = workspace([
