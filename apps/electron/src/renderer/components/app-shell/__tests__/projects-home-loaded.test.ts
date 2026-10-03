@@ -20,7 +20,7 @@ function renderProjects(projects: LoadedProject[]): string {
     { store },
     createElement(I18nextProvider, { i18n },
       createElement(ModalProvider, null,
-        createElement(ProjectsHomeInMain, { workspaceId: 'projects-test-workspace' }),
+        createElement(ProjectsHomeInMain, { projects, workspaceId: 'projects-test-workspace' }),
       ),
     ),
   ))

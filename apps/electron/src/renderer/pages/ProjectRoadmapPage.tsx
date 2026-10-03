@@ -255,30 +255,33 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
     const saver = roadmapSaverRef.current
     if (!workspaceId || !saver) {
       setSaveState('error')
-      return
+      return false
     }
     const act = soupProjectActResult({ source: 'native', action: 'write', nativeId: projectSlug })
-    if (!isClaimableLive(act)) return
+    if (!isClaimableLive(act)) return false
     const draft = roadmapRef.current
     const attempt = ++saveAttemptRef.current
     setSaveState('saving')
     try {
       const saved = await saver.save(draft)
-      if (roadmapSaverRef.current !== saver || saveAttemptRef.current !== attempt) return
+      if (roadmapSaverRef.current !== saver || saveAttemptRef.current !== attempt) return false
       setRoadmapCorrupt(false)
       if (roadmapRef.current === draft) {
         const next = normalizeRoadmap(saved)
         roadmapRef.current = next
         setRoadmap(next)
         setSaveState('saved')
+        return true
       } else {
         setSaveState('saving')
+        return false
       }
     } catch (err) {
-      if (roadmapSaverRef.current !== saver || saveAttemptRef.current !== attempt) return
+      if (roadmapSaverRef.current !== saver || saveAttemptRef.current !== attempt) return false
       console.error('[ProjectInfoPage] Roadmap save failed:', err)
       setSaveState('error')
       toast.error(t('projectRoadmap.saveFailed'))
+      return false
     }
   }, [workspaceId, projectSlug, t])
 
@@ -582,10 +585,13 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
     if (!workspaceId) return { ok: false as const, error: 'no workspace' }
     const scope = JSON.stringify([workspaceId, projectSlug])
     // Flush pending edits so the server-side prompt sees the current roadmap.
-    if (saveTimer.current) await flushRef.current()
+    const requestSaver = roadmapSaverRef.current
+    if (!requestSaver || !await flushRef.current()) return { ok: false as const, error: 'PROJECT_ROADMAP_SAVE_REQUIRED' }
+    if (roadmapSaverRef.current !== requestSaver) return { ok: false as const, error: 'PROJECT_ROADMAP_SCOPE_CHANGED' }
     if (scope !== aiScopeRef.current) return { ok: false as const, error: t('projectRoadmap.ai.scopeChanged') }
     const result = await window.electronAPI.runProjectRoadmapAi(workspaceId, projectSlug, {
       ...request,
+      roadmapRevision: roadmapRef.current.revision,
       today,
       language: LANGUAGE_NAMES[baseLang] ?? 'Russian',
     })
@@ -594,8 +600,11 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
     return result
   }, [workspaceId, projectSlug, today, baseLang, t])
 
-  const acceptProposal = useCallback((proposal: RoadmapProposal, keys: ProposalItemKey[]) => {
+  const acceptProposal = useCallback(async (proposal: RoadmapProposal, keys: ProposalItemKey[], expectedRevision?: string) => {
+    if (!isRoadmapRevision(expectedRevision) || expectedRevision !== roadmapRef.current.revision) throw new Error('PROJECT_ROADMAP_CONFLICT')
     updateRoadmap((r) => keys.reduce((acc, key) => applyProposalItem(acc, proposal, key, today), r))
+    if (!await flushRef.current()) throw new Error('PROJECT_ROADMAP_SAVE_REQUIRED')
+    return roadmapRef.current.revision!
   }, [updateRoadmap, today])
 
   const improveField = useCallback(async (target: ImproveTarget) => {
@@ -604,7 +613,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
     setImproving(target)
     try {
       const res = await runAi({ mode: 'improve', text: before })
-      if (res.ok && res.mode === 'improve') setImprove({ target, before, after: res.text })
+      if (res.ok && res.mode === 'improve') setImprove({ target, before, after: res.text, roadmapRevision: res.roadmapRevision })
       else if (!res.ok) toast.error(t('projectRoadmap.ai.errorGeneric', { error: res.error }))
     } finally {
       setImproving(null)
@@ -698,7 +707,8 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
   const side = (
     <div className="flex min-w-0 flex-col gap-6">
       <ProjectAiPanel
-        projectId={project.config.id}
+        key={`${workspaceId}:${project.config.id}`}
+        projectId={`${workspaceId}:${project.config.id}`}
         roadmap={roadmap}
         status={aiStatus}
         runAi={runAi}
@@ -706,7 +716,11 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
         onAccept={acceptProposal}
         improve={improve}
         onImproveDone={() => setImprove(null)}
-        onApplyImprove={(p) => updateRoadmap((r) => (p.target === 'goal' ? { ...r, goal: p.after } : p.target === 'expectedResult' ? { ...r, expectedResult: p.after } : r))}
+        onApplyImprove={async (p) => {
+          if (!isRoadmapRevision(p.roadmapRevision) || p.roadmapRevision !== roadmapRef.current.revision) throw new Error('PROJECT_ROADMAP_CONFLICT')
+          updateRoadmap((r) => (p.target === 'goal' ? { ...r, goal: p.after } : p.target === 'expectedResult' ? { ...r, expectedResult: p.after } : r))
+          if (!await flushRef.current()) throw new Error('PROJECT_ROADMAP_SAVE_REQUIRED')
+        }}
       />
       <Section id="inputs" title={t('projectRoadmap.inputs')} count={assets.filter((a) => a.filename !== project.config.icon).length + roadmap.inputs.length}>
         <ProjectInputs

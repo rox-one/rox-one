@@ -734,7 +734,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     // Cookie-authenticated web transport conveys no desktop/native identity
     // and cannot read host provider credentials or seed a runtime default.
     if (webTransportBootstrap) return
-    const identity = await retryStartup(() => window.electronAPI.getOrgIdentity())
+    const identity = await window.electronAPI.getOrgIdentity()
     if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
       throw new Error('runtime-identity-unavailable')
     }
@@ -862,7 +862,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         const wsId = await retryStartup(() => window.electronAPI.getWindowWorkspace())
         setWindowWorkspaceId(wsId)
 
-        const identity = await window.electronAPI.getOrgIdentity()
+        const identity = await retryStartup(() => window.electronAPI.getOrgIdentity())
         if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
           throw new Error('runtime-identity-unavailable')
         }
