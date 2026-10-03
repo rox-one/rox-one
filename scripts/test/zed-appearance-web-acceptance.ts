@@ -29,10 +29,10 @@ const routeCases = [
 await mkdir(artifactDir, { recursive: true })
 const browser = await chromium.launch({ headless: true, executablePath })
 const context = await browser.newContext({ viewport: { width: 1440, height: 1050 }, colorScheme: 'dark' })
-const page = await context.newPage()
+let page = await context.newPage()
 const pageErrors: string[] = []
 const report: any = { kind: 'production-authenticated-web', baseUrl, screenshots: [], matrix: [], persistence: {}, workspacePriority: {}, material: {}, responsive: [], pageErrors,
-  responsiveControls: [], limitations: [], buildIndexSha256: createHash('sha256').update(await readFile(resolve('apps/webui/dist/index.html'))).digest('hex') }
+  responsiveControls: [], screenshotReadbacks: [], limitations: [], buildIndexSha256: createHash('sha256').update(await readFile(resolve('apps/webui/dist/index.html'))).digest('hex') }
 page.on('pageerror', error => pageErrors.push(error.message))
 async function authenticate(p: Page) {
   await p.goto(baseUrl)
@@ -113,26 +113,42 @@ async function appearanceFormBounds(p: Page) {
         ?? row.closest<HTMLElement>('.appearance-settings-page')!
       const rowRect = row.getBoundingClientRect()
       const paneRect = pane.getBoundingClientRect()
+      // Radix may prepend a style element, so firstElementChild is not a
+      // reliable viewport. Its root shares the viewport's clipping bounds.
+      const scrollViewport = row.closest('[data-slot="scroll-area"]')?.getBoundingClientRect()
       const left = Math.max(0, rowRect.left, paneRect.left)
       const right = Math.min(innerWidth, rowRect.right, paneRect.right)
       return { label: row.firstElementChild?.textContent ?? '', left, right,
         controls: [...row.querySelectorAll<HTMLElement>('button,input,select')].map(control => {
           const rect = control.getBoundingClientRect()
+          const top = Math.max(0, paneRect.top, scrollViewport?.top ?? 0, rect.top)
+          const bottom = Math.min(innerHeight, paneRect.bottom, scrollViewport?.bottom ?? innerHeight, rect.bottom)
+          const verticallyVisible = bottom > top
+          const hit = verticallyVisible ? document.elementFromPoint((rect.left + rect.right) / 2, (top + bottom) / 2) : null
           return { role: control.getAttribute('role') ?? control.tagName.toLowerCase(),
             label: control.getAttribute('aria-label') ?? control.textContent ?? '',
             left: rect.left, right: rect.right, width: rect.width,
-            disabled: control.hasAttribute('disabled'), clipped: rect.left < left - 1 || rect.right > right + 1 }
+            disabled: control.hasAttribute('disabled'), clipped: rect.left < left - 1 || rect.right > right + 1,
+            inert: Boolean(control.closest('[inert],[aria-hidden="true"]')),
+            verticallyVisible, receivesPointer: hit === control || Boolean(hit && control.contains(hit)) }
         }) }
     }))
 }
 function assertAppearanceForm(rows: Awaited<ReturnType<typeof appearanceFormBounds>>) {
+  let visibleEnabledControls = 0
   for (const label of ['Режим', 'Контраст', 'Цветовая тема', 'Интерфейс', 'Чат агента', 'Терминал', 'Материал окна']) {
     assert.ok(rows.some(row => row.label.startsWith(label) && row.controls.length), `mounted Appearance controls: ${label}`)
   }
   for (const row of rows) for (const control of row.controls) {
     assert.ok(control.width > 0, `nonzero form control: ${row.label} / ${control.label}`)
     assert.equal(control.clipped, false, `form control fits its row and visible content pane: ${row.label} / ${control.label}`)
+    assert.equal(control.inert, false, `Appearance control is in the active accessible pane: ${row.label} / ${control.label}`)
+    if (control.verticallyVisible && !control.disabled) {
+      visibleEnabledControls++
+      assert.equal(control.receivesPointer, true, `visible control receives pointer: ${row.label} / ${control.label}`)
+    }
   }
+  assert.ok(visibleEnabledControls > 0, 'Appearance has visible interactive form controls; hit-testing is not vacuous')
 }
 async function narrowMenus(width: number, zoom: number) {
   const themeRow = page.locator('[data-layout="settings-row"]').filter({ has: page.getByText('Цветовая тема', { exact: true }) })
@@ -171,6 +187,8 @@ async function narrowMenus(width: number, zoom: number) {
     await popover.waitFor({ state: 'hidden' })
     await page.waitForTimeout(100)
     assert.equal(await trigger.evaluate(element => document.activeElement === element), true, 'menu Escape returns focus')
+    const formAfterInteraction = await appearanceFormBounds(page)
+    assertAppearanceForm(formAfterInteraction)
     report.responsiveControls.push({ physicalWidth: width, zoomPercent: zoom * 100, menu: name, bounds, keyboard: 'Space/open; Escape/focus', selected: name === 'theme' ? 'nordfox-opaque' : 'system' })
   }
   await page.getByRole('radio', { name: 'Системная', exact: true }).scrollIntoViewIfNeeded()
@@ -206,7 +224,15 @@ function assertSurface(snapshot_: any, testCase: typeof cases[number], glass = t
 }
 async function screenshot(name: string) {
   const path = resolve(artifactDir, `${name}.png`)
-  await page.screenshot({ path, fullPage: true })
+  const viewportBefore = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, dpr: devicePixelRatio }))
+  // This application is fixed to its viewport. A full-page capture can reset
+  // external CDP metrics to Playwright's registered viewport during capture.
+  await page.screenshot({ path })
+  const viewportAfter = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, dpr: devicePixelRatio }))
+  assert.deepEqual(viewportAfter, viewportBefore, 'screenshot preserves the actual layout viewport and DPR')
+  const form = name.startsWith('responsive-') && name.endsWith('settings-appearance') ? await appearanceFormBounds(page) : undefined
+  if (form) assertAppearanceForm(form)
+  report.screenshotReadbacks.push({ name, viewportBefore, viewportAfter, appearanceControls: form?.reduce((sum, row) => sum + row.controls.length, 0) })
   report.screenshots.push(path)
 }
 async function route(label: string, id: string) {
@@ -323,10 +349,14 @@ try {
 
   // Responsive checks use real production deep links discovered in the route matrix.
   // Device metrics emulate browser zoom layout; they do not claim native Chromium menu zoom.
-  const cdp = await context.newCDPSession(page)
   for (const width of [1440, 375]) for (const zoom of [1, 1.25, 1.5]) {
-    await cdp.send('Emulation.setDeviceMetricsOverride', { width: Math.round(width / zoom), height: Math.round(1050 / zoom),
-      deviceScaleFactor: zoom, mobile: false })
+    // Playwright must own both viewport and DPR. Mixing its default1440/1
+    // context with external CDP overrides lets capture restore stale metrics.
+    const responsiveContext = await browser.newContext({ viewport: { width: Math.round(width / zoom), height: Math.round(1050 / zoom) },
+      deviceScaleFactor: zoom, colorScheme: 'light' })
+    page = await responsiveContext.newPage()
+    page.on('pageerror', error => pageErrors.push(error.message))
+    await authenticate(page)
     for (const routeCase of routeCases) {
       const url = new URL(baseUrl)
       url.searchParams.set('ws', report.persistence.reload.dataset ? new URL(page.url()).searchParams.get('ws')! : '')
@@ -338,6 +368,8 @@ try {
       const current = await snapshot(page)
       report.lastSnapshot = current
       assertSurface(current, cases[0])
+      assert.equal(current.viewport.width, Math.round(width / zoom), 'actual responsive layout viewport')
+      assert.equal(current.viewport.dpr, zoom, 'actual emulated DPR')
       assert.equal(current.viewport.horizontalOverflow, false, 'no root horizontal overflow')
       const form = routeCase.id === 'settings/appearance' ? await appearanceFormBounds(page) : undefined
       if (form) assertAppearanceForm(form)
@@ -345,8 +377,8 @@ try {
       if (width === 375 && form) await narrowMenus(width, zoom)
       if (routeCase.id === 'home' || routeCase.id === 'settings/appearance') await screenshot(`responsive-${width}-${zoom * 100}-${routeCase.id.replace('/', '-')}`)
     }
+    await responsiveContext.close()
   }
-  await cdp.send('Emulation.clearDeviceMetricsOverride')
   const blocked = report.matrix.flatMap((row: any) => row.unavailableSurfaces.map((surface: any) => ({ route: row.requestedRoute, ...surface })))
   if (blocked.length) report.limitations.push({ kind: 'existing-domain-authority', surfaces: blocked })
   const messages = report.matrix.flatMap((row: any) => row.unavailableMessages.map((message: string) => ({ route: row.requestedRoute, message })))
