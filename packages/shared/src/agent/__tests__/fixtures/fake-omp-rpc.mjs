@@ -18,7 +18,19 @@
 //   FAKE_OMP_BACKSTOP_MS    — turn-finish backstop (default 8000)
 
 import readline from 'node:readline'
-import { appendFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
+
+const sessionDirIndex = process.argv.indexOf('--session-dir')
+const providedSessionDir = sessionDirIndex >= 0 ? process.argv[sessionDirIndex + 1] : null
+const sessionDir = providedSessionDir || mkdtempSync(join(tmpdir(), 'fake-omp-rpc-session-'))
+if (!providedSessionDir) process.on('exit', () => rmSync(sessionDir, { recursive: true, force: true }))
+const sessionFile = join(sessionDir, 'fake-omp-session.jsonl')
+mkdirSync(sessionDir, { recursive: true })
+if (!existsSync(sessionFile)) writeFileSync(sessionFile, JSON.stringify({
+  type: 'session', version: 3, id: 'fake-omp-session', timestamp: new Date().toISOString(), cwd: process.cwd(),
+}) + '\n')
 
 const JOURNAL = process.env.FAKE_OMP_JOURNAL
 const HOST_TOOL = process.env.FAKE_OMP_HOST_TOOL || ''
@@ -90,7 +102,7 @@ rl.on('line', (line) => {
       type: 'response',
       id: msg.id,
       success: true,
-      data: { sessionId: 'fake-omp-session', sessionFile: null, model: selectedModel },
+      data: { sessionId: 'fake-omp-session', sessionFile, model: selectedModel },
     })
     return
   }

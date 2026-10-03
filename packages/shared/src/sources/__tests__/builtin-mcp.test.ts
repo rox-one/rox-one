@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -13,7 +13,7 @@ import {
 } from '../builtin-mcp.ts';
 import type { FolderSourceConfig, LoadedSource } from '../types.ts';
 import { SourceServerBuilder } from '../server-builder.ts';
-import { SourceCredentialManager, sourceNeedsAuthentication } from '../credential-manager.ts';
+import { SourceCredentialManager, isMultiHeaderCredential, sourceNeedsAuthentication } from '../credential-manager.ts';
 import { markSourceAuthenticated } from '../storage.ts';
 import { validateSourceConfig } from '../../config/validators.ts';
 
@@ -113,6 +113,107 @@ describe('built-in MCP provisioning', () => {
     const options = { env: { TELEGRAM_API_ID: '123', TELEGRAM_API_HASH: 'hash', TELEGRAM_SESSION_NAME: '/private/session' }, fileExists: (path: string) => path === '/private/session.session' };
     expect(getBuiltinMcpReadiness(source, options).status).toBe('ready');
     expect(getBuiltinMcpReadiness(source, { ...options, fileExists: () => false }).status).toBe('needs_auth');
+  });
+
+  it('resolves existing Telegram session files against the source cwd before authentication checks', async () => {
+    ensureBuiltinMcpSources(root, { env: {} });
+    const source = config('telegram-mcp');
+    const folderPath = join(root, 'sources', source.slug);
+    const sessionPath = join(folderPath, 'sessions', 'authorized');
+    mkdirSync(join(folderPath, 'sessions'));
+    writeFileSync(`${sessionPath}.session`, 'existing Telethon session');
+    for (const sessionName of ['sessions/authorized', '${SOURCE_DIR}/sessions/authorized', '${WORKSPACE}/sources/telegram-mcp/sessions/authorized']) {
+      source.mcp!.env = { TELEGRAM_API_ID: '123', TELEGRAM_API_HASH: 'hash', TELEGRAM_SESSION_NAME: sessionName };
+      const before = JSON.stringify(source);
+      save(source);
+      expect(sourceNeedsAuthentication(loaded(source))).toBe(false);
+      expect(getDefaultMcpSourceSlugs(root, { env: {} })).toContain('telegram-mcp');
+      const server = new SourceServerBuilder().buildMcpServer(loaded(source), null);
+      expect(server).toMatchObject({ type: 'stdio', cwd: folderPath, env: { TELEGRAM_SESSION_NAME: sessionPath } });
+      const all = await new SourceServerBuilder().buildAll([{ source: loaded(source) }]);
+      expect(all.errors).toEqual([]);
+      expect(all.mcpServers['telegram-mcp']).toEqual(server!);
+      expect(JSON.stringify(source)).toBe(before);
+      expect(config(source.slug).mcp?.env?.TELEGRAM_SESSION_NAME).toBe(sessionName);
+    }
+    source.mcp!.env!.TELEGRAM_SESSION_NAME = '${SOURCE_DIR}/missing';
+    expect(sourceNeedsAuthentication(loaded(source))).toBe(true);
+    expect(new SourceServerBuilder().buildMcpServer(loaded(source), null)).toBeNull();
+  });
+
+  it('accepts upstream Telegram pools and named accounts from runtime environment and encrypted credentials', () => {
+    ensureBuiltinMcpSources(root, { env: {} });
+    const source = config('telegram-mcp');
+    const folderPath = join(root, 'sources', source.slug);
+    const pathOptions = { workspaceRootPath: root, sourceFolderPath: folderPath };
+    const account = { TELEGRAM_API_ID: '123', TELEGRAM_API_HASH: 'hash' };
+    const sessionVariants: Record<string, string>[] = [
+      { TELEGRAM_SESSION_STRINGS: 'slot-one, slot-two;\nslot-three' },
+      { TELEGRAM_SESSION_STRING_WORK: 'work-session' },
+    ];
+    for (const sessions of sessionVariants) {
+      const before = JSON.stringify(source);
+      const options = { ...pathOptions, env: { ...account, ...sessions } };
+      expect(getBuiltinMcpReadiness(source, options).status).toBe('ready');
+      expect(buildRuntimeBuiltinMcpConfig(source, options).mcp?.env).toMatchObject(sessions);
+      expect(getBuiltinMcpReadiness(source, { ...pathOptions, env: {}, credential: { ...account, ...sessions } }).status).toBe('ready');
+      expect(buildRuntimeBuiltinMcpConfig(source, { ...pathOptions, env: {}, credential: { ...account, ...sessions } }).mcp?.env).toMatchObject(sessions);
+      expect(JSON.stringify(source)).toBe(before);
+      expect(JSON.stringify(config(source.slug))).not.toContain('slot-one');
+    }
+    expect(getBuiltinMcpReadiness(source, { env: { ...account, TELEGRAM_SESSION_STRINGS: ' ,;\n ' } }).status).toBe('needs_auth');
+    expect(getBuiltinMcpReadiness(source, { env: { TELEGRAM_API_ID_WORK: '123', TELEGRAM_API_HASH_WORK: 'hash', TELEGRAM_SESSION_STRING_WORK: 'work-session' } }).status).toBe('needs_auth');
+  });
+
+  it('resolves named Telegram session files and preserves vault/source/environment precedence', () => {
+    ensureBuiltinMcpSources(root, { env: {} });
+    const source = config('telegram-mcp');
+    const folderPath = join(root, 'sources', source.slug);
+    mkdirSync(join(folderPath, 'sessions'));
+    const sessionPath = join(folderPath, 'sessions', 'work');
+    writeFileSync(`${sessionPath}.session`, 'existing named Telethon session');
+    source.mcp!.env = { TELEGRAM_API_ID: '123', TELEGRAM_API_HASH: 'hash', TELEGRAM_SESSION_NAME_WORK: 'sessions/work' };
+    const options = {
+      workspaceRootPath: root, sourceFolderPath: folderPath,
+      env: { TELEGRAM_SESSION_NAME_WORK: '/unrelated/session', TELEGRAM_SESSION_STRINGS: 'ambient-slot' },
+      credential: { TELEGRAM_SESSION_NAME_WORK: '${SOURCE_DIR}/sessions/work', TELEGRAM_SESSION_STRINGS: 'vault-slot' },
+    };
+    expect(getBuiltinMcpReadiness(source, options).status).toBe('ready');
+    expect(buildRuntimeBuiltinMcpConfig(source, options).mcp?.env).toMatchObject({
+      TELEGRAM_SESSION_NAME_WORK: sessionPath, TELEGRAM_SESSION_STRINGS: 'vault-slot',
+    });
+    const fileOptions = { ...options, env: { TELEGRAM_SESSION_NAME_WORK: '/unrelated/session' }, credential: undefined };
+    expect(getBuiltinMcpReadiness(source, fileOptions).status).toBe('ready');
+    expect(buildRuntimeBuiltinMcpConfig(source, fileOptions).mcp?.env?.TELEGRAM_SESSION_NAME_WORK).toBe(sessionPath);
+    const server = new SourceServerBuilder().buildMcpServer(loaded(source), null);
+    expect(server).toMatchObject({ type: 'stdio', env: { TELEGRAM_SESSION_NAME_WORK: sessionPath } });
+    expect(source.mcp?.env?.TELEGRAM_SESSION_NAME_WORK).toBe('sessions/work');
+    source.mcp!.env!.TELEGRAM_SESSION_NAME_WORK = 'sessions/missing';
+    expect(getBuiltinMcpReadiness(source, { ...fileOptions, env: {} }).status).toBe('needs_auth');
+  });
+
+  it('loads encrypted Telegram pool and named-session records through the credential parser into the server builder', async () => {
+    ensureBuiltinMcpSources(root, { env: {} });
+    const source = loaded(config('telegram-mcp'));
+    const manager = new SourceCredentialManager();
+    const load = spyOn(manager, 'load');
+    const sessionVariants: Record<string, string>[] = [
+      { TELEGRAM_SESSION_STRINGS: 'vault-slot-one;vault-slot-two' },
+      { TELEGRAM_SESSION_STRING_WORK: 'vault-work-session' },
+    ];
+    try {
+      for (const sessions of sessionVariants) {
+        const stored = { TELEGRAM_API_ID: '123', TELEGRAM_API_HASH: 'vault-hash', ...sessions };
+        load.mockResolvedValue({ value: JSON.stringify(stored) });
+        const credential = await manager.getApiCredential(source);
+        expect(credential).toEqual(stored);
+        expect(isMultiHeaderCredential(credential!)).toBe(true);
+        expect(new SourceServerBuilder().buildMcpServer(source, null, credential)).toMatchObject({ type: 'stdio', env: stored });
+        expect(JSON.stringify(config(source.config.slug))).not.toContain('vault-');
+      }
+    } finally {
+      load.mockRestore();
+    }
   });
 
   it('gates native Windows servers and Everything on real dependencies', () => {

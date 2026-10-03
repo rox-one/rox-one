@@ -9,7 +9,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, win32 } from 'node:path';
 import type { FolderSourceConfig, McpSourceConfig } from './types.ts';
-import { expandVars } from '../utils/paths.ts';
+import { expandPath, expandVars } from '../utils/paths.ts';
 import { ensureBuiltinQmdCollection } from './builtin-mcp-qmd.ts';
 
 // A valid reserved placeholder keeps an incomplete source schema-valid. It is
@@ -65,9 +65,9 @@ export const BUILTIN_MCP_CATALOG: readonly BuiltinMcpSpec[] = [
     repository: 'https://github.com/chigwell/telegram-mcp',
     usage: 'Read Telegram context when the task calls for it. Send or change messages only when the user authorizes those actions.',
     runtime: { runner: 'uvx', package: 'git+https://github.com/chigwell/telegram-mcp@81ad14bd076d17babd8be2425965235b0c6b9e26' },
-    requiredEnvironment: ['TELEGRAM_API_ID', 'TELEGRAM_API_HASH', 'TELEGRAM_SESSION_STRING'],
+    requiredEnvironment: ['TELEGRAM_API_ID', 'TELEGRAM_API_HASH'],
     mcp: { transport: 'stdio', command: 'uvx', args: ['--from', 'git+https://github.com/chigwell/telegram-mcp@81ad14bd076d17babd8be2425965235b0c6b9e26', 'telegram-mcp'], authType: 'none', headerNames: ['TELEGRAM_API_ID', 'TELEGRAM_API_HASH', 'TELEGRAM_SESSION_STRING'] },
-    setup: 'Requires uv, Git, Python 3.10+, TELEGRAM_API_ID, TELEGRAM_API_HASH and an authorized TELEGRAM_SESSION_STRING or existing TELEGRAM_SESSION_NAME file. Obtain API credentials at https://my.telegram.org and generate the session using the upstream login helper. Never install the unrelated PyPI telegram-mcp package.',
+    setup: 'Requires uv, Git, Python 3.10+, global TELEGRAM_API_ID and TELEGRAM_API_HASH, plus an authorized TELEGRAM_SESSION_STRING or existing TELEGRAM_SESSION_NAME file. Named accounts use TELEGRAM_SESSION_STRING_<LABEL> or TELEGRAM_SESSION_NAME_<LABEL>. For concurrent clients, TELEGRAM_SESSION_STRINGS accepts a whitespace/comma/semicolon-separated pool with one separately authorized session per client; the upstream server claims a free slot. Obtain API credentials at https://my.telegram.org and generate sessions using the upstream login helper. Never install the unrelated PyPI telegram-mcp package.',
   },
   {
     slug: 'codegraph', name: 'CodeGraphContext', icon: '🕸️',
@@ -156,6 +156,9 @@ export const BUILTIN_AGENT_SKILL_PACKS = [
 export interface BuiltinMcpOptions {
   platform?: string;
   env?: Record<string, string | undefined>;
+  /** Match path-based launch preconditions to the stdio subprocess context. */
+  workspaceRootPath?: string;
+  sourceFolderPath?: string;
   /** Only consulted in memory. Never written to the source configuration. */
   token?: string | null;
   credential?: Record<string, string> | null;
@@ -202,6 +205,35 @@ function firecrawlKey(config: FolderSourceConfig, options: BuiltinMcpOptions): s
 
 function apiKey(config: FolderSourceConfig, options: BuiltinMcpOptions, name: string): string | undefined {
   return options.token?.trim() || value(name, options, config);
+}
+
+function telegramSessionPath(raw: string, config: FolderSourceConfig, options: BuiltinMcpOptions): string | undefined {
+  const sourceFolderPath = options.sourceFolderPath
+    || (options.workspaceRootPath ? join(options.workspaceRootPath, 'sources', config.slug) : undefined);
+  const expanded = expandPath(raw, sourceFolderPath, {
+    ...(options.workspaceRootPath ? { WORKSPACE: options.workspaceRootPath } : {}),
+    ...(sourceFolderPath ? { SOURCE_DIR: sourceFolderPath } : {}),
+  });
+  // Missing path context must not turn an unresolved placeholder into a cwd path.
+  return expanded.includes('${') ? undefined : expanded;
+}
+
+/** All account modes supported by the pinned upstream, using child-env precedence. */
+function telegramSessionEnvironment(config: FolderSourceConfig, options: BuiltinMcpOptions): Record<string, string> {
+  const candidates = { ...(options.env ?? process.env), ...config.mcp?.env, ...options.credential };
+  const environment: Record<string, string> = {};
+  for (const [key, candidate] of Object.entries(candidates)) {
+    if (typeof candidate !== 'string' || !candidate.trim()) continue;
+    const raw = candidate.trim();
+    if (key === 'TELEGRAM_SESSION_NAME' || key.startsWith('TELEGRAM_SESSION_NAME_')) {
+      const path = telegramSessionPath(raw, config, options);
+      if (path) environment[key] = path;
+    } else if (key === 'TELEGRAM_SESSION_STRINGS' || key === 'TELEGRAM_SESSION_STRING'
+      || key.startsWith('TELEGRAM_SESSION_STRING_')) {
+      if (!raw.includes('${')) environment[key] = raw;
+    }
+  }
+  return environment;
 }
 
 function hasExplicitQdrantLocalPath(config: FolderSourceConfig): boolean {
@@ -279,9 +311,13 @@ export function getBuiltinMcpReadiness(config: FolderSourceConfig, options: Buil
   }
   if (config.slug === 'telegram-mcp') {
     const missing = ['TELEGRAM_API_ID', 'TELEGRAM_API_HASH'].filter(key => !value(key, options, config));
-    const sessionName = value('TELEGRAM_SESSION_NAME', options, config);
-    const hasSessionFile = sessionName && (options.fileExists ?? existsSync)(sessionName.endsWith('.session') ? sessionName : `${sessionName}.session`);
-    if (!value('TELEGRAM_SESSION_STRING', options, config) && !hasSessionFile) missing.push('TELEGRAM_SESSION_STRING or authorized TELEGRAM_SESSION_NAME');
+    const sessions = telegramSessionEnvironment(config, options);
+    const hasSession = Object.entries(sessions).some(([key, setting]) => {
+      if (key === 'TELEGRAM_SESSION_STRINGS') return setting.split(/[\s,;]+/).some(Boolean);
+      if (key === 'TELEGRAM_SESSION_STRING' || key.startsWith('TELEGRAM_SESSION_STRING_')) return true;
+      return (options.fileExists ?? existsSync)(setting.endsWith('.session') ? setting : `${setting}.session`);
+    });
+    if (!hasSession) missing.push('TELEGRAM_SESSION_STRING(S), a named account session, or authorized TELEGRAM_SESSION_NAME');
     if (missing.length) return { status: 'needs_auth', reason: `Configure ${missing.join(', ')}.` };
   }
   if (config.slug === 'qdrant' && qdrantKey(config, options) && !qdrantUrl(config, options)) {
@@ -311,8 +347,8 @@ export function buildRuntimeBuiltinMcpConfig(config: FolderSourceConfig, options
     const key = options.token?.trim() || value('CONTEXT7_API_KEY', options);
     if (key) mcp.headers = { ...mcp.headers, Authorization: `Bearer ${key}` };
   } else if (config.slug === 'telegram-mcp') {
-    mcp.env = { ...mcp.env };
-    for (const key of ['TELEGRAM_API_ID', 'TELEGRAM_API_HASH', 'TELEGRAM_SESSION_STRING', 'TELEGRAM_SESSION_NAME']) {
+    mcp.env = { ...mcp.env, ...telegramSessionEnvironment(config, options) };
+    for (const key of ['TELEGRAM_API_ID', 'TELEGRAM_API_HASH']) {
       const secret = value(key, options, config);
       if (secret) mcp.env[key] = secret;
     }
@@ -382,7 +418,7 @@ export function ensureBuiltinMcpSources(workspaceRootPath: string, options: Buil
       tagline: spec.usage, icon: spec.icon, isAuthenticated: false,
       connectionStatus: 'untested', createdAt: now, updatedAt: now,
     };
-    const readiness = getBuiltinMcpReadiness(config, options);
+    const readiness = getBuiltinMcpReadiness(config, { workspaceRootPath, ...options });
     if (readiness.status === 'needs_auth') config.connectionStatus = 'needs_auth';
     else if (readiness.status === 'unsupported_platform') config.connectionStatus = 'local_disabled';
     if (readiness.reason) config.connectionError = readiness.reason;
@@ -405,7 +441,7 @@ export function getDefaultMcpSourceSlugs(workspaceRootPath: string, options: Bui
   for (const spec of BUILTIN_MCP_CATALOG) {
     try {
       const config = JSON.parse(readFileSync(join(workspaceRootPath, 'sources', spec.slug, 'config.json'), 'utf-8')) as FolderSourceConfig;
-      const readiness = getBuiltinMcpReadiness(config, options);
+      const readiness = getBuiltinMcpReadiness(config, { workspaceRootPath, ...options });
       // Authentication metadata can signal encrypted credentials. The server
       // builder still checks the real loaded secret before launching.
       const storedAuth = readiness.status === 'needs_auth' && config.isAuthenticated === true;
@@ -422,7 +458,7 @@ export function getEnabledBuiltinMcpSourceSlugs(workspaceRootPath: string, optio
     try {
       const config = JSON.parse(readFileSync(join(workspaceRootPath, 'sources', spec.slug, 'config.json'), 'utf-8')) as FolderSourceConfig;
       if (config.enabled && config.slug === spec.slug && config.type === 'mcp'
-        && getBuiltinMcpReadiness(config, options).status !== 'unsupported_platform') slugs.push(spec.slug);
+        && getBuiltinMcpReadiness(config, { workspaceRootPath, ...options }).status !== 'unsupported_platform') slugs.push(spec.slug);
     } catch { /* Missing or invalid configs are handled by normal source loading. */ }
   }
   return slugs;
