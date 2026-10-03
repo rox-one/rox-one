@@ -1,0 +1,5 @@
+# Golden Tasks recovery
+
+Source branch `codex/golden-gate-workspace` at `5def9ffd36dc160fdc7c908784e0ef97ba6a732e` contains a file-import lifecycle and a container-responsive master/detail focus helper. The current Tasks page already has richer Things-style task fields, date handling, all current links, drafts, canonical native caller binding and CAS. This recovery adapts only the remaining file-read/current-store race, native import confirmation and panel-width/focus behavior to those current owners.
+
+`personal-tasks-import.fixture.ts` runs the actual renderer singleton against the real native disk store in an isolated process. The browser fixture bundles the actual TasksPage, TaskDetail, TaskSidebar, responsive layout and dialog primitives, and compiles the actual renderer CSS with Tailwind v4. It substitutes only unchanged workspace/session/project/calendar/action/Markdown leaves and a controlled native transport; browser proof does not claim an installed native principal or OS action. Original source refs remain unchanged.

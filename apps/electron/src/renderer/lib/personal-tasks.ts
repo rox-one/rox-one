@@ -62,12 +62,20 @@ let scopeGeneration = 0
 let offIdentity: (() => void) | null = null
 let identityGeneration = 0
 let snapshotGeneration = 0
+let confirmedImport: { generation: number } | null = null
+
+/** Read-only lifetime fence; no identity or grant is exposed to consumers. */
+export function capturePersonalTaskScope(): () => boolean {
+  const generation = scopeGeneration
+  return () => callerScope !== null && generation === scopeGeneration
+}
 
 /** Invalidate before any actor/workspace transition; late replies never publish into a successor scope. */
 export function setPersonalTaskScope(scope: PersonalTaskCallerScope | null): void {
   const normalized = scope && scope.userId && (scope.authority === 'local' || scope.issuer && scope.workspaceId) ? { ...scope } : null
   if (normalized && JSON.stringify(callerScope) === JSON.stringify(normalized)) return
   callerScope = normalized
+  confirmedImport = null
   ++scopeGeneration
   unsubscribeServer?.(); unsubscribeServer = null
   if (retryTimer !== null) clearTimeout(retryTimer)
@@ -228,6 +236,7 @@ export function persistPersonalTaskStore(store: PersonalTaskStore): void {
 
 async function syncBundle(remote: PersonalTasksApi, next: PersonalTaskBundle): Promise<void> {
   const generation = scopeGeneration
+  if (confirmedImport?.generation === generation) return
   const base = synced
   if (!base) return
   const diff = diffPersonalTaskBundles(base, next)
@@ -278,6 +287,89 @@ async function syncBundle(remote: PersonalTasksApi, next: PersonalTaskBundle): P
   emit()
 }
 
+function equalTaskData(left: unknown, right: unknown): boolean {
+  const stable = (value: unknown) => JSON.stringify(value, (_key, entry) =>
+    entry && typeof entry === 'object' && !Array.isArray(entry)
+      ? Object.fromEntries(Object.keys(entry).sort().map(key => [key, entry[key]])) : entry)
+  return stable(left) === stable(right)
+}
+
+function applyTaskDiff(base: PersonalTaskBundle, diff: ReturnType<typeof diffPersonalTaskBundles>): PersonalTaskBundle {
+  const changed = new Set(diff.put.map(task => task.id))
+  return { ...base, tasks: [...base.tasks.filter(task => !changed.has(task.id) && !diff.remove.includes(task.id)), ...diff.put], ...(diff.meta ?? {}) }
+}
+
+/** Explicit import uses the current caller's CAS and canonical readback, preserving edits made at every await. */
+export async function importPersonalTasksConfirmed(incoming: PersonalTaskBundle, isCurrent: () => boolean): Promise<void> {
+  const generation = scopeGeneration
+  const token = { generation }
+  const remote = api()
+  const current = () => callerScope !== null && generation === scopeGeneration && isCurrent()
+  if (!remote || !current() || confirmedImport) throw new Error('Personal task import unavailable')
+  confirmedImport = token
+  let verified = false
+  try {
+    await hydratePersonalTasks()
+    if (!current() || !synced) throw new Error('Personal task caller changed')
+    const transport = scopedApi(remote, generation)
+    const oldBase = synced
+    const snapshot = await transport.personalTasksList()
+    if (!current()) throw new Error('Personal task caller changed')
+    const canonical = bundleFromSnapshot(snapshot)
+    const before = loadPersonalTaskStore().snapshot()
+    // Cached edits are explicit local intentions; the fresh snapshot supplies
+    // ownership and revisions. The file never imports a stale cached snapshot.
+    const base = applyTaskDiff(canonical, diffPersonalTaskBundles(oldBase, before))
+    const next = new PersonalTaskStore(base)
+    next.importBundle(incoming, 'merge')
+    const wanted = next.snapshot()
+    const diff = diffPersonalTaskBundles(canonical, wanted)
+    synced = canonical
+    revisions = snapshot.revisions
+    syncState = 'syncing'
+    emit()
+    const receipt = await pushPersonalTaskDiff(transport, structuredClone(diff), { ...snapshot.revisions })
+    if (!current()) throw new Error('Personal task caller changed')
+    syncConflicts = receipt.conflicts
+    const accepted = new Map(receipt.accepted.map(record => [record.task.id, record]))
+    if (!receipt.ok || accepted.size !== diff.put.length || new Set(receipt.removed).size !== diff.remove.length
+      || diff.put.some(task => {
+        const record = accepted.get(task.id)
+        return !record || !equalTaskData(task, record.task) || !Number.isSafeInteger(record.revision)
+          || record.revision <= (snapshot.revisions[task.id] ?? 0)
+      }) || diff.remove.some(id => !receipt.removed.includes(id))) throw new Error('Personal task import was not confirmed')
+    const readback = await transport.personalTasksList()
+    if (!current()) throw new Error('Personal task caller changed')
+    if (diff.put.some(task => !equalTaskData(readback.tasks.find(row => row.id === task.id), task)
+      || readback.revisions[task.id] !== accepted.get(task.id)!.revision)
+      || diff.remove.some(id => readback.tasks.some(task => task.id === id))
+      || diff.meta && !equalTaskData(bundleFromSnapshot(readback), { ...bundleFromSnapshot(readback), ...diff.meta })) {
+      throw new Error('Personal task import readback did not match')
+    }
+    const edits = diffPersonalTaskBundles(before, loadPersonalTaskStore().snapshot())
+    synced = bundleFromSnapshot(readback)
+    revisions = readback.revisions
+    currentBundle = applyTaskDiff(synced, edits)
+    persistPersonalTaskCache(kv(), new PersonalTaskStore(currentBundle), loadStatus)
+    verified = true
+    syncState = isEmptyDiff(diffPersonalTaskBundles(synced, currentBundle)) ? 'synced' : 'syncing'
+    emit()
+  } catch (error) {
+    if (current()) { syncState = 'error'; emit() }
+    throw error
+  } finally {
+    if (confirmedImport === token) {
+      confirmedImport = null
+      // Changes and pushes queued during the explicit import are reconciled
+      // from native storage after it retires; partial writes never fake success.
+      if (current()) {
+        if (verified && currentBundle && synced && !isEmptyDiff(diffPersonalTaskBundles(synced, currentBundle))) void syncBundle(remote, currentBundle)
+        else if (!verified) void refreshFromServer(remote).catch(() => {})
+      }
+    }
+  }
+}
+
 /** Home quick-add commits to the existing cache only after native ACK. */
 export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<void> {
   const generation = scopeGeneration
@@ -310,6 +402,7 @@ export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<
 
 async function refreshFromServer(remote: PersonalTasksApi): Promise<void> {
   const generation = scopeGeneration
+  if (confirmedImport?.generation === generation) return
   const request = ++snapshotGeneration
   const snapshot = await remote.personalTasksList()
   if (generation !== scopeGeneration || request !== snapshotGeneration) return
