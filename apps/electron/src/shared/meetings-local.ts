@@ -129,6 +129,8 @@ export interface LocalMeeting {
   source: LocalMeetingSource
   participants: string[]
   notes: string
+  /** User-selected analysis profile; does not grant tools or background work. */
+  recipeId?: import('@rox/shared/meeting-agents').MeetingProfileId
   audio: LocalMeetingAudio | null
   transcript: LocalMeetingTranscriptState
   summary: LocalMeetingSummary | null
@@ -190,7 +192,7 @@ export interface LocalAsrEngine {
 }
 
 export type LocalMeetingPatch = Partial<Pick<LocalMeeting,
-  'title' | 'participants' | 'notes' | 'scheduledAt' | 'actions' | 'summary' | 'summaryRun'>>
+  'title' | 'participants' | 'notes' | 'recipeId' | 'scheduledAt' | 'actions' | 'summary' | 'summaryRun'>>
 
 export type MeetingsLocalResult<T> = { ok: true; value: T } | { ok: false; code: string; message?: string }
 

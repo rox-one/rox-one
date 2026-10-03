@@ -1022,6 +1022,7 @@ export const RPC_CHANNELS = {
     CHANGED: 'marketplace:CHANGED',
   },
   meetings: {
+    PLAN_ACTIONS: 'meetings:planActions',
     LIST: 'meetings:list',
     GET: 'meetings:get',
     SEARCH: 'meetings:search',

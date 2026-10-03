@@ -32,6 +32,7 @@ import {
 } from '@/lib/meetings/recorder'
 import { formatRecClock } from '@/components/meetings/MeetingRecordingIndicator'
 import { MEETING_SOURCE_SEEK_SESSION_KEY } from '../../../shared/meetings-local'
+import { MEETING_PROFILE_IDS, type MeetingProfileId } from '@rox/shared/meeting-agents'
 import type { LocalAsrEngine, LocalMeeting, LocalMeetingAction, LocalTranscript, LocalTranscriptSegmentPatch } from '../../../shared/meetings-local'
 import {
   activeSegmentIndex,
@@ -92,6 +93,8 @@ export function LocalMeetingDetail(props: {
   currentMeetingId.current = m.id
   const locale = i18n.resolvedLanguage || i18n.language
   const language: 'ru' | 'en' = locale.startsWith('ru') ? 'ru' : 'en'
+  const [recipeSlash, setRecipeSlash] = useState('')
+  useEffect(() => { setRecipeSlash('') }, [m.id])
   const recordingThis = rec.meetingId === m.id && rec.status !== 'idle'
   const [, tick] = useState(0)
   useEffect(() => {
@@ -392,6 +395,8 @@ export function LocalMeetingDetail(props: {
         participants: m.participants,
         segments: transcript.segments.map(({ id, startMs, endMs, text }) => ({ id, startMs, endMs, text })),
         language,
+        recipeId: m.recipeId ?? 'standup',
+        ...(recipeSlash.trim() ? { slash: recipeSlash } : {}),
       })
       const sessionId = await startAgentRun({ workspaceId, name: t('meetings.local.summaryRunName', { title: m.title }), prompt })
       await update({ summaryRun: { sessionId, startedAt: Date.now(), transcriptRevision: transcript.revision } })
@@ -516,6 +521,28 @@ export function LocalMeetingDetail(props: {
         </>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-2 text-[12px] text-text-secondary">
+          {t('meetings.local.analysisProfile')}
+          <select
+            data-testid="meeting-analysis-profile"
+            aria-label={t('meetings.local.analysisProfile')}
+            value={m.recipeId ?? 'standup'}
+            disabled={!!m.summaryRun}
+            onChange={(event) => void update({ recipeId: event.target.value as MeetingProfileId })}
+            className="h-7 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px]"
+          >
+            {MEETING_PROFILE_IDS.map(id => <option key={id} value={id}>{t(`meetings.local.profile.${id}`)}</option>)}
+          </select>
+        </label>
+        <input
+          data-testid="meeting-analysis-slash"
+          aria-label={t('meetings.skillCommand')}
+          placeholder={t('meetings.skillCommand')}
+          value={recipeSlash}
+          disabled={!!m.summaryRun}
+          onChange={(event) => setRecipeSlash(event.target.value)}
+          className="h-7 min-w-0 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px]"
+        />
         {m.summary?.generated ? <span className="text-[11px] text-text-muted">{t('meetings.local.generatedLabel')}</span> : null}
         <Button
           data-testid="meeting-generate-summary"

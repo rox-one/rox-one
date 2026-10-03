@@ -62,6 +62,7 @@ export const CHANNEL_MAP = {
   getTask: invoke(RPC_CHANNELS.tasks.GET),
   listTasks: invoke(RPC_CHANNELS.tasks.LIST),
   listMeetings: invoke(RPC_CHANNELS.meetings.LIST),
+  planMeetingActions: invoke(RPC_CHANNELS.meetings.PLAN_ACTIONS),
   getMeeting: invoke(RPC_CHANNELS.meetings.GET),
   searchMeetings: invoke(RPC_CHANNELS.meetings.SEARCH),
   deleteMeeting: invoke(RPC_CHANNELS.meetings.DELETE),
