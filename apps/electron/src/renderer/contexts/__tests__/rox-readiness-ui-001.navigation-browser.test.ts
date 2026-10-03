@@ -261,6 +261,63 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await focusedHistorySwitchFailure('false')
   })
 
+  browserTest('explicit navigation before the workspace restore frame pushes its own history entry',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
+    // Finish the initial restore before withholding the actual workspace
+    // reconciliation frame. No timer or navigation callback is replaced.
+    await page.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))))
+    await page.evaluate(()=>{
+      const held={native:window.requestAnimationFrame,callbacks:[] as FrameRequestCallback[]}
+      ;(window as any).__ui001HeldRestoreFrames=held
+      window.requestAnimationFrame=callback=>held.callbacks.push(callback)
+    })
+    try {
+      await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'))
+      // Use timer polling while RAF is intentionally held, so the observation
+      // does not depend on the callback whose race is being exercised.
+      await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-workspace')==='ws-b'
+        &&document.querySelector('output')?.getAttribute('data-route')==='allSessions/session/first-b',null,{polling:50})
+      const restored=await page.evaluate(()=>({
+        sequence:history.state.seq,route:new URL(location.href).searchParams.get('route'),
+        workspace:new URL(location.href).searchParams.get('ws'),
+        heldFrames:(window as any).__ui001HeldRestoreFrames.callbacks.length,
+      }))
+      expect(restored.workspace).toBe('b')
+      expect(restored.route).toBe('allSessions/session/first-b')
+      expect(restored.heldFrames).toBeGreaterThan(0)
+      await page.evaluate(async()=>{
+        await (window as any).ui001nav.navigate('sources/source/two')
+        await Promise.resolve()
+      })
+      await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-route')==='sources/source/two',null,{polling:50})
+      // The old workspace frame is still withheld. Its release must not be
+      // required to claim an explicit user navigation in browser history.
+      expect(await page.evaluate(()=>history.state.seq)).toBe(restored.sequence+1)
+      expect(new URL(page.url()).searchParams.get('route')).toBe('sources/source/two')
+      expect(new URL(page.url()).searchParams.get('ws')).toBe('b')
+      expect((await snapshot()).nav.details.sourceSlug).toBe('two')
+      await page.goBack()
+      await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-route')==='allSessions/session/first-b',null,{polling:50})
+      expect(new URL(page.url()).searchParams.get('ws')).toBe('b')
+      expect(new URL(page.url()).searchParams.get('route')).toBe(restored.route)
+      expect(await page.evaluate(()=>history.state.seq)).toBe(restored.sequence)
+      await page.goForward()
+      await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-route')==='sources/source/two',null,{polling:50})
+      expect(new URL(page.url()).searchParams.get('ws')).toBe('b')
+      expect(new URL(page.url()).searchParams.get('route')).toBe('sources/source/two')
+      expect(await page.evaluate(()=>history.state.seq)).toBe(restored.sequence+1)
+      expect((await snapshot()).nav.details.sourceSlug).toBe('two')
+    } finally {
+      await page.evaluate(()=>{
+        const held=(window as any).__ui001HeldRestoreFrames
+        if(!held)return
+        window.requestAnimationFrame=held.native
+        delete (window as any).__ui001HeldRestoreFrames
+        held.callbacks.splice(0).forEach((callback:FrameRequestCallback)=>callback(performance.now()))
+      })
+    }
+  })
+
   browserTest('history-switch regression: rejected reply after focus-only change releases suppression',async()=>{
     await focusedHistorySwitchFailure('reject')
   })

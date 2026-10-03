@@ -949,6 +949,14 @@ export function NavigationProvider({
         return
       }
 
+      // Accepted navigation owns history before its atom writes. Waiting for a
+      // restoration frame can replace this route and lose it to an early Back.
+      if (initialRouteRestoredRef.current && suppressPushRef.current
+        && pendingUrlRestoreRef.current === null) {
+        suppressPushRef.current = false
+        ++historyReconcileRevisionRef.current
+      }
+
       // Handle actions (side effects)
       if (parsed?.type === 'action') {
         await handleActionNavigation(parsed, options)
