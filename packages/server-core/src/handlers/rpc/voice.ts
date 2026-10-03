@@ -22,6 +22,7 @@ import {
   catalogTemplate,
   createProductionLocalTranscribeAdapter,
   createProductionVoiceHttp,
+  createEdgeSpeakAdapter,
   deleteRecording,
   exportRecording,
   getDefaultVoicePrefs,
@@ -45,7 +46,7 @@ import {
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { createSystemSpeaker } from './system-tts'
+import { createSystemSpeaker, type SystemSpeaker } from './system-tts'
 import {
   isClaimableLive,
   rpcVoiceActResult,
@@ -133,6 +134,9 @@ function cloudAdapter(caps: VoiceCapabilities): TranscribeAdapter {
   }
 }
 
+function fishSpeakAdapter(): SpeakAdapter {
+  return { engine: 'fish-speech', async speak() { return { engine: 'fish-speech', uploaded: false } } }
+}
 
 let cachedCaps: VoiceCapabilities = {
   ...LAST_KNOWN_GOOD_CAPABILITIES,
@@ -140,7 +144,6 @@ let cachedCaps: VoiceCapabilities = {
   quota: { asr: { remaining: 100, resetAt: 0 }, process: { remaining: 100, resetAt: 0 } },
 }
 let host: VoiceHost | null = null
-const systemSpeaker = createSystemSpeaker()
 
 function getHost(server: RpcServer): VoiceHost {
   if (!host) {
@@ -174,7 +177,15 @@ function broadcast(server: RpcServer, prefs: VoicePrefs): void {
   pushTyped(server, RPC_CHANNELS.voice.CHANGED, { to: 'all' }, prefs)
 }
 
-export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): void {
+export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps, options: {
+  edgeSpeaker?: SpeakAdapter
+  systemSpeaker?: SystemSpeaker
+  loadPrefs?: () => VoicePrefs
+} = {}): void {
+  const edgeSpeaker = options.edgeSpeaker ?? createEdgeSpeakAdapter()
+  const systemSpeaker = options.systemSpeaker ?? createSystemSpeaker()
+  const readPrefs = options.loadPrefs ?? loadVoicePrefs
+  let synthesis: AbortController | null = null
   server.handle(RPC_CHANNELS.voice.GET, async () => {
     const listed = rpcVoiceListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) throw new Error('voice prefs are not live')
@@ -257,14 +268,38 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
       return { engine: 'system', uploaded: false as const, playback: 'none' as const, speaking: systemSpeaker.isSpeaking() }
     }
     if (body.stop === true) {
-      const stopped = systemSpeaker.stop()
+      const pending = synthesis !== null
+      synthesis?.abort()
+      synthesis = null
+      const stopped = systemSpeaker.stop() || pending
       return { engine: 'system', uploaded: false as const, playback: 'none' as const, stopped }
     }
     const text = assertEditableTranscript(typeof body.text === 'string' ? body.text : '')
-    const result = await systemSpeaker.speak(text)
-    return result.played
-      ? { engine: 'system', uploaded: false as const, playback: 'native' as const, voice: result.voice }
-      : { engine: 'system', uploaded: false as const, playback: 'none' as const, reason: 'russian-system-voice-unavailable' as const }
+    synthesis?.abort()
+    systemSpeaker.stop()
+    const controller = new AbortController()
+    synthesis = controller
+    const prefs = readPrefs()
+    try {
+      try {
+        const policy = await speakWithPolicy(prefs, { text, language: prefs.recognitionLanguage, signal: controller.signal }, {
+          edge: edgeSpeaker,
+          fish: fishSpeakAdapter(),
+        })
+        if (controller.signal.aborted) return { engine: prefs.ttsEngine, uploaded: false, playback: 'none' as const }
+        if (policy.audioBase64) return { ...policy, playback: 'audio' as const }
+      } catch {
+        // An unavailable online service/CLI keeps the existing system fallback usable.
+        if (controller.signal.aborted) return { engine: prefs.ttsEngine, uploaded: false, playback: 'none' as const }
+      }
+      const result = await systemSpeaker.speak(text)
+      if (controller.signal.aborted) return { engine: 'system', uploaded: false, playback: 'none' as const }
+      return result.played
+        ? { engine: 'system', uploaded: false as const, playback: 'native' as const, voice: result.voice }
+        : { engine: 'system', uploaded: false as const, playback: 'renderer' as const }
+    } finally {
+      if (synthesis === controller) synthesis = null
+    }
   })
 
   server.handle(RPC_CHANNELS.voice.START, async () => getHost(server).start(loadVoicePrefs()))

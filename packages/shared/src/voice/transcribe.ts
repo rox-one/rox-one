@@ -60,6 +60,15 @@ export async function transcribeWithPolicy(
   }
 }
 
+export async function speakWithPolicy(
+  prefs: VoicePrefs,
+  input: SpeakInput,
+  adapters: { edge: SpeakAdapter; fish: SpeakAdapter },
+): Promise<SpeakResult> {
+  const adapter = prefs.ttsEngine === 'fish-speech' ? adapters.fish : adapters.edge
+  const result = await adapter.speak(input)
+  return { ...result, engine: prefs.ttsEngine, uploaded: false }
+}
 
 export function assertEditableTranscript(text: string): string {
   const next = text.trim()

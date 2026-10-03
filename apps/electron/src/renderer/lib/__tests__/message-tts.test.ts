@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { createMessageTts } from '../message-tts'
+import { createMessageTts, type MessageAudio, type SpeakVoiceApi } from '../message-tts'
 
 function harness(playback: 'native' | 'renderer' | 'none' | 'throw') {
   const calls: Array<Record<string, unknown>> = []
@@ -29,6 +29,70 @@ function harness(playback: 'native' | 'renderer' | 'none' | 'throw') {
 }
 
 describe('message TTS', () => {
+  function audioHarness(overrides: { speakVoice?: SpeakVoiceApi; play?: () => Promise<void> } = {}) {
+    let paused = 0
+    let disposed = 0
+    let fallback = 0
+    const audio: MessageAudio = {
+      play: overrides.play ?? (async () => {}), pause() { paused++ }, dispose() { disposed++ }, onended: null, onerror: null,
+    }
+    const tts = createMessageTts({
+      speakVoice: overrides.speakVoice ?? (async (payload) => payload.stop ? { playback: 'none' } : { playback: 'audio', audioBase64: 'bXAz', mimeType: 'audio/mpeg' }),
+      createAudio: (base64, mimeType) => { expect(base64).toBe('bXAz'); expect(mimeType).toBe('audio/mpeg'); return audio },
+      synth: { cancel() {}, speak() { fallback++ } },
+      createUtterance: (text) => text,
+    })
+    return { tts, audio, get paused() { return paused }, get disposed() { return disposed }, get fallback() { return fallback } }
+  }
+
+  it('plays Edge MP3, releases it on completion and only calls onEnd once', async () => {
+    const h = audioHarness()
+    let ended = 0
+    expect(await h.tts.speak('Привет', () => { ended++ })).toBe('audio')
+    const callback = h.audio.onended!
+    callback()
+    callback()
+    expect(ended).toBe(1)
+    expect(h.disposed).toBe(1)
+    expect(h.fallback).toBe(0)
+  })
+
+  it('stops audio and releases its resources', async () => {
+    const h = audioHarness()
+    let ended = 0
+    await h.tts.speak('hello', () => { ended++ })
+    const staleEnd = h.audio.onended!
+    h.tts.stop()
+    staleEnd()
+    expect(h.paused).toBe(1)
+    expect(h.disposed).toBe(1)
+    expect(ended).toBe(0)
+  })
+
+  it('releases audio and falls back if client playback is rejected', async () => {
+    const h = audioHarness({ play: async () => { throw new Error('autoplay blocked') } })
+    expect(await h.tts.speak('hello', () => {})).toBe('web-speech')
+    expect(h.disposed).toBe(1)
+    expect(h.fallback).toBe(1)
+  })
+
+  it('does not play a late synthesis response after stop', async () => {
+    let resolve!: (result: Awaited<ReturnType<SpeakVoiceApi>>) => void
+    const h = audioHarness({ speakVoice: (payload) => payload.stop ? Promise.resolve({ playback: 'none' }) : new Promise((done) => { resolve = done }) })
+    const pending = h.tts.speak('hello', () => {})
+    h.tts.stop()
+    resolve({ playback: 'audio', audioBase64: 'bXAz', mimeType: 'audio/mpeg' })
+    expect(await pending).toBe('unavailable')
+    expect(h.disposed).toBe(0)
+    expect(h.fallback).toBe(0)
+  })
+
+  it('honors cancellation from the host without starting Web Speech', async () => {
+    const h = audioHarness({ speakVoice: async () => ({ playback: 'none' }) })
+    expect(await h.tts.speak('hello', () => {})).toBe('unavailable')
+    expect(h.fallback).toBe(0)
+  })
+
   it('uses native playback when the host speaks and reports the end via polling', async () => {
     const h = harness('native')
     let ended = 0

@@ -3336,6 +3336,9 @@ export const TurnCard = React.memo(function TurnCard({
   // Re-render if isLastResponse changed (for Accept Plan button visibility)
   if (prev.isLastResponse !== next.isLastResponse) return false
 
+  // Playback state changes the Listen/Stop action and its current callback.
+  if (prev.isListening !== next.isListening) return false
+
   // Re-render if displayMode changed
   if (prev.displayMode !== next.displayMode) return false
 

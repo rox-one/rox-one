@@ -76,6 +76,7 @@ export {
 
 export { VoiceIdentityClient, memoryIdentityStore, VoiceIdentityError } from './identity.ts'
 export { RoxTranscriptionAdapter, RoxTranscriptionError } from './adapters/rox-transcription.ts'
+export { createEdgeSpeakAdapter } from './adapters/edge-tts.ts'
 export { normalizeVerboseJson, validateAudioLimits, AudioValidationError, type NormalizedTranscript } from './adapters/audio-result.ts'
 export { VoiceHost, type VoiceHostEvent } from './host.ts'
 export { createVoiceJob, applyJobEvent, advanceJob, type VoiceJob } from './job-machine.ts'
