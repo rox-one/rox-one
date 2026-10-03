@@ -92,7 +92,35 @@
       "fail": 0,
       "assertions": 3654,
       "files": 117,
-      "browserOptIn": false
+      "browserOptIn": false,
+      "command": [
+        "bun",
+        "test",
+        "--timeout",
+        "30000",
+        "./apps/electron/src/renderer/components/app-shell/__tests__",
+        "./apps/electron/src/shared/__tests__",
+        "./apps/electron/src/renderer/contexts/__tests__",
+        "./apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+        "./apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts",
+        "./apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts",
+        "./apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts"
+      ],
+      "environment": {
+        "CHROMIUM_EXECUTABLE": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-2/work/ui001-separate-browser-phase"
+      }
+    },
+    {
+      "name": "electron-types",
+      "command": [
+        "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "apps/electron",
+      "exitCode": 0,
+      "diagnostics": 0
     }
   ],
   "failureHistoryRetained": true,
@@ -121,6 +149,11 @@
       "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/geometry-fixture-20261004/ui-001-main-install.log.gz",
       "rawSha256": "b9877cf484575a39b998785ecfa7e8c00303938a0717def22ab8647ee7b05eca",
       "compressedSha256": "18597fd8f2b58bc4ae5e085f69c0c2c0449255a7b721b1acb68075b2584ad963"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/geometry-fixture-20261004/ui-001-main-typecheck.log.gz",
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compressedSha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
     }
   ],
   "review": "Independent read-only review found no actionable issues; committed storage mutations and stale queued events retain separate controls.",
@@ -132,5 +165,9 @@
     "Actual hosted web and canonical service/provider receipts",
     "Immutable release replay across original acceptance targets"
   ],
-  "delivery": "Branch/PR pending; no main merge, deployment, signing or provider calls"
+  "delivery": {
+    "method": "new branch and pull request",
+    "target": "rox-one/rox-one:main",
+    "remoteReceipt": "Provided after this verification receipt; no main merge requested."
+  }
 }
