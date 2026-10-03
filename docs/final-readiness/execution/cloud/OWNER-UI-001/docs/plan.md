@@ -4,7 +4,7 @@
 
 1. Проверить исходный SHA, инструкции, literal acceptance и живой origin/main; сохранить оба конфликтующих варианта и все отрицательные результаты.
 2. Объединить новый main с ремонтом без потери возможностей; устранить проблемы в общем парсере, реальном NavigationProvider и редакторе навыка.
-3. Выполнить исходную app-shell регрессию, parser/layout проверки, реальные callbacks и mounted NavigationProvider/Chromium с reload/history/race/failure/field-draft сценариями; проверить типы и сборку.
+3. Закрыть P1 global-selection/AppShell-loader bypass с отрицательными контролями и проверкой metadata recovery. Выполнить исходную app-shell регрессию, parser/layout проверки, реальные callbacks и mounted NavigationProvider/Chromium с reload/history/race/failure/field-draft сценариями; проверить типы и сборку.
 4. Создать PR в rox-one/rox-one, прикрепить к чату, наблюдать проверки exact HEAD и исправить причины ошибок. Дополнительный UI-001 Recovery workflow удерживает поведенческие проверки на CI; проверки Windows/macOS native/hosted не подменяются.
 5. Слить проверенный HEAD в main по явной авторизации; прочитать GitHub PR/main повторно, сверить исходники/parentage и сформировать новый outputs delivery с SHA, результатами и внешними prerequisites.
 

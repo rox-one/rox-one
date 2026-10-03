@@ -1,13 +1,13 @@
 {
-  "integrationBase": "79fa5274315941f66ea26975551c66580e6036cd",
+  "integrationBase": "42034d8deb617630f923be8f61b33c72c05ed782",
   "sourceSha256": {
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "587281b0676cd7135e842a7440c0820bd475b93ed96b6a5b99c7303d34100231",
-    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "a29699db1fdeda3205113d7256c174e7ebf29e3a1d7e96e3cdac15bb53ab8959",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "3205051ae7f946f33e4fde1a54c091a62aff5f522607ccaccbbae71a80c9c2e9",
     "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
-    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "814b705341388ce18911f1009aeccf188b1186c6827fe56434b0f88b1c377f01",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "b410e4facccbb9f0d8f20002384322dca3037ccdee9c87a6450401ddc997960d",
     "apps/electron/src/shared/route-parser.ts": "613068e6cc643848b45f9ee3a4fb8a991cbb80873bd31bbf1f40d48f2bfe8ad5",
     "apps/electron/src/shared/types.ts": "899852aae94cdd8d729ff616021bc7605158bc59c5db058ad78bd8a3cbf86c40",
-    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "b0a9fa69f2edd9b94871cb7df0b00e4e4fdfb2d84b47cdf2f56f99f794188ffd",
     "apps/electron/src/renderer/lib/nav-helpers.ts": "7b94fc00f694ee2c83a682725ca9460d88a138b4a421fa452d1a77d034df5e2f",
     "apps/electron/src/renderer/atoms/panel-stack.ts": "b669a999d338e69c5d6975e322aaab1170638141351696d05d219d786239259c",
     "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff",
