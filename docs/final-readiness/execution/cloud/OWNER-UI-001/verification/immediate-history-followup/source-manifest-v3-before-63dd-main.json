@@ -1,8 +1,8 @@
 {
-  "integrationBase": "63dd527439cd422d0c392cd8fce1461db333168b",
+  "integrationBase": "bb047b946da41346301cffe88a43db0adf621dcf",
   "sourceSha256": {
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "47de25aa61eac95f05c5c8e092171d3ab9eea8a748983b794045d225b0cd5a9c",
-    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "358412c055360dde392c2b7a8f17e04a44c841dc31147539f518d465f91cafef",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "284020622cacdae95efd48727a59a98ae5f1f4c1984ee7ec20e054dd58260d60",
     "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
     "apps/electron/src/renderer/contexts/NavigationContext.tsx": "8e4535909c47b15de52e79e3715d88e997dc40f1d6d65f38d0581989dd18bb43",
     "apps/electron/src/shared/route-parser.ts": "c6d324f368b7924ba1980e6b20036672374782807f5944d88e16a9c0de22a134",
