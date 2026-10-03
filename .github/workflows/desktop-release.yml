@@ -33,6 +33,7 @@ jobs:
           packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts
           packages/shared/src/agent/__tests__/omp-first-run.test.ts
           packages/shared/src/agent/__tests__/omp-worker-policy.test.ts
+          packages/shared/src/agent/__tests__/omp-native-policy.test.ts
           packages/shared/src/agent/__tests__/omp-permission-mode.test.ts
           packages/shared/src/agent/__tests__/omp-startup-lifecycle.test.ts
           packages/shared/src/agent/__tests__/omp-lifecycle-hardening.test.ts
@@ -58,7 +59,9 @@ jobs:
           packages/shared/src/skills/__tests__/gstack-root-helpers.test.ts
           packages/shared/src/skills/__tests__/gstack-browse-io.test.ts
           packages/shared/src/skills/__tests__/gstack-state-security.test.ts
+          packages/shared/src/skills/__tests__/gstack-design-security.test.ts
           packages/shared/src/skills/__tests__/autoplan-security.test.ts
+          packages/shared/src/skills/__tests__/vendor-provenance.test.ts
           scripts/probes/omp-worker-loop.test.ts
           packages/shared/src/toolchain/__tests__/acpx.test.ts
           packages/shared/src/credentials/backends/__tests__/keychain-master-key.test.ts
