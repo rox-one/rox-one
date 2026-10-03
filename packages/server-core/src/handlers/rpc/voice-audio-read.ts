@@ -30,14 +30,14 @@ export function readVoiceAudioChunk(root: string, recording: VoiceRecording, bod
     }
     if (canonical.some((path, index) => path !== (index === 0 ? canonical[0] : join(canonical[0]!, ...['voice', 'recordings', recording.id].slice(0, index))))) throw new Error('Recording audio is unavailable')
     assertAncestors()
-    const named = lstatSync(file, { bigint: true })
-    if (!named.isFile() || named.isSymbolicLink() || named.size <= 0n || named.size > BigInt(MAX_BYTES)) throw new Error('Recording audio is unavailable')
     fd = openSync(file, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0))
     const opened = fstatSync(fd, { bigint: true })
+    if (!opened.isFile() || opened.size <= 0n || opened.size > BigInt(MAX_BYTES)) throw new Error('Recording audio is unavailable')
+    const named = lstatSync(file, { bigint: true })
     const token = createHash('sha256').update([recording.hash, opened.dev, opened.ino, opened.size, opened.mtimeNs, opened.ctimeNs].join(':')).digest('hex')
     const same = (stat: typeof named) => stat.isFile() && !stat.isSymbolicLink() && stat.dev === opened.dev && stat.ino === opened.ino
       && stat.size === opened.size && stat.mtimeNs === opened.mtimeNs && stat.ctimeNs === opened.ctimeNs
-    if (!opened.isFile() || !same(named) || (offset as number) >= Number(opened.size) || ((offset as number) > 0 && body.token !== token)) throw new Error('Recording audio changed')
+    if (!same(named) || (offset as number) >= Number(opened.size) || ((offset as number) > 0 && body.token !== token)) throw new Error('Recording audio changed')
     // Bind the opened leaf to every prechecked ancestor before reading bytes.
     assertAncestors()
     const bytes = Buffer.alloc(Math.min(CHUNK_BYTES, Number(opened.size) - (offset as number)))
