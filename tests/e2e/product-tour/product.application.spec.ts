@@ -119,6 +119,11 @@ test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creati
   })
   await info.attach('highlighted-control-layout', { body: Buffer.from(JSON.stringify(focused)), contentType: 'application/json' })
   expect(focused.label).toBe('New note')
+  await expect.poll(() => page.evaluate(() => {
+    const target = document.activeElement!.getBoundingClientRect()
+    const mask = document.querySelector('[data-product-tour-mask] rect')!
+    return Math.max(Math.abs(Number(mask.getAttribute('x')) - (target.x - 8)), Math.abs(Number(mask.getAttribute('y')) - (target.y - 8)), Math.abs(Number(mask.getAttribute('width')) - (target.width + 16)), Math.abs(Number(mask.getAttribute('height')) - (target.height + 16)))
+  })).toBeLessThanOrEqual(2)
   await page.keyboard.press('Enter')
   const dialog = page.getByRole('dialog').filter({ has: page.getByRole('textbox') })
   await dialog.getByRole('textbox').fill(`Guided canonical note ${Date.now()}`)
