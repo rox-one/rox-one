@@ -125,7 +125,15 @@ export function restrictFilePermissions(filePath: string): void {
     }
     return;
   }
-  try { fs.chmodSync(filePath, 0o600); } catch { /* best-effort */ }
+  let fd: number | undefined;
+  try {
+    fd = fs.openSync(filePath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+    const stat = fs.fstatSync(fd);
+    const uid = process.geteuid?.() ?? process.getuid?.();
+    if (!stat.isFile() || (uid !== undefined && stat.uid !== uid)) return;
+    fs.fchmodSync(fd, 0o600);
+  } catch { /* best-effort; never chmod through a link */ }
+  finally { if (fd !== undefined) fs.closeSync(fd); }
 }
 
 /**
@@ -273,8 +281,7 @@ export function writeSecureFile(
   filePath: string,
   data: string | NodeJS.ArrayBufferView,
 ): void {
-  fs.writeFileSync(filePath, data, { mode: 0o600 });
-  restrictFilePermissions(filePath);
+  writePrivateDescriptor(filePath, data, false);
 }
 
 /**
@@ -288,10 +295,7 @@ export function appendSecureFile(
   filePath: string,
   data: string | NodeJS.ArrayBufferView,
 ): void {
-  const existed = fs.existsSync(filePath);
-  const payload = typeof data === 'string' ? data : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-  fs.appendFileSync(filePath, payload, { mode: 0o600 });
-  if (!existed) restrictFilePermissions(filePath);
+  writePrivateDescriptor(filePath, data, true);
 }
 
 /**
@@ -352,4 +356,25 @@ export function mkdirSecure(dirPath: string): void {
  */
 export function __resetWarnedForTests(): void {
   warnedOnce = false;
+}
+
+/** Open once, reject symlink/nonregular/foreign objects, harden that inode
+ * before writing. Windows keeps upstream icacls restriction for every write. */
+function writePrivateDescriptor(filePath: string, data: string | NodeJS.ArrayBufferView, append: boolean): void {
+  const flags = fs.constants.O_WRONLY | fs.constants.O_CREAT | (append ? fs.constants.O_APPEND : 0) | (fs.constants.O_NOFOLLOW || 0);
+  const fd = fs.openSync(filePath, flags, 0o600);
+  try {
+    const stat = fs.fstatSync(fd);
+    if (!stat.isFile()) throw new Error('Refusing non-regular private state file');
+    const uid = process.geteuid?.() ?? process.getuid?.();
+    if (uid !== undefined && stat.uid !== uid) throw new Error('Refusing foreign-owned private state file');
+    if (process.platform === 'win32') {
+      const current = fs.lstatSync(filePath);
+      if (current.isSymbolicLink() || current.dev !== stat.dev || current.ino !== stat.ino) throw new Error('Private state file changed during open');
+      restrictFilePermissions(filePath);
+    } else fs.fchmodSync(fd, 0o600);
+    if (!append) fs.ftruncateSync(fd, 0);
+    const payload = typeof data === 'string' ? data : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+    fs.writeFileSync(fd, payload);
+  } finally { fs.closeSync(fd); }
 }

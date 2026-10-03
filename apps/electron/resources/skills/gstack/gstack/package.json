@@ -1,7 +1,7 @@
 {
   "name": "gstack",
   "version": "1.91.13",
-  "description": "Garry's Stack — Claude Code skills + fast headless browser. One repo, one install, entire AI engineering workflow.",
+  "description": "Garry's Stack \u2014 Claude Code skills + fast headless browser. One repo, one install, entire AI engineering workflow.",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -73,7 +73,8 @@
     "html-to-docx": "1.8.0",
     "marked": "^18.0.11",
     "playwright": "^1.62.1",
-    "socks": "^2.8.9"
+    "socks": "^2.8.9",
+    "htmlparser2": "3.10.1"
   },
   "engines": {
     "bun": ">=1.0.0"

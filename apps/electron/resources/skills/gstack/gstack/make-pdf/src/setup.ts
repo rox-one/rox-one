@@ -82,7 +82,7 @@ export async function runSetup(): Promise<void> {
   ].join("\n");
   const fixturePath = path.join(OUTPUT_TMP_DIR, `make-pdf-smoke-${process.pid}.md`);
   const outPath = path.join(OUTPUT_TMP_DIR, `make-pdf-smoke-${process.pid}.pdf`);
-  fs.writeFileSync(fixturePath, fixture, "utf8");
+  fs.writeFileSync(fixturePath, fixture, { encoding: "utf8", flag: "wx", mode: 0o600 });
 
   try {
     await generate({

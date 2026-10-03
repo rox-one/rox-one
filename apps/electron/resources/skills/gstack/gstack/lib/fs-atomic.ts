@@ -43,12 +43,14 @@ export function atomicWriteSync(
   opts: AtomicWriteOpts = {},
 ): void {
   const tmp = tmpPathFor(target);
+  let created = false;
   try {
     if (opts.mode !== undefined) {
-      fs.writeFileSync(tmp, data, { mode: opts.mode });
+      fs.writeFileSync(tmp, data, { mode: opts.mode, flag: 'wx' });
     } else {
-      fs.writeFileSync(tmp, data);
+      fs.writeFileSync(tmp, data, { mode: 0o600, flag: 'wx' });
     }
+    created = true;
     if (opts.noReplace) {
       // Publishing the complete temp inode with link(2) gives atomic
       // no-replace semantics; unlink only removes the temporary name.
@@ -57,7 +59,7 @@ export function atomicWriteSync(
     } else fs.renameSync(tmp, target);
   } catch (err) {
     try {
-      fs.unlinkSync(tmp);
+      if (created) fs.unlinkSync(tmp);
     } catch {
       // Best-effort cleanup; the original error is the one that matters.
     }

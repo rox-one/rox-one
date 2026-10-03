@@ -189,15 +189,17 @@ async function handleEdit(args: string[]): Promise<string> {
     );
   }
   const editor = process.env.EDITOR || 'vi';
-  const tmpFile = path.join(os.tmpdir(), `gstack-domain-skill-${process.pid}-${Date.now()}.md`);
-  await fs.writeFile(tmpFile, current.body, 'utf8');
-  const result = spawnSync(editor, [tmpFile], { stdio: 'inherit' });
-  if (result.status !== 0) {
-    await fs.unlink(tmpFile).catch(() => {});
-    throw new Error(`Editor exited with status ${result.status}; no changes saved.`);
+  const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'gstack-domain-skill-'));
+  const tmpFile = path.join(temporaryDir, 'edit.md');
+  let newBody: string;
+  try {
+    await fs.writeFile(tmpFile, current.body, { encoding: 'utf8', flag: 'wx', mode: 0o600 });
+    const result = spawnSync(editor, [tmpFile], { stdio: 'inherit' });
+    if (result.status !== 0) throw new Error(`Editor exited with status ${result.status}; no changes saved.`);
+    newBody = await fs.readFile(tmpFile, 'utf8');
+  } finally {
+    await fs.rm(temporaryDir, { recursive: true, force: true });
   }
-  const newBody = await fs.readFile(tmpFile, 'utf8');
-  await fs.unlink(tmpFile).catch(() => {});
   if (newBody === current.body) {
     return `No changes for ${host}.`;
   }

@@ -33,7 +33,8 @@ import * as crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 import { render as renderHtml, renderTmpDir } from "../../lib/aside-render";
-import { escapeHtml, sanitizeUntrustedHtml } from "./render";
+import { escapeHtml } from "./render";
+import { sanitizeDiagramSvg } from "./safe-html";
 import { imageDims } from "./image-size";
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -261,7 +262,7 @@ export function buildDiagnosticBlock(fence: DiagramFence, errorMessage: string):
  */
 export function buildDiagramFigure(fence: DiagramFence, svg: string): string {
   const label = diagramLabel(fence);
-  const cleanSvg = sanitizeUntrustedHtml(svg);
+  const cleanSvg = sanitizeDiagramSvg(svg);
   const captioned = fence.title
     ? `\n<figcaption class="diagram-caption">${escapeHtml(fence.title)}</figcaption>`
     : "";

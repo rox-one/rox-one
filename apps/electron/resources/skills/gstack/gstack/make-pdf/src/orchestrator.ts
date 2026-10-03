@@ -42,7 +42,7 @@ import {
 import { applyImagePolicy } from "./image-policy";
 
 /** Default output location (`$P generate letter.md` → /tmp/letter.pdf). */
-export const OUTPUT_TMP_DIR = process.platform === "win32" ? os.tmpdir() : "/tmp";
+export const OUTPUT_TMP_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "gstack-make-pdf-"));
 
 class ProgressReporter {
   private readonly quiet: boolean;
@@ -181,7 +181,7 @@ export async function generate(opts: GenerateOptions): Promise<string> {
       "</style>",
       `</style>\n<style>\n${screenCss()}\n</style>`,
     );
-    fs.writeFileSync(outputPath, withScreenLayer, "utf8");
+    writePrivateOutput(outputPath, withScreenLayer);
     const kb = Math.round(fs.statSync(outputPath).size / 1024);
     progress.done(`${rendered.meta.wordCount} words · ${kb}KB · ${outputPath}`);
     return outputPath;
@@ -209,7 +209,7 @@ export async function generate(opts: GenerateOptions): Promise<string> {
       creator: rendered.meta.author || undefined,
     });
     const bytes: Uint8Array = buf instanceof Uint8Array ? buf : new Uint8Array(await (buf as Blob).arrayBuffer());
-    fs.writeFileSync(outputPath, bytes);
+    writePrivateOutput(outputPath, bytes);
     progress.end("Converting to DOCX");
     const kb = Math.round(fs.statSync(outputPath).size / 1024);
     progress.done(`${rendered.meta.wordCount} words · ${kb}KB · ${outputPath} (content fidelity — layout is Word's)`);
@@ -300,7 +300,7 @@ export async function preview(opts: PreviewOptions): Promise<string> {
 
   // Write to a stable path under /tmp so the user can reload in the same tab.
   const previewPath = path.join(OUTPUT_TMP_DIR, `make-pdf-preview-${deriveSlug(input)}.html`);
-  fs.writeFileSync(previewPath, rendered.html, "utf8");
+  writePrivateOutput(previewPath, rendered.html);
 
   progress.begin("Opening preview");
   tryOpen(previewPath);
@@ -333,3 +333,17 @@ function tryOpen(pathOrUrl: string): void {
 
 /** Setup-only re-export so cli.ts can dynamic-import without another file. */
 export { ExitCode };
+
+/** Refuse symlink outputs and harden the opened inode before writing. */
+function writePrivateOutput(filePath: string, data: string | Uint8Array): void {
+  const fd = fs.openSync(filePath, fs.constants.O_WRONLY | fs.constants.O_CREAT | (fs.constants.O_NOFOLLOW || 0), 0o600);
+  try {
+    const stat = fs.fstatSync(fd);
+    if (!stat.isFile()) throw new Error("Refusing non-regular output file");
+    const uid = process.geteuid?.() ?? process.getuid?.();
+    if (uid !== undefined && stat.uid !== uid) throw new Error("Refusing foreign-owned output file");
+    if (process.platform !== "win32") fs.fchmodSync(fd, 0o600);
+    fs.ftruncateSync(fd, 0);
+    fs.writeFileSync(fd, data);
+  } finally { fs.closeSync(fd); }
+}
