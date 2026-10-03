@@ -1832,10 +1832,11 @@ function AppShellContent({
 
   const focusServicePanel = useSetAtom(focusServicePanelAtom)
   const handleServiceClick = useCallback((serviceId: AppNavDestinationId) => {
-    if (focusServicePanel(serviceId)) return
+    // An explicit service selection must recover a stale workspace URL through navigate.
+    if (navState.navigator !== 'unavailable' && focusServicePanel(serviceId)) return
     const route = APP_NAV_DESTINATIONS_BY_ID[serviceId].route?.()
     if (route) navigate(route)
-  }, [focusServicePanel, navigate])
+  }, [focusServicePanel, navigate, navState.navigator])
 
   const handleAllSessionsClick = useCallback(() => {
     handleServiceClick('sessions')

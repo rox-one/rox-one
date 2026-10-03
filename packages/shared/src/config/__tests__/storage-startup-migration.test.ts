@@ -12,6 +12,11 @@ const PI_ANTHROPIC_OPUS_DEFAULT = getPiModelsForAuthProvider('anthropic').some(m
 const STORAGE_MODULE_PATH = pathToFileURL(join(import.meta.dir, '..', 'storage.ts')).href
 const PI_RESOLVER_SETUP_PATH = pathToFileURL(join(import.meta.dir, '..', '..', '..', 'tests', 'setup', 'register-pi-model-resolver.ts')).href
 
+// A case can run two cold storage imports. CI observed 2–3.4 seconds per
+// child under load; bound each child and give both startups a finite case budget.
+const MIGRATION_SUBPROCESS_TIMEOUT_MS = 10_000
+const MIGRATION_CASE_TIMEOUT_MS = 2 * MIGRATION_SUBPROCESS_TIMEOUT_MS + 5000
+
 function setupWorkspaceConfigDir() {
   const configDir = mkdtempSync(join(tmpdir(), 'craft-agent-config-'))
   const workspaceRoot = join(configDir, 'workspaces', 'my-workspace')
@@ -63,6 +68,7 @@ function writeRootConfig(configPath: string, workspaceRoot: string, llmConnectio
 }
 
 function runMigration(configDir: string) {
+  const started = performance.now()
   const run = Bun.spawnSync([
     process.execPath,
     '--eval',
@@ -75,11 +81,13 @@ function runMigration(configDir: string) {
     },
     stdout: 'pipe',
     stderr: 'pipe',
+    timeout: MIGRATION_SUBPROCESS_TIMEOUT_MS,
+    killSignal: 'SIGKILL',
   })
 
   if (run.exitCode !== 0) {
     throw new Error(
-      `migration subprocess failed (exit ${run.exitCode})\nstdout:\n${run.stdout.toString()}\nstderr:\n${run.stderr.toString()}`,
+      `migration subprocess failed after ${Math.round(performance.now() - started)}ms (exit ${run.exitCode}, signal ${run.signalCode}, budget ${MIGRATION_SUBPROCESS_TIMEOUT_MS}ms)\nstdout:\n${run.stdout.toString()}\nstderr:\n${run.stderr.toString()}`,
     )
   }
 }
@@ -118,7 +126,7 @@ describe('startup migration (integration)', () => {
     expect(connection.customEndpoint).toEqual({ api: 'anthropic-messages' })
     expect(connection.baseUrl).toBe('https://proxy.example.com')
     expect(connection.defaultModel).toBe('claude-sonnet-proxy')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('upgrades temporary pi_compat anthropic-messages connections into anthropic_compat', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -145,7 +153,7 @@ describe('startup migration (integration)', () => {
     expect(connection.providerType).toBe('anthropic_compat')
     expect(connection.customEndpoint).toEqual({ api: 'anthropic-messages' })
     expect(connection.piAuthProvider).toBeUndefined()
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('repairs broken pi-api-key openai-codex provider on startup migration', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -169,7 +177,7 @@ describe('startup migration (integration)', () => {
     expect(connection).toBeDefined()
     expect(connection.piAuthProvider).toBe('openai')
     expect(connection.authType).toBe('api_key')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('preserves userDefined3Tier model subsets during startup migration', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -198,7 +206,7 @@ describe('startup migration (integration)', () => {
     expect(connection.modelSelectionMode).toBe('userDefined3Tier')
     expect(connection.models).toEqual(migratedModels)
     expect(connection.defaultModel).toBe(migratedModels[0])
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('normalizes auto mode model set back to provider defaults', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -226,7 +234,7 @@ describe('startup migration (integration)', () => {
     expect(modelIds.length).toBeGreaterThan(1)
     expect(modelIds).toContain(PI_ANTHROPIC_OPUS_DEFAULT)
     expect(modelIds).toContain(connection.defaultModel)
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('repairs userDefined3Tier lists by removing invalid IDs and fixing default model', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -252,7 +260,7 @@ describe('startup migration (integration)', () => {
     expect(connection.modelSelectionMode).toBe('userDefined3Tier')
     expect(connection.models).toEqual(['pi/claude-opus-4-6', 'pi/claude-haiku-4-5'])
     expect(connection.defaultModel).toBe('pi/claude-opus-4-6')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('falls back to provider defaults when userDefined3Tier becomes empty after filtering', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -281,7 +289,7 @@ describe('startup migration (integration)', () => {
     expect(modelIds).toContain(PI_ANTHROPIC_OPUS_DEFAULT)
     expect(modelIds).not.toContain('pi/not-real-1')
     expect(connection.defaultModel).toBe(modelIds[0])
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('normalizes legacy unprefixed userDefined3Tier model IDs instead of resetting', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -319,7 +327,7 @@ describe('startup migration (integration)', () => {
     const modelIds = getModelIds(connection)
     expect(modelIds).toEqual(expectedPrefixed)
     expect(connection.defaultModel).toBe(expectedPrefixed[0])
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 })
 
 function readConfigJson(configPath: string): any {
@@ -365,7 +373,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     const opus = connection.models.find((m: any) => (typeof m === 'string' ? m : m.id) === 'claude-opus-4-6')
     expect(typeof opus).toBe('object')
     expect(opus.name).toBe('Opus 4.6')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('restores Opus 4.6 once to direct Anthropic connections and respects a later removal', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -407,7 +415,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
 
     connection = findConnection(configPath, 'anthropic')
     expect(modelIdsOf(connection)).not.toContain('claude-opus-4-6')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('migrates direct Anthropic Opus 4.5 defaults straight to Opus 4.8', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -431,7 +439,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     expect(connection.defaultModel).toBe('claude-opus-4-8')
     expect(ids).toContain('claude-opus-4-8')
     expect(ids).not.toContain('claude-opus-4-5-20251101')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('migrates previous direct Anthropic Opus 4.7 defaults to Opus 4.8 while keeping 4.7 selectable', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -469,7 +477,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     const pi = readPiApiKeyConnection(configPath)
     expect(pi.defaultModel).toBe('pi/claude-opus-4-7')
     expect(modelIdsOf(pi)).toEqual(['pi/claude-opus-4-7', 'pi/claude-sonnet-4-6'])
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('keeps workspace default Opus 4.6 unchanged', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -494,7 +502,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
 
     const migratedWsConfig = JSON.parse(readFileSync(wsConfigPath, 'utf-8'))
     expect(migratedWsConfig.defaults.model).toBe('claude-opus-4-6')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('migrates workspace default Opus 4.7 to Opus 4.8', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -519,7 +527,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
 
     const migratedWsConfig = JSON.parse(readFileSync(wsConfigPath, 'utf-8'))
     expect(migratedWsConfig.defaults.model).toBe('claude-opus-4-8')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('keeps Pi Anthropic Opus 4.6 IDs unchanged', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -547,7 +555,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     expect(connection.defaultModel).toBe('pi/claude-opus-4-6')
     expect(modelIdsOf(connection)).toEqual(['pi/claude-opus-4-6', 'pi/claude-sonnet-4-6'])
     expect(connection.models[0].name).toBe('Opus 4.6')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('keeps Pi Bedrock Opus 4.6 native IDs unchanged', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -575,7 +583,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     expect(connection.defaultModel).toBe('pi/us.anthropic.claude-opus-4-6-v1')
     expect(modelIdsOf(connection)).toEqual(['pi/us.anthropic.claude-opus-4-6-v1', 'pi/us.anthropic.claude-sonnet-4-6'])
     expect(connection.models[0].name).toBe('Opus 4.6')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('migrates legacy unprefixed Pi Anthropic Opus 4.6 IDs to pi-prefixed Opus 4.6', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -599,7 +607,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     const connection = readPiApiKeyConnection(configPath)
     expect(connection.defaultModel).toBe('pi/claude-opus-4-6')
     expect(modelIdsOf(connection)).toEqual(['pi/claude-opus-4-6', 'pi/claude-sonnet-4-6'])
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('migrates legacy Bedrock provider Opus 4.6 IDs to Pi Bedrock native Opus 4.6 IDs', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -624,7 +632,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     expect(connection.piAuthProvider).toBe('amazon-bedrock')
     expect(connection.defaultModel).toBe('pi/us.anthropic.claude-opus-4-6-v1')
     expect(modelIdsOf(connection)).toEqual(['pi/us.anthropic.claude-opus-4-6-v1', 'pi/us.anthropic.claude-sonnet-4-6'])
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('migrates seeded rox-kimi kimi-K3 connections onto the public ROX plane', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -661,7 +669,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     expect(migrated.migrationsApplied).toContain('rox-kimi-public-models-v1')
     expect(migrated.migrationsApplied).toContain('rox-connection-display-name-v1')
     expect(migrated.migrationsApplied).toContain('rox-r1-max-default-v1')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('upgrades installed ROX defaults while preserving sessions and other providers', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -699,7 +707,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     const afterFirstRun = readFileSync(configPath, 'utf8')
     runMigration(configDir)
     expect(readFileSync(configPath, 'utf8')).toBe(afterFirstRun)
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('keeps a custom runtime and a workspace using another provider unchanged', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -720,7 +728,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     expect(findConnection(configPath, 'private-runtime')).toEqual(privateRuntime)
     expect(modelIdsOf(findConnection(configPath, 'rox-kimi'))).toEqual(['rox/r1-max', 'private/extra'])
     expect(JSON.parse(readFileSync(workspaceConfigPath, 'utf8')).defaults.model).toBe('rox/standard')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('preserves an explicit legacy Rox Max default across repeated startup', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -739,7 +747,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     expect(findConnection(configPath, 'rox-kimi').defaultModel).toBe('rox/max')
     expect(modelIdsOf(findConnection(configPath, 'rox-kimi'))).toEqual(['rox/r1-max', 'rox/max'])
     expect(JSON.parse(readFileSync(workspaceConfigPath, 'utf8')).defaults.model).toBe('rox/max')
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('upgrades old onboarding Rox defaults with a separate marker and preserves private catalogs', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -770,7 +778,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     const afterFirstRun = readFileSync(configPath, 'utf8')
     runMigration(configDir)
     expect(readFileSync(configPath, 'utf8')).toBe(afterFirstRun)
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 
   it('preserves a seeded slug explicitly repointed to a private runtime', () => {
     const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
@@ -782,5 +790,5 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     writeRootConfig(configPath, workspaceRoot, [privateRuntime])
     runMigration(configDir)
     expect(findConnection(configPath, 'rox-kimi')).toEqual(privateRuntime)
-  })
+  }, MIGRATION_CASE_TIMEOUT_MS)
 })
