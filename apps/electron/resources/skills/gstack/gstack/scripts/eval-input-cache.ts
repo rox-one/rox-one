@@ -1,3 +1,4 @@
+import { readBoundedStable } from '../lib/cso/bounded-file';
 /**
  * Conservative reuse of verified paid results. No provider calls or import-time I/O.
  *
@@ -168,7 +169,7 @@ export function buildEvalInputIdentity(input: EvalInputManifest): EvalInputIdent
       if (inside === '..' || inside.startsWith(`..${path.sep}`) || path.isAbsolute(inside)) throw new Error('Input escapes repository');
       const stat = fs.statSync(target);
       if (!stat.isFile()) throw new Error('Input is not a regular file');
-      return { path: relative, target: inside.split(path.sep).join('/'), sha256: hash(fs.readFileSync(target)), mode: stat.mode & 0o777 };
+      return { path: relative, target: inside.split(path.sep).join('/'), sha256: hash(readBoundedStable(target, 64 * 1024 * 1024, 'Evaluation input')), mode: stat.mode & 0o777 };
     });
     const caseIds = sorted(Object.keys(input.prompts));
     const key = hash(canonical({ schema: SCHEMA, scope: input.scope, files,
@@ -220,7 +221,7 @@ export function lookupEvalInputCache(options: EvalCachePolicy & {
     const filename = path.join(options.cacheDir, `${options.identity.key}.json`);
     if (!fs.lstatSync(filename).isFile()) throw new Error('Receipt is not a regular file');
     // Read the same inode we inspect; do not follow a link swapped in after lstat.
-    const fd = fs.openSync(filename, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0));
+    const fd = fs.openSync(filename, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
     let receipt: unknown;
     try {
       const stat = fs.fstatSync(fd);

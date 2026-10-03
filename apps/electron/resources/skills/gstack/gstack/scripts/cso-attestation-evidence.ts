@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { readBoundedStable } from '../lib/cso/bounded-file';
 /** Bind cryptographically verified `gh attestation verify --format json` output to reviewed statements. */
 import * as fs from 'node:fs';
 import { resolve } from 'node:path';
@@ -24,6 +25,6 @@ if(import.meta.main){
     const args=process.argv.slice(2),command=args.shift(),file=args.shift(),predicate=args.shift(),subject=args.shift();
     if(command!=='digest'||!file||!predicate||!subject||args.length)throw new Error('Usage: cso-attestation-evidence digest VERIFIED.json PREDICATE SUBJECT_SHA256');
     const path=resolve(file),stat=fs.lstatSync(path);if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1||stat.size<=0||stat.size>MAX_BYTES)throw new Error('UNSAFE_VERIFIED_ATTESTATION_FILE');
-    process.stdout.write(verifiedStatementSetDigest(JSON.parse(fs.readFileSync(path,'utf8')),predicate,subject)+'\n');
+    process.stdout.write(verifiedStatementSetDigest(JSON.parse(readBoundedStable(path,MAX_BYTES,'Verified attestation').toString('utf8')),predicate,subject)+'\n');
   }catch(error){process.stderr.write((error instanceof Error?error.message:'ATTESTATION_EVIDENCE_ERROR')+'\n');process.exitCode=1;}
 }

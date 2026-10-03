@@ -113,7 +113,7 @@ export function readQaCapture(reportRoot: string, captureId: string, expectedHas
   return { receipt, sha256, stdout: out, stderr: err, observed, observationText };
 }
 
-const anchoredOn = (command: unknown, captureId: string) => typeof command === 'string' && new RegExp(`\\scapture\\s+\\S+\\s+${captureId}(?:\\s|$)`).test(command);
+export const anchoredOn = (command: unknown, captureId: string) => typeof command === 'string' && new RegExp(`\\scapture\\s+\\S+\\s+${captureId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`).test(command);
 const nativeCommand = (command: string) => command.slice(command.indexOf(' -- ') + 4).trim();
 const MERGED_NOTE = ['observationCapture', 'observationArgv', 'observed', 'hypothesis', 'nextCapture', 'nextArgv'];
 const links = (note: Record<string, any>, previous: string, captureId: string) => note.observationCapture === previous && note.nextCapture === captureId

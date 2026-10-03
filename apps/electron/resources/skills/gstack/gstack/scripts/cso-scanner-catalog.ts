@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { readBoundedStable } from '../lib/cso/bounded-file';
 /** Assemble and validate a complete source-controlled scanner catalog proposal. */
 import * as fs from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -18,7 +19,7 @@ function sameFile(left: fs.Stats, right: fs.Stats): boolean {
   return left.dev === right.dev && left.ino === right.ino && left.mode === right.mode && left.nlink === right.nlink && left.size === right.size;
 }
 function hashRegularFile(path: string, expected: fs.Stats): string {
-  const hash = createHash('sha256'), fd = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0));
+  const hash = createHash('sha256'), fd = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
   try {
     const before = fs.fstatSync(fd);
     if (!before.isFile() || before.nlink !== 1 || !sameFile(expected, before)) throw new Error('UNSAFE_SCANNER_ASSET');
@@ -100,7 +101,7 @@ export function validateScannerCatalogTransition(current: ScannerCatalog, propos
 function readJson(path: string): unknown {
   const stat = fs.lstatSync(path);
   if (stat.isSymbolicLink() || !stat.isFile() || stat.nlink !== 1 || stat.size > MAX_ARTIFACT) throw new Error(`UNSAFE_CATALOG_ARTIFACT: ${basename(path)}`);
-  return JSON.parse(fs.readFileSync(path, 'utf8'));
+  return JSON.parse(readBoundedStable(path, MAX_ARTIFACT, 'Scanner catalog artifact').toString('utf8'));
 }
 function fragments(directory: string): unknown[] {
   const root = fs.realpathSync(directory), values: unknown[] = [];
@@ -164,7 +165,7 @@ if (import.meta.main) {
       const path = args.shift(); if (!path || args.length) throw new Error('Usage: hash-asset PATH'); process.stdout.write(scannerAssetHash(resolve(path)) + '\n');
     } else if (command === 'version-hash') {
       const stdout = args.shift(), stderr = args.shift(); if (!stdout || !stderr || args.length) throw new Error('Usage: version-hash STDOUT STDERR');
-      const read = (path: string) => { const stat = fs.lstatSync(path); if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1 || stat.size > 8192) throw new Error('UNSAFE_VERSION_OUTPUT'); return fs.readFileSync(path, 'utf8'); };
+      const read = (path: string) => { const stat = fs.lstatSync(path); if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1 || stat.size > 8192) throw new Error('UNSAFE_VERSION_OUTPUT'); return readBoundedStable(path, 8192, 'Scanner version output').toString('utf8'); };
       process.stdout.write(scannerVersionHash(read(resolve(stdout)), read(resolve(stderr))) + '\n');
     } else throw new Error('Usage: cso-scanner-catalog <validate|validate-transition|assemble|hash-asset|version-hash> ...');
   } catch (error) {

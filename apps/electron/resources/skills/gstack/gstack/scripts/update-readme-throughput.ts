@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { atomicWriteSync } from '../lib/fs-atomic';
 /**
  * Read docs/throughput-2013-vs-2026.json, replace the README anchor with the
  * computed logical-lines multiple.
@@ -41,7 +42,7 @@ function main() {
     // preserving the anchor so the next run can replace it.
     const replacement = `${PENDING}: run scripts/garry-output-comparison.ts ${ANCHOR}`;
     const updated = readme.replace(ANCHOR, replacement);
-    fs.writeFileSync(README, updated);
+    atomicWriteSync(README, updated, { mode: 0o644 });
     process.stderr.write(
       `${JSON_PATH} not found. Wrote ${PENDING} marker to README. Run scripts/garry-output-comparison.ts to generate it.\n`
     );
@@ -64,7 +65,7 @@ function main() {
     // Write an honest pending-ish marker. Don't fall back to a bogus number.
     const replacement = `${PENDING}: multiple not yet computable (one or both years inactive in this repo) ${ANCHOR}`;
     const updated = readme.replace(ANCHOR, replacement);
-    fs.writeFileSync(README, updated);
+    atomicWriteSync(README, updated, { mode: 0o644 });
     process.stderr.write(`Multiple not computable. Wrote ${PENDING} marker.\n`);
     process.exit(0);
   }
@@ -72,7 +73,7 @@ function main() {
   // Normal flow: replace the anchor with the number + anchor (anchor stays for next run).
   const replacement = `**${mult}×** ${ANCHOR}`;
   const updated = readme.replace(ANCHOR, replacement);
-  fs.writeFileSync(README, updated);
+  atomicWriteSync(README, updated, { mode: 0o644 });
   process.stderr.write(`README throughput multiple updated: ${mult}×\n`);
 }
 

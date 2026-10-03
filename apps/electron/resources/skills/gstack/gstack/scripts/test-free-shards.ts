@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { readBoundedStable } from '../lib/cso/bounded-file';
 /**
  * test-free-shards — enumerate, shard, curate, and run the free test suite.
  *
@@ -1540,7 +1541,7 @@ function trackShardBrowser(stateDir: string, env: NodeJS.ProcessEnv) {
     if (!fs.existsSync(file)) return null;
     const info = fs.lstatSync(file);
     if (!info.isFile() || info.size > 65536) throw new BrowserCleanupError('unsafe browser state record');
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
+    return JSON.parse(readBoundedStable(file, 65536, 'Browser state record').toString('utf8'));
   };
   const nativeStart = async (capture: Capture, identity: Identity): Promise<string> => {
     check(capture);

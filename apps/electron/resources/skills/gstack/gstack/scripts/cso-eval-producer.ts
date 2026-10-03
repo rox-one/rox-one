@@ -315,7 +315,7 @@ function artifactIdentity(path: string): { sha256: string; bytes: number } {
   }
   let descriptor: number | undefined;
   try {
-    descriptor = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0));
+    descriptor = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
     const opened = fs.fstatSync(descriptor);
     if (!opened.isFile() || opened.nlink !== 1 || opened.dev !== named.dev || opened.ino !== named.ino || opened.mode !== named.mode || opened.size !== named.size) {
       throw new Error('PRODUCER_INSTALLATION_RACE');

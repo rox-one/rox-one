@@ -839,10 +839,12 @@ export const FAILURE_TAIL_BYTES = 64 * 1024;
 /** Read back only the tail of a shard log (never the whole 30-min stream). */
 function readLogTail(logPath: string, maxBytes = FAILURE_TAIL_BYTES): string {
   try {
-    const size = fs.statSync(logPath).size;
-    const start = Math.max(0, size - maxBytes);
-    const fd = fs.openSync(logPath, 'r');
+    const fd = fs.openSync(logPath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
     try {
+      const stat = fs.fstatSync(fd);
+      if (!stat.isFile()) return '';
+      const size = stat.size;
+      const start = Math.max(0, size - maxBytes);
       const buffer = Buffer.alloc(size - start);
       fs.readSync(fd, buffer, 0, buffer.length, start);
       return buffer.toString('utf8');

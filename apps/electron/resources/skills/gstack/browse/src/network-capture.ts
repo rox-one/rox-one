@@ -1,3 +1,4 @@
+import { writeSecureFile } from './file-permissions';
 /**
  * Network response body capture — SizeCappedBuffer + capture lifecycle.
  *
@@ -69,7 +70,7 @@ export class SizeCappedBuffer {
   /** Export to JSONL file. */
   exportToFile(filePath: string): number {
     const lines = this.entries.map(e => JSON.stringify(e));
-    fs.writeFileSync(filePath, lines.join('\n') + '\n');
+    writeSecureFile(filePath, lines.join('\n') + '\n');
     return this.entries.length;
   }
 

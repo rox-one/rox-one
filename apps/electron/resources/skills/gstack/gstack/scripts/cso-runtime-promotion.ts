@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { readBoundedStable } from '../lib/cso/bounded-file';
 /** Generate a reviewable catalog candidate from authenticated qualification statements. */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -209,7 +210,7 @@ function collectEvidence(root: string): unknown[] {
   return files.sort().map(file => {
     const before = fs.lstatSync(file);
     if (!before.isFile() || before.isSymbolicLink() || before.nlink !== 1 || before.size > MAX_EVIDENCE_BYTES) throw new Error('UNSAFE_QUALIFICATION_STATEMENT');
-    const body = fs.readFileSync(file, 'utf8');
+    const body = readBoundedStable(file, MAX_EVIDENCE_BYTES, 'Qualification statement').toString('utf8');
     const after = fs.lstatSync(file);
     if (before.dev !== after.dev || before.ino !== after.ino || before.size !== after.size ||
       before.mtimeMs !== after.mtimeMs || before.ctimeMs !== after.ctimeMs) throw new Error('QUALIFICATION_EVIDENCE_RACE');
@@ -223,7 +224,7 @@ function readCatalogArtifact(file: string): unknown {
   if (!before.isFile() || before.isSymbolicLink() || before.nlink !== 1 || before.size <= 0 || before.size > MAX_EVIDENCE_BYTES) {
     throw new Error('UNSAFE_RUNTIME_CATALOG_ARTIFACT');
   }
-  const body = fs.readFileSync(absolute, 'utf8');
+  const body = readBoundedStable(absolute, MAX_EVIDENCE_BYTES, 'Runtime catalog artifact').toString('utf8');
   const after = fs.lstatSync(absolute);
   if (before.dev !== after.dev || before.ino !== after.ino || before.mode !== after.mode ||
     before.nlink !== after.nlink || before.size !== after.size || before.mtimeMs !== after.mtimeMs ||

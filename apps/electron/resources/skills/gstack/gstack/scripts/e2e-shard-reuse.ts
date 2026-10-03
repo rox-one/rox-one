@@ -1,3 +1,4 @@
+import { readBoundedStable } from '../lib/cso/bounded-file';
 /**
  * Verified first-attempt reuse for PR-lane E2E shards, on the same receipts as
  * the workflow-judge reuse (scripts/eval-input-cache.ts).
@@ -238,7 +239,7 @@ function readJson(file: string, maxBytes = 64 * 1024): any {
   try {
     const stat = fs.lstatSync(file);
     if (!stat.isFile() || stat.size > maxBytes) return null;
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
+    return JSON.parse(readBoundedStable(file, maxBytes, 'Shard cache receipt').toString('utf8'));
   } catch { return null; }
 }
 

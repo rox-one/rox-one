@@ -12,7 +12,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { mkdirSecure } from './file-permissions';
+import { mkdirSecure, writeSecureFile } from './file-permissions';
 import { safeUnlinkQuiet } from './error-handling';
 import { readConfigKey, resolveStateRoot } from '../../lib/state-root';
 import { remoteSlug } from '../../lib/remote-identity';
@@ -126,7 +126,7 @@ export function ensureStateDir(config: BrowseConfig): void {
   // synchronously, before return — the project-.gitignore dance below is now
   // redundant safety, kept so `.gstack/` still reads as ignored in git status.
   try {
-    fs.writeFileSync(path.join(config.stateDir, '.gitignore'), '*\n');
+    writeSecureFile(path.join(config.stateDir, '.gitignore'), '*\n');
   } catch {
     // Best-effort; the project-.gitignore path below is the fallback.
   }

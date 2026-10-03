@@ -115,3 +115,10 @@ test('canonical pytest plan rejects quoted count-suppressing addopts but admits 
     expect(() => canonicalTestPlan(dir, 'python')).not.toThrow();
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('capture identifiers are matched literally rather than as regular expressions', async () => {
+  const { anchoredOn } = await import(join(resources, 'gstack/lib/qa-evidence.ts'));
+  expect(anchoredOn('tool capture root abc.*', 'abc.*')).toBe(true);
+  expect(anchoredOn('tool capture root abcXYZ', 'abc.*')).toBe(false);
+  expect(anchoredOn('tool capture root normal-id', 'normal-id')).toBe(true);
+});
