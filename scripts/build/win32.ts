@@ -190,6 +190,8 @@ export async function buildElectronAppWindows(config: BuildConfig): Promise<void
     rootDir
   );
 
+  run('node ./node_modules/esbuild/bin/esbuild apps/electron/src/preload/voice-overlay.ts --bundle --platform=node --format=cjs --outfile=apps/electron/dist/voice-overlay-preload.cjs --external:electron', rootDir);
+
   // Build renderer - invoke vite directly via node
   console.log('  Building renderer...');
   const rendererDir = join(electronDir, 'dist', 'renderer');

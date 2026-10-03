@@ -205,6 +205,7 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
     const state = states.get(clientId)
     if (state) cancel(state)
     states.delete(clientId)
+    deps.voiceOverlay?.retire(clientId)
   }
   const disposeInvalidation = authority?.onInvalidation(event => {
     for (const [clientId, state] of states) {
@@ -265,6 +266,9 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
       const target = { to: 'client' as const, clientId: state.context.clientId }
       pushTyped(server, RPC_CHANNELS.voice.JOB, target, event.job)
       pushTyped(server, RPC_CHANNELS.voice.OVERLAY, target, event.overlay)
+      try {
+        deps.voiceOverlay?.publish({ context: state.context, state: event.overlay, position: readPrefs(state.context).overlayPosition, assertCurrent: state.assertCurrent })
+      } catch { deps.voiceOverlay?.retire(state.context.clientId) }
     })
     state.host = host
     return host
