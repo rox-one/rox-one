@@ -338,13 +338,13 @@ export { ExitCode };
 function writePrivateOutput(filePath: string, data: string | Uint8Array): void {
   const fd = fs.openSync(filePath, fs.constants.O_WRONLY | fs.constants.O_CREAT | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0), 0o600);
   try {
-    const stat = fs.fstatSync(fd);
-    if (!stat.isFile() || stat.nlink !== 1) throw new Error("Refusing non-regular or hard-linked output file");
+    const stat = fs.fstatSync(fd, { bigint: true });
+    if (!stat.isFile() || stat.nlink !== 1n) throw new Error("Refusing non-regular or hard-linked output file");
     const uid = process.geteuid?.() ?? process.getuid?.();
-    if (uid !== undefined && stat.uid !== uid) throw new Error("Refusing foreign-owned output file");
+    if (uid !== undefined && stat.uid !== BigInt(uid)) throw new Error("Refusing foreign-owned output file");
     if (process.platform !== "win32") fs.fchmodSync(fd, 0o600);
     else {
-      const current = fs.lstatSync(filePath);
+      const current = fs.lstatSync(filePath, { bigint: true });
       if (current.isSymbolicLink() || current.dev !== stat.dev || current.ino !== stat.ino) throw new Error("Output file changed during open");
     }
     fs.ftruncateSync(fd, 0);

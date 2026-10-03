@@ -364,12 +364,12 @@ function writePrivateDescriptor(filePath: string, data: string | NodeJS.ArrayBuf
   const flags = fs.constants.O_WRONLY | fs.constants.O_CREAT | (append ? fs.constants.O_APPEND : 0) | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0);
   const fd = fs.openSync(filePath, flags, 0o600);
   try {
-    const stat = fs.fstatSync(fd);
-    if (!stat.isFile() || stat.nlink !== 1) throw new Error('Refusing non-regular or hard-linked private state file');
+    const stat = fs.fstatSync(fd, { bigint: true });
+    if (!stat.isFile() || stat.nlink !== 1n) throw new Error('Refusing non-regular or hard-linked private state file');
     const uid = process.geteuid?.() ?? process.getuid?.();
-    if (uid !== undefined && stat.uid !== uid) throw new Error('Refusing foreign-owned private state file');
+    if (uid !== undefined && stat.uid !== BigInt(uid)) throw new Error('Refusing foreign-owned private state file');
     if (process.platform === 'win32') {
-      const current = fs.lstatSync(filePath);
+      const current = fs.lstatSync(filePath, { bigint: true });
       if (current.isSymbolicLink() || current.dev !== stat.dev || current.ino !== stat.ino) throw new Error('Private state file changed during open');
       restrictFilePermissions(filePath);
     } else fs.fchmodSync(fd, 0o600);
